@@ -1,0 +1,42 @@
+# follows https://pentacent.medium.com/nginx-and-lets-encrypt-with-docker-in-less-than-5-minutes-b4b8a60d3a71
+version: '3'
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    # just for local testing
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    volumes:
+      - local_dynamic_storage:/home/storage
+  background:
+    build:
+      context: ..
+      dockerfile: Dockerfile.background
+    env_file:
+      - .env
+    volumes:
+      - local_dynamic_storage:/home/storage
+  nginx:
+    image: nginx:1.23.4-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./data/nginx:/etc/nginx/conf.d
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    depends_on:
+      - api
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+volumes:
+  local_dynamic_storage:

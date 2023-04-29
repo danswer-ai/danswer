@@ -1,0 +1,8 @@
+__pycache__/
+.idea/
+site_crawls/
+.ipynb_checkpoints/
+api_keys.py
+*ipynb
+qdrant-data/
+typesense-data/
