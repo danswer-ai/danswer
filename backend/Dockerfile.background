@@ -8,7 +8,7 @@ COPY ./requirements/default.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
 
 WORKDIR /app
-COPY ./qa_service /app/qa_service
+COPY ./danswer /app/danswer
 
 ENV PYTHONPATH .
-CMD ["python3", "qa_service/background/update.py"]
+CMD ["python3", "danswer/background/update.py"]
