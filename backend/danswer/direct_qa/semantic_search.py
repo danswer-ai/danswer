@@ -13,6 +13,8 @@ from danswer.configs.model_configs import QUERY_EMBEDDING_CONTEXT_SIZE
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logging import setup_logger
 from danswer.utils.timing import build_timing_wrapper
+from qdrant_client.http.exceptions import ResponseHandlingException
+from qdrant_client.http.exceptions import UnexpectedResponse
 from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
@@ -43,14 +45,21 @@ def semantic_retrival(
         )["data"][0]["embedding"]
     else:
         query_embedding = embedding_model.encode(query)
-    hits = get_qdrant_client().search(
-        collection_name=qdrant_collection,
-        query_vector=query_embedding
-        if isinstance(query_embedding, list)
-        else query_embedding.tolist(),
-        query_filter=None,
-        limit=num_hits,
-    )
+    try:
+        hits = get_qdrant_client().search(
+            collection_name=qdrant_collection,
+            query_vector=query_embedding
+            if isinstance(query_embedding, list)
+            else query_embedding.tolist(),
+            query_filter=None,
+            limit=num_hits,
+        )
+    except ResponseHandlingException as e:
+        logger.exception(f'Qdrant querying failed due to: "{e}", is Qdrant set up?')
+    except UnexpectedResponse as e:
+        logger.exception(
+            f'Qdrant querying failed due to: "{e}", has ingestion been run?'
+        )
 
     retrieved_chunks = []
     for hit in hits:
