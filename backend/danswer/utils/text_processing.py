@@ -11,9 +11,14 @@ def clean_model_quote(quote: str, trim_length: int) -> str:
 
 def shared_precompare_cleanup(text: str) -> str:
     text = text.lower()
-    text = "".join(
-        text.split()
-    )  # GPT models like to return cleaner spacing, not good for quote matching
-    return text.replace(
-        "*", ""
-    )  # GPT models sometimes like to cleanup bulletpoints represented by *
+
+    # GPT models like to return cleaner spacing, not good for quote matching
+    text = "".join(text.split())
+
+    # GPT models sometimes like to clean up bulletpoints represented by *
+    text = text.replace("*", "")
+
+    # GPT models sometimes like to edit the quoting, ie "Title: Contents" becomes Title: "Contents"
+    text = text.replace('"', "")
+
+    return text
