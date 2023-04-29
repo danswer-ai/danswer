@@ -5,6 +5,7 @@ from danswer.connectors.slack.config import get_pull_frequency
 from danswer.connectors.slack.pull import SlackPullLoader
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.utils.indexing_pipeline import build_indexing_pipeline
 from danswer.utils.logging import setup_logger
 
 logger = setup_logger()
@@ -21,6 +22,7 @@ def run_update():
     # TODO (chris): implement a more generic way to run updates
     # so we don't need to edit this file for future connectors
     dynamic_config_store = get_dynamic_config_store()
+    indexing_pipeline = build_indexing_pipeline()
     current_time = int(time.time())
 
     # Slack
@@ -40,7 +42,7 @@ def run_update():
         ):
             logger.info(f"Running slack pull from {last_pull or 0} to {current_time}")
             for doc_batch in SlackPullLoader().load(last_pull or 0, current_time):
-                print(len(doc_batch))
+                indexing_pipeline(doc_batch)
             dynamic_config_store.store(last_slack_pull_key, current_time)
 
 
