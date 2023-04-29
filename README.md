@@ -3,7 +3,7 @@
 </h2>
 
 <p align="center">
-<p align="center">The First OpenSource Enterprise QA System</p>
+<p align="center">OpenSource Enterprise QA</p>
 
 <p align="center">
 <a href="https://join.slack.com/t/danswer/shared_invite/zt-1u5ycen3o-6SJbWfivLWP5LPyp_jftuw" target="_blank">
