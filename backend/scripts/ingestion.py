@@ -109,6 +109,6 @@ if __name__ == "__main__":
     if args.rebuild_index:
         recreate_collection(args.qdrant_collection)
 
-    #load_slack_batch(args.slack_export_dir, args.qdrant_collection)
+    # load_slack_batch(args.slack_export_dir, args.qdrant_collection)
     load_web_batch(args.website_url, args.qdrant_collection)
-    #load_google_drive_batch(args.qdrant_collection)
+    # load_google_drive_batch(args.qdrant_collection)
