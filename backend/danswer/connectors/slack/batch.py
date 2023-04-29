@@ -6,6 +6,7 @@ from typing import Any
 from typing import cast
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
+from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.connectors.slack.utils import get_message_link
@@ -31,6 +32,7 @@ def _process_batch_event(
                         text=event["text"],
                     )
                 ],
+                source=matching_doc.source,
                 metadata=matching_doc.metadata,
             )
 
@@ -44,6 +46,7 @@ def _process_batch_event(
                     text=event["text"],
                 )
             ],
+            source=DocumentSource.Slack,
             metadata={},
         )
 

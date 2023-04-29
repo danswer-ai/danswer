@@ -53,9 +53,7 @@ def index_chunks(
                     DOCUMENT_ID: document.id,
                     CHUNK_ID: chunk.chunk_id,
                     CONTENT: chunk.content,
-                    SOURCE_TYPE: str(
-                        document.metadata.get("source_type", DocumentSource.Unknown)
-                    ),
+                    SOURCE_TYPE: str(document.source),
                     SOURCE_LINKS: chunk.source_links,
                     SECTION_CONTINUATION: chunk.section_continuation,
                     ALLOWED_USERS: [],  # TODO

@@ -6,6 +6,7 @@ from typing import cast
 from typing import List
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
+from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.connectors.slack.utils import get_client
@@ -173,6 +174,7 @@ def thread_to_doc(channel_id: str, thread: ThreadType) -> Document:
             )
             for m in thread
         ],
+        source=DocumentSource.Slack,
         metadata={},
     )
 

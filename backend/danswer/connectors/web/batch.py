@@ -93,7 +93,8 @@ class BatchWebLoader(BatchLoader):
                         Document(
                             id=current_url,
                             sections=[Section(link=current_url, text=page_text)],
-                            metadata={SOURCE_TYPE: DocumentSource.Web},
+                            source=DocumentSource.Web,
+                            metadata={},
                         )
                     )
 

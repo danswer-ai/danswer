@@ -2,6 +2,7 @@ import unittest
 
 from danswer.chunking.chunk import chunk_document
 from danswer.chunking.chunk import chunk_large_section
+from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 
@@ -20,7 +21,6 @@ class TestDocumentChunking(unittest.TestCase):
         self.large_section = Section(text=WAR_AND_PEACE, link="https://www.test.com/")
         self.document = Document(
             id="test_document",
-            metadata={"source_type": "testing"},
             sections=[
                 Section(
                     text="Here is some testing text", link="https://www.test.com/0"
@@ -39,6 +39,8 @@ class TestDocumentChunking(unittest.TestCase):
                     text="should be combined into one", link="https://www.test.com/5"
                 ),
             ],
+            source=DocumentSource.Web,  # arbitrary picking web, doens't matter for this test
+            metadata={},
         )
 
     def test_chunk_large_section(self):

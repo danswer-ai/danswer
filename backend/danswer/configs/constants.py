@@ -15,13 +15,9 @@ class DocumentSource(Enum):
     Slack = 1
     Web = 2
     GoogleDrive = 3
-    Unknown = 4
 
     def __str__(self):
         return self.name
 
     def __int__(self):
         return self.value
-
-
-WEB_SOURCE = "Web"
