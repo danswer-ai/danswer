@@ -128,7 +128,8 @@ class BatchGoogleDriveLoader(BatchLoader):
                     Document(
                         id=file["webViewLink"],
                         sections=[Section(link=file["webViewLink"], text=full_context)],
-                        metadata={SOURCE_TYPE: DocumentSource.GoogleDrive},
+                        source=DocumentSource.GoogleDrive,
+                        metadata={},
                     )
                 )
 

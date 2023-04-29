@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Any
 
+from danswer.configs.constants import DocumentSource
+
 
 @dataclass
 class Section:
@@ -12,6 +14,7 @@ class Section:
 class Document:
     id: str
     sections: list[Section]
+    source: DocumentSource
     metadata: dict[str, Any]
 
 
