@@ -1,26 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { Formik, Form, Field, ErrorMessage, FormikHelpers } from "formik";
+import React, { useState } from "react";
+import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
+import { BACKEND_URL } from "@/lib/constants";
 import { Popup } from "./Popup";
 import { TextFormField } from "./Field";
 
 interface FormData {
-  slack_bot_token: string;
-  workspace_id: string;
+  url: string;
 }
 
 const validationSchema = Yup.object().shape({
-  slack_bot_token: Yup.string().required("Please enter your Slack Bot Token"),
-  workspace_id: Yup.string().required("Please enter your Workspace ID"),
-  pull_frequency: Yup.number().required(
-    "Please enter a pull frequency (in minutes). 0 => no pulling from slack"
+  url: Yup.string().required(
+    "Please enter the website URL to scrape e.g. https://docs.github.com/en/actions"
   ),
 });
-
-const getConfig = async (): Promise<FormData> => {
-  const response = await fetch("/api/admin/slack_connector_config");
-  return response.json();
-};
 
 const handleSubmit = async (
   values: FormData,
@@ -31,7 +24,8 @@ const handleSubmit = async (
 ) => {
   setSubmitting(true);
   try {
-    const response = await fetch("/api/admin/slack_connector_config", {
+    // TODO (chris): replace this with actual call
+    const response = await fetch(BACKEND_URL + "/admin/website_index", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -59,29 +53,17 @@ interface SlackFormProps {
   onSubmit: (isSuccess: boolean) => void;
 }
 
-export const SlackForm: React.FC<SlackFormProps> = ({ onSubmit }) => {
-  const [initialValues, setInitialValues] = React.useState<FormData>();
+export const WebIndexForm: React.FC<SlackFormProps> = ({ onSubmit }) => {
   const [popup, setPopup] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
 
-  useEffect(() => {
-    getConfig().then((response) => {
-      setInitialValues(response);
-    });
-  }, []);
-
-  if (!initialValues) {
-    // TODO (chris): improve
-    return <div>Loading...</div>;
-  }
-
   return (
     <>
       {popup && <Popup message={popup.message} type={popup.type} />}
       <Formik
-        initialValues={initialValues}
+        initialValues={{ url: "" }}
         validationSchema={validationSchema}
         onSubmit={(values, formikHelpers) =>
           handleSubmit(values, formikHelpers, setPopup)
@@ -89,15 +71,13 @@ export const SlackForm: React.FC<SlackFormProps> = ({ onSubmit }) => {
       >
         {({ isSubmitting }) => (
           <Form>
-            <TextFormField name="slack_bot_token" label="Slack Bot Token:" />
-            <TextFormField name="workspace_id" label="Workspace ID:" />
-            <TextFormField name="pull_frequency" label="Pull Frequency:" />
+            <TextFormField name="url" label="URL to Scrape:" />
             <button
               type="submit"
               disabled={isSubmitting}
               className="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
             >
-              Update
+              Index
             </button>
           </Form>
         )}
