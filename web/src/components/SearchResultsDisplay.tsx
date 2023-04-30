@@ -9,8 +9,8 @@ interface SearchResultsDisplayProps {
   isFetching: boolean;
 }
 
-const ICON_SIZE = "16";
-const ICON_STYLE = "text-blue-600 my-auto mr-1";
+const ICON_SIZE = "20";
+const ICON_STYLE = "text-blue-600 my-auto mr-1 flex flex-shrink-0";
 
 const getSourceIcon = (sourceType: string) => {
   switch (sourceType) {
@@ -45,15 +45,15 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
 
   return (
     <div className="p-4 border rounded-md border-gray-700">
-      <h2 className="text-sm font-bold mb-2">Answer</h2>
-      <p className="mb-4 text-sm">{answer}</p>
+      <h2 className="text font-bold mb-2">Answer</h2>
+      <p className="mb-4">{answer}</p>
 
-      <h2 className="text-xs font-bold mb-2">Sources</h2>
+      <h2 className="text-sm font-bold mb-2">Sources</h2>
       <div className="flex">
         {Object.entries(quotes).map(([_, quoteInfo]) => (
           <a
             key={quoteInfo.document_id}
-            className="p-2 border border-gray-800 rounded-lg text-xs flex max-w-[200px] hover:bg-gray-800"
+            className="p-2 border border-gray-800 rounded-lg text-sm flex max-w-[230px] hover:bg-gray-800"
             href={quoteInfo.link}
             target="_blank"
             rel="noopener noreferrer"
