@@ -22,7 +22,7 @@ def _process_batch_event(
     if event["type"] == "message" and event.get("subtype") != "channel_join":
         if matching_doc:
             return Document(
-                id=matching_doc.id,
+                id=matching_doc.id,  # CHRIS IS THIS RIGHT?
                 sections=matching_doc.sections
                 + [
                     Section(
@@ -37,7 +37,7 @@ def _process_batch_event(
             )
 
         return Document(
-            id=event["ts"],
+            id=event["ts"],  # CHRIS IS THIS RIGHT?
             sections=[
                 Section(
                     link=get_message_link(
