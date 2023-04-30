@@ -15,7 +15,7 @@ export default function Home() {
           <h1 className="text-4xl font-bold mb-4">Slack</h1>
         </div>
         <h2 className="text-3xl font-bold mb-4 ml-auto mr-auto">Config</h2>
-        <SlackForm onSubmit={(success) => console.log(success)}/>
+        <SlackForm onSubmit={(success) => console.log(success)} />
       </div>
     </>
   );

@@ -24,8 +24,10 @@ export const ThinkingAnimation: React.FC = () => {
   }, []);
 
   return (
-    <div className="thinking-animation">
-      Thinking<span className="dots">{dots}</span>
+    <div className="thinking-animation flex">
+      <div className="mx-auto">
+        Thinking<span className="dots">{dots}</span>
+      </div>
     </div>
   );
 };
