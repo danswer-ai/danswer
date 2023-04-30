@@ -9,7 +9,9 @@ export default function Home() {
     <>
       <Header />
       <div className="p-24 flex flex-col items-center min-h-screen bg-gray-900 text-gray-100">
-        <SearchSection />
+        <div className="max-w-[800px] w-full">
+          <SearchSection />
+        </div>
       </div>
     </>
   );

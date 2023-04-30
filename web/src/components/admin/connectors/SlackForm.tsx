@@ -12,7 +12,9 @@ interface FormData {
 const validationSchema = Yup.object().shape({
   slack_bot_token: Yup.string().required("Please enter your Slack Bot Token"),
   workspace_id: Yup.string().required("Please enter your Workspace ID"),
-  pull_frequency: Yup.number().required("Please enter a pull frequency (in minutes). 0 => no pulling from slack"),
+  pull_frequency: Yup.number().required(
+    "Please enter a pull frequency (in minutes). 0 => no pulling from slack"
+  ),
 });
 
 const getConfig = async (): Promise<FormData> => {

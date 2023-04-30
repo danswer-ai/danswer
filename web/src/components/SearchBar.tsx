@@ -7,7 +7,7 @@ import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SearchResponse } from "./types";
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"; // "http://servi-lb8a1-jhqpsz92kbm2-1605938866.us-east-2.elb.amazonaws.com/direct-qa";
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"; // "http://servi-lb8a1-jhqpsz92kbm2-1605938866.us-east-2.elb.amazonaws.com/direct-qa";
 
 const searchRequest = async (query: string): Promise<SearchResponse> => {
   const response = await fetch(BACKEND_URL + "/direct-qa", {
@@ -36,7 +36,9 @@ export const SearchSection: React.FC<{}> = () => {
           });
         }}
       />
-      <SearchResultsDisplay data={answer} isFetching={isFetching} />
+      <div className="mt-2">
+        <SearchResultsDisplay data={answer} isFetching={isFetching} />
+      </div>
     </>
   );
 };
@@ -74,8 +76,8 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
   };
 
   return (
-    <div className="flex justify-center p-4">
-      <div className="flex items-center w-[800px] border-2 border-gray-300 rounded px-4 py-2 focus-within:border-blue-500">
+    <div className="flex justify-center py-4">
+      <div className="flex items-center w-full border-2 border-gray-600 rounded px-4 py-2 focus-within:border-blue-500">
         <MagnifyingGlass className="text-gray-400" />
         <textarea
           className="flex-grow ml-2 h-6 bg-transparent outline-none placeholder-gray-400 overflow-hidden whitespace-normal resize-none"
