@@ -1,3 +1,5 @@
+import json
+from typing import Any
 from typing import List
 
 import openai
@@ -10,11 +12,9 @@ from danswer.configs.model_configs import CROSS_ENCODER_MODEL
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import MODEL_CACHE_FOLDER
 from danswer.configs.model_configs import QUERY_EMBEDDING_CONTEXT_SIZE
-from danswer.utils.clients import get_qdrant_client
+from danswer.datastores.interfaces import Datastore
 from danswer.utils.logging import setup_logger
 from danswer.utils.timing import build_timing_wrapper
-from qdrant_client.http.exceptions import ResponseHandlingException
-from qdrant_client.http.exceptions import UnexpectedResponse
 from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
@@ -33,49 +33,12 @@ cross_encoder.max_length = CROSS_EMBED_CONTEXT_SIZE
 
 
 @build_timing_wrapper()
-def semantic_retrival(
-    qdrant_collection: str,
-    query: str,
-    num_hits: int = NUM_RETURNED_HITS,
-    use_openai: bool = False,
-) -> List[InferenceChunk]:
-    if use_openai:
-        query_embedding = openai.Embedding.create(
-            input=query, model="text-embedding-ada-002"
-        )["data"][0]["embedding"]
-    else:
-        query_embedding = embedding_model.encode(query)
-    try:
-        hits = get_qdrant_client().search(
-            collection_name=qdrant_collection,
-            query_vector=query_embedding
-            if isinstance(query_embedding, list)
-            else query_embedding.tolist(),
-            query_filter=None,
-            limit=num_hits,
-        )
-    except ResponseHandlingException as e:
-        logger.exception(f'Qdrant querying failed due to: "{e}", is Qdrant set up?')
-    except UnexpectedResponse as e:
-        logger.exception(
-            f'Qdrant querying failed due to: "{e}", has ingestion been run?'
-        )
-
-    retrieved_chunks = []
-    for hit in hits:
-        payload = hit.payload
-        retrieved_chunks.append(InferenceChunk.from_dict(payload))
-
-    return retrieved_chunks
-
-
-@build_timing_wrapper()
 def semantic_reranking(
     query: str,
     chunks: List[InferenceChunk],
     filtered_result_set_size: int = NUM_RERANKED_RESULTS,
 ) -> List[InferenceChunk]:
-    sim_scores = cross_encoder.predict([(query, chunk.content) for chunk in chunks])
+    sim_scores = cross_encoder.predict([(query, chunk.content) for chunk in chunks])  # type: ignore
     scored_results = list(zip(sim_scores, chunks))
     scored_results.sort(key=lambda x: x[0], reverse=True)
     ranked_sim_scores, ranked_chunks = zip(*scored_results)
@@ -84,15 +47,23 @@ def semantic_reranking(
         f"Reranked similarity scores: {str(ranked_sim_scores[:filtered_result_set_size])}"
     )
 
-    return ranked_chunks[:filtered_result_set_size]
+    top_results = min(len(ranked_chunks), filtered_result_set_size)
+    return ranked_chunks[:top_results]
 
 
 def semantic_search(
-    qdrant_collection: str,
     query: str,
+    filters: dict[str, Any] | None,
+    datastore: Datastore,
     num_hits: int = NUM_RETURNED_HITS,
     filtered_result_set_size: int = NUM_RERANKED_RESULTS,
-) -> List[InferenceChunk]:
-    top_chunks = semantic_retrival(qdrant_collection, query, num_hits)
+) -> List[InferenceChunk] | None:
+    top_chunks = datastore.semantic_retrieval(query, filters, num_hits)
+    if not top_chunks:
+        filters_log_msg = json.dumps(filters, separators=(",", ":")).replace("\n", "")
+        logger.warning(
+            f"Semantic search returned no results with filters: {filters_log_msg}"
+        )
+        return None
     ranked_chunks = semantic_reranking(query, top_chunks, filtered_result_set_size)
     return ranked_chunks

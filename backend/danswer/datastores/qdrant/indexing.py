@@ -6,7 +6,6 @@ from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import DOCUMENT_ID
-from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
