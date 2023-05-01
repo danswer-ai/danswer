@@ -47,8 +47,7 @@ def semantic_reranking(
         f"Reranked similarity scores: {str(ranked_sim_scores[:filtered_result_set_size])}"
     )
 
-    top_results = min(len(ranked_chunks), filtered_result_set_size)
-    return ranked_chunks[:top_results]
+    return ranked_chunks[:filtered_result_set_size]
 
 
 def semantic_search(
