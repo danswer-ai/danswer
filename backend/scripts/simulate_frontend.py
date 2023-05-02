@@ -47,8 +47,8 @@ if __name__ == "__main__":
             args = parser.parse_args(user_input.split())
 
             keyword_search = args.keyword_search
-            source_types = args.source_types.split(",")
-            if len(source_types) == 1:
+            source_types = args.source_types.split(",") if args.source_types else None
+            if source_types and len(source_types) == 1:
                 source_types = source_types[0]
             query = " ".join(args.query)
 

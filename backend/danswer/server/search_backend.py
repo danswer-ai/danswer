@@ -6,7 +6,7 @@ from danswer.configs.app_configs import DEFAULT_PROMPT
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import SOURCE_LINKS
-from danswer.datastores.qdrant.store import create_datastore
+from danswer.datastores import create_datastore
 from danswer.direct_qa.qa_prompts import BASIC_QA_PROMPTS
 from danswer.direct_qa.question_answer import answer_question
 from danswer.direct_qa.question_answer import process_answer

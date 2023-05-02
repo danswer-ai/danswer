@@ -2,7 +2,6 @@ from typing import Any
 
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import InferenceChunk
-from danswer.configs.app_configs import DEFAULT_VECTOR_STORE
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.datastores.interfaces import Datastore
 from danswer.datastores.qdrant.indexing import index_chunks
@@ -44,7 +43,12 @@ class QdrantDatastore(Datastore):
         filter_conditions = []
         try:
             if filters_dict:
-                for filter_key, filter_val in filters_dict.items():
+                valid_filters = {
+                    key: value
+                    for key, value in filters_dict.items()
+                    if value is not None
+                }
+                for filter_key, filter_val in valid_filters.items():
                     if isinstance(filter_val, str):
                         filter_conditions.append(
                             FieldCondition(
@@ -92,12 +96,3 @@ class QdrantDatastore(Datastore):
         match = matches[0]
 
         return InferenceChunk.from_dict(match.payload)
-
-
-def create_datastore(
-    collection: str, vector_db_type: str = DEFAULT_VECTOR_STORE
-) -> Datastore:
-    if vector_db_type == "qdrant":
-        return QdrantDatastore(collection=collection)
-    else:
-        raise ValueError(f"Invalid Vector DB setting: {vector_db_type}")
