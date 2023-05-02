@@ -7,7 +7,7 @@ from danswer.datastores.qdrant.indexing import index_chunks
 from danswer.embedding.biencoder import get_default_model
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logging import setup_logger
-from danswer.utils.timing import build_timing_wrapper
+from danswer.utils.timing import log_function_time
 from qdrant_client.http.exceptions import ResponseHandlingException
 from qdrant_client.http.exceptions import UnexpectedResponse
 from qdrant_client.http.models import FieldCondition
@@ -28,7 +28,7 @@ class QdrantDatastore(Datastore):
             chunks=chunks, collection=self.collection, client=self.client
         )
 
-    @build_timing_wrapper()
+    @log_function_time()
     def semantic_retrieval(
         self, query: str, filters: list[DatastoreFilter] | None, num_to_retrieve: int
     ) -> list[InferenceChunk]:
