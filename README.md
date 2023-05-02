@@ -25,7 +25,7 @@
 * Filter by source (Slack, Google Drive, etc)
 
 ## Upcoming
-* Permissioning for document access managmeent
-* Options for more secure or self hosting generative LLM
+* Permissioning for document access management
+* Options for more secure or self-hosting generative LLM
 * More connectors and easy way to contribute community connectors
 * Support for other vector DBs (with no particular prioritization: Weaviate, Pinecone, Milvus, Vespa)
