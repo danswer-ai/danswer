@@ -79,6 +79,7 @@ def match_quotes_to_docs(
     prefix_only_length: int = 100,
 ) -> Dict[str, Dict[str, Union[str, int, None]]]:
     quotes_dict: dict[str, dict[str, Union[str, int, None]]] = {}
+    links: set[str] = set()
     for quote in quotes:
         max_edits = math.ceil(float(len(quote)) * max_error_percent)
 
@@ -112,17 +113,20 @@ def match_quotes_to_docs(
                 if int(link_offset) <= offset:
                     curr_link = link
                 else:
-                    quotes_dict[quote] = {
-                        DOCUMENT_ID: chunk.document_id,
-                        SOURCE_LINK: curr_link,
-                        SOURCE_TYPE: chunk.source_type,
-                    }
+                    if curr_link and curr_link not in links:
+                        links.add(curr_link)
+                        quotes_dict[quote] = {
+                            DOCUMENT_ID: chunk.document_id,
+                            SOURCE_LINK: curr_link,
+                            SOURCE_TYPE: chunk.source_type,
+                        }
                     break
-            quotes_dict[quote] = {
-                DOCUMENT_ID: chunk.document_id,
-                SOURCE_LINK: curr_link,
-                SOURCE_TYPE: chunk.source_type,
-            }
+            if curr_link and curr_link not in links:
+                quotes_dict[quote] = {
+                    DOCUMENT_ID: chunk.document_id,
+                    SOURCE_LINK: curr_link,
+                    SOURCE_TYPE: chunk.source_type,
+                }
             break
     return quotes_dict
 
