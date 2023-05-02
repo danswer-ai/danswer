@@ -1,41 +1,23 @@
 import time
 from http import HTTPStatus
-from typing import Dict
-from typing import List
-from typing import Union
 
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.semantic_search import semantic_search
+from danswer.server.models import KeywordResponse
+from danswer.server.models import QAQuestion
+from danswer.server.models import QAResponse
+from danswer.server.models import ServerStatus
 from danswer.utils.clients import TSClient
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
-from pydantic import BaseModel
 
 
 logger = setup_logger()
 
 router = APIRouter()
-
-
-class ServerStatus(BaseModel):
-    status: str
-
-
-class QAQuestion(BaseModel):
-    query: str
-    collection: str
-
-
-class QAResponse(BaseModel):
-    answer: Union[str, None]
-    quotes: Union[Dict[str, Dict[str, str]], None]
-
-
-class KeywordResponse(BaseModel):
-    results: Union[List[str], None]
 
 
 @router.get("/", response_model=ServerStatus)
@@ -59,8 +41,7 @@ def direct_qa(question: QAQuestion):
 
     logger.info(f"Total QA took {time.time() - start_time} seconds")
 
-    qa_response = {"answer": answer, "quotes": quotes}
-    return qa_response
+    return QAResponse(answer=answer, quotes=quotes)
 
 
 @router.post("/keyword-search", response_model=KeywordResponse)
@@ -87,4 +68,4 @@ def keyword_search(question: QAQuestion):
     total_time = time.time() - start_time
     logger.info(f"Total Keyword Search took {total_time} seconds")
 
-    return {"results": sources}
+    return KeywordResponse(results=sources)
