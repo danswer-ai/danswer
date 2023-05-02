@@ -16,50 +16,20 @@ from danswer.configs.constants import SOURCE_LINK
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.model_configs import OPENAI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import OPENAPI_MODEL_VERSION
+from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.qa_prompts import ANSWER_PAT
+from danswer.direct_qa.qa_prompts import generic_prompt_processor
 from danswer.direct_qa.qa_prompts import QUOTE_PAT
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.utils.logging import setup_logger
 from danswer.utils.text_processing import clean_model_quote
 from danswer.utils.text_processing import shared_precompare_cleanup
+from danswer.utils.timing import log_function_time
 
 
 logger = setup_logger()
 
 openai.api_key = OPENAI_API_KEY
-
-
-def ask_openai(
-    complete_qa_prompt: str,
-    model: str = OPENAPI_MODEL_VERSION,
-    max_tokens: int = OPENAI_MAX_OUTPUT_TOKENS,
-) -> str:
-    try:
-        response = openai.Completion.create(
-            prompt=complete_qa_prompt,
-            temperature=0,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0,
-            model=model,
-            max_tokens=max_tokens,
-        )
-        model_answer = response["choices"][0]["text"].strip()
-        logger.info("OpenAI Token Usage: " + str(response["usage"]).replace("\n", ""))
-        return model_answer
-    except Exception as e:
-        logger.exception(e)
-        return "Model Failure"
-
-
-def answer_question(
-    query: str,
-    context_docs: list[str],
-    prompt_processor: Callable[[str, list[str]], str],
-) -> str:
-    formatted_prompt = prompt_processor(query, context_docs)
-    logger.debug(formatted_prompt)
-    return ask_openai(formatted_prompt)
 
 
 def separate_answer_quotes(
@@ -158,9 +128,52 @@ def match_quotes_to_docs(
 
 def process_answer(
     answer_raw: str, chunks: list[InferenceChunk]
-) -> Tuple[Optional[str], Optional[Dict[str, Dict[str, Union[str, int, None]]]]]:
+) -> tuple[str | None, dict[str, dict[str, str | int | None]] | None]:
     answer, quote_strings = separate_answer_quotes(answer_raw)
     if not answer or not quote_strings:
         return None, None
     quotes_dict = match_quotes_to_docs(quote_strings, chunks)
     return answer, quotes_dict
+
+
+class OpenAICompletionQA(QAModel):
+    def __init__(
+        self,
+        prompt_processor: Callable[[str, list[str]], str] = generic_prompt_processor,
+        model_version: str = OPENAPI_MODEL_VERSION,
+        max_output_tokens: int = OPENAI_MAX_OUTPUT_TOKENS,
+    ) -> None:
+        self.prompt_processor = prompt_processor
+        self.model_version = model_version
+        self.max_output_tokens = max_output_tokens
+
+    @log_function_time()
+    def answer_question(
+        self, query: str, context_docs: list[InferenceChunk]
+    ) -> tuple[str | None, dict[str, dict[str, str | int | None]] | None]:
+        top_contents = [ranked_chunk.content for ranked_chunk in context_docs]
+        filled_prompt = self.prompt_processor(query, top_contents)
+        logger.debug(filled_prompt)
+
+        try:
+            response = openai.Completion.create(
+                prompt=filled_prompt,
+                temperature=0,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0,
+                model=self.model_version,
+                max_tokens=self.max_output_tokens,
+            )
+            model_output = response["choices"][0]["text"].strip()
+            logger.info(
+                "OpenAI Token Usage: " + str(response["usage"]).replace("\n", "")
+            )
+        except Exception as e:
+            logger.exception(e)
+            model_output = "Model Failure"
+
+        logger.debug(model_output)
+
+        answer, quotes_dict = process_answer(model_output, context_docs)
+        return answer, quotes_dict

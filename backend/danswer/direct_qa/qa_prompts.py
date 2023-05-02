@@ -21,8 +21,3 @@ def generic_prompt_processor(question: str, documents: list[str]) -> str:
     prompt += f"{QUESTION_PAT}\n{question}\n"
     prompt += f"{ANSWER_PAT}\n"
     return prompt
-
-
-BASIC_QA_PROMPTS = {
-    "generic-qa": generic_prompt_processor,
-}

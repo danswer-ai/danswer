@@ -6,13 +6,13 @@ from danswer.utils.logging import setup_logger
 logger = setup_logger()
 
 
-def build_timing_wrapper(
+def log_function_time(
     func_name: str | None = None,
 ) -> Callable[[Callable], Callable]:
     """Build a timing wrapper for a function. Logs how long the function took to run.
     Use like:
 
-    @build_timing_wrapper()
+    @log_function_time()
     def my_func():
         ...
     """

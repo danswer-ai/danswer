@@ -14,7 +14,7 @@ from danswer.configs.model_configs import QUERY_EMBEDDING_CONTEXT_SIZE
 from danswer.datastores.interfaces import Datastore
 from danswer.datastores.interfaces import DatastoreFilter
 from danswer.utils.logging import setup_logger
-from danswer.utils.timing import build_timing_wrapper
+from danswer.utils.timing import log_function_time
 from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
@@ -32,7 +32,7 @@ cross_encoder = CrossEncoder(CROSS_ENCODER_MODEL)
 cross_encoder.max_length = CROSS_EMBED_CONTEXT_SIZE
 
 
-@build_timing_wrapper()
+@log_function_time()
 def semantic_reranking(
     query: str,
     chunks: List[InferenceChunk],
@@ -50,6 +50,7 @@ def semantic_reranking(
     return ranked_chunks[:filtered_result_set_size]
 
 
+@log_function_time()
 def semantic_search(
     query: str,
     filters: list[DatastoreFilter] | None,
@@ -65,4 +66,9 @@ def semantic_search(
         )
         return None
     ranked_chunks = semantic_reranking(query, top_chunks, filtered_result_set_size)
+
+    top_docs = [ranked_chunk.document_id for ranked_chunk in ranked_chunks]
+    files_log_msg = f"Top links from semantic search: {', '.join(top_docs)}"
+    logger.info(files_log_msg)
+
     return ranked_chunks
