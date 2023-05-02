@@ -1,3 +1,4 @@
+from danswer.datastores.interfaces import DatastoreFilter
 from pydantic import BaseModel
 
 
@@ -8,6 +9,7 @@ class ServerStatus(BaseModel):
 class QAQuestion(BaseModel):
     query: str
     collection: str
+    filters: list[DatastoreFilter] | None
 
 
 class QAResponse(BaseModel):

@@ -12,7 +12,7 @@ class Section:
 
 @dataclass
 class Document:
-    id: str
+    id: str  # This must be unique or during indexing/reindexing, chunks will be overwritten
     sections: list[Section]
     source: DocumentSource
     metadata: dict[str, Any]

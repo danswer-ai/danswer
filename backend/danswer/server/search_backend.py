@@ -4,6 +4,7 @@ from http import HTTPStatus
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import SOURCE_LINKS
+from danswer.datastores import create_datastore
 from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.semantic_search import semantic_search
 from danswer.server.models import KeywordResponse
@@ -28,17 +29,21 @@ def read_server_status():
 
 @router.post("/direct-qa", response_model=QAResponse)
 def direct_qa(question: QAQuestion):
+    start_time = time.time()
     qa_model = get_default_backend_qa_model()
     query = question.query
     collection = question.collection
+    filters = question.filters
+
+    datastore = create_datastore(collection)
 
     logger.info(f"Received semantic query: {query}")
-    start_time = time.time()
 
-    ranked_chunks = semantic_search(collection, query)
+    ranked_chunks = semantic_search(query, filters, datastore)
+    if not ranked_chunks:
+        return {"answer": None, "quotes": None}
 
     answer, quotes = qa_model.answer_question(query, ranked_chunks)
-
     logger.info(f"Total QA took {time.time() - start_time} seconds")
 
     return QAResponse(answer=answer, quotes=quotes)

@@ -6,7 +6,6 @@ from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import DOCUMENT_ID
-from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
@@ -34,6 +33,11 @@ def recreate_collection(collection_name: str, embedding_dim: int = DOC_EMBEDDING
         raise RuntimeError("Could not create Qdrant collection")
 
 
+def get_uuid_from_chunk(chunk: EmbeddedIndexChunk) -> uuid.UUID:
+    unique_identifier_string = "_".join([chunk.source_document.id, str(chunk.chunk_id)])
+    return uuid.uuid5(uuid.NAMESPACE_X500, unique_identifier_string)
+
+
 def index_chunks(
     chunks: list[EmbeddedIndexChunk],
     collection: str,
@@ -48,7 +52,7 @@ def index_chunks(
         document = chunk.source_document
         point_structs.append(
             PointStruct(
-                id=str(uuid.uuid4()),
+                id=str(get_uuid_from_chunk(chunk)),
                 payload={
                     DOCUMENT_ID: document.id,
                     CHUNK_ID: chunk.chunk_id,
