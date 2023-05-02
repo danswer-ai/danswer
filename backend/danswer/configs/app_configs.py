@@ -10,6 +10,7 @@ APP_PORT = 8080
 #####
 # Vector DB Configs
 #####
+DEFAULT_VECTOR_STORE = os.environ.get("VECTOR_DB", "qdrant")
 # Url / Key are used to connect to a remote Qdrant instance
 QDRANT_URL = os.environ.get("QDRANT_URL", "")
 QDRANT_API_KEY = os.environ.get("QDRANT_API_KEY", "")

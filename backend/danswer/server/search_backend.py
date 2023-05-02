@@ -1,13 +1,12 @@
 import time
 from http import HTTPStatus
-from typing import Dict
-from typing import List
-from typing import Union
 
 from danswer.configs.app_configs import DEFAULT_PROMPT
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import SOURCE_LINKS
+from danswer.datastores import create_datastore
+from danswer.datastores.interfaces import DatastoreFilter
 from danswer.direct_qa.qa_prompts import BASIC_QA_PROMPTS
 from danswer.direct_qa.question_answer import answer_question
 from danswer.direct_qa.question_answer import process_answer
@@ -30,15 +29,16 @@ class ServerStatus(BaseModel):
 class QAQuestion(BaseModel):
     query: str
     collection: str
+    filters: list[DatastoreFilter] | None
 
 
 class QAResponse(BaseModel):
-    answer: Union[str, None]
-    quotes: Union[Dict[str, Dict[str, str]], None]
+    answer: str | None
+    quotes: dict[str, dict[str, str]] | None
 
 
 class KeywordResponse(BaseModel):
-    results: Union[List[str], None]
+    results: list[str] | None
 
 
 @router.get("/", response_model=ServerStatus)
@@ -52,16 +52,24 @@ def direct_qa(question: QAQuestion):
     prompt_processor = BASIC_QA_PROMPTS[DEFAULT_PROMPT]
     query = question.query
     collection = question.collection
+    filters = question.filters
+
+    datastore = create_datastore(collection)
 
     logger.info(f"Received semantic query: {query}")
-    start_time = time.time()
 
-    ranked_chunks = semantic_search(collection, query)
+    start_time = time.time()
+    ranked_chunks = semantic_search(query, filters, datastore)
     sem_search_time = time.time()
+
+    logger.info(f"Semantic search took {sem_search_time - start_time} seconds")
+
+    if not ranked_chunks:
+        return {"answer": None, "quotes": None}
+
     top_docs = [ranked_chunk.document_id for ranked_chunk in ranked_chunks]
     top_contents = [ranked_chunk.content for ranked_chunk in ranked_chunks]
 
-    logger.info(f"Semantic search took {sem_search_time - start_time} seconds")
     files_log_msg = f"Top links from semantic search: {', '.join(top_docs)}"
     logger.info(files_log_msg)
 
