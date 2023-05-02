@@ -1,9 +1,8 @@
-from typing import Any
-
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.datastores.interfaces import Datastore
+from danswer.datastores.interfaces import DatastoreFilter
 from danswer.datastores.qdrant.indexing import index_chunks
 from danswer.embedding.biencoder import get_default_model
 from danswer.utils.clients import get_qdrant_client
@@ -31,7 +30,7 @@ class QdrantDatastore(Datastore):
 
     @build_timing_wrapper()
     def semantic_retrieval(
-        self, query: str, filters_dict: dict[str, Any] | None, num_to_retrieve: int
+        self, query: str, filters: list[DatastoreFilter] | None, num_to_retrieve: int
     ) -> list[InferenceChunk]:
         query_embedding = get_default_model().encode(
             query
@@ -42,29 +41,30 @@ class QdrantDatastore(Datastore):
         hits = []
         filter_conditions = []
         try:
-            if filters_dict:
-                valid_filters = {
-                    key: value
-                    for key, value in filters_dict.items()
-                    if value is not None
-                }
-                for filter_key, filter_val in valid_filters.items():
-                    if isinstance(filter_val, str):
-                        filter_conditions.append(
-                            FieldCondition(
-                                key=filter_key,
-                                match=MatchValue(value=filter_val),
+            if filters:
+                for filter_dict in filters:
+                    valid_filters = {
+                        key: value
+                        for key, value in filter_dict.items()
+                        if value is not None
+                    }
+                    for filter_key, filter_val in valid_filters.items():
+                        if isinstance(filter_val, str):
+                            filter_conditions.append(
+                                FieldCondition(
+                                    key=filter_key,
+                                    match=MatchValue(value=filter_val),
+                                )
                             )
-                        )
-                    elif isinstance(filter_val, list):
-                        filter_conditions.append(
-                            FieldCondition(
-                                key=filter_key,
-                                match=MatchAny(any=filter_val),
+                        elif isinstance(filter_val, list):
+                            filter_conditions.append(
+                                FieldCondition(
+                                    key=filter_key,
+                                    match=MatchAny(any=filter_val),
+                                )
                             )
-                        )
-                    else:
-                        raise ValueError("Invalid filters provided")
+                        else:
+                            raise ValueError("Invalid filters provided")
 
             hits = self.client.search(
                 collection_name=self.collection,

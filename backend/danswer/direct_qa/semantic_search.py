@@ -1,5 +1,4 @@
 import json
-from typing import Any
 from typing import List
 
 import openai
@@ -13,6 +12,7 @@ from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import MODEL_CACHE_FOLDER
 from danswer.configs.model_configs import QUERY_EMBEDDING_CONTEXT_SIZE
 from danswer.datastores.interfaces import Datastore
+from danswer.datastores.interfaces import DatastoreFilter
 from danswer.utils.logging import setup_logger
 from danswer.utils.timing import build_timing_wrapper
 from sentence_transformers import CrossEncoder  # type: ignore
@@ -52,7 +52,7 @@ def semantic_reranking(
 
 def semantic_search(
     query: str,
-    filters: dict[str, Any] | None,
+    filters: list[DatastoreFilter] | None,
     datastore: Datastore,
     num_hits: int = NUM_RETURNED_HITS,
     filtered_result_set_size: int = NUM_RERANKED_RESULTS,

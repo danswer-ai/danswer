@@ -1,12 +1,12 @@
 import time
 from http import HTTPStatus
-from typing import Any
 
 from danswer.configs.app_configs import DEFAULT_PROMPT
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.datastores import create_datastore
+from danswer.datastores.interfaces import DatastoreFilter
 from danswer.direct_qa.qa_prompts import BASIC_QA_PROMPTS
 from danswer.direct_qa.question_answer import answer_question
 from danswer.direct_qa.question_answer import process_answer
@@ -29,7 +29,7 @@ class ServerStatus(BaseModel):
 class QAQuestion(BaseModel):
     query: str
     collection: str
-    filters: dict[str, Any] | None
+    filters: list[DatastoreFilter] | None
 
 
 class QAResponse(BaseModel):

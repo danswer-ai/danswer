@@ -59,7 +59,7 @@ if __name__ == "__main__":
             query_json = {
                 "query": query,
                 "collection": QDRANT_DEFAULT_COLLECTION,
-                "filters": {SOURCE_TYPE: source_types},
+                "filters": [{SOURCE_TYPE: source_types}],
             }
 
             response = requests.post(endpoint, json=query_json)

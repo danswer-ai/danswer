@@ -1,8 +1,9 @@
 import abc
-from typing import Any
 
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import InferenceChunk
+
+DatastoreFilter = dict[str, str | list[str] | None]
 
 
 class Datastore:
@@ -12,6 +13,6 @@ class Datastore:
 
     @abc.abstractmethod
     def semantic_retrieval(
-        self, query: str, filters: dict[str, Any] | None, num_to_retrieve: int
+        self, query: str, filters: list[DatastoreFilter] | None, num_to_retrieve: int
     ) -> list[InferenceChunk]:
         raise NotImplementedError
