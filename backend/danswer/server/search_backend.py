@@ -24,7 +24,7 @@ router = APIRouter()
 @router.get("/", response_model=ServerStatus)
 @router.get("/status", response_model=ServerStatus)
 def read_server_status():
-    return {"status": HTTPStatus.OK.value}
+    return ServerStatus(status=HTTPStatus.OK.value)
 
 
 @router.post("/direct-qa", response_model=QAResponse)
