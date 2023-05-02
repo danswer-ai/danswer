@@ -19,6 +19,7 @@ from danswer.configs.model_configs import OPENAPI_MODEL_VERSION
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.qa_prompts import ANSWER_PAT
 from danswer.direct_qa.qa_prompts import generic_prompt_processor
+from danswer.direct_qa.qa_prompts import openai_chat_completion_processor
 from danswer.direct_qa.qa_prompts import QUOTE_PAT
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.utils.logging import setup_logger
@@ -166,6 +167,51 @@ class OpenAICompletionQA(QAModel):
                 max_tokens=self.max_output_tokens,
             )
             model_output = response["choices"][0]["text"].strip()
+            logger.info(
+                "OpenAI Token Usage: " + str(response["usage"]).replace("\n", "")
+            )
+        except Exception as e:
+            logger.exception(e)
+            model_output = "Model Failure"
+
+        logger.debug(model_output)
+
+        answer, quotes_dict = process_answer(model_output, context_docs)
+        return answer, quotes_dict
+
+
+class OpenAIChatCompletionQA(QAModel):
+    def __init__(
+        self,
+        prompt_processor: Callable[
+            [str, list[str]], list[dict[str, str]]
+        ] = openai_chat_completion_processor,
+        model_version: str = OPENAPI_MODEL_VERSION,
+        max_output_tokens: int = OPENAI_MAX_OUTPUT_TOKENS,
+    ) -> None:
+        self.prompt_processor = prompt_processor
+        self.model_version = model_version
+        self.max_output_tokens = max_output_tokens
+
+    @log_function_time()
+    def answer_question(
+        self, query: str, context_docs: list[InferenceChunk]
+    ) -> tuple[str | None, dict[str, dict[str, str | int | None]] | None]:
+        top_contents = [ranked_chunk.content for ranked_chunk in context_docs]
+        messages = self.prompt_processor(query, top_contents)
+        logger.debug(messages)
+
+        try:
+            response = openai.ChatCompletion.create(
+                messages=messages,
+                temperature=0,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0,
+                model=self.model_version,
+                max_tokens=self.max_output_tokens,
+            )
+            model_output = response["choices"][0]["message"]["content"].strip()
             logger.info(
                 "OpenAI Token Usage: " + str(response["usage"]).replace("\n", "")
             )
