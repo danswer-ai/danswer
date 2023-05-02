@@ -23,6 +23,7 @@ def generic_prompt_processor(question: str, documents: list[str]) -> str:
     return prompt
 
 
+# TODO remove this
 BASIC_QA_PROMPTS = {
     "generic-qa": generic_prompt_processor,
 }

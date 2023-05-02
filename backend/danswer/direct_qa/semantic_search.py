@@ -12,7 +12,7 @@ from danswer.configs.model_configs import MODEL_CACHE_FOLDER
 from danswer.configs.model_configs import QUERY_EMBEDDING_CONTEXT_SIZE
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logging import setup_logger
-from danswer.utils.timing import build_timing_wrapper
+from danswer.utils.timing import log_function_time
 from qdrant_client.http.exceptions import ResponseHandlingException
 from qdrant_client.http.exceptions import UnexpectedResponse
 from sentence_transformers import CrossEncoder  # type: ignore
@@ -32,7 +32,7 @@ cross_encoder = CrossEncoder(CROSS_ENCODER_MODEL)
 cross_encoder.max_length = CROSS_EMBED_CONTEXT_SIZE
 
 
-@build_timing_wrapper()
+@log_function_time()
 def semantic_retrival(
     qdrant_collection: str,
     query: str,
@@ -69,7 +69,7 @@ def semantic_retrival(
     return retrieved_chunks
 
 
-@build_timing_wrapper()
+@log_function_time()
 def semantic_reranking(
     query: str,
     chunks: List[InferenceChunk],
@@ -95,4 +95,9 @@ def semantic_search(
 ) -> List[InferenceChunk]:
     top_chunks = semantic_retrival(qdrant_collection, query, num_hits)
     ranked_chunks = semantic_reranking(query, top_chunks, filtered_result_set_size)
+
+    top_docs = [ranked_chunk.document_id for ranked_chunk in ranked_chunks]
+    files_log_msg = f"Top links from semantic search: {', '.join(top_docs)}"
+    logger.info(files_log_msg)
+
     return ranked_chunks

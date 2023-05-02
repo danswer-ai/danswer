@@ -4,13 +4,10 @@ from typing import Dict
 from typing import List
 from typing import Union
 
-from danswer.configs.app_configs import DEFAULT_PROMPT
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import SOURCE_LINKS
-from danswer.direct_qa.qa_prompts import BASIC_QA_PROMPTS
-from danswer.direct_qa.question_answer import answer_question
-from danswer.direct_qa.question_answer import process_answer
+from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.semantic_search import semantic_search
 from danswer.utils.clients import TSClient
 from danswer.utils.logging import setup_logger
@@ -49,7 +46,7 @@ def read_server_status():
 
 @router.post("/direct-qa", response_model=QAResponse)
 def direct_qa(question: QAQuestion):
-    prompt_processor = BASIC_QA_PROMPTS[DEFAULT_PROMPT]
+    qa_model = get_default_backend_qa_model()
     query = question.query
     collection = question.collection
 
@@ -57,28 +54,12 @@ def direct_qa(question: QAQuestion):
     start_time = time.time()
 
     ranked_chunks = semantic_search(collection, query)
-    sem_search_time = time.time()
-    top_docs = [ranked_chunk.document_id for ranked_chunk in ranked_chunks]
-    top_contents = [ranked_chunk.content for ranked_chunk in ranked_chunks]
 
-    logger.info(f"Semantic search took {sem_search_time - start_time} seconds")
-    files_log_msg = f"Top links from semantic search: {', '.join(top_docs)}"
-    logger.info(files_log_msg)
+    answer, quotes = qa_model.answer_question(query, ranked_chunks)
 
-    qa_answer = answer_question(query, top_contents, prompt_processor)
-    qa_time = time.time()
-    logger.debug(qa_answer)
-    logger.info(f"GPT QA took {qa_time - sem_search_time} seconds")
+    logger.info(f"Total QA took {time.time() - start_time} seconds")
 
-    # Postprocessing, no more models involved, purely rule based
-    answer, quotes_dict = process_answer(qa_answer, ranked_chunks)
-    postprocess_time = time.time()
-    logger.info(f"Postprocessing took {postprocess_time - qa_time} seconds")
-
-    total_time = time.time() - start_time
-    logger.info(f"Total QA took {total_time} seconds")
-
-    qa_response = {"answer": answer, "quotes": quotes_dict}
+    qa_response = {"answer": answer, "quotes": quotes}
     return qa_response
 
 
