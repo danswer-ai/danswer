@@ -166,7 +166,7 @@ def get_all_threads(
 
 def thread_to_doc(channel_id: str, thread: ThreadType) -> Document:
     return Document(
-        id=f"{channel_id}__{thread[0]['ts']}",  # CHRIS IS THIS RIGHT?
+        id=f"{channel_id}__{thread[0]['ts']}",
         sections=[
             Section(
                 link=get_message_link(m, channel_id=channel_id),
