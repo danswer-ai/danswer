@@ -122,6 +122,7 @@ def match_quotes_to_docs(
                         }
                     break
             if curr_link and curr_link not in links:
+                links.add(curr_link)
                 quotes_dict[quote] = {
                     DOCUMENT_ID: chunk.document_id,
                     SOURCE_LINK: curr_link,
