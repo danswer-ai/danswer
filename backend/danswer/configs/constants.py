@@ -11,13 +11,7 @@ ALLOWED_USERS = "allowed_users"
 ALLOWED_GROUPS = "allowed_groups"
 
 
-class DocumentSource(Enum):
-    Slack = 1
-    Web = 2
-    GoogleDrive = 3
-
-    def __str__(self):
-        return self.name
-
-    def __int__(self):
-        return self.value
+class DocumentSource(str, Enum):
+    SLACK = "slack"
+    WEB = "web"
+    GOOGLE_DRIVE = "google_drive"

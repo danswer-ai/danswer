@@ -6,6 +6,7 @@ RUN apt-get update \
 
 COPY ./requirements/default.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
+RUN playwright install
 
 WORKDIR /app
 COPY ./danswer /app/danswer
