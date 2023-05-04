@@ -1,6 +1,9 @@
 import time
 from http import HTTPStatus
 
+from danswer.auth.db import create_db_and_tables
+from danswer.auth.db import User
+from danswer.auth.users import current_active_user
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import SOURCE_LINKS
@@ -14,11 +17,24 @@ from danswer.server.models import ServerStatus
 from danswer.utils.clients import TSClient
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
+from fastapi import Depends
 
 
 logger = setup_logger()
 
 router = APIRouter()
+
+
+# TODO remove this once Alembic is up
+@router.on_event("startup")
+async def on_startup():
+    await create_db_and_tables()
+
+
+# TODO delete this useless endpoint once frontend is integrated with auth
+@router.get("/test-auth")
+async def authenticated_route(user: User = Depends(current_active_user)):
+    return {"message": f"Hello {user.email}!"}
 
 
 @router.get("/", response_model=ServerStatus)

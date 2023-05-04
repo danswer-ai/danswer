@@ -1,4 +1,9 @@
 import uvicorn
+from danswer.auth.schemas import UserCreate
+from danswer.auth.schemas import UserRead
+from danswer.auth.schemas import UserUpdate
+from danswer.auth.users import auth_backend
+from danswer.auth.users import fastapi_users
 from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
 from danswer.server.admin import router as admin_router
@@ -17,6 +22,32 @@ def get_application() -> FastAPI:
     application.include_router(backend_router)
     application.include_router(event_processing_router)
     application.include_router(admin_router)
+
+    application.include_router(
+        fastapi_users.get_auth_router(auth_backend),
+        prefix="/auth/database",
+        tags=["auth"],
+    )
+    application.include_router(
+        fastapi_users.get_register_router(UserRead, UserCreate),
+        prefix="/auth",
+        tags=["auth"],
+    )
+    application.include_router(
+        fastapi_users.get_reset_password_router(),
+        prefix="/auth",
+        tags=["auth"],
+    )
+    application.include_router(
+        fastapi_users.get_verify_router(UserRead),
+        prefix="/auth",
+        tags=["auth"],
+    )
+    application.include_router(
+        fastapi_users.get_users_router(UserRead, UserUpdate),
+        prefix="/users",
+        tags=["users"],
+    )
     return application
 
 
