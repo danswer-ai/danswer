@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Formik, Form, Field, ErrorMessage, FormikHelpers } from "formik";
 import * as Yup from "yup";
-import { BACKEND_URL } from "@/lib/constants";
 import { Popup } from "./Popup";
 
 interface FormData {
@@ -18,7 +17,7 @@ const validationSchema = Yup.object().shape({
 });
 
 const getConfig = async (): Promise<FormData> => {
-  const response = await fetch(BACKEND_URL + "/admin/slack_connector_config");
+  const response = await fetch("/api/admin/slack_connector_config");
   return response.json();
 };
 
@@ -31,17 +30,13 @@ const handleSubmit = async (
 ) => {
   setSubmitting(true);
   try {
-    // Replace this with your actual API call
-    const response = await fetch(
-      BACKEND_URL + "/admin/slack_connector_config",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      }
-    );
+    const response = await fetch("/api/admin/slack_connector_config", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
+    });
 
     if (response.ok) {
       setPopup({ message: "Success!", type: "success" });

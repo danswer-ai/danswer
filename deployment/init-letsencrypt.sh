@@ -1,14 +1,20 @@
 #!/bin/bash
 
+# .env.nginx file must be present in the same directory as this script and
+# must set DOMAIN (and optionally EMAIL)
+set -o allexport
+source .env.nginx
+set +o allexport
+
 if ! [ -x "$(command -v docker compose)" ]; then
   echo 'Error: docker compose is not installed.' >&2
   exit 1
 fi
 
-domains=(api.danswer.dev www.api.danswer.dev)
+domains=("$DOMAIN" "www.$DOMAIN")
 rsa_key_size=4096
 data_path="./data/certbot"
-email="" # Adding a valid address is strongly recommended
+email="$EMAIL" # Adding a valid address is strongly recommended
 staging=0 # Set to 1 if you're testing your setup to avoid hitting request limits
 
 if [ -d "$data_path" ]; then
