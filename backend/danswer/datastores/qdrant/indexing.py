@@ -13,6 +13,7 @@ from danswer.configs.model_configs import DOC_EMBEDDING_DIM
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logging import setup_logger
 from qdrant_client import QdrantClient
+from qdrant_client.http.exceptions import ResponseHandlingException
 from qdrant_client.http.models.models import UpdateStatus
 from qdrant_client.models import Distance
 from qdrant_client.models import PointStruct
@@ -42,7 +43,7 @@ def index_chunks(
     chunks: list[EmbeddedIndexChunk],
     collection: str,
     client: QdrantClient | None = None,
-    batch_upsert: bool = False,
+    batch_upsert: bool = True,
 ) -> bool:
     if client is None:
         client = get_qdrant_client()
@@ -57,7 +58,7 @@ def index_chunks(
                     DOCUMENT_ID: document.id,
                     CHUNK_ID: chunk.chunk_id,
                     CONTENT: chunk.content,
-                    SOURCE_TYPE: str(document.source),
+                    SOURCE_TYPE: str(document.source.value),
                     SOURCE_LINKS: chunk.source_links,
                     SECTION_CONTINUATION: chunk.section_continuation,
                     ALLOWED_USERS: [],  # TODO
@@ -74,11 +75,22 @@ def index_chunks(
             for x in range(0, len(point_structs), DEFAULT_BATCH_SIZE)
         ]
         for point_struct_batch in point_struct_batches:
-            index_results = client.upsert(
-                collection_name=collection, points=point_struct_batch
-            )
+
+            def upsert():
+                for _ in range(5):
+                    try:
+                        index_results = client.upsert(
+                            collection_name=collection, points=point_struct_batch
+                        )
+                        return index_results
+                    except ResponseHandlingException as e:
+                        logger.warning(
+                            f"Failed to upsert batch into qdrant due to error: {e}"
+                        )
+
+            index_results = upsert()
             logger.info(
-                f"Indexing {len(point_struct_batch)} chunks into collection '{collection}', "
+                f"Indexed {len(point_struct_batch)} chunks into collection '{collection}', "
                 f"status: {index_results.status}"
             )
     else:
