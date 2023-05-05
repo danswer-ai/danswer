@@ -14,11 +14,11 @@ const ICON_STYLE = "text-blue-600 my-auto mr-1 flex flex-shrink-0";
 
 const getSourceIcon = (sourceType: string) => {
   switch (sourceType) {
-    case "Web":
+    case "web":
       return <Globe size={ICON_SIZE} className={ICON_STYLE} />;
-    case "Slack":
+    case "slack":
       return <SlackLogo size={ICON_SIZE} className={ICON_STYLE} />;
-    case "Google Drive":
+    case "google_drive":
       return <GoogleDriveLogo size={ICON_SIZE} className={ICON_STYLE} />;
     default:
       return null;
