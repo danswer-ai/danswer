@@ -4,10 +4,10 @@ from typing import Optional
 from danswer.auth.configs import RESET_PASSWORD_TOKEN_SECRET
 from danswer.auth.configs import RESET_PASSWORD_VERIFICATION_TOKEN_SECRET
 from danswer.auth.configs import SESSION_EXPIRE_TIME_SECONDS
-from danswer.auth.db import AccessToken
-from danswer.auth.db import get_access_token_db
-from danswer.auth.db import get_user_db
-from danswer.auth.db import User
+from danswer.db.auth import get_access_token_db
+from danswer.db.auth import get_user_db
+from danswer.db.models import AccessToken
+from danswer.db.models import User
 from fastapi import Depends
 from fastapi import Request
 from fastapi_users import BaseUserManager

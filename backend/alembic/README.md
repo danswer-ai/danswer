@@ -1,6 +1,7 @@
 Generic single-database configuration with an async dbapi.
 
 ## To generate new migrations: 
+run from danswer/backend:
 `alembic revision --autogenerate -m <DESCRIPTION_OF_MIGRATION>`
 
 More info can be found here: https://alembic.sqlalchemy.org/en/latest/autogenerate.html

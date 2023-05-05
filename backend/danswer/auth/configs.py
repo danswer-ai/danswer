@@ -5,11 +5,3 @@ RESET_PASSWORD_VERIFICATION_TOKEN_SECRET = os.environ[
     "RESET_PASSWORD_VERIFICATION_TOKEN_SECRET"
 ]
 SESSION_EXPIRE_TIME_SECONDS = int(os.environ.get("SESSION_EXPIRE_TIME_SECONDS", 3600))
-
-DATABASE_DRIVER = "postgresql+asyncpg"
-DB_USER = os.environ.get("DB_USER", "postgres")
-DB_USER_PASSWORD = os.environ["DB_USER_PASSWORD"]
-DB_HOST = os.environ.get("DB_HOST", "localhost")
-DB_PORT = os.environ.get("DB_PORT", "5432")
-DB_TABLE_NAME = os.environ.get("DB_TABLE_NAME", "danswer")
-DATABASE_URL = f"{DATABASE_DRIVER}://{DB_USER}:{DB_USER_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_TABLE_NAME}"

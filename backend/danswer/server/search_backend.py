@@ -1,13 +1,12 @@
 import time
 from http import HTTPStatus
 
-from danswer.auth.db import create_db_and_tables
-from danswer.auth.db import User
 from danswer.auth.users import current_active_user
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.datastores import create_datastore
+from danswer.db.models import User
 from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.semantic_search import semantic_search
 from danswer.server.models import KeywordResponse
@@ -23,12 +22,6 @@ from fastapi import Depends
 logger = setup_logger()
 
 router = APIRouter()
-
-
-# TODO remove this once Alembic is up
-@router.on_event("startup")
-async def on_startup():
-    await create_db_and_tables()
 
 
 # TODO delete this useless endpoint once frontend is integrated with auth
