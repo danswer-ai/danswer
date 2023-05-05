@@ -5,21 +5,39 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
+    depends_on:
+      - db
     # just for local testing
     ports:
       - "8080:8080"
     env_file:
       - .env
+    environment:
+      - POSTGRES_HOST=db
     volumes:
       - local_dynamic_storage:/home/storage
   background:
     build:
       context: ..
       dockerfile: Dockerfile.background
+    depends_on:
+      - db
     env_file:
       - .env
+    environment:
+      - POSTGRES_HOST=db
     volumes:
       - local_dynamic_storage:/home/storage
+  db:
+    image: postgres:15.2-alpine
+    restart: always
+    # POSTGRES_USER and POSTGRES_PASSWORD should be set in .env file
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes: 
+      - db:/var/lib/postgresql/data
   nginx:
     image: nginx:1.23.4-alpine
     ports:
@@ -40,3 +58,4 @@ services:
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 volumes:
   local_dynamic_storage:
+  db:

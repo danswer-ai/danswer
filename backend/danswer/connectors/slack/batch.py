@@ -46,7 +46,7 @@ def _process_batch_event(
                     text=event["text"],
                 )
             ],
-            source=DocumentSource.Slack,
+            source=DocumentSource.SLACK,
             metadata={},
         )
 

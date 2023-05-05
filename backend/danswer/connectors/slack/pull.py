@@ -174,7 +174,7 @@ def thread_to_doc(channel_id: str, thread: ThreadType) -> Document:
             )
             for m in thread
         ],
-        source=DocumentSource.Slack,
+        source=DocumentSource.SLACK,
         metadata={},
     )
 

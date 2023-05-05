@@ -17,6 +17,8 @@ ProcessDocumentFunc = Callable[..., Document]
 BuildListenerFunc = Callable[[ConnectorConfig], ProcessDocumentFunc]
 
 
+# TODO (chris) refactor definition of a connector to match `InputType`
+# + make them all async-based
 class BatchLoader:
     @abc.abstractmethod
     def load(self) -> Generator[List[Document], None, None]:
