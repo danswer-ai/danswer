@@ -1,9 +1,12 @@
 import uvicorn
+from danswer.auth.configs import ENABLE_OAUTH
+from danswer.auth.configs import SECRET
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
 from danswer.auth.users import fastapi_users
+from danswer.auth.users import google_oauth_client
 from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
 from danswer.server.admin import router as admin_router
@@ -48,6 +51,25 @@ def get_application() -> FastAPI:
         prefix="/users",
         tags=["users"],
     )
+    if ENABLE_OAUTH:
+        application.include_router(
+            fastapi_users.get_oauth_router(
+                google_oauth_client,
+                auth_backend,
+                SECRET,
+                associate_by_email=True,
+                is_verified_by_default=True,
+            ),
+            prefix="/auth/google",
+            tags=["auth"],
+        )
+        application.include_router(
+            fastapi_users.get_oauth_associate_router(
+                google_oauth_client, UserRead, SECRET
+            ),
+            prefix="/auth/associate/google",
+            tags=["auth"],
+        )
     return application
 
 

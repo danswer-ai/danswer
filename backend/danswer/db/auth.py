@@ -2,6 +2,7 @@ from collections.abc import AsyncGenerator
 
 from danswer.db.engine import build_async_engine
 from danswer.db.models import AccessToken
+from danswer.db.models import OAuthAccount
 from danswer.db.models import User
 from fastapi import Depends
 from fastapi_users.db import SQLAlchemyUserDatabase
@@ -17,7 +18,7 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):
-    yield SQLAlchemyUserDatabase(session, User)
+    yield SQLAlchemyUserDatabase(session, User, OAuthAccount)
 
 
 async def get_access_token_db(
