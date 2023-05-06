@@ -31,7 +31,7 @@ async def authenticated_route(user: User = Depends(current_active_user)):
     return {"message": f"Hello {user.email}!"}
 
 
-# TODO delete this once oauth is built out and tested
+# TODO DAN-39 delete this once oauth is built out and tested
 @router.api_route("/test", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
 def test_endpoint(request: Request):
     print(request)

@@ -69,7 +69,7 @@ def get_application() -> FastAPI:
                 SECRET,
                 associate_by_email=True,
                 is_verified_by_default=True,
-                redirect_url="http://localhost:8080/test",  # TODO set this to frontend redirect
+                redirect_url="http://localhost:8080/test",  # TODO DAN-39 set this to frontend redirect
             ),
             prefix="/auth/google",
             tags=["auth"],
