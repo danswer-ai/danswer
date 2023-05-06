@@ -4,7 +4,8 @@ from typing import Any
 
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
-from fastapi.encoders import jsonable_encoder
+from fastapi_users.db import SQLAlchemyBaseUserTableUUID
+from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyBaseAccessTokenTableUUID
 from sqlalchemy import DateTime
 from sqlalchemy import Enum
 from sqlalchemy import func
@@ -16,6 +17,14 @@ from sqlalchemy.orm import mapped_column
 
 
 class Base(DeclarativeBase):
+    pass
+
+
+class User(SQLAlchemyBaseUserTableUUID, Base):
+    pass
+
+
+class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
     pass
 
 
