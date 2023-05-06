@@ -14,10 +14,20 @@ from danswer.server.event_loading import router as event_processing_router
 from danswer.server.search_backend import router as backend_router
 from danswer.utils.logging import setup_logger
 from fastapi import FastAPI
+from fastapi import Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 
 logger = setup_logger()
+
+
+def validation_exception_handler(request: Request, exc: RequestValidationError):
+    exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
+    logger.exception(f"{request}: {exc_str}")
+    content = {"status_code": 422, "message": exc_str, "data": None}
+    return JSONResponse(content=content, status_code=422)
 
 
 def get_application() -> FastAPI:
@@ -59,6 +69,7 @@ def get_application() -> FastAPI:
                 SECRET,
                 associate_by_email=True,
                 is_verified_by_default=True,
+                redirect_url="http://localhost:8080/test",  # TODO set this to frontend redirect
             ),
             prefix="/auth/google",
             tags=["auth"],
@@ -70,6 +81,11 @@ def get_application() -> FastAPI:
             prefix="/auth/associate/google",
             tags=["auth"],
         )
+
+    application.add_exception_handler(
+        RequestValidationError, validation_exception_handler
+    )
+
     return application
 
 

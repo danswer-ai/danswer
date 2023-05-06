@@ -17,6 +17,7 @@ from danswer.utils.clients import TSClient
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import Request
 
 
 logger = setup_logger()
@@ -28,6 +29,12 @@ router = APIRouter()
 @router.get("/test-auth")
 async def authenticated_route(user: User = Depends(current_active_user)):
     return {"message": f"Hello {user.email}!"}
+
+
+# TODO delete this once oauth is built out and tested
+@router.api_route("/test", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+def test_endpoint(request: Request):
+    print(request)
 
 
 @router.get("/", response_model=ServerStatus)
