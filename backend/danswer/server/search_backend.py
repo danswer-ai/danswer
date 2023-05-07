@@ -3,6 +3,7 @@ from http import HTTPStatus
 
 from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_active_user
+from danswer.auth.users import current_admin_user
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import SOURCE_LINKS
@@ -33,6 +34,12 @@ router = APIRouter()
 # TODO delete this useless endpoint once frontend is integrated with auth
 @router.get("/test-auth")
 async def authenticated_route(user: User = Depends(current_active_user)):
+    return {"message": f"Hello {user.email} who is a {user.role}!"}
+
+
+# TODO delete this useless endpoint once frontend is integrated with auth
+@router.get("/test-admin")
+async def admin_route(user: User = Depends(current_admin_user)):
     return {"message": f"Hello {user.email} who is a {user.role}!"}
 
 

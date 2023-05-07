@@ -13,7 +13,9 @@ from danswer.db.engine import build_async_engine
 from danswer.db.models import AccessToken
 from danswer.db.models import User
 from fastapi import Depends
+from fastapi import HTTPException
 from fastapi import Request
+from fastapi import status
 from fastapi_users import BaseUserManager
 from fastapi_users import FastAPIUsers
 from fastapi_users import models
@@ -94,3 +96,12 @@ google_oauth_client = GoogleOAuth2(GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_S
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 
 current_active_user = fastapi_users.current_user(active=True)
+
+
+def current_admin_user(user: User = Depends(current_active_user)) -> User:
+    if not hasattr(user, "role") or user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. User is not an admin.",
+        )
+    return user
