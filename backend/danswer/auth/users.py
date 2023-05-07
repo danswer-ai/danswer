@@ -1,8 +1,9 @@
 import uuid
 from typing import Optional
 
-from danswer.auth.configs import RESET_PASSWORD_TOKEN_SECRET
-from danswer.auth.configs import RESET_PASSWORD_VERIFICATION_TOKEN_SECRET
+from danswer.auth.configs import GOOGLE_OAUTH_CLIENT_ID
+from danswer.auth.configs import GOOGLE_OAUTH_CLIENT_SECRET
+from danswer.auth.configs import SECRET
 from danswer.auth.configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_user_db
@@ -18,11 +19,12 @@ from fastapi_users.authentication import CookieTransport
 from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from fastapi_users.db import SQLAlchemyUserDatabase
+from httpx_oauth.clients.google import GoogleOAuth2
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
-    reset_password_token_secret = RESET_PASSWORD_TOKEN_SECRET
-    verification_token_secret = RESET_PASSWORD_VERIFICATION_TOKEN_SECRET
+    reset_password_token_secret = SECRET
+    verification_token_secret = SECRET
 
     async def on_after_register(self, user: User, request: Optional[Request] = None):
         print(f"User {user.id} has registered.")
@@ -58,6 +60,8 @@ auth_backend = AuthenticationBackend(
     transport=cookie_transport,
     get_strategy=get_database_strategy,
 )
+
+google_oauth_client = GoogleOAuth2(GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET)
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 
