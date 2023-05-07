@@ -47,6 +47,7 @@ def upgrade() -> None:
         sa.Column(
             "time_updated",
             sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
             server_onupdate=sa.text("now()"),  # type: ignore
             nullable=True,
         ),

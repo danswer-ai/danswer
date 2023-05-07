@@ -73,7 +73,7 @@ class IndexAttempt(Base):
         DateTime(timezone=True), server_default=func.now()
     )
     time_updated: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=True), onupdate=func.now()
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
     document_ids: Mapped[list[str] | None] = mapped_column(
