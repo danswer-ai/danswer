@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
-import { BACKEND_URL } from "@/lib/constants";
 import { Popup } from "./Popup";
 import { TextFormField } from "./Field";
 
@@ -24,8 +23,7 @@ const handleSubmit = async (
 ) => {
   setSubmitting(true);
   try {
-    // TODO (chris): replace this with actual call
-    const response = await fetch(BACKEND_URL + "/admin/website_index", {
+    const response = await fetch("/api/admin/connectors/web/index-attempt", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

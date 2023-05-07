@@ -20,7 +20,7 @@ router = APIRouter(prefix="/admin")
 logger = setup_logger()
 
 
-@router.get("/slack_connector_config", response_model=SlackConfig)
+@router.get("/connectors/slack/config", response_model=SlackConfig)
 def fetch_slack_config():
     try:
         return get_slack_config()
@@ -28,7 +28,12 @@ def fetch_slack_config():
         return SlackConfig(slack_bot_token="", workspace_id="")
 
 
-@router.post("/slack_connector_config")
+@router.post("/connectors/slack/config")
+def modify_slack_config(slack_config: SlackConfig):
+    update_slack_config(slack_config)
+
+
+@router.post("/connectors/slack/auth")
 def modify_slack_config(slack_config: SlackConfig):
     update_slack_config(slack_config)
 
@@ -37,7 +42,7 @@ class WebIndexAttemptRequest(BaseModel):
     url: str
 
 
-@router.post("/website_index", status_code=201)
+@router.post("/connectors/web/index-attempt", status_code=201)
 async def index_website(web_index_attempt_request: WebIndexAttemptRequest):
     index_request = IndexAttempt(
         source=DocumentSource.WEB,
@@ -58,7 +63,7 @@ class ListWebsiteIndexAttemptsResponse(BaseModel):
     index_attempts: list[IndexAttemptSnapshot]
 
 
-@router.get("/website_index")
+@router.get("/connectors/web/index-attempt")
 async def list_website_index_attempts() -> ListWebsiteIndexAttemptsResponse:
     index_attempts = await fetch_index_attempts(sources=[DocumentSource.WEB])
     return ListWebsiteIndexAttemptsResponse(

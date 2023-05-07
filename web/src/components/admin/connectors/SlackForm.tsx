@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Formik, Form, Field, ErrorMessage, FormikHelpers } from "formik";
+import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { Popup } from "./Popup";
 import { TextFormField } from "./Field";
@@ -18,7 +18,7 @@ const validationSchema = Yup.object().shape({
 });
 
 const getConfig = async (): Promise<FormData> => {
-  const response = await fetch("/api/admin/slack_connector_config");
+  const response = await fetch("/api/admin/connectors/slack/config");
   return response.json();
 };
 
@@ -31,7 +31,7 @@ const handleSubmit = async (
 ) => {
   setSubmitting(true);
   try {
-    const response = await fetch("/api/admin/slack_connector_config", {
+    const response = await fetch("/api/admin/connectors/slack/config", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

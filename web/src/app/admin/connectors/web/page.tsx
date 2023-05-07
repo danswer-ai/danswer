@@ -4,7 +4,6 @@ import useSWR, { useSWRConfig } from "swr";
 
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { WebIndexForm } from "@/components/admin/connectors/WebIndexForm";
-import { BACKEND_URL } from "@/lib/constants";
 
 interface WebsiteIndexAttempt {
   url: string;
@@ -15,13 +14,6 @@ interface WebsiteIndexAttempt {
 interface ListWebIndexingResponse {
   index_attempts: WebsiteIndexAttempt[];
 }
-
-const listWebIndexingHistory = async (): Promise<ListWebIndexingResponse> => {
-  const response = await fetch(BACKEND_URL + "/admin/website_index", {
-    headers: { "Content-Type": "application/json" },
-  });
-  return response.json();
-};
 
 const COLUMNS = [
   { header: "Base URL", key: "url" },
@@ -34,7 +26,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 export default function Web() {
   const { mutate } = useSWRConfig();
   const { data: indexingHistory } = useSWR<ListWebIndexingResponse>(
-    BACKEND_URL + "/admin/website_index",
+    "/api/admin/connectors/web/index-attempt",
     fetcher
   );
 
@@ -50,7 +42,7 @@ export default function Web() {
         <WebIndexForm
           onSubmit={(success) => {
             if (success) {
-              mutate(BACKEND_URL + "/admin/website_index");
+              mutate("/api/admin/connectors/web/index-attempt");
             }
           }}
         />
