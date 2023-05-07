@@ -1,6 +1,8 @@
 import os
+from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 
 
@@ -29,3 +31,10 @@ def build_connection_string(
 def build_async_engine() -> AsyncEngine:
     connection_string = build_connection_string()
     return create_async_engine(connection_string)
+
+
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSession(
+        build_async_engine(), future=True, expire_on_commit=False
+    ) as async_session:
+        yield async_session

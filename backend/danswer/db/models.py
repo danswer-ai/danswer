@@ -3,6 +3,7 @@ from enum import Enum as PyEnum
 from typing import Any
 from typing import List
 
+from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
 from fastapi_users.db import SQLAlchemyBaseOAuthAccountTableUUID
@@ -31,7 +32,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     oauth_accounts: Mapped[List[OAuthAccount]] = relationship(
         "OAuthAccount", lazy="joined"
     )
-    pass
+    role: Mapped[UserRole] = mapped_column(
+        Enum(UserRole, native_enum=False, default=UserRole.BASIC)
+    )
 
 
 class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
