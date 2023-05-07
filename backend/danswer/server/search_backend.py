@@ -33,7 +33,7 @@ router = APIRouter()
 # TODO delete this useless endpoint once frontend is integrated with auth
 @router.get("/test-auth")
 async def authenticated_route(user: User = Depends(current_active_user)):
-    return {"message": f"Hello {user.role}!"}
+    return {"message": f"Hello {user.email} who is a {user.role}!"}
 
 
 # TODO DAN-39 delete this once oauth is built out and tested
