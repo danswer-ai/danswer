@@ -19,3 +19,7 @@ class QAResponse(BaseModel):
 
 class KeywordResponse(BaseModel):
     results: list[str] | None
+
+
+class UserByEmail(BaseModel):
+    user_email: str

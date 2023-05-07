@@ -1,11 +1,14 @@
 import time
 from http import HTTPStatus
 
+from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_active_user
+from danswer.auth.users import current_admin_user
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.datastores import create_datastore
+from danswer.db.engine import build_async_engine
 from danswer.db.models import User
 from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.semantic_search import semantic_search
@@ -13,12 +16,15 @@ from danswer.server.models import KeywordResponse
 from danswer.server.models import QAQuestion
 from danswer.server.models import QAResponse
 from danswer.server.models import ServerStatus
+from danswer.server.models import UserByEmail
 from danswer.utils.clients import TSClient
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import HTTPException
 from fastapi import Request
-
+from fastapi_users.db import SQLAlchemyUserDatabase
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = setup_logger()
 
@@ -28,7 +34,13 @@ router = APIRouter()
 # TODO delete this useless endpoint once frontend is integrated with auth
 @router.get("/test-auth")
 async def authenticated_route(user: User = Depends(current_active_user)):
-    return {"message": f"Hello {user.email}!"}
+    return {"message": f"Hello {user.email} who is a {user.role}!"}
+
+
+# TODO delete this useless endpoint once frontend is integrated with auth
+@router.get("/test-admin")
+async def admin_route(user: User = Depends(current_admin_user)):
+    return {"message": f"Hello {user.email} who is a {user.role}!"}
 
 
 # TODO DAN-39 delete this once oauth is built out and tested
@@ -41,6 +53,23 @@ def test_endpoint(request: Request):
 @router.get("/status", response_model=ServerStatus)
 def read_server_status():
     return ServerStatus(status=HTTPStatus.OK.value)
+
+
+@router.patch("/promote-user-to-admin", response_model=None)
+async def promote_admin(
+    user_email: UserByEmail, user: User = Depends(current_active_user)
+):
+    if user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    async with AsyncSession(build_async_engine()) as asession:
+        user_db = SQLAlchemyUserDatabase(asession, User)  # type: ignore
+        user_to_promote = await user_db.get_by_email(user_email.user_email)
+        if not user_to_promote:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_to_promote.role = UserRole.ADMIN
+        asession.add(user_to_promote)
+        await asession.commit()
+    return
 
 
 @router.post("/direct-qa", response_model=QAResponse)
