@@ -10,7 +10,7 @@ class UserRole(str, Enum):
 
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
-    role: UserRole | None
+    role: UserRole
 
 
 class UserCreate(schemas.BaseUserCreate):
@@ -18,4 +18,4 @@ class UserCreate(schemas.BaseUserCreate):
 
 
 class UserUpdate(schemas.BaseUserUpdate):
-    role: UserRole = UserRole.BASIC
+    role: UserRole
