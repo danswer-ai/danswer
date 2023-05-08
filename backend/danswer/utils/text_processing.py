@@ -22,8 +22,9 @@ def shared_precompare_cleanup(text: str) -> str:
     text = text.replace('\\"', "")
     text = text.replace('"', "")
 
-    # GPT models prefer to end on a period over a colon so sometimes will edit terminating punctuations
+    # GPT models often change up punctuations to make the text flow better.
     text = text.replace(".", "")
     text = text.replace(":", "")
+    text = text.replace(",", "")
 
     return text

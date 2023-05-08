@@ -19,7 +19,8 @@ from danswer.configs.model_configs import OPENAI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import OPENAPI_MODEL_VERSION
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.qa_prompts import ANSWER_PAT
-from danswer.direct_qa.qa_prompts import freeform_chat_processor
+from danswer.direct_qa.qa_prompts import get_chat_reflexion_msg
+from danswer.direct_qa.qa_prompts import json_chat_processor
 from danswer.direct_qa.qa_prompts import json_processor
 from danswer.direct_qa.qa_prompts import QUOTE_PAT
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
@@ -206,13 +207,15 @@ class OpenAIChatCompletionQA(QAModel):
         self,
         prompt_processor: Callable[
             [str, list[str]], list[dict[str, str]]
-        ] = freeform_chat_processor,
+        ] = json_chat_processor,
         model_version: str = OPENAPI_MODEL_VERSION,
         max_output_tokens: int = OPENAI_MAX_OUTPUT_TOKENS,
+        reflexion_try_count: int = 0,
     ) -> None:
         self.prompt_processor = prompt_processor
         self.model_version = model_version
         self.max_output_tokens = max_output_tokens
+        self.reflexion_try_count = reflexion_try_count
 
     @log_function_time()
     def answer_question(
@@ -221,24 +224,28 @@ class OpenAIChatCompletionQA(QAModel):
         top_contents = [ranked_chunk.content for ranked_chunk in context_docs]
         messages = self.prompt_processor(query, top_contents)
         logger.debug(messages)
-
-        try:
-            response = openai.ChatCompletion.create(
-                messages=messages,
-                temperature=0,
-                top_p=1,
-                frequency_penalty=0,
-                presence_penalty=0,
-                model=self.model_version,
-                max_tokens=self.max_output_tokens,
-            )
-            model_output = response["choices"][0]["message"]["content"].strip()
-            logger.info(
-                "OpenAI Token Usage: " + str(response["usage"]).replace("\n", "")
-            )
-        except Exception as e:
-            logger.exception(e)
-            model_output = "Model Failure"
+        model_output = ""
+        for _ in range(self.reflexion_try_count + 1):
+            try:
+                response = openai.ChatCompletion.create(
+                    messages=messages,
+                    temperature=0,
+                    top_p=1,
+                    frequency_penalty=0,
+                    presence_penalty=0,
+                    model=self.model_version,
+                    max_tokens=self.max_output_tokens,
+                )
+                model_output = response["choices"][0]["message"]["content"].strip()
+                assistant_msg = {"content": model_output, "role": "assistant"}
+                messages.extend([assistant_msg, get_chat_reflexion_msg()])
+                logger.info(
+                    "OpenAI Token Usage: " + str(response["usage"]).replace("\n", "")
+                )
+            except Exception as e:
+                logger.exception(e)
+                logger.warning(f"Model failure for query: {query}")
+                return None, None
 
         logger.debug(model_output)
 

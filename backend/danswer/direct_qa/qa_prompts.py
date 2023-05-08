@@ -6,19 +6,31 @@ ANSWER_PAT = "Answer:"
 UNCERTAINTY_PAT = "?"
 QUOTE_PAT = "Quote:"
 
+SYSTEM_ROLE = "You are a Question Answering system that answers queries based on provided documents. "
+
+BASE_PROMPT = (
+    f"Answer the query based on provided documents and quote relevant sections. "
+    f"Respond with a json containing a concise answer and up to three most relevant quotes from the documents.\n"
+)
+
+UNABLE_TO_FIND_JSON_MSG = (
+    "If the query cannot be answered based on the documents, respond with {}. "
+)
+
+SAMPLE_QUESTION = "Where is the Eiffel Tower?"
+
+SAMPLE_JSON_RESPONSE = {
+    "answer": "The Eiffel Tower is located in Paris, France.",
+    "quotes": [
+        "The Eiffel Tower is an iconic symbol of Paris",
+        "located on the Champ de Mars in France.",
+    ],
+}
+
 
 def json_processor(question: str, documents: list[str]) -> str:
-    sample_response = {
-        "answer": "The Eiffel Tower is located in Paris, France.",
-        "quotes": [
-            "The Eiffel Tower is an iconic symbol of Paris",
-            "located on the Champ de Mars in France.",
-        ],
-    }
     prompt = (
-        f"Answer the query based on provided documents and quote relevant sections. "
-        f"Respond with a json containing a concise answer and up to three most relevant quotes from the documents.\n"
-        f"Sample response:\n{json.dumps(sample_response)}\n\n"
+        BASE_PROMPT + f"Sample response:\n{json.dumps(SAMPLE_JSON_RESPONSE)}\n\n"
         f'Each context document below is prefixed with "{DOC_SEP_PAT}".\n\n'
     )
 
@@ -33,18 +45,11 @@ def json_processor(question: str, documents: list[str]) -> str:
 # Chain of Thought approach works however has higher token cost (more expensive) and is slower.
 # Should use this one if users ask questions that require logical reasoning.
 def json_cot_variant_processor(question: str, documents: list[str]) -> str:
-    sample_response = {
-        "answer": "The Eiffel Tower is located in Paris, France.",
-        "quotes": [
-            "The Eiffel Tower is an iconic symbol of Paris",
-            "located on the Champ de Mars in France.",
-        ],
-    }
     prompt = (
         f"Answer the query based on provided documents and quote relevant sections. "
         f'Respond with a freeform reasoning section followed by "Final Answer:" with a '
         f"json containing a concise answer to the query and up to three most relevant quotes from the documents.\n"
-        f"Sample answer json:\n{json.dumps(sample_response)}\n\n"
+        f"Sample answer json:\n{json.dumps(SAMPLE_JSON_RESPONSE)}\n\n"
         f'Each context document below is prefixed with "{DOC_SEP_PAT}".\n\n'
     )
 
@@ -61,21 +66,13 @@ def json_cot_variant_processor(question: str, documents: list[str]) -> str:
 # Model seems to take the one example of answering Yes and just does that too.
 def json_reflexion_processor(question: str, documents: list[str]) -> str:
     reflexion_str = "Does this fully answer the user query?"
-    sample_response = {
-        "answer": "The Eiffel Tower is located in Paris, France.",
-        "quotes": [
-            "The Eiffel Tower is an iconic symbol of Paris",
-            "located on the Champ de Mars in France.",
-        ],
-    }
     prompt = (
-        f"Answer the query based on provided documents and quote relevant sections. "
-        f"Respond with a json containing a concise answer and up to three most relevant quotes from the documents.\n"
-        f"After each generated json, ask {reflexion_str} and respond Yes or No. "
+        BASE_PROMPT
+        + f'After each generated json, ask "{reflexion_str}" and respond Yes or No. '
         f"If No, generate a better json response to the query.\n"
         f"Sample question and response:\n"
-        f"{QUESTION_PAT}\nWhere is the Eiffel Tower?\n"
-        f"{json.dumps(sample_response)}\n"
+        f"{QUESTION_PAT}\n{SAMPLE_QUESTION}\n"
+        f"{json.dumps(SAMPLE_JSON_RESPONSE)}\n"
         f"{reflexion_str} Yes\n\n"
         f'Each context document below is prefixed with "{DOC_SEP_PAT}".\n\n'
     )
@@ -105,6 +102,39 @@ def freeform_processor(question: str, documents: list[str]) -> str:
     prompt += f"{QUESTION_PAT}\n{question}\n"
     prompt += f"{ANSWER_PAT}\n"
     return prompt
+
+
+def json_chat_processor(question: str, documents: list[str]) -> list[dict[str, str]]:
+    role_msg = (
+        SYSTEM_ROLE
+        + 'Start by reading the following documents and responding with "Acknowledged"'
+    )
+
+    messages = [{"role": "system", "content": role_msg}]
+
+    for document in documents:
+        messages.extend(
+            [
+                {
+                    "role": "user",
+                    "content": document,
+                },
+                {"role": "assistant", "content": "Acknowledged"},
+            ]
+        )
+    sample_msg = (
+        f"Now answer the user query based on documents above and quote relevant sections. "
+        f"Respond with a json containing a concise answer and up to three most relevant quotes from the documents.\n"
+        f"Sample response: {json.dumps(SAMPLE_JSON_RESPONSE)}"
+    )
+    messages.append({"role": "system", "content": sample_msg})
+
+    messages.append({"role": "user", "content": f"{QUESTION_PAT}\n{question}\n"})
+
+    # Note that the below will be dropped in reflexion if used
+    messages.append({"role": "assistant", "content": "Answer Json:\n"})
+
+    return messages
 
 
 def freeform_chat_processor(
@@ -144,3 +174,16 @@ def freeform_chat_processor(
     )
 
     return messages
+
+
+# Not very useful, have not seen it improve an answer based on this
+# Sometimes gpt-3.5-turbo will just answer something worse like:
+# 'The response is a valid json that fully answers the user query with quotes exactly matching sections of the source
+# document. No revision is needed.'
+def get_chat_reflexion_msg() -> dict[str, str]:
+    reflexion_content = (
+        "Is the assistant response a valid json that fully answer the user query? "
+        "If the response needs to be fixed or if an improvement is possible, provide a revised json. "
+        "Otherwise, respond with the same json."
+    )
+    return {"role": "system", "content": reflexion_content}
