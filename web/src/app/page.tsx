@@ -1,8 +1,5 @@
-import { Inter } from "next/font/google";
 import { SearchSection } from "@/components/SearchBar";
 import { Header } from "@/components/Header";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
   return (
