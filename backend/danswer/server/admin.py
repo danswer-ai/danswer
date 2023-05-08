@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.models import ConnectorDescriptor
 from danswer.connectors.models import InputType
 from danswer.connectors.slack.config import get_slack_config
 from danswer.connectors.slack.config import SlackConfig

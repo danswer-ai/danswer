@@ -14,6 +14,16 @@ BLURB_LENGTH = 200  # Characters. Blurbs will be truncated at the first punctuat
 
 
 #####
+# Web Configs
+#####
+# WEB_DOMAIN is used to set the redirect_uri when doing OAuth with Google
+# TODO: investigate if this can be done cleaner by overwriting the redirect_uri
+# on the frontend and just sending a dummy value (or completely generating the URL)
+# on the frontend
+WEB_DOMAIN = os.environ.get("WEB_DOMAIN", "http://localhost:3000")
+
+
+#####
 # Vector DB Configs
 #####
 DEFAULT_VECTOR_STORE = os.environ.get("VECTOR_DB", "qdrant")

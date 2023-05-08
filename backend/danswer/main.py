@@ -9,6 +9,7 @@ from danswer.auth.users import fastapi_users
 from danswer.auth.users import google_oauth_client
 from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
+from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.server.admin import router as admin_router
 from danswer.server.event_loading import router as event_processing_router
 from danswer.server.search_backend import router as backend_router
@@ -69,7 +70,9 @@ def get_application() -> FastAPI:
                 SECRET,
                 associate_by_email=True,
                 is_verified_by_default=True,
-                redirect_url="http://localhost:8080/test",  # TODO DAN-39 set this to frontend redirect
+                # points the user back to the login page, where we will call the
+                # /auth/google/callback endpoint + redirect them to the main app
+                redirect_url=f"{WEB_DOMAIN}/auth/google/callback",
             ),
             prefix="/auth/google",
             tags=["auth"],
