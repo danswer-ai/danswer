@@ -1,3 +1,4 @@
+import json
 import math
 import re
 from collections.abc import Callable
@@ -18,8 +19,8 @@ from danswer.configs.model_configs import OPENAI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import OPENAPI_MODEL_VERSION
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.qa_prompts import ANSWER_PAT
-from danswer.direct_qa.qa_prompts import generic_prompt_processor
-from danswer.direct_qa.qa_prompts import openai_chat_completion_processor
+from danswer.direct_qa.qa_prompts import freeform_chat_processor
+from danswer.direct_qa.qa_prompts import json_processor
 from danswer.direct_qa.qa_prompts import QUOTE_PAT
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.utils.logging import setup_logger
@@ -33,10 +34,9 @@ logger = setup_logger()
 openai.api_key = OPENAI_API_KEY
 
 
-def separate_answer_quotes(
+def extract_answer_quotes_freeform(
     answer_raw: str,
 ) -> Tuple[Optional[str], Optional[list[str]]]:
-    """Gives back the answer and quote sections"""
     null_answer_check = (
         answer_raw.replace(ANSWER_PAT, "").replace(QUOTE_PAT, "").strip()
     )
@@ -69,6 +69,27 @@ def separate_answer_quotes(
     if len(sections) == 1:
         return answer, None
     return answer, sections_clean[1:]
+
+
+def extract_answer_quotes_json(
+    answer_dict: dict[str, str | list[str]]
+) -> Tuple[Optional[str], Optional[list[str]]]:
+    answer_dict = {k.lower(): v for k, v in answer_dict.items()}
+    answer = str(answer_dict.get("answer"))
+    quotes = answer_dict.get("quotes") or answer_dict.get("quote")
+    if isinstance(quotes, str):
+        quotes = [quotes]
+    return answer, quotes
+
+
+def separate_answer_quotes(
+    answer_raw: str,
+) -> Tuple[Optional[str], Optional[list[str]]]:
+    try:
+        model_raw_json = json.loads(answer_raw)
+        return extract_answer_quotes_json(model_raw_json)
+    except ValueError:
+        return extract_answer_quotes_freeform(answer_raw)
 
 
 def match_quotes_to_docs(
@@ -140,7 +161,7 @@ def process_answer(
 class OpenAICompletionQA(QAModel):
     def __init__(
         self,
-        prompt_processor: Callable[[str, list[str]], str] = generic_prompt_processor,
+        prompt_processor: Callable[[str, list[str]], str] = json_processor,
         model_version: str = OPENAPI_MODEL_VERSION,
         max_output_tokens: int = OPENAI_MAX_OUTPUT_TOKENS,
     ) -> None:
@@ -185,7 +206,7 @@ class OpenAIChatCompletionQA(QAModel):
         self,
         prompt_processor: Callable[
             [str, list[str]], list[dict[str, str]]
-        ] = openai_chat_completion_processor,
+        ] = freeform_chat_processor,
         model_version: str = OPENAPI_MODEL_VERSION,
         max_output_tokens: int = OPENAI_MAX_OUTPUT_TOKENS,
     ) -> None:
