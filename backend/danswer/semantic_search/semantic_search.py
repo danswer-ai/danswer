@@ -21,8 +21,7 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
-from danswer.configs.model_configs import MODEL_CACHE_FOLDER
-from danswer.configs.model_configs import QUERY_EMBEDDING_CONTEXT_SIZE
+from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.datastores.interfaces import Datastore
 from danswer.datastores.interfaces import DatastoreFilter
 from danswer.utils.logging import setup_logger
@@ -44,13 +43,26 @@ DOCUMENT_ENCODER_MODEL = "sentence-transformers/all-distilroberta-v1"
 DOC_EMBEDDING_DIM = 768  # Depends on the document encoder model
 CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
+_EMBED_MODEL: None | SentenceTransformer = None
+_RERANK_MODEL: None | CrossEncoder = None
 
-embedding_model = SentenceTransformer(
-    DOCUMENT_ENCODER_MODEL, cache_folder=MODEL_CACHE_FOLDER
-)
-embedding_model.max_seq_length = QUERY_EMBEDDING_CONTEXT_SIZE
-cross_encoder = CrossEncoder(CROSS_ENCODER_MODEL)
-cross_encoder.max_length = CROSS_EMBED_CONTEXT_SIZE
+
+def get_default_embedding_model() -> SentenceTransformer:
+    global _EMBED_MODEL
+    if _EMBED_MODEL is None:
+        _EMBED_MODEL = SentenceTransformer(DOCUMENT_ENCODER_MODEL)
+        _EMBED_MODEL.max_seq_length = DOC_EMBEDDING_CONTEXT_SIZE
+
+    return _EMBED_MODEL
+
+
+def get_default_reranking_model() -> CrossEncoder:
+    global _RERANK_MODEL
+    if _RERANK_MODEL is None:
+        _RERANK_MODEL = CrossEncoder(CROSS_ENCODER_MODEL)
+        _RERANK_MODEL.max_length = CROSS_EMBED_CONTEXT_SIZE
+
+    return _RERANK_MODEL
 
 
 @log_function_time()
@@ -59,6 +71,7 @@ def semantic_reranking(
     chunks: List[InferenceChunk],
     filtered_result_set_size: int = NUM_RERANKED_RESULTS,
 ) -> List[InferenceChunk]:
+    cross_encoder = get_default_reranking_model()
     sim_scores = cross_encoder.predict([(query, chunk.content) for chunk in chunks])  # type: ignore
     scored_results = list(zip(sim_scores, chunks))
     scored_results.sort(key=lambda x: x[0], reverse=True)

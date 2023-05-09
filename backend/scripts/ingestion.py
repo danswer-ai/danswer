@@ -12,8 +12,8 @@ from danswer.connectors.web.batch import BatchWebLoader
 from danswer.datastores.interfaces import Datastore
 from danswer.datastores.qdrant.indexing import recreate_collection
 from danswer.datastores.qdrant.store import QdrantDatastore
-from danswer.embedding.biencoder import DefaultEmbedder
-from danswer.embedding.type_aliases import Embedder
+from danswer.semantic_search.biencoder import DefaultEmbedder
+from danswer.semantic_search.type_aliases import Embedder
 from danswer.utils.logging import setup_logger
 
 

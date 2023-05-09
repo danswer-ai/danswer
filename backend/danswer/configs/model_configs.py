@@ -3,7 +3,6 @@ import os
 QUERY_EMBEDDING_CONTEXT_SIZE = 256
 DOC_EMBEDDING_CONTEXT_SIZE = 512
 CROSS_EMBED_CONTEXT_SIZE = 512
-MODEL_CACHE_FOLDER = os.environ.get("TRANSFORMERS_CACHE")
 
 # Purely an optimization, memory limitation consideration
 BATCH_SIZE_ENCODE_CHUNKS = 8
