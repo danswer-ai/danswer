@@ -1,13 +1,15 @@
 import os
 
-# Bi/Cross-Encoder Model Configs
-# TODO: try 'all-distilroberta-v1' maybe larger training set has more technical knowledge (768 dim)
-# Downside: slower by factor of 3 (model size)
-# Important considerations, max tokens must be 512
-DOCUMENT_ENCODER_MODEL = "multi-qa-MiniLM-L6-cos-v1"
-DOC_EMBEDDING_DIM = 384  # Depends on the document encoder model
+# Important considerations when choosing models
+# Max tokens count needs to be high considering use case (at least 512)
+# MIT or Apache license
+# Inference/Indexing speed
 
-# L-12-v2 might be worth a try, though stats seem very very similar, L-12 slower by factor of 2
+# Bi/Cross-Encoder Model Configs
+# Use 'multi-qa-MiniLM-L6-cos-v1' if license is added because it is 3x faster (384 dimensional embedding)
+DOCUMENT_ENCODER_MODEL = "sentence-transformers/all-distilroberta-v1"
+DOC_EMBEDDING_DIM = 768  # Depends on the document encoder model
+
 CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 QUERY_EMBEDDING_CONTEXT_SIZE = 256
@@ -22,4 +24,4 @@ BATCH_SIZE_ENCODE_CHUNKS = 8
 # https://platform.openai.com/docs/models/model-endpoint-compatibility
 INTERNAL_MODEL_VERSION = os.environ.get("INTERNAL_MODEL", "openai-completion")
 OPENAPI_MODEL_VERSION = os.environ.get("OPENAI_MODEL_VERSION", "text-davinci-003")
-OPENAI_MAX_OUTPUT_TOKENS = 400
+OPENAI_MAX_OUTPUT_TOKENS = 512
