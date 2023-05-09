@@ -13,18 +13,14 @@
 #
 # The NLP models used here are licensed under Apache 2.0
 # Specifically the sentence-transformers/all-distilroberta-v1 and cross-encoder/ms-marco-MiniLM-L-6-v2 models
-# The original creators can be found at https://www.sbert.net/index.html
+# The original authors can be found at https://www.sbert.net/index.html
 import json
 from typing import List
 
-import openai
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
-from danswer.configs.app_configs import OPENAI_API_KEY
 from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
-from danswer.configs.model_configs import CROSS_ENCODER_MODEL
-from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import MODEL_CACHE_FOLDER
 from danswer.configs.model_configs import QUERY_EMBEDDING_CONTEXT_SIZE
 from danswer.datastores.interfaces import Datastore
@@ -37,7 +33,16 @@ from sentence_transformers import SentenceTransformer  # type: ignore
 
 logger = setup_logger()
 
-openai.api_key = OPENAI_API_KEY
+# Important considerations when choosing models
+# Max tokens count needs to be high considering use case (at least 512)
+# Models used must be MIT or Apache license
+# Inference/Indexing speed
+
+# Bi/Cross-Encoder Model Configs
+# Use 'multi-qa-MiniLM-L6-cos-v1' if license is added because it is 3x faster (384 dimensional embedding)
+DOCUMENT_ENCODER_MODEL = "sentence-transformers/all-distilroberta-v1"
+DOC_EMBEDDING_DIM = 768  # Depends on the document encoder model
+CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 
 embedding_model = SentenceTransformer(
@@ -67,7 +72,7 @@ def semantic_reranking(
 
 
 @log_function_time()
-def semantic_search(
+def retrieve_ranked_documents(
     query: str,
     filters: list[DatastoreFilter] | None,
     datastore: Datastore,
