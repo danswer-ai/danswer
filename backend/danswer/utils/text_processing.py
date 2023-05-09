@@ -19,6 +19,12 @@ def shared_precompare_cleanup(text: str) -> str:
     text = text.replace("*", "")
 
     # GPT models sometimes like to edit the quoting, ie "Title: Contents" becomes Title: "Contents"
+    text = text.replace('\\"', "")
     text = text.replace('"', "")
+
+    # GPT models often change up punctuations to make the text flow better.
+    text = text.replace(".", "")
+    text = text.replace(":", "")
+    text = text.replace(",", "")
 
     return text
