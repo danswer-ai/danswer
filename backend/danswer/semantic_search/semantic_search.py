@@ -11,9 +11,10 @@
 # limitations under the License.
 #
 #
-# The NLP models used here are licensed under Apache 2.0
+# The NLP models used here are licensed under Apache 2.0, the original author's LICENSE file is
+# included in this same directory.
 # Specifically the sentence-transformers/all-distilroberta-v1 and cross-encoder/ms-marco-MiniLM-L-6-v2 models
-# The original authors can be found at https://www.sbert.net/index.html
+# The original authors can be found at https://www.sbert.net/
 import json
 from typing import List
 
