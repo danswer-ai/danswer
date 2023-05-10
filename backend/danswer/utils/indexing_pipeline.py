@@ -8,8 +8,8 @@ from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.connectors.models import Document
 from danswer.datastores.interfaces import Datastore
 from danswer.datastores.qdrant.store import QdrantDatastore
-from danswer.embedding.biencoder import DefaultEmbedder
-from danswer.embedding.type_aliases import Embedder
+from danswer.semantic_search.biencoder import DefaultEmbedder
+from danswer.semantic_search.type_aliases import Embedder
 
 
 def _indexing_pipeline(

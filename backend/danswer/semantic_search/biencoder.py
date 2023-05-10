@@ -1,25 +1,13 @@
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import IndexChunk
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
-from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
-from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
-from danswer.embedding.type_aliases import Embedder
+from danswer.semantic_search.semantic_search import get_default_embedding_model
+from danswer.semantic_search.type_aliases import Embedder
 from danswer.utils.logging import setup_logger
 from sentence_transformers import SentenceTransformer  # type: ignore
 
 
 logger = setup_logger()
-
-_MODEL: None | SentenceTransformer = None
-
-
-def get_default_model() -> SentenceTransformer:
-    global _MODEL
-    if _MODEL is None:
-        _MODEL = SentenceTransformer(DOCUMENT_ENCODER_MODEL)
-        _MODEL.max_seq_length = DOC_EMBEDDING_CONTEXT_SIZE
-
-    return _MODEL
 
 
 def encode_chunks(
@@ -29,7 +17,7 @@ def encode_chunks(
 ) -> list[EmbeddedIndexChunk]:
     embedded_chunks = []
     if embedding_model is None:
-        embedding_model = get_default_model()
+        embedding_model = get_default_embedding_model()
 
     chunk_batches = [
         chunks[i : i + batch_size] for i in range(0, len(chunks), batch_size)

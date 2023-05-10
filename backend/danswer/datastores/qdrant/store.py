@@ -4,7 +4,7 @@ from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.datastores.interfaces import Datastore
 from danswer.datastores.interfaces import DatastoreFilter
 from danswer.datastores.qdrant.indexing import index_chunks
-from danswer.embedding.biencoder import get_default_model
+from danswer.semantic_search.semantic_search import get_default_embedding_model
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logging import setup_logger
 from danswer.utils.timing import log_function_time
@@ -32,7 +32,7 @@ class QdrantDatastore(Datastore):
     def semantic_retrieval(
         self, query: str, filters: list[DatastoreFilter] | None, num_to_retrieve: int
     ) -> list[InferenceChunk]:
-        query_embedding = get_default_model().encode(
+        query_embedding = get_default_embedding_model().encode(
             query
         )  # TODO: make this part of the embedder interface
         if not isinstance(query_embedding, list):

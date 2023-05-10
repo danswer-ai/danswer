@@ -11,7 +11,7 @@ from danswer.datastores import create_datastore
 from danswer.db.engine import build_async_engine
 from danswer.db.models import User
 from danswer.direct_qa import get_default_backend_qa_model
-from danswer.direct_qa.semantic_search import semantic_search
+from danswer.semantic_search.semantic_search import retrieve_ranked_documents
 from danswer.server.models import KeywordResponse
 from danswer.server.models import QAQuestion
 from danswer.server.models import QAResponse
@@ -84,7 +84,7 @@ def direct_qa(question: QAQuestion):
 
     logger.info(f"Received semantic query: {query}")
 
-    ranked_chunks = semantic_search(query, filters, datastore)
+    ranked_chunks = retrieve_ranked_documents(query, filters, datastore)
     if not ranked_chunks:
         return {"answer": None, "quotes": None}
 
