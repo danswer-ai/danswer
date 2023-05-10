@@ -175,6 +175,7 @@ def thread_to_doc(channel_id: str, thread: ThreadType) -> Document:
             for m in thread
         ],
         source=DocumentSource.SLACK,
+        semantic_identifier="WIP Slack Channel",  # TODO: chris can you add the identifier for slack?
         metadata={},
     )
 

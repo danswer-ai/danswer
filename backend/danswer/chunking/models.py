@@ -29,6 +29,7 @@ class EmbeddedIndexChunk(IndexChunk):
 class InferenceChunk(BaseChunk):
     document_id: str
     source_type: str
+    semantic_identifier: str
 
     @classmethod
     def from_dict(cls, init_dict):

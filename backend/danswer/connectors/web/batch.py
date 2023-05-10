@@ -80,6 +80,11 @@ class BatchWebLoader(BatchLoader):
                     content = await page.content()
                     soup = BeautifulSoup(content, "html.parser")
 
+                    title_tag = soup.find("title")
+                    title = None
+                    if title_tag and title_tag.text:
+                        title = title_tag.text
+
                     # Heuristics based cleaning
                     for undesired_tag in ["nav", "header", "footer", "meta"]:
                         [tag.extract() for tag in soup.find_all(undesired_tag)]
@@ -96,6 +101,7 @@ class BatchWebLoader(BatchLoader):
                             id=current_url,
                             sections=[Section(link=current_url, text=page_text)],
                             source=DocumentSource.WEB,
+                            semantic_identifier=title,
                             metadata={},
                         )
                     )
@@ -142,6 +148,11 @@ class BatchWebLoader(BatchLoader):
                     content = page.content()
                     soup = BeautifulSoup(content, "html.parser")
 
+                    title_tag = soup.find("title")
+                    title = None
+                    if title_tag and title_tag.text:
+                        title = title_tag.text
+
                     # Heuristics based cleaning
                     for undesired_tag in ["nav", "header", "footer", "meta"]:
                         [tag.extract() for tag in soup.find_all(undesired_tag)]
@@ -158,6 +169,7 @@ class BatchWebLoader(BatchLoader):
                             id=current_url,
                             sections=[Section(link=current_url, text=page_text)],
                             source=DocumentSource.WEB,
+                            semantic_identifier=title,
                             metadata={},
                         )
                     )

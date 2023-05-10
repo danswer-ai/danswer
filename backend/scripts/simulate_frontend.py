@@ -4,6 +4,8 @@ import json
 import requests
 from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
+from danswer.configs.constants import SEMANTIC_IDENTIFIER
+from danswer.configs.constants import SOURCE_LINK
 from danswer.configs.constants import SOURCE_TYPE
 
 
@@ -81,7 +83,8 @@ if __name__ == "__main__":
                         contents["quotes"].items()
                     ):
                         print(f"Quote {str(ind + 1)}:\n{quote}")
-                        print(f"Link: {quote_info['link']}")
+                        print(f"Semantic Identifier: {quote_info[SEMANTIC_IDENTIFIER]}")
+                        print(f"Link: {quote_info[SOURCE_LINK]}")
                         print(f"Source: {quote_info[SOURCE_TYPE]}")
                 else:
                     print("No quotes found")

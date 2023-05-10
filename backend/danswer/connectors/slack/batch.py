@@ -33,6 +33,7 @@ def _process_batch_event(
                     )
                 ],
                 source=matching_doc.source,
+                semantic_identifier="WIP Slack Channel",  # TODO: chris can you add the identifier for slack?
                 metadata=matching_doc.metadata,
             )
 
@@ -47,6 +48,7 @@ def _process_batch_event(
                 )
             ],
             source=DocumentSource.SLACK,
+            semantic_identifier="WIP Slack Channel",  # TODO: chris can you add the identifier for slack?
             metadata={},
         )
 

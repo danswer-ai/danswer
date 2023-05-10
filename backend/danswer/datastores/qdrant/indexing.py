@@ -7,6 +7,7 @@ from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import SECTION_CONTINUATION
+from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.semantic_search.semantic_search import DOC_EMBEDDING_DIM
@@ -60,6 +61,7 @@ def index_chunks(
                     CONTENT: chunk.content,
                     SOURCE_TYPE: str(document.source.value),
                     SOURCE_LINKS: chunk.source_links,
+                    SEMANTIC_IDENTIFIER: document.semantic_identifier,
                     SECTION_CONTINUATION: chunk.section_continuation,
                     ALLOWED_USERS: [],  # TODO
                     ALLOWED_GROUPS: [],  # TODO
