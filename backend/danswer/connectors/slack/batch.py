@@ -14,12 +14,15 @@ from danswer.connectors.type_aliases import BatchLoader
 
 
 def _process_batch_event(
-    event: dict[str, Any],
+    slack_event: dict[str, Any],
+    channel: dict[str, Any],
     matching_doc: Document | None,
     workspace: str | None = None,
-    channel_id: str | None = None,
 ) -> Document | None:
-    if event["type"] == "message" and event.get("subtype") != "channel_join":
+    if (
+        slack_event["type"] == "message"
+        and slack_event.get("subtype") != "channel_join"
+    ):
         if matching_doc:
             return Document(
                 id=matching_doc.id,
@@ -27,28 +30,28 @@ def _process_batch_event(
                 + [
                     Section(
                         link=get_message_link(
-                            event, workspace=workspace, channel_id=channel_id
+                            slack_event, workspace=workspace, channel_id=channel["id"]
                         ),
-                        text=event["text"],
+                        text=slack_event["text"],
                     )
                 ],
                 source=matching_doc.source,
-                semantic_identifier="WIP Slack Channel",  # TODO: chris can you add the identifier for slack?
+                semantic_identifier=matching_doc.semantic_identifier,
                 metadata=matching_doc.metadata,
             )
 
         return Document(
-            id=event["ts"],
+            id=slack_event["ts"],
             sections=[
                 Section(
                     link=get_message_link(
-                        event, workspace=workspace, channel_id=channel_id
+                        slack_event, workspace=workspace, channel_id=channel["id"]
                     ),
-                    text=event["text"],
+                    text=slack_event["text"],
                 )
             ],
             source=DocumentSource.SLACK,
-            semantic_identifier="WIP Slack Channel",  # TODO: chris can you add the identifier for slack?
+            semantic_identifier=channel["name"],
             metadata={},
         )
 
@@ -78,11 +81,13 @@ class BatchSlackLoader(BatchLoader):
             for path in channel_file_paths:
                 with open(path) as f:
                     events = cast(list[dict[str, Any]], json.load(f))
-                for event in events:
+                for slack_event in events:
                     doc = _process_batch_event(
-                        event,
-                        document_batch.get(event.get("thread_ts", "")),
-                        channel_id=channel_info["id"],
+                        slack_event=slack_event,
+                        channel=channel_info,
+                        matching_doc=document_batch.get(
+                            slack_event.get("thread_ts", "")
+                        ),
                     )
                     if doc:
                         document_batch[doc.id] = doc

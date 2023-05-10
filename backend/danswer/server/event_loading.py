@@ -1,5 +1,6 @@
 from typing import Any
 
+from danswer.connectors.slack.pull import get_channel_info
 from danswer.connectors.slack.pull import get_thread
 from danswer.connectors.slack.pull import thread_to_doc
 from danswer.connectors.slack.utils import get_client
@@ -42,9 +43,12 @@ def process_slack_event(event: SlackEvent):
 
             channel_id = event.event["channel"]
             thread_ts = message.get("thread_ts")
+            slack_client = get_client()
             doc = thread_to_doc(
-                channel_id,
-                get_thread(get_client(), channel_id, thread_ts)
+                channel=get_channel_info(client=slack_client, channel_id=channel_id),
+                thread=get_thread(
+                    client=slack_client, channel_id=channel_id, thread_id=thread_ts
+                )
                 if thread_ts
                 else [message],
             )

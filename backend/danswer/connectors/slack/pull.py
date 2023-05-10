@@ -23,6 +23,7 @@ logger = setup_logger()
 SLACK_LIMIT = 900
 
 
+ChannelType = dict[str, Any]
 MessageType = dict[str, Any]
 # list of messages in a thread
 ThreadType = list[MessageType]
@@ -85,7 +86,14 @@ def _make_slack_api_call(
     return _make_slack_api_call_paginated(_make_slack_api_rate_limited(call))(**kwargs)
 
 
-def get_channels(client: WebClient) -> list[dict[str, Any]]:
+def get_channel_info(client: WebClient, channel_id: str) -> ChannelType:
+    """Get information about a channel. Needed to convert channel ID to channel name"""
+    return _make_slack_api_call(client.conversations_info, channel=channel_id)[0][
+        "channel"
+    ]
+
+
+def get_channels(client: WebClient) -> list[ChannelType]:
     """Get all channels in the workspace"""
     channels: list[dict[str, Any]] = []
     for result in _make_slack_api_call(client.conversations_list):
@@ -127,44 +135,8 @@ def get_thread(client: WebClient, channel_id: str, thread_id: str) -> ThreadType
     return threads
 
 
-def _default_msg_filter(message: MessageType) -> bool:
-    return message.get("subtype", "") == "channel_join"
-
-
-def get_all_threads(
-    client: WebClient,
-    msg_filter_func: Callable[[MessageType], bool] = _default_msg_filter,
-    oldest: str | None = None,
-    latest: str | None = None,
-) -> dict[str, list[ThreadType]]:
-    """Get all threads in the workspace"""
-    channels = get_channels(client)
-    channel_id_to_messages: dict[str, list[dict[str, Any]]] = {}
-    for channel in channels:
-        channel_id_to_messages[channel["id"]] = get_channel_messages(
-            client=client, channel=channel, oldest=oldest, latest=latest
-        )
-
-    channel_to_threads: dict[str, list[ThreadType]] = {}
-    for channel_id, messages in channel_id_to_messages.items():
-        final_threads: list[ThreadType] = []
-        for message in messages:
-            thread_ts = message.get("thread_ts")
-            if thread_ts:
-                thread = get_thread(client, channel_id, thread_ts)
-                filtered_thread = [
-                    message for message in thread if not msg_filter_func(message)
-                ]
-                if filtered_thread:
-                    final_threads.append(filtered_thread)
-            else:
-                final_threads.append([message])
-        channel_to_threads[channel_id] = final_threads
-
-    return channel_to_threads
-
-
-def thread_to_doc(channel_id: str, thread: ThreadType) -> Document:
+def thread_to_doc(channel: ChannelType, thread: ThreadType) -> Document:
+    channel_id = channel["id"]
     return Document(
         id=f"{channel_id}__{thread[0]['ts']}",
         sections=[
@@ -175,21 +147,55 @@ def thread_to_doc(channel_id: str, thread: ThreadType) -> Document:
             for m in thread
         ],
         source=DocumentSource.SLACK,
-        semantic_identifier="WIP Slack Channel",  # TODO: chris can you add the identifier for slack?
+        semantic_identifier=channel["name"],
         metadata={},
     )
+
+
+def _default_msg_filter(message: MessageType) -> bool:
+    return message.get("subtype", "") == "channel_join"
 
 
 def get_all_docs(
     client: WebClient,
     oldest: str | None = None,
     latest: str | None = None,
+    msg_filter_func: Callable[[MessageType], bool] = _default_msg_filter,
 ) -> list[Document]:
     """Get all documents in the workspace"""
-    channel_id_to_threads = get_all_threads(client=client, oldest=oldest, latest=latest)
+    channels = get_channels(client)
+    channel_id_to_channel_info = {channel["id"]: channel for channel in channels}
+
+    channel_id_to_messages: dict[str, list[dict[str, Any]]] = {}
+    for channel in channels:
+        channel_id_to_messages[channel["id"]] = get_channel_messages(
+            client=client, channel=channel, oldest=oldest, latest=latest
+        )
+
+    channel_id_to_threads: dict[str, list[ThreadType]] = {}
+    for channel_id, messages in channel_id_to_messages.items():
+        final_threads: list[ThreadType] = []
+        for message in messages:
+            thread_ts = message.get("thread_ts")
+            if thread_ts:
+                thread = get_thread(
+                    client=client, channel_id=channel_id, thread_id=thread_ts
+                )
+                filtered_thread = [
+                    message for message in thread if not msg_filter_func(message)
+                ]
+                if filtered_thread:
+                    final_threads.append(filtered_thread)
+            else:
+                final_threads.append([message])
+        channel_id_to_threads[channel_id] = final_threads
+
     docs: list[Document] = []
     for channel_id, threads in channel_id_to_threads.items():
-        docs.extend(thread_to_doc(channel_id, thread) for thread in threads)
+        docs.extend(
+            thread_to_doc(channel=channel_id_to_channel_info[channel_id], thread=thread)
+            for thread in threads
+        )
     logger.info(f"Pulled {len(docs)} documents from slack")
     return docs
 
