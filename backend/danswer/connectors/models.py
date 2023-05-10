@@ -17,7 +17,8 @@ class Document:
     id: str  # This must be unique or during indexing/reindexing, chunks will be overwritten
     sections: list[Section]
     source: DocumentSource
-    metadata: dict[str, Any]
+    semantic_identifier: str | None
+    metadata: dict[str, Any] | None
 
 
 def get_raw_document_text(document: Document) -> str:

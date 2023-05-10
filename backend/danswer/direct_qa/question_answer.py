@@ -13,6 +13,7 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import OPENAI_API_KEY
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.configs.constants import DOCUMENT_ID
+from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINK
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.model_configs import OPENAI_MAX_OUTPUT_TOKENS
@@ -138,12 +139,14 @@ def match_quotes_to_docs(
                         DOCUMENT_ID: chunk.document_id,
                         SOURCE_LINK: curr_link,
                         SOURCE_TYPE: chunk.source_type,
+                        SEMANTIC_IDENTIFIER: chunk.semantic_identifier,
                     }
                     break
             quotes_dict[quote] = {
                 DOCUMENT_ID: chunk.document_id,
                 SOURCE_LINK: curr_link,
                 SOURCE_TYPE: chunk.source_type,
+                SEMANTIC_IDENTIFIER: chunk.semantic_identifier,
             }
             break
     return quotes_dict

@@ -7,7 +7,6 @@ from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import GOOGLE_DRIVE_TOKENS_JSON
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import SOURCE_TYPE
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.connectors.type_aliases import BatchLoader
@@ -129,6 +128,7 @@ class BatchGoogleDriveLoader(BatchLoader):
                         id=file["webViewLink"],
                         sections=[Section(link=file["webViewLink"], text=full_context)],
                         source=DocumentSource.GOOGLE_DRIVE,
+                        semantic_identifier=file["name"],
                         metadata={},
                     )
                 )
