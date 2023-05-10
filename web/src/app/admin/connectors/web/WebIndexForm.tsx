@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
-import { Popup } from "./Popup";
-import { TextFormField } from "./Field";
+import { Popup } from "../../../../components/admin/connectors/Popup";
+import { TextFormField } from "../../../../components/admin/connectors/Field";
 
 interface FormData {
   url: string;
@@ -20,8 +20,9 @@ const handleSubmit = async (
   setPopup: (
     popup: { message: string; type: "success" | "error" } | null
   ) => void
-) => {
+): Promise<boolean> => {
   setSubmitting(true);
+  let isSuccess = false;
   try {
     const response = await fetch("/api/admin/connectors/web/index-attempt", {
       method: "POST",
@@ -32,6 +33,7 @@ const handleSubmit = async (
     });
 
     if (response.ok) {
+      isSuccess = true;
       setPopup({ message: "Success!", type: "success" });
     } else {
       const errorData = await response.json();
@@ -44,6 +46,7 @@ const handleSubmit = async (
     setTimeout(() => {
       setPopup(null);
     }, 3000);
+    return isSuccess;
   }
 };
 
@@ -64,16 +67,22 @@ export const WebIndexForm: React.FC<SlackFormProps> = ({ onSubmit }) => {
         initialValues={{ url: "" }}
         validationSchema={validationSchema}
         onSubmit={(values, formikHelpers) =>
-          handleSubmit(values, formikHelpers, setPopup)
+          handleSubmit(values, formikHelpers, setPopup).then((isSuccess) =>
+            onSubmit(isSuccess)
+          )
         }
       >
         {({ isSubmitting }) => (
           <Form>
-            <TextFormField name="url" label="URL to Scrape:" />
+            <TextFormField name="url" label="URL to Index:" />
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
+              className={
+                "bg-slate-500 hover:bg-slate-700 text-white " +
+                "font-bold py-2 px-4 rounded focus:outline-none " +
+                "focus:shadow-outline w-full max-w-xs"
+              }
             >
               Index
             </button>

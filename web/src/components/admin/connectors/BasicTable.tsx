@@ -19,9 +19,16 @@ export const BasicTable: FC<BasicTableProps> = ({ columns, data }) => {
     <div className="overflow-x-auto">
       <table className="w-full table-auto">
         <thead>
-          <tr className="text-left border border-gray-300">
+          <tr className="text-left bg-gray-700">
             {columns.map((column, index) => (
-              <th key={index} className="px-4 py-2 font-bold">
+              <th
+                key={index}
+                className={
+                  "px-4 py-2 font-bold" +
+                  (index === 0 ? " rounded-tl-md" : "") +
+                  (index === columns.length - 1 ? " rounded-tr-md" : "")
+                }
+              >
                 {column.header}
               </th>
             ))}
@@ -29,18 +36,28 @@ export const BasicTable: FC<BasicTableProps> = ({ columns, data }) => {
         </thead>
         <tbody>
           {data.map((row, rowIndex) => (
-            <tr
-              key={rowIndex}
-              className={rowIndex % 2 === 0 ? "bg-gray-600" : "bg-gray-700"}
-            >
-              {columns.map((column, colIndex) => (
-                <td
-                  key={colIndex}
-                  className="px-4 py-2 border-b border-gray-500"
-                >
-                  {row[column.key]}
-                </td>
-              ))}
+            <tr key={rowIndex} className="text-sm">
+              {columns.map((column, colIndex) => {
+                let entryClassName = "px-4 py-2 border-b border-gray-700";
+                const isFinalRow = rowIndex === data.length - 1;
+                if (colIndex === 0) {
+                  entryClassName += " border-l";
+                  if (isFinalRow) {
+                    entryClassName += " rounded-bl-md";
+                  }
+                }
+                if (colIndex === columns.length - 1) {
+                  entryClassName += " border-r";
+                  if (isFinalRow) {
+                    entryClassName += " rounded-br-md";
+                  }
+                }
+                return (
+                  <td key={colIndex} className={entryClassName}>
+                    {row[column.key]}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>

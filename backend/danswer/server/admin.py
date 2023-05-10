@@ -13,6 +13,7 @@ from danswer.db.models import IndexingStatus
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
+from fastapi import HTTPException
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/admin")
@@ -57,6 +58,8 @@ class IndexAttemptSnapshot(BaseModel):
     url: str
     status: IndexingStatus
     time_created: datetime
+    time_updated: datetime
+    docs_indexed: int
 
 
 class ListWebsiteIndexAttemptsResponse(BaseModel):
@@ -72,6 +75,10 @@ async def list_website_index_attempts() -> ListWebsiteIndexAttemptsResponse:
                 url=index_attempt.connector_specific_config["url"],
                 status=index_attempt.status,
                 time_created=index_attempt.time_created,
+                time_updated=index_attempt.time_updated,
+                docs_indexed=0
+                if not index_attempt.document_ids
+                else len(index_attempt.document_ids),
             )
             for index_attempt in index_attempts
         ]

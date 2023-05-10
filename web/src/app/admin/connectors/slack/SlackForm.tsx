@@ -1,13 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
-import { Popup } from "./Popup";
-import { TextFormField } from "./Field";
-
-interface FormData {
-  slack_bot_token: string;
-  workspace_id: string;
-}
+import { Popup } from "../../../../components/admin/connectors/Popup";
+import { TextFormField } from "../../../../components/admin/connectors/Field";
+import { SlackConfig } from "./interfaces";
 
 const validationSchema = Yup.object().shape({
   slack_bot_token: Yup.string().required("Please enter your Slack Bot Token"),
@@ -17,18 +13,14 @@ const validationSchema = Yup.object().shape({
   ),
 });
 
-const getConfig = async (): Promise<FormData> => {
-  const response = await fetch("/api/admin/connectors/slack/config");
-  return response.json();
-};
-
 const handleSubmit = async (
-  values: FormData,
-  { setSubmitting }: FormikHelpers<FormData>,
+  values: SlackConfig,
+  { setSubmitting }: FormikHelpers<SlackConfig>,
   setPopup: (
     popup: { message: string; type: "success" | "error" } | null
   ) => void
 ) => {
+  let isSuccess = false;
   setSubmitting(true);
   try {
     const response = await fetch("/api/admin/connectors/slack/config", {
@@ -40,6 +32,7 @@ const handleSubmit = async (
     });
 
     if (response.ok) {
+      isSuccess = true;
       setPopup({ message: "Success!", type: "success" });
     } else {
       const errorData = await response.json();
@@ -53,38 +46,33 @@ const handleSubmit = async (
       setPopup(null);
     }, 3000);
   }
+  return isSuccess;
 };
 
 interface SlackFormProps {
+  existingSlackConfig: SlackConfig;
   onSubmit: (isSuccess: boolean) => void;
 }
 
-export const SlackForm: React.FC<SlackFormProps> = ({ onSubmit }) => {
-  const [initialValues, setInitialValues] = React.useState<FormData>();
+export const SlackForm: React.FC<SlackFormProps> = ({
+  existingSlackConfig,
+  onSubmit,
+}) => {
   const [popup, setPopup] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
 
-  useEffect(() => {
-    getConfig().then((response) => {
-      setInitialValues(response);
-    });
-  }, []);
-
-  if (!initialValues) {
-    // TODO (chris): improve
-    return <div>Loading...</div>;
-  }
-
   return (
     <>
       {popup && <Popup message={popup.message} type={popup.type} />}
       <Formik
-        initialValues={initialValues}
+        initialValues={existingSlackConfig}
         validationSchema={validationSchema}
         onSubmit={(values, formikHelpers) =>
-          handleSubmit(values, formikHelpers, setPopup)
+          handleSubmit(values, formikHelpers, setPopup).then((isSuccess) =>
+            onSubmit(isSuccess)
+          )
         }
       >
         {({ isSubmitting }) => (
