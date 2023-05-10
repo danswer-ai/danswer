@@ -8,6 +8,12 @@ APP_PORT = 8080
 
 
 #####
+# User Facing Features Configs
+#####
+BLURB_LENGTH = 200  # Characters. Blurbs will be truncated at the first punctuation after this many characters.
+
+
+#####
 # Vector DB Configs
 #####
 DEFAULT_VECTOR_STORE = os.environ.get("VECTOR_DB", "qdrant")

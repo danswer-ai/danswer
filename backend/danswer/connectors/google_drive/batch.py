@@ -121,7 +121,7 @@ class BatchGoogleDriveLoader(BatchLoader):
             doc_batch = []
             for file in files_batch:
                 text_contents = extract_text(file, service)
-                full_context = file["name"] + " " + text_contents
+                full_context = file["name"] + " - " + text_contents
 
                 doc_batch.append(
                     Document(

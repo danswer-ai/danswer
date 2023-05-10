@@ -8,6 +8,7 @@ from danswer.connectors.models import Document
 @dataclass
 class BaseChunk:
     chunk_id: int
+    blurb: str  # The first sentence(s) of the first Section of the chunk
     content: str
     source_links: Optional[
         dict[int, str]
