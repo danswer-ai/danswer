@@ -17,6 +17,7 @@ from danswer.server.models import QAQuestion
 from danswer.server.models import QAResponse
 from danswer.server.models import ServerStatus
 from danswer.server.models import UserByEmail
+from danswer.server.models import UserRoleResponse
 from danswer.utils.clients import TSClient
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
@@ -47,6 +48,11 @@ async def admin_route(user: User = Depends(current_admin_user)):
 @router.api_route("/test", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
 def test_endpoint(request: Request):
     print(request)
+
+
+@router.get("/get-user-role", response_model=UserRoleResponse)
+async def get_user_role(user: User = Depends(current_active_user)):
+    return UserRoleResponse(role=user.role)
 
 
 @router.get("/", response_model=ServerStatus)
