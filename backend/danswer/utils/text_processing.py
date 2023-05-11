@@ -26,5 +26,6 @@ def shared_precompare_cleanup(text: str) -> str:
     text = text.replace(".", "")
     text = text.replace(":", "")
     text = text.replace(",", "")
+    text = text.replace("-", "")
 
     return text

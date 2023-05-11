@@ -66,6 +66,11 @@ def get_default_reranking_model() -> CrossEncoder:
     return _RERANK_MODEL
 
 
+def warm_up_models() -> None:
+    get_default_embedding_model().encode("Danswer is so cool")
+    get_default_reranking_model().predict(("What is Danswer", "Enterprise QA"))  # type: ignore
+
+
 @log_function_time()
 def semantic_reranking(
     query: str,
