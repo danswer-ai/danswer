@@ -61,10 +61,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
     target.style.height = `${newHeight}px`;
   };
 
-  // const handleSubmit = (event: KeyboardEvent<HTMLInputElement>) => {
-  //   onSearch(searchTerm);
-  // };
-
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       onSearch(searchTerm);
