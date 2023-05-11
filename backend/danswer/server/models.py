@@ -6,6 +6,10 @@ class ServerStatus(BaseModel):
     status: str
 
 
+class UserRoleResponse(BaseModel):
+    role: str
+
+
 class QAQuestion(BaseModel):
     query: str
     collection: str
