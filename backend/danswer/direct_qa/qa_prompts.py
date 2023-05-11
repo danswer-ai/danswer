@@ -10,7 +10,8 @@ SYSTEM_ROLE = "You are a Question Answering system that answers queries based on
 
 BASE_PROMPT = (
     f"Answer the query based on provided documents and quote relevant sections. "
-    f"Respond with a json containing a concise answer and up to three most relevant quotes from the documents.\n"
+    f"Respond with a json containing a concise answer and up to three most relevant quotes from the documents. "
+    f"The quotes must be EXACT substrings from the documents.\n"
 )
 
 UNABLE_TO_FIND_JSON_MSG = (

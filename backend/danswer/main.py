@@ -86,6 +86,15 @@ def get_application() -> FastAPI:
         RequestValidationError, validation_exception_handler
     )
 
+    @application.on_event("startup")
+    async def startup_event() -> None:
+        from danswer.semantic_search.semantic_search import (
+            warm_up_models,
+        )  # To avoid circular imports
+
+        warm_up_models()
+        logger.info("Semantic Search models are ready.")
+
     return application
 
 
