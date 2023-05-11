@@ -11,7 +11,7 @@ from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
-from danswer.semantic_search.semantic_search import DOC_EMBEDDING_DIM
+from danswer.configs.model_configs import DOC_EMBEDDING_DIM
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logging import setup_logger
 from qdrant_client import QdrantClient

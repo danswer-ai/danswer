@@ -1,3 +1,4 @@
+import json
 import time
 from http import HTTPStatus
 
@@ -11,6 +12,7 @@ from danswer.datastores import create_datastore
 from danswer.db.engine import build_async_engine
 from danswer.db.models import User
 from danswer.direct_qa import get_default_backend_qa_model
+from danswer.direct_qa.question_answer import yield_json_line
 from danswer.semantic_search.semantic_search import retrieve_ranked_documents
 from danswer.server.models import KeywordResponse
 from danswer.server.models import QAQuestion
@@ -24,6 +26,7 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
+from fastapi.responses import StreamingResponse
 from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -78,29 +81,73 @@ async def promote_admin(
     return
 
 
-@router.post("/direct-qa", response_model=QAResponse)
+@router.get("/direct-qa", response_model=QAResponse)
 def direct_qa(question: QAQuestion):
     start_time = time.time()
-    qa_model = get_default_backend_qa_model()
+
     query = question.query
     collection = question.collection
     filters = question.filters
-
-    datastore = create_datastore(collection)
-
     logger.info(f"Received semantic query: {query}")
 
-    ranked_chunks = retrieve_ranked_documents(query, filters, datastore)
+    ranked_chunks = retrieve_ranked_documents(
+        query, filters, create_datastore(collection)
+    )
     if not ranked_chunks:
         return {"answer": None, "quotes": None}
 
+    qa_model = get_default_backend_qa_model()
     answer, quotes = qa_model.answer_question(query, ranked_chunks)
+
     logger.info(f"Total QA took {time.time() - start_time} seconds")
 
     return QAResponse(answer=answer, quotes=quotes)
 
 
-@router.post("/keyword-search", response_model=KeywordResponse)
+@router.get("/stream-direct-qa")
+def stream_direct_qa(question: QAQuestion):
+    top_documents_key = "top_documents"
+    answer_key = "answer"
+    quotes_key = "quotes"
+
+    def stream_qa_portions():
+        query = question.query
+        collection = question.collection
+        filters = question.filters
+        logger.info(f"Received semantic query: {query}")
+
+        ranked_chunks = retrieve_ranked_documents(
+            query, filters, create_datastore(collection)
+        )
+        if not ranked_chunks:
+            return yield_json_line(
+                {top_documents_key: None, answer_key: None, quotes_key: None}
+            )
+
+        linked_chunks = [
+            chunk
+            for chunk in ranked_chunks
+            if chunk.source_links and "0" in chunk.source_links
+        ]
+        top_docs = {
+            top_documents_key: {
+                "document section links": [
+                    chunk.source_links["0"] for chunk in linked_chunks
+                ],
+                "blurbs": [chunk.blurb for chunk in linked_chunks],
+            }
+        }
+        yield yield_json_line(top_docs)
+
+        qa_model = get_default_backend_qa_model()
+        for response_dict in qa_model.stream_answer(query, ranked_chunks):
+            logger.debug(response_dict)
+            yield yield_json_line(response_dict)
+
+    return StreamingResponse(stream_qa_portions(), media_type="application/json")
+
+
+@router.get("/keyword-search", response_model=KeywordResponse)
 def keyword_search(question: QAQuestion):
     ts_client = TSClient.get_instance()
     query = question.query
