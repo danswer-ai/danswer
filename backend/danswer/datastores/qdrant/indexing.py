@@ -3,6 +3,7 @@ import uuid
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.configs.constants import ALLOWED_GROUPS
 from danswer.configs.constants import ALLOWED_USERS
+from danswer.configs.constants import BLURB
 from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import DOCUMENT_ID
@@ -58,6 +59,7 @@ def index_chunks(
                 payload={
                     DOCUMENT_ID: document.id,
                     CHUNK_ID: chunk.chunk_id,
+                    BLURB: chunk.blurb,
                     CONTENT: chunk.content,
                     SOURCE_TYPE: str(document.source.value),
                     SOURCE_LINKS: chunk.source_links,

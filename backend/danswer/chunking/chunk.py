@@ -1,7 +1,9 @@
 import abc
+import re
 from collections.abc import Callable
 
 from danswer.chunking.models import IndexChunk
+from danswer.configs.app_configs import BLURB_LENGTH
 from danswer.configs.app_configs import CHUNK_OVERLAP
 from danswer.configs.app_configs import CHUNK_SIZE
 from danswer.connectors.models import Document
@@ -12,14 +14,44 @@ SECTION_SEPARATOR = "\n\n"
 ChunkFunc = Callable[[Document], list[IndexChunk]]
 
 
+def extract_blurb(text: str, blurb_len: int) -> str:
+    if len(text) < blurb_len:
+        return text
+
+    match = re.search(r"[.!?:]", text[blurb_len:])
+    max_blub_len = min(2 * blurb_len, len(text))
+
+    end_index = (
+        max_blub_len
+        if match is None
+        else min(blurb_len + match.start() + 1, max_blub_len)
+    )
+
+    if text[end_index : end_index + 1] not in [" ", "", "\r", "\n"]:
+        last_space = text.rfind(" ", 0, end_index)
+        # If there's no space in the text (single word longer than blurb_len), return the whole text
+        end_index = last_space if last_space != -1 else len(text)
+
+    blurb = text[:end_index]
+
+    blurb = blurb.replace("\n", " ")
+    blurb = blurb.replace("\r", " ")
+    while "  " in blurb:
+        blurb = blurb.replace("  ", " ")
+
+    return blurb
+
+
 def chunk_large_section(
     section: Section,
     document: Document,
     start_chunk_id: int,
     chunk_size: int = CHUNK_SIZE,
     word_overlap: int = CHUNK_OVERLAP,
+    blurb_len: int = BLURB_LENGTH,
 ) -> list[IndexChunk]:
     section_text = section.text
+    blurb = extract_blurb(section_text, blurb_len)
     char_count = len(section_text)
     chunk_strs: list[str] = []
     start_pos = segment_start_pos = 0
@@ -61,6 +93,7 @@ def chunk_large_section(
             IndexChunk(
                 source_document=document,
                 chunk_id=start_chunk_id + chunk_ind,
+                blurb=blurb,
                 content=chunk_str,
                 source_links={0: section.link},
                 section_continuation=(chunk_ind != 0),
@@ -73,6 +106,7 @@ def chunk_document(
     document: Document,
     chunk_size: int = CHUNK_SIZE,
     subsection_overlap: int = CHUNK_OVERLAP,
+    blurb_len=BLURB_LENGTH,
 ) -> list[IndexChunk]:
     chunks: list[IndexChunk] = []
     link_offsets: dict[int, str] = {}
@@ -90,6 +124,7 @@ def chunk_document(
                     IndexChunk(
                         source_document=document,
                         chunk_id=len(chunks),
+                        blurb=extract_blurb(chunk_text, blurb_len),
                         content=chunk_text,
                         source_links=link_offsets,
                         section_continuation=False,
@@ -104,6 +139,7 @@ def chunk_document(
                 start_chunk_id=len(chunks),
                 chunk_size=chunk_size,
                 word_overlap=subsection_overlap,
+                blurb_len=blurb_len,
             )
             chunks.extend(large_section_chunks)
             continue
@@ -119,6 +155,7 @@ def chunk_document(
                 IndexChunk(
                     source_document=document,
                     chunk_id=len(chunks),
+                    blurb=extract_blurb(chunk_text, blurb_len),
                     content=chunk_text,
                     source_links=link_offsets,
                     section_continuation=False,
@@ -133,6 +170,7 @@ def chunk_document(
             IndexChunk(
                 source_document=document,
                 chunk_id=len(chunks),
+                blurb=extract_blurb(chunk_text, blurb_len),
                 content=chunk_text,
                 source_links=link_offsets,
                 section_continuation=False,

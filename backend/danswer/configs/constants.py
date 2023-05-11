@@ -2,6 +2,7 @@ from enum import Enum
 
 DOCUMENT_ID = "document_id"
 CHUNK_ID = "chunk_id"
+BLURB = "blurb"
 CONTENT = "content"
 SOURCE_TYPE = "source_type"
 SOURCE_LINKS = "source_links"
