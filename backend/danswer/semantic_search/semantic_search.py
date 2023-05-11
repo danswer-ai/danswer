@@ -102,7 +102,7 @@ def retrieve_ranked_documents(
         return None
     ranked_chunks = semantic_reranking(query, top_chunks, filtered_result_set_size)
 
-    top_docs = [ranked_chunk.document_id for ranked_chunk in ranked_chunks]
+    top_docs = [ranked_chunk.source_links["0"] for ranked_chunk in ranked_chunks]
     files_log_msg = f"Top links from semantic search: {', '.join(top_docs)}"
     logger.info(files_log_msg)
 

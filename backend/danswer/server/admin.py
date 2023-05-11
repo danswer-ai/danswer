@@ -35,7 +35,7 @@ def modify_slack_config(slack_config: SlackConfig):
 
 
 @router.post("/connectors/slack/auth")
-def modify_slack_config(slack_config: SlackConfig):
+def modify_slack_auth(slack_config: SlackConfig):
     update_slack_config(slack_config)
 
 

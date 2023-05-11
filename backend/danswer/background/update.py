@@ -77,7 +77,7 @@ async def run_update():
         try:
             # TODO (chris): make all connectors async + spawn processes to
             # parallelize / take advantage of multiple cores + implement retries
-            document_ids: list[str] = []
+            document_ids = []
             async for doc_batch in BatchWebLoader(base_url=base_url).async_load():
                 chunks = indexing_pipeline(doc_batch)
                 document_ids.extend([chunk.source_document.id for chunk in chunks])

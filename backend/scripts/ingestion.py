@@ -5,6 +5,7 @@ from danswer.chunking.chunk import Chunker
 from danswer.chunking.chunk import DefaultChunker
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
+from danswer.connectors.github.batch import BatchGithubLoader
 from danswer.connectors.google_drive.batch import BatchGoogleDriveLoader
 from danswer.connectors.slack.batch import BatchSlackLoader
 from danswer.connectors.type_aliases import BatchLoader
@@ -78,9 +79,23 @@ def load_google_drive_batch(qdrant_collection: str):
     )
 
 
+def load_github_batch(owner: str, repo: str, qdrant_collection: str):
+    logger.info("Loading documents from Github.")
+    load_batch(
+        BatchGithubLoader(
+            repo_owner=owner, repo_name=repo, batch_size=INDEX_BATCH_SIZE
+        ),
+        DefaultChunker(),
+        DefaultEmbedder(),
+        QdrantDatastore(collection=qdrant_collection),
+    )
+
+
 class BatchLoadingArgs(argparse.Namespace):
-    slack_export_dir: str
     website_url: str
+    github_owner: str
+    github_repo: str
+    slack_export_dir: str
     qdrant_collection: str
     rebuild_index: bool
 
@@ -90,6 +105,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--website-url",
         default="https://docs.github.com/en/actions",
+    )
+    parser.add_argument(
+        "--github-owner",
+        default="danswer-ai",
+    )
+    parser.add_argument(
+        "--github-repo",
+        default="danswer",
     )
     parser.add_argument(
         "--slack-export-dir",
@@ -109,6 +132,7 @@ if __name__ == "__main__":
     if args.rebuild_index:
         recreate_collection(args.qdrant_collection)
 
-    # load_slack_batch(args.slack_export_dir, args.qdrant_collection)
+    load_slack_batch(args.slack_export_dir, args.qdrant_collection)
     load_web_batch(args.website_url, args.qdrant_collection)
-    # load_google_drive_batch(args.qdrant_collection)
+    load_google_drive_batch(args.qdrant_collection)
+    load_github_batch(args.github_owner, args.github_repo, args.qdrant_collection)
