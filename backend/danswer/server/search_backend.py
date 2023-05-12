@@ -5,6 +5,7 @@ from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_active_user
 from danswer.auth.users import current_admin_user
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
+from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.datastores import create_datastore
@@ -16,6 +17,7 @@ from danswer.semantic_search.semantic_search import retrieve_ranked_documents
 from danswer.server.models import KeywordResponse
 from danswer.server.models import QAQuestion
 from danswer.server.models import QAResponse
+from danswer.server.models import SearchDoc
 from danswer.server.models import ServerStatus
 from danswer.server.models import UserByEmail
 from danswer.server.models import UserRoleResponse
@@ -81,7 +83,7 @@ async def promote_admin(
 
 
 @router.get("/direct-qa", response_model=QAResponse)
-def direct_qa(question: QAQuestion = Depends()):
+def direct_qa(question: QAQuestion = Depends()) -> QAResponse:
     start_time = time.time()
 
     query = question.query
@@ -93,21 +95,31 @@ def direct_qa(question: QAQuestion = Depends()):
         query, filters, create_datastore(collection)
     )
     if not ranked_chunks:
-        return {"answer": None, "quotes": None}
+        return QAResponse(answer=None, quotes=None, ranked_documents=None)
+
+    top_docs = [
+        SearchDoc(
+            semantic_name=chunk.semantic_identifier,
+            link=chunk.source_links.get("0") if chunk.source_links else None,
+            blurb=chunk.blurb,
+            source_type=chunk.source_type,
+        )
+        for chunk in ranked_chunks
+    ]
 
     qa_model = get_default_backend_qa_model()
-    answer, quotes = qa_model.answer_question(query, ranked_chunks)
+    answer, quotes = qa_model.answer_question(
+        query, ranked_chunks[:NUM_RERANKED_RESULTS]
+    )
 
     logger.info(f"Total QA took {time.time() - start_time} seconds")
 
-    return QAResponse(answer=answer, quotes=quotes)
+    return QAResponse(answer=answer, quotes=quotes, ranked_documents=top_docs)
 
 
 @router.get("/stream-direct-qa")
 def stream_direct_qa(question: QAQuestion = Depends()):
     top_documents_key = "top_documents"
-    answer_key = "answer"
-    quotes_key = "quotes"
 
     def stream_qa_portions():
         query = question.query
@@ -120,26 +132,25 @@ def stream_direct_qa(question: QAQuestion = Depends()):
         )
         if not ranked_chunks:
             return yield_json_line(
-                {top_documents_key: None, answer_key: None, quotes_key: None}
+                QAResponse(answer=None, quotes=None, ranked_documents=None)
             )
 
-        linked_chunks = [
-            chunk
+        top_docs = [
+            SearchDoc(
+                semantic_name=chunk.semantic_identifier,
+                link=chunk.source_links.get("0") if chunk.source_links else None,
+                blurb=chunk.blurb,
+                source_type=chunk.source_type,
+            )
             for chunk in ranked_chunks
-            if chunk.source_links and "0" in chunk.source_links
         ]
-        top_docs = {
-            top_documents_key: {
-                "document section links": [
-                    chunk.source_links["0"] for chunk in linked_chunks
-                ],
-                "blurbs": [chunk.blurb for chunk in linked_chunks],
-            }
-        }
-        yield yield_json_line(top_docs)
+        top_docs_dict = {top_documents_key: [top_doc.json() for top_doc in top_docs]}
+        yield yield_json_line(top_docs_dict)
 
         qa_model = get_default_backend_qa_model()
-        for response_dict in qa_model.answer_question_stream(query, ranked_chunks):
+        for response_dict in qa_model.answer_question_stream(
+            query, ranked_chunks[:NUM_RERANKED_RESULTS]
+        ):
             logger.debug(response_dict)
             yield yield_json_line(response_dict)
 

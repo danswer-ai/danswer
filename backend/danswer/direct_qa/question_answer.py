@@ -260,7 +260,7 @@ class OpenAICompletionQA(QAModel):
                     if stream_answer_end(model_previous, event_text):
                         found_answer_end = True
                         continue
-                    yield {"answer data": event_text}
+                    yield {"answer_data": event_text}
 
         except Exception as e:
             logger.exception(e)

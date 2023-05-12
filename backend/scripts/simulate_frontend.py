@@ -1,5 +1,6 @@
 import argparse
 import json
+import urllib
 
 import requests
 from danswer.configs.app_configs import APP_PORT
@@ -78,7 +79,9 @@ if __name__ == "__main__":
                 "filters": [{SOURCE_TYPE: source_types}],
             }
             if not args.stream:
-                response = requests.get(endpoint, json=query_json)
+                response = requests.get(
+                    endpoint, params=urllib.parse.urlencode(query_json)
+                )
                 contents = json.loads(response.content)
                 if keyword_search:
                     if contents["results"]:
@@ -106,15 +109,11 @@ if __name__ == "__main__":
                     else:
                         print("No quotes found")
             else:
-                answer = ""
-                with requests.get(endpoint, json=query_json, stream=True) as r:
+                with requests.get(
+                    endpoint, params=urllib.parse.urlencode(query_json), stream=True
+                ) as r:
                     for json_response in r.iter_lines():
-                        response_dict = json.loads(json_response.decode())
-                        if "answer data" not in response_dict:
-                            print(response_dict)
-                        else:
-                            answer += response_dict["answer data"]
-                            print(answer)
+                        print(json.loads(json_response.decode()))
 
         except Exception as e:
             print(f"Failed due to {e}, retrying")
