@@ -23,7 +23,7 @@ def _check_should_run(current_time: int, last_pull: int, pull_frequency: int) ->
     return current_time - last_pull > pull_frequency * 60
 
 
-async def run_update():
+async def run_update() -> None:
     logger.info("Running update")
     # TODO (chris): implement a more generic way to run updates
     # so we don't need to edit this file for future connectors

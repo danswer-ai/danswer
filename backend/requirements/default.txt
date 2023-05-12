@@ -15,6 +15,7 @@ Mako==1.2.4
 openai==0.27.6
 playwright==1.32.1
 pydantic==1.10.7
+PyGithub==1.58.2
 PyPDF2==3.0.1
 pytest-playwright==0.3.2
 qdrant-client==1.1.0
