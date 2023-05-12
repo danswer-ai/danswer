@@ -1,6 +1,5 @@
 import inspect
 from dataclasses import dataclass
-from typing import Optional
 
 from danswer.connectors.models import Document
 
@@ -10,9 +9,9 @@ class BaseChunk:
     chunk_id: int
     blurb: str  # The first sentence(s) of the first Section of the chunk
     content: str
-    source_links: Optional[
-        dict[int, str]
-    ]  # Holds the link and the offsets into the raw Chunk text
+    source_links: dict[
+        int, str
+    ] | None  # Holds the link and the offsets into the raw Chunk text
     section_continuation: bool  # True if this Chunk's start is not at the start of a Section
 
 

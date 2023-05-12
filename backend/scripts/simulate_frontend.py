@@ -22,10 +22,17 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "-s",
+        "-t",
         "--source-types",
         type=str,
         help="Comma separated list of source types to filter by",
+    )
+
+    parser.add_argument(
+        "-s",
+        "--stream",
+        action="store_true",
+        help="Enable streaming response",
     )
 
     parser.add_argument("query", nargs="*", help="The query to process")
@@ -34,7 +41,8 @@ if __name__ == "__main__":
         try:
             user_input = input(
                 "\n\nAsk any question:\n"
-                "  - prefix with -s to add a filter by source(s)\n"
+                "  - prefix with -t to add a filter by source type(s)\n"
+                "  - prefix with -s to stream answer\n"
                 "  - input an empty string to rerun last query\n\t"
             )
 
@@ -55,40 +63,58 @@ if __name__ == "__main__":
                 source_types = source_types[0]
             query = " ".join(args.query)
 
-            endpoint = f"http://127.0.0.1:{APP_PORT}/direct-qa"
+            endpoint = (
+                f"http://127.0.0.1:{APP_PORT}/direct-qa"
+                if not args.stream
+                else f"http://127.0.0.1:{APP_PORT}/stream-direct-qa"
+            )
             if args.keyword_search:
                 endpoint = f"http://127.0.0.1:{APP_PORT}/keyword-search"
+                raise NotImplementedError("keyword search is not supported for now")
 
             query_json = {
                 "query": query,
                 "collection": QDRANT_DEFAULT_COLLECTION,
                 "filters": [{SOURCE_TYPE: source_types}],
             }
-
-            response = requests.post(endpoint, json=query_json)
-            contents = json.loads(response.content)
-            if keyword_search:
-                if contents["results"]:
-                    for link in contents["results"]:
-                        print(link)
+            if not args.stream:
+                response = requests.get(endpoint, json=query_json)
+                contents = json.loads(response.content)
+                if keyword_search:
+                    if contents["results"]:
+                        for link in contents["results"]:
+                            print(link)
+                    else:
+                        print("No matches found")
                 else:
-                    print("No matches found")
+                    answer = contents.get("answer")
+                    if answer:
+                        print("Answer: " + answer)
+                    else:
+                        print("Answer: ?")
+                    if contents.get("quotes"):
+                        for ind, (quote, quote_info) in enumerate(
+                            contents["quotes"].items()
+                        ):
+                            print(f"Quote {str(ind + 1)}:\n{quote}")
+                            print(
+                                f"Semantic Identifier: {quote_info[SEMANTIC_IDENTIFIER]}"
+                            )
+                            print(f"Blurb: {quote_info[BLURB]}")
+                            print(f"Link: {quote_info[SOURCE_LINK]}")
+                            print(f"Source: {quote_info[SOURCE_TYPE]}")
+                    else:
+                        print("No quotes found")
             else:
-                answer = contents.get("answer")
-                if answer:
-                    print("Answer: " + answer)
-                else:
-                    print("Answer: ?")
-                if contents.get("quotes"):
-                    for ind, (quote, quote_info) in enumerate(
-                        contents["quotes"].items()
-                    ):
-                        print(f"Quote {str(ind + 1)}:\n{quote}")
-                        print(f"Semantic Identifier: {quote_info[SEMANTIC_IDENTIFIER]}")
-                        print(f"Blurb: {quote_info[BLURB]}")
-                        print(f"Link: {quote_info[SOURCE_LINK]}")
-                        print(f"Source: {quote_info[SOURCE_TYPE]}")
-                else:
-                    print("No quotes found")
+                answer = ""
+                with requests.get(endpoint, json=query_json, stream=True) as r:
+                    for json_response in r.iter_lines():
+                        response_dict = json.loads(json_response.decode())
+                        if "answer data" not in response_dict:
+                            print(response_dict)
+                        else:
+                            answer += response_dict["answer data"]
+                            print(answer)
+
         except Exception as e:
             print(f"Failed due to {e}, retrying")

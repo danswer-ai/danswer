@@ -2,6 +2,8 @@ import json
 import math
 import re
 from collections.abc import Callable
+from collections.abc import Generator
+from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Tuple
@@ -35,6 +37,10 @@ from danswer.utils.timing import log_function_time
 logger = setup_logger()
 
 openai.api_key = OPENAI_API_KEY
+
+
+def yield_json_line(json_dict):
+    return json.dumps(json_dict) + "\n"
 
 
 def extract_answer_quotes_freeform(
@@ -165,6 +171,15 @@ def process_answer(
     return answer, quotes_dict
 
 
+def stream_answer_end(answer_so_far: str, next_token: str) -> bool:
+    next_token = next_token.replace('\\"', "")
+    if answer_so_far and answer_so_far[-1] != "\\":
+        next_token = next_token[1:]
+    if '"' in next_token:
+        return True
+    return False
+
+
 class OpenAICompletionQA(QAModel):
     def __init__(
         self,
@@ -206,6 +221,57 @@ class OpenAICompletionQA(QAModel):
 
         answer, quotes_dict = process_answer(model_output, context_docs)
         return answer, quotes_dict
+
+    def answer_question_stream(
+        self, query: str, context_docs: list[InferenceChunk]
+    ) -> Generator[dict[str, Any] | None, None, None]:
+        top_contents = [ranked_chunk.content for ranked_chunk in context_docs]
+        filled_prompt = self.prompt_processor(query, top_contents)
+        logger.debug(filled_prompt)
+
+        try:
+            response = openai.Completion.create(
+                prompt=filled_prompt,
+                temperature=0,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0,
+                model=self.model_version,
+                max_tokens=self.max_output_tokens,
+                stream=True,
+            )
+
+            model_output = ""
+            found_answer_start = False
+            found_answer_end = False
+            # iterate through the stream of events
+            for event in response:
+                event_text = event["choices"][0]["text"]
+                model_previous = model_output
+                model_output += event_text
+
+                if not found_answer_start and '{"answer":"' in model_output.replace(
+                    " ", ""
+                ).replace("\n", ""):
+                    found_answer_start = True
+                    continue
+
+                if found_answer_start and not found_answer_end:
+                    if stream_answer_end(model_previous, event_text):
+                        found_answer_end = True
+                        continue
+                    yield {"answer data": event_text}
+
+        except Exception as e:
+            logger.exception(e)
+            model_output = "Model Failure"
+
+        logger.debug(model_output)
+
+        answer, quotes_dict = process_answer(model_output, context_docs)
+        logger.info(answer)
+
+        yield quotes_dict
 
 
 class OpenAIChatCompletionQA(QAModel):
@@ -257,3 +323,11 @@ class OpenAIChatCompletionQA(QAModel):
 
         answer, quotes_dict = process_answer(model_output, context_docs)
         return answer, quotes_dict
+
+    @log_function_time()
+    def answer_question_stream(
+        self, query: str, context_docs: list[InferenceChunk]
+    ) -> Any:
+        raise NotImplementedError(
+            "Danswer with chat completion does not support streaming yet"
+        )

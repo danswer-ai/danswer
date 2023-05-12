@@ -1,5 +1,5 @@
 import abc
-from typing import *
+from typing import Any
 
 from danswer.chunking.models import InferenceChunk
 
@@ -7,6 +7,16 @@ from danswer.chunking.models import InferenceChunk
 class QAModel:
     @abc.abstractmethod
     def answer_question(
-        self, query: str, context_docs: list[InferenceChunk]
+        self,
+        query: str,
+        context_docs: list[InferenceChunk],
     ) -> tuple[str | None, dict[str, dict[str, str | int | None]] | None]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def answer_question_stream(
+        self,
+        query: str,
+        context_docs: list[InferenceChunk],
+    ) -> Any:
         raise NotImplementedError
