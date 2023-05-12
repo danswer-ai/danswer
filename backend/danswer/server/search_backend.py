@@ -1,4 +1,3 @@
-import json
 import time
 from http import HTTPStatus
 
