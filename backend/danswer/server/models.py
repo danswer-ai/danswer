@@ -14,6 +14,7 @@ class SearchDoc(BaseModel):
     semantic_name: str
     link: str
     blurb: str
+    source_type: str
 
 
 class QAQuestion(BaseModel):

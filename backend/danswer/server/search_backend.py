@@ -102,6 +102,7 @@ def direct_qa(question: QAQuestion = Depends()) -> QAResponse:
             semantic_name=chunk.semantic_identifier,
             link=chunk.source_links.get("0") if chunk.source_links else None,
             blurb=chunk.blurb,
+            source_type=chunk.source_type,
         )
         for chunk in ranked_chunks
     ]
@@ -139,6 +140,7 @@ def stream_direct_qa(question: QAQuestion = Depends()):
                 semantic_name=chunk.semantic_identifier,
                 link=chunk.source_links.get("0") if chunk.source_links else None,
                 blurb=chunk.blurb,
+                source_type=chunk.source_type,
             )
             for chunk in ranked_chunks
         ]
