@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
 
 
+SYNC_DB_API = "psycopg2"
 ASYNC_DB_API = "asyncpg"
 # below are intended to match the env variables names used by the official
 # postgres docker image https://hub.docker.com/_/postgres
@@ -33,7 +34,7 @@ def build_connection_string(
 
 
 def build_engine() -> Engine:
-    connection_string = build_connection_string()
+    connection_string = build_connection_string(db_api=SYNC_DB_API)
     return create_engine(connection_string)
 
 
