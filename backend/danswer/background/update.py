@@ -23,7 +23,7 @@ def _check_should_run(current_time: int, last_pull: int, pull_frequency: int) ->
     return current_time - last_pull > pull_frequency * 60
 
 
-async def run_update():
+async def run_update() -> None:
     logger.info("Running update")
     # TODO (chris): implement a more generic way to run updates
     # so we don't need to edit this file for future connectors
@@ -77,7 +77,7 @@ async def run_update():
         try:
             # TODO (chris): make all connectors async + spawn processes to
             # parallelize / take advantage of multiple cores + implement retries
-            document_ids = []
+            document_ids: list[str] = []
             async for doc_batch in BatchWebLoader(base_url=base_url).async_load():
                 chunks = indexing_pipeline(doc_batch)
                 document_ids.extend([chunk.source_document.id for chunk in chunks])

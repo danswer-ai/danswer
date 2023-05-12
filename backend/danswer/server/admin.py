@@ -34,11 +34,6 @@ def modify_slack_config(slack_config: SlackConfig):
     update_slack_config(slack_config)
 
 
-@router.post("/connectors/slack/auth")
-def modify_slack_auth(slack_config: SlackConfig):
-    update_slack_config(slack_config)
-
-
 class WebIndexAttemptRequest(BaseModel):
     url: str
 
