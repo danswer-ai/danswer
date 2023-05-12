@@ -81,7 +81,7 @@ async def promote_admin(
 
 
 @router.get("/direct-qa", response_model=QAResponse)
-def direct_qa(question: QAQuestion):
+def direct_qa(question: QAQuestion = Depends()):
     start_time = time.time()
 
     query = question.query
@@ -104,7 +104,7 @@ def direct_qa(question: QAQuestion):
 
 
 @router.get("/stream-direct-qa")
-def stream_direct_qa(question: QAQuestion):
+def stream_direct_qa(question: QAQuestion = Depends()):
     top_documents_key = "top_documents"
     answer_key = "answer"
     quotes_key = "quotes"
@@ -147,7 +147,7 @@ def stream_direct_qa(question: QAQuestion):
 
 
 @router.get("/keyword-search", response_model=KeywordResponse)
-def keyword_search(question: QAQuestion):
+def keyword_search(question: QAQuestion = Depends()):
     ts_client = TSClient.get_instance()
     query = question.query
     collection = question.collection
