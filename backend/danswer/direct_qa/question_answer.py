@@ -171,7 +171,7 @@ def process_answer(
     return answer, quotes_dict
 
 
-def stream_answer_end(answer_so_far, next_token):
+def stream_answer_end(answer_so_far: str, next_token: str) -> bool:
     next_token = next_token.replace('\\"', "")
     if answer_so_far and answer_so_far[-1] != "\\":
         next_token = next_token[1:]
@@ -222,7 +222,7 @@ class OpenAICompletionQA(QAModel):
         answer, quotes_dict = process_answer(model_output, context_docs)
         return answer, quotes_dict
 
-    def stream_answer(
+    def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> Generator[dict[str, Any] | None, None, None]:
         top_contents = [ranked_chunk.content for ranked_chunk in context_docs]
@@ -325,7 +325,9 @@ class OpenAIChatCompletionQA(QAModel):
         return answer, quotes_dict
 
     @log_function_time()
-    def stream_answer(self, query: str, context_docs: list[InferenceChunk]) -> Any:
+    def answer_question_stream(
+        self, query: str, context_docs: list[InferenceChunk]
+    ) -> Any:
         raise NotImplementedError(
             "Danswer with chat completion does not support streaming yet"
         )

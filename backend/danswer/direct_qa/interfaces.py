@@ -14,7 +14,7 @@ class QAModel:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def stream_answer(
+    def answer_question_stream(
         self,
         query: str,
         context_docs: list[InferenceChunk],

@@ -140,7 +140,7 @@ def stream_direct_qa(question: QAQuestion):
         yield yield_json_line(top_docs)
 
         qa_model = get_default_backend_qa_model()
-        for response_dict in qa_model.stream_answer(query, ranked_chunks):
+        for response_dict in qa_model.answer_question_stream(query, ranked_chunks):
             logger.debug(response_dict)
             yield yield_json_line(response_dict)
 
