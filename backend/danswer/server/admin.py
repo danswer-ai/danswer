@@ -39,14 +39,14 @@ class WebIndexAttemptRequest(BaseModel):
 
 
 @router.post("/connectors/web/index-attempt", status_code=201)
-async def index_website(web_index_attempt_request: WebIndexAttemptRequest):
+def index_website(web_index_attempt_request: WebIndexAttemptRequest) -> None:
     index_request = IndexAttempt(
         source=DocumentSource.WEB,
         input_type=InputType.PULL,
         connector_specific_config={"url": web_index_attempt_request.url},
         status=IndexingStatus.NOT_STARTED,
     )
-    await insert_index_attempt(index_request)
+    insert_index_attempt(index_request)
 
 
 class IndexAttemptSnapshot(BaseModel):
@@ -62,8 +62,8 @@ class ListWebsiteIndexAttemptsResponse(BaseModel):
 
 
 @router.get("/connectors/web/index-attempt")
-async def list_website_index_attempts() -> ListWebsiteIndexAttemptsResponse:
-    index_attempts = await fetch_index_attempts(sources=[DocumentSource.WEB])
+def list_website_index_attempts() -> ListWebsiteIndexAttemptsResponse:
+    index_attempts = fetch_index_attempts(sources=[DocumentSource.WEB])
     return ListWebsiteIndexAttemptsResponse(
         index_attempts=[
             IndexAttemptSnapshot(

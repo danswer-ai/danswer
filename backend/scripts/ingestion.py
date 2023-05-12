@@ -7,9 +7,9 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.connectors.github.batch import BatchGithubLoader
 from danswer.connectors.google_drive.batch import BatchGoogleDriveLoader
+from danswer.connectors.interfaces import PullLoader
 from danswer.connectors.slack.batch import BatchSlackLoader
-from danswer.connectors.type_aliases import BatchLoader
-from danswer.connectors.web.batch import BatchWebLoader
+from danswer.connectors.web.pull import WebLoader
 from danswer.datastores.interfaces import Datastore
 from danswer.datastores.qdrant.indexing import recreate_collection
 from danswer.datastores.qdrant.store import QdrantDatastore
@@ -22,7 +22,7 @@ logger = setup_logger()
 
 
 def load_batch(
-    doc_loader: BatchLoader,
+    doc_loader: PullLoader,
     chunker: Chunker,
     embedder: Embedder,
     datastore: Datastore,
@@ -62,7 +62,7 @@ def load_slack_batch(file_path: str, qdrant_collection: str):
 def load_web_batch(url: str, qdrant_collection: str):
     logger.info("Loading documents from web.")
     load_batch(
-        BatchWebLoader(base_url=url, batch_size=INDEX_BATCH_SIZE),
+        WebLoader(base_url=url, batch_size=INDEX_BATCH_SIZE),
         DefaultChunker(),
         DefaultEmbedder(),
         QdrantDatastore(collection=qdrant_collection),

@@ -1,11 +1,10 @@
-import asyncio
 import time
 from typing import cast
 
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.slack.config import get_pull_frequency
-from danswer.connectors.slack.pull import SlackPullLoader
-from danswer.connectors.web.batch import BatchWebLoader
+from danswer.connectors.slack.pull import PeriodicSlackLoader
+from danswer.connectors.web.pull import WebLoader
 from danswer.db.index_attempt import fetch_index_attempts
 from danswer.db.index_attempt import update_index_attempt
 from danswer.db.models import IndexingStatus
@@ -23,7 +22,11 @@ def _check_should_run(current_time: int, last_pull: int, pull_frequency: int) ->
     return current_time - last_pull > pull_frequency * 60
 
 
-async def run_update() -> None:
+def run_update() -> None:
+    # NOTE: have to make this async due to fastapi users only supporting an async
+    # driver for postgres. In the future, we should figure out a way to
+    # make it work with sync drivers so we don't need to make all code touching
+    # the database async
     logger.info("Running update")
     # TODO (chris): implement a more generic way to run updates
     # so we don't need to edit this file for future connectors
@@ -37,7 +40,9 @@ async def run_update() -> None:
     except ConfigNotFoundError:
         pull_frequency = 0
     if pull_frequency:
-        last_slack_pull_key = LAST_PULL_KEY_TEMPLATE.format(SlackPullLoader.__name__)
+        last_slack_pull_key = LAST_PULL_KEY_TEMPLATE.format(
+            PeriodicSlackLoader.__name__
+        )
         try:
             last_pull = cast(int, dynamic_config_store.load(last_slack_pull_key))
         except ConfigNotFoundError:
@@ -47,7 +52,7 @@ async def run_update() -> None:
             current_time, last_pull, pull_frequency
         ):
             logger.info(f"Running slack pull from {last_pull or 0} to {current_time}")
-            for doc_batch in SlackPullLoader().load(last_pull or 0, current_time):
+            for doc_batch in PeriodicSlackLoader().load(last_pull or 0, current_time):
                 indexing_pipeline(doc_batch)
             dynamic_config_store.store(last_slack_pull_key, current_time)
 
@@ -56,7 +61,7 @@ async def run_update() -> None:
     # prevent race conditions across multiple background jobs. For now,
     # this assumes we only ever run a single background job at a time
     # TODO (chris): make this generic for all pull connectors (not just web)
-    not_started_index_attempts = await fetch_index_attempts(
+    not_started_index_attempts = fetch_index_attempts(
         sources=[DocumentSource.WEB], statuses=[IndexingStatus.NOT_STARTED]
     )
     for not_started_index_attempt in not_started_index_attempts:
@@ -67,7 +72,7 @@ async def run_update() -> None:
             f"{not_started_index_attempt.input_type}, and connector_specific_config: "
             f"{not_started_index_attempt.connector_specific_config}"
         )
-        await update_index_attempt(
+        update_index_attempt(
             index_attempt_id=not_started_index_attempt.id,
             new_status=IndexingStatus.IN_PROGRESS,
         )
@@ -75,10 +80,10 @@ async def run_update() -> None:
         error_msg = None
         base_url = not_started_index_attempt.connector_specific_config["url"]
         try:
-            # TODO (chris): make all connectors async + spawn processes to
-            # parallelize / take advantage of multiple cores + implement retries
+            # TODO (chris): spawn processes to parallelize / take advantage of
+            # multiple cores + implement retries
             document_ids: list[str] = []
-            async for doc_batch in BatchWebLoader(base_url=base_url).async_load():
+            for doc_batch in WebLoader(base_url=base_url).load():
                 chunks = indexing_pipeline(doc_batch)
                 document_ids.extend([chunk.source_document.id for chunk in chunks])
         except Exception as e:
@@ -87,7 +92,7 @@ async def run_update() -> None:
             )
             error_msg = str(e)
 
-        await update_index_attempt(
+        update_index_attempt(
             index_attempt_id=not_started_index_attempt.id,
             new_status=IndexingStatus.FAILED if error_msg else IndexingStatus.SUCCESS,
             document_ids=document_ids if not error_msg else None,
@@ -95,11 +100,11 @@ async def run_update() -> None:
         )
 
 
-async def update_loop(delay: int = 60):
+def update_loop(delay: int = 60):
     while True:
         start = time.time()
         try:
-            await run_update()
+            run_update()
         except Exception:
             logger.exception("Failed to run update")
         sleep_time = delay - (time.time() - start)
@@ -108,4 +113,4 @@ async def update_loop(delay: int = 60):
 
 
 if __name__ == "__main__":
-    asyncio.run(update_loop())
+    update_loop()

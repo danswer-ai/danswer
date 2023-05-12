@@ -7,10 +7,10 @@ from typing import cast
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.interfaces import PullLoader
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.connectors.slack.utils import get_message_link
-from danswer.connectors.type_aliases import BatchLoader
 
 
 def _process_batch_event(
@@ -58,7 +58,9 @@ def _process_batch_event(
     return None
 
 
-class BatchSlackLoader(BatchLoader):
+class BatchSlackLoader(PullLoader):
+    """Loads from an unzipped slack workspace export"""
+
     def __init__(
         self, export_path_str: str, batch_size: int = INDEX_BATCH_SIZE
     ) -> None:

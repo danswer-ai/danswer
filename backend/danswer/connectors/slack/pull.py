@@ -7,12 +7,12 @@ from typing import List
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.interfaces import RangePullLoader
+from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.connectors.slack.utils import get_client
 from danswer.connectors.slack.utils import get_message_link
-from danswer.connectors.type_aliases import PullLoader
-from danswer.connectors.type_aliases import SecondsSinceUnixEpoch
 from danswer.utils.logging import setup_logger
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -200,7 +200,7 @@ def get_all_docs(
     return docs
 
 
-class SlackPullLoader(PullLoader):
+class PeriodicSlackLoader(RangePullLoader):
     def __init__(self, batch_size: int = INDEX_BATCH_SIZE) -> None:
         self.client = get_client()
         self.batch_size = batch_size
@@ -208,7 +208,6 @@ class SlackPullLoader(PullLoader):
     def load(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> Generator[List[Document], None, None]:
-        # TODO: make this respect start and end
         all_docs = get_all_docs(client=self.client, oldest=str(start), latest=str(end))
         for i in range(0, len(all_docs), self.batch_size):
             yield all_docs[i : i + self.batch_size]

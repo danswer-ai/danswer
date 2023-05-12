@@ -4,9 +4,9 @@ from collections.abc import Generator
 from danswer.configs.app_configs import GITHUB_ACCESS_TOKEN
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.interfaces import PullLoader
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.connectors.type_aliases import BatchLoader
 from danswer.utils.logging import setup_logger
 from github import Github
 
@@ -24,7 +24,7 @@ def get_pr_batches(pull_requests, batch_size):
         yield batch
 
 
-class BatchGithubLoader(BatchLoader):
+class BatchGithubLoader(PullLoader):
     def __init__(
         self,
         repo_owner: str,

@@ -7,9 +7,9 @@ from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import GOOGLE_DRIVE_TOKENS_JSON
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.interfaces import PullLoader
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.connectors.type_aliases import BatchLoader
 from danswer.utils.logging import setup_logger
 from google.auth.transport.requests import Request  # type: ignore
 from google.oauth2.credentials import Credentials  # type: ignore
@@ -103,7 +103,11 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
         return "\n".join(page.extract_text() for page in pdf_reader.pages)
 
 
-class BatchGoogleDriveLoader(BatchLoader):
+class BatchGoogleDriveLoader(PullLoader):
+    """
+    Loads everything in a Google Drive account
+    """
+
     def __init__(
         self,
         batch_size: int = INDEX_BATCH_SIZE,

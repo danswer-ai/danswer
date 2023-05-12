@@ -1,9 +1,13 @@
 import os
 from collections.abc import AsyncGenerator
+from collections.abc import Generator
 
+from sqlalchemy.engine import create_engine
+from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.orm import Session
 
 
 ASYNC_DB_API = "asyncpg"
@@ -26,6 +30,11 @@ def build_connection_string(
     db: str = DEFAULT_DB,
 ) -> str:
     return f"postgresql+{db_api}://{user}:{password}@{host}:{port}/{db}"
+
+
+def build_engine() -> Engine:
+    connection_string = build_connection_string()
+    return create_engine(connection_string)
 
 
 def build_async_engine() -> AsyncEngine:
