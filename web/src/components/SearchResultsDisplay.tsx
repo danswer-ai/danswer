@@ -1,7 +1,7 @@
 import React from "react";
 import { Globe, SlackLogo, GoogleDriveLogo } from "@phosphor-icons/react";
 import "tailwindcss/tailwind.css";
-import { SearchResponse } from "./types";
+import { Quote, SearchResponse } from "./types";
 import { ThinkingAnimation } from "./Thinking";
 
 interface SearchResultsDisplayProps {
@@ -38,31 +38,64 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
   }
 
   const { answer, quotes } = data;
-
   if (!answer || !quotes) {
     return <div>Unable to find an answer</div>;
   }
 
-  return (
-    <div className="p-4 border rounded-md border-gray-700">
-      <h2 className="text font-bold mb-2">Answer</h2>
-      <p className="mb-4">{answer}</p>
+  const dedupedQuotes: Quote[] = [];
+  const seen = new Set<string>();
+  Object.values(quotes).forEach((quote) => {
+    if (!seen.has(quote.document_id)) {
+      dedupedQuotes.push(quote);
+      seen.add(quote.document_id);
+    }
+  });
 
-      <h2 className="text-sm font-bold mb-2">Sources</h2>
-      <div className="flex">
-        {Object.entries(quotes).map(([_, quoteInfo]) => (
-          <a
-            key={quoteInfo.document_id}
-            className="p-2 border border-gray-800 rounded-lg text-sm flex max-w-[230px] hover:bg-gray-800"
-            href={quoteInfo.link}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {getSourceIcon(quoteInfo.source_type)}
-            <p className="truncate break-all">{quoteInfo.document_id}</p>
-          </a>
+  return (
+    <>
+      <div className="p-4 border rounded-md border-gray-700">
+        <h2 className="text font-bold mb-2">AI Answer</h2>
+        <p className="mb-4">{answer}</p>
+
+        <h2 className="text-sm font-bold mb-2">Sources</h2>
+        <div className="flex">
+          {dedupedQuotes.map((quoteInfo) => (
+            <a
+              key={quoteInfo.document_id}
+              className="p-2 border border-gray-800 rounded-lg text-sm flex max-w-[230px] hover:bg-gray-800"
+              href={quoteInfo.link}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {getSourceIcon(quoteInfo.source_type)}
+              <p className="truncate break-all">
+                {quoteInfo.semantic_identifier || quoteInfo.document_id}
+              </p>
+            </a>
+          ))}
+        </div>
+      </div>
+      <div className="mt-4">
+        <div className="font-bold border-b mb-4 pb-1 border-gray-800">
+          Results
+        </div>
+        {dedupedQuotes.map((quoteInfo) => (
+          <div key={quoteInfo.document_id} className="text-sm">
+            <a
+              className="rounded-lg flex font-bold"
+              href={quoteInfo.link}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {getSourceIcon(quoteInfo.source_type)}
+              <p className="truncate break-all">
+                {quoteInfo.semantic_identifier || quoteInfo.document_id}
+              </p>
+            </a>
+            <p className="p-2 mb-2 text-gray-200">{quoteInfo.blurb}</p>
+          </div>
         ))}
       </div>
-    </div>
+    </>
   );
 };

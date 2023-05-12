@@ -7,14 +7,14 @@ import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SearchResponse } from "./types";
 
 const searchRequest = async (query: string): Promise<SearchResponse> => {
-  const response = await fetch("/api/direct-qa", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      query: query,
-      collection: "semantic_search",
-    }),
-  });
+  const url = new URL("/api/direct-qa", window.location.origin);
+  const params = new URLSearchParams({
+    query,
+    collection: "semantic_search",
+  }).toString();
+  url.search = params;
+
+  const response = await fetch(url);
   return response.json();
 };
 
