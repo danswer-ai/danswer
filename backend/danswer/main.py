@@ -90,7 +90,7 @@ def get_application() -> FastAPI:
     )
 
     @application.on_event("startup")
-    async def startup_event() -> None:
+    def startup_event() -> None:
         from danswer.semantic_search.semantic_search import (
             warm_up_models,
         )  # To avoid circular imports
