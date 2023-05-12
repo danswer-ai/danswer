@@ -10,6 +10,12 @@ class UserRoleResponse(BaseModel):
     role: str
 
 
+class SearchDoc(BaseModel):
+    semantic_name: str
+    link: str
+    blurb: str
+
+
 class QAQuestion(BaseModel):
     query: str
     collection: str
@@ -19,6 +25,7 @@ class QAQuestion(BaseModel):
 class QAResponse(BaseModel):
     answer: str | None
     quotes: dict[str, dict[str, str | int | None]] | None
+    ranked_documents: list[SearchDoc] | None
 
 
 class KeywordResponse(BaseModel):

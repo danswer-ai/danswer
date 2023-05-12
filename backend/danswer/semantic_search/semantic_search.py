@@ -19,7 +19,6 @@ import json
 from typing import List
 
 from danswer.chunking.models import InferenceChunk
-from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
 from danswer.configs.model_configs import CROSS_ENCODER_MODEL
@@ -67,7 +66,6 @@ def warm_up_models() -> None:
 def semantic_reranking(
     query: str,
     chunks: List[InferenceChunk],
-    filtered_result_set_size: int = NUM_RERANKED_RESULTS,
 ) -> List[InferenceChunk]:
     cross_encoder = get_default_reranking_model()
     sim_scores = cross_encoder.predict([(query, chunk.content) for chunk in chunks])  # type: ignore
@@ -75,11 +73,9 @@ def semantic_reranking(
     scored_results.sort(key=lambda x: x[0], reverse=True)
     ranked_sim_scores, ranked_chunks = zip(*scored_results)
 
-    logger.debug(
-        f"Reranked similarity scores: {str(ranked_sim_scores[:filtered_result_set_size])}"
-    )
+    logger.debug(f"Reranked similarity scores: {str(ranked_sim_scores)}")
 
-    return ranked_chunks[:filtered_result_set_size]
+    return ranked_chunks
 
 
 @log_function_time()
@@ -88,7 +84,6 @@ def retrieve_ranked_documents(
     filters: list[DatastoreFilter] | None,
     datastore: Datastore,
     num_hits: int = NUM_RETURNED_HITS,
-    filtered_result_set_size: int = NUM_RERANKED_RESULTS,
 ) -> List[InferenceChunk] | None:
     top_chunks = datastore.semantic_retrieval(query, filters, num_hits)
     if not top_chunks:
@@ -97,7 +92,7 @@ def retrieve_ranked_documents(
             f"Semantic search returned no results with filters: {filters_log_msg}"
         )
         return None
-    ranked_chunks = semantic_reranking(query, top_chunks, filtered_result_set_size)
+    ranked_chunks = semantic_reranking(query, top_chunks)
 
     top_docs = [ranked_chunk.source_links["0"] for ranked_chunk in ranked_chunks]
     files_log_msg = f"Top links from semantic search: {', '.join(top_docs)}"
