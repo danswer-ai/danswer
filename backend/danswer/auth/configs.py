@@ -1,5 +1,7 @@
 import os
 
+DISABLE_AUTH = os.environ.get("DISABLE_AUTH", "").lower() == "true"
+
 SECRET = os.environ.get("SECRET", "")
 SESSION_EXPIRE_TIME_SECONDS = int(os.environ.get("SESSION_EXPIRE_TIME_SECONDS", 3600))
 

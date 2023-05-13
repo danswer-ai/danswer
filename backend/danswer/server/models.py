@@ -2,10 +2,6 @@ from danswer.datastores.interfaces import DatastoreFilter
 from pydantic import BaseModel
 
 
-class ServerStatus(BaseModel):
-    status: str
-
-
 class UserRoleResponse(BaseModel):
     role: str
 
