@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from danswer.auth.users import current_admin_user
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
 from danswer.connectors.slack.config import get_slack_config
@@ -9,11 +10,13 @@ from danswer.db.index_attempt import fetch_index_attempts
 from danswer.db.index_attempt import insert_index_attempt
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
+from danswer.db.models import User
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
-from fastapi import HTTPException
+from fastapi import Depends
 from pydantic import BaseModel
+
 
 router = APIRouter(prefix="/admin")
 
@@ -21,7 +24,7 @@ logger = setup_logger()
 
 
 @router.get("/connectors/slack/config", response_model=SlackConfig)
-def fetch_slack_config() -> SlackConfig:
+def fetch_slack_config(_: User = Depends(current_admin_user)) -> SlackConfig:
     try:
         return get_slack_config()
     except ConfigNotFoundError:
@@ -29,7 +32,9 @@ def fetch_slack_config() -> SlackConfig:
 
 
 @router.post("/connectors/slack/config")
-def modify_slack_config(slack_config: SlackConfig) -> None:
+def modify_slack_config(
+    slack_config: SlackConfig, _: User = Depends(current_admin_user)
+) -> None:
     update_slack_config(slack_config)
 
 
@@ -38,7 +43,10 @@ class WebIndexAttemptRequest(BaseModel):
 
 
 @router.post("/connectors/web/index-attempt", status_code=201)
-def index_website(web_index_attempt_request: WebIndexAttemptRequest) -> None:
+def index_website(
+    web_index_attempt_request: WebIndexAttemptRequest,
+    _: User = Depends(current_admin_user),
+) -> None:
     index_request = IndexAttempt(
         source=DocumentSource.WEB,
         input_type=InputType.PULL,
@@ -61,7 +69,9 @@ class ListWebsiteIndexAttemptsResponse(BaseModel):
 
 
 @router.get("/connectors/web/index-attempt")
-def list_website_index_attempts() -> ListWebsiteIndexAttemptsResponse:
+def list_website_index_attempts(
+    _: User = Depends(current_admin_user),
+) -> ListWebsiteIndexAttemptsResponse:
     index_attempts = fetch_index_attempts(sources=[DocumentSource.WEB])
     return ListWebsiteIndexAttemptsResponse(
         index_attempts=[
