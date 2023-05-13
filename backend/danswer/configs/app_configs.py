@@ -21,6 +21,26 @@ BLURB_LENGTH = 200  # Characters. Blurbs will be truncated at the first punctuat
 # on the frontend and just sending a dummy value (or completely generating the URL)
 # on the frontend
 WEB_DOMAIN = os.environ.get("WEB_DOMAIN", "http://localhost:3000")
+APP_DOMAIN = os.environ.get("APP_DOMAIN", f"http://localhost:{APP_PORT}")
+
+
+#####
+# Auth Configs
+#####
+DISABLE_AUTH = os.environ.get("DISABLE_AUTH", "").lower() == "true"
+# Email verification not validated, haven't tried with an actual email server, probably doesn't work
+REQUIRE_EMAIL_VERIFICATION = (
+    os.environ.get("REQUIRE_EMAIL_VERIFICATION", "").lower() == "true"
+)
+SMTP_SERVER = os.environ.get("SMTP_SERVER", "localhost")
+
+SECRET = os.environ.get("SECRET", "")
+SESSION_EXPIRE_TIME_SECONDS = int(os.environ.get("SESSION_EXPIRE_TIME_SECONDS", 3600))
+VALID_EMAIL_DOMAIN = os.environ.get("VALID_EMAIL_DOMAIN", "")
+# OAuth Login Flow
+ENABLE_OAUTH = os.environ.get("ENABLE_OAUTH", "False").lower() != "false"
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
+GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
 
 
 #####
