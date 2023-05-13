@@ -7,15 +7,18 @@ from typing import Optional
 
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
-from danswer.configs.app_configs import APP_DOMAIN
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import GOOGLE_OAUTH_CLIENT_ID
 from danswer.configs.app_configs import GOOGLE_OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
+from danswer.configs.app_configs import SMTP_PASS
+from danswer.configs.app_configs import SMTP_PORT
 from danswer.configs.app_configs import SMTP_SERVER
+from danswer.configs.app_configs import SMTP_USER
 from danswer.configs.app_configs import VALID_EMAIL_DOMAIN
+from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_user_count
 from danswer.db.auth import get_user_db
@@ -47,12 +50,16 @@ def send_user_verification_email(user_email: str, token: str) -> None:
     msg["From"] = "no-reply@danswer.dev"
     msg["To"] = user_email
 
-    link = f"{APP_DOMAIN}/verify?token={token}"
+    link = f"{WEB_DOMAIN}/verify-email?token={token}"
 
     body = MIMEText(f"Click the following link to verify your email address: {link}")
     msg.attach(body)
 
-    with smtplib.SMTP(SMTP_SERVER) as s:
+    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as s:
+        s.starttls()
+        # If credentials fails with gmail, check (You need an app password, not just the basic email password)
+        # https://support.google.com/accounts/answer/185833?sjid=8512343437447396151-NA
+        s.login(SMTP_USER, SMTP_PASS)
         s.send_message(msg)
 
 
