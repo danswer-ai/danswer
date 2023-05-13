@@ -1,19 +1,30 @@
+import smtplib
 import uuid
 from collections.abc import AsyncGenerator
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from typing import Optional
 
-from danswer.auth.configs import DISABLE_AUTH
-from danswer.auth.configs import GOOGLE_OAUTH_CLIENT_ID
-from danswer.auth.configs import GOOGLE_OAUTH_CLIENT_SECRET
-from danswer.auth.configs import SECRET
-from danswer.auth.configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
+from danswer.configs.app_configs import DISABLE_AUTH
+from danswer.configs.app_configs import GOOGLE_OAUTH_CLIENT_ID
+from danswer.configs.app_configs import GOOGLE_OAUTH_CLIENT_SECRET
+from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
+from danswer.configs.app_configs import SECRET
+from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
+from danswer.configs.app_configs import SMTP_PASS
+from danswer.configs.app_configs import SMTP_PORT
+from danswer.configs.app_configs import SMTP_SERVER
+from danswer.configs.app_configs import SMTP_USER
+from danswer.configs.app_configs import VALID_EMAIL_DOMAIN
+from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_user_count
 from danswer.db.auth import get_user_db
 from danswer.db.models import AccessToken
 from danswer.db.models import User
+from danswer.utils.logging import setup_logger
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
@@ -29,6 +40,27 @@ from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from fastapi_users.db import SQLAlchemyUserDatabase
 from httpx_oauth.clients.google import GoogleOAuth2
+
+logger = setup_logger()
+
+
+def send_user_verification_email(user_email: str, token: str) -> None:
+    msg = MIMEMultipart()
+    msg["Subject"] = "Danswer Email Verification"
+    msg["From"] = "no-reply@danswer.dev"
+    msg["To"] = user_email
+
+    link = f"{WEB_DOMAIN}/verify-email?token={token}"
+
+    body = MIMEText(f"Click the following link to verify your email address: {link}")
+    msg.attach(body)
+
+    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as s:
+        s.starttls()
+        # If credentials fails with gmail, check (You need an app password, not just the basic email password)
+        # https://support.google.com/accounts/answer/185833?sjid=8512343437447396151-NA
+        s.login(SMTP_USER, SMTP_PASS)
+        s.send_message(msg)
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
@@ -52,17 +84,34 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_register(
         self, user: User, request: Optional[Request] = None
     ) -> None:
-        print(f"User {user.id} has registered.")
+        logger.info(f"User {user.id} has registered.")
 
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None
     ) -> None:
-        print(f"User {user.id} has forgot their password. Reset token: {token}")
+        logger.info(f"User {user.id} has forgot their password. Reset token: {token}")
 
     async def on_after_request_verify(
         self, user: User, token: str, request: Optional[Request] = None
     ) -> None:
-        print(f"Verification requested for user {user.id}. Verification token: {token}")
+        if VALID_EMAIL_DOMAIN:
+            if user.email.count("@") != 1:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email is not valid",
+                )
+            domain = user.email.split("@")[-1]
+            if domain != VALID_EMAIL_DOMAIN:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email domain is not valid",
+                )
+
+        logger.info(
+            f"Verification requested for user {user.id}. Verification token: {token}"
+        )
+
+        send_user_verification_email(user.email, token)
 
 
 async def get_user_manager(
@@ -92,7 +141,9 @@ google_oauth_client = GoogleOAuth2(GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_S
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 
-current_active_user = fastapi_users.current_user(active=True, optional=DISABLE_AUTH)
+current_active_user = fastapi_users.current_user(
+    active=True, verified=REQUIRE_EMAIL_VERIFICATION, optional=DISABLE_AUTH
+)
 
 
 def current_admin_user(user: User = Depends(current_active_user)) -> User | None:

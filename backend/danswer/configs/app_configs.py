@@ -24,6 +24,27 @@ WEB_DOMAIN = os.environ.get("WEB_DOMAIN", "http://localhost:3000")
 
 
 #####
+# Auth Configs
+#####
+DISABLE_AUTH = os.environ.get("DISABLE_AUTH", "").lower() == "true"
+REQUIRE_EMAIL_VERIFICATION = (
+    os.environ.get("REQUIRE_EMAIL_VERIFICATION", "").lower() == "true"
+)
+SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
+SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
+
+SECRET = os.environ.get("SECRET", "")
+SESSION_EXPIRE_TIME_SECONDS = int(os.environ.get("SESSION_EXPIRE_TIME_SECONDS", 3600))
+VALID_EMAIL_DOMAIN = os.environ.get("VALID_EMAIL_DOMAIN", "")
+# OAuth Login Flow
+ENABLE_OAUTH = os.environ.get("ENABLE_OAUTH", "").lower() != "false"
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
+GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
+
+
+#####
 # Vector DB Configs
 #####
 DEFAULT_VECTOR_STORE = os.environ.get("VECTOR_DB", "qdrant")
@@ -46,6 +67,7 @@ GOOGLE_DRIVE_TOKENS_JSON = os.environ.get("GOOGLE_DRIVE_TOKENS_JSON", "")
 GOOGLE_DRIVE_INCLUDE_SHARED = False
 
 GITHUB_ACCESS_TOKEN = os.environ.get("GITHUB_ACCESS_TOKEN", "")
+
 
 #####
 # Query Configs

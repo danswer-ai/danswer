@@ -1,6 +1,4 @@
 import uvicorn
-from danswer.auth.configs import ENABLE_OAUTH
-from danswer.auth.configs import SECRET
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
@@ -9,6 +7,8 @@ from danswer.auth.users import fastapi_users
 from danswer.auth.users import google_oauth_client
 from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
+from danswer.configs.app_configs import ENABLE_OAUTH
+from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.server.admin import router as admin_router
 from danswer.server.event_loading import router as event_processing_router

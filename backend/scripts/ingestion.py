@@ -116,7 +116,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--slack-export-dir",
-        default="/Users/chrisweaver/Downloads/test-slack-export",
+        default="~/Downloads/test-slack-export",
     )
     parser.add_argument(
         "--qdrant-collection",
@@ -133,6 +133,6 @@ if __name__ == "__main__":
         recreate_collection(args.qdrant_collection)
 
     # load_slack_batch(args.slack_export_dir, args.qdrant_collection)
-    # load_web_batch(args.website_url, args.qdrant_collection)
+    load_web_batch(args.website_url, args.qdrant_collection)
     # load_google_drive_batch(args.qdrant_collection)
-    load_github_batch(args.github_owner, args.github_repo, args.qdrant_collection)
+    # load_github_batch(args.github_owner, args.github_repo, args.qdrant_collection)
