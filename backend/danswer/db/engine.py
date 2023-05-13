@@ -1,13 +1,11 @@
 import os
 from collections.abc import AsyncGenerator
-from collections.abc import Generator
 
 from sqlalchemy.engine import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.orm import Session
 
 
 SYNC_DB_API = "psycopg2"

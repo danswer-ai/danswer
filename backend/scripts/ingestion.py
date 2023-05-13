@@ -26,7 +26,7 @@ def load_batch(
     chunker: Chunker,
     embedder: Embedder,
     datastore: Datastore,
-):
+) -> None:
     num_processed = 0
     total_chunks = 0
     for document_batch in doc_loader.load():
@@ -49,7 +49,7 @@ def load_batch(
     logger.info(f"Finished, indexed a total of {num_processed} documents")
 
 
-def load_slack_batch(file_path: str, qdrant_collection: str):
+def load_slack_batch(file_path: str, qdrant_collection: str) -> None:
     logger.info("Loading documents from Slack.")
     load_batch(
         BatchSlackLoader(export_path_str=file_path, batch_size=INDEX_BATCH_SIZE),
@@ -59,7 +59,7 @@ def load_slack_batch(file_path: str, qdrant_collection: str):
     )
 
 
-def load_web_batch(url: str, qdrant_collection: str):
+def load_web_batch(url: str, qdrant_collection: str) -> None:
     logger.info("Loading documents from web.")
     load_batch(
         WebLoader(base_url=url, batch_size=INDEX_BATCH_SIZE),
@@ -69,7 +69,7 @@ def load_web_batch(url: str, qdrant_collection: str):
     )
 
 
-def load_google_drive_batch(qdrant_collection: str):
+def load_google_drive_batch(qdrant_collection: str) -> None:
     logger.info("Loading documents from Google Drive.")
     load_batch(
         BatchGoogleDriveLoader(batch_size=INDEX_BATCH_SIZE),
@@ -79,7 +79,7 @@ def load_google_drive_batch(qdrant_collection: str):
     )
 
 
-def load_github_batch(owner: str, repo: str, qdrant_collection: str):
+def load_github_batch(owner: str, repo: str, qdrant_collection: str) -> None:
     logger.info("Loading documents from Github.")
     load_batch(
         BatchGithubLoader(
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     if args.rebuild_index:
         recreate_collection(args.qdrant_collection)
 
-    load_slack_batch(args.slack_export_dir, args.qdrant_collection)
-    load_web_batch(args.website_url, args.qdrant_collection)
-    load_google_drive_batch(args.qdrant_collection)
+    # load_slack_batch(args.slack_export_dir, args.qdrant_collection)
+    # load_web_batch(args.website_url, args.qdrant_collection)
+    # load_google_drive_batch(args.qdrant_collection)
     load_github_batch(args.github_owner, args.github_repo, args.qdrant_collection)

@@ -7,7 +7,7 @@ from danswer.direct_qa.question_answer import separate_answer_quotes
 
 
 class TestQAPostprocessing(unittest.TestCase):
-    def test_separate_answer_quotes(self):
+    def test_separate_answer_quotes(self) -> None:
         test_answer = textwrap.dedent(
             """
             It seems many people love dogs
@@ -17,9 +17,9 @@ class TestQAPostprocessing(unittest.TestCase):
         ).strip()
         answer, quotes = separate_answer_quotes(test_answer)
         self.assertEqual(answer, "It seems many people love dogs")
-        self.assertEqual(quotes[0], "A dog is a man's best friend")
+        self.assertEqual(quotes[0], "A dog is a man's best friend")  # type: ignore
         self.assertEqual(
-            quotes[1], "Air Bud was a movie about dogs and people loved it"
+            quotes[1], "Air Bud was a movie about dogs and people loved it"  # type: ignore
         )
 
         # Lowercase should be allowed
@@ -32,9 +32,9 @@ class TestQAPostprocessing(unittest.TestCase):
         ).strip()
         answer, quotes = separate_answer_quotes(test_answer)
         self.assertEqual(answer, "It seems many people love dogs")
-        self.assertEqual(quotes[0], "A dog is a man's best friend")
+        self.assertEqual(quotes[0], "A dog is a man's best friend")  # type: ignore
         self.assertEqual(
-            quotes[1], "Air Bud was a movie about dogs and people loved it"
+            quotes[1], "Air Bud was a movie about dogs and people loved it"  # type: ignore
         )
 
         # No Answer
@@ -59,10 +59,10 @@ class TestQAPostprocessing(unittest.TestCase):
         answer, quotes = separate_answer_quotes(test_answer)
         self.assertEqual(answer, "It seems many people love dogs")
         self.assertEqual(
-            quotes[0], "A well known saying is:\nA dog is a man's best friend"
+            quotes[0], "A well known saying is:\nA dog is a man's best friend"  # type: ignore
         )
         self.assertEqual(
-            quotes[1], "Air Bud was a movie about dogs and people loved it"
+            quotes[1], "Air Bud was a movie about dogs and people loved it"  # type: ignore
         )
 
         # Random patterns not picked up
@@ -77,14 +77,14 @@ class TestQAPostprocessing(unittest.TestCase):
         answer, quotes = separate_answer_quotes(test_answer)
         self.assertEqual(answer, "It seems many people love quote: dogs")
         self.assertEqual(
-            quotes[0], "Quote: A well known saying is:\nA dog is a man's best friend"
+            quotes[0], "Quote: A well known saying is:\nA dog is a man's best friend"  # type: ignore
         )
         self.assertEqual(
-            quotes[1],
+            quotes[1],  # type: ignore
             "Answer: Air Bud was a movie about dogs and quote: people loved it",
         )
 
-    def test_fuzzy_match_quotes_to_docs(self):
+    def test_fuzzy_match_quotes_to_docs(self) -> None:
         chunk_0_text = textwrap.dedent(
             """
             Here's a doc with some LINK embedded in the text
@@ -109,6 +109,8 @@ class TestQAPostprocessing(unittest.TestCase):
                 23: "first line link",
                 49: "second line link",
             },
+            blurb="anything",
+            semantic_identifier="anything",
             section_continuation=False,
         )
         test_chunk_1 = InferenceChunk(
@@ -117,6 +119,8 @@ class TestQAPostprocessing(unittest.TestCase):
             chunk_id=0,
             content=chunk_1_text,
             source_links={0: "doc 1 base", 36: "2nd line link", 82: "last link"},
+            blurb="whatever",
+            semantic_identifier="whatever",
             section_continuation=False,
         )
 

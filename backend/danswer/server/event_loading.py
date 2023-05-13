@@ -26,11 +26,11 @@ class EventHandlingResponse(BaseModel):
 
 
 @router.post("/process_slack_event", response_model=EventHandlingResponse)
-def process_slack_event(event: SlackEvent):
+def process_slack_event(event: SlackEvent) -> EventHandlingResponse:
     logger.info("Recieved slack event: %s", event.dict())
 
     if event.type == "url_verification":
-        return {"challenge": event.challenge}
+        return EventHandlingResponse(challenge=event.challenge)
 
     if event.type == "event_callback" and event.event:
         try:
@@ -54,12 +54,12 @@ def process_slack_event(event: SlackEvent):
             )
             if doc is None:
                 logger.info("Message was determined to not be indexable")
-                return {}
+                return EventHandlingResponse(challenge=None)  # @CHRIS is this right?
 
             build_indexing_pipeline()([doc])
         except Exception:
             logger.exception("Failed to process slack message")
-        return {}
+        return EventHandlingResponse(challenge=None)
 
     logger.error("Unsupported event type: %s", event.type)
-    return {}
+    return EventHandlingResponse(challenge=None)

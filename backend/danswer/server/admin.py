@@ -21,7 +21,7 @@ logger = setup_logger()
 
 
 @router.get("/connectors/slack/config", response_model=SlackConfig)
-def fetch_slack_config():
+def fetch_slack_config() -> SlackConfig:
     try:
         return get_slack_config()
     except ConfigNotFoundError:
@@ -29,7 +29,7 @@ def fetch_slack_config():
 
 
 @router.post("/connectors/slack/config")
-def modify_slack_config(slack_config: SlackConfig):
+def modify_slack_config(slack_config: SlackConfig) -> None:
     update_slack_config(slack_config)
 
 

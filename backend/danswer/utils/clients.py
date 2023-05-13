@@ -1,3 +1,4 @@
+from typing import Any
 from typing import Optional
 
 import typesense  # type: ignore
@@ -12,7 +13,7 @@ from danswer.configs.app_configs import TYPESENSE_PORT
 from qdrant_client import QdrantClient
 
 
-_qdrant_client: Optional[QdrantClient] = None
+_qdrant_client: QdrantClient | None = None
 
 
 def get_qdrant_client() -> QdrantClient:
@@ -33,16 +34,16 @@ class TSClient:
 
     @staticmethod
     def get_instance(
-        host=TYPESENSE_HOST,
-        port=TYPESENSE_PORT,
-        api_key=TYPESENSE_API_KEY,
-        timeout=DB_CONN_TIMEOUT,
+        host: str = TYPESENSE_HOST,
+        port: int = TYPESENSE_PORT,
+        api_key: str = TYPESENSE_API_KEY,
+        timeout: int = DB_CONN_TIMEOUT,
     ) -> "TSClient":
         if TSClient.__instance is None:
             TSClient(host, port, api_key, timeout)
         return TSClient.__instance  # type: ignore
 
-    def __init__(self, host, port, api_key, timeout):
+    def __init__(self, host: str, port: int, api_key: str, timeout: int) -> None:
         if TSClient.__instance is not None:
             raise Exception(
                 "Singleton instance already exists. Use TSClient.get_instance() to get the instance."
@@ -58,5 +59,5 @@ class TSClient:
             )
 
     # delegate all client operations to the third party client
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         return getattr(self.client, name)

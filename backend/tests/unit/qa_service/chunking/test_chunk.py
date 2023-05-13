@@ -17,7 +17,7 @@ WAR_AND_PEACE = (
 
 
 class TestDocumentChunking(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.large_section = Section(text=WAR_AND_PEACE, link="https://www.test.com/")
         self.document = Document(
             id="test_document",
@@ -39,11 +39,12 @@ class TestDocumentChunking(unittest.TestCase):
                     text="should be combined into one", link="https://www.test.com/5"
                 ),
             ],
-            source=DocumentSource.Web,  # arbitrary picking web, doens't matter for this test
+            source=DocumentSource.WEB,  # arbitrary picking web, doens't matter for this test
+            semantic_identifier="Whatever",
             metadata={},
         )
 
-    def test_chunk_large_section(self):
+    def test_chunk_large_section(self) -> None:
         chunks = chunk_large_section(
             section=self.large_section,
             document=self.document,
@@ -63,7 +64,7 @@ class TestDocumentChunking(unittest.TestCase):
         self.assertTrue(chunks[1].section_continuation)
         self.assertTrue(chunks[-1].section_continuation)
 
-    def test_chunk_document(self):
+    def test_chunk_document(self) -> None:
         chunks = chunk_document(self.document, chunk_size=100, subsection_overlap=3)
         self.assertEqual(len(chunks), 8)
         self.assertEqual(

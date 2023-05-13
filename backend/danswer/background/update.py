@@ -100,7 +100,7 @@ def run_update() -> None:
         )
 
 
-def update_loop(delay: int = 60):
+def update_loop(delay: int = 60) -> None:
     while True:
         start = time.time()
         try:

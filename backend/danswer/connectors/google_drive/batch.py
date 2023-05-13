@@ -54,7 +54,7 @@ def get_file_batches(
     service: discovery.Resource,
     include_shared: bool = GOOGLE_DRIVE_INCLUDE_SHARED,
     batch_size: int = INDEX_BATCH_SIZE,
-):
+) -> Generator[list[dict[str, str]], None, None]:
     next_page_token = ""
     while next_page_token is not None:
         results = (
@@ -69,7 +69,7 @@ def get_file_batches(
         )
         next_page_token = results.get("nextPageToken")
         files = results["files"]
-        valid_files = []
+        valid_files: list[dict[str, str]] = []
         for file in files:
             if file["mimeType"] in SUPPORTED_DRIVE_DOC_TYPES:
                 valid_files.append(file)

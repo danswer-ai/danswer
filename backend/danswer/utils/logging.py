@@ -1,7 +1,8 @@
 import logging
+from logging import Logger
 
 
-def setup_logger(name: str = __name__, log_level: int = logging.INFO):
+def setup_logger(name: str = __name__, log_level: int = logging.INFO) -> Logger:
     logger = logging.getLogger(name)
 
     # If the logger already has handlers, assume it was already configured and return it.

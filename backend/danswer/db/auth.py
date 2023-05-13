@@ -1,3 +1,4 @@
+from collections.abc import AsyncGenerator
 from typing import Any
 from typing import Dict
 
@@ -37,11 +38,13 @@ class SQLAlchemyUserAdminDB(SQLAlchemyUserDatabase):
         return await super().create(create_dict)
 
 
-async def get_user_db(session: AsyncSession = Depends(get_async_session)):
+async def get_user_db(
+    session: AsyncSession = Depends(get_async_session),
+) -> AsyncGenerator[SQLAlchemyUserAdminDB, None]:
     yield SQLAlchemyUserAdminDB(session, User, OAuthAccount)  # type: ignore
 
 
 async def get_access_token_db(
     session: AsyncSession = Depends(get_async_session),
-):
+) -> AsyncGenerator[SQLAlchemyAccessTokenDatabase, None]:
     yield SQLAlchemyAccessTokenDatabase(session, AccessToken)  # type: ignore

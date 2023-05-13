@@ -9,13 +9,18 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logging import setup_logger
 from github import Github
+from github.PaginatedList import PaginatedList
+from github.PullRequest import PullRequest
+
 
 logger = setup_logger()
 
 github_client = Github(GITHUB_ACCESS_TOKEN)
 
 
-def get_pr_batches(pull_requests, batch_size):
+def get_pr_batches(
+    pull_requests: PaginatedList, batch_size: int
+) -> Generator[list[PullRequest], None, None]:
     it = iter(pull_requests)
     while True:
         batch = list(itertools.islice(it, batch_size))
