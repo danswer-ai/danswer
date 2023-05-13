@@ -35,6 +35,10 @@ services:
     build:
       context: ../web
       dockerfile: Dockerfile
+    depends_on:
+      - api
+    environment:
+      - INTERNAL_AUTH_URL=http://api:8080
   db:
     image: postgres:15.2-alpine
     restart: always
