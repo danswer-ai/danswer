@@ -16,6 +16,7 @@ from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logging import setup_logger
 from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import ResponseHandlingException
+from qdrant_client.http.models.models import UpdateResult
 from qdrant_client.http.models.models import UpdateStatus
 from qdrant_client.models import Distance
 from qdrant_client.models import PointStruct
@@ -26,7 +27,9 @@ logger = setup_logger()
 DEFAULT_BATCH_SIZE = 30
 
 
-def recreate_collection(collection_name: str, embedding_dim: int = DOC_EMBEDDING_DIM):
+def recreate_collection(
+    collection_name: str, embedding_dim: int = DOC_EMBEDDING_DIM
+) -> None:
     logger.info(f"Attempting to recreate collection {collection_name}")
     result = get_qdrant_client().recreate_collection(
         collection_name=collection_name,
@@ -47,8 +50,7 @@ def index_chunks(
     client: QdrantClient | None = None,
     batch_upsert: bool = True,
 ) -> bool:
-    if client is None:
-        client = get_qdrant_client()
+    q_client: QdrantClient = client if client else get_qdrant_client()
 
     point_structs = []
     for chunk in chunks:
@@ -80,24 +82,27 @@ def index_chunks(
         ]
         for point_struct_batch in point_struct_batches:
 
-            def upsert():
+            def upsert() -> UpdateResult | None:
                 for _ in range(5):
                     try:
-                        index_results = client.upsert(
+                        return q_client.upsert(
                             collection_name=collection, points=point_struct_batch
                         )
-                        return index_results
                     except ResponseHandlingException as e:
                         logger.warning(
                             f"Failed to upsert batch into qdrant due to error: {e}"
                         )
+                return None
 
             index_results = upsert()
+            log_status = index_results.status if index_results else "Failed"
             logger.info(
                 f"Indexed {len(point_struct_batch)} chunks into collection '{collection}', "
-                f"status: {index_results.status}"
+                f"status: {log_status}"
             )
     else:
-        index_results = client.upsert(collection_name=collection, points=point_structs)
+        index_results = q_client.upsert(
+            collection_name=collection, points=point_structs
+        )
         logger.info(f"Batch indexing status: {index_results.status}")
     return index_results is not None and index_results.status == UpdateStatus.COMPLETED

@@ -78,7 +78,11 @@ class QdrantDatastore(Datastore):
             logger.exception(
                 f'Qdrant querying failed due to: "{e}", has ingestion been run?'
             )
-        return [InferenceChunk.from_dict(hit.payload) for hit in hits]
+        return [
+            InferenceChunk.from_dict(hit.payload)
+            for hit in hits
+            if hit.payload is not None
+        ]
 
     def get_from_id(self, object_id: str) -> InferenceChunk | None:
         matches, _ = self.client.scroll(
@@ -94,5 +98,7 @@ class QdrantDatastore(Datastore):
             logger.error(f"Found multiple matches for {logger}: {matches}")
 
         match = matches[0]
+        if not match.payload:
+            return None
 
         return InferenceChunk.from_dict(match.payload)

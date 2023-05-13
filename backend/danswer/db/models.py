@@ -83,7 +83,7 @@ class IndexAttempt(Base):
         String(), default=None
     )  # only filled if status = "failed"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<IndexAttempt(id={self.id!r}, "
             f"source={self.source!r}, "

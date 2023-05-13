@@ -1,4 +1,5 @@
 import uuid
+from collections.abc import AsyncGenerator
 from typing import Optional
 
 from danswer.auth.configs import DISABLE_AUTH
@@ -48,21 +49,25 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 user_create.role = UserRole.BASIC
         return await super().create(user_create, safe=safe, request=request)  # type: ignore
 
-    async def on_after_register(self, user: User, request: Optional[Request] = None):
+    async def on_after_register(
+        self, user: User, request: Optional[Request] = None
+    ) -> None:
         print(f"User {user.id} has registered.")
 
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None
-    ):
+    ) -> None:
         print(f"User {user.id} has forgot their password. Reset token: {token}")
 
     async def on_after_request_verify(
         self, user: User, token: str, request: Optional[Request] = None
-    ):
+    ) -> None:
         print(f"Verification requested for user {user.id}. Verification token: {token}")
 
 
-async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):
+async def get_user_manager(
+    user_db: SQLAlchemyUserDatabase = Depends(get_user_db),
+) -> AsyncGenerator[UserManager, None]:
     yield UserManager(user_db)
 
 

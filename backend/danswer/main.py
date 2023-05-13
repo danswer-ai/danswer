@@ -24,7 +24,9 @@ from fastapi.responses import JSONResponse
 logger = setup_logger()
 
 
-def validation_exception_handler(request: Request, exc: RequestValidationError):
+def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
     logger.exception(f"{request}: {exc_str}")
     content = {"status_code": 422, "message": exc_str, "data": None}

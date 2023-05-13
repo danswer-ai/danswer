@@ -1,5 +1,6 @@
 import inspect
 from dataclasses import dataclass
+from typing import Any
 
 from danswer.connectors.models import Document
 
@@ -32,7 +33,7 @@ class InferenceChunk(BaseChunk):
     semantic_identifier: str
 
     @classmethod
-    def from_dict(cls, init_dict):
+    def from_dict(cls, init_dict: dict[str, Any]) -> "InferenceChunk":
         return cls(
             **{
                 k: v

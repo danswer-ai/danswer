@@ -106,7 +106,7 @@ def chunk_document(
     document: Document,
     chunk_size: int = CHUNK_SIZE,
     subsection_overlap: int = CHUNK_OVERLAP,
-    blurb_len=BLURB_LENGTH,
+    blurb_len: int = BLURB_LENGTH,
 ) -> list[IndexChunk]:
     chunks: list[IndexChunk] = []
     link_offsets: dict[int, str] = {}

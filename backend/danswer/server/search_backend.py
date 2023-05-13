@@ -12,7 +12,7 @@ from danswer.datastores import create_datastore
 from danswer.db.engine import build_async_engine
 from danswer.db.models import User
 from danswer.direct_qa import get_default_backend_qa_model
-from danswer.direct_qa.question_answer import yield_json_line
+from danswer.direct_qa.question_answer import get_json_line
 from danswer.semantic_search.semantic_search import retrieve_ranked_documents
 from danswer.server.models import KeywordResponse
 from danswer.server.models import QAQuestion
@@ -111,9 +111,8 @@ def stream_direct_qa(
             query, filters, create_datastore(collection)
         )
         if not ranked_chunks:
-            return yield_json_line(
-                QAResponse(answer=None, quotes=None, ranked_documents=None)
-            )
+            yield get_json_line({top_documents_key: None})
+            return
 
         top_docs = [
             SearchDoc(
@@ -125,14 +124,14 @@ def stream_direct_qa(
             for chunk in ranked_chunks
         ]
         top_docs_dict = {top_documents_key: [top_doc.json() for top_doc in top_docs]}
-        yield yield_json_line(top_docs_dict)
+        yield get_json_line(top_docs_dict)
 
         qa_model = get_default_backend_qa_model()
         for response_dict in qa_model.answer_question_stream(
             query, ranked_chunks[:NUM_RERANKED_RESULTS]
         ):
             logger.debug(response_dict)
-            yield yield_json_line(response_dict)
+            yield get_json_line(response_dict)
         return
 
     return StreamingResponse(stream_qa_portions(), media_type="application/json")

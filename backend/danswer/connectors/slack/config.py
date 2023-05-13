@@ -29,5 +29,5 @@ def get_pull_frequency() -> int:
     return get_slack_config().pull_frequency
 
 
-def update_slack_config(slack_config: SlackConfig):
+def update_slack_config(slack_config: SlackConfig) -> None:
     get_dynamic_config_store().store(SLACK_CONFIG_KEY, slack_config.dict())
