@@ -11,6 +11,7 @@ SEMANTIC_IDENTIFIER = "semantic_identifier"
 SECTION_CONTINUATION = "section_continuation"
 ALLOWED_USERS = "allowed_users"
 ALLOWED_GROUPS = "allowed_groups"
+NO_AUTH_USER = "FooBarUser"
 
 
 class DocumentSource(str, Enum):

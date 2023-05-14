@@ -1,5 +1,6 @@
 from danswer.auth.users import current_admin_user
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import NO_AUTH_USER
 from danswer.connectors.google_drive.connector_auth import get_auth_url
 from danswer.connectors.google_drive.connector_auth import get_drive_tokens
 from danswer.connectors.google_drive.connector_auth import get_save_access_tokens
@@ -24,7 +25,6 @@ from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
 
-
 router = APIRouter(prefix="/admin")
 
 logger = setup_logger()
@@ -38,15 +38,17 @@ def check_drive_tokens(_: User = Depends(current_admin_user)) -> AuthStatus:
 
 
 @router.get("/connectors/google-drive/authorize", response_model=AuthUrl)
-def google_drive_auth(_: User = Depends(current_admin_user)) -> AuthUrl:
-    return AuthUrl(auth_url=get_auth_url())
+def google_drive_auth(user: User = Depends(current_admin_user)) -> AuthUrl:
+    user_id = str(user.id) if user else NO_AUTH_USER
+    return AuthUrl(auth_url=get_auth_url(user_id))
 
 
 @router.get("/connectors/google-drive/callback", status_code=201)
 def google_drive_callback(
-    callback: GDriveCallback = Depends(), _: User = Depends(current_admin_user)
+    callback: GDriveCallback = Depends(), user: User = Depends(current_admin_user)
 ) -> None:
-    verify_csrf(callback.state)
+    user_id = str(user.id) if user else NO_AUTH_USER
+    verify_csrf(user_id, callback.state)
     return get_save_access_tokens(callback.code)
 
 

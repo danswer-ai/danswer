@@ -6,12 +6,12 @@ from urllib.parse import urlparse
 from danswer.configs.app_configs import GOOGLE_DRIVE_CREDENTIAL_JSON
 from danswer.configs.app_configs import GOOGLE_DRIVE_TOKENS_JSON
 from danswer.configs.app_configs import WEB_DOMAIN
+from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.utils.logging import setup_logger
 from google.auth.transport.requests import Request  # type: ignore
 from google.oauth2.credentials import Credentials  # type: ignore
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore
 from googleapiclient import discovery  # type: ignore
-
 
 logger = setup_logger()
 
@@ -65,15 +65,17 @@ def get_drive_tokens(token_path: str = GOOGLE_DRIVE_TOKENS_JSON) -> Any:
     return None
 
 
-def verify_csrf(state: str) -> None:
-    global google_drive_csrf_state
-    if not google_drive_csrf_state or not google_drive_csrf_state == state:
+def verify_csrf(user_id: str, state: str) -> None:
+    csrf = get_dynamic_config_store().load(user_id)
+    if csrf != state:
         raise PermissionError(
             "State from Google Drive Connector callback does not match expected"
         )
 
 
-def get_auth_url(credentials_file: str = GOOGLE_DRIVE_CREDENTIAL_JSON) -> str:
+def get_auth_url(
+    user_id: str, credentials_file: str = GOOGLE_DRIVE_CREDENTIAL_JSON
+) -> str:
     flow = InstalledAppFlow.from_client_secrets_file(
         credentials_file,
         scopes=SCOPES,
@@ -83,8 +85,7 @@ def get_auth_url(credentials_file: str = GOOGLE_DRIVE_CREDENTIAL_JSON) -> str:
 
     parsed_url = urlparse(auth_url)
     params = parse_qs(parsed_url.query)
-    global google_drive_csrf_state
-    google_drive_csrf_state = params.get("state", [None])[0]  # type: ignore
+    get_dynamic_config_store().store(user_id, params.get("state", [None])[0])  # type: ignore
     return str(auth_url)
 
 
@@ -94,7 +95,7 @@ def get_save_access_tokens(
     credentials_file: str = GOOGLE_DRIVE_CREDENTIAL_JSON,
 ) -> Any:
     flow = InstalledAppFlow.from_client_secrets_file(
-        credentials_file, scopes=SCOPES, redirect_uri="http://localhost:8080/test"
+        credentials_file, scopes=SCOPES, redirect_uri=FRONTEND_GOOGLE_DRIVE_REDIRECT
     )
     flow.fetch_token(code=auth_code)
     creds = flow.credentials
