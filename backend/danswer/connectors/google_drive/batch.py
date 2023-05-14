@@ -1,12 +1,10 @@
 import io
-import os
 from collections.abc import Generator
 
-from danswer.configs.app_configs import GOOGLE_DRIVE_CREDENTIAL_JSON
 from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
-from danswer.configs.app_configs import GOOGLE_DRIVE_TOKENS_JSON
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.google_drive.connector_auth import get_drive_tokens
 from danswer.connectors.interfaces import PullLoader
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -28,26 +26,6 @@ SUPPORTED_DRIVE_DOC_TYPES = [
 ID_KEY = "id"
 LINK_KEY = "link"
 TYPE_KEY = "type"
-
-
-def get_credentials() -> Credentials:
-    creds = None
-    if os.path.exists(GOOGLE_DRIVE_TOKENS_JSON):
-        creds = Credentials.from_authorized_user_file(GOOGLE_DRIVE_TOKENS_JSON, SCOPES)
-
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                GOOGLE_DRIVE_CREDENTIAL_JSON, SCOPES
-            )
-            creds = flow.run_local_server()
-
-        with open(GOOGLE_DRIVE_TOKENS_JSON, "w") as token_file:
-            token_file.write(creds.to_json())
-
-    return creds
 
 
 def get_file_batches(
@@ -115,7 +93,10 @@ class BatchGoogleDriveLoader(PullLoader):
     ) -> None:
         self.batch_size = batch_size
         self.include_shared = include_shared
-        self.creds = get_credentials()
+        self.creds = get_drive_tokens()
+
+        if not self.creds:
+            raise PermissionError("Unable to access Google Drive.")
 
     def load(self) -> Generator[list[Document], None, None]:
         service = discovery.build("drive", "v3", credentials=self.creds)
