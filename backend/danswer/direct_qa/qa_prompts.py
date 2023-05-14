@@ -6,17 +6,12 @@ ANSWER_PAT = "Answer:"
 UNCERTAINTY_PAT = "?"
 QUOTE_PAT = "Quote:"
 
-SYSTEM_ROLE = "You are a Question Answering system that answers queries based on provided documents. "
-
 BASE_PROMPT = (
     f"Answer the query based on provided documents and quote relevant sections. "
     f"Respond with a json containing a concise answer and up to three most relevant quotes from the documents. "
     f"The quotes must be EXACT substrings from the documents.\n"
 )
 
-UNABLE_TO_FIND_JSON_MSG = (
-    "If the query cannot be answered based on the documents, respond with {}. "
-)
 
 SAMPLE_QUESTION = "Where is the Eiffel Tower?"
 
@@ -106,12 +101,21 @@ def freeform_processor(question: str, documents: list[str]) -> str:
 
 
 def json_chat_processor(question: str, documents: list[str]) -> list[dict[str, str]]:
-    role_msg = (
-        SYSTEM_ROLE
-        + 'Start by reading the following documents and responding with "Acknowledged"'
+    intro_msg = (
+        "You are a Question Answering assistant that answers queries based on provided documents.\n"
+        'Start by reading the following documents and responding with "Acknowledged".'
     )
 
-    messages = [{"role": "system", "content": role_msg}]
+    task_msg = (
+        "Now answer the next user query based on documents above and quote relevant sections.\n"
+        "Respond with a JSON containing the answer and up to three most relevant quotes from the documents.\n"
+        "If the query cannot be answered based on the documents, do not provide an answer.\n"
+        "All quotes MUST be EXACT substrings from provided documents.\n"
+        "Your responses should be informative and concise.\n"
+        "You MUST prioritize information from provided documents over internal knowledge.\n"
+        f"Sample response:\n{json.dumps(SAMPLE_JSON_RESPONSE)}"
+    )
+    messages = [{"role": "system", "content": intro_msg}]
 
     for document in documents:
         messages.extend(
@@ -123,17 +127,9 @@ def json_chat_processor(question: str, documents: list[str]) -> list[dict[str, s
                 {"role": "assistant", "content": "Acknowledged"},
             ]
         )
-    sample_msg = (
-        f"Now answer the user query based on documents above and quote relevant sections. "
-        f"Respond with a json containing a concise answer and up to three most relevant quotes from the documents.\n"
-        f"Sample response: {json.dumps(SAMPLE_JSON_RESPONSE)}"
-    )
-    messages.append({"role": "system", "content": sample_msg})
+    messages.append({"role": "system", "content": task_msg})
 
     messages.append({"role": "user", "content": f"{QUESTION_PAT}\n{question}\n"})
-
-    # Note that the below will be dropped in reflexion if used
-    messages.append({"role": "assistant", "content": "Answer Json:\n"})
 
     return messages
 
