@@ -3,6 +3,7 @@ import { Globe, SlackLogo, GoogleDriveLogo } from "@phosphor-icons/react";
 import "tailwindcss/tailwind.css";
 import { Quote, Document } from "./types";
 import { ThinkingAnimation } from "../Thinking";
+import { GithubIcon } from "../icons/icons";
 
 interface SearchResultsDisplayProps {
   answer: string | null;
@@ -22,6 +23,8 @@ const getSourceIcon = (sourceType: string) => {
       return <SlackLogo size={ICON_SIZE} className={ICON_STYLE} />;
     case "google_drive":
       return <GoogleDriveLogo size={ICON_SIZE} className={ICON_STYLE} />;
+    case "github":
+      return <GithubIcon size={ICON_SIZE} className={ICON_STYLE} />;
     default:
       return null;
   }
@@ -102,7 +105,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
               >
                 {getSourceIcon(doc.source_type)}
                 <p className="truncate break-all">
-                  {doc.semantic_name || doc.document_id}
+                  {doc.semantic_identifier || doc.document_id}
                 </p>
               </a>
               <p className="pl-1 py-3 text-gray-200">{doc.blurb}</p>

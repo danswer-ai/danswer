@@ -1,6 +1,6 @@
 "use client";
 
-import { Globe, SlackLogo } from "@phosphor-icons/react";
+import { Globe, SlackLogo, GithubLogo } from "@phosphor-icons/react";
 
 interface IconProps {
   size?: string;
@@ -21,4 +21,11 @@ export const SlackIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <SlackLogo size={size} className={className} />;
+};
+
+export const GithubIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <GithubLogo size={size} className={className} />;
 };

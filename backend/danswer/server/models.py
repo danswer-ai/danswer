@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from danswer.datastores.interfaces import DatastoreFilter
 from danswer.db.models import IndexingStatus
@@ -49,12 +50,8 @@ class UserByEmail(BaseModel):
     user_email: str
 
 
-class WebIndexAttemptRequest(BaseModel):
-    url: str
-
-
 class IndexAttemptSnapshot(BaseModel):
-    url: str
+    connector_specific_config: dict[str, Any]
     status: IndexingStatus
     time_created: datetime
     time_updated: datetime

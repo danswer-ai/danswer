@@ -11,7 +11,7 @@ export interface Document {
   link: string;
   source_type: string;
   blurb: string;
-  semantic_name: string | null;
+  semantic_identifier: string | null;
 }
 
 export interface SearchResponse {

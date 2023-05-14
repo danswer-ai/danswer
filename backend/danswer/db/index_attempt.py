@@ -1,4 +1,5 @@
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.models import InputType
 from danswer.db.engine import build_engine
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
@@ -20,6 +21,7 @@ def fetch_index_attempts(
     *,
     sources: list[DocumentSource] | None = None,
     statuses: list[IndexingStatus] | None = None,
+    input_types: list[InputType] | None = None,
 ) -> list[IndexAttempt]:
     with Session(build_engine(), future=True, expire_on_commit=False) as session:
         stmt = select(IndexAttempt)
@@ -27,6 +29,8 @@ def fetch_index_attempts(
             stmt = stmt.where(IndexAttempt.source.in_(sources))
         if statuses:
             stmt = stmt.where(IndexAttempt.status.in_(statuses))
+        if input_types:
+            stmt = stmt.where(IndexAttempt.input_type.in_(input_types))
         results = session.scalars(stmt)
         return list(results.all())
 

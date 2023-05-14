@@ -1,25 +1,16 @@
 "use client";
 
 import useSWR, { useSWRConfig } from "swr";
+import * as Yup from "yup";
 
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
-import { WebIndexForm } from "@/app/admin/connectors/web/WebIndexForm";
 import { ThinkingAnimation } from "@/components/Thinking";
 import { timeAgo } from "@/lib/time";
 import { GlobeIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
-
-interface WebsiteIndexAttempt {
-  url: string;
-  status: "success" | "failure" | "in_progress" | "not_started";
-  time_created: string;
-  time_updated: string;
-  docs_indexed: number;
-}
-
-interface ListWebIndexingResponse {
-  index_attempts: WebsiteIndexAttempt[];
-}
+import { IndexAttempt, ListIndexingResponse } from "../interfaces";
+import { IndexForm } from "@/components/admin/connectors/Form";
+import { TextFormField } from "@/components/admin/connectors/Field";
 
 const COLUMNS = [
   { header: "Base URL", key: "url" },
@@ -30,28 +21,29 @@ const COLUMNS = [
 
 export default function Web() {
   const { mutate } = useSWRConfig();
-  const { data, isLoading, error } = useSWR<ListWebIndexingResponse>(
+  const { data, isLoading, error } = useSWR<ListIndexingResponse>(
     "/api/admin/connectors/web/index-attempt",
     fetcher
   );
 
-  const urlToLatestIndexAttempt = new Map<string, WebsiteIndexAttempt>();
+  const urlToLatestIndexAttempt = new Map<string, IndexAttempt>();
   const urlToLatestIndexSuccess = new Map<string, string>();
   data?.index_attempts?.forEach((indexAttempt) => {
-    const latestIndexAttempt = urlToLatestIndexAttempt.get(indexAttempt.url);
+    const url = indexAttempt.connector_specific_config.base_url;
+    const latestIndexAttempt = urlToLatestIndexAttempt.get(url);
     if (
       !latestIndexAttempt ||
       indexAttempt.time_created > latestIndexAttempt.time_created
     ) {
-      urlToLatestIndexAttempt.set(indexAttempt.url, indexAttempt);
+      urlToLatestIndexAttempt.set(url, indexAttempt);
     }
 
-    const latestIndexSuccess = urlToLatestIndexSuccess.get(indexAttempt.url);
+    const latestIndexSuccess = urlToLatestIndexSuccess.get(url);
     if (
       indexAttempt.status === "success" &&
       (!latestIndexSuccess || indexAttempt.time_updated > latestIndexSuccess)
     ) {
-      urlToLatestIndexSuccess.set(indexAttempt.url, indexAttempt.time_updated);
+      urlToLatestIndexSuccess.set(url, indexAttempt.time_updated);
     }
   });
 
@@ -65,7 +57,15 @@ export default function Web() {
         Request Indexing
       </h2>
       <div className="border-solid border-gray-600 border rounded-md p-6">
-        <WebIndexForm
+        <IndexForm
+          source="web"
+          formBody={<TextFormField name="base_url" label="URL to Index:" />}
+          validationSchema={Yup.object().shape({
+            base_url: Yup.string().required(
+              "Please enter the website URL to scrape e.g. https://docs.github.com/en/actions"
+            ),
+          })}
+          initialValues={{ base_url: "" }}
           onSubmit={(success) => {
             if (success) {
               mutate("/api/admin/connectors/web/index-attempt");
@@ -87,22 +87,21 @@ export default function Web() {
           data={
             urlToLatestIndexAttempt.size > 0
               ? Array.from(urlToLatestIndexAttempt.values()).map(
-                  (indexAttempt) => ({
-                    ...indexAttempt,
-                    indexed_at:
-                      timeAgo(urlToLatestIndexSuccess.get(indexAttempt.url)) ||
-                      "-",
-                    docs_indexed: indexAttempt.docs_indexed || "-",
-                    url: (
-                      <a
-                        className="text-blue-500"
-                        target="_blank"
-                        href={indexAttempt.url}
-                      >
-                        {indexAttempt.url}
-                      </a>
-                    ),
-                  })
+                  (indexAttempt) => {
+                    const url = indexAttempt.connector_specific_config
+                      .base_url as string;
+                    return {
+                      indexed_at:
+                        timeAgo(urlToLatestIndexSuccess.get(url)) || "-",
+                      docs_indexed: indexAttempt.docs_indexed || "-",
+                      url: (
+                        <a className="text-blue-500" target="_blank" href={url}>
+                          {url}
+                        </a>
+                      ),
+                      status: indexAttempt.status,
+                    };
+                  }
                 )
               : []
           }

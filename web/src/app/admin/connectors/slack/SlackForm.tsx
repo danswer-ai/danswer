@@ -3,7 +3,7 @@ import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { Popup } from "../../../../components/admin/connectors/Popup";
 import { TextFormField } from "../../../../components/admin/connectors/Field";
-import { SlackConfig } from "./interfaces";
+import { SlackConfig } from "../interfaces";
 
 const validationSchema = Yup.object().shape({
   slack_bot_token: Yup.string().required("Please enter your Slack Bot Token"),

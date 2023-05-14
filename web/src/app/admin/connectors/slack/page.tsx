@@ -8,7 +8,7 @@ import { SlackForm } from "@/app/admin/connectors/slack/SlackForm";
 import { SlackIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
 import useSWR, { useSWRConfig } from "swr";
-import { SlackConfig } from "./interfaces";
+import { SlackConfig } from "../interfaces";
 import { ThinkingAnimation } from "@/components/Thinking";
 
 const MainSection = () => {
@@ -47,6 +47,7 @@ const MainSection = () => {
               ? ConnectorStatus.Running
               : ConnectorStatus.NotSetup
           }
+          source="slack"
         />
       }
 
