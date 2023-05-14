@@ -17,7 +17,6 @@ logger = setup_logger()
 
 SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 FRONTEND_GOOGLE_DRIVE_REDIRECT = f"{WEB_DOMAIN}/auth/connectors/google_drive/callback"
-google_drive_csrf_state: str = ""  # TODO save this to DB
 
 
 def backend_get_credentials() -> Credentials:
