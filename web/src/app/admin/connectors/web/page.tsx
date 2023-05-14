@@ -37,7 +37,7 @@ export default function Web() {
 
   const urlToLatestIndexAttempt = new Map<string, WebsiteIndexAttempt>();
   const urlToLatestIndexSuccess = new Map<string, string>();
-  data?.index_attempts.forEach((indexAttempt) => {
+  data?.index_attempts?.forEach((indexAttempt) => {
     const latestIndexAttempt = urlToLatestIndexAttempt.get(indexAttempt.url);
     if (
       !latestIndexAttempt ||
