@@ -1,5 +1,5 @@
 <h2 align="center">
-<a href="https://www.danswer.dev/"> <img width="50%" src="https://github.com/danswer-owners/danswer/blob/f40a2dff00263ccc891e007d2310f634f5b6d15f/DanswerWithName.png?raw=true)" /></a>
+<a href="https://www.danswer.dev/"> <img width="50%" src="https://github.com/danswer-owners/danswer/blob/32acf1487522f4ceb18f0e6de34d6a95136b091f/DanswerWithName.png?raw=true)" /></a>
 </h2>
 
 <p align="center">
