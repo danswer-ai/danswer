@@ -7,6 +7,7 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.connectors.github.batch import BatchGithubLoader
 from danswer.connectors.google_drive.batch import BatchGoogleDriveLoader
+from danswer.connectors.google_drive.connector_auth import backend_get_credentials
 from danswer.connectors.interfaces import PullLoader
 from danswer.connectors.slack.batch import BatchSlackLoader
 from danswer.connectors.web.pull import WebLoader
@@ -71,6 +72,7 @@ def load_web_batch(url: str, qdrant_collection: str) -> None:
 
 def load_google_drive_batch(qdrant_collection: str) -> None:
     logger.info("Loading documents from Google Drive.")
+    backend_get_credentials()
     load_batch(
         BatchGoogleDriveLoader(batch_size=INDEX_BATCH_SIZE),
         DefaultChunker(),

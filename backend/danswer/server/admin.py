@@ -1,7 +1,10 @@
-from datetime import datetime
-
 from danswer.auth.users import current_admin_user
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import NO_AUTH_USER
+from danswer.connectors.google_drive.connector_auth import get_auth_url
+from danswer.connectors.google_drive.connector_auth import get_drive_tokens
+from danswer.connectors.google_drive.connector_auth import save_access_tokens
+from danswer.connectors.google_drive.connector_auth import verify_csrf
 from danswer.connectors.models import InputType
 from danswer.connectors.slack.config import get_slack_config
 from danswer.connectors.slack.config import SlackConfig
@@ -12,15 +15,41 @@ from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import User
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.server.models import AuthStatus
+from danswer.server.models import AuthUrl
+from danswer.server.models import GDriveCallback
+from danswer.server.models import IndexAttemptSnapshot
+from danswer.server.models import ListWebsiteIndexAttemptsResponse
+from danswer.server.models import WebIndexAttemptRequest
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
-from pydantic import BaseModel
-
 
 router = APIRouter(prefix="/admin")
 
 logger = setup_logger()
+
+
+@router.get("/connectors/google-drive/check-auth", response_model=AuthStatus)
+def check_drive_tokens(_: User = Depends(current_admin_user)) -> AuthStatus:
+    tokens = get_drive_tokens()
+    authenticated = tokens is not None
+    return AuthStatus(authenticated=authenticated)
+
+
+@router.get("/connectors/google-drive/authorize", response_model=AuthUrl)
+def google_drive_auth(user: User = Depends(current_admin_user)) -> AuthUrl:
+    user_id = str(user.id) if user else NO_AUTH_USER
+    return AuthUrl(auth_url=get_auth_url(user_id))
+
+
+@router.get("/connectors/google-drive/callback", status_code=201)
+def google_drive_callback(
+    callback: GDriveCallback = Depends(), user: User = Depends(current_admin_user)
+) -> None:
+    user_id = str(user.id) if user else NO_AUTH_USER
+    verify_csrf(user_id, callback.state)
+    return save_access_tokens(callback.code)
 
 
 @router.get("/connectors/slack/config", response_model=SlackConfig)
@@ -38,10 +67,6 @@ def modify_slack_config(
     update_slack_config(slack_config)
 
 
-class WebIndexAttemptRequest(BaseModel):
-    url: str
-
-
 @router.post("/connectors/web/index-attempt", status_code=201)
 def index_website(
     web_index_attempt_request: WebIndexAttemptRequest,
@@ -54,18 +79,6 @@ def index_website(
         status=IndexingStatus.NOT_STARTED,
     )
     insert_index_attempt(index_request)
-
-
-class IndexAttemptSnapshot(BaseModel):
-    url: str
-    status: IndexingStatus
-    time_created: datetime
-    time_updated: datetime
-    docs_indexed: int
-
-
-class ListWebsiteIndexAttemptsResponse(BaseModel):
-    index_attempts: list[IndexAttemptSnapshot]
 
 
 @router.get("/connectors/web/index-attempt")

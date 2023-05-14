@@ -1,5 +1,4 @@
 from danswer.dynamic_configs import get_dynamic_config_store
-from danswer.dynamic_configs.interface import ConfigNotFoundError
 from pydantic import BaseModel
 
 
