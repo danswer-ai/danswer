@@ -60,7 +60,7 @@ def get_drive_tokens(token_path: str = GOOGLE_DRIVE_TOKENS_JSON) -> Any:
                     token_file.write(creds.to_json())
                 return creds
         except Exception as e:
-            logger.info(f"Failed to refresh google drive access token due to: {e}")
+            logger.exception(f"Failed to refresh google drive access token due to: {e}")
             return None
     return None
 
@@ -89,7 +89,7 @@ def get_auth_url(
     return str(auth_url)
 
 
-def get_save_access_tokens(
+def save_access_tokens(
     auth_code: str,
     token_path: str = GOOGLE_DRIVE_TOKENS_JSON,
     credentials_file: str = GOOGLE_DRIVE_CREDENTIAL_JSON,

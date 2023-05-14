@@ -3,7 +3,7 @@ from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import NO_AUTH_USER
 from danswer.connectors.google_drive.connector_auth import get_auth_url
 from danswer.connectors.google_drive.connector_auth import get_drive_tokens
-from danswer.connectors.google_drive.connector_auth import get_save_access_tokens
+from danswer.connectors.google_drive.connector_auth import save_access_tokens
 from danswer.connectors.google_drive.connector_auth import verify_csrf
 from danswer.connectors.models import InputType
 from danswer.connectors.slack.config import get_slack_config
@@ -49,7 +49,7 @@ def google_drive_callback(
 ) -> None:
     user_id = str(user.id) if user else NO_AUTH_USER
     verify_csrf(user_id, callback.state)
-    return get_save_access_tokens(callback.code)
+    return save_access_tokens(callback.code)
 
 
 @router.get("/connectors/slack/config", response_model=SlackConfig)
