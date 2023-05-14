@@ -324,10 +324,57 @@ class OpenAIChatCompletionQA(QAModel):
         answer, quotes_dict = process_answer(model_output, context_docs)
         return answer, quotes_dict
 
-    @log_function_time()
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> Any:
-        raise NotImplementedError(
-            "Danswer with chat completion does not support streaming yet"
-        )
+    ) -> Generator[dict[str, Any] | None, None, None]:
+        top_contents = [ranked_chunk.content for ranked_chunk in context_docs]
+        messages = self.prompt_processor(query, top_contents)
+        logger.debug(messages)
+
+        try:
+            response = openai.ChatCompletion.create(
+                messages=messages,
+                temperature=0,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0,
+                model=self.model_version,
+                max_tokens=self.max_output_tokens,
+                stream=True,
+            )
+
+            model_output = ""
+            found_answer_start = False
+            found_answer_end = False
+            for event in response:
+                event_dict = event["choices"][0]["delta"]
+                if (
+                    "content" not in event_dict
+                ):  # could be a role message or empty termination
+                    continue
+                event_text = event_dict["content"]
+                model_previous = model_output
+                model_output += event_text
+
+                if not found_answer_start and '{"answer":"' in model_output.replace(
+                    " ", ""
+                ).replace("\n", ""):
+                    found_answer_start = True
+                    continue
+
+                if found_answer_start and not found_answer_end:
+                    if stream_answer_end(model_previous, event_text):
+                        found_answer_end = True
+                        continue
+                    yield {"answer_data": event_text}
+
+        except Exception as e:
+            logger.exception(e)
+            model_output = "Model Failure"
+
+        logger.debug(model_output)
+
+        answer, quotes_dict = process_answer(model_output, context_docs)
+        logger.info(answer)
+
+        yield quotes_dict
