@@ -23,7 +23,7 @@ class UserRoleResponse(BaseModel):
 
 
 class SearchDoc(BaseModel):
-    semantic_name: str
+    semantic_identifier: str
     link: str
     blurb: str
     source_type: str

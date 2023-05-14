@@ -77,7 +77,7 @@ def direct_qa(
 
     top_docs = [
         SearchDoc(
-            semantic_name=chunk.semantic_identifier,
+            semantic_identifier=chunk.semantic_identifier,
             link=chunk.source_links.get("0") if chunk.source_links else None,
             blurb=chunk.blurb,
             source_type=chunk.source_type,
@@ -116,7 +116,7 @@ def stream_direct_qa(
 
         top_docs = [
             SearchDoc(
-                semantic_name=chunk.semantic_identifier,
+                semantic_identifier=chunk.semantic_identifier,
                 link=chunk.source_links.get("0") if chunk.source_links else None,
                 blurb=chunk.blurb,
                 source_type=chunk.source_type,
