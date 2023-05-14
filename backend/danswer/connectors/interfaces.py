@@ -9,6 +9,7 @@ from danswer.connectors.models import Document
 SecondsSinceUnixEpoch = float
 
 
+# TODO (chris): rename from Loader -> Connector
 class PullLoader:
     @abc.abstractmethod
     def load(self) -> Generator[List[Document], None, None]:

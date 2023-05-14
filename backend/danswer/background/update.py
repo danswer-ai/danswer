@@ -2,6 +2,8 @@ import time
 from typing import cast
 
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.factory import build_connector
+from danswer.connectors.models import InputType
 from danswer.connectors.slack.config import get_pull_frequency
 from danswer.connectors.slack.pull import PeriodicSlackLoader
 from danswer.connectors.web.pull import WebLoader
@@ -35,6 +37,8 @@ def run_update() -> None:
     current_time = int(time.time())
 
     # Slack
+    # TODO (chris): make Slack use the same approach as other connectors /
+    # make other connectors periodic
     try:
         pull_frequency = get_pull_frequency()
     except ConfigNotFoundError:
@@ -56,17 +60,15 @@ def run_update() -> None:
                 indexing_pipeline(doc_batch)
             dynamic_config_store.store(last_slack_pull_key, current_time)
 
-    # Web
     # TODO (chris): make this more efficient / in a single transaction to
     # prevent race conditions across multiple background jobs. For now,
     # this assumes we only ever run a single background job at a time
-    # TODO (chris): make this generic for all pull connectors (not just web)
     not_started_index_attempts = fetch_index_attempts(
-        sources=[DocumentSource.WEB], statuses=[IndexingStatus.NOT_STARTED]
+        input_types=[InputType.PULL], statuses=[IndexingStatus.NOT_STARTED]
     )
     for not_started_index_attempt in not_started_index_attempts:
         logger.info(
-            "Attempting to index website with IndexAttempt id: "
+            "Attempting to index with IndexAttempt id: "
             f"{not_started_index_attempt.id}, source: "
             f"{not_started_index_attempt.source}, input_type: "
             f"{not_started_index_attempt.input_type}, and connector_specific_config: "
@@ -78,17 +80,25 @@ def run_update() -> None:
         )
 
         error_msg = None
-        base_url = not_started_index_attempt.connector_specific_config["url"]
         try:
             # TODO (chris): spawn processes to parallelize / take advantage of
             # multiple cores + implement retries
+            connector = build_connector(
+                source=not_started_index_attempt.source,
+                input_type=InputType.PULL,
+                connector_specific_config=not_started_index_attempt.connector_specific_config,
+            )
+
             document_ids: list[str] = []
-            for doc_batch in WebLoader(base_url=base_url).load():
+            for doc_batch in connector.load():
                 chunks = indexing_pipeline(doc_batch)
                 document_ids.extend([chunk.source_document.id for chunk in chunks])
         except Exception as e:
             logger.exception(
-                "Failed to index website with url %s due to: %s", base_url, e
+                "Failed to index for source %s with config %s due to: %s",
+                not_started_index_attempt.source,
+                not_started_index_attempt.connector_specific_config,
+                e,
             )
             error_msg = str(e)
 
