@@ -1,15 +1,25 @@
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/admin/connectors/Sidebar";
 import { GlobeIcon, SlackIcon } from "@/components/icons/icons";
+import { getCurrentUserSS } from "@/lib/userSS";
+import { redirect } from "next/navigation";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const user = await getCurrentUserSS();
+  if (!user) {
+    return redirect("/auth/login");
+  }
+  if (user.role !== "admin") {
+    return redirect("/");
+  }
+
   return (
     <div>
-      <Header />
+      <Header user={user} />
       <div className="bg-gray-900 pt-8 flex">
         <Sidebar
           title="Connectors"

@@ -4,5 +4,5 @@ export interface User {
   is_active: string;
   is_superuser: string;
   is_verified: string;
-  role: string;
+  role: "basic" | "admin";
 }

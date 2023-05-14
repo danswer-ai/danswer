@@ -1,6 +1,9 @@
+import { Header } from "@/components/Header";
 import "./globals.css";
 
 import { Inter } from "next/font/google";
+import { getCurrentUserSS } from "@/lib/userSS";
+import { redirect } from "next/navigation";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -12,7 +15,7 @@ export const metadata = {
   description: "Question answering for your documents",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;

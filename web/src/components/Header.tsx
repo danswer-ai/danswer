@@ -1,5 +1,6 @@
 "use client";
 
+import { User } from "@/lib/types";
 import { logout } from "@/lib/user";
 import { UserCircle } from "@phosphor-icons/react";
 import Link from "next/link";
@@ -7,7 +8,11 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import "tailwindcss/tailwind.css";
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  user: User;
+}
+
+export const Header: React.FC<HeaderProps> = ({ user }) => {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -64,11 +69,13 @@ export const Header: React.FC = () => {
                 "w-36 overflow-hidden shadow-xl z-10 text-sm text-gray-300"
               }
             >
-              <Link href="/admin/connectors/slack">
-                <div className="flex py-2 px-3 cursor-pointer hover:bg-gray-500 border-b border-gray-500">
-                  Connectors
-                </div>
-              </Link>
+              {user.role === "admin" && (
+                <Link href="/admin/connectors/slack">
+                  <div className="flex py-2 px-3 cursor-pointer hover:bg-gray-500 border-b border-gray-500">
+                    Connectors
+                  </div>
+                </Link>
+              )}
               <div
                 className="flex py-2 px-3 cursor-pointer hover:bg-gray-500"
                 onClick={handleLogout}
