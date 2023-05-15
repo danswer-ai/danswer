@@ -1,9 +1,9 @@
 <h2 align="center">
-<a href="https://www.danswer.dev/"> <img width="50%" src="https://github.com/danswer-owners/danswer/blob/2ab726386205efd00ff6806f67a1abdaf607d632/DanswerWithName.png?raw=true)" /></a>
+<a href="https://docs.danswer.dev/"> <img width="50%" src="https://github.com/danswer-owners/danswer/blob/2ab726386205efd00ff6806f67a1abdaf607d632/DanswerWithName.png?raw=true)" /></a>
 </h2>
 
 <p align="center">
-<p align="center">OpenSource Enterprise QA</p>
+<p align="center">OpenSource Enterprise Question-Answering</p>
 
 <p align="center">
 <a href="https://join.slack.com/t/danswer/shared_invite/zt-1u5ycen3o-6SJbWfivLWP5LPyp_jftuw" target="_blank">
