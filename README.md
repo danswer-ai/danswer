@@ -14,7 +14,7 @@
 </a>
 </p>
 
-[Danswer](https://danswer.dev/) allows you to ask natural language questions against internal documents and get back reliable answers backed by quotes and references from the source material so that you can always trust what you get back. You can connect to a number of common tools such as Slack, Google Drive, and Confluent, among others.  
+[Danswer](https://docs.danswer.dev/) allows you to ask natural language questions against internal documents and get back reliable answers backed by quotes and references from the source material so that you can always trust what you get back. You can connect to a number of common tools such as Slack, Google Drive, and Confluent, among others.  
 
 
 
