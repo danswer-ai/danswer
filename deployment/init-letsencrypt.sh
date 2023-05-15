@@ -6,7 +6,7 @@ set -o allexport
 source .env.nginx
 set +o allexport
 
-if ! [ -x "$(command -v docker compose)" ]; then
+if ! docker compose --version >/dev/null 2>&1; then
   echo 'Error: docker compose is not installed.' >&2
   exit 1
 fi
