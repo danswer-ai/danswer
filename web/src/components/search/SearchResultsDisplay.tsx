@@ -2,7 +2,7 @@ import React from "react";
 import { Globe, SlackLogo, GoogleDriveLogo } from "@phosphor-icons/react";
 import "tailwindcss/tailwind.css";
 import { Quote, Document } from "./types";
-import { ThinkingAnimation } from "../Thinking";
+import { LoadingAnimation } from "../Loading";
 import { GithubIcon } from "../icons/icons";
 
 interface SearchResultsDisplayProps {
@@ -38,7 +38,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
 }) => {
   if (!answer) {
     if (isFetching) {
-      return <ThinkingAnimation />;
+      return <LoadingAnimation />;
     }
     return null;
   }

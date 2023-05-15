@@ -15,3 +15,5 @@ export interface IndexAttempt {
 export interface ListIndexingResponse {
   index_attempts: IndexAttempt[];
 }
+
+export type ValidSources = "web" | "github" | "slack" | "google_drive";

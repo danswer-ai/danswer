@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from "react";
-import "./thinking.css";
+import "./loading.css";
 
-interface ThinkingAnimationProps {
+interface LoadingAnimationProps {
   text?: string;
 }
 
-export const ThinkingAnimation: React.FC<ThinkingAnimationProps> = ({
-  text,
-}) => {
+export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ text }) => {
   const [dots, setDots] = useState("...");
 
   useEffect(() => {
@@ -30,9 +28,9 @@ export const ThinkingAnimation: React.FC<ThinkingAnimationProps> = ({
   }, []);
 
   return (
-    <div className="thinking-animation flex">
+    <div className="loading-animation flex">
       <div className="mx-auto">
-        {text || "Thinking"}
+        {text === undefined ? "Thinking" : text}
         <span className="dots">{dots}</span>
       </div>
     </div>

@@ -4,11 +4,14 @@ import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
-import { ThinkingAnimation } from "@/components/Thinking";
+import { LoadingAnimation } from "@/components/Loading";
 import { timeAgo } from "@/lib/time";
 import { GlobeIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
-import { IndexAttempt, ListIndexingResponse } from "../interfaces";
+import {
+  IndexAttempt,
+  ListIndexingResponse,
+} from "../../../../components/admin/connectors/interfaces";
 import { IndexForm } from "@/components/admin/connectors/Form";
 import { TextFormField } from "@/components/admin/connectors/Field";
 
@@ -78,7 +81,7 @@ export default function Web() {
         Indexing History
       </h2>
       {isLoading ? (
-        <ThinkingAnimation text="Loading" />
+        <LoadingAnimation text="Loading" />
       ) : error ? (
         <div>Error loading indexing history</div>
       ) : (
