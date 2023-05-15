@@ -2,14 +2,14 @@
 
 import {
   ConnectorStatus,
-  ReccuringConnectorStatus,
-} from "@/components/admin/connectors/RecurringConnectorStatus";
+  ConnectorStatusEnum,
+} from "@/components/admin/connectors/ConnectorStatus";
 import { SlackForm } from "@/app/admin/connectors/slack/SlackForm";
 import { SlackIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
 import useSWR, { useSWRConfig } from "swr";
-import { SlackConfig } from "../interfaces";
-import { ThinkingAnimation } from "@/components/Thinking";
+import { SlackConfig } from "../../../../components/admin/connectors/interfaces";
+import { LoadingAnimation } from "@/components/Loading";
 
 const MainSection = () => {
   // TODO: add back in once this is ready
@@ -26,7 +26,7 @@ const MainSection = () => {
   if (isLoading) {
     return (
       <div className="mt-16">
-        <ThinkingAnimation text="Loading" />
+        <LoadingAnimation text="Loading" />
       </div>
     );
   } else if (error || !data) {
@@ -41,11 +41,11 @@ const MainSection = () => {
         Status
       </h2>
       {
-        <ReccuringConnectorStatus
+        <ConnectorStatus
           status={
             data.pull_frequency !== 0
-              ? ConnectorStatus.Running
-              : ConnectorStatus.NotSetup
+              ? ConnectorStatusEnum.Running
+              : ConnectorStatusEnum.NotSetup
           }
           source="slack"
         />

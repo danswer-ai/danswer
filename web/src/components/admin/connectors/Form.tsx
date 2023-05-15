@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { Popup } from "./Popup";
-
-type ValidSources = "web" | "github";
+import { ValidSources } from "./interfaces";
 
 const handleSubmit = async (
   source: ValidSources,

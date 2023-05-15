@@ -1,6 +1,11 @@
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/admin/connectors/Sidebar";
-import { GithubIcon, GlobeIcon, SlackIcon } from "@/components/icons/icons";
+import {
+  GithubIcon,
+  GlobeIcon,
+  GoogleDriveIcon,
+  SlackIcon,
+} from "@/components/icons/icons";
 import { getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 
@@ -53,6 +58,15 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/connectors/github",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <GoogleDriveIcon size="16" />
+                      <div className="ml-1">Google Drive</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/google-drive",
                 },
               ],
             },

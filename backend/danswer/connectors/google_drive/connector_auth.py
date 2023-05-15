@@ -11,16 +11,18 @@ from danswer.utils.logging import setup_logger
 from google.auth.transport.requests import Request  # type: ignore
 from google.oauth2.credentials import Credentials  # type: ignore
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore
-from googleapiclient import discovery  # type: ignore
 
 logger = setup_logger()
 
 SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
-FRONTEND_GOOGLE_DRIVE_REDIRECT = f"{WEB_DOMAIN}/auth/connectors/google_drive/callback"
+FRONTEND_GOOGLE_DRIVE_REDIRECT = (
+    f"{WEB_DOMAIN}/admin/connectors/google-drive/auth/callback"
+)
 
 
 def backend_get_credentials() -> Credentials:
-    """This approach does not work for the one-box builds"""
+    """This approach does not work for production builds as it requires
+    a browser to be opened. It is used for local development only."""
     creds = None
     if os.path.exists(GOOGLE_DRIVE_TOKENS_JSON):
         creds = Credentials.from_authorized_user_file(GOOGLE_DRIVE_TOKENS_JSON, SCOPES)
@@ -100,7 +102,7 @@ def save_access_tokens(
     creds = flow.credentials
 
     os.makedirs(os.path.dirname(token_path), exist_ok=True)
-    with open(token_path, "w") as token_file:
+    with open(token_path, "w+") as token_file:
         token_file.write(creds.to_json())
 
     if not get_drive_tokens(token_path):

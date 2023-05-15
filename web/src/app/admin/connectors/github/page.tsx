@@ -4,8 +4,8 @@ import * as Yup from "yup";
 import { IndexForm } from "@/components/admin/connectors/Form";
 import {
   ConnectorStatus,
-  ReccuringConnectorStatus,
-} from "@/components/admin/connectors/RecurringConnectorStatus";
+  ConnectorStatusEnum,
+} from "@/components/admin/connectors/ConnectorStatus";
 import { GithubIcon } from "@/components/icons/icons";
 import { TextFormField } from "@/components/admin/connectors/Field";
 
@@ -20,10 +20,7 @@ export default function Page() {
       <h2 className="text-xl font-bold pl-2 mb-2 mt-6 ml-auto mr-auto">
         Status
       </h2>
-      <ReccuringConnectorStatus
-        status={ConnectorStatus.Running}
-        source="github"
-      />
+      <ConnectorStatus status={ConnectorStatusEnum.Setup} source="github" />
 
       {/* TODO: make this periodic */}
       <h2 className="text-xl font-bold pl-2 mb-2 mt-6 ml-auto mr-auto">
