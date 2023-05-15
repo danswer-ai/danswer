@@ -51,8 +51,10 @@ class BatchGithubLoader(PullLoader):
                 full_context = f"Pull-Request {pull_request.title}  {pull_request.body}"
                 doc_batch.append(
                     Document(
-                        id=pull_request.url,
-                        sections=[Section(link=pull_request.url, text=full_context)],
+                        id=pull_request.html_url,
+                        sections=[
+                            Section(link=pull_request.html_url, text=full_context)
+                        ],
                         source=DocumentSource.GITHUB,
                         semantic_identifier=pull_request.title,
                         metadata={
