@@ -25,10 +25,6 @@ def _check_should_run(current_time: int, last_pull: int, pull_frequency: int) ->
 
 
 def run_update() -> None:
-    # NOTE: have to make this async due to fastapi users only supporting an async
-    # driver for postgres. In the future, we should figure out a way to
-    # make it work with sync drivers so we don't need to make all code touching
-    # the database async
     logger.info("Running update")
     # TODO (chris): implement a more generic way to run updates
     # so we don't need to edit this file for future connectors
@@ -91,8 +87,8 @@ def run_update() -> None:
 
             document_ids: list[str] = []
             for doc_batch in connector.load():
-                chunks = indexing_pipeline(doc_batch)
-                document_ids.extend([chunk.source_document.id for chunk in chunks])
+                indexing_pipeline(doc_batch)
+                document_ids.extend([doc.id for doc in doc_batch])
         except Exception as e:
             logger.exception(
                 "Failed to index for source %s with config %s due to: %s",
