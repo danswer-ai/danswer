@@ -1,6 +1,11 @@
 "use client";
 
-import { Globe, SlackLogo, GithubLogo } from "@phosphor-icons/react";
+import {
+  Globe,
+  SlackLogo,
+  GithubLogo,
+  GoogleDriveLogo,
+} from "@phosphor-icons/react";
 
 interface IconProps {
   size?: string;
@@ -28,4 +33,11 @@ export const GithubIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <GithubLogo size={size} className={className} />;
+};
+
+export const GoogleDriveIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <GoogleDriveLogo size={size} className={className} />;
 };

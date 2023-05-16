@@ -1,25 +1,34 @@
 "use client";
 
-import { ListIndexingResponse } from "@/app/admin/connectors/interfaces";
+import {
+  IndexAttempt,
+  ListIndexingResponse,
+  ValidSources,
+} from "@/components/admin/connectors/interfaces";
 import { fetcher } from "@/lib/fetcher";
 import { timeAgo } from "@/lib/time";
 import { CheckCircle, MinusCircle } from "@phosphor-icons/react";
 import useSWR from "swr";
 
-export enum ConnectorStatus {
+export enum ConnectorStatusEnum {
+  Setup = "Setup",
   Running = "Running",
   NotSetup = "Not Setup",
 }
 
-interface ReccuringConnectorStatusProps {
-  status: ConnectorStatus;
-  source: string;
+const sortIndexAttemptsByTimeUpdated = (a: IndexAttempt, b: IndexAttempt) => {
+  if (a.time_updated === b.time_updated) {
+    return 0;
+  }
+  return a.time_updated > b.time_updated ? -1 : 1;
+};
+
+interface ConnectorStatusProps {
+  status: ConnectorStatusEnum;
+  source: ValidSources;
 }
 
-export const ReccuringConnectorStatus = ({
-  status,
-  source,
-}: ReccuringConnectorStatusProps) => {
+export const ConnectorStatus = ({ status, source }: ConnectorStatusProps) => {
   const { data } = useSWR<ListIndexingResponse>(
     `/api/admin/connectors/${source}/index-attempt`,
     fetcher
@@ -27,14 +36,12 @@ export const ReccuringConnectorStatus = ({
 
   const lastSuccessfulAttempt = data?.index_attempts
     .filter((attempt) => attempt.status === "success")
-    .sort((a, b) => {
-      if (a.time_updated === b.time_updated) {
-        return 0;
-      }
-      return a.time_updated > b.time_updated ? -1 : 1;
-    })[0];
+    .sort(sortIndexAttemptsByTimeUpdated)[0];
 
-  if (status === ConnectorStatus.Running) {
+  if (
+    status === ConnectorStatusEnum.Running ||
+    status == ConnectorStatusEnum.Setup
+  ) {
     return (
       <div>
         <div className="text-emerald-600 flex align-middle text-center">
@@ -43,7 +50,7 @@ export const ReccuringConnectorStatus = ({
         </div>
         {lastSuccessfulAttempt && (
           <p className="text-xs my-auto ml-1">
-            Last updated {timeAgo(lastSuccessfulAttempt.time_updated)}
+            Last indexed {timeAgo(lastSuccessfulAttempt.time_updated)}
           </p>
         )}
       </div>
