@@ -3,10 +3,10 @@
 import {
   IndexAttempt,
   ListIndexingResponse,
-  ValidSources,
-} from "@/components/admin/connectors/interfaces";
+} from "@/components/admin/connectors/types";
 import { fetcher } from "@/lib/fetcher";
 import { timeAgo } from "@/lib/time";
+import { ValidSources } from "@/lib/types";
 import { CheckCircle, MinusCircle } from "@phosphor-icons/react";
 import useSWR from "swr";
 

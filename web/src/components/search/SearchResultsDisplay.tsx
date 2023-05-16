@@ -1,9 +1,7 @@
 import React from "react";
-import { Globe, SlackLogo, GoogleDriveLogo } from "@phosphor-icons/react";
-import "tailwindcss/tailwind.css";
 import { Quote, Document } from "./types";
 import { LoadingAnimation } from "../Loading";
-import { GithubIcon } from "../icons/icons";
+import { getSourceIcon } from "../source";
 
 interface SearchResultsDisplayProps {
   answer: string | null;
@@ -11,24 +9,6 @@ interface SearchResultsDisplayProps {
   documents: Document[] | null;
   isFetching: boolean;
 }
-
-const ICON_SIZE = "20";
-const ICON_STYLE = "text-blue-600 my-auto mr-1 flex flex-shrink-0";
-
-const getSourceIcon = (sourceType: string) => {
-  switch (sourceType) {
-    case "web":
-      return <Globe size={ICON_SIZE} className={ICON_STYLE} />;
-    case "slack":
-      return <SlackLogo size={ICON_SIZE} className={ICON_STYLE} />;
-    case "google_drive":
-      return <GoogleDriveLogo size={ICON_SIZE} className={ICON_STYLE} />;
-    case "github":
-      return <GithubIcon size={ICON_SIZE} className={ICON_STYLE} />;
-    default:
-      return null;
-  }
-};
 
 export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
   answer,
@@ -76,7 +56,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  {getSourceIcon(quoteInfo.source_type)}
+                  {getSourceIcon(quoteInfo.source_type, "20")}
                   <p className="truncate break-all">
                     {quoteInfo.semantic_identifier || quoteInfo.document_id}
                   </p>
@@ -103,7 +83,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {getSourceIcon(doc.source_type)}
+                {getSourceIcon(doc.source_type, "20")}
                 <p className="truncate break-all">
                   {doc.semantic_identifier || doc.document_id}
                 </p>

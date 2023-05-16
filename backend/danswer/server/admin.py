@@ -115,6 +115,29 @@ def list_index_attempts(
             IndexAttemptSnapshot(
                 connector_specific_config=index_attempt.connector_specific_config,
                 status=index_attempt.status,
+                source=index_attempt.source,
+                time_created=index_attempt.time_created,
+                time_updated=index_attempt.time_updated,
+                docs_indexed=0
+                if not index_attempt.document_ids
+                else len(index_attempt.document_ids),
+            )
+            for index_attempt in index_attempts
+        ]
+    )
+
+
+@router.get("/connectors/index-attempt")
+def list_all_index_attempts(
+    _: User = Depends(current_admin_user),
+) -> ListIndexAttemptsResponse:
+    index_attempts = fetch_index_attempts()
+    return ListIndexAttemptsResponse(
+        index_attempts=[
+            IndexAttemptSnapshot(
+                connector_specific_config=index_attempt.connector_specific_config,
+                status=index_attempt.status,
+                source=index_attempt.source,
                 time_created=index_attempt.time_created,
                 time_updated=index_attempt.time_updated,
                 docs_indexed=0

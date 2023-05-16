@@ -6,3 +6,5 @@ export interface User {
   is_verified: string;
   role: "basic" | "admin";
 }
+
+export type ValidSources = "web" | "github" | "slack" | "google_drive";

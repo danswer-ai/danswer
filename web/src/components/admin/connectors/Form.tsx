@@ -2,17 +2,12 @@ import React, { useState } from "react";
 import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { Popup } from "./Popup";
-import { ValidSources } from "./interfaces";
+import { ValidSources } from "@/lib/types";
 
-const handleSubmit = async (
+export const submitIndexRequest = async (
   source: ValidSources,
-  values: Yup.AnyObject,
-  { setSubmitting }: FormikHelpers<Yup.AnyObject>,
-  setPopup: (
-    popup: { message: string; type: "success" | "error" } | null
-  ) => void
-): Promise<boolean> => {
-  setSubmitting(true);
+  values: Yup.AnyObject
+): Promise<{ message: string; isSuccess: boolean }> => {
   let isSuccess = false;
   try {
     const response = await fetch(
@@ -28,19 +23,13 @@ const handleSubmit = async (
 
     if (response.ok) {
       isSuccess = true;
-      setPopup({ message: "Success!", type: "success" });
+      return { message: "Success!", isSuccess: true };
     } else {
       const errorData = await response.json();
-      setPopup({ message: `Error: ${errorData.detail}`, type: "error" });
+      return { message: `Error: ${errorData.detail}`, isSuccess: false };
     }
   } catch (error) {
-    setPopup({ message: `Error: ${error}`, type: "error" });
-  } finally {
-    setSubmitting(false);
-    setTimeout(() => {
-      setPopup(null);
-    }, 3000);
-    return isSuccess;
+    return { message: `Error: ${error}`, isSuccess: false };
   }
 };
 
@@ -73,12 +62,18 @@ export function IndexForm<YupObjectType extends Yup.AnyObject>({
         initialValues={initialValues}
         validationSchema={validationSchema}
         onSubmit={(values, formikHelpers) => {
-          handleSubmit(
-            source,
-            { ...values, ...additionalNonFormValues },
-            formikHelpers as FormikHelpers<Yup.AnyObject>,
-            setPopup
-          ).then((isSuccess) => onSubmit(isSuccess));
+          formikHelpers.setSubmitting(true);
+          submitIndexRequest(source, {
+            ...values,
+            ...additionalNonFormValues,
+          }).then(({ message, isSuccess }) => {
+            setPopup({ message, type: isSuccess ? "success" : "error" });
+            formikHelpers.setSubmitting(false);
+            setTimeout(() => {
+              setPopup(null);
+            }, 3000);
+            onSubmit(isSuccess);
+          });
         }}
       >
         {({ isSubmitting }) => (

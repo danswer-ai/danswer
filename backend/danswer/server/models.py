@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any
 
+from danswer.configs.constants import DocumentSource
 from danswer.datastores.interfaces import DatastoreFilter
 from danswer.db.models import IndexingStatus
 from pydantic import BaseModel
@@ -53,6 +54,7 @@ class UserByEmail(BaseModel):
 class IndexAttemptSnapshot(BaseModel):
     connector_specific_config: dict[str, Any]
     status: IndexingStatus
+    source: DocumentSource
     time_created: datetime
     time_updated: datetime
     docs_indexed: int

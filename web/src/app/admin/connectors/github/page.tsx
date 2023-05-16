@@ -17,11 +17,6 @@ export default function Page() {
         <h1 className="text-3xl font-bold pl-2">Github PRs</h1>
       </div>
 
-      <h2 className="text-xl font-bold pl-2 mb-2 mt-6 ml-auto mr-auto">
-        Status
-      </h2>
-      <ConnectorStatus status={ConnectorStatusEnum.Setup} source="github" />
-
       {/* TODO: make this periodic */}
       <h2 className="text-xl font-bold pl-2 mb-2 mt-6 ml-auto mr-auto">
         Request Indexing
