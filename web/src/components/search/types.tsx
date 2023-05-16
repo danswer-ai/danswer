@@ -1,7 +1,9 @@
+import { ValidSources } from "@/lib/types";
+
 export interface Quote {
   document_id: string;
   link: string;
-  source_type: string;
+  source_type: ValidSources;
   blurb: string;
   semantic_identifier: string | null;
 }
@@ -9,7 +11,7 @@ export interface Quote {
 export interface Document {
   document_id: string;
   link: string;
-  source_type: string;
+  source_type: ValidSources;
   blurb: string;
   semantic_identifier: string | null;
 }

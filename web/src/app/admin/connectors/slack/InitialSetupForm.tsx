@@ -3,14 +3,12 @@ import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { Popup } from "../../../../components/admin/connectors/Popup";
 import { TextFormField } from "../../../../components/admin/connectors/Field";
-import { SlackConfig } from "../../../../components/admin/connectors/interfaces";
+import { SlackConfig } from "../../../../components/admin/connectors/types";
 
 const validationSchema = Yup.object().shape({
   slack_bot_token: Yup.string().required("Please enter your Slack Bot Token"),
   workspace_id: Yup.string().required("Please enter your Workspace ID"),
-  pull_frequency: Yup.number().required(
-    "Please enter a pull frequency (in minutes). 0 => no pulling from slack"
-  ),
+  pull_frequency: Yup.number().optional(),
 });
 
 const handleSubmit = async (
@@ -49,12 +47,12 @@ const handleSubmit = async (
   return isSuccess;
 };
 
-interface SlackFormProps {
+interface Props {
   existingSlackConfig: SlackConfig;
   onSubmit: (isSuccess: boolean) => void;
 }
 
-export const SlackForm: React.FC<SlackFormProps> = ({
+export const InitialSetupForm: React.FC<Props> = ({
   existingSlackConfig,
   onSubmit,
 }) => {
@@ -79,14 +77,22 @@ export const SlackForm: React.FC<SlackFormProps> = ({
           <Form>
             <TextFormField name="slack_bot_token" label="Slack Bot Token:" />
             <TextFormField name="workspace_id" label="Workspace ID:" />
-            <TextFormField name="pull_frequency" label="Pull Frequency:" />
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
-            >
-              Update
-            </button>
+            <TextFormField
+              name="pull_frequency"
+              label="Pull Frequency (in minutes):"
+            />
+            <div className="flex">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={
+                  "mx-auto bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 " +
+                  "px-4 max-w-sm rounded focus:outline-none focus:shadow-outline w-full"
+                }
+              >
+                Update
+              </button>
+            </div>
           </Form>
         )}
       </Formik>

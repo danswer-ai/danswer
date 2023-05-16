@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR, { useSWRConfig } from "swr";
+import useSWR from "swr";
 import * as Yup from "yup";
 
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
@@ -11,9 +11,10 @@ import { fetcher } from "@/lib/fetcher";
 import {
   IndexAttempt,
   ListIndexingResponse,
-} from "../../../../components/admin/connectors/interfaces";
+} from "../../../../components/admin/connectors/types";
 import { IndexForm } from "@/components/admin/connectors/Form";
 import { TextFormField } from "@/components/admin/connectors/Field";
+import { useRouter } from "next/navigation";
 
 const COLUMNS = [
   { header: "Base URL", key: "url" },
@@ -23,7 +24,8 @@ const COLUMNS = [
 ];
 
 export default function Web() {
-  const { mutate } = useSWRConfig();
+  const router = useRouter();
+
   const { data, isLoading, error } = useSWR<ListIndexingResponse>(
     "/api/admin/connectors/web/index-attempt",
     fetcher
@@ -71,7 +73,7 @@ export default function Web() {
           initialValues={{ base_url: "" }}
           onSubmit={(success) => {
             if (success) {
-              mutate("/api/admin/connectors/web/index-attempt");
+              router.push("/admin/indexing/status");
             }
           }}
         />

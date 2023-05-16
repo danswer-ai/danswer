@@ -1,7 +1,10 @@
 "use client";
 
 import * as Yup from "yup";
-import { IndexForm } from "@/components/admin/connectors/Form";
+import {
+  IndexForm,
+  submitIndexRequest,
+} from "@/components/admin/connectors/Form";
 import {
   ConnectorStatusEnum,
   ConnectorStatus,
@@ -10,8 +13,13 @@ import { GoogleDriveIcon } from "@/components/icons/icons";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { LoadingAnimation } from "@/components/Loading";
+import { useRouter } from "next/navigation";
+import { Popup } from "@/components/admin/connectors/Popup";
+import { useState } from "react";
 
 export default function Page() {
+  const router = useRouter();
+
   const {
     data: isAuthenticatedData,
     isLoading: isAuthenticatedLoading,
@@ -28,6 +36,11 @@ export default function Page() {
     "/api/admin/connectors/google-drive/authorize",
     fetcher
   );
+
+  const [popup, setPopup] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
   const header = (
     <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
@@ -73,33 +86,58 @@ export default function Page() {
 
   if (isAuthenticatedData.authenticated) {
     return (
-      <div className="mx-auto">
+      <div>
         {header}
+        {popup && <Popup message={popup.message} type={popup.type} />}
 
-        <h2 className="text-xl font-bold pl-2 mb-2 mt-6 ml-auto mr-auto">
-          Status
+        {/* TODO: add periodic support */}
+        <h2 className="text-xl font-bold mb-2 ml-auto mr-auto">
+          Request Indexing
         </h2>
-        <ConnectorStatus
-          status={ConnectorStatusEnum.Setup}
-          source="google_drive"
-        />
-
-        {/* TODO: make this periodic */}
-        <div className="w-fit mt-2">
-          <IndexForm
-            source="google_drive"
-            formBody={null}
-            validationSchema={Yup.object().shape({})}
-            initialValues={{}}
-            onSubmit={(isSuccess) => console.log(isSuccess)}
-          />
+        <p className="text-sm mb-2">
+          Index the all docs in the setup Google Drive account.
+        </p>
+        <div className="mt-2 mb-4">
+          <button
+            type="submit"
+            className={
+              "bg-slate-500 hover:bg-slate-700 text-white " +
+              "font-bold py-2 px-4 rounded focus:outline-none " +
+              "focus:shadow-outline w-full max-w-sm mx-auto"
+            }
+            onClick={async () => {
+              const { message, isSuccess } = await submitIndexRequest(
+                "google_drive",
+                {}
+              );
+              if (isSuccess) {
+                setPopup({
+                  message,
+                  type: isSuccess ? "success" : "error",
+                });
+                setTimeout(() => {
+                  setPopup(null);
+                }, 3000);
+                router.push("/admin/indexing/status");
+              }
+            }}
+          >
+            Index
+          </button>
         </div>
 
-        {/* 
-          TODO: add back ability add more accounts / switch account
+        {/* TODO: add ability to add more accounts / switch account */}
+        <div className="mb-2">
+          <h2 className="text-xl font-bold mb-2 ml-auto mr-auto">
+            Re-Authenticate
+          </h2>
+          <p className="text-sm mb-4">
+            If you want to switch Google Drive accounts, you can re-authenticate
+            below.
+          </p>
           <a
             className={
-              "group relative w-64 flex justify-center " +
+              "group relative w-64 " +
               "py-2 px-4 border border-transparent text-sm " +
               "font-medium rounded-md text-white bg-red-600 " +
               "hover:bg-red-700 focus:outline-none focus:ring-2 " +
@@ -107,8 +145,9 @@ export default function Page() {
             }
             href={authorizationUrlData.auth_url}
           >
-            Re-Authenticate
-          </a> */}
+            Authenticate with Google Drive
+          </a>
+        </div>
       </div>
     );
   }

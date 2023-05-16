@@ -1,6 +1,7 @@
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/admin/connectors/Sidebar";
 import {
+  NotebookIcon,
   GithubIcon,
   GlobeIcon,
   GoogleDriveIcon,
@@ -27,10 +28,24 @@ export default async function AdminLayout({
       <Header user={user} />
       <div className="bg-gray-900 pt-8 flex">
         <Sidebar
-          title="Connectors"
+          title="Connector"
           collections={[
             {
-              name: "Connectors",
+              name: "Indexing",
+              items: [
+                {
+                  name: (
+                    <div className="flex">
+                      <NotebookIcon size="16" />
+                      <div className="ml-1">Status</div>
+                    </div>
+                  ),
+                  link: "/admin/indexing/status",
+                },
+              ],
+            },
+            {
+              name: "Connector Settings",
               items: [
                 {
                   name: (

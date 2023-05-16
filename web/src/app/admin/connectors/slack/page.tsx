@@ -1,15 +1,11 @@
 "use client";
 
-import {
-  ConnectorStatus,
-  ConnectorStatusEnum,
-} from "@/components/admin/connectors/ConnectorStatus";
-import { SlackForm } from "@/app/admin/connectors/slack/SlackForm";
 import { SlackIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
 import useSWR, { useSWRConfig } from "swr";
-import { SlackConfig } from "../../../../components/admin/connectors/interfaces";
+import { SlackConfig } from "../../../../components/admin/connectors/types";
 import { LoadingAnimation } from "@/components/Loading";
+import { InitialSetupForm } from "./InitialSetupForm";
 
 const MainSection = () => {
   // TODO: add back in once this is ready
@@ -36,26 +32,15 @@ const MainSection = () => {
   }
 
   return (
-    <div>
-      <h2 className="text-xl font-bold pl-2 mb-2 mt-6 ml-auto mr-auto">
-        Status
-      </h2>
-      {
-        <ConnectorStatus
-          status={
-            data.pull_frequency !== 0
-              ? ConnectorStatusEnum.Running
-              : ConnectorStatusEnum.NotSetup
-          }
-          source="slack"
-        />
-      }
-
-      <h2 className="text-xl font-bold pl-2 mb-2 mt-6 ml-auto mr-auto">
-        Config
-      </h2>
-      <div className="border-solid border-gray-600 border rounded-md p-6">
-        <SlackForm
+    <div className="mx-auto">
+      <h2 className="text-xl font-bold mb-3 ml-auto mr-auto">Config</h2>
+      <p className="text-sm mb-4">
+        To use the Slack connector, you must first provide a Slack bot token
+        corresponding to the Slack App set up in your workspace. For more
+        details on setting up the Danswer Slack App, see the docs here (TODO).
+      </p>
+      <div className="border border-gray-700 rounded-md p-3">
+        <InitialSetupForm
           existingSlackConfig={data}
           onSubmit={() => mutate("/api/admin/connectors/slack/config")}
         />
