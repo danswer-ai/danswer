@@ -9,6 +9,8 @@ RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
 
 WORKDIR /app
 COPY ./danswer /app/danswer
+COPY ./alembic /app/alembic
+COPY ./alembic.ini /app/alembic.ini
 
-ENV PYTHONPATH .
-CMD ["uvicorn", "danswer.main:app", "--host", "0.0.0.0", "--port", "8080"]
+ENV PYTHONPATH /app
+CMD ["/bin/sh", "-c", "alembic upgrade head && uvicorn danswer.main:app --host 0.0.0.0 --port 8080"]

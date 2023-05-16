@@ -7,11 +7,11 @@ upstream app_server {
 
     # for a TCP configuration
     # TODO: use gunicorn to manage multiple processes
-    server api:8080 fail_timeout=0;
+    server api_server:8080 fail_timeout=0;
 }
 
 upstream web_server {
-    server web:3000 fail_timeout=0;
+    server web_server:3000 fail_timeout=0;
 }
 
 server {

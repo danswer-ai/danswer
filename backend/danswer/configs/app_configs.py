@@ -36,7 +36,9 @@ SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
 SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
 
 SECRET = os.environ.get("SECRET", "")
-SESSION_EXPIRE_TIME_SECONDS = int(os.environ.get("SESSION_EXPIRE_TIME_SECONDS", 3600))
+SESSION_EXPIRE_TIME_SECONDS = int(
+    os.environ.get("SESSION_EXPIRE_TIME_SECONDS", 86400)
+)  # 1 day
 VALID_EMAIL_DOMAIN = os.environ.get("VALID_EMAIL_DOMAIN", "")
 # OAuth Login Flow
 ENABLE_OAUTH = os.environ.get("ENABLE_OAUTH", "").lower() != "false"
@@ -45,7 +47,7 @@ GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
 
 
 #####
-# Vector DB Configs
+# DB Configs
 #####
 DEFAULT_VECTOR_STORE = os.environ.get("VECTOR_DB", "qdrant")
 # Url / Key are used to connect to a remote Qdrant instance
@@ -58,12 +60,24 @@ QDRANT_DEFAULT_COLLECTION = os.environ.get("QDRANT_COLLECTION", "semantic_search
 DB_CONN_TIMEOUT = 2  # Timeout seconds connecting to DBs
 INDEX_BATCH_SIZE = 16  # File batches (not accounting file chunking)
 
+# below are intended to match the env variables names used by the official postgres docker image
+# https://hub.docker.com/_/postgres
+POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "password")
+POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5432")
+POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
+
 
 #####
 # Connector Configs
 #####
-GOOGLE_DRIVE_CREDENTIAL_JSON = os.environ.get("GOOGLE_DRIVE_CREDENTIAL_JSON", "")
-GOOGLE_DRIVE_TOKENS_JSON = os.environ.get("GOOGLE_DRIVE_TOKENS_JSON", "")
+GOOGLE_DRIVE_CREDENTIAL_JSON = os.environ.get(
+    "GOOGLE_DRIVE_CREDENTIAL_JSON", "/home/storage/google_drive_creds.json"
+)
+GOOGLE_DRIVE_TOKENS_JSON = os.environ.get(
+    "GOOGLE_DRIVE_TOKENS_JSON", "/home/storage/google_drive_tokens.json"
+)
 GOOGLE_DRIVE_INCLUDE_SHARED = False
 
 GITHUB_ACCESS_TOKEN = os.environ.get("GITHUB_ACCESS_TOKEN", "")
@@ -76,7 +90,9 @@ DEFAULT_PROMPT = "generic-qa"
 NUM_RETURNED_HITS = 15
 NUM_RERANKED_RESULTS = 4
 KEYWORD_MAX_HITS = 5
-QUOTE_ALLOWED_ERROR_PERCENT = 0.05  # 1 edit per 2 characters
+QUOTE_ALLOWED_ERROR_PERCENT = (
+    0.05  # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
+)
 
 
 #####
@@ -111,3 +127,8 @@ CROSS_ENCODER_PORT = 9000
 TYPESENSE_API_KEY = os.environ.get("TYPESENSE_API_KEY", "")
 TYPESENSE_HOST = "localhost"
 TYPESENSE_PORT = 8108
+
+DYNAMIC_CONFIG_STORE = os.environ.get(
+    "DYNAMIC_CONFIG_STORE", "FileSystemBackedDynamicConfigStore"
+)
+DYNAMIC_CONFIG_DIR_PATH = os.environ.get("DYNAMIC_CONFIG_DIR_PATH", "/home/storage")
