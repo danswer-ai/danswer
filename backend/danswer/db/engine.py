@@ -1,10 +1,10 @@
 from collections.abc import AsyncGenerator
 
-from configs.app_configs import POSTGRES_DB
-from configs.app_configs import POSTGRES_HOST
-from configs.app_configs import POSTGRES_PASSWORD
-from configs.app_configs import POSTGRES_PORT
-from configs.app_configs import POSTGRES_USER
+from danswer.configs.app_configs import POSTGRES_DB
+from danswer.configs.app_configs import POSTGRES_HOST
+from danswer.configs.app_configs import POSTGRES_PASSWORD
+from danswer.configs.app_configs import POSTGRES_PORT
+from danswer.configs.app_configs import POSTGRES_USER
 from sqlalchemy.engine import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine

@@ -12,5 +12,5 @@ RUN playwright install-deps
 WORKDIR /app
 COPY ./danswer /app/danswer
 
-ENV PYTHONPATH .
+ENV PYTHONPATH /app
 CMD ["python3", "danswer/background/update.py"]
