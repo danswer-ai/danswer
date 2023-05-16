@@ -5,7 +5,7 @@ services:
       context: ../backend
       dockerfile: Dockerfile
     depends_on:
-      - backend_db
+      - relational_db
       - vector_db
     restart: always
     ports:
@@ -13,7 +13,7 @@ services:
     env_file:
       - .env
     environment:
-      - POSTGRES_HOST=backend_db
+      - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
     volumes:
       - local_dynamic_storage:/home/storage
@@ -22,13 +22,13 @@ services:
       context: ../backend
       dockerfile: Dockerfile.background
     depends_on:
-      - backend_db
+      - relational_db
       - vector_db
     restart: always
     env_file:
       - .env
     environment:
-      - POSTGRES_HOST=backend_db
+      - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
     volumes:
       - local_dynamic_storage:/home/storage
@@ -43,7 +43,7 @@ services:
       - INTERNAL_AUTH_URL=http://api_server:8080
     ports:
       - "3000:3000"
-  backend_db:
+  relational_db:
     image: postgres:15.2-alpine
     restart: always
     # POSTGRES_USER and POSTGRES_PASSWORD should be set in .env file
