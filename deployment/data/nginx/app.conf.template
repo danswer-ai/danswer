@@ -7,19 +7,19 @@ upstream app_server {
 
     # for a TCP configuration
     # TODO: use gunicorn to manage multiple processes
-    server api:8080 fail_timeout=0;
+    server api_server:8080 fail_timeout=0;
 }
 
 upstream web_server {
-    server web:3000 fail_timeout=0;
+    server web_server:3000 fail_timeout=0;
 }
 
 server {
     listen 80;
     server_name ${DOMAIN};
 
-    location ~ ^/api(.*)$ {
-        rewrite ^/api(/.*)$ $1 break;
+    location ~ ^/api_server(.*)$ {
+        rewrite ^/api_server(/.*)$ $1 break;
 
         # misc headers
         proxy_set_header X-Real-IP $remote_addr;

@@ -11,5 +11,10 @@ not optimal, but can get you started easily and cheaply. To run:
      - `docker compose -f docker-compose.dev.yml -p danswer-one-box up -d --build`
      - This will start Web/API servers, Postgres (backend DB), Qdrant (vector DB), and the background indexing job.
    - For Prod:
-     - `docker compose -f docker-compose.prod.yml p danswer-one-box up -d --build`
+     - `docker compose -f docker-compose.prod.yml -p danswer-one-box up -d --build`
      - This will additionally run certbot and start Nginx.
+4. To shut down the deployment run:
+   - For Local:
+     - `docker compose -f docker-compose.dev.yml -p danswer-one-box down`
+   - For Prod:
+     - `docker compose -f docker-compose.prod.yml -p danswer-one-box down`
