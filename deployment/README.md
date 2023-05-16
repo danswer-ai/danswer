@@ -8,13 +8,13 @@ not optimal, but can get you started easily and cheaply. To run:
    - `chmod +x init-letsencrypt.sh` + `./init-letsencrypt.sh` to set up https certificate.
 3. Run one of the docker compose commands below depending on your environment:
    - For Local:
-     - `docker compose -f docker-compose.dev.yml -p danswer-one-box up -d --build`
+     - `docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build`
      - This will start Web/API servers, Postgres (backend DB), Qdrant (vector DB), and the background indexing job.
    - For Prod:
-     - `docker compose -f docker-compose.prod.yml -p danswer-one-box up -d --build`
+     - `docker compose -f docker-compose.prod.yml -p danswer-stack up -d --build`
      - This will additionally run certbot and start Nginx.
 4. To shut down the deployment run:
    - For Local:
-     - `docker compose -f docker-compose.dev.yml -p danswer-one-box down`
+     - `docker compose -f docker-compose.dev.yml -p danswer-stack down`
    - For Prod:
-     - `docker compose -f docker-compose.prod.yml -p danswer-one-box down`
+     - `docker compose -f docker-compose.prod.yml -p danswer-stack down`

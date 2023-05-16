@@ -20,7 +20,7 @@ FRONTEND_GOOGLE_DRIVE_REDIRECT = f"{WEB_DOMAIN}/auth/connectors/google_drive/cal
 
 
 def backend_get_credentials() -> Credentials:
-    """This approach does not work for the one-box builds"""
+    """This approach is only for local development use"""
     creds = None
     if os.path.exists(GOOGLE_DRIVE_TOKENS_JSON):
         creds = Credentials.from_authorized_user_file(GOOGLE_DRIVE_TOKENS_JSON, SCOPES)
