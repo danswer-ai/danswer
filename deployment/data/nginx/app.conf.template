@@ -18,8 +18,8 @@ server {
     listen 80;
     server_name ${DOMAIN};
 
-    location ~ ^/api_server(.*)$ {
-        rewrite ^/api_server(/.*)$ $1 break;
+    location ~ ^/api(.*)$ {
+        rewrite ^/api(/.*)$ $1 break;
 
         # misc headers
         proxy_set_header X-Real-IP $remote_addr;
