@@ -2,10 +2,6 @@
 
 import * as Yup from "yup";
 import { IndexForm } from "@/components/admin/connectors/Form";
-import {
-  ConnectorStatus,
-  ConnectorStatusEnum,
-} from "@/components/admin/connectors/ConnectorStatus";
 import { GithubIcon } from "@/components/icons/icons";
 import { TextFormField } from "@/components/admin/connectors/Field";
 

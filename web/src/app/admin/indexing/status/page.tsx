@@ -12,7 +12,7 @@ import {
   ListIndexingResponse,
 } from "@/components/admin/connectors/types";
 import { getSourceMetadata } from "@/components/source";
-import { CheckCircle } from "@phosphor-icons/react";
+import { CheckCircle, XCircle } from "@phosphor-icons/react";
 import { submitIndexRequest } from "@/components/admin/connectors/Form";
 import { useState } from "react";
 import { Popup } from "@/components/admin/connectors/Popup";
@@ -88,6 +88,25 @@ export default function Status() {
                 latestSuccessfulIndexAttemptsBySource.get(
                   getModifiedSource(indexAttempt)
                 );
+
+              let statusDisplay = (
+                <div className="text-gray-400">In Progress...</div>
+              );
+              if (indexAttempt.status === "success") {
+                statusDisplay = (
+                  <div className="text-green-600 flex">
+                    <CheckCircle className="my-auto mr-1" size="18" />
+                    Success
+                  </div>
+                );
+              } else if (indexAttempt.status === "failed") {
+                statusDisplay = (
+                  <div className="text-red-600 flex">
+                    <XCircle className="my-auto mr-1" size="18" />
+                    Error
+                  </div>
+                );
+              }
               return {
                 indexed_at:
                   timeAgo(successfulIndexAttempt?.time_updated) || "-",
@@ -108,15 +127,7 @@ export default function Status() {
                     </div>
                   </a>
                 ),
-                status:
-                  indexAttempt.status === "success" ? (
-                    <div className="text-green-600 flex">
-                      <CheckCircle className="my-auto mr-1" size="18" />
-                      Success
-                    </div>
-                  ) : (
-                    <div className="text-gray-400">In Progress...</div>
-                  ),
+                status: statusDisplay,
                 reindex: (
                   <button
                     className={

@@ -8,7 +8,7 @@ export interface SlackConfig {
 
 export interface IndexAttempt {
   connector_specific_config: { [key: string]: any };
-  status: "success" | "failure" | "in_progress" | "not_started";
+  status: "success" | "failed" | "in_progress" | "not_started";
   source: ValidSources;
   time_created: string;
   time_updated: string;
