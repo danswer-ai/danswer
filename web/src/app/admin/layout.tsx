@@ -7,6 +7,7 @@ import {
   GoogleDriveIcon,
   SlackIcon,
 } from "@/components/icons/icons";
+import { DISABLE_AUTH } from "@/lib/constants";
 import { getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 
@@ -15,12 +16,15 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getCurrentUserSS();
-  if (!user) {
-    return redirect("/auth/login");
-  }
-  if (user.role !== "admin") {
-    return redirect("/");
+  let user = null;
+  if (!DISABLE_AUTH) {
+    user = await getCurrentUserSS();
+    if (!user) {
+      return redirect("/auth/login");
+    }
+    if (user.role !== "admin") {
+      return redirect("/");
+    }
   }
 
   return (

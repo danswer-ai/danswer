@@ -1,9 +1,6 @@
-import { Header } from "@/components/Header";
 import "./globals.css";
 
 import { Inter } from "next/font/google";
-import { getCurrentUserSS } from "@/lib/userSS";
-import { redirect } from "next/navigation";
 
 const inter = Inter({
   subsets: ["latin"],
