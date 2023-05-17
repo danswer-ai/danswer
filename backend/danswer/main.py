@@ -93,9 +93,15 @@ def get_application() -> FastAPI:
 
     @application.on_event("startup")
     def startup_event() -> None:
+        # To avoid circular imports
         from danswer.semantic_search.semantic_search import (
             warm_up_models,
-        )  # To avoid circular imports
+        )
+        from danswer.datastores.qdrant.indexing import create_collection
+        from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
+
+        create_collection(collection_name=QDRANT_DEFAULT_COLLECTION)
+        logger.info("Collection ready")
 
         warm_up_models()
         logger.info("Semantic Search models are ready.")
