@@ -4,6 +4,7 @@ import re
 from collections.abc import Callable
 from collections.abc import Generator
 from typing import Any
+from typing import cast
 from typing import Dict
 from typing import Optional
 from typing import Tuple
@@ -241,12 +242,12 @@ class OpenAICompletionQA(QAModel):
                 stream=True,
             )
 
-            model_output = ""
+            model_output: str = ""
             found_answer_start = False
             found_answer_end = False
             # iterate through the stream of events
             for event in response:
-                event_text = event["choices"][0]["text"]
+                event_text = cast(str, event["choices"][0]["text"])
                 model_previous = model_output
                 model_output += event_text
 
@@ -259,6 +260,7 @@ class OpenAICompletionQA(QAModel):
                 if found_answer_start and not found_answer_end:
                     if stream_answer_end(model_previous, event_text):
                         found_answer_end = True
+                        yield {"answer_finished": True}
                         continue
                     yield {"answer_data": event_text}
 
@@ -343,11 +345,11 @@ class OpenAIChatCompletionQA(QAModel):
                 stream=True,
             )
 
-            model_output = ""
+            model_output: str = ""
             found_answer_start = False
             found_answer_end = False
             for event in response:
-                event_dict = event["choices"][0]["delta"]
+                event_dict = cast(str, event["choices"][0]["delta"])
                 if (
                     "content" not in event_dict
                 ):  # could be a role message or empty termination
@@ -365,6 +367,7 @@ class OpenAIChatCompletionQA(QAModel):
                 if found_answer_start and not found_answer_end:
                     if stream_answer_end(model_previous, event_text):
                         found_answer_end = True
+                        yield {"answer_finished": True}
                         continue
                     yield {"answer_data": event_text}
 

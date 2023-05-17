@@ -1,15 +1,18 @@
 import time
 from collections.abc import Callable
 from typing import Any
+from typing import TypeVar
 
 from danswer.utils.logging import setup_logger
 
 logger = setup_logger()
 
+F = TypeVar("F", bound=Callable)
+
 
 def log_function_time(
     func_name: str | None = None,
-) -> Callable[[Callable], Callable]:
+) -> Callable[[F], F]:
     """Build a timing wrapper for a function. Logs how long the function took to run.
     Use like:
 

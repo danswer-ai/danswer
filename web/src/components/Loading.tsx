@@ -3,9 +3,13 @@ import "./loading.css";
 
 interface LoadingAnimationProps {
   text?: string;
+  size?: "text-sm" | "text-md";
 }
 
-export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ text }) => {
+export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
+  text,
+  size,
+}) => {
   const [dots, setDots] = useState("...");
 
   useEffect(() => {
@@ -29,7 +33,7 @@ export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ text }) => {
 
   return (
     <div className="loading-animation flex">
-      <div className="mx-auto">
+      <div className={"mx-auto flex" + size ? ` ${size}` : ""}>
         {text === undefined ? "Thinking" : text}
         <span className="dots">{dots}</span>
       </div>

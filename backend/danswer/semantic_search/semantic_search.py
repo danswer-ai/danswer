@@ -16,7 +16,6 @@
 # Specifically the sentence-transformers/all-distilroberta-v1 and cross-encoder/ms-marco-MiniLM-L-6-v2 models
 # The original authors can be found at https://www.sbert.net/
 import json
-from typing import List
 
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_RETURNED_HITS
@@ -65,8 +64,8 @@ def warm_up_models() -> None:
 @log_function_time()
 def semantic_reranking(
     query: str,
-    chunks: List[InferenceChunk],
-) -> List[InferenceChunk]:
+    chunks: list[InferenceChunk],
+) -> list[InferenceChunk]:
     cross_encoder = get_default_reranking_model()
     sim_scores = cross_encoder.predict([(query, chunk.content) for chunk in chunks])  # type: ignore
     scored_results = list(zip(sim_scores, chunks))
@@ -84,7 +83,7 @@ def retrieve_ranked_documents(
     filters: list[DatastoreFilter] | None,
     datastore: Datastore,
     num_hits: int = NUM_RETURNED_HITS,
-) -> List[InferenceChunk] | None:
+) -> list[InferenceChunk] | None:
     top_chunks = datastore.semantic_retrieval(query, filters, num_hits)
     if not top_chunks:
         filters_log_msg = json.dumps(filters, separators=(",", ":")).replace("\n", "")
