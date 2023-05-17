@@ -1,7 +1,13 @@
+import { DISABLE_AUTH } from "@/lib/constants";
 import { getGoogleOAuthUrlSS, getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 
 const Page = async () => {
+  // no need for any of the below if auth is disabled
+  if (DISABLE_AUTH) {
+    return redirect("/");
+  }
+
   const [currentUser, authorizationUrl] = await Promise.all([
     getCurrentUserSS(),
     getGoogleOAuthUrlSS(),

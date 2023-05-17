@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 
 interface HeaderProps {
-  user: User;
+  user: User | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({ user }) => {
@@ -74,19 +74,21 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
                 "w-36 overflow-hidden shadow-xl z-10 text-sm text-gray-300"
               }
             >
-              {user.role === "admin" && (
+              {user?.role === "admin" && (
                 <Link href="/admin/indexing/status">
                   <div className="flex py-2 px-3 cursor-pointer hover:bg-gray-500 border-b border-gray-500">
                     Connectors
                   </div>
                 </Link>
               )}
-              <div
-                className="flex py-2 px-3 cursor-pointer hover:bg-gray-500"
-                onClick={handleLogout}
-              >
-                Logout
-              </div>
+              {user && (
+                <div
+                  className="flex py-2 px-3 cursor-pointer hover:bg-gray-500"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </div>
+              )}
             </div>
           )}
         </div>
