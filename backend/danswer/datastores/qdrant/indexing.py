@@ -27,6 +27,18 @@ logger = setup_logger()
 DEFAULT_BATCH_SIZE = 30
 
 
+def create_collection(
+    collection_name: str, embedding_dim: int = DOC_EMBEDDING_DIM
+) -> None:
+    logger.info(f"Attempting to create collection {collection_name}")
+    result = get_qdrant_client().create_collection(
+        collection_name=collection_name,
+        vectors_config=VectorParams(size=embedding_dim, distance=Distance.COSINE),
+    )
+    if not result:
+        raise RuntimeError("Could not create Qdrant collection")
+
+
 def recreate_collection(
     collection_name: str, embedding_dim: int = DOC_EMBEDDING_DIM
 ) -> None:
