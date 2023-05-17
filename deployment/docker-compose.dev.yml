@@ -39,6 +39,8 @@ services:
     depends_on:
       - api_server
     restart: always
+    env_file:
+      - .env
     environment:
       - INTERNAL_AUTH_URL=http://api_server:8080
     ports:
