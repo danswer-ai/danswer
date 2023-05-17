@@ -1,4 +1,5 @@
 import abc
+from collections.abc import Generator
 from typing import Any
 
 from danswer.chunking.models import InferenceChunk
@@ -18,5 +19,5 @@ class QAModel:
         self,
         query: str,
         context_docs: list[InferenceChunk],
-    ) -> Any:
+    ) -> Generator[dict[str, Any] | None, None, None]:
         raise NotImplementedError

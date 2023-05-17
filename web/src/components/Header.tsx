@@ -3,6 +3,7 @@
 import { User } from "@/lib/types";
 import { logout } from "@/lib/user";
 import { UserCircle } from "@phosphor-icons/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
@@ -52,7 +53,12 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
     <header className="bg-gray-800 text-gray-200 py-4">
       <div className="mx-8 flex">
         <Link href="/">
-          <h1 className="text-2xl font-bold">danswer 💃</h1>
+          <div className="flex">
+            <div className="h-[32px] w-[30px]">
+              <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
+            </div>
+            <h1 className="flex text-2xl font-bold my-auto">Danswer</h1>
+          </div>
         </Link>
 
         <div

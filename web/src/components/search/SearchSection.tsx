@@ -63,6 +63,8 @@ const searchRequestStreamed = async (
   url.search = params;
 
   let answer = "";
+  let quotes: Record<string, Quote> | null = null;
+  let relevantDocuments: Document[] | null = null;
   try {
     const response = await fetch(url);
     const reader = response.body?.getReader();
@@ -96,12 +98,26 @@ const searchRequestStreamed = async (
         if (answerChunk) {
           answer += answerChunk;
           updateCurrentAnswer(answer);
+        } else if (chunk.answer_finished) {
+          // set quotes as non-null to signify that the answer is finished and
+          // we're now looking for quotes
+          updateQuotes({});
+          if (
+            !answer.endsWith(".") &&
+            !answer.endsWith("?") &&
+            !answer.endsWith("!")
+          ) {
+            answer += ".";
+            updateCurrentAnswer(answer);
+          }
         } else {
           const docs = chunk.top_documents as any[];
           if (docs) {
-            updateDocs(docs.map((doc) => JSON.parse(doc) as Document));
+            relevantDocuments = docs.map((doc) => JSON.parse(doc) as Document);
+            updateDocs(relevantDocuments);
           } else {
-            updateQuotes(chunk as Record<string, Quote>);
+            quotes = chunk as Record<string, Quote>;
+            updateQuotes(quotes);
           }
         }
       });
@@ -109,7 +125,7 @@ const searchRequestStreamed = async (
   } catch (err) {
     console.error("Fetch error:", err);
   }
-  return answer;
+  return { answer, quotes, relevantDocuments };
 };
 
 export const SearchSection: React.FC<{}> = () => {
@@ -123,11 +139,11 @@ export const SearchSection: React.FC<{}> = () => {
       <SearchBar
         onSearch={(query) => {
           setIsFetching(true);
-          setAnswer("");
+          setAnswer(null);
           setQuotes(null);
           setDocuments(null);
           searchRequestStreamed(query, setAnswer, setQuotes, setDocuments).then(
-            () => {
+            ({ quotes }) => {
               setIsFetching(false);
               // if no quotes were given, set to empty object so that the SearchResultsDisplay
               // component knows that the search was successful but no quotes were found
