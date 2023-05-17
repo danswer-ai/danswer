@@ -26,6 +26,7 @@
 * One line Docker Compose deployment of all services to host Danswer anywhere.
 
 ## Upcoming
+* Chat/Conversation support.
 * Extend current user Auth flows to support document level access management.
 * Support for custom endpoints for Generative AI models or even self-host options.
 * Custom Deep Learning NLP model to classify user intent to customize prompts for code generation, summarization, etc.
