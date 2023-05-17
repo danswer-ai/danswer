@@ -31,7 +31,9 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
+# Not needed, set by compose 
+# ENV NODE_ENV production  
+
 # Disable automatic telemetry collection
 ENV NEXT_TELEMETRY_DISABLED 1
 

@@ -42,7 +42,8 @@ services:
     env_file:
       - .env
     environment:
-      - INTERNAL_AUTH_URL=http://api_server:8080
+      - INTERNAL_URL=http://api_server:8080
+      - NODE_ENV=development
     ports:
       - "3000:3000"
   relational_db:
