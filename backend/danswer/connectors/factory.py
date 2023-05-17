@@ -48,8 +48,11 @@ def build_connector(
 def build_pull_connector(
     source: DocumentSource, connector_specific_config: dict[str, Any]
 ) -> PullLoader:
-    return _range_pull_to_pull(
-        build_connector(source, InputType.PULL, connector_specific_config)
+    connector = build_connector(source, InputType.PULL, connector_specific_config)
+    return (
+        _range_pull_to_pull(connector)
+        if isinstance(connector, RangePullLoader)
+        else connector
     )
 
 
