@@ -336,7 +336,7 @@ class OpenAIChatCompletionQA(QAModel):
         try:
             response = openai.ChatCompletion.create(
                 messages=messages,
-                temperature=0,
+                temperature=1,
                 top_p=1,
                 frequency_penalty=0,
                 presence_penalty=0,
