@@ -3,12 +3,15 @@ from typing import cast
 
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.factory import build_connector
+from danswer.connectors.factory import build_pull_connector
 from danswer.connectors.models import InputType
 from danswer.connectors.slack.config import get_pull_frequency
 from danswer.connectors.slack.pull import PeriodicSlackLoader
 from danswer.connectors.web.pull import WebLoader
 from danswer.db.index_attempt import fetch_index_attempts
+from danswer.db.index_attempt import insert_index_attempt
 from danswer.db.index_attempt import update_index_attempt
+from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
@@ -51,9 +54,21 @@ def run_update() -> None:
         if last_pull is None or _check_should_run(
             current_time, last_pull, pull_frequency
         ):
-            logger.info(f"Running slack pull from {last_pull or 0} to {current_time}")
-            for doc_batch in PeriodicSlackLoader().load(last_pull or 0, current_time):
-                indexing_pipeline(doc_batch)
+            # TODO (chris): go back to only fetching messages that have changed
+            # since the last pull. Not supported for now due to how we compute the
+            # number of documents indexed for the admin dashboard (only look at latest)
+            logger.info("Scheduling periodic slack pull")
+            insert_index_attempt(
+                IndexAttempt(
+                    source=DocumentSource.SLACK,
+                    input_type=InputType.PULL,
+                    status=IndexingStatus.NOT_STARTED,
+                    connector_specific_config={},
+                )
+            )
+            # not 100% accurate, but the inaccuracy will result in more
+            # frequent pulling rather than less frequent, which is fine
+            # for now
             dynamic_config_store.store(last_slack_pull_key, current_time)
 
     # TODO (chris): make this more efficient / in a single transaction to
@@ -79,9 +94,8 @@ def run_update() -> None:
         try:
             # TODO (chris): spawn processes to parallelize / take advantage of
             # multiple cores + implement retries
-            connector = build_connector(
+            connector = build_pull_connector(
                 source=not_started_index_attempt.source,
-                input_type=InputType.PULL,
                 connector_specific_config=not_started_index_attempt.connector_specific_config,
             )
 
