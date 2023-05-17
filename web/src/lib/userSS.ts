@@ -1,14 +1,12 @@
 import { cookies } from "next/headers";
 import { User } from "./types";
-
-const INTERNAL_AUTH_URL =
-  process.env.INTERNAL_AUTH_URL || "http://127.0.0.1:8080";
+import { INTERNAL_URL } from "./constants";
 
 export const buildUrl = (path: string) => {
   if (path.startsWith("/")) {
-    return `${INTERNAL_AUTH_URL}${path}`;
+    return `${INTERNAL_URL}${path}`;
   }
-  return `${INTERNAL_AUTH_URL}/${path}`;
+  return `${INTERNAL_URL}/${path}`;
 };
 
 export const getGoogleOAuthUrlSS = async (): Promise<string> => {

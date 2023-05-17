@@ -40,7 +40,8 @@ services:
     env_file:
       - .env
     environment:
-      - INTERNAL_AUTH_URL=http://api_server:8080
+      - INTERNAL_URL=http://api_server:8080
+      - NODE_ENV=production
   relational_db:
     image: postgres:15.2-alpine
     restart: always

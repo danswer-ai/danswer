@@ -5,20 +5,20 @@ const nextConfig = {
   },
   output: "standalone",
   redirects: async () => {
-    // In production, something else (nginx in the one box setup) takes care
-    // of this redirect
-    // NOTE: this may get adjusted later if we want to support hosting of the
-    // API server on a different domain without requring some kind of proxy
-    if (process.env.NODE_ENV === "development") {
-      return [
-        {
-          source: "/api/:path*",
-          destination: "http://localhost:8080/:path*", // Proxy to Backend
-          permanent: true,
-        },
-      ];
-    }
-    return [];
+    // In production, something else (nginx in the one box setup) should take
+    // care of this redirect. Leaving in for now due to issues with dev setup
+    // and accessing `process.env.NODE_ENV` + for cases where people don't want
+    // to setup nginx and are okay with the frontend proxying the request.
+    // TODO (chris): better support non-nginx setups
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${
+          process.env.INTERNAL_URL || "http://localhost:8080"
+        }/:path*`, // Proxy to Backend
+        permanent: true,
+      },
+    ];
   },
 };
 
