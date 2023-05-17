@@ -77,13 +77,13 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
                 {dedupedQuotes.map((quoteInfo) => (
                   <a
                     key={quoteInfo.document_id}
-                    className="p-2 border border-gray-800 rounded-lg text-sm flex max-w-[230px] hover:bg-gray-800"
+                    className="p-2 ml-1 border border-gray-800 rounded-lg text-sm flex max-w-[230px] hover:bg-gray-800"
                     href={quoteInfo.link}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     {getSourceIcon(quoteInfo.source_type, "20")}
-                    <p className="truncate break-all">
+                    <p className="truncate break-all ml-0.5">
                       {quoteInfo.semantic_identifier || quoteInfo.document_id}
                     </p>
                   </a>
@@ -113,7 +113,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
                   rel="noopener noreferrer"
                 >
                   {getSourceIcon(doc.source_type, "20")}
-                  <p className="truncate break-all">
+                  <p className="truncate break-all ml-0.5">
                     {doc.semantic_identifier || doc.document_id}
                   </p>
                 </a>
