@@ -10,6 +10,7 @@ from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import ENABLE_OAUTH
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
+from danswer.datastores.qdrant.indexing import list_collections
 from danswer.server.admin import router as admin_router
 from danswer.server.event_loading import router as event_processing_router
 from danswer.server.search_backend import router as backend_router
@@ -100,8 +101,11 @@ def get_application() -> FastAPI:
         from danswer.datastores.qdrant.indexing import create_collection
         from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 
-        create_collection(collection_name=QDRANT_DEFAULT_COLLECTION)
-        logger.info("Collection ready")
+        if QDRANT_DEFAULT_COLLECTION not in {
+            collection.name for collection in list_collections().collections
+        }:
+            logger.info(f"Creating collection with name: {QDRANT_DEFAULT_COLLECTION}")
+            create_collection(collection_name=QDRANT_DEFAULT_COLLECTION)
 
         warm_up_models()
         logger.info("Semantic Search models are ready.")

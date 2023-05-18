@@ -18,6 +18,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import ResponseHandlingException
 from qdrant_client.http.models.models import UpdateResult
 from qdrant_client.http.models.models import UpdateStatus
+from qdrant_client.models import CollectionsResponse
 from qdrant_client.models import Distance
 from qdrant_client.models import PointStruct
 from qdrant_client.models import VectorParams
@@ -25,6 +26,10 @@ from qdrant_client.models import VectorParams
 logger = setup_logger()
 
 DEFAULT_BATCH_SIZE = 30
+
+
+def list_collections() -> CollectionsResponse:
+    return get_qdrant_client().get_collections()
 
 
 def create_collection(
