@@ -21,7 +21,7 @@ from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINK
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.model_configs import OPENAI_MAX_OUTPUT_TOKENS
-from danswer.configs.model_configs import OPENAPI_MODEL_VERSION
+from danswer.configs.model_configs import OPENAI_MODEL_VERSION
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.qa_prompts import ANSWER_PAT
 from danswer.direct_qa.qa_prompts import get_chat_reflexion_msg
@@ -185,7 +185,7 @@ class OpenAICompletionQA(QAModel):
     def __init__(
         self,
         prompt_processor: Callable[[str, list[str]], str] = json_processor,
-        model_version: str = OPENAPI_MODEL_VERSION,
+        model_version: str = OPENAI_MODEL_VERSION,
         max_output_tokens: int = OPENAI_MAX_OUTPUT_TOKENS,
     ) -> None:
         self.prompt_processor = prompt_processor
@@ -282,7 +282,7 @@ class OpenAIChatCompletionQA(QAModel):
         prompt_processor: Callable[
             [str, list[str]], list[dict[str, str]]
         ] = json_chat_processor,
-        model_version: str = OPENAPI_MODEL_VERSION,
+        model_version: str = OPENAI_MODEL_VERSION,
         max_output_tokens: int = OPENAI_MAX_OUTPUT_TOKENS,
         reflexion_try_count: int = 0,
     ) -> None:
