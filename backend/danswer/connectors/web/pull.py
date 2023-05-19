@@ -38,6 +38,9 @@ def get_internal_links(
             href = href.split("#")[0]
 
         if not is_valid_url(href):
+            # Relative path handling
+            if url[-1] != "/":
+                url += "/"
             href = urljoin(url, href)
 
         if urlparse(href).netloc == urlparse(url).netloc and base_url in href:
@@ -77,19 +80,36 @@ class WebLoader(PullLoader):
                     content = page.content()
                     soup = BeautifulSoup(content, "html.parser")
 
+                    internal_links = get_internal_links(
+                        self.base_url, current_url, soup
+                    )
+                    for link in internal_links:
+                        if link not in visited_links:
+                            to_visit.append(link)
+
                     title_tag = soup.find("title")
                     title = None
                     if title_tag and title_tag.text:
                         title = title_tag.text
 
                     # Heuristics based cleaning
-                    for undesired_tag in ["nav", "header", "footer", "meta"]:
-                        [tag.extract() for tag in soup.find_all(undesired_tag)]
                     for undesired_div in ["sidebar", "header", "footer"]:
                         [
                             tag.extract()
-                            for tag in soup.find_all("div", {"class": undesired_div})
+                            for tag in soup.find_all(
+                                "div", class_=lambda x: x and undesired_div in x.split()
+                            )
                         ]
+
+                    for undesired_tag in [
+                        "nav",
+                        "header",
+                        "footer",
+                        "meta",
+                        "script",
+                        "style",
+                    ]:
+                        [tag.extract() for tag in soup.find_all(undesired_tag)]
 
                     page_text = soup.get_text(TAG_SEPARATOR)
 
@@ -102,13 +122,6 @@ class WebLoader(PullLoader):
                             metadata={},
                         )
                     )
-
-                    internal_links = get_internal_links(
-                        self.base_url, current_url, soup
-                    )
-                    for link in internal_links:
-                        if link not in visited_links:
-                            to_visit.append(link)
 
                     page.close()
                 except Exception as e:
