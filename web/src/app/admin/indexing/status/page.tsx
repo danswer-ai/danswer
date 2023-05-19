@@ -16,6 +16,7 @@ import { CheckCircle, XCircle } from "@phosphor-icons/react";
 import { submitIndexRequest } from "@/components/admin/connectors/Form";
 import { useState } from "react";
 import { Popup } from "@/components/admin/connectors/Popup";
+import { HealthCheckBanner } from "@/components/health/healthcheck";
 
 const getModifiedSource = (indexAttempt: IndexAttempt) => {
   return indexAttempt.source === "web"
@@ -63,6 +64,9 @@ export default function Status() {
   return (
     <div className="mx-auto">
       {popup && <Popup message={popup.message} type={popup.type} />}
+      <div className="mb-4">
+        <HealthCheckBanner />
+      </div>
       <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
         <NotebookIcon size="32" />
         <h1 className="text-3xl font-bold pl-2">Indexing Status</h1>

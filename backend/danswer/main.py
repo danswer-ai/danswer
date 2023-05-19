@@ -13,6 +13,7 @@ from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.datastores.qdrant.indexing import list_collections
 from danswer.server.admin import router as admin_router
 from danswer.server.event_loading import router as event_processing_router
+from danswer.server.health import router as health_router
 from danswer.server.search_backend import router as backend_router
 from danswer.utils.logging import setup_logger
 from fastapi import FastAPI
@@ -39,6 +40,7 @@ def get_application() -> FastAPI:
     application.include_router(backend_router)
     application.include_router(event_processing_router)
     application.include_router(admin_router)
+    application.include_router(health_router)
 
     application.include_router(
         fastapi_users.get_auth_router(auth_backend),

@@ -4,10 +4,14 @@ import * as Yup from "yup";
 import { IndexForm } from "@/components/admin/connectors/Form";
 import { GithubIcon } from "@/components/icons/icons";
 import { TextFormField } from "@/components/admin/connectors/Field";
+import { HealthCheckBanner } from "@/components/health/healthcheck";
 
 export default function Page() {
   return (
     <div className="mx-auto">
+      <div className="mb-4">
+        <HealthCheckBanner />
+      </div>
       <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
         <GithubIcon size="32" />
         <h1 className="text-3xl font-bold pl-2">Github PRs</h1>
