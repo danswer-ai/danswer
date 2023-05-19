@@ -15,6 +15,7 @@ import {
 import { IndexForm } from "@/components/admin/connectors/Form";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { useRouter } from "next/navigation";
+import { HealthCheckBanner } from "@/components/health/healthcheck";
 
 const COLUMNS = [
   { header: "Base URL", key: "url" },
@@ -54,6 +55,9 @@ export default function Web() {
 
   return (
     <div className="mx-auto">
+      <div className="mb-4">
+        <HealthCheckBanner />
+      </div>
       <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
         <GlobeIcon size="32" />
         <h1 className="text-3xl font-bold pl-2">Web</h1>

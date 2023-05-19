@@ -21,7 +21,9 @@ from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.server.models import AuthStatus
 from danswer.server.models import AuthUrl
 from danswer.server.models import GDriveCallback
+from danswer.server.models import IndexAttemptRequest
 from danswer.server.models import IndexAttemptSnapshot
+from danswer.server.models import ListIndexAttemptsResponse
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
@@ -69,11 +71,6 @@ def modify_slack_config(
     update_slack_config(slack_config)
 
 
-class IndexAttemptRequest(BaseModel):
-    input_type: InputType = InputType.PULL
-    connector_specific_config: dict[str, Any]
-
-
 @router.post("/connectors/{source}/index-attempt", status_code=201)
 def index(
     source: DocumentSource,
@@ -98,10 +95,6 @@ def index(
             status=IndexingStatus.NOT_STARTED,
         )
     )
-
-
-class ListIndexAttemptsResponse(BaseModel):
-    index_attempts: list[IndexAttemptSnapshot]
 
 
 @router.get("/connectors/{source}/index-attempt")

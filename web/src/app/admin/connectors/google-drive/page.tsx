@@ -16,6 +16,7 @@ import { LoadingAnimation } from "@/components/Loading";
 import { useRouter } from "next/navigation";
 import { Popup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
+import { HealthCheckBanner } from "@/components/health/healthcheck";
 
 export default function Page() {
   const router = useRouter();
@@ -43,9 +44,14 @@ export default function Page() {
   } | null>(null);
 
   const header = (
-    <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-      <GoogleDriveIcon size="32" />
-      <h1 className="text-3xl font-bold pl-2">Google Drive</h1>
+    <div>
+      <div className="mb-4">
+        <HealthCheckBanner />
+      </div>
+      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
+        <GoogleDriveIcon size="32" />
+        <h1 className="text-3xl font-bold pl-2">Google Drive</h1>
+      </div>
     </div>
   );
 

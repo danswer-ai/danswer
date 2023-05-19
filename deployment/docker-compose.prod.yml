@@ -33,7 +33,7 @@ services:
   web_server:
     build:
       context: ../web
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     depends_on:
       - api_server
     restart: always
@@ -41,7 +41,6 @@ services:
       - .env
     environment:
       - INTERNAL_URL=http://api_server:8080
-      - NODE_ENV=production
   relational_db:
     image: postgres:15.2-alpine
     restart: always
