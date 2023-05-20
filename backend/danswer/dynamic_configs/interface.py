@@ -21,3 +21,7 @@ class DynamicConfigStore:
     @abc.abstractmethod
     def load(self, key: str) -> JSON_ro:
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def delete(self, key: str) -> None:
+        raise NotImplementedError

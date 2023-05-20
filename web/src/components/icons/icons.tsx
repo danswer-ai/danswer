@@ -7,6 +7,8 @@ import {
   GithubLogo,
   GoogleDriveLogo,
   Notebook,
+  Key,
+  Trash,
 } from "@phosphor-icons/react";
 
 interface IconProps {
@@ -21,6 +23,20 @@ export const NotebookIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <Notebook size={size} className={className} />;
+};
+
+export const KeyIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <Key size={size} className={className} />;
+};
+
+export const TrashIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <Trash size={size} className={className} />;
 };
 
 export const GlobeIcon = ({

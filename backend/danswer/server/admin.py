@@ -1,8 +1,10 @@
 from typing import Any
+from typing import cast
 
 from danswer.auth.users import current_admin_user
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import NO_AUTH_USER
+from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
 from danswer.connectors.factory import build_connector
 from danswer.connectors.google_drive.connector_auth import get_auth_url
 from danswer.connectors.google_drive.connector_auth import get_drive_tokens
@@ -17,7 +19,13 @@ from danswer.db.index_attempt import insert_index_attempt
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import User
+from danswer.direct_qa.key_validation import (
+    check_openai_api_key_is_valid,
+)
+from danswer.direct_qa.question_answer import get_openai_api_key
+from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.server.models import ApiKey
 from danswer.server.models import AuthStatus
 from danswer.server.models import AuthUrl
 from danswer.server.models import GDriveCallback
@@ -27,6 +35,7 @@ from danswer.server.models import ListIndexAttemptsResponse
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import HTTPException
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/admin")
@@ -140,3 +149,59 @@ def list_all_index_attempts(
             for index_attempt in index_attempts
         ]
     )
+
+
+@router.head("/openai-api-key/validate")
+def validate_existing_openai_api_key(
+    _: User = Depends(current_admin_user),
+) -> None:
+    is_valid = False
+    try:
+        openai_api_key = get_openai_api_key()
+        is_valid = check_openai_api_key_is_valid(openai_api_key)
+    except ConfigNotFoundError:
+        raise HTTPException(status_code=404, detail="Key not found")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if not is_valid:
+        raise HTTPException(status_code=400, detail="Invalid API key provided")
+
+
+@router.get("/openai-api-key")
+def get_openai_api_key_from_dynamic_config_store(
+    _: User = Depends(current_admin_user),
+) -> ApiKey:
+    """
+    NOTE: Only gets value from dynamic config store as to not expose env variables.
+    """
+    try:
+        # only get last 4 characters of key to not expose full key
+        return ApiKey(
+            api_key=cast(
+                str, get_dynamic_config_store().load(OPENAI_API_KEY_STORAGE_KEY)
+            )[-4:]
+        )
+    except ConfigNotFoundError:
+        raise HTTPException(status_code=404, detail="Key not found")
+
+
+@router.post("/openai-api-key")
+def store_openai_api_key(
+    request: ApiKey,
+    _: User = Depends(current_admin_user),
+) -> None:
+    try:
+        is_valid = check_openai_api_key_is_valid(request.api_key)
+        if not is_valid:
+            raise HTTPException(400, "Invalid API key provided")
+        get_dynamic_config_store().store(OPENAI_API_KEY_STORAGE_KEY, request.api_key)
+    except RuntimeError as e:
+        raise HTTPException(400, str(e))
+
+
+@router.delete("/openai-api-key")
+def delete_openai_api_key(
+    _: User = Depends(current_admin_user),
+) -> None:
+    get_dynamic_config_store().delete(OPENAI_API_KEY_STORAGE_KEY)
