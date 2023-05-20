@@ -6,7 +6,6 @@ import useSWR, { useSWRConfig } from "swr";
 import { SlackConfig } from "../../../../components/admin/connectors/types";
 import { LoadingAnimation } from "@/components/Loading";
 import { InitialSetupForm } from "./InitialSetupForm";
-import { useRouter } from "next/navigation";
 
 const MainSection = () => {
   // TODO: add back in once this is ready
@@ -14,7 +13,6 @@ const MainSection = () => {
   //   "/api/admin/connectors/web/index-attempt",
   //   fetcher
   // );
-  const router = useRouter();
 
   const { mutate } = useSWRConfig();
   const { data, isLoading, error } = useSWR<SlackConfig>(
