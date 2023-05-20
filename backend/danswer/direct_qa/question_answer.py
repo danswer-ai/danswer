@@ -3,6 +3,7 @@ import math
 import re
 from collections.abc import Callable
 from collections.abc import Generator
+from functools import wraps
 from typing import Any
 from typing import cast
 from typing import Dict
@@ -17,6 +18,7 @@ from danswer.configs.app_configs import OPENAI_API_KEY
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.configs.constants import BLURB
 from danswer.configs.constants import DOCUMENT_ID
+from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINK
 from danswer.configs.constants import SOURCE_TYPE
@@ -29,15 +31,19 @@ from danswer.direct_qa.qa_prompts import json_chat_processor
 from danswer.direct_qa.qa_prompts import json_processor
 from danswer.direct_qa.qa_prompts import QUOTE_PAT
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
+from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.utils.logging import setup_logger
 from danswer.utils.text_processing import clean_model_quote
 from danswer.utils.text_processing import shared_precompare_cleanup
 from danswer.utils.timing import log_function_time
+from openai.error import AuthenticationError
 
 
 logger = setup_logger()
 
-openai.api_key = OPENAI_API_KEY
+
+def get_openai_api_key():
+    return OPENAI_API_KEY or get_dynamic_config_store().load(OPENAI_API_KEY_STORAGE_KEY)
 
 
 def get_json_line(json_dict: dict) -> str:
@@ -181,16 +187,23 @@ def stream_answer_end(answer_so_far: str, next_token: str) -> bool:
     return False
 
 
-class OpenAICompletionQA(QAModel):
+# used to check if the QAModel is an OpenAI model
+class OpenAIQAModel(QAModel):
+    pass
+
+
+class OpenAICompletionQA(OpenAIQAModel):
     def __init__(
         self,
         prompt_processor: Callable[[str, list[str]], str] = json_processor,
         model_version: str = OPENAI_MODEL_VERSION,
         max_output_tokens: int = OPENAI_MAX_OUTPUT_TOKENS,
+        api_key: str | None = None,
     ) -> None:
         self.prompt_processor = prompt_processor
         self.model_version = model_version
         self.max_output_tokens = max_output_tokens
+        self.api_key = api_key or get_openai_api_key()
 
     @log_function_time()
     def answer_question(
@@ -202,6 +215,7 @@ class OpenAICompletionQA(QAModel):
 
         try:
             response = openai.Completion.create(
+                api_key=self.api_key,
                 prompt=filled_prompt,
                 temperature=0,
                 top_p=1,
@@ -214,6 +228,9 @@ class OpenAICompletionQA(QAModel):
             logger.info(
                 "OpenAI Token Usage: " + str(response["usage"]).replace("\n", "")
             )
+        except AuthenticationError:
+            logger.exception("Failed to authenticate with OpenAI API")
+            raise
         except Exception as e:
             logger.exception(e)
             model_output = "Model Failure"
@@ -232,6 +249,7 @@ class OpenAICompletionQA(QAModel):
 
         try:
             response = openai.Completion.create(
+                api_key=self.api_key,
                 prompt=filled_prompt,
                 temperature=0,
                 top_p=1,
@@ -263,7 +281,9 @@ class OpenAICompletionQA(QAModel):
                         yield {"answer_finished": True}
                         continue
                     yield {"answer_data": event_text}
-
+        except AuthenticationError:
+            logger.exception("Failed to authenticate with OpenAI API")
+            raise
         except Exception as e:
             logger.exception(e)
             model_output = "Model Failure"
@@ -276,7 +296,7 @@ class OpenAICompletionQA(QAModel):
         yield quotes_dict
 
 
-class OpenAIChatCompletionQA(QAModel):
+class OpenAIChatCompletionQA(OpenAIQAModel):
     def __init__(
         self,
         prompt_processor: Callable[
@@ -285,11 +305,13 @@ class OpenAIChatCompletionQA(QAModel):
         model_version: str = OPENAI_MODEL_VERSION,
         max_output_tokens: int = OPENAI_MAX_OUTPUT_TOKENS,
         reflexion_try_count: int = 0,
+        api_key: str | None = None,
     ) -> None:
         self.prompt_processor = prompt_processor
         self.model_version = model_version
         self.max_output_tokens = max_output_tokens
         self.reflexion_try_count = reflexion_try_count
+        self.api_key = api_key or get_openai_api_key()
 
     @log_function_time()
     def answer_question(
@@ -302,6 +324,7 @@ class OpenAIChatCompletionQA(QAModel):
         for _ in range(self.reflexion_try_count + 1):
             try:
                 response = openai.ChatCompletion.create(
+                    api_key=self.api_key,
                     messages=messages,
                     temperature=0,
                     top_p=1,
@@ -316,6 +339,9 @@ class OpenAIChatCompletionQA(QAModel):
                 logger.info(
                     "OpenAI Token Usage: " + str(response["usage"]).replace("\n", "")
                 )
+            except AuthenticationError:
+                logger.exception("Failed to authenticate with OpenAI API")
+                raise
             except Exception as e:
                 logger.exception(e)
                 logger.warning(f"Model failure for query: {query}")
@@ -335,6 +361,7 @@ class OpenAIChatCompletionQA(QAModel):
 
         try:
             response = openai.ChatCompletion.create(
+                api_key=self.api_key,
                 messages=messages,
                 temperature=0,
                 top_p=1,
@@ -370,7 +397,9 @@ class OpenAIChatCompletionQA(QAModel):
                         yield {"answer_finished": True}
                         continue
                     yield {"answer_data": event_text}
-
+        except AuthenticationError:
+            logger.exception("Failed to authenticate with OpenAI API")
+            raise
         except Exception as e:
             logger.exception(e)
             model_output = "Model Failure"

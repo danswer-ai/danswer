@@ -73,3 +73,7 @@ class IndexAttemptSnapshot(BaseModel):
 
 class ListIndexAttemptsResponse(BaseModel):
     index_attempts: list[IndexAttemptSnapshot]
+
+
+class ApiKey(BaseModel):
+    api_key: str

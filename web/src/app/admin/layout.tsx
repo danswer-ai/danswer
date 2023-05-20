@@ -6,6 +6,7 @@ import {
   GlobeIcon,
   GoogleDriveIcon,
   SlackIcon,
+  KeyIcon,
 } from "@/components/icons/icons";
 import { DISABLE_AUTH } from "@/lib/constants";
 import { getCurrentUserSS } from "@/lib/userSS";
@@ -86,6 +87,20 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/connectors/google-drive",
+                },
+              ],
+            },
+            {
+              name: "Keys",
+              items: [
+                {
+                  name: (
+                    <div className="flex">
+                      <KeyIcon size="16" />
+                      <div className="ml-1">OpenAI</div>
+                    </div>
+                  ),
+                  link: "/admin/keys/openai",
                 },
               ],
             },
