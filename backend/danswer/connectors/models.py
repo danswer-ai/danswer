@@ -26,9 +26,9 @@ def get_raw_document_text(document: Document) -> str:
 
 
 class InputType(str, Enum):
-    PULL = "pull"  # e.g. calling slack API to get all messages in the last hour
-    LOAD_STATE = "load_state"  # e.g. loading the state of a slack workspace from a file
-    EVENT = "event"  # e.g. registered an endpoint as a listener, and processing slack events
+    LOAD_STATE = "load_state"  # e.g. loading a save state from a file
+    PULL = "pull"  # e.g. calling an API to get all documents in the last hour
+    EVENT = "event"  # e.g. registered an endpoint as a listener, and processing connector events
 
 
 class ConnectorDescriptor(BaseModel):

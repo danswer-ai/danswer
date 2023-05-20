@@ -2,12 +2,10 @@ import time
 from typing import cast
 
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.factory import build_connector
-from danswer.connectors.factory import build_pull_connector
+from danswer.connectors.factory import build_load_connector
 from danswer.connectors.models import InputType
 from danswer.connectors.slack.config import get_pull_frequency
-from danswer.connectors.slack.pull import PeriodicSlackLoader
-from danswer.connectors.web.pull import WebLoader
+from danswer.connectors.slack.connector import SlackConnector
 from danswer.db.index_attempt import fetch_index_attempts
 from danswer.db.index_attempt import insert_index_attempt
 from danswer.db.index_attempt import update_index_attempt
@@ -43,9 +41,7 @@ def run_update() -> None:
     except ConfigNotFoundError:
         pull_frequency = 0
     if pull_frequency:
-        last_slack_pull_key = LAST_PULL_KEY_TEMPLATE.format(
-            PeriodicSlackLoader.__name__
-        )
+        last_slack_pull_key = LAST_PULL_KEY_TEMPLATE.format(SlackConnector.__name__)
         try:
             last_pull = cast(int, dynamic_config_store.load(last_slack_pull_key))
         except ConfigNotFoundError:
@@ -94,13 +90,13 @@ def run_update() -> None:
         try:
             # TODO (chris): spawn processes to parallelize / take advantage of
             # multiple cores + implement retries
-            connector = build_pull_connector(
+            connector = build_load_connector(
                 source=not_started_index_attempt.source,
                 connector_specific_config=not_started_index_attempt.connector_specific_config,
             )
 
             document_ids: list[str] = []
-            for doc_batch in connector.load():
+            for doc_batch in connector.load_from_state():
                 indexing_pipeline(doc_batch)
                 document_ids.extend([doc.id for doc in doc_batch])
         except Exception as e:

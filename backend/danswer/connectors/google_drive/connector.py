@@ -5,7 +5,7 @@ from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.google_drive.connector_auth import get_drive_tokens
-from danswer.connectors.interfaces import PullLoader
+from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logging import setup_logger
@@ -81,11 +81,7 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
         return "\n".join(page.extract_text() for page in pdf_reader.pages)
 
 
-class BatchGoogleDriveLoader(PullLoader):
-    """
-    Loads everything in a Google Drive account
-    """
-
+class GoogleDriveConnector(LoadConnector):
     def __init__(
         self,
         batch_size: int = INDEX_BATCH_SIZE,
@@ -98,7 +94,7 @@ class BatchGoogleDriveLoader(PullLoader):
         if not self.creds:
             raise PermissionError("Unable to access Google Drive.")
 
-    def load(self) -> Generator[list[Document], None, None]:
+    def load_from_state(self) -> Generator[list[Document], None, None]:
         service = discovery.build("drive", "v3", credentials=self.creds)
         for files_batch in get_file_batches(
             service, self.include_shared, self.batch_size
