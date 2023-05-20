@@ -1,9 +1,11 @@
+import io
 from collections.abc import Generator
 from typing import Any
 from typing import cast
 from urllib.parse import urljoin
 from urllib.parse import urlparse
 
+import requests
 from bs4 import BeautifulSoup
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -12,6 +14,7 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logging import setup_logger
 from playwright.sync_api import sync_playwright
+from PyPDF2 import PdfReader
 
 logger = setup_logger()
 TAG_SEPARATOR = "\n"
@@ -38,6 +41,9 @@ def get_internal_links(
             href = href.split("#")[0]
 
         if not is_valid_url(href):
+            # Relative path handling
+            if url[-1] != "/":
+                url += "/"
             href = urljoin(url, href)
 
         if urlparse(href).netloc == urlparse(url).netloc and base_url in href:
@@ -61,6 +67,11 @@ class WebLoader(PullLoader):
         to_visit: list[str] = [self.base_url]
         doc_batch: list[Document] = []
 
+        # Edge case handling user provides HTML without terminating slash (prevents duplicate)
+        # Most sites either redirect no slash to slash or serve same content
+        if self.base_url[-1] != "/":
+            visited_links.add(self.base_url + "/")
+
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
             context = browser.new_context()
@@ -72,10 +83,36 @@ class WebLoader(PullLoader):
                 visited_links.add(current_url)
 
                 try:
+                    if current_url.split(".")[-1] == "pdf":
+                        # PDF files are not checked for links
+                        response = requests.get(current_url)
+                        pdf_reader = PdfReader(io.BytesIO(response.content))
+                        page_text = ""
+                        for page in pdf_reader.pages:
+                            page_text += page.extract_text()
+
+                        doc_batch.append(
+                            Document(
+                                id=current_url,
+                                sections=[Section(link=current_url, text=page_text)],
+                                source=DocumentSource.WEB,
+                                semantic_identifier=current_url.split(".")[-1],
+                                metadata={},
+                            )
+                        )
+                        continue
+
                     page = context.new_page()
                     page.goto(current_url)
                     content = page.content()
                     soup = BeautifulSoup(content, "html.parser")
+
+                    internal_links = get_internal_links(
+                        self.base_url, current_url, soup
+                    )
+                    for link in internal_links:
+                        if link not in visited_links:
+                            to_visit.append(link)
 
                     title_tag = soup.find("title")
                     title = None
@@ -83,13 +120,23 @@ class WebLoader(PullLoader):
                         title = title_tag.text
 
                     # Heuristics based cleaning
-                    for undesired_tag in ["nav", "header", "footer", "meta"]:
-                        [tag.extract() for tag in soup.find_all(undesired_tag)]
                     for undesired_div in ["sidebar", "header", "footer"]:
                         [
                             tag.extract()
-                            for tag in soup.find_all("div", {"class": undesired_div})
+                            for tag in soup.find_all(
+                                "div", class_=lambda x: x and undesired_div in x.split()
+                            )
                         ]
+
+                    for undesired_tag in [
+                        "nav",
+                        "header",
+                        "footer",
+                        "meta",
+                        "script",
+                        "style",
+                    ]:
+                        [tag.extract() for tag in soup.find_all(undesired_tag)]
 
                     page_text = soup.get_text(TAG_SEPARATOR)
 
@@ -102,13 +149,6 @@ class WebLoader(PullLoader):
                             metadata={},
                         )
                     )
-
-                    internal_links = get_internal_links(
-                        self.base_url, current_url, soup
-                    )
-                    for link in internal_links:
-                        if link not in visited_links:
-                            to_visit.append(link)
 
                     page.close()
                 except Exception as e:
