@@ -26,7 +26,7 @@ def get_raw_document_text(document: Document) -> str:
 
 
 class InputType(str, Enum):
-    LOAD_STATE = "load_state"  # e.g. loading a save state from a file
+    LOAD_STATE = "load_state"  # e.g. loading a current full state or a save state, such as from a file
     POLL = "poll"  # e.g. calling an API to get all documents in the last hour
     EVENT = "event"  # e.g. registered an endpoint as a listener, and processing connector events
 
