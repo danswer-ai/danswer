@@ -70,7 +70,7 @@ def modify_slack_config(
 
 
 class IndexAttemptRequest(BaseModel):
-    input_type: InputType = InputType.PULL
+    input_type: InputType = InputType.LOAD_STATE
     connector_specific_config: dict[str, Any]
 
 
@@ -81,10 +81,10 @@ def index(
     _: User = Depends(current_admin_user),
 ) -> None:
     # validate that the connector specified by the source / input_type combination
-    # exists AND that the connector_specific_config is valid for that connector type
+    # exists AND that the connector_specific_config is valid for that connector type, should be load
     build_connector(
         source=source,
-        input_type=index_attempt_request.input_type,
+        input_type=index_attempt_request.input_type,  # TODO chris this is wrong for most requests
         connector_specific_config=index_attempt_request.connector_specific_config,
     )
 

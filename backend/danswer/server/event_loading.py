@@ -1,6 +1,6 @@
 from typing import Any
 
-from danswer.connectors.slack.connector import get_channel_info  # YUHONG
+from danswer.connectors.slack.connector import get_channel_info
 from danswer.connectors.slack.connector import get_thread
 from danswer.connectors.slack.connector import thread_to_doc
 from danswer.connectors.slack.utils import get_client

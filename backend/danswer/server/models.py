@@ -26,7 +26,7 @@ class UserRoleResponse(BaseModel):
 
 class SearchDoc(BaseModel):
     semantic_identifier: str
-    link: str
+    link: str | None
     blurb: str
     source_type: str
 

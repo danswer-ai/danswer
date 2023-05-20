@@ -1,6 +1,7 @@
 import time
 from collections.abc import Callable
 from typing import Any
+from typing import cast
 from typing import TypeVar
 
 from danswer.utils.logging import setup_logger
@@ -21,7 +22,7 @@ def log_function_time(
         ...
     """
 
-    def timing_wrapper(func: Callable) -> Callable:
+    def timing_wrapper(func: F) -> F:
         def wrapped_func(*args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
             result = func(*args, **kwargs)
@@ -30,6 +31,6 @@ def log_function_time(
             )
             return result
 
-        return wrapped_func
+        return cast(F, wrapped_func)
 
     return timing_wrapper

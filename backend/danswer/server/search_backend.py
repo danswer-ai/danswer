@@ -78,7 +78,7 @@ def direct_qa(
     top_docs = [
         SearchDoc(
             semantic_identifier=chunk.semantic_identifier,
-            link=chunk.source_links.get("0") if chunk.source_links else None,
+            link=chunk.source_links.get(0) if chunk.source_links else None,
             blurb=chunk.blurb,
             source_type=chunk.source_type,
         )
@@ -117,7 +117,7 @@ def stream_direct_qa(
         top_docs = [
             SearchDoc(
                 semantic_identifier=chunk.semantic_identifier,
-                link=chunk.source_links.get("0") if chunk.source_links else None,
+                link=chunk.source_links.get(0) if chunk.source_links else None,
                 blurb=chunk.blurb,
                 source_type=chunk.source_type,
             )
@@ -130,6 +130,8 @@ def stream_direct_qa(
         for response_dict in qa_model.answer_question_stream(
             query, ranked_chunks[:NUM_RERANKED_RESULTS]
         ):
+            if response_dict is None:
+                continue
             logger.debug(response_dict)
             yield get_json_line(response_dict)
         return
