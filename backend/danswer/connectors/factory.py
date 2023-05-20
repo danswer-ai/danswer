@@ -8,7 +8,7 @@ from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.interfaces import BaseConnector
 from danswer.connectors.interfaces import EventConnector
 from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PullConnector
+from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import InputType
 from danswer.connectors.slack.connector import SlackConnector
@@ -41,7 +41,7 @@ def build_connector(
         [
             input_type == InputType.LOAD_STATE
             and not isinstance(connector, LoadConnector),
-            input_type == InputType.PULL and not isinstance(connector, PullConnector),
+            input_type == InputType.POLL and not isinstance(connector, PollConnector),
             input_type == InputType.EVENT and not isinstance(connector, EventConnector),
         ]
     ):
@@ -53,16 +53,14 @@ def build_connector(
 
 
 # TODO this is some jank, rework at some point
-def _pull_to_load_connector(range_pull_connector: PullConnector) -> LoadConnector:
+def _pull_to_load_connector(range_pull_connector: PollConnector) -> LoadConnector:
     class _Connector(LoadConnector):
         def __init__(self) -> None:
             self._connector = range_pull_connector
 
         def load_from_state(self) -> Generator[list[Document], None, None]:
             # adding some buffer to make sure we get all documents
-            return self._connector.pull_from_source(
-                0, time.time() + _NUM_SECONDS_IN_DAY
-            )
+            return self._connector.poll_source(0, time.time() + _NUM_SECONDS_IN_DAY)
 
     return _Connector()
 
@@ -71,8 +69,8 @@ def _pull_to_load_connector(range_pull_connector: PullConnector) -> LoadConnecto
 def build_load_connector(
     source: DocumentSource, connector_specific_config: dict[str, Any]
 ) -> LoadConnector:
-    connector = build_connector(source, InputType.PULL, connector_specific_config)
-    if isinstance(connector, PullConnector):
+    connector = build_connector(source, InputType.POLL, connector_specific_config)
+    if isinstance(connector, PollConnector):
         return _pull_to_load_connector(connector)
     assert isinstance(connector, LoadConnector)
     return connector

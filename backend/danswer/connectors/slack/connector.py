@@ -11,7 +11,7 @@ from typing import List
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import PullConnector
+from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -249,7 +249,7 @@ def _process_batch_event(
     return None
 
 
-class SlackConnector(LoadConnector, PullConnector):
+class SlackConnector(LoadConnector, PollConnector):
     def __init__(
         self, export_path_str: str, batch_size: int = INDEX_BATCH_SIZE
     ) -> None:
@@ -288,7 +288,7 @@ class SlackConnector(LoadConnector, PullConnector):
 
         yield list(document_batch.values())
 
-    def pull_from_source(
+    def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> Generator[List[Document], None, None]:
         all_docs = get_all_docs(client=self.client, oldest=str(start), latest=str(end))

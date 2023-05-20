@@ -18,7 +18,7 @@ from danswer.utils.logging import setup_logger
 
 logger = setup_logger()
 
-LAST_PULL_KEY_TEMPLATE = "last_pull_{}"
+LAST_POLL_KEY_TEMPLATE = "last_poll_{}"
 
 
 def _check_should_run(current_time: int, last_pull: int, pull_frequency: int) -> bool:
@@ -41,7 +41,7 @@ def run_update() -> None:
     except ConfigNotFoundError:
         pull_frequency = 0
     if pull_frequency:
-        last_slack_pull_key = LAST_PULL_KEY_TEMPLATE.format(SlackConnector.__name__)
+        last_slack_pull_key = LAST_POLL_KEY_TEMPLATE.format(SlackConnector.__name__)
         try:
             last_pull = cast(int, dynamic_config_store.load(last_slack_pull_key))
         except ConfigNotFoundError:
@@ -57,7 +57,7 @@ def run_update() -> None:
             insert_index_attempt(
                 IndexAttempt(
                     source=DocumentSource.SLACK,
-                    input_type=InputType.PULL,
+                    input_type=InputType.POLL,
                     status=IndexingStatus.NOT_STARTED,
                     connector_specific_config={},
                 )
