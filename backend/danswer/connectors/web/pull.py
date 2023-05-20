@@ -67,7 +67,8 @@ class WebLoader(PullLoader):
         to_visit: list[str] = [self.base_url]
         doc_batch: list[Document] = []
 
-        # Edge case handling user provides HTML without terminating slack (prevents duplicate)
+        # Edge case handling user provides HTML without terminating slash (prevents duplicate)
+        # Most sites either redirect no slash to slash or serve same content
         if self.base_url[-1] != "/":
             visited_links.add(self.base_url + "/")
 
