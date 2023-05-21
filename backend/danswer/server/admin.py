@@ -84,7 +84,7 @@ def index(
     # exists AND that the connector_specific_config is valid for that connector type, should be load
     build_connector(
         source=source,
-        input_type=index_attempt_request.input_type,  # TODO chris this is wrong for most requests
+        input_type=index_attempt_request.input_type,
         connector_specific_config=index_attempt_request.connector_specific_config,
     )
 

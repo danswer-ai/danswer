@@ -53,7 +53,7 @@ def build_connector(
 
 
 # TODO this is some jank, rework at some point
-def _pull_to_load_connector(range_pull_connector: PollConnector) -> LoadConnector:
+def _poll_to_load_connector(range_pull_connector: PollConnector) -> LoadConnector:
     class _Connector(LoadConnector):
         def __init__(self) -> None:
             self._connector = range_pull_connector
@@ -71,6 +71,6 @@ def build_load_connector(
 ) -> LoadConnector:
     connector = build_connector(source, InputType.LOAD_STATE, connector_specific_config)
     if isinstance(connector, PollConnector):
-        return _pull_to_load_connector(connector)
+        return _poll_to_load_connector(connector)
     assert isinstance(connector, LoadConnector)
     return connector
