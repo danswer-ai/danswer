@@ -17,6 +17,7 @@ export interface Document {
 }
 
 export interface SearchResponse {
-  answer: string;
-  quotes: Record<string, Quote>;
+  answer: string | null;
+  quotes: Record<string, Quote> | null;
+  documents: Document[] | null;
 }
