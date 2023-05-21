@@ -1,6 +1,7 @@
 import inspect
 from dataclasses import dataclass
 from typing import Any
+from typing import cast
 
 from danswer.connectors.models import Document
 
@@ -34,10 +35,12 @@ class InferenceChunk(BaseChunk):
 
     @classmethod
     def from_dict(cls, init_dict: dict[str, Any]) -> "InferenceChunk":
-        return cls(
-            **{
-                k: v
-                for k, v in init_dict.items()
-                if k in inspect.signature(cls).parameters
+        init_kwargs = {
+            k: v for k, v in init_dict.items() if k in inspect.signature(cls).parameters
+        }
+        if "source_links" in init_kwargs:
+            init_kwargs["source_links"] = {
+                int(k): v
+                for k, v in cast(dict[str, str], init_kwargs["source_links"]).items()
             }
-        )
+        return cls(**init_kwargs)

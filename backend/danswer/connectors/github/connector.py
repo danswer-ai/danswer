@@ -4,7 +4,7 @@ from collections.abc import Generator
 from danswer.configs.app_configs import GITHUB_ACCESS_TOKEN
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.interfaces import PullLoader
+from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logging import setup_logger
@@ -29,7 +29,7 @@ def get_pr_batches(
         yield batch
 
 
-class BatchGithubLoader(PullLoader):
+class GithubConnector(LoadConnector):
     def __init__(
         self,
         repo_owner: str,
@@ -42,7 +42,7 @@ class BatchGithubLoader(PullLoader):
         self.batch_size = batch_size
         self.state_filter = state_filter
 
-    def load(self) -> Generator[list[Document], None, None]:
+    def load_from_state(self) -> Generator[list[Document], None, None]:
         repo = github_client.get_repo(f"{self.repo_owner}/{self.repo_name}")
         pull_requests = repo.get_pulls(state=self.state_filter)
         for pr_batch in get_pr_batches(pull_requests, self.batch_size):

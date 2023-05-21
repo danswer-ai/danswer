@@ -8,22 +8,29 @@ from danswer.connectors.models import Document
 SecondsSinceUnixEpoch = float
 
 
-# TODO (chris): rename from Loader -> Connector
-class PullLoader:
+class BaseConnector(abc.ABC):
+    # Reserved for future shared uses
+    pass
+
+
+# Large set update or reindex, generally pulling a complete state or from a savestate file
+class LoadConnector(BaseConnector):
     @abc.abstractmethod
-    def load(self) -> Generator[list[Document], None, None]:
+    def load_from_state(self) -> Generator[list[Document], None, None]:
         raise NotImplementedError
 
 
-class RangePullLoader:
+# Small set updates by time
+class PollConnector(BaseConnector):
     @abc.abstractmethod
-    def load(
+    def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> Generator[list[Document], None, None]:
         raise NotImplementedError
 
 
-class PushLoader:
+# Event driven
+class EventConnector(BaseConnector):
     @abc.abstractmethod
-    def load(self, event: Any) -> Generator[list[Document], None, None]:
+    def handle_event(self, event: Any) -> Generator[list[Document], None, None]:
         raise NotImplementedError

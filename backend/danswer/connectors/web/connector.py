@@ -9,7 +9,7 @@ import requests
 from bs4 import BeautifulSoup
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.interfaces import PullLoader
+from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logging import setup_logger
@@ -51,7 +51,7 @@ def get_internal_links(
     return internal_links
 
 
-class WebLoader(PullLoader):
+class WebConnector(LoadConnector):
     def __init__(
         self,
         base_url: str,
@@ -60,7 +60,7 @@ class WebLoader(PullLoader):
         self.base_url = base_url
         self.batch_size = batch_size
 
-    def load(self) -> Generator[list[Document], None, None]:
+    def load_from_state(self) -> Generator[list[Document], None, None]:
         """Traverses through all pages found on the website
         and converts them into documents"""
         visited_links: set[str] = set()
@@ -88,8 +88,8 @@ class WebLoader(PullLoader):
                         response = requests.get(current_url)
                         pdf_reader = PdfReader(io.BytesIO(response.content))
                         page_text = ""
-                        for page in pdf_reader.pages:
-                            page_text += page.extract_text()
+                        for pdf_page in pdf_reader.pages:
+                            page_text += pdf_page.extract_text()
 
                         doc_batch.append(
                             Document(

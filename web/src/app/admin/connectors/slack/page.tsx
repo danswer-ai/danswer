@@ -15,7 +15,6 @@ const MainSection = () => {
   //   "/api/admin/connectors/web/index-attempt",
   //   fetcher
   // );
-  const router = useRouter();
 
   const { mutate } = useSWRConfig();
   const { data, isLoading, error } = useSWR<SlackConfig>(

@@ -2,11 +2,12 @@ import React, { useState } from "react";
 import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { Popup } from "./Popup";
-import { ValidSources } from "@/lib/types";
+import { ValidInputTypes, ValidSources } from "@/lib/types";
 
 export const submitIndexRequest = async (
   source: ValidSources,
-  values: Yup.AnyObject
+  values: Yup.AnyObject,
+  inputType: ValidInputTypes = "load_state"
 ): Promise<{ message: string; isSuccess: boolean }> => {
   let isSuccess = false;
   try {
@@ -17,7 +18,7 @@ export const submitIndexRequest = async (
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ connector_specific_config: values }),
+        body: JSON.stringify({ connector_specific_config: values, inputType }),
       }
     );
 

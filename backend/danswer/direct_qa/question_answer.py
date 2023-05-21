@@ -376,7 +376,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
             found_answer_start = False
             found_answer_end = False
             for event in response:
-                event_dict = cast(str, event["choices"][0]["delta"])
+                event_dict = event["choices"][0]["delta"]
                 if (
                     "content" not in event_dict
                 ):  # could be a role message or empty termination

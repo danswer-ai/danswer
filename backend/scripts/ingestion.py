@@ -5,12 +5,12 @@ from danswer.chunking.chunk import Chunker
 from danswer.chunking.chunk import DefaultChunker
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
-from danswer.connectors.github.batch import BatchGithubLoader
-from danswer.connectors.google_drive.batch import BatchGoogleDriveLoader
+from danswer.connectors.github.connector import GithubConnector
+from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.google_drive.connector_auth import backend_get_credentials
-from danswer.connectors.interfaces import PullLoader
-from danswer.connectors.slack.batch import BatchSlackLoader
-from danswer.connectors.web.pull import WebLoader
+from danswer.connectors.interfaces import LoadConnector
+from danswer.connectors.slack.connector import SlackConnector
+from danswer.connectors.web.connector import WebConnector
 from danswer.datastores.interfaces import Datastore
 from danswer.datastores.qdrant.indexing import recreate_collection
 from danswer.datastores.qdrant.store import QdrantDatastore
@@ -23,14 +23,14 @@ logger = setup_logger()
 
 
 def load_batch(
-    doc_loader: PullLoader,
+    doc_loader: LoadConnector,
     chunker: Chunker,
     embedder: Embedder,
     datastore: Datastore,
 ) -> None:
     num_processed = 0
     total_chunks = 0
-    for document_batch in doc_loader.load():
+    for document_batch in doc_loader.load_from_state():
         if not document_batch:
             logger.warning("No parseable documents found in batch")
             continue
@@ -53,7 +53,7 @@ def load_batch(
 def load_slack_batch(file_path: str, qdrant_collection: str) -> None:
     logger.info("Loading documents from Slack.")
     load_batch(
-        BatchSlackLoader(export_path_str=file_path, batch_size=INDEX_BATCH_SIZE),
+        SlackConnector(export_path_str=file_path, batch_size=INDEX_BATCH_SIZE),
         DefaultChunker(),
         DefaultEmbedder(),
         QdrantDatastore(collection=qdrant_collection),
@@ -63,7 +63,7 @@ def load_slack_batch(file_path: str, qdrant_collection: str) -> None:
 def load_web_batch(url: str, qdrant_collection: str) -> None:
     logger.info("Loading documents from web.")
     load_batch(
-        WebLoader(base_url=url, batch_size=INDEX_BATCH_SIZE),
+        WebConnector(base_url=url, batch_size=INDEX_BATCH_SIZE),
         DefaultChunker(),
         DefaultEmbedder(),
         QdrantDatastore(collection=qdrant_collection),
@@ -74,7 +74,7 @@ def load_google_drive_batch(qdrant_collection: str) -> None:
     logger.info("Loading documents from Google Drive.")
     backend_get_credentials()
     load_batch(
-        BatchGoogleDriveLoader(batch_size=INDEX_BATCH_SIZE),
+        GoogleDriveConnector(batch_size=INDEX_BATCH_SIZE),
         DefaultChunker(),
         DefaultEmbedder(),
         QdrantDatastore(collection=qdrant_collection),
@@ -84,9 +84,7 @@ def load_google_drive_batch(qdrant_collection: str) -> None:
 def load_github_batch(owner: str, repo: str, qdrant_collection: str) -> None:
     logger.info("Loading documents from Github.")
     load_batch(
-        BatchGithubLoader(
-            repo_owner=owner, repo_name=repo, batch_size=INDEX_BATCH_SIZE
-        ),
+        GithubConnector(repo_owner=owner, repo_name=repo, batch_size=INDEX_BATCH_SIZE),
         DefaultChunker(),
         DefaultEmbedder(),
         QdrantDatastore(collection=qdrant_collection),

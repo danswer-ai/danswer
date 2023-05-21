@@ -3,15 +3,16 @@ from collections.abc import Generator
 from typing import Any
 
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.github.batch import BatchGithubLoader
-from danswer.connectors.google_drive.batch import BatchGoogleDriveLoader
-from danswer.connectors.interfaces import PullLoader
-from danswer.connectors.interfaces import RangePullLoader
+from danswer.connectors.github.connector import GithubConnector
+from danswer.connectors.google_drive.connector import GoogleDriveConnector
+from danswer.connectors.interfaces import BaseConnector
+from danswer.connectors.interfaces import EventConnector
+from danswer.connectors.interfaces import LoadConnector
+from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import InputType
-from danswer.connectors.slack.batch import BatchSlackLoader
-from danswer.connectors.slack.pull import PeriodicSlackLoader
-from danswer.connectors.web.pull import WebLoader
+from danswer.connectors.slack.connector import SlackConnector
+from danswer.connectors.web.connector import WebConnector
 
 _NUM_SECONDS_IN_DAY = 86400
 
@@ -24,45 +25,52 @@ def build_connector(
     source: DocumentSource,
     input_type: InputType,
     connector_specific_config: dict[str, Any],
-) -> PullLoader | RangePullLoader:
+) -> BaseConnector:
     if source == DocumentSource.SLACK:
-        if input_type == InputType.PULL:
-            return PeriodicSlackLoader(**connector_specific_config)
-        if input_type == InputType.LOAD_STATE:
-            return BatchSlackLoader(**connector_specific_config)
+        connector: BaseConnector = SlackConnector(**connector_specific_config)
     elif source == DocumentSource.GOOGLE_DRIVE:
-        if input_type == InputType.PULL:
-            return BatchGoogleDriveLoader(**connector_specific_config)
+        connector = GoogleDriveConnector(**connector_specific_config)
     elif source == DocumentSource.GITHUB:
-        if input_type == InputType.PULL:
-            return BatchGithubLoader(**connector_specific_config)
+        connector = GithubConnector(**connector_specific_config)
     elif source == DocumentSource.WEB:
-        if input_type == InputType.PULL:
-            return WebLoader(**connector_specific_config)
+        connector = WebConnector(**connector_specific_config)
+    else:
+        raise ConnectorMissingException(f"Connector not found for source={source}")
 
-    raise ConnectorMissingException(
-        f"Connector not found for source={source}, input_type={input_type}"
-    )
+    if any(
+        [
+            input_type == InputType.LOAD_STATE
+            and not isinstance(connector, LoadConnector),
+            input_type == InputType.POLL and not isinstance(connector, PollConnector),
+            input_type == InputType.EVENT and not isinstance(connector, EventConnector),
+        ]
+    ):
+        raise ConnectorMissingException(
+            f"Connector for source={source} does not accept input_type={input_type}"
+        )
+
+    return connector
 
 
-def build_pull_connector(
-    source: DocumentSource, connector_specific_config: dict[str, Any]
-) -> PullLoader:
-    connector = build_connector(source, InputType.PULL, connector_specific_config)
-    return (
-        _range_pull_to_pull(connector)
-        if isinstance(connector, RangePullLoader)
-        else connector
-    )
-
-
-def _range_pull_to_pull(range_pull_connector: RangePullLoader) -> PullLoader:
-    class _Connector(PullLoader):
+# TODO this is some jank, rework at some point
+def _poll_to_load_connector(range_pull_connector: PollConnector) -> LoadConnector:
+    class _Connector(LoadConnector):
         def __init__(self) -> None:
             self._connector = range_pull_connector
 
-        def load(self) -> Generator[list[Document], None, None]:
+        def load_from_state(self) -> Generator[list[Document], None, None]:
             # adding some buffer to make sure we get all documents
-            return self._connector.load(0, time.time() + _NUM_SECONDS_IN_DAY)
+            return self._connector.poll_source(0, time.time() + _NUM_SECONDS_IN_DAY)
 
     return _Connector()
+
+
+# TODO this is some jank, rework at some point
+def build_load_connector(
+    source: DocumentSource, connector_specific_config: dict[str, Any]
+) -> LoadConnector:
+    connector = build_connector(source, InputType.LOAD_STATE, connector_specific_config)
+    if isinstance(connector, PollConnector):
+        return _poll_to_load_connector(connector)
+    assert isinstance(connector, LoadConnector)
+    return connector

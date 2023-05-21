@@ -87,7 +87,7 @@ def index(
     _: User = Depends(current_admin_user),
 ) -> None:
     # validate that the connector specified by the source / input_type combination
-    # exists AND that the connector_specific_config is valid for that connector type
+    # exists AND that the connector_specific_config is valid for that connector type, should be load
     build_connector(
         source=source,
         input_type=index_attempt_request.input_type,

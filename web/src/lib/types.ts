@@ -8,3 +8,4 @@ export interface User {
 }
 
 export type ValidSources = "web" | "github" | "slack" | "google_drive";
+export type ValidInputTypes = "load_state" | "poll" | "event";
