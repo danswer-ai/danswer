@@ -13,6 +13,7 @@ ALLOWED_USERS = "allowed_users"
 ALLOWED_GROUPS = "allowed_groups"
 NO_AUTH_USER = "FooBarUser"  # TODO rework this temporary solution
 OPENAI_API_KEY_STORAGE_KEY = "openai_api_key"
+HTML_SEPARATOR = "\n"
 
 
 class DocumentSource(str, Enum):
@@ -20,3 +21,4 @@ class DocumentSource(str, Enum):
     WEB = "web"
     GOOGLE_DRIVE = "google_drive"
     GITHUB = "github"
+    CONFLUENCE = "confluence"

@@ -3,6 +3,7 @@ from collections.abc import Generator
 from typing import Any
 
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.github.connector import GithubConnector
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.interfaces import BaseConnector
@@ -34,6 +35,8 @@ def build_connector(
         connector = GithubConnector(**connector_specific_config)
     elif source == DocumentSource.WEB:
         connector = WebConnector(**connector_specific_config)
+    elif source == DocumentSource.CONFLUENCE:
+        connector = ConfluenceConnector(**connector_specific_config)
     else:
         raise ConnectorMissingException(f"Connector not found for source={source}")
 
