@@ -1,10 +1,16 @@
 from datetime import datetime
 from typing import Any
+from typing import Literal
 
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.models import InputType
 from danswer.datastores.interfaces import DatastoreFilter
 from danswer.db.models import IndexingStatus
 from pydantic import BaseModel
+
+
+class HealthCheckResponse(BaseModel):
+    status: Literal["ok"]
 
 
 class AuthStatus(BaseModel):
@@ -51,6 +57,11 @@ class UserByEmail(BaseModel):
     user_email: str
 
 
+class IndexAttemptRequest(BaseModel):
+    input_type: InputType = InputType.PULL
+    connector_specific_config: dict[str, Any]
+
+
 class IndexAttemptSnapshot(BaseModel):
     connector_specific_config: dict[str, Any]
     status: IndexingStatus
@@ -60,5 +71,9 @@ class IndexAttemptSnapshot(BaseModel):
     docs_indexed: int
 
 
-class ListWebsiteIndexAttemptsResponse(BaseModel):
+class ListIndexAttemptsResponse(BaseModel):
     index_attempts: list[IndexAttemptSnapshot]
+
+
+class ApiKey(BaseModel):
+    api_key: str

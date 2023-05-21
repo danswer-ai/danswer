@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from typing import cast
 
@@ -36,3 +37,11 @@ class FileSystemBackedDynamicConfigStore(DynamicConfigStore):
         with lock.acquire(timeout=FILE_LOCK_TIMEOUT):
             with open(self.dir_path / key) as f:
                 return cast(JSON_ro, json.load(f))
+
+    def delete(self, key: str) -> None:
+        file_path = self.dir_path / key
+        if not file_path.exists():
+            raise ConfigNotFoundError
+        lock = _get_file_lock(file_path)
+        with lock.acquire(timeout=FILE_LOCK_TIMEOUT):
+            os.remove(file_path)

@@ -1,13 +1,6 @@
 import { cookies } from "next/headers";
 import { User } from "./types";
-import { INTERNAL_URL } from "./constants";
-
-export const buildUrl = (path: string) => {
-  if (path.startsWith("/")) {
-    return `${INTERNAL_URL}${path}`;
-  }
-  return `${INTERNAL_URL}/${path}`;
-};
+import { buildUrl } from "./utilsSS";
 
 export const getGoogleOAuthUrlSS = async (): Promise<string> => {
   const res = await fetch(buildUrl("/auth/google/authorize"));

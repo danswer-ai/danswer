@@ -6,6 +6,8 @@ import useSWR, { useSWRConfig } from "swr";
 import { SlackConfig } from "../../../../components/admin/connectors/types";
 import { LoadingAnimation } from "@/components/Loading";
 import { InitialSetupForm } from "./InitialSetupForm";
+import { useRouter } from "next/navigation";
+import { HealthCheckBanner } from "@/components/health/healthcheck";
 
 const MainSection = () => {
   // TODO: add back in once this is ready
@@ -27,9 +29,7 @@ const MainSection = () => {
       </div>
     );
   } else if (error || !data) {
-    return (
-      <div className="mt-16">{`Error loading Slack config - ${error}`}</div>
-    );
+    return <div>{`Error loading Slack config - ${error}`}</div>;
   }
 
   return (
@@ -60,6 +60,9 @@ const MainSection = () => {
 export default function Page() {
   return (
     <div className="mx-auto">
+      <div className="mb-4">
+        <HealthCheckBanner />
+      </div>
       <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
         <SlackIcon size="32" />
         <h1 className="text-3xl font-bold pl-2">Slack</h1>

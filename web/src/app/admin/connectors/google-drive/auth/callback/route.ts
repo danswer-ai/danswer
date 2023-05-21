@@ -1,5 +1,5 @@
 import { getDomain } from "@/lib/redirectSS";
-import { buildUrl } from "@/lib/userSS";
+import { buildUrl } from "@/lib/utilsSS";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (request: NextRequest) => {
