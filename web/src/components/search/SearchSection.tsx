@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { SearchBar } from "./SearchBar";
 import { SearchResultsDisplay } from "./SearchResultsDisplay";
-import { Quote, Document } from "./types";
+import { Quote, Document, SearchResponse } from "./types";
+
+const initialSearchResponse: SearchResponse = {
+  answer: null,
+  quotes: null,
+  documents: null,
+};
 
 const processSingleChunk = (
   chunk: string,
@@ -99,9 +105,6 @@ const searchRequestStreamed = async (
           answer += answerChunk;
           updateCurrentAnswer(answer);
         } else if (chunk.answer_finished) {
-          // set quotes as non-null to signify that the answer is finished and
-          // we're now looking for quotes
-          updateQuotes({});
           if (
             !answer.endsWith(".") &&
             !answer.endsWith("?") &&
@@ -129,9 +132,9 @@ const searchRequestStreamed = async (
 };
 
 export const SearchSection: React.FC<{}> = () => {
-  const [answer, setAnswer] = useState<string | null>("");
-  const [quotes, setQuotes] = useState<Record<string, Quote> | null>(null);
-  const [documents, setDocuments] = useState<Document[] | null>(null);
+  const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(
+    null
+  );
   const [isFetching, setIsFetching] = useState(false);
 
   return (
@@ -139,26 +142,36 @@ export const SearchSection: React.FC<{}> = () => {
       <SearchBar
         onSearch={(query) => {
           setIsFetching(true);
-          setAnswer(null);
-          setQuotes(null);
-          setDocuments(null);
-          searchRequestStreamed(query, setAnswer, setQuotes, setDocuments).then(
-            ({ quotes }) => {
-              setIsFetching(false);
-              // if no quotes were given, set to empty object so that the SearchResultsDisplay
-              // component knows that the search was successful but no quotes were found
-              if (!quotes) {
-                setQuotes({});
-              }
-            }
-          );
+          setSearchResponse({
+            answer: null,
+            quotes: null,
+            documents: null,
+          });
+          searchRequestStreamed(
+            query,
+            (answer) =>
+              setSearchResponse((prevState) => ({
+                ...(prevState || initialSearchResponse),
+                answer,
+              })),
+            (quotes) =>
+              setSearchResponse((prevState) => ({
+                ...(prevState || initialSearchResponse),
+                quotes,
+              })),
+            (documents) =>
+              setSearchResponse((prevState) => ({
+                ...(prevState || initialSearchResponse),
+                documents,
+              }))
+          ).then(() => {
+            setIsFetching(false);
+          });
         }}
       />
       <div className="mt-2">
         <SearchResultsDisplay
-          answer={answer}
-          quotes={quotes}
-          documents={documents}
+          searchResponse={searchResponse}
           isFetching={isFetching}
         />
       </div>

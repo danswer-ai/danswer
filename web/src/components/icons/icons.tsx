@@ -9,6 +9,7 @@ import {
   Notebook,
   Key,
   Trash,
+  Info,
 } from "@phosphor-icons/react";
 
 interface IconProps {
@@ -65,4 +66,11 @@ export const GoogleDriveIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <GoogleDriveLogo size={size} className={className} />;
+};
+
+export const InfoIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <Info size={size} className={className} />;
 };

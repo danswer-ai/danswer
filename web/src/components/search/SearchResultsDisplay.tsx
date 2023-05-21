@@ -1,7 +1,8 @@
 import React from "react";
-import { Quote, Document } from "./types";
+import { Quote, Document, SearchResponse } from "./types";
 import { getSourceIcon } from "../source";
 import { LoadingAnimation } from "../Loading";
+import { InfoIcon } from "../icons/icons";
 
 const removeDuplicateDocs = (documents: Document[]) => {
   const seen = new Set<string>();
@@ -19,33 +20,35 @@ const removeDuplicateDocs = (documents: Document[]) => {
 };
 
 interface SearchResultsDisplayProps {
-  answer: string | null;
-  quotes: Record<string, Quote> | null;
-  documents: Document[] | null;
+  searchResponse: SearchResponse | null;
   isFetching: boolean;
 }
 
 export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
-  answer,
-  quotes,
-  documents,
+  searchResponse,
   isFetching,
 }) => {
-  if (!answer) {
-    if (isFetching) {
-      return (
-        <div className="flex">
-          <div className="mx-auto">
-            <LoadingAnimation />
-          </div>
-        </div>
-      );
-    }
+  if (!searchResponse) {
     return null;
   }
 
-  if (answer === null) {
-    return <div>Unable to find an answer</div>;
+  if (isFetching) {
+    return (
+      <div className="flex">
+        <div className="mx-auto">
+          <LoadingAnimation />
+        </div>
+      </div>
+    );
+  }
+
+  const { answer, quotes, documents } = searchResponse;
+  if (answer === null && documents === null && quotes === null) {
+    return (
+      <div className="text-red-800">
+        Something went wrong, please try again.
+      </div>
+    );
   }
 
   const dedupedQuotes: Quote[] = [];
@@ -61,38 +64,53 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
 
   return (
     <>
-      <div className="p-4 border-2 rounded-md border-gray-700">
-        <div className="flex mb-1">
-          <h2 className="text font-bold my-auto">AI Answer</h2>
-        </div>
-        <p className="mb-4">{answer}</p>
+      {answer && (
+        <div className="p-4 border-2 rounded-md border-gray-700">
+          <div className="flex mb-1">
+            <h2 className="text font-bold my-auto">AI Answer</h2>
+          </div>
+          <p className="mb-4">{answer}</p>
 
-        {quotes !== null && (
-          <>
-            <h2 className="text-sm font-bold mb-2">Sources</h2>
-            {isFetching && dedupedQuotes.length === 0 ? (
-              <LoadingAnimation text="Finding quotes" size="text-sm" />
-            ) : (
-              <div className="flex">
-                {dedupedQuotes.map((quoteInfo) => (
-                  <a
-                    key={quoteInfo.document_id}
-                    className="p-2 ml-1 border border-gray-800 rounded-lg text-sm flex max-w-[230px] hover:bg-gray-800"
-                    href={quoteInfo.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {getSourceIcon(quoteInfo.source_type, "20")}
-                    <p className="truncate break-all ml-0.5">
-                      {quoteInfo.semantic_identifier || quoteInfo.document_id}
-                    </p>
-                  </a>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+          {quotes !== null && (
+            <>
+              <h2 className="text-sm font-bold mb-2">Sources</h2>
+              {isFetching && dedupedQuotes.length === 0 ? (
+                <LoadingAnimation text="Finding quotes" size="text-sm" />
+              ) : (
+                <div className="flex">
+                  {dedupedQuotes.map((quoteInfo) => (
+                    <a
+                      key={quoteInfo.document_id}
+                      className="p-2 ml-1 border border-gray-800 rounded-lg text-sm flex max-w-[230px] hover:bg-gray-800"
+                      href={quoteInfo.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {getSourceIcon(quoteInfo.source_type, "20")}
+                      <p className="truncate break-all ml-0.5">
+                        {quoteInfo.semantic_identifier || quoteInfo.document_id}
+                      </p>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {!answer && !isFetching && (
+        <div className="flex">
+          <InfoIcon
+            size="20"
+            className="text-red-800 my-auto flex flex-shrink-0"
+          />
+          <div className="text-red-800 text-xs my-auto ml-1">
+            GPT hurt itself in its confusion :(
+          </div>
+        </div>
+      )}
+
       {/* Only display docs once we're done fetching to avoid distracting from the AI answer*/}
       {!isFetching && documents && documents.length > 0 && (
         <div className="mt-4">
@@ -103,7 +121,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
             .slice(0, 7)
             .map((doc) => (
               <div
-                key={doc.document_id}
+                key={doc.semantic_identifier}
                 className="text-sm border-b border-gray-800 mb-3"
               >
                 <a
