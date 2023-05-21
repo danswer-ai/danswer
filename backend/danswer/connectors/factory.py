@@ -69,7 +69,7 @@ def _pull_to_load_connector(range_pull_connector: PollConnector) -> LoadConnecto
 def build_load_connector(
     source: DocumentSource, connector_specific_config: dict[str, Any]
 ) -> LoadConnector:
-    connector = build_connector(source, InputType.POLL, connector_specific_config)
+    connector = build_connector(source, InputType.LOAD_STATE, connector_specific_config)
     if isinstance(connector, PollConnector):
         return _pull_to_load_connector(connector)
     assert isinstance(connector, LoadConnector)
