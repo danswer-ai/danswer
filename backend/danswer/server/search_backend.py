@@ -6,6 +6,7 @@ from danswer.auth.users import current_active_user
 from danswer.auth.users import current_admin_user
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
+from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.datastores import create_datastore
@@ -85,10 +86,14 @@ def direct_qa(
         for chunk in ranked_chunks
     ]
 
-    qa_model = get_default_backend_qa_model()
-    answer, quotes = qa_model.answer_question(
-        query, ranked_chunks[:NUM_RERANKED_RESULTS]
-    )
+    qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
+    try:
+        answer, quotes = qa_model.answer_question(
+            query, ranked_chunks[:NUM_RERANKED_RESULTS]
+        )
+    except Exception:
+        # exception is logged in the answer_question method, no need to re-log
+        answer, quotes = None, None
 
     logger.info(f"Total QA took {time.time() - start_time} seconds")
 
@@ -126,14 +131,19 @@ def stream_direct_qa(
         top_docs_dict = {top_documents_key: [top_doc.json() for top_doc in top_docs]}
         yield get_json_line(top_docs_dict)
 
-        qa_model = get_default_backend_qa_model()
-        for response_dict in qa_model.answer_question_stream(
-            query, ranked_chunks[:NUM_RERANKED_RESULTS]
-        ):
-            if response_dict is None:
-                continue
-            logger.debug(response_dict)
-            yield get_json_line(response_dict)
+        qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
+        try:
+            for response_dict in qa_model.answer_question_stream(
+                query, ranked_chunks[:NUM_RERANKED_RESULTS]
+            ):
+                if response_dict is None:
+                    continue
+                logger.debug(response_dict)
+                yield get_json_line(response_dict)
+        except Exception:
+            # exception is logged in the answer_question method, no need to re-log
+            pass
+
         return
 
     return StreamingResponse(stream_qa_portions(), media_type="application/json")
