@@ -32,7 +32,9 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
     return null;
   }
 
-  if (isFetching) {
+  const { answer, quotes, documents } = searchResponse;
+
+  if (isFetching && !answer) {
     return (
       <div className="flex">
         <div className="mx-auto">
@@ -42,7 +44,6 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
     );
   }
 
-  const { answer, quotes, documents } = searchResponse;
   if (answer === null && documents === null && quotes === null) {
     return (
       <div className="text-red-800">

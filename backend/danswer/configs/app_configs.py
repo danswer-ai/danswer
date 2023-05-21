@@ -98,6 +98,7 @@ KEYWORD_MAX_HITS = 5
 QUOTE_ALLOWED_ERROR_PERCENT = (
     0.05  # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
 )
+QA_TIMEOUT = 10  # 10 seconds
 
 
 #####

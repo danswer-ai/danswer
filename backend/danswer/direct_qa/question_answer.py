@@ -7,8 +7,10 @@ from functools import wraps
 from typing import Any
 from typing import cast
 from typing import Dict
+from typing import Literal
 from typing import Optional
 from typing import Tuple
+from typing import TypeVar
 from typing import Union
 
 import openai
@@ -37,6 +39,7 @@ from danswer.utils.text_processing import clean_model_quote
 from danswer.utils.text_processing import shared_precompare_cleanup
 from danswer.utils.timing import log_function_time
 from openai.error import AuthenticationError
+from openai.error import Timeout
 
 
 logger = setup_logger()
@@ -187,6 +190,48 @@ def stream_answer_end(answer_so_far: str, next_token: str) -> bool:
     return False
 
 
+F = TypeVar("F", bound=Callable)
+
+Answer = str
+Quotes = dict[str, dict[str, str | int | None]]
+ModelType = Literal["ChatCompletion", "Completion"]
+PromptProcessor = Callable[[str, list[str]], str]
+
+
+def _build_openai_settings(**kwargs: dict[str, Any]) -> dict[str, Any]:
+    """
+    Utility to add in some common default values so they don't have to be set every time.
+    """
+    return {
+        "temperature": 0,
+        "top_p": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        **kwargs,
+    }
+
+
+def _handle_openai_exceptions_wrapper(openai_call: F, query: str) -> F:
+    @wraps(openai_call)
+    def wrapped_call(*args: list[Any], **kwargs: dict[str, Any]) -> Any:
+        try:
+            if not kwargs.get("stream"):
+                return openai_call(*args, **kwargs)
+            # if streamed, the call returns a generator
+            yield from openai_call(*args, **kwargs)
+        except AuthenticationError:
+            logger.exception("Failed to authenticate with OpenAI API")
+            raise
+        except Timeout:
+            logger.exception("OpenAI API timed out for query: %s", query)
+            raise
+        except Exception as e:
+            logger.exception("Unexpected error with OpenAI API for query: %s", query)
+            raise
+
+    return cast(F, wrapped_call)
+
+
 # used to check if the QAModel is an OpenAI model
 class OpenAIQAModel(QAModel):
     pass
@@ -199,11 +244,13 @@ class OpenAICompletionQA(OpenAIQAModel):
         model_version: str = OPENAI_MODEL_VERSION,
         max_output_tokens: int = OPENAI_MAX_OUTPUT_TOKENS,
         api_key: str | None = None,
+        timeout: int | None = None,
     ) -> None:
         self.prompt_processor = prompt_processor
         self.model_version = model_version
         self.max_output_tokens = max_output_tokens
         self.api_key = api_key or get_openai_api_key()
+        self.timeout = timeout
 
     @log_function_time()
     def answer_question(
@@ -213,28 +260,21 @@ class OpenAICompletionQA(OpenAIQAModel):
         filled_prompt = self.prompt_processor(query, top_contents)
         logger.debug(filled_prompt)
 
-        try:
-            response = openai.Completion.create(
+        openai_call = _handle_openai_exceptions_wrapper(
+            openai_call=openai.Completion.create,
+            query=query,
+        )
+        response = openai_call(
+            **_build_openai_settings(
                 api_key=self.api_key,
                 prompt=filled_prompt,
-                temperature=0,
-                top_p=1,
-                frequency_penalty=0,
-                presence_penalty=0,
                 model=self.model_version,
                 max_tokens=self.max_output_tokens,
-            )
-            model_output = response["choices"][0]["text"].strip()
-            logger.info(
-                "OpenAI Token Usage: " + str(response["usage"]).replace("\n", "")
-            )
-        except AuthenticationError:
-            logger.exception("Failed to authenticate with OpenAI API")
-            raise
-        except Exception as e:
-            logger.exception(e)
-            model_output = "Model Failure"
-
+                request_timeout=self.timeout,
+            ),
+        )
+        model_output = cast(str, response["choices"][0]["text"]).strip()
+        logger.info("OpenAI Token Usage: " + str(response["usage"]).replace("\n", ""))
         logger.debug(model_output)
 
         answer, quotes_dict = process_answer(model_output, context_docs)
@@ -247,46 +287,41 @@ class OpenAICompletionQA(OpenAIQAModel):
         filled_prompt = self.prompt_processor(query, top_contents)
         logger.debug(filled_prompt)
 
-        try:
-            response = openai.Completion.create(
+        openai_call = _handle_openai_exceptions_wrapper(
+            openai_call=openai.Completion.create,
+            query=query,
+        )
+        response = openai_call(
+            **_build_openai_settings(
                 api_key=self.api_key,
                 prompt=filled_prompt,
-                temperature=0,
-                top_p=1,
-                frequency_penalty=0,
-                presence_penalty=0,
                 model=self.model_version,
                 max_tokens=self.max_output_tokens,
+                request_timeout=self.timeout,
                 stream=True,
-            )
+            ),
+        )
+        model_output: str = ""
+        found_answer_start = False
+        found_answer_end = False
+        # iterate through the stream of events
+        for event in response:
+            event_text = cast(str, event["choices"][0]["text"])
+            model_previous = model_output
+            model_output += event_text
 
-            model_output: str = ""
-            found_answer_start = False
-            found_answer_end = False
-            # iterate through the stream of events
-            for event in response:
-                event_text = cast(str, event["choices"][0]["text"])
-                model_previous = model_output
-                model_output += event_text
+            if not found_answer_start and '{"answer":"' in model_output.replace(
+                " ", ""
+            ).replace("\n", ""):
+                found_answer_start = True
+                continue
 
-                if not found_answer_start and '{"answer":"' in model_output.replace(
-                    " ", ""
-                ).replace("\n", ""):
-                    found_answer_start = True
+            if found_answer_start and not found_answer_end:
+                if stream_answer_end(model_previous, event_text):
+                    found_answer_end = True
+                    yield {"answer_finished": True}
                     continue
-
-                if found_answer_start and not found_answer_end:
-                    if stream_answer_end(model_previous, event_text):
-                        found_answer_end = True
-                        yield {"answer_finished": True}
-                        continue
-                    yield {"answer_data": event_text}
-        except AuthenticationError:
-            logger.exception("Failed to authenticate with OpenAI API")
-            raise
-        except Exception as e:
-            logger.exception(e)
-            model_output = "Model Failure"
+                yield {"answer_data": event_text}
 
         logger.debug(model_output)
 
@@ -304,6 +339,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         ] = json_chat_processor,
         model_version: str = OPENAI_MODEL_VERSION,
         max_output_tokens: int = OPENAI_MAX_OUTPUT_TOKENS,
+        timeout: int | None = None,
         reflexion_try_count: int = 0,
         api_key: str | None = None,
     ) -> None:
@@ -312,6 +348,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         self.max_output_tokens = max_output_tokens
         self.reflexion_try_count = reflexion_try_count
         self.api_key = api_key or get_openai_api_key()
+        self.timeout = timeout
 
     @log_function_time()
     def answer_question(
@@ -322,30 +359,25 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         logger.debug(messages)
         model_output = ""
         for _ in range(self.reflexion_try_count + 1):
-            try:
-                response = openai.ChatCompletion.create(
+            openai_call = _handle_openai_exceptions_wrapper(
+                openai_call=openai.ChatCompletion.create,
+                query=query,
+            )
+            response = openai_call(
+                **_build_openai_settings(
                     api_key=self.api_key,
                     messages=messages,
-                    temperature=0,
-                    top_p=1,
-                    frequency_penalty=0,
-                    presence_penalty=0,
                     model=self.model_version,
                     max_tokens=self.max_output_tokens,
-                )
-                model_output = response["choices"][0]["message"]["content"].strip()
-                assistant_msg = {"content": model_output, "role": "assistant"}
-                messages.extend([assistant_msg, get_chat_reflexion_msg()])
-                logger.info(
-                    "OpenAI Token Usage: " + str(response["usage"]).replace("\n", "")
-                )
-            except AuthenticationError:
-                logger.exception("Failed to authenticate with OpenAI API")
-                raise
-            except Exception as e:
-                logger.exception(e)
-                logger.warning(f"Model failure for query: {query}")
-                return None, None
+                    request_timeout=self.timeout,
+                ),
+            )
+            model_output = response["choices"][0]["message"]["content"].strip()
+            assistant_msg = {"content": model_output, "role": "assistant"}
+            messages.extend([assistant_msg, get_chat_reflexion_msg()])
+            logger.info(
+                "OpenAI Token Usage: " + str(response["usage"]).replace("\n", "")
+            )
 
         logger.debug(model_output)
 
@@ -359,50 +391,46 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         messages = self.prompt_processor(query, top_contents)
         logger.debug(messages)
 
-        try:
-            response = openai.ChatCompletion.create(
+        openai_call = _handle_openai_exceptions_wrapper(
+            openai_call=openai.ChatCompletion.create,
+            query=query,
+        )
+        response = openai_call(
+            **_build_openai_settings(
                 api_key=self.api_key,
                 messages=messages,
-                temperature=0,
-                top_p=1,
-                frequency_penalty=0,
-                presence_penalty=0,
                 model=self.model_version,
                 max_tokens=self.max_output_tokens,
+                request_timeout=self.timeout,
                 stream=True,
-            )
+            ),
+        )
+        logger.info("Raw response: %s", response)
+        model_output: str = ""
+        found_answer_start = False
+        found_answer_end = False
+        for event in response:
+            event_dict = cast(str, event["choices"][0]["delta"])
+            if (
+                "content" not in event_dict
+            ):  # could be a role message or empty termination
+                continue
+            event_text = event_dict["content"]
+            model_previous = model_output
+            model_output += event_text
 
-            model_output: str = ""
-            found_answer_start = False
-            found_answer_end = False
-            for event in response:
-                event_dict = event["choices"][0]["delta"]
-                if (
-                    "content" not in event_dict
-                ):  # could be a role message or empty termination
+            if not found_answer_start and '{"answer":"' in model_output.replace(
+                " ", ""
+            ).replace("\n", ""):
+                found_answer_start = True
+                continue
+
+            if found_answer_start and not found_answer_end:
+                if stream_answer_end(model_previous, event_text):
+                    found_answer_end = True
+                    yield {"answer_finished": True}
                     continue
-                event_text = event_dict["content"]
-                model_previous = model_output
-                model_output += event_text
-
-                if not found_answer_start and '{"answer":"' in model_output.replace(
-                    " ", ""
-                ).replace("\n", ""):
-                    found_answer_start = True
-                    continue
-
-                if found_answer_start and not found_answer_end:
-                    if stream_answer_end(model_previous, event_text):
-                        found_answer_end = True
-                        yield {"answer_finished": True}
-                        continue
-                    yield {"answer_data": event_text}
-        except AuthenticationError:
-            logger.exception("Failed to authenticate with OpenAI API")
-            raise
-        except Exception as e:
-            logger.exception(e)
-            model_output = "Model Failure"
+                yield {"answer_data": event_text}
 
         logger.debug(model_output)
 
