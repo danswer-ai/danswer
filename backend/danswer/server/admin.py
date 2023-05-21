@@ -106,6 +106,13 @@ def index(
     )
 
 
+@router.get("/admin/connectors")
+def get_connectors(
+    _: User = Depends(current_admin_user),
+) -> None:
+    pass
+
+
 @router.get("/connectors/{source}/index-attempt")
 def list_index_attempts(
     source: DocumentSource,
