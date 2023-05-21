@@ -58,7 +58,7 @@ class UserByEmail(BaseModel):
 
 
 class IndexAttemptRequest(BaseModel):
-    input_type: InputType = InputType.PULL
+    input_type: InputType = InputType.POLL
     connector_specific_config: dict[str, Any]
 
 
