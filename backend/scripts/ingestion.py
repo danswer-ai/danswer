@@ -1,3 +1,4 @@
+# This file is only for development purposes
 import argparse
 from itertools import chain
 
@@ -5,6 +6,7 @@ from danswer.chunking.chunk import Chunker
 from danswer.chunking.chunk import DefaultChunker
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
+from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.github.connector import GithubConnector
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.google_drive.connector_auth import backend_get_credentials
@@ -91,11 +93,22 @@ def load_github_batch(owner: str, repo: str, qdrant_collection: str) -> None:
     )
 
 
+def load_confluence_batch(confluence_wiki_url: str, qdrant_collection: str) -> None:
+    logger.info("Loading documents from Confluence.")
+    load_batch(
+        ConfluenceConnector(confluence_wiki_url, batch_size=INDEX_BATCH_SIZE),
+        DefaultChunker(),
+        DefaultEmbedder(),
+        QdrantDatastore(collection=qdrant_collection),
+    )
+
+
 class BatchLoadingArgs(argparse.Namespace):
     website_url: str
     github_owner: str
     github_repo: str
     slack_export_dir: str
+    confluence_link: str
     qdrant_collection: str
     rebuild_index: bool
 
@@ -119,6 +132,10 @@ if __name__ == "__main__":
         default="~/Downloads/test-slack-export",
     )
     parser.add_argument(
+        "--confluence_link",
+        default="https://danswer.atlassian.net/wiki/spaces/fakespace",
+    )
+    parser.add_argument(
         "--qdrant-collection",
         default=QDRANT_DEFAULT_COLLECTION,
     )
@@ -133,6 +150,7 @@ if __name__ == "__main__":
         recreate_collection(args.qdrant_collection)
 
     # load_slack_batch(args.slack_export_dir, args.qdrant_collection)
-    load_web_batch(args.website_url, args.qdrant_collection)
+    # load_web_batch(args.website_url, args.qdrant_collection)
     # load_google_drive_batch(args.qdrant_collection)
     # load_github_batch(args.github_owner, args.github_repo, args.qdrant_collection)
+    load_confluence_batch(args.confluence_link, args.qdrant_collection)

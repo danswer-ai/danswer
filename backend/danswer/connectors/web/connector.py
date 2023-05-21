@@ -9,6 +9,7 @@ import requests
 from bs4 import BeautifulSoup
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import HTML_SEPARATOR
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -17,7 +18,6 @@ from playwright.sync_api import sync_playwright
 from PyPDF2 import PdfReader
 
 logger = setup_logger()
-TAG_SEPARATOR = "\n"
 
 
 def is_valid_url(url: str) -> bool:
@@ -138,7 +138,7 @@ class WebConnector(LoadConnector):
                     ]:
                         [tag.extract() for tag in soup.find_all(undesired_tag)]
 
-                    page_text = soup.get_text(TAG_SEPARATOR)
+                    page_text = soup.get_text(HTML_SEPARATOR)
 
                     doc_batch.append(
                         Document(
