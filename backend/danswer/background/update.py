@@ -71,7 +71,8 @@ def run_update() -> None:
     # prevent race conditions across multiple background jobs. For now,
     # this assumes we only ever run a single background job at a time
     not_started_index_attempts = fetch_index_attempts(
-        input_types=[InputType.LOAD_STATE], statuses=[IndexingStatus.NOT_STARTED]
+        input_types=[InputType.LOAD_STATE, InputType.POLL],
+        statuses=[IndexingStatus.NOT_STARTED],
     )
     for not_started_index_attempt in not_started_index_attempts:
         logger.info(
@@ -114,6 +115,8 @@ def run_update() -> None:
             document_ids=document_ids if not error_msg else None,
             error_msg=error_msg,
         )
+
+    logger.info("Finished update")
 
 
 def update_loop(delay: int = 60) -> None:
