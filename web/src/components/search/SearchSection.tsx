@@ -105,6 +105,9 @@ const searchRequestStreamed = async (
           answer += answerChunk;
           updateCurrentAnswer(answer);
         } else if (chunk.answer_finished) {
+          // set quotes as non-null to signify that the answer is finished and
+          // we're now looking for quotes
+          updateQuotes({});
           if (
             !answer.endsWith(".") &&
             !answer.endsWith("?") &&
