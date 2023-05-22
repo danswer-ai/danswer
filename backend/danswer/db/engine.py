@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from collections.abc import Generator
 
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
@@ -10,6 +11,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.orm import Session
 
 
 SYNC_DB_API = "psycopg2"
@@ -36,6 +38,11 @@ def build_engine() -> Engine:
 def build_async_engine() -> AsyncEngine:
     connection_string = build_connection_string()
     return create_async_engine(connection_string)
+
+
+def get_session() -> Generator[Session, None, None]:
+    with Session(build_engine(), future=True, expire_on_commit=False) as session:
+        yield session
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:

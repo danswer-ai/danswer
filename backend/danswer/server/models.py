@@ -83,16 +83,13 @@ class CredentialSnapshot(BaseModel):
 
 
 class IndexAttemptSnapshot(BaseModel):
-    connector_specific_config: dict[str, Any]
-    status: IndexingStatus
     source: DocumentSource
+    input_type: InputType
+    status: IndexingStatus
+    connector_specific_config: dict[str, Any]
+    docs_indexed: int
     time_created: datetime
     time_updated: datetime
-    docs_indexed: int
-
-
-class ListIndexAttemptsResponse(BaseModel):
-    index_attempts: list[IndexAttemptSnapshot]
 
 
 class ApiKey(BaseModel):

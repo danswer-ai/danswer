@@ -6,6 +6,8 @@ from danswer.connectors.factory import build_load_connector
 from danswer.connectors.models import InputType
 from danswer.connectors.slack.config import get_pull_frequency
 from danswer.connectors.slack.connector import SlackConnector
+from danswer.db.connector import fetch_connectors
+from danswer.db.engine import get_session
 from danswer.db.index_attempt import fetch_index_attempts
 from danswer.db.index_attempt import insert_index_attempt
 from danswer.db.index_attempt import update_index_attempt
@@ -119,11 +121,23 @@ def run_update() -> None:
     logger.info("Finished update")
 
 
+def create_indexing_jobs(db_session: Session) -> None:
+    connectors = fetch_connectors(db_session, disabled_status=False)
+    for connector in connectors:
+        pass
+
+
+def run_indexing_job(db_session: Session) -> None:
+    pass
+
+
 def update_loop(delay: int = 60) -> None:
     while True:
         start = time.time()
         try:
-            run_update()
+            with get_session() as db_session:
+                create_indexing_jobs(db_session)
+                run_indexing_jobs(db_session)
         except Exception:
             logger.exception("Failed to run update")
         sleep_time = delay - (time.time() - start)

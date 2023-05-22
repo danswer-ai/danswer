@@ -1,32 +1,27 @@
-from typing import Any
 from typing import cast
 
 from danswer.auth.users import current_admin_user
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import NO_AUTH_USER
 from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
-from danswer.connectors.factory import build_connector
 from danswer.connectors.google_drive.connector_auth import get_auth_url
 from danswer.connectors.google_drive.connector_auth import get_drive_tokens
 from danswer.connectors.google_drive.connector_auth import save_access_tokens
 from danswer.connectors.google_drive.connector_auth import verify_csrf
-from danswer.connectors.models import InputType
 from danswer.connectors.slack.config import get_slack_config
 from danswer.connectors.slack.config import SlackConfig
 from danswer.connectors.slack.config import update_slack_config
+from danswer.db.connector import add_credential_to_connector
 from danswer.db.connector import create_update_connector
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.connector import fetch_connectors
+from danswer.db.credentials import create_update_credential
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
+from danswer.db.engine import get_session
 from danswer.db.index_attempt import fetch_index_attempts
-from danswer.db.index_attempt import insert_index_attempt
-from danswer.db.models import IndexAttempt
-from danswer.db.models import IndexingStatus
 from danswer.db.models import User
-from danswer.direct_qa.key_validation import (
-    check_openai_api_key_is_valid,
-)
+from danswer.direct_qa.key_validation import check_openai_api_key_is_valid
 from danswer.direct_qa.question_answer import get_openai_api_key
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
@@ -36,14 +31,12 @@ from danswer.server.models import AuthUrl
 from danswer.server.models import ConnectorSnapshot
 from danswer.server.models import CredentialSnapshot
 from danswer.server.models import GDriveCallback
-from danswer.server.models import IndexAttemptRequest
 from danswer.server.models import IndexAttemptSnapshot
-from danswer.server.models import ListIndexAttemptsResponse
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
-from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/admin")
 
@@ -87,37 +80,59 @@ def modify_slack_config(
     update_slack_config(slack_config)
 
 
-@router.post("/connectors/{source}/index-attempt", status_code=201)
-def index(
-    source: DocumentSource,
-    index_attempt_request: IndexAttemptRequest,
+@router.get("/connectors/index-attempt", response_model=list[IndexAttemptSnapshot])
+def list_all_index_attempts(
     _: User = Depends(current_admin_user),
-) -> None:
-    # validate that the connector specified by the source / input_type combination
-    # exists AND that the connector_specific_config is valid for that connector type, should be load
-    build_connector(
-        source=source,
-        input_type=index_attempt_request.input_type,
-        connector_specific_config=index_attempt_request.connector_specific_config,
-    )
-
-    # once validated, insert the index attempt into the database where it will
-    # get picked up by a background job
-    insert_index_attempt(
-        index_attempt=IndexAttempt(
-            source=source,
-            input_type=index_attempt_request.input_type,
-            connector_specific_config=index_attempt_request.connector_specific_config,
-            status=IndexingStatus.NOT_STARTED,
+    db_session: Session = Depends(get_session),
+) -> list[IndexAttemptSnapshot]:
+    index_attempts = fetch_index_attempts(db_session)
+    return [
+        IndexAttemptSnapshot(
+            source=index_attempt.connector.source,
+            input_type=index_attempt.connector.input_type,
+            status=index_attempt.status,
+            connector_specific_config=index_attempt.connector.connector_specific_config,
+            docs_indexed=0
+            if not index_attempt.document_ids
+            else len(index_attempt.document_ids),
+            time_created=index_attempt.time_created,
+            time_updated=index_attempt.time_updated,
         )
-    )
+        for index_attempt in index_attempts
+    ]
 
 
-@router.get("/admin/connector")
+@router.get(
+    "/connectors/{source}/index-attempt", response_model=list[IndexAttemptSnapshot]
+)
+def list_index_attempts(
+    source: DocumentSource,
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> list[IndexAttemptSnapshot]:
+    index_attempts = fetch_index_attempts(db_session, sources=[source])
+    return [
+        IndexAttemptSnapshot(
+            source=index_attempt.connector.source,
+            input_type=index_attempt.connector.input_type,
+            status=index_attempt.status,
+            connector_specific_config=index_attempt.connector.connector_specific_config,
+            docs_indexed=0
+            if not index_attempt.document_ids
+            else len(index_attempt.document_ids),
+            time_created=index_attempt.time_created,
+            time_updated=index_attempt.time_updated,
+        )
+        for index_attempt in index_attempts
+    ]
+
+
+@router.get("/admin/connector", response_model=list[ConnectorSnapshot])
 def get_connectors(
     _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
 ) -> list[ConnectorSnapshot]:
-    connectors = fetch_connectors()
+    connectors = fetch_connectors(db_session)
     return [
         ConnectorSnapshot(
             id=connector.id,
@@ -134,12 +149,13 @@ def get_connectors(
     ]
 
 
-@router.get("/admin/connector/{connector_id}")
+@router.get("/admin/connector/{connector_id}", response_model=ConnectorSnapshot)
 def get_connector_by_id(
     connector_id: int,
     _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
 ) -> ConnectorSnapshot:
-    connector = fetch_connector_by_id(connector_id=connector_id)
+    connector = fetch_connector_by_id(connector_id, db_session)
     return ConnectorSnapshot(
         id=connector.id,
         name=connector.name,
@@ -153,13 +169,16 @@ def get_connector_by_id(
     )
 
 
-@router.put("/admin/connector/{connector_id}")
+@router.put("/admin/connector/{connector_id}", response_model=ConnectorSnapshot)
 def update_or_create_connector(
     connector_id: int,
     connector_data: ConnectorSnapshot,
     _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
 ) -> ConnectorSnapshot:
-    updated_connector = create_update_connector(connector_id, connector_data)
+    updated_connector = create_update_connector(
+        connector_id, connector_data, db_session
+    )
 
     return ConnectorSnapshot(
         id=updated_connector.id,
@@ -174,26 +193,12 @@ def update_or_create_connector(
     )
 
 
-@router.get("/admin/credential/{credential_id}")
-def get_credential_by_id(
-    credential_id: int,
-    _: User = Depends(current_admin_user),
-) -> CredentialSnapshot:
-    credential = fetch_credential_by_id(credential_id=credential_id)
-    return CredentialSnapshot(
-        id=credential.id,
-        credentials=credential.credentials,
-        user_id=credential.user_id,
-        time_created=credential.time_created,
-        time_updated=credential.time_updated,
-    )
-
-
-@router.get("/admin/credential")
+@router.get("/admin/credential", response_model=list[CredentialSnapshot])
 def get_credentials(
     _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
 ) -> list[CredentialSnapshot]:
-    credentials = fetch_credentials()
+    credentials = fetch_credentials(db_session)
     return [
         CredentialSnapshot(
             id=credential.id,
@@ -206,56 +211,55 @@ def get_credentials(
     ]
 
 
-@router.get("/connectors/{source}/index-attempt")
-def list_index_attempts(
-    source: DocumentSource,
+@router.get("/admin/credential/{credential_id}", response_model=CredentialSnapshot)
+def get_credential_by_id(
+    credential_id: int,
     _: User = Depends(current_admin_user),
-) -> ListIndexAttemptsResponse:
-    index_attempts = fetch_index_attempts(sources=[source])
-    return ListIndexAttemptsResponse(
-        index_attempts=[
-            IndexAttemptSnapshot(
-                connector_specific_config=index_attempt.connector_specific_config,
-                status=index_attempt.status,
-                source=index_attempt.source,
-                time_created=index_attempt.time_created,
-                time_updated=index_attempt.time_updated,
-                docs_indexed=0
-                if not index_attempt.document_ids
-                else len(index_attempt.document_ids),
-            )
-            for index_attempt in index_attempts
-        ]
+    db_session: Session = Depends(get_session),
+) -> CredentialSnapshot:
+    credential = fetch_credential_by_id(credential_id, db_session)
+    return CredentialSnapshot(
+        id=credential.id,
+        credentials=credential.credentials,
+        user_id=credential.user_id,
+        time_created=credential.time_created,
+        time_updated=credential.time_updated,
     )
 
 
-@router.get("/connectors/index-attempt")
-def list_all_index_attempts(
+@router.put("/admin/credential/{credential_id}", response_model=CredentialSnapshot)
+def update_or_create_credential(
+    credential_id: int,
+    credential_data: CredentialSnapshot,
     _: User = Depends(current_admin_user),
-) -> ListIndexAttemptsResponse:
-    index_attempts = fetch_index_attempts()
-    return ListIndexAttemptsResponse(
-        index_attempts=[
-            IndexAttemptSnapshot(
-                connector_specific_config=index_attempt.connector_specific_config,
-                status=index_attempt.status,
-                source=index_attempt.source,
-                time_created=index_attempt.time_created,
-                time_updated=index_attempt.time_updated,
-                docs_indexed=0
-                if not index_attempt.document_ids
-                else len(index_attempt.document_ids),
-            )
-            for index_attempt in index_attempts
-        ]
+    db_session: Session = Depends(get_session),
+) -> CredentialSnapshot:
+    updated_credential = create_update_credential(
+        credential_id, credential_data, db_session
+    )
+
+    return CredentialSnapshot(
+        id=updated_credential.id,
+        credentials=updated_credential.credentials,
+        user_id=updated_credential.user_id,
+        time_created=updated_credential.time_created,
+        time_updated=updated_credential.time_updated,
     )
 
 
-@router.head("/openai-api-key/validate")
+@router.put("/connector/{connector_id}/credential/{credential_id}")
+def assign_credential_to_connector(
+    connector_id: int,
+    credential_id: int,
+    db_session: Session = Depends(get_session),
+) -> None:
+    add_credential_to_connector(connector_id, credential_id, db_session)
+
+
+@router.head("/admin/openai-api-key/validate")
 def validate_existing_openai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
-    is_valid = False
     try:
         openai_api_key = get_openai_api_key()
         is_valid = check_openai_api_key_is_valid(openai_api_key)
@@ -268,7 +272,7 @@ def validate_existing_openai_api_key(
         raise HTTPException(status_code=400, detail="Invalid API key provided")
 
 
-@router.get("/openai-api-key")
+@router.get("/admin/openai-api-key", response_model=ApiKey)
 def get_openai_api_key_from_dynamic_config_store(
     _: User = Depends(current_admin_user),
 ) -> ApiKey:
@@ -286,7 +290,7 @@ def get_openai_api_key_from_dynamic_config_store(
         raise HTTPException(status_code=404, detail="Key not found")
 
 
-@router.post("/openai-api-key")
+@router.post("/admin/openai-api-key")
 def store_openai_api_key(
     request: ApiKey,
     _: User = Depends(current_admin_user),
@@ -300,7 +304,7 @@ def store_openai_api_key(
         raise HTTPException(400, str(e))
 
 
-@router.delete("/openai-api-key")
+@router.delete("/admin/openai-api-key")
 def delete_openai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:

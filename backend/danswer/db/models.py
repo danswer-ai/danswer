@@ -39,6 +39,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole, native_enum=False, default=UserRole.BASIC)
     )
+    credentials: Mapped[List["Credential"]] = relationship(
+        "Credential", back_populates="user", lazy="joined"
+    )
 
 
 class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
@@ -59,6 +62,13 @@ class ConnectorCredentialAssociation(Base):
         ForeignKey("credential.id"), primary_key=True
     )
 
+    connector: Mapped["Connector"] = relationship(
+        "Connector", back_populates="credentials"
+    )
+    credential: Mapped["Credential"] = relationship(
+        "Credential", back_populates="connectors"
+    )
+
 
 class Connector(Base):
     __tablename__ = "connector"
@@ -73,11 +83,6 @@ class Connector(Base):
         postgresql.JSONB(), nullable=False
     )
     refresh_freq: Mapped[int] = mapped_column(Integer)
-    credential_ids: Mapped[List["Credential"]] = relationship(
-        "ConnectorCredentialAssociation",
-        back_populates="connector",
-        cascade="all, delete-orphan",
-    )
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -85,6 +90,12 @@ class Connector(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    credential_ids: Mapped[List["ConnectorCredentialAssociation"]] = relationship(
+        "ConnectorCredentialAssociation",
+        back_populates="connector",
+        cascade="all, delete-orphan",
+    )
 
 
 class Credential(Base):
@@ -95,17 +106,19 @@ class Credential(Base):
         postgresql.JSONB(), nullable=False
     )
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=True)
-    connector_ids: Mapped[List["Connector"]] = relationship(
-        "ConnectorCredentialAssociation",
-        back_populates="credential",
-        cascade="all, delete-orphan",
-    )
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
     time_updated: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+    connector_ids: Mapped[List["ConnectorCredentialAssociation"]] = relationship(
+        "ConnectorCredentialAssociation",
+        back_populates="credential",
+        cascade="all, delete-orphan",
+    )
+    user: Mapped[User] = relationship("User", back_populates="credentials")
 
 
 class IndexingStatus(str, PyEnum):
@@ -139,6 +152,8 @@ class IndexAttempt(Base):
     time_updated: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+    connector: Mapped[Connector] = relationship("Connector")
 
     def __repr__(self) -> str:
         return (
