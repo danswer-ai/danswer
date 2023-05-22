@@ -62,6 +62,26 @@ class IndexAttemptRequest(BaseModel):
     connector_specific_config: dict[str, Any]
 
 
+class ConnectorSnapshot(BaseModel):
+    id: int
+    name: str
+    source: DocumentSource
+    input_type: InputType
+    connector_specific_config: dict[str, Any]
+    refresh_freq: int
+    time_created: datetime
+    time_updated: datetime
+    disabled: bool
+
+
+class CredentialSnapshot(BaseModel):
+    id: int
+    credentials: dict[str, Any]
+    user_id: int
+    time_created: datetime
+    time_updated: datetime
+
+
 class IndexAttemptSnapshot(BaseModel):
     connector_specific_config: dict[str, Any]
     status: IndexingStatus

@@ -14,6 +14,11 @@ from danswer.connectors.models import InputType
 from danswer.connectors.slack.config import get_slack_config
 from danswer.connectors.slack.config import SlackConfig
 from danswer.connectors.slack.config import update_slack_config
+from danswer.db.connector import create_update_connector
+from danswer.db.connector import fetch_connector_by_id
+from danswer.db.connector import fetch_connectors
+from danswer.db.credentials import fetch_credential_by_id
+from danswer.db.credentials import fetch_credentials
 from danswer.db.index_attempt import fetch_index_attempts
 from danswer.db.index_attempt import insert_index_attempt
 from danswer.db.models import IndexAttempt
@@ -28,6 +33,8 @@ from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.server.models import ApiKey
 from danswer.server.models import AuthStatus
 from danswer.server.models import AuthUrl
+from danswer.server.models import ConnectorSnapshot
+from danswer.server.models import CredentialSnapshot
 from danswer.server.models import GDriveCallback
 from danswer.server.models import IndexAttemptRequest
 from danswer.server.models import IndexAttemptSnapshot
@@ -106,11 +113,97 @@ def index(
     )
 
 
-@router.get("/admin/connectors")
+@router.get("/admin/connector")
 def get_connectors(
     _: User = Depends(current_admin_user),
-) -> None:
-    pass
+) -> list[ConnectorSnapshot]:
+    connectors = fetch_connectors()
+    return [
+        ConnectorSnapshot(
+            id=connector.id,
+            name=connector.name,
+            source=connector.source,
+            input_type=connector.input_type,
+            connector_specific_config=connector.connector_specific_config,
+            refresh_freq=connector.refresh_freq,
+            time_created=connector.time_created,
+            time_updated=connector.time_updated,
+            disabled=connector.disabled,
+        )
+        for connector in connectors
+    ]
+
+
+@router.get("/admin/connector/{connector_id}")
+def get_connector_by_id(
+    connector_id: int,
+    _: User = Depends(current_admin_user),
+) -> ConnectorSnapshot:
+    connector = fetch_connector_by_id(connector_id=connector_id)
+    return ConnectorSnapshot(
+        id=connector.id,
+        name=connector.name,
+        source=connector.source,
+        input_type=connector.input_type,
+        connector_specific_config=connector.connector_specific_config,
+        refresh_freq=connector.refresh_freq,
+        time_created=connector.time_created,
+        time_updated=connector.time_updated,
+        disabled=connector.disabled,
+    )
+
+
+@router.put("/admin/connector/{connector_id}")
+def update_or_create_connector(
+    connector_id: int,
+    connector_data: ConnectorSnapshot,
+    _: User = Depends(current_admin_user),
+) -> ConnectorSnapshot:
+    updated_connector = create_update_connector(connector_id, connector_data)
+
+    return ConnectorSnapshot(
+        id=updated_connector.id,
+        name=updated_connector.name,
+        source=updated_connector.source,
+        input_type=updated_connector.input_type,
+        connector_specific_config=updated_connector.connector_specific_config,
+        refresh_freq=updated_connector.refresh_freq,
+        time_created=updated_connector.time_created,
+        time_updated=updated_connector.time_updated,
+        disabled=updated_connector.disabled,
+    )
+
+
+@router.get("/admin/credential/{credential_id}")
+def get_credential_by_id(
+    credential_id: int,
+    _: User = Depends(current_admin_user),
+) -> CredentialSnapshot:
+    credential = fetch_credential_by_id(credential_id=credential_id)
+    return CredentialSnapshot(
+        id=credential.id,
+        credentials=credential.credentials,
+        user_id=credential.user_id,
+        time_created=credential.time_created,
+        time_updated=credential.time_updated,
+    )
+
+
+@router.get("/admin/credential")
+def get_credentials(
+    _: User = Depends(current_admin_user),
+) -> list[CredentialSnapshot]:
+    credentials = fetch_credentials()
+    return [
+        CredentialSnapshot(
+            id=credential.id,
+            credentials=credential.credentials,
+            user_id=credential.user_id,
+            time_created=credential.time_created,
+            time_updated=credential.time_updated,
+        )
+        for credential in credentials
+    ]
 
 
 @router.get("/connectors/{source}/index-attempt")
