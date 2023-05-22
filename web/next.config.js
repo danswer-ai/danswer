@@ -6,16 +6,14 @@ const nextConfig = {
   output: "standalone",
   redirects: async () => {
     // In production, something else (nginx in the one box setup) should take
-    // care of this redirect. Leaving in for now due to issues with dev setup
-    // and accessing `process.env.NODE_ENV` + for cases where people don't want
-    // to setup nginx and are okay with the frontend proxying the request.
-    // TODO (chris): better support non-nginx setups
+    // care of this redirect. TODO (chris): better support setups where 
+    // web_server and api_server are on different machines.
+    if (process.env.NODE_ENV === "production") return [];
+
     return [
       {
         source: "/api/:path*",
-        destination: `${
-          process.env.INTERNAL_URL || "http://localhost:8080"
-        }/:path*`, // Proxy to Backend
+        destination: "http://localhost:8080/:path*", // Proxy to Backend
         permanent: true,
       },
     ];
