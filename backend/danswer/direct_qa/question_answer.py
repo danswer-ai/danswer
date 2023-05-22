@@ -215,10 +215,14 @@ def _handle_openai_exceptions_wrapper(openai_call: F, query: str) -> F:
     @wraps(openai_call)
     def wrapped_call(*args: list[Any], **kwargs: dict[str, Any]) -> Any:
         try:
-            if not kwargs.get("stream"):
-                return openai_call(*args, **kwargs)
             # if streamed, the call returns a generator
-            yield from openai_call(*args, **kwargs)
+            if kwargs.get("stream"):
+
+                def _generator():
+                    yield from openai_call(*args, **kwargs)
+
+                return _generator()
+            return openai_call(*args, **kwargs)
         except AuthenticationError:
             logger.exception("Failed to authenticate with OpenAI API")
             raise
@@ -372,7 +376,9 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
                     request_timeout=self.timeout,
                 ),
             )
-            model_output = response["choices"][0]["message"]["content"].strip()
+            model_output = cast(
+                str, response["choices"][0]["message"]["content"]
+            ).strip()
             assistant_msg = {"content": model_output, "role": "assistant"}
             messages.extend([assistant_msg, get_chat_reflexion_msg()])
             logger.info(
@@ -405,12 +411,11 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
                 stream=True,
             ),
         )
-        logger.info("Raw response: %s", response)
         model_output: str = ""
         found_answer_start = False
         found_answer_end = False
         for event in response:
-            event_dict = cast(str, event["choices"][0]["delta"])
+            event_dict = cast(dict[str, Any], event["choices"][0]["delta"])
             if (
                 "content" not in event_dict
             ):  # could be a role message or empty termination
