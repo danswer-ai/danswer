@@ -251,13 +251,17 @@ def _process_batch_event(
 
 class SlackConnector(LoadConnector, PollConnector):
     def __init__(
-        self, export_path_str: str, batch_size: int = INDEX_BATCH_SIZE
+        self, export_path_str: str | None = None, batch_size: int = INDEX_BATCH_SIZE
     ) -> None:
         self.export_path_str = export_path_str
         self.batch_size = batch_size
         self.client = get_client()
 
     def load_from_state(self) -> Generator[list[Document], None, None]:
+        if self.export_path_str is None:
+            raise ValueError(
+                "This Slack connector was not set up with a state-export file."
+            )
         export_path = Path(self.export_path_str)
 
         with open(export_path / "channels.json") as f:
