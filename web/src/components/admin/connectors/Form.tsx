@@ -18,7 +18,10 @@ export const submitIndexRequest = async (
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ connector_specific_config: values, input_type: inputType }),
+        body: JSON.stringify({
+          connector_specific_config: values,
+          input_type: inputType,
+        }),
       }
     );
 

@@ -6,7 +6,7 @@ const nextConfig = {
   output: "standalone",
   redirects: async () => {
     // In production, something else (nginx in the one box setup) should take
-    // care of this redirect. TODO (chris): better support setups where 
+    // care of this redirect. TODO (chris): better support setups where
     // web_server and api_server are on different machines.
     if (process.env.NODE_ENV === "production") return [];
 

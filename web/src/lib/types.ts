@@ -7,5 +7,10 @@ export interface User {
   role: "basic" | "admin";
 }
 
-export type ValidSources = "web" | "github" | "slack" | "google_drive";
+export type ValidSources =
+  | "web"
+  | "github"
+  | "slack"
+  | "google_drive"
+  | "confluence";
 export type ValidInputTypes = "load_state" | "poll" | "event";

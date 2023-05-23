@@ -7,6 +7,7 @@ import {
   GoogleDriveIcon,
   SlackIcon,
   KeyIcon,
+  ConfluenceIcon,
 } from "@/components/icons/icons";
 import { DISABLE_AUTH } from "@/lib/constants";
 import { getCurrentUserSS } from "@/lib/userSS";
@@ -41,7 +42,7 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <NotebookIcon size="16" />
+                      <NotebookIcon size="18" />
                       <div className="ml-1">Status</div>
                     </div>
                   ),
@@ -88,6 +89,15 @@ export default async function AdminLayout({
                   ),
                   link: "/admin/connectors/google-drive",
                 },
+                {
+                  name: (
+                    <div className="flex">
+                      <ConfluenceIcon size="16" />
+                      <div className="ml-1">Confluence</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/confluence",
+                },
               ],
             },
             {
@@ -96,7 +106,7 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <KeyIcon size="16" />
+                      <KeyIcon size="18" />
                       <div className="ml-1">OpenAI</div>
                     </div>
                   ),

@@ -1,16 +1,8 @@
 "use client";
 
-import { ValidSources } from "@/lib/types";
-import {
-  Globe,
-  SlackLogo,
-  GithubLogo,
-  GoogleDriveLogo,
-  Notebook,
-  Key,
-  Trash,
-  Info,
-} from "@phosphor-icons/react";
+import { Notebook, Key, Trash, Info } from "@phosphor-icons/react";
+import { SiConfluence, SiGithub, SiGoogledrive, SiSlack } from "react-icons/si";
+import { FaGlobe } from "react-icons/fa";
 
 interface IconProps {
   size?: string;
@@ -44,28 +36,35 @@ export const GlobeIcon = ({
   size = "16",
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <Globe size={size} className={className} />;
+  return <FaGlobe size={size} className={className} />;
 };
 
 export const SlackIcon = ({
   size = "16",
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <SlackLogo size={size} className={className} />;
+  return <SiSlack size={size} className={className} />;
 };
 
 export const GithubIcon = ({
   size = "16",
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <GithubLogo size={size} className={className} />;
+  return <SiGithub size={size} className={className} />;
 };
 
 export const GoogleDriveIcon = ({
   size = "16",
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <GoogleDriveLogo size={size} className={className} />;
+  return <SiGoogledrive size={size} className={className} />;
+};
+
+export const ConfluenceIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <SiConfluence size={size} className={className} />;
 };
 
 export const InfoIcon = ({
