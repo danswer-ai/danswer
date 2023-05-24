@@ -1,12 +1,25 @@
 from datetime import datetime
 from typing import Any
+from typing import Generic
 from typing import Literal
+from typing import Optional
+from typing import TypeVar
 
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
 from danswer.datastores.interfaces import DatastoreFilter
 from danswer.db.models import IndexingStatus
 from pydantic import BaseModel
+from pydantic.generics import GenericModel
+
+
+DataT = TypeVar("DataT")
+
+
+class StatusResponse(GenericModel, Generic[DataT]):
+    success: bool
+    message: Optional[str] = None
+    data: Optional[DataT] = None
 
 
 class HealthCheckResponse(BaseModel):
@@ -72,23 +85,24 @@ class ConnectorBase(BaseModel):
     input_type: InputType
     connector_specific_config: dict[str, Any]
     refresh_freq: int  # In seconds
+    disabled: bool
 
 
 class ConnectorSnapshot(ConnectorBase):
     id: int
+    credential_ids: list[int]
     time_created: datetime
     time_updated: datetime
-    disabled: bool
 
 
 class CredentialBase(BaseModel):
     credential_json: dict[str, Any]
-    user_id: int
     public_doc: bool
 
 
 class CredentialSnapshot(CredentialBase):
     id: int
+    user_id: int | None
     time_created: datetime
     time_updated: datetime
 

@@ -105,10 +105,8 @@ class Credential(Base):
     __tablename__ = "credential"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    credential_json: Mapped[
-        dict[str, Any]
-    ] = mapped_column(  # TODO FIND THE REST OF THESE (credentials)
-        postgresql.JSONB(), nullable=False
+    credential_json: Mapped[dict[str, Any]] = mapped_column(
+        postgresql.JSONB(), nullable=True
     )
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=True)
     public_doc: Mapped[bool] = mapped_column(Boolean, default=False)

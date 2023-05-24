@@ -12,11 +12,16 @@ from danswer.connectors.slack.config import get_slack_config
 from danswer.connectors.slack.config import SlackConfig
 from danswer.connectors.slack.config import update_slack_config
 from danswer.db.connector import add_credential_to_connector
+from danswer.db.connector import connector_not_found_response
 from danswer.db.connector import create_connector
+from danswer.db.connector import delete_connector
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.connector import fetch_connectors
+from danswer.db.connector import remove_credential_from_connector
 from danswer.db.connector import update_connector
 from danswer.db.credentials import create_credential
+from danswer.db.credentials import credential_not_found_response
+from danswer.db.credentials import delete_credential
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
 from danswer.db.credentials import update_credential
@@ -32,10 +37,12 @@ from danswer.server.models import AuthStatus
 from danswer.server.models import AuthUrl
 from danswer.server.models import ConnectorBase
 from danswer.server.models import ConnectorSnapshot
+from danswer.server.models import CredentialBase
 from danswer.server.models import CredentialSnapshot
 from danswer.server.models import GDriveCallback
 from danswer.server.models import IndexAttemptSnapshot
 from danswer.server.models import ObjectCreationIdResponse
+from danswer.server.models import StatusResponse
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
@@ -145,6 +152,9 @@ def get_connectors(
             input_type=connector.input_type,
             connector_specific_config=connector.connector_specific_config,
             refresh_freq=connector.refresh_freq,
+            credential_ids=[
+                association.credential.id for association in connector.credentials
+            ],
             time_created=connector.time_created,
             time_updated=connector.time_updated,
             disabled=connector.disabled,
@@ -153,13 +163,19 @@ def get_connectors(
     ]
 
 
-@router.get("/manage/connector/{connector_id}", response_model=ConnectorSnapshot)
+@router.get(
+    "/manage/connector/{connector_id}",
+    response_model=ConnectorSnapshot | StatusResponse[int],
+)
 def get_connector_by_id(
     connector_id: int,
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> ConnectorSnapshot:
+) -> ConnectorSnapshot | StatusResponse[int]:
     connector = fetch_connector_by_id(connector_id, db_session)
+    if connector is None:
+        return connector_not_found_response(connector_id)
+
     return ConnectorSnapshot(
         id=connector.id,
         name=connector.name,
@@ -167,6 +183,9 @@ def get_connector_by_id(
         input_type=connector.input_type,
         connector_specific_config=connector.connector_specific_config,
         refresh_freq=connector.refresh_freq,
+        credential_ids=[
+            association.credential.id for association in connector.credentials
+        ],
         time_created=connector.time_created,
         time_updated=connector.time_updated,
         disabled=connector.disabled,
@@ -182,14 +201,19 @@ def create_connector_from_model(
     return create_connector(connector_info, db_session)
 
 
-@router.patch("/manage/connector/{connector_id}", response_model=ConnectorSnapshot)
-def update_connector_from_snapshot(
+@router.patch(
+    "/manage/connector/{connector_id}",
+    response_model=ConnectorSnapshot | StatusResponse[int],
+)
+def update_connector_from_model(
     connector_id: int,
-    connector_data: ConnectorSnapshot,
+    connector_data: ConnectorBase,
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> ConnectorSnapshot:
+) -> ConnectorSnapshot | StatusResponse[int]:
     updated_connector = update_connector(connector_id, connector_data, db_session)
+    if updated_connector is None:
+        return connector_not_found_response(connector_id)
 
     return ConnectorSnapshot(
         id=updated_connector.id,
@@ -198,18 +222,30 @@ def update_connector_from_snapshot(
         input_type=updated_connector.input_type,
         connector_specific_config=updated_connector.connector_specific_config,
         refresh_freq=updated_connector.refresh_freq,
+        credential_ids=[
+            association.credential.id for association in updated_connector.credentials
+        ],
         time_created=updated_connector.time_created,
         time_updated=updated_connector.time_updated,
         disabled=updated_connector.disabled,
     )
 
 
-@router.get("/manage/credential", response_model=list[CredentialSnapshot])
-def get_credentials(
+@router.delete("/manage/connector/{connector_id}", response_model=StatusResponse[int])
+def delete_connector_by_id(
+    connector_id: int,
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
+) -> StatusResponse[int]:
+    return delete_connector(connector_id, db_session)
+
+
+@router.get("/manage/credential", response_model=list[CredentialSnapshot])
+def get_credentials(
+    user: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
 ) -> list[CredentialSnapshot]:
-    credentials = fetch_credentials(db_session)
+    credentials = fetch_credentials(user, db_session)
     return [
         CredentialSnapshot(
             id=credential.id,
@@ -223,13 +259,23 @@ def get_credentials(
     ]
 
 
-@router.get("/manage/credential/{credential_id}", response_model=CredentialSnapshot)
+@router.get(
+    "/manage/credential/{credential_id}",
+    response_model=CredentialSnapshot | StatusResponse[int],
+)
 def get_credential_by_id(
     credential_id: int,
-    _: User = Depends(current_admin_user),
+    user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> CredentialSnapshot:
-    credential = fetch_credential_by_id(credential_id, db_session)
+) -> CredentialSnapshot | StatusResponse[int]:
+    credential = fetch_credential_by_id(credential_id, user, db_session)
+    if credential is None:
+        return StatusResponse(
+            success=False,
+            message="Credential does not exit or does not belong to user",
+            data=credential_id,
+        )
+
     return CredentialSnapshot(
         id=credential.id,
         credential_json=credential.credential_json,
@@ -242,23 +288,28 @@ def get_credential_by_id(
 
 @router.post("/manage/credential", response_model=ObjectCreationIdResponse)
 def create_credential_from_model(
-    connector_info: ConnectorBase,
-    _: User = Depends(current_admin_user),
+    connector_info: CredentialBase,
+    user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
-    return create_credential(connector_info, db_session)
+    return create_credential(connector_info, user, db_session)
 
 
-@router.put("/manage/credential/{credential_id}", response_model=CredentialSnapshot)
-def update_or_create_credential(
+@router.patch(
+    "/manage/credential/{credential_id}",
+    response_model=CredentialSnapshot | StatusResponse[int],
+)
+def update_credential_from_model(
     credential_id: int,
-    credential_data: CredentialSnapshot,
-    _: User = Depends(current_admin_user),
+    credential_data: CredentialBase,
+    user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> CredentialSnapshot:
-    updated_credential = create_update_credential(
-        credential_id, credential_data, db_session
+) -> CredentialSnapshot | StatusResponse[int]:
+    updated_credential = update_credential(
+        credential_id, credential_data, user, db_session
     )
+    if updated_credential is None:
+        return credential_not_found_response(credential_id)
 
     return CredentialSnapshot(
         id=updated_credential.id,
@@ -270,13 +321,38 @@ def update_or_create_credential(
     )
 
 
+@router.delete("/manage/credential/{credential_id}", response_model=StatusResponse[int])
+def delete_credential_by_id(
+    credential_id: int,
+    user: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse:
+    delete_credential(credential_id, user, db_session)
+    return StatusResponse(
+        success=True, message="Credential deleted successfully", data=credential_id
+    )
+
+
 @router.put("/manage/connector/{connector_id}/credential/{credential_id}")
-def assign_credential_to_connector(
+def associate_credential_to_connector(
     connector_id: int,
     credential_id: int,
+    user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> None:
-    add_credential_to_connector(connector_id, credential_id, db_session)
+) -> StatusResponse[int]:
+    return add_credential_to_connector(connector_id, credential_id, user, db_session)
+
+
+@router.delete("/manage/connector/{connector_id}/credential/{credential_id}")
+def dissociate_credential_from_connector(
+    connector_id: int,
+    credential_id: int,
+    user: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse[int]:
+    return remove_credential_from_connector(
+        connector_id, credential_id, user, db_session
+    )
 
 
 @router.head("/admin/openai-api-key/validate")

@@ -1,19 +1,23 @@
-from datetime import datetime
-
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.models import Connector
 from danswer.db.models import ConnectorCredentialAssociation
+from danswer.db.models import User
 from danswer.server.models import ConnectorBase
-from danswer.server.models import ConnectorSnapshot
 from danswer.server.models import ObjectCreationIdResponse
+from danswer.server.models import StatusResponse
 from danswer.utils.logging import setup_logger
 from sqlalchemy import select
-from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
 logger = setup_logger()
+
+
+def connector_not_found_response(connector_id: int) -> StatusResponse[int]:
+    return StatusResponse(
+        success=False, message=f"Connector does not exist", data=connector_id
+    )
 
 
 def fetch_connectors(
@@ -40,10 +44,10 @@ def connector_by_name_exists(connector_name: str, db_session: Session) -> bool:
     return connector is not None
 
 
-def fetch_connector_by_id(connector_id: int, db_session: Session) -> Connector:
+def fetch_connector_by_id(connector_id: int, db_session: Session) -> Connector | None:
     stmt = select(Connector).where(Connector.id == connector_id)
     result = db_session.execute(stmt)
-    connector = result.scalar_one()
+    connector = result.scalar_one_or_none()
     return connector
 
 
@@ -71,15 +75,19 @@ def create_connector(
 
 def update_connector(
     connector_id: int,
-    connector_data: ConnectorSnapshot,
+    connector_data: ConnectorBase,
     db_session: Session,
-) -> Connector:
-    if connector_id != connector_data.id:
-        raise ValueError("Conflicting information in trying to update Connector")
-    try:
-        connector = fetch_connector_by_id(connector_id, db_session)
-    except NoResultFound:
-        raise ValueError(f"Connector by provided id {connector_id} does not exist")
+) -> Connector | None:
+    connector = fetch_connector_by_id(connector_id, db_session)
+    if connector is None:
+        return None
+
+    if connector_data.name != connector.name and connector_by_name_exists(
+        connector_data.name, db_session
+    ):
+        raise ValueError(
+            "Connector by this name already exists, duplicate naming not allowed."
+        )
 
     connector.name = connector_data.name
     connector.source = connector_data.source
@@ -87,22 +95,118 @@ def update_connector(
     connector.connector_specific_config = connector_data.connector_specific_config
     connector.refresh_freq = connector_data.refresh_freq
     connector.disabled = connector_data.disabled
-    connector.time_updated = datetime.now()
 
     db_session.commit()
     return connector
+
+
+def delete_connector(
+    connector_id: int,
+    db_session: Session,
+) -> StatusResponse[int]:
+    connector = fetch_connector_by_id(connector_id, db_session)
+    if connector is None:
+        return StatusResponse(
+            success=True, message="Connector was already deleted", data=connector_id
+        )
+
+    db_session.delete(connector)
+    db_session.commit()
+    return StatusResponse(
+        success=True, message="Connector deleted successfully", data=connector_id
+    )
 
 
 def add_credential_to_connector(
     connector_id: int,
     credential_id: int,
+    user: User,
     db_session: Session,
-) -> Connector:
+) -> StatusResponse[int]:
     connector = fetch_connector_by_id(connector_id, db_session)
-    fetch_credential_by_id(credential_id, db_session)  # Just verifies validity
+    credential = fetch_credential_by_id(credential_id, user, db_session)
+
+    if connector is None:
+        return StatusResponse(
+            success=False, message=f"Connector does not exist", data=connector_id
+        )
+
+    if credential is None:
+        return StatusResponse(
+            success=False,
+            message=f"Credential does not exist or does not belong to user",
+            data=credential_id,
+        )
+
+    existing_association = (
+        db_session.query(ConnectorCredentialAssociation)
+        .filter(
+            ConnectorCredentialAssociation.connector_id == connector_id,
+            ConnectorCredentialAssociation.credential_id == credential_id,
+        )
+        .one_or_none()
+    )
+    if existing_association is not None:
+        return StatusResponse(
+            success=False,
+            message=f"Connector already has Credential {credential_id}",
+            data=connector_id,
+        )
+
     association = ConnectorCredentialAssociation(
         connector_id=connector_id, credential_id=credential_id
     )
     db_session.add(association)
     db_session.commit()
-    return connector
+
+    return StatusResponse(
+        success=True,
+        message=f"New Credential {credential_id} added to Connector",
+        data=connector_id,
+    )
+
+
+def remove_credential_from_connector(
+    connector_id: int,
+    credential_id: int,
+    user: User,
+    db_session: Session,
+) -> StatusResponse[int]:
+    connector = fetch_connector_by_id(connector_id, db_session)
+    credential = fetch_credential_by_id(credential_id, user, db_session)
+
+    if connector is None:
+        return StatusResponse(
+            success=False, message=f"Connector does not exist", data=connector_id
+        )
+
+    if credential is None:
+        return StatusResponse(
+            success=False,
+            message=f"Credential does not exist or does not belong to user",
+            data=credential_id,
+        )
+
+    association = (
+        db_session.query(ConnectorCredentialAssociation)
+        .filter(
+            ConnectorCredentialAssociation.connector_id == connector_id,
+            ConnectorCredentialAssociation.credential_id == credential_id,
+        )
+        .one_or_none()
+    )
+
+    if association is not None:
+        db_session.delete(association)
+        db_session.commit()
+        return StatusResponse(
+            success=True,
+            message=f"Credential {credential_id} removed from Connector",
+            data=connector_id,
+        )
+
+    return StatusResponse(
+        success=True,
+        message=f"Connector already does not have credential {credential_id}",
+        data=connector_id,
+    )
