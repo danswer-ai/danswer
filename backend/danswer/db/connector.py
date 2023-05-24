@@ -207,6 +207,6 @@ def remove_credential_from_connector(
 
     return StatusResponse(
         success=True,
-        message=f"Connector already does not have credential {credential_id}",
+        message=f"Connector already does not have Credential {credential_id}",
         data=connector_id,
     )
