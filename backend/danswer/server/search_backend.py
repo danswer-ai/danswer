@@ -2,8 +2,8 @@ import time
 from collections.abc import Generator
 
 from danswer.auth.schemas import UserRole
-from danswer.auth.users import current_active_user
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_user
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import QA_TIMEOUT
@@ -36,7 +36,7 @@ router = APIRouter()
 
 
 @router.get("/get-user-role", response_model=UserRoleResponse)
-async def get_user_role(user: User = Depends(current_active_user)) -> UserRoleResponse:
+async def get_user_role(user: User = Depends(current_user)) -> UserRoleResponse:
     if user is None:
         raise ValueError("Invalid or missing user.")
     return UserRoleResponse(role=user.role)
@@ -61,7 +61,7 @@ async def promote_admin(
 
 @router.get("/direct-qa", response_model=QAResponse)
 def direct_qa(
-    question: QAQuestion = Depends(), _: User = Depends(current_active_user)
+    question: QAQuestion = Depends(), _: User = Depends(current_user)
 ) -> QAResponse:
     start_time = time.time()
 
@@ -102,7 +102,7 @@ def direct_qa(
 
 @router.get("/stream-direct-qa")
 def stream_direct_qa(
-    question: QAQuestion = Depends(), _: User = Depends(current_active_user)
+    question: QAQuestion = Depends(), _: User = Depends(current_user)
 ) -> StreamingResponse:
     top_documents_key = "top_documents"
 
@@ -151,7 +151,7 @@ def stream_direct_qa(
 
 @router.get("/keyword-search", response_model=KeywordResponse)
 def keyword_search(
-    question: QAQuestion = Depends(), _: User = Depends(current_active_user)
+    question: QAQuestion = Depends(), _: User = Depends(current_user)
 ) -> KeywordResponse:
     ts_client = TSClient.get_instance()
     query = question.query

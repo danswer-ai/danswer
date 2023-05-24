@@ -1,5 +1,6 @@
 from collections.abc import AsyncGenerator
 from collections.abc import Generator
+from contextlib import contextmanager
 
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
@@ -40,11 +41,13 @@ def build_async_engine() -> AsyncEngine:
     return create_async_engine(connection_string)
 
 
+@contextmanager
 def get_session() -> Generator[Session, None, None]:
     with Session(build_engine(), future=True, expire_on_commit=False) as session:
         yield session
 
 
+@contextmanager
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSession(
         build_async_engine(), future=True, expire_on_commit=False

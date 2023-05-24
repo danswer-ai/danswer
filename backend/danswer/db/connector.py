@@ -5,7 +5,9 @@ from danswer.connectors.models import InputType
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.models import Connector
 from danswer.db.models import ConnectorCredentialAssociation
+from danswer.server.models import ConnectorBase
 from danswer.server.models import ConnectorSnapshot
+from danswer.server.models import ObjectCreationIdResponse
 from danswer.utils.logging import setup_logger
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
@@ -31,6 +33,13 @@ def fetch_connectors(
     return list(results.all())
 
 
+def connector_by_name_exists(connector_name: str, db_session: Session) -> bool:
+    stmt = select(Connector).where(Connector.name == connector_name)
+    result = db_session.execute(stmt)
+    connector = result.scalar_one_or_none()
+    return connector is not None
+
+
 def fetch_connector_by_id(connector_id: int, db_session: Session) -> Connector:
     stmt = select(Connector).where(Connector.id == connector_id)
     result = db_session.execute(stmt)
@@ -38,7 +47,29 @@ def fetch_connector_by_id(connector_id: int, db_session: Session) -> Connector:
     return connector
 
 
-def create_update_connector(
+def create_connector(
+    connector_data: ConnectorBase,
+    db_session: Session,
+) -> ObjectCreationIdResponse:
+    if connector_by_name_exists(connector_data.name, db_session):
+        raise ValueError(
+            "Connector by this name already exists, duplicate naming not allowed."
+        )
+
+    connector = Connector(
+        name=connector_data.name,
+        source=connector_data.source,
+        input_type=connector_data.input_type,
+        connector_specific_config=connector_data.connector_specific_config,
+        refresh_freq=connector_data.refresh_freq,
+    )
+    db_session.add(connector)
+    db_session.commit()
+
+    return ObjectCreationIdResponse(id=connector.id)
+
+
+def update_connector(
     connector_id: int,
     connector_data: ConnectorSnapshot,
     db_session: Session,
@@ -48,8 +79,7 @@ def create_update_connector(
     try:
         connector = fetch_connector_by_id(connector_id, db_session)
     except NoResultFound:
-        connector = Connector(id=connector_id)
-        db_session.add(connector)
+        raise ValueError(f"Connector by provided id {connector_id} does not exist")
 
     connector.name = connector_data.name
     connector.source = connector_data.source

@@ -54,7 +54,7 @@ def process_slack_event(event: SlackEvent) -> EventHandlingResponse:
             )
             if doc is None:
                 logger.info("Message was determined to not be indexable")
-                return EventHandlingResponse(challenge=None)  # @CHRIS is this right?
+                return EventHandlingResponse(challenge=None)
 
             build_indexing_pipeline()([doc])
         except Exception:

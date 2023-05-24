@@ -12,12 +12,14 @@ from danswer.connectors.slack.config import get_slack_config
 from danswer.connectors.slack.config import SlackConfig
 from danswer.connectors.slack.config import update_slack_config
 from danswer.db.connector import add_credential_to_connector
-from danswer.db.connector import create_update_connector
+from danswer.db.connector import create_connector
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.connector import fetch_connectors
-from danswer.db.credentials import create_update_credential
+from danswer.db.connector import update_connector
+from danswer.db.credentials import create_credential
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
+from danswer.db.credentials import update_credential
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import fetch_index_attempts
 from danswer.db.models import User
@@ -28,10 +30,12 @@ from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.server.models import ApiKey
 from danswer.server.models import AuthStatus
 from danswer.server.models import AuthUrl
+from danswer.server.models import ConnectorBase
 from danswer.server.models import ConnectorSnapshot
 from danswer.server.models import CredentialSnapshot
 from danswer.server.models import GDriveCallback
 from danswer.server.models import IndexAttemptSnapshot
+from danswer.server.models import ObjectCreationIdResponse
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
@@ -127,7 +131,7 @@ def list_index_attempts(
     ]
 
 
-@router.get("/admin/connector", response_model=list[ConnectorSnapshot])
+@router.get("/manage/connector", response_model=list[ConnectorSnapshot])
 def get_connectors(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
@@ -149,7 +153,7 @@ def get_connectors(
     ]
 
 
-@router.get("/admin/connector/{connector_id}", response_model=ConnectorSnapshot)
+@router.get("/manage/connector/{connector_id}", response_model=ConnectorSnapshot)
 def get_connector_by_id(
     connector_id: int,
     _: User = Depends(current_admin_user),
@@ -169,16 +173,23 @@ def get_connector_by_id(
     )
 
 
-@router.put("/admin/connector/{connector_id}", response_model=ConnectorSnapshot)
-def update_or_create_connector(
+@router.post("/manage/connector", response_model=ObjectCreationIdResponse)
+def create_connector_from_model(
+    connector_info: ConnectorBase,
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> ObjectCreationIdResponse:
+    return create_connector(connector_info, db_session)
+
+
+@router.patch("/manage/connector/{connector_id}", response_model=ConnectorSnapshot)
+def update_connector_from_snapshot(
     connector_id: int,
     connector_data: ConnectorSnapshot,
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ConnectorSnapshot:
-    updated_connector = create_update_connector(
-        connector_id, connector_data, db_session
-    )
+    updated_connector = update_connector(connector_id, connector_data, db_session)
 
     return ConnectorSnapshot(
         id=updated_connector.id,
@@ -193,7 +204,7 @@ def update_or_create_connector(
     )
 
 
-@router.get("/admin/credential", response_model=list[CredentialSnapshot])
+@router.get("/manage/credential", response_model=list[CredentialSnapshot])
 def get_credentials(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
@@ -202,8 +213,9 @@ def get_credentials(
     return [
         CredentialSnapshot(
             id=credential.id,
-            credentials=credential.credentials,
+            credential_json=credential.credential_json,
             user_id=credential.user_id,
+            public_doc=credential.public_doc,
             time_created=credential.time_created,
             time_updated=credential.time_updated,
         )
@@ -211,7 +223,7 @@ def get_credentials(
     ]
 
 
-@router.get("/admin/credential/{credential_id}", response_model=CredentialSnapshot)
+@router.get("/manage/credential/{credential_id}", response_model=CredentialSnapshot)
 def get_credential_by_id(
     credential_id: int,
     _: User = Depends(current_admin_user),
@@ -220,14 +232,24 @@ def get_credential_by_id(
     credential = fetch_credential_by_id(credential_id, db_session)
     return CredentialSnapshot(
         id=credential.id,
-        credentials=credential.credentials,
+        credential_json=credential.credential_json,
         user_id=credential.user_id,
+        public_doc=credential.public_doc,
         time_created=credential.time_created,
         time_updated=credential.time_updated,
     )
 
 
-@router.put("/admin/credential/{credential_id}", response_model=CredentialSnapshot)
+@router.post("/manage/credential", response_model=ObjectCreationIdResponse)
+def create_credential_from_model(
+    connector_info: ConnectorBase,
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> ObjectCreationIdResponse:
+    return create_credential(connector_info, db_session)
+
+
+@router.put("/manage/credential/{credential_id}", response_model=CredentialSnapshot)
 def update_or_create_credential(
     credential_id: int,
     credential_data: CredentialSnapshot,
@@ -240,14 +262,15 @@ def update_or_create_credential(
 
     return CredentialSnapshot(
         id=updated_credential.id,
-        credentials=updated_credential.credentials,
+        credential_json=updated_credential.credential_json,
         user_id=updated_credential.user_id,
+        public_doc=updated_credential.public_doc,
         time_created=updated_credential.time_created,
         time_updated=updated_credential.time_updated,
     )
 
 
-@router.put("/connector/{connector_id}/credential/{credential_id}")
+@router.put("/manage/connector/{connector_id}/credential/{credential_id}")
 def assign_credential_to_connector(
     connector_id: int,
     credential_id: int,

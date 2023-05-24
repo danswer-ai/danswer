@@ -1,7 +1,9 @@
 from datetime import datetime
 
 from danswer.db.models import Credential
+from danswer.server.models import CredentialBase
 from danswer.server.models import CredentialSnapshot
+from danswer.server.models import ObjectCreationIdResponse
 from danswer.utils.logging import setup_logger
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
@@ -28,7 +30,14 @@ def fetch_credential_by_id(credential_id: int, db_session: Session) -> Credentia
     return credential
 
 
-def create_update_credential(
+def create_credential(
+    credential_data: CredentialBase,
+    db_session: Session,
+) -> ObjectCreationIdResponse:
+    pass
+
+
+def update_credential(
     credential_id: int,
     credential_data: CredentialSnapshot,
     db_session: Session,
@@ -41,8 +50,9 @@ def create_update_credential(
         credential = Credential(id=credential_id)
         db_session.add(credential)
 
-    credential.credentials = credential_data.credentials
+    credential.credential_json = credential_data.credential_json
     credential.user_id = credential_data.user_id
+    credential.public_doc = credential_data.public_doc
     credential.time_updated = datetime.now()
 
     db_session.commit()

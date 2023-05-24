@@ -91,10 +91,13 @@ class Connector(Base):
     )
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    credential_ids: Mapped[List["ConnectorCredentialAssociation"]] = relationship(
+    credentials: Mapped[List["ConnectorCredentialAssociation"]] = relationship(
         "ConnectorCredentialAssociation",
         back_populates="connector",
         cascade="all, delete-orphan",
+    )
+    index_attempts: Mapped[List["IndexAttempt"]] = relationship(
+        "IndexAttempt", back_populates="connector"
     )
 
 
@@ -102,10 +105,13 @@ class Credential(Base):
     __tablename__ = "credential"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    credentials: Mapped[dict[str, Any]] = mapped_column(
+    credential_json: Mapped[
+        dict[str, Any]
+    ] = mapped_column(  # TODO FIND THE REST OF THESE (credentials)
         postgresql.JSONB(), nullable=False
     )
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=True)
+    public_doc: Mapped[bool] = mapped_column(Boolean, default=False)
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -113,7 +119,7 @@ class Credential(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    connector_ids: Mapped[List["ConnectorCredentialAssociation"]] = relationship(
+    connectors: Mapped[List["ConnectorCredentialAssociation"]] = relationship(
         "ConnectorCredentialAssociation",
         back_populates="credential",
         cascade="all, delete-orphan",
@@ -153,7 +159,9 @@ class IndexAttempt(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    connector: Mapped[Connector] = relationship("Connector")
+    connector: Mapped[Connector] = relationship(
+        "Connector", back_populates="index_attempts"
+    )
 
     def __repr__(self) -> str:
         return (

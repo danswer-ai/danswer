@@ -13,6 +13,10 @@ class HealthCheckResponse(BaseModel):
     status: Literal["ok"]
 
 
+class ObjectCreationIdResponse(BaseModel):
+    id: int | str
+
+
 class AuthStatus(BaseModel):
     authenticated: bool
 
@@ -62,22 +66,29 @@ class IndexAttemptRequest(BaseModel):
     connector_specific_config: dict[str, Any]
 
 
-class ConnectorSnapshot(BaseModel):
-    id: int
+class ConnectorBase(BaseModel):
     name: str
     source: DocumentSource
     input_type: InputType
     connector_specific_config: dict[str, Any]
-    refresh_freq: int
+    refresh_freq: int  # In seconds
+
+
+class ConnectorSnapshot(ConnectorBase):
+    id: int
     time_created: datetime
     time_updated: datetime
     disabled: bool
 
 
-class CredentialSnapshot(BaseModel):
-    id: int
-    credentials: dict[str, Any]
+class CredentialBase(BaseModel):
+    credential_json: dict[str, Any]
     user_id: int
+    public_doc: bool
+
+
+class CredentialSnapshot(CredentialBase):
+    id: int
     time_created: datetime
     time_updated: datetime
 
