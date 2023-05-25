@@ -54,20 +54,20 @@ router = APIRouter(prefix="/admin")
 logger = setup_logger()
 
 
-@router.get("/connectors/google-drive/check-auth", response_model=AuthStatus)
+@router.get("/connector/google-drive/check-auth", response_model=AuthStatus)
 def check_drive_tokens(_: User = Depends(current_admin_user)) -> AuthStatus:
     tokens = get_drive_tokens()
     authenticated = tokens is not None
     return AuthStatus(authenticated=authenticated)
 
 
-@router.get("/connectors/google-drive/authorize", response_model=AuthUrl)
+@router.get("/connector/google-drive/authorize", response_model=AuthUrl)
 def google_drive_auth(user: User = Depends(current_admin_user)) -> AuthUrl:
     user_id = str(user.id) if user else NO_AUTH_USER
     return AuthUrl(auth_url=get_auth_url(user_id))
 
 
-@router.get("/connectors/google-drive/callback", status_code=201)
+@router.get("/connector/google-drive/callback", status_code=201)
 def google_drive_callback(
     callback: GDriveCallback = Depends(), user: User = Depends(current_admin_user)
 ) -> None:
@@ -76,7 +76,7 @@ def google_drive_callback(
     return save_access_tokens(callback.code)
 
 
-@router.get("/connectors/slack/config", response_model=SlackConfig)
+@router.get("/connector/slack/config", response_model=SlackConfig)
 def fetch_slack_config(_: User = Depends(current_admin_user)) -> SlackConfig:
     try:
         return get_slack_config()
@@ -84,14 +84,14 @@ def fetch_slack_config(_: User = Depends(current_admin_user)) -> SlackConfig:
         return SlackConfig(slack_bot_token="", workspace_id="")
 
 
-@router.post("/connectors/slack/config")
+@router.post("/connector/slack/config")
 def modify_slack_config(
     slack_config: SlackConfig, _: User = Depends(current_admin_user)
 ) -> None:
     update_slack_config(slack_config)
 
 
-@router.get("/connectors/index-attempt", response_model=list[IndexAttemptSnapshot])
+@router.get("/index-attempt", response_model=list[IndexAttemptSnapshot])
 def list_all_index_attempts(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
@@ -113,9 +113,7 @@ def list_all_index_attempts(
     ]
 
 
-@router.get(
-    "/connectors/{source}/index-attempt", response_model=list[IndexAttemptSnapshot]
-)
+@router.get("/index-attempt/{source}", response_model=list[IndexAttemptSnapshot])
 def list_index_attempts(
     source: DocumentSource,
     _: User = Depends(current_admin_user),
@@ -138,7 +136,7 @@ def list_index_attempts(
     ]
 
 
-@router.get("/manage/connector", response_model=list[ConnectorSnapshot])
+@router.get("/connector", response_model=list[ConnectorSnapshot])
 def get_connectors(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
@@ -164,7 +162,7 @@ def get_connectors(
 
 
 @router.get(
-    "/manage/connector/{connector_id}",
+    "/connector/{connector_id}",
     response_model=ConnectorSnapshot | StatusResponse[int],
 )
 def get_connector_by_id(
@@ -192,7 +190,7 @@ def get_connector_by_id(
     )
 
 
-@router.post("/manage/connector", response_model=ObjectCreationIdResponse)
+@router.post("/connector", response_model=ObjectCreationIdResponse)
 def create_connector_from_model(
     connector_info: ConnectorBase,
     _: User = Depends(current_admin_user),
@@ -202,7 +200,7 @@ def create_connector_from_model(
 
 
 @router.patch(
-    "/manage/connector/{connector_id}",
+    "/connector/{connector_id}",
     response_model=ConnectorSnapshot | StatusResponse[int],
 )
 def update_connector_from_model(
@@ -231,7 +229,7 @@ def update_connector_from_model(
     )
 
 
-@router.delete("/manage/connector/{connector_id}", response_model=StatusResponse[int])
+@router.delete("/connector/{connector_id}", response_model=StatusResponse[int])
 def delete_connector_by_id(
     connector_id: int,
     _: User = Depends(current_admin_user),
@@ -240,7 +238,7 @@ def delete_connector_by_id(
     return delete_connector(connector_id, db_session)
 
 
-@router.get("/manage/credential", response_model=list[CredentialSnapshot])
+@router.get("/credential", response_model=list[CredentialSnapshot])
 def get_credentials(
     user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
@@ -260,7 +258,7 @@ def get_credentials(
 
 
 @router.get(
-    "/manage/credential/{credential_id}",
+    "/credential/{credential_id}",
     response_model=CredentialSnapshot | StatusResponse[int],
 )
 def get_credential_by_id(
@@ -286,7 +284,7 @@ def get_credential_by_id(
     )
 
 
-@router.post("/manage/credential", response_model=ObjectCreationIdResponse)
+@router.post("/credential", response_model=ObjectCreationIdResponse)
 def create_credential_from_model(
     connector_info: CredentialBase,
     user: User = Depends(current_admin_user),
@@ -296,7 +294,7 @@ def create_credential_from_model(
 
 
 @router.patch(
-    "/manage/credential/{credential_id}",
+    "/credential/{credential_id}",
     response_model=CredentialSnapshot | StatusResponse[int],
 )
 def update_credential_from_model(
@@ -321,7 +319,7 @@ def update_credential_from_model(
     )
 
 
-@router.delete("/manage/credential/{credential_id}", response_model=StatusResponse[int])
+@router.delete("/credential/{credential_id}", response_model=StatusResponse[int])
 def delete_credential_by_id(
     credential_id: int,
     user: User = Depends(current_admin_user),
@@ -333,7 +331,7 @@ def delete_credential_by_id(
     )
 
 
-@router.put("/manage/connector/{connector_id}/credential/{credential_id}")
+@router.put("/connector/{connector_id}/credential/{credential_id}")
 def associate_credential_to_connector(
     connector_id: int,
     credential_id: int,
@@ -343,7 +341,7 @@ def associate_credential_to_connector(
     return add_credential_to_connector(connector_id, credential_id, user, db_session)
 
 
-@router.delete("/manage/connector/{connector_id}/credential/{credential_id}")
+@router.delete("/connector/{connector_id}/credential/{credential_id}")
 def dissociate_credential_from_connector(
     connector_id: int,
     credential_id: int,
@@ -355,7 +353,7 @@ def dissociate_credential_from_connector(
     )
 
 
-@router.head("/admin/openai-api-key/validate")
+@router.head("/openai-api-key/validate")
 def validate_existing_openai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
@@ -371,7 +369,7 @@ def validate_existing_openai_api_key(
         raise HTTPException(status_code=400, detail="Invalid API key provided")
 
 
-@router.get("/admin/openai-api-key", response_model=ApiKey)
+@router.get("/openai-api-key", response_model=ApiKey)
 def get_openai_api_key_from_dynamic_config_store(
     _: User = Depends(current_admin_user),
 ) -> ApiKey:
@@ -389,7 +387,7 @@ def get_openai_api_key_from_dynamic_config_store(
         raise HTTPException(status_code=404, detail="Key not found")
 
 
-@router.post("/admin/openai-api-key")
+@router.post("/openai-api-key")
 def store_openai_api_key(
     request: ApiKey,
     _: User = Depends(current_admin_user),
@@ -403,7 +401,7 @@ def store_openai_api_key(
         raise HTTPException(400, str(e))
 
 
-@router.delete("/admin/openai-api-key")
+@router.delete("/openai-api-key")
 def delete_openai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
