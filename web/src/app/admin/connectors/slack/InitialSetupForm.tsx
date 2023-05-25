@@ -21,7 +21,7 @@ const handleSubmit = async (
   let isSuccess = false;
   setSubmitting(true);
   try {
-    const response = await fetch("/api/admin/connectors/slack/config", {
+    const response = await fetch("/api/admin/connector/slack/config", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

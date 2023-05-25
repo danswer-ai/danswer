@@ -12,7 +12,7 @@ import {
   IndexAttempt,
   ListIndexingResponse,
 } from "../../../../components/admin/connectors/types";
-import { IndexForm } from "@/components/admin/connectors/Form";
+import { IndexForm } from "@/components/admin/connectors/IndexForm";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { useRouter } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
@@ -28,7 +28,7 @@ export default function Web() {
   const router = useRouter();
 
   const { data, isLoading, error } = useSWR<ListIndexingResponse>(
-    "/api/admin/connectors/web/index-attempt",
+    "/api/admin/connector/web/index-attempt",
     fetcher
   );
 

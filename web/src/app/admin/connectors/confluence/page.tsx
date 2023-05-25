@@ -1,7 +1,7 @@
 "use client";
 
 import * as Yup from "yup";
-import { IndexForm } from "@/components/admin/connectors/Form";
+import { IndexForm } from "@/components/admin/connectors/IndexForm";
 import { ConfluenceIcon } from "@/components/icons/icons";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
