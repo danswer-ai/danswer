@@ -9,8 +9,9 @@ SecondsSinceUnixEpoch = float
 
 
 class BaseConnector(abc.ABC):
-    # Reserved for future shared uses
-    pass
+    @abc.abstractmethod
+    def load_credentials(self, credentials: dict[str, Any]) -> None:
+        raise NotImplementedError
 
 
 # Large set update or reindex, generally pulling a complete state or from a savestate file

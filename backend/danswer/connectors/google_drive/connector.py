@@ -1,5 +1,6 @@
 import io
 from collections.abc import Generator
+from typing import Any
 
 from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -93,6 +94,10 @@ class GoogleDriveConnector(LoadConnector):
 
         if not self.creds:
             raise PermissionError("Unable to access Google Drive.")
+
+    def load_credentials(self, credentials: dict[str, Any]) -> None:
+        # TODO replace file with direct credentials, store for each user
+        pass
 
     def load_from_state(self) -> Generator[list[Document], None, None]:
         service = discovery.build("drive", "v3", credentials=self.creds)

@@ -60,6 +60,10 @@ class WebConnector(LoadConnector):
         self.base_url = base_url
         self.batch_size = batch_size
 
+    def load_credentials(self, credentials: dict[str, Any]) -> None:
+        # Web Connector does not use credentials
+        pass
+
     def load_from_state(self) -> Generator[list[Document], None, None]:
         """Traverses through all pages found on the website
         and converts them into documents"""

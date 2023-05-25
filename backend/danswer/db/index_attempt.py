@@ -10,12 +10,6 @@ from sqlalchemy.orm import Session
 logger = setup_logger()
 
 
-def insert_index_attempt(db_session: Session, index_attempt: IndexAttempt) -> None:
-    logger.info(f"Inserting {index_attempt}")
-    db_session.add(index_attempt)
-    db_session.commit()
-
-
 def fetch_index_attempts(
     db_session: Session,
     sources: list[DocumentSource] | None = None,
@@ -33,31 +27,29 @@ def fetch_index_attempts(
     return list(results.all())
 
 
-def update_index_attempt(
-    db_session: Session,
-    index_attempt_id: int,
-    new_status: IndexingStatus,
-    document_ids: list[str] | None = None,
-    error_msg: str | None = None,
-) -> bool:
-    """Returns `True` if successfully updated, `False` if cannot find matching ID"""
-    stmt = select(IndexAttempt).where(IndexAttempt.id == index_attempt_id)
-    result = db_session.scalar(stmt)
-    if result:
-        result.status = new_status
-        result.document_ids = document_ids
-        result.error_msg = error_msg
-        db_session.commit()
-        return True
-    return False
-
-
-def get_incomplete_index_attempts_from_connector(
+def create_index_attempt(
     connector_id: int,
+    credential_id: int,
+    db_session: Session,
+) -> int:
+    new_attempt = IndexAttempt(
+        connector_id=connector_id,
+        credential_id=credential_id,
+        status=IndexingStatus.NOT_STARTED,
+    )
+    db_session.add(new_attempt)
+    db_session.commit()
+
+    return new_attempt.id
+
+
+def get_incomplete_index_attempts(
+    connector_id: int | None,
     db_session: Session,
 ) -> list[IndexAttempt]:
     stmt = select(IndexAttempt)
-    stmt = stmt.where(IndexAttempt.connector_id == connector_id)
+    if connector_id is not None:
+        stmt = stmt.where(IndexAttempt.connector_id == connector_id)
     stmt = stmt.where(
         IndexAttempt.status.notin_([IndexingStatus.SUCCESS, IndexingStatus.FAILED])
     )
@@ -66,14 +58,40 @@ def get_incomplete_index_attempts_from_connector(
     return list(incomplete_attempts.all())
 
 
-def mark_attempt_failed(
-    index_attempts: list[IndexAttempt],
+def get_not_started_index_attempts(db_session: Session) -> list[IndexAttempt]:
+    stmt = select(IndexAttempt)
+    stmt = stmt.where(IndexAttempt.status == IndexingStatus.NOT_STARTED)
+    new_attempts = db_session.scalars(stmt)
+    return list(new_attempts.all())
+
+
+def mark_attempt_in_progress(
+    index_attempt: IndexAttempt,
     db_session: Session,
 ) -> None:
-    for attempt in index_attempts:
-        attempt.status = IndexingStatus.FAILED
-        db_session.add(attempt)
-        db_session.commit()
+    index_attempt.status = IndexingStatus.IN_PROGRESS
+    db_session.add(index_attempt)
+    db_session.commit()
+
+
+def mark_attempt_succeeded(
+    index_attempt: IndexAttempt,
+    docs_indexed: list[str],
+    db_session: Session,
+) -> None:
+    index_attempt.status = IndexingStatus.SUCCESS
+    index_attempt.document_ids = docs_indexed
+    db_session.add(index_attempt)
+    db_session.commit()
+
+
+def mark_attempt_failed(
+    index_attempt: IndexAttempt, db_session: Session, failure_reason: str = "Unknown"
+) -> None:
+    index_attempt.status = IndexingStatus.FAILED
+    index_attempt.error_msg = failure_reason
+    db_session.add(index_attempt)
+    db_session.commit()
 
 
 def get_last_finished_attempt(

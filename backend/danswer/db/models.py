@@ -2,7 +2,6 @@ import datetime
 from enum import Enum as PyEnum
 from typing import Any
 from typing import List
-from typing import Optional
 
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DocumentSource
@@ -164,7 +163,7 @@ class IndexAttempt(Base):
     connector: Mapped[Connector] = relationship(
         "Connector", back_populates="index_attempts"
     )
-    credential: Mapped[Connector] = relationship(
+    credential: Mapped[Credential] = relationship(
         "Credential", back_populates="index_attempts"
     )
 

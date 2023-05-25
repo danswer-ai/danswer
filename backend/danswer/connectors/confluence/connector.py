@@ -56,6 +56,10 @@ class ConfluenceConnector(LoadConnector):
             cloud=True,
         )
 
+    def load_credentials(self, credentials: dict[str, Any]) -> None:
+        # TODO move global CONFLUENCE_USERNAME and CONFLUENCE_ACCESS_TOKEN and client init here
+        pass
+
     def _comment_dfs(
         self, comments_str: str, comment_pages: Generator[dict[str, Any], None, None]
     ) -> str:

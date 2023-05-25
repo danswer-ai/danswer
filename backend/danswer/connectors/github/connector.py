@@ -1,5 +1,6 @@
 import itertools
 from collections.abc import Generator
+from typing import Any
 
 from danswer.configs.app_configs import GITHUB_ACCESS_TOKEN
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -41,6 +42,10 @@ class GithubConnector(LoadConnector):
         self.repo_name = repo_name
         self.batch_size = batch_size
         self.state_filter = state_filter
+
+    def load_credentials(self, credentials: dict[str, Any]) -> None:
+        # TODO replace github_client = Github(GITHUB_ACCESS_TOKEN) with user specific tokens
+        pass
 
     def load_from_state(self) -> Generator[list[Document], None, None]:
         repo = github_client.get_repo(f"{self.repo_owner}/{self.repo_name}")

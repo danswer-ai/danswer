@@ -1,4 +1,4 @@
-"""Admin Users
+"""Permission Framework
 
 Revision ID: 27c6ecc08586
 Revises: 2666d766cb9b
