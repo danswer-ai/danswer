@@ -4,6 +4,7 @@ from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import InputType
+from danswer.db.connector import disable_connector
 from danswer.db.connector import fetch_connectors
 from danswer.db.engine import build_engine
 from danswer.db.engine import get_db_current_time
@@ -27,6 +28,8 @@ logger = setup_logger()
 def should_create_new_indexing(
     connector: Connector, last_index: IndexAttempt | None, db_session: Session
 ) -> bool:
+    if connector.refresh_freq is None:
+        return True
     if not last_index:
         return True
     current_db_time = get_db_current_time(db_session)
@@ -37,11 +40,19 @@ def should_create_new_indexing(
 
 
 def create_indexing_jobs(db_session: Session) -> None:
-    connectors = fetch_connectors(db_session, disabled_status=False)
+    connectors = fetch_connectors(db_session)
     for connector in connectors:
         in_progress_indexing_attempts = get_incomplete_index_attempts(
             connector.id, db_session
         )
+
+        # For a run-once connector, allow retries if failed
+        # TODO implement a max retry for this and other cases where all credentials fail
+        if connector.disabled and not (
+            in_progress_indexing_attempts and connector.refresh_freq is None
+        ):
+            continue
+
         # Currently single threaded so any still in-progress must have errored
         for attempt in in_progress_indexing_attempts:
             mark_attempt_failed(attempt, db_session)
@@ -58,11 +69,15 @@ def create_indexing_jobs(db_session: Session) -> None:
             credential = association.credential
             create_index_attempt(connector.id, credential.id, db_session)
 
+        if connector.refresh_freq is None:
+            disable_connector(connector.id, db_session)
+
 
 def run_indexing_jobs(last_run_time: float, db_session: Session) -> None:
     indexing_pipeline = build_indexing_pipeline()
 
     new_indexing_attempts = get_not_started_index_attempts(db_session)
+    logger.info(f"Found {len(new_indexing_attempts)} new indexing tasks.")
     for attempt in new_indexing_attempts:
         mark_attempt_in_progress(attempt, db_session)
 
@@ -77,7 +92,12 @@ def run_indexing_jobs(last_run_time: float, db_session: Session) -> None:
                 db_connector.connector_specific_config,
                 db_credential.credential_json,
             )
+        except Exception as e:
+            logger.exception(f"Unable to instantiate connector due to {e}")
+            disable_connector(db_connector.id, db_session)
+            continue
 
+        try:
             if task == InputType.LOAD_STATE:
                 assert isinstance(runnable_connector, LoadConnector)
                 doc_batch_generator = runnable_connector.load_from_state()
@@ -105,15 +125,17 @@ def run_indexing_jobs(last_run_time: float, db_session: Session) -> None:
             mark_attempt_failed(attempt, db_session, failure_reason=str(e))
 
 
-def update_loop(delay: int = 60) -> None:
+def update_loop(delay: int = 10) -> None:
     last_run_time = 0.0
     while True:
         start = time.time()
+        logger.info(f"Running update, current time: {time.ctime(start)}")
         try:
             with Session(
                 build_engine(), future=True, expire_on_commit=False
             ) as db_session:
                 create_indexing_jobs(db_session)
+                # TODO failed poll jobs won't recover data from failed runs, should fix
                 run_indexing_jobs(last_run_time, db_session)
         except Exception as e:
             logger.exception(f"Failed to run update due to {e}")

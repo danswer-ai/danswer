@@ -27,11 +27,11 @@ def fetch_connectors(
     disabled_status: bool | None = None,
 ) -> list[Connector]:
     stmt = select(Connector)
-    if sources:
+    if sources is not None:
         stmt = stmt.where(Connector.source.in_(sources))
-    if input_types:
+    if input_types is not None:
         stmt = stmt.where(Connector.input_type.in_(input_types))
-    if disabled_status:
+    if disabled_status is not None:
         stmt = stmt.where(Connector.disabled.is_(disabled_status))
     results = db_session.scalars(stmt)
     return list(results.all())
@@ -98,6 +98,22 @@ def update_connector(
 
     db_session.commit()
     return connector
+
+
+def disable_connector(
+    connector_id: int,
+    db_session: Session,
+) -> StatusResponse[int]:
+    connector = fetch_connector_by_id(connector_id, db_session)
+    if connector is None:
+        return StatusResponse(
+            success=True, message="Connector does not exist", data=connector_id
+        )
+    connector.disabled = True
+    db_session.commit()
+    return StatusResponse(
+        success=True, message="Connector deleted successfully", data=connector_id
+    )
 
 
 def delete_connector(

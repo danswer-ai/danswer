@@ -51,7 +51,7 @@ def upgrade() -> None:
             postgresql.JSONB(astext_type=sa.Text()),
             nullable=False,
         ),
-        sa.Column("refresh_freq", sa.Integer(), nullable=False),
+        sa.Column("refresh_freq", sa.Integer(), nullable=True),
         sa.Column(
             "time_created",
             sa.DateTime(timezone=True),

@@ -1,6 +1,5 @@
 from collections.abc import AsyncGenerator
 from collections.abc import Generator
-from contextlib import contextmanager
 from datetime import datetime
 
 from danswer.configs.app_configs import POSTGRES_DB
@@ -23,7 +22,9 @@ ASYNC_DB_API = "asyncpg"
 
 def get_db_current_time(db_session: Session) -> datetime:
     result = db_session.execute(text("SELECT NOW()")).scalar()
-    return datetime(result)
+    if result is None:
+        raise ValueError("Database did not return a time")
+    return result
 
 
 def build_connection_string(

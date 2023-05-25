@@ -84,7 +84,7 @@ class ConnectorBase(BaseModel):
     source: DocumentSource
     input_type: InputType
     connector_specific_config: dict[str, Any]
-    refresh_freq: int  # In seconds
+    refresh_freq: int | None  # In seconds, None for one time index with no refresh
     disabled: bool
 
 
