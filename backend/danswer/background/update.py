@@ -7,22 +7,29 @@ from danswer.connectors.models import InputType
 from danswer.connectors.slack.config import get_pull_frequency
 from danswer.connectors.slack.connector import SlackConnector
 from danswer.db.connector import fetch_connectors
+from danswer.db.engine import build_engine
+from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import fetch_index_attempts
+from danswer.db.index_attempt import get_incomplete_index_attempts_from_connector
+from danswer.db.index_attempt import get_last_finished_attempt
 from danswer.db.index_attempt import insert_index_attempt
+from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.index_attempt import update_index_attempt
+from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.utils.indexing_pipeline import build_indexing_pipeline
 from danswer.utils.logging import setup_logger
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
 LAST_POLL_KEY_TEMPLATE = "last_poll_{}"
 
-
+"""
 def _check_should_run(current_time: int, last_pull: int, pull_frequency: int) -> bool:
     return current_time - last_pull > pull_frequency * 60
 
@@ -119,15 +126,40 @@ def run_update() -> None:
         )
 
     logger.info("Finished update")
+"""
+
+
+def should_create_new_indexing(
+    connector: Connector, last_index: IndexAttempt | None, db_session: Session
+) -> bool:
+    if not last_index:
+        return True
+    current_db_time = get_db_current_time(db_session)
+    time_since_index = current_db_time - last_index.time_updated
+    return time_since_index.total_seconds() >= connector.refresh_freq
 
 
 def create_indexing_jobs(db_session: Session) -> None:
     connectors = fetch_connectors(db_session, disabled_status=False)
     for connector in connectors:
+        in_progress_indexing_attempts = get_incomplete_index_attempts_from_connector(
+            connector.id, db_session
+        )
+        # Currently single threaded so any still in-progress must have errored
+        mark_attempt_failed(in_progress_indexing_attempts, db_session)
+
+        last_finished_indexing_attempt = get_last_finished_attempt(
+            connector.id, db_session
+        )
+        if not should_create_new_indexing(
+            connector, last_finished_indexing_attempt, db_session
+        ):
+            continue
+
         pass
 
 
-def run_indexing_job(db_session: Session) -> None:
+def run_indexing_jobs(db_session: Session) -> None:
     pass
 
 
@@ -135,7 +167,9 @@ def update_loop(delay: int = 60) -> None:
     while True:
         start = time.time()
         try:
-            with get_session() as db_session:
+            with Session(
+                build_engine(), future=True, expire_on_commit=False
+            ) as db_session:
                 create_indexing_jobs(db_session)
                 run_indexing_jobs(db_session)
         except Exception:

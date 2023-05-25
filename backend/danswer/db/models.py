@@ -122,6 +122,9 @@ class Credential(Base):
         back_populates="credential",
         cascade="all, delete-orphan",
     )
+    index_attempts: Mapped[List["IndexAttempt"]] = relationship(
+        "IndexAttempt", back_populates="connector"
+    )
     user: Mapped[User] = relationship("User", back_populates="credentials")
 
 
@@ -143,6 +146,7 @@ class IndexAttempt(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     connector_id: Mapped[int] = mapped_column(ForeignKey("connector.id"))
+    credential_id: Mapped[int] = mapped_column(ForeignKey("credential.id"))
     status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
     document_ids: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String()), default=None
@@ -159,6 +163,9 @@ class IndexAttempt(Base):
 
     connector: Mapped[Connector] = relationship(
         "Connector", back_populates="index_attempts"
+    )
+    credential: Mapped[Connector] = relationship(
+        "Credential", back_populates="index_attempts"
     )
 
     def __repr__(self) -> str:

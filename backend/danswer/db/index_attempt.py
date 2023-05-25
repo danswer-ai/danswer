@@ -3,6 +3,7 @@ from danswer.connectors.models import InputType
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.utils.logging import setup_logger
+from sqlalchemy import desc
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -49,3 +50,39 @@ def update_index_attempt(
         db_session.commit()
         return True
     return False
+
+
+def get_incomplete_index_attempts_from_connector(
+    connector_id: int,
+    db_session: Session,
+) -> list[IndexAttempt]:
+    stmt = select(IndexAttempt)
+    stmt = stmt.where(IndexAttempt.connector_id == connector_id)
+    stmt = stmt.where(
+        IndexAttempt.status.notin_([IndexingStatus.SUCCESS, IndexingStatus.FAILED])
+    )
+
+    incomplete_attempts = db_session.scalars(stmt)
+    return list(incomplete_attempts.all())
+
+
+def mark_attempt_failed(
+    index_attempts: list[IndexAttempt],
+    db_session: Session,
+) -> None:
+    for attempt in index_attempts:
+        attempt.status = IndexingStatus.FAILED
+        db_session.add(attempt)
+        db_session.commit()
+
+
+def get_last_finished_attempt(
+    connector_id: int,
+    db_session: Session,
+) -> IndexAttempt | None:
+    stmt = select(IndexAttempt)
+    stmt = stmt.where(IndexAttempt.connector_id == connector_id)
+    stmt = stmt.where(IndexAttempt.status == IndexingStatus.SUCCESS)
+    stmt = stmt.order_by(desc(IndexAttempt.time_updated))
+
+    return db_session.execute(stmt).scalars().first()

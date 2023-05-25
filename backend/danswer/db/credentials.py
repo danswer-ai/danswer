@@ -6,6 +6,7 @@ from danswer.server.models import StatusResponse
 from danswer.utils.logging import setup_logger
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import or_
 
 logger = setup_logger()
 
@@ -24,7 +25,9 @@ def fetch_credentials(
 ) -> list[Credential]:
     stmt = select(Credential)
     if user:
-        stmt = stmt.where(Credential.user_id.is_(user.id))
+        stmt = stmt.where(
+            or_(Credential.user_id.is_(user.id), Credential.user_id.is_(None))
+        )
     results = db_session.scalars(stmt)
     return list(results.all())
 
@@ -34,7 +37,9 @@ def fetch_credential_by_id(
 ) -> Credential | None:
     stmt = select(Credential).where(Credential.id == credential_id)
     if user:
-        stmt = stmt.where(Credential.user_id.is_(user.id))
+        stmt = stmt.where(
+            or_(Credential.user_id.is_(user.id), Credential.user_id.is_(None))
+        )
     result = db_session.execute(stmt)
     credential = result.scalar_one_or_none()
     return credential
