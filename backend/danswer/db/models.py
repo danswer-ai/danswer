@@ -123,7 +123,7 @@ class Credential(Base):
         cascade="all, delete-orphan",
     )
     index_attempts: Mapped[List["IndexAttempt"]] = relationship(
-        "IndexAttempt", back_populates="connector"
+        "IndexAttempt", back_populates="credential"
     )
     user: Mapped[User] = relationship("User", back_populates="credentials")
 

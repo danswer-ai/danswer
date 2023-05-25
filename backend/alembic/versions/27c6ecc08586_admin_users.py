@@ -1,8 +1,8 @@
-"""introduce_permissioning
+"""Admin Users
 
-Revision ID: ac29fc062120
+Revision ID: 27c6ecc08586
 Revises: 2666d766cb9b
-Create Date: 2023-05-22 22:01:04.882973
+Create Date: 2023-05-24 18:45:17.244495
 
 """
 import fastapi_users_db_sqlalchemy
@@ -11,7 +11,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "ac29fc062120"
+revision = "27c6ecc08586"
 down_revision = "2666d766cb9b"
 branch_labels = None
 depends_on = None
@@ -117,6 +117,17 @@ def upgrade() -> None:
         "index_attempt",
         sa.Column("connector_id", sa.Integer(), nullable=False),
     )
+    op.add_column(
+        "index_attempt",
+        sa.Column("credential_id", sa.Integer(), nullable=False),
+    )
+    op.create_foreign_key(
+        "fk_index_attempt_credential_id",
+        "index_attempt",
+        "credential",
+        ["credential_id"],
+        ["id"],
+    )
     op.create_foreign_key(
         "fk_index_attempt_connector_id",
         "index_attempt",
@@ -125,18 +136,18 @@ def upgrade() -> None:
         ["id"],
     )
     op.drop_column("index_attempt", "connector_specific_config")
-    op.drop_column("index_attempt", "input_type")
     op.drop_column("index_attempt", "source")
+    op.drop_column("index_attempt", "input_type")
 
 
 def downgrade() -> None:
     op.add_column(
         "index_attempt",
-        sa.Column("source", sa.VARCHAR(), autoincrement=False, nullable=False),
+        sa.Column("input_type", sa.VARCHAR(), autoincrement=False, nullable=False),
     )
     op.add_column(
         "index_attempt",
-        sa.Column("input_type", sa.VARCHAR(), autoincrement=False, nullable=False),
+        sa.Column("source", sa.VARCHAR(), autoincrement=False, nullable=False),
     )
     op.add_column(
         "index_attempt",
@@ -148,8 +159,12 @@ def downgrade() -> None:
         ),
     )
     op.drop_constraint(
+        "fk_index_attempt_credential_id", "index_attempt", type_="foreignkey"
+    )
+    op.drop_constraint(
         "fk_index_attempt_connector_id", "index_attempt", type_="foreignkey"
     )
+    op.drop_column("index_attempt", "credential_id")
     op.drop_column("index_attempt", "connector_id")
     op.drop_table("connector_credential_association")
     op.drop_table("credential")
