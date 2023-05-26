@@ -2,7 +2,6 @@ import itertools
 from collections.abc import Generator
 from typing import Any
 
-from danswer.configs.app_configs import GITHUB_ACCESS_TOKEN
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import LoadConnector
@@ -15,8 +14,6 @@ from github.PullRequest import PullRequest
 
 
 logger = setup_logger()
-
-github_client = Github(GITHUB_ACCESS_TOKEN)
 
 
 def get_pr_batches(
@@ -42,13 +39,17 @@ class GithubConnector(LoadConnector):
         self.repo_name = repo_name
         self.batch_size = batch_size
         self.state_filter = state_filter
+        self.github_client: Github | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> None:
-        # TODO replace github_client = Github(GITHUB_ACCESS_TOKEN) with user specific tokens
-        pass
+        self.github_client = Github(credentials["github_access_token"])
 
     def load_from_state(self) -> Generator[list[Document], None, None]:
-        repo = github_client.get_repo(f"{self.repo_owner}/{self.repo_name}")
+        if self.github_client is None:
+            raise RuntimeError(
+                "Github Client is not set up, was load_credentials called?"
+            )
+        repo = self.github_client.get_repo(f"{self.repo_owner}/{self.repo_name}")
         pull_requests = repo.get_pulls(state=self.state_filter)
         for pr_batch in get_pr_batches(pull_requests, self.batch_size):
             doc_batch = []
