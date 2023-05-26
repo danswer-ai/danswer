@@ -4,8 +4,6 @@ from urllib.parse import urlparse
 
 from atlassian import Confluence  # type:ignore
 from bs4 import BeautifulSoup
-from danswer.configs.app_configs import CONFLUENCE_ACCESS_TOKEN
-from danswer.configs.app_configs import CONFLUENCE_USERNAME
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import HTML_SEPARATOR
@@ -41,6 +39,28 @@ def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str]:
     return wiki_base, space
 
 
+def _comment_dfs(
+    comments_str: str,
+    comment_pages: Generator[dict[str, Any], None, None],
+    confluence_client: Confluence,
+) -> str:
+    for comment_page in comment_pages:
+        comment_html = comment_page["body"]["storage"]["value"]
+        soup = BeautifulSoup(comment_html, "html.parser")
+        comments_str += "\nComment:\n" + soup.get_text(HTML_SEPARATOR)
+        child_comment_pages = confluence_client.get_page_child_by_type(
+            comment_page["id"],
+            type="comment",
+            start=None,
+            limit=None,
+            expand="body.storage.value",
+        )
+        comments_str = _comment_dfs(
+            comments_str, child_comment_pages, confluence_client
+        )
+    return comments_str
+
+
 class ConfluenceConnector(LoadConnector):
     def __init__(
         self,
@@ -49,35 +69,24 @@ class ConfluenceConnector(LoadConnector):
     ) -> None:
         self.batch_size = batch_size
         self.wiki_base, self.space = extract_confluence_keys_from_url(wiki_page_url)
+        self.confluence_client: Confluence | None = None
+
+    def load_credentials(self, credentials: dict[str, Any]) -> None:
+        username = credentials["confluence_username"]
+        access_token = credentials["confluence_access_token"]
         self.confluence_client = Confluence(
             url=self.wiki_base,
-            username=CONFLUENCE_USERNAME,
-            password=CONFLUENCE_ACCESS_TOKEN,
+            username=username,
+            password=access_token,
             cloud=True,
         )
 
-    def load_credentials(self, credentials: dict[str, Any]) -> None:
-        # TODO move global CONFLUENCE_USERNAME and CONFLUENCE_ACCESS_TOKEN and client init here
-        pass
-
-    def _comment_dfs(
-        self, comments_str: str, comment_pages: Generator[dict[str, Any], None, None]
-    ) -> str:
-        for comment_page in comment_pages:
-            comment_html = comment_page["body"]["storage"]["value"]
-            soup = BeautifulSoup(comment_html, "html.parser")
-            comments_str += "\nComment:\n" + soup.get_text(HTML_SEPARATOR)
-            child_comment_pages = self.confluence_client.get_page_child_by_type(
-                comment_page["id"],
-                type="comment",
-                start=None,
-                limit=None,
-                expand="body.storage.value",
-            )
-            comments_str = self._comment_dfs(comments_str, child_comment_pages)
-        return comments_str
-
     def load_from_state(self) -> Generator[list[Document], None, None]:
+        if self.confluence_client is None:
+            raise RuntimeError(
+                "Confluence Client is not set up, was load_credentials called?"
+            )
+
         start_ind = 0
         while True:
             doc_batch: list[Document] = []
@@ -100,7 +109,7 @@ class ConfluenceConnector(LoadConnector):
                     limit=None,
                     expand="body.storage.value",
                 )
-                comments_text = self._comment_dfs("", comment_pages)
+                comments_text = _comment_dfs("", comment_pages, self.confluence_client)
                 page_text += comments_text
 
                 page_url = self.wiki_base + page["_links"]["webui"]

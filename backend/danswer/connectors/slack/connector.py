@@ -15,7 +15,6 @@ from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.connectors.slack.utils import get_client
 from danswer.connectors.slack.utils import get_message_link
 from danswer.utils.logging import setup_logger
 from slack_sdk import WebClient
@@ -255,11 +254,10 @@ class SlackLoadConnector(LoadConnector):
     ) -> None:
         self.export_path_str = export_path_str
         self.batch_size = batch_size
-        self.client = get_client()
 
     def load_credentials(self, credentials: dict[str, Any]) -> None:
-        # TODO migrate credentials from get_client() getting from env variable to saving to DB
-        pass
+        if credentials:
+            logger.warning("Unexpected credentials provided for Slack Load Connector")
 
     def load_from_state(self) -> Generator[list[Document], None, None]:
         export_path = Path(self.export_path_str)
@@ -296,15 +294,19 @@ class SlackLoadConnector(LoadConnector):
 class SlackPollConnector(PollConnector):
     def __init__(self, batch_size: int = INDEX_BATCH_SIZE) -> None:
         self.batch_size = batch_size
-        self.client = get_client()
+        self.client: WebClient | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> None:
-        # TODO migrate credentials from get_client() getting from env variable to saving to DB
-        pass
+        bot_token = credentials["slack_bot_token"]
+        self.client = WebClient(token=bot_token)
 
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> Generator[List[Document], None, None]:
+        if self.client is None:
+            raise RuntimeError(
+                "Slack Client is not set up, was load_credentials called?"
+            )
         all_docs = get_all_docs(client=self.client, oldest=str(start), latest=str(end))
         for i in range(0, len(all_docs), self.batch_size):
             yield all_docs[i : i + self.batch_size]

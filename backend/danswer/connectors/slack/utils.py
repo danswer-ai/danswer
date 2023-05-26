@@ -6,6 +6,7 @@ from danswer.connectors.slack.config import get_workspace_id
 from slack_sdk import WebClient
 
 
+# TODO Needs to be retired when event based slack connector reworked
 def get_client() -> WebClient:
     """NOTE: assumes token is present in environment variable SLACK_BOT_TOKEN"""
     return WebClient(token=get_slack_bot_token())

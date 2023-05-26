@@ -80,11 +80,6 @@ GOOGLE_DRIVE_TOKENS_JSON = os.environ.get(
 )
 GOOGLE_DRIVE_INCLUDE_SHARED = False
 
-# example: username@companyemail.com
-CONFLUENCE_USERNAME = os.environ.get("CONFLUENCE_USERNAME", "")
-# https://id.atlassian.com/manage-profile/security/api-tokens
-CONFLUENCE_ACCESS_TOKEN = os.environ.get("CONFLUENCE_ACCESS_TOKEN", "")
-
 
 #####
 # Query Configs
