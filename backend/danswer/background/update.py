@@ -29,7 +29,7 @@ def should_create_new_indexing(
     connector: Connector, last_index: IndexAttempt | None, db_session: Session
 ) -> bool:
     if connector.refresh_freq is None:
-        return True
+        return False
     if not last_index:
         return True
     current_db_time = get_db_current_time(db_session)
@@ -40,18 +40,11 @@ def should_create_new_indexing(
 
 
 def create_indexing_jobs(db_session: Session) -> None:
-    connectors = fetch_connectors(db_session)
+    connectors = fetch_connectors(db_session, disabled_status=False)
     for connector in connectors:
         in_progress_indexing_attempts = get_incomplete_index_attempts(
             connector.id, db_session
         )
-
-        # For a run-once connector, allow retries if failed
-        # TODO implement a max retry for this and other cases where all credentials fail
-        if connector.disabled and not (
-            in_progress_indexing_attempts and connector.refresh_freq is None
-        ):
-            continue
 
         # Currently single threaded so any still in-progress must have errored
         for attempt in in_progress_indexing_attempts:
@@ -68,9 +61,6 @@ def create_indexing_jobs(db_session: Session) -> None:
         for association in connector.credentials:
             credential = association.credential
             create_index_attempt(connector.id, credential.id, db_session)
-
-        if connector.refresh_freq is None:
-            disable_connector(connector.id, db_session)
 
 
 def run_indexing_jobs(last_run_time: float, db_session: Session) -> None:

@@ -115,11 +115,11 @@ def upgrade() -> None:
     )
     op.add_column(
         "index_attempt",
-        sa.Column("connector_id", sa.Integer(), nullable=False),
+        sa.Column("connector_id", sa.Integer(), nullable=True),
     )
     op.add_column(
         "index_attempt",
-        sa.Column("credential_id", sa.Integer(), nullable=False),
+        sa.Column("credential_id", sa.Integer(), nullable=True),
     )
     op.create_foreign_key(
         "fk_index_attempt_credential_id",

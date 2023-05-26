@@ -1,5 +1,3 @@
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.models import InputType
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.utils.logging import setup_logger
@@ -7,24 +5,8 @@ from sqlalchemy import desc
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+
 logger = setup_logger()
-
-
-def fetch_index_attempts(
-    db_session: Session,
-    sources: list[DocumentSource] | None = None,
-    input_types: list[InputType] | None = None,
-    statuses: list[IndexingStatus] | None = None,
-) -> list[IndexAttempt]:
-    stmt = select(IndexAttempt)
-    if sources:
-        stmt = stmt.where(IndexAttempt.connector.source.in_(sources))
-    if input_types:
-        stmt = stmt.where(IndexAttempt.connector.input_type.in_(input_types))
-    if statuses:
-        stmt = stmt.where(IndexAttempt.status.in_(statuses))
-    results = db_session.scalars(stmt)
-    return list(results.all())
 
 
 def create_index_attempt(

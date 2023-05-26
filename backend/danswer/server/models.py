@@ -95,6 +95,11 @@ class ConnectorSnapshot(ConnectorBase):
     time_updated: datetime
 
 
+class RunConnectorRequest(BaseModel):
+    connector_id: int
+    credential_ids: list[int] | None
+
+
 class CredentialBase(BaseModel):
     credential_json: dict[str, Any]
     public_doc: bool

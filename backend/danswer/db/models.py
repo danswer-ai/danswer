@@ -144,8 +144,10 @@ class IndexAttempt(Base):
     __tablename__ = "index_attempt"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    connector_id: Mapped[int] = mapped_column(ForeignKey("connector.id"))
-    credential_id: Mapped[int] = mapped_column(ForeignKey("credential.id"))
+    connector_id: Mapped[int] = mapped_column(ForeignKey("connector.id"), nullable=True)
+    credential_id: Mapped[int] = mapped_column(
+        ForeignKey("credential.id"), nullable=True
+    )
     status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
     document_ids: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String()), default=None

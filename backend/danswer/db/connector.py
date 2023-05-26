@@ -3,6 +3,7 @@ from danswer.connectors.models import InputType
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.models import Connector
 from danswer.db.models import ConnectorCredentialAssociation
+from danswer.db.models import IndexAttempt
 from danswer.db.models import User
 from danswer.server.models import ConnectorBase
 from danswer.server.models import ObjectCreationIdResponse
@@ -120,6 +121,8 @@ def delete_connector(
     connector_id: int,
     db_session: Session,
 ) -> StatusResponse[int]:
+    """Currently unused due to foreign key restriction from IndexAttempt
+    Use disable_connector instead"""
     connector = fetch_connector_by_id(connector_id, db_session)
     if connector is None:
         return StatusResponse(
@@ -131,6 +134,17 @@ def delete_connector(
     return StatusResponse(
         success=True, message="Connector deleted successfully", data=connector_id
     )
+
+
+def get_connector_credential_ids(
+    connector_id: int,
+    db_session: Session,
+) -> list[int]:
+    connector = fetch_connector_by_id(connector_id, db_session)
+    if connector is None:
+        raise ValueError(f"Connector by id {connector_id} does not exist")
+
+    return [association.credential.id for association in connector.credentials]
 
 
 def add_credential_to_connector(
@@ -226,3 +240,33 @@ def remove_credential_from_connector(
         message=f"Connector already does not have Credential {credential_id}",
         data=connector_id,
     )
+
+
+def fetch_latest_index_attempt_by_connector(
+    db_session: Session,
+    source: DocumentSource | None = None,
+) -> list[IndexAttempt]:
+    latest_index_attempts: list[IndexAttempt] = []
+
+    if source:
+        connectors = fetch_connectors(
+            db_session, sources=[source], disabled_status=False
+        )
+    else:
+        connectors = fetch_connectors(db_session, disabled_status=False)
+
+    if not connectors:
+        return []
+
+    for connector in connectors:
+        latest_index_attempt = (
+            db_session.query(IndexAttempt)
+            .filter(IndexAttempt.connector_id == connector.id)
+            .order_by(IndexAttempt.time_updated.desc())
+            .first()
+        )
+
+        if latest_index_attempt is not None:
+            latest_index_attempts.append(latest_index_attempt)
+
+    return latest_index_attempts

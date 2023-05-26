@@ -17,6 +17,8 @@ from danswer.db.connector import create_connector
 from danswer.db.connector import delete_connector
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.connector import fetch_connectors
+from danswer.db.connector import fetch_latest_index_attempt_by_connector
+from danswer.db.connector import get_connector_credential_ids
 from danswer.db.connector import remove_credential_from_connector
 from danswer.db.connector import update_connector
 from danswer.db.credentials import create_credential
@@ -26,7 +28,7 @@ from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
 from danswer.db.credentials import update_credential
 from danswer.db.engine import get_session
-from danswer.db.index_attempt import fetch_index_attempts
+from danswer.db.index_attempt import create_index_attempt
 from danswer.db.models import User
 from danswer.direct_qa.key_validation import check_openai_api_key_is_valid
 from danswer.direct_qa.question_answer import get_openai_api_key
@@ -42,6 +44,7 @@ from danswer.server.models import CredentialSnapshot
 from danswer.server.models import GDriveCallback
 from danswer.server.models import IndexAttemptSnapshot
 from danswer.server.models import ObjectCreationIdResponse
+from danswer.server.models import RunConnectorRequest
 from danswer.server.models import StatusResponse
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
@@ -91,12 +94,12 @@ def modify_slack_config(
     update_slack_config(slack_config)
 
 
-@router.get("/index-attempt", response_model=list[IndexAttemptSnapshot])
+@router.get("/latest-index-attempt", response_model=list[IndexAttemptSnapshot])
 def list_all_index_attempts(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[IndexAttemptSnapshot]:
-    index_attempts = fetch_index_attempts(db_session)
+    index_attempts = fetch_latest_index_attempt_by_connector(db_session)
     return [
         IndexAttemptSnapshot(
             source=index_attempt.connector.source,
@@ -113,13 +116,13 @@ def list_all_index_attempts(
     ]
 
 
-@router.get("/index-attempt/{source}", response_model=list[IndexAttemptSnapshot])
+@router.get("/latest-index-attempt/{source}", response_model=list[IndexAttemptSnapshot])
 def list_index_attempts(
     source: DocumentSource,
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[IndexAttemptSnapshot]:
-    index_attempts = fetch_index_attempts(db_session, sources=[source])
+    index_attempts = fetch_latest_index_attempt_by_connector(db_session, source=source)
     return [
         IndexAttemptSnapshot(
             source=index_attempt.connector.source,
@@ -350,6 +353,52 @@ def dissociate_credential_from_connector(
 ) -> StatusResponse[int]:
     return remove_credential_from_connector(
         connector_id, credential_id, user, db_session
+    )
+
+
+@router.post("/connector/run-once")
+def connector_run_once(
+    run_info: RunConnectorRequest,
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse[list[int]]:
+    connector_id = run_info.connector_id
+    specified_credential_ids = run_info.credential_ids
+    try:
+        possible_credential_ids = get_connector_credential_ids(
+            run_info.connector_id, db_session
+        )
+    except ValueError:
+        return StatusResponse(
+            success=False,
+            message=f"Connector by id {connector_id} does not exist.",
+        )
+
+    if not specified_credential_ids:
+        credential_ids = possible_credential_ids
+    else:
+        if set(specified_credential_ids).issubset(set(possible_credential_ids)):
+            credential_ids = specified_credential_ids
+        else:
+            return StatusResponse(
+                success=False,
+                message=f"Not all specified credentials are associated with connector",
+            )
+
+    if not credential_ids:
+        return StatusResponse(
+            success=False,
+            message=f"Connector has no valid credentials, cannot create index attempts.",
+        )
+
+    index_attempt_ids = [
+        create_index_attempt(run_info.connector_id, credential_id, db_session)
+        for credential_id in credential_ids
+    ]
+    return StatusResponse(
+        success=True,
+        message=f"Successfully created {len(index_attempt_ids)} index attempts",
+        data=index_attempt_ids,
     )
 
 
