@@ -14,7 +14,3 @@ export interface IndexAttempt {
   time_updated: string;
   docs_indexed: number;
 }
-
-export interface ListIndexingResponse {
-  index_attempts: IndexAttempt[];
-}

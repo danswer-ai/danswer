@@ -1,14 +1,6 @@
 "use client";
 
-import * as Yup from "yup";
-import {
-  IndexForm,
-  submitIndexRequest,
-} from "@/components/admin/connectors/Form";
-import {
-  ConnectorStatusEnum,
-  ConnectorStatus,
-} from "@/components/admin/connectors/ConnectorStatus";
+import { submitIndexRequest } from "@/components/admin/connectors/IndexForm";
 import { GoogleDriveIcon } from "@/components/icons/icons";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
@@ -26,7 +18,7 @@ export default function Page() {
     isLoading: isAuthenticatedLoading,
     error: isAuthenticatedError,
   } = useSWR<{ authenticated: boolean }>(
-    "/api/admin/connectors/google-drive/check-auth",
+    "/api/admin/connector/google-drive/check-auth",
     fetcher
   );
   const {
@@ -34,7 +26,7 @@ export default function Page() {
     isLoading: authorizationUrlLoading,
     error: authorizationUrlError,
   } = useSWR<{ auth_url: string }>(
-    "/api/admin/connectors/google-drive/authorize",
+    "/api/admin/connector/google-drive/authorize",
     fetcher
   );
 

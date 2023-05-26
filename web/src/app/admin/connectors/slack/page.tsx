@@ -12,13 +12,13 @@ import { HealthCheckBanner } from "@/components/health/healthcheck";
 const MainSection = () => {
   // TODO: add back in once this is ready
   // const { data, isLoading, error } = useSWR<ListSlackIndexingResponse>(
-  //   "/api/admin/connectors/web/index-attempt",
+  //   "/api/admin/connector/web/index-attempt",
   //   fetcher
   // );
 
   const { mutate } = useSWRConfig();
   const { data, isLoading, error } = useSWR<SlackConfig>(
-    "/api/admin/connectors/slack/config",
+    "/api/admin/connector/slack/config",
     fetcher
   );
 
@@ -50,7 +50,7 @@ const MainSection = () => {
       <div className="border border-gray-700 rounded-md p-3">
         <InitialSetupForm
           existingSlackConfig={data}
-          onSubmit={() => mutate("/api/admin/connectors/slack/config")}
+          onSubmit={() => mutate("/api/admin/connector/slack/config")}
         />
       </div>
     </div>
