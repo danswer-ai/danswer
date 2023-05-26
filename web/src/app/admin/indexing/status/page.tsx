@@ -15,25 +15,24 @@ import { useState } from "react";
 import { Popup } from "@/components/admin/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 
-const getModifiedSource = (indexAttempt: IndexAttempt) => {
-  return indexAttempt.source === "web"
-    ? indexAttempt.source + indexAttempt.connector_specific_config?.base_url
-    : indexAttempt.source;
-};
+const getSourceDisplay = (indexAttempt: IndexAttempt) => {
+  const sourceMetadata = getSourceMetadata(indexAttempt.source);
+  if (indexAttempt.source === "web") {
+    return (
+      sourceMetadata.displayName +
+      (indexAttempt.connector_specific_config?.base_url &&
+        ` [${indexAttempt.connector_specific_config?.base_url}]`)
+    );
+  }
 
-const getLatestIndexAttemptsBySource = (indexAttempts: IndexAttempt[]) => {
-  const latestIndexAttemptsBySource = new Map<string, IndexAttempt>();
-  indexAttempts.forEach((indexAttempt) => {
-    const source = getModifiedSource(indexAttempt);
-    const existingIndexAttempt = latestIndexAttemptsBySource.get(source);
-    if (
-      !existingIndexAttempt ||
-      indexAttempt.time_updated > existingIndexAttempt.time_updated
-    ) {
-      latestIndexAttemptsBySource.set(source, indexAttempt);
-    }
-  });
-  return latestIndexAttemptsBySource;
+  if (indexAttempt.source === "github") {
+    return (
+      sourceMetadata.displayName +
+      ` [${indexAttempt.connector_specific_config?.repo_owner}/${indexAttempt.connector_specific_config?.repo_name}]`
+    );
+  }
+
+  return sourceMetadata.displayName;
 };
 
 export default function Status() {
@@ -104,12 +103,7 @@ export default function Status() {
                   href={sourceMetadata.adminPageLink}
                 >
                   {sourceMetadata.icon({ size: "20" })}
-                  <div className="ml-1">
-                    {sourceMetadata.displayName}
-                    {indexAttempt.source === "web" &&
-                      indexAttempt.connector_specific_config?.base_url &&
-                      ` [${indexAttempt.connector_specific_config?.base_url}]`}
-                  </div>
+                  <div className="ml-1">{getSourceDisplay(indexAttempt)}</div>
                 </a>
               ),
               status: statusDisplay,

@@ -67,7 +67,9 @@ export const GithubConnectorsTable = ({
               connector.credential_ids.includes(liveCredential.id);
             return {
               credential: hasValidCredentials ? (
-                liveCredential.credential_json.github_token
+                <p className="max-w-sm truncate">
+                  {liveCredential.credential_json.github_token}
+                </p>
               ) : liveCredential ? (
                 <AttachCredentialButtonForTable
                   onClick={() => onCredentialLink(connector.id)}

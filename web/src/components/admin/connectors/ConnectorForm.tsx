@@ -44,6 +44,7 @@ interface Props<T extends Yup.AnyObject> {
   validationSchema: Yup.ObjectSchema<T>;
   initialValues: T;
   onSubmit: (isSuccess: boolean, responseJson?: Connector<T>) => void;
+  refreshFreq?: number;
 }
 
 export function ConnectorForm<T extends Yup.AnyObject>({
@@ -53,6 +54,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
   formBody,
   validationSchema,
   initialValues,
+  refreshFreq,
   onSubmit,
 }: Props<T>): JSX.Element {
   const [popup, setPopup] = useState<{
@@ -73,7 +75,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             source,
             input_type: inputType,
             connector_specific_config: values,
-            refresh_freq: 0,
+            refresh_freq: refreshFreq || 0,
             disabled: false,
           }).then(({ message, isSuccess, response }) => {
             setPopup({ message, type: isSuccess ? "success" : "error" });

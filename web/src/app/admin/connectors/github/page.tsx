@@ -146,8 +146,8 @@ const Main = () => {
         </>
       )}
 
-      <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
-        <h2 className="font-bold mb-3">Connect to a new repository</h2>
+      <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+        <h2 className="font-bold mb-3">Connect to a New Repository</h2>
         <ConnectorForm<GithubConfig>
           nameBuilder={(values) =>
             `GithubConnector-${values.repo_owner}/${values.repo_name}`
@@ -176,6 +176,7 @@ const Main = () => {
               repo_name: "",
             }
           }
+          refreshFreq={10}
           onSubmit={async (isSuccess, responseJson) => {
             if (isSuccess && responseJson) {
               await linkCredential(responseJson.id, githubCredential.id);
