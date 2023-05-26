@@ -4,9 +4,11 @@ from danswer.server.models import CredentialBase
 from danswer.server.models import ObjectCreationIdResponse
 from danswer.server.models import StatusResponse
 from danswer.utils.logging import setup_logger
+from db.engine import build_engine
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import or_
+
 
 logger = setup_logger()
 
@@ -92,3 +94,31 @@ def delete_credential(
 
     db_session.delete(credential)
     db_session.commit()
+
+
+def create_initial_public_credential() -> None:
+    public_cred_id = 0
+    error_msg = (
+        "DB is not in a valid initial state."
+        "There must exist an empty public credential for data connectors that do not require additional Auth."
+    )
+    with Session(build_engine(), future=True, expire_on_commit=False) as db_session:
+        first_credential = fetch_credential_by_id(public_cred_id, None, db_session)
+
+        if first_credential is not None:
+            if (
+                first_credential.credential_json != {}
+                or first_credential.public_doc is False
+            ):
+                raise ValueError(error_msg)
+            return
+
+        if db_session.query(Credential).count() != 0:
+            # Doesn't really catch if all existing credentials were deleted but should never reach that state anyhow
+            raise ValueError(error_msg)
+
+        credential = Credential(
+            id=public_cred_id, credential_json={}, user_id=None, public_doc=True
+        )
+        db_session.add(credential)
+        db_session.commit()

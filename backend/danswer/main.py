@@ -11,6 +11,7 @@ from danswer.configs.app_configs import ENABLE_OAUTH
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.datastores.qdrant.indexing import list_collections
+from danswer.db.credentials import create_initial_public_credential
 from danswer.server.admin import router as admin_router
 from danswer.server.event_loading import router as event_processing_router
 from danswer.server.health import router as health_router
@@ -129,6 +130,9 @@ def get_application() -> FastAPI:
 
         warm_up_models()
         logger.info("Semantic Search models are ready.")
+
+        logger.info("Verifying public credential exists.")
+        create_initial_public_credential()
 
     return application
 

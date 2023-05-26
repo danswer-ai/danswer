@@ -141,6 +141,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    op.execute("TRUNCATE TABLE index_attempt")
     op.add_column(
         "index_attempt",
         sa.Column("input_type", sa.VARCHAR(), autoincrement=False, nullable=False),
