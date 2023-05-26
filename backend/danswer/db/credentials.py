@@ -113,10 +113,6 @@ def create_initial_public_credential() -> None:
                 raise ValueError(error_msg)
             return
 
-        if db_session.query(Credential).count() != 0:
-            # Doesn't really catch if all existing credentials were deleted but should never reach that state anyhow
-            raise ValueError(error_msg)
-
         credential = Credential(
             id=public_cred_id, credential_json={}, user_id=None, public_doc=True
         )
