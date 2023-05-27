@@ -4,6 +4,7 @@ from typing import cast
 from danswer.auth.users import current_admin_user
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
+from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_KEY
 from danswer.connectors.google_drive.connector_auth import get_auth_url
 from danswer.connectors.google_drive.connector_auth import get_drive_tokens
 from danswer.connectors.google_drive.connector_auth import (
@@ -79,11 +80,23 @@ def update_google_app_credentials(
     )
 
 
-@router.get("/connector/google-drive/check-auth")
-def check_drive_tokens(_: User = Depends(current_admin_user)) -> AuthStatus:
-    tokens = get_drive_tokens()
-    authenticated = tokens is not None
-    return AuthStatus(authenticated=authenticated)
+@router.get("/connector/google-drive/check-auth/{credential_id}")
+def check_drive_tokens(
+    credential_id: int,
+    user: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> AuthStatus:
+    db_credentials = fetch_credential_by_id(credential_id, user, db_session)
+    if (
+        not db_credentials
+        or DB_CREDENTIALS_DICT_KEY not in db_credentials.credential_json
+    ):
+        return AuthStatus(authenticated=False)
+    token_json_str = str(db_credentials.credential_json[DB_CREDENTIALS_DICT_KEY])
+    google_drive_creds = get_drive_tokens(token_json_str=token_json_str)
+    if google_drive_creds is None:
+        return AuthStatus(authenticated=False)
+    return AuthStatus(authenticated=True)
 
 
 @router.get("/connector/google-drive/authorize/{credential_id}", response_model=AuthUrl)

@@ -31,7 +31,8 @@ def get_drive_tokens(
         return None
 
     if token_json_str is not None:
-        creds = Credentials.from_authorized_user_info(token_json_str, SCOPES)
+        creds_json = json.loads(token_json_str)
+        creds = Credentials.from_authorized_user_info(creds_json, SCOPES)
 
     if not creds:
         return None

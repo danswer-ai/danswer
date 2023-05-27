@@ -43,13 +43,6 @@ def value_error_handler(_: Request, exc: ValueError) -> JSONResponse:
     )
 
 
-def general_exception_handler(_: Request, exc: Exception) -> JSONResponse:
-    return JSONResponse(
-        status_code=500,
-        content={"message": str(exc)},
-    )
-
-
 def get_application() -> FastAPI:
     application = FastAPI(title="Internal Search QA Backend", debug=True, version="0.1")
     application.include_router(backend_router)
@@ -110,8 +103,6 @@ def get_application() -> FastAPI:
     )
 
     application.add_exception_handler(ValueError, value_error_handler)
-
-    application.add_exception_handler(Exception, general_exception_handler)
 
     @application.on_event("startup")
     def startup_event() -> None:
