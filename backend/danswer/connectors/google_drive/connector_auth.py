@@ -1,22 +1,21 @@
 import json
-import os
 from json import JSONDecodeError
-from typing import Any
 from urllib.parse import parse_qs
 from urllib.parse import urlparse
 
-from danswer.configs.app_configs import GOOGLE_DRIVE_CREDENTIAL_JSON
-from danswer.configs.app_configs import GOOGLE_DRIVE_TOKENS_JSON
 from danswer.configs.app_configs import WEB_DOMAIN
+from danswer.db.credentials import update_credential_json
 from danswer.db.models import User
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.utils.logging import setup_logger
 from google.auth.transport.requests import Request  # type: ignore
 from google.oauth2.credentials import Credentials  # type: ignore
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
+DB_CREDENTIALS_DICT_KEY = "google_drive_tokens"
 CRED_KEY = "credential_id_{}"
 GOOGLE_DRIVE_CRED_KEY = "google_drive_app_credential"
 SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
@@ -25,9 +24,14 @@ FRONTEND_GOOGLE_DRIVE_REDIRECT = (
 )
 
 
-# TODO this doesn't work for reasons unknown
-def get_drive_tokens(token_json_str: str) -> Any:
-    creds = Credentials.from_authorized_user_info(token_json_str, SCOPES)
+def get_drive_tokens(
+    *, creds: Credentials | None = None, token_json_str: str | None = None
+) -> Credentials | None:
+    if creds is None and token_json_str is None:
+        return None
+
+    if token_json_str is not None:
+        creds = Credentials.from_authorized_user_info(token_json_str, SCOPES)
 
     if not creds:
         return None
@@ -45,8 +49,8 @@ def get_drive_tokens(token_json_str: str) -> Any:
     return None
 
 
-def verify_csrf(credential_id: str, state: str) -> None:
-    csrf = get_dynamic_config_store().load(CRED_KEY.format(credential_id))
+def verify_csrf(credential_id: int, state: str) -> None:
+    csrf = get_dynamic_config_store().load(CRED_KEY.format(str(credential_id)))
     if csrf != state:
         raise PermissionError(
             "State from Google Drive Connector callback does not match expected"
@@ -73,9 +77,10 @@ def get_auth_url(
 
 def update_credential_access_tokens(
     auth_code: str,
-    credential_id: str,
+    credential_id: int,
     user: User,
-) -> Any:
+    db_session: Session,
+) -> Credentials | None:
     creds_str = str(get_dynamic_config_store().load(GOOGLE_DRIVE_CRED_KEY))
     credential_json = json.loads(creds_str)
     flow = InstalledAppFlow.from_client_config(
@@ -85,14 +90,11 @@ def update_credential_access_tokens(
     )
     flow.fetch_token(code=auth_code)
     creds = flow.credentials
+    token_json_str = creds.to_json()
+    new_creds_dict = {DB_CREDENTIALS_DICT_KEY: token_json_str}
 
-    os.makedirs(os.path.dirname(token_path), exist_ok=True)
-    with open(token_path, "w+") as token_file:
-        token_file.write(creds.to_json())
-
-    if not get_drive_tokens(token_path):
-        raise PermissionError("Not able to access Google Drive.")
-
+    if not update_credential_json(credential_id, new_creds_dict, user, db_session):
+        return None
     return creds
 
 

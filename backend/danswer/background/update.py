@@ -6,6 +6,7 @@ from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import InputType
 from danswer.db.connector import disable_connector
 from danswer.db.connector import fetch_connectors
+from danswer.db.credentials import backend_update_credential_json
 from danswer.db.engine import build_engine
 from danswer.db.engine import get_db_current_time
 from danswer.db.index_attempt import create_index_attempt
@@ -20,7 +21,6 @@ from danswer.db.models import IndexAttempt
 from danswer.utils.indexing_pipeline import build_indexing_pipeline
 from danswer.utils.logging import setup_logger
 from sqlalchemy.orm import Session
-
 
 logger = setup_logger()
 
@@ -81,12 +81,16 @@ def run_indexing_jobs(last_run_time: float, db_session: Session) -> None:
         task = db_connector.input_type
 
         try:
-            runnable_connector = instantiate_connector(
+            runnable_connector, new_credential_json = instantiate_connector(
                 db_connector.source,
                 task,
                 db_connector.connector_specific_config,
                 db_credential.credential_json,
             )
+            if new_credential_json is not None:
+                backend_update_credential_json(
+                    db_credential, new_credential_json, db_session
+                )
         except Exception as e:
             logger.exception(f"Unable to instantiate connector due to {e}")
             disable_connector(db_connector.id, db_session)
@@ -109,9 +113,6 @@ def run_indexing_jobs(last_run_time: float, db_session: Session) -> None:
 
             document_ids: list[str] = []
             for doc_batch in doc_batch_generator:
-                if isinstance(doc_batch, tuple):
-                    # TODO update credentials
-                    pass
                 # TODO introduce permissioning here
                 indexing_pipeline(doc_batch)
                 document_ids.extend([doc.id for doc in doc_batch])

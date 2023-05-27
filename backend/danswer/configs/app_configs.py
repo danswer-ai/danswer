@@ -72,12 +72,6 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
 #####
 # Connector Configs
 #####
-GOOGLE_DRIVE_CREDENTIAL_JSON = os.environ.get(
-    "GOOGLE_DRIVE_CREDENTIAL_JSON", "/home/storage/google_drive_creds.json"
-)
-GOOGLE_DRIVE_TOKENS_JSON = os.environ.get(
-    "GOOGLE_DRIVE_TOKENS_JSON", "/home/storage/google_drive_tokens.json"
-)
 GOOGLE_DRIVE_INCLUDE_SHARED = False
 
 

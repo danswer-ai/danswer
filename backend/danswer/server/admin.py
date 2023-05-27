@@ -79,7 +79,7 @@ def update_google_app_credentials(
     )
 
 
-@router.get("/connector/google-drive/check-auth", response_model=AuthStatus)
+@router.get("/connector/google-drive/check-auth")
 def check_drive_tokens(_: User = Depends(current_admin_user)) -> AuthStatus:
     tokens = get_drive_tokens()
     authenticated = tokens is not None
@@ -93,14 +93,22 @@ def google_drive_auth(
     return AuthUrl(auth_url=get_auth_url(credential_id))
 
 
-@router.get("/connector/google-drive/callback/{credential_id}", status_code=201)
+@router.get("/connector/google-drive/callback/{credential_id}")
 def google_drive_callback(
-    credential_id: str,
+    credential_id: int,
     callback: GDriveCallback = Depends(),
     user: User = Depends(current_admin_user),
-) -> None:
+    db_session: Session = Depends(get_session),
+) -> StatusResponse:
     verify_csrf(credential_id, callback.state)
-    return update_credential_access_tokens(callback.code, credential_id, user)
+    if (
+        update_credential_access_tokens(callback.code, credential_id, user, db_session)
+        is None
+    ):
+        return StatusResponse(
+            success=False, message="Unable to fetch Google Drive access tokens"
+        )
+    return StatusResponse(success=True, message="Updated Google Drive access tokens")
 
 
 @router.get("/connector/slack/config", response_model=SlackConfig)

@@ -2,11 +2,9 @@ import json
 import os
 import time
 from collections.abc import Callable
-from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 from typing import cast
-from typing import List
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -256,9 +254,10 @@ class SlackLoadConnector(LoadConnector):
         self.export_path_str = export_path_str
         self.batch_size = batch_size
 
-    def load_credentials(self, credentials: dict[str, Any]) -> None:
+    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         if credentials:
             logger.warning("Unexpected credentials provided for Slack Load Connector")
+        return None
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         export_path = Path(self.export_path_str)
@@ -297,15 +296,16 @@ class SlackPollConnector(PollConnector):
         self.batch_size = batch_size
         self.client: WebClient | None = None
 
-    def load_credentials(self, credentials: dict[str, Any]) -> None:
+    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         bot_token = credentials["slack_bot_token"]
         self.client = WebClient(token=bot_token)
+        return None
 
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
         if self.client is None:
-            raise RuntimeError(
+            raise PermissionError(
                 "Slack Client is not set up, was load_credentials called?"
             )
         all_docs = get_all_docs(client=self.client, oldest=str(start), latest=str(end))

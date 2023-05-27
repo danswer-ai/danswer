@@ -1,5 +1,4 @@
 import io
-from collections.abc import Generator
 from typing import Any
 from typing import cast
 from urllib.parse import urljoin
@@ -61,9 +60,10 @@ class WebConnector(LoadConnector):
         self.base_url = base_url
         self.batch_size = batch_size
 
-    def load_credentials(self, credentials: dict[str, Any]) -> None:
+    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         if credentials:
             logger.warning("Unexpected credentials provided for Web Connector")
+        return None
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         """Traverses through all pages found on the website

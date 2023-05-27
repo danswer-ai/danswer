@@ -42,12 +42,13 @@ class GithubConnector(LoadConnector):
         self.state_filter = state_filter
         self.github_client: Github | None = None
 
-    def load_credentials(self, credentials: dict[str, Any]) -> None:
+    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         self.github_client = Github(credentials["github_access_token"])
+        return None
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         if self.github_client is None:
-            raise RuntimeError(
+            raise PermissionError(
                 "Github Client is not set up, was load_credentials called?"
             )
         repo = self.github_client.get_repo(f"{self.repo_owner}/{self.repo_name}")

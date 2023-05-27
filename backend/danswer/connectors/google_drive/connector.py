@@ -5,6 +5,7 @@ from typing import Any
 from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_KEY
 from danswer.connectors.google_drive.connector_auth import get_drive_tokens
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
@@ -91,16 +92,23 @@ class GoogleDriveConnector(LoadConnector):
     ) -> None:
         self.batch_size = batch_size
         self.include_shared = include_shared
-        self.creds = get_drive_tokens()
+        self.creds: Credentials | None = None
 
-        if not self.creds:
+    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
+        access_token_json_str = credentials[DB_CREDENTIALS_DICT_KEY]
+        creds = get_drive_tokens(token_json_str=access_token_json_str)
+        if creds is None:
             raise PermissionError("Unable to access Google Drive.")
-
-    def load_credentials(self, credentials: dict[str, Any]) -> None:
-        # TODO replace file with direct credentials, store for each user
-        pass
+        self.creds = creds
+        new_creds_json_str = creds.to_json()
+        if new_creds_json_str != access_token_json_str:
+            return {DB_CREDENTIALS_DICT_KEY: new_creds_json_str}
+        return None
 
     def load_from_state(self) -> GenerateDocumentsOutput:
+        if self.creds is None:
+            raise PermissionError("Not logged into Google Drive")
+
         service = discovery.build("drive", "v3", credentials=self.creds)
         for files_batch in get_file_batches(
             service, self.include_shared, self.batch_size

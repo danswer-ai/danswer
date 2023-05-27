@@ -72,7 +72,7 @@ class ConfluenceConnector(LoadConnector):
         self.wiki_base, self.space = extract_confluence_keys_from_url(wiki_page_url)
         self.confluence_client: Confluence | None = None
 
-    def load_credentials(self, credentials: dict[str, Any]) -> None:
+    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         username = credentials["confluence_username"]
         access_token = credentials["confluence_access_token"]
         self.confluence_client = Confluence(
@@ -81,10 +81,11 @@ class ConfluenceConnector(LoadConnector):
             password=access_token,
             cloud=True,
         )
+        return None
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         if self.confluence_client is None:
-            raise RuntimeError(
+            raise PermissionError(
                 "Confluence Client is not set up, was load_credentials called?"
             )
 

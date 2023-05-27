@@ -64,9 +64,9 @@ def instantiate_connector(
     input_type: InputType,
     connector_specific_config: dict[str, Any],
     credentials: dict[str, Any],
-) -> BaseConnector:
+) -> tuple[BaseConnector, dict[str, Any] | None]:
     connector_class = identify_connector_class(source, input_type)
     connector = connector_class(**connector_specific_config)
-    connector.load_credentials(credentials)
+    new_credentials = connector.load_credentials(credentials)
 
-    return connector
+    return connector, new_credentials

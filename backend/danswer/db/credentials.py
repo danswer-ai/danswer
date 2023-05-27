@@ -98,6 +98,16 @@ def update_credential_json(
     return credential
 
 
+def backend_update_credential_json(
+    credential: Credential,
+    credential_json: dict[str, Any],
+    db_session: Session,
+) -> None:
+    """This should not be used in any flows involving the frontend or users"""
+    credential.credential_json = credential_json
+    db_session.commit()
+
+
 def delete_credential(
     credential_id: int,
     user: User,
