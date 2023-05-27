@@ -32,6 +32,10 @@ export interface Connector<T> extends ConnectorBase<T> {
   time_updated: string;
 }
 
+export interface WebConfig {
+  base_url: string;
+}
+
 export interface GithubConfig {
   repo_owner: string;
   repo_name: string;
