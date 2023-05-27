@@ -22,6 +22,10 @@ class StatusResponse(GenericModel, Generic[DataT]):
     data: Optional[DataT] = None
 
 
+class DataRequest(BaseModel):
+    data: str
+
+
 class HealthCheckResponse(BaseModel):
     status: Literal["ok"]
 

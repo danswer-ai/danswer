@@ -104,6 +104,9 @@ def run_indexing_jobs(last_run_time: float, db_session: Session) -> None:
 
             document_ids: list[str] = []
             for doc_batch in doc_batch_generator:
+                if isinstance(doc_batch, tuple):
+                    # TODO update credentials
+                    pass
                 # TODO introduce permissioning here
                 indexing_pipeline(doc_batch)
                 document_ids.extend([doc.id for doc in doc_batch])

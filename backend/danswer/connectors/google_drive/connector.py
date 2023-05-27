@@ -6,6 +6,7 @@ from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.google_drive.connector_auth import get_drive_tokens
+from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -99,7 +100,7 @@ class GoogleDriveConnector(LoadConnector):
         # TODO replace file with direct credentials, store for each user
         pass
 
-    def load_from_state(self) -> Generator[list[Document], None, None]:
+    def load_from_state(self) -> GenerateDocumentsOutput:
         service = discovery.build("drive", "v3", credentials=self.creds)
         for files_batch in get_file_batches(
             service, self.include_shared, self.batch_size

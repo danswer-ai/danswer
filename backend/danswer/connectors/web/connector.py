@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import HTML_SEPARATOR
+from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -64,7 +65,7 @@ class WebConnector(LoadConnector):
         if credentials:
             logger.warning("Unexpected credentials provided for Web Connector")
 
-    def load_from_state(self) -> Generator[list[Document], None, None]:
+    def load_from_state(self) -> GenerateDocumentsOutput:
         """Traverses through all pages found on the website
         and converts them into documents"""
         visited_links: set[str] = set()

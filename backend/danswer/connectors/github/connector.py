@@ -4,6 +4,7 @@ from typing import Any
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -44,7 +45,7 @@ class GithubConnector(LoadConnector):
     def load_credentials(self, credentials: dict[str, Any]) -> None:
         self.github_client = Github(credentials["github_access_token"])
 
-    def load_from_state(self) -> Generator[list[Document], None, None]:
+    def load_from_state(self) -> GenerateDocumentsOutput:
         if self.github_client is None:
             raise RuntimeError(
                 "Github Client is not set up, was load_credentials called?"

@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import HTML_SEPARATOR
+from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -81,7 +82,7 @@ class ConfluenceConnector(LoadConnector):
             cloud=True,
         )
 
-    def load_from_state(self) -> Generator[list[Document], None, None]:
+    def load_from_state(self) -> GenerateDocumentsOutput:
         if self.confluence_client is None:
             raise RuntimeError(
                 "Confluence Client is not set up, was load_credentials called?"

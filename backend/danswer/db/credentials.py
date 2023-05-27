@@ -1,3 +1,5 @@
+from typing import Any
+
 from danswer.db.engine import build_engine
 from danswer.db.models import Credential
 from danswer.db.models import User
@@ -76,6 +78,21 @@ def update_credential(
     credential.credential_json = credential_data.credential_json
     credential.user_id = int(user.id) if user is not None else None
     credential.public_doc = credential_data.public_doc
+
+    db_session.commit()
+    return credential
+
+
+def update_credential_json(
+    credential_id: int,
+    credential_json: dict[str, Any],
+    user: User,
+    db_session: Session,
+) -> Credential | None:
+    credential = fetch_credential_by_id(credential_id, user, db_session)
+    if credential is None:
+        return None
+    credential.credential_json = credential_json
 
     db_session.commit()
     return credential

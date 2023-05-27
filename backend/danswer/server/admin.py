@@ -2,11 +2,13 @@ from typing import cast
 
 from danswer.auth.users import current_admin_user
 from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import NO_AUTH_USER
 from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
 from danswer.connectors.google_drive.connector_auth import get_auth_url
 from danswer.connectors.google_drive.connector_auth import get_drive_tokens
-from danswer.connectors.google_drive.connector_auth import save_access_tokens
+from danswer.connectors.google_drive.connector_auth import (
+    update_credential_access_tokens,
+)
+from danswer.connectors.google_drive.connector_auth import upsert_google_app_cred
 from danswer.connectors.google_drive.connector_auth import verify_csrf
 from danswer.connectors.slack.config import get_slack_config
 from danswer.connectors.slack.config import SlackConfig
@@ -41,6 +43,7 @@ from danswer.server.models import ConnectorBase
 from danswer.server.models import ConnectorSnapshot
 from danswer.server.models import CredentialBase
 from danswer.server.models import CredentialSnapshot
+from danswer.server.models import DataRequest
 from danswer.server.models import GDriveCallback
 from danswer.server.models import IndexAttemptSnapshot
 from danswer.server.models import ObjectCreationIdResponse
@@ -57,6 +60,20 @@ router = APIRouter(prefix="/admin")
 logger = setup_logger()
 
 
+@router.put("/connector/google-drive/setup")
+def update_google_app_credentials(
+    cred_json: DataRequest, _: User = Depends(current_admin_user)
+) -> StatusResponse:
+    try:
+        upsert_google_app_cred(cred_json.data)
+    except ValueError as e:
+        return StatusResponse(success=False, message=str(e))
+
+    return StatusResponse(
+        success=True, message="Successfully saved Google App Credentials"
+    )
+
+
 @router.get("/connector/google-drive/check-auth", response_model=AuthStatus)
 def check_drive_tokens(_: User = Depends(current_admin_user)) -> AuthStatus:
     tokens = get_drive_tokens()
@@ -64,19 +81,21 @@ def check_drive_tokens(_: User = Depends(current_admin_user)) -> AuthStatus:
     return AuthStatus(authenticated=authenticated)
 
 
-@router.get("/connector/google-drive/authorize", response_model=AuthUrl)
-def google_drive_auth(user: User = Depends(current_admin_user)) -> AuthUrl:
-    user_id = str(user.id) if user else NO_AUTH_USER
-    return AuthUrl(auth_url=get_auth_url(user_id))
+@router.get("/connector/google-drive/authorize/{credential_id}", response_model=AuthUrl)
+def google_drive_auth(
+    credential_id: str, _: User = Depends(current_admin_user)
+) -> AuthUrl:
+    return AuthUrl(auth_url=get_auth_url(credential_id))
 
 
-@router.get("/connector/google-drive/callback", status_code=201)
+@router.get("/connector/google-drive/callback/{credential_id}", status_code=201)
 def google_drive_callback(
-    callback: GDriveCallback = Depends(), user: User = Depends(current_admin_user)
+    credential_id: str,
+    callback: GDriveCallback = Depends(),
+    user: User = Depends(current_admin_user),
 ) -> None:
-    user_id = str(user.id) if user else NO_AUTH_USER
-    verify_csrf(user_id, callback.state)
-    return save_access_tokens(callback.code)
+    verify_csrf(credential_id, callback.state)
+    return update_credential_access_tokens(callback.code, credential_id, user)
 
 
 @router.get("/connector/slack/config", response_model=SlackConfig)

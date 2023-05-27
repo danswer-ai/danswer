@@ -11,7 +11,6 @@ SEMANTIC_IDENTIFIER = "semantic_identifier"
 SECTION_CONTINUATION = "section_continuation"
 ALLOWED_USERS = "allowed_users"
 ALLOWED_GROUPS = "allowed_groups"
-NO_AUTH_USER = "FooBarUser"  # TODO rework this temporary solution
 OPENAI_API_KEY_STORAGE_KEY = "openai_api_key"
 HTML_SEPARATOR = "\n"
 

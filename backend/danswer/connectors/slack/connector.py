@@ -10,6 +10,7 @@ from typing import List
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
@@ -259,7 +260,7 @@ class SlackLoadConnector(LoadConnector):
         if credentials:
             logger.warning("Unexpected credentials provided for Slack Load Connector")
 
-    def load_from_state(self) -> Generator[list[Document], None, None]:
+    def load_from_state(self) -> GenerateDocumentsOutput:
         export_path = Path(self.export_path_str)
 
         with open(export_path / "channels.json") as f:
@@ -302,7 +303,7 @@ class SlackPollConnector(PollConnector):
 
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
-    ) -> Generator[List[Document], None, None]:
+    ) -> GenerateDocumentsOutput:
         if self.client is None:
             raise RuntimeError(
                 "Slack Client is not set up, was load_credentials called?"
