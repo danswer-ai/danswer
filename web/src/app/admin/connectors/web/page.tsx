@@ -11,6 +11,7 @@ import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { Connector, WebConfig } from "@/lib/types";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
+import { linkCredential } from "@/lib/credential";
 
 export default function Web() {
   const { mutate } = useSWRConfig();
@@ -57,10 +58,11 @@ export default function Web() {
           initialValues={{
             base_url: "",
           }}
-          refreshFreq={10}
-          // refreshFreq={60 * 60 * 24} // 1 day
-          onSubmit={async (isSuccess) => {
-            if (isSuccess) {
+          refreshFreq={60 * 60 * 24} // 1 day
+          onSubmit={async (isSuccess, responseJson) => {
+            if (isSuccess && responseJson) {
+              // assumes there is a dummy credential with id 0
+              await linkCredential(responseJson.id, 0);
               mutate("/api/admin/connector");
             }
           }}
