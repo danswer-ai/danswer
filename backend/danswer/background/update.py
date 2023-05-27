@@ -114,7 +114,10 @@ def run_indexing_jobs(last_run_time: float, db_session: Session) -> None:
             document_ids: list[str] = []
             for doc_batch in doc_batch_generator:
                 # TODO introduce permissioning here
-                indexing_pipeline(doc_batch)
+                index_user_id = (
+                    None if db_credential.public_doc else db_credential.user_id
+                )
+                indexing_pipeline(documents=doc_batch, user_id=index_user_id)
                 document_ids.extend([doc.id for doc in doc_batch])
 
             mark_attempt_succeeded(attempt, document_ids, db_session)

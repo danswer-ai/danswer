@@ -13,16 +13,18 @@ from danswer.semantic_search.type_aliases import Embedder
 
 
 def _indexing_pipeline(
+    *,
     chunker: Chunker,
     embedder: Embedder,
     datastore: Datastore,
     documents: list[Document],
+    user_id: int | None,
 ) -> list[EmbeddedIndexChunk]:
     # TODO: make entire indexing pipeline async to not block the entire process
     # when running on async endpoints
     chunks = list(chain(*[chunker.chunk(document) for document in documents]))
     chunks_with_embeddings = embedder.embed(chunks)
-    datastore.index(chunks_with_embeddings)
+    datastore.index(chunks_with_embeddings, user_id)
     return chunks_with_embeddings
 
 
@@ -44,4 +46,6 @@ def build_indexing_pipeline(
     if datastore is None:
         datastore = QdrantDatastore()
 
-    return partial(_indexing_pipeline, chunker, embedder, datastore)
+    return partial(
+        _indexing_pipeline, chunker=chunker, embedder=embedder, datastore=datastore
+    )

@@ -79,7 +79,7 @@ class Connector(Base):
     )
     input_type = mapped_column(Enum(InputType, native_enum=False))
     connector_specific_config: Mapped[dict[str, Any]] = mapped_column(
-        postgresql.JSONB(), nullable=False
+        postgresql.JSONB()
     )
     refresh_freq: Mapped[int | None] = mapped_column(Integer, nullable=True)
     time_created: Mapped[datetime.datetime] = mapped_column(
@@ -104,10 +104,8 @@ class Credential(Base):
     __tablename__ = "credential"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    credential_json: Mapped[dict[str, Any]] = mapped_column(
-        postgresql.JSONB(), nullable=True
-    )
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=True)
+    credential_json: Mapped[dict[str, Any]] = mapped_column(postgresql.JSONB())
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     public_doc: Mapped[bool] = mapped_column(Boolean, default=False)
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
@@ -144,8 +142,10 @@ class IndexAttempt(Base):
     __tablename__ = "index_attempt"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    connector_id: Mapped[int] = mapped_column(ForeignKey("connector.id"), nullable=True)
-    credential_id: Mapped[int] = mapped_column(
+    connector_id: Mapped[int | None] = mapped_column(
+        ForeignKey("connector.id"), nullable=True
+    )
+    credential_id: Mapped[int | None] = mapped_column(
         ForeignKey("credential.id"), nullable=True
     )
     status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))

@@ -61,7 +61,7 @@ async def promote_admin(
 
 @router.get("/direct-qa", response_model=QAResponse)
 def direct_qa(
-    question: QAQuestion = Depends(), _: User = Depends(current_user)
+    question: QAQuestion = Depends(), user: User = Depends(current_user)
 ) -> QAResponse:
     start_time = time.time()
 
@@ -70,8 +70,9 @@ def direct_qa(
     filters = question.filters
     logger.info(f"Received semantic query: {query}")
 
+    user_id = None if user is None else int(user.id)
     ranked_chunks = retrieve_ranked_documents(
-        query, filters, create_datastore(collection)
+        query, user_id, filters, create_datastore(collection)
     )
     if not ranked_chunks:
         return QAResponse(answer=None, quotes=None, ranked_documents=None)
@@ -102,7 +103,7 @@ def direct_qa(
 
 @router.get("/stream-direct-qa")
 def stream_direct_qa(
-    question: QAQuestion = Depends(), _: User = Depends(current_user)
+    question: QAQuestion = Depends(), user: User = Depends(current_user)
 ) -> StreamingResponse:
     top_documents_key = "top_documents"
 
@@ -112,8 +113,9 @@ def stream_direct_qa(
         filters = question.filters
         logger.info(f"Received semantic query: {query}")
 
+        user_id = None if user is None else int(user.id)
         ranked_chunks = retrieve_ranked_documents(
-            query, filters, create_datastore(collection)
+            query, user_id, filters, create_datastore(collection)
         )
         if not ranked_chunks:
             yield get_json_line({top_documents_key: None})

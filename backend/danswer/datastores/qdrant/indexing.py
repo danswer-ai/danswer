@@ -7,6 +7,7 @@ from danswer.configs.constants import BLURB
 from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import DOCUMENT_ID
+from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
@@ -14,7 +15,9 @@ from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.model_configs import DOC_EMBEDDING_DIM
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logging import setup_logger
+from danswer.utils.timing import log_function_time
 from qdrant_client import QdrantClient
+from qdrant_client.http import models
 from qdrant_client.http.exceptions import ResponseHandlingException
 from qdrant_client.http.models.models import UpdateResult
 from qdrant_client.http.models.models import UpdateStatus
@@ -44,6 +47,44 @@ def create_collection(
         raise RuntimeError("Could not create Qdrant collection")
 
 
+@log_function_time()
+def get_document_whitelists(
+    doc_chunk_id: str, collection_name: str, q_client: QdrantClient
+) -> tuple[int, list[str], list[str]]:
+    results = q_client.retrieve(
+        collection_name=collection_name,
+        ids=[doc_chunk_id],
+        with_payload=[ALLOWED_USERS, ALLOWED_GROUPS],
+    )
+    if len(results) == 0:
+        return 0, [], []
+    payload = results[0].payload
+    if not payload:
+        raise RuntimeError(
+            "Qdrant Index is corrupted, Document found with no access lists."
+        )
+    return len(results), payload[ALLOWED_USERS], payload[ALLOWED_GROUPS]
+
+
+@log_function_time()
+def delete_doc_chunks(
+    document_id: str, collection_name: str, q_client: QdrantClient
+) -> None:
+    q_client.delete(
+        collection_name=collection_name,
+        points_selector=models.FilterSelector(
+            filter=models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key=DOCUMENT_ID,
+                        match=models.MatchValue(value=document_id),
+                    ),
+                ],
+            )
+        ),
+    )
+
+
 def recreate_collection(
     collection_name: str, embedding_dim: int = DOC_EMBEDDING_DIM
 ) -> None:
@@ -63,18 +104,47 @@ def get_uuid_from_chunk(chunk: EmbeddedIndexChunk) -> uuid.UUID:
 
 def index_chunks(
     chunks: list[EmbeddedIndexChunk],
+    user_id: int | None,
     collection: str,
     client: QdrantClient | None = None,
     batch_upsert: bool = True,
 ) -> bool:
+    # Public documents will have the PUBLIC string in ALLOWED_USERS
+    # If credential that kicked this off has no user associated, either Auth is off or the doc is public
+    user_str = PUBLIC_DOC_PAT if user_id is None else str(user_id)
     q_client: QdrantClient = client if client else get_qdrant_client()
 
     point_structs = []
+    # Maps document id to dict of whitelists for users/groups each containing list of users/groups as strings
+    doc_user_map: dict[str, dict[str, list[str]]] = {}
     for chunk in chunks:
+        chunk_uuid = str(get_uuid_from_chunk(chunk))
         document = chunk.source_document
+
+        if document.id not in doc_user_map:
+            num_doc_chunks, whitelist_users, whitelist_groups = get_document_whitelists(
+                chunk_uuid, collection, q_client
+            )
+            if num_doc_chunks == 0:
+                doc_user_map[document.id] = {
+                    ALLOWED_USERS: [user_str],
+                    # TODO introduce groups logic here
+                    ALLOWED_GROUPS: whitelist_groups,
+                }
+            else:
+                if user_str not in whitelist_users:
+                    whitelist_users.append(user_str)
+                # TODO introduce groups logic here
+                doc_user_map[document.id] = {
+                    ALLOWED_USERS: whitelist_users,
+                    ALLOWED_GROUPS: whitelist_groups,
+                }
+                # Need to delete document chunks because number of chunks may decrease
+                delete_doc_chunks(document.id, collection, q_client)
+
         point_structs.append(
             PointStruct(
-                id=str(get_uuid_from_chunk(chunk)),
+                id=chunk_uuid,
                 payload={
                     DOCUMENT_ID: document.id,
                     CHUNK_ID: chunk.chunk_id,
@@ -84,8 +154,8 @@ def index_chunks(
                     SOURCE_LINKS: chunk.source_links,
                     SEMANTIC_IDENTIFIER: document.semantic_identifier,
                     SECTION_CONTINUATION: chunk.section_continuation,
-                    ALLOWED_USERS: [],  # TODO
-                    ALLOWED_GROUPS: [],  # TODO
+                    ALLOWED_USERS: doc_user_map[document.id][ALLOWED_USERS],
+                    ALLOWED_GROUPS: doc_user_map[document.id][ALLOWED_GROUPS],
                 },
                 vector=chunk.embedding,
             )

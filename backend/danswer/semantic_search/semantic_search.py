@@ -80,11 +80,12 @@ def semantic_reranking(
 @log_function_time()
 def retrieve_ranked_documents(
     query: str,
+    user_id: int | None,
     filters: list[DatastoreFilter] | None,
     datastore: Datastore,
     num_hits: int = NUM_RETURNED_HITS,
 ) -> list[InferenceChunk] | None:
-    top_chunks = datastore.semantic_retrieval(query, filters, num_hits)
+    top_chunks = datastore.semantic_retrieval(query, user_id, filters, num_hits)
     if not top_chunks:
         filters_log_msg = json.dumps(filters, separators=(",", ":")).replace("\n", "")
         logger.warning(
