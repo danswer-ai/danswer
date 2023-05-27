@@ -1,1 +1,3 @@
-export const AttachCredentialPopup = () => {};
+export const AttachCredentialPopup = () => {
+  return <div></div>;
+};

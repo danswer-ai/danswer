@@ -68,7 +68,7 @@ export const GithubConnectorsTable = ({
             return {
               credential: hasValidCredentials ? (
                 <p className="max-w-sm truncate">
-                  {liveCredential.credential_json.github_token}
+                  {liveCredential.credential_json.github_access_token}
                 </p>
               ) : liveCredential ? (
                 <AttachCredentialButtonForTable
@@ -78,7 +78,9 @@ export const GithubConnectorsTable = ({
                 <p className="text-red-700">N/A</p>
               ),
               repository: `${connector.connector_specific_config.repo_owner}/${connector.connector_specific_config.repo_name}`,
-              status: hasValidCredentials ? (
+              status: connector.disabled ? (
+                <div className="text-red-700">Disabled</div>
+              ) : hasValidCredentials ? (
                 <div className="text-emerald-600">Running!</div>
               ) : (
                 <div className="text-red-700">Missing Credentials</div>

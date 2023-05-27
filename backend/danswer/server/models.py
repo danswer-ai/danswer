@@ -3,11 +3,13 @@ from typing import Any
 from typing import Generic
 from typing import Literal
 from typing import Optional
+from typing import TYPE_CHECKING
 from typing import TypeVar
 
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
 from danswer.datastores.interfaces import DatastoreFilter
+from danswer.db.models import Connector
 from danswer.db.models import IndexingStatus
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
@@ -97,6 +99,32 @@ class ConnectorSnapshot(ConnectorBase):
     credential_ids: list[int]
     time_created: datetime
     time_updated: datetime
+
+    @classmethod
+    def from_connector_db_model(cls, connector: Connector) -> "ConnectorSnapshot":
+        return ConnectorSnapshot(
+            id=connector.id,
+            name=connector.name,
+            source=connector.source,
+            input_type=connector.input_type,
+            connector_specific_config=connector.connector_specific_config,
+            refresh_freq=connector.refresh_freq,
+            credential_ids=[
+                association.credential.id for association in connector.credentials
+            ],
+            time_created=connector.time_created,
+            time_updated=connector.time_updated,
+            disabled=connector.disabled,
+        )
+
+
+class ConnectorIndexingStatus(BaseModel):
+    """Represents the latest indexing status of a connector"""
+
+    connector: ConnectorSnapshot
+    last_status: IndexingStatus
+    last_success: datetime | None
+    docs_indexed: int
 
 
 class RunConnectorRequest(BaseModel):

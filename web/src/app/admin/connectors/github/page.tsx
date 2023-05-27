@@ -52,7 +52,7 @@ const Main = () => {
     (connector) => connector.source === "github"
   );
   const githubCredential = credentialsData.filter(
-    (credential) => credential.credential_json?.github_token
+    (credential) => credential.credential_json?.github_access_token
   )[0];
 
   return (
@@ -66,7 +66,7 @@ const Main = () => {
           <div className="flex mb-1 text-sm">
             <p className="my-auto">Existing Access Token: </p>
             <p className="ml-1 italic my-auto">
-              {githubCredential.credential_json.github_token}
+              {githubCredential.credential_json.github_access_token}
             </p>{" "}
             <button
               className="ml-1 hover:bg-gray-700 rounded-full p-1"
@@ -96,19 +96,19 @@ const Main = () => {
               formBody={
                 <>
                   <TextFormField
-                    name="github_token"
+                    name="github_access_token"
                     label="Access Token:"
                     type="password"
                   />
                 </>
               }
               validationSchema={Yup.object().shape({
-                github_token: Yup.string().required(
+                github_access_token: Yup.string().required(
                   "Please enter the access token for Github"
                 ),
               })}
               initialValues={{
-                github_token: "",
+                github_access_token: "",
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
@@ -176,7 +176,7 @@ const Main = () => {
               repo_name: "",
             }
           }
-          refreshFreq={10}
+          refreshFreq={10 * 60} // 10 minutes
           onSubmit={async (isSuccess, responseJson) => {
             if (isSuccess && responseJson) {
               await linkCredential(responseJson.id, githubCredential.id);

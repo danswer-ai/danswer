@@ -7,28 +7,28 @@ import { LoadingAnimation } from "@/components/Loading";
 import { timeAgo } from "@/lib/time";
 import { NotebookIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
-import { IndexAttempt } from "@/components/admin/connectors/types";
 import { getSourceMetadata } from "@/components/source";
 import { CheckCircle, XCircle } from "@phosphor-icons/react";
 import { submitIndexRequest } from "@/components/admin/connectors/IndexForm";
 import { useState } from "react";
 import { Popup } from "@/components/admin/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
+import { Connector, ConnectorIndexingStatus } from "@/lib/types";
 
-const getSourceDisplay = (indexAttempt: IndexAttempt) => {
-  const sourceMetadata = getSourceMetadata(indexAttempt.source);
-  if (indexAttempt.source === "web") {
+const getSourceDisplay = (connector: Connector<any>) => {
+  const sourceMetadata = getSourceMetadata(connector.source);
+  if (connector.source === "web") {
     return (
       sourceMetadata.displayName +
-      (indexAttempt.connector_specific_config?.base_url &&
-        ` [${indexAttempt.connector_specific_config?.base_url}]`)
+      (connector.connector_specific_config?.base_url &&
+        ` [${connector.connector_specific_config?.base_url}]`)
     );
   }
 
-  if (indexAttempt.source === "github") {
+  if (connector.source === "github") {
     return (
       sourceMetadata.displayName +
-      ` [${indexAttempt.connector_specific_config?.repo_owner}/${indexAttempt.connector_specific_config?.repo_name}]`
+      ` [${connector.connector_specific_config?.repo_owner}/${connector.connector_specific_config?.repo_name}]`
     );
   }
 
@@ -41,7 +41,10 @@ export default function Status() {
     data: indexAttemptData,
     isLoading: indexAttemptIsLoading,
     error: indexAttemptIsError,
-  } = useSWR<IndexAttempt[]>("/api/admin/latest-index-attempt", fetcher);
+  } = useSWR<ConnectorIndexingStatus<any>[]>(
+    "/api/admin/connector/indexing-status",
+    fetcher
+  );
 
   const [popup, setPopup] = useState<{
     message: string;
@@ -72,19 +75,21 @@ export default function Status() {
             { header: "Docs Indexed", key: "docs_indexed" },
             { header: "Re-Index", key: "reindex" },
           ]}
-          data={indexAttemptData.map((indexAttempt) => {
-            const sourceMetadata = getSourceMetadata(indexAttempt.source);
+          data={indexAttemptData.map((connectorIndexingStatus) => {
+            const sourceMetadata = getSourceMetadata(
+              connectorIndexingStatus.connector.source
+            );
             let statusDisplay = (
               <div className="text-gray-400">In Progress...</div>
             );
-            if (indexAttempt.status === "success") {
+            if (connectorIndexingStatus.last_status === "success") {
               statusDisplay = (
                 <div className="text-green-600 flex">
                   <CheckCircle className="my-auto mr-1" size="18" />
                   Success
                 </div>
               );
-            } else if (indexAttempt.status === "failed") {
+            } else if (connectorIndexingStatus.last_status === "failed") {
               statusDisplay = (
                 <div className="text-red-600 flex">
                   <XCircle className="my-auto mr-1" size="18" />
@@ -93,9 +98,9 @@ export default function Status() {
               );
             }
             return {
-              indexed_at: timeAgo(indexAttempt?.time_updated) || "-",
-              docs_indexed: indexAttempt?.docs_indexed
-                ? `${indexAttempt?.docs_indexed} documents`
+              indexed_at: timeAgo(connectorIndexingStatus?.last_success) || "-",
+              docs_indexed: connectorIndexingStatus?.docs_indexed
+                ? `${connectorIndexingStatus?.docs_indexed} documents`
                 : "-",
               connector: (
                 <a
@@ -103,7 +108,9 @@ export default function Status() {
                   href={sourceMetadata.adminPageLink}
                 >
                   {sourceMetadata.icon({ size: "20" })}
-                  <div className="ml-1">{getSourceDisplay(indexAttempt)}</div>
+                  <div className="ml-1">
+                    {getSourceDisplay(connectorIndexingStatus.connector)}
+                  </div>
                 </a>
               ),
               status: statusDisplay,
@@ -118,8 +125,9 @@ export default function Status() {
                   }
                   onClick={async () => {
                     const { message, isSuccess } = await submitIndexRequest(
-                      indexAttempt.source,
-                      indexAttempt.connector_specific_config
+                      connectorIndexingStatus.connector.source,
+                      connectorIndexingStatus.connector
+                        .connector_specific_config
                     );
                     setPopup({
                       message,

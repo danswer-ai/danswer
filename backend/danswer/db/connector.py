@@ -9,7 +9,10 @@ from danswer.server.models import ConnectorBase
 from danswer.server.models import ObjectCreationIdResponse
 from danswer.server.models import StatusResponse
 from danswer.utils.logging import setup_logger
+from sqlalchemy import and_
+from sqlalchemy import func
 from sqlalchemy import select
+from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Session
 
 logger = setup_logger()
@@ -270,3 +273,30 @@ def fetch_latest_index_attempt_by_connector(
             latest_index_attempts.append(latest_index_attempt)
 
     return latest_index_attempts
+
+
+def fetch_latest_index_attempts_by_status(
+    db_session: Session,
+) -> list[IndexAttempt]:
+    subquery = (
+        db_session.query(
+            IndexAttempt.connector_id,
+            IndexAttempt.status,
+            func.max(IndexAttempt.time_updated).label("time_updated"),
+        )
+        .group_by(IndexAttempt.connector_id)
+        .group_by(IndexAttempt.status)
+        .subquery()
+    )
+
+    alias = aliased(IndexAttempt, subquery)
+
+    query = db_session.query(IndexAttempt).join(
+        alias,
+        and_(
+            IndexAttempt.connector_id == alias.connector_id,
+            IndexAttempt.status == alias.status,
+            IndexAttempt.time_updated == alias.time_updated,
+        ),
+    )
+    return query.all()

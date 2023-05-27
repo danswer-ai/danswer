@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import cast
 
 from danswer.auth.users import current_admin_user
@@ -20,6 +21,7 @@ from danswer.db.connector import delete_connector
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector import fetch_latest_index_attempt_by_connector
+from danswer.db.connector import fetch_latest_index_attempts_by_status
 from danswer.db.connector import get_connector_credential_ids
 from danswer.db.connector import remove_credential_from_connector
 from danswer.db.connector import update_connector
@@ -31,6 +33,8 @@ from danswer.db.credentials import fetch_credentials
 from danswer.db.credentials import update_credential
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import create_index_attempt
+from danswer.db.models import IndexAttempt
+from danswer.db.models import IndexingStatus
 from danswer.db.models import User
 from danswer.direct_qa.key_validation import check_openai_api_key_is_valid
 from danswer.direct_qa.question_answer import get_openai_api_key
@@ -40,6 +44,7 @@ from danswer.server.models import ApiKey
 from danswer.server.models import AuthStatus
 from danswer.server.models import AuthUrl
 from danswer.server.models import ConnectorBase
+from danswer.server.models import ConnectorIndexingStatus
 from danswer.server.models import ConnectorSnapshot
 from danswer.server.models import CredentialBase
 from danswer.server.models import CredentialSnapshot
@@ -165,22 +170,59 @@ def get_connectors(
 ) -> list[ConnectorSnapshot]:
     connectors = fetch_connectors(db_session)
     return [
-        ConnectorSnapshot(
-            id=connector.id,
-            name=connector.name,
-            source=connector.source,
-            input_type=connector.input_type,
-            connector_specific_config=connector.connector_specific_config,
-            refresh_freq=connector.refresh_freq,
-            credential_ids=[
-                association.credential.id for association in connector.credentials
-            ],
-            time_created=connector.time_created,
-            time_updated=connector.time_updated,
-            disabled=connector.disabled,
-        )
-        for connector in connectors
+        ConnectorSnapshot.from_connector_db_model(connector) for connector in connectors
     ]
+
+
+@router.get("/connector/indexing-status")
+def get_connectors_indexing_status(
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> list[ConnectorIndexingStatus]:
+    connector_id_to_connector = {
+        connector.id: connector for connector in fetch_connectors(db_session)
+    }
+    index_attempts = fetch_latest_index_attempts_by_status(db_session)
+    connector_to_index_attempts: dict[int, list[IndexAttempt]] = defaultdict(list)
+    for index_attempt in index_attempts:
+        connector_to_index_attempts[index_attempt.connector_id].append(index_attempt)
+
+    indexing_statuses: list[ConnectorIndexingStatus] = []
+    for connector_id, index_attempts in connector_to_index_attempts.items():
+        # NOTE: index_attempts is guaranteed to be length > 0
+        connector = connector_id_to_connector[connector_id]
+        index_attempts_sorted = sorted(index_attempts, key=lambda x: x.time_updated)
+        successful_index_attempts_sorted = [
+            index_attempt
+            for index_attempt in index_attempts_sorted
+            if index_attempt.status == IndexingStatus.SUCCESS
+        ]
+        indexing_statuses.append(
+            ConnectorIndexingStatus(
+                connector=ConnectorSnapshot.from_connector_db_model(connector),
+                last_status=index_attempts_sorted[0].status,
+                last_success=successful_index_attempts_sorted[0].time_updated
+                if successful_index_attempts_sorted
+                else None,
+                docs_indexed=len(successful_index_attempts_sorted[0].document_ids)
+                if successful_index_attempts_sorted
+                else 0,
+            ),
+        )
+
+    # add in the connector that haven't started indexing yet
+    for connector in connector_id_to_connector.values():
+        if connector.id not in connector_to_index_attempts:
+            indexing_statuses.append(
+                ConnectorIndexingStatus(
+                    connector=ConnectorSnapshot.from_connector_db_model(connector),
+                    last_status=IndexingStatus.NOT_STARTED,
+                    last_success=None,
+                    docs_indexed=0,
+                ),
+            )
+
+    return indexing_statuses
 
 
 @router.get(

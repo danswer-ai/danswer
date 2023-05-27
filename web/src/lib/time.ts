@@ -1,4 +1,6 @@
-export const timeAgo = (dateString: string | undefined): string | null => {
+export const timeAgo = (
+  dateString: string | undefined | null
+): string | null => {
   if (!dateString) {
     return null;
   }
