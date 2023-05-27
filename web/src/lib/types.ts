@@ -45,6 +45,10 @@ export interface ConfluenceConfig {
   wiki_page_url: string;
 }
 
+export interface SlackConfig {
+  workspace: string;
+}
+
 export interface ConnectorIndexingStatus<T> {
   connector: Connector<T>;
   last_status: "success" | "failed" | "in_progress" | "not_started";
@@ -72,4 +76,8 @@ export interface GithubCredentialJson {
 export interface ConfluenceCredentialJson {
   confluence_username: string;
   confluence_access_token: string;
+}
+
+export interface SlackCredentialJson {
+  slack_bot_token: string
 }

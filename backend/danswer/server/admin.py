@@ -12,9 +12,6 @@ from danswer.connectors.google_drive.connector_auth import (
 )
 from danswer.connectors.google_drive.connector_auth import upsert_google_app_cred
 from danswer.connectors.google_drive.connector_auth import verify_csrf
-from danswer.connectors.slack.config import get_slack_config
-from danswer.connectors.slack.config import SlackConfig
-from danswer.connectors.slack.config import update_slack_config
 from danswer.db.connector import add_credential_to_connector
 from danswer.db.connector import connector_not_found_response
 from danswer.db.connector import create_connector
@@ -122,21 +119,6 @@ def google_drive_callback(
             success=False, message="Unable to fetch Google Drive access tokens"
         )
     return StatusResponse(success=True, message="Updated Google Drive access tokens")
-
-
-@router.get("/connector/slack/config", response_model=SlackConfig)
-def fetch_slack_config(_: User = Depends(current_admin_user)) -> SlackConfig:
-    try:
-        return get_slack_config()
-    except ConfigNotFoundError:
-        return SlackConfig(slack_bot_token="", workspace_id="")
-
-
-@router.post("/connector/slack/config")
-def modify_slack_config(
-    slack_config: SlackConfig, _: User = Depends(current_admin_user)
-) -> None:
-    update_slack_config(slack_config)
 
 
 @router.get("/latest-index-attempt", response_model=list[IndexAttemptSnapshot])

@@ -17,7 +17,7 @@ interface Props<ConnectorConfigType, ConnectorCredentialType> {
   liveCredential: Credential<ConnectorCredentialType> | null;
   getCredential?: (
     credential: Credential<ConnectorCredentialType>
-  ) => JSX.Element;
+  ) => JSX.Element | string;
   onDelete: () => void;
   onCredentialLink?: (connectorId: number) => void;
   specialColumns?: ColumnSpecification<ConnectorConfigType>[];

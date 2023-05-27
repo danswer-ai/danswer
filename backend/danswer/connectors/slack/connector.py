@@ -137,13 +137,15 @@ def get_thread(client: WebClient, channel_id: str, thread_id: str) -> ThreadType
     return threads
 
 
-def thread_to_doc(channel: ChannelType, thread: ThreadType) -> Document:
+def thread_to_doc(workspace: str, channel: ChannelType, thread: ThreadType) -> Document:
     channel_id = channel["id"]
     return Document(
         id=f"{channel_id}__{thread[0]['ts']}",
         sections=[
             Section(
-                link=get_message_link(m, channel_id=channel_id),
+                link=get_message_link(
+                    event=m, workspace=workspace, channel_id=channel_id
+                ),
                 text=cast(str, m["text"]),
             )
             for m in thread
@@ -160,6 +162,7 @@ def _default_msg_filter(message: MessageType) -> bool:
 
 def get_all_docs(
     client: WebClient,
+    workspace: str,
     oldest: str | None = None,
     latest: str | None = None,
     msg_filter_func: Callable[[MessageType], bool] = _default_msg_filter,
@@ -195,68 +198,77 @@ def get_all_docs(
     docs: list[Document] = []
     for channel_id, threads in channel_id_to_threads.items():
         docs.extend(
-            thread_to_doc(channel=channel_id_to_channel_info[channel_id], thread=thread)
+            thread_to_doc(
+                workspace=workspace,
+                channel=channel_id_to_channel_info[channel_id],
+                thread=thread,
+            )
             for thread in threads
         )
     logger.info(f"Pulled {len(docs)} documents from slack")
     return docs
 
 
-def _process_batch_event(
-    slack_event: dict[str, Any],
-    channel: dict[str, Any],
-    matching_doc: Document | None,
-    workspace: str | None = None,
-) -> Document | None:
-    if (
-        slack_event["type"] == "message"
-        and slack_event.get("subtype") != "channel_join"
-    ):
-        if matching_doc:
-            return Document(
-                id=matching_doc.id,
-                sections=matching_doc.sections
-                + [
-                    Section(
-                        link=get_message_link(
-                            slack_event, workspace=workspace, channel_id=channel["id"]
-                        ),
-                        text=slack_event["text"],
-                    )
-                ],
-                source=matching_doc.source,
-                semantic_identifier=matching_doc.semantic_identifier,
-                metadata=matching_doc.metadata,
-            )
-
-        return Document(
-            id=slack_event["ts"],
-            sections=[
-                Section(
-                    link=get_message_link(
-                        slack_event, workspace=workspace, channel_id=channel["id"]
-                    ),
-                    text=slack_event["text"],
-                )
-            ],
-            source=DocumentSource.SLACK,
-            semantic_identifier=channel["name"],
-            metadata={},
-        )
-
-    return None
-
-
 class SlackLoadConnector(LoadConnector):
     def __init__(
-        self, export_path_str: str, batch_size: int = INDEX_BATCH_SIZE
+        self, workspace: str, export_path_str: str, batch_size: int = INDEX_BATCH_SIZE
     ) -> None:
+        self.workspace = workspace
         self.export_path_str = export_path_str
         self.batch_size = batch_size
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         if credentials:
             logger.warning("Unexpected credentials provided for Slack Load Connector")
+        return None
+
+    @staticmethod
+    def _process_batch_event(
+        slack_event: dict[str, Any],
+        channel: dict[str, Any],
+        matching_doc: Document | None,
+        workspace: str,
+    ) -> Document | None:
+        if (
+            slack_event["type"] == "message"
+            and slack_event.get("subtype") != "channel_join"
+        ):
+            if matching_doc:
+                return Document(
+                    id=matching_doc.id,
+                    sections=matching_doc.sections
+                    + [
+                        Section(
+                            link=get_message_link(
+                                event=slack_event,
+                                workspace=workspace,
+                                channel_id=channel["id"],
+                            ),
+                            text=slack_event["text"],
+                        )
+                    ],
+                    source=matching_doc.source,
+                    semantic_identifier=matching_doc.semantic_identifier,
+                    metadata=matching_doc.metadata,
+                )
+
+            return Document(
+                id=slack_event["ts"],
+                sections=[
+                    Section(
+                        link=get_message_link(
+                            event=slack_event,
+                            workspace=workspace,
+                            channel_id=channel["id"],
+                        ),
+                        text=slack_event["text"],
+                    )
+                ],
+                source=DocumentSource.SLACK,
+                semantic_identifier=channel["name"],
+                metadata={},
+            )
+
         return None
 
     def load_from_state(self) -> GenerateDocumentsOutput:
@@ -276,12 +288,13 @@ class SlackLoadConnector(LoadConnector):
                 with open(path) as f:
                     events = cast(list[dict[str, Any]], json.load(f))
                 for slack_event in events:
-                    doc = _process_batch_event(
+                    doc = self._process_batch_event(
                         slack_event=slack_event,
                         channel=channel_info,
                         matching_doc=document_batch.get(
                             slack_event.get("thread_ts", "")
                         ),
+                        workspace=self.workspace,
                     )
                     if doc:
                         document_batch[doc.id] = doc
@@ -292,7 +305,8 @@ class SlackLoadConnector(LoadConnector):
 
 
 class SlackPollConnector(PollConnector):
-    def __init__(self, batch_size: int = INDEX_BATCH_SIZE) -> None:
+    def __init__(self, workspace: str, batch_size: int = INDEX_BATCH_SIZE) -> None:
+        self.workspace = workspace
         self.batch_size = batch_size
         self.client: WebClient | None = None
 
@@ -308,6 +322,11 @@ class SlackPollConnector(PollConnector):
             raise PermissionError(
                 "Slack Client is not set up, was load_credentials called?"
             )
-        all_docs = get_all_docs(client=self.client, oldest=str(start), latest=str(end))
+        all_docs = get_all_docs(
+            client=self.client,
+            workspace=self.workspace,
+            oldest=str(start),
+            latest=str(end),
+        )
         for i in range(0, len(all_docs), self.batch_size):
             yield all_docs[i : i + self.batch_size]
