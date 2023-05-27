@@ -69,6 +69,11 @@ def run_indexing_jobs(last_run_time: float, db_session: Session) -> None:
     new_indexing_attempts = get_not_started_index_attempts(db_session)
     logger.info(f"Found {len(new_indexing_attempts)} new indexing tasks.")
     for attempt in new_indexing_attempts:
+        logger.info(
+            f"Starting new indexing attempt for connector: '{attempt.connector.name}', "
+            f"with config: '{attempt.connector.connector_specific_config}', and "
+            f" with credentials: '{[c.credential_id for c in attempt.connector.credentials]}'"
+        )
         mark_attempt_in_progress(attempt, db_session)
 
         db_connector = attempt.connector
