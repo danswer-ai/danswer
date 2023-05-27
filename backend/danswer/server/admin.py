@@ -212,7 +212,9 @@ def get_connectors_indexing_status(
     for connector_id, index_attempts in connector_to_index_attempts.items():
         # NOTE: index_attempts is guaranteed to be length > 0
         connector = connector_id_to_connector[connector_id]
-        index_attempts_sorted = sorted(index_attempts, key=lambda x: x.time_updated)
+        index_attempts_sorted = sorted(
+            index_attempts, key=lambda x: x.time_updated, reverse=True
+        )
         successful_index_attempts_sorted = [
             index_attempt
             for index_attempt in index_attempts_sorted

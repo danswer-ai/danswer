@@ -13,7 +13,7 @@ import { submitIndexRequest } from "@/components/admin/connectors/IndexForm";
 import { useState } from "react";
 import { Popup } from "@/components/admin/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { Connector, ConnectorIndexingStatus } from "@/lib/types";
+import { Connector, ConnectorIndexingStatus, GithubConfig } from "@/lib/types";
 
 const getSourceDisplay = (connector: Connector<any>) => {
   const sourceMetadata = getSourceMetadata(connector.source);
@@ -29,6 +29,13 @@ const getSourceDisplay = (connector: Connector<any>) => {
     return (
       sourceMetadata.displayName +
       ` [${connector.connector_specific_config?.repo_owner}/${connector.connector_specific_config?.repo_name}]`
+    );
+  }
+
+  if (connector.source === "confluence") {
+    return (
+      sourceMetadata.displayName +
+      ` [${connector.connector_specific_config?.wiki_page_url}]`
     );
   }
 

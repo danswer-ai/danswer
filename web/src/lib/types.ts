@@ -37,6 +37,10 @@ export interface GithubConfig {
   repo_name: string;
 }
 
+export interface ConfluenceConfig {
+  wiki_page_url: string;
+}
+
 export interface ConnectorIndexingStatus<T> {
   connector: Connector<T>;
   last_status: "success" | "failed" | "in_progress" | "not_started";
@@ -59,4 +63,9 @@ export interface Credential<T> extends CredentialBase<T> {
 
 export interface GithubCredentialJson {
   github_access_token: string;
+}
+
+export interface ConfluenceCredentialJson {
+  confluence_username: string;
+  confluence_access_token: string;
 }

@@ -1,0 +1,124 @@
+import {
+  Connector,
+  Credential,
+  ConfluenceConfig,
+  ConfluenceCredentialJson,
+} from "@/lib/types";
+import { BasicTable } from "@/components/admin/connectors/BasicTable";
+import { Popup } from "@/components/admin/connectors/Popup";
+import { useState } from "react";
+import { TrashIcon } from "@/components/icons/icons";
+import { deleteConnector } from "@/lib/connector";
+import { AttachCredentialButtonForTable } from "@/components/admin/connectors/buttons/AttachCredentialButtonForTable";
+
+interface Props {
+  connectors: Connector<ConfluenceConfig>[];
+  liveCredential: Credential<ConfluenceCredentialJson> | null;
+  onDelete: () => void;
+  onCredentialLink: (connectorId: number) => void;
+}
+
+export const ConfluenceConnectorsTable = ({
+  connectors,
+  liveCredential,
+  onDelete,
+  onCredentialLink,
+}: Props) => {
+  const [popup, setPopup] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+
+  return (
+    <>
+      {popup && <Popup message={popup.message} type={popup.type} />}
+      <BasicTable
+        columns={[
+          {
+            header: "Url",
+            key: "url",
+          },
+          {
+            header: "Status",
+            key: "status",
+          },
+          {
+            header: "Credential",
+            key: "credential",
+          },
+          // {
+          //   header: "Force Index",
+          //   key: "index",
+          // },
+          {
+            header: "Remove",
+            key: "remove",
+          },
+        ]}
+        data={connectors.map((connector) => {
+          const hasValidCredentials =
+            liveCredential &&
+            connector.credential_ids.includes(liveCredential.id);
+          return {
+            credential: hasValidCredentials ? (
+              <p className="max-w-sm truncate">
+                {liveCredential.credential_json.confluence_username}
+              </p>
+            ) : liveCredential ? (
+              <AttachCredentialButtonForTable
+                onClick={() => onCredentialLink(connector.id)}
+              />
+            ) : (
+              <p className="text-red-700">N/A</p>
+            ),
+            url: connector.connector_specific_config.wiki_page_url,
+            status: connector.disabled ? (
+              <div className="text-red-700">Disabled</div>
+            ) : hasValidCredentials ? (
+              <div className="text-emerald-600">Running!</div>
+            ) : (
+              <div className="text-red-700">Missing Credentials</div>
+            ),
+            remove: (
+              <div
+                className="cursor-pointer mx-auto"
+                onClick={() => {
+                  deleteConnector(connector.id).then(() => {
+                    setPopup({
+                      message: "Successfully deleted connector",
+                      type: "success",
+                    });
+                    setTimeout(() => {
+                      setPopup(null);
+                    }, 3000);
+                    onDelete();
+                  });
+                }}
+              >
+                <TrashIcon />
+              </div>
+            ),
+          };
+          // index: (
+          //   <IndexButtonForTable
+          //     onClick={async () => {
+          //       const { message, isSuccess } = await submitIndexRequest(
+          //         connector.source,
+          //         connector.connector_specific_config
+          //       );
+          //       setPopup({
+          //         message,
+          //         type: isSuccess ? "success" : "error",
+          //       });
+          //       setTimeout(() => {
+          //         setPopup(null);
+          //       }, 3000);
+          //       mutate("/api/admin/connector/index-attempt");
+          //     }}
+          //   />
+          // ),
+        })}
+      />
+    </>
+  );
+};
