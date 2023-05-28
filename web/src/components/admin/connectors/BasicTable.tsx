@@ -16,7 +16,7 @@ interface BasicTableProps {
 
 export const BasicTable: FC<BasicTableProps> = ({ columns, data }) => {
   return (
-    <div className="overflow-x-auto">
+    <div>
       <table className="w-full table-auto">
         <thead>
           <tr className="text-left bg-gray-700">

@@ -94,7 +94,7 @@ export default function Web() {
               ),
             },
           ]}
-          onDelete={() => mutate("/api/admin/connector")}
+          onUpdate={() => mutate("/api/admin/connector")}
         />
       ) : (
         <p className="text-sm">No indexed websites found</p>

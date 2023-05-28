@@ -5,7 +5,7 @@ import useSWR, { useSWRConfig } from "swr";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { LoadingAnimation } from "@/components/Loading";
 import { timeAgo } from "@/lib/time";
-import { NotebookIcon } from "@/components/icons/icons";
+import { NotebookIcon, XSquareIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
 import { getSourceMetadata } from "@/components/source";
 import { CheckCircle, XCircle } from "@phosphor-icons/react";
@@ -13,7 +13,7 @@ import { submitIndexRequest } from "@/components/admin/connectors/IndexForm";
 import { useState } from "react";
 import { Popup } from "@/components/admin/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { Connector, ConnectorIndexingStatus, GithubConfig } from "@/lib/types";
+import { Connector, ConnectorIndexingStatus } from "@/lib/types";
 
 const getSourceDisplay = (connector: Connector<any>) => {
   const sourceMetadata = getSourceMetadata(connector.source);
@@ -89,7 +89,14 @@ export default function Status() {
             let statusDisplay = (
               <div className="text-gray-400">In Progress...</div>
             );
-            if (connectorIndexingStatus.last_status === "success") {
+            if (connectorIndexingStatus.connector.disabled) {
+              statusDisplay = (
+                <div className="text-red-600 flex">
+                  <XSquareIcon className="my-auto mr-1" size="18" />
+                  Disabled
+                </div>
+              );
+            } else if (connectorIndexingStatus.last_status === "success") {
               statusDisplay = (
                 <div className="text-green-600 flex">
                   <CheckCircle className="my-auto mr-1" size="18" />

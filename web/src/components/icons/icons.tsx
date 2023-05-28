@@ -1,6 +1,14 @@
 "use client";
 
-import { Notebook, Key, Trash, Info } from "@phosphor-icons/react";
+import {
+  Notebook,
+  Key,
+  Trash,
+  Info,
+  XSquare,
+  LinkBreak,
+  Link,
+} from "@phosphor-icons/react";
 import { SiConfluence, SiGithub, SiGoogledrive, SiSlack } from "react-icons/si";
 import { FaGlobe } from "react-icons/fa";
 
@@ -30,6 +38,27 @@ export const TrashIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <Trash size={size} className={className} />;
+};
+
+export const LinkBreakIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <LinkBreak size={size} className={className} />;
+};
+
+export const LinkIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <Link size={size} className={className} />;
+};
+
+export const XSquareIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <XSquare size={size} className={className} />;
 };
 
 export const GlobeIcon = ({

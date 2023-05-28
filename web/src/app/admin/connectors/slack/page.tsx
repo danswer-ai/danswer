@@ -135,15 +135,18 @@ const MainSection = () => {
             <ConnectorsTable
               connectors={slackConnectors}
               liveCredential={slackCredential}
-              getCredential={(credential) => credential.credential_json.slack_bot_token}
+              getCredential={(credential) =>
+                credential.credential_json.slack_bot_token
+              }
               specialColumns={[
                 {
                   header: "Workspace",
                   key: "workspace",
-                  getValue: (connector) => connector.connector_specific_config.workspace,
+                  getValue: (connector) =>
+                    connector.connector_specific_config.workspace,
                 },
               ]}
-              onDelete={() => mutate("/api/admin/connector")}
+              onUpdate={() => mutate("/api/admin/connector")}
               onCredentialLink={async (connectorId) => {
                 if (slackCredential) {
                   await linkCredential(connectorId, slackCredential.id);

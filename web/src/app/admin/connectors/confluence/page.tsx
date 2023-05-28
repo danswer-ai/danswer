@@ -15,8 +15,8 @@ import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { LoadingAnimation } from "@/components/Loading";
 import { deleteCredential, linkCredential } from "@/lib/credential";
-import { ConfluenceConnectorsTable } from "./ConnectorsTable";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
+import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 
 const Main = () => {
   const { mutate } = useSWRConfig();
@@ -167,16 +167,40 @@ const Main = () => {
             every <b>10</b> minutes.
           </p>
           <div className="mb-2">
-            <ConfluenceConnectorsTable
+            <ConnectorsTable<ConfluenceConfig, ConfluenceCredentialJson>
               connectors={confluenceConnectors}
               liveCredential={confluenceCredential}
-              onDelete={() => mutate("/api/admin/connector")}
+              getCredential={(credential) => {
+                return (
+                  <div>
+                    <p className="mb-0.5">
+                      {credential.credential_json.confluence_username}
+                    </p>
+                    <p>{credential.credential_json.confluence_access_token}</p>
+                  </div>
+                );
+              }}
               onCredentialLink={async (connectorId) => {
                 if (confluenceCredential) {
                   await linkCredential(connectorId, confluenceCredential.id);
                   mutate("/api/admin/connector");
                 }
               }}
+              specialColumns={[
+                {
+                  header: "Url",
+                  key: "url",
+                  getValue: (connector) => (
+                    <a
+                      className="text-blue-500"
+                      href={connector.connector_specific_config.wiki_page_url}
+                    >
+                      {connector.connector_specific_config.wiki_page_url}
+                    </a>
+                  ),
+                },
+              ]}
+              onUpdate={() => mutate("/api/admin/connector")}
             />
           </div>
         </>

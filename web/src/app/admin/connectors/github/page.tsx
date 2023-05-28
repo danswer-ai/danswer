@@ -12,11 +12,11 @@ import {
   GithubCredentialJson,
   Credential,
 } from "@/lib/types";
-import { GithubConnectorsTable } from "./ConnectorsTable";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { LoadingAnimation } from "@/components/Loading";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import { deleteCredential, linkCredential } from "@/lib/credential";
+import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 
 const Main = () => {
   const { mutate } = useSWRConfig();
@@ -131,16 +131,27 @@ const Main = () => {
             every <b>10</b> minutes.
           </p>
           <div className="mb-2">
-            <GithubConnectorsTable
+            <ConnectorsTable<GithubConfig, GithubCredentialJson>
               connectors={githubConnectors}
               liveCredential={githubCredential}
-              onDelete={() => mutate("/api/admin/connector")}
+              getCredential={(credential) =>
+                credential.credential_json.github_access_token
+              }
               onCredentialLink={async (connectorId) => {
                 if (githubCredential) {
                   await linkCredential(connectorId, githubCredential.id);
                   mutate("/api/admin/connector");
                 }
               }}
+              specialColumns={[
+                {
+                  header: "Repository",
+                  key: "repository",
+                  getValue: (connector) =>
+                    `${connector.connector_specific_config.repo_owner}/${connector.connector_specific_config.repo_name}`,
+                },
+              ]}
+              onUpdate={() => mutate("/api/admin/connector")}
             />
           </div>
         </>

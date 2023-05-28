@@ -79,5 +79,5 @@ export interface ConfluenceCredentialJson {
 }
 
 export interface SlackCredentialJson {
-  slack_bot_token: string
+  slack_bot_token: string;
 }
