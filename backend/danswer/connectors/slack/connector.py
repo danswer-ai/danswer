@@ -325,7 +325,10 @@ class SlackPollConnector(PollConnector):
         all_docs = get_all_docs(
             client=self.client,
             workspace=self.workspace,
-            oldest=str(start),
+            # NOTE: need to impute to `None` instead of using 0.0, since Slack will
+            # throw an error if we use 0.0 on an account without infinite data
+            # retention
+            oldest=str(start) if start else None,
             latest=str(end),
         )
         for i in range(0, len(all_docs), self.batch_size):
