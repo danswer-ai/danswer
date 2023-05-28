@@ -7,7 +7,7 @@ from danswer.direct_qa.question_answer import OpenAICompletionQA
 
 
 def get_default_backend_qa_model(
-    internal_model: str = INTERNAL_MODEL_VERSION, **kwargs: dict[str, Any]
+    internal_model: str = INTERNAL_MODEL_VERSION, **kwargs: Any
 ) -> QAModel:
     if internal_model == "openai-completion":
         return OpenAICompletionQA(**kwargs)

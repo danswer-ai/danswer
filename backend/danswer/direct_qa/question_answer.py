@@ -45,8 +45,10 @@ from openai.error import Timeout
 logger = setup_logger()
 
 
-def get_openai_api_key():
-    return OPENAI_API_KEY or get_dynamic_config_store().load(OPENAI_API_KEY_STORAGE_KEY)
+def get_openai_api_key() -> str:
+    return OPENAI_API_KEY or cast(
+        str, get_dynamic_config_store().load(OPENAI_API_KEY_STORAGE_KEY)
+    )
 
 
 def get_json_line(json_dict: dict) -> str:
@@ -198,7 +200,7 @@ ModelType = Literal["ChatCompletion", "Completion"]
 PromptProcessor = Callable[[str, list[str]], str]
 
 
-def _build_openai_settings(**kwargs: dict[str, Any]) -> dict[str, Any]:
+def _build_openai_settings(**kwargs: Any) -> dict[str, Any]:
     """
     Utility to add in some common default values so they don't have to be set every time.
     """
@@ -218,7 +220,7 @@ def _handle_openai_exceptions_wrapper(openai_call: F, query: str) -> F:
             # if streamed, the call returns a generator
             if kwargs.get("stream"):
 
-                def _generator():
+                def _generator() -> Generator[Any, None, None]:
                     yield from openai_call(*args, **kwargs)
 
                 return _generator()

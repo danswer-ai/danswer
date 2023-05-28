@@ -1,3 +1,5 @@
+from typing import cast
+
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
 from danswer.db.credentials import fetch_credential_by_id
@@ -299,4 +301,4 @@ def fetch_latest_index_attempts_by_status(
             IndexAttempt.time_updated == alias.time_updated,
         ),
     )
-    return query.all()
+    return cast(list[IndexAttempt], query.all())

@@ -188,7 +188,11 @@ def get_connectors_indexing_status(
     index_attempts = fetch_latest_index_attempts_by_status(db_session)
     connector_to_index_attempts: dict[int, list[IndexAttempt]] = defaultdict(list)
     for index_attempt in index_attempts:
-        connector_to_index_attempts[index_attempt.connector_id].append(index_attempt)
+        # don't consider index attempts where the connector has been deleted
+        if index_attempt.connector_id:
+            connector_to_index_attempts[index_attempt.connector_id].append(
+                index_attempt
+            )
 
     indexing_statuses: list[ConnectorIndexingStatus] = []
     for connector_id, index_attempts in connector_to_index_attempts.items():
@@ -211,6 +215,7 @@ def get_connectors_indexing_status(
                 else None,
                 docs_indexed=len(successful_index_attempts_sorted[0].document_ids)
                 if successful_index_attempts_sorted
+                and successful_index_attempts_sorted[0].document_ids
                 else 0,
             ),
         )
