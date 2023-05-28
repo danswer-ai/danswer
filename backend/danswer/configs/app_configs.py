@@ -44,6 +44,9 @@ VALID_EMAIL_DOMAIN = os.environ.get("VALID_EMAIL_DOMAIN", "")
 ENABLE_OAUTH = os.environ.get("ENABLE_OAUTH", "").lower() != "false"
 GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
 GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
+MASK_CREDENTIAL_PREFIX = (
+    os.environ.get("MASK_CREDENTIAL_PREFIX", "True").lower() != "false"
+)
 
 
 #####

@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import cast
 
 from danswer.auth.users import current_admin_user
+from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
 from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_KEY
@@ -28,6 +29,7 @@ from danswer.db.credentials import credential_not_found_response
 from danswer.db.credentials import delete_credential
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
+from danswer.db.credentials import mask_credential_dict
 from danswer.db.credentials import update_credential
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import create_index_attempt
@@ -321,7 +323,9 @@ def get_credentials(
     return [
         CredentialSnapshot(
             id=credential.id,
-            credential_json=credential.credential_json,
+            credential_json=mask_credential_dict(credential.credential_json)
+            if MASK_CREDENTIAL_PREFIX
+            else credential.credential_json,
             user_id=credential.user_id,
             public_doc=credential.public_doc,
             time_created=credential.time_created,
@@ -350,7 +354,9 @@ def get_credential_by_id(
 
     return CredentialSnapshot(
         id=credential.id,
-        credential_json=credential.credential_json,
+        credential_json=mask_credential_dict(credential.credential_json)
+        if MASK_CREDENTIAL_PREFIX
+        else credential.credential_json,
         user_id=credential.user_id,
         public_doc=credential.public_doc,
         time_created=credential.time_created,
