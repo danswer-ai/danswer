@@ -5,7 +5,7 @@ from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
-from danswer.configs.app_configs import NUM_RERANKED_RESULTS
+from danswer.configs.app_configs import NUM_GENERATIVE_AI_IN
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import SOURCE_LINKS
@@ -71,11 +71,13 @@ def direct_qa(
     logger.info(f"Received semantic query: {query}")
 
     user_id = None if user is None else int(user.id)
-    ranked_chunks = retrieve_ranked_documents(
+    ranked_chunks, unranked_chunks = retrieve_ranked_documents(
         query, user_id, filters, create_datastore(collection)
     )
     if not ranked_chunks:
-        return QAResponse(answer=None, quotes=None, ranked_documents=None)
+        return QAResponse(
+            answer=None, quotes=None, ranked_documents=None, unranked_documents=None
+        )
 
     top_docs = [
         SearchDoc(
@@ -87,10 +89,26 @@ def direct_qa(
         for chunk in ranked_chunks
     ]
 
-    qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
+    other_top_docs = (
+        [
+            SearchDoc(
+                semantic_identifier=chunk.semantic_identifier,
+                link=chunk.source_links.get(0) if chunk.source_links else None,
+                blurb=chunk.blurb,
+                source_type=chunk.source_type,
+            )
+            for chunk in unranked_chunks
+        ]
+        if unranked_chunks
+        else []
+    )
+
+    qa_model = get_default_backend_qa_model(
+        internal_model="openai-completion", model_versiontimeout=QA_TIMEOUT
+    )
     try:
         answer, quotes = qa_model.answer_question(
-            query, ranked_chunks[:NUM_RERANKED_RESULTS]
+            query, ranked_chunks[:NUM_GENERATIVE_AI_IN]
         )
     except Exception:
         # exception is logged in the answer_question method, no need to re-log
@@ -98,7 +116,12 @@ def direct_qa(
 
     logger.info(f"Total QA took {time.time() - start_time} seconds")
 
-    return QAResponse(answer=answer, quotes=quotes, ranked_documents=top_docs)
+    return QAResponse(
+        answer=answer,
+        quotes=quotes,
+        ranked_documents=top_docs,
+        unranked_documents=other_top_docs,
+    )
 
 
 @router.get("/stream-direct-qa")
@@ -106,6 +129,7 @@ def stream_direct_qa(
     question: QAQuestion = Depends(), user: User = Depends(current_user)
 ) -> StreamingResponse:
     top_documents_key = "top_documents"
+    unranked_top_docs_key = "unranked_top_documents"
 
     def stream_qa_portions() -> Generator[str, None, None]:
         query = question.query
@@ -114,11 +138,11 @@ def stream_direct_qa(
         logger.info(f"Received semantic query: {query}")
 
         user_id = None if user is None else int(user.id)
-        ranked_chunks = retrieve_ranked_documents(
+        ranked_chunks, unranked_chunks = retrieve_ranked_documents(
             query, user_id, filters, create_datastore(collection)
         )
         if not ranked_chunks:
-            yield get_json_line({top_documents_key: None})
+            yield get_json_line({top_documents_key: None, unranked_top_docs_key: None})
             return
 
         top_docs = [
@@ -130,13 +154,30 @@ def stream_direct_qa(
             )
             for chunk in ranked_chunks
         ]
-        top_docs_dict = {top_documents_key: [top_doc.json() for top_doc in top_docs]}
+        unranked_top_docs = (
+            [
+                SearchDoc(
+                    semantic_identifier=chunk.semantic_identifier,
+                    link=chunk.source_links.get(0) if chunk.source_links else None,
+                    blurb=chunk.blurb,
+                    source_type=chunk.source_type,
+                )
+                for chunk in unranked_chunks
+            ]
+            if unranked_chunks
+            else []
+        )
+
+        top_docs_dict = {
+            top_documents_key: [top_doc.json() for top_doc in top_docs],
+            unranked_top_docs_key: [doc.json() for doc in unranked_top_docs],
+        }
         yield get_json_line(top_docs_dict)
 
         qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
         try:
             for response_dict in qa_model.answer_question_stream(
-                query, ranked_chunks[:NUM_RERANKED_RESULTS]
+                query, ranked_chunks[:NUM_GENERATIVE_AI_IN]
             ):
                 if response_dict is None:
                     continue

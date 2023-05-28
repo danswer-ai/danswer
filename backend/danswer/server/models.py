@@ -85,6 +85,8 @@ class QAResponse(BaseModel):
     answer: str | None
     quotes: dict[str, dict[str, str | int | None]] | None
     ranked_documents: list[SearchDoc] | None
+    # for performance, only a few top documents are cross-encoded for rerank, the rest follow retrieval order
+    unranked_documents: list[SearchDoc] | None
 
 
 class KeywordResponse(BaseModel):

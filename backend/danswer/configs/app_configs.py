@@ -82,8 +82,9 @@ GOOGLE_DRIVE_INCLUDE_SHARED = False
 # Query Configs
 #####
 DEFAULT_PROMPT = "generic-qa"
-NUM_RETURNED_HITS = 15
-NUM_RERANKED_RESULTS = 4
+NUM_RETURNED_HITS = 50
+NUM_RERANKED_RESULTS = 15
+NUM_GENERATIVE_AI_IN = 4
 KEYWORD_MAX_HITS = 5
 QUOTE_ALLOWED_ERROR_PERCENT = (
     0.05  # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
@@ -97,6 +98,11 @@ QA_TIMEOUT = 10  # 10 seconds
 # Chunking docs to this number of characters not including finishing the last word and the overlap words below
 # Calculated by ~500 to 512 tokens max * average 4 chars per token
 CHUNK_SIZE = 2000
+# More accurate results at the expense of indexing speed and index size (stores additional 4 MINI_CHUNK vectors)
+ENABLE_MINI_BATCH = True
+# Mini chunks for fine-grained embedding, calculated as 128 tokens for 4 additional vectors for 512 chunk size above
+# Not rounded down to not lose any context in full chunk.
+MINI_CHUNK_SIZE = 512
 # Each chunk includes an additional 5 words from previous chunk
 # in extreme cases, may cause some words at the end to be truncated by embedding model
 CHUNK_OVERLAP = 5
