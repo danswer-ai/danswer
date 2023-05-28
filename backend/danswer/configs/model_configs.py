@@ -12,6 +12,8 @@ CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 DOC_EMBEDDING_DIM = 768  # Depends on the document encoder model
 
 QUERY_EMBEDDING_CONTEXT_SIZE = 256
+# The below is correlated with CHUNK_SIZE in app_configs but not strictly calculated
+# To avoid extra overhead of tokenizing for chunking during indexing.
 DOC_EMBEDDING_CONTEXT_SIZE = 512
 CROSS_EMBED_CONTEXT_SIZE = 512
 

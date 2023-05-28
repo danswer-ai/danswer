@@ -1,6 +1,7 @@
 import uuid
 
 from danswer.chunking.models import EmbeddedIndexChunk
+from danswer.chunking.models import InferenceChunk
 from danswer.configs.constants import ALLOWED_GROUPS
 from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import BLURB
@@ -15,7 +16,6 @@ from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.model_configs import DOC_EMBEDDING_DIM
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logging import setup_logger
-from danswer.utils.timing import log_function_time
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from qdrant_client.http.exceptions import ResponseHandlingException
@@ -47,7 +47,35 @@ def create_collection(
         raise RuntimeError("Could not create Qdrant collection")
 
 
-@log_function_time()
+def recreate_collection(
+    collection_name: str, embedding_dim: int = DOC_EMBEDDING_DIM
+) -> None:
+    logger.info(f"Attempting to recreate collection {collection_name}")
+    result = get_qdrant_client().recreate_collection(
+        collection_name=collection_name,
+        vectors_config=VectorParams(size=embedding_dim, distance=Distance.COSINE),
+    )
+    if not result:
+        raise RuntimeError("Could not create Qdrant collection")
+
+
+def get_uuid_from_chunk(
+    chunk: EmbeddedIndexChunk | InferenceChunk, mini_chunk_ind: int = 0
+) -> uuid.UUID:
+    doc_str = (
+        chunk.source_document.id
+        if isinstance(chunk, EmbeddedIndexChunk)
+        else chunk.document_id
+    )
+    # Web parsing URL duplicate catching
+    if doc_str and doc_str[-1] == "/":
+        doc_str = doc_str[:-1]
+    unique_identifier_string = "_".join(
+        [doc_str, str(chunk.chunk_id), str(mini_chunk_ind)]
+    )
+    return uuid.uuid5(uuid.NAMESPACE_X500, unique_identifier_string)
+
+
 def get_document_whitelists(
     doc_chunk_id: str, collection_name: str, q_client: QdrantClient
 ) -> tuple[int, list[str], list[str]]:
@@ -66,7 +94,6 @@ def get_document_whitelists(
     return len(results), payload[ALLOWED_USERS], payload[ALLOWED_GROUPS]
 
 
-@log_function_time()
 def delete_doc_chunks(
     document_id: str, collection_name: str, q_client: QdrantClient
 ) -> None:
@@ -85,23 +112,6 @@ def delete_doc_chunks(
     )
 
 
-def recreate_collection(
-    collection_name: str, embedding_dim: int = DOC_EMBEDDING_DIM
-) -> None:
-    logger.info(f"Attempting to recreate collection {collection_name}")
-    result = get_qdrant_client().recreate_collection(
-        collection_name=collection_name,
-        vectors_config=VectorParams(size=embedding_dim, distance=Distance.COSINE),
-    )
-    if not result:
-        raise RuntimeError("Could not create Qdrant collection")
-
-
-def get_uuid_from_chunk(chunk: EmbeddedIndexChunk) -> uuid.UUID:
-    unique_identifier_string = "_".join([chunk.source_document.id, str(chunk.chunk_id)])
-    return uuid.uuid5(uuid.NAMESPACE_X500, unique_identifier_string)
-
-
 def index_chunks(
     chunks: list[EmbeddedIndexChunk],
     user_id: int | None,
@@ -114,7 +124,7 @@ def index_chunks(
     user_str = PUBLIC_DOC_PAT if user_id is None else str(user_id)
     q_client: QdrantClient = client if client else get_qdrant_client()
 
-    point_structs = []
+    point_structs: list[PointStruct] = []
     # Maps document id to dict of whitelists for users/groups each containing list of users/groups as strings
     doc_user_map: dict[str, dict[str, list[str]]] = {}
     for chunk in chunks:
@@ -142,23 +152,26 @@ def index_chunks(
                 # Need to delete document chunks because number of chunks may decrease
                 delete_doc_chunks(document.id, collection, q_client)
 
-        point_structs.append(
-            PointStruct(
-                id=chunk_uuid,
-                payload={
-                    DOCUMENT_ID: document.id,
-                    CHUNK_ID: chunk.chunk_id,
-                    BLURB: chunk.blurb,
-                    CONTENT: chunk.content,
-                    SOURCE_TYPE: str(document.source.value),
-                    SOURCE_LINKS: chunk.source_links,
-                    SEMANTIC_IDENTIFIER: document.semantic_identifier,
-                    SECTION_CONTINUATION: chunk.section_continuation,
-                    ALLOWED_USERS: doc_user_map[document.id][ALLOWED_USERS],
-                    ALLOWED_GROUPS: doc_user_map[document.id][ALLOWED_GROUPS],
-                },
-                vector=chunk.embedding,
-            )
+        point_structs.extend(
+            [
+                PointStruct(
+                    id=str(get_uuid_from_chunk(chunk, minichunk_ind)),
+                    payload={
+                        DOCUMENT_ID: document.id,
+                        CHUNK_ID: chunk.chunk_id,
+                        BLURB: chunk.blurb,
+                        CONTENT: chunk.content,
+                        SOURCE_TYPE: str(document.source.value),
+                        SOURCE_LINKS: chunk.source_links,
+                        SEMANTIC_IDENTIFIER: document.semantic_identifier,
+                        SECTION_CONTINUATION: chunk.section_continuation,
+                        ALLOWED_USERS: doc_user_map[document.id][ALLOWED_USERS],
+                        ALLOWED_GROUPS: doc_user_map[document.id][ALLOWED_GROUPS],
+                    },
+                    vector=embedding,
+                )
+                for minichunk_ind, embedding in enumerate(chunk.embeddings)
+            ]
         )
 
     index_results = None

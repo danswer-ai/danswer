@@ -18,6 +18,7 @@
 import json
 
 from danswer.chunking.models import InferenceChunk
+from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
 from danswer.configs.model_configs import CROSS_ENCODER_MODEL
@@ -84,15 +85,16 @@ def retrieve_ranked_documents(
     filters: list[DatastoreFilter] | None,
     datastore: Datastore,
     num_hits: int = NUM_RETURNED_HITS,
-) -> list[InferenceChunk] | None:
+    num_rerank: int = NUM_RERANKED_RESULTS,
+) -> tuple[list[InferenceChunk] | None, list[InferenceChunk] | None]:
     top_chunks = datastore.semantic_retrieval(query, user_id, filters, num_hits)
     if not top_chunks:
         filters_log_msg = json.dumps(filters, separators=(",", ":")).replace("\n", "")
         logger.warning(
             f"Semantic search returned no results with filters: {filters_log_msg}"
         )
-        return None
-    ranked_chunks = semantic_reranking(query, top_chunks)
+        return None, None
+    ranked_chunks = semantic_reranking(query, top_chunks[:num_rerank])
 
     top_docs = [
         ranked_chunk.source_links[0]
@@ -102,4 +104,4 @@ def retrieve_ranked_documents(
     files_log_msg = f"Top links from semantic search: {', '.join(top_docs)}"
     logger.info(files_log_msg)
 
-    return ranked_chunks
+    return ranked_chunks, top_chunks[num_rerank:]
