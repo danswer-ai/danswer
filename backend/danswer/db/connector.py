@@ -72,6 +72,7 @@ def create_connector(
         input_type=connector_data.input_type,
         connector_specific_config=connector_data.connector_specific_config,
         refresh_freq=connector_data.refresh_freq,
+        disabled=connector_data.disabled,
     )
     db_session.add(connector)
     db_session.commit()
