@@ -19,6 +19,8 @@ class BaseChunk:
 
 @dataclass
 class IndexChunk(BaseChunk):
+    # During indexing flow, we have access to a complete "Document"
+    # During inference we only have access to the document id and do not reconstruct the Document
     source_document: Document
 
 

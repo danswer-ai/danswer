@@ -60,6 +60,8 @@ services:
     restart: always
     ports:
       - "6333:6333"
+    env_file:
+      - .env
     volumes:
       - qdrant_volume:/qdrant/storage
   nginx:
@@ -78,7 +80,16 @@ services:
     command: > 
       /bin/sh -c "envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template.dev > /etc/nginx/conf.d/app.conf 
       && while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
+  search_engine:
+    image: typesense/typesense:0.24.1
+    restart: always
+    ports:
+      - "8108:8108"
+    volumes:
+      - typesense_volume:/typesense/storage
+    command: "--data-dir /data --api-key=${TYPESENSE_API_KEY} --enable-cors"
 volumes:
   local_dynamic_storage:
   db_volume:
   qdrant_volume:
+  typesense_volume:

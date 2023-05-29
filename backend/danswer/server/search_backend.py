@@ -1,34 +1,29 @@
 import time
 from collections.abc import Generator
 
-from danswer.auth.schemas import UserRole
-from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
 from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import SOURCE_LINKS
-from danswer.datastores import create_datastore
-from danswer.db.engine import build_async_engine
+from danswer.datastores.qdrant.store import QdrantIndex
 from danswer.db.models import User
 from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.question_answer import get_json_line
 from danswer.semantic_search.semantic_search import retrieve_ranked_documents
 from danswer.server.models import KeywordResponse
-from danswer.server.models import QAQuestion
 from danswer.server.models import QAResponse
+from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchDoc
-from danswer.server.models import UserByEmail
+from danswer.server.models import SearchResponse
 from danswer.server.models import UserRoleResponse
-from danswer.utils.clients import TSClient
+from danswer.utils.clients import get_typesense_client
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
-from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
-from fastapi_users.db import SQLAlchemyUserDatabase
-from sqlalchemy.ext.asyncio import AsyncSession
+
 
 logger = setup_logger()
 
@@ -42,26 +37,80 @@ async def get_user_role(user: User = Depends(current_user)) -> UserRoleResponse:
     return UserRoleResponse(role=user.role)
 
 
-@router.patch("/promote-user-to-admin", response_model=None)
-async def promote_admin(
-    user_email: UserByEmail, user: User = Depends(current_admin_user)
-) -> None:
-    if user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    async with AsyncSession(build_async_engine()) as asession:
-        user_db = SQLAlchemyUserDatabase(asession, User)  # type: ignore
-        user_to_promote = await user_db.get_by_email(user_email.user_email)
-        if not user_to_promote:
-            raise HTTPException(status_code=404, detail="User not found")
-        user_to_promote.role = UserRole.ADMIN
-        asession.add(user_to_promote)
-        await asession.commit()
-    return
+@router.get("/semantic-search")
+def semantic_search(
+    question: QuestionRequest = Depends(), user: User = Depends(current_user)
+) -> SearchResponse:
+    query = question.query
+    collection = question.collection
+    filters = question.filters
+    logger.info(f"Received semantic search for: {query}")
+
+    user_id = None if user is None else int(user.id)
+    ranked_chunks, unranked_chunks = retrieve_ranked_documents(
+        query, user_id, filters, QdrantIndex(collection)
+    )
+    if not ranked_chunks:
+        return SearchResponse(top_ranked_docs=None, semi_ranked_docs=None)
+
+    top_docs = [
+        SearchDoc(
+            semantic_identifier=chunk.semantic_identifier,
+            link=chunk.source_links.get(0) if chunk.source_links else None,
+            blurb=chunk.blurb,
+            source_type=chunk.source_type,
+        )
+        for chunk in ranked_chunks
+    ]
+
+    other_top_docs = (
+        [
+            SearchDoc(
+                semantic_identifier=chunk.semantic_identifier,
+                link=chunk.source_links.get(0) if chunk.source_links else None,
+                blurb=chunk.blurb,
+                source_type=chunk.source_type,
+            )
+            for chunk in unranked_chunks
+        ]
+        if unranked_chunks
+        else []
+    )
+    return SearchResponse(top_ranked_docs=top_docs, semi_ranked_docs=other_top_docs)
+
+
+@router.get("/keyword-search", response_model=KeywordResponse)
+def keyword_search(
+    question: QuestionRequest = Depends(), _: User = Depends(current_user)
+) -> KeywordResponse:
+    ts_client = get_typesense_client()
+    query = question.query
+    collection = question.collection
+
+    logger.info(f"Received keyword query: {query}")
+    start_time = time.time()
+
+    search_results = ts_client.collections[collection].documents.search(
+        {
+            "q": query,
+            "query_by": CONTENT,
+            "per_page": KEYWORD_MAX_HITS,
+            "limit_hits": KEYWORD_MAX_HITS,
+        }
+    )
+
+    hits = search_results["hits"]
+    sources = [hit["document"][SOURCE_LINKS][0] for hit in hits]
+
+    total_time = time.time() - start_time
+    logger.info(f"Total Keyword Search took {total_time} seconds")
+
+    return KeywordResponse(results=sources)
 
 
 @router.get("/direct-qa", response_model=QAResponse)
 def direct_qa(
-    question: QAQuestion = Depends(), user: User = Depends(current_user)
+    question: QuestionRequest = Depends(), user: User = Depends(current_user)
 ) -> QAResponse:
     start_time = time.time()
 
@@ -72,7 +121,7 @@ def direct_qa(
 
     user_id = None if user is None else int(user.id)
     ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-        query, user_id, filters, create_datastore(collection)
+        query, user_id, filters, QdrantIndex(collection)
     )
     if not ranked_chunks:
         return QAResponse(
@@ -126,7 +175,7 @@ def direct_qa(
 
 @router.get("/stream-direct-qa")
 def stream_direct_qa(
-    question: QAQuestion = Depends(), user: User = Depends(current_user)
+    question: QuestionRequest = Depends(), user: User = Depends(current_user)
 ) -> StreamingResponse:
     top_documents_key = "top_documents"
     unranked_top_docs_key = "unranked_top_documents"
@@ -139,7 +188,7 @@ def stream_direct_qa(
 
         user_id = None if user is None else int(user.id)
         ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-            query, user_id, filters, create_datastore(collection)
+            query, user_id, filters, QdrantIndex(collection)
         )
         if not ranked_chunks:
             yield get_json_line({top_documents_key: None, unranked_top_docs_key: None})
@@ -190,32 +239,3 @@ def stream_direct_qa(
         return
 
     return StreamingResponse(stream_qa_portions(), media_type="application/json")
-
-
-@router.get("/keyword-search", response_model=KeywordResponse)
-def keyword_search(
-    question: QAQuestion = Depends(), _: User = Depends(current_user)
-) -> KeywordResponse:
-    ts_client = TSClient.get_instance()
-    query = question.query
-    collection = question.collection
-
-    logger.info(f"Received keyword query: {query}")
-    start_time = time.time()
-
-    search_results = ts_client.collections[collection].documents.search(
-        {
-            "q": query,
-            "query_by": CONTENT,
-            "per_page": KEYWORD_MAX_HITS,
-            "limit_hits": KEYWORD_MAX_HITS,
-        }
-    )
-
-    hits = search_results["hits"]
-    sources = [hit["document"][SOURCE_LINKS][0] for hit in hits]
-
-    total_time = time.time() - start_time
-    logger.info(f"Total Keyword Search took {total_time} seconds")
-
-    return KeywordResponse(results=sources)

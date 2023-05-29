@@ -24,8 +24,8 @@ from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
 from danswer.configs.model_configs import CROSS_ENCODER_MODEL_ENSEMBLE
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
-from danswer.datastores.interfaces import Datastore
-from danswer.datastores.interfaces import DatastoreFilter
+from danswer.datastores.interfaces import IndexFilter
+from danswer.datastores.interfaces import VectorIndex
 from danswer.utils.logging import setup_logger
 from danswer.utils.timing import log_function_time
 from sentence_transformers import CrossEncoder  # type: ignore
@@ -86,8 +86,8 @@ def semantic_reranking(
 def retrieve_ranked_documents(
     query: str,
     user_id: int | None,
-    filters: list[DatastoreFilter] | None,
-    datastore: Datastore,
+    filters: list[IndexFilter] | None,
+    datastore: VectorIndex,
     num_hits: int = NUM_RETURNED_HITS,
     num_rerank: int = NUM_RERANKED_RESULTS,
 ) -> tuple[list[InferenceChunk] | None, list[InferenceChunk] | None]:

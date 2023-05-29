@@ -9,8 +9,11 @@ from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import ENABLE_OAUTH
 from danswer.configs.app_configs import SECRET
+from danswer.configs.app_configs import TYPESENSE_DEFAULT_COLLECTION
 from danswer.configs.app_configs import WEB_DOMAIN
-from danswer.datastores.qdrant.indexing import list_collections
+from danswer.datastores.qdrant.indexing import list_qdrant_collections
+from danswer.datastores.typesense.store import check_typesense_collection_exist
+from danswer.datastores.typesense.store import create_typesense_collection
 from danswer.db.credentials import create_initial_public_credential
 from danswer.server.admin import router as admin_router
 from danswer.server.event_loading import router as event_processing_router
@@ -22,7 +25,6 @@ from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-
 
 logger = setup_logger()
 
@@ -110,15 +112,21 @@ def get_application() -> FastAPI:
         from danswer.semantic_search.semantic_search import (
             warm_up_models,
         )
-        from danswer.datastores.qdrant.indexing import create_collection
+        from danswer.datastores.qdrant.indexing import create_qdrant_collection
         from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 
         if QDRANT_DEFAULT_COLLECTION not in {
-            collection.name for collection in list_collections().collections
+            collection.name for collection in list_qdrant_collections().collections
         }:
-            logger.info(f"Creating collection with name: {QDRANT_DEFAULT_COLLECTION}")
-            create_collection(collection_name=QDRANT_DEFAULT_COLLECTION)
-
+            logger.info(
+                f"Creating Qdrant collection with name: {QDRANT_DEFAULT_COLLECTION}"
+            )
+            create_qdrant_collection(collection_name=QDRANT_DEFAULT_COLLECTION)
+        if not check_typesense_collection_exist(TYPESENSE_DEFAULT_COLLECTION):
+            logger.info(
+                f"Creating Typesense collection with name: {TYPESENSE_DEFAULT_COLLECTION}"
+            )
+            create_typesense_collection(collection_name=TYPESENSE_DEFAULT_COLLECTION)
         warm_up_models()
         logger.info("Semantic Search models are ready.")
 

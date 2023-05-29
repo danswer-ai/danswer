@@ -52,16 +52,23 @@ MASK_CREDENTIAL_PREFIX = (
 #####
 # DB Configs
 #####
-DEFAULT_VECTOR_STORE = os.environ.get("VECTOR_DB", "qdrant")
+# Qdrant is Semantic Search Vector DB
 # Url / Key are used to connect to a remote Qdrant instance
 QDRANT_URL = os.environ.get("QDRANT_URL", "")
 QDRANT_API_KEY = os.environ.get("QDRANT_API_KEY", "")
 # Host / Port are used for connecting to local Qdrant instance
 QDRANT_HOST = os.environ.get("QDRANT_HOST", "localhost")
 QDRANT_PORT = 6333
-QDRANT_DEFAULT_COLLECTION = os.environ.get("QDRANT_COLLECTION", "semantic_search")
-DB_CONN_TIMEOUT = 2  # Timeout seconds connecting to DBs
-INDEX_BATCH_SIZE = 16  # File batches (not accounting file chunking)
+QDRANT_DEFAULT_COLLECTION = os.environ.get("QDRANT_DEFAULT_COLLECTION", "danswer_index")
+# Typesense is the Keyword Search Engine
+TYPESENSE_HOST = os.environ.get("TYPESENSE_HOST", "localhost")
+TYPESENSE_PORT = 8108
+TYPESENSE_DEFAULT_COLLECTION = os.environ.get(
+    "TYPESENSE_DEFAULT_COLLECTION", "danswer_index"
+)
+TYPESENSE_API_KEY = os.environ.get("TYPESENSE_API_KEY", "")
+# Number of documents in a batch during indexing (further batching done by chunks before passing to bi-encoder)
+INDEX_BATCH_SIZE = 16
 
 # below are intended to match the env variables names used by the official postgres docker image
 # https://hub.docker.com/_/postgres
@@ -124,10 +131,6 @@ CROSS_ENCODER_PORT = 9000
 #####
 # Miscellaneous
 #####
-TYPESENSE_API_KEY = os.environ.get("TYPESENSE_API_KEY", "")
-TYPESENSE_HOST = "localhost"
-TYPESENSE_PORT = 8108
-
 DYNAMIC_CONFIG_STORE = os.environ.get(
     "DYNAMIC_CONFIG_STORE", "FileSystemBackedDynamicConfigStore"
 )
