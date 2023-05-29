@@ -82,7 +82,7 @@ const Main = () => {
       ) : (
         <>
           <p className="text-sm">
-            If you don't have an access token, read the guide{" "}
+            If you don&apos;t have an access token, read the guide{" "}
             <a
               className="text-blue-500"
               href="https://docs.danswer.dev/connectors/github"

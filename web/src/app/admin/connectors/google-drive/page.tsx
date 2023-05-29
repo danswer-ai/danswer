@@ -1,7 +1,6 @@
 "use client";
 
-import { submitIndexRequest } from "@/components/admin/connectors/IndexForm";
-import { GoogleDriveIcon, TrashIcon } from "@/components/icons/icons";
+import { GoogleDriveIcon } from "@/components/icons/icons";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { LoadingAnimation } from "@/components/Loading";
@@ -60,7 +59,7 @@ const AppCredentialUpload = ({
         disabled={!appCredentialJsonStr}
         onClick={async () => {
           const response = await fetch(
-            "/api/admin/connector/google-drive/setup",
+            "/api/admin/connector/google-drive/app-credential",
             {
               method: "PUT",
               headers: {
@@ -108,7 +107,6 @@ const Main = () => {
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,
-    isValidating: isCredentialsValidating,
     error: isCredentialsError,
   } = useSWR<Credential<GoogleDriveCredentialJson>[]>(
     "/api/admin/credential",
@@ -120,11 +118,7 @@ const Main = () => {
     type: "success" | "error";
   } | null>(null);
 
-  if (
-    isCredentialsLoading ||
-    isAppCredentialLoading ||
-    isCredentialsValidating
-  ) {
+  if (isCredentialsLoading || isAppCredentialLoading || isConnectorsLoading) {
     return (
       <div className="mx-auto">
         <LoadingAnimation text="" />
@@ -183,7 +177,12 @@ const Main = () => {
               If you want to update these credentials, upload a new
               credentials.json file below.
               <div className="mt-2">
-                <AppCredentialUpload setPopup={setPopup} />
+                <AppCredentialUpload
+                  setPopup={(popup) => {
+                    mutate("/api/admin/connector/google-drive/app-credential");
+                    setPopup(popup);
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -201,7 +200,12 @@ const Main = () => {
               to setup your google app in your company workspace. Download the
               credentials.json, and upload it here.
             </p>
-            <AppCredentialUpload setPopup={setPopup} />
+            <AppCredentialUpload
+              setPopup={(popup) => {
+                mutate("/api/admin/connector/google-drive/app-credential");
+                setPopup(popup);
+              }}
+            />
           </>
         )}
       </div>
