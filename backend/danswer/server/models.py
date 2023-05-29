@@ -28,6 +28,21 @@ class DataRequest(BaseModel):
     data: str
 
 
+class GoogleAppWebCredentials(BaseModel):
+    client_id: str
+    project_id: str
+    auth_uri: str
+    token_uri: str
+    auth_provider_x509_cert_url: str
+    client_secret: str
+    redirect_uris: list[str]
+    javascript_origins: list[str]
+
+
+class GoogleAppCredentials(BaseModel):
+    web: GoogleAppWebCredentials
+
+
 class HealthCheckResponse(BaseModel):
     status: Literal["ok"]
 

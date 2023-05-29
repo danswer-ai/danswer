@@ -1,5 +1,3 @@
-import { Credential } from "./types";
-
 export async function deleteCredential<T>(credentialId: number) {
   const response = await fetch(`/api/admin/credential/${credentialId}`, {
     method: "DELETE",

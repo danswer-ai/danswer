@@ -81,3 +81,7 @@ export interface ConfluenceCredentialJson {
 export interface SlackCredentialJson {
   slack_bot_token: string;
 }
+
+export interface GoogleDriveCredentialJson {
+  google_drive_tokens: string;
+}

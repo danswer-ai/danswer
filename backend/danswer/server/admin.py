@@ -8,6 +8,7 @@ from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
 from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_KEY
 from danswer.connectors.google_drive.connector_auth import get_auth_url
 from danswer.connectors.google_drive.connector_auth import get_drive_tokens
+from danswer.connectors.google_drive.connector_auth import get_google_app_cred
 from danswer.connectors.google_drive.connector_auth import (
     update_credential_access_tokens,
 )
@@ -50,6 +51,7 @@ from danswer.server.models import CredentialBase
 from danswer.server.models import CredentialSnapshot
 from danswer.server.models import DataRequest
 from danswer.server.models import GDriveCallback
+from danswer.server.models import GoogleAppCredentials
 from danswer.server.models import IndexAttemptSnapshot
 from danswer.server.models import ObjectCreationIdResponse
 from danswer.server.models import RunConnectorRequest
@@ -58,6 +60,8 @@ from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Request
+from fastapi import Response
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/admin")
@@ -65,12 +69,22 @@ router = APIRouter(prefix="/admin")
 logger = setup_logger()
 
 
-@router.put("/connector/google-drive/setup")
+@router.get("/connector/google-drive/app-credential")
+def check_google_app_credentials_exist(
+    _: User = Depends(current_admin_user),
+) -> dict[str, str]:
+    try:
+        return {"client_id": get_google_app_cred().web.client_id}
+    except ConfigNotFoundError as e:
+        raise HTTPException(status_code=404, detail="Google App Credentials not found")
+
+
+@router.put("/connector/google-drive/app-credential")
 def update_google_app_credentials(
-    cred_json: DataRequest, _: User = Depends(current_admin_user)
+    app_credentials: GoogleAppCredentials, _: User = Depends(current_admin_user)
 ) -> StatusResponse:
     try:
-        upsert_google_app_cred(cred_json.data)
+        upsert_google_app_cred(app_credentials)
     except ValueError as e:
         return StatusResponse(success=False, message=str(e))
 
@@ -98,28 +112,43 @@ def check_drive_tokens(
     return AuthStatus(authenticated=True)
 
 
+_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME = "google_drive_credential_id"
+
+
 @router.get("/connector/google-drive/authorize/{credential_id}", response_model=AuthUrl)
 def google_drive_auth(
-    credential_id: str, _: User = Depends(current_admin_user)
+    response: Response, credential_id: str, _: User = Depends(current_admin_user)
 ) -> AuthUrl:
+    # set a cookie that we can read in the callback (used for `verify_csrf`)
+    response.set_cookie(
+        key=_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME,
+        value=credential_id,
+        httponly=True,
+        max_age=600,
+    )
     return AuthUrl(auth_url=get_auth_url(credential_id))
 
 
-@router.get("/connector/google-drive/callback/{credential_id}")
+@router.get("/connector/google-drive/callback")
 def google_drive_callback(
-    credential_id: int,
+    request: Request,
     callback: GDriveCallback = Depends(),
     user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
+    credential_id = request.cookies.get(_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME)
+    if credential_id is None:
+        raise HTTPException(status_code=400, detail="Missing credential_id cookie")
+
     verify_csrf(credential_id, callback.state)
     if (
         update_credential_access_tokens(callback.code, credential_id, user, db_session)
         is None
     ):
-        return StatusResponse(
-            success=False, message="Unable to fetch Google Drive access tokens"
+        raise HTTPException(
+            status_code=500, detail="Unable to fetch Google Drive access tokens"
         )
+
     return StatusResponse(success=True, message="Updated Google Drive access tokens")
 
 

@@ -1,14 +1,8 @@
 import React, { useState } from "react";
-import { Formik, Form, FormikHelpers } from "formik";
+import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { Popup } from "./Popup";
-import {
-  ConnectorBase,
-  CredentialBase,
-  ValidInputTypes,
-  ValidSources,
-} from "@/lib/types";
-import { TextFormField } from "./Field";
+import { CredentialBase } from "@/lib/types";
 
 export async function submitCredential<T>(
   connector: CredentialBase<T>

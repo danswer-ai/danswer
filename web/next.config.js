@@ -4,7 +4,7 @@ const nextConfig = {
     appDir: true,
   },
   output: "standalone",
-  redirects: async () => {
+  rewrites: async () => {
     // In production, something else (nginx in the one box setup) should take
     // care of this redirect. TODO (chris): better support setups where
     // web_server and api_server are on different machines.
@@ -13,8 +13,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:8080/:path*", // Proxy to Backend
-        permanent: true,
+        destination: "http://127.0.0.1:8080/:path*", // Proxy to Backend
       },
     ];
   },

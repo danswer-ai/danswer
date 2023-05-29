@@ -1,12 +1,15 @@
 import json
 from json import JSONDecodeError
+from typing import cast
 from urllib.parse import parse_qs
+from urllib.parse import ParseResult
 from urllib.parse import urlparse
 
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.db.credentials import update_credential_json
 from danswer.db.models import User
 from danswer.dynamic_configs import get_dynamic_config_store
+from danswer.server.models import GoogleAppCredentials
 from danswer.utils.logging import setup_logger
 from google.auth.transport.requests import Request  # type: ignore
 from google.oauth2.credentials import Credentials  # type: ignore
@@ -19,9 +22,10 @@ DB_CREDENTIALS_DICT_KEY = "google_drive_tokens"
 CRED_KEY = "credential_id_{}"
 GOOGLE_DRIVE_CRED_KEY = "google_drive_app_credential"
 SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
-FRONTEND_GOOGLE_DRIVE_REDIRECT = (
-    f"{WEB_DOMAIN}/admin/connectors/google-drive/auth/callback"
-)
+
+
+def _build_frontend_google_drive_redirect(credential_id: int) -> str:
+    return f"{WEB_DOMAIN}/admin/connectors/google-drive/auth/callback"
 
 
 def get_drive_tokens(
@@ -66,12 +70,13 @@ def get_auth_url(
     flow = InstalledAppFlow.from_client_config(
         credential_json,
         scopes=SCOPES,
-        redirect_uri=FRONTEND_GOOGLE_DRIVE_REDIRECT,
+        redirect_uri=_build_frontend_google_drive_redirect(credential_id=credential_id),
     )
     auth_url, _ = flow.authorization_url(prompt="consent")
 
-    parsed_url = urlparse(auth_url)
+    parsed_url = cast(ParseResult, urlparse(auth_url))
     params = parse_qs(parsed_url.query)
+
     get_dynamic_config_store().store(CRED_KEY.format(credential_id), params.get("state", [None])[0])  # type: ignore
     return str(auth_url)
 
@@ -82,12 +87,11 @@ def update_credential_access_tokens(
     user: User,
     db_session: Session,
 ) -> Credentials | None:
-    creds_str = str(get_dynamic_config_store().load(GOOGLE_DRIVE_CRED_KEY))
-    credential_json = json.loads(creds_str)
+    app_credentials = get_google_app_cred()
     flow = InstalledAppFlow.from_client_config(
-        credential_json,
+        app_credentials.dict(),
         scopes=SCOPES,
-        redirect_uri=FRONTEND_GOOGLE_DRIVE_REDIRECT,
+        redirect_uri=_build_frontend_google_drive_redirect(credential_id=credential_id),
     )
     flow.fetch_token(code=auth_code)
     creds = flow.credentials
@@ -99,14 +103,10 @@ def update_credential_access_tokens(
     return creds
 
 
-def upsert_google_app_cred(creds_json_str: str) -> None:
-    try:
-        creds = json.loads(creds_json_str)
-        if "web" not in creds:
-            raise ValueError(
-                "Wrong Google Application type or invalid credentials provided."
-            )
-    except JSONDecodeError:
-        raise ValueError("Provided value for Google Drive App is not valid")
+def get_google_app_cred() -> GoogleAppCredentials:
+    creds_str = str(get_dynamic_config_store().load(GOOGLE_DRIVE_CRED_KEY))
+    return GoogleAppCredentials(**json.loads(creds_str))
 
-    get_dynamic_config_store().store(GOOGLE_DRIVE_CRED_KEY, creds_json_str)
+
+def upsert_google_app_cred(app_credentials: GoogleAppCredentials) -> None:
+    get_dynamic_config_store().store(GOOGLE_DRIVE_CRED_KEY, app_credentials.json())
