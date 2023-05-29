@@ -46,7 +46,7 @@ def fetch_credentials(
     stmt = select(Credential)
     if user:
         stmt = stmt.where(
-            or_(Credential.user_id.is_(user.id), Credential.user_id.is_(None))
+            or_(Credential.user_id == user.id, Credential.user_id.is_(None))
         )
     results = db_session.scalars(stmt)
     return list(results.all())
@@ -58,7 +58,7 @@ def fetch_credential_by_id(
     stmt = select(Credential).where(Credential.id == credential_id)
     if user:
         stmt = stmt.where(
-            or_(Credential.user_id.is_(user.id), Credential.user_id.is_(None))
+            or_(Credential.user_id == user.id, Credential.user_id.is_(None))
         )
     result = db_session.execute(stmt)
     credential = result.scalar_one_or_none()

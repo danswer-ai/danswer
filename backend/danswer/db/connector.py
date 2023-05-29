@@ -38,7 +38,7 @@ def fetch_connectors(
     if input_types is not None:
         stmt = stmt.where(Connector.input_type.in_(input_types))
     if disabled_status is not None:
-        stmt = stmt.where(Connector.disabled.is_(disabled_status))
+        stmt = stmt.where(Connector.disabled == disabled_status)
     results = db_session.scalars(stmt)
     return list(results.all())
 
