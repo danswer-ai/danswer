@@ -46,7 +46,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
 
   if (answer === null && documents === null && quotes === null) {
     return (
-      <div className="text-red-800">
+      <div className="text-red-500">
         Something went wrong, please try again.
       </div>
     );
@@ -104,9 +104,9 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
         <div className="flex">
           <InfoIcon
             size="20"
-            className="text-red-800 my-auto flex flex-shrink-0"
+            className="text-red-500 my-auto flex flex-shrink-0"
           />
-          <div className="text-red-800 text-xs my-auto ml-1">
+          <div className="text-red-500 text-xs my-auto ml-1">
             GPT hurt itself in its confusion :(
           </div>
         </div>
