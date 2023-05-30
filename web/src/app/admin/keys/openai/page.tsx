@@ -29,7 +29,7 @@ const ExistingKeys = () => {
     <div>
       <h2 className="text-lg font-bold mb-2">Existing Key</h2>
       <div className="flex mb-1">
-        <p className="text-sm italic my-auto">sk- ...{data?.api_key}</p>
+        <p className="text-sm italic my-auto">sk- ****...**{data?.api_key}</p>
         <button
           className="ml-1 my-auto hover:bg-gray-700 rounded-full p-1"
           onClick={async () => {

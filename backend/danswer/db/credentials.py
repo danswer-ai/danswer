@@ -15,7 +15,7 @@ logger = setup_logger()
 
 
 def mask_string(sensitive_str: str) -> str:
-    return "*" * (len(sensitive_str) - 4) + sensitive_str[-4:]
+    return "****...**" + sensitive_str[-4:]
 
 
 def mask_credential_dict(credential_dict: dict[str, Any]) -> dict[str, str]:

@@ -72,23 +72,16 @@ const Main = () => {
       {confluenceCredential ? (
         <>
           <div className="flex mb-1 text-sm">
-            <div>
-              <div className="flex">
+            {/* <div className="flex">
                 <p className="my-auto">Existing Username: </p>
                 <p className="ml-1 italic my-auto max-w-md truncate">
                   {confluenceCredential.credential_json?.confluence_username}
                 </p>{" "}
-              </div>
-              <div className="flex">
-                <p className="my-auto">Existing Access Token: </p>
-                <p className="ml-1 italic my-auto max-w-md truncate">
-                  {
-                    confluenceCredential.credential_json
-                      ?.confluence_access_token
-                  }
-                </p>
-              </div>
-            </div>
+              </div> */}
+            <p className="my-auto">Existing Access Token: </p>
+            <p className="ml-1 italic my-auto max-w-md truncate">
+              {confluenceCredential.credential_json?.confluence_access_token}
+            </p>
             <button
               className="ml-1 hover:bg-gray-700 rounded-full p-1"
               onClick={async () => {
@@ -182,9 +175,6 @@ const Main = () => {
               getCredential={(credential) => {
                 return (
                   <div>
-                    <p className="mb-0.5">
-                      {credential.credential_json.confluence_username}
-                    </p>
                     <p>{credential.credential_json.confluence_access_token}</p>
                   </div>
                 );
