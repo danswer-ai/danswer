@@ -34,7 +34,7 @@ function StatusRow<ConnectorConfigType>({
       statusDisplay = <div className="text-emerald-600 flex">Running!</div>;
   }
   if (connector.disabled) {
-    <div className="text-red-700">Disabled</div>;
+    statusDisplay = <div className="text-red-700">Disabled</div>;
   }
 
   return (
