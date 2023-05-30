@@ -302,7 +302,10 @@ def create_connector_from_model(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
-    return create_connector(connector_info, db_session)
+    try:
+        return create_connector(connector_info, db_session)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.patch(
