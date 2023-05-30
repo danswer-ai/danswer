@@ -7,10 +7,10 @@ from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import PUBLIC_DOC_PAT
+from danswer.datastores.datastore_utils import get_uuid_from_chunk
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import VectorIndex
-from danswer.datastores.qdrant.indexing import get_uuid_from_chunk
-from danswer.datastores.qdrant.indexing import index_chunks
+from danswer.datastores.qdrant.indexing import index_qdrant_chunks
 from danswer.semantic_search.semantic_search import get_default_embedding_model
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logging import setup_logger
@@ -78,7 +78,7 @@ class QdrantIndex(VectorIndex):
         self.client = get_qdrant_client()
 
     def index(self, chunks: list[EmbeddedIndexChunk], user_id: int | None) -> bool:
-        return index_chunks(
+        return index_qdrant_chunks(
             chunks=chunks,
             user_id=user_id,
             collection=self.collection,
