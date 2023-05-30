@@ -23,7 +23,7 @@ GOOGLE_DRIVE_CRED_KEY = "google_drive_app_credential"
 SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 
 
-def _build_frontend_google_drive_redirect(credential_id: int) -> str:
+def _build_frontend_google_drive_redirect() -> str:
     return f"{WEB_DOMAIN}/admin/connectors/google-drive/auth/callback"
 
 
@@ -69,7 +69,7 @@ def get_auth_url(
     flow = InstalledAppFlow.from_client_config(
         credential_json,
         scopes=SCOPES,
-        redirect_uri=_build_frontend_google_drive_redirect(credential_id=credential_id),
+        redirect_uri=_build_frontend_google_drive_redirect(),
     )
     auth_url, _ = flow.authorization_url(prompt="consent")
 
@@ -90,7 +90,7 @@ def update_credential_access_tokens(
     flow = InstalledAppFlow.from_client_config(
         app_credentials.dict(),
         scopes=SCOPES,
-        redirect_uri=_build_frontend_google_drive_redirect(credential_id=credential_id),
+        redirect_uri=_build_frontend_google_drive_redirect(),
     )
     flow.fetch_token(code=auth_code)
     creds = flow.credentials
