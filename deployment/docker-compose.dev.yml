@@ -65,6 +65,9 @@ services:
   nginx:
     image: nginx:1.23.4-alpine
     restart: always
+    depends_on:
+      - api_server
+      - web_server
     environment:
       - DOMAIN=localhost
     ports:
