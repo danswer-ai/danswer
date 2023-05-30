@@ -63,7 +63,7 @@ def verify_csrf(credential_id: int, state: str) -> None:
 
 
 def get_auth_url(
-    credential_id: str,
+    credential_id: int,
 ) -> str:
     creds_str = str(get_dynamic_config_store().load(GOOGLE_DRIVE_CRED_KEY))
     credential_json = json.loads(creds_str)

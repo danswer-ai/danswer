@@ -11,6 +11,7 @@ from danswer.server.models import ConnectorBase
 from danswer.server.models import ObjectCreationIdResponse
 from danswer.server.models import StatusResponse
 from danswer.utils.logging import setup_logger
+from fastapi import HTTPException
 from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import select
@@ -18,12 +19,6 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Session
 
 logger = setup_logger()
-
-
-def connector_not_found_response(connector_id: int) -> StatusResponse[int]:
-    return StatusResponse(
-        success=False, message=f"Connector does not exist", data=connector_id
-    )
 
 
 def fetch_connectors(
@@ -113,9 +108,8 @@ def disable_connector(
 ) -> StatusResponse[int]:
     connector = fetch_connector_by_id(connector_id, db_session)
     if connector is None:
-        return StatusResponse(
-            success=True, message="Connector does not exist", data=connector_id
-        )
+        raise HTTPException(status_code=404, detail="Connector does not exist")
+
     connector.disabled = True
     db_session.commit()
     return StatusResponse(
@@ -163,15 +157,12 @@ def add_credential_to_connector(
     credential = fetch_credential_by_id(credential_id, user, db_session)
 
     if connector is None:
-        return StatusResponse(
-            success=False, message=f"Connector does not exist", data=connector_id
-        )
+        raise HTTPException(status_code=404, detail="Connector does not exist")
 
     if credential is None:
-        return StatusResponse(
-            success=False,
-            message=f"Credential does not exist or does not belong to user",
-            data=credential_id,
+        raise HTTPException(
+            status_code=401,
+            detail="Credential does not exist or does not belong to user",
         )
 
     existing_association = (
@@ -212,15 +203,12 @@ def remove_credential_from_connector(
     credential = fetch_credential_by_id(credential_id, user, db_session)
 
     if connector is None:
-        return StatusResponse(
-            success=False, message=f"Connector does not exist", data=connector_id
-        )
+        raise HTTPException(status_code=404, detail="Connector does not exist")
 
     if credential is None:
-        return StatusResponse(
-            success=False,
-            message=f"Credential does not exist or does not belong to user",
-            data=credential_id,
+        raise HTTPException(
+            status_code=404,
+            detail="Credential does not exist or does not belong to user",
         )
 
     association = (
@@ -242,7 +230,7 @@ def remove_credential_from_connector(
         )
 
     return StatusResponse(
-        success=True,
+        success=False,
         message=f"Connector already does not have Credential {credential_id}",
         data=connector_id,
     )

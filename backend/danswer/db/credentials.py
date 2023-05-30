@@ -5,7 +5,6 @@ from danswer.db.models import Credential
 from danswer.db.models import User
 from danswer.server.models import CredentialBase
 from danswer.server.models import ObjectCreationIdResponse
-from danswer.server.models import StatusResponse
 from danswer.utils.logging import setup_logger
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -29,14 +28,6 @@ def mask_credential_dict(credential_dict: dict[str, Any]) -> dict[str, str]:
 
         masked_creds[key] = mask_string(val)
     return masked_creds
-
-
-def credential_not_found_response(credential_id: int) -> StatusResponse[int]:
-    return StatusResponse(
-        success=False,
-        message="Credential does not exit or does not belong to user",
-        data=credential_id,
-    )
 
 
 def fetch_credentials(

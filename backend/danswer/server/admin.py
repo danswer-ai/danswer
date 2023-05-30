@@ -15,7 +15,6 @@ from danswer.connectors.google_drive.connector_auth import (
 from danswer.connectors.google_drive.connector_auth import upsert_google_app_cred
 from danswer.connectors.google_drive.connector_auth import verify_csrf
 from danswer.db.connector import add_credential_to_connector
-from danswer.db.connector import connector_not_found_response
 from danswer.db.connector import create_connector
 from danswer.db.connector import delete_connector
 from danswer.db.connector import fetch_connector_by_id
@@ -26,7 +25,6 @@ from danswer.db.connector import get_connector_credential_ids
 from danswer.db.connector import remove_credential_from_connector
 from danswer.db.connector import update_connector
 from danswer.db.credentials import create_credential
-from danswer.db.credentials import credential_not_found_response
 from danswer.db.credentials import delete_credential
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
@@ -49,7 +47,6 @@ from danswer.server.models import ConnectorIndexingStatus
 from danswer.server.models import ConnectorSnapshot
 from danswer.server.models import CredentialBase
 from danswer.server.models import CredentialSnapshot
-from danswer.server.models import DataRequest
 from danswer.server.models import GDriveCallback
 from danswer.server.models import GoogleAppCredentials
 from danswer.server.models import IndexAttemptSnapshot
@@ -86,7 +83,7 @@ def update_google_app_credentials(
     try:
         upsert_google_app_cred(app_credentials)
     except ValueError as e:
-        return StatusResponse(success=False, message=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
     return StatusResponse(
         success=True, message="Successfully saved Google App Credentials"
@@ -126,7 +123,7 @@ def google_drive_auth(
         httponly=True,
         max_age=600,
     )
-    return AuthUrl(auth_url=get_auth_url(credential_id))
+    return AuthUrl(auth_url=get_auth_url(int(credential_id)))
 
 
 @router.get("/connector/google-drive/callback")
@@ -136,10 +133,12 @@ def google_drive_callback(
     user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
-    credential_id = request.cookies.get(_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME)
-    if credential_id is None:
-        raise HTTPException(status_code=400, detail="Missing credential_id cookie")
-
+    credential_id_cookie = request.cookies.get(_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME)
+    if credential_id_cookie is None or not credential_id_cookie.isdigit():
+        raise HTTPException(
+            status_code=401, detail="Request did not pass CSRF verification."
+        )
+    credential_id = int(credential_id_cookie)
     verify_csrf(credential_id, callback.state)
     if (
         update_credential_access_tokens(callback.code, credential_id, user, db_session)
@@ -277,7 +276,9 @@ def get_connector_by_id(
 ) -> ConnectorSnapshot | StatusResponse[int]:
     connector = fetch_connector_by_id(connector_id, db_session)
     if connector is None:
-        return connector_not_found_response(connector_id)
+        raise HTTPException(
+            status_code=404, detail=f"Connector {connector_id} does not exist"
+        )
 
     return ConnectorSnapshot(
         id=connector.id,
@@ -316,7 +317,9 @@ def update_connector_from_model(
 ) -> ConnectorSnapshot | StatusResponse[int]:
     updated_connector = update_connector(connector_id, connector_data, db_session)
     if updated_connector is None:
-        return connector_not_found_response(connector_id)
+        raise HTTPException(
+            status_code=404, detail=f"Connector {connector_id} does not exist"
+        )
 
     return ConnectorSnapshot(
         id=updated_connector.id,
@@ -375,10 +378,9 @@ def get_credential_by_id(
 ) -> CredentialSnapshot | StatusResponse[int]:
     credential = fetch_credential_by_id(credential_id, user, db_session)
     if credential is None:
-        return StatusResponse(
-            success=False,
-            message="Credential does not exit or does not belong to user",
-            data=credential_id,
+        raise HTTPException(
+            status_code=401,
+            detail=f"Credential {credential_id} does not exist or does not belong to user",
         )
 
     return CredentialSnapshot(
@@ -416,7 +418,10 @@ def update_credential_from_model(
         credential_id, credential_data, user, db_session
     )
     if updated_credential is None:
-        return credential_not_found_response(credential_id)
+        raise HTTPException(
+            status_code=401,
+            detail=f"Credential {credential_id} does not exist or does not belong to user",
+        )
 
     return CredentialSnapshot(
         id=updated_credential.id,
