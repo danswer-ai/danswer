@@ -1,5 +1,4 @@
 import json
-from json import JSONDecodeError
 from typing import cast
 from urllib.parse import parse_qs
 from urllib.parse import ParseResult
