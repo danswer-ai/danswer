@@ -8,7 +8,6 @@ import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import {
   ConfluenceCredentialJson,
   ConfluenceConfig,
-  Connector,
   Credential,
   ConnectorIndexingStatus,
 } from "@/lib/types";
@@ -230,7 +229,7 @@ const Main = () => {
           onSubmit={async (isSuccess, responseJson) => {
             if (isSuccess && responseJson) {
               await linkCredential(responseJson.id, confluenceCredential.id);
-              mutate("/api/admin/connector");
+              mutate("/api/admin/connector/indexing-status");
             }
           }}
         />

@@ -69,7 +69,7 @@ export default function Web() {
             if (isSuccess && responseJson) {
               // assumes there is a dummy credential with id 0
               await linkCredential(responseJson.id, 0);
-              mutate("/api/admin/connector");
+              mutate("/api/admin/connector/indexing-status");
             }
           }}
         />

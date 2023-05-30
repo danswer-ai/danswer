@@ -196,7 +196,7 @@ const Main = () => {
           onSubmit={async (isSuccess, responseJson) => {
             if (isSuccess && responseJson) {
               await linkCredential(responseJson.id, githubCredential.id);
-              mutate("/api/admin/connector");
+              mutate("/api/admin/connector/indexing-status");
             }
           }}
         />
