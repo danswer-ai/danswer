@@ -10,6 +10,7 @@ import {
   ConfluenceConfig,
   Connector,
   Credential,
+  ConnectorIndexingStatus,
 } from "@/lib/types";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
@@ -21,10 +22,13 @@ import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsT
 const Main = () => {
   const { mutate } = useSWRConfig();
   const {
-    data: connectorsData,
-    isLoading: isConnectorsLoading,
-    error: isConnectorsError,
-  } = useSWR<Connector<ConfluenceConfig>[]>("/api/admin/connector", fetcher);
+    data: connectorIndexingStatuses,
+    isLoading: isConnectorIndexingStatusesLoading,
+    error: isConnectorIndexingStatusesError,
+  } = useSWR<ConnectorIndexingStatus<any>[]>(
+    "/api/admin/connector/indexing-status",
+    fetcher
+  );
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,
@@ -35,11 +39,15 @@ const Main = () => {
     fetcher
   );
 
-  if (isConnectorsLoading || isCredentialsLoading || isCredentialsValidating) {
+  if (
+    isConnectorIndexingStatusesLoading ||
+    isCredentialsLoading ||
+    isCredentialsValidating
+  ) {
     return <LoadingAnimation text="Loading" />;
   }
 
-  if (isConnectorsError || !connectorsData) {
+  if (isConnectorIndexingStatusesError || !connectorIndexingStatuses) {
     return <div>Failed to load connectors</div>;
   }
 
@@ -47,8 +55,9 @@ const Main = () => {
     return <div>Failed to load credentials</div>;
   }
 
-  const confluenceConnectors = connectorsData.filter(
-    (connector) => connector.source === "confluence"
+  const confluenceConnectorIndexingStatuses = connectorIndexingStatuses.filter(
+    (connectorIndexingStatus) =>
+      connectorIndexingStatus.connector.source === "confluence"
   );
   const confluenceCredential = credentialsData.filter(
     (credential) => credential.credential_json?.confluence_access_token
@@ -155,12 +164,12 @@ const Main = () => {
         setup, specify any link to a Confluence page below and click
         &quot;Index&quot; to Index. Based on the provided link, we will index
         the ENTIRE SPACE, not just the specified page. For example, entering{" "}
-        <i>https://danswer.atlassian.net/wiki/spaces/SD/overview</i> and
-        clicking the Index button will index the whole <i>SD</i> Confluence
+        <i>https://danswer.atlassian.net/wiki/spaces/Engineering/overview</i>{" "}
+        and clicking the Index button will index the whole <i>SD</i> Confluence
         space.
       </p>
 
-      {connectorsData.length > 0 && (
+      {confluenceConnectorIndexingStatuses.length > 0 && (
         <>
           <p className="text-sm mb-2">
             We pull the latest pages and comments from each space listed below
@@ -168,7 +177,7 @@ const Main = () => {
           </p>
           <div className="mb-2">
             <ConnectorsTable<ConfluenceConfig, ConfluenceCredentialJson>
-              connectors={confluenceConnectors}
+              connectorIndexingStatuses={confluenceConnectorIndexingStatuses}
               liveCredential={confluenceCredential}
               getCredential={(credential) => {
                 return (
@@ -221,7 +230,7 @@ const Main = () => {
           }
           validationSchema={Yup.object().shape({
             wiki_page_url: Yup.string().required(
-              "Please enter any link to your confluence e.g. https://danswer.atlassian.net/wiki/spaces/SD/overview"
+              "Please enter any link to your confluence e.g. https://danswer.atlassian.net/wiki/spaces/Engineering/overview"
             ),
           })}
           initialValues={{

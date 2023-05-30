@@ -1,4 +1,4 @@
-import { Connector, Credential } from "@/lib/types";
+import { Connector, ConnectorIndexingStatus, Credential } from "@/lib/types";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { Popup, PopupSpec } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
@@ -7,62 +7,80 @@ import { deleteConnector, updateConnector } from "@/lib/connector";
 import { AttachCredentialButtonForTable } from "@/components/admin/connectors/buttons/AttachCredentialButtonForTable";
 
 interface StatusRowProps<ConnectorConfigType> {
-  connector: Connector<ConnectorConfigType>;
+  connectorIndexingStatus: ConnectorIndexingStatus<ConnectorConfigType>;
   hasCredentialsIssue: boolean;
   setPopup: (popupSpec: PopupSpec | null) => void;
   onUpdate: () => void;
 }
 
 function StatusRow<ConnectorConfigType>({
-  connector,
+  connectorIndexingStatus,
   hasCredentialsIssue,
   setPopup,
   onUpdate,
 }: StatusRowProps<ConnectorConfigType>) {
   const [statusHovered, setStatusHovered] = useState<boolean>(false);
+  const connector = connectorIndexingStatus.connector;
+
+  let statusDisplay;
+  switch (connectorIndexingStatus.last_status) {
+    case "success":
+      statusDisplay = <div className="text-emerald-600 flex">Running!</div>;
+      break;
+    case "failed":
+      statusDisplay = <div className="text-red-700">Failed</div>;
+      break;
+    default:
+      statusDisplay = <div className="text-emerald-600 flex">Running!</div>;
+  }
+  if (connector.disabled) {
+    <div className="text-red-700">Disabled</div>;
+  }
 
   return (
     <div className="flex">
-      {connector.disabled ? (
-        <div className="text-red-700">Disabled</div>
-      ) : !hasCredentialsIssue ? (
-        <div className="text-emerald-600 flex">Running!</div>
-      ) : (
-        <div className="text-red-700">Missing Credentials</div>
-      )}
-      <div
-        className="cursor-pointer ml-1 my-auto relative"
-        onMouseEnter={() => setStatusHovered(true)}
-        onMouseLeave={() => setStatusHovered(false)}
-        onClick={() => {
-          updateConnector({
-            ...connector,
-            disabled: !connector.disabled,
-          }).then(() => {
-            setPopup({
-              message: connector.disabled
-                ? "Enabled connector!"
-                : "Disabled connector!",
-              type: "success",
+      {statusDisplay}
+      {!hasCredentialsIssue && (
+        <div
+          className="cursor-pointer ml-1 my-auto relative"
+          onMouseEnter={() => setStatusHovered(true)}
+          onMouseLeave={() => setStatusHovered(false)}
+          onClick={() => {
+            updateConnector({
+              ...connector,
+              disabled: !connector.disabled,
+            }).then(() => {
+              setPopup({
+                message: connector.disabled
+                  ? "Enabled connector!"
+                  : "Disabled connector!",
+                type: "success",
+              });
+              setTimeout(() => {
+                setPopup(null);
+              }, 4000);
+              onUpdate();
             });
-            setTimeout(() => {
-              setPopup(null);
-            }, 3000);
-            onUpdate();
-          });
-        }}
-      >
-        {statusHovered && (
-          <div className="flex flex-nowrap absolute top-0 left-0 ml-8 mb-5 bg-gray-700 px-3 py-2 rounded shadow-lg">
-            {connector.disabled ? "Enable!" : "Disable!"}
-          </div>
-        )}
-        {connector.disabled ? (
-          <LinkIcon className="my-auto flex flex-shrink-0 text-red-700" />
-        ) : (
-          <LinkBreakIcon className="my-auto flex flex-shrink-0 text-emerald-600" />
-        )}
-      </div>
+          }}
+        >
+          {statusHovered && (
+            <div className="flex flex-nowrap absolute top-0 left-0 ml-8 bg-gray-700 px-3 py-2 rounded shadow-lg">
+              {connector.disabled ? "Enable!" : "Disable!"}
+            </div>
+          )}
+          {connector.disabled ? (
+            <LinkIcon className="my-auto flex flex-shrink-0 text-red-700" />
+          ) : (
+            <LinkBreakIcon
+              className={`my-auto flex flex-shrink-0 ${
+                connectorIndexingStatus.last_status === "failed"
+                  ? "text-red-700"
+                  : "text-emerald-600"
+              }`}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -74,8 +92,8 @@ interface ColumnSpecification<ConnectorConfigType> {
 }
 
 interface ConnectorsTableProps<ConnectorConfigType, ConnectorCredentialType> {
-  connectors: Connector<ConnectorConfigType>[];
-  liveCredential: Credential<ConnectorCredentialType> | null;
+  connectorIndexingStatuses: ConnectorIndexingStatus<ConnectorConfigType>[];
+  liveCredential?: Credential<ConnectorCredentialType> | null;
   getCredential?: (
     credential: Credential<ConnectorCredentialType>
   ) => JSX.Element | string;
@@ -85,7 +103,7 @@ interface ConnectorsTableProps<ConnectorConfigType, ConnectorCredentialType> {
 }
 
 export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
-  connectors,
+  connectorIndexingStatuses,
   liveCredential,
   getCredential,
   specialColumns,
@@ -123,7 +141,8 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
       {popup && <Popup message={popup.message} type={popup.type} />}
       <BasicTable
         columns={columns}
-        data={connectors.map((connector) => {
+        data={connectorIndexingStatuses.map((connectorIndexingStatus) => {
+          const connector = connectorIndexingStatus.connector;
           const hasValidCredentials =
             liveCredential &&
             connector.credential_ids.includes(liveCredential.id);
@@ -145,10 +164,9 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
           return {
             status: (
               <StatusRow
-                connector={connector}
+                connectorIndexingStatus={connectorIndexingStatus}
                 hasCredentialsIssue={
-                  !hasValidCredentials &&
-                  connectorIncludesCredential !== undefined
+                  !hasValidCredentials && connectorIncludesCredential
                 }
                 setPopup={setPopup}
                 onUpdate={onUpdate}
@@ -165,7 +183,7 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
                     });
                     setTimeout(() => {
                       setPopup(null);
-                    }, 3000);
+                    }, 4000);
                     onUpdate();
                   });
                 }}
@@ -196,7 +214,7 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
           //       });
           //       setTimeout(() => {
           //         setPopup(null);
-          //       }, 3000);
+          //       }, 4000);
           //       mutate("/api/admin/connector/index-attempt");
           //     }}
           //   />

@@ -14,6 +14,8 @@ RUN \
   elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
   fi
+# needed for image processing
+RUN npm i sharp 
 
 
 # Step 2. Rebuild the source code only when needed

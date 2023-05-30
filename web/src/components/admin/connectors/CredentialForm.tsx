@@ -63,7 +63,7 @@ export function CredentialForm<T extends Yup.AnyObject>({
             formikHelpers.setSubmitting(false);
             setTimeout(() => {
               setPopup(null);
-            }, 3000);
+            }, 4000);
             onSubmit(isSuccess);
           });
         }}

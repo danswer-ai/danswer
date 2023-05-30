@@ -7,10 +7,10 @@ import { HealthCheckBanner } from "@/components/health/healthcheck";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
 import {
-  Connector,
   GithubConfig,
   GithubCredentialJson,
   Credential,
+  ConnectorIndexingStatus,
 } from "@/lib/types";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { LoadingAnimation } from "@/components/Loading";
@@ -21,10 +21,13 @@ import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsT
 const Main = () => {
   const { mutate } = useSWRConfig();
   const {
-    data: connectorsData,
-    isLoading: isConnectorsLoading,
-    error: isConnectorsError,
-  } = useSWR<Connector<GithubConfig>[]>("/api/admin/connector", fetcher);
+    data: connectorIndexingStatuses,
+    isLoading: isConnectorIndexingStatusesLoading,
+    error: isConnectorIndexingStatusesError,
+  } = useSWR<ConnectorIndexingStatus<any>[]>(
+    "/api/admin/connector/indexing-status",
+    fetcher
+  );
 
   const {
     data: credentialsData,
@@ -36,11 +39,15 @@ const Main = () => {
     fetcher
   );
 
-  if (isConnectorsLoading || isCredentialsLoading || isCredentialsValidating) {
+  if (
+    isConnectorIndexingStatusesLoading ||
+    isCredentialsLoading ||
+    isCredentialsValidating
+  ) {
     return <LoadingAnimation text="Loading" />;
   }
 
-  if (isConnectorsError || !connectorsData) {
+  if (isConnectorIndexingStatusesError || !connectorIndexingStatuses) {
     return <div>Failed to load connectors</div>;
   }
 
@@ -48,9 +55,11 @@ const Main = () => {
     return <div>Failed to load credentials</div>;
   }
 
-  const githubConnectors = connectorsData.filter(
-    (connector) => connector.source === "github"
-  );
+  const githubConnectorIndexingStatuses: ConnectorIndexingStatus<GithubConfig>[] =
+    connectorIndexingStatuses.filter(
+      (connectorIndexingStatus) =>
+        connectorIndexingStatus.connector.source === "github"
+    );
   const githubCredential = credentialsData.filter(
     (credential) => credential.credential_json?.github_access_token
   )[0];
@@ -124,7 +133,7 @@ const Main = () => {
         Step 2: Which repositories do you want to make searchable?
       </h2>
 
-      {connectorsData.length > 0 && (
+      {githubConnectorIndexingStatuses.length > 0 && (
         <>
           <p className="text-sm mb-2">
             We pull the latest Pull Requests from each repository listed below
@@ -132,7 +141,7 @@ const Main = () => {
           </p>
           <div className="mb-2">
             <ConnectorsTable<GithubConfig, GithubCredentialJson>
-              connectors={githubConnectors}
+              connectorIndexingStatuses={githubConnectorIndexingStatuses}
               liveCredential={githubCredential}
               getCredential={(credential) =>
                 credential.credential_json.github_access_token
@@ -179,14 +188,10 @@ const Main = () => {
               "Please enter the name of the repository to index e.g. danswer "
             ),
           })}
-          initialValues={
-            connectorsData.filter(
-              (connector) => connector.name === "GithubConnector"
-            )[0]?.connector_specific_config || {
-              repo_owner: "",
-              repo_name: "",
-            }
-          }
+          initialValues={{
+            repo_owner: "",
+            repo_name: "",
+          }}
           refreshFreq={10 * 60} // 10 minutes
           onSubmit={async (isSuccess, responseJson) => {
             if (isSuccess && responseJson) {

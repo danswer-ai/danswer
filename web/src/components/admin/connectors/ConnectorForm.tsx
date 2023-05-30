@@ -85,7 +85,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             }
             setTimeout(() => {
               setPopup(null);
-            }, 3000);
+            }, 4000);
             onSubmit(isSuccess, response);
           });
         }}

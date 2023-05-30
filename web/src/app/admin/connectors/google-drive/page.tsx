@@ -12,6 +12,7 @@ import { Button } from "@/components/Button";
 import {
   Connector,
   ConnectorBase,
+  ConnectorIndexingStatus,
   Credential,
   GoogleDriveCredentialJson,
 } from "@/lib/types";
@@ -100,10 +101,13 @@ const Main = () => {
     fetcher
   );
   const {
-    data: connectorsData,
-    isLoading: isConnectorsLoading,
-    error: isConnectorsError,
-  } = useSWR<Connector<{}>[]>("/api/admin/connector", fetcher);
+    data: connectorIndexingStatuses,
+    isLoading: isConnectorIndexingStatusesLoading,
+    error: isConnectorIndexingStatusesError,
+  } = useSWR<ConnectorIndexingStatus<any>[]>(
+    "/api/admin/connector/indexing-status",
+    fetcher
+  );
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,
@@ -118,7 +122,11 @@ const Main = () => {
     type: "success" | "error";
   } | null>(null);
 
-  if (isCredentialsLoading || isAppCredentialLoading || isConnectorsLoading) {
+  if (
+    isCredentialsLoading ||
+    isAppCredentialLoading ||
+    isConnectorIndexingStatusesLoading
+  ) {
     return (
       <div className="mx-auto">
         <LoadingAnimation text="" />
@@ -134,7 +142,7 @@ const Main = () => {
     );
   }
 
-  if (isConnectorsError || !connectorsData) {
+  if (isConnectorIndexingStatusesError || !connectorIndexingStatuses) {
     return (
       <div className="mx-auto">
         <div className="text-red-500">Failed to load connectors.</div>
@@ -152,9 +160,11 @@ const Main = () => {
     );
   }
 
-  const googleDriveConnectors = connectorsData.filter(
-    (connector) => connector.source === "google_drive"
-  );
+  const googleDriveConnectorIndexingStatuses: ConnectorIndexingStatus<{}>[] =
+    connectorIndexingStatuses.filter(
+      (connectorIndexingStatus) =>
+        connectorIndexingStatus.connector.source === "google_drive"
+    );
   const googleDriveCredential = credentialsData.filter(
     (credential) => credential.credential_json?.google_drive_tokens
   )[0];
@@ -277,7 +287,7 @@ const Main = () => {
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
         Step 3: Start Indexing!
       </h2>
-      {googleDriveConnectors.length > 0 ? (
+      {googleDriveConnectorIndexingStatuses.length > 0 ? (
         <div>
           <p className="text-sm mb-2">
             The Google Drive connector is setup! Checkout the{" "}
@@ -288,14 +298,16 @@ const Main = () => {
           </p>
           <Button
             onClick={() => {
-              deleteConnector(googleDriveConnectors[0].id).then(() => {
+              deleteConnector(
+                googleDriveConnectorIndexingStatuses[0].connector.id
+              ).then(() => {
                 setPopup({
                   message: "Successfully deleted connector!",
                   type: "success",
                 });
                 setTimeout(() => {
                   setPopup(null);
-                }, 3000);
+                }, 4000);
                 mutate("/api/admin/connector");
               });
             }}

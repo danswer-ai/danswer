@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR, { useSWRConfig } from "swr";
+import useSWR from "swr";
 
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { LoadingAnimation } from "@/components/Loading";
@@ -9,7 +9,6 @@ import { NotebookIcon, XSquareIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
 import { getSourceMetadata } from "@/components/source";
 import { CheckCircle, XCircle } from "@phosphor-icons/react";
-import { submitIndexRequest } from "@/components/admin/connectors/IndexForm";
 import { useState } from "react";
 import { Popup } from "@/components/admin/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
@@ -43,14 +42,14 @@ const getSourceDisplay = (connector: Connector<any>) => {
 };
 
 export default function Status() {
-  const { mutate } = useSWRConfig();
   const {
     data: indexAttemptData,
     isLoading: indexAttemptIsLoading,
     error: indexAttemptIsError,
   } = useSWR<ConnectorIndexingStatus<any>[]>(
     "/api/admin/connector/indexing-status",
-    fetcher
+    fetcher,
+    { refreshInterval: 30000 } // 30 seconds
   );
 
   const [popup, setPopup] = useState<{
@@ -80,7 +79,7 @@ export default function Status() {
             { header: "Status", key: "status" },
             { header: "Last Indexed", key: "indexed_at" },
             { header: "Docs Indexed", key: "docs_indexed" },
-            { header: "Re-Index", key: "reindex" },
+            // { header: "Re-Index", key: "reindex" },
           ]}
           data={indexAttemptData.map((connectorIndexingStatus) => {
             const sourceMetadata = getSourceMetadata(
@@ -100,7 +99,7 @@ export default function Status() {
               statusDisplay = (
                 <div className="text-green-600 flex">
                   <CheckCircle className="my-auto mr-1" size="18" />
-                  Success
+                  Running
                 </div>
               );
             } else if (connectorIndexingStatus.last_status === "failed") {
@@ -128,34 +127,35 @@ export default function Status() {
                 </a>
               ),
               status: statusDisplay,
-              reindex: (
-                <button
-                  className={
-                    "group relative " +
-                    "py-1 px-2 border border-transparent text-sm " +
-                    "font-medium rounded-md text-white bg-red-800 " +
-                    "hover:bg-red-900 focus:outline-none focus:ring-2 " +
-                    "focus:ring-offset-2 focus:ring-red-500 mx-auto"
-                  }
-                  onClick={async () => {
-                    const { message, isSuccess } = await submitIndexRequest(
-                      connectorIndexingStatus.connector.source,
-                      connectorIndexingStatus.connector
-                        .connector_specific_config
-                    );
-                    setPopup({
-                      message,
-                      type: isSuccess ? "success" : "error",
-                    });
-                    setTimeout(() => {
-                      setPopup(null);
-                    }, 3000);
-                    mutate("/api/admin/connector/index-attempt");
-                  }}
-                >
-                  Index
-                </button>
-              ),
+              // TODO: add the below back in after this is supported in the backend
+              // reindex: (
+              //   <button
+              //     className={
+              //       "group relative " +
+              //       "py-1 px-2 border border-transparent text-sm " +
+              //       "font-medium rounded-md text-white bg-red-800 " +
+              //       "hover:bg-red-900 focus:outline-none focus:ring-2 " +
+              //       "focus:ring-offset-2 focus:ring-red-500 mx-auto"
+              //     }
+              //     onClick={async () => {
+              //       const { message, isSuccess } = await submitIndexRequest(
+              //         connectorIndexingStatus.connector.source,
+              //         connectorIndexingStatus.connector
+              //           .connector_specific_config
+              //       );
+              //       setPopup({
+              //         message,
+              //         type: isSuccess ? "success" : "error",
+              //       });
+              //       setTimeout(() => {
+              //         setPopup(null);
+              //       }, 4000);
+              //       mutate("/api/admin/connector/index-attempt");
+              //     }}
+              //   >
+              //     Index
+              //   </button>
+              // ),
             };
           })}
         />

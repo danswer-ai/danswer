@@ -8,7 +8,7 @@ import { GlobeIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { Connector, WebConfig } from "@/lib/types";
+import { ConnectorIndexingStatus, WebConfig } from "@/lib/types";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { linkCredential } from "@/lib/credential";
@@ -17,13 +17,19 @@ export default function Web() {
   const { mutate } = useSWRConfig();
 
   const {
-    data: connectorsData,
-    isLoading: isConnectorsLoading,
-    error: isConnectorsError,
-  } = useSWR<Connector<WebConfig>[]>("/api/admin/connector", fetcher);
+    data: connectorIndexingStatuses,
+    isLoading: isConnectorIndexingStatusesLoading,
+    error: isConnectorIndexingStatusesError,
+  } = useSWR<ConnectorIndexingStatus<any>[]>(
+    "/api/admin/connector/indexing-status",
+    fetcher
+  );
 
-  const webConnectors =
-    connectorsData?.filter((connector) => connector.source === "web") ?? [];
+  const webIndexingStatuses: ConnectorIndexingStatus<WebConfig>[] =
+    connectorIndexingStatuses?.filter(
+      (connectorIndexingStatus) =>
+        connectorIndexingStatus.connector.source === "web"
+    ) ?? [];
 
   return (
     <div className="mx-auto container">
@@ -52,7 +58,7 @@ export default function Web() {
           }
           validationSchema={Yup.object().shape({
             base_url: Yup.string().required(
-              "Please enter the website URL to scrape e.g. https://docs.github.com/en/actions"
+              "Please enter the website URL to scrape e.g. https://docs.danswer.dev/"
             ),
           })}
           initialValues={{
@@ -72,14 +78,13 @@ export default function Web() {
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
         Already Indexed Websites
       </h2>
-      {isConnectorsLoading ? (
+      {isConnectorIndexingStatusesLoading ? (
         <LoadingAnimation text="Loading" />
-      ) : isConnectorsError || !connectorsData ? (
+      ) : isConnectorIndexingStatusesError || !connectorIndexingStatuses ? (
         <div>Error loading indexing history</div>
-      ) : webConnectors.length > 0 ? (
+      ) : webIndexingStatuses.length > 0 ? (
         <ConnectorsTable<WebConfig, {}>
-          connectors={webConnectors}
-          liveCredential={null}
+          connectorIndexingStatuses={webIndexingStatuses}
           specialColumns={[
             {
               header: "Base URL",

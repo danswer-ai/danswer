@@ -11,6 +11,7 @@ import {
   SlackConfig,
   Credential,
   SlackCredentialJson,
+  ConnectorIndexingStatus,
 } from "@/lib/types";
 import { deleteCredential, linkCredential } from "@/lib/credential";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
@@ -21,10 +22,13 @@ import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 const MainSection = () => {
   const { mutate } = useSWRConfig();
   const {
-    data: connectorsData,
-    isLoading: isConnectorsLoading,
-    error: isConnectorsError,
-  } = useSWR<Connector<SlackConfig>[]>("/api/admin/connector", fetcher);
+    data: connectorIndexingStatuses,
+    isLoading: isConnectorIndexingStatusesLoading,
+    error: isConnectorIndexingStatusesError,
+  } = useSWR<ConnectorIndexingStatus<any>[]>(
+    "/api/admin/connector/indexing-status",
+    fetcher
+  );
 
   const {
     data: credentialsData,
@@ -36,11 +40,15 @@ const MainSection = () => {
     fetcher
   );
 
-  if (isConnectorsLoading || isCredentialsLoading || isCredentialsValidating) {
+  if (
+    isConnectorIndexingStatusesLoading ||
+    isCredentialsLoading ||
+    isCredentialsValidating
+  ) {
     return <LoadingAnimation text="Loading" />;
   }
 
-  if (isConnectorsError || !connectorsData) {
+  if (isConnectorIndexingStatusesError || !connectorIndexingStatuses) {
     return <div>Failed to load connectors</div>;
   }
 
@@ -48,9 +56,11 @@ const MainSection = () => {
     return <div>Failed to load credentials</div>;
   }
 
-  const slackConnectors = connectorsData.filter(
-    (connector) => connector.source === "slack"
-  );
+  const slackConnectorIndexingStatuses: ConnectorIndexingStatus<SlackConfig>[] =
+    connectorIndexingStatuses.filter(
+      (connectorIndexingStatus) =>
+        connectorIndexingStatus.connector.source === "slack"
+    );
   const slackCredential = credentialsData.filter(
     (credential) => credential.credential_json?.slack_bot_token
   )[0];
@@ -125,7 +135,7 @@ const MainSection = () => {
         Step 2: Which workspaces do you want to make searchable?
       </h2>
 
-      {connectorsData.length > 0 && (
+      {slackConnectorIndexingStatuses.length > 0 && (
         <>
           <p className="text-sm mb-2">
             We pull the latest messages from each workspace listed below every{" "}
@@ -133,7 +143,7 @@ const MainSection = () => {
           </p>
           <div className="mb-2">
             <ConnectorsTable
-              connectors={slackConnectors}
+              connectorIndexingStatuses={slackConnectorIndexingStatuses}
               liveCredential={slackCredential}
               getCredential={(credential) =>
                 credential.credential_json.slack_bot_token
