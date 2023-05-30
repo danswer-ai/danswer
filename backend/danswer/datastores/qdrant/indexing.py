@@ -160,12 +160,14 @@ def index_qdrant_chunks(
             index_results = upsert()
             log_status = index_results.status if index_results else "Failed"
             logger.info(
-                f"Indexed {len(point_struct_batch)} chunks into collection '{collection}', "
+                f"Indexed {len(point_struct_batch)} chunks into Qdrant collection '{collection}', "
                 f"status: {log_status}"
             )
     else:
         index_results = q_client.upsert(
             collection_name=collection, points=point_structs
         )
-        logger.info(f"Batch indexing status: {index_results.status}")
+        logger.info(
+            f"Document batch of size {len(point_structs)} indexing status: {index_results.status}"
+        )
     return index_results is not None and index_results.status == UpdateStatus.COMPLETED

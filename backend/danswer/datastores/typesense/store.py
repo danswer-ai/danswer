@@ -52,7 +52,7 @@ def create_typesense_collection(
             # Typesense uses "id" type string as a special field
             {"name": "id", "type": "string"},
             {"name": DOCUMENT_ID, "type": "string"},
-            {"name": CHUNK_ID, "type": "int32[]"},
+            {"name": CHUNK_ID, "type": "int32"},
             {"name": BLURB, "type": "string"},
             {"name": CONTENT, "type": "string"},
             {"name": SOURCE_TYPE, "type": "string"},
@@ -132,7 +132,7 @@ def index_typesense_chunks(
             {
                 "id": str(get_uuid_from_chunk(chunk)),  # No minichunks for typesense
                 DOCUMENT_ID: document.id,
-                CHUNK_ID: str(chunk.chunk_id),
+                CHUNK_ID: chunk.chunk_id,
                 BLURB: chunk.blurb,
                 CONTENT: chunk.content,
                 SOURCE_TYPE: str(document.source.value),
@@ -150,8 +150,17 @@ def index_typesense_chunks(
             for x in range(0, len(new_documents), DEFAULT_BATCH_SIZE)
         ]
         for doc_batch in doc_batches:
-            ts_client.collections[collection].documents.import_(
+            results = ts_client.collections[collection].documents.import_(
                 doc_batch, {"action": "upsert"}
+            )
+            failures = [
+                doc_res["success"]
+                for doc_res in results
+                if doc_res["success"] is not True
+            ]
+            logger.info(
+                f"Indexed {len(doc_batch)} chunks into Typesense collection '{collection}', "
+                f"number failed: {len(failures)}"
             )
     else:
         [
