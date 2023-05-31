@@ -13,7 +13,7 @@ interface StatusRowProps<ConnectorConfigType> {
   onUpdate: () => void;
 }
 
-function StatusRow<ConnectorConfigType>({
+export function StatusRow<ConnectorConfigType>({
   connectorIndexingStatus,
   hasCredentialsIssue,
   setPopup,

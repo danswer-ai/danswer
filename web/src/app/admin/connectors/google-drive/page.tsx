@@ -17,6 +17,7 @@ import {
   GoogleDriveCredentialJson,
 } from "@/lib/types";
 import { deleteConnector } from "@/lib/connector";
+import { StatusRow } from "@/components/admin/connectors/table/ConnectorsTable";
 
 const AppCredentialUpload = ({
   setPopup,
@@ -165,6 +166,8 @@ const Main = () => {
       (connectorIndexingStatus) =>
         connectorIndexingStatus.connector.source === "google_drive"
     );
+  const googleDriveConnectorIndexingStatus =
+    googleDriveConnectorIndexingStatuses[0];
   const googleDriveCredential = credentialsData.filter(
     (credential) => credential.credential_json?.google_drive_tokens
   )[0];
@@ -287,19 +290,37 @@ const Main = () => {
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
         Step 3: Start Indexing!
       </h2>
-      {googleDriveConnectorIndexingStatuses.length > 0 ? (
+      {googleDriveConnectorIndexingStatus ? (
         <div>
-          <p className="text-sm mb-2">
-            The Google Drive connector is setup! Checkout the{" "}
-            <a href="/admin/indexing/status" className="text-blue-500">
-              status page
-            </a>{" "}
-            for the latest indexing status.
-          </p>
+          <div className="text-sm mb-2">
+            <div className="flex mb-1">
+              The Google Drive connector is setup!{" "}
+              <b className="mx-2">Status:</b>{" "}
+              <StatusRow
+                connectorIndexingStatus={googleDriveConnectorIndexingStatus}
+                hasCredentialsIssue={
+                  googleDriveConnectorIndexingStatus.connector.credential_ids
+                    .length === 0
+                }
+                setPopup={setPopup}
+                onUpdate={() => {
+                  mutate("/api/admin/connector/indexing-status");
+                }}
+              />
+            </div>
+            <p>
+              Checkout the{" "}
+              <a href="/admin/indexing/status" className="text-blue-500">
+                status page
+              </a>{" "}
+              for the latest indexing status. We fetch the latest documents from
+              Google Drive every <b>10</b> minutes.
+            </p>
+          </div>
           <Button
             onClick={() => {
               deleteConnector(
-                googleDriveConnectorIndexingStatuses[0].connector.id
+                googleDriveConnectorIndexingStatus.connector.id
               ).then(() => {
                 setPopup({
                   message: "Successfully deleted connector!",
