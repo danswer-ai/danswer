@@ -14,20 +14,20 @@
 </a>
 </p>
 
-[Danswer](https://docs.danswer.dev/) allows you to ask natural language questions against internal documents and get back reliable answers backed by quotes and references from the source material so that you can always trust what you get back. You can connect to a number of common tools such as Slack, GitHub, Google Drive, among others.  
+[Danswer](https://docs.danswer.dev/) allows you to ask natural language questions against internal documents and get back reliable answers backed by quotes and references from the source material so that you can always trust what you get back. You can connect to a number of common tools such as Slack, GitHub, Confluence, amongst others.  
 
 
 
 ## 💃 Features
 * Direct QA powered by Generative AI models with answers backed by quotes and source links.
 * Intelligent Document Retrieval (Semantic Search/Reranking) using the latest LLMs.
-* Connectors to Slack, GitHub, GoogleDrive, Web scrapping, with more to come.
+* User autentication with document level access management.
 * Management Dashboard to manage connectors and set up features such as live update fetching.
+* Connectors to Slack, GitHub, GoogleDrive, Confluence, and Web scrapping, with more to come.
 * One line Docker Compose deployment of all services to host Danswer anywhere.
 
 ## Upcoming
 * Chat/Conversation support.
-* Extend current user Auth flows to support document level access management.
 * Support for custom endpoints for Generative AI models or even self-host options.
 * Custom Deep Learning NLP model to classify user intent to customize prompts for code generation, summarization, etc.
 * Templates to easily build custom connectors.
