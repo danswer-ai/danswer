@@ -8,11 +8,15 @@ DatastoreFilter = dict[str, str | list[str] | None]
 
 class Datastore:
     @abc.abstractmethod
-    def index(self, chunks: list[EmbeddedIndexChunk]) -> bool:
+    def index(self, chunks: list[EmbeddedIndexChunk], user_id: int | None) -> bool:
         raise NotImplementedError
 
     @abc.abstractmethod
     def semantic_retrieval(
-        self, query: str, filters: list[DatastoreFilter] | None, num_to_retrieve: int
+        self,
+        query: str,
+        user_id: int | None,
+        filters: list[DatastoreFilter] | None,
+        num_to_retrieve: int,
     ) -> list[InferenceChunk]:
         raise NotImplementedError

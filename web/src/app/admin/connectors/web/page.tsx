@@ -1,60 +1,38 @@
 "use client";
 
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 
-import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { LoadingAnimation } from "@/components/Loading";
-import { timeAgo } from "@/lib/time";
 import { GlobeIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
-import {
-  IndexAttempt,
-  ListIndexingResponse,
-} from "../../../../components/admin/connectors/types";
-import { IndexForm } from "@/components/admin/connectors/Form";
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { useRouter } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-
-const COLUMNS = [
-  { header: "Base URL", key: "url" },
-  { header: "Last Indexed", key: "indexed_at" },
-  { header: "Docs Indexed", key: "docs_indexed" },
-  { header: "Status", key: "status" },
-];
+import { ConnectorIndexingStatus, WebConfig } from "@/lib/types";
+import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
+import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
+import { linkCredential } from "@/lib/credential";
 
 export default function Web() {
-  const router = useRouter();
+  const { mutate } = useSWRConfig();
 
-  const { data, isLoading, error } = useSWR<ListIndexingResponse>(
-    "/api/admin/connectors/web/index-attempt",
+  const {
+    data: connectorIndexingStatuses,
+    isLoading: isConnectorIndexingStatusesLoading,
+    error: isConnectorIndexingStatusesError,
+  } = useSWR<ConnectorIndexingStatus<any>[]>(
+    "/api/admin/connector/indexing-status",
     fetcher
   );
 
-  const urlToLatestIndexAttempt = new Map<string, IndexAttempt>();
-  const urlToLatestIndexSuccess = new Map<string, string>();
-  data?.index_attempts?.forEach((indexAttempt) => {
-    const url = indexAttempt.connector_specific_config.base_url;
-    const latestIndexAttempt = urlToLatestIndexAttempt.get(url);
-    if (
-      !latestIndexAttempt ||
-      indexAttempt.time_created > latestIndexAttempt.time_created
-    ) {
-      urlToLatestIndexAttempt.set(url, indexAttempt);
-    }
-
-    const latestIndexSuccess = urlToLatestIndexSuccess.get(url);
-    if (
-      indexAttempt.status === "success" &&
-      (!latestIndexSuccess || indexAttempt.time_updated > latestIndexSuccess)
-    ) {
-      urlToLatestIndexSuccess.set(url, indexAttempt.time_updated);
-    }
-  });
+  const webIndexingStatuses: ConnectorIndexingStatus<WebConfig>[] =
+    connectorIndexingStatuses?.filter(
+      (connectorIndexingStatus) =>
+        connectorIndexingStatus.connector.source === "web"
+    ) ?? [];
 
   return (
-    <div className="mx-auto">
+    <div className="mx-auto container">
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
@@ -62,59 +40,69 @@ export default function Web() {
         <GlobeIcon size="32" />
         <h1 className="text-3xl font-bold pl-2">Web</h1>
       </div>
-      <h2 className="text-xl font-bold pl-2 mb-2 mt-6 ml-auto mr-auto">
-        Request Indexing
+      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+        Step 1: Specify which websites to index
       </h2>
+      <p className="text-sm mb-2">
+        We re-fetch the latest state of the website once a day.
+      </p>
       <div className="border-solid border-gray-600 border rounded-md p-6">
-        <IndexForm
+        <ConnectorForm<WebConfig>
+          nameBuilder={(values) => `WebConnector-${values.base_url}`}
           source="web"
-          formBody={<TextFormField name="base_url" label="URL to Index:" />}
+          inputType="load_state"
+          formBody={
+            <>
+              <TextFormField name="base_url" label="URL to Index:" />
+            </>
+          }
           validationSchema={Yup.object().shape({
             base_url: Yup.string().required(
-              "Please enter the website URL to scrape e.g. https://docs.github.com/en/actions"
+              "Please enter the website URL to scrape e.g. https://docs.danswer.dev/"
             ),
           })}
-          initialValues={{ base_url: "" }}
-          onSubmit={(success) => {
-            if (success) {
-              router.push("/admin/indexing/status");
+          initialValues={{
+            base_url: "",
+          }}
+          refreshFreq={60 * 60 * 24} // 1 day
+          onSubmit={async (isSuccess, responseJson) => {
+            if (isSuccess && responseJson) {
+              // assumes there is a dummy credential with id 0
+              await linkCredential(responseJson.id, 0);
+              mutate("/api/admin/connector/indexing-status");
             }
           }}
         />
       </div>
 
-      <h2 className="text-xl font-bold pl-2 mb-2 mt-6 ml-auto mr-auto">
-        Indexing History
+      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+        Already Indexed Websites
       </h2>
-      {isLoading ? (
+      {isConnectorIndexingStatusesLoading ? (
         <LoadingAnimation text="Loading" />
-      ) : error ? (
+      ) : isConnectorIndexingStatusesError || !connectorIndexingStatuses ? (
         <div>Error loading indexing history</div>
-      ) : (
-        <BasicTable
-          columns={COLUMNS}
-          data={
-            urlToLatestIndexAttempt.size > 0
-              ? Array.from(urlToLatestIndexAttempt.values()).map(
-                  (indexAttempt) => {
-                    const url = indexAttempt.connector_specific_config
-                      .base_url as string;
-                    return {
-                      indexed_at:
-                        timeAgo(urlToLatestIndexSuccess.get(url)) || "-",
-                      docs_indexed: indexAttempt.docs_indexed || "-",
-                      url: (
-                        <a className="text-blue-500" target="_blank" href={url}>
-                          {url}
-                        </a>
-                      ),
-                      status: indexAttempt.status,
-                    };
-                  }
-                )
-              : []
-          }
+      ) : webIndexingStatuses.length > 0 ? (
+        <ConnectorsTable<WebConfig, {}>
+          connectorIndexingStatuses={webIndexingStatuses}
+          specialColumns={[
+            {
+              header: "Base URL",
+              key: "base_url",
+              getValue: (connector) => (
+                <a
+                  className="text-blue-500"
+                  href={connector.connector_specific_config.base_url}
+                >
+                  {connector.connector_specific_config.base_url}
+                </a>
+              ),
+            },
+          ]}
+          onUpdate={() => mutate("/api/admin/connector/indexing-status")}
         />
+      ) : (
+        <p className="text-sm">No indexed websites found</p>
       )}
     </div>
   );

@@ -11,6 +11,7 @@ from danswer.configs.app_configs import ENABLE_OAUTH
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.datastores.qdrant.indexing import list_collections
+from danswer.db.credentials import create_initial_public_credential
 from danswer.server.admin import router as admin_router
 from danswer.server.event_loading import router as event_processing_router
 from danswer.server.health import router as health_router
@@ -33,6 +34,13 @@ def validation_exception_handler(
     logger.exception(f"{request}: {exc_str}")
     content = {"status_code": 422, "message": exc_str, "data": None}
     return JSONResponse(content=content, status_code=422)
+
+
+def value_error_handler(_: Request, exc: ValueError) -> JSONResponse:
+    return JSONResponse(
+        status_code=400,
+        content={"message": str(exc)},
+    )
 
 
 def get_application() -> FastAPI:
@@ -94,6 +102,8 @@ def get_application() -> FastAPI:
         RequestValidationError, validation_exception_handler
     )
 
+    application.add_exception_handler(ValueError, value_error_handler)
+
     @application.on_event("startup")
     def startup_event() -> None:
         # To avoid circular imports
@@ -111,6 +121,9 @@ def get_application() -> FastAPI:
 
         warm_up_models()
         logger.info("Semantic Search models are ready.")
+
+        logger.info("Verifying public credential exists.")
+        create_initial_public_credential()
 
     return application
 

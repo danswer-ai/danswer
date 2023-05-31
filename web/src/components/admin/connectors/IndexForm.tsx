@@ -12,7 +12,7 @@ export const submitIndexRequest = async (
   let isSuccess = false;
   try {
     const response = await fetch(
-      `/api/admin/connectors/${source}/index-attempt`,
+      `/api/admin/connector/${source}/index-attempt`,
       {
         method: "POST",
         headers: {
@@ -75,7 +75,7 @@ export function IndexForm<YupObjectType extends Yup.AnyObject>({
             formikHelpers.setSubmitting(false);
             setTimeout(() => {
               setPopup(null);
-            }, 3000);
+            }, 4000);
             onSubmit(isSuccess);
           });
         }}

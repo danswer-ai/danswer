@@ -117,10 +117,14 @@ const searchRequestStreamed = async (
             updateCurrentAnswer(answer);
           }
         } else {
-          const docs = chunk.top_documents as any[];
-          if (docs) {
-            relevantDocuments = docs.map((doc) => JSON.parse(doc) as Document);
-            updateDocs(relevantDocuments);
+          if (Object.hasOwn(chunk, "top_documents")) {
+            const docs = chunk.top_documents as any[] | null;
+            if (docs) {
+              relevantDocuments = docs.map(
+                (doc) => JSON.parse(doc) as Document
+              );
+              updateDocs(relevantDocuments);
+            }
           } else {
             quotes = chunk as Record<string, Quote>;
             updateQuotes(quotes);

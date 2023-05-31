@@ -1,52 +1,41 @@
-import os
-from typing import Any
+import json
+from typing import cast
 from urllib.parse import parse_qs
+from urllib.parse import ParseResult
 from urllib.parse import urlparse
 
-from danswer.configs.app_configs import GOOGLE_DRIVE_CREDENTIAL_JSON
-from danswer.configs.app_configs import GOOGLE_DRIVE_TOKENS_JSON
 from danswer.configs.app_configs import WEB_DOMAIN
+from danswer.db.credentials import update_credential_json
+from danswer.db.models import User
 from danswer.dynamic_configs import get_dynamic_config_store
+from danswer.server.models import GoogleAppCredentials
 from danswer.utils.logging import setup_logger
 from google.auth.transport.requests import Request  # type: ignore
 from google.oauth2.credentials import Credentials  # type: ignore
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore
+from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
+DB_CREDENTIALS_DICT_KEY = "google_drive_tokens"
+CRED_KEY = "credential_id_{}"
+GOOGLE_DRIVE_CRED_KEY = "google_drive_app_credential"
 SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
-FRONTEND_GOOGLE_DRIVE_REDIRECT = (
-    f"{WEB_DOMAIN}/admin/connectors/google-drive/auth/callback"
-)
 
 
-def backend_get_credentials() -> Credentials:
-    """This approach does not work for production builds as it requires
-    a browser to be opened. It is used for local development only."""
-    creds = None
-    if os.path.exists(GOOGLE_DRIVE_TOKENS_JSON):
-        creds = Credentials.from_authorized_user_file(GOOGLE_DRIVE_TOKENS_JSON, SCOPES)
-
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                GOOGLE_DRIVE_CREDENTIAL_JSON, SCOPES
-            )
-            creds = flow.run_local_server()
-
-        with open(GOOGLE_DRIVE_TOKENS_JSON, "w") as token_file:
-            token_file.write(creds.to_json())
-
-    return creds
+def _build_frontend_google_drive_redirect() -> str:
+    return f"{WEB_DOMAIN}/admin/connectors/google-drive/auth/callback"
 
 
-def get_drive_tokens(token_path: str = GOOGLE_DRIVE_TOKENS_JSON) -> Any:
-    if not os.path.exists(token_path):
+def get_drive_tokens(
+    *, creds: Credentials | None = None, token_json_str: str | None = None
+) -> Credentials | None:
+    if creds is None and token_json_str is None:
         return None
 
-    creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+    if token_json_str is not None:
+        creds_json = json.loads(token_json_str)
+        creds = Credentials.from_authorized_user_info(creds_json, SCOPES)
 
     if not creds:
         return None
@@ -57,8 +46,6 @@ def get_drive_tokens(token_path: str = GOOGLE_DRIVE_TOKENS_JSON) -> Any:
         try:
             creds.refresh(Request())
             if creds.valid:
-                with open(token_path, "w") as token_file:
-                    token_file.write(creds.to_json())
                 return creds
         except Exception as e:
             logger.exception(f"Failed to refresh google drive access token due to: {e}")
@@ -66,8 +53,8 @@ def get_drive_tokens(token_path: str = GOOGLE_DRIVE_TOKENS_JSON) -> Any:
     return None
 
 
-def verify_csrf(user_id: str, state: str) -> None:
-    csrf = get_dynamic_config_store().load(user_id)
+def verify_csrf(credential_id: int, state: str) -> None:
+    csrf = get_dynamic_config_store().load(CRED_KEY.format(str(credential_id)))
     if csrf != state:
         raise PermissionError(
             "State from Google Drive Connector callback does not match expected"
@@ -75,37 +62,50 @@ def verify_csrf(user_id: str, state: str) -> None:
 
 
 def get_auth_url(
-    user_id: str, credentials_file: str = GOOGLE_DRIVE_CREDENTIAL_JSON
+    credential_id: int,
 ) -> str:
-    flow = InstalledAppFlow.from_client_secrets_file(
-        credentials_file,
+    creds_str = str(get_dynamic_config_store().load(GOOGLE_DRIVE_CRED_KEY))
+    credential_json = json.loads(creds_str)
+    flow = InstalledAppFlow.from_client_config(
+        credential_json,
         scopes=SCOPES,
-        redirect_uri=FRONTEND_GOOGLE_DRIVE_REDIRECT,
+        redirect_uri=_build_frontend_google_drive_redirect(),
     )
     auth_url, _ = flow.authorization_url(prompt="consent")
 
-    parsed_url = urlparse(auth_url)
+    parsed_url = cast(ParseResult, urlparse(auth_url))
     params = parse_qs(parsed_url.query)
-    get_dynamic_config_store().store(user_id, params.get("state", [None])[0])  # type: ignore
+
+    get_dynamic_config_store().store(CRED_KEY.format(credential_id), params.get("state", [None])[0])  # type: ignore
     return str(auth_url)
 
 
-def save_access_tokens(
+def update_credential_access_tokens(
     auth_code: str,
-    token_path: str = GOOGLE_DRIVE_TOKENS_JSON,
-    credentials_file: str = GOOGLE_DRIVE_CREDENTIAL_JSON,
-) -> Any:
-    flow = InstalledAppFlow.from_client_secrets_file(
-        credentials_file, scopes=SCOPES, redirect_uri=FRONTEND_GOOGLE_DRIVE_REDIRECT
+    credential_id: int,
+    user: User,
+    db_session: Session,
+) -> Credentials | None:
+    app_credentials = get_google_app_cred()
+    flow = InstalledAppFlow.from_client_config(
+        app_credentials.dict(),
+        scopes=SCOPES,
+        redirect_uri=_build_frontend_google_drive_redirect(),
     )
     flow.fetch_token(code=auth_code)
     creds = flow.credentials
+    token_json_str = creds.to_json()
+    new_creds_dict = {DB_CREDENTIALS_DICT_KEY: token_json_str}
 
-    os.makedirs(os.path.dirname(token_path), exist_ok=True)
-    with open(token_path, "w+") as token_file:
-        token_file.write(creds.to_json())
-
-    if not get_drive_tokens(token_path):
-        raise PermissionError("Not able to access Google Drive.")
-
+    if not update_credential_json(credential_id, new_creds_dict, user, db_session):
+        return None
     return creds
+
+
+def get_google_app_cred() -> GoogleAppCredentials:
+    creds_str = str(get_dynamic_config_store().load(GOOGLE_DRIVE_CRED_KEY))
+    return GoogleAppCredentials(**json.loads(creds_str))
+
+
+def upsert_google_app_cred(app_credentials: GoogleAppCredentials) -> None:
+    get_dynamic_config_store().store(GOOGLE_DRIVE_CRED_KEY, app_credentials.json())

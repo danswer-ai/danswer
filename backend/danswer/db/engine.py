@@ -1,19 +1,30 @@
 from collections.abc import AsyncGenerator
+from collections.abc import Generator
+from datetime import datetime
 
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
 from danswer.configs.app_configs import POSTGRES_PASSWORD
 from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
+from sqlalchemy import text
 from sqlalchemy.engine import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.orm import Session
 
 
 SYNC_DB_API = "psycopg2"
 ASYNC_DB_API = "asyncpg"
+
+
+def get_db_current_time(db_session: Session) -> datetime:
+    result = db_session.execute(text("SELECT NOW()")).scalar()
+    if result is None:
+        raise ValueError("Database did not return a time")
+    return result
 
 
 def build_connection_string(
@@ -36,6 +47,11 @@ def build_engine() -> Engine:
 def build_async_engine() -> AsyncEngine:
     connection_string = build_connection_string()
     return create_async_engine(connection_string)
+
+
+def get_session() -> Generator[Session, None, None]:
+    with Session(build_engine(), future=True, expire_on_commit=False) as session:
+        yield session
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:

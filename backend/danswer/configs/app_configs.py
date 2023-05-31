@@ -44,6 +44,9 @@ VALID_EMAIL_DOMAIN = os.environ.get("VALID_EMAIL_DOMAIN", "")
 ENABLE_OAUTH = os.environ.get("ENABLE_OAUTH", "").lower() != "false"
 GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
 GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
+MASK_CREDENTIAL_PREFIX = (
+    os.environ.get("MASK_CREDENTIAL_PREFIX", "True").lower() != "false"
+)
 
 
 #####
@@ -72,20 +75,7 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
 #####
 # Connector Configs
 #####
-GOOGLE_DRIVE_CREDENTIAL_JSON = os.environ.get(
-    "GOOGLE_DRIVE_CREDENTIAL_JSON", "/home/storage/google_drive_creds.json"
-)
-GOOGLE_DRIVE_TOKENS_JSON = os.environ.get(
-    "GOOGLE_DRIVE_TOKENS_JSON", "/home/storage/google_drive_tokens.json"
-)
 GOOGLE_DRIVE_INCLUDE_SHARED = False
-
-GITHUB_ACCESS_TOKEN = os.environ.get("GITHUB_ACCESS_TOKEN", "")
-
-# example: username@companyemail.com
-CONFLUENCE_USERNAME = os.environ.get("CONFLUENCE_USERNAME", "")
-# https://id.atlassian.com/manage-profile/security/api-tokens
-CONFLUENCE_ACCESS_TOKEN = os.environ.get("CONFLUENCE_ACCESS_TOKEN", "")
 
 
 #####

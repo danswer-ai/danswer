@@ -1,6 +1,8 @@
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
+from danswer.configs.constants import ALLOWED_USERS
+from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.datastores.interfaces import Datastore
 from danswer.datastores.interfaces import DatastoreFilter
 from danswer.datastores.qdrant.indexing import index_chunks
@@ -23,14 +25,21 @@ class QdrantDatastore(Datastore):
         self.collection = collection
         self.client = get_qdrant_client()
 
-    def index(self, chunks: list[EmbeddedIndexChunk]) -> bool:
+    def index(self, chunks: list[EmbeddedIndexChunk], user_id: int | None) -> bool:
         return index_chunks(
-            chunks=chunks, collection=self.collection, client=self.client
+            chunks=chunks,
+            user_id=user_id,
+            collection=self.collection,
+            client=self.client,
         )
 
     @log_function_time()
     def semantic_retrieval(
-        self, query: str, filters: list[DatastoreFilter] | None, num_to_retrieve: int
+        self,
+        query: str,
+        user_id: int | None,
+        filters: list[DatastoreFilter] | None,
+        num_to_retrieve: int,
     ) -> list[InferenceChunk]:
         query_embedding = get_default_embedding_model().encode(
             query
@@ -41,6 +50,23 @@ class QdrantDatastore(Datastore):
         hits = []
         filter_conditions = []
         try:
+            # Permissions filter
+            if user_id:
+                filter_conditions.append(
+                    FieldCondition(
+                        key=ALLOWED_USERS,
+                        match=MatchAny(any=[str(user_id), PUBLIC_DOC_PAT]),
+                    )
+                )
+            else:
+                filter_conditions.append(
+                    FieldCondition(
+                        key=ALLOWED_USERS,
+                        match=MatchValue(value=PUBLIC_DOC_PAT),
+                    )
+                )
+
+            # Provided query filters
             if filters:
                 for filter_dict in filters:
                     valid_filters = {

@@ -1,14 +1,213 @@
 "use client";
 
 import * as Yup from "yup";
-import { IndexForm } from "@/components/admin/connectors/Form";
-import { GithubIcon } from "@/components/icons/icons";
+import { GithubIcon, TrashIcon } from "@/components/icons/icons";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
+import useSWR, { useSWRConfig } from "swr";
+import { fetcher } from "@/lib/fetcher";
+import {
+  GithubConfig,
+  GithubCredentialJson,
+  Credential,
+  ConnectorIndexingStatus,
+} from "@/lib/types";
+import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
+import { LoadingAnimation } from "@/components/Loading";
+import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
+import { deleteCredential, linkCredential } from "@/lib/credential";
+import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
+
+const Main = () => {
+  const { mutate } = useSWRConfig();
+  const {
+    data: connectorIndexingStatuses,
+    isLoading: isConnectorIndexingStatusesLoading,
+    error: isConnectorIndexingStatusesError,
+  } = useSWR<ConnectorIndexingStatus<any>[]>(
+    "/api/admin/connector/indexing-status",
+    fetcher
+  );
+
+  const {
+    data: credentialsData,
+    isLoading: isCredentialsLoading,
+    isValidating: isCredentialsValidating,
+    error: isCredentialsError,
+  } = useSWR<Credential<GithubCredentialJson>[]>(
+    "/api/admin/credential",
+    fetcher
+  );
+
+  if (
+    isConnectorIndexingStatusesLoading ||
+    isCredentialsLoading ||
+    isCredentialsValidating
+  ) {
+    return <LoadingAnimation text="Loading" />;
+  }
+
+  if (isConnectorIndexingStatusesError || !connectorIndexingStatuses) {
+    return <div>Failed to load connectors</div>;
+  }
+
+  if (isCredentialsError || !credentialsData) {
+    return <div>Failed to load credentials</div>;
+  }
+
+  const githubConnectorIndexingStatuses: ConnectorIndexingStatus<GithubConfig>[] =
+    connectorIndexingStatuses.filter(
+      (connectorIndexingStatus) =>
+        connectorIndexingStatus.connector.source === "github"
+    );
+  const githubCredential = credentialsData.filter(
+    (credential) => credential.credential_json?.github_access_token
+  )[0];
+
+  return (
+    <>
+      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+        Step 1: Provide your access token
+      </h2>
+      {githubCredential ? (
+        <>
+          {" "}
+          <div className="flex mb-1 text-sm">
+            <p className="my-auto">Existing Access Token: </p>
+            <p className="ml-1 italic my-auto">
+              {githubCredential.credential_json.github_access_token}
+            </p>{" "}
+            <button
+              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+              onClick={async () => {
+                await deleteCredential(githubCredential.id);
+                mutate("/api/admin/credential");
+              }}
+            >
+              <TrashIcon />
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="text-sm">
+            If you don&apos;t have an access token, read the guide{" "}
+            <a
+              className="text-blue-500"
+              href="https://docs.danswer.dev/connectors/github"
+            >
+              here
+            </a>{" "}
+            on how to get one from Github.
+          </p>
+          <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
+            <CredentialForm<GithubCredentialJson>
+              formBody={
+                <>
+                  <TextFormField
+                    name="github_access_token"
+                    label="Access Token:"
+                    type="password"
+                  />
+                </>
+              }
+              validationSchema={Yup.object().shape({
+                github_access_token: Yup.string().required(
+                  "Please enter the access token for Github"
+                ),
+              })}
+              initialValues={{
+                github_access_token: "",
+              }}
+              onSubmit={(isSuccess) => {
+                if (isSuccess) {
+                  mutate("/api/admin/credential");
+                }
+              }}
+            />
+          </div>
+        </>
+      )}
+
+      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+        Step 2: Which repositories do you want to make searchable?
+      </h2>
+
+      {githubConnectorIndexingStatuses.length > 0 && (
+        <>
+          <p className="text-sm mb-2">
+            We pull the latest Pull Requests from each repository listed below
+            every <b>10</b> minutes.
+          </p>
+          <div className="mb-2">
+            <ConnectorsTable<GithubConfig, GithubCredentialJson>
+              connectorIndexingStatuses={githubConnectorIndexingStatuses}
+              liveCredential={githubCredential}
+              getCredential={(credential) =>
+                credential.credential_json.github_access_token
+              }
+              onCredentialLink={async (connectorId) => {
+                if (githubCredential) {
+                  await linkCredential(connectorId, githubCredential.id);
+                  mutate("/api/admin/connector/indexing-status");
+                }
+              }}
+              specialColumns={[
+                {
+                  header: "Repository",
+                  key: "repository",
+                  getValue: (connector) =>
+                    `${connector.connector_specific_config.repo_owner}/${connector.connector_specific_config.repo_name}`,
+                },
+              ]}
+              onUpdate={() => mutate("/api/admin/connector/indexing-status")}
+            />
+          </div>
+        </>
+      )}
+
+      <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+        <h2 className="font-bold mb-3">Connect to a New Repository</h2>
+        <ConnectorForm<GithubConfig>
+          nameBuilder={(values) =>
+            `GithubConnector-${values.repo_owner}/${values.repo_name}`
+          }
+          source="github"
+          inputType="load_state"
+          formBody={
+            <>
+              <TextFormField name="repo_owner" label="Repository Owner:" />
+              <TextFormField name="repo_name" label="Repository Name:" />
+            </>
+          }
+          validationSchema={Yup.object().shape({
+            repo_owner: Yup.string().required(
+              "Please enter the owner of the repository to index e.g. danswer-ai"
+            ),
+            repo_name: Yup.string().required(
+              "Please enter the name of the repository to index e.g. danswer "
+            ),
+          })}
+          initialValues={{
+            repo_owner: "",
+            repo_name: "",
+          }}
+          refreshFreq={10 * 60} // 10 minutes
+          onSubmit={async (isSuccess, responseJson) => {
+            if (isSuccess && responseJson) {
+              await linkCredential(responseJson.id, githubCredential.id);
+              mutate("/api/admin/connector/indexing-status");
+            }
+          }}
+        />
+      </div>
+    </>
+  );
+};
 
 export default function Page() {
   return (
-    <div className="mx-auto">
+    <div className="container mx-auto">
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
@@ -16,35 +215,7 @@ export default function Page() {
         <GithubIcon size="32" />
         <h1 className="text-3xl font-bold pl-2">Github PRs</h1>
       </div>
-
-      {/* TODO: make this periodic */}
-      <h2 className="text-xl font-bold pl-2 mb-2 mt-6 ml-auto mr-auto">
-        Request Indexing
-      </h2>
-      <div className="border-solid border-gray-600 border rounded-md p-6">
-        <IndexForm
-          source="github"
-          formBody={
-            <>
-              <TextFormField name="repo_owner" label="Owner of repo:" />
-              <TextFormField name="repo_name" label="Name of repo:" />
-            </>
-          }
-          validationSchema={Yup.object().shape({
-            repo_owner: Yup.string().required(
-              "Please enter the owner of the repo scrape e.g. danswer-ai"
-            ),
-            repo_name: Yup.string().required(
-              "Please enter the name of the repo scrape e.g. danswer "
-            ),
-          })}
-          initialValues={{
-            repo_owner: "",
-            repo_name: "",
-          }}
-          onSubmit={(isSuccess) => console.log(isSuccess)}
-        />
-      </div>
+      <Main />
     </div>
   );
 }

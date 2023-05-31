@@ -35,7 +35,7 @@ services:
   web_server:
     build:
       context: ../web
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     depends_on:
       - api_server
     restart: always
@@ -43,12 +43,12 @@ services:
       - .env
     environment:
       - INTERNAL_URL=http://api_server:8080
-    ports:
-      - "3000:3000"
   relational_db:
     image: postgres:15.2-alpine
     restart: always
-    # POSTGRES_USER and POSTGRES_PASSWORD should be set in .env file
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
     env_file:
       - .env
     ports:
@@ -62,6 +62,22 @@ services:
       - "6333:6333"
     volumes:
       - qdrant_volume:/qdrant/storage
+  nginx:
+    image: nginx:1.23.4-alpine
+    restart: always
+    depends_on:
+      - api_server
+      - web_server
+    environment:
+      - DOMAIN=localhost
+    ports:
+      - "80:80"
+      - "3000:80"  # allow for localhost:3000 usage, since that is the norm
+    volumes:
+      - ./data/nginx:/etc/nginx/conf.d
+    command: > 
+      /bin/sh -c "envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template.dev > /etc/nginx/conf.d/app.conf 
+      && while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
 volumes:
   local_dynamic_storage:
   db_volume:

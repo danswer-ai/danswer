@@ -1,55 +1,88 @@
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.models import InputType
-from danswer.db.engine import build_engine
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.utils.logging import setup_logger
+from sqlalchemy import desc
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
 
 logger = setup_logger()
 
 
-def insert_index_attempt(index_attempt: IndexAttempt) -> None:
-    logger.info(f"Inserting {index_attempt}")
-    with Session(build_engine()) as session:
-        session.add(index_attempt)
-        session.commit()
+def create_index_attempt(
+    connector_id: int,
+    credential_id: int,
+    db_session: Session,
+) -> int:
+    new_attempt = IndexAttempt(
+        connector_id=connector_id,
+        credential_id=credential_id,
+        status=IndexingStatus.NOT_STARTED,
+    )
+    db_session.add(new_attempt)
+    db_session.commit()
+
+    return new_attempt.id
 
 
-def fetch_index_attempts(
-    *,
-    sources: list[DocumentSource] | None = None,
-    statuses: list[IndexingStatus] | None = None,
-    input_types: list[InputType] | None = None,
+def get_incomplete_index_attempts(
+    connector_id: int | None,
+    db_session: Session,
 ) -> list[IndexAttempt]:
-    with Session(build_engine(), future=True, expire_on_commit=False) as session:
-        stmt = select(IndexAttempt)
-        if sources:
-            stmt = stmt.where(IndexAttempt.source.in_(sources))
-        if statuses:
-            stmt = stmt.where(IndexAttempt.status.in_(statuses))
-        if input_types:
-            stmt = stmt.where(IndexAttempt.input_type.in_(input_types))
-        results = session.scalars(stmt)
-        return list(results.all())
+    stmt = select(IndexAttempt)
+    if connector_id is not None:
+        stmt = stmt.where(IndexAttempt.connector_id == connector_id)
+    stmt = stmt.where(
+        IndexAttempt.status.notin_([IndexingStatus.SUCCESS, IndexingStatus.FAILED])
+    )
+
+    incomplete_attempts = db_session.scalars(stmt)
+    return list(incomplete_attempts.all())
 
 
-def update_index_attempt(
-    *,
-    index_attempt_id: int,
-    new_status: IndexingStatus,
-    document_ids: list[str] | None = None,
-    error_msg: str | None = None,
-) -> bool:
-    """Returns `True` if successfully updated, `False` if cannot find matching ID"""
-    with Session(build_engine(), future=True, expire_on_commit=False) as session:
-        stmt = select(IndexAttempt).where(IndexAttempt.id == index_attempt_id)
-        result = session.scalar(stmt)
-        if result:
-            result.status = new_status
-            result.document_ids = document_ids
-            result.error_msg = error_msg
-            session.commit()
-            return True
-        return False
+def get_not_started_index_attempts(db_session: Session) -> list[IndexAttempt]:
+    stmt = select(IndexAttempt)
+    stmt = stmt.where(IndexAttempt.status == IndexingStatus.NOT_STARTED)
+    new_attempts = db_session.scalars(stmt)
+    return list(new_attempts.all())
+
+
+def mark_attempt_in_progress(
+    index_attempt: IndexAttempt,
+    db_session: Session,
+) -> None:
+    index_attempt.status = IndexingStatus.IN_PROGRESS
+    db_session.add(index_attempt)
+    db_session.commit()
+
+
+def mark_attempt_succeeded(
+    index_attempt: IndexAttempt,
+    docs_indexed: list[str],
+    db_session: Session,
+) -> None:
+    index_attempt.status = IndexingStatus.SUCCESS
+    index_attempt.document_ids = docs_indexed
+    db_session.add(index_attempt)
+    db_session.commit()
+
+
+def mark_attempt_failed(
+    index_attempt: IndexAttempt, db_session: Session, failure_reason: str = "Unknown"
+) -> None:
+    index_attempt.status = IndexingStatus.FAILED
+    index_attempt.error_msg = failure_reason
+    db_session.add(index_attempt)
+    db_session.commit()
+
+
+def get_last_finished_attempt(
+    connector_id: int,
+    db_session: Session,
+) -> IndexAttempt | None:
+    stmt = select(IndexAttempt)
+    stmt = stmt.where(IndexAttempt.connector_id == connector_id)
+    stmt = stmt.where(IndexAttempt.status == IndexingStatus.SUCCESS)
+    stmt = stmt.order_by(desc(IndexAttempt.time_updated))
+
+    return db_session.execute(stmt).scalars().first()

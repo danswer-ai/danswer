@@ -7,16 +7,19 @@ from danswer.connectors.models import Document
 
 SecondsSinceUnixEpoch = float
 
+GenerateDocumentsOutput = Generator[list[Document], None, None]
+
 
 class BaseConnector(abc.ABC):
-    # Reserved for future shared uses
-    pass
+    @abc.abstractmethod
+    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
+        raise NotImplementedError
 
 
 # Large set update or reindex, generally pulling a complete state or from a savestate file
 class LoadConnector(BaseConnector):
     @abc.abstractmethod
-    def load_from_state(self) -> Generator[list[Document], None, None]:
+    def load_from_state(self) -> GenerateDocumentsOutput:
         raise NotImplementedError
 
 
@@ -25,12 +28,12 @@ class PollConnector(BaseConnector):
     @abc.abstractmethod
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
-    ) -> Generator[list[Document], None, None]:
+    ) -> GenerateDocumentsOutput:
         raise NotImplementedError
 
 
 # Event driven
 class EventConnector(BaseConnector):
     @abc.abstractmethod
-    def handle_event(self, event: Any) -> Generator[list[Document], None, None]:
+    def handle_event(self, event: Any) -> GenerateDocumentsOutput:
         raise NotImplementedError

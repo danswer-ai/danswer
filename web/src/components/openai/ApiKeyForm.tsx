@@ -50,7 +50,7 @@ export const ApiKeyForm = ({ handleResponse }: Props) => {
             }
             setTimeout(() => {
               setPopup(null);
-            }, 3000);
+            }, 4000);
           }
         }}
       >

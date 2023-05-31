@@ -1,5 +1,4 @@
 import io
-from collections.abc import Generator
 from typing import Any
 from typing import cast
 from urllib.parse import urljoin
@@ -10,6 +9,7 @@ from bs4 import BeautifulSoup
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import HTML_SEPARATOR
+from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -57,10 +57,17 @@ class WebConnector(LoadConnector):
         base_url: str,
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
+        if "://" not in base_url:
+            base_url = "https://" + base_url
         self.base_url = base_url
         self.batch_size = batch_size
 
-    def load_from_state(self) -> Generator[list[Document], None, None]:
+    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
+        if credentials:
+            logger.warning("Unexpected credentials provided for Web Connector")
+        return None
+
+    def load_from_state(self) -> GenerateDocumentsOutput:
         """Traverses through all pages found on the website
         and converts them into documents"""
         visited_links: set[str] = set()

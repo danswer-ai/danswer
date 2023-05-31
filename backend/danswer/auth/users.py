@@ -1,3 +1,4 @@
+import contextlib
 import smtplib
 import uuid
 from collections.abc import AsyncGenerator
@@ -22,6 +23,7 @@ from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_user_count
 from danswer.db.auth import get_user_db
+from danswer.db.engine import get_async_session
 from danswer.db.models import AccessToken
 from danswer.db.models import User
 from danswer.utils.logging import setup_logger
@@ -40,8 +42,12 @@ from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from fastapi_users.db import SQLAlchemyUserDatabase
 from httpx_oauth.clients.google import GoogleOAuth2
+from pydantic import EmailStr
 
 logger = setup_logger()
+
+FAKE_USER_EMAIL = "fakeuser@fakedanswermail.com"
+FAKE_USER_PASS = "foobar"
 
 
 def send_user_verification_email(user_email: str, token: str) -> None:
@@ -141,14 +147,44 @@ google_oauth_client = GoogleOAuth2(GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_S
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 
+
+# Currently unused, maybe useful later
+async def create_get_fake_user() -> User:
+    get_async_session_context = contextlib.asynccontextmanager(
+        get_async_session
+    )  # type:ignore
+    get_user_db_context = contextlib.asynccontextmanager(get_user_db)
+    get_user_manager_context = contextlib.asynccontextmanager(get_user_manager)
+
+    logger.info("Creating fake user due to Auth being turned off")
+    async with get_async_session_context() as session:
+        async with get_user_db_context(session) as user_db:
+            async with get_user_manager_context(user_db) as user_manager:
+                user = await user_manager.get_by_email(FAKE_USER_EMAIL)
+                if user:
+                    return user
+                user = await user_manager.create(
+                    UserCreate(email=EmailStr(FAKE_USER_EMAIL), password=FAKE_USER_PASS)
+                )
+                logger.info("Created fake user.")
+                return user
+
+
 current_active_user = fastapi_users.current_user(
     active=True, verified=REQUIRE_EMAIL_VERIFICATION, optional=DISABLE_AUTH
 )
 
 
-def current_admin_user(user: User = Depends(current_active_user)) -> User | None:
+async def current_user(user: User = Depends(current_active_user)) -> User | None:
     if DISABLE_AUTH:
         return None
+    return user
+
+
+async def current_admin_user(user: User = Depends(current_user)) -> User | None:
+    if DISABLE_AUTH:
+        return None
+
     if not user or not hasattr(user, "role") or user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
