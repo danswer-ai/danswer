@@ -181,7 +181,7 @@ const Main = () => {
               onCredentialLink={async (connectorId) => {
                 if (confluenceCredential) {
                   await linkCredential(connectorId, confluenceCredential.id);
-                  mutate("/api/admin/connector");
+                  mutate("/api/admin/connector/indexing-status");
                 }
               }}
               specialColumns={[
@@ -198,7 +198,7 @@ const Main = () => {
                   ),
                 },
               ]}
-              onUpdate={() => mutate("/api/admin/connector")}
+              onUpdate={() => mutate("/api/admin/connector/indexing-status")}
             />
           </div>
         </>

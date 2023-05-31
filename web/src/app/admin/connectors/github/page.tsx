@@ -149,7 +149,7 @@ const Main = () => {
               onCredentialLink={async (connectorId) => {
                 if (githubCredential) {
                   await linkCredential(connectorId, githubCredential.id);
-                  mutate("/api/admin/connector");
+                  mutate("/api/admin/connector/indexing-status");
                 }
               }}
               specialColumns={[
@@ -160,7 +160,7 @@ const Main = () => {
                     `${connector.connector_specific_config.repo_owner}/${connector.connector_specific_config.repo_name}`,
                 },
               ]}
-              onUpdate={() => mutate("/api/admin/connector")}
+              onUpdate={() => mutate("/api/admin/connector/indexing-status")}
             />
           </div>
         </>

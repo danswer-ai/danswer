@@ -156,11 +156,11 @@ const MainSection = () => {
                     connector.connector_specific_config.workspace,
                 },
               ]}
-              onUpdate={() => mutate("/api/admin/connector")}
+              onUpdate={() => mutate("/api/admin/connector/indexing-status")}
               onCredentialLink={async (connectorId) => {
                 if (slackCredential) {
                   await linkCredential(connectorId, slackCredential.id);
-                  mutate("/api/admin/connector");
+                  mutate("/api/admin/connector/indexing-status");
                 }
               }}
             />

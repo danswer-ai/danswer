@@ -332,7 +332,7 @@ const Main = () => {
                   message: "Successfully deleted connector!",
                   type: "success",
                 });
-                mutate("/api/admin/connector");
+                mutate("/api/admin/connector/indexing-status");
               });
             }}
           >
@@ -396,7 +396,7 @@ const Main = () => {
                 message: "Successfully created connector!",
                 type: "success",
               });
-              mutate("/api/admin/connector");
+              mutate("/api/admin/connector/indexing-status");
             }}
           >
             Add
