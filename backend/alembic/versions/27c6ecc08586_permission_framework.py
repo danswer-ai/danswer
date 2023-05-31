@@ -18,6 +18,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    op.execute("TRUNCATE TABLE index_attempt")
     op.create_table(
         "connector",
         sa.Column("id", sa.Integer(), nullable=False),
