@@ -122,6 +122,12 @@ const Main = () => {
     message: string;
     type: "success" | "error";
   } | null>(null);
+  const setPopupWithExpiration = (popupSpec: PopupSpec | null) => {
+    setPopup(popupSpec);
+    setTimeout(() => {
+      setPopup(null);
+    }, 4000);
+  };
 
   if (
     isCredentialsLoading ||
@@ -193,7 +199,7 @@ const Main = () => {
                 <AppCredentialUpload
                   setPopup={(popup) => {
                     mutate("/api/admin/connector/google-drive/app-credential");
-                    setPopup(popup);
+                    setPopupWithExpiration(popup);
                   }}
                 />
               </div>
@@ -216,7 +222,7 @@ const Main = () => {
             <AppCredentialUpload
               setPopup={(popup) => {
                 mutate("/api/admin/connector/google-drive/app-credential");
-                setPopup(popup);
+                setPopupWithExpiration(popup);
               }}
             />
           </>
@@ -259,7 +265,7 @@ const Main = () => {
             }
           );
           if (!credentialCreationResponse.ok) {
-            setPopup({
+            setPopupWithExpiration({
               message: `Failed to create credential - ${credentialCreationResponse.status}`,
               type: "error",
             });
@@ -272,7 +278,7 @@ const Main = () => {
             `/api/admin/connector/google-drive/authorize/${credential.id}`
           );
           if (!authorizationUrlResponse.ok) {
-            setPopup({
+            setPopupWithExpiration({
               message: `Failed to create credential - ${authorizationUrlResponse.status}`,
               type: "error",
             });
@@ -302,7 +308,7 @@ const Main = () => {
                   googleDriveConnectorIndexingStatus.connector.credential_ids
                     .length === 0
                 }
-                setPopup={setPopup}
+                setPopup={setPopupWithExpiration}
                 onUpdate={() => {
                   mutate("/api/admin/connector/indexing-status");
                 }}
@@ -322,13 +328,10 @@ const Main = () => {
               deleteConnector(
                 googleDriveConnectorIndexingStatus.connector.id
               ).then(() => {
-                setPopup({
+                setPopupWithExpiration({
                   message: "Successfully deleted connector!",
                   type: "success",
                 });
-                setTimeout(() => {
-                  setPopup(null);
-                }, 4000);
                 mutate("/api/admin/connector");
               });
             }}
@@ -363,7 +366,7 @@ const Main = () => {
                 }
               );
               if (!connectorCreationResponse.ok) {
-                setPopup({
+                setPopupWithExpiration({
                   message: `Failed to create connector - ${connectorCreationResponse.status}`,
                   type: "error",
                 });
@@ -382,14 +385,14 @@ const Main = () => {
                 }
               );
               if (!credentialLinkResponse.ok) {
-                setPopup({
+                setPopupWithExpiration({
                   message: `Failed to link connector to credential - ${credentialLinkResponse.status}`,
                   type: "error",
                 });
                 return;
               }
 
-              setPopup({
+              setPopupWithExpiration({
                 message: "Successfully created connector!",
                 type: "success",
               });
