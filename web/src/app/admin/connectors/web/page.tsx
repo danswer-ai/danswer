@@ -99,7 +99,7 @@ export default function Web() {
               ),
             },
           ]}
-          onUpdate={() => mutate("/api/admin/connector")}
+          onUpdate={() => mutate("/api/admin/connector/indexing-status")}
         />
       ) : (
         <p className="text-sm">No indexed websites found</p>
