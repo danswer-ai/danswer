@@ -57,6 +57,8 @@ class WebConnector(LoadConnector):
         base_url: str,
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
+        if "://" not in base_url:
+            base_url = "https://" + base_url
         self.base_url = base_url
         self.batch_size = batch_size
 
