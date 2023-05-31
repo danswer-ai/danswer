@@ -24,14 +24,11 @@ export function StatusRow<ConnectorConfigType>({
 
   let statusDisplay;
   switch (connectorIndexingStatus.last_status) {
-    case "success":
-      statusDisplay = <div className="text-emerald-600 flex">Running!</div>;
-      break;
     case "failed":
       statusDisplay = <div className="text-red-700">Failed</div>;
       break;
     default:
-      statusDisplay = <div className="text-emerald-600 flex">Running!</div>;
+      statusDisplay = <div className="text-emerald-600 flex">Enabled!</div>;
   }
   if (connector.disabled) {
     statusDisplay = <div className="text-red-700">Disabled</div>;

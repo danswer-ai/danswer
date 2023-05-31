@@ -99,7 +99,7 @@ export default function Status() {
               statusDisplay = (
                 <div className="text-green-600 flex">
                   <CheckCircle className="my-auto mr-1" size="18" />
-                  Running
+                  Enabled
                 </div>
               );
             } else if (connectorIndexingStatus.last_status === "failed") {

@@ -157,8 +157,8 @@ const Main = () => {
         &quot;Index&quot; to Index. Based on the provided link, we will index
         the ENTIRE SPACE, not just the specified page. For example, entering{" "}
         <i>https://danswer.atlassian.net/wiki/spaces/Engineering/overview</i>{" "}
-        and clicking the Index button will index the whole <i>Engineering</i> Confluence
-        space.
+        and clicking the Index button will index the whole <i>Engineering</i>{" "}
+        Confluence space.
       </p>
 
       {confluenceConnectorIndexingStatuses.length > 0 && (
