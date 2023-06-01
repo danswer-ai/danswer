@@ -1,7 +1,7 @@
 import numpy
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import IndexChunk
-from danswer.configs.app_configs import ENABLE_MINI_BATCH
+from danswer.configs.app_configs import ENABLE_MINI_CHUNK
 from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.semantic_search.semantic_search import get_default_embedding_model
@@ -49,7 +49,7 @@ def encode_chunks(
     chunks: list[IndexChunk],
     embedding_model: SentenceTransformer | None = None,
     batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
-    enable_mini_batch: bool = ENABLE_MINI_BATCH,
+    enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
 ) -> list[EmbeddedIndexChunk]:
     embedded_chunks: list[EmbeddedIndexChunk] = []
     if embedding_model is None:
@@ -61,7 +61,7 @@ def encode_chunks(
         chunk_texts.append(chunk.content)
         mini_chunk_texts = (
             split_chunk_text_into_mini_chunks(chunk.content)
-            if enable_mini_batch
+            if enable_mini_chunk
             else []
         )
         chunk_texts.extend(mini_chunk_texts)

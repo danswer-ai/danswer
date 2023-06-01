@@ -99,7 +99,7 @@ QA_TIMEOUT = 10  # 10 seconds
 # Calculated by ~500 to 512 tokens max * average 4 chars per token
 CHUNK_SIZE = 2000
 # More accurate results at the expense of indexing speed and index size (stores additional 4 MINI_CHUNK vectors)
-ENABLE_MINI_BATCH = True
+ENABLE_MINI_CHUNK = False
 # Mini chunks for fine-grained embedding, calculated as 128 tokens for 4 additional vectors for 512 chunk size above
 # Not rounded down to not lose any context in full chunk.
 MINI_CHUNK_SIZE = 512
