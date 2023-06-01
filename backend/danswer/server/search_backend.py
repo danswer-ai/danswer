@@ -5,7 +5,7 @@ from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.app_configs import KEYWORD_MAX_HITS
-from danswer.configs.app_configs import NUM_GENERATIVE_AI_IN
+from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import SOURCE_LINKS
@@ -108,7 +108,7 @@ def direct_qa(
     )
     try:
         answer, quotes = qa_model.answer_question(
-            query, ranked_chunks[:NUM_GENERATIVE_AI_IN]
+            query, ranked_chunks[:NUM_GENERATIVE_AI_INPUT_DOCS]
         )
     except Exception:
         # exception is logged in the answer_question method, no need to re-log
@@ -177,7 +177,7 @@ def stream_direct_qa(
         qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
         try:
             for response_dict in qa_model.answer_question_stream(
-                query, ranked_chunks[:NUM_GENERATIVE_AI_IN]
+                query, ranked_chunks[:NUM_GENERATIVE_AI_INPUT_DOCS]
             ):
                 if response_dict is None:
                     continue
