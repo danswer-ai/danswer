@@ -21,7 +21,7 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
-from danswer.configs.model_configs import CROSS_ENCODER_MODEL
+from danswer.configs.model_configs import CROSS_ENCODER_MODEL_ENSEMBLE
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.datastores.interfaces import Datastore
@@ -36,7 +36,7 @@ logger = setup_logger()
 
 
 _EMBED_MODEL: None | SentenceTransformer = None
-_RERANK_MODEL: None | CrossEncoder = None
+_RERANK_MODELS: None | list[CrossEncoder] = None
 
 
 def get_default_embedding_model() -> SentenceTransformer:
@@ -48,18 +48,22 @@ def get_default_embedding_model() -> SentenceTransformer:
     return _EMBED_MODEL
 
 
-def get_default_reranking_model() -> CrossEncoder:
-    global _RERANK_MODEL
-    if _RERANK_MODEL is None:
-        _RERANK_MODEL = CrossEncoder(CROSS_ENCODER_MODEL)
-        _RERANK_MODEL.max_length = CROSS_EMBED_CONTEXT_SIZE
+def get_default_reranking_model_ensemble() -> list[CrossEncoder]:
+    global _RERANK_MODELS
+    if _RERANK_MODELS is None:
+        _RERANK_MODELS = [
+            CrossEncoder(model_name) for model_name in CROSS_ENCODER_MODEL_ENSEMBLE
+        ]
+        for model in _RERANK_MODELS:
+            model.max_length = CROSS_EMBED_CONTEXT_SIZE
 
-    return _RERANK_MODEL
+    return _RERANK_MODELS
 
 
 def warm_up_models() -> None:
     get_default_embedding_model().encode("Danswer is so cool")
-    get_default_reranking_model().predict(("What is Danswer", "Enterprise QA"))  # type: ignore
+    cross_encoders = get_default_reranking_model_ensemble()
+    [cross_encoder.predict(("What is Danswer", "Enterprise QA")) for cross_encoder in cross_encoders]  # type: ignore
 
 
 @log_function_time()
@@ -67,8 +71,8 @@ def semantic_reranking(
     query: str,
     chunks: list[InferenceChunk],
 ) -> list[InferenceChunk]:
-    cross_encoder = get_default_reranking_model()
-    sim_scores = cross_encoder.predict([(query, chunk.content) for chunk in chunks])  # type: ignore
+    cross_encoders = get_default_reranking_model_ensemble()
+    sim_scores = sum([encoder.predict([(query, chunk.content) for chunk in chunks]) for encoder in cross_encoders])  # type: ignore
     scored_results = list(zip(sim_scores, chunks))
     scored_results.sort(key=lambda x: x[0], reverse=True)
     ranked_sim_scores, ranked_chunks = zip(*scored_results)
