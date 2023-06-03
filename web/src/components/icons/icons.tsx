@@ -8,6 +8,7 @@ import {
   XSquare,
   LinkBreak,
   Link,
+  Plug,
 } from "@phosphor-icons/react";
 import { SiConfluence, SiGithub, SiGoogledrive, SiSlack } from "react-icons/si";
 import { FaGlobe } from "react-icons/fa";
@@ -18,6 +19,13 @@ interface IconProps {
 }
 
 const defaultTailwindCSS = "text-blue-400 my-auto flex flex-shrink-0";
+
+export const PlugIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <Plug size={size} className={className} />;
+};
 
 export const NotebookIcon = ({
   size = "16",

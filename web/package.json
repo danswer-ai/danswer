@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.0.8",
+    "@types/js-cookie": "^3.0.3",
     "@types/node": "18.15.11",
     "@types/react": "18.0.32",
     "@types/react-dom": "18.0.11",
@@ -17,6 +18,7 @@
     "eslint": "8.37.0",
     "eslint-config-next": "13.2.4",
     "formik": "^2.2.9",
+    "js-cookie": "^3.0.5",
     "next": "^13.2.4",
     "postcss": "^8.4.23",
     "react": "^18.2.0",

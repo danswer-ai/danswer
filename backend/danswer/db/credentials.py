@@ -96,9 +96,6 @@ def update_credential_json(
     user: User,
     db_session: Session,
 ) -> Credential | None:
-    logger.info("HIIII")
-    logger.info(credential_id)
-    logger.info(credential_json)
     credential = fetch_credential_by_id(credential_id, user, db_session)
     if credential is None:
         return None

@@ -47,7 +47,7 @@ export default function Status() {
     isLoading: indexAttemptIsLoading,
     error: indexAttemptIsError,
   } = useSWR<ConnectorIndexingStatus<any>[]>(
-    "/api/admin/connector/indexing-status",
+    "/api/manage/admin/connector/indexing-status",
     fetcher,
     { refreshInterval: 30000 } // 30 seconds
   );
@@ -150,7 +150,7 @@ export default function Status() {
               //       setTimeout(() => {
               //         setPopup(null);
               //       }, 4000);
-              //       mutate("/api/admin/connector/index-attempt");
+              //       mutate("/api/manage/admin/connector/index-attempt");
               //     }}
               //   >
               //     Index

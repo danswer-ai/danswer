@@ -18,6 +18,9 @@ import {
 } from "@/lib/types";
 import { deleteConnector } from "@/lib/connector";
 import { StatusRow } from "@/components/admin/connectors/table/ConnectorsTable";
+import { setupGoogleDriveOAuth } from "@/lib/googleDrive";
+import Cookies from "js-cookie";
+import { GOOGLE_DRIVE_AUTH_IS_ADMIN_COOKIE_NAME } from "@/lib/constants";
 
 const AppCredentialUpload = ({
   setPopup,
@@ -61,7 +64,7 @@ const AppCredentialUpload = ({
         disabled={!appCredentialJsonStr}
         onClick={async () => {
           const response = await fetch(
-            "/api/admin/connector/google-drive/app-credential",
+            "/api/manage/admin/connector/google-drive/app-credential",
             {
               method: "PUT",
               headers: {
@@ -98,7 +101,7 @@ const Main = () => {
     isLoading: isAppCredentialLoading,
     error: isAppCredentialError,
   } = useSWR<{ client_id: string }>(
-    "/api/admin/connector/google-drive/app-credential",
+    "/api/manage/admin/connector/google-drive/app-credential",
     fetcher
   );
   const {
@@ -106,7 +109,7 @@ const Main = () => {
     isLoading: isConnectorIndexingStatusesLoading,
     error: isConnectorIndexingStatusesError,
   } = useSWR<ConnectorIndexingStatus<any>[]>(
-    "/api/admin/connector/indexing-status",
+    "/api/manage/admin/connector/indexing-status",
     fetcher
   );
   const {
@@ -114,7 +117,7 @@ const Main = () => {
     isLoading: isCredentialsLoading,
     error: isCredentialsError,
   } = useSWR<Credential<GoogleDriveCredentialJson>[]>(
-    "/api/admin/credential",
+    "/api/manage/credential",
     fetcher
   );
 
@@ -198,7 +201,9 @@ const Main = () => {
               <div className="mt-2">
                 <AppCredentialUpload
                   setPopup={(popup) => {
-                    mutate("/api/admin/connector/google-drive/app-credential");
+                    mutate(
+                      "/api/manage/admin/connector/google-drive/app-credential"
+                    );
                     setPopupWithExpiration(popup);
                   }}
                 />
@@ -221,7 +226,9 @@ const Main = () => {
             </p>
             <AppCredentialUpload
               setPopup={(popup) => {
-                mutate("/api/admin/connector/google-drive/app-credential");
+                mutate(
+                  "/api/manage/admin/connector/google-drive/app-credential"
+                );
                 setPopupWithExpiration(popup);
               }}
             />
@@ -251,43 +258,22 @@ const Main = () => {
       </div>
       <Button
         onClick={async () => {
-          const credentialCreationResponse = await fetch(
-            "/api/admin/credential",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                public_doc: true,
-                credential_json: {},
-              }),
-            }
-          );
-          if (!credentialCreationResponse.ok) {
-            setPopupWithExpiration({
-              message: `Failed to create credential - ${credentialCreationResponse.status}`,
-              type: "error",
+          const [authUrl, errorMsg] = await setupGoogleDriveOAuth({
+            isPublic: true,
+          });
+          if (authUrl) {
+            // cookie used by callback to determine where to finally redirect to
+            Cookies.set(GOOGLE_DRIVE_AUTH_IS_ADMIN_COOKIE_NAME, "true", {
+              path: "/",
             });
+            router.push(authUrl);
             return;
           }
-          const credential =
-            (await credentialCreationResponse.json()) as Credential<{}>;
 
-          const authorizationUrlResponse = await fetch(
-            `/api/admin/connector/google-drive/authorize/${credential.id}`
-          );
-          if (!authorizationUrlResponse.ok) {
-            setPopupWithExpiration({
-              message: `Failed to create credential - ${authorizationUrlResponse.status}`,
-              type: "error",
-            });
-            return;
-          }
-          const authorizationUrlJson =
-            (await authorizationUrlResponse.json()) as { auth_url: string };
-
-          router.push(authorizationUrlJson.auth_url);
+          setPopup({
+            message: errorMsg,
+            type: "error",
+          });
         }}
       >
         Authenticate with Google Drive
@@ -310,7 +296,7 @@ const Main = () => {
                 }
                 setPopup={setPopupWithExpiration}
                 onUpdate={() => {
-                  mutate("/api/admin/connector/indexing-status");
+                  mutate("/api/manage/admin/connector/indexing-status");
                 }}
               />
             </div>
@@ -332,7 +318,7 @@ const Main = () => {
                   message: "Successfully deleted connector!",
                   type: "success",
                 });
-                mutate("/api/admin/connector/indexing-status");
+                mutate("/api/manage/admin/connector/indexing-status");
               });
             }}
           >
@@ -356,7 +342,7 @@ const Main = () => {
                 disabled: false,
               };
               const connectorCreationResponse = await fetch(
-                `/api/admin/connector`,
+                `/api/manage/admin/connector`,
                 {
                   method: "POST",
                   headers: {
@@ -376,7 +362,7 @@ const Main = () => {
                 (await connectorCreationResponse.json()) as Connector<{}>;
 
               const credentialLinkResponse = await fetch(
-                `/api/admin/connector/${connector.id}/credential/${googleDriveCredential.id}`,
+                `/api/manage/connector/${connector.id}/credential/${googleDriveCredential.id}`,
                 {
                   method: "PUT",
                   headers: {
@@ -396,7 +382,7 @@ const Main = () => {
                 message: "Successfully created connector!",
                 type: "success",
               });
-              mutate("/api/admin/connector/indexing-status");
+              mutate("/api/manage/admin/connector/indexing-status");
             }}
           >
             Add

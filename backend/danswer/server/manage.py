@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import cast
 
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_user
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
@@ -61,12 +62,16 @@ from fastapi import Request
 from fastapi import Response
 from sqlalchemy.orm import Session
 
-router = APIRouter(prefix="/admin")
+router = APIRouter(prefix="/manage")
 
 logger = setup_logger()
 
+_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME = "google_drive_credential_id"
 
-@router.get("/connector/google-drive/app-credential")
+"""Admin only API endpoints"""
+
+
+@router.get("/admin/connector/google-drive/app-credential")
 def check_google_app_credentials_exist(
     _: User = Depends(current_admin_user),
 ) -> dict[str, str]:
@@ -76,7 +81,7 @@ def check_google_app_credentials_exist(
         raise HTTPException(status_code=404, detail="Google App Credentials not found")
 
 
-@router.put("/connector/google-drive/app-credential")
+@router.put("/admin/connector/google-drive/app-credential")
 def update_google_app_credentials(
     app_credentials: GoogleAppCredentials, _: User = Depends(current_admin_user)
 ) -> StatusResponse:
@@ -90,7 +95,7 @@ def update_google_app_credentials(
     )
 
 
-@router.get("/connector/google-drive/check-auth/{credential_id}")
+@router.get("/admin/connector/google-drive/check-auth/{credential_id}")
 def check_drive_tokens(
     credential_id: int,
     user: User = Depends(current_admin_user),
@@ -109,11 +114,8 @@ def check_drive_tokens(
     return AuthStatus(authenticated=True)
 
 
-_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME = "google_drive_credential_id"
-
-
-@router.get("/connector/google-drive/authorize/{credential_id}", response_model=AuthUrl)
-def google_drive_auth(
+@router.get("/admin/connector/google-drive/authorize/{credential_id}")
+def admin_google_drive_auth(
     response: Response, credential_id: str, _: User = Depends(current_admin_user)
 ) -> AuthUrl:
     # set a cookie that we can read in the callback (used for `verify_csrf`)
@@ -123,35 +125,10 @@ def google_drive_auth(
         httponly=True,
         max_age=600,
     )
-    return AuthUrl(auth_url=get_auth_url(int(credential_id)))
+    return AuthUrl(auth_url=get_auth_url(credential_id=int(credential_id)))
 
 
-@router.get("/connector/google-drive/callback")
-def google_drive_callback(
-    request: Request,
-    callback: GDriveCallback = Depends(),
-    user: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> StatusResponse:
-    credential_id_cookie = request.cookies.get(_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME)
-    if credential_id_cookie is None or not credential_id_cookie.isdigit():
-        raise HTTPException(
-            status_code=401, detail="Request did not pass CSRF verification."
-        )
-    credential_id = int(credential_id_cookie)
-    verify_csrf(credential_id, callback.state)
-    if (
-        update_credential_access_tokens(callback.code, credential_id, user, db_session)
-        is None
-    ):
-        raise HTTPException(
-            status_code=500, detail="Unable to fetch Google Drive access tokens"
-        )
-
-    return StatusResponse(success=True, message="Updated Google Drive access tokens")
-
-
-@router.get("/latest-index-attempt", response_model=list[IndexAttemptSnapshot])
+@router.get("/admin/latest-index-attempt")
 def list_all_index_attempts(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
@@ -173,7 +150,7 @@ def list_all_index_attempts(
     ]
 
 
-@router.get("/latest-index-attempt/{source}", response_model=list[IndexAttemptSnapshot])
+@router.get("/admin/latest-index-attempt/{source}")
 def list_index_attempts(
     source: DocumentSource,
     _: User = Depends(current_admin_user),
@@ -196,18 +173,7 @@ def list_index_attempts(
     ]
 
 
-@router.get("/connector", response_model=list[ConnectorSnapshot])
-def get_connectors(
-    _: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> list[ConnectorSnapshot]:
-    connectors = fetch_connectors(db_session)
-    return [
-        ConnectorSnapshot.from_connector_db_model(connector) for connector in connectors
-    ]
-
-
-@router.get("/connector/indexing-status")
+@router.get("/admin/connector/indexing-status")
 def get_connector_indexing_status(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
@@ -265,38 +231,7 @@ def get_connector_indexing_status(
     return indexing_statuses
 
 
-@router.get(
-    "/connector/{connector_id}",
-    response_model=ConnectorSnapshot | StatusResponse[int],
-)
-def get_connector_by_id(
-    connector_id: int,
-    _: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> ConnectorSnapshot | StatusResponse[int]:
-    connector = fetch_connector_by_id(connector_id, db_session)
-    if connector is None:
-        raise HTTPException(
-            status_code=404, detail=f"Connector {connector_id} does not exist"
-        )
-
-    return ConnectorSnapshot(
-        id=connector.id,
-        name=connector.name,
-        source=connector.source,
-        input_type=connector.input_type,
-        connector_specific_config=connector.connector_specific_config,
-        refresh_freq=connector.refresh_freq,
-        credential_ids=[
-            association.credential.id for association in connector.credentials
-        ],
-        time_created=connector.time_created,
-        time_updated=connector.time_updated,
-        disabled=connector.disabled,
-    )
-
-
-@router.post("/connector", response_model=ObjectCreationIdResponse)
+@router.post("/admin/connector")
 def create_connector_from_model(
     connector_info: ConnectorBase,
     _: User = Depends(current_admin_user),
@@ -308,10 +243,7 @@ def create_connector_from_model(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.patch(
-    "/connector/{connector_id}",
-    response_model=ConnectorSnapshot | StatusResponse[int],
-)
+@router.patch("/admin/connector/{connector_id}")
 def update_connector_from_model(
     connector_id: int,
     connector_data: ConnectorBase,
@@ -340,7 +272,7 @@ def update_connector_from_model(
     )
 
 
-@router.delete("/connector/{connector_id}", response_model=StatusResponse[int])
+@router.delete("/admin/connector/{connector_id}", response_model=StatusResponse[int])
 def delete_connector_by_id(
     connector_id: int,
     _: User = Depends(current_admin_user),
@@ -349,128 +281,7 @@ def delete_connector_by_id(
     return delete_connector(connector_id, db_session)
 
 
-@router.get("/credential", response_model=list[CredentialSnapshot])
-def get_credentials(
-    user: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> list[CredentialSnapshot]:
-    credentials = fetch_credentials(user, db_session)
-    return [
-        CredentialSnapshot(
-            id=credential.id,
-            credential_json=mask_credential_dict(credential.credential_json)
-            if MASK_CREDENTIAL_PREFIX
-            else credential.credential_json,
-            user_id=credential.user_id,
-            public_doc=credential.public_doc,
-            time_created=credential.time_created,
-            time_updated=credential.time_updated,
-        )
-        for credential in credentials
-    ]
-
-
-@router.get(
-    "/credential/{credential_id}",
-    response_model=CredentialSnapshot | StatusResponse[int],
-)
-def get_credential_by_id(
-    credential_id: int,
-    user: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> CredentialSnapshot | StatusResponse[int]:
-    credential = fetch_credential_by_id(credential_id, user, db_session)
-    if credential is None:
-        raise HTTPException(
-            status_code=401,
-            detail=f"Credential {credential_id} does not exist or does not belong to user",
-        )
-
-    return CredentialSnapshot(
-        id=credential.id,
-        credential_json=mask_credential_dict(credential.credential_json)
-        if MASK_CREDENTIAL_PREFIX
-        else credential.credential_json,
-        user_id=credential.user_id,
-        public_doc=credential.public_doc,
-        time_created=credential.time_created,
-        time_updated=credential.time_updated,
-    )
-
-
-@router.post("/credential", response_model=ObjectCreationIdResponse)
-def create_credential_from_model(
-    connector_info: CredentialBase,
-    user: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> ObjectCreationIdResponse:
-    return create_credential(connector_info, user, db_session)
-
-
-@router.patch(
-    "/credential/{credential_id}",
-    response_model=CredentialSnapshot | StatusResponse[int],
-)
-def update_credential_from_model(
-    credential_id: int,
-    credential_data: CredentialBase,
-    user: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> CredentialSnapshot | StatusResponse[int]:
-    updated_credential = update_credential(
-        credential_id, credential_data, user, db_session
-    )
-    if updated_credential is None:
-        raise HTTPException(
-            status_code=401,
-            detail=f"Credential {credential_id} does not exist or does not belong to user",
-        )
-
-    return CredentialSnapshot(
-        id=updated_credential.id,
-        credential_json=updated_credential.credential_json,
-        user_id=updated_credential.user_id,
-        public_doc=updated_credential.public_doc,
-        time_created=updated_credential.time_created,
-        time_updated=updated_credential.time_updated,
-    )
-
-
-@router.delete("/credential/{credential_id}", response_model=StatusResponse[int])
-def delete_credential_by_id(
-    credential_id: int,
-    user: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> StatusResponse:
-    delete_credential(credential_id, user, db_session)
-    return StatusResponse(
-        success=True, message="Credential deleted successfully", data=credential_id
-    )
-
-
-@router.put("/connector/{connector_id}/credential/{credential_id}")
-def associate_credential_to_connector(
-    connector_id: int,
-    credential_id: int,
-    user: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> StatusResponse[int]:
-    return add_credential_to_connector(connector_id, credential_id, user, db_session)
-
-
-@router.delete("/connector/{connector_id}/credential/{credential_id}")
-def dissociate_credential_from_connector(
-    connector_id: int,
-    credential_id: int,
-    user: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> StatusResponse[int]:
-    return remove_credential_from_connector(
-        connector_id, credential_id, user, db_session
-    )
-
-
-@router.post("/connector/run-once")
+@router.post("/admin/connector/run-once")
 def connector_run_once(
     run_info: RunConnectorRequest,
     _: User = Depends(current_admin_user),
@@ -516,7 +327,7 @@ def connector_run_once(
     )
 
 
-@router.head("/openai-api-key/validate")
+@router.head("/admin/openai-api-key/validate")
 def validate_existing_openai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
@@ -532,7 +343,7 @@ def validate_existing_openai_api_key(
         raise HTTPException(status_code=400, detail="Invalid API key provided")
 
 
-@router.get("/openai-api-key", response_model=ApiKey)
+@router.get("/admin/openai-api-key", response_model=ApiKey)
 def get_openai_api_key_from_dynamic_config_store(
     _: User = Depends(current_admin_user),
 ) -> ApiKey:
@@ -550,7 +361,7 @@ def get_openai_api_key_from_dynamic_config_store(
         raise HTTPException(status_code=404, detail="Key not found")
 
 
-@router.post("/openai-api-key")
+@router.put("/admin/openai-api-key")
 def store_openai_api_key(
     request: ApiKey,
     _: User = Depends(current_admin_user),
@@ -564,8 +375,204 @@ def store_openai_api_key(
         raise HTTPException(400, str(e))
 
 
-@router.delete("/openai-api-key")
+@router.delete("/admin/openai-api-key")
 def delete_openai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
     get_dynamic_config_store().delete(OPENAI_API_KEY_STORAGE_KEY)
+
+
+"""Endpoints for all!"""
+
+
+@router.get("/connector/google-drive/authorize/{credential_id}")
+def google_drive_auth(
+    response: Response, credential_id: str, _: User = Depends(current_user)
+) -> AuthUrl:
+    # set a cookie that we can read in the callback (used for `verify_csrf`)
+    response.set_cookie(
+        key=_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME,
+        value=credential_id,
+        httponly=True,
+        max_age=600,
+    )
+    return AuthUrl(auth_url=get_auth_url(int(credential_id)))
+
+
+@router.get("/connector/google-drive/callback")
+def google_drive_callback(
+    request: Request,
+    callback: GDriveCallback = Depends(),
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse:
+    credential_id_cookie = request.cookies.get(_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME)
+    if credential_id_cookie is None or not credential_id_cookie.isdigit():
+        raise HTTPException(
+            status_code=401, detail="Request did not pass CSRF verification."
+        )
+    credential_id = int(credential_id_cookie)
+    verify_csrf(credential_id, callback.state)
+    if (
+        update_credential_access_tokens(callback.code, credential_id, user, db_session)
+        is None
+    ):
+        raise HTTPException(
+            status_code=500, detail="Unable to fetch Google Drive access tokens"
+        )
+
+    return StatusResponse(success=True, message="Updated Google Drive access tokens")
+
+
+@router.get("/connector")
+def get_connectors(
+    _: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> list[ConnectorSnapshot]:
+    connectors = fetch_connectors(db_session)
+    return [
+        ConnectorSnapshot.from_connector_db_model(connector) for connector in connectors
+    ]
+
+
+@router.get("/connector/{connector_id}")
+def get_connector_by_id(
+    connector_id: int,
+    _: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> ConnectorSnapshot | StatusResponse[int]:
+    connector = fetch_connector_by_id(connector_id, db_session)
+    if connector is None:
+        raise HTTPException(
+            status_code=404, detail=f"Connector {connector_id} does not exist"
+        )
+
+    return ConnectorSnapshot(
+        id=connector.id,
+        name=connector.name,
+        source=connector.source,
+        input_type=connector.input_type,
+        connector_specific_config=connector.connector_specific_config,
+        refresh_freq=connector.refresh_freq,
+        credential_ids=[
+            association.credential.id for association in connector.credentials
+        ],
+        time_created=connector.time_created,
+        time_updated=connector.time_updated,
+        disabled=connector.disabled,
+    )
+
+
+@router.get("/credential")
+def get_credentials(
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> list[CredentialSnapshot]:
+    credentials = fetch_credentials(user, db_session)
+    return [
+        CredentialSnapshot(
+            id=credential.id,
+            credential_json=mask_credential_dict(credential.credential_json)
+            if MASK_CREDENTIAL_PREFIX
+            else credential.credential_json,
+            user_id=credential.user_id,
+            public_doc=credential.public_doc,
+            time_created=credential.time_created,
+            time_updated=credential.time_updated,
+        )
+        for credential in credentials
+    ]
+
+
+@router.get("/credential/{credential_id}")
+def get_credential_by_id(
+    credential_id: int,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> CredentialSnapshot | StatusResponse[int]:
+    credential = fetch_credential_by_id(credential_id, user, db_session)
+    if credential is None:
+        raise HTTPException(
+            status_code=401,
+            detail=f"Credential {credential_id} does not exist or does not belong to user",
+        )
+
+    return CredentialSnapshot(
+        id=credential.id,
+        credential_json=mask_credential_dict(credential.credential_json)
+        if MASK_CREDENTIAL_PREFIX
+        else credential.credential_json,
+        user_id=credential.user_id,
+        public_doc=credential.public_doc,
+        time_created=credential.time_created,
+        time_updated=credential.time_updated,
+    )
+
+
+@router.post("/credential")
+def create_credential_from_model(
+    connector_info: CredentialBase,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> ObjectCreationIdResponse:
+    return create_credential(connector_info, user, db_session)
+
+
+@router.patch("/credential/{credential_id}")
+def update_credential_from_model(
+    credential_id: int,
+    credential_data: CredentialBase,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> CredentialSnapshot | StatusResponse[int]:
+    updated_credential = update_credential(
+        credential_id, credential_data, user, db_session
+    )
+    if updated_credential is None:
+        raise HTTPException(
+            status_code=401,
+            detail=f"Credential {credential_id} does not exist or does not belong to user",
+        )
+
+    return CredentialSnapshot(
+        id=updated_credential.id,
+        credential_json=updated_credential.credential_json,
+        user_id=updated_credential.user_id,
+        public_doc=updated_credential.public_doc,
+        time_created=updated_credential.time_created,
+        time_updated=updated_credential.time_updated,
+    )
+
+
+@router.delete("/credential/{credential_id}")
+def delete_credential_by_id(
+    credential_id: int,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse:
+    delete_credential(credential_id, user, db_session)
+    return StatusResponse(
+        success=True, message="Credential deleted successfully", data=credential_id
+    )
+
+
+@router.put("/connector/{connector_id}/credential/{credential_id}")
+def associate_credential_to_connector(
+    connector_id: int,
+    credential_id: int,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse[int]:
+    return add_credential_to_connector(connector_id, credential_id, user, db_session)
+
+
+@router.delete("/connector/{connector_id}/credential/{credential_id}")
+def dissociate_credential_from_connector(
+    connector_id: int,
+    credential_id: int,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse[int]:
+    return remove_credential_from_connector(
+        connector_id, credential_id, user, db_session
+    )

@@ -26,6 +26,7 @@ def fetch_connectors(
     sources: list[DocumentSource] | None = None,
     input_types: list[InputType] | None = None,
     disabled_status: bool | None = None,
+    user: User | None = None,
 ) -> list[Connector]:
     stmt = select(Connector)
     if sources is not None:

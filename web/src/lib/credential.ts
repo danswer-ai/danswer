@@ -1,5 +1,5 @@
 export async function deleteCredential<T>(credentialId: number) {
-  const response = await fetch(`/api/admin/credential/${credentialId}`, {
+  const response = await fetch(`/api/manage/credential/${credentialId}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -13,7 +13,7 @@ export async function linkCredential<T>(
   credentialId: number
 ) {
   const response = await fetch(
-    `/api/admin/connector/${connectorId}/credential/${credentialId}`,
+    `/api/manage/connector/${connectorId}/credential/${credentialId}`,
     {
       method: "PUT",
       headers: {

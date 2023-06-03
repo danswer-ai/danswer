@@ -12,9 +12,9 @@ from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.datastores.qdrant.indexing import list_collections
 from danswer.db.credentials import create_initial_public_credential
-from danswer.server.admin import router as admin_router
 from danswer.server.event_loading import router as event_processing_router
 from danswer.server.health import router as health_router
+from danswer.server.manage import router as admin_router
 from danswer.server.search_backend import router as backend_router
 from danswer.utils.logging import setup_logger
 from fastapi import FastAPI

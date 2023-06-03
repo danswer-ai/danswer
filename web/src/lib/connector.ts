@@ -3,7 +3,7 @@ import { Connector, ConnectorBase } from "./types";
 export async function createConnector<T>(
   connector: ConnectorBase<T>
 ): Promise<Connector<T>> {
-  const response = await fetch(`/api/admin/connector`, {
+  const response = await fetch(`/api/manage/admin/connector`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -16,7 +16,7 @@ export async function createConnector<T>(
 export async function updateConnector<T>(
   connector: Connector<T>
 ): Promise<Connector<T>> {
-  const response = await fetch(`/api/admin/connector/${connector.id}`, {
+  const response = await fetch(`/api/manage/admin/connector/${connector.id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -29,7 +29,7 @@ export async function updateConnector<T>(
 export async function deleteConnector<T>(
   connectorId: number
 ): Promise<Connector<T>> {
-  const response = await fetch(`/api/admin/connector/${connectorId}`, {
+  const response = await fetch(`/api/manage/admin/connector/${connectorId}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",

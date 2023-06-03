@@ -26,7 +26,7 @@ const MainSection = () => {
     isLoading: isConnectorIndexingStatusesLoading,
     error: isConnectorIndexingStatusesError,
   } = useSWR<ConnectorIndexingStatus<any>[]>(
-    "/api/admin/connector/indexing-status",
+    "/api/manage/admin/connector/indexing-status",
     fetcher
   );
 
@@ -36,7 +36,7 @@ const MainSection = () => {
     isValidating: isCredentialsValidating,
     error: isCredentialsError,
   } = useSWR<Credential<SlackCredentialJson>[]>(
-    "/api/admin/credential",
+    "/api/manage/credential",
     fetcher
   );
 
@@ -81,7 +81,7 @@ const MainSection = () => {
               className="ml-1 hover:bg-gray-700 rounded-full p-1"
               onClick={async () => {
                 await deleteCredential(slackCredential.id);
-                mutate("/api/admin/credential");
+                mutate("/api/manage/credential");
               }}
             >
               <TrashIcon />
@@ -123,7 +123,7 @@ const MainSection = () => {
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
-                  mutate("/api/admin/credential");
+                  mutate("/api/manage/credential");
                 }
               }}
             />
@@ -156,11 +156,13 @@ const MainSection = () => {
                     connector.connector_specific_config.workspace,
                 },
               ]}
-              onUpdate={() => mutate("/api/admin/connector/indexing-status")}
+              onUpdate={() =>
+                mutate("/api/manage/admin/connector/indexing-status")
+              }
               onCredentialLink={async (connectorId) => {
                 if (slackCredential) {
                   await linkCredential(connectorId, slackCredential.id);
-                  mutate("/api/admin/connector/indexing-status");
+                  mutate("/api/manage/admin/connector/indexing-status");
                 }
               }}
             />
@@ -191,7 +193,7 @@ const MainSection = () => {
           onSubmit={async (isSuccess, responseJson) => {
             if (isSuccess && responseJson) {
               await linkCredential(responseJson.id, slackCredential.id);
-              mutate("/api/admin/connector/indexing-status");
+              mutate("/api/manage/admin/connector/indexing-status");
             }
           }}
         />
