@@ -11,11 +11,11 @@ from danswer.datastores.qdrant.store import QdrantIndex
 from danswer.db.models import User
 from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.question_answer import get_json_line
-from danswer.semantic_search.semantic_search import retrieve_ranked_documents
+from danswer.search.semantic_search import chunks_to_search_docs
+from danswer.search.semantic_search import retrieve_ranked_documents
 from danswer.server.models import KeywordResponse
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
-from danswer.server.models import SearchDoc
 from danswer.server.models import SearchResponse
 from danswer.server.models import UserRoleResponse
 from danswer.utils.clients import get_typesense_client
@@ -53,29 +53,9 @@ def semantic_search(
     if not ranked_chunks:
         return SearchResponse(top_ranked_docs=None, semi_ranked_docs=None)
 
-    top_docs = [
-        SearchDoc(
-            semantic_identifier=chunk.semantic_identifier,
-            link=chunk.source_links.get(0) if chunk.source_links else None,
-            blurb=chunk.blurb,
-            source_type=chunk.source_type,
-        )
-        for chunk in ranked_chunks
-    ]
+    top_docs = chunks_to_search_docs(ranked_chunks)
+    other_top_docs = chunks_to_search_docs(unranked_chunks)
 
-    other_top_docs = (
-        [
-            SearchDoc(
-                semantic_identifier=chunk.semantic_identifier,
-                link=chunk.source_links.get(0) if chunk.source_links else None,
-                blurb=chunk.blurb,
-                source_type=chunk.source_type,
-            )
-            for chunk in unranked_chunks
-        ]
-        if unranked_chunks
-        else []
-    )
     return SearchResponse(top_ranked_docs=top_docs, semi_ranked_docs=other_top_docs)
 
 
@@ -89,6 +69,10 @@ def keyword_search(
 
     logger.info(f"Received keyword query: {query}")
     start_time = time.time()
+
+    ranked_chunks = retrieve_keyword_documents(
+        query, user_id, filters, QdrantIndex(collection)
+    )
 
     search_results = ts_client.collections[collection].documents.search(
         {
@@ -117,6 +101,7 @@ def direct_qa(
     query = question.query
     collection = question.collection
     filters = question.filters
+    use_keyword = question.use_keyword
     logger.info(f"Received semantic query: {query}")
 
     user_id = None if user is None else int(user.id)
@@ -128,33 +113,7 @@ def direct_qa(
             answer=None, quotes=None, ranked_documents=None, unranked_documents=None
         )
 
-    top_docs = [
-        SearchDoc(
-            semantic_identifier=chunk.semantic_identifier,
-            link=chunk.source_links.get(0) if chunk.source_links else None,
-            blurb=chunk.blurb,
-            source_type=chunk.source_type,
-        )
-        for chunk in ranked_chunks
-    ]
-
-    other_top_docs = (
-        [
-            SearchDoc(
-                semantic_identifier=chunk.semantic_identifier,
-                link=chunk.source_links.get(0) if chunk.source_links else None,
-                blurb=chunk.blurb,
-                source_type=chunk.source_type,
-            )
-            for chunk in unranked_chunks
-        ]
-        if unranked_chunks
-        else []
-    )
-
-    qa_model = get_default_backend_qa_model(
-        internal_model="openai-completion", model_versiontimeout=QA_TIMEOUT
-    )
+    qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
     try:
         answer, quotes = qa_model.answer_question(
             query, ranked_chunks[:NUM_GENERATIVE_AI_INPUT_DOCS]
@@ -168,8 +127,8 @@ def direct_qa(
     return QAResponse(
         answer=answer,
         quotes=quotes,
-        ranked_documents=top_docs,
-        unranked_documents=other_top_docs,
+        ranked_documents=chunks_to_search_docs(ranked_chunks),
+        unranked_documents=chunks_to_search_docs(unranked_chunks),
     )
 
 
@@ -194,29 +153,8 @@ def stream_direct_qa(
             yield get_json_line({top_documents_key: None, unranked_top_docs_key: None})
             return
 
-        top_docs = [
-            SearchDoc(
-                semantic_identifier=chunk.semantic_identifier,
-                link=chunk.source_links.get(0) if chunk.source_links else None,
-                blurb=chunk.blurb,
-                source_type=chunk.source_type,
-            )
-            for chunk in ranked_chunks
-        ]
-        unranked_top_docs = (
-            [
-                SearchDoc(
-                    semantic_identifier=chunk.semantic_identifier,
-                    link=chunk.source_links.get(0) if chunk.source_links else None,
-                    blurb=chunk.blurb,
-                    source_type=chunk.source_type,
-                )
-                for chunk in unranked_chunks
-            ]
-            if unranked_chunks
-            else []
-        )
-
+        top_docs = chunks_to_search_docs(ranked_chunks)
+        unranked_top_docs = chunks_to_search_docs(unranked_chunks)
         top_docs_dict = {
             top_documents_key: [top_doc.json() for top_doc in top_docs],
             unranked_top_docs_key: [doc.json() for doc in unranked_top_docs],

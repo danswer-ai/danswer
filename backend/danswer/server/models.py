@@ -77,6 +77,7 @@ class SearchDoc(BaseModel):
 class QuestionRequest(BaseModel):
     query: str
     collection: str
+    use_keyword: bool | None
     filters: list[IndexFilter] | None
 
 
