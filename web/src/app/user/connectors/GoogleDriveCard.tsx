@@ -6,7 +6,6 @@ import { GoogleDriveCredentialJson, Credential } from "@/lib/types";
 import { GOOGLE_DRIVE_AUTH_IS_ADMIN_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import { CardProps } from "./interface";
-import { useEffect } from "react";
 import { CheckCircle, MinusCircle } from "@phosphor-icons/react";
 
 export const GoogleDriveCard = ({
@@ -53,9 +52,10 @@ export const GoogleDriveCard = ({
           credentialIsLinked ? (
             <>
               <p>
-                Danswer has access to your Google Drive documents! Don't worry,
-                only <b>you</b> will be able to see your private documents. You
-                can revoke this access by clicking the button below.
+                Danswer has access to your Google Drive documents! Don&apos;t
+                worry, only <b>you</b> will be able to see your private
+                documents. You can revoke this access by clicking the button
+                below.
               </p>
               <div className="mt-2 flex">
                 <Button
@@ -76,9 +76,9 @@ export const GoogleDriveCard = ({
           ) : (
             <>
               <p>
-                We've recieved your credentials from Google! Click the button
-                below to activate the connector - we will pull the latest state
-                of your documents every <b>10</b> minutes.
+                We&apos;ve recieved your credentials from Google! Click the
+                button below to activate the connector - we will pull the latest
+                state of your documents every <b>10</b> minutes.
               </p>
               <div className="mt-2 flex">
                 <Button
@@ -101,10 +101,10 @@ export const GoogleDriveCard = ({
           <>
             <p>
               If you want to make all your Google Drive documents searchable
-              through Danswer, click the button below! Don't worry, only{" "}
+              through Danswer, click the button below! Don&apos;t worry, only{" "}
               <b>you</b> will be able to see your private documents. Currently,
-              you'll only be able to search through documents shared with the
-              whole company.
+              you&apos;ll only be able to search through documents shared with
+              the whole company.
             </p>
             <div className="mt-2 flex">
               <Button
