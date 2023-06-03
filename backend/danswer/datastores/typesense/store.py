@@ -66,7 +66,6 @@ def create_typesense_collection(
     ts_client.collections.create(collection_schema)
 
 
-# TODO untested code, need test
 def get_typesense_document_whitelists(
     doc_chunk_id: str, collection_name: str, ts_client: typesense.Client
 ) -> tuple[bool, list[str], list[str]]:
@@ -77,14 +76,13 @@ def get_typesense_document_whitelists(
         )
     except ObjectNotFound:
         return False, [], []
-    if not document[ALLOWED_USERS] or not document[ALLOWED_GROUPS]:
+    if document[ALLOWED_USERS] is None or document[ALLOWED_GROUPS] is None:
         raise RuntimeError(
             "Typesense Index is corrupted, Document found with no access lists."
         )
     return True, document[ALLOWED_USERS], document[ALLOWED_GROUPS]
 
 
-# TODO fill this out
 def delete_typesense_doc_chunks(
     document_id: str, collection_name: str, ts_client: typesense.Client
 ) -> None:
@@ -93,10 +91,11 @@ def delete_typesense_doc_chunks(
         "query_by": DOCUMENT_ID,
     }
 
+    # TODO consider race conditions if running multiple processes/threads
     hits = ts_client.collections[collection_name].documents.search(search_parameters)
     [
         ts_client.collections[collection_name].documents[hit["document"]["id"]].delete()
-        for hit in hits
+        for hit in hits["hits"]
     ]
 
 

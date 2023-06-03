@@ -115,7 +115,6 @@ def run_indexing_jobs(last_run_time: float, db_session: Session) -> None:
 
             document_ids: list[str] = []
             for doc_batch in doc_batch_generator:
-                # TODO introduce permissioning here
                 index_user_id = (
                     None if db_credential.public_doc else db_credential.user_id
                 )
