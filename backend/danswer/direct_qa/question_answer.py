@@ -332,9 +332,17 @@ class OpenAICompletionQA(OpenAIQAModel):
         logger.debug(model_output)
 
         answer, quotes_dict = process_answer(model_output, context_docs)
-        logger.info(answer)
+        if answer:
+            logger.info(answer)
+        else:
+            logger.warning(
+                "Answer extraction from model output failed, most likely no quotes provided"
+            )
 
-        yield quotes_dict
+        if quotes_dict is None:
+            yield {}
+        else:
+            yield quotes_dict
 
 
 class OpenAIChatCompletionQA(OpenAIQAModel):
@@ -442,6 +450,14 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         logger.debug(model_output)
 
         answer, quotes_dict = process_answer(model_output, context_docs)
-        logger.info(answer)
+        if answer:
+            logger.info(answer)
+        else:
+            logger.warning(
+                "Answer extraction from model output failed, most likely no quotes provided"
+            )
 
-        yield quotes_dict
+        if quotes_dict is None:
+            yield {}
+        else:
+            yield quotes_dict
