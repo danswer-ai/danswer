@@ -7,6 +7,7 @@ services:
     depends_on:
       - relational_db
       - vector_db
+      - search_engine
     restart: always
     ports:
       - "8080:8080"
@@ -15,6 +16,9 @@ services:
     environment:
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
+      - TYPESENSE_HOST=host.docker.internal
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
+      - DISABLE_AUTH=True
     volumes:
       - local_dynamic_storage:/home/storage
   background:
@@ -43,12 +47,13 @@ services:
       - .env
     environment:
       - INTERNAL_URL=http://api_server:8080
+      - DISABLE_AUTH=True
   relational_db:
     image: postgres:15.2-alpine
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
     env_file:
       - .env
     ports:
@@ -58,12 +63,24 @@ services:
   vector_db:
     image: qdrant/qdrant:v1.1.3
     restart: always
-    ports:
-      - "6333:6333"
     env_file:
       - .env
+    ports:
+      - "6333:6333"
     volumes:
       - qdrant_volume:/qdrant/storage
+  search_engine:
+    image: typesense/typesense:0.24.1
+    restart: always
+    environment:
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
+      - TYPESENSE_DATA_DIR=/typesense/storage
+    env_file:
+      - .env
+    ports:
+      - "8108:8108"
+    volumes:
+      - typesense_volume:/typesense/storage
   nginx:
     image: nginx:1.23.4-alpine
     restart: always
@@ -80,14 +97,6 @@ services:
     command: > 
       /bin/sh -c "envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template.dev > /etc/nginx/conf.d/app.conf 
       && while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
-  search_engine:
-    image: typesense/typesense:0.24.1
-    restart: always
-    ports:
-      - "8108:8108"
-    volumes:
-      - typesense_volume:/typesense/storage
-    command: "--data-dir /data --api-key=${TYPESENSE_API_KEY} --enable-cors"
 volumes:
   local_dynamic_storage:
   db_volume:

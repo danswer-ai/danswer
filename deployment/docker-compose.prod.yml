@@ -7,12 +7,15 @@ services:
     depends_on:
       - relational_db
       - vector_db
+      - search_engine
     restart: always
     env_file:
       - .env
     environment:
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
+      - TYPESENSE_HOST=host.docker.internal
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
     volumes:
       - local_dynamic_storage:/home/storage
   background:
@@ -54,8 +57,22 @@ services:
   vector_db:
     image: qdrant/qdrant:v1.1.3
     restart: always
+    env_file:
+      - .env
     volumes:
       - qdrant_volume:/qdrant/storage
+  search_engine:
+    image: typesense/typesense:0.24.1
+    restart: always
+    # TYPESENSE_API_KEY must be set in .env file
+    environment:
+      - TYPESENSE_DATA_DIR=/typesense/storage
+    env_file:
+      - .env
+    ports:
+      - "8108:8108"
+    volumes:
+      - typesense_volume:/typesense/storage
   nginx:
     image: nginx:1.23.4-alpine
     restart: always
@@ -83,3 +100,4 @@ volumes:
   local_dynamic_storage:
   db_volume:
   qdrant_volume:
+  typesense_volume:
