@@ -170,6 +170,36 @@ def index_typesense_chunks(
     return True
 
 
+def _build_typesense_filters(
+    user_id: int | None, filters: list[IndexFilter] | None
+) -> str:
+    filter_str = ""
+
+    # Permissions filter
+    if user_id:
+        filter_str += f"{ALLOWED_USERS}:=[{PUBLIC_DOC_PAT}|{user_id}] && "
+    else:
+        filter_str += f"{ALLOWED_USERS}:={PUBLIC_DOC_PAT} && "
+
+    # Provided query filters
+    if filters:
+        for filter_dict in filters:
+            valid_filters = {
+                key: value for key, value in filter_dict.items() if value is not None
+            }
+            for filter_key, filter_val in valid_filters.items():
+                if isinstance(filter_val, str):
+                    filter_str += f"{filter_key}:={filter_val} && "
+                elif isinstance(filter_val, list):
+                    filters_or = ",".join([str(f_val) for f_val in filter_val])
+                    filter_str += f"{filter_key}:=[{filters_or}] && "
+                else:
+                    raise ValueError("Invalid filters provided")
+    if filter_str[-4:] == " && ":
+        filter_str = filter_str[:-4]
+    return filter_str
+
+
 class TypesenseIndex(KeywordIndex):
     def __init__(self, collection: str = TYPESENSE_DEFAULT_COLLECTION) -> None:
         self.collection = collection
@@ -190,10 +220,13 @@ class TypesenseIndex(KeywordIndex):
         filters: list[IndexFilter] | None,
         num_to_retrieve: int,
     ) -> list[InferenceChunk]:
+        filters_str = _build_typesense_filters(user_id, filters)
+
         search_results = self.ts_client.collections[self.collection].documents.search(
             {
                 "q": query,
                 "query_by": CONTENT,
+                "filter_by": filters_str,
                 "per_page": num_to_retrieve,
                 "limit_hits": num_to_retrieve,
             }

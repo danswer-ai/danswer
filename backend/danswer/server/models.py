@@ -7,7 +7,6 @@ from typing import TypeVar
 
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
-from danswer.datastores.interfaces import IndexFilter
 from danswer.db.models import Connector
 from danswer.db.models import IndexingStatus
 from pydantic import BaseModel
@@ -78,7 +77,7 @@ class QuestionRequest(BaseModel):
     query: str
     collection: str
     use_keyword: bool | None
-    filters: list[IndexFilter] | None
+    filters: str | None  # string of list[IndexFilter]
 
 
 class SearchResponse(BaseModel):
@@ -93,10 +92,6 @@ class QAResponse(BaseModel):
     ranked_documents: list[SearchDoc] | None
     # for performance, only a few top documents are cross-encoded for rerank, the rest follow retrieval order
     unranked_documents: list[SearchDoc] | None
-
-
-class KeywordResponse(BaseModel):
-    results: list[str] | None
 
 
 class UserByEmail(BaseModel):

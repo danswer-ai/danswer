@@ -1,29 +1,27 @@
+import json
 import time
 from collections.abc import Generator
 
 from danswer.auth.users import current_user
-from danswer.configs.app_configs import KEYWORD_MAX_HITS
+from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
 from danswer.configs.app_configs import QA_TIMEOUT
-from danswer.configs.constants import CONTENT
-from danswer.configs.constants import SOURCE_LINKS
 from danswer.datastores.qdrant.store import QdrantIndex
+from danswer.datastores.typesense.store import TypesenseIndex
 from danswer.db.models import User
 from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.question_answer import get_json_line
+from danswer.search.keyword_search import retrieve_keyword_documents
 from danswer.search.semantic_search import chunks_to_search_docs
 from danswer.search.semantic_search import retrieve_ranked_documents
-from danswer.server.models import KeywordResponse
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchResponse
 from danswer.server.models import UserRoleResponse
-from danswer.utils.clients import get_typesense_client
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
-
 
 logger = setup_logger()
 
@@ -43,8 +41,8 @@ def semantic_search(
 ) -> SearchResponse:
     query = question.query
     collection = question.collection
-    filters = question.filters
-    logger.info(f"Received semantic search for: {query}")
+    filters = json.loads(question.filters) if question.filters is not None else None
+    logger.info(f"Received semantic search query: {query}")
 
     user_id = None if user is None else int(user.id)
     ranked_chunks, unranked_chunks = retrieve_ranked_documents(
@@ -59,37 +57,24 @@ def semantic_search(
     return SearchResponse(top_ranked_docs=top_docs, semi_ranked_docs=other_top_docs)
 
 
-@router.get("/keyword-search", response_model=KeywordResponse)
+@router.get("/keyword-search", response_model=SearchResponse)
 def keyword_search(
-    question: QuestionRequest = Depends(), _: User = Depends(current_user)
-) -> KeywordResponse:
-    ts_client = get_typesense_client()
+    question: QuestionRequest = Depends(), user: User = Depends(current_user)
+) -> SearchResponse:
     query = question.query
     collection = question.collection
+    filters = json.loads(question.filters) if question.filters is not None else None
+    logger.info(f"Received keyword search query: {query}")
 
-    logger.info(f"Received keyword query: {query}")
-    start_time = time.time()
-
+    user_id = None if user is None else int(user.id)
     ranked_chunks = retrieve_keyword_documents(
-        query, user_id, filters, QdrantIndex(collection)
+        query, user_id, filters, TypesenseIndex(collection)
     )
+    if not ranked_chunks:
+        return SearchResponse(top_ranked_docs=None, semi_ranked_docs=None)
 
-    search_results = ts_client.collections[collection].documents.search(
-        {
-            "q": query,
-            "query_by": CONTENT,
-            "per_page": KEYWORD_MAX_HITS,
-            "limit_hits": KEYWORD_MAX_HITS,
-        }
-    )
-
-    hits = search_results["hits"]
-    sources = [hit["document"][SOURCE_LINKS][0] for hit in hits]
-
-    total_time = time.time() - start_time
-    logger.info(f"Total Keyword Search took {total_time} seconds")
-
-    return KeywordResponse(results=sources)
+    top_docs = chunks_to_search_docs(ranked_chunks)
+    return SearchResponse(top_ranked_docs=top_docs, semi_ranked_docs=None)
 
 
 @router.get("/direct-qa", response_model=QAResponse)
@@ -100,14 +85,20 @@ def direct_qa(
 
     query = question.query
     collection = question.collection
-    filters = question.filters
+    filters = json.loads(question.filters) if question.filters is not None else None
     use_keyword = question.use_keyword
-    logger.info(f"Received semantic query: {query}")
+    logger.info(f"Received QA query: {query}")
 
     user_id = None if user is None else int(user.id)
-    ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-        query, user_id, filters, QdrantIndex(collection)
-    )
+    if use_keyword:
+        ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
+            query, user_id, filters, TypesenseIndex(collection)
+        )
+        unranked_chunks: list[InferenceChunk] | None = []
+    else:
+        ranked_chunks, unranked_chunks = retrieve_ranked_documents(
+            query, user_id, filters, QdrantIndex(collection)
+        )
     if not ranked_chunks:
         return QAResponse(
             answer=None, quotes=None, ranked_documents=None, unranked_documents=None
@@ -142,13 +133,20 @@ def stream_direct_qa(
     def stream_qa_portions() -> Generator[str, None, None]:
         query = question.query
         collection = question.collection
-        filters = question.filters
-        logger.info(f"Received semantic query: {query}")
+        filters = json.loads(question.filters) if question.filters is not None else None
+        use_keyword = question.use_keyword
+        logger.info(f"Received QA query: {query}")
 
         user_id = None if user is None else int(user.id)
-        ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-            query, user_id, filters, QdrantIndex(collection)
-        )
+        if use_keyword:
+            ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
+                query, user_id, filters, TypesenseIndex(collection)
+            )
+            unranked_chunks: list[InferenceChunk] | None = []
+        else:
+            ranked_chunks, unranked_chunks = retrieve_ranked_documents(
+                query, user_id, filters, QdrantIndex(collection)
+            )
         if not ranked_chunks:
             yield get_json_line({top_documents_key: None, unranked_top_docs_key: None})
             return
@@ -173,7 +171,6 @@ def stream_direct_qa(
         except Exception:
             # exception is logged in the answer_question method, no need to re-log
             pass
-
         return
 
     return StreamingResponse(stream_qa_portions(), media_type="application/json")

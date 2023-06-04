@@ -91,7 +91,6 @@ GOOGLE_DRIVE_INCLUDE_SHARED = False
 NUM_RETURNED_HITS = 50
 NUM_RERANKED_RESULTS = 15
 NUM_GENERATIVE_AI_INPUT_DOCS = 5
-KEYWORD_MAX_HITS = 5
 # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = 10  # 10 seconds

@@ -2,6 +2,7 @@
 import argparse
 import json
 import urllib
+from pprint import pprint
 
 import requests
 from danswer.configs.app_configs import APP_PORT
@@ -44,13 +45,13 @@ if __name__ == "__main__":
 
     parser.add_argument("query", nargs="*", help="The query to process")
 
+    previous_input = None
     while True:
-        previous_input = None
         try:
             user_input = input(
                 "\n\nAsk any question:\n"
                 "  - Use -f (QA/Search) and -t (Semantic/Keyword) flags to set endpoint.\n"
-                "  - prefix with -s to stream answer, -f source1,source2,etc for filters.\n"
+                "  - prefix with -s to stream answer, --filters web,slack etc. for filters.\n"
                 "  - input an empty string to rerun last query.\n\t"
             )
 
@@ -94,8 +95,8 @@ if __name__ == "__main__":
             query_json = {
                 "query": query,
                 "collection": QDRANT_DEFAULT_COLLECTION,
-                "use_keyword": flow_type,  # Only applicable to QA Endpoints
-                "filters": [{SOURCE_TYPE: source_types}],
+                "use_keyword": flow_type == "keyword",  # Ignore if not QA Endpoints
+                "filters": json.dumps([{SOURCE_TYPE: source_types}]),
             }
 
             if args.stream:
@@ -103,13 +104,13 @@ if __name__ == "__main__":
                     endpoint, params=urllib.parse.urlencode(query_json), stream=True
                 ) as r:
                     for json_response in r.iter_lines():
-                        print(json.loads(json_response.decode()))
+                        pprint(json.loads(json_response.decode()))
             else:
                 response = requests.get(
                     endpoint, params=urllib.parse.urlencode(query_json)
                 )
                 contents = json.loads(response.content)
-                print(contents)
+                pprint(contents)
 
         except Exception as e:
             print(f"Failed due to {e}, retrying")

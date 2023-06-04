@@ -1,3 +1,4 @@
+import nltk  # type:ignore
 import uvicorn
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRead
@@ -25,6 +26,7 @@ from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
 
 logger = setup_logger()
 
@@ -115,6 +117,7 @@ def get_application() -> FastAPI:
         from danswer.datastores.qdrant.indexing import create_qdrant_collection
         from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 
+        logger.info("Verifying Document Indexes are available.")
         if QDRANT_DEFAULT_COLLECTION not in {
             collection.name for collection in list_qdrant_collections().collections
         }:
@@ -127,8 +130,13 @@ def get_application() -> FastAPI:
                 f"Creating Typesense collection with name: {TYPESENSE_DEFAULT_COLLECTION}"
             )
             create_typesense_collection(collection_name=TYPESENSE_DEFAULT_COLLECTION)
+
+        logger.info("Warming up local NLP models.")
         warm_up_models()
-        logger.info("Semantic Search models are ready.")
+
+        logger.info("Verifying query preprocessing (NLTK) data is downloaded")
+        nltk.download("stopwords")
+        nltk.download("wordnet")
 
         logger.info("Verifying public credential exists.")
         create_initial_public_credential()
