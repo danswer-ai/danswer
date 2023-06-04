@@ -182,16 +182,21 @@ def get_connector_indexing_status(
         connector.id: connector for connector in fetch_connectors(db_session)
     }
     index_attempts = fetch_latest_index_attempts_by_status(db_session)
-    connector_to_index_attempts: dict[int, list[IndexAttempt]] = defaultdict(list)
+    connector_credential_pair_to_index_attempts: dict[
+        int, list[IndexAttempt]
+    ] = defaultdict(list)
     for index_attempt in index_attempts:
         # don't consider index attempts where the connector has been deleted
         if index_attempt.connector_id:
-            connector_to_index_attempts[index_attempt.connector_id].append(
-                index_attempt
-            )
+            connector_credential_pair_to_index_attempts[
+                (index_attempt.connector_id, index_attempt.credential_id)
+            ].append(index_attempt)
 
     indexing_statuses: list[ConnectorIndexingStatus] = []
-    for connector_id, index_attempts in connector_to_index_attempts.items():
+    for (
+        connector_id,
+        _,
+    ), index_attempts in connector_credential_pair_to_index_attempts.items():
         # NOTE: index_attempts is guaranteed to be length > 0
         connector = connector_id_to_connector[connector_id]
         index_attempts_sorted = sorted(
@@ -216,17 +221,21 @@ def get_connector_indexing_status(
             ),
         )
 
-    # add in the connector that haven't started indexing yet
+    # add in the connectors that haven't started indexing yet
     for connector in connector_id_to_connector.values():
-        if connector.id not in connector_to_index_attempts:
-            indexing_statuses.append(
-                ConnectorIndexingStatus(
-                    connector=ConnectorSnapshot.from_connector_db_model(connector),
-                    last_status=IndexingStatus.NOT_STARTED,
-                    last_success=None,
-                    docs_indexed=0,
-                ),
-            )
+        for credential in connector.credentials:
+            if (
+                connector.id,
+                credential.credential_id,
+            ) not in connector_credential_pair_to_index_attempts:
+                indexing_statuses.append(
+                    ConnectorIndexingStatus(
+                        connector=ConnectorSnapshot.from_connector_db_model(connector),
+                        last_status=IndexingStatus.NOT_STARTED,
+                        last_success=None,
+                        docs_indexed=0,
+                    ),
+                )
 
     return indexing_statuses
 

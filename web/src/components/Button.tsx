@@ -11,7 +11,6 @@ export const Button = ({
   disabled = false,
   fullWidth = false,
 }: Props) => {
-  console.log(fullWidth);
   return (
     <button
       className={
