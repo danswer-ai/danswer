@@ -12,9 +12,12 @@ import { CheckCircle, XCircle } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Popup } from "@/components/admin/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { Connector, ConnectorIndexingStatus } from "@/lib/types";
+import { ConnectorIndexingStatus } from "@/lib/types";
 
-const getSourceDisplay = (connector: Connector<any>) => {
+const getSourceDisplay = (
+  connectorIndexingStatus: ConnectorIndexingStatus<any>
+) => {
+  const connector = connectorIndexingStatus.connector;
   const sourceMetadata = getSourceMetadata(connector.source);
   if (connector.source === "web") {
     return (
@@ -36,6 +39,16 @@ const getSourceDisplay = (connector: Connector<any>) => {
       sourceMetadata.displayName +
       ` [${connector.connector_specific_config?.wiki_page_url}]`
     );
+  }
+
+  if (
+    connector.source === "google_drive" &&
+    !connectorIndexingStatus.public_doc
+  ) {
+    if (connectorIndexingStatus.owner) {
+      return `${sourceMetadata.displayName} [${connectorIndexingStatus.owner}]`;
+    }
+    return `${sourceMetadata.displayName} [private]`;
   }
 
   return sourceMetadata.displayName;
@@ -122,7 +135,7 @@ export default function Status() {
                 >
                   {sourceMetadata.icon({ size: "20" })}
                   <div className="ml-1">
-                    {getSourceDisplay(connectorIndexingStatus.connector)}
+                    {getSourceDisplay(connectorIndexingStatus)}
                   </div>
                 </a>
               ),

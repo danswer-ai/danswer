@@ -33,6 +33,7 @@ from danswer.db.credentials import mask_credential_dict
 from danswer.db.credentials import update_credential
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import create_index_attempt
+from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import User
@@ -178,16 +179,17 @@ def get_connector_indexing_status(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[ConnectorIndexingStatus]:
-    connector_id_to_connector = {
+    connector_id_to_connector: dict[int, Connector] = {
         connector.id: connector for connector in fetch_connectors(db_session)
     }
     index_attempts = fetch_latest_index_attempts_by_status(db_session)
     connector_credential_pair_to_index_attempts: dict[
-        int, list[IndexAttempt]
+        tuple[int, int], list[IndexAttempt]
     ] = defaultdict(list)
     for index_attempt in index_attempts:
         # don't consider index attempts where the connector has been deleted
-        if index_attempt.connector_id:
+        # or the credential has been deleted
+        if index_attempt.connector_id and index_attempt.credential_id:
             connector_credential_pair_to_index_attempts[
                 (index_attempt.connector_id, index_attempt.credential_id)
             ].append(index_attempt)
@@ -195,10 +197,16 @@ def get_connector_indexing_status(
     indexing_statuses: list[ConnectorIndexingStatus] = []
     for (
         connector_id,
-        _,
+        credential_id,
     ), index_attempts in connector_credential_pair_to_index_attempts.items():
         # NOTE: index_attempts is guaranteed to be length > 0
         connector = connector_id_to_connector[connector_id]
+        credential = [
+            credential_association.credential
+            for credential_association in connector.credentials
+            if credential_association.credential_id == credential_id
+        ][0]
+
         index_attempts_sorted = sorted(
             index_attempts, key=lambda x: x.time_updated, reverse=True
         )
@@ -210,6 +218,8 @@ def get_connector_indexing_status(
         indexing_statuses.append(
             ConnectorIndexingStatus(
                 connector=ConnectorSnapshot.from_connector_db_model(connector),
+                public_doc=credential.public_doc,
+                owner=credential.user.email if credential.user else "",
                 last_status=index_attempts_sorted[0].status,
                 last_success=successful_index_attempts_sorted[0].time_updated
                 if successful_index_attempts_sorted
@@ -223,14 +233,16 @@ def get_connector_indexing_status(
 
     # add in the connectors that haven't started indexing yet
     for connector in connector_id_to_connector.values():
-        for credential in connector.credentials:
+        for credential_association in connector.credentials:
             if (
                 connector.id,
-                credential.credential_id,
+                credential_association.credential_id,
             ) not in connector_credential_pair_to_index_attempts:
                 indexing_statuses.append(
                     ConnectorIndexingStatus(
                         connector=ConnectorSnapshot.from_connector_db_model(connector),
+                        public_doc=credential_association.credential.public_doc,
+                        owner=credential.user.email if credential.user else "",
                         last_status=IndexingStatus.NOT_STARTED,
                         last_success=None,
                         docs_indexed=0,

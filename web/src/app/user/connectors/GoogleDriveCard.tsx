@@ -19,7 +19,9 @@ export const GoogleDriveCard = ({
 
   const existingCredential: Credential<GoogleDriveCredentialJson> | undefined =
     userCredentials?.find(
-      (credential) => credential.credential_json?.google_drive_tokens
+      (credential) =>
+        credential.credential_json?.google_drive_tokens !== undefined &&
+        !credential.public_doc
     );
 
   const credentialIsLinked =
@@ -65,6 +67,7 @@ export const GoogleDriveCard = ({
                       message: "Successfully revoked access to Google Drive!",
                       type: "success",
                     });
+                    mutate("/api/manage/connector");
                     mutate("/api/manage/credential");
                   }}
                   fullWidth

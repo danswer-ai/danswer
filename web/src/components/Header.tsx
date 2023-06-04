@@ -71,12 +71,12 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
             <div
               className={
                 "absolute top-10 right-0 mt-2 bg-gray-600 rounded-sm " +
-                "w-56 overflow-hidden shadow-xl z-10 text-sm text-gray-300"
+                "w-48 overflow-hidden shadow-xl z-10 text-sm text-gray-300"
               }
             >
               <Link href="/user/connectors">
                 <div className="flex py-2 px-3 cursor-pointer hover:bg-gray-500 border-b border-gray-500">
-                  Manage Personal Connectors
+                  Personal Connectors
                 </div>
               </Link>
               {/* Show connector option if (1) auth is disabled or (2) user is an admin */}

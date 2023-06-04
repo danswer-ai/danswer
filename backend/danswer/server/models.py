@@ -137,6 +137,8 @@ class ConnectorIndexingStatus(BaseModel):
     """Represents the latest indexing status of a connector"""
 
     connector: ConnectorSnapshot
+    owner: str
+    public_doc: bool
     last_status: IndexingStatus
     last_success: datetime | None
     docs_indexed: int
