@@ -47,7 +47,6 @@ def create_collection(
         raise RuntimeError("Could not create Qdrant collection")
 
 
-@log_function_time()
 def get_document_whitelists(
     doc_chunk_id: str, collection_name: str, q_client: QdrantClient
 ) -> tuple[int, list[str], list[str]]:
@@ -66,7 +65,6 @@ def get_document_whitelists(
     return len(results), payload[ALLOWED_USERS], payload[ALLOWED_GROUPS]
 
 
-@log_function_time()
 def delete_doc_chunks(
     document_id: str, collection_name: str, q_client: QdrantClient
 ) -> None:

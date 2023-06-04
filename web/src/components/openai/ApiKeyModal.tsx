@@ -7,7 +7,7 @@ export const ApiKeyModal = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin/openai-api-key/validate", {
+    fetch("/api/manage/admin/openai-api-key/validate", {
       method: "HEAD",
     }).then((res) => {
       // show popup if either the API key is not set or the API key is invalid

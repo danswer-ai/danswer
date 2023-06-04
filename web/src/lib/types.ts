@@ -51,6 +51,8 @@ export interface SlackConfig {
 
 export interface ConnectorIndexingStatus<T> {
   connector: Connector<T>;
+  public_doc: boolean;
+  owner: string;
   last_status: "success" | "failed" | "in_progress" | "not_started";
   last_success: string | null;
   docs_indexed: number;

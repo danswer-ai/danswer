@@ -21,7 +21,7 @@ export default function Web() {
     isLoading: isConnectorIndexingStatusesLoading,
     error: isConnectorIndexingStatusesError,
   } = useSWR<ConnectorIndexingStatus<any>[]>(
-    "/api/admin/connector/indexing-status",
+    "/api/manage/admin/connector/indexing-status",
     fetcher
   );
 
@@ -69,7 +69,7 @@ export default function Web() {
             if (isSuccess && responseJson) {
               // assumes there is a dummy credential with id 0
               await linkCredential(responseJson.id, 0);
-              mutate("/api/admin/connector/indexing-status");
+              mutate("/api/manage/admin/connector/indexing-status");
             }
           }}
         />
@@ -99,7 +99,7 @@ export default function Web() {
               ),
             },
           ]}
-          onUpdate={() => mutate("/api/admin/connector/indexing-status")}
+          onUpdate={() => mutate("/api/manage/admin/connector/indexing-status")}
         />
       ) : (
         <p className="text-sm">No indexed websites found</p>

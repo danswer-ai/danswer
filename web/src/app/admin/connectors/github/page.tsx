@@ -25,7 +25,7 @@ const Main = () => {
     isLoading: isConnectorIndexingStatusesLoading,
     error: isConnectorIndexingStatusesError,
   } = useSWR<ConnectorIndexingStatus<any>[]>(
-    "/api/admin/connector/indexing-status",
+    "/api/manage/admin/connector/indexing-status",
     fetcher
   );
 
@@ -35,7 +35,7 @@ const Main = () => {
     isValidating: isCredentialsValidating,
     error: isCredentialsError,
   } = useSWR<Credential<GithubCredentialJson>[]>(
-    "/api/admin/credential",
+    "/api/manage/credential",
     fetcher
   );
 
@@ -81,7 +81,7 @@ const Main = () => {
               className="ml-1 hover:bg-gray-700 rounded-full p-1"
               onClick={async () => {
                 await deleteCredential(githubCredential.id);
-                mutate("/api/admin/credential");
+                mutate("/api/manage/credential");
               }}
             >
               <TrashIcon />
@@ -121,7 +121,7 @@ const Main = () => {
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
-                  mutate("/api/admin/credential");
+                  mutate("/api/manage/credential");
                 }
               }}
             />
@@ -149,7 +149,7 @@ const Main = () => {
               onCredentialLink={async (connectorId) => {
                 if (githubCredential) {
                   await linkCredential(connectorId, githubCredential.id);
-                  mutate("/api/admin/connector/indexing-status");
+                  mutate("/api/manage/admin/connector/indexing-status");
                 }
               }}
               specialColumns={[
@@ -160,7 +160,9 @@ const Main = () => {
                     `${connector.connector_specific_config.repo_owner}/${connector.connector_specific_config.repo_name}`,
                 },
               ]}
-              onUpdate={() => mutate("/api/admin/connector/indexing-status")}
+              onUpdate={() =>
+                mutate("/api/manage/admin/connector/indexing-status")
+              }
             />
           </div>
         </>
@@ -196,7 +198,7 @@ const Main = () => {
           onSubmit={async (isSuccess, responseJson) => {
             if (isSuccess && responseJson) {
               await linkCredential(responseJson.id, githubCredential.id);
-              mutate("/api/admin/connector/indexing-status");
+              mutate("/api/manage/admin/connector/indexing-status");
             }
           }}
         />

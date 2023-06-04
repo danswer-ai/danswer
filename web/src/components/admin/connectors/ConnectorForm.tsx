@@ -14,7 +14,7 @@ export async function submitConnector<T>(
 ): Promise<{ message: string; isSuccess: boolean; response?: Connector<T> }> {
   let isSuccess = false;
   try {
-    const response = await fetch(`/api/admin/connector`, {
+    const response = await fetch(`/api/manage/admin/connector`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

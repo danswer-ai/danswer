@@ -9,7 +9,7 @@ export async function submitCredential<T>(
 ): Promise<{ message: string; isSuccess: boolean }> {
   let isSuccess = false;
   try {
-    const response = await fetch(`/api/admin/credential`, {
+    const response = await fetch(`/api/manage/credential`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

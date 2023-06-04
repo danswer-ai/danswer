@@ -272,10 +272,12 @@ def fetch_latest_index_attempts_by_status(
     subquery = (
         db_session.query(
             IndexAttempt.connector_id,
+            IndexAttempt.credential_id,
             IndexAttempt.status,
             func.max(IndexAttempt.time_updated).label("time_updated"),
         )
         .group_by(IndexAttempt.connector_id)
+        .group_by(IndexAttempt.credential_id)
         .group_by(IndexAttempt.status)
         .subquery()
     )
@@ -286,6 +288,7 @@ def fetch_latest_index_attempts_by_status(
         alias,
         and_(
             IndexAttempt.connector_id == alias.connector_id,
+            IndexAttempt.credential_id == alias.credential_id,
             IndexAttempt.status == alias.status,
             IndexAttempt.time_updated == alias.time_updated,
         ),

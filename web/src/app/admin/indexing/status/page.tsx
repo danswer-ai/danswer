@@ -9,12 +9,13 @@ import { NotebookIcon, XSquareIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
 import { getSourceMetadata } from "@/components/source";
 import { CheckCircle, XCircle } from "@phosphor-icons/react";
-import { useState } from "react";
-import { Popup } from "@/components/admin/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { Connector, ConnectorIndexingStatus } from "@/lib/types";
+import { ConnectorIndexingStatus } from "@/lib/types";
 
-const getSourceDisplay = (connector: Connector<any>) => {
+const getSourceDisplay = (
+  connectorIndexingStatus: ConnectorIndexingStatus<any>
+) => {
+  const connector = connectorIndexingStatus.connector;
   const sourceMetadata = getSourceMetadata(connector.source);
   if (connector.source === "web") {
     return (
@@ -38,28 +39,140 @@ const getSourceDisplay = (connector: Connector<any>) => {
     );
   }
 
+  if (
+    connector.source === "google_drive" &&
+    !connectorIndexingStatus.public_doc
+  ) {
+    if (connectorIndexingStatus.owner) {
+      return `${sourceMetadata.displayName} [${connectorIndexingStatus.owner}]`;
+    }
+    return `${sourceMetadata.displayName} [private]`;
+  }
+
   return sourceMetadata.displayName;
 };
 
-export default function Status() {
+function Main() {
   const {
     data: indexAttemptData,
     isLoading: indexAttemptIsLoading,
     error: indexAttemptIsError,
   } = useSWR<ConnectorIndexingStatus<any>[]>(
-    "/api/admin/connector/indexing-status",
+    "/api/manage/admin/connector/indexing-status",
     fetcher,
     { refreshInterval: 30000 } // 30 seconds
   );
 
-  const [popup, setPopup] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
+  if (indexAttemptIsLoading) {
+    return <LoadingAnimation text="" />;
+  }
+
+  if (indexAttemptIsError || !indexAttemptData) {
+    return <div className="text-red-600">Error loading indexing history.</div>;
+  }
+
+  // sort by source name
+  indexAttemptData.sort((a, b) => {
+    if (a.connector.source < b.connector.source) {
+      return -1;
+    } else if (a.connector.source > b.connector.source) {
+      return 1;
+    } else {
+      return 0;
+    }
+  });
 
   return (
+    <BasicTable
+      columns={[
+        { header: "Connector", key: "connector" },
+        { header: "Status", key: "status" },
+        { header: "Last Indexed", key: "indexed_at" },
+        { header: "Docs Indexed", key: "docs_indexed" },
+        // { header: "Re-Index", key: "reindex" },
+      ]}
+      data={indexAttemptData.map((connectorIndexingStatus) => {
+        const sourceMetadata = getSourceMetadata(
+          connectorIndexingStatus.connector.source
+        );
+        let statusDisplay = <div className="text-gray-400">In Progress...</div>;
+        if (connectorIndexingStatus.connector.disabled) {
+          statusDisplay = (
+            <div className="text-red-600 flex">
+              <XSquareIcon className="my-auto mr-1" size="18" />
+              Disabled
+            </div>
+          );
+        } else if (connectorIndexingStatus.last_status === "success") {
+          statusDisplay = (
+            <div className="text-green-600 flex">
+              <CheckCircle className="my-auto mr-1" size="18" />
+              Enabled
+            </div>
+          );
+        } else if (connectorIndexingStatus.last_status === "failed") {
+          statusDisplay = (
+            <div className="text-red-600 flex">
+              <XCircle className="my-auto mr-1" size="18" />
+              Error
+            </div>
+          );
+        }
+        return {
+          indexed_at: timeAgo(connectorIndexingStatus?.last_success) || "-",
+          docs_indexed: connectorIndexingStatus?.docs_indexed
+            ? `${connectorIndexingStatus?.docs_indexed} documents`
+            : "-",
+          connector: (
+            <a
+              className="text-blue-500 flex"
+              href={sourceMetadata.adminPageLink}
+            >
+              {sourceMetadata.icon({ size: "20" })}
+              <div className="ml-1">
+                {getSourceDisplay(connectorIndexingStatus)}
+              </div>
+            </a>
+          ),
+          status: statusDisplay,
+          // TODO: add the below back in after this is supported in the backend
+          // reindex: (
+          //   <button
+          //     className={
+          //       "group relative " +
+          //       "py-1 px-2 border border-transparent text-sm " +
+          //       "font-medium rounded-md text-white bg-red-800 " +
+          //       "hover:bg-red-900 focus:outline-none focus:ring-2 " +
+          //       "focus:ring-offset-2 focus:ring-red-500 mx-auto"
+          //     }
+          //     onClick={async () => {
+          //       const { message, isSuccess } = await submitIndexRequest(
+          //         connectorIndexingStatus.connector.source,
+          //         connectorIndexingStatus.connector
+          //           .connector_specific_config
+          //       );
+          //       setPopup({
+          //         message,
+          //         type: isSuccess ? "success" : "error",
+          //       });
+          //       setTimeout(() => {
+          //         setPopup(null);
+          //       }, 4000);
+          //       mutate("/api/manage/admin/connector/index-attempt");
+          //     }}
+          //   >
+          //     Index
+          //   </button>
+          // ),
+        };
+      })}
+    />
+  );
+}
+
+export default function Status() {
+  return (
     <div className="mx-auto container">
-      {popup && <Popup message={popup.message} type={popup.type} />}
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
@@ -67,99 +180,7 @@ export default function Status() {
         <NotebookIcon size="32" />
         <h1 className="text-3xl font-bold pl-2">Indexing Status</h1>
       </div>
-
-      {indexAttemptIsLoading ? (
-        <LoadingAnimation text="Loading" />
-      ) : indexAttemptIsError || !indexAttemptData ? (
-        <div>Error loading indexing history</div>
-      ) : (
-        <BasicTable
-          columns={[
-            { header: "Connector", key: "connector" },
-            { header: "Status", key: "status" },
-            { header: "Last Indexed", key: "indexed_at" },
-            { header: "Docs Indexed", key: "docs_indexed" },
-            // { header: "Re-Index", key: "reindex" },
-          ]}
-          data={indexAttemptData.map((connectorIndexingStatus) => {
-            const sourceMetadata = getSourceMetadata(
-              connectorIndexingStatus.connector.source
-            );
-            let statusDisplay = (
-              <div className="text-gray-400">In Progress...</div>
-            );
-            if (connectorIndexingStatus.connector.disabled) {
-              statusDisplay = (
-                <div className="text-red-600 flex">
-                  <XSquareIcon className="my-auto mr-1" size="18" />
-                  Disabled
-                </div>
-              );
-            } else if (connectorIndexingStatus.last_status === "success") {
-              statusDisplay = (
-                <div className="text-green-600 flex">
-                  <CheckCircle className="my-auto mr-1" size="18" />
-                  Enabled
-                </div>
-              );
-            } else if (connectorIndexingStatus.last_status === "failed") {
-              statusDisplay = (
-                <div className="text-red-600 flex">
-                  <XCircle className="my-auto mr-1" size="18" />
-                  Error
-                </div>
-              );
-            }
-            return {
-              indexed_at: timeAgo(connectorIndexingStatus?.last_success) || "-",
-              docs_indexed: connectorIndexingStatus?.docs_indexed
-                ? `${connectorIndexingStatus?.docs_indexed} documents`
-                : "-",
-              connector: (
-                <a
-                  className="text-blue-500 flex"
-                  href={sourceMetadata.adminPageLink}
-                >
-                  {sourceMetadata.icon({ size: "20" })}
-                  <div className="ml-1">
-                    {getSourceDisplay(connectorIndexingStatus.connector)}
-                  </div>
-                </a>
-              ),
-              status: statusDisplay,
-              // TODO: add the below back in after this is supported in the backend
-              // reindex: (
-              //   <button
-              //     className={
-              //       "group relative " +
-              //       "py-1 px-2 border border-transparent text-sm " +
-              //       "font-medium rounded-md text-white bg-red-800 " +
-              //       "hover:bg-red-900 focus:outline-none focus:ring-2 " +
-              //       "focus:ring-offset-2 focus:ring-red-500 mx-auto"
-              //     }
-              //     onClick={async () => {
-              //       const { message, isSuccess } = await submitIndexRequest(
-              //         connectorIndexingStatus.connector.source,
-              //         connectorIndexingStatus.connector
-              //           .connector_specific_config
-              //       );
-              //       setPopup({
-              //         message,
-              //         type: isSuccess ? "success" : "error",
-              //       });
-              //       setTimeout(() => {
-              //         setPopup(null);
-              //       }, 4000);
-              //       mutate("/api/admin/connector/index-attempt");
-              //     }}
-              //   >
-              //     Index
-              //   </button>
-              // ),
-            };
-          })}
-        />
-      )}
+      <Main />
     </div>
   );
 }
