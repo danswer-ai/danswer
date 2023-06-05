@@ -45,6 +45,8 @@ def create_indexing_jobs(db_session: Session) -> None:
         in_progress_indexing_attempts = get_incomplete_index_attempts(
             connector.id, db_session
         )
+        if in_progress_indexing_attempts:
+            logger.error("Found incomplete indexing attempts")
 
         # Currently single threaded so any still in-progress must have errored
         for attempt in in_progress_indexing_attempts:
@@ -113,7 +115,6 @@ def run_indexing_jobs(last_run_time: float, db_session: Session) -> None:
 
             document_ids: list[str] = []
             for doc_batch in doc_batch_generator:
-                # TODO introduce permissioning here
                 index_user_id = (
                     None if db_credential.public_doc else db_credential.user_id
                 )

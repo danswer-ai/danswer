@@ -64,7 +64,7 @@ const searchRequestStreamed = async (
   const url = new URL("/api/stream-direct-qa", window.location.origin);
   const params = new URLSearchParams({
     query,
-    collection: "semantic_search",
+    collection: "danswer_index",
   }).toString();
   url.search = params;
 

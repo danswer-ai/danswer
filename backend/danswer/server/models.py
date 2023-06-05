@@ -3,12 +3,10 @@ from typing import Any
 from typing import Generic
 from typing import Literal
 from typing import Optional
-from typing import TYPE_CHECKING
 from typing import TypeVar
 
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
-from danswer.datastores.interfaces import DatastoreFilter
 from danswer.db.models import Connector
 from danswer.db.models import IndexingStatus
 from pydantic import BaseModel
@@ -75,10 +73,17 @@ class SearchDoc(BaseModel):
     source_type: str
 
 
-class QAQuestion(BaseModel):
+class QuestionRequest(BaseModel):
     query: str
     collection: str
-    filters: list[DatastoreFilter] | None
+    use_keyword: bool | None
+    filters: str | None  # string of list[IndexFilter]
+
+
+class SearchResponse(BaseModel):
+    # For semantic search, top docs are reranked, the remaining are as ordered from retrieval
+    top_ranked_docs: list[SearchDoc] | None
+    semi_ranked_docs: list[SearchDoc] | None
 
 
 class QAResponse(BaseModel):
@@ -87,10 +92,6 @@ class QAResponse(BaseModel):
     ranked_documents: list[SearchDoc] | None
     # for performance, only a few top documents are cross-encoded for rerank, the rest follow retrieval order
     unranked_documents: list[SearchDoc] | None
-
-
-class KeywordResponse(BaseModel):
-    results: list[str] | None
 
 
 class UserByEmail(BaseModel):

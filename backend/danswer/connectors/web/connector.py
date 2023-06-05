@@ -79,92 +79,96 @@ class WebConnector(LoadConnector):
         if self.base_url[-1] != "/":
             visited_links.add(self.base_url + "/")
 
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True)
-            context = browser.new_context()
+        restart_playwright = True
+        while to_visit:
+            current_url = to_visit.pop()
+            if current_url in visited_links:
+                continue
+            visited_links.add(current_url)
 
-            while to_visit:
-                current_url = to_visit.pop()
-                if current_url in visited_links:
-                    continue
-                visited_links.add(current_url)
+            try:
+                if restart_playwright:
+                    playwright = sync_playwright().start()
+                    browser = playwright.chromium.launch(headless=True)
+                    context = browser.new_context()
+                    restart_playwright = False
 
-                try:
-                    if current_url.split(".")[-1] == "pdf":
-                        # PDF files are not checked for links
-                        response = requests.get(current_url)
-                        pdf_reader = PdfReader(io.BytesIO(response.content))
-                        page_text = ""
-                        for pdf_page in pdf_reader.pages:
-                            page_text += pdf_page.extract_text()
-
-                        doc_batch.append(
-                            Document(
-                                id=current_url,
-                                sections=[Section(link=current_url, text=page_text)],
-                                source=DocumentSource.WEB,
-                                semantic_identifier=current_url.split(".")[-1],
-                                metadata={},
-                            )
-                        )
-                        continue
-
-                    page = context.new_page()
-                    page.goto(current_url)
-                    content = page.content()
-                    soup = BeautifulSoup(content, "html.parser")
-
-                    internal_links = get_internal_links(
-                        self.base_url, current_url, soup
-                    )
-                    for link in internal_links:
-                        if link not in visited_links:
-                            to_visit.append(link)
-
-                    title_tag = soup.find("title")
-                    title = None
-                    if title_tag and title_tag.text:
-                        title = title_tag.text
-
-                    # Heuristics based cleaning
-                    for undesired_div in ["sidebar", "header", "footer"]:
-                        [
-                            tag.extract()
-                            for tag in soup.find_all(
-                                "div", class_=lambda x: x and undesired_div in x.split()
-                            )
-                        ]
-
-                    for undesired_tag in [
-                        "nav",
-                        "header",
-                        "footer",
-                        "meta",
-                        "script",
-                        "style",
-                    ]:
-                        [tag.extract() for tag in soup.find_all(undesired_tag)]
-
-                    page_text = soup.get_text(HTML_SEPARATOR)
+                if current_url.split(".")[-1] == "pdf":
+                    # PDF files are not checked for links
+                    response = requests.get(current_url)
+                    pdf_reader = PdfReader(io.BytesIO(response.content))
+                    page_text = ""
+                    for pdf_page in pdf_reader.pages:
+                        page_text += pdf_page.extract_text()
 
                     doc_batch.append(
                         Document(
                             id=current_url,
                             sections=[Section(link=current_url, text=page_text)],
                             source=DocumentSource.WEB,
-                            semantic_identifier=title,
+                            semantic_identifier=current_url.split(".")[-1],
                             metadata={},
                         )
                     )
-
-                    page.close()
-                except Exception as e:
-                    logger.error(f"Failed to fetch '{current_url}': {e}")
                     continue
 
-                if len(doc_batch) >= self.batch_size:
-                    yield doc_batch
-                    doc_batch = []
+                page = context.new_page()
+                page.goto(current_url)
+                content = page.content()
+                soup = BeautifulSoup(content, "html.parser")
 
-            if doc_batch:
+                internal_links = get_internal_links(self.base_url, current_url, soup)
+                for link in internal_links:
+                    if link not in visited_links:
+                        to_visit.append(link)
+
+                title_tag = soup.find("title")
+                title = None
+                if title_tag and title_tag.text:
+                    title = title_tag.text
+
+                # Heuristics based cleaning
+                for undesired_div in ["sidebar", "header", "footer"]:
+                    [
+                        tag.extract()
+                        for tag in soup.find_all(
+                            "div", class_=lambda x: x and undesired_div in x.split()
+                        )
+                    ]
+
+                for undesired_tag in [
+                    "nav",
+                    "header",
+                    "footer",
+                    "meta",
+                    "script",
+                    "style",
+                ]:
+                    [tag.extract() for tag in soup.find_all(undesired_tag)]
+
+                page_text = soup.get_text(HTML_SEPARATOR)
+
+                doc_batch.append(
+                    Document(
+                        id=current_url,
+                        sections=[Section(link=current_url, text=page_text)],
+                        source=DocumentSource.WEB,
+                        semantic_identifier=title,
+                        metadata={},
+                    )
+                )
+
+                page.close()
+            except Exception as e:
+                logger.error(f"Failed to fetch '{current_url}': {e}")
+                continue
+
+            if len(doc_batch) >= self.batch_size:
+                playwright.stop()
+                restart_playwright = True
                 yield doc_batch
+                doc_batch = []
+
+        if doc_batch:
+            playwright.stop()
+            yield doc_batch

@@ -7,11 +7,11 @@ from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import PUBLIC_DOC_PAT
-from danswer.datastores.interfaces import Datastore
-from danswer.datastores.interfaces import DatastoreFilter
-from danswer.datastores.qdrant.indexing import get_uuid_from_chunk
-from danswer.datastores.qdrant.indexing import index_chunks
-from danswer.semantic_search.semantic_search import get_default_embedding_model
+from danswer.datastores.datastore_utils import get_uuid_from_chunk
+from danswer.datastores.interfaces import IndexFilter
+from danswer.datastores.interfaces import VectorIndex
+from danswer.datastores.qdrant.indexing import index_qdrant_chunks
+from danswer.search.semantic_search import get_default_embedding_model
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logging import setup_logger
 from danswer.utils.timing import log_function_time
@@ -26,7 +26,7 @@ logger = setup_logger()
 
 
 def _build_qdrant_filters(
-    user_id: int | None, filters: list[DatastoreFilter] | None
+    user_id: int | None, filters: list[IndexFilter] | None
 ) -> list[FieldCondition]:
     filter_conditions: list[FieldCondition] = []
     # Permissions filter
@@ -72,13 +72,13 @@ def _build_qdrant_filters(
     return filter_conditions
 
 
-class QdrantDatastore(Datastore):
+class QdrantIndex(VectorIndex):
     def __init__(self, collection: str = QDRANT_DEFAULT_COLLECTION) -> None:
         self.collection = collection
         self.client = get_qdrant_client()
 
     def index(self, chunks: list[EmbeddedIndexChunk], user_id: int | None) -> bool:
-        return index_chunks(
+        return index_qdrant_chunks(
             chunks=chunks,
             user_id=user_id,
             collection=self.collection,
@@ -90,7 +90,7 @@ class QdrantDatastore(Datastore):
         self,
         query: str,
         user_id: int | None,
-        filters: list[DatastoreFilter] | None,
+        filters: list[IndexFilter] | None,
         num_to_retrieve: int = NUM_RETURNED_HITS,
         page_size: int = NUM_RERANKED_RESULTS,
     ) -> list[InferenceChunk]:

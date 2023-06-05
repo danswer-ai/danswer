@@ -1,4 +1,5 @@
 import inspect
+import json
 from dataclasses import dataclass
 from typing import Any
 from typing import cast
@@ -19,6 +20,8 @@ class BaseChunk:
 
 @dataclass
 class IndexChunk(BaseChunk):
+    # During indexing flow, we have access to a complete "Document"
+    # During inference we only have access to the document id and do not reconstruct the Document
     source_document: Document
 
 
@@ -39,8 +42,13 @@ class InferenceChunk(BaseChunk):
             k: v for k, v in init_dict.items() if k in inspect.signature(cls).parameters
         }
         if "source_links" in init_kwargs:
+            source_links = init_kwargs["source_links"]
+            source_links_dict = (
+                json.loads(source_links)
+                if isinstance(source_links, str)
+                else source_links
+            )
             init_kwargs["source_links"] = {
-                int(k): v
-                for k, v in cast(dict[str, str], init_kwargs["source_links"]).items()
+                int(k): v for k, v in cast(dict[str, str], source_links_dict).items()
             }
         return cls(**init_kwargs)
