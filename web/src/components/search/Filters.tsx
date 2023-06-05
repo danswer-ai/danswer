@@ -23,7 +23,7 @@ export function SourceSelector({
   const handleSelect = (source: Source) => {
     setSelectedSources((prev: Source[]) => {
       if (prev.includes(source)) {
-        return prev.filter((s) => s !== source);
+        return prev.filter((s) => s.internalName !== source.internalName);
       } else {
         return [...prev, source];
       }
@@ -41,8 +41,10 @@ export function SourceSelector({
           key={source.internalName}
           className={
             "flex cursor-pointer w-full items-center text-white " +
-            "py-1.5 my-1.5 hover:bg-gray-700 rounded-lg px-2" +
-            (selectedSources.includes(source) ? " bg-gray-700" : "")
+            "py-1.5 my-1.5 rounded-lg px-2 " +
+            (selectedSources.includes(source)
+              ? "bg-gray-700"
+              : "hover:bg-gray-800")
           }
           onClick={() => handleSelect(source)}
         >

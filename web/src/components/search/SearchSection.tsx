@@ -184,6 +184,7 @@ export const SearchSection: React.FC<{}> = () => {
 
   // Filters
   const [sources, setSources] = useState<Source[]>([]);
+  console.log(sources);
 
   return (
     <div className="relative max-w-[1500px] mx-auto">
