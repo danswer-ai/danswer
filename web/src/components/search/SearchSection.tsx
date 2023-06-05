@@ -57,20 +57,6 @@ const processRawChunkString = (
   return [parsedChunkSections, currPartialChunk];
 };
 
-<<<<<<< HEAD
-const searchRequestStreamed = async (
-  query: string,
-  updateCurrentAnswer: (val: string) => void,
-  updateQuotes: (quotes: Record<string, Quote>) => void,
-  updateDocs: (docs: Document[]) => void
-) => {
-  const url = new URL("/api/stream-direct-qa", window.location.origin);
-  const params = new URLSearchParams({
-    query,
-    collection: "danswer_index",
-  }).toString();
-  url.search = params;
-=======
 interface SearchRequestStreamedArgs {
   query: string;
   sources: Source[];
@@ -78,7 +64,6 @@ interface SearchRequestStreamedArgs {
   updateQuotes: (quotes: Record<string, Quote>) => void;
   updateDocs: (docs: Document[]) => void;
 }
->>>>>>> c58d4d7 (Adding filters)
 
 const searchRequestStreamed = async ({
   query,
@@ -95,7 +80,7 @@ const searchRequestStreamed = async ({
       method: "POST",
       body: JSON.stringify({
         query,
-        collection: "semantic_search",
+        collection: "danswer_index",
         ...(sources.length > 0
           ? {
               filters: [
