@@ -33,7 +33,7 @@ def semantic_search(
 ) -> SearchResponse:
     query = question.query
     collection = question.collection
-    filters = json.loads(question.filters) if question.filters is not None else None
+    filters = question.filters
     logger.info(f"Received semantic search query: {query}")
 
     user_id = None if user is None else int(user.id)
@@ -55,7 +55,7 @@ def keyword_search(
 ) -> SearchResponse:
     query = question.query
     collection = question.collection
-    filters = json.loads(question.filters) if question.filters is not None else None
+    filters = question.filters
     logger.info(f"Received keyword search query: {query}")
 
     user_id = None if user is None else int(user.id)
@@ -70,12 +70,14 @@ def keyword_search(
 
 
 @router.post("/direct-qa")
-def direct_qa(question: QuestionRequest, user: User = Depends(current_user)) -> QAResponse:
+def direct_qa(
+    question: QuestionRequest, user: User = Depends(current_user)
+) -> QAResponse:
     start_time = time.time()
 
     query = question.query
     collection = question.collection
-    filters = json.loads(question.filters) if question.filters is not None else None
+    filters = question.filters
     use_keyword = question.use_keyword
     logger.info(f"Received QA query: {query}")
 
@@ -123,7 +125,7 @@ def stream_direct_qa(
     def stream_qa_portions() -> Generator[str, None, None]:
         query = question.query
         collection = question.collection
-        filters = json.loads(question.filters) if question.filters is not None else None
+        filters = question.filters
         use_keyword = question.use_keyword
         logger.info(f"Received QA query: {query}")
 
