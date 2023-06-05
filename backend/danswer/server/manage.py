@@ -43,7 +43,7 @@ from danswer.direct_qa.key_validation import check_openai_api_key_is_valid
 from danswer.direct_qa.question_answer import get_openai_api_key
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.server.models import ApiKey, UserRoleResponse
+from danswer.server.models import ApiKey
 from danswer.server.models import AuthStatus
 from danswer.server.models import AuthUrl
 from danswer.server.models import ConnectorBase
@@ -58,6 +58,7 @@ from danswer.server.models import ObjectCreationIdResponse
 from danswer.server.models import RunConnectorRequest
 from danswer.server.models import StatusResponse
 from danswer.server.models import UserByEmail
+from danswer.server.models import UserRoleResponse
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
