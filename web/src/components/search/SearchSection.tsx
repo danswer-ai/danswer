@@ -6,6 +6,7 @@ import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { Quote, Document, SearchResponse } from "./types";
 import { SourceSelector } from "./Filters";
 import { Source } from "./interfaces";
+import { Connector } from "@/lib/types";
 
 const initialSearchResponse: SearchResponse = {
   answer: null,
@@ -160,7 +161,11 @@ const searchRequestStreamed = async ({
   return { answer, quotes, relevantDocuments };
 };
 
-export const SearchSection: React.FC<{}> = () => {
+interface SearchSectionProps {
+  connectors: Connector<any>[];
+}
+
+export const SearchSection: React.FC<SearchSectionProps> = ({ connectors }) => {
   // Search
   const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(
     null
@@ -176,6 +181,7 @@ export const SearchSection: React.FC<{}> = () => {
         <SourceSelector
           selectedSources={sources}
           setSelectedSources={setSources}
+          existingSources={connectors.map((connector) => connector.source)}
         />
       </div>
       <div className="w-[800px] mx-auto">

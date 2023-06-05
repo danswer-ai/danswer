@@ -2,11 +2,7 @@ import React from "react";
 import { Source } from "./interfaces";
 import { getSourceIcon } from "../source";
 import { Funnel } from "@phosphor-icons/react";
-
-interface SourceSelectorProps {
-  selectedSources: Source[];
-  setSelectedSources: React.Dispatch<React.SetStateAction<Source[]>>;
-}
+import { ValidSources } from "@/lib/types";
 
 const sources: Source[] = [
   { displayName: "Google Drive", internalName: "google_drive" },
@@ -16,9 +12,16 @@ const sources: Source[] = [
   { displayName: "Web", internalName: "web" },
 ];
 
+interface SourceSelectorProps {
+  selectedSources: Source[];
+  setSelectedSources: React.Dispatch<React.SetStateAction<Source[]>>;
+  existingSources: ValidSources[];
+}
+
 export function SourceSelector({
   selectedSources,
   setSelectedSources,
+  existingSources,
 }: SourceSelectorProps) {
   const handleSelect = (source: Source) => {
     setSelectedSources((prev: Source[]) => {
@@ -36,24 +39,26 @@ export function SourceSelector({
         <h2 className="font-bold my-auto">Filters</h2>
         <Funnel className="my-auto ml-2" size="20" />
       </div>
-      {sources.map((source) => (
-        <div
-          key={source.internalName}
-          className={
-            "flex cursor-pointer w-full items-center text-white " +
-            "py-1.5 my-1.5 rounded-lg px-2 " +
-            (selectedSources.includes(source)
-              ? "bg-gray-700"
-              : "hover:bg-gray-800")
-          }
-          onClick={() => handleSelect(source)}
-        >
-          {getSourceIcon(source.internalName, "16")}
-          <span className="ml-2 text-sm text-gray-200">
-            {source.displayName}
-          </span>
-        </div>
-      ))}
+      {sources
+        .filter((source) => existingSources.includes(source.internalName))
+        .map((source) => (
+          <div
+            key={source.internalName}
+            className={
+              "flex cursor-pointer w-full items-center text-white " +
+              "py-1.5 my-1.5 rounded-lg px-2 " +
+              (selectedSources.includes(source)
+                ? "bg-gray-700"
+                : "hover:bg-gray-800")
+            }
+            onClick={() => handleSelect(source)}
+          >
+            {getSourceIcon(source.internalName, "16")}
+            <span className="ml-2 text-sm text-gray-200">
+              {source.displayName}
+            </span>
+          </div>
+        ))}
     </div>
   );
 }
