@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import cast
 
+from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
@@ -31,6 +32,7 @@ from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
 from danswer.db.credentials import mask_credential_dict
 from danswer.db.credentials import update_credential
+from danswer.db.engine import build_async_engine
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.models import Connector
@@ -55,21 +57,43 @@ from danswer.server.models import IndexAttemptSnapshot
 from danswer.server.models import ObjectCreationIdResponse
 from danswer.server.models import RunConnectorRequest
 from danswer.server.models import StatusResponse
+from danswer.server.models import UserByEmail
+from danswer.server.models import UserRoleResponse
 from danswer.utils.logging import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
 from fastapi import Response
+from fastapi_users.db import SQLAlchemyUserDatabase
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-router = APIRouter(prefix="/manage")
 
+router = APIRouter(prefix="/manage")
 logger = setup_logger()
 
 _GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME = "google_drive_credential_id"
 
+
 """Admin only API endpoints"""
+
+
+@router.patch("/promote-user-to-admin", response_model=None)
+async def promote_admin(
+    user_email: UserByEmail, user: User = Depends(current_admin_user)
+) -> None:
+    if user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    async with AsyncSession(build_async_engine()) as asession:
+        user_db = SQLAlchemyUserDatabase(asession, User)  # type: ignore
+        user_to_promote = await user_db.get_by_email(user_email.user_email)
+        if not user_to_promote:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_to_promote.role = UserRole.ADMIN
+        asession.add(user_to_promote)
+        await asession.commit()
+    return
 
 
 @router.get("/admin/connector/google-drive/app-credential")
@@ -403,7 +427,14 @@ def delete_openai_api_key(
     get_dynamic_config_store().delete(OPENAI_API_KEY_STORAGE_KEY)
 
 
-"""Endpoints for all!"""
+"""Endpoints for basic users"""
+
+
+@router.get("/get-user-role", response_model=UserRoleResponse)
+async def get_user_role(user: User = Depends(current_user)) -> UserRoleResponse:
+    if user is None:
+        raise ValueError("Invalid or missing user.")
+    return UserRoleResponse(role=user.role)
 
 
 @router.get("/connector/google-drive/authorize/{credential_id}")

@@ -52,16 +52,23 @@ MASK_CREDENTIAL_PREFIX = (
 #####
 # DB Configs
 #####
-DEFAULT_VECTOR_STORE = os.environ.get("VECTOR_DB", "qdrant")
+# Qdrant is Semantic Search Vector DB
 # Url / Key are used to connect to a remote Qdrant instance
 QDRANT_URL = os.environ.get("QDRANT_URL", "")
 QDRANT_API_KEY = os.environ.get("QDRANT_API_KEY", "")
 # Host / Port are used for connecting to local Qdrant instance
 QDRANT_HOST = os.environ.get("QDRANT_HOST", "localhost")
 QDRANT_PORT = 6333
-QDRANT_DEFAULT_COLLECTION = os.environ.get("QDRANT_COLLECTION", "semantic_search")
-DB_CONN_TIMEOUT = 2  # Timeout seconds connecting to DBs
-INDEX_BATCH_SIZE = 16  # File batches (not accounting file chunking)
+QDRANT_DEFAULT_COLLECTION = os.environ.get("QDRANT_DEFAULT_COLLECTION", "danswer_index")
+# Typesense is the Keyword Search Engine
+TYPESENSE_HOST = os.environ.get("TYPESENSE_HOST", "localhost")
+TYPESENSE_PORT = 8108
+TYPESENSE_DEFAULT_COLLECTION = os.environ.get(
+    "TYPESENSE_DEFAULT_COLLECTION", "danswer_index"
+)
+TYPESENSE_API_KEY = os.environ.get("TYPESENSE_API_KEY", "")
+# Number of documents in a batch during indexing (further batching done by chunks before passing to bi-encoder)
+INDEX_BATCH_SIZE = 16
 
 # below are intended to match the env variables names used by the official postgres docker image
 # https://hub.docker.com/_/postgres
@@ -81,13 +88,11 @@ GOOGLE_DRIVE_INCLUDE_SHARED = False
 #####
 # Query Configs
 #####
-DEFAULT_PROMPT = "generic-qa"
-NUM_RETURNED_HITS = 15
-NUM_RERANKED_RESULTS = 4
-KEYWORD_MAX_HITS = 5
-QUOTE_ALLOWED_ERROR_PERCENT = (
-    0.05  # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
-)
+NUM_RETURNED_HITS = 50
+NUM_RERANKED_RESULTS = 15
+NUM_GENERATIVE_AI_INPUT_DOCS = 5
+# 1 edit per 2 characters, currently unused due to fuzzy match being too slow
+QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = 10  # 10 seconds
 
 
@@ -97,6 +102,11 @@ QA_TIMEOUT = 10  # 10 seconds
 # Chunking docs to this number of characters not including finishing the last word and the overlap words below
 # Calculated by ~500 to 512 tokens max * average 4 chars per token
 CHUNK_SIZE = 2000
+# More accurate results at the expense of indexing speed and index size (stores additional 4 MINI_CHUNK vectors)
+ENABLE_MINI_CHUNK = False
+# Mini chunks for fine-grained embedding, calculated as 128 tokens for 4 additional vectors for 512 chunk size above
+# Not rounded down to not lose any context in full chunk.
+MINI_CHUNK_SIZE = 512
 # Each chunk includes an additional 5 words from previous chunk
 # in extreme cases, may cause some words at the end to be truncated by embedding model
 CHUNK_OVERLAP = 5
@@ -120,10 +130,6 @@ CROSS_ENCODER_PORT = 9000
 #####
 # Miscellaneous
 #####
-TYPESENSE_API_KEY = os.environ.get("TYPESENSE_API_KEY", "")
-TYPESENSE_HOST = "localhost"
-TYPESENSE_PORT = 8108
-
 DYNAMIC_CONFIG_STORE = os.environ.get(
     "DYNAMIC_CONFIG_STORE", "FileSystemBackedDynamicConfigStore"
 )

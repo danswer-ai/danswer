@@ -1,3 +1,4 @@
+import nltk  # type:ignore
 import uvicorn
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRead
@@ -9,8 +10,11 @@ from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import ENABLE_OAUTH
 from danswer.configs.app_configs import SECRET
+from danswer.configs.app_configs import TYPESENSE_DEFAULT_COLLECTION
 from danswer.configs.app_configs import WEB_DOMAIN
-from danswer.datastores.qdrant.indexing import list_collections
+from danswer.datastores.qdrant.indexing import list_qdrant_collections
+from danswer.datastores.typesense.store import check_typesense_collection_exist
+from danswer.datastores.typesense.store import create_typesense_collection
 from danswer.db.credentials import create_initial_public_credential
 from danswer.server.event_loading import router as event_processing_router
 from danswer.server.health import router as health_router
@@ -107,23 +111,35 @@ def get_application() -> FastAPI:
     @application.on_event("startup")
     def startup_event() -> None:
         # To avoid circular imports
-        from danswer.semantic_search.semantic_search import (
+        from danswer.search.semantic_search import (
             warm_up_models,
         )
-        from danswer.datastores.qdrant.indexing import create_collection
+        from danswer.datastores.qdrant.indexing import create_qdrant_collection
         from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 
-        if QDRANT_DEFAULT_COLLECTION not in {
-            collection.name for collection in list_collections().collections
-        }:
-            logger.info(f"Creating collection with name: {QDRANT_DEFAULT_COLLECTION}")
-            create_collection(collection_name=QDRANT_DEFAULT_COLLECTION)
-
+        logger.info("Warming up local NLP models.")
         warm_up_models()
-        logger.info("Semantic Search models are ready.")
+
+        logger.info("Verifying query preprocessing (NLTK) data is downloaded")
+        nltk.download("stopwords")
+        nltk.download("wordnet")
 
         logger.info("Verifying public credential exists.")
         create_initial_public_credential()
+
+        logger.info("Verifying Document Indexes are available.")
+        if QDRANT_DEFAULT_COLLECTION not in {
+            collection.name for collection in list_qdrant_collections().collections
+        }:
+            logger.info(
+                f"Creating Qdrant collection with name: {QDRANT_DEFAULT_COLLECTION}"
+            )
+            create_qdrant_collection(collection_name=QDRANT_DEFAULT_COLLECTION)
+        if not check_typesense_collection_exist(TYPESENSE_DEFAULT_COLLECTION):
+            logger.info(
+                f"Creating Typesense collection with name: {TYPESENSE_DEFAULT_COLLECTION}"
+            )
+            create_typesense_collection(collection_name=TYPESENSE_DEFAULT_COLLECTION)
 
     return application
 

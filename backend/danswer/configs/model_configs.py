@@ -5,13 +5,22 @@ import os
 # Models used must be MIT or Apache license
 # Inference/Indexing speed
 
-# Bi/Cross-Encoder Model Configs
+# https://www.sbert.net/docs/pretrained_models.html
 # Use 'multi-qa-MiniLM-L6-cos-v1' if license is added because it is 3x faster (384 dimensional embedding)
+# Context size is 256 for above though
 DOCUMENT_ENCODER_MODEL = "sentence-transformers/all-distilroberta-v1"
-CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 DOC_EMBEDDING_DIM = 768  # Depends on the document encoder model
 
+# https://www.sbert.net/docs/pretrained-models/ce-msmarco.html
+# Previously using "cross-encoder/ms-marco-MiniLM-L-6-v2" alone
+CROSS_ENCODER_MODEL_ENSEMBLE = [
+    "cross-encoder/ms-marco-MiniLM-L-4-v2",
+    "cross-encoder/ms-marco-TinyBERT-L-2-v2",
+]
+
 QUERY_EMBEDDING_CONTEXT_SIZE = 256
+# The below is correlated with CHUNK_SIZE in app_configs but not strictly calculated
+# To avoid extra overhead of tokenizing for chunking during indexing.
 DOC_EMBEDDING_CONTEXT_SIZE = 512
 CROSS_EMBED_CONTEXT_SIZE = 512
 
