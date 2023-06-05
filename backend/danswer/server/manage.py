@@ -213,7 +213,10 @@ def get_connector_indexing_status(
     for index_attempt in index_attempts:
         # don't consider index attempts where the connector has been deleted
         # or the credential has been deleted
-        if index_attempt.connector_id and index_attempt.credential_id:
+        if (
+            index_attempt.connector_id is not None
+            and index_attempt.credential_id is not None
+        ):
             connector_credential_pair_to_index_attempts[
                 (index_attempt.connector_id, index_attempt.credential_id)
             ].append(index_attempt)

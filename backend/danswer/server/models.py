@@ -7,6 +7,7 @@ from typing import TypeVar
 
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
+from danswer.datastores.interfaces import IndexFilter
 from danswer.db.models import Connector
 from danswer.db.models import IndexingStatus
 from pydantic import BaseModel
@@ -77,7 +78,7 @@ class QuestionRequest(BaseModel):
     query: str
     collection: str
     use_keyword: bool | None
-    filters: str | None  # string of list[IndexFilter]
+    filters: list[IndexFilter] | None
 
 
 class SearchResponse(BaseModel):

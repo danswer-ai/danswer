@@ -27,13 +27,13 @@ logger = setup_logger()
 router = APIRouter()
 
 
-@router.get("/semantic-search")
+@router.post("/semantic-search")
 def semantic_search(
-    question: QuestionRequest = Depends(), user: User = Depends(current_user)
+    question: QuestionRequest, user: User = Depends(current_user)
 ) -> SearchResponse:
     query = question.query
     collection = question.collection
-    filters = json.loads(question.filters) if question.filters is not None else None
+    filters = question.filters
     logger.info(f"Received semantic search query: {query}")
 
     user_id = None if user is None else int(user.id)
@@ -49,13 +49,13 @@ def semantic_search(
     return SearchResponse(top_ranked_docs=top_docs, semi_ranked_docs=other_top_docs)
 
 
-@router.get("/keyword-search", response_model=SearchResponse)
+@router.post("/keyword-search")
 def keyword_search(
-    question: QuestionRequest = Depends(), user: User = Depends(current_user)
+    question: QuestionRequest, user: User = Depends(current_user)
 ) -> SearchResponse:
     query = question.query
     collection = question.collection
-    filters = json.loads(question.filters) if question.filters is not None else None
+    filters = question.filters
     logger.info(f"Received keyword search query: {query}")
 
     user_id = None if user is None else int(user.id)
@@ -69,15 +69,15 @@ def keyword_search(
     return SearchResponse(top_ranked_docs=top_docs, semi_ranked_docs=None)
 
 
-@router.get("/direct-qa", response_model=QAResponse)
+@router.post("/direct-qa")
 def direct_qa(
-    question: QuestionRequest = Depends(), user: User = Depends(current_user)
+    question: QuestionRequest, user: User = Depends(current_user)
 ) -> QAResponse:
     start_time = time.time()
 
     query = question.query
     collection = question.collection
-    filters = json.loads(question.filters) if question.filters is not None else None
+    filters = question.filters
     use_keyword = question.use_keyword
     logger.info(f"Received QA query: {query}")
 
@@ -115,9 +115,9 @@ def direct_qa(
     )
 
 
-@router.get("/stream-direct-qa")
+@router.post("/stream-direct-qa")
 def stream_direct_qa(
-    question: QuestionRequest = Depends(), user: User = Depends(current_user)
+    question: QuestionRequest, user: User = Depends(current_user)
 ) -> StreamingResponse:
     top_documents_key = "top_documents"
     unranked_top_docs_key = "unranked_top_documents"
@@ -125,7 +125,7 @@ def stream_direct_qa(
     def stream_qa_portions() -> Generator[str, None, None]:
         query = question.query
         collection = question.collection
-        filters = json.loads(question.filters) if question.filters is not None else None
+        filters = question.filters
         use_keyword = question.use_keyword
         logger.info(f"Received QA query: {query}")
 
