@@ -4,6 +4,8 @@ import { useState } from "react";
 import { SearchBar } from "./SearchBar";
 import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { Quote, Document, SearchResponse } from "./types";
+import { SourceSelector } from "./Filters";
+import { Source } from "./interfaces";
 
 const initialSearchResponse: SearchResponse = {
   answer: null,
@@ -55,6 +57,7 @@ const processRawChunkString = (
   return [parsedChunkSections, currPartialChunk];
 };
 
+<<<<<<< HEAD
 const searchRequestStreamed = async (
   query: string,
   updateCurrentAnswer: (val: string) => void,
@@ -67,12 +70,46 @@ const searchRequestStreamed = async (
     collection: "danswer_index",
   }).toString();
   url.search = params;
+=======
+interface SearchRequestStreamedArgs {
+  query: string;
+  sources: Source[];
+  updateCurrentAnswer: (val: string) => void;
+  updateQuotes: (quotes: Record<string, Quote>) => void;
+  updateDocs: (docs: Document[]) => void;
+}
+>>>>>>> c58d4d7 (Adding filters)
 
+const searchRequestStreamed = async ({
+  query,
+  sources,
+  updateCurrentAnswer,
+  updateQuotes,
+  updateDocs,
+}: SearchRequestStreamedArgs) => {
   let answer = "";
   let quotes: Record<string, Quote> | null = null;
   let relevantDocuments: Document[] | null = null;
   try {
-    const response = await fetch(url);
+    const response = await fetch("/api/stream-direct-qa", {
+      method: "POST",
+      body: JSON.stringify({
+        query,
+        collection: "semantic_search",
+        ...(sources.length > 0
+          ? {
+              filters: [
+                {
+                  source_type: sources.map((source) => source.internalName),
+                },
+              ],
+            }
+          : {}),
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
     const reader = response.body?.getReader();
     const decoder = new TextDecoder("utf-8");
 
@@ -139,49 +176,62 @@ const searchRequestStreamed = async (
 };
 
 export const SearchSection: React.FC<{}> = () => {
+  // Search
   const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(
     null
   );
   const [isFetching, setIsFetching] = useState(false);
 
+  // Filters
+  const [sources, setSources] = useState<Source[]>([]);
+
   return (
-    <>
-      <SearchBar
-        onSearch={(query) => {
-          setIsFetching(true);
-          setSearchResponse({
-            answer: null,
-            quotes: null,
-            documents: null,
-          });
-          searchRequestStreamed(
-            query,
-            (answer) =>
-              setSearchResponse((prevState) => ({
-                ...(prevState || initialSearchResponse),
-                answer,
-              })),
-            (quotes) =>
-              setSearchResponse((prevState) => ({
-                ...(prevState || initialSearchResponse),
-                quotes,
-              })),
-            (documents) =>
-              setSearchResponse((prevState) => ({
-                ...(prevState || initialSearchResponse),
-                documents,
-              }))
-          ).then(() => {
-            setIsFetching(false);
-          });
-        }}
-      />
-      <div className="mt-2">
-        <SearchResultsDisplay
-          searchResponse={searchResponse}
-          isFetching={isFetching}
+    <div className="relative max-w-[1500px] mx-auto">
+      <div className="absolute left-0 ml-24 hidden 2xl:block">
+        <SourceSelector
+          selectedSources={sources}
+          setSelectedSources={setSources}
         />
       </div>
-    </>
+      <div className="w-[800px] mx-auto">
+        <SearchBar
+          onSearch={(query) => {
+            setIsFetching(true);
+            setSearchResponse({
+              answer: null,
+              quotes: null,
+              documents: null,
+            });
+            searchRequestStreamed({
+              query,
+              sources,
+              updateCurrentAnswer: (answer) =>
+                setSearchResponse((prevState) => ({
+                  ...(prevState || initialSearchResponse),
+                  answer,
+                })),
+              updateQuotes: (quotes) =>
+                setSearchResponse((prevState) => ({
+                  ...(prevState || initialSearchResponse),
+                  quotes,
+                })),
+              updateDocs: (documents) =>
+                setSearchResponse((prevState) => ({
+                  ...(prevState || initialSearchResponse),
+                  documents,
+                })),
+            }).then(() => {
+              setIsFetching(false);
+            });
+          }}
+        />
+        <div className="mt-2">
+          <SearchResultsDisplay
+            searchResponse={searchResponse}
+            isFetching={isFetching}
+          />
+        </div>
+      </div>
+    </div>
   );
 };

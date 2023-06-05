@@ -23,7 +23,7 @@ export default async function Home() {
       </div>
       <ApiKeyModal />
       <div className="px-24 pt-10 flex flex-col items-center min-h-screen bg-gray-900 text-gray-100">
-        <div className="max-w-[800px] w-full">
+        <div className="w-full">
           <SearchSection />
         </div>
       </div>

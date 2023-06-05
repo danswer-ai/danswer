@@ -27,9 +27,9 @@ logger = setup_logger()
 router = APIRouter()
 
 
-@router.get("/semantic-search")
+@router.post("/semantic-search")
 def semantic_search(
-    question: QuestionRequest = Depends(), user: User = Depends(current_user)
+    question: QuestionRequest, user: User = Depends(current_user)
 ) -> SearchResponse:
     query = question.query
     collection = question.collection
@@ -49,9 +49,9 @@ def semantic_search(
     return SearchResponse(top_ranked_docs=top_docs, semi_ranked_docs=other_top_docs)
 
 
-@router.get("/keyword-search", response_model=SearchResponse)
+@router.post("/keyword-search")
 def keyword_search(
-    question: QuestionRequest = Depends(), user: User = Depends(current_user)
+    question: QuestionRequest, user: User = Depends(current_user)
 ) -> SearchResponse:
     query = question.query
     collection = question.collection
@@ -69,10 +69,8 @@ def keyword_search(
     return SearchResponse(top_ranked_docs=top_docs, semi_ranked_docs=None)
 
 
-@router.get("/direct-qa", response_model=QAResponse)
-def direct_qa(
-    question: QuestionRequest = Depends(), user: User = Depends(current_user)
-) -> QAResponse:
+@router.post("/direct-qa")
+def direct_qa(question: QuestionRequest, user: User = Depends(current_user)) -> QAResponse:
     start_time = time.time()
 
     query = question.query
@@ -115,9 +113,9 @@ def direct_qa(
     )
 
 
-@router.get("/stream-direct-qa")
+@router.post("/stream-direct-qa")
 def stream_direct_qa(
-    question: QuestionRequest = Depends(), user: User = Depends(current_user)
+    question: QuestionRequest, user: User = Depends(current_user)
 ) -> StreamingResponse:
     top_documents_key = "top_documents"
     unranked_top_docs_key = "unranked_top_documents"

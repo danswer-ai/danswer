@@ -45,11 +45,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
   }
 
   if (answer === null && documents === null && quotes === null) {
-    return (
-      <div className="text-red-500">
-        Something went wrong, please try again.
-      </div>
-    );
+    return <div className="text-gray-300">No matching documents found.</div>;
   }
 
   const dedupedQuotes: Quote[] = [];
