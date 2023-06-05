@@ -14,7 +14,7 @@ services:
     environment:
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
-      - TYPESENSE_HOST=host.docker.internal
+      - TYPESENSE_HOST=search_engine
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
     volumes:
       - local_dynamic_storage:/home/storage
