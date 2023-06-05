@@ -33,7 +33,7 @@ export function SourceSelector({
   return (
     <div className="bg-gray-900 p-6">
       <div className="flex mb-3 mx-2">
-        <h2 className="font-bold my-auto">Source</h2>
+        <h2 className="font-bold my-auto">Filters</h2>
         <Funnel className="my-auto ml-2" size="20" />
       </div>
       {sources.map((source) => (
