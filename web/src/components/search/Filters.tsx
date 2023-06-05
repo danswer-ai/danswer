@@ -11,9 +11,9 @@ interface SourceSelectorProps {
 const sources: Source[] = [
   { displayName: "Google Drive", internalName: "google_drive" },
   { displayName: "Slack", internalName: "slack" },
-  { displayName: "Web", internalName: "web" },
   { displayName: "Confluence", internalName: "confluence" },
   { displayName: "Github PRs", internalName: "github" },
+  { displayName: "Web", internalName: "web" },
 ];
 
 export function SourceSelector({
