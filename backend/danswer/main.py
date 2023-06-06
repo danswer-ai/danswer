@@ -123,6 +123,7 @@ def get_application() -> FastAPI:
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")
         nltk.download("stopwords")
         nltk.download("wordnet")
+        nltk.download("punkt")
 
         logger.info("Verifying public credential exists.")
         create_initial_public_credential()

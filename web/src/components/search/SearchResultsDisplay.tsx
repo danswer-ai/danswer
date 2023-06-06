@@ -1,12 +1,17 @@
 import React from "react";
-import { Quote, Document, SearchResponse } from "./types";
 import { getSourceIcon } from "../source";
 import { LoadingAnimation } from "../Loading";
 import { InfoIcon } from "../icons/icons";
+import {
+  DanswerDocument,
+  SearchResponse,
+  Quote,
+} from "@/lib/search/interfaces";
+import { SearchType } from "./SearchTypeSelector";
 
-const removeDuplicateDocs = (documents: Document[]) => {
+const removeDuplicateDocs = (documents: DanswerDocument[]) => {
   const seen = new Set<string>();
-  const output: Document[] = [];
+  const output: DanswerDocument[] = [];
   documents.forEach((document) => {
     if (
       document.semantic_identifier &&
@@ -96,17 +101,19 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
         </div>
       )}
 
-      {!answer && !isFetching && (
-        <div className="flex">
-          <InfoIcon
-            size="20"
-            className="text-red-500 my-auto flex flex-shrink-0"
-          />
-          <div className="text-red-500 text-xs my-auto ml-1">
-            GPT hurt itself in its confusion :(
+      {!answer &&
+        !isFetching &&
+        searchResponse.searchType === SearchType.AI && (
+          <div className="flex">
+            <InfoIcon
+              size="20"
+              className="text-red-500 my-auto flex flex-shrink-0"
+            />
+            <div className="text-red-500 text-xs my-auto ml-1">
+              GPT hurt itself in its confusion :(
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Only display docs once we're done fetching to avoid distracting from the AI answer*/}
       {!isFetching && documents && documents.length > 0 && (
