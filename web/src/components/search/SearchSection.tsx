@@ -14,12 +14,17 @@ import {
 } from "@/lib/search/interfaces";
 import { keywordSearch } from "@/lib/search/keyword";
 import { aiSearchRequestStreamed } from "@/lib/search/ai";
+import Cookies from "js-cookie";
 
 interface SearchSectionProps {
   connectors: Connector<any>[];
+  defaultSearchType: SearchType;
 }
 
-export const SearchSection: React.FC<SearchSectionProps> = ({ connectors }) => {
+export const SearchSection: React.FC<SearchSectionProps> = ({
+  connectors,
+  defaultSearchType,
+}) => {
   // Search
   const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(
     null
@@ -30,20 +35,13 @@ export const SearchSection: React.FC<SearchSectionProps> = ({ connectors }) => {
   const [sources, setSources] = useState<Source[]>([]);
 
   // Search Type
-  const storedSearchType = localStorage.getItem("searchType") as
-    | keyof typeof SearchType
-    | null;
-  let searchTypeDefault: SearchType =
-    storedSearchType !== null && SearchType.hasOwnProperty(storedSearchType)
-      ? SearchType[storedSearchType]
-      : SearchType.AI; // default to AI search
-
   const [selectedSearchType, setSelectedSearchType] =
-    useState<SearchType>(searchTypeDefault);
+    useState<SearchType>(defaultSearchType);
 
   // if the user updates value, store into localStorage so it persists across sessions
   useEffect(() => {
-    localStorage.setItem("searchType", selectedSearchType);
+    Cookies.set("searchType", selectedSearchType);
+    // localStorage.setItem("searchType", selectedSearchType);
   }, [selectedSearchType]);
 
   // helpers
@@ -72,11 +70,13 @@ export const SearchSection: React.FC<SearchSectionProps> = ({ connectors }) => {
   return (
     <div className="relative max-w-[1500px] mx-auto">
       <div className="absolute left-0 ml-24 hidden 2xl:block">
-        <SourceSelector
-          selectedSources={sources}
-          setSelectedSources={setSources}
-          existingSources={connectors.map((connector) => connector.source)}
-        />
+        {sources.length > 0 && (
+          <SourceSelector
+            selectedSources={sources}
+            setSelectedSources={setSources}
+            existingSources={connectors.map((connector) => connector.source)}
+          />
+        )}
       </div>
       <div className="w-[800px] mx-auto">
         <SearchTypeSelector
