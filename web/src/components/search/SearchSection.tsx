@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { SearchBar } from "./SearchBar";
 import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SourceSelector } from "./Filters";
@@ -12,7 +12,6 @@ import {
   SearchResponse,
   Source,
 } from "@/lib/search/interfaces";
-import { keywordSearch } from "@/lib/search/keyword";
 import { aiSearchRequestStreamed } from "@/lib/search/ai";
 import Cookies from "js-cookie";
 
@@ -37,12 +36,6 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
   // Search Type
   const [selectedSearchType, setSelectedSearchType] =
     useState<SearchType>(defaultSearchType);
-
-  // if the user updates value, store into localStorage so it persists across sessions
-  useEffect(() => {
-    Cookies.set("searchType", selectedSearchType);
-    // localStorage.setItem("searchType", selectedSearchType);
-  }, [selectedSearchType]);
 
   // helpers
   const initialSearchResponse: SearchResponse = {
@@ -81,7 +74,10 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
       <div className="w-[800px] mx-auto">
         <SearchTypeSelector
           selectedSearchType={selectedSearchType}
-          setSelectedSearchType={setSelectedSearchType}
+          setSelectedSearchType={(searchType) => {
+            Cookies.set("searchType", searchType);
+            setSelectedSearchType(searchType);
+          }}
         />
 
         <SearchBar

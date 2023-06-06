@@ -2,8 +2,8 @@ const defaultStyle =
   "py-1 px-2 border rounded border-gray-700 cursor-pointer font-bold ";
 
 export enum SearchType {
-  SEMANTIC = "Semantic",
-  KEYWORD = "Keyword",
+  SEMANTIC = "SEMANTIC",
+  KEYWORD = "KEYWORD",
 }
 
 interface Props {
