@@ -16,6 +16,7 @@ export const getGoogleOAuthUrlSS = async (): Promise<string> => {
 export const getCurrentUserSS = async (): Promise<User | null> => {
   const response = await fetch(buildUrl("/users/me"), {
     credentials: "include",
+    next: { revalidate: 0 },
     headers: {
       cookie: cookies()
         .getAll()
