@@ -11,9 +11,12 @@ from danswer.datastores.typesense.store import TypesenseIndex
 from danswer.db.models import User
 from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.question_answer import get_json_line
+from danswer.search.danswer_helper import recommend_search
 from danswer.search.keyword_search import retrieve_keyword_documents
 from danswer.search.semantic_search import chunks_to_search_docs
+from danswer.search.semantic_search import get_default_tokenizer
 from danswer.search.semantic_search import retrieve_ranked_documents
+from danswer.server.models import HelperResponse
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchResponse
@@ -25,6 +28,17 @@ from fastapi.responses import StreamingResponse
 logger = setup_logger()
 
 router = APIRouter()
+
+
+@router.get("/search-type")
+def get_search_type(
+    question: QuestionRequest = Depends(), _: User = Depends(current_user)
+) -> HelperResponse:
+    query = question.query
+    is_keyword = question.use_keyword if question.use_keyword is not None else False
+
+    change_search_type, message = recommend_search(query, is_keyword)
+    return HelperResponse(intervene=change_search_type, message=message)
 
 
 @router.post("/semantic-search")

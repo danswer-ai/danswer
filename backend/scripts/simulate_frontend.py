@@ -96,19 +96,15 @@ if __name__ == "__main__":
                 "query": query,
                 "collection": QDRANT_DEFAULT_COLLECTION,
                 "use_keyword": flow_type == "keyword",  # Ignore if not QA Endpoints
-                "filters": json.dumps([{SOURCE_TYPE: source_types}]),
+                "filters": [{SOURCE_TYPE: source_types}],
             }
 
             if args.stream:
-                with requests.get(
-                    endpoint, params=urllib.parse.urlencode(query_json), stream=True
-                ) as r:
+                with requests.post(endpoint, json=query_json, stream=True) as r:
                     for json_response in r.iter_lines():
                         pprint(json.loads(json_response.decode()))
             else:
-                response = requests.get(
-                    endpoint, params=urllib.parse.urlencode(query_json)
-                )
+                response = requests.post(endpoint, json=query_json)
                 contents = json.loads(response.content)
                 pprint(contents)
 

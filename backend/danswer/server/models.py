@@ -27,6 +27,11 @@ class DataRequest(BaseModel):
     data: str
 
 
+class HelperResponse(BaseModel):
+    intervene: bool
+    message: str | None = None
+
+
 class GoogleAppWebCredentials(BaseModel):
     client_id: str
     project_id: str

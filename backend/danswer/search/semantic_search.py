@@ -21,29 +21,22 @@ from danswer.utils.logging import setup_logger
 from danswer.utils.timing import log_function_time
 from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
+from transformers import AutoTokenizer  # type: ignore
 
 logger = setup_logger()
 
 
 _EMBED_MODEL: None | SentenceTransformer = None
+_TOKENIZER: None | AutoTokenizer = None
 _RERANK_MODELS: None | list[CrossEncoder] = None
 
 
-def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc]:
-    search_docs = (
-        [
-            SearchDoc(
-                semantic_identifier=chunk.semantic_identifier,
-                link=chunk.source_links.get(0) if chunk.source_links else None,
-                blurb=chunk.blurb,
-                source_type=chunk.source_type,
-            )
-            for chunk in chunks
-        ]
-        if chunks
-        else []
-    )
-    return search_docs
+def get_default_tokenizer() -> AutoTokenizer:
+    global _TOKENIZER
+    if _TOKENIZER is None:
+        _TOKENIZER = AutoTokenizer.from_pretrained(DOCUMENT_ENCODER_MODEL)
+
+    return _TOKENIZER
 
 
 def get_default_embedding_model() -> SentenceTransformer:
@@ -68,9 +61,27 @@ def get_default_reranking_model_ensemble() -> list[CrossEncoder]:
 
 
 def warm_up_models() -> None:
+    get_default_tokenizer()("Danswer")
     get_default_embedding_model().encode("Danswer is so cool")
     cross_encoders = get_default_reranking_model_ensemble()
     [cross_encoder.predict(("What is Danswer", "Enterprise QA")) for cross_encoder in cross_encoders]  # type: ignore
+
+
+def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc]:
+    search_docs = (
+        [
+            SearchDoc(
+                semantic_identifier=chunk.semantic_identifier,
+                link=chunk.source_links.get(0) if chunk.source_links else None,
+                blurb=chunk.blurb,
+                source_type=chunk.source_type,
+            )
+            for chunk in chunks
+        ]
+        if chunks
+        else []
+    )
+    return search_docs
 
 
 @log_function_time()
