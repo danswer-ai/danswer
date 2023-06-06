@@ -41,7 +41,7 @@ export default async function Home() {
     storedSearchType !== undefined &&
     SearchType.hasOwnProperty(storedSearchType)
       ? SearchType[storedSearchType]
-      : SearchType.AI; // default to AI search
+      : SearchType.SEMANTIC; // default to semantic search
 
   return (
     <>

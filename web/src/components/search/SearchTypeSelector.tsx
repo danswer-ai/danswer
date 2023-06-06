@@ -1,11 +1,9 @@
-import React, { useState } from "react";
-
 const defaultStyle =
   "py-1 px-2 border rounded border-gray-700 cursor-pointer font-bold ";
 
 export enum SearchType {
-  AI = "AI Search",
-  Traditional = "Traditional",
+  SEMANTIC = "Semantic",
+  KEYWORD = "Keyword",
 }
 
 interface Props {
@@ -22,11 +20,11 @@ export const SearchTypeSelector: React.FC<Props> = ({
       <div
         className={
           defaultStyle +
-          (selectedSearchType === SearchType.AI
+          (selectedSearchType === SearchType.SEMANTIC
             ? "bg-blue-500"
             : "bg-gray-800 hover:bg-gray-600")
         }
-        onClick={() => setSelectedSearchType(SearchType.AI)}
+        onClick={() => setSelectedSearchType(SearchType.SEMANTIC)}
       >
         AI Search
       </div>
@@ -35,11 +33,11 @@ export const SearchTypeSelector: React.FC<Props> = ({
         className={
           defaultStyle +
           "ml-2 " +
-          (selectedSearchType === SearchType.Traditional
+          (selectedSearchType === SearchType.KEYWORD
             ? "bg-blue-500"
             : "bg-gray-800 hover:bg-gray-600")
         }
-        onClick={() => setSelectedSearchType(SearchType.Traditional)}
+        onClick={() => setSelectedSearchType(SearchType.KEYWORD)}
       >
         Keyword Search
       </div>

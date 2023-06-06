@@ -35,4 +35,5 @@ export interface SearchRequestArgs {
   updateCurrentAnswer: (val: string) => void;
   updateQuotes: (quotes: Record<string, Quote>) => void;
   updateDocs: (documents: DanswerDocument[]) => void;
+  searchType: SearchType;
 }

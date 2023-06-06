@@ -94,27 +94,19 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
               searchType: selectedSearchType,
             });
 
-            if (selectedSearchType === SearchType.AI) {
-              await aiSearchRequestStreamed({
-                query,
-                sources,
-                updateCurrentAnswer,
-                updateQuotes,
-                updateDocs,
-              });
-            } else {
-              await keywordSearch({
-                query,
-                sources,
-                updateCurrentAnswer,
-                updateQuotes,
-                updateDocs,
-              });
-            }
+            await aiSearchRequestStreamed({
+              query,
+              sources,
+              updateCurrentAnswer,
+              updateQuotes,
+              updateDocs,
+              searchType: selectedSearchType,
+            });
 
             setIsFetching(false);
           }}
         />
+
         <div className="mt-2">
           <SearchResultsDisplay
             searchResponse={searchResponse}

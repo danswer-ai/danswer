@@ -1,3 +1,4 @@
+import { SearchType } from "@/components/search/SearchTypeSelector";
 import { DanswerDocument, Quote, SearchRequestArgs } from "./interfaces";
 
 const processSingleChunk = (
@@ -50,6 +51,7 @@ export const aiSearchRequestStreamed = async ({
   updateCurrentAnswer,
   updateQuotes,
   updateDocs,
+  searchType,
 }: SearchRequestArgs) => {
   let answer = "";
   let quotes: Record<string, Quote> | null = null;
@@ -60,6 +62,7 @@ export const aiSearchRequestStreamed = async ({
       body: JSON.stringify({
         query,
         collection: "danswer_index",
+        use_keyword: searchType === SearchType.KEYWORD,
         ...(sources.length > 0
           ? {
               filters: [
