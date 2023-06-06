@@ -1,8 +1,8 @@
 import React from "react";
-import { Source } from "./interfaces";
 import { getSourceIcon } from "../source";
 import { Funnel } from "@phosphor-icons/react";
 import { ValidSources } from "@/lib/types";
+import { Source } from "@/lib/search/interfaces";
 
 const sources: Source[] = [
   { displayName: "Google Drive", internalName: "google_drive" },
