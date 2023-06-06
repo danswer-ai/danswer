@@ -70,7 +70,7 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
   return (
     <div className="relative max-w-[1500px] mx-auto">
       <div className="absolute left-0 ml-24 hidden 2xl:block">
-        {sources.length > 0 && (
+        {connectors.length > 0 && (
           <SourceSelector
             selectedSources={sources}
             setSelectedSources={setSources}
