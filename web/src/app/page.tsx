@@ -6,7 +6,9 @@ import { DISABLE_AUTH } from "@/lib/constants";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
 import { buildUrl } from "@/lib/utilsSS";
-import { User } from "@/lib/types";
+import { Connector, User } from "@/lib/types";
+import { cookies } from "next/headers";
+import { SearchType } from "@/components/search/SearchTypeSelector";
 
 export default async function Home() {
   const tasks = [
@@ -24,12 +26,22 @@ export default async function Home() {
     return redirect("/auth/login");
   }
 
-  let connectors = null;
+  let connectors: Connector<any>[] = [];
   if (connectorsResponse.ok) {
     connectors = await connectorsResponse.json();
   } else {
     console.log(`Failed to fetch connectors - ${connectorsResponse.status}`);
   }
+
+  // needs to be done in a non-client side component due to nextjs
+  const storedSearchType = cookies().get("searchType")?.value as
+    | keyof typeof SearchType
+    | undefined;
+  let searchTypeDefault: SearchType =
+    storedSearchType !== undefined &&
+    SearchType.hasOwnProperty(storedSearchType)
+      ? SearchType[storedSearchType]
+      : SearchType.SEMANTIC; // default to semantic search
 
   return (
     <>
@@ -40,7 +52,10 @@ export default async function Home() {
       <ApiKeyModal />
       <div className="px-24 pt-10 flex flex-col items-center min-h-screen bg-gray-900 text-gray-100">
         <div className="w-full">
-          <SearchSection connectors={connectors} />
+          <SearchSection
+            connectors={connectors}
+            defaultSearchType={searchTypeDefault}
+          />
         </div>
       </div>
     </>

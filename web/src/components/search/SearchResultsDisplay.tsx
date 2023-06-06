@@ -1,12 +1,17 @@
 import React from "react";
-import { Quote, Document, SearchResponse } from "./types";
 import { getSourceIcon } from "../source";
 import { LoadingAnimation } from "../Loading";
 import { InfoIcon } from "../icons/icons";
+import {
+  DanswerDocument,
+  SearchResponse,
+  Quote,
+} from "@/lib/search/interfaces";
+import { SearchType } from "./SearchTypeSelector";
 
-const removeDuplicateDocs = (documents: Document[]) => {
+const removeDuplicateDocs = (documents: DanswerDocument[]) => {
   const seen = new Set<string>();
-  const output: Document[] = [];
+  const output: DanswerDocument[] = [];
   documents.forEach((document) => {
     if (
       document.semantic_identifier &&
@@ -62,54 +67,58 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
   return (
     <>
       {answer && (
-        <div className="p-4 border-2 rounded-md border-gray-700">
-          <div className="flex mb-1">
-            <h2 className="text font-bold my-auto">AI Answer</h2>
-          </div>
-          <p className="mb-4">{answer}</p>
+        <div className="h-56">
+          <div className="p-4 border-2 rounded-md border-gray-700">
+            <div className="flex mb-1">
+              <h2 className="text font-bold my-auto">AI Answer</h2>
+            </div>
+            <p className="mb-4">{answer}</p>
 
-          {quotes !== null && (
-            <>
-              <h2 className="text-sm font-bold mb-2">Sources</h2>
-              {isFetching && dedupedQuotes.length === 0 ? (
-                <LoadingAnimation text="Finding quotes" size="text-sm" />
-              ) : (
-                <div className="flex">
-                  {dedupedQuotes.map((quoteInfo) => (
-                    <a
-                      key={quoteInfo.document_id}
-                      className="p-2 ml-1 border border-gray-800 rounded-lg text-sm flex max-w-[280px] hover:bg-gray-800"
-                      href={quoteInfo.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {getSourceIcon(quoteInfo.source_type, "20")}
-                      <p className="truncate break-all ml-2">
-                        {quoteInfo.semantic_identifier || quoteInfo.document_id}
-                      </p>
-                    </a>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
-
-      {!answer && !isFetching && (
-        <div className="flex">
-          <InfoIcon
-            size="20"
-            className="text-red-500 my-auto flex flex-shrink-0"
-          />
-          <div className="text-red-500 text-xs my-auto ml-1">
-            GPT hurt itself in its confusion :(
+            {quotes !== null && (
+              <>
+                <h2 className="text-sm font-bold mb-2">Sources</h2>
+                {isFetching && dedupedQuotes.length === 0 ? (
+                  <LoadingAnimation text="Finding quotes" size="text-sm" />
+                ) : (
+                  <div className="flex">
+                    {dedupedQuotes.map((quoteInfo) => (
+                      <a
+                        key={quoteInfo.document_id}
+                        className="p-2 ml-1 border border-gray-800 rounded-lg text-sm flex max-w-[280px] hover:bg-gray-800"
+                        href={quoteInfo.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {getSourceIcon(quoteInfo.source_type, "20")}
+                        <p className="truncate break-all ml-2">
+                          {quoteInfo.semantic_identifier ||
+                            quoteInfo.document_id}
+                        </p>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}
 
-      {/* Only display docs once we're done fetching to avoid distracting from the AI answer*/}
-      {!isFetching && documents && documents.length > 0 && (
+      {!answer &&
+        !isFetching &&
+        searchResponse.searchType === SearchType.SEMANTIC && (
+          <div className="flex">
+            <InfoIcon
+              size="20"
+              className="text-red-500 my-auto flex flex-shrink-0"
+            />
+            <div className="text-red-500 text-xs my-auto ml-1">
+              GPT hurt itself in its confusion :(
+            </div>
+          </div>
+        )}
+
+      {documents && documents.length > 0 && (
         <div className="mt-4">
           <div className="font-bold border-b mb-4 pb-1 border-gray-800">
             Results
