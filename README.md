@@ -21,7 +21,7 @@
 ## 💃 Features
 * Direct QA powered by Generative AI models with answers backed by quotes and source links.
 * Intelligent Document Retrieval (Semantic Search/Reranking) using the latest LLMs.
-* User autentication with document level access management.
+* User authentication with document level access management.
 * Management Dashboard to manage connectors and set up features such as live update fetching.
 * Connectors to Slack, GitHub, GoogleDrive, Confluence, and Web scrapping, with more to come.
 * One line Docker Compose deployment of all services to host Danswer anywhere.
