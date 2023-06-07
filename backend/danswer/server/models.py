@@ -27,6 +27,11 @@ class DataRequest(BaseModel):
     data: str
 
 
+class HelperResponse(BaseModel):
+    values: dict[str, str]
+    details: list[str] | None = None
+
+
 class GoogleAppWebCredentials(BaseModel):
     client_id: str
     project_id: str
@@ -79,6 +84,7 @@ class QuestionRequest(BaseModel):
     collection: str
     use_keyword: bool | None
     filters: list[IndexFilter] | None
+    offset: int | None
 
 
 class SearchResponse(BaseModel):

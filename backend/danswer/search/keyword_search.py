@@ -13,23 +13,21 @@ from nltk.tokenize import word_tokenize  # type:ignore
 logger = setup_logger()
 
 
-def lemmatize_text(text: str) -> str:
+def lemmatize_text(text: str) -> list[str]:
     lemmatizer = WordNetLemmatizer()
     word_tokens = word_tokenize(text)
-    lemmatized_text = [lemmatizer.lemmatize(word) for word in word_tokens]
-    return " ".join(lemmatized_text)
+    return [lemmatizer.lemmatize(word) for word in word_tokens]
 
 
-def remove_stop_words(text: str) -> str:
+def remove_stop_words(text: str) -> list[str]:
     stop_words = set(stopwords.words("english"))
     word_tokens = word_tokenize(text)
-    filtered_text = [word for word in word_tokens if word.casefold() not in stop_words]
-    return " ".join(filtered_text)
+    return [word for word in word_tokens if word.casefold() not in stop_words]
 
 
 def query_processing(query: str) -> str:
-    query = remove_stop_words(query)
-    query = lemmatize_text(query)
+    query = " ".join(remove_stop_words(query))
+    query = " ".join(lemmatize_text(query))
     return query
 
 

@@ -10,8 +10,8 @@ from danswer.datastores.interfaces import KeywordIndex
 from danswer.datastores.interfaces import VectorIndex
 from danswer.datastores.qdrant.store import QdrantIndex
 from danswer.datastores.typesense.store import TypesenseIndex
+from danswer.search.models import Embedder
 from danswer.search.semantic_search import DefaultEmbedder
-from danswer.search.type_aliases import Embedder
 
 
 class IndexingPipelineProtocol(Protocol):

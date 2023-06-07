@@ -11,7 +11,7 @@ from danswer.datastores.datastore_utils import get_uuid_from_chunk
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import VectorIndex
 from danswer.datastores.qdrant.indexing import index_qdrant_chunks
-from danswer.search.semantic_search import get_default_embedding_model
+from danswer.search.search_utils import get_default_embedding_model
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logging import setup_logger
 from danswer.utils.timing import log_function_time

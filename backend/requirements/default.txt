@@ -28,6 +28,7 @@ rfc3986==1.5.0
 sentence-transformers==2.2.2
 slack-sdk==3.20.2
 SQLAlchemy[mypy]==2.0.12
+tensorflow==2.12.0
 transformers==4.27.3
 types-beautifulsoup4==4.12.0.3
 types-html5lib==1.1.11.13

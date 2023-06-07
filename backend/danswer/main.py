@@ -111,7 +111,7 @@ def get_application() -> FastAPI:
     @application.on_event("startup")
     def startup_event() -> None:
         # To avoid circular imports
-        from danswer.search.semantic_search import (
+        from danswer.search.search_utils import (
             warm_up_models,
         )
         from danswer.datastores.qdrant.indexing import create_qdrant_collection

@@ -9,24 +9,17 @@ from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
-from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
-from danswer.configs.model_configs import CROSS_ENCODER_MODEL_ENSEMBLE
-from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
-from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import VectorIndex
-from danswer.search.type_aliases import Embedder
+from danswer.search.models import Embedder
+from danswer.search.search_utils import get_default_embedding_model
+from danswer.search.search_utils import get_default_reranking_model_ensemble
 from danswer.server.models import SearchDoc
 from danswer.utils.logging import setup_logger
 from danswer.utils.timing import log_function_time
-from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
 logger = setup_logger()
-
-
-_EMBED_MODEL: None | SentenceTransformer = None
-_RERANK_MODELS: None | list[CrossEncoder] = None
 
 
 def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc]:
@@ -44,33 +37,6 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
         else []
     )
     return search_docs
-
-
-def get_default_embedding_model() -> SentenceTransformer:
-    global _EMBED_MODEL
-    if _EMBED_MODEL is None:
-        _EMBED_MODEL = SentenceTransformer(DOCUMENT_ENCODER_MODEL)
-        _EMBED_MODEL.max_seq_length = DOC_EMBEDDING_CONTEXT_SIZE
-
-    return _EMBED_MODEL
-
-
-def get_default_reranking_model_ensemble() -> list[CrossEncoder]:
-    global _RERANK_MODELS
-    if _RERANK_MODELS is None:
-        _RERANK_MODELS = [
-            CrossEncoder(model_name) for model_name in CROSS_ENCODER_MODEL_ENSEMBLE
-        ]
-        for model in _RERANK_MODELS:
-            model.max_length = CROSS_EMBED_CONTEXT_SIZE
-
-    return _RERANK_MODELS
-
-
-def warm_up_models() -> None:
-    get_default_embedding_model().encode("Danswer is so cool")
-    cross_encoders = get_default_reranking_model_ensemble()
-    [cross_encoder.predict(("What is Danswer", "Enterprise QA")) for cross_encoder in cross_encoders]  # type: ignore
 
 
 @log_function_time()

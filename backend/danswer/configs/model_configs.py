@@ -18,7 +18,7 @@ CROSS_ENCODER_MODEL_ENSEMBLE = [
     "cross-encoder/ms-marco-TinyBERT-L-2-v2",
 ]
 
-QUERY_EMBEDDING_CONTEXT_SIZE = 256
+QUERY_MAX_CONTEXT_SIZE = 256
 # The below is correlated with CHUNK_SIZE in app_configs but not strictly calculated
 # To avoid extra overhead of tokenizing for chunking during indexing.
 DOC_EMBEDDING_CONTEXT_SIZE = 512
@@ -32,3 +32,6 @@ BATCH_SIZE_ENCODE_CHUNKS = 8
 INTERNAL_MODEL_VERSION = os.environ.get("INTERNAL_MODEL", "openai-chat-completion")
 OPENAI_MODEL_VERSION = os.environ.get("OPENAI_MODEL_VERSION", "gpt-3.5-turbo")
 OPENAI_MAX_OUTPUT_TOKENS = 512
+
+# Danswer custom Deep Learning Models
+INTENT_MODEL_VERSION = "danswer/intent-model"

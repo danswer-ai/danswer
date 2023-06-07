@@ -1,4 +1,3 @@
-import json
 import time
 from collections.abc import Generator
 
@@ -11,9 +10,11 @@ from danswer.datastores.typesense.store import TypesenseIndex
 from danswer.db.models import User
 from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.question_answer import get_json_line
+from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.keyword_search import retrieve_keyword_documents
 from danswer.search.semantic_search import chunks_to_search_docs
 from danswer.search.semantic_search import retrieve_ranked_documents
+from danswer.server.models import HelperResponse
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchResponse
@@ -25,6 +26,15 @@ from fastapi.responses import StreamingResponse
 logger = setup_logger()
 
 router = APIRouter()
+
+
+@router.get("/search-intent")
+def get_search_type(
+    question: QuestionRequest = Depends(), _: User = Depends(current_user)
+) -> HelperResponse:
+    query = question.query
+    use_keyword = question.use_keyword if question.use_keyword is not None else False
+    return recommend_search_flow(query, use_keyword)
 
 
 @router.post("/semantic-search")
@@ -79,6 +89,7 @@ def direct_qa(
     collection = question.collection
     filters = question.filters
     use_keyword = question.use_keyword
+    offset_count = question.offset if question.offset is not None else 0
     logger.info(f"Received QA query: {query}")
 
     user_id = None if user is None else int(user.id)
@@ -97,9 +108,13 @@ def direct_qa(
         )
 
     qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
+    chunk_offset = offset_count * NUM_GENERATIVE_AI_INPUT_DOCS
+    if chunk_offset >= len(ranked_chunks):
+        raise ValueError("Chunks offset too large, should not retry this many times")
     try:
         answer, quotes = qa_model.answer_question(
-            query, ranked_chunks[:NUM_GENERATIVE_AI_INPUT_DOCS]
+            query,
+            ranked_chunks[chunk_offset : chunk_offset + NUM_GENERATIVE_AI_INPUT_DOCS],
         )
     except Exception:
         # exception is logged in the answer_question method, no need to re-log
@@ -127,6 +142,7 @@ def stream_direct_qa(
         collection = question.collection
         filters = question.filters
         use_keyword = question.use_keyword
+        offset_count = question.offset if question.offset is not None else 0
         logger.info(f"Received QA query: {query}")
 
         user_id = None if user is None else int(user.id)
@@ -152,9 +168,17 @@ def stream_direct_qa(
         yield get_json_line(top_docs_dict)
 
         qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
+        chunk_offset = offset_count * NUM_GENERATIVE_AI_INPUT_DOCS
+        if chunk_offset >= len(ranked_chunks):
+            raise ValueError(
+                "Chunks offset too large, should not retry this many times"
+            )
         try:
             for response_dict in qa_model.answer_question_stream(
-                query, ranked_chunks[:NUM_GENERATIVE_AI_INPUT_DOCS]
+                query,
+                ranked_chunks[
+                    chunk_offset : chunk_offset + NUM_GENERATIVE_AI_INPUT_DOCS
+                ],
             ):
                 if response_dict is None:
                     continue
