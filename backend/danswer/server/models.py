@@ -28,8 +28,8 @@ class DataRequest(BaseModel):
 
 
 class HelperResponse(BaseModel):
-    intervene: bool
-    message: str | None = None
+    values: dict[str, str]
+    details: list[str] | None = None
 
 
 class GoogleAppWebCredentials(BaseModel):
