@@ -84,6 +84,7 @@ class QuestionRequest(BaseModel):
     collection: str
     use_keyword: bool | None
     filters: list[IndexFilter] | None
+    offset: int | None
 
 
 class SearchResponse(BaseModel):

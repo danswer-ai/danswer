@@ -28,7 +28,7 @@ logger = setup_logger()
 router = APIRouter()
 
 
-@router.get("/search-type")
+@router.get("/search-intent")
 def get_search_type(
     question: QuestionRequest = Depends(), _: User = Depends(current_user)
 ) -> HelperResponse:
@@ -89,6 +89,7 @@ def direct_qa(
     collection = question.collection
     filters = question.filters
     use_keyword = question.use_keyword
+    chunk_offset = question.offset if question.offset is not None else 0
     logger.info(f"Received QA query: {query}")
 
     user_id = None if user is None else int(user.id)
@@ -109,7 +110,8 @@ def direct_qa(
     qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
     try:
         answer, quotes = qa_model.answer_question(
-            query, ranked_chunks[:NUM_GENERATIVE_AI_INPUT_DOCS]
+            query,
+            ranked_chunks[chunk_offset : chunk_offset + NUM_GENERATIVE_AI_INPUT_DOCS],
         )
     except Exception:
         # exception is logged in the answer_question method, no need to re-log
@@ -137,6 +139,7 @@ def stream_direct_qa(
         collection = question.collection
         filters = question.filters
         use_keyword = question.use_keyword
+        chunk_offset = question.offset if question.offset is not None else 0
         logger.info(f"Received QA query: {query}")
 
         user_id = None if user is None else int(user.id)
@@ -164,7 +167,10 @@ def stream_direct_qa(
         qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
         try:
             for response_dict in qa_model.answer_question_stream(
-                query, ranked_chunks[:NUM_GENERATIVE_AI_INPUT_DOCS]
+                query,
+                ranked_chunks[
+                    chunk_offset : chunk_offset + NUM_GENERATIVE_AI_INPUT_DOCS
+                ],
             ):
                 if response_dict is None:
                     continue
