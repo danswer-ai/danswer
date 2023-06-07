@@ -89,7 +89,7 @@ def direct_qa(
     collection = question.collection
     filters = question.filters
     use_keyword = question.use_keyword
-    chunk_offset = question.offset if question.offset is not None else 0
+    offset_count = question.offset if question.offset is not None else 0
     logger.info(f"Received QA query: {query}")
 
     user_id = None if user is None else int(user.id)
@@ -108,6 +108,9 @@ def direct_qa(
         )
 
     qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
+    chunk_offset = offset_count * NUM_GENERATIVE_AI_INPUT_DOCS
+    if chunk_offset >= len(ranked_chunks):
+        raise ValueError("Chunks offset too large, should not retry this many times")
     try:
         answer, quotes = qa_model.answer_question(
             query,
@@ -139,7 +142,7 @@ def stream_direct_qa(
         collection = question.collection
         filters = question.filters
         use_keyword = question.use_keyword
-        chunk_offset = question.offset if question.offset is not None else 0
+        offset_count = question.offset if question.offset is not None else 0
         logger.info(f"Received QA query: {query}")
 
         user_id = None if user is None else int(user.id)
@@ -165,6 +168,11 @@ def stream_direct_qa(
         yield get_json_line(top_docs_dict)
 
         qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
+        chunk_offset = offset_count * NUM_GENERATIVE_AI_INPUT_DOCS
+        if chunk_offset >= len(ranked_chunks):
+            raise ValueError(
+                "Chunks offset too large, should not retry this many times"
+            )
         try:
             for response_dict in qa_model.answer_question_stream(
                 query,

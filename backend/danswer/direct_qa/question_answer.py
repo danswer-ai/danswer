@@ -185,7 +185,8 @@ def process_answer(
 
 def stream_answer_end(answer_so_far: str, next_token: str) -> bool:
     next_token = next_token.replace('\\"', "")
-    if answer_so_far and answer_so_far[-1] != "\\":
+    # If the previous character is an escape token, don't consider the first character of next_token
+    if answer_so_far and answer_so_far[-1] == "\\":
         next_token = next_token[1:]
     if '"' in next_token:
         return True
