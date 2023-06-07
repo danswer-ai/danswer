@@ -58,7 +58,10 @@ def recommend_search_flow(
     if count_unk_tokens(query, get_default_tokenizer()) > 2:
         if not keyword:
             heuristic_search_type = SearchType.KEYWORD
-            message = "Query contains words that the AI model cannot understand, Keyword Search may yield better results."
+            message = (
+                "Query contains words that the AI model cannot understand, "
+                "Keyword Search may yield better results."
+            )
 
     # Too many stop words, most likely a Semantic query (still may be valid QA)
     if non_stopword_percent < 1 - max_percent_stopwords:
