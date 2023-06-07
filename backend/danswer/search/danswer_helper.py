@@ -35,6 +35,7 @@ def query_intent(query: str) -> tuple[SearchType, QueryFlow]:
             return SearchType.KEYWORD, QueryFlow.SEARCH
         if semantic > 70:
             return SearchType.SEMANTIC, QueryFlow.SEARCH
+        # If it's a QA question, it must be a "Semantic" style statement/question
         return SearchType.SEMANTIC, QueryFlow.QUESTION_ANSWER
     # If definitely not a QA question, choose between keyword or semantic search
     elif keyword > semantic:
