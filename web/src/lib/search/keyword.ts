@@ -2,7 +2,7 @@ import { DanswerDocument, SearchRequestArgs } from "./interfaces";
 
 interface KeywordResponse {
   top_ranked_docs: DanswerDocument[];
-  semi_ranked_docs: DanswerDocument[];
+  lower_ranked_docs: DanswerDocument[];
 }
 
 export const keywordSearch = async ({
@@ -37,8 +37,8 @@ export const keywordSearch = async ({
   const keywordResults = (await response.json()) as KeywordResponse;
 
   let matchingDocs = keywordResults.top_ranked_docs;
-  if (keywordResults.semi_ranked_docs) {
-    matchingDocs = matchingDocs.concat(keywordResults.semi_ranked_docs);
+  if (keywordResults.lower_ranked_docs) {
+    matchingDocs = matchingDocs.concat(keywordResults.lower_ranked_docs);
   }
 
   updateDocs(matchingDocs);

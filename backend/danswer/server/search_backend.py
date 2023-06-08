@@ -10,8 +10,11 @@ from danswer.datastores.typesense.store import TypesenseIndex
 from danswer.db.models import User
 from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.question_answer import get_json_line
+from danswer.search.danswer_helper import query_intent
 from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.keyword_search import retrieve_keyword_documents
+from danswer.search.models import QueryFlow
+from danswer.search.models import SearchType
 from danswer.search.semantic_search import chunks_to_search_docs
 from danswer.search.semantic_search import retrieve_ranked_documents
 from danswer.server.models import HelperResponse
@@ -51,12 +54,12 @@ def semantic_search(
         query, user_id, filters, QdrantIndex(collection)
     )
     if not ranked_chunks:
-        return SearchResponse(top_ranked_docs=None, semi_ranked_docs=None)
+        return SearchResponse(top_ranked_docs=None, lower_ranked_docs=None)
 
     top_docs = chunks_to_search_docs(ranked_chunks)
     other_top_docs = chunks_to_search_docs(unranked_chunks)
 
-    return SearchResponse(top_ranked_docs=top_docs, semi_ranked_docs=other_top_docs)
+    return SearchResponse(top_ranked_docs=top_docs, lower_ranked_docs=other_top_docs)
 
 
 @router.post("/keyword-search")
@@ -73,10 +76,10 @@ def keyword_search(
         query, user_id, filters, TypesenseIndex(collection)
     )
     if not ranked_chunks:
-        return SearchResponse(top_ranked_docs=None, semi_ranked_docs=None)
+        return SearchResponse(top_ranked_docs=None, lower_ranked_docs=None)
 
     top_docs = chunks_to_search_docs(ranked_chunks)
-    return SearchResponse(top_ranked_docs=top_docs, semi_ranked_docs=None)
+    return SearchResponse(top_ranked_docs=top_docs, lower_ranked_docs=None)
 
 
 @router.post("/direct-qa")
@@ -92,6 +95,10 @@ def direct_qa(
     offset_count = question.offset if question.offset is not None else 0
     logger.info(f"Received QA query: {query}")
 
+    predicted_search, predicted_flow = query_intent(query)
+    if use_keyword is None:
+        use_keyword = predicted_search == SearchType.KEYWORD
+
     user_id = None if user is None else int(user.id)
     if use_keyword:
         ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
@@ -104,7 +111,12 @@ def direct_qa(
         )
     if not ranked_chunks:
         return QAResponse(
-            answer=None, quotes=None, ranked_documents=None, unranked_documents=None
+            answer=None,
+            quotes=None,
+            top_ranked_docs=None,
+            lower_ranked_docs=None,
+            predicted_flow=predicted_flow,
+            predicted_search=predicted_search,
         )
 
     qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
@@ -125,8 +137,10 @@ def direct_qa(
     return QAResponse(
         answer=answer,
         quotes=quotes,
-        ranked_documents=chunks_to_search_docs(ranked_chunks),
-        unranked_documents=chunks_to_search_docs(unranked_chunks),
+        top_ranked_docs=chunks_to_search_docs(ranked_chunks),
+        lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
+        predicted_flow=predicted_flow,
+        predicted_search=predicted_search,
     )
 
 
@@ -136,6 +150,8 @@ def stream_direct_qa(
 ) -> StreamingResponse:
     top_documents_key = "top_documents"
     unranked_top_docs_key = "unranked_top_documents"
+    predicted_flow_key = "predicted_flow"
+    predicted_search_key = "predicted_search"
 
     def stream_qa_portions() -> Generator[str, None, None]:
         query = question.query
@@ -144,6 +160,10 @@ def stream_direct_qa(
         use_keyword = question.use_keyword
         offset_count = question.offset if question.offset is not None else 0
         logger.info(f"Received QA query: {query}")
+
+        predicted_search, predicted_flow = query_intent(query)
+        if use_keyword is None:
+            use_keyword = predicted_search == SearchType.KEYWORD
 
         user_id = None if user is None else int(user.id)
         if use_keyword:
@@ -156,16 +176,25 @@ def stream_direct_qa(
                 query, user_id, filters, QdrantIndex(collection)
             )
         if not ranked_chunks:
-            yield get_json_line({top_documents_key: None, unranked_top_docs_key: None})
+            yield get_json_line(
+                {
+                    top_documents_key: None,
+                    unranked_top_docs_key: None,
+                    predicted_flow_key: predicted_flow,
+                    predicted_search_key: predicted_search,
+                }
+            )
             return
 
         top_docs = chunks_to_search_docs(ranked_chunks)
         unranked_top_docs = chunks_to_search_docs(unranked_chunks)
-        top_docs_dict = {
+        initial_response_dict = {
             top_documents_key: [top_doc.json() for top_doc in top_docs],
             unranked_top_docs_key: [doc.json() for doc in unranked_top_docs],
+            predicted_flow_key: predicted_flow,
+            predicted_search_key: predicted_search,
         }
-        yield get_json_line(top_docs_dict)
+        yield get_json_line(initial_response_dict)
 
         qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
         chunk_offset = offset_count * NUM_GENERATIVE_AI_INPUT_DOCS

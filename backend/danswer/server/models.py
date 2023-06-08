@@ -10,6 +10,8 @@ from danswer.connectors.models import InputType
 from danswer.datastores.interfaces import IndexFilter
 from danswer.db.models import Connector
 from danswer.db.models import IndexingStatus
+from danswer.search.models import QueryFlow
+from danswer.search.models import SearchType
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
 
@@ -90,15 +92,14 @@ class QuestionRequest(BaseModel):
 class SearchResponse(BaseModel):
     # For semantic search, top docs are reranked, the remaining are as ordered from retrieval
     top_ranked_docs: list[SearchDoc] | None
-    semi_ranked_docs: list[SearchDoc] | None
+    lower_ranked_docs: list[SearchDoc] | None
 
 
-class QAResponse(BaseModel):
+class QAResponse(SearchResponse):
     answer: str | None
     quotes: dict[str, dict[str, str | int | None]] | None
-    ranked_documents: list[SearchDoc] | None
-    # for performance, only a few top documents are cross-encoded for rerank, the rest follow retrieval order
-    unranked_documents: list[SearchDoc] | None
+    predicted_flow: QueryFlow
+    predicted_search: SearchType
 
 
 class UserByEmail(BaseModel):
