@@ -22,6 +22,7 @@ pydantic==1.10.7
 PyGithub==1.58.2
 PyPDF2==3.0.1
 pytest-playwright==0.3.2
+python-multipart==0.0.6
 qdrant-client==1.2.0
 requests==2.28.2
 rfc3986==1.5.0

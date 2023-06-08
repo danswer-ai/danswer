@@ -14,4 +14,4 @@ WORKDIR /app
 COPY ./danswer /app/danswer
 
 ENV PYTHONPATH /app
-CMD ["python3", "danswer/background/update.py"]
+CMD ["python3", "danswer/background/update.py", "&&", "python3", "danswer/background/file_deletion.py"]

@@ -7,6 +7,7 @@ from danswer.auth.users import current_user
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
+from danswer.connectors.file.utils import write_temp_files
 from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_KEY
 from danswer.connectors.google_drive.connector_auth import get_auth_url
 from danswer.connectors.google_drive.connector_auth import get_drive_tokens
@@ -51,6 +52,7 @@ from danswer.server.models import ConnectorIndexingStatus
 from danswer.server.models import ConnectorSnapshot
 from danswer.server.models import CredentialBase
 from danswer.server.models import CredentialSnapshot
+from danswer.server.models import FileUploadResponse
 from danswer.server.models import GDriveCallback
 from danswer.server.models import GoogleAppCredentials
 from danswer.server.models import IndexAttemptSnapshot
@@ -65,6 +67,7 @@ from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
 from fastapi import Response
+from fastapi import UploadFile
 from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
@@ -151,6 +154,14 @@ def admin_google_drive_auth(
         max_age=600,
     )
     return AuthUrl(auth_url=get_auth_url(credential_id=int(credential_id)))
+
+
+@router.post("/admin/connector/file/upload")
+def upload_files(
+    files: list[UploadFile], _: User = Depends(current_admin_user)
+) -> FileUploadResponse:
+    file_paths = write_temp_files([file.file for file in files])
+    return FileUploadResponse(file_paths=file_paths)
 
 
 @router.get("/admin/latest-index-attempt")
