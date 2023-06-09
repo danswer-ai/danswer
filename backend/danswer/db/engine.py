@@ -27,6 +27,15 @@ def get_db_current_time(db_session: Session) -> datetime:
     return result
 
 
+def translate_db_time_to_server_time(
+    db_time: datetime, db_session: Session
+) -> datetime:
+    server_now = datetime.now()
+    db_now = get_db_current_time(db_session)
+    time_diff = server_now - db_now
+    return db_time + time_diff
+
+
 def build_connection_string(
     *,
     db_api: str = ASYNC_DB_API,
