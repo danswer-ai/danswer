@@ -26,7 +26,8 @@ def write_temp_files(files: list[tuple[str, IO[Any]]]) -> list[str]:
     NOTE: need to pass in (file_name, File) tuples since FastAPI's `UploadFile` class
     exposed SpooledTemporaryFile does not include a name.
     """
-    os.makedirs(_TEMP_LOCATION, exist_ok=True)
+    file_location = _TEMP_LOCATION / str(uuid.uuid4())
+    os.makedirs(file_location, exist_ok=True)
 
     file_paths: list[str] = []
     for file_name, file in files:
@@ -36,7 +37,7 @@ def write_temp_files(files: list[tuple[str, IO[Any]]]) -> list[str]:
                 f"Invalid file extension for file: '{file_name}'. Must be one of {_VALID_FILE_EXTENSIONS}"
             )
 
-        file_path = _TEMP_LOCATION / f"{str(uuid.uuid4())}__{file_name}"
+        file_path = file_location / file_name
         with open(file_path, "wb") as buffer:
             # copy file content from uploaded file to the newly created file
             shutil.copyfileobj(file, buffer)

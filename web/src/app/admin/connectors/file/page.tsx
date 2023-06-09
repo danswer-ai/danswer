@@ -16,6 +16,16 @@ import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { CheckCircle, XCircle } from "@phosphor-icons/react";
 import { Spinner } from "@/components/Spinner";
 
+const COLUMNS = [
+  { header: "File names", key: "fileNames" },
+  { header: "Status", key: "status" },
+];
+
+const getNameFromPath = (path: string) => {
+  const pathParts = path.split("/");
+  return pathParts[pathParts.length - 1];
+};
+
 export default function File() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [filesAreUploading, setFilesAreUploading] = useState<boolean>(false);
@@ -178,16 +188,13 @@ export default function File() {
             In Progress File Indexing
           </h2>
           <BasicTable
-            columns={[
-              { header: "File names", key: "fileNames" },
-              { header: "Status", key: "status" },
-            ]}
+            columns={COLUMNS}
             data={inProgressFileIndexingStatuses.map(
               (connectorIndexingStatus) => {
                 return {
                   fileNames:
                     connectorIndexingStatus.connector.connector_specific_config.file_locations
-                      .map((path) => path.split("__").splice(1).join("__"))
+                      .map(getNameFromPath)
                       .join(", "),
                   status: "In Progress",
                 };
@@ -203,16 +210,13 @@ export default function File() {
             Successful File Indexing
           </h2>
           <BasicTable
-            columns={[
-              { header: "File names", key: "fileNames" },
-              { header: "Status", key: "status" },
-            ]}
+            columns={COLUMNS}
             data={successfulFileIndexingStatuses.map(
               (connectorIndexingStatus) => {
                 return {
                   fileNames:
                     connectorIndexingStatus.connector.connector_specific_config.file_locations
-                      .map((path) => path.split("__").splice(1).join("__"))
+                      .map(getNameFromPath)
                       .join(", "),
                   status: (
                     <div className="text-emerald-600 flex">
@@ -236,15 +240,12 @@ export default function File() {
             administrator to resolve this issue.
           </p>
           <BasicTable
-            columns={[
-              { header: "File names", key: "fileNames" },
-              { header: "Status", key: "status" },
-            ]}
+            columns={COLUMNS}
             data={failedFileIndexingStatuses.map((connectorIndexingStatus) => {
               return {
                 fileNames:
                   connectorIndexingStatus.connector.connector_specific_config.file_locations
-                    .map((path) => path.split("__").splice(1).join("__"))
+                    .map(getNameFromPath)
                     .join(", "),
                 status: (
                   <div className="text-red-600 flex">

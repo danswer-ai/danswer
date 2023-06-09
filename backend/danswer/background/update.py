@@ -50,6 +50,9 @@ def create_indexing_jobs(db_session: Session) -> None:
 
         # Currently single threaded so any still in-progress must have errored
         for attempt in in_progress_indexing_attempts:
+            logger.warning(
+                f"Marking in-progress attempt 'connector: {attempt.connector_id}, credential: {attempt.credential_id}' as failed"
+            )
             mark_attempt_failed(attempt, db_session)
 
         last_finished_indexing_attempt = get_last_finished_attempt(

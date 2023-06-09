@@ -28,7 +28,7 @@ def _get_files_from_zip(
     with zipfile.ZipFile(zip_location, "r") as zip_file:
         for file_name in zip_file.namelist():
             with zip_file.open(file_name, "r") as file:
-                yield file_name, file
+                yield os.path.basename(file_name), file
 
 
 def _open_files_at_location(
