@@ -1,10 +1,11 @@
-mypy==1.1.1
-mypy-extensions==1.0.0
 black==23.3.0
-reorder-python-imports==3.9.0
+mypy-extensions==1.0.0
+mypy==1.1.1
 pre-commit==3.2.2
+reorder-python-imports==3.9.0
 types-beautifulsoup4==4.12.0.3
 types-html5lib==1.1.11.13
+types-psycopg2==2.9.21.10
+types-regex==2023.3.23.1
 types-requests==2.28.11.17
 types-urllib3==1.26.25.11
-types-regex==2023.3.23.1

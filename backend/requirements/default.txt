@@ -30,10 +30,5 @@ slack-sdk==3.20.2
 SQLAlchemy[mypy]==2.0.12
 tensorflow==2.12.0
 transformers==4.27.3
-types-beautifulsoup4==4.12.0.3
-types-html5lib==1.1.11.13
-types-regex==2023.3.23.1
-types-requests==2.28.11.17
-types-urllib3==1.26.25.11
 typesense==0.15.1
 uvicorn==0.21.1

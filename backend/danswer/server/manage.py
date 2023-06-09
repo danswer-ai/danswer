@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Any
 from typing import cast
 
 from danswer.auth.schemas import UserRole
@@ -203,6 +204,7 @@ def get_connector_indexing_status(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[ConnectorIndexingStatus]:
+    credential: Any = None  # TODO Chris, this maybe can stay, good to declare anyhow, but fix the next thing
     connector_id_to_connector: dict[int, Connector] = {
         connector.id: connector for connector in fetch_connectors(db_session)
     }
@@ -269,7 +271,9 @@ def get_connector_indexing_status(
                     ConnectorIndexingStatus(
                         connector=ConnectorSnapshot.from_connector_db_model(connector),
                         public_doc=credential_association.credential.public_doc,
-                        owner=credential.user.email if credential.user else "",
+                        owner=credential.user.email
+                        if credential and credential.user
+                        else "",  # TODO Chris can you patch this? I think you need to fetch the credential here, is this really the best way to structure this function x.x fml
                         last_status=IndexingStatus.NOT_STARTED,
                         last_success=None,
                         docs_indexed=0,
