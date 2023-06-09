@@ -1,3 +1,4 @@
+import datetime
 import io
 from collections.abc import Generator
 from typing import Any
@@ -9,6 +10,8 @@ from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_K
 from danswer.connectors.google_drive.connector_auth import get_drive_tokens
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
+from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logging import setup_logger
@@ -35,9 +38,23 @@ def get_file_batches(
     service: discovery.Resource,
     include_shared: bool = GOOGLE_DRIVE_INCLUDE_SHARED,
     batch_size: int = INDEX_BATCH_SIZE,
+    time_range_start: SecondsSinceUnixEpoch | None = None,
+    time_range_end: SecondsSinceUnixEpoch | None = None,
 ) -> Generator[list[dict[str, str]], None, None]:
     next_page_token = ""
     while next_page_token is not None:
+        query = ""
+        if time_range_start is not None:
+            time_start = (
+                datetime.datetime.utcfromtimestamp(time_range_start).isoformat() + "Z"
+            )
+            query += f"modifiedTime >= '{time_start}' "
+        if time_range_end is not None:
+            time_stop = (
+                datetime.datetime.utcfromtimestamp(time_range_end).isoformat() + "Z"
+            )
+            query += f"and modifiedTime <= '{time_stop}'"
+
         results = (
             service.files()
             .list(
@@ -45,6 +62,7 @@ def get_file_batches(
                 supportsAllDrives=include_shared,
                 fields="nextPageToken, files(mimeType, id, name, webViewLink)",
                 pageToken=next_page_token,
+                q=query,
             )
             .execute()
         )
@@ -84,7 +102,7 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
         return "\n".join(page.extract_text() for page in pdf_reader.pages)
 
 
-class GoogleDriveConnector(LoadConnector):
+class GoogleDriveConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         batch_size: int = INDEX_BATCH_SIZE,
@@ -105,13 +123,21 @@ class GoogleDriveConnector(LoadConnector):
             return {DB_CREDENTIALS_DICT_KEY: new_creds_json_str}
         return None
 
-    def load_from_state(self) -> GenerateDocumentsOutput:
+    def _fetch_docs_from_drive(
+        self,
+        start: SecondsSinceUnixEpoch | None = None,
+        end: SecondsSinceUnixEpoch | None = None,
+    ) -> GenerateDocumentsOutput:
         if self.creds is None:
             raise PermissionError("Not logged into Google Drive")
 
         service = discovery.build("drive", "v3", credentials=self.creds)
         for files_batch in get_file_batches(
-            service, self.include_shared, self.batch_size
+            service,
+            self.include_shared,
+            self.batch_size,
+            time_range_start=start,
+            time_range_end=end,
         ):
             doc_batch = []
             for file in files_batch:
@@ -129,3 +155,11 @@ class GoogleDriveConnector(LoadConnector):
                 )
 
             yield doc_batch
+
+    def load_from_state(self) -> GenerateDocumentsOutput:
+        yield from self._fetch_docs_from_drive()
+
+    def poll_source(
+        self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
+    ) -> GenerateDocumentsOutput:
+        yield from self._fetch_docs_from_drive(start, end)

@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Any
 from typing import cast
 
 from danswer.auth.schemas import UserRole
@@ -222,6 +223,7 @@ def get_connector_indexing_status(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[ConnectorIndexingStatus]:
+    credential: Any = None  # TODO Chris, this maybe can stay, good to declare anyhow, but fix the next thing
     connector_id_to_connector: dict[int, Connector] = {
         connector.id: connector for connector in fetch_connectors(db_session)
     }

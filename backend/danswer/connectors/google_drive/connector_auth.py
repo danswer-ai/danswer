@@ -46,6 +46,7 @@ def get_drive_tokens(
         try:
             creds.refresh(Request())
             if creds.valid:
+                logger.info("Refreshed Google Drive tokens.")
                 return creds
         except Exception as e:
             logger.exception(f"Failed to refresh google drive access token due to: {e}")
