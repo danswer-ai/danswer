@@ -157,10 +157,15 @@ class IndexAttempt(Base):
         String(), default=None
     )  # only filled if status = "failed"
     time_created: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        DateTime(timezone=True),
+        server_default=func.now(),
+        index=True,
     )
     time_updated: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True),
+        server_default=func.now(),
+        index=True,
+        onupdate=func.now(),
     )
 
     connector: Mapped[Connector] = relationship(

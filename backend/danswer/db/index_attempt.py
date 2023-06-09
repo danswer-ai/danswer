@@ -1,3 +1,4 @@
+from danswer.db.engine import translate_db_time_to_server_time
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.utils.logging import setup_logger
@@ -74,13 +75,28 @@ def mark_attempt_failed(
     db_session.commit()
 
 
-def get_last_finished_attempt(
+def get_last_successful_attempt(
     connector_id: int,
     db_session: Session,
 ) -> IndexAttempt | None:
     stmt = select(IndexAttempt)
     stmt = stmt.where(IndexAttempt.connector_id == connector_id)
     stmt = stmt.where(IndexAttempt.status == IndexingStatus.SUCCESS)
-    stmt = stmt.order_by(desc(IndexAttempt.time_updated))
+    # Note, the below is using time_created instead of time_updated
+    stmt = stmt.order_by(desc(IndexAttempt.time_created))
 
     return db_session.execute(stmt).scalars().first()
+
+
+def get_last_successful_attempt_start_time(
+    connector_id: int,
+    db_session: Session,
+) -> float:
+    """Technically the start time is a bit later than creation but for intended use, it doesn't matter"""
+    last_indexing = get_last_successful_attempt(connector_id, db_session)
+    if last_indexing is None:
+        return 0.0
+    last_index_start = translate_db_time_to_server_time(
+        last_indexing.time_created, db_session
+    )
+    return last_index_start.timestamp()
