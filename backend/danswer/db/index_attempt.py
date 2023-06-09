@@ -25,16 +25,14 @@ def create_index_attempt(
     return new_attempt.id
 
 
-def get_incomplete_index_attempts(
+def get_inprogress_index_attempts(
     connector_id: int | None,
     db_session: Session,
 ) -> list[IndexAttempt]:
     stmt = select(IndexAttempt)
     if connector_id is not None:
         stmt = stmt.where(IndexAttempt.connector_id == connector_id)
-    stmt = stmt.where(
-        IndexAttempt.status.notin_([IndexingStatus.SUCCESS, IndexingStatus.FAILED])
-    )
+    stmt = stmt.where(IndexAttempt.status == IndexingStatus.IN_PROGRESS)
 
     incomplete_attempts = db_session.scalars(stmt)
     return list(incomplete_attempts.all())

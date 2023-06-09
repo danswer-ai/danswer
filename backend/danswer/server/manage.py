@@ -160,7 +160,15 @@ def admin_google_drive_auth(
 def upload_files(
     files: list[UploadFile], _: User = Depends(current_admin_user)
 ) -> FileUploadResponse:
-    file_paths = write_temp_files([file.file for file in files])
+    for file in files:
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="File name cannot be empty")
+    try:
+        file_paths = write_temp_files(
+            [(cast(str, file.filename), file.file) for file in files]
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     return FileUploadResponse(file_paths=file_paths)
 
 
@@ -355,9 +363,9 @@ def connector_run_once(
             run_info.connector_id, db_session
         )
     except ValueError:
-        return StatusResponse(
-            success=False,
-            message=f"Connector by id {connector_id} does not exist.",
+        raise HTTPException(
+            status_code=404,
+            detail=f"Connector by id {connector_id} does not exist.",
         )
 
     if not specified_credential_ids:
@@ -366,15 +374,15 @@ def connector_run_once(
         if set(specified_credential_ids).issubset(set(possible_credential_ids)):
             credential_ids = specified_credential_ids
         else:
-            return StatusResponse(
-                success=False,
-                message=f"Not all specified credentials are associated with connector",
+            raise HTTPException(
+                status_code=400,
+                detail="Not all specified credentials are associated with connector",
             )
 
     if not credential_ids:
-        return StatusResponse(
-            success=False,
-            message=f"Connector has no valid credentials, cannot create index attempts.",
+        raise HTTPException(
+            status_code=400,
+            detail="Connector has no valid credentials, cannot create index attempts.",
         )
 
     index_attempt_ids = [

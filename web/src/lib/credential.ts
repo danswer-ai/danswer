@@ -8,7 +8,7 @@ export async function deleteCredential<T>(credentialId: number) {
   return response.json();
 }
 
-export async function linkCredential<T>(
+export async function linkCredential(
   connectorId: number,
   credentialId: number
 ) {

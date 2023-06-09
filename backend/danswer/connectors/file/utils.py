@@ -8,15 +8,35 @@ from typing import IO
 
 _TEMP_LOCATION = Path("/tmp/file_connector")
 _FILE_AGE_CLEANUP_THRESHOLD = 3  # hours
+_VALID_FILE_EXTENSIONS = [".txt", ".zip"]
 
 
-def write_temp_files(files: list[IO[Any]]) -> list[str]:
-    """Writes temporary files to disk and returns their paths"""
+def get_file_ext(file_path_or_name: str | Path) -> str:
+    _, extension = os.path.splitext(file_path_or_name)
+    return extension
+
+
+def check_file_ext_is_valid(ext: str) -> bool:
+    return ext in _VALID_FILE_EXTENSIONS
+
+
+def write_temp_files(files: list[tuple[str, IO[Any]]]) -> list[str]:
+    """Writes temporary files to disk and returns their paths
+
+    NOTE: need to pass in (file_name, File) tuples since FastAPI's `UploadFile` class
+    exposed SpooledTemporaryFile does not include a name.
+    """
     os.makedirs(_TEMP_LOCATION, exist_ok=True)
 
     file_paths: list[str] = []
-    for file in files:
-        file_path = _TEMP_LOCATION / str(uuid.uuid4())
+    for file_name, file in files:
+        extension = get_file_ext(file_name)
+        if not check_file_ext_is_valid(extension):
+            raise ValueError(
+                f"Invalid file extension for file: '{file_name}'. Must be one of {_VALID_FILE_EXTENSIONS}"
+            )
+
+        file_path = _TEMP_LOCATION / f"{str(uuid.uuid4())}__{file_name}"
         with open(file_path, "wb") as buffer:
             # copy file content from uploaded file to the newly created file
             shutil.copyfileobj(file, buffer)

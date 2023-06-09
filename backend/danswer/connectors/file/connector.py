@@ -8,6 +8,8 @@ from typing import IO
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.file.utils import check_file_ext_is_valid
+from danswer.connectors.file.utils import get_file_ext
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
@@ -21,7 +23,7 @@ _LINK_METADATA_FLAG = "#LINK="
 
 
 def _get_files_from_zip(
-    zip_location: Path,
+    zip_location: str | Path,
 ) -> Generator[tuple[str, IO[Any]], None, None]:
     with zipfile.ZipFile(zip_location, "r") as zip_file:
         for file_name in zip_file.namelist():
@@ -29,22 +31,23 @@ def _get_files_from_zip(
                 yield file_name, file
 
 
-def _get_files_from_directory(
-    dir_location: Path,
-) -> Generator[tuple[str, IO[Any]], None, None]:
-    for file_name in os.listdir(dir_location):
-        path = dir_location / file_name
-        if os.path.isdir(path):
-            logger.warning(f"Skipping file '{file_name}' because it is a directory")
-            continue
+def _open_files_at_location(
+    file_path: str | Path,
+) -> Generator[tuple[str, IO[Any]], Any, None]:
+    extension = get_file_ext(file_path)
 
-        with open(path, "r") as file:
-            yield file_name, file
+    if extension == ".zip":
+        yield from _get_files_from_zip(file_path)
+    elif extension == ".txt":
+        with open(file_path, "r") as file:
+            yield os.path.basename(file_path), file
+    else:
+        logger.warning(f"Skipping file '{file_path}' with extension '{extension}'")
 
 
-def _process_file(file_name: str, file: IO[bytes] | IO[str]) -> list[Document]:
-    _, extension = os.path.splitext(file_name)
-    if extension not in [".txt"]:
+def _process_file(file_name: str, file: IO[Any]) -> list[Document]:
+    extension = get_file_ext(file_name)
+    if not check_file_ext_is_valid(extension):
         logger.warning(f"Skipping file '{file_name}' with extension '{extension}'")
         return []
 
@@ -73,42 +76,29 @@ def _process_file(file_name: str, file: IO[bytes] | IO[str]) -> list[Document]:
     ]
 
 
-class FileType(str, Enum):
-    DIRECTORY = "directory"
-    ZIP = "zip"
-
-
 class LocalFileConnector(LoadConnector):
     def __init__(
         self,
-        file_location: Path | str,
-        file_type: FileType,
+        file_locations: list[Path | str],
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
-        if isinstance(file_location, str):
-            file_location = Path(file_location)
-        self.file_location = file_location
-        self.file_type = file_type
+        self.file_locations = [Path(file_location) for file_location in file_locations]
         self.batch_size = batch_size
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         pass
 
     def load_from_state(self) -> GenerateDocumentsOutput:
-        if self.file_type == FileType.ZIP:
-            files = _get_files_from_zip(self.file_location)
-        elif self.file_type == FileType.DIRECTORY:
-            files = _get_files_from_directory(self.file_location)
-        else:
-            raise ValueError(f"Unsupported file type: {self.file_type}")
-
         documents: list[Document] = []
-        for file_name, file in files:
-            documents.extend(_process_file(file_name, file))
+        for file_location in self.file_locations:
+            files = _open_files_at_location(file_location)
 
-            if len(documents) >= self.batch_size:
-                yield documents
-                documents = []
+            for file_name, file in files:
+                documents.extend(_process_file(file_name, file))
+
+                if len(documents) >= self.batch_size:
+                    yield documents
+                    documents = []
 
         if documents:
             yield documents
@@ -116,8 +106,7 @@ class LocalFileConnector(LoadConnector):
 
 if __name__ == "__main__":
     connector = LocalFileConnector(
-        file_location=Path("/Users/chrisweaver/projects/danswer/backend/random.zip"),
-        file_type=FileType.ZIP,
+        file_locations=[Path("/Users/chrisweaver/projects/danswer/backend/random.zip")],
     )
     doc_batch_generator = connector.load_from_state()
     for doc_batch in doc_batch_generator:
@@ -125,8 +114,9 @@ if __name__ == "__main__":
             print(doc)
 
     connector = LocalFileConnector(
-        file_location=Path("/Users/chrisweaver/projects/danswer/backend/random"),
-        file_type=FileType.DIRECTORY,
+        file_locations=[
+            Path("/Users/chrisweaver/projects/danswer/backend/random/test.txt")
+        ],
     )
     doc_batch_generator = connector.load_from_state()
     for doc_batch in doc_batch_generator:
