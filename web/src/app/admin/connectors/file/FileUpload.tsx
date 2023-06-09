@@ -35,7 +35,7 @@ export const FileUpload: FC<FileUploadProps> = ({
               }
             >
               <input {...getInputProps()} />
-              <b>Drag 'n' drop some files here, or click to select files</b>
+              <b>Drag and drop some files here, or click to select files</b>
             </div>
           </section>
         )}
