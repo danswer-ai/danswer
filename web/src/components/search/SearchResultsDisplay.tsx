@@ -131,7 +131,10 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
                 className="text-sm border-b border-gray-800 mb-3"
               >
                 <a
-                  className="rounded-lg flex font-bold"
+                  className={
+                    "rounded-lg flex font-bold " +
+                    (doc.link ? "" : "pointer-events-none")
+                  }
                   href={doc.link}
                   target="_blank"
                   rel="noopener noreferrer"
