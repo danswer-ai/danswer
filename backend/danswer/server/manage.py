@@ -269,7 +269,9 @@ def get_connector_indexing_status(
                     ConnectorIndexingStatus(
                         connector=ConnectorSnapshot.from_connector_db_model(connector),
                         public_doc=credential_association.credential.public_doc,
-                        owner=credential.user.email if credential.user else "",
+                        owner=credential_association.credential.user.email
+                        if credential_association.credential.user
+                        else "",
                         last_status=IndexingStatus.NOT_STARTED,
                         last_success=None,
                         docs_indexed=0,
