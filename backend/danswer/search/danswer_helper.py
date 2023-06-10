@@ -7,6 +7,7 @@ from danswer.search.search_utils import get_default_intent_model
 from danswer.search.search_utils import get_default_intent_model_tokenizer
 from danswer.search.search_utils import get_default_tokenizer
 from danswer.server.models import HelperResponse
+from danswer.utils.timing import log_function_time
 from transformers import AutoTokenizer  # type:ignore
 
 
@@ -17,6 +18,7 @@ def count_unk_tokens(text: str, tokenizer: AutoTokenizer) -> int:
     return len([token for token in tokenized_text if token == tokenizer.unk_token])
 
 
+@log_function_time()
 def query_intent(query: str) -> tuple[SearchType, QueryFlow]:
     tokenizer = get_default_intent_model_tokenizer()
     intent_model = get_default_intent_model()
@@ -47,7 +49,7 @@ def query_intent(query: str) -> tuple[SearchType, QueryFlow]:
 def recommend_search_flow(
     query: str,
     keyword: bool,
-    max_percent_stopwords: float = 0.33,  # Every third word max, ie "effects of caffeine" still viable keyword search
+    max_percent_stopwords: float = 0.30,  # ~Every third word max, ie "effects of caffeine" still viable keyword search
 ) -> HelperResponse:
     heuristic_search_type: SearchType | None = None
     message: str | None = None
@@ -61,24 +63,21 @@ def recommend_search_flow(
     if count_unk_tokens(query, get_default_tokenizer()) > 0:
         if not keyword:
             heuristic_search_type = SearchType.KEYWORD
-            message = (
-                "Query contains words that the AI model cannot understand, "
-                "Keyword Search may yield better results."
-            )
+            message = "Unknown tokens in query."
 
     # Too many stop words, most likely a Semantic query (still may be valid QA)
     if non_stopword_percent < 1 - max_percent_stopwords:
         if keyword:
             heuristic_search_type = SearchType.SEMANTIC
-            message = "Query contains stopwords, AI Search is likely more suitable."
+            message = "Stopwords in query"
 
     # Model based decisions
     model_search_type, flow = query_intent(query)
     if not message:
         if model_search_type == SearchType.SEMANTIC and keyword:
-            message = "Query may yield better results with Semantic Search"
+            message = "Intent model classified Semantic Search"
         if model_search_type == SearchType.KEYWORD and not keyword:
-            message = "Query may yield better results with Keyword Search."
+            message = "Intent model classified Keyword Search."
 
     return HelperResponse(
         values={
