@@ -1,5 +1,16 @@
-import { SearchType } from "@/components/search/SearchTypeSelector";
 import { ValidSources } from "../types";
+
+export const FlowType = {
+  SEARCH: "search",
+  QUESTION_ANSWER: "question-answer",
+};
+export type FlowType = (typeof FlowType)[keyof typeof FlowType];
+export const SearchType = {
+  SEMANTIC: "semantic",
+  KEYWORD: "keyword",
+  AUTOMATIC: "automatic",
+};
+export type SearchType = (typeof SearchType)[keyof typeof SearchType];
 
 export interface Quote {
   document_id: string;
@@ -18,7 +29,8 @@ export interface DanswerDocument {
 }
 
 export interface SearchResponse {
-  searchType: SearchType;
+  suggestedSearchType: SearchType | null;
+  suggestedFlowType: FlowType | null;
   answer: string | null;
   quotes: Record<string, Quote> | null;
   documents: DanswerDocument[] | null;
@@ -35,5 +47,7 @@ export interface SearchRequestArgs {
   updateCurrentAnswer: (val: string) => void;
   updateQuotes: (quotes: Record<string, Quote>) => void;
   updateDocs: (documents: DanswerDocument[]) => void;
-  searchType: SearchType;
+  updateSuggestedSearchType: (searchType: SearchType) => void;
+  updateSuggestedFlowType: (flowType: FlowType) => void;
+  selectedSearchType: SearchType | null;
 }

@@ -8,7 +8,7 @@ import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
 import { buildUrl } from "@/lib/utilsSS";
 import { Connector, User } from "@/lib/types";
 import { cookies } from "next/headers";
-import { SearchType } from "@/components/search/SearchTypeSelector";
+import { SearchType } from "@/lib/search/interfaces";
 
 export default async function Home() {
   const tasks = [
@@ -35,13 +35,13 @@ export default async function Home() {
 
   // needs to be done in a non-client side component due to nextjs
   const storedSearchType = cookies().get("searchType")?.value as
-    | keyof typeof SearchType
+    | string
     | undefined;
   let searchTypeDefault: SearchType =
     storedSearchType !== undefined &&
     SearchType.hasOwnProperty(storedSearchType)
-      ? SearchType[storedSearchType]
-      : SearchType.SEMANTIC; // default to semantic search
+      ? (storedSearchType as SearchType)
+      : SearchType.AUTOMATIC; // default to automatic
 
   return (
     <>

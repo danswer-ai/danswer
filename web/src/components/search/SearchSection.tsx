@@ -5,15 +5,18 @@ import { SearchBar } from "./SearchBar";
 import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SourceSelector } from "./Filters";
 import { Connector } from "@/lib/types";
-import { SearchType, SearchTypeSelector } from "./SearchTypeSelector";
+import { SearchTypeSelector } from "./SearchTypeSelector";
 import {
   DanswerDocument,
   Quote,
   SearchResponse,
   Source,
+  FlowType,
+  SearchType,
 } from "@/lib/search/interfaces";
-import { aiSearchRequestStreamed } from "@/lib/search/ai";
+import { searchRequestStreamed } from "@/lib/search/streaming";
 import Cookies from "js-cookie";
+import { SearchHelper } from "./SearchHelper";
 
 interface SearchSectionProps {
   connectors: Connector<any>[];
@@ -42,7 +45,8 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
     answer: null,
     quotes: null,
     documents: null,
-    searchType: selectedSearchType,
+    suggestedSearchType: null,
+    suggestedFlowType: null,
   };
   const updateCurrentAnswer = (answer: string) =>
     setSearchResponse((prevState) => ({
@@ -59,10 +63,20 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
       ...(prevState || initialSearchResponse),
       documents,
     }));
+  const updateSuggestedSearchType = (suggestedSearchType: SearchType) =>
+    setSearchResponse((prevState) => ({
+      ...(prevState || initialSearchResponse),
+      suggestedSearchType,
+    }));
+  const updateSuggestedFlowType = (suggestedFlowType: FlowType) =>
+    setSearchResponse((prevState) => ({
+      ...(prevState || initialSearchResponse),
+      suggestedFlowType,
+    }));
 
   return (
-    <div className="relative max-w-[1500px] mx-auto">
-      <div className="absolute left-0 ml-24 hidden 2xl:block">
+    <div className="relative mx-auto">
+      <div className="absolute left-0 ml-12 block">
         {connectors.length > 0 && (
           <SourceSelector
             selectedSources={sources}
@@ -71,43 +85,46 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
           />
         )}
       </div>
-      <div className="w-[800px] mx-auto">
-        <SearchTypeSelector
-          selectedSearchType={selectedSearchType}
-          setSelectedSearchType={(searchType) => {
-            Cookies.set("searchType", searchType);
-            setSelectedSearchType(searchType);
-          }}
-        />
-
-        <SearchBar
-          onSearch={async (query) => {
-            setIsFetching(true);
-            setSearchResponse({
-              answer: null,
-              quotes: null,
-              documents: null,
-              searchType: selectedSearchType,
-            });
-
-            await aiSearchRequestStreamed({
-              query,
-              sources,
-              updateCurrentAnswer,
-              updateQuotes,
-              updateDocs,
-              searchType: selectedSearchType,
-            });
-
-            setIsFetching(false);
-          }}
-        />
-
-        <div className="mt-2">
-          <SearchResultsDisplay
-            searchResponse={searchResponse}
-            isFetching={isFetching}
+      <div className="w-[1000px] mx-auto flex">
+        <div className="w-[800px] mx-auto">
+          <SearchTypeSelector
+            selectedSearchType={selectedSearchType}
+            setSelectedSearchType={(searchType) => {
+              Cookies.set("searchType", searchType);
+              setSelectedSearchType(searchType);
+            }}
           />
+
+          <SearchBar
+            onSearch={async (query) => {
+              setIsFetching(true);
+              setSearchResponse(initialSearchResponse);
+
+              await searchRequestStreamed({
+                query,
+                sources,
+                updateCurrentAnswer,
+                updateQuotes,
+                updateDocs,
+                updateSuggestedSearchType,
+                updateSuggestedFlowType,
+                selectedSearchType,
+              });
+
+              setIsFetching(false);
+            }}
+          />
+
+          <div className="mt-2">
+            <SearchResultsDisplay
+              searchResponse={searchResponse}
+              isFetching={isFetching}
+            />
+          </div>
+        </div>
+        
+        <div className="ml-4">
+        <SearchHelper searchResponse={searchResponse}/>
         </div>
       </div>
     </div>

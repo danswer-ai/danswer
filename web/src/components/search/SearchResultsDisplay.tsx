@@ -6,8 +6,8 @@ import {
   DanswerDocument,
   SearchResponse,
   Quote,
+  FlowType,
 } from "@/lib/search/interfaces";
-import { SearchType } from "./SearchTypeSelector";
 
 const removeDuplicateDocs = (documents: DanswerDocument[]) => {
   const seen = new Set<string>();
@@ -63,10 +63,10 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
       }
     });
   }
-
+  console.log(searchResponse.suggestedFlowType);
   return (
     <>
-      {answer && (
+      {answer && searchResponse.suggestedFlowType !== FlowType.SEARCH && (
         <div className="h-56">
           <div className="p-4 border-2 rounded-md border-gray-700">
             <div className="flex mb-1">
@@ -104,19 +104,17 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
         </div>
       )}
 
-      {!answer &&
-        !isFetching &&
-        searchResponse.searchType === SearchType.SEMANTIC && (
-          <div className="flex">
-            <InfoIcon
-              size="20"
-              className="text-red-500 my-auto flex flex-shrink-0"
-            />
-            <div className="text-red-500 text-xs my-auto ml-1">
-              GPT hurt itself in its confusion :(
-            </div>
+      {!answer && !isFetching && (
+        <div className="flex">
+          <InfoIcon
+            size="20"
+            className="text-red-500 my-auto flex flex-shrink-0"
+          />
+          <div className="text-red-500 text-xs my-auto ml-1">
+            GPT hurt itself in its confusion :(
           </div>
-        )}
+        </div>
+      )}
 
       {documents && documents.length > 0 && (
         <div className="mt-4">

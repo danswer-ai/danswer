@@ -1,5 +1,9 @@
-import { SearchType } from "@/components/search/SearchTypeSelector";
-import { DanswerDocument, Quote, SearchRequestArgs } from "./interfaces";
+import {
+  DanswerDocument,
+  Quote,
+  SearchRequestArgs,
+  SearchType,
+} from "./interfaces";
 
 const processSingleChunk = (
   chunk: string,
@@ -45,14 +49,21 @@ const processRawChunkString = (
   return [parsedChunkSections, currPartialChunk];
 };
 
-export const aiSearchRequestStreamed = async ({
+export const searchRequestStreamed = async ({
   query,
   sources,
   updateCurrentAnswer,
   updateQuotes,
   updateDocs,
-  searchType,
+  updateSuggestedSearchType,
+  updateSuggestedFlowType,
+  selectedSearchType,
 }: SearchRequestArgs) => {
+  let useKeyword = null;
+  if (selectedSearchType) {
+    useKeyword = selectedSearchType === SearchType.KEYWORD ? true : false;
+  }
+
   let answer = "";
   let quotes: Record<string, Quote> | null = null;
   let relevantDocuments: DanswerDocument[] | null = null;
@@ -62,7 +73,7 @@ export const aiSearchRequestStreamed = async ({
       body: JSON.stringify({
         query,
         collection: "danswer_index",
-        use_keyword: searchType === SearchType.KEYWORD,
+        use_keyword: useKeyword,
         ...(sources.length > 0
           ? {
               filters: [
@@ -128,6 +139,13 @@ export const aiSearchRequestStreamed = async ({
                 (doc) => JSON.parse(doc) as DanswerDocument
               );
               updateDocs(relevantDocuments);
+            }
+            console.log(chunk);
+            if (chunk.predicted_flow) {
+              updateSuggestedFlowType(chunk.predicted_flow);
+            }
+            if (chunk.predicted_search) {
+              updateSuggestedSearchType(chunk.predicted_search);
             }
           } else {
             quotes = chunk as Record<string, Quote>;

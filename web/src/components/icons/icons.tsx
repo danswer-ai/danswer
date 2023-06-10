@@ -9,6 +9,7 @@ import {
   LinkBreak,
   Link,
   Plug,
+  Bird,
 } from "@phosphor-icons/react";
 import { SiConfluence, SiGithub, SiGoogledrive, SiSlack } from "react-icons/si";
 import { FaFile, FaGlobe } from "react-icons/fa";
@@ -116,4 +117,11 @@ export const InfoIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <Info size={size} className={className} />;
+};
+
+export const BirdIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <Bird size={size} className={className} />;
 };
