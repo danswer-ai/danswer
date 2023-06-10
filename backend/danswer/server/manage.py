@@ -7,6 +7,7 @@ from danswer.auth.users import current_user
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
+from danswer.connectors.file.utils import write_temp_files
 from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_KEY
 from danswer.connectors.google_drive.connector_auth import get_auth_url
 from danswer.connectors.google_drive.connector_auth import get_drive_tokens
@@ -51,6 +52,7 @@ from danswer.server.models import ConnectorIndexingStatus
 from danswer.server.models import ConnectorSnapshot
 from danswer.server.models import CredentialBase
 from danswer.server.models import CredentialSnapshot
+from danswer.server.models import FileUploadResponse
 from danswer.server.models import GDriveCallback
 from danswer.server.models import GoogleAppCredentials
 from danswer.server.models import IndexAttemptSnapshot
@@ -65,6 +67,7 @@ from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
 from fastapi import Response
+from fastapi import UploadFile
 from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
@@ -151,6 +154,22 @@ def admin_google_drive_auth(
         max_age=600,
     )
     return AuthUrl(auth_url=get_auth_url(credential_id=int(credential_id)))
+
+
+@router.post("/admin/connector/file/upload")
+def upload_files(
+    files: list[UploadFile], _: User = Depends(current_admin_user)
+) -> FileUploadResponse:
+    for file in files:
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="File name cannot be empty")
+    try:
+        file_paths = write_temp_files(
+            [(cast(str, file.filename), file.file) for file in files]
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return FileUploadResponse(file_paths=file_paths)
 
 
 @router.get("/admin/latest-index-attempt")
@@ -344,9 +363,9 @@ def connector_run_once(
             run_info.connector_id, db_session
         )
     except ValueError:
-        return StatusResponse(
-            success=False,
-            message=f"Connector by id {connector_id} does not exist.",
+        raise HTTPException(
+            status_code=404,
+            detail=f"Connector by id {connector_id} does not exist.",
         )
 
     if not specified_credential_ids:
@@ -355,15 +374,15 @@ def connector_run_once(
         if set(specified_credential_ids).issubset(set(possible_credential_ids)):
             credential_ids = specified_credential_ids
         else:
-            return StatusResponse(
-                success=False,
-                message=f"Not all specified credentials are associated with connector",
+            raise HTTPException(
+                status_code=400,
+                detail="Not all specified credentials are associated with connector",
             )
 
     if not credential_ids:
-        return StatusResponse(
-            success=False,
-            message=f"Connector has no valid credentials, cannot create index attempts.",
+        raise HTTPException(
+            status_code=400,
+            detail="Connector has no valid credentials, cannot create index attempts.",
         )
 
     index_attempt_ids = [

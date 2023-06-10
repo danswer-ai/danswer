@@ -10,6 +10,7 @@ const sources: Source[] = [
   { displayName: "Confluence", internalName: "confluence" },
   { displayName: "Github PRs", internalName: "github" },
   { displayName: "Web", internalName: "web" },
+  { displayName: "File", internalName: "file" },
 ];
 
 interface SourceSelectorProps {

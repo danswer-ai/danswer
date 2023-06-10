@@ -10,7 +10,7 @@ from danswer.db.credentials import backend_update_credential_json
 from danswer.db.engine import build_engine
 from danswer.db.engine import get_db_current_time
 from danswer.db.index_attempt import create_index_attempt
-from danswer.db.index_attempt import get_incomplete_index_attempts
+from danswer.db.index_attempt import get_inprogress_index_attempts
 from danswer.db.index_attempt import get_last_finished_attempt
 from danswer.db.index_attempt import get_not_started_index_attempts
 from danswer.db.index_attempt import mark_attempt_failed
@@ -42,7 +42,7 @@ def should_create_new_indexing(
 def create_indexing_jobs(db_session: Session) -> None:
     connectors = fetch_connectors(db_session, disabled_status=False)
     for connector in connectors:
-        in_progress_indexing_attempts = get_incomplete_index_attempts(
+        in_progress_indexing_attempts = get_inprogress_index_attempts(
             connector.id, db_session
         )
         if in_progress_indexing_attempts:
@@ -50,6 +50,9 @@ def create_indexing_jobs(db_session: Session) -> None:
 
         # Currently single threaded so any still in-progress must have errored
         for attempt in in_progress_indexing_attempts:
+            logger.warning(
+                f"Marking in-progress attempt 'connector: {attempt.connector_id}, credential: {attempt.credential_id}' as failed"
+            )
             mark_attempt_failed(attempt, db_session)
 
         last_finished_indexing_attempt = get_last_finished_attempt(

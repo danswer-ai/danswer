@@ -8,6 +8,7 @@ import {
   SlackIcon,
   KeyIcon,
   ConfluenceIcon,
+  FileIcon,
 } from "@/components/icons/icons";
 import { DISABLE_AUTH } from "@/lib/constants";
 import { getCurrentUserSS } from "@/lib/userSS";
@@ -65,15 +66,6 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <GlobeIcon size="16" />
-                      <div className="ml-1">Web</div>
-                    </div>
-                  ),
-                  link: "/admin/connectors/web",
-                },
-                {
-                  name: (
-                    <div className="flex">
                       <GithubIcon size="16" />
                       <div className="ml-1">Github</div>
                     </div>
@@ -97,6 +89,24 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/connectors/confluence",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <GlobeIcon size="16" />
+                      <div className="ml-1">Web</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/web",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <FileIcon size="16" />
+                      <div className="ml-1">File</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/file",
                 },
               ],
             },

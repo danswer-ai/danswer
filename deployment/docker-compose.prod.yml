@@ -18,6 +18,7 @@ services:
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
     volumes:
       - local_dynamic_storage:/home/storage
+      - file_connector_tmp_storage:/home/file_connector_storage
   background:
     build:
       context: ../backend
@@ -33,6 +34,7 @@ services:
       - QDRANT_HOST=vector_db
     volumes:
       - local_dynamic_storage:/home/storage
+      - file_connector_tmp_storage:/home/file_connector_storage
   web_server:
     build:
       context: ../web
@@ -98,6 +100,7 @@ services:
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 volumes:
   local_dynamic_storage:
+  file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them
   db_volume:
   qdrant_volume:
   typesense_volume:

@@ -3,6 +3,7 @@ from typing import Type
 
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.confluence.connector import ConfluenceConnector
+from danswer.connectors.file.connector import LocalFileConnector
 from danswer.connectors.github.connector import GithubConnector
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.interfaces import BaseConnector
@@ -27,6 +28,7 @@ def identify_connector_class(
 ) -> Type[BaseConnector]:
     connector_map = {
         DocumentSource.WEB: WebConnector,
+        DocumentSource.FILE: LocalFileConnector,
         DocumentSource.SLACK: {
             InputType.LOAD_STATE: SlackLoadConnector,
             InputType.POLL: SlackPollConnector,

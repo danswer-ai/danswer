@@ -1,6 +1,7 @@
 import { ValidSources } from "@/lib/types";
 import {
   ConfluenceIcon,
+  FileIcon,
   GithubIcon,
   GlobeIcon,
   GoogleDriveIcon,
@@ -20,6 +21,12 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: GlobeIcon,
         displayName: "Web",
         adminPageLink: "/admin/connectors/web",
+      };
+    case "file":
+      return {
+        icon: FileIcon,
+        displayName: "File",
+        adminPageLink: "/admin/connectors/file",
       };
     case "slack":
       return {

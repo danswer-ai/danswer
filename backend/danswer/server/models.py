@@ -49,6 +49,10 @@ class GoogleAppCredentials(BaseModel):
     web: GoogleAppWebCredentials
 
 
+class FileUploadResponse(BaseModel):
+    file_paths: list[str]
+
+
 class HealthCheckResponse(BaseModel):
     status: Literal["ok"]
 

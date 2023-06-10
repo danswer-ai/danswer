@@ -12,7 +12,8 @@ export type ValidSources =
   | "github"
   | "slack"
   | "google_drive"
-  | "confluence";
+  | "confluence"
+  | "file";
 export type ValidInputTypes = "load_state" | "poll" | "event";
 
 // CONNECTORS
@@ -21,7 +22,7 @@ export interface ConnectorBase<T> {
   input_type: ValidInputTypes;
   source: ValidSources;
   connector_specific_config: T;
-  refresh_freq: number;
+  refresh_freq: number | null;
   disabled: boolean;
 }
 
@@ -47,6 +48,10 @@ export interface ConfluenceConfig {
 
 export interface SlackConfig {
   workspace: string;
+}
+
+export interface FileConfig {
+  file_locations: string[];
 }
 
 export interface ConnectorIndexingStatus<T> {

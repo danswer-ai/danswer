@@ -11,7 +11,7 @@ import {
   Plug,
 } from "@phosphor-icons/react";
 import { SiConfluence, SiGithub, SiGoogledrive, SiSlack } from "react-icons/si";
-import { FaGlobe } from "react-icons/fa";
+import { FaFile, FaGlobe } from "react-icons/fa";
 
 interface IconProps {
   size?: string;
@@ -74,6 +74,13 @@ export const GlobeIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <FaGlobe size={size} className={className} />;
+};
+
+export const FileIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FaFile size={size} className={className} />;
 };
 
 export const SlackIcon = ({
