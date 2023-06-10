@@ -77,10 +77,12 @@ def mark_attempt_failed(
 
 def get_last_successful_attempt(
     connector_id: int,
+    credential_id: int,
     db_session: Session,
 ) -> IndexAttempt | None:
     stmt = select(IndexAttempt)
     stmt = stmt.where(IndexAttempt.connector_id == connector_id)
+    stmt = stmt.where(IndexAttempt.credential_id == credential_id)
     stmt = stmt.where(IndexAttempt.status == IndexingStatus.SUCCESS)
     # Note, the below is using time_created instead of time_updated
     stmt = stmt.order_by(desc(IndexAttempt.time_created))
@@ -90,10 +92,11 @@ def get_last_successful_attempt(
 
 def get_last_successful_attempt_start_time(
     connector_id: int,
+    credential_id: int,
     db_session: Session,
 ) -> float:
     """Technically the start time is a bit later than creation but for intended use, it doesn't matter"""
-    last_indexing = get_last_successful_attempt(connector_id, db_session)
+    last_indexing = get_last_successful_attempt(connector_id, credential_id, db_session)
     if last_indexing is None:
         return 0.0
     last_index_start = translate_db_time_to_server_time(

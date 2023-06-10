@@ -54,16 +54,16 @@ def create_indexing_jobs(db_session: Session) -> None:
             )
             mark_attempt_failed(attempt, db_session)
 
-        last_finished_indexing_attempt = get_last_successful_attempt(
-            connector.id, db_session
-        )
-        if not should_create_new_indexing(
-            connector, last_finished_indexing_attempt, db_session
-        ):
-            continue
-
         for association in connector.credentials:
             credential = association.credential
+
+            last_successful_attempt = get_last_successful_attempt(
+                connector.id, credential.id, db_session
+            )
+            if not should_create_new_indexing(
+                connector, last_successful_attempt, db_session
+            ):
+                continue
             create_index_attempt(connector.id, credential.id, db_session)
 
 
@@ -107,13 +107,13 @@ def run_indexing_jobs(db_session: Session) -> None:
 
             elif task == InputType.POLL:
                 assert isinstance(runnable_connector, PollConnector)
-                if attempt.connector_id is None:
+                if attempt.connector_id is None or attempt.credential_id is None:
                     raise ValueError(
-                        f"Polling attempt {attempt.id} has no associated connector_id, "
-                        f"can't fetch time range"
+                        f"Polling attempt {attempt.id} is missing connector_id or credential_id, "
+                        f"can't fetch time range."
                     )
                 last_run_time = get_last_successful_attempt_start_time(
-                    attempt.connector_id, db_session
+                    attempt.connector_id, attempt.credential_id, db_session
                 )
                 doc_batch_generator = runnable_connector.poll_source(
                     last_run_time, time.time()

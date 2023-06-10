@@ -74,7 +74,7 @@ def upgrade() -> None:
         sa.Column(
             "credential_json",
             postgresql.JSONB(astext_type=sa.Text()),
-            nullable=True,
+            nullable=False,
         ),
         sa.Column(
             "user_id",

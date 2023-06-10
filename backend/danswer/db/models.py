@@ -144,12 +144,16 @@ class IndexAttempt(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     connector_id: Mapped[int | None] = mapped_column(
-        ForeignKey("connector.id"), nullable=True
+        ForeignKey("connector.id"),
+        nullable=True,
+        index=True,
     )
     credential_id: Mapped[int | None] = mapped_column(
-        ForeignKey("credential.id"), nullable=True
+        ForeignKey("credential.id"),
+        nullable=True,
+        index=True,
     )
-    status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
+    status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus), index=True)
     document_ids: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String()), default=None
     )  # only filled if status = "complete"
