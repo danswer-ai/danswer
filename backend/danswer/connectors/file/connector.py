@@ -1,3 +1,4 @@
+import json
 import os
 import zipfile
 from collections.abc import Generator
@@ -19,7 +20,7 @@ from danswer.utils.logging import setup_logger
 
 logger = setup_logger()
 
-_LINK_METADATA_FLAG = "#LINK="
+_METADATA_FLAG = "#DANSWER_METADATA="
 
 
 def _get_files_from_zip(
@@ -51,24 +52,22 @@ def _process_file(file_name: str, file: IO[Any]) -> list[Document]:
         logger.warning(f"Skipping file '{file_name}' with extension '{extension}'")
         return []
 
-    link = ""
+    metadata = {}
     file_content_raw = ""
     for ind, line in enumerate(file):
-        try:
-            if isinstance(line, bytes):
-                line = line.decode("utf-8")
-            line = str(line)
+        if isinstance(line, bytes):
+            line = line.decode("utf-8")
+        line = str(line)
 
-            if ind == 0 and line.startswith(_LINK_METADATA_FLAG):
-                link = line.replace(_LINK_METADATA_FLAG, "", 1).strip()
+        if ind == 0 and line.startswith(_METADATA_FLAG):
+            metadata = json.loads(line.replace(_METADATA_FLAG, "", 1).strip())
+        else:
             file_content_raw += line
-        except Exception:
-            logger.exception(f"Unable to process line in file '{file_name}'")
 
     return [
         Document(
             id=file_name,
-            sections=[Section(link=link, text=file_content_raw)],
+            sections=[Section(link=metadata.get("link", ""), text=file_content_raw)],
             source=DocumentSource.FILE,
             semantic_identifier=file_name,
             metadata={},
@@ -102,23 +101,3 @@ class LocalFileConnector(LoadConnector):
 
         if documents:
             yield documents
-
-
-if __name__ == "__main__":
-    connector = LocalFileConnector(
-        file_locations=[Path("/Users/chrisweaver/projects/danswer/backend/random.zip")],
-    )
-    doc_batch_generator = connector.load_from_state()
-    for doc_batch in doc_batch_generator:
-        for doc in doc_batch:
-            print(doc)
-
-    connector = LocalFileConnector(
-        file_locations=[
-            Path("/Users/chrisweaver/projects/danswer/backend/random/test.txt")
-        ],
-    )
-    doc_batch_generator = connector.load_from_state()
-    for doc_batch in doc_batch_generator:
-        for doc in doc_batch:
-            print(doc)

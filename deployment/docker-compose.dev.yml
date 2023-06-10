@@ -21,6 +21,7 @@ services:
       - DISABLE_AUTH=True
     volumes:
       - local_dynamic_storage:/home/storage
+      - file_connector_tmp_storage:/home/file_connector_storage
   background:
     build:
       context: ../backend
@@ -38,6 +39,7 @@ services:
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
     volumes:
       - local_dynamic_storage:/home/storage
+      - file_connector_tmp_storage:/home/file_connector_storage
   web_server:
     build:
       context: ../web
@@ -101,6 +103,7 @@ services:
       && while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
 volumes:
   local_dynamic_storage:
+  file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them
   db_volume:
   qdrant_volume:
   typesense_volume:
