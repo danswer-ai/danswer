@@ -7,6 +7,7 @@ from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import PUBLIC_DOC_PAT
+from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import VectorIndex
@@ -92,7 +93,8 @@ class QdrantIndex(VectorIndex):
         user_id: int | None,
         filters: list[IndexFilter] | None,
         num_to_retrieve: int = NUM_RETURNED_HITS,
-        page_size: int = NUM_RERANKED_RESULTS,
+        page_size: int = NUM_RETURNED_HITS,
+        distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
     ) -> list[InferenceChunk]:
         query_embedding = get_default_embedding_model().encode(
             query
@@ -113,6 +115,7 @@ class QdrantIndex(VectorIndex):
                     query_filter=Filter(must=list(filter_conditions)),
                     limit=page_size,
                     offset=page_offset,
+                    score_threshold=distance_cutoff,
                 )
                 page_offset += page_size
                 if not hits:

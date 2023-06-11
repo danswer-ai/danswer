@@ -18,6 +18,9 @@ CROSS_ENCODER_MODEL_ENSEMBLE = [
     "cross-encoder/ms-marco-TinyBERT-L-2-v2",
 ]
 
+# Better to keep it loose, surfacing more results better than missing results
+SEARCH_DISTANCE_CUTOFF = 0.1  # Cosine similarity (currently), range of -1 to 1 with -1 being completely opposite
+
 QUERY_MAX_CONTEXT_SIZE = 256
 # The below is correlated with CHUNK_SIZE in app_configs but not strictly calculated
 # To avoid extra overhead of tokenizing for chunking during indexing.
