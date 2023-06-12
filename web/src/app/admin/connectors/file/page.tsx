@@ -91,13 +91,12 @@ export default function File() {
         the very beginning of the file that looks like:
         <div className="flex my-2">
           <div className="mx-auto">
-            #DANSWER_METADATA={"{"}"link": "{"<LINK>"}"{"}"}
+            #DANSWER_METADATA={"{"}&quot;link&quot;: &quot;{"<LINK>"}&quot;{"}"}
           </div>
         </div>{" "}
         where <i>{"<LINK>"}</i> is the link to the file. This will enable
-        Danswer to link users to the file when they click on the search result
-        or if the document is quoted when giving an answer. More details on this
-        can be found in the{" "}
+        Danswer to link users to the file when they click on the search result.
+        More details on this can be found in the{" "}
         <a
           href="https://docs.danswer.dev/connectors/file"
           className="text-blue-500"
