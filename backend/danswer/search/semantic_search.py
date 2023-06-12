@@ -64,6 +64,8 @@ def retrieve_ranked_documents(
     num_hits: int = NUM_RETURNED_HITS,
     num_rerank: int = NUM_RERANKED_RESULTS,
 ) -> tuple[list[InferenceChunk] | None, list[InferenceChunk] | None]:
+    """Uses vector similarity to fetch the top num_hits document chunks with a distance cutoff.
+    Reranks the top num_rerank out of those (instead of all due to latency)"""
     top_chunks = datastore.semantic_retrieval(query, user_id, filters, num_hits)
     if not top_chunks:
         filters_log_msg = json.dumps(filters, separators=(",", ":")).replace("\n", "")
