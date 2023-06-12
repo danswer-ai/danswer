@@ -19,7 +19,6 @@ import {
 import { searchRequestStreamed } from "@/lib/search/streaming";
 import Cookies from "js-cookie";
 import { SearchHelper } from "./SearchHelper";
-import { SearchSteps } from "./SearchSteps";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -164,14 +163,6 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
         />
 
         <div className="mt-2">
-          {/* Doesn't fit in well right now, can try and add this in later */}
-          {/* <SearchSteps
-            isFetching={isFetching}
-            searchResponse={searchResponse}
-            selectedSearchType={selectedSearchType}
-            defaultOverrides={defaultOverrides}
-          /> */}
-
           <SearchResultsDisplay
             searchResponse={searchResponse}
             isFetching={isFetching}
