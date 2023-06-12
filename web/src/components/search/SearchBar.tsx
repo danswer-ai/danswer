@@ -2,15 +2,19 @@ import React, { useState, KeyboardEvent, ChangeEvent } from "react";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 
 interface SearchBarProps {
-  onSearch: (searchTerm: string) => void;
+  query: string;
+  setQuery: (query: string) => void;
+  onSearch: () => void;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
-  const [searchTerm, setSearchTerm] = useState<string>("");
-
+export const SearchBar: React.FC<SearchBarProps> = ({
+  query,
+  setQuery,
+  onSearch,
+}) => {
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const target = event.target;
-    setSearchTerm(target.value);
+    setQuery(target.value);
 
     // Resize the textarea to fit the content
     target.style.height = "24px";
@@ -20,7 +24,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
-      onSearch(searchTerm);
+      onSearch();
       event.preventDefault();
     }
   };
@@ -34,7 +38,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
           role="textarea"
           aria-multiline
           placeholder="Search..."
-          value={searchTerm}
+          value={query}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           suppressContentEditableWarning={true}

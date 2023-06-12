@@ -106,6 +106,9 @@ def json_chat_processor(question: str, documents: list[str]) -> list[dict[str, s
         'Start by reading the following documents and responding with "Acknowledged".'
     )
 
+    complete_answer_not_found_response = (
+        '{"answer": "' + UNCERTAINTY_PAT + '", "quotes": []}'
+    )
     task_msg = (
         "Now answer the next user query based on documents above and quote relevant sections.\n"
         "Respond with a JSON containing the answer and up to three most relevant quotes from the documents.\n"
@@ -113,7 +116,7 @@ def json_chat_processor(question: str, documents: list[str]) -> list[dict[str, s
         "Your responses should be informative and concise.\n"
         "You MUST prioritize information from provided documents over internal knowledge.\n"
         "If the query cannot be answered based on the documents, respond with "
-        '{"answer": "Information not found", "quotes": []}\n'
+        f"{complete_answer_not_found_response}\n"
         "If the query requires aggregating whole documents, respond with "
         '{"answer": "Aggregations not supported", "quotes": []}\n'
         f"Sample response:\n{json.dumps(SAMPLE_JSON_RESPONSE)}"

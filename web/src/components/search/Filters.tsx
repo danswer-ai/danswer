@@ -35,7 +35,7 @@ export function SourceSelector({
   };
 
   return (
-    <div className="bg-gray-900 px-6">
+    <div className="bg-gray-900">
       <div className="flex mb-2 pb-1 pl-2 border-b border-gray-800 mx-2">
         <h2 className="font-bold my-auto">Filters</h2>
         <Funnel className="my-auto ml-2" size="20" />
