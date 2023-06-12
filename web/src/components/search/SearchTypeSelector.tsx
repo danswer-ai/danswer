@@ -36,7 +36,7 @@ export const SearchTypeSelector: React.FC<Props> = ({
         }
         onClick={() => setSelectedSearchType(SearchType.SEMANTIC)}
       >
-        Semantic
+        AI Search
       </div>
 
       <div
@@ -49,7 +49,7 @@ export const SearchTypeSelector: React.FC<Props> = ({
         }
         onClick={() => setSelectedSearchType(SearchType.KEYWORD)}
       >
-        Keyword
+        Keyword Search
       </div>
     </div>
   );

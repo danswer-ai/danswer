@@ -7,7 +7,7 @@ import {
 } from "@/lib/search/interfaces";
 import { BrainIcon } from "../icons/icons";
 
-const CLICKABLE_CLASS_NAME = "text-blue-600 cursor-pointer";
+const CLICKABLE_CLASS_NAME = "text-blue-400 cursor-pointer";
 const NUM_DOCUMENTS_FED_TO_GPT = 5;
 
 interface Props {
@@ -31,22 +31,20 @@ const getAssistantMessage = ({
   forceQADisplay,
   setOffset,
 }: Props): string | JSX.Element | null => {
-  if (
-    !searchResponse ||
-    !searchResponse.suggestedFlowType ||
-    searchResponse.answer === null
-  ) {
+  if (!searchResponse || !searchResponse.suggestedFlowType) {
     return null;
   }
 
   if (
     searchResponse.suggestedFlowType === FlowType.SEARCH &&
-    !defaultOverrides.forceDisplayQA
+    !defaultOverrides.forceDisplayQA &&
+    !isFetching &&
+    searchResponse.answer
   ) {
     return (
       <div>
-        This doesn&apos;t seem like a question that&apos;s a great fit for an
-        Agent answer. Do you still want to have{" "}
+        This doesn&apos;t seem like a question for a Generative AI. Do you still
+        want to have{" "}
         <span className={CLICKABLE_CLASS_NAME} onClick={forceQADisplay}>
           GPT give a response?
         </span>
@@ -54,6 +52,8 @@ const getAssistantMessage = ({
     );
   }
 
+  console.log(searchResponse.suggestedSearchType);
+  console.log(selectedSearchType);
   if (
     selectedSearchType !== SearchType.AUTOMATIC &&
     searchResponse.suggestedSearchType !== selectedSearchType
@@ -70,7 +70,7 @@ const getAssistantMessage = ({
               restartSearch({ searchType: SearchType.SEMANTIC });
             }}
           >
-            switch?
+            try AI search?
           </span>
         </div>
       );
@@ -86,7 +86,7 @@ const getAssistantMessage = ({
             restartSearch({ searchType: SearchType.KEYWORD });
           }}
         >
-          switch?
+          try Keyword search?
         </span>
       </div>
     );
