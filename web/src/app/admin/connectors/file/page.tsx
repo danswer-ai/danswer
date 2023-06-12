@@ -86,24 +86,24 @@ export default function File() {
         these files will be searchable via Danswer! Currently only <i>.txt</i>{" "}
         and <i>.zip</i> files (containing only <i>.txt</i> files) are supported.
       </p>
-      <p className="text-sm mb-3">
-        <b>NOTE:</b> if a file is accessible via a link, you can add a line at
-        the very beginning of the file that looks like:
+      <div className="text-sm mb-3">
+        <b>NOTE:</b> if the original document is accessible via a link, you can
+        add a line at the very beginning of the file that looks like:
         <div className="flex my-2">
-          <div className="mx-auto">
+          <div className="mx-auto font-bold">
             #DANSWER_METADATA={"{"}&quot;link&quot;: &quot;{"<LINK>"}&quot;{"}"}
           </div>
         </div>{" "}
         where <i>{"<LINK>"}</i> is the link to the file. This will enable
-        Danswer to link users to the original document when they click on the search result.
-        More details on this can be found in the{" "}
+        Danswer to link users to the original document when they click on the
+        search result. More details on this can be found in the{" "}
         <a
           href="https://docs.danswer.dev/connectors/file"
           className="text-blue-500"
         >
           documentation.
         </a>
-      </p>
+      </div>
       <div className="flex">
         <div className="mx-auto max-w-3xl w-full">
           <FileUpload
