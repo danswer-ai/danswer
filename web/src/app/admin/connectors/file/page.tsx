@@ -83,7 +83,27 @@ export default function File() {
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">Upload Files</h2>
       <p className="text-sm mb-2">
         Specify files below, click the <b>Upload</b> button, and the contents of
-        these files will be searchable via Danswer!
+        these files will be searchable via Danswer! Currently only <i>.txt</i>{" "}
+        and <i>.zip</i> files (containing only <i>.txt</i> files) are supported.
+      </p>
+      <p className="text-sm mb-3">
+        <b>NOTE:</b> if a file is accessible via a link, you can add a line at
+        the very beginning of the file that looks like:
+        <div className="flex my-2">
+          <div className="mx-auto">
+            #DANSWER_METADATA={"{"}"link": "{"<LINK>"}"{"}"}
+          </div>
+        </div>{" "}
+        where <i>{"<LINK>"}</i> is the link to the file. This will enable
+        Danswer to link users to the file when they click on the search result
+        or if the document is quoted when giving an answer. More details on this
+        can be found in the{" "}
+        <a
+          href="https://docs.danswer.dev/connectors/file"
+          className="text-blue-500"
+        >
+          documentation.
+        </a>
       </p>
       <div className="flex">
         <div className="mx-auto max-w-3xl w-full">
