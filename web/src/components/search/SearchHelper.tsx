@@ -45,8 +45,8 @@ const getAssistantMessage = ({
   ) {
     return (
       <div>
-        This doesn't seem like a question that's a great fit for an Agent
-        answer. Do you still want to have{" "}
+        This doesn&apos;t seem like a question that&apos;s a great fit for an
+        Agent answer. Do you still want to have{" "}
         <span className={CLICKABLE_CLASS_NAME} onClick={forceQADisplay}>
           GPT give a response?
         </span>

@@ -48,9 +48,9 @@ export const SearchSteps: React.FC<Props> = ({
 
   return (
     <div className="flex flex-col text-sm text-gray-200">
-      {steps.map(([message, isComplete]) => {
+      {steps.map(([message, isComplete], ind) => {
         return (
-          <div className="flex my-auto">
+          <div key={ind} className="flex my-auto">
             <div className="mr-2">
               {isComplete ? (
                 <CheckCircle className="text-emerald-600" />
