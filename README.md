@@ -21,13 +21,14 @@
 ## 💃 Features
 * Direct QA powered by Generative AI models with answers backed by quotes and source links.
 * Intelligent Document Retrieval (Semantic Search/Reranking) using the latest LLMs.
+* An AI Helper backed by a custom Deep Learning model to interpret user intent.
 * User authentication with document level access management.
+* Connectors to Slack, GitHub, GoogleDrive, Confluence, local files, and web scrapping, with more to come.
 * Management Dashboard to manage connectors and set up features such as live update fetching.
-* Connectors to Slack, GitHub, GoogleDrive, Confluence, and Web scrapping, with more to come.
 * One line Docker Compose deployment of all services to host Danswer anywhere.
 
 ## Upcoming
 * Chat/Conversation support.
-* Support for custom endpoints for Generative AI models or even self-host options.
-* Custom Deep Learning NLP model to classify user intent to customize prompts for code generation, summarization, etc.
+* Support custom endpoints for Generative AI models or even self-host options.
 * Templates to easily build custom connectors.
+* Personalized search
