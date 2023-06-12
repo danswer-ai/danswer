@@ -63,8 +63,8 @@ def extract_answer_quotes_freeform(
     )
 
     # If model just gives back the uncertainty pattern to signify answer isn't found or nothing at all
-    if null_answer_check == UNCERTAINTY_PAT or not null_answer_check:
-        return None, None
+    # if null_answer_check == UNCERTAINTY_PAT or not null_answer_check:
+    #     return None, None
 
     # If no answer section, don't care about the quote
     if answer_raw.lower().strip().startswith(QUOTE_PAT.lower()):

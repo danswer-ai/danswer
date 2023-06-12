@@ -58,9 +58,10 @@ export const searchRequestStreamed = async ({
   updateSuggestedSearchType,
   updateSuggestedFlowType,
   selectedSearchType,
+  offset,
 }: SearchRequestArgs) => {
   let useKeyword = null;
-  if (selectedSearchType) {
+  if (selectedSearchType !== SearchType.AUTOMATIC) {
     useKeyword = selectedSearchType === SearchType.KEYWORD ? true : false;
   }
 
@@ -83,6 +84,7 @@ export const searchRequestStreamed = async ({
               ],
             }
           : {}),
+        offset: offset,
       }),
       headers: {
         "Content-Type": "application/json",
@@ -124,12 +126,15 @@ export const searchRequestStreamed = async ({
           // we're now looking for quotes
           updateQuotes({});
           if (
+            answer &&
             !answer.endsWith(".") &&
             !answer.endsWith("?") &&
             !answer.endsWith("!")
           ) {
             answer += ".";
             updateCurrentAnswer(answer);
+          } else {
+            updateCurrentAnswer("");
           }
         } else {
           if (Object.hasOwn(chunk, "top_documents")) {
@@ -140,7 +145,7 @@ export const searchRequestStreamed = async ({
               );
               updateDocs(relevantDocuments);
             }
-            console.log(chunk);
+
             if (chunk.predicted_flow) {
               updateSuggestedFlowType(chunk.predicted_flow);
             }

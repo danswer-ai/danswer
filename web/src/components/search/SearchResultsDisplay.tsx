@@ -7,6 +7,7 @@ import {
   SearchResponse,
   Quote,
   FlowType,
+  SearchDefaultOverrides,
 } from "@/lib/search/interfaces";
 
 const removeDuplicateDocs = (documents: DanswerDocument[]) => {
@@ -27,11 +28,13 @@ const removeDuplicateDocs = (documents: DanswerDocument[]) => {
 interface SearchResultsDisplayProps {
   searchResponse: SearchResponse | null;
   isFetching: boolean;
+  defaultOverrides: SearchDefaultOverrides;
 }
 
 export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
   searchResponse,
   isFetching,
+  defaultOverrides,
 }) => {
   if (!searchResponse) {
     return null;
@@ -63,48 +66,50 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
       }
     });
   }
-  console.log(searchResponse.suggestedFlowType);
+
   return (
     <>
-      {answer && searchResponse.suggestedFlowType !== FlowType.SEARCH && (
-        <div className="h-56">
-          <div className="p-4 border-2 rounded-md border-gray-700">
-            <div className="flex mb-1">
-              <h2 className="text font-bold my-auto">AI Answer</h2>
+      {answer &&
+        (searchResponse.suggestedFlowType !== FlowType.SEARCH ||
+          defaultOverrides.forceDisplayQA) && (
+          <div className="min-h-[14rem]">
+            <div className="p-4 border-2 rounded-md border-gray-700">
+              <div className="flex mb-1">
+                <h2 className="text font-bold my-auto">AI Answer</h2>
+              </div>
+              <p className="mb-4">{answer}</p>
+
+              {quotes !== null && (
+                <>
+                  <h2 className="text-sm font-bold mb-2">Sources</h2>
+                  {isFetching && dedupedQuotes.length === 0 ? (
+                    <LoadingAnimation text="Finding quotes" size="text-sm" />
+                  ) : (
+                    <div className="flex">
+                      {dedupedQuotes.map((quoteInfo) => (
+                        <a
+                          key={quoteInfo.document_id}
+                          className="p-2 ml-1 border border-gray-800 rounded-lg text-sm flex max-w-[280px] hover:bg-gray-800"
+                          href={quoteInfo.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {getSourceIcon(quoteInfo.source_type, "20")}
+                          <p className="truncate break-all ml-2">
+                            {quoteInfo.semantic_identifier ||
+                              quoteInfo.document_id}
+                          </p>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-            <p className="mb-4">{answer}</p>
-
-            {quotes !== null && (
-              <>
-                <h2 className="text-sm font-bold mb-2">Sources</h2>
-                {isFetching && dedupedQuotes.length === 0 ? (
-                  <LoadingAnimation text="Finding quotes" size="text-sm" />
-                ) : (
-                  <div className="flex">
-                    {dedupedQuotes.map((quoteInfo) => (
-                      <a
-                        key={quoteInfo.document_id}
-                        className="p-2 ml-1 border border-gray-800 rounded-lg text-sm flex max-w-[280px] hover:bg-gray-800"
-                        href={quoteInfo.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {getSourceIcon(quoteInfo.source_type, "20")}
-                        <p className="truncate break-all ml-2">
-                          {quoteInfo.semantic_identifier ||
-                            quoteInfo.document_id}
-                        </p>
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
           </div>
-        </div>
-      )}
+        )}
 
-      {!answer && !isFetching && (
+      {(answer === null || answer === undefined) && !isFetching && (
         <div className="flex">
           <InfoIcon
             size="20"

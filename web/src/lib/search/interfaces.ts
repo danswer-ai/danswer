@@ -41,6 +41,11 @@ export interface Source {
   internalName: ValidSources;
 }
 
+export interface SearchDefaultOverrides {
+  forceDisplayQA: boolean;
+  offset: number;
+}
+
 export interface SearchRequestArgs {
   query: string;
   sources: Source[];
@@ -50,4 +55,10 @@ export interface SearchRequestArgs {
   updateSuggestedSearchType: (searchType: SearchType) => void;
   updateSuggestedFlowType: (flowType: FlowType) => void;
   selectedSearchType: SearchType | null;
+  offset: number | null;
+}
+
+export interface SearchRequestOverrides {
+  searchType?: SearchType;
+  offset?: number;
 }

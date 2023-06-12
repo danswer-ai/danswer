@@ -13,10 +13,18 @@ import {
   Source,
   FlowType,
   SearchType,
+  SearchDefaultOverrides,
+  SearchRequestOverrides,
 } from "@/lib/search/interfaces";
 import { searchRequestStreamed } from "@/lib/search/streaming";
 import Cookies from "js-cookie";
 import { SearchHelper } from "./SearchHelper";
+import { SearchSteps } from "./SearchSteps";
+
+const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
+  forceDisplayQA: false,
+  offset: 0,
+};
 
 interface SearchSectionProps {
   connectors: Connector<any>[];
@@ -27,6 +35,9 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
   connectors,
   defaultSearchType,
 }) => {
+  // Search Bar
+  const [query, setQuery] = useState<string>("");
+
   // Search
   const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(
     null
@@ -40,7 +51,11 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
   const [selectedSearchType, setSelectedSearchType] =
     useState<SearchType>(defaultSearchType);
 
-  // helpers
+  // Overrides for default behavior that only last a single query
+  const [defaultOverrides, setDefaultOverrides] =
+    useState<SearchDefaultOverrides>(SEARCH_DEFAULT_OVERRIDES_START);
+
+  // Helpers
   const initialSearchResponse: SearchResponse = {
     answer: null,
     quotes: null,
@@ -74,9 +89,31 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
       suggestedFlowType,
     }));
 
+  const onSearch = async ({
+    searchType,
+    offset,
+  }: SearchRequestOverrides = {}) => {
+    setIsFetching(true);
+    setSearchResponse(initialSearchResponse);
+
+    await searchRequestStreamed({
+      query,
+      sources,
+      updateCurrentAnswer,
+      updateQuotes,
+      updateDocs,
+      updateSuggestedSearchType,
+      updateSuggestedFlowType,
+      selectedSearchType: searchType ?? selectedSearchType,
+      offset: offset ?? defaultOverrides.offset,
+    });
+
+    setIsFetching(false);
+  };
+
   return (
-    <div className="relative mx-auto">
-      <div className="absolute left-0 ml-12 block">
+    <div className="relative max-w-[2000px] xl:max-w-[1400px] mx-auto">
+      <div className="absolute left-0 hidden 2xl:block w-64">
         {connectors.length > 0 && (
           <SourceSelector
             selectedSources={sources}
@@ -84,47 +121,62 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
             existingSources={connectors.map((connector) => connector.source)}
           />
         )}
-      </div>
-      <div className="w-[1000px] mx-auto flex">
-        <div className="w-[800px] mx-auto">
-          <SearchTypeSelector
+
+        <div className="mt-10">
+          <SearchHelper
+            isFetching={isFetching}
+            searchResponse={searchResponse}
             selectedSearchType={selectedSearchType}
-            setSelectedSearchType={(searchType) => {
-              Cookies.set("searchType", searchType);
-              setSelectedSearchType(searchType);
+            setSelectedSearchType={setSelectedSearchType}
+            defaultOverrides={defaultOverrides}
+            restartSearch={onSearch}
+            forceQADisplay={() =>
+              setDefaultOverrides((prevState) => ({
+                ...(prevState || SEARCH_DEFAULT_OVERRIDES_START),
+                forceDisplayQA: true,
+              }))
+            }
+            setOffset={(offset) => {
+              setDefaultOverrides((prevState) => ({
+                ...(prevState || SEARCH_DEFAULT_OVERRIDES_START),
+                offset,
+              }));
             }}
           />
-
-          <SearchBar
-            onSearch={async (query) => {
-              setIsFetching(true);
-              setSearchResponse(initialSearchResponse);
-
-              await searchRequestStreamed({
-                query,
-                sources,
-                updateCurrentAnswer,
-                updateQuotes,
-                updateDocs,
-                updateSuggestedSearchType,
-                updateSuggestedFlowType,
-                selectedSearchType,
-              });
-
-              setIsFetching(false);
-            }}
-          />
-
-          <div className="mt-2">
-            <SearchResultsDisplay
-              searchResponse={searchResponse}
-              isFetching={isFetching}
-            />
-          </div>
         </div>
-        
-        <div className="ml-4">
-        <SearchHelper searchResponse={searchResponse}/>
+      </div>
+      <div className="w-[800px] mx-auto">
+        <SearchTypeSelector
+          selectedSearchType={selectedSearchType}
+          setSelectedSearchType={(searchType) => {
+            Cookies.set("searchType", searchType);
+            setSelectedSearchType(searchType);
+          }}
+        />
+
+        <SearchBar
+          query={query}
+          setQuery={setQuery}
+          onSearch={async () => {
+            setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
+            await onSearch({ offset: 0 });
+          }}
+        />
+
+        <div className="mt-2">
+          {/* Doesn't fit in well right now, can try and add this in later */}
+          {/* <SearchSteps
+            isFetching={isFetching}
+            searchResponse={searchResponse}
+            selectedSearchType={selectedSearchType}
+            defaultOverrides={defaultOverrides}
+          /> */}
+
+          <SearchResultsDisplay
+            searchResponse={searchResponse}
+            isFetching={isFetching}
+            defaultOverrides={defaultOverrides}
+          />
         </div>
       </div>
     </div>

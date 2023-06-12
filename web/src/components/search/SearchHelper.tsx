@@ -1,39 +1,142 @@
-import { SearchResponse, SearchType } from "@/lib/search/interfaces";
-import { BirdIcon } from "../icons/icons";
+import {
+  FlowType,
+  SearchDefaultOverrides,
+  SearchRequestOverrides,
+  SearchResponse,
+  SearchType,
+} from "@/lib/search/interfaces";
+import { BrainIcon } from "../icons/icons";
+
+const CLICKABLE_CLASS_NAME = "text-blue-600 cursor-pointer";
+const NUM_DOCUMENTS_FED_TO_GPT = 5;
+
+interface Props {
+  isFetching: boolean;
+  searchResponse: SearchResponse | null;
+  selectedSearchType: SearchType;
+  setSelectedSearchType: (searchType: SearchType) => void;
+  defaultOverrides: SearchDefaultOverrides;
+  restartSearch: (overrides?: SearchRequestOverrides) => void;
+  forceQADisplay: () => void;
+  setOffset: (offset: number) => void;
+}
 
 const getAssistantMessage = ({
+  isFetching,
   searchResponse,
   selectedSearchType,
-}: Props) => {
-  if (searchResponse?.answer) {
-    return "HI!"
+  setSelectedSearchType,
+  defaultOverrides,
+  restartSearch,
+  forceQADisplay,
+  setOffset,
+}: Props): string | JSX.Element | null => {
+  if (
+    !searchResponse ||
+    !searchResponse.suggestedFlowType ||
+    searchResponse.answer === null
+  ) {
+    return null;
   }
+
+  if (
+    searchResponse.suggestedFlowType === FlowType.SEARCH &&
+    !defaultOverrides.forceDisplayQA
+  ) {
+    return (
+      <div>
+        This doesn't seem like a question that's a great fit for an Agent
+        answer. Do you still want to have{" "}
+        <span className={CLICKABLE_CLASS_NAME} onClick={forceQADisplay}>
+          GPT give a response?
+        </span>
+      </div>
+    );
+  }
+
+  if (
+    selectedSearchType !== SearchType.AUTOMATIC &&
+    searchResponse.suggestedSearchType !== selectedSearchType
+  ) {
+    if (searchResponse.suggestedSearchType === SearchType.SEMANTIC) {
+      return (
+        <div>
+          Your query looks more like natural language, Semantic Search may yield
+          better results. Would you like to{" "}
+          <span
+            className={CLICKABLE_CLASS_NAME}
+            onClick={() => {
+              setSelectedSearchType(SearchType.SEMANTIC);
+              restartSearch({ searchType: SearchType.SEMANTIC });
+            }}
+          >
+            switch?
+          </span>
+        </div>
+      );
+    }
+    return (
+      <div>
+        Your query seems to be a better fit for keyword search. Would you like
+        to{" "}
+        <span
+          className={CLICKABLE_CLASS_NAME}
+          onClick={() => {
+            setSelectedSearchType(SearchType.KEYWORD);
+            restartSearch({ searchType: SearchType.KEYWORD });
+          }}
+        >
+          switch?
+        </span>
+      </div>
+    );
+  }
+
+  if (
+    (searchResponse.suggestedFlowType === FlowType.QUESTION_ANSWER ||
+      defaultOverrides.forceDisplayQA) &&
+    !isFetching &&
+    searchResponse.answer === ""
+  ) {
+    return (
+      <div>
+        GPT was unable to find an answer in the most relevant{" "}
+        <b>{` ${(defaultOverrides.offset + 1) * NUM_DOCUMENTS_FED_TO_GPT} `}</b>{" "}
+        documents. Do you want to{" "}
+        <span
+          className={CLICKABLE_CLASS_NAME}
+          onClick={() => {
+            const newOffset = defaultOverrides.offset + 1;
+            setOffset(newOffset);
+            restartSearch({
+              offset: newOffset,
+            });
+          }}
+        >
+          keep searching?
+        </span>
+      </div>
+    );
+  }
+
   return null;
 };
 
-interface Props {
-  searchResponse: SearchResponse | null;
-  selectedSearchType: SearchType;
-}
-
-export const SearchHelper: React.FC<Props> = ({
-  searchResponse,
-  selectedSearchType,
-}) => {
-  const message = getAssistantMessage({ searchResponse, selectedSearchType });
+export const SearchHelper: React.FC<Props> = (props) => {
+  const message = getAssistantMessage(props);
 
   if (!message) {
     return null;
   }
 
   return (
-    <div className="border border-gray-600 rounded p-4 w-64">
+    <div className="border border-gray-800 rounded p-3 text-sm">
       <div className="flex">
-        <BirdIcon size="20" />
+        <BrainIcon size="20" />
         <b className="ml-2">AI Assistant</b>
       </div>
 
-      <p className="text-sm">{message}</p>
+      <p className="mt-1 text-gray-300">{message}</p>
     </div>
   );
 };
