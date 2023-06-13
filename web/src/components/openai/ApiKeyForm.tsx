@@ -22,7 +22,7 @@ export const ApiKeyForm = ({ handleResponse }: Props) => {
         initialValues={{ apiKey: "" }}
         onSubmit={async ({ apiKey }, formikHelpers) => {
           const response = await fetch(OPENAI_API_KEY_URL, {
-            method: "POST",
+            method: "PUT",
             headers: {
               "Content-Type": "application/json",
             },
