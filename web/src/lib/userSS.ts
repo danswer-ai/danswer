@@ -14,19 +14,24 @@ export const getGoogleOAuthUrlSS = async (): Promise<string> => {
 
 // should be used server-side only
 export const getCurrentUserSS = async (): Promise<User | null> => {
-  const response = await fetch(buildUrl("/users/me"), {
-    credentials: "include",
-    next: { revalidate: 0 },
-    headers: {
-      cookie: cookies()
-        .getAll()
-        .map((cookie) => `${cookie.name}=${cookie.value}`)
-        .join("; "),
-    },
-  });
-  if (!response.ok) {
+  try {
+    const response = await fetch(buildUrl("/users/me"), {
+      credentials: "include",
+      next: { revalidate: 0 },
+      headers: {
+        cookie: cookies()
+          .getAll()
+          .map((cookie) => `${cookie.name}=${cookie.value}`)
+          .join("; "),
+      },
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const user = await response.json();
+    return user;
+  } catch (e) {
+    console.log(`Error fetching user: ${e}`);
     return null;
   }
-  const user = await response.json();
-  return user;
 };

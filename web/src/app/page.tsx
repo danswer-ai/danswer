@@ -18,19 +18,27 @@ export default async function Home() {
     }),
   ];
 
-  const results = await Promise.all(tasks);
+  // catch cases where the backend is completely unreachable here
+  // without try / catch, will just raise an exception and the page
+  // will not render
+  let results: (User | Response | null)[] = [null, null];
+  try {
+    results = await Promise.all(tasks);
+  } catch (e) {
+    console.log(`Some fetch failed for the main search page - ${e}`);
+  }
   const user = results[0] as User | null;
-  const connectorsResponse = results[1] as Response;
+  const connectorsResponse = results[1] as Response | null;
 
   if (!DISABLE_AUTH && !user) {
     return redirect("/auth/login");
   }
 
   let connectors: Connector<any>[] = [];
-  if (connectorsResponse.ok) {
+  if (connectorsResponse?.ok) {
     connectors = await connectorsResponse.json();
   } else {
-    console.log(`Failed to fetch connectors - ${connectorsResponse.status}`);
+    console.log(`Failed to fetch connectors - ${connectorsResponse?.status}`);
   }
 
   // needs to be done in a non-client side component due to nextjs
