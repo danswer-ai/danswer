@@ -71,7 +71,7 @@ prod cluster**
    - `kubectl apply -f .`
 
 2. To remove Danswer, run:
-   - **WARNING, this will also erase your indexed data and users**'
+   - **WARNING, this will also erase your indexed data and users**
    - `kubectl delete -f .`
    - To not delete the persistent volumes (Document indexes and Users), specify the specific `.yaml` files instead of 
    `.` without specifying delete on persistent-volumes.yaml.
