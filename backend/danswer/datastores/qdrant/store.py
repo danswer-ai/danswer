@@ -1,8 +1,7 @@
-import uuid
+from uuid import UUID
 
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import InferenceChunk
-from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.constants import ALLOWED_USERS
@@ -27,7 +26,7 @@ logger = setup_logger()
 
 
 def _build_qdrant_filters(
-    user_id: int | None, filters: list[IndexFilter] | None
+    user_id: UUID | None, filters: list[IndexFilter] | None
 ) -> list[FieldCondition]:
     filter_conditions: list[FieldCondition] = []
     # Permissions filter
@@ -78,7 +77,7 @@ class QdrantIndex(VectorIndex):
         self.collection = collection
         self.client = get_qdrant_client()
 
-    def index(self, chunks: list[EmbeddedIndexChunk], user_id: int | None) -> bool:
+    def index(self, chunks: list[EmbeddedIndexChunk], user_id: UUID | None) -> bool:
         return index_qdrant_chunks(
             chunks=chunks,
             user_id=user_id,
@@ -90,7 +89,7 @@ class QdrantIndex(VectorIndex):
     def semantic_retrieval(
         self,
         query: str,
-        user_id: int | None,
+        user_id: UUID | None,
         filters: list[IndexFilter] | None,
         num_to_retrieve: int = NUM_RETURNED_HITS,
         page_size: int = NUM_RETURNED_HITS,
@@ -106,7 +105,7 @@ class QdrantIndex(VectorIndex):
 
         page_offset = 0
         found_inference_chunks: list[InferenceChunk] = []
-        found_chunk_uuids: set[uuid.UUID] = set()
+        found_chunk_uuids: set[UUID] = set()
         while len(found_inference_chunks) < num_to_retrieve:
             try:
                 hits = self.client.search(

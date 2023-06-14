@@ -1,4 +1,4 @@
-upstream app_server {
+upstream api_server {
     # fail_timeout=0 means we always retry an upstream even if it failed
     # to return a good HTTP response
 
@@ -35,7 +35,7 @@ server {
         # we don't want nginx trying to do something clever with
         # redirects, we set the Host: header above already.
         proxy_redirect off;
-        proxy_pass http://app_server;
+        proxy_pass http://api_server;
     }
 
     location / {

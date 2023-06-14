@@ -1,4 +1,5 @@
 from functools import partial
+from uuid import UUID
 
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.configs.constants import ALLOWED_GROUPS
@@ -86,7 +87,7 @@ def delete_qdrant_doc_chunks(
 
 def index_qdrant_chunks(
     chunks: list[EmbeddedIndexChunk],
-    user_id: int | None,
+    user_id: UUID | None,
     collection: str,
     client: QdrantClient | None = None,
     batch_upsert: bool = True,

@@ -2,6 +2,7 @@ import datetime
 from enum import Enum as PyEnum
 from typing import Any
 from typing import List
+from uuid import UUID
 
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DocumentSource
@@ -105,7 +106,7 @@ class Credential(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     credential_json: Mapped[dict[str, Any]] = mapped_column(postgresql.JSONB())
-    user_id: Mapped[int | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     public_doc: Mapped[bool] = mapped_column(Boolean, default=False)
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

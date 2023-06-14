@@ -1,7 +1,7 @@
 FROM python:3.11-slim-bullseye
 
 RUN apt-get update \
-    && apt-get install -y git cmake pkg-config libprotobuf-c-dev protobuf-compiler \ 
+    && apt-get install -y git cmake pkg-config libprotobuf-c-dev protobuf-compiler \
        libprotobuf-dev libgoogle-perftools-dev libpq-dev build-essential cron curl \
        supervisor \
     && rm -rf /var/lib/apt/lists/*

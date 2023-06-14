@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: background-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: background
+  template:
+    metadata:
+      labels:
+        app: background
+    spec:
+      containers:
+      - name: background
+        image: danswer/danswer-background:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POSTGRES_HOST
+          value: relational-db-service
+        - name: QDRANT_HOST
+          value: vector-db-service
+        - name: TYPESENSE_HOST
+          value: search-engine-service
+        - name: TYPESENSE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: danswer-secrets
+              key: typesense_api_key
+        volumeMounts:
+        - name: dynamic-storage
+          mountPath: /home/storage
+        - name: file-connector-storage
+          mountPath: /home/file_connector_storage
+      volumes:
+      - name: dynamic-storage
+        persistentVolumeClaim:
+          claimName: dynamic-pvc
+      - name: file-connector-storage
+        persistentVolumeClaim:
+          claimName: file-connector-pvc
