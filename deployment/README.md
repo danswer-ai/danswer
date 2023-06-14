@@ -1,32 +1,74 @@
-This serves as an example for how to deploy everything on a single machine. This is
-not optimal, but can get you started easily and cheaply. To run:
+# Deploying Danswer
+The two options provided here are the easiest ways to get Danswer up and running.
+
+- Docker Compose is simpler and default values are already preset to run right out of the box with a single command.
+As everything is running on a single machine, this may not be as scalable depending on your hardware, traffic and needs.
+
+- Kubernetes deployment is also provided. Depending on your existing infrastructure, this may be more suitable for
+production deployment but there are a few caveats.
+  - User auth is turned on by default for Kubernetes (with the assumption this is for production use)
+  so you must either update the deployments to turn off user auth or provide the values shown in the example
+  secrets.yaml file.
+  - The example provided assumes a blank slate for existing Kubernetes deployments/services. You may need to adjust the
+  deployments or services according to your setup. This may require existing Kubernetes knowledge or additional
+  setup time.
+
+All the features of Danswer are fully available regardless of the deployment option.
+
+For information on setting up connectors, check out https://docs.danswer.dev/connectors/overview
 
 
-1. Run one of the docker compose commands below depending on your environment:
-   - For Local:
-     - `docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build`
-     - This will start Web/API servers, Postgres (backend DB), Qdrant (vector DB), and the background indexing job.
-     - Downloading packages/requirements may take 20+ minutes depending on your internet connection.
+## Docker Compose:
+Docker Compose provides the easiest way to get Danswer up and running.
+
+Requirements: Docker and docker compose
+
+1. To run Danswer, navigate to `docker_compose` directory and run the following:
+   - `docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build`
+   - This will start Web/API servers, Postgres (backend DB), Qdrant (vector DB), and the background indexing job.
+   - Downloading packages/requirements may take 20+ minutes depending on your internet connection and whether it needs
+   to install packages for GPU.
 
 
-2. To shut down the deployment run (use stop to stop containers, down to remove containers):
-   - For Local:
-     - `docker compose -f docker-compose.dev.yml -p danswer-stack stop`
+2. To shut down the deployment, run:
+   - To stop the containers: `docker compose -f docker-compose.dev.yml -p danswer-stack stop`
+   - To delete the containers: `docker compose -f docker-compose.dev.yml -p danswer-stack down`
 
 
-3. To completely remove Danswer (**WARNING, this will also erase your indexed data and all users**) run:
-   - For Local:
-     - `docker compose -f docker-compose.dev.yml -p danswer-stack down -v`
+3. To completely remove Danswer run:
+   - **WARNING, this will also erase your indexed data and users**
+   - `docker compose -f docker-compose.dev.yml -p danswer-stack down -v`
 
 
 Additional steps for setting up for Prod:
 
 1. Set up a `.env` file in this directory with relevant environment variables.
    - Refer to env.dev.template and env.prod.template
-
+   - To turn on user auth, set:
+     - ENABLE_OAUTH=True 
+     - GOOGLE_OAUTH_CLIENT_ID=\<your GCP API client ID\>
+     - GOOGLE_OAUTH_CLIENT_SECRET=\<associated client secret\>
+     - Refer to https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid
 
 2. Set up https:
    - Set up a `.env.nginx` file in this directory based on `env.nginx.template`.
    - `chmod +x init-letsencrypt.sh` + `./init-letsencrypt.sh` to set up https certificate.
 
 3. Follow the above steps but replacing dev with prod.
+
+
+## Kubernetes:
+Depending on your deployment needs Kubernetes may be more suitable. The yamls provided will work out of the box but the
+intent is for you to customize the deployment to fit your own needs. There is no data replication or auto-scaling built
+in for the provided example.
+
+Requirements: a Kubernetes cluster and kubectl
+
+1. To run Danswer, navigate to `kubernetes` directory and run the following:
+   - `kubectl apply -f .`
+
+2. To remove Danswer, run:
+   - **WARNING, this will also erase your indexed data and users**'
+   - `kubectl delete -f .`
+   - To not delete the persistent volumes (Document indexes and Users), specify the specific `.yaml` files instead of 
+   `.` without specifying delete on persistent-volumes.yaml.

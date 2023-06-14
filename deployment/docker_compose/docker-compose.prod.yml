@@ -2,15 +2,13 @@ version: '3'
 services:
   api_server:
     build:
-      context: ../backend
+      context: ../../backend
       dockerfile: Dockerfile
     depends_on:
       - relational_db
       - vector_db
       - search_engine
     restart: always
-    ports:
-      - "8080:8080"
     env_file:
       - .env
     environment:
@@ -18,13 +16,12 @@ services:
       - QDRANT_HOST=vector_db
       - TYPESENSE_HOST=search_engine
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
-      - DISABLE_AUTH=True
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
   background:
     build:
-      context: ../backend
+      context: ../../backend
       dockerfile: Dockerfile.background
     depends_on:
       - relational_db
@@ -35,14 +32,12 @@ services:
     environment:
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
-      - TYPESENSE_HOST=search_engine
-      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
   web_server:
     build:
-      context: ../web
+      context: ../../web
       dockerfile: Dockerfile
     depends_on:
       - api_server
@@ -51,13 +46,10 @@ services:
       - .env
     environment:
       - INTERNAL_URL=http://api_server:8080
-      - DISABLE_AUTH=True
   relational_db:
     image: postgres:15.2-alpine
     restart: always
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+    # POSTGRES_USER and POSTGRES_PASSWORD should be set in .env file
     env_file:
       - .env
     ports:
@@ -69,15 +61,13 @@ services:
     restart: always
     env_file:
       - .env
-    ports:
-      - "6333:6333"
     volumes:
       - qdrant_volume:/qdrant/storage
   search_engine:
     image: typesense/typesense:0.24.1
     restart: always
+    # TYPESENSE_API_KEY must be set in .env file
     environment:
-      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
       - TYPESENSE_DATA_DIR=/typesense/storage
     env_file:
       - .env
@@ -88,19 +78,26 @@ services:
   nginx:
     image: nginx:1.23.4-alpine
     restart: always
-    depends_on:
-      - api_server
-      - web_server
-    environment:
-      - DOMAIN=localhost
     ports:
       - "80:80"
-      - "3000:80"  # allow for localhost:3000 usage, since that is the norm
+      - "443:443"
     volumes:
-      - ./data/nginx:/etc/nginx/conf.d
+      - ../data/nginx:/etc/nginx/conf.d
+      - ../data/certbot/conf:/etc/letsencrypt
+      - ../data/certbot/www:/var/www/certbot
     command: > 
-      /bin/sh -c "envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template.dev > /etc/nginx/conf.d/app.conf 
+      /bin/sh -c "envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template > /etc/nginx/conf.d/app.conf 
       && while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
+    env_file:
+      - .env.nginx
+  # follows https://pentacent.medium.com/nginx-and-lets-encrypt-with-docker-in-less-than-5-minutes-b4b8a60d3a71
+  certbot:
+    image: certbot/certbot
+    restart: always
+    volumes:
+      - ../data/certbot/conf:/etc/letsencrypt
+      - ../data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 volumes:
   local_dynamic_storage:
   file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them

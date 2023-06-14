@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-server-service
+spec:
+  selector:
+    app: api-server
+  ports:
+    - name: api-server-port
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-server-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-server
+  template:
+    metadata:
+      labels:
+        app: api-server
+    spec:
+      containers:
+      - name: api-server
+        image: danswer/danswer-api-server:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        env:
+        - name: POSTGRES_HOST
+          value: relational-db-service
+        - name: QDRANT_HOST
+          value: vector-db-service
+        - name: TYPESENSE_HOST
+          value: search-engine-service
+        - name: TYPESENSE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: danswer-secrets
+              key: typesense_api_key
+        - name: GOOGLE_OAUTH_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: danswer-secrets
+              key: google_oauth_client_id
+        - name: GOOGLE_OAUTH_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: danswer-secrets
+              key: google_oauth_client_secret
+        volumeMounts:
+        - name: dynamic-storage
+          mountPath: /home/storage
+        - name: file-connector-storage
+          mountPath: /home/file_connector_storage
+      volumes:
+      - name: dynamic-storage
+        persistentVolumeClaim:
+          claimName: dynamic-pvc
+      - name: file-connector-storage
+        persistentVolumeClaim:
+          claimName: file-connector-pvc
