@@ -1,14 +1,14 @@
 interface Props {
-  onClick: () => void;
   children: JSX.Element | string;
+  onClick?: () => void;
   disabled?: boolean;
   fullWidth?: boolean;
   className?: string;
 }
 
 export const Button = ({
-  onClick,
   children,
+  onClick,
   disabled = false,
   fullWidth = false,
   className = "",
