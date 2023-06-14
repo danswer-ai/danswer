@@ -63,7 +63,7 @@ def create_credential(
 ) -> ObjectCreationIdResponse:
     credential = Credential(
         credential_json=credential_data.credential_json,
-        user_id=int(user.id) if user else None,
+        user_id=user.id if user else None,
         public_doc=credential_data.public_doc,
     )
     db_session.add(credential)
@@ -83,7 +83,7 @@ def update_credential(
         return None
 
     credential.credential_json = credential_data.credential_json
-    credential.user_id = int(user.id) if user is not None else None
+    credential.user_id = user.id if user is not None else None
     credential.public_doc = credential_data.public_doc
 
     db_session.commit()

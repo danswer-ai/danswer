@@ -1,4 +1,5 @@
 import json
+from uuid import UUID
 
 import numpy
 from danswer.chunking.models import EmbeddedIndexChunk
@@ -58,7 +59,7 @@ def semantic_reranking(
 @log_function_time()
 def retrieve_ranked_documents(
     query: str,
-    user_id: int | None,
+    user_id: UUID | None,
     filters: list[IndexFilter] | None,
     datastore: VectorIndex,
     num_hits: int = NUM_RETURNED_HITS,

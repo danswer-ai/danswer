@@ -40,7 +40,7 @@ Requirements: Docker and docker compose
    - `docker compose -f docker-compose.dev.yml -p danswer-stack down -v`
 
 
-Additional steps for setting up for Prod:
+Additional steps for user auth and https if you do want to use Docker Compose for production:
 
 1. Set up a `.env` file in this directory with relevant environment variables.
    - Refer to env.dev.template and env.prod.template
@@ -63,6 +63,9 @@ intent is for you to customize the deployment to fit your own needs. There is no
 in for the provided example.
 
 Requirements: a Kubernetes cluster and kubectl
+
+**NOTE: This setup does not explicitly enable https, the assumption is you would have this already set up for your
+prod cluster**
 
 1. To run Danswer, navigate to `kubernetes` directory and run the following:
    - `kubectl apply -f .`

@@ -1,6 +1,7 @@
 import json
 from functools import partial
 from typing import Any
+from uuid import UUID
 
 import typesense  # type: ignore
 from danswer.chunking.models import EmbeddedIndexChunk
@@ -101,7 +102,7 @@ def delete_typesense_doc_chunks(
 
 def index_typesense_chunks(
     chunks: list[IndexChunk | EmbeddedIndexChunk],
-    user_id: int | None,
+    user_id: UUID | None,
     collection: str,
     client: typesense.Client | None = None,
     batch_upsert: bool = True,
@@ -171,7 +172,7 @@ def index_typesense_chunks(
 
 
 def _build_typesense_filters(
-    user_id: int | None, filters: list[IndexFilter] | None
+    user_id: UUID | None, filters: list[IndexFilter] | None
 ) -> str:
     filter_str = ""
 
@@ -205,7 +206,7 @@ class TypesenseIndex(KeywordIndex):
         self.collection = collection
         self.ts_client = get_typesense_client()
 
-    def index(self, chunks: list[IndexChunk], user_id: int | None) -> bool:
+    def index(self, chunks: list[IndexChunk], user_id: UUID | None) -> bool:
         return index_typesense_chunks(
             chunks=chunks,
             user_id=user_id,
@@ -216,7 +217,7 @@ class TypesenseIndex(KeywordIndex):
     def keyword_search(
         self,
         query: str,
-        user_id: int | None,
+        user_id: UUID | None,
         filters: list[IndexFilter] | None,
         num_to_retrieve: int,
     ) -> list[InferenceChunk]:

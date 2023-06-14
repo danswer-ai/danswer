@@ -49,7 +49,7 @@ def semantic_search(
     filters = question.filters
     logger.info(f"Received semantic search query: {query}")
 
-    user_id = None if user is None else int(user.id)
+    user_id = None if user is None else user.id
     ranked_chunks, unranked_chunks = retrieve_ranked_documents(
         query, user_id, filters, QdrantIndex(collection)
     )
@@ -71,7 +71,7 @@ def keyword_search(
     filters = question.filters
     logger.info(f"Received keyword search query: {query}")
 
-    user_id = None if user is None else int(user.id)
+    user_id = None if user is None else user.id
     ranked_chunks = retrieve_keyword_documents(
         query, user_id, filters, TypesenseIndex(collection)
     )
@@ -99,7 +99,7 @@ def direct_qa(
     if use_keyword is None:
         use_keyword = predicted_search == SearchType.KEYWORD
 
-    user_id = None if user is None else int(user.id)
+    user_id = None if user is None else user.id
     if use_keyword:
         ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
             query, user_id, filters, TypesenseIndex(collection)
@@ -165,7 +165,7 @@ def stream_direct_qa(
         if use_keyword is None:
             use_keyword = predicted_search == SearchType.KEYWORD
 
-        user_id = None if user is None else int(user.id)
+        user_id = None if user is None else user.id
         if use_keyword:
             ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
                 query, user_id, filters, TypesenseIndex(collection)

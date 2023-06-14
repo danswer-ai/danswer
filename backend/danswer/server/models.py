@@ -4,6 +4,7 @@ from typing import Generic
 from typing import Literal
 from typing import Optional
 from typing import TypeVar
+from uuid import UUID
 
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
@@ -171,7 +172,7 @@ class CredentialBase(BaseModel):
 
 class CredentialSnapshot(CredentialBase):
     id: int
-    user_id: int | None
+    user_id: UUID | None
     time_created: datetime
     time_updated: datetime
 

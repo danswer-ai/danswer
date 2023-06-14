@@ -1,4 +1,5 @@
 import json
+from uuid import UUID
 
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_RETURNED_HITS
@@ -34,7 +35,7 @@ def query_processing(query: str) -> str:
 @log_function_time()
 def retrieve_keyword_documents(
     query: str,
-    user_id: int | None,
+    user_id: UUID | None,
     filters: list[IndexFilter] | None,
     datastore: KeywordIndex,
     num_hits: int = NUM_RETURNED_HITS,

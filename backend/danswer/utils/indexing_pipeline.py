@@ -1,6 +1,7 @@
 from functools import partial
 from itertools import chain
 from typing import Protocol
+from uuid import UUID
 
 from danswer.chunking.chunk import Chunker
 from danswer.chunking.chunk import DefaultChunker
@@ -16,7 +17,7 @@ from danswer.search.semantic_search import DefaultEmbedder
 
 class IndexingPipelineProtocol(Protocol):
     def __call__(
-        self, documents: list[Document], user_id: int | None
+        self, documents: list[Document], user_id: UUID | None
     ) -> list[EmbeddedIndexChunk]:
         ...
 
@@ -28,7 +29,7 @@ def _indexing_pipeline(
     vector_index: VectorIndex,
     keyword_index: KeywordIndex,
     documents: list[Document],
-    user_id: int | None,
+    user_id: UUID | None,
 ) -> list[EmbeddedIndexChunk]:
     # TODO: make entire indexing pipeline async to not block the entire process
     # when running on async endpoints

@@ -1,6 +1,7 @@
 import abc
 from typing import Generic
 from typing import TypeVar
+from uuid import UUID
 
 from danswer.chunking.models import BaseChunk
 from danswer.chunking.models import EmbeddedIndexChunk
@@ -14,7 +15,7 @@ IndexFilter = dict[str, str | list[str] | None]
 
 class DocumentIndex(Generic[T], abc.ABC):
     @abc.abstractmethod
-    def index(self, chunks: list[T], user_id: int | None) -> bool:
+    def index(self, chunks: list[T], user_id: UUID | None) -> bool:
         raise NotImplementedError
 
 
@@ -23,7 +24,7 @@ class VectorIndex(DocumentIndex[EmbeddedIndexChunk], abc.ABC):
     def semantic_retrieval(
         self,
         query: str,
-        user_id: int | None,
+        user_id: UUID | None,
         filters: list[IndexFilter] | None,
         num_to_retrieve: int,
     ) -> list[InferenceChunk]:
@@ -35,7 +36,7 @@ class KeywordIndex(DocumentIndex[IndexChunk], abc.ABC):
     def keyword_search(
         self,
         query: str,
-        user_id: int | None,
+        user_id: UUID | None,
         filters: list[IndexFilter] | None,
         num_to_retrieve: int,
     ) -> list[InferenceChunk]:
