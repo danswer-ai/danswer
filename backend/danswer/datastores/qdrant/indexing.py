@@ -52,6 +52,7 @@ def create_qdrant_collection(
 def get_qdrant_document_whitelists(
     doc_chunk_id: str, collection_name: str, q_client: QdrantClient
 ) -> tuple[bool, list[str], list[str]]:
+    """Get whether a document is found and the existing whitelists"""
     results = q_client.retrieve(
         collection_name=collection_name,
         ids=[doc_chunk_id],
@@ -69,8 +70,8 @@ def get_qdrant_document_whitelists(
 
 def delete_qdrant_doc_chunks(
     document_id: str, collection_name: str, q_client: QdrantClient
-) -> None:
-    q_client.delete(
+) -> bool:
+    res = q_client.delete(
         collection_name=collection_name,
         points_selector=models.FilterSelector(
             filter=models.Filter(
@@ -83,6 +84,7 @@ def delete_qdrant_doc_chunks(
             )
         ),
     )
+    return True
 
 
 def index_qdrant_chunks(
@@ -91,7 +93,7 @@ def index_qdrant_chunks(
     collection: str,
     client: QdrantClient | None = None,
     batch_upsert: bool = True,
-) -> bool:
+) -> int:
     # Public documents will have the PUBLIC string in ALLOWED_USERS
     # If credential that kicked this off has no user associated, either Auth is off or the doc is public
     user_str = PUBLIC_DOC_PAT if user_id is None else str(user_id)
@@ -100,6 +102,7 @@ def index_qdrant_chunks(
     point_structs: list[PointStruct] = []
     # Maps document id to dict of whitelists for users/groups each containing list of users/groups as strings
     doc_user_map: dict[str, dict[str, list[str]]] = {}
+    docs_deleted = 0
     for chunk in chunks:
         document = chunk.source_document
         doc_user_map, delete_doc = update_doc_user_map(
@@ -114,6 +117,8 @@ def index_qdrant_chunks(
         )
 
         if delete_doc:
+            # Processing the first chunk of the doc and the doc exists
+            docs_deleted += 1
             delete_qdrant_doc_chunks(document.id, collection, q_client)
 
         point_structs.extend(
@@ -138,7 +143,6 @@ def index_qdrant_chunks(
             ]
         )
 
-    index_results = None
     if batch_upsert:
         point_struct_batches = [
             point_structs[x : x + DEFAULT_BATCH_SIZE]
@@ -171,4 +175,5 @@ def index_qdrant_chunks(
         logger.info(
             f"Document batch of size {len(point_structs)} indexing status: {index_results.status}"
         )
-    return index_results is not None and index_results.status == UpdateStatus.COMPLETED
+
+    return len(doc_user_map.keys()) - docs_deleted

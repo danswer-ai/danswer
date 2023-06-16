@@ -86,7 +86,7 @@ def get_typesense_document_whitelists(
 
 def delete_typesense_doc_chunks(
     document_id: str, collection_name: str, ts_client: typesense.Client
-) -> None:
+) -> bool:
     search_parameters = {
         "q": document_id,
         "query_by": DOCUMENT_ID,
@@ -98,6 +98,7 @@ def delete_typesense_doc_chunks(
         ts_client.collections[collection_name].documents[hit["document"]["id"]].delete()
         for hit in hits["hits"]
     ]
+    return True if hits else False
 
 
 def index_typesense_chunks(
@@ -106,12 +107,13 @@ def index_typesense_chunks(
     collection: str,
     client: typesense.Client | None = None,
     batch_upsert: bool = True,
-) -> bool:
+) -> int:
     user_str = PUBLIC_DOC_PAT if user_id is None else str(user_id)
     ts_client: typesense.Client = client if client else get_typesense_client()
 
     new_documents: list[dict[str, Any]] = []
     doc_user_map: dict[str, dict[str, list[str]]] = {}
+    docs_deleted = 0
     for chunk in chunks:
         document = chunk.source_document
         doc_user_map, delete_doc = update_doc_user_map(
@@ -126,6 +128,8 @@ def index_typesense_chunks(
         )
 
         if delete_doc:
+            # Processing the first chunk of the doc and the doc exists
+            docs_deleted += 1
             delete_typesense_doc_chunks(document.id, collection, ts_client)
 
         new_documents.append(
@@ -168,7 +172,7 @@ def index_typesense_chunks(
             for document in new_documents
         ]
 
-    return True
+    return len(doc_user_map.keys()) - docs_deleted
 
 
 def _build_typesense_filters(
@@ -206,7 +210,7 @@ class TypesenseIndex(KeywordIndex):
         self.collection = collection
         self.ts_client = get_typesense_client()
 
-    def index(self, chunks: list[IndexChunk], user_id: UUID | None) -> bool:
+    def index(self, chunks: list[IndexChunk], user_id: UUID | None) -> int:
         return index_typesense_chunks(
             chunks=chunks,
             user_id=user_id,

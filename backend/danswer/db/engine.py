@@ -1,6 +1,7 @@
 from collections.abc import AsyncGenerator
 from collections.abc import Generator
 from datetime import datetime
+from datetime import timezone
 
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
@@ -25,6 +26,15 @@ def get_db_current_time(db_session: Session) -> datetime:
     if result is None:
         raise ValueError("Database did not return a time")
     return result
+
+
+def translate_db_time_to_server_time(
+    db_time: datetime, db_session: Session
+) -> datetime:
+    server_now = datetime.now()
+    db_now = get_db_current_time(db_session)
+    time_diff = server_now - db_now.astimezone(timezone.utc).replace(tzinfo=None)
+    return db_time + time_diff
 
 
 def build_connection_string(
