@@ -227,14 +227,17 @@ class TypesenseIndex(KeywordIndex):
     ) -> list[InferenceChunk]:
         filters_str = _build_typesense_filters(user_id, filters)
 
+        search_query = {
+            "q": query,
+            "query_by": CONTENT,
+            "filter_by": filters_str,
+            "per_page": num_to_retrieve,
+            "limit_hits": num_to_retrieve,
+            "num_typos": 2,
+        }
+
         search_results = self.ts_client.collections[self.collection].documents.search(
-            {
-                "q": query,
-                "query_by": CONTENT,
-                "filter_by": filters_str,
-                "per_page": num_to_retrieve,
-                "limit_hits": num_to_retrieve,
-            }
+            search_query
         )
 
         hits = search_results["hits"]
