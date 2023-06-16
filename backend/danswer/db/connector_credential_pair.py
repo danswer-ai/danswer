@@ -91,7 +91,9 @@ def add_credential_to_connector(
         )
 
     association = ConnectorCredentialPair(
-        connector_id=connector_id, credential_id=credential_id
+        connector_id=connector_id,
+        credential_id=credential_id,
+        last_attempt_status=IndexingStatus.NOT_STARTED,
     )
     db_session.add(association)
     db_session.commit()

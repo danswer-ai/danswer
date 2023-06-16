@@ -170,6 +170,8 @@ def run_indexing_jobs(db_session: Session) -> None:
                 db_session=db_session,
             )
 
+            logger.info(f"Indexed {len(document_ids)} documents")
+
         except Exception as e:
             logger.exception(f"Indexing job with id {attempt.id} failed due to {e}")
             mark_attempt_failed(attempt, db_session, failure_reason=str(e))
@@ -183,13 +185,12 @@ def run_indexing_jobs(db_session: Session) -> None:
 
 
 def update_loop(delay: int = 10) -> None:
+    engine = build_engine()
     while True:
         start = time.time()
         logger.info(f"Running update, current time: {time.ctime(start)}")
         try:
-            with Session(
-                build_engine(), future=True, expire_on_commit=False
-            ) as db_session:
+            with Session(engine, future=True, expire_on_commit=False) as db_session:
                 create_indexing_jobs(db_session)
                 run_indexing_jobs(db_session)
         except Exception as e:
