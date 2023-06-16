@@ -5,7 +5,6 @@ from uuid import UUID
 
 from danswer.chunking.chunk import Chunker
 from danswer.chunking.chunk import DefaultChunker
-from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.connectors.models import Document
 from danswer.datastores.interfaces import KeywordIndex
 from danswer.datastores.interfaces import VectorIndex
@@ -13,12 +12,13 @@ from danswer.datastores.qdrant.store import QdrantIndex
 from danswer.datastores.typesense.store import TypesenseIndex
 from danswer.search.models import Embedder
 from danswer.search.semantic_search import DefaultEmbedder
+from danswer.utils.logging import setup_logger
+
+logger = setup_logger()
 
 
 class IndexingPipelineProtocol(Protocol):
-    def __call__(
-        self, documents: list[Document], user_id: UUID | None
-    ) -> list[EmbeddedIndexChunk]:
+    def __call__(self, documents: list[Document], user_id: UUID | None) -> int:
         ...
 
 
@@ -30,15 +30,19 @@ def _indexing_pipeline(
     keyword_index: KeywordIndex,
     documents: list[Document],
     user_id: UUID | None,
-) -> list[EmbeddedIndexChunk]:
+) -> int:
     # TODO: make entire indexing pipeline async to not block the entire process
     # when running on async endpoints
     chunks = list(chain(*[chunker.chunk(document) for document in documents]))
     # TODO keyword indexing can occur at same time as embedding
-    keyword_index.index(chunks, user_id)
+    net_doc_count_keyword = keyword_index.index(chunks, user_id)
     chunks_with_embeddings = embedder.embed(chunks)
-    vector_index.index(chunks_with_embeddings, user_id)
-    return chunks_with_embeddings
+    net_doc_count_vector = vector_index.index(chunks_with_embeddings, user_id)
+    if net_doc_count_vector != net_doc_count_vector:
+        logger.exception(
+            "Document count change from keyword/vector indices don't align"
+        )
+    return max(net_doc_count_keyword, net_doc_count_vector)
 
 
 def build_indexing_pipeline(

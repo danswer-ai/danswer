@@ -77,7 +77,7 @@ class QdrantIndex(VectorIndex):
         self.collection = collection
         self.client = get_qdrant_client()
 
-    def index(self, chunks: list[EmbeddedIndexChunk], user_id: UUID | None) -> bool:
+    def index(self, chunks: list[EmbeddedIndexChunk], user_id: UUID | None) -> int:
         return index_qdrant_chunks(
             chunks=chunks,
             user_id=user_id,

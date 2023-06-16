@@ -15,7 +15,8 @@ IndexFilter = dict[str, str | list[str] | None]
 
 class DocumentIndex(Generic[T], abc.ABC):
     @abc.abstractmethod
-    def index(self, chunks: list[T], user_id: UUID | None) -> bool:
+    def index(self, chunks: list[T], user_id: UUID | None) -> int:
+        """Indexes document chunks into the Document Index and return the number of new documents"""
         raise NotImplementedError
 
 

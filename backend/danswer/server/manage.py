@@ -1,5 +1,4 @@
 from collections import defaultdict
-from typing import Any
 from typing import cast
 
 from danswer.auth.schemas import UserRole
@@ -18,7 +17,6 @@ from danswer.connectors.google_drive.connector_auth import (
 )
 from danswer.connectors.google_drive.connector_auth import upsert_google_app_cred
 from danswer.connectors.google_drive.connector_auth import verify_csrf
-from danswer.db.connector import add_credential_to_connector
 from danswer.db.connector import create_connector
 from danswer.db.connector import delete_connector
 from danswer.db.connector import fetch_connector_by_id
@@ -26,8 +24,10 @@ from danswer.db.connector import fetch_connectors
 from danswer.db.connector import fetch_latest_index_attempt_by_connector
 from danswer.db.connector import fetch_latest_index_attempts_by_status
 from danswer.db.connector import get_connector_credential_ids
-from danswer.db.connector import remove_credential_from_connector
 from danswer.db.connector import update_connector
+from danswer.db.connector_credential_pair import add_credential_to_connector
+from danswer.db.connector_credential_pair import get_connector_credential_pairs
+from danswer.db.connector_credential_pair import remove_credential_from_connector
 from danswer.db.credentials import create_credential
 from danswer.db.credentials import delete_credential
 from danswer.db.credentials import fetch_credential_by_id
@@ -173,130 +173,27 @@ def upload_files(
     return FileUploadResponse(file_paths=file_paths)
 
 
-@router.get("/admin/latest-index-attempt")
-def list_all_index_attempts(
-    _: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> list[IndexAttemptSnapshot]:
-    index_attempts = fetch_latest_index_attempt_by_connector(db_session)
-    return [
-        IndexAttemptSnapshot(
-            source=index_attempt.connector.source,
-            input_type=index_attempt.connector.input_type,
-            status=index_attempt.status,
-            connector_specific_config=index_attempt.connector.connector_specific_config,
-            docs_indexed=0
-            if not index_attempt.document_ids
-            else len(index_attempt.document_ids),
-            time_created=index_attempt.time_created,
-            time_updated=index_attempt.time_updated,
-        )
-        for index_attempt in index_attempts
-    ]
-
-
-@router.get("/admin/latest-index-attempt/{source}")
-def list_index_attempts(
-    source: DocumentSource,
-    _: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> list[IndexAttemptSnapshot]:
-    index_attempts = fetch_latest_index_attempt_by_connector(db_session, source=source)
-    return [
-        IndexAttemptSnapshot(
-            source=index_attempt.connector.source,
-            input_type=index_attempt.connector.input_type,
-            status=index_attempt.status,
-            connector_specific_config=index_attempt.connector.connector_specific_config,
-            docs_indexed=0
-            if not index_attempt.document_ids
-            else len(index_attempt.document_ids),
-            time_created=index_attempt.time_created,
-            time_updated=index_attempt.time_updated,
-        )
-        for index_attempt in index_attempts
-    ]
-
-
 @router.get("/admin/connector/indexing-status")
 def get_connector_indexing_status(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[ConnectorIndexingStatus]:
-    connector_id_to_connector: dict[int, Connector] = {
-        connector.id: connector for connector in fetch_connectors(db_session)
-    }
-    index_attempts = fetch_latest_index_attempts_by_status(db_session)
-    connector_credential_pair_to_index_attempts: dict[
-        tuple[int, int], list[IndexAttempt]
-    ] = defaultdict(list)
-    for index_attempt in index_attempts:
-        # don't consider index attempts where the connector has been deleted
-        # or the credential has been deleted
-        if (
-            index_attempt.connector_id is not None
-            and index_attempt.credential_id is not None
-        ):
-            connector_credential_pair_to_index_attempts[
-                (index_attempt.connector_id, index_attempt.credential_id)
-            ].append(index_attempt)
-
     indexing_statuses: list[ConnectorIndexingStatus] = []
-    for (
-        connector_id,
-        credential_id,
-    ), index_attempts in connector_credential_pair_to_index_attempts.items():
-        # NOTE: index_attempts is guaranteed to be length > 0
-        connector = connector_id_to_connector[connector_id]
-        credential = [
-            credential_association.credential
-            for credential_association in connector.credentials
-            if credential_association.credential_id == credential_id
-        ][0]
 
-        index_attempts_sorted = sorted(
-            index_attempts, key=lambda x: x.time_updated, reverse=True
-        )
-        successful_index_attempts_sorted = [
-            index_attempt
-            for index_attempt in index_attempts_sorted
-            if index_attempt.status == IndexingStatus.SUCCESS
-        ]
+    cc_pairs = get_connector_credential_pairs(db_session)
+    for cc_pair in cc_pairs:
+        connector = cc_pair.connector
+        credential = cc_pair.credential
         indexing_statuses.append(
             ConnectorIndexingStatus(
                 connector=ConnectorSnapshot.from_connector_db_model(connector),
                 public_doc=credential.public_doc,
                 owner=credential.user.email if credential.user else "",
-                last_status=index_attempts_sorted[0].status,
-                last_success=successful_index_attempts_sorted[0].time_updated
-                if successful_index_attempts_sorted
-                else None,
-                docs_indexed=len(successful_index_attempts_sorted[0].document_ids)
-                if successful_index_attempts_sorted
-                and successful_index_attempts_sorted[0].document_ids
-                else 0,
-            ),
+                last_status=cc_pair.last_attempt_status,
+                last_success=cc_pair.last_successful_index_time,
+                docs_indexed=cc_pair.total_docs_indexed,
+            )
         )
-
-    # add in the connectors that haven't started indexing yet
-    for connector in connector_id_to_connector.values():
-        for credential_association in connector.credentials:
-            if (
-                connector.id,
-                credential_association.credential_id,
-            ) not in connector_credential_pair_to_index_attempts:
-                indexing_statuses.append(
-                    ConnectorIndexingStatus(
-                        connector=ConnectorSnapshot.from_connector_db_model(connector),
-                        public_doc=credential_association.credential.public_doc,
-                        owner=credential_association.credential.user.email
-                        if credential_association.credential.user
-                        else "",
-                        last_status=IndexingStatus.NOT_STARTED,
-                        last_success=None,
-                        docs_indexed=0,
-                    ),
-                )
 
     return indexing_statuses
 

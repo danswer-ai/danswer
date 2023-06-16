@@ -101,7 +101,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
-        "connector_credential_association",
+        "connector_credential_pair",
         sa.Column("connector_id", sa.Integer(), nullable=False),
         sa.Column("credential_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
@@ -168,6 +168,6 @@ def downgrade() -> None:
     )
     op.drop_column("index_attempt", "credential_id")
     op.drop_column("index_attempt", "connector_id")
-    op.drop_table("connector_credential_association")
+    op.drop_table("connector_credential_pair")
     op.drop_table("credential")
     op.drop_table("connector")

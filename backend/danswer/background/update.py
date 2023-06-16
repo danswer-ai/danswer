@@ -6,6 +6,7 @@ from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import InputType
 from danswer.db.connector import disable_connector
 from danswer.db.connector import fetch_connectors
+from danswer.db.connector_credential_pair import update_connector_credential_pair
 from danswer.db.credentials import backend_update_credential_json
 from danswer.db.engine import build_engine
 from danswer.db.engine import get_db_current_time
@@ -19,6 +20,7 @@ from danswer.db.index_attempt import mark_attempt_in_progress
 from danswer.db.index_attempt import mark_attempt_succeeded
 from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
+from danswer.db.models import IndexingStatus
 from danswer.utils.indexing_pipeline import build_indexing_pipeline
 from danswer.utils.logging import setup_logger
 from sqlalchemy.orm import Session
@@ -50,9 +52,18 @@ def create_indexing_jobs(db_session: Session) -> None:
         # Currently single threaded so any still in-progress must have errored
         for attempt in in_progress_indexing_attempts:
             logger.warning(
-                f"Marking in-progress attempt 'connector: {attempt.connector_id}, credential: {attempt.credential_id}' as failed"
+                f"Marking in-progress attempt 'connector: {attempt.connector_id}, "
+                f"credential: {attempt.credential_id}' as failed"
             )
             mark_attempt_failed(attempt, db_session)
+            if attempt.connector_id and attempt.credential_id:
+                update_connector_credential_pair(
+                    connector_id=attempt.connector_id,
+                    credential_id=attempt.credential_id,
+                    attempt_status=IndexingStatus.FAILED,
+                    net_docs=None,
+                    db_session=db_session,
+                )
 
         for association in connector.credentials:
             credential = association.credential
@@ -65,6 +76,14 @@ def create_indexing_jobs(db_session: Session) -> None:
             ):
                 continue
             create_index_attempt(connector.id, credential.id, db_session)
+
+            update_connector_credential_pair(
+                connector_id=connector.id,
+                credential_id=credential.id,
+                attempt_status=IndexingStatus.NOT_STARTED,
+                net_docs=None,
+                db_session=db_session,
+            )
 
 
 def run_indexing_jobs(db_session: Session) -> None:
@@ -84,6 +103,14 @@ def run_indexing_jobs(db_session: Session) -> None:
         db_credential = attempt.credential
         task = db_connector.input_type
 
+        update_connector_credential_pair(
+            connector_id=db_connector.id,
+            credential_id=db_credential.id,
+            attempt_status=IndexingStatus.IN_PROGRESS,
+            net_docs=None,
+            db_session=db_session,
+        )
+
         try:
             runnable_connector, new_credential_json = instantiate_connector(
                 db_connector.source,
@@ -100,6 +127,7 @@ def run_indexing_jobs(db_session: Session) -> None:
             disable_connector(db_connector.id, db_session)
             continue
 
+        net_doc_change = 0
         try:
             if task == InputType.LOAD_STATE:
                 assert isinstance(runnable_connector, LoadConnector)
@@ -128,14 +156,30 @@ def run_indexing_jobs(db_session: Session) -> None:
                 index_user_id = (
                     None if db_credential.public_doc else db_credential.user_id
                 )
-                indexing_pipeline(documents=doc_batch, user_id=index_user_id)
+                net_doc_change += indexing_pipeline(
+                    documents=doc_batch, user_id=index_user_id
+                )
                 document_ids.extend([doc.id for doc in doc_batch])
 
             mark_attempt_succeeded(attempt, document_ids, db_session)
+            update_connector_credential_pair(
+                connector_id=db_connector.id,
+                credential_id=db_credential.id,
+                attempt_status=IndexingStatus.SUCCESS,
+                net_docs=net_doc_change,
+                db_session=db_session,
+            )
 
         except Exception as e:
             logger.exception(f"Indexing job with id {attempt.id} failed due to {e}")
             mark_attempt_failed(attempt, db_session, failure_reason=str(e))
+            update_connector_credential_pair(
+                connector_id=db_connector.id,
+                credential_id=db_credential.id,
+                attempt_status=IndexingStatus.FAILED,
+                net_docs=net_doc_change,
+                db_session=db_session,
+            )
 
 
 def update_loop(delay: int = 10) -> None:

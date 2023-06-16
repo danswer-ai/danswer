@@ -24,6 +24,13 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 
 
+class IndexingStatus(str, PyEnum):
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    SUCCESS = "success"
+    FAILED = "failed"
+
+
 class Base(DeclarativeBase):
     pass
 
@@ -48,19 +55,25 @@ class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
     pass
 
 
-class ConnectorCredentialAssociation(Base):
+class ConnectorCredentialPair(Base):
     """Connectors and Credentials can have a many-to-many relationship
     I.e. A Confluence Connector may have multiple admin users who can run it with their own credentials
     I.e. An admin user may use the same credential to index multiple Confluence Spaces
     """
 
-    __tablename__ = "connector_credential_association"
+    __tablename__ = "connector_credential_pair"
     connector_id: Mapped[int] = mapped_column(
         ForeignKey("connector.id"), primary_key=True
     )
     credential_id: Mapped[int] = mapped_column(
         ForeignKey("credential.id"), primary_key=True
     )
+    # Time finished, not used for calculating backend jobs which uses time started (created)
+    last_successful_index_time: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    last_attempt_status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
+    total_docs_indexed: Mapped[int] = mapped_column(Integer, default=0)
 
     connector: Mapped["Connector"] = relationship(
         "Connector", back_populates="credentials"
@@ -91,8 +104,8 @@ class Connector(Base):
     )
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    credentials: Mapped[List["ConnectorCredentialAssociation"]] = relationship(
-        "ConnectorCredentialAssociation",
+    credentials: Mapped[List["ConnectorCredentialPair"]] = relationship(
+        "ConnectorCredentialPair",
         back_populates="connector",
         cascade="all, delete-orphan",
     )
@@ -115,8 +128,8 @@ class Credential(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    connectors: Mapped[List["ConnectorCredentialAssociation"]] = relationship(
-        "ConnectorCredentialAssociation",
+    connectors: Mapped[List["ConnectorCredentialPair"]] = relationship(
+        "ConnectorCredentialPair",
         back_populates="credential",
         cascade="all, delete-orphan",
     )
@@ -124,13 +137,6 @@ class Credential(Base):
         "IndexAttempt", back_populates="credential"
     )
     user: Mapped[User] = relationship("User", back_populates="credentials")
-
-
-class IndexingStatus(str, PyEnum):
-    NOT_STARTED = "not_started"
-    IN_PROGRESS = "in_progress"
-    SUCCESS = "success"
-    FAILED = "failed"
 
 
 class IndexAttempt(Base):
@@ -146,14 +152,12 @@ class IndexAttempt(Base):
     connector_id: Mapped[int | None] = mapped_column(
         ForeignKey("connector.id"),
         nullable=True,
-        index=True,
     )
     credential_id: Mapped[int | None] = mapped_column(
         ForeignKey("credential.id"),
         nullable=True,
-        index=True,
     )
-    status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus), index=True)
+    status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
     document_ids: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String()), default=None
     )  # only filled if status = "complete"
@@ -163,12 +167,10 @@ class IndexAttempt(Base):
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
-        index=True,
     )
     time_updated: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
-        index=True,
         onupdate=func.now(),
     )
 
