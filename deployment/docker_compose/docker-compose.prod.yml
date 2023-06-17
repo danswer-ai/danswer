@@ -15,7 +15,6 @@ services:
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
       - TYPESENSE_HOST=search_engine
-      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
@@ -32,6 +31,7 @@ services:
     environment:
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
+      - TYPESENSE_HOST=search_engine
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
