@@ -60,12 +60,12 @@ def build_async_engine() -> AsyncEngine:
 
 
 def get_session() -> Generator[Session, None, None]:
-    with Session(build_engine(), future=True, expire_on_commit=False) as session:
+    with Session(build_engine(), expire_on_commit=False) as session:
         yield session
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSession(
-        build_async_engine(), future=True, expire_on_commit=False
+        build_async_engine(), expire_on_commit=False
     ) as async_session:
         yield async_session

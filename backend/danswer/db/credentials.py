@@ -136,7 +136,7 @@ def create_initial_public_credential() -> None:
         "DB is not in a valid initial state."
         "There must exist an empty public credential for data connectors that do not require additional Auth."
     )
-    with Session(build_engine(), future=True, expire_on_commit=False) as db_session:
+    with Session(build_engine(), expire_on_commit=False) as db_session:
         first_credential = fetch_credential_by_id(public_cred_id, None, db_session)
 
         if first_credential is not None:
