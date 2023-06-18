@@ -13,7 +13,7 @@
     <img src="https://img.shields.io/badge/slack-join-blue.svg?logo=slack" alt="Slack">
 </a>
 <a href="https://discord.gg/s6qETAVZ" target="_blank">
-    <img src="https://img.shields.io/badge/discord-join-blue.svg?logo=discord" alt="Discord">
+    <img src="https://img.shields.io/badge/discord-join-blue.svg?logo=discord&logoColor=white" alt="Discord">
 </a>
 <a href="https://github.com/danswer-ai/danswer/blob/main/README.md" target="_blank">
     <img src="https://img.shields.io/static/v1?label=license&message=MIT&color=blue" alt="License">
@@ -25,7 +25,7 @@
 Check out our <strong><a href="https://www.youtube.com/watch?v=geNzY1nbCnU">Video Demo</a></strong>!
 
 
-## 💃 Features
+## Features 💃
 * Direct QA powered by Generative AI models with answers backed by quotes and source links.
 * Intelligent Document Retrieval (Semantic Search/Reranking) using the latest LLMs.
 * An AI Helper backed by a custom Deep Learning model to interpret user intent.
