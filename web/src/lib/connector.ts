@@ -36,16 +36,19 @@ export async function updateConnector<T>(
   return await response.json();
 }
 
-export async function deleteConnector<T>(
+export async function deleteConnector(
   connectorId: number
-): Promise<Connector<T>> {
+): Promise<string | null> {
   const response = await fetch(`/api/manage/admin/connector/${connectorId}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
     },
   });
-  return await response.json();
+  if (response.ok) {
+    return null;
+  }
+  return (await response.json()).detail;
 }
 
 export async function runConnector(
