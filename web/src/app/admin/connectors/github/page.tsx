@@ -168,41 +168,49 @@ const Main = () => {
         </>
       )}
 
-      <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
-        <h2 className="font-bold mb-3">Connect to a New Repository</h2>
-        <ConnectorForm<GithubConfig>
-          nameBuilder={(values) =>
-            `GithubConnector-${values.repo_owner}/${values.repo_name}`
-          }
-          source="github"
-          inputType="load_state"
-          formBody={
-            <>
-              <TextFormField name="repo_owner" label="Repository Owner:" />
-              <TextFormField name="repo_name" label="Repository Name:" />
-            </>
-          }
-          validationSchema={Yup.object().shape({
-            repo_owner: Yup.string().required(
-              "Please enter the owner of the repository to index e.g. danswer-ai"
-            ),
-            repo_name: Yup.string().required(
-              "Please enter the name of the repository to index e.g. danswer "
-            ),
-          })}
-          initialValues={{
-            repo_owner: "",
-            repo_name: "",
-          }}
-          refreshFreq={10 * 60} // 10 minutes
-          onSubmit={async (isSuccess, responseJson) => {
-            if (isSuccess && responseJson) {
-              await linkCredential(responseJson.id, githubCredential.id);
-              mutate("/api/manage/admin/connector/indexing-status");
+      {githubCredential ? (
+        <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+          <h2 className="font-bold mb-3">Connect to a New Repository</h2>
+          <ConnectorForm<GithubConfig>
+            nameBuilder={(values) =>
+              `GithubConnector-${values.repo_owner}/${values.repo_name}`
             }
-          }}
-        />
-      </div>
+            source="github"
+            inputType="load_state"
+            formBody={
+              <>
+                <TextFormField name="repo_owner" label="Repository Owner:" />
+                <TextFormField name="repo_name" label="Repository Name:" />
+              </>
+            }
+            validationSchema={Yup.object().shape({
+              repo_owner: Yup.string().required(
+                "Please enter the owner of the repository to index e.g. danswer-ai"
+              ),
+              repo_name: Yup.string().required(
+                "Please enter the name of the repository to index e.g. danswer "
+              ),
+            })}
+            initialValues={{
+              repo_owner: "",
+              repo_name: "",
+            }}
+            refreshFreq={10 * 60} // 10 minutes
+            onSubmit={async (isSuccess, responseJson) => {
+              if (isSuccess && responseJson) {
+                await linkCredential(responseJson.id, githubCredential.id);
+                mutate("/api/manage/admin/connector/indexing-status");
+              }
+            }}
+          />
+        </div>
+      ) : (
+        <p className="text-sm">
+          Please provide your access token in Step 1 first! Once done with that,
+          you can then specify which Github repositories you want to make
+          searchable.
+        </p>
+      )}
     </>
   );
 };
