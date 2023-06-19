@@ -1,6 +1,6 @@
 from typing import Any
 
-from danswer.db.engine import build_engine
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import Credential
 from danswer.db.models import User
 from danswer.server.models import CredentialBase
@@ -136,7 +136,7 @@ def create_initial_public_credential() -> None:
         "DB is not in a valid initial state."
         "There must exist an empty public credential for data connectors that do not require additional Auth."
     )
-    with Session(build_engine(), expire_on_commit=False) as db_session:
+    with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
         first_credential = fetch_credential_by_id(public_cred_id, None, db_session)
 
         if first_credential is not None:

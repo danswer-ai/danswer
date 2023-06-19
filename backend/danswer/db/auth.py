@@ -3,8 +3,8 @@ from typing import Any
 from typing import Dict
 
 from danswer.auth.schemas import UserRole
-from danswer.db.engine import build_async_engine
 from danswer.db.engine import get_async_session
+from danswer.db.engine import get_sqlalchemy_async_engine
 from danswer.db.models import AccessToken
 from danswer.db.models import OAuthAccount
 from danswer.db.models import User
@@ -18,7 +18,7 @@ from sqlalchemy.future import select
 
 
 async def get_user_count() -> int:
-    async with AsyncSession(build_async_engine()) as asession:
+    async with AsyncSession(get_sqlalchemy_async_engine()) as asession:
         stmt = select(func.count(User.id))
         result = await asession.execute(stmt)
         user_count = result.scalar()
