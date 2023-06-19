@@ -3,6 +3,7 @@ import { buildUrl } from "@/lib/utilsSS";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { GOOGLE_DRIVE_AUTH_IS_ADMIN_COOKIE_NAME } from "@/lib/constants";
+import { processCookies } from "@/lib/userSS";
 
 export const GET = async (request: NextRequest) => {
   // Wrapper around the FastAPI endpoint /connectors/google-drive/callback,
@@ -12,10 +13,7 @@ export const GET = async (request: NextRequest) => {
 
   const response = await fetch(url.toString(), {
     headers: {
-      cookie: cookies()
-        .getAll()
-        .map((cookie) => `${cookie.name}=${cookie.value}`)
-        .join("; "),
+      cookie: processCookies(cookies()),
     },
   });
 

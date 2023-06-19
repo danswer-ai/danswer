@@ -1,6 +1,6 @@
 import { SearchSection } from "@/components/search/SearchSection";
 import { Header } from "@/components/Header";
-import { getCurrentUserSS } from "@/lib/userSS";
+import { getCurrentUserSS, processCookies } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { DISABLE_AUTH } from "@/lib/constants";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
@@ -15,6 +15,9 @@ export default async function Home() {
     DISABLE_AUTH ? (async () => null)() : getCurrentUserSS(),
     fetch(buildUrl("/manage/connector"), {
       next: { revalidate: 0 },
+      headers: {
+        cookie: processCookies(cookies()),
+      },
     }),
   ];
 

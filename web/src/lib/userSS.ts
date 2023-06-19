@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { User } from "./types";
 import { buildUrl } from "./utilsSS";
+import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 
 export const getGoogleOAuthUrlSS = async (): Promise<string> => {
   const res = await fetch(buildUrl("/auth/google/authorize"));
@@ -34,4 +35,11 @@ export const getCurrentUserSS = async (): Promise<User | null> => {
     console.log(`Error fetching user: ${e}`);
     return null;
   }
+};
+
+export const processCookies = (cookies: ReadonlyRequestCookies): string => {
+  return cookies
+    .getAll()
+    .map((cookie) => `${cookie.name}=${cookie.value}`)
+    .join("; ");
 };
