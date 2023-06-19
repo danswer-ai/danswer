@@ -34,8 +34,8 @@ from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
 from danswer.db.credentials import mask_credential_dict
 from danswer.db.credentials import update_credential
-from danswer.db.engine import build_async_engine
 from danswer.db.engine import get_session
+from danswer.db.engine import get_sqlalchemy_async_engine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
@@ -89,7 +89,7 @@ async def promote_admin(
 ) -> None:
     if user.role != UserRole.ADMIN:
         raise HTTPException(status_code=401, detail="Unauthorized")
-    async with AsyncSession(build_async_engine()) as asession:
+    async with AsyncSession(get_sqlalchemy_async_engine()) as asession:
         user_db = SQLAlchemyUserDatabase(asession, User)  # type: ignore
         user_to_promote = await user_db.get_by_email(user_email.user_email)
         if not user_to_promote:

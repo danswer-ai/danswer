@@ -8,8 +8,8 @@ from danswer.db.connector import disable_connector
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import update_connector_credential_pair
 from danswer.db.credentials import backend_update_credential_json
-from danswer.db.engine import build_engine
 from danswer.db.engine import get_db_current_time
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
 from danswer.db.index_attempt import get_last_successful_attempt
@@ -185,7 +185,7 @@ def run_indexing_jobs(db_session: Session) -> None:
 
 
 def update_loop(delay: int = 10) -> None:
-    engine = build_engine()
+    engine = get_sqlalchemy_engine()
     while True:
         start = time.time()
         logger.info(f"Running update, current time: {time.ctime(start)}")
