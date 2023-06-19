@@ -173,11 +173,18 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
               <div
                 className="cursor-pointer mx-auto"
                 onClick={() => {
-                  deleteConnector(connector.id).then(() => {
-                    setPopup({
-                      message: "Successfully deleted connector",
-                      type: "success",
-                    });
+                  deleteConnector(connector.id).then((errorMsg) => {
+                    if (errorMsg) {
+                      setPopup({
+                        message: `Unable to delete existing connector - ${errorMsg}`,
+                        type: "error",
+                      });
+                    } else {
+                      setPopup({
+                        message: "Successfully deleted connector",
+                        type: "success",
+                      });
+                    }
                     setTimeout(() => {
                       setPopup(null);
                     }, 4000);
