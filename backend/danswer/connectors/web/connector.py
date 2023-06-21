@@ -1,4 +1,5 @@
 import io
+from collections import Counter
 from typing import Any
 from typing import cast
 from urllib.parse import urljoin
@@ -28,14 +29,25 @@ def is_valid_url(url: str) -> bool:
         return False
 
 
+def last_repeat(segments: list[str]) -> bool:
+    # 1 indexed, but also we allow the last section to repeat
+    for n in range(2, int(len(segments) / 2) + 1):
+        if segments[-n:] == segments[-2 * n : -n]:
+            return True
+    return False
+
+
 def get_internal_links(
     base_url: str, url: str, soup: BeautifulSoup, should_ignore_pound: bool = True
-) -> list[str]:
-    internal_links = []
+) -> set[str]:
+    internal_links = set()
     for link in cast(list[dict[str, Any]], soup.find_all("a")):
         href = cast(str | None, link.get("href"))
         if not href:
             continue
+
+        # Handles /../ and other edge cases
+        href = urlparse(href).geturl()
 
         if should_ignore_pound and "#" in href:
             href = href.split("#")[0]
@@ -46,8 +58,17 @@ def get_internal_links(
                 url += "/"
             href = urljoin(url, href)
 
+        if href[-1] == "/":
+            href = href[:-1]
+
         if urlparse(href).netloc == urlparse(url).netloc and base_url in href:
-            internal_links.append(href)
+            # In case of bad website design and local links recurse
+            segments = href.split("/")
+            counter = Counter(segments)
+            del counter[""]
+            repeats = max(counter.values())
+            if repeats < 10 and not last_repeat(segments):
+                internal_links.add(href)
     return internal_links
 
 
@@ -59,6 +80,8 @@ class WebConnector(LoadConnector):
     ) -> None:
         if "://" not in base_url:
             base_url = "https://" + base_url
+        if base_url[-1] == "/":
+            base_url = base_url[:-1]
         self.base_url = base_url
         self.batch_size = batch_size
 
