@@ -9,10 +9,10 @@ const processSingleChunk = (
   chunk: string,
   currPartialChunk: string | null
 ): [{ [key: string]: any } | null, string | null] => {
-  const completeChunk = chunk + (currPartialChunk || "");
+  const completeChunk = (currPartialChunk || "") + chunk;
   try {
     // every complete chunk should be valid JSON
-    const chunkJson = JSON.parse(chunk);
+    const chunkJson = JSON.parse(completeChunk);
     return [chunkJson, null];
   } catch (err) {
     // if it's not valid JSON, then it's probably an incomplete chunk
@@ -42,10 +42,12 @@ const processRawChunkString = (
     );
     if (processedChunk) {
       parsedChunkSections.push(processedChunk);
+      currPartialChunk = null;
     } else {
       currPartialChunk = partialChunk;
     }
   });
+
   return [parsedChunkSections, currPartialChunk];
 };
 
@@ -112,9 +114,7 @@ export const searchRequestStreamed = async ({
       if (!completedChunks.length && !partialChunk) {
         break;
       }
-      if (partialChunk) {
-        previousPartialChunk = partialChunk;
-      }
+      previousPartialChunk = partialChunk;
       completedChunks.forEach((chunk) => {
         // TODO: clean up response / this logic
         const answerChunk = chunk.answer_data;
