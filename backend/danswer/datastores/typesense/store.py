@@ -182,7 +182,7 @@ def _build_typesense_filters(
 
     # Permissions filter
     if user_id:
-        filter_str += f"{ALLOWED_USERS}:=[{PUBLIC_DOC_PAT}|{user_id}] && "
+        filter_str += f"{ALLOWED_USERS}:=[{PUBLIC_DOC_PAT},{user_id}] && "
     else:
         filter_str += f"{ALLOWED_USERS}:={PUBLIC_DOC_PAT} && "
 
