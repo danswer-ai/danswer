@@ -479,9 +479,9 @@ const Main = () => {
   };
 
   if (
-    isCredentialsLoading ||
-    isAppCredentialLoading ||
-    isConnectorIndexingStatusesLoading
+    (!appCredentialData && isAppCredentialLoading) ||
+    (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
+    (!credentialsData && isCredentialsLoading)
   ) {
     return (
       <div className="mx-auto">

@@ -33,7 +33,6 @@ const MainSection = () => {
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,
-    isValidating: isCredentialsValidating,
     error: isCredentialsError,
   } = useSWR<Credential<SlackCredentialJson>[]>(
     "/api/manage/credential",
@@ -41,9 +40,8 @@ const MainSection = () => {
   );
 
   if (
-    isConnectorIndexingStatusesLoading ||
-    isCredentialsLoading ||
-    isCredentialsValidating
+    (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
+    (!credentialsData && isCredentialsLoading)
   ) {
     return <LoadingAnimation text="Loading" />;
   }

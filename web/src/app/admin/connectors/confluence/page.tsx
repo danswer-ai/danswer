@@ -31,7 +31,6 @@ const Main = () => {
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,
-    isValidating: isCredentialsValidating,
     error: isCredentialsError,
   } = useSWR<Credential<ConfluenceCredentialJson>[]>(
     "/api/manage/credential",
@@ -39,9 +38,8 @@ const Main = () => {
   );
 
   if (
-    isConnectorIndexingStatusesLoading ||
-    isCredentialsLoading ||
-    isCredentialsValidating
+    (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
+    (!credentialsData && isCredentialsLoading)
   ) {
     return <LoadingAnimation text="Loading" />;
   }
