@@ -89,6 +89,8 @@ def delete_typesense_doc_chunks(
 ) -> bool:
     doc_id_filter = {"filter_by": f"{DOCUMENT_ID}:'{document_id}'"}
 
+    # Typesense doesn't seem to prioritize individual deletions, problem not seen with this approach
+    # Point to consider if we see instances of number of Typesense and Qdrant docs not matching
     del_result = ts_client.collections[collection_name].documents.delete(doc_id_filter)
     return del_result["num_deleted"] != 0
 
