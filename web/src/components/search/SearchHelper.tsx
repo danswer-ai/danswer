@@ -52,8 +52,6 @@ const getAssistantMessage = ({
     );
   }
 
-  console.log(searchResponse.suggestedSearchType);
-  console.log(selectedSearchType);
   if (
     selectedSearchType !== SearchType.AUTOMATIC &&
     searchResponse.suggestedSearchType !== selectedSearchType
