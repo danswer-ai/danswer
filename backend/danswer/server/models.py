@@ -177,15 +177,5 @@ class CredentialSnapshot(CredentialBase):
     time_updated: datetime
 
 
-class IndexAttemptSnapshot(BaseModel):
-    source: DocumentSource
-    input_type: InputType
-    status: IndexingStatus
-    connector_specific_config: dict[str, Any]
-    docs_indexed: int
-    time_created: datetime
-    time_updated: datetime
-
-
 class ApiKey(BaseModel):
     api_key: str

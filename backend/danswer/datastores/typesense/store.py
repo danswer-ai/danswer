@@ -87,18 +87,10 @@ def get_typesense_document_whitelists(
 def delete_typesense_doc_chunks(
     document_id: str, collection_name: str, ts_client: typesense.Client
 ) -> bool:
-    search_parameters = {
-        "q": document_id,
-        "query_by": DOCUMENT_ID,
-    }
+    doc_id_filter = {"filter_by": f"{DOCUMENT_ID}:'{document_id}'"}
 
-    # TODO consider race conditions if running multiple processes/threads
-    hits = ts_client.collections[collection_name].documents.search(search_parameters)
-    [
-        ts_client.collections[collection_name].documents[hit["document"]["id"]].delete()
-        for hit in hits["hits"]
-    ]
-    return True if hits else False
+    del_result = ts_client.collections[collection_name].documents.delete(doc_id_filter)
+    return del_result["num_deleted"] != 0
 
 
 def index_typesense_chunks(
