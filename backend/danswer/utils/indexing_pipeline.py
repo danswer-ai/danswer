@@ -38,11 +38,11 @@ def _indexing_pipeline(
     net_doc_count_keyword = keyword_index.index(chunks, user_id)
     chunks_with_embeddings = embedder.embed(chunks)
     net_doc_count_vector = vector_index.index(chunks_with_embeddings, user_id)
-    if net_doc_count_vector != net_doc_count_vector:
-        logger.exception(
-            "Document count change from keyword/vector indices don't align"
-        )
-    return max(net_doc_count_keyword, net_doc_count_vector)
+    if net_doc_count_vector != net_doc_count_keyword:
+        logger.warning("Document count change from keyword/vector indices don't align")
+    net_new_docs = max(net_doc_count_keyword, net_doc_count_vector)
+    logger.info(f"Indexed {net_new_docs} new documents")
+    return net_new_docs
 
 
 def build_indexing_pipeline(

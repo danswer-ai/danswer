@@ -1,11 +1,9 @@
-from collections import defaultdict
 from typing import cast
 
 from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
-from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
 from danswer.connectors.file.utils import write_temp_files
 from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_KEY
@@ -21,8 +19,6 @@ from danswer.db.connector import create_connector
 from danswer.db.connector import delete_connector
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.connector import fetch_connectors
-from danswer.db.connector import fetch_latest_index_attempt_by_connector
-from danswer.db.connector import fetch_latest_index_attempts_by_status
 from danswer.db.connector import get_connector_credential_ids
 from danswer.db.connector import update_connector
 from danswer.db.connector_credential_pair import add_credential_to_connector
@@ -37,9 +33,6 @@ from danswer.db.credentials import update_credential
 from danswer.db.engine import get_session
 from danswer.db.engine import get_sqlalchemy_async_engine
 from danswer.db.index_attempt import create_index_attempt
-from danswer.db.models import Connector
-from danswer.db.models import IndexAttempt
-from danswer.db.models import IndexingStatus
 from danswer.db.models import User
 from danswer.direct_qa.key_validation import check_openai_api_key_is_valid
 from danswer.direct_qa.question_answer import get_openai_api_key
@@ -56,7 +49,6 @@ from danswer.server.models import CredentialSnapshot
 from danswer.server.models import FileUploadResponse
 from danswer.server.models import GDriveCallback
 from danswer.server.models import GoogleAppCredentials
-from danswer.server.models import IndexAttemptSnapshot
 from danswer.server.models import ObjectCreationIdResponse
 from danswer.server.models import RunConnectorRequest
 from danswer.server.models import StatusResponse
