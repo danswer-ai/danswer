@@ -11,7 +11,7 @@ APP_PORT = 8080
 # User Facing Features Configs
 #####
 BLURB_LENGTH = 200  # Characters. Blurbs will be truncated at the first punctuation after this many characters.
-
+GENERATIVE_MODEL_ACCESS_CHECK_FREQ = 86400  # 1 day
 
 #####
 # Web Configs

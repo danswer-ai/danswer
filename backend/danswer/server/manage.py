@@ -1,8 +1,11 @@
+from datetime import datetime
+from datetime import timedelta
 from typing import cast
 
 from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
+from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
 from danswer.connectors.file.utils import write_temp_files
@@ -290,6 +293,20 @@ def connector_run_once(
 def validate_existing_openai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
+    check_key_time = "openai_api_key_last_check_time"
+    kv_store = get_dynamic_config_store()
+    curr_time = datetime.now()
+    try:
+        last_check = datetime.fromtimestamp(cast(float, kv_store.load(check_key_time)))
+        check_freq_sec = timedelta(seconds=GENERATIVE_MODEL_ACCESS_CHECK_FREQ)
+        if curr_time - last_check < check_freq_sec:
+            return
+    except ConfigNotFoundError:
+        # First time checking the key, nothing unusual
+        pass
+
+    get_dynamic_config_store().store(check_key_time, curr_time.timestamp())
+
     try:
         openai_api_key = get_openai_api_key()
         is_valid = check_openai_api_key_is_valid(openai_api_key)
