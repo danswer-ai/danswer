@@ -13,6 +13,7 @@ export type ValidSources =
   | "slack"
   | "google_drive"
   | "confluence"
+  | "jira"
   | "file";
 export type ValidInputTypes = "load_state" | "poll" | "event";
 
@@ -44,6 +45,10 @@ export interface GithubConfig {
 
 export interface ConfluenceConfig {
   wiki_page_url: string;
+}
+
+export interface JiraConfig {
+  jira_project_url: string;
 }
 
 export interface SlackConfig {
@@ -83,6 +88,11 @@ export interface GithubCredentialJson {
 export interface ConfluenceCredentialJson {
   confluence_username: string;
   confluence_access_token: string;
+}
+
+export interface JiraCredentialJson {
+  jira_user_email: string;
+  jira_api_token: string;
 }
 
 export interface SlackCredentialJson {

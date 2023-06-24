@@ -9,6 +9,7 @@ import {
   KeyIcon,
   ConfluenceIcon,
   FileIcon,
+  JiraIcon,
 } from "@/components/icons/icons";
 import { DISABLE_AUTH } from "@/lib/constants";
 import { getCurrentUserSS } from "@/lib/userSS";
@@ -89,6 +90,15 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/connectors/confluence",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <JiraIcon size="16" />
+                      <div className="ml-1">Jira</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/jira",
                 },
                 {
                   name: (

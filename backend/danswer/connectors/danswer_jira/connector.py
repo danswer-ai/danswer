@@ -6,6 +6,7 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
+from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -77,7 +78,7 @@ def fetch_jira_issues_batch(
     return doc_batch, len(batch)
 
 
-class JiraConnector(LoadConnector):
+class JiraConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         jira_project_url: str,
@@ -123,13 +124,13 @@ class JiraConnector(LoadConnector):
                 "Jira Client is not set up, was load_credentials called?"
             )
 
-        start_datetime_str = datetime.fromtimestamp(start).strftime("%Y-%m-%dT%H:%M:%S")
-        end_datetime_str = datetime.fromtimestamp(end).strftime("%Y-%m-%dT%H:%M:%S")
+        start_date_str = datetime.fromtimestamp(start).strftime("%Y-%m-%d")
+        end_date_str = datetime.fromtimestamp(end).strftime("%Y-%m-%d")
 
         jql = (
             f"project = {self.jira_project} AND "
-            f"updated >= {start_datetime_str} AND "
-            f"updated <= {end_datetime_str}"
+            f"updated >= {start_date_str} AND "
+            f"updated <= {end_date_str}"
         )
 
         start_ind = 0

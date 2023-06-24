@@ -5,6 +5,7 @@ import {
   GithubIcon,
   GlobeIcon,
   GoogleDriveIcon,
+  JiraIcon,
   SlackIcon,
 } from "./icons/icons";
 
@@ -51,6 +52,12 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: ConfluenceIcon,
         displayName: "Confluence",
         adminPageLink: "/admin/connectors/confluence",
+      };
+    case "jira":
+      return {
+        icon: JiraIcon,
+        displayName: "Jira",
+        adminPageLink: "/admin/connectors/jira",
       };
     default:
       throw new Error("Invalid source type");

@@ -39,6 +39,13 @@ const getSourceDisplay = (
     );
   }
 
+  if (connector.source === "jira") {
+    return (
+      sourceMetadata.displayName +
+      ` [${connector.connector_specific_config?.jira_project_url}]`
+    );
+  }
+
   if (
     connector.source === "google_drive" &&
     !connectorIndexingStatus.public_doc
