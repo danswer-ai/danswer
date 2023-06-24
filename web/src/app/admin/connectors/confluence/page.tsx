@@ -93,11 +93,10 @@ const Main = () => {
       ) : (
         <>
           <p className="text-sm">
-            To use the Confluence connector, you must first follow the guide
-            described{" "}
+            To use the Confluence connector, first follow the guide{" "}
             <a
               className="text-blue-500"
-              href="https://docs.danswer.dev/connectors/slack#setting-up"
+              href="https://docs.danswer.dev/connectors/confluence#setting-up"
             >
               here
             </a>{" "}
@@ -143,16 +142,7 @@ const Main = () => {
       {confluenceCredential ? (
         <>
           <p className="text-sm mb-4">
-            To use the Confluence connector, you must first follow the guide
-            described{" "}
-            <a
-              className="text-blue-500"
-              href="https://docs.danswer.dev/connectors/slack#setting-up"
-            >
-              here
-            </a>{" "}
-            to give the Danswer backend read access to your documents. Once that
-            is setup, specify any link to a Confluence page below and click
+            Specify any link to a Confluence page below and click
             &quot;Index&quot; to Index. Based on the provided link, we will
             index the ENTIRE SPACE, not just the specified page. For example,
             entering{" "}
