@@ -17,8 +17,11 @@ import { LoadingAnimation } from "@/components/Loading";
 import { deleteCredential, linkCredential } from "@/lib/credential";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
+import { usePopup } from "@/components/admin/connectors/Popup";
 
 const Main = () => {
+  const { popup, setPopup } = usePopup();
+
   const { mutate } = useSWRConfig();
   const {
     data: connectorIndexingStatuses,
@@ -62,6 +65,7 @@ const Main = () => {
 
   return (
     <>
+      {popup}
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your access token
       </h2>
@@ -82,6 +86,14 @@ const Main = () => {
             <button
               className="ml-1 hover:bg-gray-700 rounded-full p-1"
               onClick={async () => {
+                if (confluenceConnectorIndexingStatuses.length > 0) {
+                  setPopup({
+                    type: "error",
+                    message:
+                      "Must delete all connectors before deleting credentials",
+                  });
+                  return;
+                }
                 await deleteCredential(confluenceCredential.id);
                 mutate("/api/manage/credential");
               }}

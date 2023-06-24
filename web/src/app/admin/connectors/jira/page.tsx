@@ -17,8 +17,11 @@ import { LoadingAnimation } from "@/components/Loading";
 import { deleteCredential, linkCredential } from "@/lib/credential";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
+import { usePopup } from "@/components/admin/connectors/Popup";
 
 const Main = () => {
+  const { popup, setPopup } = usePopup();
+
   const { mutate } = useSWRConfig();
   const {
     data: connectorIndexingStatuses,
@@ -61,6 +64,7 @@ const Main = () => {
 
   return (
     <>
+      {popup}
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your Credentials
       </h2>
@@ -81,6 +85,14 @@ const Main = () => {
             <button
               className="ml-1 hover:bg-gray-700 rounded-full p-1"
               onClick={async () => {
+                if (jiraConnectorIndexingStatuses.length > 0) {
+                  setPopup({
+                    type: "error",
+                    message:
+                      "Must delete all connectors before deleting credentials",
+                  });
+                  return;
+                }
                 await deleteCredential(jiraCredential.id);
                 mutate("/api/manage/credential");
               }}
@@ -139,102 +151,108 @@ const Main = () => {
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
         Step 2: Which spaces do you want to make searchable?
       </h2>
-      <p className="text-sm mb-4">
-        To use the Confluence connector, you must first follow the guide
-        described{" "}
-        <a
-          className="text-blue-500"
-          href="https://docs.danswer.dev/connectors/slack#setting-up"
-        >
-          here
-        </a>{" "}
-        to give the Danswer backend read access to your documents. Once that is
-        setup, specify any link to a Confluence page below and click
-        &quot;Index&quot; to Index. Based on the provided link, we will index
-        the ENTIRE SPACE, not just the specified page. For example, entering{" "}
-        <i>https://danswer.atlassian.net/wiki/spaces/Engineering/overview</i>{" "}
-        and clicking the Index button will index the whole <i>Engineering</i>{" "}
-        Confluence space.
-      </p>
-
-      {jiraConnectorIndexingStatuses.length > 0 && (
+      {jiraCredential ? (
         <>
-          <p className="text-sm mb-2">
-            We pull the latest pages and comments from each space listed below
-            every <b>10</b> minutes.
+          {" "}
+          <p className="text-sm mb-4">
+            Specify any link to a Jira page below and click &quot;Index&quot; to
+            Index. Based on the provided link, we will index the ENTIRE SPACE,
+            not just the specified page. For example, entering{" "}
+            <i>
+              https://danswer.atlassian.net/wiki/spaces/Engineering/overview
+            </i>{" "}
+            and clicking the Index button will index the whole{" "}
+            <i>Engineering</i> Confluence space.
           </p>
-          <div className="mb-2">
-            <ConnectorsTable<JiraConfig, JiraCredentialJson>
-              connectorIndexingStatuses={jiraConnectorIndexingStatuses}
-              liveCredential={jiraCredential}
-              getCredential={(credential) => {
-                return (
-                  <div>
-                    <p>{credential.credential_json.jira_api_token}</p>
-                  </div>
-                );
+          {jiraConnectorIndexingStatuses.length > 0 && (
+            <>
+              <p className="text-sm mb-2">
+                We pull the latest pages and comments from each space listed
+                below every <b>10</b> minutes.
+              </p>
+              <div className="mb-2">
+                <ConnectorsTable<JiraConfig, JiraCredentialJson>
+                  connectorIndexingStatuses={jiraConnectorIndexingStatuses}
+                  liveCredential={jiraCredential}
+                  getCredential={(credential) => {
+                    return (
+                      <div>
+                        <p>{credential.credential_json.jira_api_token}</p>
+                      </div>
+                    );
+                  }}
+                  onCredentialLink={async (connectorId) => {
+                    if (jiraCredential) {
+                      await linkCredential(connectorId, jiraCredential.id);
+                      mutate("/api/manage/admin/connector/indexing-status");
+                    }
+                  }}
+                  specialColumns={[
+                    {
+                      header: "Url",
+                      key: "url",
+                      getValue: (connector) => (
+                        <a
+                          className="text-blue-500"
+                          href={
+                            connector.connector_specific_config.jira_project_url
+                          }
+                        >
+                          {connector.connector_specific_config.jira_project_url}
+                        </a>
+                      ),
+                    },
+                  ]}
+                  onUpdate={() =>
+                    mutate("/api/manage/admin/connector/indexing-status")
+                  }
+                />
+              </div>
+            </>
+          )}
+          <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+            <h2 className="font-bold mb-3">Add a New Space</h2>
+            <ConnectorForm<JiraConfig>
+              nameBuilder={(values) =>
+                `JiraConnector-${values.jira_project_url}`
+              }
+              source="jira"
+              inputType="poll"
+              formBody={
+                <>
+                  <TextFormField
+                    name="jira_project_url"
+                    label="Jira Project URL:"
+                  />
+                </>
+              }
+              validationSchema={Yup.object().shape({
+                jira_project_url: Yup.string().required(
+                  "Please enter any link to your jira project e.g. https://danswer.atlassian.net/jira/software/projects/DAN/boards/1"
+                ),
+              })}
+              initialValues={{
+                jira_project_url: "",
               }}
-              onCredentialLink={async (connectorId) => {
-                if (jiraCredential) {
-                  await linkCredential(connectorId, jiraCredential.id);
+              refreshFreq={10 * 60} // 10 minutes
+              onSubmit={async (isSuccess, responseJson) => {
+                if (isSuccess && responseJson) {
+                  await linkCredential(responseJson.id, jiraCredential.id);
                   mutate("/api/manage/admin/connector/indexing-status");
                 }
               }}
-              specialColumns={[
-                {
-                  header: "Url",
-                  key: "url",
-                  getValue: (connector) => (
-                    <a
-                      className="text-blue-500"
-                      href={
-                        connector.connector_specific_config.jira_project_url
-                      }
-                    >
-                      {connector.connector_specific_config.jira_project_url}
-                    </a>
-                  ),
-                },
-              ]}
-              onUpdate={() =>
-                mutate("/api/manage/admin/connector/indexing-status")
-              }
             />
           </div>
         </>
+      ) : (
+        <>
+          <p className="text-sm">
+            Please provide your access token in Step 1 first! Once done with
+            that, you can then specify which Jira projects you want to make
+            searchable.
+          </p>
+        </>
       )}
-
-      <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
-        <h2 className="font-bold mb-3">Add a New Space</h2>
-        <ConnectorForm<JiraConfig>
-          nameBuilder={(values) => `JiraConnector-${values.jira_project_url}`}
-          source="jira"
-          inputType="poll"
-          formBody={
-            <>
-              <TextFormField
-                name="jira_project_url"
-                label="Jira Project URL:"
-              />
-            </>
-          }
-          validationSchema={Yup.object().shape({
-            jira_project_url: Yup.string().required(
-              "Please enter any link to your jira project e.g. https://danswer.atlassian.net/jira/software/projects/DAN/boards/1"
-            ),
-          })}
-          initialValues={{
-            jira_project_url: "",
-          }}
-          refreshFreq={10 * 60} // 10 minutes
-          onSubmit={async (isSuccess, responseJson) => {
-            if (isSuccess && responseJson) {
-              await linkCredential(responseJson.id, jiraCredential.id);
-              mutate("/api/manage/admin/connector/indexing-status");
-            }
-          }}
-        />
-      </div>
     </>
   );
 };

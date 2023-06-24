@@ -146,9 +146,9 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
           const credential = connectorIncludesCredential
             ? {
                 credential: hasValidCredentials ? (
-                  <p className="max-w-sm truncate">
+                  <div className="max-w-sm truncate">
                     {getCredential(liveCredential)}
-                  </p>
+                  </div>
                 ) : liveCredential ? (
                   <AttachCredentialButtonForTable
                     onClick={() => onCredentialLink(connector.id)}

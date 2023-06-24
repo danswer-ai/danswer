@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 export interface PopupSpec {
   message: string;
   type: "success" | "error";
@@ -12,3 +14,18 @@ export const Popup: React.FC<PopupSpec> = ({ message, type }) => (
     {message}
   </div>
 );
+
+export const usePopup = () => {
+  const [popup, setPopup] = useState<PopupSpec | null>(null);
+  const setPopupWithExpiration = (popupSpec: PopupSpec | null) => {
+    setPopup(popupSpec);
+    setTimeout(() => {
+      setPopup(null);
+    }, 4000);
+  };
+
+  return {
+    popup: popup && <Popup {...popup} />,
+    setPopup: setPopupWithExpiration,
+  };
+};

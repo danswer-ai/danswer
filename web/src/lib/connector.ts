@@ -1,4 +1,4 @@
-import { Connector, ConnectorBase } from "./types";
+import { Connector, ConnectorBase, ValidSources } from "./types";
 
 async function handleResponse(
   response: Response
@@ -62,6 +62,30 @@ export async function runConnector(
   });
   if (!response.ok) {
     return (await response.json()).detail;
+  }
+  return null;
+}
+
+export async function deleteConnectorIfExists({
+  source,
+  name,
+}: {
+  source: ValidSources;
+  name?: string;
+}): Promise<string | null> {
+  const connectorsResponse = await fetch("/api/manage/connector");
+  if (connectorsResponse.ok) {
+    const connectors = (await connectorsResponse.json()) as Connector<any>[];
+    const googleDriveConnectors = connectors.filter(
+      (connector) =>
+        connector.source === source && (!name || connector.name === name)
+    );
+    if (googleDriveConnectors.length > 0) {
+      const errorMsg = await deleteConnector(googleDriveConnectors[0].id);
+      if (errorMsg) {
+        return errorMsg;
+      }
+    }
   }
   return null;
 }
