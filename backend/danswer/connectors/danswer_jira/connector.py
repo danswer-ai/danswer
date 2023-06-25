@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timezone
 from typing import Any
 from urllib.parse import urlparse
 
@@ -70,7 +71,7 @@ def fetch_jira_issues_batch(
             Document(
                 id=page_url,
                 sections=[Section(link=page_url, text=semantic_rep)],
-                source=DocumentSource.CONFLUENCE,
+                source=DocumentSource.JIRA,
                 semantic_identifier=jira.fields.summary,
                 metadata={},
             )
@@ -124,13 +125,17 @@ class JiraConnector(LoadConnector, PollConnector):
                 "Jira Client is not set up, was load_credentials called?"
             )
 
-        start_date_str = datetime.fromtimestamp(start).strftime("%Y-%m-%d")
-        end_date_str = datetime.fromtimestamp(end).strftime("%Y-%m-%d")
+        start_date_str = datetime.fromtimestamp(start, tz=timezone.utc).strftime(
+            "%Y-%m-%d %H:%M"
+        )
+        end_date_str = datetime.fromtimestamp(end, tz=timezone.utc).strftime(
+            "%Y-%m-%d %H:%M"
+        )
 
         jql = (
             f"project = {self.jira_project} AND "
-            f"updated >= {start_date_str} AND "
-            f"updated <= {end_date_str}"
+            f"updated >= '{start_date_str}' AND "
+            f"updated <= '{end_date_str}'"
         )
 
         start_ind = 0
