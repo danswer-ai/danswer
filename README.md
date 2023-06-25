@@ -12,7 +12,7 @@
 <a href="https://join.slack.com/t/danswer/shared_invite/zt-1u5ycen3o-6SJbWfivLWP5LPyp_jftuw" target="_blank">
     <img src="https://img.shields.io/badge/slack-join-blue.svg?logo=slack" alt="Slack">
 </a>
-<a href="https://discord.gg/s6qETAVZ" target="_blank">
+<a href="https://discord.gg/TDJ59cGV2X" target="_blank">
     <img src="https://img.shields.io/badge/discord-join-blue.svg?logo=discord&logoColor=white" alt="Discord">
 </a>
 <a href="https://github.com/danswer-ai/danswer/blob/main/README.md" target="_blank">
