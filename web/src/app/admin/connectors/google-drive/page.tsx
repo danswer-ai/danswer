@@ -16,7 +16,7 @@ import {
   Credential,
   GoogleDriveCredentialJson,
 } from "@/lib/types";
-import { deleteConnector } from "@/lib/connector";
+import { deleteConnector, deleteConnectorIfExists } from "@/lib/connector";
 import { StatusRow } from "@/components/admin/connectors/table/ConnectorsTable";
 import { setupGoogleDriveOAuth } from "@/lib/googleDrive";
 import Cookies from "js-cookie";
@@ -133,25 +133,15 @@ const GoogleDriveConnectorManagement = ({
             // best effort check to see if existing connector exists
             // delete it if it does, the current assumption is that only
             // one google drive connector will exist at a time
-            const connectorsResponse = await fetch("/api/manage/connector");
-            if (connectorsResponse.ok) {
-              const connectors =
-                (await connectorsResponse.json()) as Connector<any>[];
-              const googleDriveConnectors = connectors.filter(
-                (connector) => connector.source === "google_drive"
-              );
-              if (googleDriveConnectors.length > 0) {
-                const errorMsg = await deleteConnector(
-                  googleDriveConnectors[0].id
-                );
-                if (errorMsg) {
-                  setPopup({
-                    message: `Unable to delete existing connector - ${errorMsg}`,
-                    type: "error",
-                  });
-                  return;
-                }
-              }
+            const errorMsg = await deleteConnectorIfExists({
+              source: "google_drive",
+            });
+            if (errorMsg) {
+              setPopup({
+                message: `Unable to delete existing connector - ${errorMsg}`,
+                type: "error",
+              });
+              return;
             }
 
             const connectorBase: ConnectorBase<{}> = {

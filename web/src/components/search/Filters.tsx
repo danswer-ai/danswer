@@ -8,6 +8,7 @@ const sources: Source[] = [
   { displayName: "Google Drive", internalName: "google_drive" },
   { displayName: "Slack", internalName: "slack" },
   { displayName: "Confluence", internalName: "confluence" },
+  { displayName: "Jira", internalName: "jira" },
   { displayName: "Github PRs", internalName: "github" },
   { displayName: "Web", internalName: "web" },
   { displayName: "File", internalName: "file" },

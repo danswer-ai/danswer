@@ -12,6 +12,7 @@ google-auth-oauthlib==1.0.0
 httpcore==0.16.3
 httpx==0.23.3
 httpx-oauth==0.11.2
+jira==3.5.1
 Mako==1.2.4
 nltk==3.8.1
 openai==0.27.6

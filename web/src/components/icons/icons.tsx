@@ -12,7 +12,13 @@ import {
   Bird,
   Brain,
 } from "@phosphor-icons/react";
-import { SiConfluence, SiGithub, SiGoogledrive, SiSlack } from "react-icons/si";
+import {
+  SiConfluence,
+  SiGithub,
+  SiGoogledrive,
+  SiJira,
+  SiSlack,
+} from "react-icons/si";
 import { FaFile, FaGlobe } from "react-icons/fa";
 
 interface IconProps {
@@ -111,6 +117,13 @@ export const ConfluenceIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <SiConfluence size={size} className={className} />;
+};
+
+export const JiraIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <SiJira size={size} className={className} />;
 };
 
 export const InfoIcon = ({

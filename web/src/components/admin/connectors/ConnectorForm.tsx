@@ -68,26 +68,27 @@ export function ConnectorForm<T extends Yup.AnyObject>({
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
-        onSubmit={(values, formikHelpers) => {
+        onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
-          submitConnector<T>({
+
+          const { message, isSuccess, response } = await submitConnector<T>({
             name: nameBuilder(values),
             source,
             input_type: inputType,
             connector_specific_config: values,
             refresh_freq: refreshFreq || 0,
             disabled: false,
-          }).then(({ message, isSuccess, response }) => {
-            setPopup({ message, type: isSuccess ? "success" : "error" });
-            formikHelpers.setSubmitting(false);
-            if (isSuccess) {
-              formikHelpers.resetForm();
-            }
-            setTimeout(() => {
-              setPopup(null);
-            }, 4000);
-            onSubmit(isSuccess, response);
           });
+
+          setPopup({ message, type: isSuccess ? "success" : "error" });
+          formikHelpers.setSubmitting(false);
+          if (isSuccess) {
+            formikHelpers.resetForm();
+          }
+          setTimeout(() => {
+            setPopup(null);
+          }, 4000);
+          onSubmit(isSuccess, response);
         }}
       >
         {({ isSubmitting }) => (
