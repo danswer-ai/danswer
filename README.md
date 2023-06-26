@@ -30,7 +30,7 @@ Check out our <strong><a href="https://www.youtube.com/watch?v=geNzY1nbCnU">Vide
 * Intelligent Document Retrieval (Semantic Search/Reranking) using the latest LLMs.
 * An AI Helper backed by a custom Deep Learning model to interpret user intent.
 * User authentication and document level access management.
-* Connectors to Slack, GitHub, GoogleDrive, Confluence, local files, and web scrapping, with more to come.
+* Connectors to Slack, GitHub, GoogleDrive, Confluence, local files, and web scraping, with more to come.
 * Management Dashboard to manage connectors and set up features such as live update fetching.
 * One line Docker Compose (or Kubernetes) deployment to host Danswer anywhere.
 
