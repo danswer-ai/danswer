@@ -1,5 +1,5 @@
 <h2 align="center">
-<a href="https://docs.danswer.dev/"> <img width="50%" src="https://github.com/danswer-owners/danswer/blob/1fabd9372d66cd54238847197c33f091a724803b/DanswerWithName.png?raw=true)" /></a>
+<a href="https://www.danswer.ai/"> <img width="50%" src="https://github.com/danswer-owners/danswer/blob/1fabd9372d66cd54238847197c33f091a724803b/DanswerWithName.png?raw=true)" /></a>
 </h2>
 
 <p align="center">
@@ -20,7 +20,7 @@
 </a>
 </p>
 
-<strong>[Danswer](https://docs.danswer.dev/)</strong> allows you to ask natural language questions against internal documents and get back reliable answers backed by quotes and references from the source material so that you can always trust what you get back. You can connect to a number of common tools such as Slack, GitHub, Confluence, amongst others.
+<strong>[Danswer](https://www.danswer.ai/)</strong> allows you to ask natural language questions against internal documents and get back reliable answers backed by quotes and references from the source material so that you can always trust what you get back. You can connect to a number of common tools such as Slack, GitHub, Confluence, amongst others.
 
 Check out our <strong><a href="https://www.youtube.com/watch?v=geNzY1nbCnU">Video Demo</a></strong>!
 
