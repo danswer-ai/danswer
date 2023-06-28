@@ -25,6 +25,7 @@
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3",
     "react-icons": "^4.8.0",
+    "semver": "^7.5.3",
     "swr": "^2.1.5",
     "tailwindcss": "^3.3.1",
     "typescript": "5.0.3",
