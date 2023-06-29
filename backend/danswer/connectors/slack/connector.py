@@ -156,8 +156,25 @@ def thread_to_doc(workspace: str, channel: ChannelType, thread: ThreadType) -> D
     )
 
 
+# list of subtypes can be found here: https://api.slack.com/events/message
+_DISALLOWED_MSG_SUBTYPES = {
+    "channel_join",
+    "channel_leave",
+    "channel_archive",
+    "channel_unarchive",
+    "pinned_item",
+    "unpinned_item",
+    "ekm_access_denied",
+    "channel_posting_permissions",
+    "group_join",
+    "group_leave",
+    "group_archive",
+    "group_unarchive",
+}
+
+
 def _default_msg_filter(message: MessageType) -> bool:
-    return message.get("subtype", "") == "channel_join"
+    return message.get("subtype", "") in _DISALLOWED_MSG_SUBTYPES
 
 
 def get_all_docs(
@@ -191,7 +208,7 @@ def get_all_docs(
                 ]
                 if filtered_thread:
                     final_threads.append(filtered_thread)
-            else:
+            elif not msg_filter_func(message):
                 final_threads.append([message])
         channel_id_to_threads[channel_id] = final_threads
 
