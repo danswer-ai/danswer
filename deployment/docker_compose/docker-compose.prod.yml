@@ -61,6 +61,8 @@ services:
     restart: always
     env_file:
       - .env
+    environment:
+      - QDRANT__TELEMETRY_DISABLED=true
     volumes:
       - qdrant_volume:/qdrant/storage
   search_engine:
