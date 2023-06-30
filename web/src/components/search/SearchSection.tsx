@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { SearchBar } from "./SearchBar";
 import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SourceSelector } from "./Filters";
@@ -19,6 +19,7 @@ import {
 import { searchRequestStreamed } from "@/lib/search/streaming";
 import Cookies from "js-cookie";
 import { SearchHelper } from "./SearchHelper";
+import { CancellationToken, cancellable } from "@/lib/search/cancellable";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -88,21 +89,43 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
       suggestedFlowType,
     }));
 
+  let lastSearchCancellationToken = useRef<CancellationToken | null>(null);
   const onSearch = async ({
     searchType,
     offset,
   }: SearchRequestOverrides = {}) => {
+    // cancel the prior search if it hasn't finished
+    if (lastSearchCancellationToken.current) {
+      lastSearchCancellationToken.current.cancel();
+    }
+    lastSearchCancellationToken.current = new CancellationToken();
+
     setIsFetching(true);
     setSearchResponse(initialSearchResponse);
 
     await searchRequestStreamed({
       query,
       sources,
-      updateCurrentAnswer,
-      updateQuotes,
-      updateDocs,
-      updateSuggestedSearchType,
-      updateSuggestedFlowType,
+      updateCurrentAnswer: cancellable({
+        cancellationToken: lastSearchCancellationToken.current,
+        fn: updateCurrentAnswer,
+      }),
+      updateQuotes: cancellable({
+        cancellationToken: lastSearchCancellationToken.current,
+        fn: updateQuotes,
+      }),
+      updateDocs: cancellable({
+        cancellationToken: lastSearchCancellationToken.current,
+        fn: updateDocs,
+      }),
+      updateSuggestedSearchType: cancellable({
+        cancellationToken: lastSearchCancellationToken.current,
+        fn: updateSuggestedSearchType,
+      }),
+      updateSuggestedFlowType: cancellable({
+        cancellationToken: lastSearchCancellationToken.current,
+        fn: updateSuggestedFlowType,
+      }),
       selectedSearchType: searchType ?? selectedSearchType,
       offset: offset ?? defaultOverrides.offset,
     });
