@@ -34,6 +34,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       <div className="flex items-center w-full border-2 border-gray-600 rounded px-4 py-2 focus-within:border-blue-500">
         <MagnifyingGlass className="text-gray-400" />
         <textarea
+          autoFocus
           className="flex-grow ml-2 h-6 bg-transparent outline-none placeholder-gray-400 overflow-hidden whitespace-normal resize-none"
           role="textarea"
           aria-multiline

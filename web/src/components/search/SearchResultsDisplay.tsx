@@ -86,21 +86,34 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
                     <LoadingAnimation text="Finding quotes" size="text-sm" />
                   ) : (
                     <div className="flex">
-                      {dedupedQuotes.map((quoteInfo) => (
-                        <a
-                          key={quoteInfo.document_id}
-                          className="p-2 ml-1 border border-gray-800 rounded-lg text-sm flex max-w-[280px] hover:bg-gray-800"
-                          href={quoteInfo.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {getSourceIcon(quoteInfo.source_type, "20")}
-                          <p className="truncate break-all ml-2">
-                            {quoteInfo.semantic_identifier ||
-                              quoteInfo.document_id}
-                          </p>
-                        </a>
-                      ))}
+                      {dedupedQuotes.length > 0 ? (
+                        dedupedQuotes.map((quoteInfo) => (
+                          <a
+                            key={quoteInfo.document_id}
+                            className="p-2 ml-1 border border-gray-800 rounded-lg text-sm flex max-w-[280px] hover:bg-gray-800"
+                            href={quoteInfo.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {getSourceIcon(quoteInfo.source_type, "20")}
+                            <p className="truncate break-all ml-2">
+                              {quoteInfo.semantic_identifier ||
+                                quoteInfo.document_id}
+                            </p>
+                          </a>
+                        ))
+                      ) : (
+                        <div className="flex">
+                          <InfoIcon
+                            size="20"
+                            className="text-red-500 my-auto flex flex-shrink-0"
+                          />
+                          <div className="text-red-500 text-sm my-auto ml-1">
+                            Did not find any exact quotes to support the above
+                            answer.
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </>
@@ -126,30 +139,28 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
           <div className="font-bold border-b mb-4 pb-1 border-gray-800">
             Results
           </div>
-          {removeDuplicateDocs(documents)
-            .slice(0, 7)
-            .map((doc) => (
-              <div
-                key={doc.semantic_identifier}
-                className="text-sm border-b border-gray-800 mb-3"
+          {removeDuplicateDocs(documents).map((doc) => (
+            <div
+              key={doc.semantic_identifier}
+              className="text-sm border-b border-gray-800 mb-3"
+            >
+              <a
+                className={
+                  "rounded-lg flex font-bold " +
+                  (doc.link ? "" : "pointer-events-none")
+                }
+                href={doc.link}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <a
-                  className={
-                    "rounded-lg flex font-bold " +
-                    (doc.link ? "" : "pointer-events-none")
-                  }
-                  href={doc.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {getSourceIcon(doc.source_type, "20")}
-                  <p className="truncate break-all ml-2">
-                    {doc.semantic_identifier || doc.document_id}
-                  </p>
-                </a>
-                <p className="pl-1 py-3 text-gray-200">{doc.blurb}</p>
-              </div>
-            ))}
+                {getSourceIcon(doc.source_type, "20")}
+                <p className="truncate break-all ml-2">
+                  {doc.semantic_identifier || doc.document_id}
+                </p>
+              </a>
+              <p className="pl-1 py-3 text-gray-200">{doc.blurb}</p>
+            </div>
+          ))}
         </div>
       )}
     </>
