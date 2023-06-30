@@ -228,6 +228,11 @@ class TypesenseIndex(KeywordIndex):
             "per_page": num_to_retrieve,
             "limit_hits": num_to_retrieve,
             "num_typos": 2,
+            "prefix": "false",
+            # below is required to allow proper partial matching of a query
+            # (partial matching = only some of the terms in the query match)
+            # more info here: https://typesense-community.slack.com/archives/C01P749MET0/p1688083239192799
+            "exhaustive_search": "true",
         }
 
         search_results = self.ts_client.collections[self.collection].documents.search(
