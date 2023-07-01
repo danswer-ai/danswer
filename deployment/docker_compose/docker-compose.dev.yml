@@ -57,7 +57,7 @@ services:
     volumes:
       - db_volume:/var/lib/postgresql/data
   vector_db:
-    image: qdrant/qdrant:v1.1.3
+    image: qdrant/qdrant:v1.3.0
     restart: always
     environment:
       - QDRANT__TELEMETRY_DISABLED=true
