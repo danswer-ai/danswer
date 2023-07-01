@@ -30,8 +30,8 @@ def is_valid_url(url: str) -> bool:
 
 def get_internal_links(
     base_url: str, url: str, soup: BeautifulSoup, should_ignore_pound: bool = True
-) -> list[str]:
-    internal_links = []
+) -> set[str]:
+    internal_links = set()
     for link in cast(list[dict[str, Any]], soup.find_all("a")):
         href = cast(str | None, link.get("href"))
         if not href:
@@ -47,8 +47,14 @@ def get_internal_links(
             href = urljoin(url, href)
 
         if urlparse(href).netloc == urlparse(url).netloc and base_url in href:
-            internal_links.append(href)
+            internal_links.add(href)
     return internal_links
+
+
+def remove_trailing_slash(url: str) -> str:
+    if url and url[-1] == "/":
+        return url[:-1]
+    return url
 
 
 class WebConnector(LoadConnector):
@@ -70,21 +76,20 @@ class WebConnector(LoadConnector):
     def load_from_state(self) -> GenerateDocumentsOutput:
         """Traverses through all pages found on the website
         and converts them into documents"""
-        visited_links: set[str] = set()
+        visited_links: set[
+            str
+        ] = set()  # Holds the urls without trailing slash, assumes content is the same
         to_visit: list[str] = [self.base_url]
         doc_batch: list[Document] = []
-
-        # Edge case handling user provides HTML without terminating slash (prevents duplicate)
-        # Most sites either redirect no slash to slash or serve same content
-        if self.base_url[-1] != "/":
-            visited_links.add(self.base_url + "/")
 
         restart_playwright = True
         while to_visit:
             current_url = to_visit.pop()
             if current_url in visited_links:
                 continue
-            visited_links.add(current_url)
+            visited_links.add(remove_trailing_slash(current_url))
+
+            logger.info(f"Indexing {current_url}")
 
             try:
                 if restart_playwright:
@@ -114,12 +119,23 @@ class WebConnector(LoadConnector):
 
                 page = context.new_page()
                 page.goto(current_url)
+                final_page = page.url
+                if remove_trailing_slash(final_page) != remove_trailing_slash(
+                    current_url
+                ):
+                    logger.info(f"Redirected to {final_page}")
+                    current_url = final_page
+                    final_page = remove_trailing_slash(final_page)
+                    if final_page in visited_links:
+                        continue
+                    visited_links.add(final_page)
+
                 content = page.content()
                 soup = BeautifulSoup(content, "html.parser")
 
                 internal_links = get_internal_links(self.base_url, current_url, soup)
                 for link in internal_links:
-                    if link not in visited_links:
+                    if remove_trailing_slash(link) not in visited_links:
                         to_visit.append(link)
 
                 title_tag = soup.find("title")
@@ -161,6 +177,8 @@ class WebConnector(LoadConnector):
                 page.close()
             except Exception as e:
                 logger.error(f"Failed to fetch '{current_url}': {e}")
+                playwright.stop()
+                restart_playwright = True
                 continue
 
             if len(doc_batch) >= self.batch_size:
