@@ -28,6 +28,8 @@ Requirements: Docker and docker compose
    - This will start Web/API servers, Postgres (backend DB), Qdrant (vector DB), and the background indexing job.
    - Downloading packages/requirements may take 20+ minutes depending on your internet connection and whether it needs
    to install packages for GPU.
+   - If you want to adjust any environment variables, either use the `-e` flag or the `--env-file` flag when running the `docker compose` command,
+   
 
 
 2. To shut down the deployment, run:
@@ -43,7 +45,7 @@ Requirements: Docker and docker compose
 Additional steps for user auth and https if you do want to use Docker Compose for production:
 
 1. Set up a `.env` file in this directory with relevant environment variables.
-   - Refer to env.dev.template and env.prod.template
+   - Refer to `env.prod.template`
    - To turn on user auth, set:
      - ENABLE_OAUTH=True 
      - GOOGLE_OAUTH_CLIENT_ID=\<your GCP API client ID\>
