@@ -69,6 +69,8 @@ services:
     restart: always
     env_file:
       - .env
+    environment:
+      - QDRANT__TELEMETRY_DISABLED=true
     ports:
       - "6333:6333"
     volumes:
