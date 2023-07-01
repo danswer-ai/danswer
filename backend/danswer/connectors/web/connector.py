@@ -85,7 +85,7 @@ class WebConnector(LoadConnector):
         restart_playwright = True
         while to_visit:
             current_url = to_visit.pop()
-            if current_url in visited_links:
+            if remove_trailing_slash(current_url) in visited_links:
                 continue
             visited_links.add(remove_trailing_slash(current_url))
 
