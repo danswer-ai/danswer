@@ -1,10 +1,20 @@
 version: '3'
 services:
+  llama_server:
+    image: ghcr.io/abetlen/llama-cpp-python:latest
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL=/models/${MODEL_FILE_NAME}
+    volumes:
+      - ../data/models:/models
   api_server:
     build:
       context: ../../backend
       dockerfile: Dockerfile
     depends_on:
+      - llama_server
       - relational_db
       - vector_db
       - search_engine
@@ -12,6 +22,8 @@ services:
     ports:
       - "8080:8080"
     environment:
+      - OPENAI_API_BASE=http://localhost:8000/v1
+      - OPENAI_API_KEY=EMPTY
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
       - TYPESENSE_HOST=search_engine
@@ -25,6 +37,7 @@ services:
       context: ../../backend
       dockerfile: Dockerfile.background
     depends_on:
+      - llama_server
       - relational_db
       - vector_db
     restart: always
@@ -41,6 +54,7 @@ services:
       context: ../../web
       dockerfile: Dockerfile
     depends_on:
+      - llama_server
       - api_server
     restart: always
     environment:
@@ -79,6 +93,7 @@ services:
     image: nginx:1.23.4-alpine
     restart: always
     depends_on:
+      - llama_server
       - api_server
       - web_server
     environment:
