@@ -105,6 +105,7 @@ class QAResponse(SearchResponse):
     quotes: dict[str, dict[str, str | int | None]] | None
     predicted_flow: QueryFlow
     predicted_search: SearchType
+    error_msg: str | None = None
 
 
 class UserByEmail(BaseModel):

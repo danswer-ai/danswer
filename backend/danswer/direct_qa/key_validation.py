@@ -1,5 +1,5 @@
 from danswer.direct_qa import get_default_backend_qa_model
-from danswer.direct_qa.question_answer import OpenAIQAModel
+from danswer.direct_qa.llm import OpenAIQAModel
 from openai.error import AuthenticationError
 from openai.error import Timeout
 
