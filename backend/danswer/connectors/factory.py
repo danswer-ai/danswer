@@ -12,6 +12,7 @@ from danswer.connectors.interfaces import EventConnector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import InputType
+from danswer.connectors.slab.connector import SlabConnector
 from danswer.connectors.slack.connector import SlackLoadConnector
 from danswer.connectors.slack.connector import SlackPollConnector
 from danswer.connectors.web.connector import WebConnector
@@ -38,6 +39,7 @@ def identify_connector_class(
         DocumentSource.GOOGLE_DRIVE: GoogleDriveConnector,
         DocumentSource.CONFLUENCE: ConfluenceConnector,
         DocumentSource.JIRA: JiraConnector,
+        DocumentSource.SLAB: SlabConnector,
     }
     connector_by_source = connector_map.get(source, {})
 
