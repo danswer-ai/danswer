@@ -1,6 +1,6 @@
 import json
 from collections.abc import Callable
-from collections.abc import Collection
+from collections.abc import Generator
 from datetime import datetime
 from datetime import timezone
 from typing import Any
@@ -15,9 +15,12 @@ from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.utils.logging import setup_logger
 from dateutil import parser
 
+
 SLAB_API_URL = "https://api.slab.com/v1/graphql"
+logger = setup_logger()
 
 
 class SlabBotTokenNotFoundError(PermissionError):
@@ -28,7 +31,14 @@ class SlabBotTokenNotFoundError(PermissionError):
 def run_graphql_request(graphql_query: dict[str, Any], bot_token: str) -> str:
     headers = {"Authorization": bot_token, "Content-Type": "application/json"}
 
-    response = requests.post(SLAB_API_URL, headers=headers, json=graphql_query)
+    try:
+        response = requests.post(
+            SLAB_API_URL, headers=headers, json=graphql_query, timeout=60
+        )
+    except requests.exceptions.Timeout:
+        raise TimeoutError(
+            "Slab API timed out, this should not happen according to their API rate limiting."
+        )
 
     if response.status_code != 200:
         raise ValueError(f"GraphQL query failed: {graphql_query}")
@@ -38,7 +48,7 @@ def run_graphql_request(graphql_query: dict[str, Any], bot_token: str) -> str:
 
 def get_all_post_ids(bot_token: str) -> list[str]:
     query = """
-        query GetDanswerDocs {
+        query GetAllPostIds {
             organization {
                 posts {
                   id
@@ -56,7 +66,7 @@ def get_all_post_ids(bot_token: str) -> list[str]:
 
 def get_post_by_id(post_id: str, bot_token: str) -> dict[str, str]:
     query = """
-        query ExampleQuery($postId: ID!) {
+        query GetPostById($postId: ID!) {
             post(id: $postId) {
                 title
                 content
@@ -70,9 +80,12 @@ def get_post_by_id(post_id: str, bot_token: str) -> dict[str, str]:
     return results["data"]["post"]
 
 
-def iterate_post_batches(pagination_start: str | None, batch_size: int, bot_token: str):
+def iterate_post_batches(
+    batch_size: int, bot_token: str
+) -> Generator[list[dict[str, str]], None, None]:
+    """This may not be safe to use, not sure if page edits will change the order of results"""
     query = """
-        query PostSearchResult($query: String!, $first: Int, $types: [SearchType], $after: String) {
+        query IteratePostBatches($query: String!, $first: Int, $types: [SearchType], $after: String) {
             search(query: $query, first: $first, types: $types, after: $after) {
                 edges {
                     node {
@@ -88,20 +101,32 @@ def iterate_post_batches(pagination_start: str | None, batch_size: int, bot_toke
                 }
                 pageInfo {
                     endCursor
+                    hasNextPage
                 }
             }
         }
     """
-    graphql_query = {
-        "query": query,
-        "variables": {
-            "query": "",
-            "first": batch_size,
-            "types": ["POST"],
-            "after": pagination_start,
-        },
-    }
-    results = json.loads(run_graphql_request(graphql_query, bot_token))
+    pagination_start = None
+    exists_more_pages = True
+    while exists_more_pages:
+        graphql_query = {
+            "query": query,
+            "variables": {
+                "query": "",
+                "first": batch_size,
+                "types": ["POST"],
+                "after": pagination_start,
+            },
+        }
+        results = json.loads(run_graphql_request(graphql_query, bot_token))
+        pagination_start = results["data"]["search"]["pageInfo"]["endCursor"]
+        hits = results["data"]["search"]["edges"]
+
+        posts = [hit["node"] for hit in hits]
+        if posts:
+            yield posts
+
+        exists_more_pages = results["data"]["search"]["pageInfo"]["hasNextPage"]
 
 
 def get_slab_url_from_title_id(base_url: str, title: str, page_id: str) -> str:
@@ -181,15 +206,3 @@ class SlabConnector(LoadConnector, PollConnector):
         yield from self._iterate_posts(
             time_filter=lambda t: start_time <= t <= end_time
         )
-
-
-if __name__ == "__main__":
-    s_bot_token = "r7mex6dj90ci7sc7hsyro84gva3atq"
-    c = SlabConnector("https://danswer.slab.com/", s_bot_token)
-    import time
-
-    current_time = time.time()
-    one_day_ago = current_time - 86400
-
-    for batch in c.poll_source(one_day_ago, current_time):
-        print(batch)
