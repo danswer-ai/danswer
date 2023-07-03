@@ -6,6 +6,7 @@ from typing import cast
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import SlackResponse
 
+# number of messages we request per page when fetching paginated slack messages
 _SLACK_LIMIT = 900
 
 

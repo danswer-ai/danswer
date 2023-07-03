@@ -19,6 +19,8 @@ _NUM_DOCS_TO_DISPLAY = 5
 
 
 def _get_socket_client() -> SocketModeClient:
+    # For more info on how to set this up, checkout the docs:
+    # https://docs.danswer.dev/slack_bot_setup
     app_token = os.environ.get("DANSWER_BOT_SLACK_APP_TOKEN")
     if not app_token:
         raise RuntimeError("DANSWER_BOT_SLACK_APP_TOKEN is not set")
@@ -43,7 +45,7 @@ def _process_quotes(
     for quote_dict in quotes.values():
         doc_link = quote_dict.get("document_id")
         doc_name = quote_dict.get("semantic_identifier")
-        if doc_link and doc_name:
+        if doc_link and doc_name and doc_name not in doc_identifiers:
             doc_identifiers.append(str(doc_name))
             quote_lines.append(f"- <{doc_link}|{doc_name}>")
 
@@ -77,12 +79,16 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
         client.send_socket_mode_response(response)
 
         # Ensure that the message is a new message + of expected type
-        if req.payload.get("event", {}).get("type") != "message":
-            logger.info("Ignoring non-message event")
+        event_type = req.payload.get("event", {}).get("type")
+        if event_type != "message":
+            logger.info(f"Ignoring non-message event of type '{event_type}'")
 
+        message_subtype = req.payload.get("event", {}).get("subtype")
         if req.payload.get("event", {}).get("subtype") is not None:
             # this covers things like channel_join, channel_leave, etc.
-            logger.info("Ignoring message since is is a special message type")
+            logger.info(
+                f"Ignoring message with subtype '{message_subtype}' since is is a special message type"
+            )
             return
 
         if req.payload.get("event", {}).get("bot_profile"):
@@ -178,8 +184,15 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
         logger.info(f"Successfully processed message with ts: '{thread_ts}'")
 
 
-# Add a new listener to receive messages from Slack
-# You can add more listeners like this
+# Follow the guide (https://docs.danswer.dev/slack_bot_setup) to set up
+# the slack bot in your workspace, and then add the bot to any channels you want to
+# try and answer questions for. Running this file will setup Danswer to listen to all
+# messages in those channels and attempt to answer them. As of now, it will only respond
+# to messages sent directly in the channel - it will not respond to messages sent within a
+# thread.
+#
+# NOTE: we are using Web Sockets so that you can run this from within a firewalled VPC
+# without issue.
 if __name__ == "__main__":
     socket_client = _get_socket_client()
     socket_client.socket_mode_request_listeners.append(process_slack_event)  # type: ignore
