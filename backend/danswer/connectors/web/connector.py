@@ -51,12 +51,6 @@ def get_internal_links(
     return internal_links
 
 
-def remove_trailing_slash(url: str) -> str:
-    if url and url[-1] == "/":
-        return url[:-1]
-    return url
-
-
 class WebConnector(LoadConnector):
     def __init__(
         self,
@@ -76,18 +70,16 @@ class WebConnector(LoadConnector):
     def load_from_state(self) -> GenerateDocumentsOutput:
         """Traverses through all pages found on the website
         and converts them into documents"""
-        visited_links: set[
-            str
-        ] = set()  # Holds the urls without trailing slash, assumes content is the same
+        visited_links: set[str] = set()
         to_visit: list[str] = [self.base_url]
         doc_batch: list[Document] = []
 
         restart_playwright = True
         while to_visit:
             current_url = to_visit.pop()
-            if remove_trailing_slash(current_url) in visited_links:
+            if current_url in visited_links:
                 continue
-            visited_links.add(remove_trailing_slash(current_url))
+            visited_links.add(current_url)
 
             logger.info(f"Indexing {current_url}")
 
@@ -120,22 +112,20 @@ class WebConnector(LoadConnector):
                 page = context.new_page()
                 page.goto(current_url)
                 final_page = page.url
-                if remove_trailing_slash(final_page) != remove_trailing_slash(
-                    current_url
-                ):
+                if final_page != current_url:
                     logger.info(f"Redirected to {final_page}")
                     current_url = final_page
-                    final_page = remove_trailing_slash(final_page)
-                    if final_page in visited_links:
+                    if current_url in visited_links:
+                        logger.info(f"Redirected page already indexed")
                         continue
-                    visited_links.add(final_page)
+                    visited_links.add(current_url)
 
                 content = page.content()
                 soup = BeautifulSoup(content, "html.parser")
 
                 internal_links = get_internal_links(self.base_url, current_url, soup)
                 for link in internal_links:
-                    if remove_trailing_slash(link) not in visited_links:
+                    if link not in visited_links:
                         to_visit.append(link)
 
                 title_tag = soup.find("title")
