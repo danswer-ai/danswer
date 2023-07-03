@@ -18,7 +18,8 @@ from danswer.connectors.models import Section
 from danswer.utils.logging import setup_logger
 from dateutil import parser
 
-
+# Fairly generous retry because it's not understood why occasionally GraphQL requests fail even with timeout > 1 min
+SLAB_GRAPHQL_MAX_TRIES = 10
 SLAB_API_URL = "https://api.slab.com/v1/graphql"
 logger = setup_logger()
 
@@ -28,22 +29,36 @@ class SlabBotTokenNotFoundError(PermissionError):
         super().__init__("Slab Bot Token not found, was load_credentials called?")
 
 
-def run_graphql_request(graphql_query: dict[str, Any], bot_token: str) -> str:
+def run_graphql_request(
+    graphql_query: dict, bot_token: str, max_tries: int = SLAB_GRAPHQL_MAX_TRIES
+) -> str:
     headers = {"Authorization": bot_token, "Content-Type": "application/json"}
 
-    try:
-        response = requests.post(
-            SLAB_API_URL, headers=headers, json=graphql_query, timeout=60
-        )
-    except requests.exceptions.Timeout:
-        raise TimeoutError(
-            "Slab API timed out, this should not happen according to their API rate limiting."
-        )
+    for try_count in range(max_tries):
+        try:
+            response = requests.post(
+                SLAB_API_URL, headers=headers, json=graphql_query, timeout=60
+            )
+            response.raise_for_status()
 
-    if response.status_code != 200:
-        raise ValueError(f"GraphQL query failed: {graphql_query}")
+            if response.status_code != 200:
+                raise ValueError(f"GraphQL query failed: {graphql_query}")
 
-    return response.text
+            return response.text
+
+        except (requests.exceptions.Timeout, ValueError) as e:
+            if try_count < max_tries - 1:
+                logger.warning("A Slab GraphQL error occurred. Retrying...")
+                continue
+
+            if isinstance(e, requests.exceptions.Timeout):
+                raise TimeoutError("Slab API timed out after 3 attempts")
+            else:
+                raise ValueError("Slab GraphQL query failed after 3 attempts")
+
+    raise RuntimeError(
+        "Unexpected execution from Slab Connector. This should not happen."
+    )  # for static checker
 
 
 def get_all_post_ids(bot_token: str) -> list[str]:
@@ -51,13 +66,13 @@ def get_all_post_ids(bot_token: str) -> list[str]:
         query GetAllPostIds {
             organization {
                 posts {
-                  id
+                    id
                 }
-              }
             }
+        }
         """
 
-    graphql_query: dict[str, str] = {"query": query}
+    graphql_query = {"query": query}
 
     results = json.loads(run_graphql_request(graphql_query, bot_token))
     posts = results["data"]["organization"]["posts"]
@@ -141,12 +156,12 @@ class SlabConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         base_url: str,
-        slab_bot_token: str | None = None,
         batch_size: int = INDEX_BATCH_SIZE,
+        slab_bot_token: str | None = None,
     ) -> None:
         self.base_url = base_url
-        self.slab_bot_token = slab_bot_token
         self.batch_size = batch_size
+        self.slab_bot_token = slab_bot_token
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         self.slab_bot_token = credentials["slab_bot_token"]
