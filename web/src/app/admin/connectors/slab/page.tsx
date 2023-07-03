@@ -137,7 +137,7 @@ const Main = () => {
       )}
 
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
-        Step 2: What's the base URL for your Slab team?
+        Step 2: What&apos;s the base URL for your Slab team?
       </h2>
       {slabCredential ? (
         <>
