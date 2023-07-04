@@ -1,24 +1,41 @@
 version: '3'
 services:
-  llama_server:
+  fastchat_controller:
     build:
       context: .
-      dockerfile: llama-server.dockerfile
-    restart: always
+      dockerfile: Dockerfile
+    image: fastchat:latest
+    ports:
+      - "21001:21001"
+    entrypoint: ["python", "-m", "fastchat.serve.controller", "--host", "0.0.0.0", "--port", "21001"]
+  fastchat_model_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - huggingface:/root/.cache/huggingface
+    environment:
+      FASTCHAT_CONTROLLER_URL: http://fastchat-controller:21001
+    image: fastchat:latest
+    entrypoint: ["python", "-m", "fastchat.serve.model_worker", "--model-name", 'falcon', "--model-path", "/models/$", "--worker-address", "http://fastchat-model-worker:21002", "--controller-address", "http://fastchat-controller:21001", "--host", "0.0.0.0", "--port", "21002"]
+  fastchat_api_server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      FASTCHAT_CONTROLLER_URL: http://fastchat-controller:21001
+    image: fastchat:latest
     ports:
       - "8000:8000"
-    environment:
-      - MODEL=/models/${MODEL_FILE_NAME}
-      - CACHE=True
-      - N_CTX=4096
-    volumes:
-      - ../data/models:/models
+    entrypoint: ["python", "-m", "fastchat.serve.openai_api_server", "--controller-address", "http://fastchat-controller:21001", "--host", "0.0.0.0", "--port", "8000"]
   api_server:
     build:
       context: ../../backend
       dockerfile: Dockerfile
     depends_on:
-      - llama_server
+      - fastchat_controller
+      - fastchat_model_worker
+      - fastchat_api_server
       - relational_db
       - vector_db
       - search_engine
@@ -41,7 +58,9 @@ services:
       context: ../../backend
       dockerfile: Dockerfile.background
     depends_on:
-      - llama_server
+      - fastchat_controller
+      - fastchat_model_worker
+      - fastchat_api_server
       - relational_db
       - vector_db
     restart: always
@@ -58,7 +77,9 @@ services:
       context: ../../web
       dockerfile: Dockerfile
     depends_on:
-      - llama_server
+      - fastchat_controller
+      - fastchat_model_worker
+      - fastchat_api_server
       - api_server
     restart: always
     environment:
@@ -97,7 +118,9 @@ services:
     image: nginx:1.23.4-alpine
     restart: always
     depends_on:
-      - llama_server
+      - fastchat_controller
+      - fastchat_model_worker
+      - fastchat_api_server
       - api_server
       - web_server
     environment:
@@ -116,3 +139,4 @@ volumes:
   db_volume:
   qdrant_volume:
   typesense_volume:
+  huggingface:
