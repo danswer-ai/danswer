@@ -1,58 +1,6 @@
-from setuptools import find_packages, setup
+#!/usr/bin/env python
 
-setup(
-    name="danswer",
-    packages=find_packages(),
-    version="0.1",
-    install_requires=[
-       "alembic==1.10.4",
-       "asyncpg==0.27.0",
-       "atlassian-python-api==3.37.0",
-       "beautifulsoup4==4.12.0",
-       "fastapi==0.95.0",
-       "fastapi-users==11.0.0",
-       "fastapi-users-db-sqlalchemy==5.0.0",
-       "filelock==3.12.0",
-       "google-api-python-client==2.86.0",
-       "google-auth-httplib2==0.1.0",
-       "google-auth-oauthlib==1.0.0",
-       "httpcore==0.16.3",
-       "httpx==0.23.3",
-       "httpx-oauth==0.11.2",
-       "jira==3.5.1",
-       "Mako==1.2.4",
-       "nltk==3.8.1",
-       "openai==0.27.6",
-       "playwright==1.32.1",
-       "psycopg2==2.9.6",
-       "psycopg2-binary==2.9.6",
-       "pydantic==1.10.7",
-       "PyGithub==1.58.2",
-       "PyPDF2==3.0.1",
-       "pytest-playwright==0.3.2",
-       "python-multipart==0.0.6",
-       "qdrant-client==1.2.0",
-       "requests==2.31.0",
-       "rfc3986==1.5.0",
-       "sentence-transformers==2.2.2",
-       "slack-sdk==3.20.2",
-       "SQLAlchemy[mypy]==2.0.12",
-       "tensorflow==2.12.0",
-       "transformers==4.30.1",
-       "typesense==0.15.1",
-       "uvicorn==0.21.1",
-    ],
-    extras_require={"dev": [
-       "black==23.3.0",
-       "mypy-extensions==1.0.0",
-       "mypy==1.1.1",
-       "pre-commit==3.2.2",
-       "reorder-python-imports==3.9.0",
-       "types-beautifulsoup4==4.12.0.3",
-       "types-html5lib==1.1.11.13",
-       "types-psycopg2==2.9.21.10",
-       "types-regex==2023.3.23.1",
-       "types-requests==2.28.11.17",
-       "types-urllib3==1.26.25.11",
-    ]},
-)
+import setuptools
+
+if __name__ == "__main__":
+    setuptools.setup()
