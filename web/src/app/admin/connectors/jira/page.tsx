@@ -156,13 +156,13 @@ const Main = () => {
           {" "}
           <p className="text-sm mb-4">
             Specify any link to a Jira page below and click &quot;Index&quot; to
-            Index. Based on the provided link, we will index the ENTIRE SPACE,
+            Index. Based on the provided link, we will index the ENTIRE PROJECT,
             not just the specified page. For example, entering{" "}
             <i>
-              https://danswer.atlassian.net/wiki/spaces/Engineering/overview
+              https://danswer.atlassian.net/jira/software/projects/DAN/boards/1
             </i>{" "}
-            and clicking the Index button will index the whole{" "}
-            <i>Engineering</i> Confluence space.
+            and clicking the Index button will index the whole <i>DAN</i> Jira
+            project.
           </p>
           {jiraConnectorIndexingStatuses.length > 0 && (
             <>
@@ -211,7 +211,7 @@ const Main = () => {
             </>
           )}
           <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
-            <h2 className="font-bold mb-3">Add a New Space</h2>
+            <h2 className="font-bold mb-3">Add a New Project</h2>
             <ConnectorForm<JiraConfig>
               nameBuilder={(values) =>
                 `JiraConnector-${values.jira_project_url}`
