@@ -43,7 +43,7 @@ def _process_quotes(
     quote_lines: list[str] = []
     doc_identifiers: list[str] = []
     for quote_dict in quotes.values():
-        doc_link = quote_dict.get("document_id")
+        doc_link = quote_dict.get("link")
         doc_name = quote_dict.get("semantic_identifier")
         if doc_link and doc_name and doc_name not in doc_identifiers:
             doc_identifiers.append(str(doc_name))
