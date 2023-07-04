@@ -1,6 +1,5 @@
 import json
 import os
-import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -15,14 +14,13 @@ from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.connectors.slack.utils import get_message_link
+from danswer.connectors.slack.utils import make_slack_api_call_paginated
+from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.utils.logging import setup_logger
 from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
 from slack_sdk.web import SlackResponse
 
 logger = setup_logger()
-
-SLACK_LIMIT = 900
 
 
 ChannelType = dict[str, Any]
@@ -31,61 +29,10 @@ MessageType = dict[str, Any]
 ThreadType = list[MessageType]
 
 
-def _make_slack_api_call_paginated(
-    call: Callable[..., SlackResponse],
-) -> Callable[..., list[dict[str, Any]]]:
-    """Wraps calls to slack API so that they automatically handle pagination"""
-
-    def paginated_call(**kwargs: Any) -> list[dict[str, Any]]:
-        results: list[dict[str, Any]] = []
-        cursor: str | None = None
-        has_more = True
-        while has_more:
-            for result in call(cursor=cursor, limit=SLACK_LIMIT, **kwargs):
-                has_more = result.get("has_more", False)
-                cursor = result.get("response_metadata", {}).get("next_cursor", "")
-                results.append(cast(dict[str, Any], result))
-        return results
-
-    return paginated_call
-
-
-def _make_slack_api_rate_limited(
-    call: Callable[..., SlackResponse], max_retries: int = 3
-) -> Callable[..., SlackResponse]:
-    """Wraps calls to slack API so that they automatically handle rate limiting"""
-
-    def rate_limited_call(**kwargs: Any) -> SlackResponse:
-        for _ in range(max_retries):
-            try:
-                # Make the API call
-                response = call(**kwargs)
-
-                # Check for errors in the response
-                if response.get("ok"):
-                    return response
-                else:
-                    raise SlackApiError("", response)
-
-            except SlackApiError as e:
-                if e.response["error"] == "ratelimited":
-                    # Handle rate limiting: get the 'Retry-After' header value and sleep for that duration
-                    retry_after = int(e.response.headers.get("Retry-After", 1))
-                    time.sleep(retry_after)
-                else:
-                    # Raise the error for non-transient errors
-                    raise
-
-        # If the code reaches this point, all retries have been exhausted
-        raise Exception(f"Max retries ({max_retries}) exceeded")
-
-    return rate_limited_call
-
-
 def _make_slack_api_call(
     call: Callable[..., SlackResponse], **kwargs: Any
 ) -> list[dict[str, Any]]:
-    return _make_slack_api_call_paginated(_make_slack_api_rate_limited(call))(**kwargs)
+    return make_slack_api_call_paginated(make_slack_api_rate_limited(call))(**kwargs)
 
 
 def get_channel_info(client: WebClient, channel_id: str) -> ChannelType:
