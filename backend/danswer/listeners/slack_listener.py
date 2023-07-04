@@ -61,11 +61,16 @@ def _process_documents(
     if not documents:
         return None
 
-    top_documents = [
-        d
-        for d in documents
-        if d.semantic_identifier not in already_displayed_doc_identifiers
-    ][:_NUM_DOCS_TO_DISPLAY]
+    seen_docs_identifiers = set(already_displayed_doc_identifiers)
+    top_documents: list[SearchDoc] = []
+    for d in documents:
+        if d.semantic_identifier in seen_docs_identifiers:
+            continue
+        seen_docs_identifiers.add(d.semantic_identifier)
+        top_documents.append(d)
+        if len(top_documents) >= _NUM_DOCS_TO_DISPLAY:
+            break
+
     top_documents_str = "\n".join(
         [f"- <{d.link}|{d.semantic_identifier}>" for d in top_documents]
     )
