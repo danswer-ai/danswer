@@ -1,12 +1,16 @@
 version: '3'
 services:
   llama_server:
-    image: ghcr.io/abetlen/llama-cpp-python:latest
+    build:
+      context: .
+      dockerfile: llama-server.dockerfile
     restart: always
     ports:
       - "8000:8000"
     environment:
       - MODEL=/models/${MODEL_FILE_NAME}
+      - CACHE=True
+      - N_CTX=4096
     volumes:
       - ../data/models:/models
   api_server:
@@ -22,7 +26,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - OPENAI_API_BASE=http://localhost:8000/v1
+      - OPENAI_API_BASE=http://llama_server:8000/v1
       - OPENAI_API_KEY=EMPTY
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
