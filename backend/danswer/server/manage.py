@@ -38,7 +38,7 @@ from danswer.db.engine import get_sqlalchemy_async_engine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.models import User
 from danswer.direct_qa.key_validation import check_openai_api_key_is_valid
-from danswer.direct_qa.question_answer import get_openai_api_key
+from danswer.direct_qa.llm import get_openai_api_key
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.server.models import ApiKey
