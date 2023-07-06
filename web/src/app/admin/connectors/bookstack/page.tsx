@@ -9,7 +9,7 @@ import {
   BookstackCredentialJson,
   BookstackConfig,
   Credential,
-  ConnectorIndexingStatus, ConfluenceConfig,
+  ConnectorIndexingStatus,
 } from "@/lib/types";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";

@@ -1,11 +1,9 @@
+import html
+import time
 from collections.abc import Callable
-from collections.abc import Generator
 from datetime import datetime
-from datetime import timezone
 from typing import Any
-from urllib.parse import urlparse
 
-from atlassian import Confluence  # type:ignore
 from bs4 import BeautifulSoup
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -14,14 +12,17 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.bookstack.client import BookStackApiClient
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+
 
 class BookstackClientNotSetUpError(PermissionError):
     def __init__(self) -> None:
         super().__init__(
-            "Confluence Client is not set up, was load_credentials called?"
+            "BookStack Client is not set up, was load_credentials called?"
         )
+
 
 class BookstackConnector(LoadConnector, PollConnector):
     def __init__(
@@ -29,90 +30,133 @@ class BookstackConnector(LoadConnector, PollConnector):
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.batch_size = batch_size
+        self.bookstack_client: BookStackApiClient | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        base_url = credentials["bookstack_base_url"]
-        api_token_id = credentials["bookstack_api_token_id"]
-        api_token_secret = credentials["bookstack_api_token_secret"]
+        self.bookstack_client = BookStackApiClient(
+            base_url=credentials["bookstack_base_url"],
+            token_id=credentials["bookstack_api_token_id"],
+            token_secret=credentials["bookstack_api_token_secret"],
+        )
         return None
 
     def _get_doc_batch(
-        self, start_ind: int, time_filter: Callable[[datetime], bool] | None = None
+        self,
+        endpoint: str,
+        transformer: Callable[[dict], Document],
+        start_ind: int,
+        start: SecondsSinceUnixEpoch | None = None,
+        end: SecondsSinceUnixEpoch | None = None,
     ) -> tuple[list[Document], int]:
         doc_batch: list[Document] = []
 
-        if self.confluence_client is None:
-            raise BookstackClientNotSetUpError()
+        params = {
+            "count": str(self.batch_size),
+            "offset": str(start_ind),
+            "sort": "+id"
+        }
 
-        batch = self.confluence_client.get_all_pages_from_space(
-            self.space,
-            start=start_ind,
-            limit=self.batch_size,
-            expand="body.storage.value,version",
-        )
+        if start:
+            params["filter[updated_at:gte]"] = datetime.utcfromtimestamp(start).strftime('%Y-%m-%d %H:%M:%S')
 
-        for page in batch:
-            last_modified_str = page["version"]["when"]
-            last_modified = datetime.fromisoformat(last_modified_str)
+        if end:
+            params["filter[updated_at:lte]"] = datetime.utcfromtimestamp(end).strftime('%Y-%m-%d %H:%M:%S')
 
-            if time_filter is None or time_filter(last_modified):
-                page_html = page["body"]["storage"]["value"]
-                soup = BeautifulSoup(page_html, "html.parser")
-                page_text = page.get("title", "") + "\n" + soup.get_text(HTML_SEPARATOR)
-                comment_pages = self.confluence_client.get_page_child_by_type(
-                    page["id"],
-                    type="comment",
-                    start=None,
-                    limit=None,
-                    expand="body.storage.value",
-                )
-                comments_text = _comment_dfs("", comment_pages, self.confluence_client)
-                page_text += comments_text
+        batch = self.bookstack_client.get(endpoint, params=params).get("data", [])
+        for item in batch:
+            doc_batch.append(transformer(item))
 
-                page_url = self.wiki_base + page["_links"]["webui"]
-
-                doc_batch.append(
-                    Document(
-                        id=page_url,
-                        sections=[Section(link=page_url, text=page_text)],
-                        source=DocumentSource.CONFLUENCE,
-                        semantic_identifier=page["title"],
-                        metadata={},
-                    )
-                )
         return doc_batch, len(batch)
 
+    def _book_to_document(self, book: dict):
+        url = self.bookstack_client.build_app_url("/books/" + book.get("slug"))
+        text = book.get("name", "") + "\n" + book.get("description", "")
+        return Document(
+            id=url,
+            sections=[Section(link=url, text=text)],
+            source=DocumentSource.BOOKSTACK,
+            semantic_identifier="Book: " + book.get("name"),
+            metadata={
+                "type": "book",
+                "updated_at": book.get("updated_at")
+            },
+        )
+
+    def _chapter_to_document(self, chapter: dict):
+        url = self.bookstack_client.build_app_url("/books/" + chapter.get("book_slug") + "/chapter/" + chapter.get("slug"))
+        text = chapter.get("name", "") + "\n" + chapter.get("description", "")
+        return Document(
+            id=url,
+            sections=[Section(link=url, text=text)],
+            source=DocumentSource.BOOKSTACK,
+            semantic_identifier="Chapter: " + chapter.get("name"),
+            metadata={
+                "type": "chapter",
+                "updated_at": chapter.get("updated_at")
+            },
+        )
+
+    def _shelf_to_document(self, shelf: dict):
+        url = self.bookstack_client.build_app_url("/shelves/" + shelf.get("slug"))
+        text = shelf.get("name", "") + "\n" + shelf.get("description", "")
+        return Document(
+            id=url,
+            sections=[Section(link=url, text=text)],
+            source=DocumentSource.BOOKSTACK,
+            semantic_identifier="Shelf: " + shelf.get("name"),
+            metadata={
+                "type": "shelf",
+                "updated_at": shelf.get("updated_at")
+            },
+        )
+
+    def _page_to_document(self, page: dict):
+        page_id = str(page.get("id"))
+        page_data = self.bookstack_client.get("/pages/" + page_id, {})
+        url = self.bookstack_client.build_app_url("/books/" + page.get("book_slug") + "/page/" + page_data.get("slug"))
+        page_html = "<h1>" + html.escape(page_data.get("name")) + "</h1>" + page_data.get("html")
+        soup = BeautifulSoup(page_html, "html.parser")
+        text = soup.get_text(HTML_SEPARATOR)
+        time.sleep(0.1)
+        return Document(
+            id=url,
+            sections=[Section(link=url, text=text)],
+            source=DocumentSource.BOOKSTACK,
+            semantic_identifier="Page: " + page_data.get("name"),
+            metadata={
+                "type": "page",
+                "updated_at": page_data.get("updated_at")
+            },
+        )
+
     def load_from_state(self) -> GenerateDocumentsOutput:
-        if self.confluence_client is None:
+        if self.bookstack_client is None:
             raise BookstackClientNotSetUpError()
 
-        start_ind = 0
-        while True:
-            doc_batch, num_pages = self._get_doc_batch(start_ind)
-            start_ind += num_pages
-            if doc_batch:
-                yield doc_batch
-
-            if num_pages < self.batch_size:
-                break
+        return self.poll_source(None, None)
 
     def poll_source(
-        self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
+        self, start: SecondsSinceUnixEpoch | None, end: SecondsSinceUnixEpoch | None
     ) -> GenerateDocumentsOutput:
-        if self.confluence_client is None:
+        if self.bookstack_client is None:
             raise BookstackClientNotSetUpError()
 
-        start_time = datetime.fromtimestamp(start, tz=timezone.utc)
-        end_time = datetime.fromtimestamp(end, tz=timezone.utc)
+        transform_by_endpoint: dict[str, Callable[[dict], Document]] = {
+            "/books": self._book_to_document,
+            "/chapters": self._chapter_to_document,
+            "/shelves": self._shelf_to_document,
+            "/pages": self._page_to_document,
+        }
 
-        start_ind = 0
-        while True:
-            doc_batch, num_pages = self._get_doc_batch(
-                start_ind, time_filter=lambda t: start_time <= t <= end_time
-            )
-            start_ind += num_pages
-            if doc_batch:
-                yield doc_batch
+        for endpoint, transform in transform_by_endpoint.items():
+            start_ind = 0
+            while True:
+                doc_batch, num_results = self._get_doc_batch(endpoint, transform, start_ind, start, end)
+                start_ind += num_results
+                if doc_batch:
+                    yield doc_batch
 
-            if num_pages < self.batch_size:
-                break
+                if num_results < self.batch_size:
+                    break
+                else:
+                    time.sleep(0.2)
