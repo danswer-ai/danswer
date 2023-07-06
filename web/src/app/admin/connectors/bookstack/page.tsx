@@ -145,7 +145,7 @@ const Main = () => {
         </>
       )}
 
-      {bookstackConnectorIndexingStatuses.length > 0 ? (
+      {bookstackConnectorIndexingStatuses.length > 0 && (
         <>
           <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
             BookStack indexing status
@@ -184,7 +184,9 @@ const Main = () => {
             />
           </div>
         </>
-      ) : (
+      )}
+
+      {bookstackCredential && bookstackConnectorIndexingStatuses.length === 0 && (
           <>
             <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
               <h2 className="font-bold mb-3">Create Connection</h2>
