@@ -2,6 +2,7 @@ from typing import Any
 from typing import Type
 
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.bookstack.connector import BookstackConnector
 from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.danswer_jira.connector import JiraConnector
 from danswer.connectors.file.connector import LocalFileConnector
@@ -37,6 +38,7 @@ def identify_connector_class(
         },
         DocumentSource.GITHUB: GithubConnector,
         DocumentSource.GOOGLE_DRIVE: GoogleDriveConnector,
+        DocumentSource.BOOKSTACK: BookstackConnector,
         DocumentSource.CONFLUENCE: ConfluenceConnector,
         DocumentSource.JIRA: JiraConnector,
         DocumentSource.SLAB: SlabConnector,
