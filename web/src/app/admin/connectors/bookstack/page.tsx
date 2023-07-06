@@ -67,7 +67,7 @@ const Main = () => {
     <>
       {popup}
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
-        Step 1: Provide your access token
+        Step 1: Provide your API details
       </h2>
 
       {bookstackCredential ? (
@@ -99,11 +99,11 @@ const Main = () => {
       ) : (
         <>
           <p className="text-sm">
-            To get started you'll need API token details for your BookStack instance.
+            To get started you&apos;ll need API token details for your BookStack instance.
             You can get these by editing your (or another) user account in BookStack
-            and creating a token via the "API Tokens" section at the bottom.
+            and creating a token via the &apos;API Tokens&apos; section at the bottom.
             Your user account will require to be assigned a BookStack role which
-            has the "Access system API" system permission assigned.
+            has the &apos;Access system API&apos; system permission assigned.
           </p>
           <div className="border-solid border-gray-600 border rounded-md p-6 mt-2 mb-4">
             <CredentialForm<BookstackCredentialJson>
@@ -145,7 +145,7 @@ const Main = () => {
         </>
       )}
 
-      {bookstackConnectorIndexingStatuses.length > 0 && (
+      {bookstackConnectorIndexingStatuses.length > 0 ? (
         <>
           <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
             BookStack indexing status
@@ -184,42 +184,47 @@ const Main = () => {
             />
           </div>
         </>
+      ) : (
+          <>
+            <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+              <h2 className="font-bold mb-3">Create Connection</h2>
+              <p className="text-sm mb-4">
+                Press connect below to start the connection to your BookStack instance.
+              </p>
+              <ConnectorForm<BookstackConfig>
+                nameBuilder={(values) =>
+                  `BookStackConnector`
+                }
+                source="bookstack"
+                inputType="poll"
+                formBody={
+                  <>
+                  </>
+                }
+                validationSchema={Yup.object().shape({
+                })}
+                initialValues={{
+                }}
+                refreshFreq={10 * 60} // 10 minutes
+                onSubmit={async (isSuccess, responseJson) => {
+                  if (isSuccess && responseJson) {
+                    await linkCredential(
+                      responseJson.id,
+                      bookstackCredential.id
+                    );
+                    mutate("/api/manage/admin/connector/indexing-status");
+                  }
+                }}
+              />
+            </div>
+          </>
       )}
-
-      <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
-        <h2 className="font-bold mb-3">Setup Connector</h2>
-        <ConnectorForm<BookstackConfig>
-          nameBuilder={(values) =>
-            `BookStackConnector`
-          }
-          source="bookstack"
-          inputType="poll"
-          formBody={
-            <>
-            </>
-          }
-          validationSchema={Yup.object().shape({
-          })}
-          initialValues={{
-          }}
-          refreshFreq={10 * 60} // 10 minutes
-          onSubmit={async (isSuccess, responseJson) => {
-            if (isSuccess && responseJson) {
-              await linkCredential(
-                responseJson.id,
-                bookstackCredential.id
-              );
-              mutate("/api/manage/admin/connector/indexing-status");
-            }
-          }}
-        />
-      </div>
 
       {!bookstackCredential && (
         <>
           <p className="text-sm mb-4">
             Please provide your API details in Step 1 first! Once done with that,
-            you'll be able to see indexing status.
+            you&apos;ll be able to start the connection then see indexing status.
           </p>
         </>
       )}
