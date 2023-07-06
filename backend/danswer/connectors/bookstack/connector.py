@@ -72,7 +72,7 @@ class BookstackConnector(LoadConnector, PollConnector):
         url = self.bookstack_client.build_app_url("/books/" + book.get("slug"))
         text = book.get("name", "") + "\n" + book.get("description", "")
         return Document(
-            id=url,
+            id="book:" + str(book.get("id")),
             sections=[Section(link=url, text=text)],
             source=DocumentSource.BOOKSTACK,
             semantic_identifier="Book: " + book.get("name"),
@@ -86,7 +86,7 @@ class BookstackConnector(LoadConnector, PollConnector):
         url = self.bookstack_client.build_app_url("/books/" + chapter.get("book_slug") + "/chapter/" + chapter.get("slug"))
         text = chapter.get("name", "") + "\n" + chapter.get("description", "")
         return Document(
-            id=url,
+            id="chapter:" + str(chapter.get("id")),
             sections=[Section(link=url, text=text)],
             source=DocumentSource.BOOKSTACK,
             semantic_identifier="Chapter: " + chapter.get("name"),
@@ -100,7 +100,7 @@ class BookstackConnector(LoadConnector, PollConnector):
         url = self.bookstack_client.build_app_url("/shelves/" + shelf.get("slug"))
         text = shelf.get("name", "") + "\n" + shelf.get("description", "")
         return Document(
-            id=url,
+            id="shelf:" + str(shelf.get("id")),
             sections=[Section(link=url, text=text)],
             source=DocumentSource.BOOKSTACK,
             semantic_identifier="Shelf: " + shelf.get("name"),
@@ -119,7 +119,7 @@ class BookstackConnector(LoadConnector, PollConnector):
         text = soup.get_text(HTML_SEPARATOR)
         time.sleep(0.1)
         return Document(
-            id=url,
+            id="page:" + page_id,
             sections=[Section(link=url, text=text)],
             source=DocumentSource.BOOKSTACK,
             semantic_identifier="Page: " + page_data.get("name"),
