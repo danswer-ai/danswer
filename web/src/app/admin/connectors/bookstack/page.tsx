@@ -193,7 +193,7 @@ const Main = () => {
             `BookStackConnector`
           }
           source="bookstack"
-          inputType="load_state"
+          inputType="poll"
           formBody={
             <>
             </>
