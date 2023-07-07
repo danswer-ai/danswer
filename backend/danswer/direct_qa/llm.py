@@ -177,8 +177,11 @@ def process_answer(
     answer_raw: str, chunks: list[InferenceChunk]
 ) -> tuple[str | None, dict[str, dict[str, str | int | None]] | None]:
     answer, quote_strings = separate_answer_quotes(answer_raw)
-    if not answer or not quote_strings:
+    if answer == UNCERTAINTY_PAT or not answer:
         return None, None
+
+    if not quote_strings:
+        return answer, None
     quotes_dict = match_quotes_to_docs(quote_strings, chunks)
     return answer, quotes_dict
 

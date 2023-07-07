@@ -19,7 +19,9 @@ from danswer.utils.logging import setup_logger
 logger = setup_logger()
 
 
-def answer_question(question: QuestionRequest, user: User | None) -> QAResponse:
+def answer_question(
+    question: QuestionRequest, user: User | None, qa_model_timeout: int = QA_TIMEOUT
+) -> QAResponse:
     start_time = time.time()
 
     query = question.query
@@ -53,7 +55,7 @@ def answer_question(question: QuestionRequest, user: User | None) -> QAResponse:
             predicted_search=predicted_search,
         )
 
-    qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
+    qa_model = get_default_backend_qa_model(timeout=qa_model_timeout)
     chunk_offset = offset_count * NUM_GENERATIVE_AI_INPUT_DOCS
     if chunk_offset >= len(ranked_chunks):
         raise ValueError("Chunks offset too large, should not retry this many times")

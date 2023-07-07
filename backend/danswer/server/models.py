@@ -80,6 +80,7 @@ class UserRoleResponse(BaseModel):
 
 
 class SearchDoc(BaseModel):
+    document_id: str
     semantic_identifier: str
     link: str | None
     blurb: str

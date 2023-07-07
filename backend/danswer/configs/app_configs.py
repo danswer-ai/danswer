@@ -136,3 +136,12 @@ DYNAMIC_CONFIG_STORE = os.environ.get(
     "DYNAMIC_CONFIG_STORE", "FileSystemBackedDynamicConfigStore"
 )
 DYNAMIC_CONFIG_DIR_PATH = os.environ.get("DYNAMIC_CONFIG_DIR_PATH", "/home/storage")
+
+
+#####
+# Danswer Slack Bot Configs
+#####
+DANSWER_BOT_NUM_DOCS_TO_DISPLAY = int(
+    os.environ.get("DANSWER_BOT_NUM_DOCS_TO_DISPLAY", "5")
+)
+DANSWER_BOT_NUM_RETRIES = int(os.environ.get("DANSWER_BOT_NUM_RETRIES", "5"))
