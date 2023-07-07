@@ -16,6 +16,7 @@ from typing import Union
 import openai
 import regex
 from danswer.chunking.models import InferenceChunk
+from danswer.configs.app_configs import INCLUDE_METADATA
 from danswer.configs.app_configs import OPENAI_API_KEY
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.configs.constants import BLURB
@@ -32,7 +33,6 @@ from danswer.direct_qa.qa_prompts import get_chat_reflexion_msg
 from danswer.direct_qa.qa_prompts import json_chat_processor
 from danswer.direct_qa.qa_prompts import json_processor
 from danswer.direct_qa.qa_prompts import QUOTE_PAT
-from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.utils.logging import setup_logger
 from danswer.utils.text_processing import clean_model_quote
@@ -247,24 +247,29 @@ class OpenAIQAModel(QAModel):
 class OpenAICompletionQA(OpenAIQAModel):
     def __init__(
         self,
-        prompt_processor: Callable[[str, list[str]], str] = json_processor,
+        prompt_processor: Callable[
+            [str, list[InferenceChunk], bool], str
+        ] = json_processor,
         model_version: str = OPENAI_MODEL_VERSION,
         max_output_tokens: int = OPENAI_MAX_OUTPUT_TOKENS,
         api_key: str | None = None,
         timeout: int | None = None,
+        include_metadata: bool = INCLUDE_METADATA,
     ) -> None:
         self.prompt_processor = prompt_processor
         self.model_version = model_version
         self.max_output_tokens = max_output_tokens
         self.api_key = api_key or get_openai_api_key()
         self.timeout = timeout
+        self.include_metadata = include_metadata
 
     @log_function_time()
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> tuple[str | None, dict[str, dict[str, str | int | None]] | None]:
-        top_contents = [ranked_chunk.content for ranked_chunk in context_docs]
-        filled_prompt = self.prompt_processor(query, top_contents)
+        filled_prompt = self.prompt_processor(
+            query, context_docs, self.include_metadata
+        )
         logger.debug(filled_prompt)
 
         openai_call = _handle_openai_exceptions_wrapper(
@@ -290,8 +295,9 @@ class OpenAICompletionQA(OpenAIQAModel):
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> Generator[dict[str, Any] | None, None, None]:
-        top_contents = [ranked_chunk.content for ranked_chunk in context_docs]
-        filled_prompt = self.prompt_processor(query, top_contents)
+        filled_prompt = self.prompt_processor(
+            query, context_docs, self.include_metadata
+        )
         logger.debug(filled_prompt)
 
         openai_call = _handle_openai_exceptions_wrapper(
@@ -350,13 +356,14 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
     def __init__(
         self,
         prompt_processor: Callable[
-            [str, list[str]], list[dict[str, str]]
+            [str, list[InferenceChunk], bool], list[dict[str, str]]
         ] = json_chat_processor,
         model_version: str = OPENAI_MODEL_VERSION,
         max_output_tokens: int = OPENAI_MAX_OUTPUT_TOKENS,
         timeout: int | None = None,
         reflexion_try_count: int = 0,
         api_key: str | None = None,
+        include_metadata: bool = INCLUDE_METADATA,
     ) -> None:
         self.prompt_processor = prompt_processor
         self.model_version = model_version
@@ -364,13 +371,15 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         self.reflexion_try_count = reflexion_try_count
         self.api_key = api_key or get_openai_api_key()
         self.timeout = timeout
+        self.include_metadata = include_metadata
 
     @log_function_time()
     def answer_question(
-        self, query: str, context_docs: list[InferenceChunk]
+        self,
+        query: str,
+        context_docs: list[InferenceChunk],
     ) -> tuple[str | None, dict[str, dict[str, str | int | None]] | None]:
-        top_contents = [ranked_chunk.content for ranked_chunk in context_docs]
-        messages = self.prompt_processor(query, top_contents)
+        messages = self.prompt_processor(query, context_docs, self.include_metadata)
         logger.debug(messages)
         model_output = ""
         for _ in range(self.reflexion_try_count + 1):
@@ -404,8 +413,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> Generator[dict[str, Any] | None, None, None]:
-        top_contents = [ranked_chunk.content for ranked_chunk in context_docs]
-        messages = self.prompt_processor(query, top_contents)
+        messages = self.prompt_processor(query, context_docs, self.include_metadata)
         logger.debug(messages)
 
         openai_call = _handle_openai_exceptions_wrapper(

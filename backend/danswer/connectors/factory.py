@@ -26,7 +26,7 @@ class ConnectorMissingException(Exception):
 
 def identify_connector_class(
     source: DocumentSource,
-    input_type: InputType,
+    input_type: InputType | None = None,
 ) -> Type[BaseConnector]:
     connector_map = {
         DocumentSource.WEB: WebConnector,
@@ -44,7 +44,11 @@ def identify_connector_class(
     connector_by_source = connector_map.get(source, {})
 
     if isinstance(connector_by_source, dict):
-        connector = connector_by_source.get(input_type)
+        if input_type is None:
+            # If not specified, default to most exhaustive update
+            connector = connector_by_source.get(InputType.LOAD_STATE)
+        else:
+            connector = connector_by_source.get(input_type)
     else:
         connector = connector_by_source
     if connector is None:
