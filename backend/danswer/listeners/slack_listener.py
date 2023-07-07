@@ -169,7 +169,7 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
             )
         except Exception:
             logger.exception(
-                "Unable to process message - did not successfully answer in {DANSWER_BOT_NUM_RETRIES} attempts"
+                f"Unable to process message - did not successfully answer in {DANSWER_BOT_NUM_RETRIES} attempts"
             )
             return
 
@@ -212,7 +212,7 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
             )
         except Exception:
             logger.exception(
-                "Unable to process message - could not respond in slack in {DANSWER_BOT_NUM_RETRIES} attempts"
+                f"Unable to process message - could not respond in slack in {DANSWER_BOT_NUM_RETRIES} attempts"
             )
             return
 
