@@ -226,7 +226,7 @@ const Main = () => {
                 `ConfluenceConnector-${values.wiki_page_url}`
               }
               source="confluence"
-              inputType="load_state"
+              inputType="poll"
               formBody={
                 <>
                   <TextFormField name="wiki_page_url" label="Confluence URL:" />
