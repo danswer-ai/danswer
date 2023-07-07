@@ -78,112 +78,105 @@ def _process_documents(
 
 
 def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> None:
-    try:
-        if req.type == "events_api":
-            # Acknowledge the request anyway
-            response = SocketModeResponse(envelope_id=req.envelope_id)
-            client.send_socket_mode_response(response)
+    if req.type == "events_api":
+        # Acknowledge the request anyway
+        response = SocketModeResponse(envelope_id=req.envelope_id)
+        client.send_socket_mode_response(response)
 
-            # Ensure that the message is a new message + of expected type
-            event_type = req.payload.get("event", {}).get("type")
-            if event_type != "message":
-                logger.info(f"Ignoring non-message event of type '{event_type}'")
+        # Ensure that the message is a new message + of expected type
+        event_type = req.payload.get("event", {}).get("type")
+        if event_type != "message":
+            logger.info(f"Ignoring non-message event of type '{event_type}'")
 
-            message_subtype = req.payload.get("event", {}).get("subtype")
-            if req.payload.get("event", {}).get("subtype") is not None:
-                # this covers things like channel_join, channel_leave, etc.
-                logger.info(
-                    f"Ignoring message with subtype '{message_subtype}' since is is a special message type"
-                )
-                return
-
-            if req.payload.get("event", {}).get("bot_profile"):
-                logger.info("Ignoring message from bot")
-                return
-
-            msg = req.payload.get("event", {}).get("text")
-            thread_ts = req.payload.get("event", {}).get("ts")
-            if not msg:
-                logger.error("Unable to process empty message")
-                return
-
-            # TODO: message should be enqueued and processed elsewhere,
-            # but doing it here for now for simplicity
-
-            @retry(tries=DANSWER_BOT_NUM_RETRIES, delay=0.25, backoff=2, logger=logger)
-            def _get_answer(question: QuestionRequest) -> QAResponse:
-                answer = answer_question(question=question, user=None)
-                if not answer.error_msg:
-                    return answer
-                else:
-                    raise RuntimeError(answer.error_msg)
-
-            answer = None
-            try:
-                answer = _get_answer(
-                    QuestionRequest(
-                        query=req.payload.get("event", {}).get("text"),
-                        collection=QDRANT_DEFAULT_COLLECTION,
-                        use_keyword=None,
-                        filters=None,
-                        offset=None,
-                    )
-                )
-            except Exception:
-                logger.exception(
-                    "Unable to process message - did not successfully answer in {DANSWER_BOT_NUM_RETRIES} attempts"
-                )
-                return
-
-            # convert raw response into "nicely" formatted Slack message
-            quote_str, doc_identifiers = _process_quotes(answer.quotes)
-            top_documents_str = _process_documents(
-                answer.top_ranked_docs, doc_identifiers
+        message_subtype = req.payload.get("event", {}).get("subtype")
+        if req.payload.get("event", {}).get("subtype") is not None:
+            # this covers things like channel_join, channel_leave, etc.
+            logger.info(
+                f"Ignoring message with subtype '{message_subtype}' since is is a special message type"
             )
+            return
 
-            if not answer.answer:
-                text = f"Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓\n\n{top_documents_str}"
+        if req.payload.get("event", {}).get("bot_profile"):
+            logger.info("Ignoring message from bot")
+            return
+
+        msg = req.payload.get("event", {}).get("text")
+        thread_ts = req.payload.get("event", {}).get("ts")
+        if not msg:
+            logger.error("Unable to process empty message")
+            return
+
+        # TODO: message should be enqueued and processed elsewhere,
+        # but doing it here for now for simplicity
+
+        @retry(tries=DANSWER_BOT_NUM_RETRIES, delay=0.25, backoff=2, logger=logger)
+        def _get_answer(question: QuestionRequest) -> QAResponse:
+            answer = answer_question(question=question, user=None)
+            if not answer.error_msg:
+                return answer
             else:
-                top_documents_str_with_header = (
-                    f"*Other potentially relevant docs:*\n{top_documents_str}"
-                )
-                if quote_str:
-                    text = f"{answer.answer}\n\n*Sources:*\n{quote_str}\n\n{top_documents_str_with_header}"
-                else:
-                    text = f"{answer.answer}\n\n*Warning*: no sources were quoted for this answer, so it may be unreliable 😔\n\n{top_documents_str_with_header}"
+                raise RuntimeError(answer.error_msg)
 
-            @retry(tries=DANSWER_BOT_NUM_RETRIES, delay=0.25, backoff=2, logger=logger)
-            def _respond_in_thread(
-                channel: str,
-                text: str,
-                thread_ts: str,
-            ) -> None:
-                slack_call = make_slack_api_rate_limited(
-                    client.web_client.chat_postMessage
+        answer = None
+        try:
+            answer = _get_answer(
+                QuestionRequest(
+                    query=req.payload.get("event", {}).get("text"),
+                    collection=QDRANT_DEFAULT_COLLECTION,
+                    use_keyword=None,
+                    filters=None,
+                    offset=None,
                 )
-                response = slack_call(
-                    channel=channel,
-                    text=text,
-                    thread_ts=thread_ts,
-                )
-                if not response.get("ok"):
-                    raise RuntimeError(f"Unable to post message: {response}")
+            )
+        except Exception:
+            logger.exception(
+                "Unable to process message - did not successfully answer in {DANSWER_BOT_NUM_RETRIES} attempts"
+            )
+            return
 
-            try:
-                _respond_in_thread(
-                    channel=req.payload.get("event", {}).get("channel"),
-                    text=text,
-                    thread_ts=thread_ts,
-                )
-            except Exception:
-                logger.exception(
-                    "Unable to process message - could not respond in slack in {DANSWER_BOT_NUM_RETRIES} attempts"
-                )
-                return
+        # convert raw response into "nicely" formatted Slack message
+        quote_str, doc_identifiers = _process_quotes(answer.quotes)
+        top_documents_str = _process_documents(answer.top_ranked_docs, doc_identifiers)
 
-            logger.info(f"Successfully processed message with ts: '{thread_ts}'")
-    except Exception:
-        logger.exception("Unable to process message")
+        if not answer.answer:
+            text = f"Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓\n\n{top_documents_str}"
+        else:
+            top_documents_str_with_header = (
+                f"*Other potentially relevant docs:*\n{top_documents_str}"
+            )
+            if quote_str:
+                text = f"{answer.answer}\n\n*Sources:*\n{quote_str}\n\n{top_documents_str_with_header}"
+            else:
+                text = f"{answer.answer}\n\n*Warning*: no sources were quoted for this answer, so it may be unreliable 😔\n\n{top_documents_str_with_header}"
+
+        @retry(tries=DANSWER_BOT_NUM_RETRIES, delay=0.25, backoff=2, logger=logger)
+        def _respond_in_thread(
+            channel: str,
+            text: str,
+            thread_ts: str,
+        ) -> None:
+            slack_call = make_slack_api_rate_limited(client.web_client.chat_postMessage)
+            response = slack_call(
+                channel=channel,
+                text=text,
+                thread_ts=thread_ts,
+            )
+            if not response.get("ok"):
+                raise RuntimeError(f"Unable to post message: {response}")
+
+        try:
+            _respond_in_thread(
+                channel=req.payload.get("event", {}).get("channel"),
+                text=text,
+                thread_ts=thread_ts,
+            )
+        except Exception:
+            logger.exception(
+                "Unable to process message - could not respond in slack in {DANSWER_BOT_NUM_RETRIES} attempts"
+            )
+            return
+
+        logger.info(f"Successfully processed message with ts: '{thread_ts}'")
 
 
 # Follow the guide (https://docs.danswer.dev/slack_bot_setup) to set up
