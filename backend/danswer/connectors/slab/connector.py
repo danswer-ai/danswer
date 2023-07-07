@@ -147,7 +147,13 @@ def iterate_post_batches(
 def get_slab_url_from_title_id(base_url: str, title: str, page_id: str) -> str:
     """This is not a documented approach but seems to be the way it works currently
     May be subject to change without notification"""
-    title = title.replace("[", "").replace("]", "").replace(" ", "-").lower()
+    title = (
+        title.replace("[", "")
+        .replace("]", "")
+        .replace(":", "")
+        .replace(" ", "-")
+        .lower()
+    )
     url_id = title + "-" + page_id
     return urljoin(urljoin(base_url, "posts/"), url_id)
 
