@@ -6,7 +6,7 @@ from danswer.connectors.factory import identify_connector_class
 
 
 GENERAL_SEP_PAT = "---\n"
-DOC_SEP_PAT = f"{GENERAL_SEP_PAT}NEW DOCUMENT:"
+DOC_SEP_PAT = "---NEW DOCUMENT---"
 DOC_CONTENT_START_PAT = "DOCUMENT CONTENTS:\n"
 QUESTION_PAT = "Query:"
 ANSWER_PAT = "Answer:"
@@ -16,7 +16,7 @@ QUOTE_PAT = "Quote:"
 BASE_PROMPT = (
     f"Answer the query based on provided documents and quote relevant sections. "
     f"Respond with a json containing a concise answer and up to three most relevant quotes from the documents. "
-    f"The quotes must be EXACT substrings from the documents.\n"
+    f"The quotes must be EXACT substrings from the documents."
 )
 
 
@@ -35,7 +35,7 @@ def add_metadata_section(
     prompt_current: str,
     chunk: InferenceChunk,
     prepend_tab: bool = False,
-    include_sep: bool = True,
+    include_sep: bool = False,
 ) -> str:
     def _prepend(s: str, ppt: bool) -> str:
         return "\t" + s if ppt else s
@@ -46,14 +46,17 @@ def add_metadata_section(
         connector_class = identify_connector_class(DocumentSource(chunk.source_type))
         for metadata_line in connector_class.parse_metadata(chunk.metadata):
             prompt_current += _prepend(f"\t{metadata_line}\n", prepend_tab)
-    prompt_current += DOC_CONTENT_START_PAT
+    prompt_current += _prepend(DOC_CONTENT_START_PAT, prepend_tab)
     if include_sep:
         prompt_current += GENERAL_SEP_PAT
     return prompt_current
 
 
 def json_processor(
-    question: str, chunks: list[InferenceChunk], include_metadata: bool = False
+    question: str,
+    chunks: list[InferenceChunk],
+    include_metadata: bool = False,
+    include_sep: bool = True,
 ) -> str:
     prompt = (
         BASE_PROMPT + f"Sample response:\n{json.dumps(SAMPLE_JSON_RESPONSE)}\n\n"
@@ -61,9 +64,11 @@ def json_processor(
     )
 
     for chunk in chunks:
-        prompt += f"\n{DOC_SEP_PAT}\n"
+        prompt += f"\n\n{DOC_SEP_PAT}\n"
         if include_metadata:
-            prompt = add_metadata_section(prompt, chunk, True)
+            prompt = add_metadata_section(
+                prompt, chunk, prepend_tab=False, include_sep=include_sep
+            )
 
         prompt += chunk.content
 
@@ -105,7 +110,7 @@ def json_chat_processor(
         full_context = ""
         if include_metadata:
             full_context = add_metadata_section(
-                full_context, chunk, include_sep=include_sep
+                full_context, chunk, prepend_tab=False, include_sep=include_sep
             )
         full_context += chunk.content
         messages.extend(
