@@ -1,5 +1,7 @@
 import os
 
+from danswer.configs.app_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
+from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.direct_qa.answer_question import answer_question
@@ -14,9 +16,6 @@ from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 
 logger = setup_logger()
-
-_NUM_RETRIES = 5
-_NUM_DOCS_TO_DISPLAY = 5
 
 
 def _get_socket_client() -> SocketModeClient:
@@ -58,7 +57,9 @@ def _process_quotes(
 
 
 def _process_documents(
-    documents: list[SearchDoc] | None, already_displayed_doc_identifiers: list[str]
+    documents: list[SearchDoc] | None,
+    already_displayed_doc_identifiers: list[str],
+    num_docs_to_display: int = DANSWER_BOT_NUM_DOCS_TO_DISPLAY,
 ) -> str | None:
     if not documents:
         return None
@@ -70,7 +71,7 @@ def _process_documents(
             continue
         seen_docs_identifiers.add(d.document_id)
         top_documents.append(d)
-        if len(top_documents) >= _NUM_DOCS_TO_DISPLAY:
+        if len(top_documents) >= num_docs_to_display:
             break
 
     return "\n".join([f"- <{d.link}|{d.semantic_identifier}>" for d in top_documents])
@@ -109,7 +110,7 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
             # TODO: message should be enqueued and processed elsewhere,
             # but doing it here for now for simplicity
 
-            @retry(tries=_NUM_RETRIES, delay=0.25, backoff=2, logger=logger)
+            @retry(tries=DANSWER_BOT_NUM_RETRIES, delay=0.25, backoff=2, logger=logger)
             def _get_answer(question: QuestionRequest) -> QAResponse:
                 answer = answer_question(question=question, user=None)
                 if not answer.error_msg:
@@ -130,7 +131,7 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
                 )
             except Exception:
                 logger.exception(
-                    "Unable to process message - did not successfully answer in {_NUM_RETRIES} attempts"
+                    "Unable to process message - did not successfully answer in {DANSWER_BOT_NUM_RETRIES} attempts"
                 )
                 return
 
@@ -151,7 +152,7 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
                 else:
                     text = f"{answer.answer}\n\n*Warning*: no sources were quoted for this answer, so it may be unreliable 😔\n\n{top_documents_str_with_header}"
 
-            @retry(tries=_NUM_RETRIES, delay=0.25, backoff=2, logger=logger)
+            @retry(tries=DANSWER_BOT_NUM_RETRIES, delay=0.25, backoff=2, logger=logger)
             def _respond_in_thread(
                 channel: str,
                 text: str,
@@ -176,7 +177,7 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
                 )
             except Exception:
                 logger.exception(
-                    "Unable to process message - could not respond in slack in {_NUM_RETRIES} attempts"
+                    "Unable to process message - could not respond in slack in {DANSWER_BOT_NUM_RETRIES} attempts"
                 )
                 return
 
