@@ -17,6 +17,7 @@ from danswer.connectors.models import Section
 from danswer.connectors.slack.utils import get_message_link
 from danswer.connectors.slack.utils import make_slack_api_call_paginated
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
+from danswer.connectors.slack.utils import UserIdReplacer
 from danswer.utils.logging import setup_logger
 from slack_sdk import WebClient
 from slack_sdk.web import SlackResponse
@@ -83,7 +84,12 @@ def get_thread(client: WebClient, channel_id: str, thread_id: str) -> ThreadType
     return threads
 
 
-def thread_to_doc(workspace: str, channel: ChannelType, thread: ThreadType) -> Document:
+def thread_to_doc(
+    workspace: str,
+    channel: ChannelType,
+    thread: ThreadType,
+    user_id_replacer: UserIdReplacer,
+) -> Document:
     channel_id = channel["id"]
     return Document(
         id=f"{channel_id}__{thread[0]['ts']}",
@@ -92,7 +98,7 @@ def thread_to_doc(workspace: str, channel: ChannelType, thread: ThreadType) -> D
                 link=get_message_link(
                     event=m, workspace=workspace, channel_id=channel_id
                 ),
-                text=cast(str, m["text"]),
+                text=user_id_replacer.replace_user_ids_with_names(cast(str, m["text"])),
             )
             for m in thread
         ],
@@ -131,6 +137,8 @@ def get_all_docs(
     msg_filter_func: Callable[[MessageType], bool] = _default_msg_filter,
 ) -> Generator[Document, None, None]:
     """Get all documents in the workspace, channel by channel"""
+    user_id_replacer = UserIdReplacer(client=client)
+
     channels = get_channels(client)
 
     for channel in channels:
@@ -156,7 +164,10 @@ def get_all_docs(
                 if filtered_thread:
                     channel_docs += 1
                     yield thread_to_doc(
-                        workspace=workspace, channel=channel, thread=filtered_thread
+                        workspace=workspace,
+                        channel=channel,
+                        thread=filtered_thread,
+                        user_id_replacer=user_id_replacer,
                     )
 
         logger.info(
