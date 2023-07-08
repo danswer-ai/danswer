@@ -146,7 +146,7 @@ const GoogleDriveConnectorManagement = ({
 
             const connectorBase: ConnectorBase<{}> = {
               name: "GoogleDriveConnector",
-              input_type: "load_state",
+              input_type: "poll",
               source: "google_drive",
               connector_specific_config: {},
               refresh_freq: 60 * 10, // 10 minutes
