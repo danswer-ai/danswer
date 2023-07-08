@@ -1,6 +1,7 @@
 version: '3'
 services:
   api_server:
+    image: danswer/danswer-api-server:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -21,6 +22,7 @@ services:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
   background:
+    image: danswer/danswer-background:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile.background
@@ -39,6 +41,7 @@ services:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
   web_server:
+    image: danswer/danswer-web-server:latest
     build:
       context: ../../web
       dockerfile: Dockerfile
