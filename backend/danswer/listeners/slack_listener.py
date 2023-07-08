@@ -68,13 +68,13 @@ def _process_quotes(
     for quote_dict in quotes.values():
         doc_id = str(quote_dict.get("document_id", ""))
         doc_link = quote_dict.get("link")
-        doc_name = quote_dict.get("semantic_identifier")
+        doc_name = str(quote_dict.get("semantic_identifier", ""))
         if doc_link and doc_name and doc_id and doc_id not in doc_identifiers:
-            doc_identifiers.append(str(doc_id))
+            doc_identifiers.append(doc_id)
             custom_semantic_identifier = _build_custom_semantic_identifier(
                 semantic_identifier=doc_name,
-                blurb=quote_dict.get("blurb", ""),
-                source=quote_dict.get("source_type", ""),
+                blurb=str(quote_dict.get("blurb", "")),
+                source=str(quote_dict.get("source_type", "")),
             )
             quote_lines.append(f"- <{doc_link}|{custom_semantic_identifier}>")
 
