@@ -115,6 +115,7 @@ const Main = () => {
                   <TextFormField
                     name="slab_bot_token"
                     label="Slab Bot Token:"
+                    type="password"
                   />
                 </>
               }
