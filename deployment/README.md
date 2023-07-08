@@ -24,11 +24,10 @@ Docker Compose provides the easiest way to get Danswer up and running.
 Requirements: Docker and docker compose
 
 1. To run Danswer, navigate to `docker_compose` directory and run the following:
-   - `docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build`
+   - `docker-compose -f docker-compose.dev.yml -p danswer-stack pull && docker-compose -f docker-compose.dev.yml -p danswer-stack up -d`
+      - or run: `docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build` to build from source
    - This will start Web/API servers, Postgres (backend DB), Qdrant (vector DB), and the background indexing job.
-   - Downloading packages/requirements may take 20+ minutes depending on your internet connection and whether it needs
-   to install packages for GPU.
-   - If you want to adjust any environment variables, either use the `-e` flag or the `--env-file` flag when running the `docker compose` command,
+   - Downloading images or packages/requirements may take 15+ minutes depending on your internet connection.
    
 
 
