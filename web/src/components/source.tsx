@@ -1,5 +1,6 @@
 import { ValidSources } from "@/lib/types";
 import {
+  BookstackIcon,
   ConfluenceIcon,
   FileIcon,
   GithubIcon,
@@ -47,6 +48,12 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: GithubIcon,
         displayName: "Github PRs",
         adminPageLink: "/admin/connectors/github",
+      };
+    case "bookstack":
+      return {
+        icon: BookstackIcon,
+        displayName: "BookStack",
+        adminPageLink: "/admin/connectors/bookstack",
       };
     case "confluence":
       return {
