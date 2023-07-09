@@ -7,6 +7,7 @@ import {
   GoogleDriveIcon,
   SlackIcon,
   KeyIcon,
+  BookstackIcon,
   ConfluenceIcon,
   FileIcon,
   JiraIcon,
@@ -82,6 +83,15 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/connectors/google-drive",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <BookstackIcon size="16" />
+                      <div className="ml-1">BookStack</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/bookstack",
                 },
                 {
                   name: (

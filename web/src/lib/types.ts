@@ -12,6 +12,7 @@ export type ValidSources =
   | "github"
   | "slack"
   | "google_drive"
+  | "bookstack"
   | "confluence"
   | "jira"
   | "slab"
@@ -42,6 +43,9 @@ export interface WebConfig {
 export interface GithubConfig {
   repo_owner: string;
   repo_name: string;
+}
+
+export interface BookstackConfig {
 }
 
 export interface ConfluenceConfig {
@@ -88,6 +92,12 @@ export interface Credential<T> extends CredentialBase<T> {
 
 export interface GithubCredentialJson {
   github_access_token: string;
+}
+
+export interface BookstackCredentialJson {
+  bookstack_base_url: string;
+  bookstack_api_token_id: string;
+  bookstack_api_token_secret: string;
 }
 
 export interface ConfluenceCredentialJson {

@@ -7,6 +7,7 @@ import { Source } from "@/lib/search/interfaces";
 const sources: Source[] = [
   { displayName: "Google Drive", internalName: "google_drive" },
   { displayName: "Slack", internalName: "slack" },
+  { displayName: "BookStack", internalName: "bookstack" },
   { displayName: "Confluence", internalName: "confluence" },
   { displayName: "Jira", internalName: "jira" },
   { displayName: "Slab", internalName: "slab" },
