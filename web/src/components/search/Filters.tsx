@@ -14,6 +14,7 @@ const sources: Source[] = [
   { displayName: "Github PRs", internalName: "github" },
   { displayName: "Web", internalName: "web" },
   { displayName: "File", internalName: "file" },
+  { displayName: "Alation", internalName: "alation" },
 ];
 
 interface SourceSelectorProps {
