@@ -66,6 +66,12 @@ def get_user_whitelist() -> list[str]:
     return _user_whitelist
 
 
+def verify_email_in_whitelist(email: str) -> None:
+    whitelist = get_user_whitelist()
+    if (whitelist and email not in whitelist) or not email:
+        raise PermissionError("User not on allowed user whitelist")
+
+
 def send_user_verification_email(user_email: str, token: str) -> None:
     msg = MIMEMultipart()
     msg["Subject"] = "Danswer Email Verification"
@@ -95,6 +101,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> models.UP:
+        verify_email_in_whitelist(user_create.email)
         if hasattr(user_create, "role"):
             user_count = await get_user_count()
             if user_count == 0:
@@ -102,6 +109,33 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             else:
                 user_create.role = UserRole.BASIC
         return await super().create(user_create, safe=safe, request=request)  # type: ignore
+
+    async def oauth_callback(
+        self: "BaseUserManager[models.UOAP, models.ID]",
+        oauth_name: str,
+        access_token: str,
+        account_id: str,
+        account_email: str,
+        expires_at: Optional[int] = None,
+        refresh_token: Optional[str] = None,
+        request: Optional[Request] = None,
+        *,
+        associate_by_email: bool = False,
+        is_verified_by_default: bool = False,
+    ) -> models.UOAP:
+        verify_email_in_whitelist(account_email)
+
+        return await super().oauth_callback(  # type: ignore
+            oauth_name=oauth_name,
+            access_token=access_token,
+            account_id=account_id,
+            account_email=account_email,
+            expires_at=expires_at,
+            refresh_token=refresh_token,
+            request=request,
+            associate_by_email=associate_by_email,
+            is_verified_by_default=is_verified_by_default,
+        )
 
     async def on_after_register(
         self, user: User, request: Optional[Request] = None
@@ -194,13 +228,6 @@ current_active_user = fastapi_users.current_user(
 async def current_user(user: User = Depends(current_active_user)) -> User | None:
     if DISABLE_AUTH:
         return None
-    whitelist = get_user_whitelist()
-    if whitelist:
-        if not user.email or user.email not in whitelist:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied. User not in allowed users whitelist.",
-            )
     return user
 
 
