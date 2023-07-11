@@ -1,4 +1,5 @@
 import contextlib
+import os
 import smtplib
 import uuid
 from collections.abc import AsyncGenerator
@@ -48,6 +49,21 @@ logger = setup_logger()
 
 FAKE_USER_EMAIL = "fakeuser@fakedanswermail.com"
 FAKE_USER_PASS = "foobar"
+
+USER_WHITELIST_FILE = "/home/danswer_whitelist.txt"
+_user_whitelist: list[str] | None = None
+
+
+def get_user_whitelist() -> list[str]:
+    global _user_whitelist
+    if _user_whitelist is None:
+        if os.path.exists(USER_WHITELIST_FILE):
+            with open(USER_WHITELIST_FILE, "r") as file:
+                _user_whitelist = [line.strip() for line in file]
+        else:
+            _user_whitelist = []
+
+    return _user_whitelist
 
 
 def send_user_verification_email(user_email: str, token: str) -> None:
@@ -178,6 +194,13 @@ current_active_user = fastapi_users.current_user(
 async def current_user(user: User = Depends(current_active_user)) -> User | None:
     if DISABLE_AUTH:
         return None
+    whitelist = get_user_whitelist()
+    if whitelist:
+        if not user.email or user.email not in whitelist:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. User not in allowed users whitelist.",
+            )
     return user
 
 
