@@ -19,6 +19,7 @@ from danswer.utils.logging import setup_logger
 logger = setup_logger()
 
 class AlationObjectType(Enum):
+    """Object types in Alation. NOT an extensive list"""
     ARTICLE = 'article'
     SCHEMA = 'schema'
     TABLE = 'table'
@@ -38,6 +39,13 @@ class AlationClientNotSetUpError(PermissionError):
         )
 
 class AlationClient:
+    """A basic client helper to make requests to Alation
+
+    Arugments:
+    base_url -- The base URL to the Alation server (hostname is enough)
+    user_id -- The ID of the user with API access
+    refresh_token -- The refresh token issued by Alation
+    """
     ALATION_OTYPE_TO_ENDPOINT = {
         AlationObjectType.ARTICLE: '/integration/v1/article/',
         AlationObjectType.SCHEMA: '/integration/v2/schema/',
@@ -58,14 +66,22 @@ class AlationClient:
         self.token_expiry = None
     
     def create_url(self, url: str, params: dict[str, str]=None):
+        """Helper for forming Alation URLs"""
         if params is not None:
             return f'{self.base_url}{url}?{urlencode(params)}'
         return f'{self.base_url}{url}'
     
     def _create_url_for_object(self, otype: AlationObjectType, params=None):
+        """Creates an Alation API endpoint for requests for a particular
+        object type. This isn't comprehensive, and won't work as a model for
+        future object types. But good enough for now.
+        """
         return self.create_url(self.ALATION_OTYPE_TO_ENDPOINT[otype], params)
     
     def authenticate(self):
+        """Creates access tokens with the refresh token to
+        make API requests.
+        """
         response = self.api_client.post(
             self.create_url('/integration/v1/createAPIAccessToken/'),
             json={
@@ -80,11 +96,18 @@ class AlationClient:
         self.token_expiry = datetime.fromisoformat(data['token_expires_at'])
     
     def _validate_access_token(self):
+        """Refreshes the access token if it expires while we're making requests
+        TODO - Probably needs to also check the validate API to handle expiring
+        refresh tokens.
+        """
         if self.token_expiry is None or \
             datetime.now(self.token_expiry.tzinfo) >= self.token_expiry:
             self.authenticate()
     
     def get_batch_for_object_type(self, otype: AlationObjectType, limit=100, skip=0):
+        """A simplified function for making batch requests to get Alation objects.
+        Not all Alation APIs work this way, but this'll do for current objects.
+        """
         self._validate_access_token()
         response = self.api_client.get(
             self._create_url_for_object(otype, params={
@@ -97,6 +120,7 @@ class AlationClient:
 
     @staticmethod
     def get_title_from_page(page: dict, otype: AlationObjectType) -> str:
+        """A helper to get the title for an Alation object"""
         if otype == AlationObjectType.ARTICLE:
             if len(page['title']) == 0:
                 return f"Untitled Article [{page['id']}]"
@@ -108,6 +132,7 @@ class AlationClient:
     
     @staticmethod
     def get_body_from_page(page: dict, otype: AlationObjectType) -> str:
+        """A helper to get some kind of document body from an Alation object"""
         if otype == AlationObjectType.ARTICLE:
             return page['body']
         else:
@@ -115,6 +140,15 @@ class AlationClient:
 
 
 class AlationConnector(LoadConnector):
+    """Connector to the Alation Data Catalog
+
+    Arguments:
+    server_url -- URL to the Alation Server
+    object_types_to_index -- List of Alation Object Types to index
+    batch_size -- The maximum number of objects to index in 1 request
+    max_objects_to_index_per_type -- The maximum number of objects to index for a given
+    object type. This is to reduce the liklihood of rate-limiting
+    """
     def __init__(
         self,
         server_url: str,
@@ -166,6 +200,9 @@ class AlationConnector(LoadConnector):
             raise AlationClientNotSetUpError()
 
         for otype in self.object_types_to_index:
+            # For each Alation object type we support indexing, we'll go through
+            # and fetch as many objects as we can before we either run into an error,
+            # hit a limit or run out of objects.
             start_index = 0
             while True:
                 doc_batch, num_pages = self._get_batch_for_object_type(otype, start_index)
