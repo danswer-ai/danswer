@@ -13,13 +13,9 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-
-
-class BookstackClientNotSetUpError(PermissionError):
-    def __init__(self) -> None:
-        super().__init__("BookStack Client is not set up, was load_credentials called?")
 
 
 class BookstackConnector(LoadConnector, PollConnector):
@@ -148,7 +144,7 @@ class BookstackConnector(LoadConnector, PollConnector):
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         if self.bookstack_client is None:
-            raise BookstackClientNotSetUpError()
+            raise ConnectorMissingCredentialError("Bookstack")
 
         return self.poll_source(None, None)
 
@@ -156,7 +152,7 @@ class BookstackConnector(LoadConnector, PollConnector):
         self, start: SecondsSinceUnixEpoch | None, end: SecondsSinceUnixEpoch | None
     ) -> GenerateDocumentsOutput:
         if self.bookstack_client is None:
-            raise BookstackClientNotSetUpError()
+            raise ConnectorMissingCredentialError("Bookstack")
 
         transform_by_endpoint: dict[
             str, Callable[[BookStackApiClient, dict], Document]

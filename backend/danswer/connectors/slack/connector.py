@@ -12,6 +12,7 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.connectors.slack.utils import get_message_link
@@ -285,9 +286,7 @@ class SlackPollConnector(PollConnector):
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
         if self.client is None:
-            raise PermissionError(
-                "Slack Client is not set up, was load_credentials called?"
-            )
+            raise ConnectorMissingCredentialError("Slack")
 
         documents: list[Document] = []
         for document in get_all_docs(

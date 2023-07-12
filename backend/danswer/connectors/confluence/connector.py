@@ -14,6 +14,7 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 
@@ -21,13 +22,6 @@ from danswer.connectors.models import Section
 # 1. If wiki page instead of space, do a search of all the children of the page instead of index all in the space
 # 2. Include attachments, etc
 # 3. Segment into Sections for more accurate linking, can split by headers but make sure no text/ordering is lost
-
-
-class ConfluenceClientNotSetUpError(PermissionError):
-    def __init__(self) -> None:
-        super().__init__(
-            "Confluence Client is not set up, was load_credentials called?"
-        )
 
 
 def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str]:
@@ -101,7 +95,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         doc_batch: list[Document] = []
 
         if self.confluence_client is None:
-            raise ConfluenceClientNotSetUpError()
+            raise ConnectorMissingCredentialError("Confluence")
 
         batch = self.confluence_client.get_all_pages_from_space(
             self.space,
@@ -146,7 +140,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         if self.confluence_client is None:
-            raise ConfluenceClientNotSetUpError()
+            raise ConnectorMissingCredentialError("Confluence")
 
         start_ind = 0
         while True:
@@ -162,7 +156,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
         if self.confluence_client is None:
-            raise ConfluenceClientNotSetUpError()
+            raise ConnectorMissingCredentialError("Confluence")
 
         start_time = datetime.fromtimestamp(start, tz=timezone.utc)
         end_time = datetime.fromtimestamp(end, tz=timezone.utc)
