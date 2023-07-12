@@ -79,7 +79,7 @@ export const GoogleDriveCard = ({
           ) : (
             <>
               <p>
-                We&apos;ve recieved your credentials from Google! Click the
+                We&apos;ve received your credentials from Google! Click the
                 button below to activate the connector - we will pull the latest
                 state of your documents every <b>10</b> minutes.
               </p>
