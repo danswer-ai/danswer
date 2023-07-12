@@ -66,7 +66,7 @@ class ProductboardConnector(PollConnector):
                 sections=[
                     Section(
                         link=feature["links"]["html"],
-                        content=feature["description"],
+                        text=feature["description"],
                     )
                 ],
                 semantic_identifier=feature["name"],
@@ -84,12 +84,12 @@ class ProductboardConnector(PollConnector):
         for component in self._fetch_documents(
             initial_link=f"{_PRODUCT_BOARD_BASE_URL}/components"
         ):
-            return Document(
+            yield Document(
                 id=component["id"],
                 sections=[
                     Section(
                         link=component["links"]["html"],
-                        content=component["description"],
+                        text=component["description"],
                     )
                 ],
                 semantic_identifier=component["name"],
@@ -107,12 +107,12 @@ class ProductboardConnector(PollConnector):
         for product in self._fetch_documents(
             initial_link=f"{_PRODUCT_BOARD_BASE_URL}/products"
         ):
-            return Document(
+            yield Document(
                 id=product["id"],
                 sections=[
                     Section(
                         link=product["links"]["html"],
-                        content=product["description"],
+                        text=product["description"],
                     )
                 ],
                 semantic_identifier=product["name"],
@@ -130,7 +130,7 @@ class ProductboardConnector(PollConnector):
         start: SecondsSinceUnixEpoch,
         end: SecondsSinceUnixEpoch,
     ) -> bool:
-        updated_at = document.metadata.get("updated_at")
+        updated_at = cast(str, document.metadata.get("updated_at", ""))
         if updated_at:
             updated_at_datetime = parser.parse(updated_at)
             if (
