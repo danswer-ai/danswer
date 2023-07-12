@@ -72,7 +72,7 @@ class ProductboardConnector(PollConnector):
                 semantic_identifier=feature["name"],
                 source=DocumentSource.PRODUCTBOARD,
                 metadata={
-                    "productboard_entity_type": "feature",
+                    "productboard_entity_type": feature["type"],
                     "status": feature["status"]["name"],
                     "owner": feature["owner"]["email"],
                     "updated_at": feature["updatedAt"],
