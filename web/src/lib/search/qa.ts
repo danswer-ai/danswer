@@ -51,7 +51,7 @@ export const searchRequest = async ({
       throw new Error(`Search request failed - ${response.statusText}`);
     }
 
-    const data = await response.json() as {
+    const data = (await response.json()) as {
       answer: string;
       quotes: Record<string, Quote>;
       top_ranked_docs: DanswerDocument[];
@@ -72,7 +72,6 @@ export const searchRequest = async ({
 
     updateSuggestedSearchType(data.predicted_search);
     updateSuggestedFlowType(data.predicted_flow);
-
   } catch (err) {
     console.error("Fetch error:", err);
   }

@@ -45,8 +45,7 @@ export interface GithubConfig {
   repo_name: string;
 }
 
-export interface BookstackConfig {
-}
+export interface BookstackConfig {}
 
 export interface ConfluenceConfig {
   wiki_page_url: string;
