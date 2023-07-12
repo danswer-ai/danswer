@@ -13,6 +13,7 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logging import setup_logger
 from dateutil import parser
+from retry import retry
 
 
 logger = setup_logger()
@@ -45,15 +46,19 @@ class ProductboardConnector(PollConnector):
     ) -> Generator[dict[str, Any], None, None]:
         headers = self._build_headers()
 
-        link = initial_link
-        while True:
+        @retry(tries=3, delay=1, backoff=2)
+        def fetch(link: str) -> dict[str, Any]:
             response = requests.get(link, headers=headers)
-            response_json = cast(dict[str, Any], response.json())
+            return response.json()
+
+        curr_link = initial_link
+        while True:
+            response_json = fetch(curr_link)
             for entity in response_json["data"]:
                 yield entity
 
-            link = response_json.get("links", {}).get("next")
-            if not link:
+            curr_link = response_json.get("links", {}).get("next")
+            if not curr_link:
                 break
 
     def _get_features(self) -> Generator[Document, None, None]:
