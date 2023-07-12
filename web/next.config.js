@@ -31,9 +31,6 @@ const nextConfig = {
       },
     ];
   },
-  publicRuntimeConfig: {
-    NEXT_PUBLIC_DISABLE_STREAMING: process.env.NEXT_PUBLIC_DISABLE_STREAMING,
-  },  
 };
 
 module.exports = nextConfig;

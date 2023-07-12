@@ -105,8 +105,9 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
     setIsFetching(true);
     setSearchResponse(initialSearchResponse);
 
-    const searchFn = NEXT_PUBLIC_DISABLE_STREAMING ? searchRequest : searchRequestStreamed;
-    console.log(NEXT_PUBLIC_DISABLE_STREAMING)
+    const searchFn = NEXT_PUBLIC_DISABLE_STREAMING
+      ? searchRequest
+      : searchRequestStreamed;
     await searchFn({
       query,
       sources,
