@@ -45,6 +45,8 @@ services:
     build:
       context: ../../web
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_DISABLE_STREAMING=${NEXT_PUBLIC_DISABLE_STREAMING:-false}
     depends_on:
       - api_server
     restart: always

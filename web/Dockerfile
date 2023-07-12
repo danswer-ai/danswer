@@ -27,6 +27,12 @@ COPY . .
 # Disable automatic telemetry collection
 ENV NEXT_TELEMETRY_DISABLED 1
 
+# Environment variables must be present at build time
+# https://github.com/vercel/next.js/discussions/14030
+# NOTE: if you add something here, make sure to add it to the runner as well
+ARG NEXT_PUBLIC_DISABLE_STREAMING
+ENV NEXT_PUBLIC_DISABLE_STREAMING=${NEXT_PUBLIC_DISABLE_STREAMING}
+
 RUN npm run build
 
 # Step 3. Production image, copy all the files and run next
@@ -51,6 +57,11 @@ COPY --from=builder /app/public ./public
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Environment variables must be redefined at run time
+# NOTE: if you add something here, make sure to add it to the builder as well
+ARG NEXT_PUBLIC_DISABLE_STREAMING
+ENV NEXT_PUBLIC_DISABLE_STREAMING=${NEXT_PUBLIC_DISABLE_STREAMING}
 
 # Note: Don't expose ports here, Compose will handle that for us if necessary. 
 # If you want to run this without compose, specify the ports to 
