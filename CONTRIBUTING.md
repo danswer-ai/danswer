@@ -96,8 +96,6 @@ Typesense:
 docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build search_engine
 ```
 #### Running Danswer
-@Chris can you verify this section? I again run most things via IDE so want to know what you think
-
 To start the frontend, navigate to `danswer/web` and run:
 ```bash
 DISABLE_AUTH=true npm run dev
@@ -115,7 +113,7 @@ TYPESENSE_API_KEY=local_dev_typesense DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_s
 
 
 ### Formatting and Linting
-#### Python
+#### Backend
 For the backend, you'll need to setup pre-commit hooks (black / reorder-python-imports). First, install pre-commit
 (if you don't have it already), following the instructions [here](https://pre-commit.com/#installation). Then, from the 
 `danswer/backend` directory, run:
@@ -127,7 +125,7 @@ Additionally, we use `mypy` for static type checking. Danswer is fully type-anno
 Right now, there is no automated type checking at the moment (coming soon), but we ask you to manually run it before creating 
 a pull requests with `python -m mypy .` from the `danswer/backend` directory.
 
-#### TS
+#### Web
 We use `prettier` for formatting. Following the guide [here](https://prettier.io/docs/en/install.html) to install, and run 
 `npx prettier --write .` from the `danswer/web` directory to automatically format. Like `mypy`, we have no automated formatting
 yet (coming soon), but we request that, for now, you run this manually before creating a pull request.
