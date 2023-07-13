@@ -5,6 +5,18 @@ As an open source project in a rapidly changing space, we welcome all contributi
 
 
 ## 💃 Guidelines
+### Contribution Opportunities
+If you're interested in contributing, but don't have anything specific in mind check out the [issues](https://github.com/danswer-ai/danswer/issues) 
+page for contribution ideas. Issues that are good for those new to the code base will be marked with a `good first issue` label. Issues that have
+been explicitly approved by the maintainers (and thus are assured to be aligned with the direction of the project) will be marked with a `approved by maintainers` label 
+(something marked wtih `good first issue` also has approval). If you see another issue that isn't labeled but sounds interesting, don't hesitate to reach out to
+us in [Slack](https://join.slack.com/t/danswer/shared_invite/zt-1u3h3ke3b-VGh1idW19R8oiNRiKBYv2w) or [Discord](https://discord.gg/TDJ59cGV2X)!
+
+If you do have a specific contributon in mind, we'd love to hear about it! Your input is vital to making sure that Danswer moves in the right / best direction. 
+With that being said, please raise a Github issue before starting on implementation. We value your time, and want to make sure
+what you're working on is aligned with the direction of the project. Alternatively, feel free to message us (Chris Weaver / Yuhong Sun) on Slack / Discord 
+directly about what you're thinking of adding. 
+
 ### Contributing Code
 To contribute to this project, please follow the
 ["fork and pull request"](https://docs.github.com/en/get-started/quickstart/contributing-to-projects) workflow.
@@ -12,7 +24,6 @@ When opening a pull request, mention related issues and feel free to tag relevan
 
 Before creating a pull request please make sure that the new changes conform to the formatting and linting requirements.
 See the [Formatting and Linting](#-formatting-and-linting) section for how to run these checks locally.
-
 
 ### Getting Help 🙋
 Our goal is to make contributing as easy as possible. If you run into any issues setting up Danswer whether for
@@ -26,13 +37,11 @@ and
 
 We would love to see you there!
 
-
 ## Get Started 🚀
 Danswer being a fully functional app, relies on several external pieces of software, specifically:
 - Postgres
 - Vector DB ([Qdrant](https://github.com/qdrant/qdrant))
 - Search Engine ([Typesense](https://github.com/typesense/typesense))
-- Playwright (only needed if you're planning to use the Web Connector)
 
 This guide provides instructions to set up the Danswer specific services outside of Docker because it's easier for
 development purposes but feel free to just use the containers and update with local changes by providing the `--build`
@@ -67,7 +76,6 @@ npm i
 ```
 
 Install Playwright (only required for Web Connector)
-@Chris this makes no sense but I don't remember, why would the playwright command exist?
 ```bash
 playwright install
 ```
@@ -92,23 +100,38 @@ docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build search_e
 
 To start the frontend, navigate to `danswer/web` and run:
 ```bash
-npm run dev
+DISABLE_AUTH=true npm run dev
 ```
 
 To run the backend api server, navigate to `danswer/backend` and run:
 ```bash
-DISABLE_AUTH=True TYPESENSE_API_KEY=local_dev_typesense DYNAMIC_CONFIG_DIR_PATH=. python danswer/main.py
+DISABLE_AUTH=True TYPESENSE_API_KEY=local_dev_typesense DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage uvicorn danswer.main:app --reload --port 8080
 ```
 
 To run the background job to check for connector updates and index documents, navigate to `danswer/backend` and run:
 ```bash
-TYPESENSE_API_KEY=local_dev_typesense DYNAMIC_CONFIG_DIR_PATH=. python danswer/main.py
+TYPESENSE_API_KEY=local_dev_typesense DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/main.py
 ```
 
 
 ### Formatting and Linting
-@Chris can you cover the installation and running checks for black and mypy?
-I run this stuff from my IDE so let's document your way
+#### Python
+For the backend, you'll need to setup pre-commit hooks (black / reorder-python-imports). First, install pre-commit
+(if you don't have it already), following the instructions [here](https://pre-commit.com/#installation). Then, from the 
+`danswer/backend` directory, run:
+```bash
+pre-commit install
+```
+
+Additionally, we use `mypy` for static type checking. Danswer is fully type-annotated, and we would like to keep it that way! 
+Right now, there is no automated type checking at the moment (coming soon), but we ask you to manually run it before creating 
+a pull requests with `python -m mypy .` from the `danswer/backend` directory.
+
+#### TS
+We use `prettier` for formatting. Following the guide [here](https://prettier.io/docs/en/install.html) to install, and run 
+`npx prettier --write .` from the `danswer/web` directory to automatically format. Like `mypy`, we have no automated formatting
+yet (coming soon), but we request that, for now, you run this manually before creating a pull request.
+
 
 ### Need Inspiration? 💡
 We try to keep up our [issues](https://github.com/danswer-ai/danswer/issues) page updated with the latest
