@@ -13,6 +13,7 @@ import {
   JiraIcon,
   SlabIcon,
   NotionIcon,
+  ProductboardIcon,
 } from "@/components/icons/icons";
 import { DISABLE_AUTH } from "@/lib/constants";
 import { getCurrentUserSS } from "@/lib/userSS";
@@ -111,6 +112,15 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/connectors/jira",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <ProductboardIcon size="16" />
+                      <div className="ml-1">Productboard</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/productboard",
                 },
                 {
                   name: (

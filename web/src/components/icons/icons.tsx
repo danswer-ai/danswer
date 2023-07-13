@@ -136,6 +136,13 @@ export const JiraIcon = ({
   return <SiJira size={size} className={className} />;
 };
 
+export const ProductboardIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <SiJira size={size} className={className} />;
+};
+
 export const SlabIcon = ({
   size = "16",
   className = defaultTailwindCSS,
