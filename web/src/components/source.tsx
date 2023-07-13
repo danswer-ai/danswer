@@ -1,5 +1,6 @@
 import { ValidSources } from "@/lib/types";
 import {
+  AlationIcon,
   BookstackIcon,
   ConfluenceIcon,
   FileIcon,
@@ -72,6 +73,12 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: SlabIcon,
         displayName: "Slab",
         adminPageLink: "/admin/connectors/slab",
+      };
+    case "alation":
+      return {
+        icon: AlationIcon,
+        displayName: "Alation",
+        adminPageLink: "/admin/connectors/alation",
       };
     default:
       throw new Error("Invalid source type");

@@ -2,6 +2,7 @@ from typing import Any
 from typing import Type
 
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.alation.connector import AlationConnector
 from danswer.connectors.bookstack.connector import BookstackConnector
 from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.danswer_jira.connector import JiraConnector
@@ -42,6 +43,7 @@ def identify_connector_class(
         DocumentSource.CONFLUENCE: ConfluenceConnector,
         DocumentSource.JIRA: JiraConnector,
         DocumentSource.SLAB: SlabConnector,
+        DocumentSource.ALATION: AlationConnector,
     }
     connector_by_source = connector_map.get(source, {})
 

@@ -56,6 +56,13 @@ const getSourceDisplay = (
     return `${sourceMetadata.displayName} [private]`;
   }
 
+  if (connector.source === "alation") {
+    return (
+      sourceMetadata.displayName +
+      ` [${connector.connector_specific_config?.server_url}]`
+    );
+  }
+
   return sourceMetadata.displayName;
 };
 

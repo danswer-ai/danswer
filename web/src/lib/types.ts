@@ -16,7 +16,8 @@ export type ValidSources =
   | "confluence"
   | "jira"
   | "slab"
-  | "file";
+  | "file"
+  | "alation";
 export type ValidInputTypes = "load_state" | "poll" | "event";
 
 // CONNECTORS
@@ -65,6 +66,12 @@ export interface SlabConfig {
 
 export interface FileConfig {
   file_locations: string[];
+}
+
+export interface AlationConfig {
+  server_url: string;
+  batch_size: number;
+  max_objects_to_index_per_type: number;
 }
 
 export interface ConnectorIndexingStatus<T> {
@@ -119,4 +126,9 @@ export interface GoogleDriveCredentialJson {
 
 export interface SlabCredentialJson {
   slab_bot_token: string;
+}
+
+export interface AlationCredentialJson {
+  alation_user_id: string;
+  alation_refresh_token: string;
 }
