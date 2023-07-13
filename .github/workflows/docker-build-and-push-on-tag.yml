@@ -39,12 +39,3 @@ jobs:
         platforms: linux/amd64,linux/arm64
         push: true
         tags: danswer/danswer-api-server:${{ github.ref_name }}
-
-    - name: Background Job Docker Build and Push
-      uses: docker/build-push-action@v2
-      with:
-        context: ./backend
-        file: ./backend/Dockerfile.background
-        platforms: linux/amd64,linux/arm64
-        push: true
-        tags: danswer/danswer-background:${{ github.ref_name }}
