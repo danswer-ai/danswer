@@ -14,6 +14,7 @@ from danswer.configs.constants import BLURB
 from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import DOCUMENT_ID
+from danswer.configs.constants import METADATA
 from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
@@ -62,6 +63,7 @@ def create_typesense_collection(
             {"name": SECTION_CONTINUATION, "type": "bool"},
             {"name": ALLOWED_USERS, "type": "string[]"},
             {"name": ALLOWED_GROUPS, "type": "string[]"},
+            {"name": METADATA, "type": "string"},
         ],
     }
     ts_client.collections.create(collection_schema)
@@ -139,6 +141,7 @@ def index_typesense_chunks(
                 SECTION_CONTINUATION: chunk.section_continuation,
                 ALLOWED_USERS: doc_user_map[document.id][ALLOWED_USERS],
                 ALLOWED_GROUPS: doc_user_map[document.id][ALLOWED_GROUPS],
+                METADATA: json.dumps(document.metadata),
             }
         )
 

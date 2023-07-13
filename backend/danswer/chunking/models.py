@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from typing import Any
 from typing import cast
 
+from danswer.configs.constants import METADATA
+from danswer.configs.constants import SOURCE_LINKS
 from danswer.connectors.models import Document
 
 
@@ -35,20 +37,23 @@ class InferenceChunk(BaseChunk):
     document_id: str
     source_type: str
     semantic_identifier: str
+    metadata: dict[str, Any]
 
     @classmethod
     def from_dict(cls, init_dict: dict[str, Any]) -> "InferenceChunk":
         init_kwargs = {
             k: v for k, v in init_dict.items() if k in inspect.signature(cls).parameters
         }
-        if "source_links" in init_kwargs:
-            source_links = init_kwargs["source_links"]
+        if SOURCE_LINKS in init_kwargs:
+            source_links = init_kwargs[SOURCE_LINKS]
             source_links_dict = (
                 json.loads(source_links)
                 if isinstance(source_links, str)
                 else source_links
             )
-            init_kwargs["source_links"] = {
+            init_kwargs[SOURCE_LINKS] = {
                 int(k): v for k, v in cast(dict[str, str], source_links_dict).items()
             }
+        if METADATA in init_kwargs:
+            init_kwargs[METADATA] = json.loads(init_kwargs[METADATA])
         return cls(**init_kwargs)

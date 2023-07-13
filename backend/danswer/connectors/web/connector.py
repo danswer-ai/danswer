@@ -1,4 +1,5 @@
 import io
+from datetime import datetime
 from typing import Any
 from typing import cast
 from urllib.parse import urljoin
@@ -84,6 +85,8 @@ class WebConnector(LoadConnector):
             logger.info(f"Indexing {current_url}")
 
             try:
+                current_visit_time = datetime.now().strftime("%B %d, %Y, %H:%M:%S")
+
                 if restart_playwright:
                     playwright = sync_playwright().start()
                     browser = playwright.chromium.launch(headless=True)
@@ -104,7 +107,7 @@ class WebConnector(LoadConnector):
                             sections=[Section(link=current_url, text=page_text)],
                             source=DocumentSource.WEB,
                             semantic_identifier=current_url.split(".")[-1],
-                            metadata={},
+                            metadata={"time visited": current_visit_time},
                         )
                     )
                     continue

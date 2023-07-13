@@ -96,6 +96,8 @@ NUM_GENERATIVE_AI_INPUT_DOCS = 5
 # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = 10  # 10 seconds
+# Include additional document/chunk metadata in prompt to GenerativeAI
+INCLUDE_METADATA = False
 
 
 #####
