@@ -38,11 +38,3 @@ jobs:
         docker push danswer/danswer-api-server:latest
         docker manifest create danswer/danswer-api-server:latest danswer/danswer-api-server:latest
         docker manifest push danswer/danswer-api-server:latest
-
-    - name: Pull, Tag and Push Background Job Image
-      run: |
-        docker pull danswer/danswer-background:${{ github.event.inputs.version }}
-        docker tag danswer/danswer-background:${{ github.event.inputs.version }} danswer/danswer-background:latest
-        docker push danswer/danswer-background:latest
-        docker manifest create danswer/danswer-background:latest danswer/danswer-background:latest
-        docker manifest push danswer/danswer-background:latest
