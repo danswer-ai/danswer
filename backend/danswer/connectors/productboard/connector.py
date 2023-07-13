@@ -4,6 +4,7 @@ from typing import Any
 from typing import cast
 
 import requests
+from bs4 import BeautifulSoup
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -40,6 +41,18 @@ class ProductboardConnector(PollConnector):
             "X-Version": "1",
         }
 
+    @staticmethod
+    def _parse_description_html(description_html: str) -> str:
+        soup = BeautifulSoup(description_html, "html.parser")
+        return soup.get_text()
+
+    @staticmethod
+    def _get_owner_email(productboard_obj: dict[str, Any]) -> str | None:
+        owner_dict = cast(dict[str, str] | None, productboard_obj.get("owner"))
+        if not owner_dict:
+            return None
+        return owner_dict.get("email")
+
     def _fetch_documents(
         self,
         initial_link: str,
@@ -71,7 +84,12 @@ class ProductboardConnector(PollConnector):
                 sections=[
                     Section(
                         link=feature["links"]["html"],
-                        text=feature["description"],
+                        text=" - ".join(
+                            (
+                                feature["name"],
+                                self._parse_description_html(feature["description"]),
+                            )
+                        ),
                     )
                 ],
                 semantic_identifier=feature["name"],
@@ -79,7 +97,7 @@ class ProductboardConnector(PollConnector):
                 metadata={
                     "productboard_entity_type": feature["type"],
                     "status": feature["status"]["name"],
-                    "owner": feature["owner"]["email"],
+                    "owner": self._get_owner_email(feature),
                     "updated_at": feature["updatedAt"],
                 },
             )
@@ -94,14 +112,19 @@ class ProductboardConnector(PollConnector):
                 sections=[
                     Section(
                         link=component["links"]["html"],
-                        text=component["description"],
+                        text=" - ".join(
+                            (
+                                component["name"],
+                                self._parse_description_html(component["description"]),
+                            )
+                        ),
                     )
                 ],
                 semantic_identifier=component["name"],
                 source=DocumentSource.PRODUCTBOARD,
                 metadata={
                     "productboard_entity_type": "component",
-                    "owner": component["owner"]["email"],
+                    "owner": self._get_owner_email(component),
                     "updated_at": component["updatedAt"],
                 },
             )
@@ -117,15 +140,47 @@ class ProductboardConnector(PollConnector):
                 sections=[
                     Section(
                         link=product["links"]["html"],
-                        text=product["description"],
+                        text=" - ".join(
+                            (
+                                product["name"],
+                                self._parse_description_html(product["description"]),
+                            )
+                        ),
                     )
                 ],
                 semantic_identifier=product["name"],
                 source=DocumentSource.PRODUCTBOARD,
                 metadata={
                     "productboard_entity_type": "product",
-                    "owner": product["owner"]["email"],
+                    "owner": self._get_owner_email(product),
                     "updated_at": product["updatedAt"],
+                },
+            )
+
+    def _get_objectives(self) -> Generator[Document, None, None]:
+        for objective in self._fetch_documents(
+            initial_link=f"{_PRODUCT_BOARD_BASE_URL}/objectives"
+        ):
+            yield Document(
+                id=objective["id"],
+                sections=[
+                    Section(
+                        link=objective["links"]["html"],
+                        text=" - ".join(
+                            (
+                                objective["name"],
+                                self._parse_description_html(objective["description"]),
+                            )
+                        ),
+                    )
+                ],
+                semantic_identifier=objective["name"],
+                source=DocumentSource.PRODUCTBOARD,
+                metadata={
+                    "productboard_entity_type": "release",
+                    "state": objective["state"],
+                    "owner": self._get_owner_email(objective),
+                    "updated_at": objective["updatedAt"],
                 },
             )
 
@@ -159,12 +214,18 @@ class ProductboardConnector(PollConnector):
         document_batch: list[Document] = []
 
         # NOTE: there is a concept of a "Note" in productboard, however
-        # there is no read API for it atm
+        # there is no read API for it atm. Additionally, comments are not
+        # included with features. Finally, "Releases" are not fetched atm,
+        # since they do not provide an updatedAt.
         feature_documents = self._get_features()
         component_documents = self._get_components()
         product_documents = self._get_products()
+        objective_documents = self._get_objectives()
         for document in chain(
-            feature_documents, component_documents, product_documents
+            feature_documents,
+            component_documents,
+            product_documents,
+            objective_documents,
         ):
             # skip documents that are not in the time range
             if self._is_updated_at_out_of_time_range(document, start, end):
