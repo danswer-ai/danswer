@@ -115,6 +115,11 @@ To start the frontend, navigate to `danswer/web` and run:
 DISABLE_AUTH=true npm run dev
 ```
 
+The first time running Danswer, you will need to run the migrations:
+```bash
+alembic upgrade head
+```
+
 To run the backend api server, navigate to `danswer/backend` and run:
 ```bash
 DISABLE_AUTH=True TYPESENSE_API_KEY=local_dev_typesense DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage uvicorn danswer.main:app --reload --port 8080
@@ -122,7 +127,7 @@ DISABLE_AUTH=True TYPESENSE_API_KEY=local_dev_typesense DYNAMIC_CONFIG_DIR_PATH=
 
 To run the background job to check for connector updates and index documents, navigate to `danswer/backend` and run:
 ```bash
-TYPESENSE_API_KEY=local_dev_typesense DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/main.py
+PYTHONPATH=. TYPESENSE_API_KEY=local_dev_typesense DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/update.py
 ```
 
 
