@@ -107,7 +107,7 @@ class WebConnector(LoadConnector):
                             sections=[Section(link=current_url, text=page_text)],
                             source=DocumentSource.WEB,
                             semantic_identifier=current_url.split(".")[-1],
-                            metadata={"time visited": current_visit_time},
+                            metadata={"Time Visited": current_visit_time},
                         )
                     )
                     continue

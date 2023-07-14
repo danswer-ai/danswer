@@ -37,6 +37,21 @@ def add_metadata_section(
     prepend_tab: bool = False,
     include_sep: bool = False,
 ) -> str:
+    """
+    Inserts a metadata section at the start of a document, providing additional context to the upcoming document.
+
+    Parameters:
+    prompt_current (str): The existing content of the prompt so far with.
+    chunk (InferenceChunk): An object that contains the document's source type and metadata information to be added.
+    prepend_tab (bool, optional): If set to True, a tab character is added at the start of each line in the metadata
+            section for consistent spacing for LLM.
+    include_sep (bool, optional): If set to True, includes default section separator pattern at the end of the metadata
+            section.
+
+    Returns:
+    str: The prompt with the newly added metadata section.
+    """
+
     def _prepend(s: str, ppt: bool) -> str:
         return "\t" + s if ppt else s
 
