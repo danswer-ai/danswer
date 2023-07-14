@@ -92,7 +92,7 @@ export const getSourceIcon = (sourceType: ValidSources, iconSize: string) => {
 };
 
 export const getSourceDisplayName = (
-  sourceType: ValidSources
+  sourceType: ValidSources,
 ): string | null => {
   return getSourceMetadata(sourceType).displayName;
 };

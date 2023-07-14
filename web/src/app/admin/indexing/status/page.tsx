@@ -13,7 +13,7 @@ import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus } from "@/lib/types";
 
 const getSourceDisplay = (
-  connectorIndexingStatus: ConnectorIndexingStatus<any>
+  connectorIndexingStatus: ConnectorIndexingStatus<any>,
 ) => {
   const connector = connectorIndexingStatus.connector;
   const sourceMetadata = getSourceMetadata(connector.source);
@@ -74,7 +74,7 @@ function Main() {
   } = useSWR<ConnectorIndexingStatus<any>[]>(
     "/api/manage/admin/connector/indexing-status",
     fetcher,
-    { refreshInterval: 30000 } // 30 seconds
+    { refreshInterval: 30000 }, // 30 seconds
   );
 
   if (indexAttemptIsLoading) {
@@ -107,7 +107,7 @@ function Main() {
       ]}
       data={indexAttemptData.map((connectorIndexingStatus) => {
         const sourceMetadata = getSourceMetadata(
-          connectorIndexingStatus.connector.source
+          connectorIndexingStatus.connector.source,
         );
         let statusDisplay = <div className="text-gray-400">In Progress...</div>;
         if (connectorIndexingStatus.connector.disabled) {

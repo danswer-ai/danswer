@@ -29,7 +29,7 @@ const Main = () => {
     error: isConnectorIndexingStatusesError,
   } = useSWR<ConnectorIndexingStatus<any>[]>(
     "/api/manage/admin/connector/indexing-status",
-    fetcher
+    fetcher,
   );
   const {
     data: credentialsData,
@@ -37,7 +37,7 @@ const Main = () => {
     error: isCredentialsError,
   } = useSWR<Credential<AlationCredentialJson>[]>(
     "/api/manage/credential",
-    fetcher
+    fetcher,
   );
 
   if (
@@ -57,7 +57,7 @@ const Main = () => {
 
   const alationConnectorIndexingStatuses = connectorIndexingStatuses.filter(
     (connectorIndexingStatus) =>
-      connectorIndexingStatus.connector.source === "alation"
+      connectorIndexingStatus.connector.source === "alation",
   );
   const alationCredential = credentialsData.filter(
     (credential) => credential.credential_json?.alation_refresh_token,
@@ -70,7 +70,9 @@ const Main = () => {
         Indexing an Alation Server
       </h2>
       <p>This connector allows for indexing objects from an Alation server.</p>
-      <p className="mb-4">Today we support indexing these specific object types:</p>
+      <p className="mb-4">
+        Today we support indexing these specific object types:
+      </p>
       <ul className="list-disc ml-8 mb-4">
         <li>Articles</li>
         <li>Tables</li>
@@ -78,8 +80,9 @@ const Main = () => {
         <li>Columns</li>
       </ul>
       <p>
-        By default the connector extracts everything. You can limit the number of objects{' '}
-        extracted by setting the "Maximum objects to index per Object Type" value below.
+        By default the connector extracts everything. You can limit the number
+        of objects extracted by setting the "Maximum objects to index per Object
+        Type" value below.
       </p>
 
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
@@ -128,7 +131,10 @@ const Main = () => {
             <CredentialForm<AlationCredentialJson>
               formBody={
                 <>
-                  <TextFormField name="alation_user_id" label="Alation User ID:" />
+                  <TextFormField
+                    name="alation_user_id"
+                    label="Alation User ID:"
+                  />
                   <TextFormField
                     name="alation_refresh_token"
                     label="Refresh Token:"
@@ -137,15 +143,18 @@ const Main = () => {
                 </>
               }
               validationSchema={Yup.object().shape({
-                alation_user_id: Yup.number().positive().integer().required(
-                  "Please enter the ID number of your User in Alation"
-                ),
+                alation_user_id: Yup.number()
+                  .positive()
+                  .integer()
+                  .required(
+                    "Please enter the ID number of your User in Alation",
+                  ),
                 alation_refresh_token: Yup.string().required(
-                  "Please enter your Alation refresh token"
+                  "Please enter your Alation refresh token",
                 ),
               })}
               initialValues={{
-                alation_user_id: "",
+                alation_user_id: 0,
                 alation_refresh_token: "",
               }}
               onSubmit={(isSuccess) => {
@@ -170,9 +179,7 @@ const Main = () => {
               </p>
               <div className="mb-2">
                 <ConnectorsTable<AlationConfig, AlationCredentialJson>
-                  connectorIndexingStatuses={
-                    alationConnectorIndexingStatuses
-                  }
+                  connectorIndexingStatuses={alationConnectorIndexingStatuses}
                   liveCredential={alationCredential}
                   getCredential={(credential) => {
                     return (
@@ -185,10 +192,7 @@ const Main = () => {
                   }}
                   onCredentialLink={async (connectorId) => {
                     if (alationCredential) {
-                      await linkCredential(
-                        connectorId,
-                        alationCredential.id
-                      );
+                      await linkCredential(connectorId, alationCredential.id);
                       mutate("/api/manage/admin/connector/indexing-status");
                     }
                   }}
@@ -199,9 +203,7 @@ const Main = () => {
                       getValue: (connector) => (
                         <a
                           className="text-blue-500"
-                          href={
-                            connector.connector_specific_config.server_url
-                          }
+                          href={connector.connector_specific_config.server_url}
                         >
                           {connector.connector_specific_config.server_url}
                         </a>
@@ -210,16 +212,15 @@ const Main = () => {
                     {
                       header: "Batch Size",
                       key: "batch_size",
-                      getValue: (connector) => (
-                        connector.connector_specific_config.batch_size || "16"
-                      ),
+                      getValue: (connector) =>
+                        connector.connector_specific_config.batch_size || "16",
                     },
                     {
                       header: "Max per type",
                       key: "max_objects_to_index_per_type",
-                      getValue: (connector) => (
-                        connector.connector_specific_config.max_objects_to_index_per_type || "Unlimited"
-                      ),
+                      getValue: (connector) =>
+                        connector.connector_specific_config
+                          .max_objects_to_index_per_type || "Unlimited",
                     },
                   ]}
                   onUpdate={() =>
@@ -238,32 +239,44 @@ const Main = () => {
                 inputType="load_state"
                 formBody={
                   <>
-                    <TextFormField name="server_url" label="Alation Server URL:" />
-                    <TextFormField name="batch_size" label="Batch Size:" type="number" />
-                    <TextFormField name="max_objects_to_index_per_type" label="Maximum objects to index per Object Type (0 = unlimited):" type="number" />
+                    <TextFormField
+                      name="server_url"
+                      label="Alation Server URL:"
+                    />
+                    <TextFormField
+                      name="batch_size"
+                      label="Batch Size:"
+                      type="number"
+                    />
+                    <TextFormField
+                      name="max_objects_to_index_per_type"
+                      label="Maximum objects to index per Object Type (0 = unlimited):"
+                      type="number"
+                    />
                   </>
                 }
                 validationSchema={Yup.object().shape({
                   server_url: Yup.string().required(
-                    "Please enter the url to your Alation server eg. https://mycompany.alationcloud.com"
+                    "Please enter the url to your Alation server eg. https://mycompany.alationcloud.com",
                   ),
-                  batch_size: Yup.number().integer().min(10).max(100).required(
-                    "Please enter a size to batch requests between 10 - 100"
-                  ),
-                  max_objects_to_index_per_type: Yup.number().integer()
+                  batch_size: Yup.number()
+                    .integer()
+                    .min(10)
+                    .max(100)
+                    .required(
+                      "Please enter a size to batch requests between 10 - 100",
+                    ),
+                  max_objects_to_index_per_type: Yup.number().integer(),
                 })}
                 initialValues={{
                   server_url: "",
                   batch_size: 100,
-                  max_objects_to_index_per_type: 0
+                  max_objects_to_index_per_type: 0,
                 }}
                 refreshFreq={24 * 60 * 60} // 24 hours
                 onSubmit={async (isSuccess, responseJson) => {
                   if (isSuccess && responseJson) {
-                    await linkCredential(
-                      responseJson.id,
-                      alationCredential.id
-                    );
+                    await linkCredential(responseJson.id, alationCredential.id);
                     mutate("/api/manage/admin/connector/indexing-status");
                   }
                 }}
@@ -273,8 +286,8 @@ const Main = () => {
         </>
       ) : (
         <p className="text-sm">
-          Please provide your refresh token in Step 1 first! Once done with that,
-          you can then specify which Alation server you want to make
+          Please provide your refresh token in Step 1 first! Once done with
+          that, you can then specify which Alation server you want to make
           searchable.
         </p>
       )}

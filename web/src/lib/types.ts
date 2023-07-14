@@ -129,6 +129,6 @@ export interface SlabCredentialJson {
 }
 
 export interface AlationCredentialJson {
-  alation_user_id: string;
+  alation_user_id: number;
   alation_refresh_token: string;
 }
