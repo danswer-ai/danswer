@@ -29,6 +29,7 @@ services:
       - "8000:8000"
     entrypoint: ["python", "-m", "fastchat.serve.openai_api_server", "--controller-address", "http://fastchat-controller:21001", "--host", "0.0.0.0", "--port", "8000"]
   api_server:
+    image: danswer/danswer-api-server:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -54,6 +55,7 @@ services:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
   background:
+    image: danswer/danswer-background:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile.background
@@ -69,13 +71,18 @@ services:
       - QDRANT_HOST=vector_db
       - TYPESENSE_HOST=search_engine
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
+      - DANSWER_BOT_SLACK_APP_TOKEN=${DANSWER_BOT_SLACK_APP_TOKEN:-}
+      - DANSWER_BOT_SLACK_BOT_TOKEN=${DANSWER_BOT_SLACK_BOT_TOKEN:-}
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
   web_server:
+    image: danswer/danswer-web-server:latest
     build:
       context: ../../web
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_DISABLE_STREAMING=${NEXT_PUBLIC_DISABLE_STREAMING:-false}
     depends_on:
       - fastchat_controller
       - fastchat_model_worker

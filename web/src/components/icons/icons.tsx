@@ -13,6 +13,7 @@ import {
   Brain,
 } from "@phosphor-icons/react";
 import {
+  SiBookstack,
   SiConfluence,
   SiGithub,
   SiGoogledrive,
@@ -111,6 +112,13 @@ export const GoogleDriveIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <SiGoogledrive size={size} className={className} />;
+};
+
+export const BookstackIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <SiBookstack size={size} className={className} />;
 };
 
 export const ConfluenceIcon = ({

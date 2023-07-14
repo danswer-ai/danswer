@@ -14,4 +14,4 @@ COPY ./alembic /app/alembic
 COPY ./alembic.ini /app/alembic.ini
 
 ENV PYTHONPATH /app
-CMD ["/bin/sh", "-c", "alembic upgrade head && uvicorn danswer.main:app --host 0.0.0.0 --port 8080"]
+CMD ["/bin/sh", "-c", "alembic upgrade head && echo \"Starting Danswer Api Server\" && uvicorn danswer.main:app --host 0.0.0.0 --port 8080"]

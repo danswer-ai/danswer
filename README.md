@@ -39,3 +39,6 @@ Check out our <strong><a href="https://www.youtube.com/watch?v=geNzY1nbCnU">Vide
 * Support custom endpoints for Generative AI models or even self-host options.
 * Templates to easily build custom connectors.
 * Personalized search
+
+## 💡 Contributing
+Looking to contribute? Please check out the [Contribution Guide](CONTRIBUTING.md) for more details.

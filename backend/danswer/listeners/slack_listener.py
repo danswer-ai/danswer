@@ -1,21 +1,22 @@
 import os
 
+from danswer.configs.app_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
+from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
+from danswer.configs.constants import DocumentSource
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.direct_qa.answer_question import answer_question
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchDoc
 from danswer.utils.logging import setup_logger
+from retry import retry
 from slack_sdk import WebClient
 from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 
 logger = setup_logger()
-
-_NUM_RETRIES = 3
-_NUM_DOCS_TO_DISPLAY = 5
 
 
 def _get_socket_client() -> SocketModeClient:
@@ -34,6 +35,28 @@ def _get_socket_client() -> SocketModeClient:
     )
 
 
+_MAX_BLURB_LEN = 25
+
+
+def _build_custom_semantic_identifier(
+    semantic_identifier: str, blurb: str, source: str
+) -> str:
+    """
+    On slack, since we just show the semantic identifier rather than semantic + blurb, we need
+    to do some custom formatting to make sure the semantic identifier is unique and meaningful.
+    """
+    if source == DocumentSource.SLACK.value:
+        truncated_blurb = (
+            f"{blurb[:_MAX_BLURB_LEN]}..." if len(blurb) > _MAX_BLURB_LEN else blurb
+        )
+        if truncated_blurb:
+            return f"#{semantic_identifier}: {truncated_blurb}"
+        else:
+            return f"#{semantic_identifier}"
+
+    return semantic_identifier
+
+
 def _process_quotes(
     quotes: dict[str, dict[str, str | int | None]] | None
 ) -> tuple[str | None, list[str]]:
@@ -43,11 +66,17 @@ def _process_quotes(
     quote_lines: list[str] = []
     doc_identifiers: list[str] = []
     for quote_dict in quotes.values():
+        doc_id = str(quote_dict.get("document_id", ""))
         doc_link = quote_dict.get("link")
-        doc_name = quote_dict.get("semantic_identifier")
-        if doc_link and doc_name and doc_name not in doc_identifiers:
-            doc_identifiers.append(str(doc_name))
-            quote_lines.append(f"- <{doc_link}|{doc_name}>")
+        doc_name = str(quote_dict.get("semantic_identifier", ""))
+        if doc_link and doc_name and doc_id and doc_id not in doc_identifiers:
+            doc_identifiers.append(doc_id)
+            custom_semantic_identifier = _build_custom_semantic_identifier(
+                semantic_identifier=doc_name,
+                blurb=str(quote_dict.get("blurb", "")),
+                source=str(quote_dict.get("source_type", "")),
+            )
+            quote_lines.append(f"- <{doc_link}|{custom_semantic_identifier}>")
 
     if not quote_lines:
         return None, []
@@ -56,25 +85,30 @@ def _process_quotes(
 
 
 def _process_documents(
-    documents: list[SearchDoc] | None, already_displayed_doc_identifiers: list[str]
+    documents: list[SearchDoc] | None,
+    already_displayed_doc_identifiers: list[str],
+    num_docs_to_display: int = DANSWER_BOT_NUM_DOCS_TO_DISPLAY,
 ) -> str | None:
     if not documents:
         return None
 
     seen_docs_identifiers = set(already_displayed_doc_identifiers)
-    top_documents: list[SearchDoc] = []
+    top_document_lines: list[str] = []
     for d in documents:
-        if d.semantic_identifier in seen_docs_identifiers:
+        if d.document_id in seen_docs_identifiers:
             continue
-        seen_docs_identifiers.add(d.semantic_identifier)
-        top_documents.append(d)
-        if len(top_documents) >= _NUM_DOCS_TO_DISPLAY:
+        seen_docs_identifiers.add(d.document_id)
+
+        custom_semantic_identifier = _build_custom_semantic_identifier(
+            semantic_identifier=d.semantic_identifier,
+            blurb=d.blurb,
+            source=d.source_type,
+        )
+        top_document_lines.append(f"- <{d.link}|{custom_semantic_identifier}>")
+        if len(top_document_lines) >= num_docs_to_display:
             break
 
-    top_documents_str = "\n".join(
-        [f"- <{d.link}|{d.semantic_identifier}>" for d in top_documents]
-    )
-    return "*Other potentially relevant documents:*\n" + top_documents_str
+    return "\n".join(top_document_lines)
 
 
 def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> None:
@@ -100,8 +134,13 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
             logger.info("Ignoring message from bot")
             return
 
+        message_ts = req.payload.get("event", {}).get("ts")
+        thread_ts = req.payload.get("event", {}).get("thread_ts")
+        if thread_ts and message_ts != thread_ts:
+            logger.info("Skipping message since it is not the root of a thread")
+            return
+
         msg = req.payload.get("event", {}).get("text")
-        thread_ts = req.payload.get("event", {}).get("ts")
         if not msg:
             logger.error("Unable to process empty message")
             return
@@ -109,54 +148,52 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
         # TODO: message should be enqueued and processed elsewhere,
         # but doing it here for now for simplicity
 
-        def _get_answer(question: QuestionRequest) -> QAResponse | None:
-            try:
-                answer = answer_question(question=question, user=None)
-                if not answer.error_msg:
-                    return answer
-                else:
-                    raise RuntimeError(answer.error_msg)
-            except Exception as e:
-                logger.error(f"Unable to process message: {e}")
-            return None
+        @retry(tries=DANSWER_BOT_NUM_RETRIES, delay=0.25, backoff=2, logger=logger)
+        def _get_answer(question: QuestionRequest) -> QAResponse:
+            answer = answer_question(question=question, user=None)
+            if not answer.error_msg:
+                return answer
+            else:
+                raise RuntimeError(answer.error_msg)
 
         answer = None
-        for _ in range(_NUM_RETRIES):
+        try:
             answer = _get_answer(
                 QuestionRequest(
                     query=req.payload.get("event", {}).get("text"),
                     collection=QDRANT_DEFAULT_COLLECTION,
-                    use_keyword=False,
+                    use_keyword=None,
                     filters=None,
                     offset=None,
                 )
             )
-            if answer:
-                break
-
-        if not answer:
-            logger.error(
-                f"Unable to process message - did not successfully answer in {_NUM_RETRIES} attempts"
+        except Exception:
+            logger.exception(
+                f"Unable to process message - did not successfully answer in {DANSWER_BOT_NUM_RETRIES} attempts"
             )
-            return
-
-        if not answer.answer:
-            logger.error(f"Unable to process message - no answer found")
             return
 
         # convert raw response into "nicely" formatted Slack message
         quote_str, doc_identifiers = _process_quotes(answer.quotes)
         top_documents_str = _process_documents(answer.top_ranked_docs, doc_identifiers)
-        if quote_str:
-            text = f"{answer.answer}\n\n*Sources:*\n{quote_str}\n\n{top_documents_str}"
-        else:
-            text = f"{answer.answer}\n\n*Warning*: no sources were quoted for this answer, so it may be unreliable 😔\n\n{top_documents_str}"
 
+        if not answer.answer:
+            text = f"Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓\n\n{top_documents_str}"
+        else:
+            top_documents_str_with_header = (
+                f"*Other potentially relevant docs:*\n{top_documents_str}"
+            )
+            if quote_str:
+                text = f"{answer.answer}\n\n*Sources:*\n{quote_str}\n\n{top_documents_str_with_header}"
+            else:
+                text = f"{answer.answer}\n\n*Warning*: no sources were quoted for this answer, so it may be unreliable 😔\n\n{top_documents_str_with_header}"
+
+        @retry(tries=DANSWER_BOT_NUM_RETRIES, delay=0.25, backoff=2, logger=logger)
         def _respond_in_thread(
             channel: str,
             text: str,
             thread_ts: str,
-        ) -> str | None:
+        ) -> None:
             slack_call = make_slack_api_rate_limited(client.web_client.chat_postMessage)
             response = slack_call(
                 channel=channel,
@@ -164,25 +201,18 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
                 thread_ts=thread_ts,
             )
             if not response.get("ok"):
-                return f"Unable to post message: {response}"
-            return None
+                raise RuntimeError(f"Unable to post message: {response}")
 
-        successfully_answered = False
-        for _ in range(_NUM_RETRIES):
-            error_msg = _respond_in_thread(
+        try:
+            _respond_in_thread(
                 channel=req.payload.get("event", {}).get("channel"),
                 text=text,
-                thread_ts=thread_ts,
+                thread_ts=thread_ts
+                or message_ts,  # pick the root of the thread (if a thread exists)
             )
-            if error_msg:
-                logger.error(error_msg)
-            else:
-                successfully_answered = True
-                break
-
-        if not successfully_answered:
-            logger.error(
-                f"Unable to process message - could not respond in slack in {_NUM_RETRIES} attempts"
+        except Exception:
+            logger.exception(
+                f"Unable to process message - could not respond in slack in {DANSWER_BOT_NUM_RETRIES} attempts"
             )
             return
 

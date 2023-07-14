@@ -42,8 +42,6 @@ def get_internal_links(
 
         if not is_valid_url(href):
             # Relative path handling
-            if url[-1] != "/":
-                url += "/"
             href = urljoin(url, href)
 
         if urlparse(href).netloc == urlparse(url).netloc and base_url in href:

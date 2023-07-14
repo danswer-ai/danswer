@@ -16,10 +16,12 @@ import {
   SearchDefaultOverrides,
   SearchRequestOverrides,
 } from "@/lib/search/interfaces";
-import { searchRequestStreamed } from "@/lib/search/streaming";
+import { searchRequestStreamed } from "@/lib/search/streamingQa";
 import Cookies from "js-cookie";
 import { SearchHelper } from "./SearchHelper";
 import { CancellationToken, cancellable } from "@/lib/search/cancellable";
+import { NEXT_PUBLIC_DISABLE_STREAMING } from "@/lib/constants";
+import { searchRequest } from "@/lib/search/qa";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -103,7 +105,10 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
     setIsFetching(true);
     setSearchResponse(initialSearchResponse);
 
-    await searchRequestStreamed({
+    const searchFn = NEXT_PUBLIC_DISABLE_STREAMING
+      ? searchRequest
+      : searchRequestStreamed;
+    await searchFn({
       query,
       sources,
       updateCurrentAnswer: cancellable({
