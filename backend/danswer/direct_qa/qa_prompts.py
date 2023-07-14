@@ -1,6 +1,13 @@
 import json
 
+from danswer.chunking.models import InferenceChunk
+from danswer.configs.constants import DocumentSource
+from danswer.connectors.factory import identify_connector_class
+
+
+GENERAL_SEP_PAT = "---\n"
 DOC_SEP_PAT = "---NEW DOCUMENT---"
+DOC_CONTENT_START_PAT = "DOCUMENT CONTENTS:\n"
 QUESTION_PAT = "Query:"
 ANSWER_PAT = "Answer:"
 UNCERTAINTY_PAT = "?"
@@ -9,7 +16,7 @@ QUOTE_PAT = "Quote:"
 BASE_PROMPT = (
     f"Answer the query based on provided documents and quote relevant sections. "
     f"Respond with a json containing a concise answer and up to three most relevant quotes from the documents. "
-    f"The quotes must be EXACT substrings from the documents.\n"
+    f"The quotes must be EXACT substrings from the documents."
 )
 
 
@@ -24,18 +31,120 @@ SAMPLE_JSON_RESPONSE = {
 }
 
 
-def json_processor(question: str, documents: list[str]) -> str:
+def add_metadata_section(
+    prompt_current: str,
+    chunk: InferenceChunk,
+    prepend_tab: bool = False,
+    include_sep: bool = False,
+) -> str:
+    """
+    Inserts a metadata section at the start of a document, providing additional context to the upcoming document.
+
+    Parameters:
+    prompt_current (str): The existing content of the prompt so far with.
+    chunk (InferenceChunk): An object that contains the document's source type and metadata information to be added.
+    prepend_tab (bool, optional): If set to True, a tab character is added at the start of each line in the metadata
+            section for consistent spacing for LLM.
+    include_sep (bool, optional): If set to True, includes default section separator pattern at the end of the metadata
+            section.
+
+    Returns:
+    str: The prompt with the newly added metadata section.
+    """
+
+    def _prepend(s: str, ppt: bool) -> str:
+        return "\t" + s if ppt else s
+
+    prompt_current += _prepend(f"DOCUMENT SOURCE: {chunk.source_type}\n", prepend_tab)
+    if chunk.metadata:
+        prompt_current += _prepend(f"METADATA:\n", prepend_tab)
+        connector_class = identify_connector_class(DocumentSource(chunk.source_type))
+        for metadata_line in connector_class.parse_metadata(chunk.metadata):
+            prompt_current += _prepend(f"\t{metadata_line}\n", prepend_tab)
+    prompt_current += _prepend(DOC_CONTENT_START_PAT, prepend_tab)
+    if include_sep:
+        prompt_current += GENERAL_SEP_PAT
+    return prompt_current
+
+
+def json_processor(
+    question: str,
+    chunks: list[InferenceChunk],
+    include_metadata: bool = False,
+    include_sep: bool = True,
+) -> str:
     prompt = (
         BASE_PROMPT + f"Sample response:\n{json.dumps(SAMPLE_JSON_RESPONSE)}\n\n"
         f'Each context document below is prefixed with "{DOC_SEP_PAT}".\n\n'
     )
 
-    for document in documents:
-        prompt += f"\n{DOC_SEP_PAT}\n{document}"
+    for chunk in chunks:
+        prompt += f"\n\n{DOC_SEP_PAT}\n"
+        if include_metadata:
+            prompt = add_metadata_section(
+                prompt, chunk, prepend_tab=False, include_sep=include_sep
+            )
+
+        prompt += chunk.content
 
     prompt += "\n\n---\n\n"
     prompt += f"{QUESTION_PAT}\n{question}\n"
     return prompt
+
+
+def json_chat_processor(
+    question: str,
+    chunks: list[InferenceChunk],
+    include_metadata: bool = False,
+    include_sep: bool = False,
+) -> list[dict[str, str]]:
+    metadata_prompt_section = "with metadata and contents " if include_metadata else ""
+    intro_msg = (
+        f"You are a Question Answering assistant that answers queries based on the provided most relevant documents.\n"
+        f'Start by reading the following documents {metadata_prompt_section}and responding with "Acknowledged".'
+    )
+
+    complete_answer_not_found_response = (
+        '{"answer": "' + UNCERTAINTY_PAT + '", "quotes": []}'
+    )
+    task_msg = (
+        "Now answer the next user query based on documents above and quote relevant sections.\n"
+        "Respond with a JSON containing the answer and up to three most relevant quotes from the documents.\n"
+        "All quotes MUST be EXACT substrings from provided documents.\n"
+        "Your responses should be informative and concise.\n"
+        "You MUST prioritize information from provided documents over internal knowledge.\n"
+        "If the query cannot be answered based on the documents, respond with "
+        f"{complete_answer_not_found_response}\n"
+        "If the query requires aggregating the number of documents, respond with "
+        '{"answer": "Aggregations not supported", "quotes": []}\n'
+        f"Sample response:\n{json.dumps(SAMPLE_JSON_RESPONSE)}"
+    )
+    messages = [{"role": "system", "content": intro_msg}]
+
+    for chunk in chunks:
+        full_context = ""
+        if include_metadata:
+            full_context = add_metadata_section(
+                full_context, chunk, prepend_tab=False, include_sep=include_sep
+            )
+        full_context += chunk.content
+        messages.extend(
+            [
+                {
+                    "role": "user",
+                    "content": full_context,
+                },
+                {"role": "assistant", "content": "Acknowledged"},
+            ]
+        )
+    messages.append({"role": "system", "content": task_msg})
+
+    messages.append({"role": "user", "content": f"{QUESTION_PAT}\n{question}\n"})
+
+    return messages
+
+
+# EVERYTHING BELOW IS DEPRECATED, kept around as reference, may use again in future
 
 
 # Chain of Thought approach works however has higher token cost (more expensive) and is slower.
@@ -98,46 +207,6 @@ def freeform_processor(question: str, documents: list[str]) -> str:
     prompt += f"{QUESTION_PAT}\n{question}\n"
     prompt += f"{ANSWER_PAT}\n"
     return prompt
-
-
-def json_chat_processor(question: str, documents: list[str]) -> list[dict[str, str]]:
-    intro_msg = (
-        "You are a Question Answering assistant that answers queries based on provided documents.\n"
-        'Start by reading the following documents and responding with "Acknowledged".'
-    )
-
-    complete_answer_not_found_response = (
-        '{"answer": "' + UNCERTAINTY_PAT + '", "quotes": []}'
-    )
-    task_msg = (
-        "Now answer the next user query based on documents above and quote relevant sections.\n"
-        "Respond with a JSON containing the answer and up to three most relevant quotes from the documents.\n"
-        "All quotes MUST be EXACT substrings from provided documents.\n"
-        "Your responses should be informative and concise.\n"
-        "You MUST prioritize information from provided documents over internal knowledge.\n"
-        "If the query cannot be answered based on the documents, respond with "
-        f"{complete_answer_not_found_response}\n"
-        "If the query requires aggregating whole documents, respond with "
-        '{"answer": "Aggregations not supported", "quotes": []}\n'
-        f"Sample response:\n{json.dumps(SAMPLE_JSON_RESPONSE)}"
-    )
-    messages = [{"role": "system", "content": intro_msg}]
-
-    for document in documents:
-        messages.extend(
-            [
-                {
-                    "role": "user",
-                    "content": document,
-                },
-                {"role": "assistant", "content": "Acknowledged"},
-            ]
-        )
-    messages.append({"role": "system", "content": task_msg})
-
-    messages.append({"role": "user", "content": f"{QUESTION_PAT}\n{question}\n"})
-
-    return messages
 
 
 def freeform_chat_processor(

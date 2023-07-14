@@ -1,3 +1,4 @@
+import json
 from functools import partial
 from uuid import UUID
 
@@ -8,6 +9,7 @@ from danswer.configs.constants import BLURB
 from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import DOCUMENT_ID
+from danswer.configs.constants import METADATA
 from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
@@ -23,7 +25,6 @@ from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from qdrant_client.http.exceptions import ResponseHandlingException
 from qdrant_client.http.models.models import UpdateResult
-from qdrant_client.http.models.models import UpdateStatus
 from qdrant_client.models import CollectionsResponse
 from qdrant_client.models import Distance
 from qdrant_client.models import PointStruct
@@ -71,7 +72,7 @@ def get_qdrant_document_whitelists(
 def delete_qdrant_doc_chunks(
     document_id: str, collection_name: str, q_client: QdrantClient
 ) -> bool:
-    res = q_client.delete(
+    q_client.delete(
         collection_name=collection_name,
         points_selector=models.FilterSelector(
             filter=models.Filter(
@@ -136,6 +137,7 @@ def index_qdrant_chunks(
                         SECTION_CONTINUATION: chunk.section_continuation,
                         ALLOWED_USERS: doc_user_map[document.id][ALLOWED_USERS],
                         ALLOWED_GROUPS: doc_user_map[document.id][ALLOWED_GROUPS],
+                        METADATA: json.dumps(document.metadata),
                     },
                     vector=embedding,
                 )
