@@ -74,8 +74,8 @@ source .venv/bin/activate
 
 Install the required python dependencies:
 ```bash
-python install -r danswer/backend/requirements/default.txt
-python install -r danswer/backend/requirements/dev.txt
+pip install -r danswer/backend/requirements/default.txt
+pip install -r danswer/backend/requirements/dev.txt
 ```
 
 Install [Node.js and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) for the frontend.
@@ -110,12 +110,18 @@ docker compose -f docker-compose.dev.yml -p danswer-stack up -d search_engine
 
 
 #### Running Danswer
+
+Setup a folder to store config. Navigate to `danswer/backend` and run:
+```bash
+mkdir dynamic_config_storage
+```
+
 To start the frontend, navigate to `danswer/web` and run:
 ```bash
 DISABLE_AUTH=true npm run dev
 ```
 
-The first time running Danswer, you will need to run the migrations:
+The first time running Danswer, you will need to run the migrations. Navigate to `danswer/backend` and run:
 ```bash
 alembic upgrade head
 ```
