@@ -14,8 +14,9 @@ spec:
     spec:
       containers:
       - name: background
-        image: danswer/danswer-background:latest
+        image: danswer/danswer-api-server:latest
         imagePullPolicy: IfNotPresent
+        command: ["/usr/bin/supervisord"]
         env:
         - name: POSTGRES_HOST
           value: relational-db-service

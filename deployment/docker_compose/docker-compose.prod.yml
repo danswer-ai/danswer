@@ -20,10 +20,11 @@ services:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
   background:
-    image: danswer/danswer-background:latest
+    image: danswer/danswer-api-server:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile.background
+    command: /usr/bin/supervisord
     depends_on:
       - relational_db
       - vector_db
