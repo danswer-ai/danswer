@@ -78,5 +78,5 @@ connector in Danswer. Then create a Pull Request in https://github.com/danswer-a
 ### Before opening PR
 1. Be sure to fully test changes end to end with setting up the connector and updating the index with new docs from the
 new connector.
-2. Be sure to run the linting/formatting, refer to
-[CONTRIBUTING.md](https://github.com/danswer-ai/danswer/blob/main/CONTRIBUTING.md)
+2. Be sure to run the linting/formatting, refer to the formatting and linting section in
+[CONTRIBUTING.md](https://github.com/danswer-ai/danswer/blob/main/CONTRIBUTING.md#formatting-and-linting)
