@@ -12,11 +12,10 @@ Issues that have been explicitly approved by the maintainers (aligned with the d
 will be marked with the `approved by maintainers` label.
 Issues marked `good first issue` are an especially great place to start.
 
-**Connectors** to other tools are another great place to contribute, the required interfaces are outlined
-[here](https://github.com/danswer-ai/danswer/blob/main/backend/danswer/connectors/interfaces.py)
-and many examples can be found under the `danswer/backend/danswer/connectors` directory.
+**Connectors** to other tools are another great place to contribute. For details on how, refer to this
+[README.md](https://github.com/danswer-ai/danswer/blob/main/backend/danswer/connectors/README.md).
 
-If you have a new contribution in mind, we'd love to hear about it!
+If you have a new/different contribution in mind, we'd love to hear about it!
 Your input is vital to making sure that Danswer moves in the right direction.
 Before starting on implementation, please raise a GitHub issue.
 
