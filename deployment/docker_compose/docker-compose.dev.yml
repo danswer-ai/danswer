@@ -55,10 +55,11 @@ services:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
   background:
-    image: danswer/danswer-background:latest
+    image: danswer/danswer-api-server:latest
     build:
       context: ../../backend
-      dockerfile: Dockerfile.background
+      dockerfile: Dockerfile
+    command: /usr/bin/supervisord
     depends_on:
       - fastchat_controller
       - fastchat_model_worker
