@@ -70,7 +70,7 @@ if __name__ == "__main__":
 - Create the new icon, type, source, and filter changes
 (refer to existing [PR](https://github.com/danswer-ai/danswer/pull/139))
 
-# Docs Changes
+#### Docs Changes
 Create the new connector page (with guiding images!) with how to get the connector credentials and how to set up the
 connector in Danswer. Then create a Pull Request in https://github.com/danswer-ai/danswer-docs
 
