@@ -97,7 +97,7 @@ NUM_GENERATIVE_AI_INPUT_DOCS = 5
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 # Include additional document/chunk metadata in prompt to GenerativeAI
 INCLUDE_METADATA = False
-QA_TIMEOUT = 80  # 80 seconds
+QA_TIMEOUT = 1000  # 1000 seconds
 
 
 #####

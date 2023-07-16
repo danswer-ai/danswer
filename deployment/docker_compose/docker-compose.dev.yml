@@ -19,11 +19,13 @@ services:
     environment:
       FASTCHAT_CONTROLLER_URL: http://fastchat_controller:21001
     image: fastchat:latest
-    entrypoint: [ "python", "-m", "fastchat.serve.model_worker", "--device", "cpu",
+    entrypoint: [ "python", "-m", "fastchat.serve.model_worker",
                   "--worker-address", "http://fastchat_model_worker:21002",
                   "--controller-address", "http://fastchat_controller:21001",
                   "--host", "0.0.0.0", "--port", "21002",
-                  "--model-path", "/models/vicuna-7b-v1.3" ]
+                  "--device", "cpu", "--load-8bit",
+                  "--model-names", "gpt-3.5-turbo,text-davinci-003,text-embedding-ada-002",
+                  "--model-path", "/models/longchat-7b-16k" ]
   fastchat_api_server:
     build:
       context: .
