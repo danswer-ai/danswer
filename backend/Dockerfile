@@ -21,4 +21,3 @@ ENV PYTHONPATH /app
 
 # By default this container does nothing, it is used by api server and background which specify their own CMD
 CMD ["tail", "-f", "/dev/null"]
-#CMD ["/bin/sh", "-c", "alembic upgrade head && echo \"Starting Danswer Api Server\" && uvicorn danswer.main:app --host 0.0.0.0 --port 8080"]
