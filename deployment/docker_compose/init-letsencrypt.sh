@@ -83,4 +83,4 @@ docker compose -f docker-compose.prod.yml run --name danswer-stack --rm --entryp
 echo
 
 echo "### Reloading nginx ..."
-docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
+docker compose -f docker-compose.prod.yml -p danswer-stack up --force-recreate -d nginx
