@@ -7,27 +7,35 @@ services:
     image: fastchat:latest
     ports:
       - "21001:21001"
-    entrypoint: ["python", "-m", "fastchat.serve.controller", "--host", "0.0.0.0", "--port", "21001"]
+    entrypoint: [ "python", "-m", "fastchat.serve.controller", "--host",
+                  "0.0.0.0", "--port", "21001" ]
   fastchat_model_worker:
     build:
       context: .
       dockerfile: Dockerfile
     volumes:
       - huggingface:/root/.cache/huggingface
+      - ../data/models:/models
     environment:
-      FASTCHAT_CONTROLLER_URL: http://fastchat-controller:21001
+      FASTCHAT_CONTROLLER_URL: http://fastchat_controller:21001
     image: fastchat:latest
-    entrypoint: ["python", "-m", "fastchat.serve.model_worker", "--model-name", 'falcon', "--model-path", "/models/$", "--worker-address", "http://fastchat-model-worker:21002", "--controller-address", "http://fastchat-controller:21001", "--host", "0.0.0.0", "--port", "21002"]
+    entrypoint: [ "python", "-m", "fastchat.serve.model_worker", "--device", "cpu",
+                  "--worker-address", "http://fastchat_model_worker:21002",
+                  "--controller-address", "http://fastchat_controller:21001",
+                  "--host", "0.0.0.0", "--port", "21002",
+                  "--model-path", "/models/vicuna-7b-v1.3" ]
   fastchat_api_server:
     build:
       context: .
       dockerfile: Dockerfile
     environment:
-      FASTCHAT_CONTROLLER_URL: http://fastchat-controller:21001
+      FASTCHAT_CONTROLLER_URL: http://fastchat_controller:21001
     image: fastchat:latest
     ports:
       - "8000:8000"
-    entrypoint: ["python", "-m", "fastchat.serve.openai_api_server", "--controller-address", "http://fastchat-controller:21001", "--host", "0.0.0.0", "--port", "8000"]
+    entrypoint: [ "python", "-m", "fastchat.serve.openai_api_server",
+                  "--controller-address", "http://fastchat_controller:21001",
+                  "--host", "0.0.0.0", "--port", "8000" ]
   api_server:
     image: danswer/danswer-api-server:latest
     build:
@@ -44,7 +52,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - OPENAI_API_BASE=http://llama_server:8000/v1
+      - OPENAI_API_BASE=http://fastchat_api_server:8000/v1
       - OPENAI_API_KEY=EMPTY
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
@@ -134,11 +142,10 @@ services:
     environment:
       - DOMAIN=localhost
     ports:
-      - "80:80"
       - "3000:80"  # allow for localhost:3000 usage, since that is the norm
     volumes:
       - ../data/nginx:/etc/nginx/conf.d
-    command: > 
+    command: >
       /bin/sh -c "envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template.dev > /etc/nginx/conf.d/app.conf 
       && while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
 volumes:
