@@ -154,8 +154,8 @@ creating a pull requests with `python -m mypy .` from the `danswer/backend` dire
 
 
 #### Web
-We use `prettier` for formatting. Follow the guide [here](https://prettier.io/docs/en/install.html) to install, and run 
-`npx prettier --write --trailing-comma es5 .` from the `danswer/web` directory to automatically format.
+We use `prettier` for formatting. The desired version (2.8.8) will be installed via a `npm i` from the `danswer/web` directory. 
+To run the formatter, use `npx prettier --write .` from the `danswer/web` directory.
 Like `mypy`, we have no automated formatting yet (coming soon), but we request that, for now,
 you run this manually before creating a pull request.
 
