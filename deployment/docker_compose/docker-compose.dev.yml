@@ -94,6 +94,8 @@ services:
   nginx:
     image: nginx:1.23.4-alpine
     restart: always
+    # nginx will immediately crash with `nginx: [emerg] host not found in upstream`
+    # if api_server / web_server are not up 
     depends_on:
       - api_server
       - web_server
