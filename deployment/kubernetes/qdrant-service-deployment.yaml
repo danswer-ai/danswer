@@ -36,7 +36,7 @@ spec:
           mountPath: /qdrant/storage
         env:
         - name: QDRANT__TELEMETRY_DISABLED
-          value: true
+          value: "true"
       volumes:
       - name: qdrant-storage
         persistentVolumeClaim:

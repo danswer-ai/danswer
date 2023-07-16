@@ -38,4 +38,4 @@ jobs:
         file: ./backend/Dockerfile
         platforms: linux/amd64,linux/arm64
         push: true
-        tags: danswer/danswer-api-server:${{ github.ref_name }}
+        tags: danswer/danswer-backend:${{ github.ref_name }}

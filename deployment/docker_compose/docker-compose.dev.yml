@@ -1,10 +1,14 @@
 version: '3'
 services:
   api_server:
-    image: danswer/danswer-api-server:latest
+    image: danswer/danswer-backend:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
+    command: >
+      /bin/sh -c "alembic upgrade head &&
+      echo \"Starting Danswer Api Server\" &&
+      uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       - relational_db
       - vector_db
@@ -22,7 +26,7 @@ services:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
   background:
-    image: danswer/danswer-api-server:latest
+    image: danswer/danswer-backend:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -97,8 +101,8 @@ services:
     volumes:
       - ../data/nginx:/etc/nginx/conf.d
     command: > 
-      /bin/sh -c "envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template.dev > /etc/nginx/conf.d/app.conf 
-      && while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
+      /bin/sh -c "envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template.dev > /etc/nginx/conf.d/app.conf &&
+      while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
 volumes:
   local_dynamic_storage:
   file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them

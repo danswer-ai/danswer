@@ -1,10 +1,14 @@
 version: '3'
 services:
   api_server:
-    image: danswer/danswer-api-server:latest
+    image: danswer/danswer-backend:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
+    command: >
+      /bin/sh -c "alembic upgrade head &&
+      echo \"Starting Danswer Api Server\" &&
+      uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       - relational_db
       - vector_db
@@ -20,10 +24,10 @@ services:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
   background:
-    image: danswer/danswer-api-server:latest
+    image: danswer/danswer-backend:latest
     build:
       context: ../../backend
-      dockerfile: Dockerfile.background
+      dockerfile: Dockerfile
     command: /usr/bin/supervisord
     depends_on:
       - relational_db
