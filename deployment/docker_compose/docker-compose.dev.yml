@@ -22,6 +22,8 @@ services:
       - TYPESENSE_HOST=search_engine
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
       - DISABLE_AUTH=${DISABLE_AUTH:-True}
+      - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
+      - GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-}
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
