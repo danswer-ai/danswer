@@ -192,7 +192,7 @@ def process_answer(
         return answer, None
     logger.info(f"All quotes (including unmatched): {quote_strings}")
     quotes_dict = match_quotes_to_docs(quote_strings, chunks)
-    logger.debug(f"Final quotes dict: {quotes_dict}")
+    logger.info(f"Final quotes dict: {quotes_dict}")
 
     return answer, quotes_dict
 
