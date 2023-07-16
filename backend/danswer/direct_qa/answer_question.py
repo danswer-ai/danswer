@@ -14,7 +14,7 @@ from danswer.search.semantic_search import chunks_to_search_docs
 from danswer.search.semantic_search import retrieve_ranked_documents
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 

@@ -27,7 +27,7 @@ from danswer.db.auth import get_user_db
 from danswer.db.engine import get_async_session
 from danswer.db.models import AccessToken
 from danswer.db.models import User
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request

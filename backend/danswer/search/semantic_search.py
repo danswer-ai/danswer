@@ -16,7 +16,7 @@ from danswer.search.models import Embedder
 from danswer.search.search_utils import get_default_embedding_model
 from danswer.search.search_utils import get_default_reranking_model_ensemble
 from danswer.server.models import SearchDoc
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 from sentence_transformers import SentenceTransformer  # type: ignore
 
@@ -47,12 +47,16 @@ def semantic_reranking(
     chunks: list[InferenceChunk],
 ) -> list[InferenceChunk]:
     cross_encoders = get_default_reranking_model_ensemble()
-    sim_scores = sum([encoder.predict([(query, chunk.content) for chunk in chunks]) for encoder in cross_encoders])  # type: ignore
-    scored_results = list(zip(sim_scores, chunks))
+    sim_scores = [
+        encoder.predict([(query, chunk.content) for chunk in chunks])  # type: ignore
+        for encoder in cross_encoders
+    ]
+    averaged_sim_scores = sum(sim_scores) / len(sim_scores)
+    scored_results = list(zip(averaged_sim_scores, chunks))
     scored_results.sort(key=lambda x: x[0], reverse=True)
     ranked_sim_scores, ranked_chunks = zip(*scored_results)
 
-    logger.debug(f"Reranked similarity scores: {str(ranked_sim_scores)}")
+    logger.debug(f"Reranked similarity scores: {ranked_sim_scores}")
 
     return ranked_chunks
 

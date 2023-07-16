@@ -4,7 +4,7 @@ from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import IndexingStatus
 from danswer.db.models import User
 from danswer.server.models import StatusResponse
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from fastapi import HTTPException
 from sqlalchemy import func
 from sqlalchemy import select

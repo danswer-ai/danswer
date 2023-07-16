@@ -7,7 +7,7 @@ from danswer.db.models import IndexAttempt
 from danswer.server.models import ConnectorBase
 from danswer.server.models import ObjectCreationIdResponse
 from danswer.server.models import StatusResponse
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from fastapi import HTTPException
 from sqlalchemy import and_
 from sqlalchemy import func

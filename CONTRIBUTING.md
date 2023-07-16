@@ -12,11 +12,10 @@ Issues that have been explicitly approved by the maintainers (aligned with the d
 will be marked with the `approved by maintainers` label.
 Issues marked `good first issue` are an especially great place to start.
 
-**Connectors** to other tools are another great place to contribute, the required interfaces are outlined
-[here](https://github.com/danswer-ai/danswer/blob/main/backend/danswer/connectors/interfaces.py)
-and many examples can be found under the `danswer/backend/danswer/connectors` directory.
+**Connectors** to other tools are another great place to contribute. For details on how, refer to this
+[README.md](https://github.com/danswer-ai/danswer/blob/main/backend/danswer/connectors/README.md).
 
-If you have a new contribution in mind, we'd love to hear about it!
+If you have a new/different contribution in mind, we'd love to hear about it!
 Your input is vital to making sure that Danswer moves in the right direction.
 Before starting on implementation, please raise a GitHub issue.
 
@@ -126,7 +125,7 @@ The first time running Danswer, you will need to run the migrations. Navigate to
 alembic upgrade head
 ```
 
-To run the backend api server, navigate to `danswer/backend` and run:
+To run the backend API server, navigate to `danswer/backend` and run:
 ```bash
 DISABLE_AUTH=True TYPESENSE_API_KEY=local_dev_typesense DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage uvicorn danswer.main:app --reload --port 8080
 ```
@@ -136,6 +135,7 @@ To run the background job to check for connector updates and index documents, na
 PYTHONPATH=. TYPESENSE_API_KEY=local_dev_typesense DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/update.py
 ```
 
+Note: if you need finer logging, add the additional environment variable `LOG_LEVEL=DEBUG` to the relevant services.
 
 ### Formatting and Linting
 #### Backend

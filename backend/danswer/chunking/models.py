@@ -56,4 +56,6 @@ class InferenceChunk(BaseChunk):
             }
         if METADATA in init_kwargs:
             init_kwargs[METADATA] = json.loads(init_kwargs[METADATA])
+        else:
+            init_kwargs[METADATA] = {}
         return cls(**init_kwargs)

@@ -9,7 +9,7 @@ from danswer.direct_qa.answer_question import answer_question
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchDoc
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from retry import retry
 from slack_sdk import WebClient
 from slack_sdk.socket_mode import SocketModeClient

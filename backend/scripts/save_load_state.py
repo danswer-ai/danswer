@@ -22,7 +22,7 @@ from danswer.datastores.qdrant.indexing import list_qdrant_collections
 from danswer.datastores.typesense.store import create_typesense_collection
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.clients import get_typesense_client
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from qdrant_client.http.models.models import SnapshotDescription
 from typesense.exceptions import ObjectNotFound  # type: ignore
 

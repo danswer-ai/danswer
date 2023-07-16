@@ -18,7 +18,7 @@ from danswer.connectors.slack.utils import get_message_link
 from danswer.connectors.slack.utils import make_slack_api_call_paginated
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.connectors.slack.utils import UserIdReplacer
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from slack_sdk import WebClient
 from slack_sdk.web import SlackResponse
 
