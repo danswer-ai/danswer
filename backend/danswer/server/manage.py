@@ -293,6 +293,15 @@ def connector_run_once(
 def validate_existing_openai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
+    # always check if key exists
+    try:
+        openai_api_key = get_openai_api_key()
+    except ConfigNotFoundError:
+        raise HTTPException(status_code=404, detail="Key not found")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # don't call OpenAI every single time, only validate every so often
     check_key_time = "openai_api_key_last_check_time"
     kv_store = get_dynamic_config_store()
     curr_time = datetime.now()
@@ -308,12 +317,10 @@ def validate_existing_openai_api_key(
     get_dynamic_config_store().store(check_key_time, curr_time.timestamp())
 
     try:
-        openai_api_key = get_openai_api_key()
         is_valid = check_openai_api_key_is_valid(openai_api_key)
-    except ConfigNotFoundError:
-        raise HTTPException(status_code=404, detail="Key not found")
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError:
+        # this is the case where they aren't using an OpenAI-based model
+        is_valid = True
 
     if not is_valid:
         raise HTTPException(status_code=400, detail="Invalid API key provided")

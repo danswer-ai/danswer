@@ -7,6 +7,8 @@ from danswer.datastores.qdrant.store import QdrantIndex
 from danswer.datastores.typesense.store import TypesenseIndex
 from danswer.db.models import User
 from danswer.direct_qa import get_default_backend_qa_model
+from danswer.direct_qa.exceptions import OpenAIKeyMissing
+from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.search.danswer_helper import query_intent
 from danswer.search.keyword_search import retrieve_keyword_documents
 from danswer.search.models import SearchType
@@ -55,7 +57,19 @@ def answer_question(
             predicted_search=predicted_search,
         )
 
-    qa_model = get_default_backend_qa_model(timeout=qa_model_timeout)
+    try:
+        qa_model = get_default_backend_qa_model(timeout=qa_model_timeout)
+    except (UnknownModelError, OpenAIKeyMissing) as e:
+        return QAResponse(
+            answer=None,
+            quotes=None,
+            top_ranked_docs=chunks_to_search_docs(ranked_chunks),
+            lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
+            predicted_flow=predicted_flow,
+            predicted_search=predicted_search,
+            error_msg=str(e),
+        )
+
     chunk_offset = offset_count * NUM_GENERATIVE_AI_INPUT_DOCS
     if chunk_offset >= len(ranked_chunks):
         raise ValueError("Chunks offset too large, should not retry this many times")

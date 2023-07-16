@@ -34,6 +34,7 @@ export interface SearchResponse {
   answer: string | null;
   quotes: Record<string, Quote> | null;
   documents: DanswerDocument[] | null;
+  error: string | null;
 }
 
 export interface Source {
@@ -54,6 +55,7 @@ export interface SearchRequestArgs {
   updateDocs: (documents: DanswerDocument[]) => void;
   updateSuggestedSearchType: (searchType: SearchType) => void;
   updateSuggestedFlowType: (flowType: FlowType) => void;
+  updateError: (error: string) => void;
   selectedSearchType: SearchType | null;
   offset: number | null;
 }

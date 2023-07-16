@@ -59,6 +59,7 @@ export const searchRequestStreamed = async ({
   updateDocs,
   updateSuggestedSearchType,
   updateSuggestedFlowType,
+  updateError,
   selectedSearchType,
   offset,
 }: SearchRequestArgs) => {
@@ -121,7 +122,11 @@ export const searchRequestStreamed = async ({
         if (answerChunk) {
           answer += answerChunk;
           updateCurrentAnswer(answer);
-        } else if (chunk.answer_finished) {
+          return;
+        }
+
+        const answerFinished = chunk.answer_finished;
+        if (answerFinished) {
           // set quotes as non-null to signify that the answer is finished and
           // we're now looking for quotes
           updateQuotes({});
@@ -136,27 +141,38 @@ export const searchRequestStreamed = async ({
           } else {
             updateCurrentAnswer("");
           }
-        } else {
-          if (Object.hasOwn(chunk, "top_documents")) {
-            const docs = chunk.top_documents as any[] | null;
-            if (docs) {
-              relevantDocuments = docs.map(
-                (doc) => JSON.parse(doc) as DanswerDocument
-              );
-              updateDocs(relevantDocuments);
-            }
-
-            if (chunk.predicted_flow) {
-              updateSuggestedFlowType(chunk.predicted_flow);
-            }
-            if (chunk.predicted_search) {
-              updateSuggestedSearchType(chunk.predicted_search);
-            }
-          } else {
-            quotes = chunk as Record<string, Quote>;
-            updateQuotes(quotes);
-          }
+          return;
         }
+
+        const errorMsg = chunk.error;
+        if (errorMsg) {
+          updateError(errorMsg);
+          return;
+        }
+
+        // These all come together
+        if (Object.hasOwn(chunk, "top_documents")) {
+          const topDocuments = chunk.top_documents as any[] | null;
+          if (topDocuments) {
+            relevantDocuments = topDocuments.map(
+              (doc) => JSON.parse(doc) as DanswerDocument
+            );
+            updateDocs(relevantDocuments);
+          }
+
+          if (chunk.predicted_flow) {
+            updateSuggestedFlowType(chunk.predicted_flow);
+          }
+
+          if (chunk.predicted_search) {
+            updateSuggestedSearchType(chunk.predicted_search);
+          }
+          return;
+        }
+
+        // if it doesn't match any of the above, assume it is a quote
+        quotes = chunk as Record<string, Quote>;
+        updateQuotes(quotes);
       });
     }
   } catch (err) {

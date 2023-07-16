@@ -10,6 +10,8 @@ from danswer.datastores.typesense.store import TypesenseIndex
 from danswer.db.models import User
 from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.answer_question import answer_question
+from danswer.direct_qa.exceptions import OpenAIKeyMissing
+from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.llm import get_json_line
 from danswer.search.danswer_helper import query_intent
 from danswer.search.danswer_helper import recommend_search_flow
@@ -148,7 +150,13 @@ def stream_direct_qa(
         logger.debug(send_packet_debug_msg.format(initial_response_dict))
         yield get_json_line(initial_response_dict)
 
-        qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
+        try:
+            qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
+        except (UnknownModelError, OpenAIKeyMissing) as e:
+            logger.exception("Unable to get QA model")
+            yield get_json_line({"error": str(e)})
+            return
+
         chunk_offset = offset_count * NUM_GENERATIVE_AI_INPUT_DOCS
         if chunk_offset >= len(ranked_chunks):
             raise ValueError(
@@ -165,9 +173,10 @@ def stream_direct_qa(
                     continue
                 logger.debug(f"Sending packet: {response_dict}")
                 yield get_json_line(response_dict)
-        except Exception:
+        except Exception as e:
             # exception is logged in the answer_question method, no need to re-log
-            pass
+            yield get_json_line({"error": str(e)})
+
         logger.info(f"Total QA took {time.time() - start_time} seconds")
         return
 

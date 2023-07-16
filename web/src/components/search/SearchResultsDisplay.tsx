@@ -40,7 +40,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
     return null;
   }
 
-  const { answer, quotes, documents } = searchResponse;
+  const { answer, quotes, documents, error } = searchResponse;
 
   if (isFetching && !answer) {
     return (
@@ -129,7 +129,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
             className="text-red-500 my-auto flex flex-shrink-0"
           />
           <div className="text-red-500 text-xs my-auto ml-1">
-            GPT hurt itself in its confusion :(
+            {error ?? "GPT hurt itself in its confusion :("}
           </div>
         </div>
       )}
