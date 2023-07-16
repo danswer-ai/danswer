@@ -33,8 +33,8 @@ jobs:
 
     - name: Pull, Tag and Push API Server Image
       run: |
-        docker pull danswer/danswer-api-server:${{ github.event.inputs.version }}
-        docker tag danswer/danswer-api-server:${{ github.event.inputs.version }} danswer/danswer-api-server:latest
-        docker push danswer/danswer-api-server:latest
-        docker manifest create danswer/danswer-api-server:latest danswer/danswer-api-server:latest
-        docker manifest push danswer/danswer-api-server:latest
+        docker pull danswer/danswer-backend:${{ github.event.inputs.version }}
+        docker tag danswer/danswer-backend:${{ github.event.inputs.version }} danswer/danswer-backend:latest
+        docker push danswer/danswer-backend:latest
+        docker manifest create danswer/danswer-backend:latest danswer/danswer-backend:latest
+        docker manifest push danswer/danswer-backend:latest
