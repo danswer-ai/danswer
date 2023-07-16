@@ -33,6 +33,7 @@ from danswer.direct_qa.qa_prompts import get_chat_reflexion_msg
 from danswer.direct_qa.qa_prompts import json_chat_processor
 from danswer.direct_qa.qa_prompts import json_processor
 from danswer.direct_qa.qa_prompts import QUOTE_PAT
+from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.utils.logging import setup_logger
 from danswer.utils.text_processing import clean_model_quote
