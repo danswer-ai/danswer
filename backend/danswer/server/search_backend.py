@@ -1,8 +1,8 @@
-import time
 from collections.abc import Generator
 
 from danswer.auth.users import current_user
 from danswer.chunking.models import InferenceChunk
+from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.datastores.qdrant.store import QdrantIndex
@@ -16,6 +16,7 @@ from danswer.direct_qa.llm import get_json_line
 from danswer.search.danswer_helper import query_intent
 from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.keyword_search import retrieve_keyword_documents
+from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
 from danswer.search.semantic_search import chunks_to_search_docs
 from danswer.search.semantic_search import retrieve_ranked_documents
@@ -24,6 +25,7 @@ from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchResponse
 from danswer.utils.logger import setup_logger
+from danswer.utils.timing import log_generator_function_time
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
@@ -104,9 +106,10 @@ def stream_direct_qa(
     logger.debug(f"Received QA query: {question.query}")
     logger.debug(f"Query filters: {question.filters}")
 
-    def stream_qa_portions() -> Generator[str, None, None]:
-        start_time = time.time()
-
+    @log_generator_function_time()
+    def stream_qa_portions(
+        disable_generative_answer: bool = DISABLE_GENERATIVE_AI,
+    ) -> Generator[str, None, None]:
         query = question.query
         collection = question.collection
         filters = question.filters
@@ -144,11 +147,19 @@ def stream_direct_qa(
         initial_response_dict = {
             top_documents_key: [top_doc.json() for top_doc in top_docs],
             unranked_top_docs_key: [doc.json() for doc in unranked_top_docs],
-            predicted_flow_key: predicted_flow,
+            # if generative AI is disabled, set flow as search so frontend
+            # doesn't ask the user if they want to run QA over more documents
+            predicted_flow_key: QueryFlow.SEARCH
+            if disable_generative_answer
+            else predicted_flow,
             predicted_search_key: predicted_search,
         }
         logger.debug(send_packet_debug_msg.format(initial_response_dict))
         yield get_json_line(initial_response_dict)
+
+        if disable_generative_answer:
+            logger.debug("Skipping QA because generative AI is disabled")
+            return
 
         try:
             qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
@@ -177,7 +188,6 @@ def stream_direct_qa(
             # exception is logged in the answer_question method, no need to re-log
             yield get_json_line({"error": str(e)})
 
-        logger.info(f"Total QA took {time.time() - start_time} seconds")
         return
 
     return StreamingResponse(stream_qa_portions(), media_type="application/json")

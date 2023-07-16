@@ -12,6 +12,10 @@ APP_PORT = 8080
 #####
 BLURB_LENGTH = 200  # Characters. Blurbs will be truncated at the first punctuation after this many characters.
 GENERATIVE_MODEL_ACCESS_CHECK_FREQ = 86400  # 1 day
+# DISABLE_GENERATIVE_AI will turn of the question answering part of Danswer. Use this
+# if you want to use Danswer as a search engine only and/or you are not comfortable sending
+# anything to OpenAI. TODO: update this message once we support Azure / open source generative models.
+DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "true"
 
 #####
 # Web Configs
