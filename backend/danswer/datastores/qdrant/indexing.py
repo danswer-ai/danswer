@@ -20,7 +20,7 @@ from danswer.datastores.datastore_utils import DEFAULT_BATCH_SIZE
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
 from danswer.datastores.datastore_utils import update_doc_user_map
 from danswer.utils.clients import get_qdrant_client
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from qdrant_client.http.exceptions import ResponseHandlingException

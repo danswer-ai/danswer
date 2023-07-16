@@ -15,7 +15,7 @@ from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from dateutil import parser
 
 # Fairly generous retry because it's not understood why occasionally GraphQL requests fail even with timeout > 1 min

@@ -4,7 +4,7 @@ from collections.abc import Callable
 from typing import Any
 from typing import cast
 
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import SlackResponse

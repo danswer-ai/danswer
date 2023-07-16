@@ -57,7 +57,7 @@ from danswer.server.models import RunConnectorRequest
 from danswer.server.models import StatusResponse
 from danswer.server.models import UserByEmail
 from danswer.server.models import UserRoleResponse
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException

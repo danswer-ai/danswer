@@ -8,7 +8,10 @@ from danswer.auth.users import fastapi_users
 from danswer.auth.users import google_oauth_client
 from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
+from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import ENABLE_OAUTH
+from danswer.configs.app_configs import GOOGLE_OAUTH_CLIENT_ID
+from danswer.configs.app_configs import GOOGLE_OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import TYPESENSE_DEFAULT_COLLECTION
 from danswer.configs.app_configs import WEB_DOMAIN
@@ -16,11 +19,14 @@ from danswer.datastores.qdrant.indexing import list_qdrant_collections
 from danswer.datastores.typesense.store import check_typesense_collection_exist
 from danswer.datastores.typesense.store import create_typesense_collection
 from danswer.db.credentials import create_initial_public_credential
+from danswer.direct_qa.key_validation import check_openai_api_key_is_valid
+from danswer.direct_qa.llm import get_openai_api_key
+from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.server.event_loading import router as event_processing_router
 from danswer.server.health import router as health_router
 from danswer.server.manage import router as admin_router
 from danswer.server.search_backend import router as backend_router
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from fastapi import FastAPI
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
@@ -116,6 +122,17 @@ def get_application() -> FastAPI:
         )
         from danswer.datastores.qdrant.indexing import create_qdrant_collection
         from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
+
+        auth_status = "off" if DISABLE_AUTH else "on"
+        logger.info(f"User auth is turned {auth_status}")
+
+        if not ENABLE_OAUTH:
+            logger.debug("OAuth is turned off")
+        else:
+            if not GOOGLE_OAUTH_CLIENT_ID or not GOOGLE_OAUTH_CLIENT_SECRET:
+                logger.warning("OAuth is turned on but incorrectly configured")
+            else:
+                logger.debug("OAuth is turned on")
 
         logger.info("Warming up local NLP models.")
         warm_up_models()

@@ -35,7 +35,8 @@ from danswer.direct_qa.qa_prompts import json_processor
 from danswer.direct_qa.qa_prompts import QUOTE_PAT
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.dynamic_configs import get_dynamic_config_store
-from danswer.utils.logging import setup_logger
+from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_model_quote
 from danswer.utils.text_processing import shared_precompare_cleanup
 from danswer.utils.timing import log_function_time
@@ -179,11 +180,20 @@ def process_answer(
 ) -> tuple[str | None, dict[str, dict[str, str | int | None]] | None]:
     answer, quote_strings = separate_answer_quotes(answer_raw)
     if answer == UNCERTAINTY_PAT or not answer:
+        if answer == UNCERTAINTY_PAT:
+            logger.debug("Answer matched UNCERTAINTY_PAT")
+        else:
+            logger.debug("No answer extracted from raw output")
         return None, None
 
+    logger.info(f"Answer: {answer}")
     if not quote_strings:
+        logger.debug("No quotes extracted from raw output")
         return answer, None
+    logger.info(f"All quotes (including unmatched): {quote_strings}")
     quotes_dict = match_quotes_to_docs(quote_strings, chunks)
+    logger.debug(f"Final quotes dict: {quotes_dict}")
+
     return answer, quotes_dict
 
 
@@ -263,9 +273,12 @@ class OpenAICompletionQA(OpenAIQAModel):
         self.prompt_processor = prompt_processor
         self.model_version = model_version
         self.max_output_tokens = max_output_tokens
-        self.api_key = api_key or get_openai_api_key()
         self.timeout = timeout
         self.include_metadata = include_metadata
+        try:
+            self.api_key = api_key or get_openai_api_key()
+        except ConfigNotFoundError:
+            raise RuntimeError("No OpenAI Key available")
 
     @log_function_time()
     def answer_question(
@@ -373,9 +386,12 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         self.model_version = model_version
         self.max_output_tokens = max_output_tokens
         self.reflexion_try_count = reflexion_try_count
-        self.api_key = api_key or get_openai_api_key()
         self.timeout = timeout
         self.include_metadata = include_metadata
+        try:
+            self.api_key = api_key or get_openai_api_key()
+        except ConfigNotFoundError:
+            raise RuntimeError("No OpenAI Key available")
 
     @log_function_time()
     def answer_question(
@@ -384,7 +400,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         context_docs: list[InferenceChunk],
     ) -> tuple[str | None, dict[str, dict[str, str | int | None]] | None]:
         messages = self.prompt_processor(query, context_docs, self.include_metadata)
-        logger.debug(messages)
+        logger.debug(json.dumps(messages, indent=4))
         model_output = ""
         for _ in range(self.reflexion_try_count + 1):
             openai_call = _handle_openai_exceptions_wrapper(
@@ -418,7 +434,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         self, query: str, context_docs: list[InferenceChunk]
     ) -> Generator[dict[str, Any] | None, None, None]:
         messages = self.prompt_processor(query, context_docs, self.include_metadata)
-        logger.debug(messages)
+        logger.debug(json.dumps(messages, indent=4))
 
         openai_call = _handle_openai_exceptions_wrapper(
             openai_call=openai.ChatCompletion.create,
@@ -446,10 +462,14 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
             event_text = event_dict["content"]
             model_previous = model_output
             model_output += event_text
+            logger.debug(f"GPT returned token: {event_text}")
 
             if not found_answer_start and '{"answer":"' in model_output.replace(
                 " ", ""
             ).replace("\n", ""):
+                # Note, if the token that completes the pattern has additional text, for example if the token is "?
+                # Then the chars after " will not be streamed, but this is ok as it prevents streaming the ? in the
+                # event that the model outputs the UNCERTAINTY_PAT
                 found_answer_start = True
                 continue
 
@@ -463,14 +483,5 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         logger.debug(model_output)
 
         answer, quotes_dict = process_answer(model_output, context_docs)
-        if answer:
-            logger.info(answer)
-        else:
-            logger.warning(
-                "Answer extraction from model output failed, most likely no quotes provided"
-            )
 
-        if quotes_dict is None:
-            yield {}
-        else:
-            yield quotes_dict
+        yield {} if quotes_dict is None else quotes_dict

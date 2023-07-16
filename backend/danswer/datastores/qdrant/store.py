@@ -13,7 +13,7 @@ from danswer.datastores.interfaces import VectorIndex
 from danswer.datastores.qdrant.indexing import index_qdrant_chunks
 from danswer.search.search_utils import get_default_embedding_model
 from danswer.utils.clients import get_qdrant_client
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 from qdrant_client.http.exceptions import ResponseHandlingException
 from qdrant_client.http.exceptions import UnexpectedResponse

@@ -2,7 +2,7 @@ import time
 from collections.abc import Callable
 from typing import Any
 
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()

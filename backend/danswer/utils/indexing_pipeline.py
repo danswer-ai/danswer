@@ -12,7 +12,7 @@ from danswer.datastores.qdrant.store import QdrantIndex
 from danswer.datastores.typesense.store import TypesenseIndex
 from danswer.search.models import Embedder
 from danswer.search.semantic_search import DefaultEmbedder
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 

@@ -26,7 +26,7 @@ from danswer.datastores.datastore_utils import update_doc_user_map
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import KeywordIndex
 from danswer.utils.clients import get_typesense_client
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from typesense.exceptions import ObjectNotFound  # type: ignore
 
 
