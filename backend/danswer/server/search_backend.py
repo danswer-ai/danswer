@@ -21,7 +21,7 @@ from danswer.server.models import HelperResponse
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchResponse
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
@@ -93,18 +93,23 @@ def direct_qa(
 def stream_direct_qa(
     question: QuestionRequest, user: User = Depends(current_user)
 ) -> StreamingResponse:
+    send_packet_debug_msg = "Sending Packet: {}"
     top_documents_key = "top_documents"
     unranked_top_docs_key = "unranked_top_documents"
     predicted_flow_key = "predicted_flow"
     predicted_search_key = "predicted_search"
 
+    logger.debug(f"Received QA query: {question.query}")
+    logger.debug(f"Query filters: {question.filters}")
+
     def stream_qa_portions() -> Generator[str, None, None]:
+        start_time = time.time()
+
         query = question.query
         collection = question.collection
         filters = question.filters
         use_keyword = question.use_keyword
         offset_count = question.offset if question.offset is not None else 0
-        logger.info(f"Received QA query: {query}")
 
         predicted_search, predicted_flow = query_intent(query)
         if use_keyword is None:
@@ -121,14 +126,15 @@ def stream_direct_qa(
                 query, user_id, filters, QdrantIndex(collection)
             )
         if not ranked_chunks:
-            yield get_json_line(
-                {
-                    top_documents_key: None,
-                    unranked_top_docs_key: None,
-                    predicted_flow_key: predicted_flow,
-                    predicted_search_key: predicted_search,
-                }
-            )
+            logger.debug("No Documents Found")
+            empty_docs_result = {
+                top_documents_key: None,
+                unranked_top_docs_key: None,
+                predicted_flow_key: predicted_flow,
+                predicted_search_key: predicted_search,
+            }
+            logger.debug(send_packet_debug_msg.format(empty_docs_result))
+            yield get_json_line(empty_docs_result)
             return
 
         top_docs = chunks_to_search_docs(ranked_chunks)
@@ -139,6 +145,7 @@ def stream_direct_qa(
             predicted_flow_key: predicted_flow,
             predicted_search_key: predicted_search,
         }
+        logger.debug(send_packet_debug_msg.format(initial_response_dict))
         yield get_json_line(initial_response_dict)
 
         qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
@@ -156,11 +163,12 @@ def stream_direct_qa(
             ):
                 if response_dict is None:
                     continue
-                logger.debug(response_dict)
+                logger.debug(f"Sending packet: {response_dict}")
                 yield get_json_line(response_dict)
         except Exception:
             # exception is logged in the answer_question method, no need to re-log
             pass
+        logger.info(f"Total QA took {time.time() - start_time} seconds")
         return
 
     return StreamingResponse(stream_qa_portions(), media_type="application/json")

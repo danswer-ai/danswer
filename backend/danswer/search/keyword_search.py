@@ -5,7 +5,7 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import KeywordIndex
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 from nltk.corpus import stopwords  # type:ignore
 from nltk.stem import WordNetLemmatizer  # type:ignore
@@ -45,7 +45,7 @@ def retrieve_keyword_documents(
     if not top_chunks:
         filters_log_msg = json.dumps(filters, separators=(",", ":")).replace("\n", "")
         logger.warning(
-            f"Keyword search returned no results...\nfilters: {filters_log_msg}\nedited query: {edited_query}"
+            f"Keyword search returned no results - Filters: {filters_log_msg}\tEdited Query: {edited_query}"
         )
         return None
     return top_chunks

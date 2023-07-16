@@ -7,15 +7,22 @@ from danswer.search.search_utils import get_default_intent_model
 from danswer.search.search_utils import get_default_intent_model_tokenizer
 from danswer.search.search_utils import get_default_tokenizer
 from danswer.server.models import HelperResponse
+from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 from transformers import AutoTokenizer  # type:ignore
+
+logger = setup_logger()
 
 
 def count_unk_tokens(text: str, tokenizer: AutoTokenizer) -> int:
     """Unclear if the wordpiece tokenizer used is actually tokenizing anything as the [UNK] token
     It splits up even foreign characters and unicode emojis without using UNK"""
     tokenized_text = tokenizer.tokenize(text)
-    return len([token for token in tokenized_text if token == tokenizer.unk_token])
+    num_unk_tokens = len(
+        [token for token in tokenized_text if token == tokenizer.unk_token]
+    )
+    logger.debug(f"Total of {num_unk_tokens} UNKNOWN tokens found")
+    return num_unk_tokens
 
 
 @log_function_time()
@@ -34,16 +41,26 @@ def query_intent(query: str) -> tuple[SearchType, QueryFlow]:
     if qa > 20:
         # If one class is very certain, choose it still
         if keyword > 70:
-            return SearchType.KEYWORD, QueryFlow.SEARCH
-        if semantic > 70:
-            return SearchType.SEMANTIC, QueryFlow.SEARCH
+            predicted_search = SearchType.KEYWORD
+            predicted_flow = QueryFlow.SEARCH
+        elif semantic > 70:
+            predicted_search = SearchType.SEMANTIC
+            predicted_flow = QueryFlow.SEARCH
         # If it's a QA question, it must be a "Semantic" style statement/question
-        return SearchType.SEMANTIC, QueryFlow.QUESTION_ANSWER
+        else:
+            predicted_search = SearchType.SEMANTIC
+            predicted_flow = QueryFlow.QUESTION_ANSWER
     # If definitely not a QA question, choose between keyword or semantic search
     elif keyword > semantic:
-        return SearchType.KEYWORD, QueryFlow.SEARCH
+        predicted_search = SearchType.KEYWORD
+        predicted_flow = QueryFlow.SEARCH
     else:
-        return SearchType.SEMANTIC, QueryFlow.SEARCH
+        predicted_search = SearchType.SEMANTIC
+        predicted_flow = QueryFlow.SEARCH
+
+    logger.debug(f"Predicted Search: {predicted_search}")
+    logger.debug(f"Predicted Flow: {predicted_flow}")
+    return predicted_search, predicted_flow
 
 
 def recommend_search_flow(

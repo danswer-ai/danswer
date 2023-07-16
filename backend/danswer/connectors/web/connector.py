@@ -14,7 +14,7 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from playwright.sync_api import sync_playwright
 from PyPDF2 import PdfReader
 

@@ -8,7 +8,7 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from github import Github
 from github.PaginatedList import PaginatedList
 from github.PullRequest import PullRequest

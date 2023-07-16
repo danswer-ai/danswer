@@ -5,7 +5,7 @@ from danswer.db.models import Credential
 from danswer.db.models import User
 from danswer.server.models import CredentialBase
 from danswer.server.models import ObjectCreationIdResponse
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import or_

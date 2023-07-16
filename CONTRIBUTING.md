@@ -125,7 +125,7 @@ The first time running Danswer, you will need to run the migrations. Navigate to
 alembic upgrade head
 ```
 
-To run the backend api server, navigate to `danswer/backend` and run:
+To run the backend API server, navigate to `danswer/backend` and run:
 ```bash
 DISABLE_AUTH=True TYPESENSE_API_KEY=local_dev_typesense DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage uvicorn danswer.main:app --reload --port 8080
 ```
@@ -135,6 +135,7 @@ To run the background job to check for connector updates and index documents, na
 PYTHONPATH=. TYPESENSE_API_KEY=local_dev_typesense DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/update.py
 ```
 
+Note: if you need finer logging, add the additional environment variable `LOG_LEVEL=DEBUG` to the relevant services.
 
 ### Formatting and Linting
 #### Backend

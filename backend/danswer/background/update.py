@@ -22,7 +22,7 @@ from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.utils.indexing_pipeline import build_indexing_pipeline
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from sqlalchemy.orm import Session
 
 logger = setup_logger()

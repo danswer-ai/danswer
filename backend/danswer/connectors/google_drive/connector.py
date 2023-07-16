@@ -14,7 +14,7 @@ from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from google.auth.transport.requests import Request  # type: ignore
 from google.oauth2.credentials import Credentials  # type: ignore
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore
