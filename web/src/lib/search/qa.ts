@@ -14,6 +14,7 @@ export const searchRequest = async ({
   updateDocs,
   updateSuggestedSearchType,
   updateSuggestedFlowType,
+  updateError,
   selectedSearchType,
   offset,
 }: SearchRequestArgs) => {
@@ -72,6 +73,7 @@ export const searchRequest = async ({
 
     updateSuggestedSearchType(data.predicted_search);
     updateSuggestedFlowType(data.predicted_flow);
+    updateError(data.error);
   } catch (err) {
     console.error("Fetch error:", err);
   }

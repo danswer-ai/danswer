@@ -24,6 +24,7 @@ services:
       - DISABLE_AUTH=${DISABLE_AUTH:-True}
       - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
       - GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      - DISABLE_GENERATIVE_AI=${DISABLE_GENERATIVE_AI:-}
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage

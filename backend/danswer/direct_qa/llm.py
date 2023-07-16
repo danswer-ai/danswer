@@ -27,6 +27,7 @@ from danswer.configs.constants import SOURCE_LINK
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.model_configs import OPENAI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import OPENAI_MODEL_VERSION
+from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.qa_prompts import ANSWER_PAT
 from danswer.direct_qa.qa_prompts import get_chat_reflexion_msg
@@ -278,7 +279,7 @@ class OpenAICompletionQA(OpenAIQAModel):
         try:
             self.api_key = api_key or get_openai_api_key()
         except ConfigNotFoundError:
-            raise RuntimeError("No OpenAI Key available")
+            raise OpenAIKeyMissing()
 
     @log_function_time()
     def answer_question(
@@ -391,7 +392,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         try:
             self.api_key = api_key or get_openai_api_key()
         except ConfigNotFoundError:
-            raise RuntimeError("No OpenAI Key available")
+            raise OpenAIKeyMissing()
 
     @log_function_time()
     def answer_question(
@@ -482,6 +483,6 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
 
         logger.debug(model_output)
 
-        answer, quotes_dict = process_answer(model_output, context_docs)
+        _, quotes_dict = process_answer(model_output, context_docs)
 
         yield {} if quotes_dict is None else quotes_dict

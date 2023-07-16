@@ -5,6 +5,7 @@ from typing import cast
 from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
+from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
@@ -293,6 +294,20 @@ def connector_run_once(
 def validate_existing_openai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
+    # OpenAI key is only used for generative QA, so no need to validate this
+    # if it's turned off
+    if DISABLE_GENERATIVE_AI:
+        return
+
+    # always check if key exists
+    try:
+        openai_api_key = get_openai_api_key()
+    except ConfigNotFoundError:
+        raise HTTPException(status_code=404, detail="Key not found")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # don't call OpenAI every single time, only validate every so often
     check_key_time = "openai_api_key_last_check_time"
     kv_store = get_dynamic_config_store()
     curr_time = datetime.now()
@@ -308,12 +323,10 @@ def validate_existing_openai_api_key(
     get_dynamic_config_store().store(check_key_time, curr_time.timestamp())
 
     try:
-        openai_api_key = get_openai_api_key()
         is_valid = check_openai_api_key_is_valid(openai_api_key)
-    except ConfigNotFoundError:
-        raise HTTPException(status_code=404, detail="Key not found")
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError:
+        # this is the case where they aren't using an OpenAI-based model
+        is_valid = True
 
     if not is_valid:
         raise HTTPException(status_code=400, detail="Invalid API key provided")
