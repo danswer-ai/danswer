@@ -21,6 +21,7 @@ services:
       - QDRANT_HOST=vector_db
       - TYPESENSE_HOST=search_engine
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - DISABLE_AUTH=${DISABLE_AUTH:-True}
       - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
       - GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-}
