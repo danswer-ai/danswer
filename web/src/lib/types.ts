@@ -16,7 +16,8 @@ export type ValidSources =
   | "confluence"
   | "jira"
   | "slab"
-  | "file";
+  | "file"
+  | "notion";
 export type ValidInputTypes = "load_state" | "poll" | "event";
 
 // CONNECTORS
@@ -71,6 +72,8 @@ export interface FileConfig {
   file_locations: string[];
 }
 
+export interface NotionConfig {}
+
 export interface ConnectorIndexingStatus<T> {
   connector: Connector<T>;
   public_doc: boolean;
@@ -123,4 +126,8 @@ export interface GoogleDriveCredentialJson {
 
 export interface SlabCredentialJson {
   slab_bot_token: string;
+}
+
+export interface NotionCredentialJson {
+  notion_integration_token: string;
 }

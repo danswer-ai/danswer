@@ -7,6 +7,7 @@ import {
   GlobeIcon,
   GoogleDriveIcon,
   JiraIcon,
+  NotionIcon,
   SlabIcon,
   SlackIcon,
 } from "./icons/icons";
@@ -73,6 +74,12 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         displayName: "Slab",
         adminPageLink: "/admin/connectors/slab",
       };
+    case "notion":
+      return {
+        icon: NotionIcon,
+        displayName: "Notion",
+        adminPageLink: "/admin/connectors/notion",
+      };
     default:
       throw new Error("Invalid source type");
   }
@@ -85,7 +92,7 @@ export const getSourceIcon = (sourceType: ValidSources, iconSize: string) => {
 };
 
 export const getSourceDisplayName = (
-  sourceType: ValidSources
+  sourceType: ValidSources,
 ): string | null => {
   return getSourceMetadata(sourceType).displayName;
 };
