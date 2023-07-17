@@ -7,7 +7,6 @@ import useSWR, { useSWRConfig } from "swr";
 import { LoadingAnimation } from "@/components/Loading";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import {
-  Connector,
   SlackConfig,
   Credential,
   SlackCredentialJson,

@@ -45,6 +45,10 @@ export interface GithubConfig {
   repo_name: string;
 }
 
+export interface GoogleDriveConfig {
+  folder_paths: string[];
+}
+
 export interface BookstackConfig {}
 
 export interface ConfluenceConfig {

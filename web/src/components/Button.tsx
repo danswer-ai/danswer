@@ -1,6 +1,7 @@
 interface Props {
   children: JSX.Element | string;
-  onClick?: () => void;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  type?: "button" | "submit" | "reset";
   disabled?: boolean;
   fullWidth?: boolean;
   className?: string;
@@ -9,6 +10,7 @@ interface Props {
 export const Button = ({
   children,
   onClick,
+  type = "submit",
   disabled = false,
   fullWidth = false,
   className = "",
@@ -26,6 +28,7 @@ export const Button = ({
         className
       }
       onClick={onClick}
+      type={type}
       disabled={disabled}
     >
       {children}

@@ -76,12 +76,12 @@ export async function deleteConnectorIfExists({
   const connectorsResponse = await fetch("/api/manage/connector");
   if (connectorsResponse.ok) {
     const connectors = (await connectorsResponse.json()) as Connector<any>[];
-    const googleDriveConnectors = connectors.filter(
+    const matchingConnectors = connectors.filter(
       (connector) =>
         connector.source === source && (!name || connector.name === name)
     );
-    if (googleDriveConnectors.length > 0) {
-      const errorMsg = await deleteConnector(googleDriveConnectors[0].id);
+    if (matchingConnectors.length > 0) {
+      const errorMsg = await deleteConnector(matchingConnectors[0].id);
       if (errorMsg) {
         return errorMsg;
       }

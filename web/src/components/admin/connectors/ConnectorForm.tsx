@@ -8,6 +8,8 @@ import {
   ValidInputTypes,
   ValidSources,
 } from "@/lib/types";
+import { deleteConnectorIfExists } from "@/lib/connector";
+import { FormBodyBuilder, RequireAtLeastOne } from "./types";
 
 export async function submitConnector<T>(
   connector: ConnectorBase<T>
@@ -35,28 +37,36 @@ export async function submitConnector<T>(
   }
 }
 
-interface Props<T extends Yup.AnyObject> {
+interface BaseProps<T extends Yup.AnyObject> {
   nameBuilder: (values: T) => string;
   source: ValidSources;
   inputType: ValidInputTypes;
   credentialId?: number;
-  formBody: JSX.Element | null;
+  // If both are specified, uses formBody
+  formBody?: JSX.Element | null;
+  formBodyBuilder?: FormBodyBuilder<T>;
   validationSchema: Yup.ObjectSchema<T>;
   initialValues: T;
   onSubmit: (isSuccess: boolean, responseJson?: Connector<T>) => void;
   refreshFreq?: number;
 }
 
+type ConnectorFormProps<T extends Yup.AnyObject> = RequireAtLeastOne<
+  BaseProps<T>,
+  "formBody" | "formBodyBuilder"
+>;
+
 export function ConnectorForm<T extends Yup.AnyObject>({
   nameBuilder,
   source,
   inputType,
   formBody,
+  formBodyBuilder,
   validationSchema,
   initialValues,
   refreshFreq,
   onSubmit,
-}: Props<T>): JSX.Element {
+}: ConnectorFormProps<T>): JSX.Element {
   const [popup, setPopup] = useState<{
     message: string;
     type: "success" | "error";
@@ -70,6 +80,20 @@ export function ConnectorForm<T extends Yup.AnyObject>({
         validationSchema={validationSchema}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
+
+          // best effort check to see if existing connector exists
+          // delete it if it does, the current assumption is that only
+          // one google drive connector will exist at a time
+          const errorMsg = await deleteConnectorIfExists({
+            source,
+          });
+          if (errorMsg) {
+            setPopup({
+              message: `Unable to delete existing connector - ${errorMsg}`,
+              type: "error",
+            });
+            return;
+          }
 
           const { message, isSuccess, response } = await submitConnector<T>({
             name: nameBuilder(values),
@@ -91,9 +115,9 @@ export function ConnectorForm<T extends Yup.AnyObject>({
           onSubmit(isSuccess, response);
         }}
       >
-        {({ isSubmitting }) => (
+        {({ isSubmitting, values }) => (
           <Form>
-            {formBody}
+            {formBody ? formBody : formBodyBuilder && formBodyBuilder(values)}
             <div className="flex">
               <button
                 type="submit"
