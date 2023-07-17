@@ -119,6 +119,11 @@ To start the frontend, navigate to `danswer/web` and run:
 ```bash
 DISABLE_AUTH=true npm run dev
 ```
+_for Windows, run:_
+```bash
+$env:DISABLE_AUTH = "true"; npm run dev
+```
+
 
 The first time running Danswer, you will need to run the migrations. Navigate to `danswer/backend` and run:
 ```bash
