@@ -50,7 +50,7 @@ export function TextArrayFieldBuilder<T extends Yup.AnyObject>({
   subtext,
   type = "text",
 }: TextArrayFieldProps): FormBodyBuilder<T> {
-  return (values) => (
+  const TextArrayField: FormBodyBuilder<T> = (values) => (
     <div className="mb-4">
       <label htmlFor={name} className="block">
         {label}
@@ -101,4 +101,5 @@ export function TextArrayFieldBuilder<T extends Yup.AnyObject>({
       />
     </div>
   );
+  return TextArrayField;
 }

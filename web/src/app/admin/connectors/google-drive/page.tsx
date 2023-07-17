@@ -226,7 +226,7 @@ const GoogleDriveConnectorManagement = ({
             <div className="mx-2">
               {googleDriveConnectorIndexingStatus.connector.connector_specific_config.folder_paths.map(
                 (path) => (
-                  <div>
+                  <div key={path}>
                     - <i>{path}</i>
                   </div>
                 )
