@@ -17,6 +17,7 @@ from danswer.connectors.models import Section
 
 @dataclass
 class NotionPage:
+    """Represents a Notion Page object"""
     id: str
     created_time: str
     last_edited_time: str
@@ -33,6 +34,7 @@ class NotionPage:
 
 @dataclass
 class NotionSearchResponse:
+    """Represents the response from the Notion Search API"""
     results: List[Dict[str, Any]]
     next_cursor: Optional[str]
     has_more: bool = False
@@ -62,13 +64,14 @@ class NotionConnector(LoadConnector, PollConnector):
         }
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
+        """Applies integration token to headers"""
         self.headers[
             "Authorization"
         ] = f'Bearer {credentials["notion_integration_token"]}'
         return None
 
     def _read_blocks(self, block_id: str, num_tabs: int = 0) -> str:
-        """Read a block."""
+        """Reads blocks for a page"""
         done = False
         result_lines_arr = []
         cur_block_id = block_id
@@ -115,7 +118,7 @@ class NotionConnector(LoadConnector, PollConnector):
         return result_lines
 
     def _read_pages(self, pages: List[NotionPage]) -> List[Document]:
-        """Read a page."""
+        """Reads pages for rich text content and generates Documents"""
         docs_batch = []
         for page in pages:
             page_text = self._read_blocks(page.id)
@@ -138,7 +141,7 @@ class NotionConnector(LoadConnector, PollConnector):
         return docs_batch
 
     def _search_notion(self, query_dict: Dict[str, Any]) -> NotionSearchResponse:
-        """Get all the pages from a Notion database."""
+        """Search for pages from a Notion database."""
         res = requests.post(
             "https://api.notion.com/v1/search",
             headers=self.headers,
@@ -148,15 +151,10 @@ class NotionConnector(LoadConnector, PollConnector):
         return NotionSearchResponse(**res.json())
 
     def load_from_state(self) -> GenerateDocumentsOutput:
-        """Load data from the input directory.
-
-        Args:
-            page_ids (List[str]): List of page ids to load.
-            database_id (str): Database_id from which to load page ids.
+        """Loads all page data from a Notion workspace.
 
         Returns:
             List[Document]: List of documents.
-
         """
         query_dict = {
             "filter": {"property": "object", "value": "page"},
@@ -178,6 +176,16 @@ class NotionConnector(LoadConnector, PollConnector):
         end: SecondsSinceUnixEpoch,
         filter_field: str = "last_edited_time",
     ) -> List[NotionPage]:
+        """A helper function to filter out pages outside of a time
+        range. This functionality doesn't yet exist in the Notion Search API,
+        but when it does, this approach can be deprecated.
+
+        Arguments:
+            pages (List[Dict]) - Pages to filter
+            start (float) - start epoch time to filter from
+            end (float) - end epoch time to filter to
+            filter_field (str) - the attribute on the page to apply the filter
+        """
         filtered_pages = []
         for page in pages:
             compare_time = time.mktime(
