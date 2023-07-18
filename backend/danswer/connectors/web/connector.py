@@ -1,22 +1,29 @@
 import io
+import re
 from datetime import datetime
 from typing import Any
 from typing import cast
+from typing import Tuple
 from urllib.parse import urljoin
 from urllib.parse import urlparse
 
+import bs4
 import requests
 from bs4 import BeautifulSoup
+from playwright.sync_api import BrowserContext
+from playwright.sync_api import Playwright
+from playwright.sync_api import sync_playwright
+from PyPDF2 import PdfReader
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
+from danswer.configs.app_configs import WEB_CONNECTOR_IGNORED_CLASSES
+from danswer.configs.app_configs import WEB_CONNECTOR_IGNORED_ELEMENTS
 from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import HTML_SEPARATOR
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
-from playwright.sync_api import sync_playwright
-from PyPDF2 import PdfReader
 
 logger = setup_logger()
 
@@ -50,6 +57,68 @@ def get_internal_links(
     return internal_links
 
 
+def strip_excessive_newlines_and_spaces(document: str) -> str:
+    # collapse repeated spaces into one
+    document = re.sub(r" +", " ", document)
+    # remove trailing spaces
+    document = re.sub(r" +[\n\r]", "\n", document)
+    # remove repeated newlines
+    document = re.sub(r"[\n\r]+", "\n", document)
+    return document.strip()
+
+
+def strip_newlines(document: str) -> str:
+    # HTML might contain newlines which are just whitespaces to a browser
+    return re.sub(r"[\n\r]+", " ", document)
+
+
+def format_document(document: BeautifulSoup) -> str:
+    """Format html to a flat text document.
+
+    The following goals:
+    - Newlines from within the HTML are removed (as browser would ignore them as well).
+    - Repeated newlines/spaces are removed (as browsers would ignore them).
+    - Newlines only before and after headlines and paragraphs or when explicit (br or pre tag)
+    - Table columns/rows are separated by newline
+    - List elements are separated by newline and start with a hyphen
+    """
+    text = ""
+    list_element_start = False
+    verbatim_output = 0
+    for e in document.descendants:
+        verbatim_output -= 1
+        if isinstance(e, bs4.element.NavigableString):
+            if isinstance(e, (bs4.element.Comment, bs4.element.Doctype)):
+                continue
+            element_text = e.text
+            if element_text:
+                if verbatim_output > 0:
+                    text += element_text
+                else:
+                    text += strip_newlines(element_text)
+                list_element_start = False
+        elif isinstance(e, bs4.element.Tag):
+            if e.name in ["p", "div"]:
+                if not list_element_start:
+                    text += "\n"
+            elif e.name in ["br", "h1", "h2", "h3", "h4", "tr", "th", "td"]:
+                text += "\n"
+                list_element_start = False
+            elif e.name == "li":
+                text += "\n- "
+                list_element_start = True
+            elif e.name == "pre":
+                if verbatim_output <= 0:
+                    verbatim_output = len(list(e.childGenerator()))
+    return strip_excessive_newlines_and_spaces(text)
+
+
+def start_playwright() -> Tuple[Playwright, BrowserContext]:
+    playwright = sync_playwright().start()
+    browser = playwright.chromium.launch(headless=True)
+    return playwright, browser.new_context()
+
+
 class WebConnector(LoadConnector):
     def __init__(
         self,
@@ -73,7 +142,8 @@ class WebConnector(LoadConnector):
         to_visit: list[str] = [self.base_url]
         doc_batch: list[Document] = []
 
-        restart_playwright = True
+        playwright, context = start_playwright()
+        restart_playwright = False
         while to_visit:
             current_url = to_visit.pop()
             if current_url in visited_links:
@@ -86,9 +156,7 @@ class WebConnector(LoadConnector):
                 current_visit_time = datetime.now().strftime("%B %d, %Y, %H:%M:%S")
 
                 if restart_playwright:
-                    playwright = sync_playwright().start()
-                    browser = playwright.chromium.launch(headless=True)
-                    context = browser.new_context()
+                    playwright, context = start_playwright()
                     restart_playwright = False
 
                 if current_url.split(".")[-1] == "pdf":
@@ -133,27 +201,21 @@ class WebConnector(LoadConnector):
                 title = None
                 if title_tag and title_tag.text:
                     title = title_tag.text
+                    title_tag.extract()
 
-                # Heuristics based cleaning
-                for undesired_div in ["sidebar", "header", "footer"]:
+                # Heuristics based cleaning of elements based on css classes
+                for undesired_element in WEB_CONNECTOR_IGNORED_CLASSES:
                     [
                         tag.extract()
                         for tag in soup.find_all(
-                            "div", class_=lambda x: x and undesired_div in x.split()
+                            class_=lambda x: x and undesired_element in x.split()
                         )
                     ]
 
-                for undesired_tag in [
-                    "nav",
-                    "header",
-                    "footer",
-                    "meta",
-                    "script",
-                    "style",
-                ]:
+                for undesired_tag in WEB_CONNECTOR_IGNORED_ELEMENTS:
                     [tag.extract() for tag in soup.find_all(undesired_tag)]
 
-                page_text = soup.get_text(HTML_SEPARATOR)
+                page_text = format_document(soup)
 
                 doc_batch.append(
                     Document(

@@ -90,6 +90,10 @@ GOOGLE_DRIVE_INCLUDE_SHARED = False
 FILE_CONNECTOR_TMP_STORAGE_PATH = os.environ.get(
     "FILE_CONNECTOR_TMP_STORAGE_PATH", "/home/file_connector_storage"
 )
+WEB_CONNECTOR_IGNORED_CLASSES = os.environ.get("WEB_CONNECTOR_IGNORED_CLASSES",
+                                               "sidebar,header,footer").split(",")
+WEB_CONNECTOR_IGNORED_ELEMENTS = os.environ.get("WEB_CONNECTOR_IGNORED_CLASSES",
+                                                "nav,header,footer,meta,script,style,symbol,aside").split(",")
 
 #####
 # Query Configs
