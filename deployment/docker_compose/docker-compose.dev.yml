@@ -20,7 +20,7 @@ services:
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
       - TYPESENSE_HOST=search_engine
-      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-typesense_api_key}
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - DISABLE_AUTH=${DISABLE_AUTH:-True}
       - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
@@ -43,7 +43,7 @@ services:
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
       - TYPESENSE_HOST=search_engine
-      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-typesense_api_key}
       - DANSWER_BOT_SLACK_APP_TOKEN=${DANSWER_BOT_SLACK_APP_TOKEN:-}
       - DANSWER_BOT_SLACK_BOT_TOKEN=${DANSWER_BOT_SLACK_BOT_TOKEN:-}
     volumes:
@@ -85,7 +85,7 @@ services:
     image: typesense/typesense:0.24.1
     restart: always
     environment:
-      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-typesense_api_key}
       - TYPESENSE_DATA_DIR=/typesense/storage
     ports:
       - "8108:8108"
