@@ -77,3 +77,5 @@ GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS", "512")
 
 # Danswer custom Deep Learning Models
 INTENT_MODEL_VERSION = "danswer/intent-model"
+
+LOCAL_LLM_MODEL = os.environ.get("LOCAL_LLM_MODEL", "deepset/deberta-v3-large-squad2")
