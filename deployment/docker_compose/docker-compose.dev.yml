@@ -29,6 +29,9 @@ services:
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
+      - model_cache_torch:/root/.cache/torch/
+      - model_cache_nltk:/root/nltk_data/
+      - model_cache_huggingface:/root/.cache/huggingface/
   background:
     image: danswer/danswer-backend:latest
     build:
@@ -49,6 +52,10 @@ services:
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
+      - model_cache_torch:/root/.cache/torch/
+      - model_cache_nltk:/root/nltk_data/
+      - model_cache_huggingface:/root/.cache/huggingface/
+
   web_server:
     image: danswer/danswer-web-server:latest
     build:
@@ -115,3 +122,6 @@ volumes:
   db_volume:
   qdrant_volume:
   typesense_volume:
+  model_cache_torch:
+  model_cache_nltk:
+  model_cache_huggingface:
