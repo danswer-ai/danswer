@@ -4,7 +4,7 @@ import { buildUrl } from "./utilsSS";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 
 export const getGoogleOAuthUrlSS = async (): Promise<string> => {
-  const res = await fetch(buildUrl("/auth/google/authorize"));
+  const res = await fetch(buildUrl("/auth/oauth/authorize"));
   if (!res.ok) {
     throw new Error("Failed to fetch data");
   }

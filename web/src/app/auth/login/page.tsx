@@ -1,5 +1,5 @@
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { DISABLE_AUTH } from "@/lib/constants";
+import {DISABLE_AUTH, OAUTH_NAME} from "@/lib/constants";
 import { User } from "@/lib/types";
 import { getGoogleOAuthUrlSS, getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
@@ -56,11 +56,11 @@ const Page = async () => {
                   " focus:outline-none focus:ring-2 hover:bg-red-700 focus:ring-offset-2 focus:ring-red-500"
                 }
               >
-                Sign in with Google
+                Sign in with {OAUTH_NAME}
               </a>
             ) : (
               <button className={BUTTON_STYLE + " cursor-default"}>
-                Sign in with Google
+                Sign in with {OAUTH_NAME}
               </button>
             )}
           </div>

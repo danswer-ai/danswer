@@ -4,9 +4,6 @@ from typing import Any
 from typing import List
 from uuid import UUID
 
-from danswer.auth.schemas import UserRole
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.models import InputType
 from fastapi_users.db import SQLAlchemyBaseOAuthAccountTableUUID
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyBaseAccessTokenTableUUID
@@ -17,11 +14,16 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import func
 from sqlalchemy import Integer
 from sqlalchemy import String
+from sqlalchemy import Text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
+
+from danswer.auth.schemas import UserRole
+from danswer.configs.constants import DocumentSource
+from danswer.connectors.models import InputType
 
 
 class IndexingStatus(str, PyEnum):
@@ -36,7 +38,8 @@ class Base(DeclarativeBase):
 
 
 class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
-    pass
+    # even an almost empty token from keycloak will not fit the default 1024 bytes
+    access_token: Mapped[str] = mapped_column(Text(), nullable=False)  # type: ignore
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
