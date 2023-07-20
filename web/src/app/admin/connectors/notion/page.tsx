@@ -29,7 +29,7 @@ const Main = () => {
     error: isConnectorIndexingStatusesError,
   } = useSWR<ConnectorIndexingStatus<any>[]>(
     "/api/manage/admin/connector/indexing-status",
-    fetcher,
+    fetcher
   );
   const {
     data: credentialsData,
@@ -37,7 +37,7 @@ const Main = () => {
     error: isCredentialsError,
   } = useSWR<Credential<NotionCredentialJson>[]>(
     "/api/manage/credential",
-    fetcher,
+    fetcher
   );
 
   if (
@@ -57,10 +57,10 @@ const Main = () => {
 
   const notionConnectorIndexingStatuses = connectorIndexingStatuses.filter(
     (connectorIndexingStatus) =>
-      connectorIndexingStatus.connector.source === "notion",
+      connectorIndexingStatus.connector.source === "notion"
   );
   const notionCredential = credentialsData.filter(
-    (credential) => credential.credential_json?.notion_integration_token,
+    (credential) => credential.credential_json?.notion_integration_token
   )[0];
 
   return (
@@ -124,7 +124,7 @@ const Main = () => {
               }
               validationSchema={Yup.object().shape({
                 notion_integration_token: Yup.string().required(
-                  "Please enter the Notion Integration token for the Danswer integration.",
+                  "Please enter the Notion Integration token for the Danswer integration."
                 ),
               })}
               initialValues={{
