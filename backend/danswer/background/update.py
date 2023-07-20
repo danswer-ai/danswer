@@ -93,13 +93,23 @@ def run_indexing_jobs(db_session: Session) -> None:
     logger.info(f"Found {len(new_indexing_attempts)} new indexing tasks.")
     for attempt in new_indexing_attempts:
         if attempt.connector is None:
-            logger.warning(f"Skipping index task as connector has been deleted: {attempt}")
+            logger.warning(
+                f"Skipping index attempt as Connector has been deleted: {attempt}"
+            )
             mark_attempt_failed(attempt, db_session, failure_reason="Connector is null")
+            continue
+        if attempt.credential is None:
+            logger.warning(
+                f"Skipping index attempt as Credential has been deleted: {attempt}"
+            )
+            mark_attempt_failed(
+                attempt, db_session, failure_reason="Credential is null"
+            )
             continue
         logger.info(
             f"Starting new indexing attempt for connector: '{attempt.connector.name}', "
             f"with config: '{attempt.connector.connector_specific_config}', and "
-            f"with credentials: '{[c.credential_id for c in attempt.connector.credentials]}'"
+            f"with credentials: '{attempt.credential_id}'"
         )
         mark_attempt_in_progress(attempt, db_session)
 
