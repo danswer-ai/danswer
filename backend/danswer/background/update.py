@@ -4,6 +4,7 @@ from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import InputType
+from danswer.datastores.indexing_pipeline import build_indexing_pipeline
 from danswer.db.connector import disable_connector
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import update_connector_credential_pair
@@ -21,7 +22,6 @@ from danswer.db.index_attempt import mark_attempt_succeeded
 from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
-from danswer.utils.indexing_pipeline import build_indexing_pipeline
 from danswer.utils.logger import setup_logger
 from sqlalchemy.orm import Session
 
