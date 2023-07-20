@@ -65,13 +65,6 @@ class NotionConnector(LoadConnector, PollConnector):
             "Notion-Version": "2022-06-28",
         }
 
-    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        """Applies integration token to headers"""
-        self.headers[
-            "Authorization"
-        ] = f'Bearer {credentials["notion_integration_token"]}'
-        return None
-
     def _read_blocks(self, block_id: str, num_tabs: int = 0) -> str:
         """Reads blocks for a page"""
         done = False
@@ -157,25 +150,6 @@ class NotionConnector(LoadConnector, PollConnector):
         res.raise_for_status()
         return NotionSearchResponse(**res.json())
 
-    def load_from_state(self) -> GenerateDocumentsOutput:
-        """Loads all page data from a Notion workspace.
-
-        Returns:
-            List[Document]: List of documents.
-        """
-        query_dict = {
-            "filter": {"property": "object", "value": "page"},
-            "page_size": self.batch_size,
-        }
-        while True:
-            db_res = self._search_notion(query_dict)
-            pages = [NotionPage(**page) for page in db_res.results]
-            yield self._read_pages(pages)
-            if db_res.has_more:
-                query_dict["start_cursor"] = db_res.next_cursor
-            else:
-                break
-
     def _filter_pages_by_time(
         self,
         pages: List[Dict[str, Any]],
@@ -201,6 +175,32 @@ class NotionConnector(LoadConnector, PollConnector):
             if compare_time <= end or compare_time > start:
                 filtered_pages += [NotionPage(**page)]
         return filtered_pages
+
+    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
+        """Applies integration token to headers"""
+        self.headers[
+            "Authorization"
+        ] = f'Bearer {credentials["notion_integration_token"]}'
+        return None
+
+    def load_from_state(self) -> GenerateDocumentsOutput:
+        """Loads all page data from a Notion workspace.
+
+        Returns:
+            List[Document]: List of documents.
+        """
+        query_dict = {
+            "filter": {"property": "object", "value": "page"},
+            "page_size": self.batch_size,
+        }
+        while True:
+            db_res = self._search_notion(query_dict)
+            pages = [NotionPage(**page) for page in db_res.results]
+            yield self._read_pages(pages)
+            if db_res.has_more:
+                query_dict["start_cursor"] = db_res.next_cursor
+            else:
+                break
 
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
