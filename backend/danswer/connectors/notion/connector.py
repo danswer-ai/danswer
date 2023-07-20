@@ -18,6 +18,7 @@ from danswer.connectors.models import Section
 @dataclass
 class NotionPage:
     """Represents a Notion Page object"""
+
     id: str
     created_time: str
     last_edited_time: str
@@ -35,6 +36,7 @@ class NotionPage:
 @dataclass
 class NotionSearchResponse:
     """Represents the response from the Notion Search API"""
+
     results: List[Dict[str, Any]]
     next_cursor: Optional[str]
     has_more: bool = False
@@ -121,7 +123,7 @@ class NotionConnector(LoadConnector, PollConnector):
         """Extracts the title from a Notion page"""
         page_title = None
         for _, prop in page.properties.items():
-            if prop['type'] == "title" and len(prop['title']) > 0:
+            if prop["type"] == "title" and len(prop["title"]) > 0:
                 page_title = " ".join([t["plain_text"] for t in prop["title"]]).strip()
                 break
         if page_title is None:
