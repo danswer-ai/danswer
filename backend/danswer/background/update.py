@@ -92,6 +92,10 @@ def run_indexing_jobs(db_session: Session) -> None:
     new_indexing_attempts = get_not_started_index_attempts(db_session)
     logger.info(f"Found {len(new_indexing_attempts)} new indexing tasks.")
     for attempt in new_indexing_attempts:
+        if attempt.connector is None:
+            logger.warning(f"Skipping index task as connector has been deleted: {attempt}")
+            mark_attempt_failed(attempt, db_session, failure_reason="Connector is null")
+            continue
         logger.info(
             f"Starting new indexing attempt for connector: '{attempt.connector.name}', "
             f"with config: '{attempt.connector.connector_specific_config}', and "
