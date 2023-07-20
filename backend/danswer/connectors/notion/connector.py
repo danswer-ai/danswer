@@ -117,18 +117,23 @@ class NotionConnector(LoadConnector, PollConnector):
         result_lines = "\n".join(result_lines_arr)
         return result_lines
 
+    def _read_page_title(self, page: NotionPage) -> str:
+        """Extracts the title from a Notion page"""
+        page_title = None
+        for _, prop in page.properties.items():
+            if prop['type'] == "title" and len(prop['title']) > 0:
+                page_title = " ".join([t["plain_text"] for t in prop["title"]]).strip()
+                break
+        if page_title is None:
+            page_title = f"Untitled Page [{page.id}]"
+        return page_title
+
     def _read_pages(self, pages: List[NotionPage]) -> List[Document]:
         """Reads pages for rich text content and generates Documents"""
         docs_batch = []
         for page in pages:
             page_text = self._read_blocks(page.id)
-            page_title = page.properties.get("Name", None) or page.properties.get(
-                "title", None
-            )
-            if page_title is not None:
-                page_title = " ".join([t["plain_text"] for t in page_title["title"]])
-            else:
-                page_title = f"Untitled Page [{page.id}]"
+            page_title = self._read_page_title(page)
             docs_batch.append(
                 Document(
                     id=page.id,
