@@ -12,6 +12,7 @@ import {
   FileIcon,
   JiraIcon,
   SlabIcon,
+  NotionIcon,
 } from "@/components/icons/icons";
 import { DISABLE_AUTH } from "@/lib/constants";
 import { getCurrentUserSS } from "@/lib/userSS";
@@ -137,6 +138,15 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/connectors/file",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <NotionIcon size="16" />
+                      <div className="ml-1">Notion</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/notion",
                 },
               ],
             },
