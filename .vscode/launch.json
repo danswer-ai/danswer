@@ -22,6 +22,43 @@
                 "--port",
                 "8080"
             ]
+        },
+        {
+            "name": "Danswer indexer",
+            "type": "python",
+            "request": "launch",
+            "program": "danswer/background/update.py",
+            "cwd": "${workspaceFolder}/backend",
+            "env": {
+                "LOG_LEVEL": "DEBUG",
+                "PYTHONPATH": ".",
+                "TYPESENSE_API_KEY": "typesense_api_key",
+                "DYNAMIC_CONFIG_DIR_PATH": "./dynamic_config_storage",
+            },
+        },
+        {
+            "name": "Danswer temp files deletion",
+            "type": "python",
+            "request": "launch",
+            "program": "danswer/background/file_deletion.py",
+            "cwd": "${workspaceFolder}/backend",
+            "env": {
+                "LOG_LEVEL": "DEBUG",
+                "PYTHONPATH": "${workspaceFolder}/backend",
+            },
+        },
+        {
+            "name": "Danswer slack bot listener",
+            "type": "python",
+            "request": "launch",
+            "program": "danswer/listeners/slack_listener.py",
+            "cwd": "${workspaceFolder}/backend",
+            "env": {
+                "LOG_LEVEL": "DEBUG",
+                "PYTHONPATH": ".",
+                "DANSWER_BOT_SLACK_APP_TOKEN": "xapp-xxxxxxxxxxxxxxx",
+                "DANSWER_BOT_SLACK_BOT_TOKEN": "xoxb-xxxxxxxxxxxxxxx"
+            },
         }
     ]
 }
