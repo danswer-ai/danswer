@@ -20,6 +20,7 @@ import {
   SiJira,
   SiNotion,
   SiSlack,
+  SiZulip,
 } from "react-icons/si";
 import { FaFile, FaGlobe } from "react-icons/fa";
 import Image from "next/image";
@@ -160,6 +161,13 @@ export const BrainIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <Brain size={size} className={className} />;
+};
+
+export const ZulipIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <SiZulip size={size} className={className} />;
 };
 
 export const NotionIcon = ({

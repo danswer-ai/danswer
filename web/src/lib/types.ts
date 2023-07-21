@@ -17,6 +17,7 @@ export type ValidSources =
   | "jira"
   | "slab"
   | "file"
+  | "zulip"
   | "notion";
 export type ValidInputTypes = "load_state" | "poll" | "event";
 
@@ -70,6 +71,11 @@ export interface SlabConfig {
 
 export interface FileConfig {
   file_locations: string[];
+}
+
+export interface ZulipConfig {
+  realm_name: string;
+  realm_url: string;
 }
 
 export interface NotionConfig {}
@@ -126,6 +132,10 @@ export interface GoogleDriveCredentialJson {
 
 export interface SlabCredentialJson {
   slab_bot_token: string;
+}
+
+export interface ZulipCredentialJson {
+  zuliprc_content: string;
 }
 
 export interface NotionCredentialJson {

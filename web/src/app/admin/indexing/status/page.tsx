@@ -56,6 +56,13 @@ const getSourceDisplay = (
     return `${sourceMetadata.displayName} [private]`;
   }
 
+  if (connector.source === "zulip") {
+    return (
+      sourceMetadata.displayName +
+      ` [${connector.connector_specific_config?.realm_name}]`
+    );
+  }
+
   return sourceMetadata.displayName;
 };
 

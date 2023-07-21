@@ -18,16 +18,19 @@ from danswer.connectors.zulip.schemas import GetMessagesResponse, Message
 logger = setup_logger()
 
 class ZulipConnector(LoadConnector, PollConnector):
-    def __init__(self, config_file: str, batch_size: int, realm_name: str, realm_url: str) -> None:
-        self.client = Client(config_file=config_file)
+    def __init__(self, realm_name: str, realm_url: str, batch_size: int = INDEX_BATCH_SIZE) -> None:
         self.batch_size = batch_size
         self.realm_name = realm_name
         self.realm_url = realm_url if realm_url.endswith("/") else realm_url + "/"
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        if credentials:
-            logger.warning("Unexpected credentials provided for Zulip Connector")
-        return None
+        contents = credentials["zuliprc_content"]
+        contents_spaces_to_newlines = contents.replace(" ", "\n")
+        # create a temporary zuliprc file
+        config_file = f"/tmp/zuliprc-{self.realm_name}"
+        with open(config_file, "w") as f:
+            f.write(contents_spaces_to_newlines)
+        self.client = Client(config_file=config_file)
     
     def _message_to_narrow_link(self, m: Message) -> str:
         stream_name = m.display_recipient # assume str

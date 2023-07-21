@@ -10,6 +10,7 @@ import {
   NotionIcon,
   SlabIcon,
   SlackIcon,
+  ZulipIcon,
 } from "./icons/icons";
 
 interface SourceMetadata {
@@ -73,6 +74,12 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: SlabIcon,
         displayName: "Slab",
         adminPageLink: "/admin/connectors/slab",
+      };    
+    case "zulip":
+      return {
+        icon: ZulipIcon,
+        displayName: "Zulip",
+        adminPageLink: "/admin/connectors/zulip",
       };
     case "notion":
       return {
