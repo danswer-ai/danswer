@@ -92,7 +92,7 @@ FILE_CONNECTOR_TMP_STORAGE_PATH = os.environ.get(
 )
 WEB_CONNECTOR_IGNORED_CLASSES = os.environ.get("WEB_CONNECTOR_IGNORED_CLASSES",
                                                "sidebar,header,footer").split(",")
-WEB_CONNECTOR_IGNORED_ELEMENTS = os.environ.get("WEB_CONNECTOR_IGNORED_CLASSES",
+WEB_CONNECTOR_IGNORED_ELEMENTS = os.environ.get("WEB_CONNECTOR_IGNORED_ELEMENTS",
                                                 "nav,header,footer,meta,script,style,symbol,aside").split(",")
 WEB_CONNECTOR_OAUTH_CLIENT_ID = os.environ.get("WEB_CONNECTOR_OAUTH_CLIENT_ID", False)
 WEB_CONNECTOR_OAUTH_CLIENT_SECRET = os.environ.get("WEB_CONNECTOR_OAUTH_CLIENT_SECRET", False)
