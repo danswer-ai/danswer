@@ -27,3 +27,4 @@ class DocumentSource(str, Enum):
     SLAB = "slab"
     JIRA = "jira"
     FILE = "file"
+    ZULIP = "zulip"

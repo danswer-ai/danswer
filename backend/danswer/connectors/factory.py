@@ -17,6 +17,7 @@ from danswer.connectors.slab.connector import SlabConnector
 from danswer.connectors.slack.connector import SlackLoadConnector
 from danswer.connectors.slack.connector import SlackPollConnector
 from danswer.connectors.web.connector import WebConnector
+from danswer.connectors.zulip.connector import ZulipConnector
 
 _NUM_SECONDS_IN_DAY = 86400
 
@@ -42,6 +43,7 @@ def identify_connector_class(
         DocumentSource.CONFLUENCE: ConfluenceConnector,
         DocumentSource.JIRA: JiraConnector,
         DocumentSource.SLAB: SlabConnector,
+        DocumentSource.ZULIP: ZulipConnector,
     }
     connector_by_source = connector_map.get(source, {})
 
