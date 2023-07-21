@@ -28,3 +28,4 @@ class DocumentSource(str, Enum):
     JIRA = "jira"
     FILE = "file"
     ZULIP = "zulip"
+    NOTION = "notion"

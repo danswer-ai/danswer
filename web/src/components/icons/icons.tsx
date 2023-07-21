@@ -18,6 +18,7 @@ import {
   SiGithub,
   SiGoogledrive,
   SiJira,
+  SiNotion,
   SiSlack,
 } from "react-icons/si";
 import { FaFile, FaGlobe } from "react-icons/fa";
@@ -159,4 +160,11 @@ export const BrainIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <Brain size={size} className={className} />;
+};
+
+export const NotionIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <SiNotion size={size} className={className} />;
 };
