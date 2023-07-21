@@ -166,7 +166,7 @@ def stream_direct_qa(
             return
 
         try:
-            qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
+            qa_model = get_default_backend_qa_model()
         except (UnknownModelError, OpenAIKeyMissing) as e:
             logger.exception("Unable to get QA model")
             yield get_json_line({"error": str(e)})

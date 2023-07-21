@@ -1,6 +1,8 @@
 import json
 import math
 import re
+from collections.abc import Generator
+from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Tuple
@@ -29,14 +31,9 @@ logger = setup_logger()
 def extract_answer_quotes_freeform(
     answer_raw: str,
 ) -> Tuple[Optional[str], Optional[list[str]]]:
-    null_answer_check = (
-        answer_raw.replace(ANSWER_PAT, "").replace(QUOTE_PAT, "").strip()
-    )
-
-    # If model just gives back the uncertainty pattern to signify answer isn't found or nothing at all
-    # if null_answer_check == UNCERTAINTY_PAT or not null_answer_check:
-    #     return None, None
-
+    """Splits the model output into an Answer and 0 or more Quote sections.
+    Splits by the Quote pattern, if not exist then assume it's all answer and no quotes
+    """
     # If no answer section, don't care about the quote
     if answer_raw.lower().strip().startswith(QUOTE_PAT.lower()):
         return None, None
@@ -166,7 +163,7 @@ def process_answer(
     return answer, quotes_dict
 
 
-def stream_answer_end(answer_so_far: str, next_token: str) -> bool:
+def stream_json_answer_end(answer_so_far: str, next_token: str) -> bool:
     next_token = next_token.replace('\\"', "")
     # If the previous character is an escape token, don't consider the first character of next_token
     if answer_so_far and answer_so_far[-1] == "\\":
@@ -174,3 +171,48 @@ def stream_answer_end(answer_so_far: str, next_token: str) -> bool:
     if '"' in next_token:
         return True
     return False
+
+
+def process_model_tokens(
+    json_prompt: bool = True,
+) -> Generator[dict[str, str | bool] | None, tuple[str, bool], None]:
+    """Yields Answer tokens back out in a dict for streaming to frontend
+    When Answer section ends, yields dict with answer_finished key
+    Collects the tokens to build final model output
+    Yields a final model output before StopIteration"""
+    model_output: str = ""
+    found_answer_start = False if json_prompt else True
+    found_answer_end = False
+    next_yield: dict[str, str | bool] | None = None
+    sent_finished = False
+    while True:
+        if next_yield and "answer_finished" in next_yield:
+            if not sent_finished:
+                sent_finished = True
+            else:
+                next_yield = None
+
+        new_token, last_token = yield next_yield
+        if last_token:
+            yield {"model_output": model_output}
+            return
+
+        model_previous = model_output
+        model_output += new_token
+
+        trimmed_combine = model_output.replace(" ", "").replace("\n", "")
+        if not found_answer_start and '{"answer":"' in trimmed_combine:
+            # Note, if the token that completes the pattern has additional text, for example if the token is "?
+            # Then the chars after " will not be streamed, but this is ok as it prevents streaming the ? in the
+            # event that the model outputs the UNCERTAINTY_PAT
+            found_answer_start = True
+            continue
+
+        if found_answer_start and not found_answer_end:
+            if (json_prompt and stream_json_answer_end(model_previous, new_token)) or (
+                not json_prompt and f"\n{QUOTE_PAT}" in model_output
+            ):
+                found_answer_end = True
+                next_yield = {"answer_finished": True}
+                continue
+            next_yield = {"answer_data": new_token}

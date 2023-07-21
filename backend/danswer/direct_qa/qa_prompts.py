@@ -19,7 +19,6 @@ BASE_PROMPT = (
     f"The quotes must be EXACT substrings from the documents."
 )
 
-
 SAMPLE_QUESTION = "Where is the Eiffel Tower?"
 
 SAMPLE_JSON_RESPONSE = {
@@ -142,6 +141,28 @@ def json_chat_processor(
     messages.append({"role": "user", "content": f"{QUESTION_PAT}\n{question}\n"})
 
     return messages
+
+
+# Avoid using this one if possible
+# Intended for models that can't follow complex instructions or have short context windows
+def weak_model_freeform_processor(
+    question: str,
+    chunks: list[InferenceChunk],
+    include_metadata: bool = False,  # Included for swapout compatibility with other prompt processors
+    include_sep: bool = True,  # Included for swapout compatibility with other prompt processors
+) -> str:
+    first_chunk = chunks[0] if chunks else "No Document Provided"
+
+    prompt = (
+        f"Reference Document:\n{first_chunk.content}\n{GENERAL_SEP_PAT}"
+        f"Answer the user query below based on reference document above. "
+        f'Respond with an "{ANSWER_PAT}" section and '
+        f'as many "{QUOTE_PAT}" sections as needed to support the answer.{GENERAL_SEP_PAT}'
+        f"{QUESTION_PAT} {question}\n"
+        f"{ANSWER_PAT}"
+    )
+
+    return prompt
 
 
 # EVERYTHING BELOW IS DEPRECATED, kept around as reference, may use again in future
