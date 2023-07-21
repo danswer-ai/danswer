@@ -1,5 +1,6 @@
 import datetime
 import io
+import tempfile
 from collections.abc import Generator
 from collections.abc import Sequence
 from itertools import chain
@@ -31,8 +32,9 @@ SCOPES = [
 ]
 SUPPORTED_DRIVE_DOC_TYPES = [
     "application/vnd.google-apps.document",
-    "application/pdf",
     "application/vnd.google-apps.spreadsheet",
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]
 DRIVE_FOLDER_TYPE = "application/vnd.google-apps.folder"
 ID_KEY = "id"
@@ -46,7 +48,10 @@ def get_folder_id(
     """
     Get the ID of a folder given its name and the ID of its parent folder.
     """
-    query = f"'{parent_id}' in parents and name='{folder_name}' and mimeType='{DRIVE_FOLDER_TYPE}'"
+    query = (
+        f"'{parent_id}' in parents and name='{folder_name}' and "
+        f"mimeType='{DRIVE_FOLDER_TYPE}'"
+    )
     results = (
         service.files()
         .list(q=query, spaces="drive", fields="nextPageToken, files(id, name)")
@@ -140,6 +145,19 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
             .decode("utf-8")
         )
     # Default download to PDF since most types can be exported as a PDF
+    elif (
+        mime_type
+        == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ):
+        import docx2txt
+
+        response = service.files().get_media(fileId=file["id"]).execute()
+        word_stream = io.BytesIO(response)
+        with tempfile.NamedTemporaryFile(delete=False) as temp:
+            temp.write(word_stream.getvalue())
+            temp_path = temp.name
+        return docx2txt.process(temp_path)
+
     else:
         response = service.files().get_media(fileId=file["id"]).execute()
         pdf_stream = io.BytesIO(response)
@@ -174,9 +192,10 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                 found_parent_id = get_folder_id(
                     service=service, parent_id=parent_id, folder_name=folder_name
                 )
-                if found_parent_id is None:
-                    raise ValueError(f"Folder path '{path}' not found in Google Drive")
-                parent_id = found_parent_id
+                if parent_id is None:
+                    raise ValueError(
+                        f"Folder '{folder_name}' in path '{path}' not found in Google Drive"
+                    )
             folder_ids.append(parent_id)
 
         return folder_ids
