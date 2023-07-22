@@ -60,6 +60,6 @@ def log_generator_function_time(
                 f"{func_name or func.__name__} took {time.time() - start_time} seconds"
             )
 
-        return cast(F, wrapped_func)
+        return cast(FG, wrapped_func)
 
     return timing_wrapper

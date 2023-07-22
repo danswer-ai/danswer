@@ -8,6 +8,7 @@ import {
   GoogleDriveIcon,
   JiraIcon,
   NotionIcon,
+  ProductboardIcon,
   SlabIcon,
   SlackIcon,
 } from "./icons/icons";
@@ -67,6 +68,12 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: JiraIcon,
         displayName: "Jira",
         adminPageLink: "/admin/connectors/jira",
+      };
+    case "productboard":
+      return {
+        icon: ProductboardIcon,
+        displayName: "Productboard",
+        adminPageLink: "/admin/connectors/productboard",
       };
     case "slab":
       return {

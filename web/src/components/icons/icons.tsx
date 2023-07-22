@@ -9,7 +9,6 @@ import {
   LinkBreak,
   Link,
   Plug,
-  Bird,
   Brain,
 } from "@phosphor-icons/react";
 import {
@@ -134,6 +133,27 @@ export const JiraIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <SiJira size={size} className={className} />;
+};
+
+export const ProductboardIcon = ({
+  size = "16",
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <svg viewBox="0 0 162 108">
+        <path
+          fill="#60A5FA"
+          d="M108.001 0L162 54l-54.001 54-53.996-54L108 0z"
+        ></path>
+        <path fill="#60A5FA" d="M107.997 0L53.999 54 0 0h107.997z"></path>
+        <path fill="#60A5FA" d="M53.999 54l53.998 54H0l53.999-54z"></path>
+      </svg>
+    </div>
+  );
 };
 
 export const SlabIcon = ({
