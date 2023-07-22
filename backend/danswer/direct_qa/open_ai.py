@@ -4,7 +4,6 @@ from collections.abc import Generator
 from functools import wraps
 from typing import Any
 from typing import cast
-from typing import Literal
 from typing import TypeVar
 
 import openai
@@ -18,9 +17,12 @@ from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.direct_qa.interfaces import QAModel
-from danswer.direct_qa.qa_prompts import get_chat_reflexion_msg
-from danswer.direct_qa.qa_prompts import json_chat_processor
-from danswer.direct_qa.qa_prompts import json_processor
+from danswer.direct_qa.qa_prompts import ChatPromptProcessor
+from danswer.direct_qa.qa_prompts import get_json_chat_reflexion_msg
+from danswer.direct_qa.qa_prompts import JsonChatProcessor
+from danswer.direct_qa.qa_prompts import JsonProcessor
+from danswer.direct_qa.qa_prompts import NonChatPromptProcessor
+from danswer.direct_qa.qa_utils import extract_quotes_from_completed_token_stream
 from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
 from danswer.dynamic_configs import get_dynamic_config_store
@@ -33,35 +35,13 @@ from openai.error import Timeout
 
 logger = setup_logger()
 
+F = TypeVar("F", bound=Callable)
+
 
 def get_openai_api_key() -> str:
     return OPENAI_API_KEY or cast(
         str, get_dynamic_config_store().load(OPENAI_API_KEY_STORAGE_KEY)
     )
-
-
-def check_openai_api_key_is_valid(openai_api_key: str) -> bool:
-    if not openai_api_key:
-        return False
-
-    qa_model = OpenAICompletionQA(api_key=openai_api_key, timeout=5)
-
-    # try for up to 2 timeouts (e.g. 10 seconds in total)
-    for _ in range(2):
-        try:
-            qa_model.answer_question("Do not respond", [])
-            return True
-        except AuthenticationError:
-            return False
-        except Timeout:
-            pass
-
-    return False
-
-
-F = TypeVar("F", bound=Callable)
-ModelType = Literal["ChatCompletion", "Completion"]
-PromptProcessor = Callable[[str, list[str]], str]
 
 
 def _build_openai_settings(**kwargs: Any) -> dict[str, Any]:
@@ -110,9 +90,7 @@ class OpenAIQAModel(QAModel):
 class OpenAICompletionQA(OpenAIQAModel):
     def __init__(
         self,
-        prompt_processor: Callable[
-            [str, list[InferenceChunk], bool], str
-        ] = json_processor,
+        prompt_processor: NonChatPromptProcessor = JsonProcessor(),
         model_version: str = GEN_AI_MODEL_VERSION,
         max_output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
         api_key: str | None = None,
@@ -129,11 +107,16 @@ class OpenAICompletionQA(OpenAIQAModel):
         except ConfigNotFoundError:
             raise OpenAIKeyMissing()
 
+    @staticmethod
+    def _generate_tokens_from_response(response: Any) -> Generator[str, None, None]:
+        for event in response:
+            yield event["choices"][0]["text"]
+
     @log_function_time()
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> tuple[DanswerAnswer, DanswerQuote]:
-        filled_prompt = self.prompt_processor(
+        filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
         logger.debug(filled_prompt)
@@ -161,7 +144,7 @@ class OpenAICompletionQA(OpenAIQAModel):
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> Generator[dict[str, Any] | None, None, None]:
-        filled_prompt = self.prompt_processor(
+        filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
         logger.debug(filled_prompt)
@@ -180,41 +163,20 @@ class OpenAICompletionQA(OpenAIQAModel):
                 stream=True,
             ),
         )
-        # TODO handle this more gracefully
-        is_json_prompt = "json" in self.prompt_processor.__name__
-        token_handler = process_model_tokens(json_prompt=is_json_prompt)
-        _ = next(token_handler)
-        for event in response:
-            next_token = cast(str, event["choices"][0]["text"])
 
-            next_message = token_handler.send((next_token, False))
-            if next_message is not None:
-                yield next_message
+        tokens = self._generate_tokens_from_response(response)
 
-        final_output = token_handler.send(("", True))
-        model_output = (
-            cast(str, final_output.get("model_output")) if final_output else ""
+        yield from process_model_tokens(
+            tokens=tokens,
+            context_docs=context_docs,
+            is_json_prompt=self.prompt_processor.specifies_json_output,
         )
-
-        logger.debug(model_output)
-
-        answer, quotes_dict = process_answer(model_output, context_docs)
-        if answer:
-            logger.info(answer)
-        else:
-            logger.warning(
-                "Answer extraction from model output failed, most likely no quotes provided"
-            )
-
-        yield {} if quotes_dict is None else quotes_dict
 
 
 class OpenAIChatCompletionQA(OpenAIQAModel):
     def __init__(
         self,
-        prompt_processor: Callable[
-            [str, list[InferenceChunk], bool], list[dict[str, str]]
-        ] = json_chat_processor,
+        prompt_processor: ChatPromptProcessor = JsonChatProcessor(),
         model_version: str = GEN_AI_MODEL_VERSION,
         max_output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
         timeout: int | None = None,
@@ -233,13 +195,25 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         except ConfigNotFoundError:
             raise OpenAIKeyMissing()
 
+    @staticmethod
+    def _generate_tokens_from_response(response: Any) -> Generator[str, None, None]:
+        for event in response:
+            event_dict = cast(dict[str, Any], event["choices"][0]["delta"])
+            if (
+                "content" not in event_dict
+            ):  # could be a role message or empty termination
+                continue
+            yield event_dict["content"]
+
     @log_function_time()
     def answer_question(
         self,
         query: str,
         context_docs: list[InferenceChunk],
     ) -> tuple[DanswerAnswer, DanswerQuote]:
-        messages = self.prompt_processor(query, context_docs, self.include_metadata)
+        messages = self.prompt_processor.fill_prompt(
+            query, context_docs, self.include_metadata
+        )
         logger.debug(json.dumps(messages, indent=4))
         model_output = ""
         for _ in range(self.reflexion_try_count + 1):
@@ -260,7 +234,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
                 str, response["choices"][0]["message"]["content"]
             ).strip()
             assistant_msg = {"content": model_output, "role": "assistant"}
-            messages.extend([assistant_msg, get_chat_reflexion_msg()])
+            messages.extend([assistant_msg, get_json_chat_reflexion_msg()])
             logger.info(
                 "OpenAI Token Usage: " + str(response["usage"]).replace("\n", "")
             )
@@ -273,7 +247,9 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> Generator[dict[str, Any] | None, None, None]:
-        messages = self.prompt_processor(query, context_docs, self.include_metadata)
+        messages = self.prompt_processor.fill_prompt(
+            query, context_docs, self.include_metadata
+        )
         logger.debug(json.dumps(messages, indent=4))
 
         openai_call = _handle_openai_exceptions_wrapper(
@@ -291,26 +267,10 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
             ),
         )
 
-        # TODO handle this more gracefully
-        is_json_prompt = "json" in self.prompt_processor.__name__
-        token_handler = process_model_tokens(json_prompt=is_json_prompt)
-        _ = next(token_handler)
-        for event in response:
-            event_dict = cast(dict[str, Any], event["choices"][0]["delta"])
-            if (
-                "content" not in event_dict
-            ):  # could be a role message or empty termination
-                continue
-            next_token = event_dict["content"]
-            next_message = token_handler.send((next_token, False))
-            if next_message is not None:
-                yield next_message
+        tokens = self._generate_tokens_from_response(response)
 
-        final_output = token_handler.send(("", True))
-        model_output = str(final_output.get("model_output")) if final_output else ""
-
-        logger.debug(model_output)
-
-        _, quotes_dict = process_answer(model_output, context_docs)
-
-        yield {} if quotes_dict is None else quotes_dict
+        yield from process_model_tokens(
+            tokens=tokens,
+            context_docs=context_docs,
+            is_json_prompt=self.prompt_processor.specifies_json_output,
+        )

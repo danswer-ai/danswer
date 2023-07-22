@@ -32,9 +32,14 @@ BATCH_SIZE_ENCODE_CHUNKS = 8
 
 # QA Model API Configs
 # refer to https://platform.openai.com/docs/models/model-endpoint-compatibility for OpenAI models
-INTERNAL_MODEL_VERSION = os.environ.get("INTERNAL_MODEL", "openai-completion")
+# Valid list:
+# - openai-completion
+# - openai-chat-completion
+# - gpt4all-completion
+# - gpt4all-chat-completion
+INTERNAL_MODEL_VERSION = os.environ.get("INTERNAL_MODEL", "openai-chat-completion")
 # For GPT4ALL, use "ggml-model-gpt4all-falcon-q4_0.bin" for the below for a tested model
-GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION", "text-davinci-003")
+GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION", "gpt-3.5-turbo")
 GEN_AI_MAX_OUTPUT_TOKENS = 512
 
 # Danswer custom Deep Learning Models

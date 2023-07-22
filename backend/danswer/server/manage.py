@@ -38,7 +38,7 @@ from danswer.db.engine import get_session
 from danswer.db.engine import get_sqlalchemy_async_engine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.models import User
-from danswer.direct_qa.open_ai import check_openai_api_key_is_valid
+from danswer.direct_qa import check_model_api_key_is_valid
 from danswer.direct_qa.open_ai import get_openai_api_key
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
@@ -323,7 +323,7 @@ def validate_existing_openai_api_key(
     get_dynamic_config_store().store(check_key_time, curr_time.timestamp())
 
     try:
-        is_valid = check_openai_api_key_is_valid(openai_api_key)
+        is_valid = check_model_api_key_is_valid(openai_api_key)
     except ValueError:
         # this is the case where they aren't using an OpenAI-based model
         is_valid = True
@@ -356,7 +356,7 @@ def store_openai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
     try:
-        is_valid = check_openai_api_key_is_valid(request.api_key)
+        is_valid = check_model_api_key_is_valid(request.api_key)
         if not is_valid:
             raise HTTPException(400, "Invalid API key provided")
         get_dynamic_config_store().store(OPENAI_API_KEY_STORAGE_KEY, request.api_key)

@@ -2,7 +2,7 @@ import json
 import math
 import re
 from collections.abc import Generator
-from typing import Any
+from typing import cast
 from typing import Dict
 from typing import Optional
 from typing import Tuple
@@ -173,32 +173,33 @@ def stream_json_answer_end(answer_so_far: str, next_token: str) -> bool:
     return False
 
 
+def extract_quotes_from_completed_token_stream(
+    model_output: str, context_chunks: list[InferenceChunk]
+) -> DanswerQuote:
+    logger.debug(model_output)
+    answer, quotes_dict = process_answer(model_output, context_chunks)
+    if answer:
+        logger.info(answer)
+    elif model_output:
+        logger.warning("Answer extraction from model output failed.")
+
+    return {} if quotes_dict is None else quotes_dict
+
+
 def process_model_tokens(
-    json_prompt: bool = True,
-) -> Generator[dict[str, str | bool] | None, tuple[str, bool], None]:
+    tokens: Generator[str, None, None],
+    context_docs: list[InferenceChunk],
+    is_json_prompt: bool = True,
+) -> Generator[dict[str, str | bool] | DanswerQuote, None, None]:
     """Yields Answer tokens back out in a dict for streaming to frontend
     When Answer section ends, yields dict with answer_finished key
-    Collects the tokens to build final model output
-    Yields a final model output before StopIteration"""
+    Collects all the tokens at the end to form the complete model output"""
     model_output: str = ""
-    found_answer_start = False if json_prompt else True
+    found_answer_start = False if is_json_prompt else True
     found_answer_end = False
-    next_yield: dict[str, str | bool] | None = None
-    sent_finished = False
-    while True:
-        if next_yield and "answer_finished" in next_yield:
-            if not sent_finished:
-                sent_finished = True
-            else:
-                next_yield = None
-
-        new_token, last_token = yield next_yield
-        if last_token:
-            yield {"model_output": model_output}
-            return
-
+    for token in tokens:
         model_previous = model_output
-        model_output += new_token
+        model_output += token
 
         trimmed_combine = model_output.replace(" ", "").replace("\n", "")
         if not found_answer_start and '{"answer":"' in trimmed_combine:
@@ -209,10 +210,12 @@ def process_model_tokens(
             continue
 
         if found_answer_start and not found_answer_end:
-            if (json_prompt and stream_json_answer_end(model_previous, new_token)) or (
-                not json_prompt and f"\n{QUOTE_PAT}" in model_output
+            if (is_json_prompt and stream_json_answer_end(model_previous, token)) or (
+                not is_json_prompt and f"\n{QUOTE_PAT}" in model_output
             ):
                 found_answer_end = True
-                next_yield = {"answer_finished": True}
+                yield {"answer_finished": True}
                 continue
-            next_yield = {"answer_data": new_token}
+            yield {"answer_data": token}
+
+    yield extract_quotes_from_completed_token_stream(model_output, context_docs)
