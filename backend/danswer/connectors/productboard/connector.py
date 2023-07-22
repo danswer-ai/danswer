@@ -12,7 +12,7 @@ from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.utils.logging import setup_logger
+from danswer.utils.logger import setup_logger
 from dateutil import parser
 from retry import retry
 
@@ -21,6 +21,10 @@ logger = setup_logger()
 
 
 _PRODUCT_BOARD_BASE_URL = "https://api.productboard.com"
+
+
+class ProductboardApiError(Exception):
+    pass
 
 
 class ProductboardConnector(PollConnector):
@@ -62,6 +66,15 @@ class ProductboardConnector(PollConnector):
         @retry(tries=3, delay=1, backoff=2)
         def fetch(link: str) -> dict[str, Any]:
             response = requests.get(link, headers=headers)
+            if not response.ok:
+                # rate-limiting is at 50 requests per second.
+                # The delay in this retry should handle this while this is
+                # not parallelized.
+                raise ProductboardApiError(
+                    "Failed to fetch from productboard - status code:"
+                    f" {response.status_code} - response: {response.text}"
+                )
+
             return response.json()
 
         curr_link = initial_link
