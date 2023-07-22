@@ -1,6 +1,7 @@
 import datetime
 import io
 from collections.abc import Generator
+from collections.abc import Sequence
 from itertools import chain
 from typing import Any
 
@@ -170,11 +171,12 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
             folder_names = path.split("/")
             parent_id = "root"
             for folder_name in folder_names:
-                parent_id = get_folder_id(
+                found_parent_id = get_folder_id(
                     service=service, parent_id=parent_id, folder_name=folder_name
                 )
-                if parent_id is None:
+                if found_parent_id is None:
                     raise ValueError(f"Folder path '{path}' not found in Google Drive")
+                parent_id = found_parent_id
             folder_ids.append(parent_id)
 
         return folder_ids
@@ -199,7 +201,9 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
             raise PermissionError("Not logged into Google Drive")
 
         service = discovery.build("drive", "v3", credentials=self.creds)
-        folder_ids = self._process_folder_paths(service, self.folder_paths)
+        folder_ids: Sequence[str | None] = self._process_folder_paths(
+            service, self.folder_paths
+        )
         if not folder_ids:
             folder_ids = [None]
 

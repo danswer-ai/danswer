@@ -1,10 +1,13 @@
 """Notion reader."""
 import time
-from dataclasses import dataclass, fields
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from dataclasses import fields
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
 import requests
-
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -26,7 +29,7 @@ class NotionPage:
     properties: Dict[str, Any]
     url: str
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: dict[str, Any]) -> None:
         names = set([f.name for f in fields(self)])
         for k, v in kwargs.items():
             if k in names:
@@ -41,7 +44,7 @@ class NotionSearchResponse:
     next_cursor: Optional[str]
     has_more: bool = False
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: dict[str, Any]) -> None:
         names = set([f.name for f in fields(self)])
         for k, v in kwargs.items():
             if k in names:
