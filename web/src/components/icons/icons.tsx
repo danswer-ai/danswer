@@ -18,6 +18,7 @@ import { FaFile, FaGlobe } from "react-icons/fa";
 import Image from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
+import guruIcon from "../../../public/Guru.svg";
 
 interface IconProps {
   size?: number;
