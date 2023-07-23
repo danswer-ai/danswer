@@ -1,5 +1,4 @@
 import os
-from typing import cast
 
 from danswer.configs.app_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
@@ -7,7 +6,6 @@ from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.direct_qa.answer_question import answer_question
-from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchDoc
@@ -59,22 +57,24 @@ def _build_custom_semantic_identifier(
     return semantic_identifier
 
 
-def _process_quotes(quotes: list[DanswerQuote]) -> tuple[str | None, list[str]]:
+def _process_quotes(
+    quotes: dict[str, dict[str, str | None]] | None
+) -> tuple[str | None, list[str]]:
     if not quotes:
         return None, []
 
     quote_lines: list[str] = []
     doc_identifiers: list[str] = []
-    for quote in quotes:
-        doc_id = quote.document_id
-        doc_link = quote.link
-        doc_name = quote.semantic_identifier
+    for quote_dict in quotes.values():
+        doc_id = str(quote_dict.get("document_id", ""))
+        doc_link = quote_dict.get("link")
+        doc_name = str(quote_dict.get("semantic_identifier", ""))
         if doc_link and doc_name and doc_id and doc_id not in doc_identifiers:
             doc_identifiers.append(doc_id)
             custom_semantic_identifier = _build_custom_semantic_identifier(
                 semantic_identifier=doc_name,
-                blurb=quote.blurb,
-                source=quote.source_type,
+                blurb=str(quote_dict.get("blurb", "")),
+                source=str(quote_dict.get("source_type", "")),
             )
             quote_lines.append(f"- <{doc_link}|{custom_semantic_identifier}>")
 
@@ -156,6 +156,7 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
             else:
                 raise RuntimeError(answer.error_msg)
 
+        answer = None
         try:
             answer = _get_answer(
                 QuestionRequest(
@@ -173,9 +174,7 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
             return
 
         # convert raw response into "nicely" formatted Slack message
-        quote_str, doc_identifiers = _process_quotes(
-            cast(list[DanswerQuote], answer.quotes)
-        )  # TODO this doesn't work
+        quote_str, doc_identifiers = _process_quotes(answer.quotes)
         top_documents_str = _process_documents(answer.top_ranked_docs, doc_identifiers)
 
         if not answer.answer:

@@ -9,6 +9,11 @@ from typing import Tuple
 import regex
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
+from danswer.configs.constants import BLURB
+from danswer.configs.constants import DOCUMENT_ID
+from danswer.configs.constants import SEMANTIC_IDENTIFIER
+from danswer.configs.constants import SOURCE_LINK
+from danswer.configs.constants import SOURCE_TYPE
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.direct_qa.qa_prompts import ANSWER_PAT
@@ -19,6 +24,24 @@ from danswer.utils.text_processing import clean_model_quote
 from danswer.utils.text_processing import shared_precompare_cleanup
 
 logger = setup_logger()
+
+
+def structure_quotes_for_response(
+    quotes: list[DanswerQuote] | None,
+) -> dict[str, dict[str, str | None]]:
+    if quotes is None:
+        return {}
+
+    response_quotes = {}
+    for quote in quotes:
+        response_quotes[quote.quote] = {
+            DOCUMENT_ID: quote.document_id,
+            SOURCE_LINK: quote.link,
+            SOURCE_TYPE: quote.source_type,
+            SEMANTIC_IDENTIFIER: quote.semantic_identifier,
+            BLURB: quote.blurb,
+        }
+    return response_quotes
 
 
 def extract_answer_quotes_freeform(
@@ -221,4 +244,4 @@ def process_model_tokens(
             yield {"answer_data": token}
 
     quotes = extract_quotes_from_completed_token_stream(model_output, context_docs)
-    yield {"quotes": quotes}
+    yield structure_quotes_for_response(quotes)
