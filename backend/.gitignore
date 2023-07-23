@@ -6,3 +6,4 @@ api_keys.py
 *ipynb
 qdrant-data/
 typesense-data/
+.env
