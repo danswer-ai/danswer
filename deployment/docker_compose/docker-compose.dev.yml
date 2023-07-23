@@ -17,6 +17,8 @@ services:
     ports:
       - "8080:8080"
     environment:
+      - INTERNAL_MODEL_VERSION=${INTERNAL_MODEL_VERSION:-openai-chat-completion}
+      - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
       - TYPESENSE_HOST=search_engine

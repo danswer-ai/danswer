@@ -38,8 +38,10 @@ from danswer.db.engine import get_session
 from danswer.db.engine import get_sqlalchemy_async_engine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.models import User
-from danswer.direct_qa.key_validation import check_openai_api_key_is_valid
-from danswer.direct_qa.llm import get_openai_api_key
+from danswer.direct_qa import check_model_api_key_is_valid
+from danswer.direct_qa import get_default_backend_qa_model
+from danswer.direct_qa.open_ai import get_openai_api_key
+from danswer.direct_qa.open_ai import OpenAIQAModel
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.server.models import ApiKey
@@ -102,7 +104,7 @@ def check_google_app_credentials_exist(
 ) -> dict[str, str]:
     try:
         return {"client_id": get_google_app_cred().web.client_id}
-    except ConfigNotFoundError as e:
+    except ConfigNotFoundError:
         raise HTTPException(status_code=404, detail="Google App Credentials not found")
 
 
@@ -295,19 +297,13 @@ def validate_existing_openai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
     # OpenAI key is only used for generative QA, so no need to validate this
-    # if it's turned off
-    if DISABLE_GENERATIVE_AI:
+    # if it's turned off or if a non-OpenAI model is being used
+    if DISABLE_GENERATIVE_AI or not isinstance(
+        get_default_backend_qa_model(), OpenAIQAModel
+    ):
         return
 
-    # always check if key exists
-    try:
-        openai_api_key = get_openai_api_key()
-    except ConfigNotFoundError:
-        raise HTTPException(status_code=404, detail="Key not found")
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    # don't call OpenAI every single time, only validate every so often
+    # Only validate every so often
     check_key_time = "openai_api_key_last_check_time"
     kv_store = get_dynamic_config_store()
     curr_time = datetime.now()
@@ -320,10 +316,17 @@ def validate_existing_openai_api_key(
         # First time checking the key, nothing unusual
         pass
 
+    try:
+        openai_api_key = get_openai_api_key()
+    except ConfigNotFoundError:
+        raise HTTPException(status_code=404, detail="Key not found")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
     get_dynamic_config_store().store(check_key_time, curr_time.timestamp())
 
     try:
-        is_valid = check_openai_api_key_is_valid(openai_api_key)
+        is_valid = check_model_api_key_is_valid(openai_api_key)
     except ValueError:
         # this is the case where they aren't using an OpenAI-based model
         is_valid = True
@@ -356,7 +359,7 @@ def store_openai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
     try:
-        is_valid = check_openai_api_key_is_valid(request.api_key)
+        is_valid = check_model_api_key_is_valid(request.api_key)
         if not is_valid:
             raise HTTPException(400, "Invalid API key provided")
         get_dynamic_config_store().store(OPENAI_API_KEY_STORAGE_KEY, request.api_key)

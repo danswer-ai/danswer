@@ -58,7 +58,7 @@ def _build_custom_semantic_identifier(
 
 
 def _process_quotes(
-    quotes: dict[str, dict[str, str | int | None]] | None
+    quotes: dict[str, dict[str, str | None]] | None
 ) -> tuple[str | None, list[str]]:
     if not quotes:
         return None, []
