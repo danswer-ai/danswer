@@ -44,6 +44,13 @@ def get_openai_api_key() -> str:
     )
 
 
+def _ensure_openai_api_key(api_key: str | None) -> str:
+    try:
+        return api_key or get_openai_api_key()
+    except ConfigNotFoundError:
+        raise OpenAIKeyMissing()
+
+
 def _build_openai_settings(**kwargs: Any) -> dict[str, Any]:
     """
     Utility to add in some common default values so they don't have to be set every time.
@@ -116,11 +123,6 @@ class OpenAICompletionQA(OpenAIQAModel):
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
-        try:
-            api_key = self.api_key or get_openai_api_key()
-        except ConfigNotFoundError:
-            raise OpenAIKeyMissing()
-
         filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
@@ -132,7 +134,7 @@ class OpenAICompletionQA(OpenAIQAModel):
         )
         response = openai_call(
             **_build_openai_settings(
-                api_key=api_key,
+                api_key=_ensure_openai_api_key(self.api_key),
                 prompt=filled_prompt,
                 model=self.model_version,
                 max_tokens=self.max_output_tokens,
@@ -149,11 +151,6 @@ class OpenAICompletionQA(OpenAIQAModel):
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> Generator[dict[str, Any] | None, None, None]:
-        try:
-            api_key = self.api_key or get_openai_api_key()
-        except ConfigNotFoundError:
-            raise OpenAIKeyMissing()
-
         filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
@@ -165,7 +162,7 @@ class OpenAICompletionQA(OpenAIQAModel):
         )
         response = openai_call(
             **_build_openai_settings(
-                api_key=api_key,
+                api_key=_ensure_openai_api_key(self.api_key),
                 prompt=filled_prompt,
                 model=self.model_version,
                 max_tokens=self.max_output_tokens,
@@ -218,11 +215,6 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         query: str,
         context_docs: list[InferenceChunk],
     ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
-        try:
-            api_key = self.api_key or get_openai_api_key()
-        except ConfigNotFoundError:
-            raise OpenAIKeyMissing()
-
         messages = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
@@ -235,7 +227,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
             )
             response = openai_call(
                 **_build_openai_settings(
-                    api_key=api_key,
+                    api_key=_ensure_openai_api_key(self.api_key),
                     messages=messages,
                     model=self.model_version,
                     max_tokens=self.max_output_tokens,
@@ -259,11 +251,6 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> Generator[dict[str, Any] | None, None, None]:
-        try:
-            api_key = self.api_key or get_openai_api_key()
-        except ConfigNotFoundError:
-            raise OpenAIKeyMissing()
-
         messages = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
@@ -275,7 +262,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         )
         response = openai_call(
             **_build_openai_settings(
-                api_key=api_key,
+                api_key=_ensure_openai_api_key(self.api_key),
                 messages=messages,
                 model=self.model_version,
                 max_tokens=self.max_output_tokens,
