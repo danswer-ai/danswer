@@ -1,24 +1,18 @@
-import json
-from collections.abc import Callable
 from collections.abc import Generator
 from typing import Any
-from typing import cast
 
-import openai
 from danswer.chunking.models import InferenceChunk
-from danswer.configs.app_configs import INCLUDE_METADATA
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
-from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.direct_qa.interfaces import QAModel
+from danswer.direct_qa.qa_prompts import ChatPromptProcessor
 from danswer.direct_qa.qa_prompts import NonChatPromptProcessor
+from danswer.direct_qa.qa_prompts import WeakChatModelFreeformProcessor
 from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
 from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
-from danswer.direct_qa.qa_utils import stream_json_answer_end
-from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 from gpt4all import GPT4All  # type:ignore
@@ -64,7 +58,7 @@ class GPT4AllCompletionQA(QAModel):
     @log_function_time()
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> tuple[DanswerAnswer, DanswerQuote]:
+    ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
         filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
@@ -107,4 +101,70 @@ class GPT4AllCompletionQA(QAModel):
 
 
 class GPT4AllChatCompletionQA(QAModel):
-    pass
+    def __init__(
+        self,
+        prompt_processor: ChatPromptProcessor = WeakChatModelFreeformProcessor(),
+        model_version: str = GEN_AI_MODEL_VERSION,
+        max_output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
+        include_metadata: bool = False,  # gpt4all models can't handle this atm
+    ) -> None:
+        self.prompt_processor = prompt_processor
+        self.model_version = model_version
+        self.max_output_tokens = max_output_tokens
+        self.include_metadata = include_metadata
+
+    @log_function_time()
+    def answer_question(
+        self, query: str, context_docs: list[InferenceChunk]
+    ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
+        filled_prompt = self.prompt_processor.fill_prompt(
+            query, context_docs, self.include_metadata
+        )
+        logger.debug(filled_prompt)
+
+        gen_ai_model = get_gpt_4_all_model(self.model_version)
+
+        with gen_ai_model.chat_session():
+            context_msgs = filled_prompt[:-1]
+            user_query = filled_prompt[-1].get("content")
+            for message in context_msgs:
+                gen_ai_model.current_chat_session.append(message)
+
+            model_output = gen_ai_model.generate(
+                **_build_gpt4all_settings(
+                    prompt=user_query, max_tokens=self.max_output_tokens
+                ),
+            )
+
+        logger.debug(model_output)
+
+        answer, quotes_dict = process_answer(model_output, context_docs)
+        return answer, quotes_dict
+
+    def answer_question_stream(
+        self, query: str, context_docs: list[InferenceChunk]
+    ) -> Generator[dict[str, Any] | None, None, None]:
+        filled_prompt = self.prompt_processor.fill_prompt(
+            query, context_docs, self.include_metadata
+        )
+        logger.debug(filled_prompt)
+
+        gen_ai_model = get_gpt_4_all_model(self.model_version)
+
+        with gen_ai_model.chat_session():
+            context_msgs = filled_prompt[:-1]
+            user_query = filled_prompt[-1].get("content")
+            for message in context_msgs:
+                gen_ai_model.current_chat_session.append(message)
+
+            model_stream = gen_ai_model.generate(
+                **_build_gpt4all_settings(
+                    prompt=user_query, max_tokens=self.max_output_tokens
+                ),
+            )
+
+            yield from process_model_tokens(
+                tokens=model_stream,
+                context_docs=context_docs,
+                is_json_prompt=self.prompt_processor.specifies_json_output,
+            )

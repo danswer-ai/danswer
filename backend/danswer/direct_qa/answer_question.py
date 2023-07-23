@@ -1,3 +1,5 @@
+from typing import cast
+
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
@@ -100,8 +102,8 @@ def answer_question(
         error_msg = f"Error occurred in call to LLM - {e}"
 
     return QAResponse(
-        answer=answer,
-        quotes=quotes,
+        answer=answer.answer if answer else None,
+        quotes=cast(list[dict[str, str | None]] | None, quotes),  # TODO is this right?
         top_ranked_docs=chunks_to_search_docs(ranked_chunks),
         lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
         predicted_flow=predicted_flow,

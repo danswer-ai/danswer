@@ -32,7 +32,23 @@ SAMPLE_JSON_RESPONSE = {
 }
 
 
-def add_metadata_section(
+def _append_acknowledge_doc_messages(
+    current_messages: list[dict[str, str]], new_chunk_content: str
+) -> list[dict[str, str]]:
+    updated_messages = current_messages.copy()
+    updated_messages.extend(
+        [
+            {
+                "role": "user",
+                "content": new_chunk_content,
+            },
+            {"role": "assistant", "content": "Acknowledged"},
+        ]
+    )
+    return updated_messages
+
+
+def _add_metadata_section(
     prompt_current: str,
     chunk: InferenceChunk,
     prepend_tab: bool = False,
@@ -120,7 +136,7 @@ class JsonProcessor(NonChatPromptProcessor):
         for chunk in chunks:
             prompt += f"\n\n{DOC_SEP_PAT}\n"
             if include_metadata:
-                prompt = add_metadata_section(
+                prompt = _add_metadata_section(
                     prompt, chunk, prepend_tab=False, include_sep=True
                 )
 
@@ -169,19 +185,11 @@ class JsonChatProcessor(ChatPromptProcessor):
         for chunk in chunks:
             full_context = ""
             if include_metadata:
-                full_context = add_metadata_section(
+                full_context = _add_metadata_section(
                     full_context, chunk, prepend_tab=False, include_sep=False
                 )
             full_context += chunk.content
-            messages.extend(
-                [
-                    {
-                        "role": "user",
-                        "content": full_context,
-                    },
-                    {"role": "assistant", "content": "Acknowledged"},
-                ]
-            )
+            messages = _append_acknowledge_doc_messages(messages, full_context)
         messages.append({"role": "system", "content": task_msg})
 
         messages.append({"role": "user", "content": f"{QUESTION_PAT}\n{question}\n"})
@@ -192,6 +200,7 @@ class JsonChatProcessor(ChatPromptProcessor):
 class WeakModelFreeformProcessor(NonChatPromptProcessor):
     """Avoid using this one if the model is capable of using another prompt
     Intended for models that can't follow complex instructions or have short context windows
+    This prompt only uses 1 reference document chunk
     """
 
     @property
@@ -206,14 +215,45 @@ class WeakModelFreeformProcessor(NonChatPromptProcessor):
 
         prompt = (
             f"Reference Document:\n{first_chunk_content}\n{GENERAL_SEP_PAT}"
-            f"Answer the user query below based on reference document above. "
+            f"Answer the user query below based on the reference document above. "
             f'Respond with an "{ANSWER_PAT}" section and '
-            f'as many "{QUOTE_PAT}" sections as needed to support the answer.{GENERAL_SEP_PAT}'
+            f'as many "{QUOTE_PAT}" sections as needed to support the answer.'
+            f"\n{GENERAL_SEP_PAT}"
             f"{QUESTION_PAT} {question}\n"
             f"{ANSWER_PAT}"
         )
 
         return prompt
+
+
+class WeakChatModelFreeformProcessor(ChatPromptProcessor):
+    """Avoid using this one if the model is capable of using another prompt
+    Intended for models that can't follow complex instructions or have short context windows
+    This prompt only uses 1 reference document chunk
+    """
+
+    @property
+    def specifies_json_output(self) -> bool:
+        return False
+
+    @staticmethod
+    def fill_prompt(
+        question: str, chunks: list[InferenceChunk], include_metadata: bool = False
+    ) -> list[dict[str, str]]:
+        first_chunk_content = chunks[0].content if chunks else "No Document Provided"
+        intro_msg = (
+            f"You are a question answering assistant. "
+            f'Respond to the query with an "{ANSWER_PAT}" section and '
+            f'as many "{QUOTE_PAT}" sections as needed to support the answer. '
+            f"Answer the user query based on the following document:\n\n{first_chunk_content}"
+        )
+
+        messages = [{"role": "system", "content": intro_msg}]
+
+        user_query = f"{QUESTION_PAT} {question}"
+        messages.append({"role": "user", "content": user_query})
+
+        return messages
 
 
 # EVERYTHING BELOW IS DEPRECATED, kept around as reference, may revisit in future
@@ -269,15 +309,7 @@ class FreeformChatProcessor(ChatPromptProcessor):
             {"role": "system", "content": role_msg},
         ]
         for chunk in chunks:
-            messages.extend(
-                [
-                    {
-                        "role": "user",
-                        "content": f"Acknowledge the following document:\n{chunk.content}",
-                    },
-                    {"role": "assistant", "content": "Acknowledged"},
-                ]
-            )
+            messages = _append_acknowledge_doc_messages(messages, chunk.content)
 
         messages.append(
             {

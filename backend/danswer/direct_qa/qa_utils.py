@@ -2,20 +2,13 @@ import json
 import math
 import re
 from collections.abc import Generator
-from typing import cast
-from typing import Dict
+from typing import Any
 from typing import Optional
 from typing import Tuple
-from typing import Union
 
 import regex
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
-from danswer.configs.constants import BLURB
-from danswer.configs.constants import DOCUMENT_ID
-from danswer.configs.constants import SEMANTIC_IDENTIFIER
-from danswer.configs.constants import SOURCE_LINK
-from danswer.configs.constants import SOURCE_TYPE
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.direct_qa.qa_prompts import ANSWER_PAT
@@ -87,8 +80,8 @@ def match_quotes_to_docs(
     max_error_percent: float = QUOTE_ALLOWED_ERROR_PERCENT,
     fuzzy_search: bool = False,
     prefix_only_length: int = 100,
-) -> Dict[str, Dict[str, Union[str, int, None]]]:
-    quotes_dict: dict[str, dict[str, Union[str, int, None]]] = {}
+) -> list[DanswerQuote]:
+    danswer_quotes = []
     for quote in quotes:
         max_edits = math.ceil(float(len(quote)) * max_error_percent)
 
@@ -122,45 +115,54 @@ def match_quotes_to_docs(
                 if int(link_offset) <= offset:
                     curr_link = link
                 else:
-                    quotes_dict[quote] = {
-                        DOCUMENT_ID: chunk.document_id,
-                        SOURCE_LINK: curr_link,
-                        SOURCE_TYPE: chunk.source_type,
-                        SEMANTIC_IDENTIFIER: chunk.semantic_identifier,
-                        BLURB: chunk.blurb,
-                    }
+                    danswer_quotes.append(
+                        DanswerQuote(
+                            quote=quote,
+                            document_id=chunk.document_id,
+                            link=curr_link,
+                            source_type=chunk.source_type,
+                            semantic_identifier=chunk.semantic_identifier,
+                            blurb=chunk.blurb,
+                        )
+                    )
                     break
-            quotes_dict[quote] = {
-                DOCUMENT_ID: chunk.document_id,
-                SOURCE_LINK: curr_link,
-                SOURCE_TYPE: chunk.source_type,
-                SEMANTIC_IDENTIFIER: chunk.semantic_identifier,
-                BLURB: chunk.blurb,
-            }
+
+            # If the offset is larger than the start of the last quote, it must be the last one
+            danswer_quotes.append(
+                DanswerQuote(
+                    quote=quote,
+                    document_id=chunk.document_id,
+                    link=curr_link,
+                    source_type=chunk.source_type,
+                    semantic_identifier=chunk.semantic_identifier,
+                    blurb=chunk.blurb,
+                )
+            )
             break
-    return quotes_dict
+
+    return danswer_quotes
 
 
 def process_answer(
     answer_raw: str, chunks: list[InferenceChunk]
-) -> tuple[DanswerAnswer, DanswerQuote]:
+) -> tuple[DanswerAnswer, list[DanswerQuote]]:
     answer, quote_strings = separate_answer_quotes(answer_raw)
     if answer == UNCERTAINTY_PAT or not answer:
         if answer == UNCERTAINTY_PAT:
             logger.debug("Answer matched UNCERTAINTY_PAT")
         else:
             logger.debug("No answer extracted from raw output")
-        return None, None
+        return DanswerAnswer(answer=None), []
 
     logger.info(f"Answer: {answer}")
     if not quote_strings:
         logger.debug("No quotes extracted from raw output")
-        return answer, None
+        return DanswerAnswer(answer=answer), []
     logger.info(f"All quotes (including unmatched): {quote_strings}")
-    quotes_dict = match_quotes_to_docs(quote_strings, chunks)
-    logger.info(f"Final quotes dict: {quotes_dict}")
+    quotes = match_quotes_to_docs(quote_strings, chunks)
+    logger.info(f"Final quotes: {quotes}")
 
-    return answer, quotes_dict
+    return DanswerAnswer(answer=answer), quotes
 
 
 def stream_json_answer_end(answer_so_far: str, next_token: str) -> bool:
@@ -175,22 +177,22 @@ def stream_json_answer_end(answer_so_far: str, next_token: str) -> bool:
 
 def extract_quotes_from_completed_token_stream(
     model_output: str, context_chunks: list[InferenceChunk]
-) -> DanswerQuote:
+) -> list[DanswerQuote]:
     logger.debug(model_output)
-    answer, quotes_dict = process_answer(model_output, context_chunks)
+    answer, quotes = process_answer(model_output, context_chunks)
     if answer:
         logger.info(answer)
     elif model_output:
         logger.warning("Answer extraction from model output failed.")
 
-    return {} if quotes_dict is None else quotes_dict
+    return quotes
 
 
 def process_model_tokens(
     tokens: Generator[str, None, None],
     context_docs: list[InferenceChunk],
     is_json_prompt: bool = True,
-) -> Generator[dict[str, str | bool] | DanswerQuote, None, None]:
+) -> Generator[dict[str, Any], None, None]:
     """Yields Answer tokens back out in a dict for streaming to frontend
     When Answer section ends, yields dict with answer_finished key
     Collects all the tokens at the end to form the complete model output"""
@@ -218,4 +220,5 @@ def process_model_tokens(
                 continue
             yield {"answer_data": token}
 
-    yield extract_quotes_from_completed_token_stream(model_output, context_docs)
+    quotes = extract_quotes_from_completed_token_stream(model_output, context_docs)
+    yield {"quotes": quotes}

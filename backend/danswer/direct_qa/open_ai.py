@@ -22,7 +22,6 @@ from danswer.direct_qa.qa_prompts import get_json_chat_reflexion_msg
 from danswer.direct_qa.qa_prompts import JsonChatProcessor
 from danswer.direct_qa.qa_prompts import JsonProcessor
 from danswer.direct_qa.qa_prompts import NonChatPromptProcessor
-from danswer.direct_qa.qa_utils import extract_quotes_from_completed_token_stream
 from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
 from danswer.dynamic_configs import get_dynamic_config_store
@@ -115,7 +114,7 @@ class OpenAICompletionQA(OpenAIQAModel):
     @log_function_time()
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> tuple[DanswerAnswer, DanswerQuote]:
+    ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
         filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
@@ -210,7 +209,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         self,
         query: str,
         context_docs: list[InferenceChunk],
-    ) -> tuple[DanswerAnswer, DanswerQuote]:
+    ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
         messages = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
