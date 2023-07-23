@@ -14,7 +14,7 @@ import {
 } from "./icons/icons";
 
 interface SourceMetadata {
-  icon: React.FC<{ size?: string; className?: string }>;
+  icon: React.FC<{ size?: number; className?: string }>;
   displayName: string;
   adminPageLink: string;
 }
@@ -92,7 +92,7 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
   }
 };
 
-export const getSourceIcon = (sourceType: ValidSources, iconSize: string) => {
+export const getSourceIcon = (sourceType: ValidSources, iconSize: number) => {
   return getSourceMetadata(sourceType).icon({
     size: iconSize,
   });

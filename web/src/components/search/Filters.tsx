@@ -60,7 +60,7 @@ export function SourceSelector({
               }
               onClick={() => handleSelect(source)}
             >
-              {getSourceIcon(source.internalName, "16")}
+              {getSourceIcon(source.internalName, 16)}
               <span className="ml-2 text-sm text-gray-200">
                 {source.displayName}
               </span>

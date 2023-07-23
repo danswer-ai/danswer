@@ -206,7 +206,7 @@ export default function Page() {
         <HealthCheckBanner />
       </div>
       <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <SlackIcon size="32" />
+        <SlackIcon size={32} />
         <h1 className="text-3xl font-bold pl-2">Slack</h1>
       </div>
       <MainSection />

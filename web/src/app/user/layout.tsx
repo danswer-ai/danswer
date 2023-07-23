@@ -1,14 +1,4 @@
 import { Header } from "@/components/Header";
-import { Sidebar } from "@/components/admin/connectors/Sidebar";
-import {
-  NotebookIcon,
-  GithubIcon,
-  GlobeIcon,
-  GoogleDriveIcon,
-  SlackIcon,
-  KeyIcon,
-  ConfluenceIcon,
-} from "@/components/icons/icons";
 import { DISABLE_AUTH } from "@/lib/constants";
 import { getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";

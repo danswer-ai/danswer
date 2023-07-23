@@ -126,7 +126,7 @@ export default function Page() {
         <HealthCheckBanner />
       </div>
       <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <PlugIcon size="32" />
+        <PlugIcon size={32} />
         <h1 className="text-3xl font-bold pl-2">Personal Connectors</h1>
       </div>
 
