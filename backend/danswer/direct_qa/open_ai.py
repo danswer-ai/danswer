@@ -1,4 +1,5 @@
 import json
+from abc import ABC
 from collections.abc import Callable
 from collections.abc import Generator
 from functools import wraps
@@ -74,7 +75,7 @@ def _handle_openai_exceptions_wrapper(openai_call: F, query: str) -> F:
         except Timeout:
             logger.exception("OpenAI API timed out for query: %s", query)
             raise
-        except Exception as e:
+        except Exception:
             logger.exception("Unexpected error with OpenAI API for query: %s", query)
             raise
 
@@ -82,7 +83,7 @@ def _handle_openai_exceptions_wrapper(openai_call: F, query: str) -> F:
 
 
 # used to check if the QAModel is an OpenAI model
-class OpenAIQAModel(QAModel):
+class OpenAIQAModel(QAModel, ABC):
     pass
 
 
@@ -115,6 +116,11 @@ class OpenAICompletionQA(OpenAIQAModel):
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
+        try:
+            api_key = self.api_key or get_openai_api_key()
+        except ConfigNotFoundError:
+            raise OpenAIKeyMissing()
+
         filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
@@ -126,7 +132,7 @@ class OpenAICompletionQA(OpenAIQAModel):
         )
         response = openai_call(
             **_build_openai_settings(
-                api_key=self.api_key,
+                api_key=api_key,
                 prompt=filled_prompt,
                 model=self.model_version,
                 max_tokens=self.max_output_tokens,
@@ -143,6 +149,11 @@ class OpenAICompletionQA(OpenAIQAModel):
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> Generator[dict[str, Any] | None, None, None]:
+        try:
+            api_key = self.api_key or get_openai_api_key()
+        except ConfigNotFoundError:
+            raise OpenAIKeyMissing()
+
         filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
@@ -154,7 +165,7 @@ class OpenAICompletionQA(OpenAIQAModel):
         )
         response = openai_call(
             **_build_openai_settings(
-                api_key=self.api_key,
+                api_key=api_key,
                 prompt=filled_prompt,
                 model=self.model_version,
                 max_tokens=self.max_output_tokens,
@@ -189,10 +200,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         self.reflexion_try_count = reflexion_try_count
         self.timeout = timeout
         self.include_metadata = include_metadata
-        try:
-            self.api_key = api_key or get_openai_api_key()
-        except ConfigNotFoundError:
-            raise OpenAIKeyMissing()
+        self.api_key = api_key
 
     @staticmethod
     def _generate_tokens_from_response(response: Any) -> Generator[str, None, None]:
@@ -210,6 +218,11 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         query: str,
         context_docs: list[InferenceChunk],
     ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
+        try:
+            api_key = self.api_key or get_openai_api_key()
+        except ConfigNotFoundError:
+            raise OpenAIKeyMissing()
+
         messages = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
@@ -222,7 +235,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
             )
             response = openai_call(
                 **_build_openai_settings(
-                    api_key=self.api_key,
+                    api_key=api_key,
                     messages=messages,
                     model=self.model_version,
                     max_tokens=self.max_output_tokens,
@@ -246,6 +259,11 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> Generator[dict[str, Any] | None, None, None]:
+        try:
+            api_key = self.api_key or get_openai_api_key()
+        except ConfigNotFoundError:
+            raise OpenAIKeyMissing()
+
         messages = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
@@ -257,7 +275,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         )
         response = openai_call(
             **_build_openai_settings(
-                api_key=self.api_key,
+                api_key=api_key,
                 messages=messages,
                 model=self.model_version,
                 max_tokens=self.max_output_tokens,

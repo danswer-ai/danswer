@@ -55,6 +55,9 @@ class GPT4AllCompletionQA(QAModel):
         self.max_output_tokens = max_output_tokens
         self.include_metadata = include_metadata
 
+    def warm_up_model(self) -> None:
+        get_gpt_4_all_model(self.model_version)
+
     @log_function_time()
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
