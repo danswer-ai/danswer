@@ -75,7 +75,7 @@ export default function File() {
         <HealthCheckBanner />
       </div>
       <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <FileIcon size="32" />
+        <FileIcon size={32} />
         <h1 className="text-3xl font-bold pl-2">File</h1>
       </div>
       {popup && <Popup message={popup.message} type={popup.type} />}

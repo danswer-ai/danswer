@@ -130,7 +130,7 @@ export const SearchHelper: React.FC<Props> = (props) => {
   return (
     <div className="border border-gray-800 rounded p-3 text-sm">
       <div className="flex">
-        <BrainIcon size="20" />
+        <BrainIcon size={20} />
         <b className="ml-2">AI Assistant</b>
       </div>
 

@@ -50,7 +50,7 @@ const Page = () => {
   return (
     <div>
       <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <KeyIcon size="32" />
+        <KeyIcon size={32} />
         <h1 className="text-3xl font-bold pl-2">OpenAI Keys</h1>
       </div>
 

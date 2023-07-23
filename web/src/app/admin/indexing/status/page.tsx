@@ -106,7 +106,7 @@ function Main() {
         if (connectorIndexingStatus.connector.disabled) {
           statusDisplay = (
             <div className="text-red-600 flex">
-              <XSquareIcon className="my-auto mr-1" size="18" />
+              <XSquareIcon className="my-auto mr-1" size={18} />
               Disabled
             </div>
           );
@@ -135,7 +135,7 @@ function Main() {
               className="text-blue-500 flex"
               href={sourceMetadata.adminPageLink}
             >
-              {sourceMetadata.icon({ size: "20" })}
+              {sourceMetadata.icon({ size: 20 })}
               <div className="ml-1">
                 {getSourceDisplay(connectorIndexingStatus)}
               </div>
@@ -184,7 +184,7 @@ export default function Status() {
         <HealthCheckBanner />
       </div>
       <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <NotebookIcon size="32" />
+        <NotebookIcon size={32} />
         <h1 className="text-3xl font-bold pl-2">Indexing Status</h1>
       </div>
       <Main />

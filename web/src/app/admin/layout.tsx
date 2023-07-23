@@ -48,7 +48,7 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <NotebookIcon size="18" />
+                      <NotebookIcon size={18} />
                       <div className="ml-1">Status</div>
                     </div>
                   ),
@@ -62,7 +62,7 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <SlackIcon size="16" />
+                      <SlackIcon size={16} />
                       <div className="ml-1">Slack</div>
                     </div>
                   ),
@@ -71,7 +71,7 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <GithubIcon size="16" />
+                      <GithubIcon size={16} />
                       <div className="ml-1">Github</div>
                     </div>
                   ),
@@ -80,7 +80,7 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <GoogleDriveIcon size="16" />
+                      <GoogleDriveIcon size={16} />
                       <div className="ml-1">Google Drive</div>
                     </div>
                   ),
@@ -89,16 +89,7 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <BookstackIcon size="16" />
-                      <div className="ml-1">BookStack</div>
-                    </div>
-                  ),
-                  link: "/admin/connectors/bookstack",
-                },
-                {
-                  name: (
-                    <div className="flex">
-                      <ConfluenceIcon size="16" />
+                      <ConfluenceIcon size={16} />
                       <div className="ml-1">Confluence</div>
                     </div>
                   ),
@@ -107,7 +98,7 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <JiraIcon size="16" />
+                      <JiraIcon size={16} />
                       <div className="ml-1">Jira</div>
                     </div>
                   ),
@@ -116,7 +107,7 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <ProductboardIcon size="16" />
+                      <ProductboardIcon size={16} />
                       <div className="ml-1">Productboard</div>
                     </div>
                   ),
@@ -125,7 +116,7 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <SlabIcon size="16" />
+                      <SlabIcon size={16} />
                       <div className="ml-1">Slab</div>
                     </div>
                   ),
@@ -134,7 +125,25 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <GlobeIcon size="16" />
+                      <NotionIcon size={16} />
+                      <div className="ml-1">Notion</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/notion",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <BookstackIcon size={16} />
+                      <div className="ml-1">BookStack</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/bookstack",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <GlobeIcon size={16} />
                       <div className="ml-1">Web</div>
                     </div>
                   ),
@@ -143,20 +152,11 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <FileIcon size="16" />
+                      <FileIcon size={16} />
                       <div className="ml-1">File</div>
                     </div>
                   ),
                   link: "/admin/connectors/file",
-                },
-                {
-                  name: (
-                    <div className="flex">
-                      <NotionIcon size="16" />
-                      <div className="ml-1">Notion</div>
-                    </div>
-                  ),
-                  link: "/admin/connectors/notion",
                 },
               ],
             },
@@ -166,7 +166,7 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <KeyIcon size="18" />
+                      <KeyIcon size={18} />
                       <div className="ml-1">OpenAI</div>
                     </div>
                   ),
