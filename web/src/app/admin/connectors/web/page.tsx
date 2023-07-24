@@ -37,7 +37,7 @@ export default function Web() {
         <HealthCheckBanner />
       </div>
       <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <GlobeIcon size="32" />
+        <GlobeIcon size={32} />
         <h1 className="text-3xl font-bold pl-2">Web</h1>
       </div>
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">

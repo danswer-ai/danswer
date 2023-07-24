@@ -26,4 +26,6 @@ class DocumentSource(str, Enum):
     CONFLUENCE = "confluence"
     SLAB = "slab"
     JIRA = "jira"
+    PRODUCTBOARD = "productboard"
     FILE = "file"
+    NOTION = "notion"

@@ -2,8 +2,8 @@ import textwrap
 import unittest
 
 from danswer.chunking.models import InferenceChunk
-from danswer.direct_qa.llm import match_quotes_to_docs
-from danswer.direct_qa.llm import separate_answer_quotes
+from danswer.direct_qa.qa_utils import match_quotes_to_docs
+from danswer.direct_qa.qa_utils import separate_answer_quotes
 
 
 class TestQAPostprocessing(unittest.TestCase):

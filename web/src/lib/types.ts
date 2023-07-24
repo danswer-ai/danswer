@@ -15,8 +15,10 @@ export type ValidSources =
   | "bookstack"
   | "confluence"
   | "jira"
+  | "productboard"
   | "slab"
-  | "file";
+  | "file"
+  | "notion";
 export type ValidInputTypes = "load_state" | "poll" | "event";
 
 // CONNECTORS
@@ -59,6 +61,8 @@ export interface JiraConfig {
   jira_project_url: string;
 }
 
+export interface ProductboardConfig {}
+
 export interface SlackConfig {
   workspace: string;
 }
@@ -70,6 +74,8 @@ export interface SlabConfig {
 export interface FileConfig {
   file_locations: string[];
 }
+
+export interface NotionConfig {}
 
 export interface ConnectorIndexingStatus<T> {
   connector: Connector<T>;
@@ -113,6 +119,10 @@ export interface JiraCredentialJson {
   jira_api_token: string;
 }
 
+export interface ProductboardCredentialJson {
+  productboard_access_token: string;
+}
+
 export interface SlackCredentialJson {
   slack_bot_token: string;
 }
@@ -123,4 +133,8 @@ export interface GoogleDriveCredentialJson {
 
 export interface SlabCredentialJson {
   slab_bot_token: string;
+}
+
+export interface NotionCredentialJson {
+  notion_integration_token: string;
 }

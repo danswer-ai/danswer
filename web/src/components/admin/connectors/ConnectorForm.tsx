@@ -80,12 +80,14 @@ export function ConnectorForm<T extends Yup.AnyObject>({
         validationSchema={validationSchema}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
+          const connectorName = nameBuilder(values);
 
           // best effort check to see if existing connector exists
           // delete it if it does, the current assumption is that only
           // one google drive connector will exist at a time
           const errorMsg = await deleteConnectorIfExists({
             source,
+            name: connectorName,
           });
           if (errorMsg) {
             setPopup({
@@ -96,7 +98,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
           }
 
           const { message, isSuccess, response } = await submitConnector<T>({
-            name: nameBuilder(values),
+            name: connectorName,
             source,
             input_type: inputType,
             connector_specific_config: values,

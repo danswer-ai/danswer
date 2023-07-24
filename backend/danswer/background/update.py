@@ -4,6 +4,7 @@ from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import InputType
+from danswer.datastores.indexing_pipeline import build_indexing_pipeline
 from danswer.db.connector import disable_connector
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import update_connector_credential_pair
@@ -21,7 +22,6 @@ from danswer.db.index_attempt import mark_attempt_succeeded
 from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
-from danswer.utils.indexing_pipeline import build_indexing_pipeline
 from danswer.utils.logger import setup_logger
 from sqlalchemy.orm import Session
 
@@ -92,10 +92,24 @@ def run_indexing_jobs(db_session: Session) -> None:
     new_indexing_attempts = get_not_started_index_attempts(db_session)
     logger.info(f"Found {len(new_indexing_attempts)} new indexing tasks.")
     for attempt in new_indexing_attempts:
+        if attempt.connector is None:
+            logger.warning(
+                f"Skipping index attempt as Connector has been deleted: {attempt}"
+            )
+            mark_attempt_failed(attempt, db_session, failure_reason="Connector is null")
+            continue
+        if attempt.credential is None:
+            logger.warning(
+                f"Skipping index attempt as Credential has been deleted: {attempt}"
+            )
+            mark_attempt_failed(
+                attempt, db_session, failure_reason="Credential is null"
+            )
+            continue
         logger.info(
             f"Starting new indexing attempt for connector: '{attempt.connector.name}', "
             f"with config: '{attempt.connector.connector_specific_config}', and "
-            f"with credentials: '{[c.credential_id for c in attempt.connector.credentials]}'"
+            f"with credentials: '{attempt.credential_id}'"
         )
         mark_attempt_in_progress(attempt, db_session)
 
@@ -143,8 +157,11 @@ def run_indexing_jobs(db_session: Session) -> None:
                 last_run_time = get_last_successful_attempt_start_time(
                     attempt.connector_id, attempt.credential_id, db_session
                 )
+                # Covers very unlikely case that time offset check from DB having tiny variations that coincide with
+                # a new document being created
+                safe_last_run_time = max(last_run_time - 1, 0.0)
                 doc_batch_generator = runnable_connector.poll_source(
-                    last_run_time, time.time()
+                    safe_last_run_time, time.time()
                 )
 
             else:

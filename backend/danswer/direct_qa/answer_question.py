@@ -1,13 +1,13 @@
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
-from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.datastores.qdrant.store import QdrantIndex
 from danswer.datastores.typesense.store import TypesenseIndex
 from danswer.db.models import User
 from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
+from danswer.direct_qa.qa_utils import structure_quotes_for_response
 from danswer.search.danswer_helper import query_intent
 from danswer.search.keyword_search import retrieve_keyword_documents
 from danswer.search.models import QueryFlow
@@ -26,7 +26,6 @@ logger = setup_logger()
 def answer_question(
     question: QuestionRequest,
     user: User | None,
-    qa_model_timeout: int = QA_TIMEOUT,
     disable_generative_answer: bool = DISABLE_GENERATIVE_AI,
 ) -> QAResponse:
     query = question.query
@@ -74,7 +73,7 @@ def answer_question(
         )
 
     try:
-        qa_model = get_default_backend_qa_model(timeout=qa_model_timeout)
+        qa_model = get_default_backend_qa_model()
     except (UnknownModelError, OpenAIKeyMissing) as e:
         return QAResponse(
             answer=None,
@@ -102,8 +101,8 @@ def answer_question(
         error_msg = f"Error occurred in call to LLM - {e}"
 
     return QAResponse(
-        answer=answer,
-        quotes=quotes,
+        answer=answer.answer if answer else None,
+        quotes=structure_quotes_for_response(quotes),
         top_ranked_docs=chunks_to_search_docs(ranked_chunks),
         lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
         predicted_flow=predicted_flow,

@@ -220,7 +220,7 @@ export default function Page() {
         <HealthCheckBanner />
       </div>
       <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <GithubIcon size="32" />
+        <GithubIcon size={32} />
         <h1 className="text-3xl font-bold pl-2">Github PRs</h1>
       </div>
       <Main />

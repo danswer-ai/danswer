@@ -17,10 +17,12 @@ services:
     ports:
       - "8080:8080"
     environment:
+      - INTERNAL_MODEL_VERSION=${INTERNAL_MODEL_VERSION:-openai-chat-completion}
+      - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
       - TYPESENSE_HOST=search_engine
-      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-typesense_api_key}
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - DISABLE_AUTH=${DISABLE_AUTH:-True}
       - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
@@ -29,6 +31,9 @@ services:
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
+      - model_cache_torch:/root/.cache/torch/
+      - model_cache_nltk:/root/nltk_data/
+      - model_cache_huggingface:/root/.cache/huggingface/
   background:
     image: danswer/danswer-backend:latest
     build:
@@ -43,12 +48,15 @@ services:
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
       - TYPESENSE_HOST=search_engine
-      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-typesense_api_key}
       - DANSWER_BOT_SLACK_APP_TOKEN=${DANSWER_BOT_SLACK_APP_TOKEN:-}
       - DANSWER_BOT_SLACK_BOT_TOKEN=${DANSWER_BOT_SLACK_BOT_TOKEN:-}
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
+      - model_cache_torch:/root/.cache/torch/
+      - model_cache_nltk:/root/nltk_data/
+      - model_cache_huggingface:/root/.cache/huggingface/
   web_server:
     image: danswer/danswer-web-server:latest
     build:
@@ -85,7 +93,7 @@ services:
     image: typesense/typesense:0.24.1
     restart: always
     environment:
-      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-local_dev_typesense}
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-typesense_api_key}
       - TYPESENSE_DATA_DIR=/typesense/storage
     ports:
       - "8108:8108"
@@ -115,3 +123,6 @@ volumes:
   db_volume:
   qdrant_volume:
   typesense_volume:
+  model_cache_torch:
+  model_cache_nltk:
+  model_cache_huggingface:
