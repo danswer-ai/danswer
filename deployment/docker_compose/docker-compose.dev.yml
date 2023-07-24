@@ -25,6 +25,8 @@ services:
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-typesense_api_key}
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - DISABLE_AUTH=${DISABLE_AUTH:-True}
+      - OAUTH_TYPE=${OAUTH_TYPE:-}
+      - OPENID_CONFIG_URL=${OPENID_CONFIG_URL:-}
       - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
       - GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-}
       - DISABLE_GENERATIVE_AI=${DISABLE_GENERATIVE_AI:-}
@@ -72,6 +74,7 @@ services:
     environment:
       - INTERNAL_URL=http://api_server:8080
       - DISABLE_AUTH=${DISABLE_AUTH:-True}
+      - OAUTH_NAME=${OAUTH_NAME:-}
   relational_db:
     image: postgres:15.2-alpine
     restart: always
