@@ -164,6 +164,8 @@ def get_application() -> FastAPI:
                     logger.warning("OAuth is turned on but OAUTH_CLIENT_SECRET is empty")
                 if OAUTH_TYPE == "openid" and not OPENID_CONFIG_URL:
                     logger.warning("OpenID is turned on but OPENID_CONFIG_URL is emtpy")
+                else:
+                    logger.debug("OAuth is turned on")
 
         logger.info("Warming up local NLP models.")
         warm_up_models()
