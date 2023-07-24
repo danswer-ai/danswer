@@ -157,8 +157,11 @@ def run_indexing_jobs(db_session: Session) -> None:
                 last_run_time = get_last_successful_attempt_start_time(
                     attempt.connector_id, attempt.credential_id, db_session
                 )
+                # Covers very unlikely case that time offset check from DB having tiny variations that coincide with
+                # a new document being created
+                safe_last_run_time = max(last_run_time - 1, 0.0)
                 doc_batch_generator = runnable_connector.poll_source(
-                    last_run_time, time.time()
+                    safe_last_run_time, time.time()
                 )
 
             else:
