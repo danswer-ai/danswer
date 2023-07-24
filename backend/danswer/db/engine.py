@@ -32,7 +32,8 @@ _ASYNC_ENGINE: AsyncEngine | None = None
 def get_db_current_time(db_session: Session) -> datetime:
     """Get the current time from Postgres representing the start of the transaction
     Within the same transaction this value will not update
-    This datetime object returned is timezone aware, default Postgres timezone is UTC"""
+    This datetime object returned should be timezone aware, default Postgres timezone is UTC
+    """
     result = db_session.execute(text("SELECT NOW()")).scalar()
     if result is None:
         raise ValueError("Database did not return a time")
@@ -42,6 +43,8 @@ def get_db_current_time(db_session: Session) -> datetime:
 def translate_db_time_to_server_time(
     db_time: datetime, db_session: Session
 ) -> datetime:
+    """If a different database driver is used which does not include timezone info,
+    this should hit an exception rather than being wrong"""
     server_now = datetime.now(timezone.utc)
     db_now = get_db_current_time(db_session)
     time_diff = server_now - db_now
