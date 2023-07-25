@@ -10,6 +10,7 @@ const sources: Source[] = [
   { displayName: "BookStack", internalName: "bookstack" },
   { displayName: "Confluence", internalName: "confluence" },
   { displayName: "Jira", internalName: "jira" },
+  { displayName: "Productboard", internalName: "productboard" },
   { displayName: "Slab", internalName: "slab" },
   { displayName: "Github PRs", internalName: "github" },
   { displayName: "Web", internalName: "web" },
@@ -59,7 +60,7 @@ export function SourceSelector({
               }
               onClick={() => handleSelect(source)}
             >
-              {getSourceIcon(source.internalName, "16")}
+              {getSourceIcon(source.internalName, 16)}
               <span className="ml-2 text-sm text-gray-200">
                 {source.displayName}
               </span>

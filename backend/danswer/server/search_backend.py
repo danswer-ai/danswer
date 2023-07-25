@@ -1,10 +1,10 @@
+import json
 from collections.abc import Generator
 
 from danswer.auth.users import current_user
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
-from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.datastores.qdrant.store import QdrantIndex
 from danswer.datastores.typesense.store import TypesenseIndex
 from danswer.db.models import User
@@ -12,7 +12,6 @@ from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.answer_question import answer_question
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
-from danswer.direct_qa.llm import get_json_line
 from danswer.search.danswer_helper import query_intent
 from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.keyword_search import retrieve_keyword_documents
@@ -33,6 +32,10 @@ from fastapi.responses import StreamingResponse
 logger = setup_logger()
 
 router = APIRouter()
+
+
+def get_json_line(json_dict: dict) -> str:
+    return json.dumps(json_dict) + "\n"
 
 
 @router.get("/search-intent")
@@ -162,7 +165,7 @@ def stream_direct_qa(
             return
 
         try:
-            qa_model = get_default_backend_qa_model(timeout=QA_TIMEOUT)
+            qa_model = get_default_backend_qa_model()
         except (UnknownModelError, OpenAIKeyMissing) as e:
             logger.exception("Unable to get QA model")
             yield get_json_line({"error": str(e)})

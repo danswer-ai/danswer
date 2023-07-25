@@ -98,7 +98,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          {getSourceIcon(quoteInfo.source_type, "20")}
+                          {getSourceIcon(quoteInfo.source_type, 20)}
                           <p className="truncate break-all ml-2">
                             {quoteInfo.semantic_identifier ||
                               quoteInfo.document_id}
@@ -108,7 +108,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
                     ) : (
                       <div className="flex">
                         <InfoIcon
-                          size="20"
+                          size={20}
                           className="text-red-500 my-auto flex flex-shrink-0"
                         />
                         <div className="text-red-500 text-sm my-auto ml-1">
@@ -130,7 +130,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
         shouldDisplayQA && (
           <div className="flex">
             <InfoIcon
-              size="20"
+              size={20}
               className="text-red-500 my-auto flex flex-shrink-0"
             />
             <div className="text-red-500 text-xs my-auto ml-1">
@@ -158,7 +158,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {getSourceIcon(doc.source_type, "20")}
+                {getSourceIcon(doc.source_type, 20)}
                 <p className="truncate break-all ml-2">
                   {doc.semantic_identifier || doc.document_id}
                 </p>

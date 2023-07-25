@@ -31,7 +31,7 @@ export const GoogleDriveCard = ({
   return (
     <div className="border rounded border-gray-700 p-3 w-80">
       <div className="flex items-center">
-        <GoogleDriveIcon size="20" />{" "}
+        <GoogleDriveIcon size={20} />{" "}
         <b className="ml-2 text-xl">Google Drive</b>
       </div>
 

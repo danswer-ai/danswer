@@ -15,6 +15,7 @@ export type ValidSources =
   | "bookstack"
   | "confluence"
   | "jira"
+  | "productboard"
   | "slab"
   | "file"
   | "zulip"
@@ -60,6 +61,8 @@ export interface ConfluenceConfig {
 export interface JiraConfig {
   jira_project_url: string;
 }
+
+export interface ProductboardConfig {}
 
 export interface SlackConfig {
   workspace: string;
@@ -120,6 +123,10 @@ export interface ConfluenceCredentialJson {
 export interface JiraCredentialJson {
   jira_user_email: string;
   jira_api_token: string;
+}
+
+export interface ProductboardCredentialJson {
+  productboard_access_token: string;
 }
 
 export interface SlackCredentialJson {

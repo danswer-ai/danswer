@@ -102,8 +102,8 @@ class SearchResponse(BaseModel):
 
 
 class QAResponse(SearchResponse):
-    answer: str | None
-    quotes: dict[str, dict[str, str | int | None]] | None
+    answer: str | None  # DanswerAnswer
+    quotes: dict[str, dict[str, str | None]] | None  # restructured DanswerQuote
     predicted_flow: QueryFlow
     predicted_search: SearchType
     error_msg: str | None = None

@@ -18,7 +18,7 @@ class Document:
     sections: list[Section]
     source: DocumentSource
     semantic_identifier: str | None
-    metadata: dict[str, Any] | None
+    metadata: dict[str, Any]
 
 
 class InputType(str, Enum):

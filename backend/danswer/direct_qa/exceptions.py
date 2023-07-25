@@ -1,5 +1,10 @@
 class OpenAIKeyMissing(Exception):
-    def __init__(self, msg: str = "Unable to find an OpenAI Key") -> None:
+    default_msg = (
+        "Unable to find existing OpenAI Key. "
+        'A new key can be added from "Keys" section of the Admin Panel'
+    )
+
+    def __init__(self, msg: str = default_msg) -> None:
         super().__init__(msg)
 
 

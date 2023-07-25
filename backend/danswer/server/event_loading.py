@@ -1,9 +1,5 @@
 from typing import Any
 
-from danswer.connectors.slack.connector import get_channel_info
-from danswer.connectors.slack.connector import get_thread
-from danswer.connectors.slack.connector import thread_to_doc
-from danswer.utils.indexing_pipeline import build_indexing_pipeline
 from danswer.utils.logger import setup_logger
 from fastapi import APIRouter
 from pydantic import BaseModel
