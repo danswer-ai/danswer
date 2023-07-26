@@ -35,9 +35,12 @@ BATCH_SIZE_ENCODE_CHUNKS = 8
 # Valid list:
 # - openai-completion
 # - openai-chat-completion
-# - gpt4all-completion
-# - gpt4all-chat-completion
-INTERNAL_MODEL_VERSION = os.environ.get("INTERNAL_MODEL", "openai-chat-completion")
+# - gpt4all-completion -> Due to M1 Macs not having compatible gpt4all version, please install dependency yourself
+# - gpt4all-chat-completion-> Due to M1 Macs not having compatible gpt4all version, please install dependency yourself
+# To use gpt4all, run: pip install --upgrade gpt4all==1.0.5
+INTERNAL_MODEL_VERSION = os.environ.get(
+    "INTERNAL_MODEL_VERSION", "openai-chat-completion"
+)
 # For GPT4ALL, use "ggml-model-gpt4all-falcon-q4_0.bin" for the below for a tested model
 GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION", "gpt-3.5-turbo")
 GEN_AI_MAX_OUTPUT_TOKENS = 512
