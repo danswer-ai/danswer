@@ -9,6 +9,7 @@ from danswer.direct_qa.open_ai import OpenAICompletionQA
 from openai.error import AuthenticationError
 from openai.error import Timeout
 
+# Imports commented out temporarily due to incompatibility of gpt4all with M1 Mac hardware currently
 # from danswer.direct_qa.gpt_4_all import GPT4AllChatCompletionQA
 # from danswer.direct_qa.gpt_4_all import GPT4AllCompletionQA
 
