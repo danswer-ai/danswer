@@ -219,8 +219,11 @@ const GoogleDriveConnectorManagement = ({
             }}
           />
         </div>
-        {googleDriveConnectorIndexingStatus.connector.connector_specific_config
-          .folder_paths.length > 0 && (
+        {/* Need to do the seemingly unnecessary handling for undefined `folder_paths` for backwards compatibility  */}
+        {(
+          googleDriveConnectorIndexingStatus.connector.connector_specific_config
+            .folder_paths || []
+        ).length > 0 && (
           <div className="mt-3">
             It is setup to index the following folders:{" "}
             <div className="mx-2">
