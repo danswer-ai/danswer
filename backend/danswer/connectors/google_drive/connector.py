@@ -192,10 +192,9 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                 found_parent_id = get_folder_id(
                     service=service, parent_id=parent_id, folder_name=folder_name
                 )
-                if parent_id is None:
-                    raise ValueError(
-                        f"Folder '{folder_name}' in path '{path}' not found in Google Drive"
-                    )
+                if found_parent_id is None:
+                    raise ValueError(f"Folder path '{path}' not found in Google Drive")
+                parent_id = found_parent_id
             folder_ids.append(parent_id)
 
         return folder_ids
