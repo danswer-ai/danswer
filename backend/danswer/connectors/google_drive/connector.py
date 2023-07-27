@@ -89,6 +89,8 @@ def get_file_batches(
             query += f"and '{folder_id}' in parents "
         query = query.rstrip()  # remove the trailing space(s)
 
+        logger.debug(f"Running Google Drive fetch with query: {query}")
+
         results = (
             service.files()
             .list(

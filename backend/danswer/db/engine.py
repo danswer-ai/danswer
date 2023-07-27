@@ -48,6 +48,7 @@ def translate_db_time_to_server_time(
     server_now = datetime.now(timezone.utc)
     db_now = get_db_current_time(db_session)
     time_diff = server_now - db_now
+    logger.debug(f"Server time to DB time offset: {time_diff.total_seconds()} seconds")
     return db_time + time_diff
 
 
