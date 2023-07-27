@@ -1,5 +1,8 @@
 import { UpdateConnectorForm } from "@/components/admin/connectors/ConnectorForm";
-import { TextArrayFieldBuilder } from "@/components/admin/connectors/Field";
+import {
+  BooleanFormField,
+  TextArrayFieldBuilder,
+} from "@/components/admin/connectors/Field";
 import { XIcon } from "@/components/icons/icons";
 import { Connector, GoogleDriveConfig } from "@/lib/types";
 import * as Yup from "yup";
@@ -34,10 +37,18 @@ export const ConnectorEditPopup = ({ existingConnector, onSubmit }: Props) => {
         <UpdateConnectorForm<GoogleDriveConfig>
           nameBuilder={googleDriveConnectorNameBuilder}
           existingConnector={existingConnector}
-          formBodyBuilder={TextArrayFieldBuilder({
-            name: "folder_paths",
-            label: "Folder Paths",
-          })}
+          formBodyBuilder={(values) => (
+            <div>
+              {TextArrayFieldBuilder({
+                name: "folder_paths",
+                label: "Folder Paths",
+              })(values)}
+              <BooleanFormField
+                name="include_shared"
+                label="Include Shared Files"
+              />
+            </div>
+          )}
           validationSchema={Yup.object().shape({
             folder_paths: Yup.array()
               .of(
@@ -46,6 +57,7 @@ export const ConnectorEditPopup = ({ existingConnector, onSubmit }: Props) => {
                 )
               )
               .required(),
+            include_shared: Yup.boolean().required(),
           })}
           onSubmit={onSubmit}
         />
