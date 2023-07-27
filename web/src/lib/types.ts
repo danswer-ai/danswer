@@ -48,7 +48,7 @@ export interface GithubConfig {
 }
 
 export interface GoogleDriveConfig {
-  folder_paths: string[];
+  folder_paths?: string[];
 }
 
 export interface BookstackConfig {}
