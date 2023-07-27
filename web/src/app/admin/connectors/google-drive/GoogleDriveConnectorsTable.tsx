@@ -76,6 +76,10 @@ export const GoogleDriveConnectorsTable = ({
           key: "folder_paths",
         },
         {
+          header: "Include Shared",
+          key: "include_shared",
+        },
+        {
           header: "Status",
           key: "status",
         },
@@ -107,6 +111,16 @@ export const GoogleDriveConnectorsTable = ({
             ) : (
               <i>All Folders</i>
             ),
+          include_shared: (
+            <div>
+              {connectorIndexingStatus.connector.connector_specific_config
+                .include_shared ? (
+                <i>Yes</i>
+              ) : (
+                <i>No</i>
+              )}
+            </div>
+          ),
           status: (
             <StatusRow
               connectorIndexingStatus={connectorIndexingStatus}

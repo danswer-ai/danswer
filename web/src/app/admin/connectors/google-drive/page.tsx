@@ -21,7 +21,10 @@ import Cookies from "js-cookie";
 import { GOOGLE_DRIVE_AUTH_IS_ADMIN_COOKIE_NAME } from "@/lib/constants";
 import { deleteCredential, linkCredential } from "@/lib/credential";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
-import { TextArrayFieldBuilder } from "@/components/admin/connectors/Field";
+import {
+  BooleanFormField,
+  TextArrayFieldBuilder,
+} from "@/components/admin/connectors/Field";
 import { GoogleDriveConnectorsTable } from "./GoogleDriveConnectorsTable";
 import { googleDriveConnectorNameBuilder } from "./utils";
 
@@ -125,55 +128,64 @@ const GoogleDriveConnectorManagement = ({
 
   // NOTE: if the connector has no credential linked, then it will not be
   // returned by the indexing-status API
-  if (!googleDriveConnectorIndexingStatus) {
-    return (
-      <>
-        <p className="text-sm mb-2">
-          Fill out the form below to create a connector. We will refresh the
-          latest documents from Google Drive every <b>10</b> minutes.
-        </p>
-        <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
-          <h2 className="font-bold mb-3">Add Connector</h2>
-          <ConnectorForm<GoogleDriveConfig>
-            nameBuilder={googleDriveConnectorNameBuilder}
-            source="google_drive"
-            inputType="poll"
-            formBodyBuilder={TextArrayFieldBuilder({
-              name: "folder_paths",
-              label: "Folder paths:",
-              subtext:
-                "Specify 0 or more folder paths to index! For example, specifying the path " +
-                "'Engineering/Materials' will cause us to only index all files contained " +
-                "within the 'Materials' folder within the 'Engineering' folder. " +
-                "If no folder paths are specified, we will index all documents in your drive.",
-            })}
-            validationSchema={Yup.object().shape({
-              folder_paths: Yup.array()
-                .of(
-                  Yup.string().required(
-                    "Please specify a folder path for your google drive e.g. 'Engineering/Materials'"
-                  )
-                )
-                .required(),
-            })}
-            initialValues={{
-              folder_paths: [],
-            }}
-            refreshFreq={10 * 60} // 10 minutes
-            onSubmit={async (isSuccess, responseJson) => {
-              if (isSuccess && responseJson) {
-                await linkCredential(
-                  responseJson.id,
-                  googleDrivePublicCredential.id
-                );
-                mutate("/api/manage/admin/connector/indexing-status");
-              }
-            }}
-          />
-        </div>
-      </>
-    );
-  }
+  // if (!googleDriveConnectorIndexingStatus) {
+  //   return (
+  //     <>
+  //       <p className="text-sm mb-2">
+  //         Fill out the form below to create a connector. We will refresh the
+  //         latest documents from Google Drive every <b>10</b> minutes.
+  //       </p>
+  //       <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+  //         <h2 className="font-bold mb-3">Add Connector</h2>
+  //         <ConnectorForm<GoogleDriveConfig>
+  //           nameBuilder={googleDriveConnectorNameBuilder}
+  //           source="google_drive"
+  //           inputType="poll"
+  //           formBodyBuilder={(values) => (
+  //             <div>
+  //               {TextArrayFieldBuilder({
+  //                 name: "folder_paths",
+  //                 label: "Folder Paths",
+  //                 subtext:
+  //                   "Specify 0 or more folder paths to index! For example, specifying the path " +
+  //                   "'Engineering/Materials' will cause us to only index all files contained " +
+  //                   "within the 'Materials' folder within the 'Engineering' folder. " +
+  //                   "If no folder paths are specified, we will index all documents in your drive.",
+  //               })(values)}
+  //               <BooleanFormField
+  //                 name="include_shared"
+  //                 label="Include Shared"
+  //               />
+  //             </div>
+  //           )}
+  //           validationSchema={Yup.object().shape({
+  //             folder_paths: Yup.array()
+  //               .of(
+  //                 Yup.string().required(
+  //                   "Please specify a folder path for your google drive e.g. 'Engineering/Materials'"
+  //                 )
+  //               )
+  //               .required(),
+  //             include_shared: Yup.boolean().required(),
+  //           })}
+  //           initialValues={{
+  //             folder_paths: [],
+  //           }}
+  //           refreshFreq={10 * 60} // 10 minutes
+  //           onSubmit={async (isSuccess, responseJson) => {
+  //             if (isSuccess && responseJson) {
+  //               await linkCredential(
+  //                 responseJson.id,
+  //                 googleDrivePublicCredential.id
+  //               );
+  //               mutate("/api/manage/admin/connector/indexing-status");
+  //             }
+  //           }}
+  //         />
+  //       </div>
+  //     </>
+  //   );
+  // }
 
   // If the connector has no credential, we will just hit the ^ section.
   // Leaving this in for now in case we want to change this behavior later
@@ -206,42 +218,65 @@ const GoogleDriveConnectorManagement = ({
     <div>
       <div className="text-sm">
         <p className="my-3">
-          Checkout the{" "}
-          <a href="/admin/indexing/status" className="text-blue-500">
-            status page
-          </a>{" "}
-          for the latest indexing status. We fetch the latest documents from
-          Google Drive every <b>10</b> minutes.
+          {googleDriveConnectorIndexingStatuses.length > 0 ? (
+            <>
+              Checkout the{" "}
+              <a href="/admin/indexing/status" className="text-blue-500">
+                status page
+              </a>{" "}
+              for the latest indexing status. We fetch the latest documents from
+              Google Drive every <b>10</b> minutes.
+            </>
+          ) : (
+            <p className="text-sm mb-2">
+              Fill out the form below to create a connector. We will refresh the
+              latest documents from Google Drive every <b>10</b> minutes.
+            </p>
+          )}
         </p>
       </div>
       {googleDriveConnectorIndexingStatuses.length > 0 && (
-        <div className="text-sm mb-2 font-bold">Existing Connectors:</div>
+        <>
+          <div className="text-sm mb-2 font-bold">Existing Connectors:</div>
+          <GoogleDriveConnectorsTable
+            googleDriveConnectorIndexingStatuses={
+              googleDriveConnectorIndexingStatuses
+            }
+            setPopup={setPopup}
+          />
+        </>
       )}
-      <GoogleDriveConnectorsTable
-        googleDriveConnectorIndexingStatuses={
-          googleDriveConnectorIndexingStatuses
-        }
-        setPopup={setPopup}
-      />
-      <h2 className="font-bold mt-3 text-sm">Add New Connector:</h2>
+
+      {googleDriveConnectorIndexingStatuses.length > 0 && (
+        <h2 className="font-bold mt-3 text-sm">Add New Connector:</h2>
+      )}
       <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
         <ConnectorForm<GoogleDriveConfig>
-          nameBuilder={(values) =>
-            `GoogleDriveConnector-${
-              values.folder_paths && values.folder_paths.join("_")
-            }`
-          }
+          nameBuilder={googleDriveConnectorNameBuilder}
           source="google_drive"
           inputType="poll"
-          formBodyBuilder={TextArrayFieldBuilder({
-            name: "folder_paths",
-            label: "Folder Paths",
-            subtext:
-              "Specify 0 or more folder paths to index! For example, specifying the path " +
-              "'Engineering/Materials' will cause us to only index all files contained " +
-              "within the 'Materials' folder within the 'Engineering' folder. " +
-              "If no folder paths are specified, we will index all documents in your drive.",
-          })}
+          formBodyBuilder={(values) => (
+            <>
+              {TextArrayFieldBuilder({
+                name: "folder_paths",
+                label: "Folder Paths",
+                subtext:
+                  "Specify 0 or more folder paths to index! For example, specifying the path " +
+                  "'Engineering/Materials' will cause us to only index all files contained " +
+                  "within the 'Materials' folder within the 'Engineering' folder. " +
+                  "If no folder paths are specified, we will index all documents in your drive.",
+              })(values)}
+              <BooleanFormField
+                name="include_shared"
+                label="Include Shared Files"
+                subtext={
+                  "If checked, then we will also index all documents shared with you. " +
+                  "If this is combined with folder paths, then we will only index documents " +
+                  "that match both criteria."
+                }
+              />
+            </>
+          )}
           validationSchema={Yup.object().shape({
             folder_paths: Yup.array()
               .of(
@@ -250,9 +285,11 @@ const GoogleDriveConnectorManagement = ({
                 )
               )
               .required(),
+            include_shared: Yup.boolean().required(),
           })}
           initialValues={{
             folder_paths: [],
+            include_shared: false,
           }}
           refreshFreq={10 * 60} // 10 minutes
           onSubmit={async (isSuccess, responseJson) => {
