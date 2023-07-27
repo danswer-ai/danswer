@@ -7,10 +7,6 @@ import { deleteConnector } from "@/lib/connector";
 import { GoogleDriveConfig, ConnectorIndexingStatus } from "@/lib/types";
 import { useSWRConfig } from "swr";
 import { useState } from "react";
-import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
-import { TextArrayFieldBuilder } from "@/components/admin/connectors/Field";
-import * as Yup from "yup";
-import { linkCredential } from "@/lib/credential";
 import { ConnectorEditPopup } from "./ConnectorEditPopup";
 
 interface EditableColumnProps {

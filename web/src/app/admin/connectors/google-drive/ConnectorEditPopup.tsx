@@ -1,7 +1,4 @@
-import {
-  ConnectorForm,
-  UpdateConnectorForm,
-} from "@/components/admin/connectors/ConnectorForm";
+import { UpdateConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { TextArrayFieldBuilder } from "@/components/admin/connectors/Field";
 import { XIcon } from "@/components/icons/icons";
 import { Connector, GoogleDriveConfig } from "@/lib/types";
