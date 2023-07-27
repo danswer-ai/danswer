@@ -127,7 +127,8 @@ export function ConnectorForm<T extends Yup.AnyObject>({
       >
         {({ isSubmitting, values }) => (
           <Form>
-            {formBody ? formBody : formBodyBuilder && formBodyBuilder(values)}
+            {formBody && formBody}
+            {formBodyBuilder && formBodyBuilder(values)}
             <div className="flex">
               <button
                 type="submit"
