@@ -115,9 +115,11 @@ ENABLE_MINI_CHUNK = False
 # Mini chunks for fine-grained embedding, calculated as 128 tokens for 4 additional vectors for 512 chunk size above
 # Not rounded down to not lose any context in full chunk.
 MINI_CHUNK_SIZE = 512
-# Each chunk includes an additional 5 words from previous chunk
-# in extreme cases, may cause some words at the end to be truncated by embedding model
-CHUNK_OVERLAP = 5
+# Each chunk includes an additional CHUNK_WORD_OVERLAP words from previous chunk
+CHUNK_WORD_OVERLAP = 5
+# When trying to finish the last word in the chunk or counting back CHUNK_WORD_OVERLAP backwards,
+# This is the max number of characters allowed in either direction
+CHUNK_MAX_CHAR_OVERLAP = 50
 
 
 #####
