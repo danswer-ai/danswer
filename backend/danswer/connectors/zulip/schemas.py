@@ -1,5 +1,10 @@
-from pydantic import BaseModel, EmailStr
-from typing import List, Any, Optional
+from typing import Any
+from typing import List
+from typing import Optional
+
+from pydantic import BaseModel
+from pydantic import EmailStr
+
 
 class Message(BaseModel):
     id: int
@@ -26,6 +31,7 @@ class Message(BaseModel):
     content_type: Optional[str]
     rendered_content: Optional[str] = None
 
+
 class GetMessagesResponse(BaseModel):
     result: str
     msg: str
@@ -33,5 +39,5 @@ class GetMessagesResponse(BaseModel):
     found_oldest: Optional[bool] = None
     found_newest: Optional[bool] = None
     history_limited: Optional[bool] = None
-    anchor: Optional[bool] = None
+    anchor: Optional[str] = None
     messages: List[Message] = []
