@@ -1,4 +1,6 @@
 import time
+from datetime import datetime
+from datetime import timezone
 
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import LoadConnector
@@ -7,6 +9,7 @@ from danswer.connectors.models import InputType
 from danswer.datastores.indexing_pipeline import build_indexing_pipeline
 from danswer.db.connector import disable_connector
 from danswer.db.connector import fetch_connectors
+from danswer.db.connector_credential_pair import get_last_successful_attempt_time
 from danswer.db.connector_credential_pair import update_connector_credential_pair
 from danswer.db.credentials import backend_update_credential_json
 from danswer.db.engine import get_db_current_time
@@ -14,7 +17,6 @@ from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
 from danswer.db.index_attempt import get_last_successful_attempt
-from danswer.db.index_attempt import get_last_successful_attempt_start_time
 from danswer.db.index_attempt import get_not_started_index_attempts
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.index_attempt import mark_attempt_in_progress
@@ -62,6 +64,7 @@ def create_indexing_jobs(db_session: Session) -> None:
                     credential_id=attempt.credential_id,
                     attempt_status=IndexingStatus.FAILED,
                     net_docs=None,
+                    run_dt=None,
                     db_session=db_session,
                 )
 
@@ -82,6 +85,7 @@ def create_indexing_jobs(db_session: Session) -> None:
                 credential_id=credential.id,
                 attempt_status=IndexingStatus.NOT_STARTED,
                 net_docs=None,
+                run_dt=None,
                 db_session=db_session,
             )
 
@@ -122,6 +126,7 @@ def run_indexing_jobs(db_session: Session) -> None:
             credential_id=db_credential.id,
             attempt_status=IndexingStatus.IN_PROGRESS,
             net_docs=None,
+            run_dt=None,
             db_session=db_session,
         )
 
@@ -143,6 +148,11 @@ def run_indexing_jobs(db_session: Session) -> None:
 
         net_doc_change = 0
         try:
+            # "official" timestamp for this run
+            # used for setting time bounds when fetching updates from apps + is
+            # stored in the DB as the last successful run time if this run succeeds
+            run_time = time.time()
+            run_dt = datetime.fromtimestamp(run_time, tz=timezone.utc)
             if task == InputType.LOAD_STATE:
                 assert isinstance(runnable_connector, LoadConnector)
                 doc_batch_generator = runnable_connector.load_from_state()
@@ -154,14 +164,11 @@ def run_indexing_jobs(db_session: Session) -> None:
                         f"Polling attempt {attempt.id} is missing connector_id or credential_id, "
                         f"can't fetch time range."
                     )
-                last_run_time = get_last_successful_attempt_start_time(
+                last_run_time = get_last_successful_attempt_time(
                     attempt.connector_id, attempt.credential_id, db_session
                 )
-                # Covers very unlikely case that time offset check from DB having tiny variations that coincide with
-                # a new document being created
-                safe_last_run_time = max(last_run_time - 1, 0.0)
                 doc_batch_generator = runnable_connector.poll_source(
-                    safe_last_run_time, time.time()
+                    start=last_run_time, end=run_time
                 )
 
             else:
@@ -184,6 +191,7 @@ def run_indexing_jobs(db_session: Session) -> None:
                 credential_id=db_credential.id,
                 attempt_status=IndexingStatus.SUCCESS,
                 net_docs=net_doc_change,
+                run_dt=run_dt,
                 db_session=db_session,
             )
 
@@ -197,6 +205,7 @@ def run_indexing_jobs(db_session: Session) -> None:
                 credential_id=db_credential.id,
                 attempt_status=IndexingStatus.FAILED,
                 net_docs=net_doc_change,
+                run_dt=run_dt,
                 db_session=db_session,
             )
 

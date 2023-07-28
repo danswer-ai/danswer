@@ -40,18 +40,6 @@ def get_db_current_time(db_session: Session) -> datetime:
     return result
 
 
-def translate_db_time_to_server_time(
-    db_time: datetime, db_session: Session
-) -> datetime:
-    """If a different database driver is used which does not include timezone info,
-    this should hit an exception rather than being wrong"""
-    server_now = datetime.now(timezone.utc)
-    db_now = get_db_current_time(db_session)
-    time_diff = server_now - db_now
-    logger.debug(f"Server time to DB time offset: {time_diff.total_seconds()} seconds")
-    return db_time + time_diff
-
-
 def build_connection_string(
     *,
     db_api: str = ASYNC_DB_API,
