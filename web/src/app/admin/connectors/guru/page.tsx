@@ -121,7 +121,7 @@ const Main = () => {
                   <TextFormField name="guru_user" label="Username:" />
                   <TextFormField
                     name="guru_user_token"
-                    label="Access Token:"
+                    label="User Token:"
                     type="password"
                   />
                 </>
