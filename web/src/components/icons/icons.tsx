@@ -10,6 +10,8 @@ import {
   Link,
   Plug,
   Brain,
+  PencilSimple,
+  X,
 } from "@phosphor-icons/react";
 import { SiBookstack, SiZulip } from "react-icons/si";
 import { FaFile, FaGlobe } from "react-icons/fa";
@@ -106,6 +108,20 @@ export const ZulipIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <SiZulip size={size} className={className} />;
+};
+
+export const PencilIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <PencilSimple size={size} className={className} />;
+};
+
+export const XIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <X size={size} className={className} />;
 };
 
 //
