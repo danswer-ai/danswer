@@ -37,6 +37,7 @@ sentence-transformers==2.2.2
 slack-sdk==3.20.2
 SQLAlchemy[mypy]==2.0.12
 tensorflow==2.12.0
+tiktoken==0.4.0
 transformers==4.30.1
 typesense==0.15.1
 uvicorn==0.21.1

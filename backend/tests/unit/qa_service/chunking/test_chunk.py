@@ -19,6 +19,9 @@ WAR_AND_PEACE = (
 class TestDocumentChunking(unittest.TestCase):
     def setUp(self) -> None:
         self.large_section = Section(text=WAR_AND_PEACE, link="https://www.test.com/")
+        self.large_unbroken_section = Section(
+            text="0123456789" * 40, link="https://www.test.com/"
+        )
         self.document = Document(
             id="test_document",
             sections=[
@@ -52,17 +55,36 @@ class TestDocumentChunking(unittest.TestCase):
             chunk_size=100,
             word_overlap=3,
         )
-        self.assertEqual(len(chunks), 5)
-        self.assertEqual(chunks[0].content, WAR_AND_PEACE[:99])
+        contents = [chunk.content for chunk in chunks]
+
+        self.assertEqual(len(contents), 5)
+        self.assertEqual(contents[0], WAR_AND_PEACE[:100])
         self.assertEqual(
-            chunks[-2].content, WAR_AND_PEACE[-176:-63]
+            contents[-2], WAR_AND_PEACE[-172:-62]
         )  # slightly longer than 100 due to overlap
         self.assertEqual(
-            chunks[-1].content, WAR_AND_PEACE[-121:]
+            contents[-1], WAR_AND_PEACE[-125:]
         )  # large overlap with second to last segment
         self.assertFalse(chunks[0].section_continuation)
         self.assertTrue(chunks[1].section_continuation)
         self.assertTrue(chunks[-1].section_continuation)
+
+    def test_chunk_max_overflow(self) -> None:
+        chunks = chunk_large_section(
+            section=self.large_unbroken_section,
+            document=self.document,
+            start_chunk_id=5,
+            chunk_size=100,
+            word_overlap=3,
+        )
+        contents = [chunk.content for chunk in chunks]
+
+        self.assertEqual(len(contents), 4)
+        self.assertEqual(contents[0], self.large_unbroken_section.text[:150])
+        self.assertEqual(contents[1], self.large_unbroken_section.text[50:250])
+        self.assertEqual(contents[2], self.large_unbroken_section.text[150:350])
+        # Last chunk counts back from the end, full chunk size (100) + 50 overlap => 400 - 150 = 250
+        self.assertEqual(contents[3], self.large_unbroken_section.text[250:])
 
     def test_chunk_document(self) -> None:
         chunks = chunk_document(self.document, chunk_size=100, subsection_overlap=3)
