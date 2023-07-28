@@ -131,11 +131,11 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/connectors/notion",
-                }
+                },
                 {
                   name: (
                     <div className="flex">
-                      <GuruIcon size="16" />
+                      <GuruIcon size={16} />
                       <div className="ml-1">Guru</div>
                     </div>
                   ),
