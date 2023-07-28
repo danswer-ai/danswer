@@ -80,7 +80,7 @@ class WebConnector(LoadConnector):
                 continue
             visited_links.add(current_url)
 
-            logger.info(f"Indexing {current_url}")
+            logger.info(f"Visiting {current_url}")
 
             try:
                 current_visit_time = datetime.now().strftime("%B %d, %Y, %H:%M:%S")
