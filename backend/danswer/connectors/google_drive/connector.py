@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from itertools import chain
 from typing import Any
 
+import docx2txt  # type:ignore
 from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -151,8 +152,6 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
         mime_type
         == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     ):
-        import docx2txt
-
         response = service.files().get_media(fileId=file["id"]).execute()
         word_stream = io.BytesIO(response)
         with tempfile.NamedTemporaryFile(delete=False) as temp:
