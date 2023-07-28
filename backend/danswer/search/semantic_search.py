@@ -58,7 +58,7 @@ def semantic_reranking(
 
     logger.debug(f"Reranked similarity scores: {ranked_sim_scores}")
 
-    return ranked_chunks
+    return list(ranked_chunks)
 
 
 @log_function_time()

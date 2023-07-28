@@ -2,6 +2,7 @@ import json
 from abc import ABC
 from collections.abc import Callable
 from collections.abc import Generator
+from copy import copy
 from functools import wraps
 from typing import Any
 from typing import cast
@@ -92,16 +93,20 @@ def _handle_openai_exceptions_wrapper(openai_call: F, query: str) -> F:
 
 def _tiktoken_trim_chunks(
     chunks: list[InferenceChunk], model_version: str, max_chunk_toks: int = 512
-) -> None:
+) -> list[InferenceChunk]:
     """Edit chunks that have too high token count. Generally due to parsing issues or
     characters from another language that are 1 char = 1 token
     Trimming by tokens leads to information loss but currently no better way of handling
     """
     encoder = tiktoken.encoding_for_model(model_version)
-    for chunk in chunks:
+    new_chunks = copy(chunks)
+    for ind, chunk in enumerate(new_chunks):
         tokens = encoder.encode(chunk.content)
         if len(tokens) > max_chunk_toks:
-            chunk.content = encoder.decode(tokens[:max_chunk_toks])
+            new_chunk = copy(chunk)
+            new_chunk.content = encoder.decode(tokens[:max_chunk_toks])
+            new_chunks[ind] = new_chunk
+    return new_chunks
 
 
 # used to check if the QAModel is an OpenAI model
@@ -138,7 +143,7 @@ class OpenAICompletionQA(OpenAIQAModel):
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
-        _tiktoken_trim_chunks(context_docs, self.model_version)
+        context_docs = _tiktoken_trim_chunks(context_docs, self.model_version)
 
         filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
@@ -168,7 +173,7 @@ class OpenAICompletionQA(OpenAIQAModel):
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> Generator[dict[str, Any] | None, None, None]:
-        _tiktoken_trim_chunks(context_docs, self.model_version)
+        context_docs = _tiktoken_trim_chunks(context_docs, self.model_version)
 
         filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
@@ -234,7 +239,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         query: str,
         context_docs: list[InferenceChunk],
     ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
-        _tiktoken_trim_chunks(context_docs, self.model_version)
+        context_docs = _tiktoken_trim_chunks(context_docs, self.model_version)
 
         messages = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
@@ -272,7 +277,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
     ) -> Generator[dict[str, Any] | None, None, None]:
-        _tiktoken_trim_chunks(context_docs, self.model_version)
+        context_docs = _tiktoken_trim_chunks(context_docs, self.model_version)
 
         messages = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
