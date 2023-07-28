@@ -81,18 +81,18 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: SlabIcon,
         displayName: "Slab",
         adminPageLink: "/admin/connectors/slab",
-      };    
-    case "zulip":
-      return {
-        icon: ZulipIcon,
-        displayName: "Zulip",
-        adminPageLink: "/admin/connectors/zulip",
       };
     case "notion":
       return {
         icon: NotionIcon,
         displayName: "Notion",
         adminPageLink: "/admin/connectors/notion",
+      };
+    case "zulip":
+      return {
+        icon: ZulipIcon,
+        displayName: "Zulip",
+        adminPageLink: "/admin/connectors/zulip",
       };
     default:
       throw new Error("Invalid source type");

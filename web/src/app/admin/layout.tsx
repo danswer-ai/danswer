@@ -162,20 +162,20 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <ZulipIcon size="16" />
-                      <div className="ml-1">Zulip</div>
-                    </div>
-                  ),
-                  link: "/admin/connectors/zulip",
-                },
-                {
-                  name: (
-                    <div className="flex">
-                      <NotionIcon size="16" />
+                      <NotionIcon size={16} />
                       <div className="ml-1">Notion</div>
                     </div>
                   ),
                   link: "/admin/connectors/notion",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <ZulipIcon size={16} />
+                      <div className="ml-1">Zulip</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/zulip",
                 },
               ],
             },

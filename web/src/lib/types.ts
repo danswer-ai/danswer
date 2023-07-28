@@ -18,8 +18,8 @@ export type ValidSources =
   | "productboard"
   | "slab"
   | "file"
-  | "zulip"
-  | "notion";
+  | "notion"
+  | "zulip";
 export type ValidInputTypes = "load_state" | "poll" | "event";
 
 // CONNECTORS
@@ -141,10 +141,10 @@ export interface SlabCredentialJson {
   slab_bot_token: string;
 }
 
-export interface ZulipCredentialJson {
-  zuliprc_content: string;
-}
-
 export interface NotionCredentialJson {
   notion_integration_token: string;
+}
+
+export interface ZulipCredentialJson {
+  zuliprc_content: string;
 }

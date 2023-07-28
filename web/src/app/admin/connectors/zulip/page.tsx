@@ -88,8 +88,9 @@ const MainSection = () => {
       ) : (
         <>
           <p className="text-sm mb-4">
-            To use the Zulip connector, you must first provide content of the zuliprc config file.
-            For more details on setting up the Danswer Zulip connector, see the{" "}
+            To use the Zulip connector, you must first provide content of the
+            zuliprc config file. For more details on setting up the Danswer
+            Zulip connector, see the{" "}
             <a
               className="text-blue-500"
               href="https://docs.danswer.dev/connectors/zulip#setting-up"
@@ -105,7 +106,7 @@ const MainSection = () => {
                   <TextFormField
                     name="zuliprc_content"
                     label="Content of the zuliprc file:"
-                    type="password"
+                    type="text"
                   />
                 </>
               }
@@ -185,12 +186,8 @@ const MainSection = () => {
             </>
           }
           validationSchema={Yup.object().shape({
-            realm_name: Yup.string().required(
-              "Please enter the realm name"
-            ),
-            realm_url: Yup.string().required(
-              "Please enter the realm url"
-            ),
+            realm_name: Yup.string().required("Please enter the realm name"),
+            realm_url: Yup.string().required("Please enter the realm url"),
           })}
           initialValues={{
             realm_name: "",
@@ -216,7 +213,7 @@ export default function Page() {
         <HealthCheckBanner />
       </div>
       <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <ZulipIcon size="32" />
+        <ZulipIcon size={32} />
         <h1 className="text-3xl font-bold pl-2">Zulip</h1>
       </div>
       <MainSection />
