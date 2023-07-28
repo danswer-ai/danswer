@@ -107,11 +107,12 @@ const Main = () => {
             To use the Guru connector, first follow the guide{" "}
             <a
               className="text-blue-500"
-              href="https://developer.productboard.com/#section/Authentication/Public-API-Access-Token"
+              href="https://help.getguru.com/s/article/how-to-obtain-your-api-credentials"
+              target="_blank"
             >
               here
             </a>{" "}
-            to generate an Access Token.
+            to generate a User Token.
           </p>
           <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
             <CredentialForm<GuruCredentialJson>
@@ -155,13 +156,13 @@ const Main = () => {
           <>
             <p className="text-sm mb-2">
               Click the button below to start indexing! We will pull the latest
-              features, components, and products from Productboard every{" "}
-              <b>10</b> minutes.
+              features, components, and products from Guru every <b>10</b>{" "}
+              minutes.
             </p>
             <div className="flex">
-              <ConnectorForm<ProductboardConfig>
-                nameBuilder={() => "ProductboardConnector"}
-                source="productboard"
+              <ConnectorForm<GuruConfig>
+                nameBuilder={() => "GuruConnector"}
+                source="guru"
                 inputType="poll"
                 formBody={null}
                 validationSchema={Yup.object().shape({})}
@@ -179,11 +180,10 @@ const Main = () => {
         ) : (
           <>
             <p className="text-sm mb-2">
-              Productboard connector is setup! We are pulling the latest
-              features, components, and products from Productboard every{" "}
-              <b>10</b> minutes.
+              Guru connector is setup! We are pulling the latest cards from Guru
+              every <b>10</b> minutes.
             </p>
-            <ConnectorsTable<ProductboardConfig, GuruCredentialJson>
+            <ConnectorsTable<GuruConfig, GuruCredentialJson>
               connectorIndexingStatuses={guruConnectorIndexingStatuses}
               liveCredential={guruCredential}
               getCredential={(credential) => {
@@ -209,8 +209,7 @@ const Main = () => {
         <>
           <p className="text-sm">
             Please provide your access token in Step 1 first! Once done with
-            that, you can then start indexing all your Productboard features,
-            components, and products.
+            that, you can then start indexing all your Guru cards.
           </p>
         </>
       )}
