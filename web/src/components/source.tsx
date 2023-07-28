@@ -88,7 +88,7 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         displayName: "Notion",
         adminPageLink: "/admin/connectors/notion",
       };
-     case "guru":
+    case "guru":
       return {
         icon: GuruIcon,
         displayName: "Guru",

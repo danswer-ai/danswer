@@ -73,8 +73,7 @@ export interface SlabConfig {
   base_url: string;
 }
 
-export interface GuruConfig {
-}
+export interface GuruConfig {}
 
 export interface FileConfig {
   file_locations: string[];

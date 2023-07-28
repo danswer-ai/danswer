@@ -117,10 +117,7 @@ const Main = () => {
             <CredentialForm<GuruCredentialJson>
               formBody={
                 <>
-                  <TextFormField
-                    name="guru_user"
-                    label="Username:"
-                  />
+                  <TextFormField name="guru_user" label="Username:" />
                   <TextFormField
                     name="guru_user_token"
                     label="Access Token:"
@@ -192,9 +189,7 @@ const Main = () => {
               getCredential={(credential) => {
                 return (
                   <div>
-                    <p>
-                      {credential.credential_json.guru_user}
-                    </p>
+                    <p>{credential.credential_json.guru_user}</p>
                   </div>
                 );
               }}
