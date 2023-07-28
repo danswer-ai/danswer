@@ -28,5 +28,5 @@ class DocumentSource(str, Enum):
     JIRA = "jira"
     PRODUCTBOARD = "productboard"
     FILE = "file"
-    ZULIP = "zulip"
     NOTION = "notion"
+    ZULIP = "zulip"

@@ -61,26 +61,26 @@ def build_search_narrow(
         apply_md: bool = False,
         anchor: str = "newest",
 ) -> Dict[str, Any]:
+    narrow_filters = []
+
+    if stream:
+        narrow_filters.append({"operator": "stream", "operand": stream})
+
+    if topic:
+        narrow_filters.append({"operator": "topic", "operand": topic})
+
+    if content:
+        narrow_filters.append({"operator": "has", "operand": content})
+
+    if not stream and not topic and not content:
+        narrow_filters.append({"operator": "streams", "operand": "public"})
+
     narrow = {
         "anchor": anchor,
         "num_before": limit,
         "num_after": 0,
-        "narrow": [
-        ],
+        "narrow": narrow_filters
     }
-
-    if stream:
-        narrow["narrow"].append({"operator": "stream", "operand": stream})
-
-    if topic:
-        narrow["narrow"].append({"operator": "topic", "operand": topic})
-
-    if content:
-        narrow["narrow"].append({"operator": "has", "operand": content})
-
-    if not stream and not topic and not content:
-        narrow["narrow"].append({"operator": "streams", "operand": "public"})
-
     narrow["apply_markdown"] = apply_md
 
     return narrow

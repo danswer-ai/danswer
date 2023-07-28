@@ -1,11 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import List, Any
-
-class Recipient(BaseModel):
-    id: int
-    email: EmailStr
-    full_name: str
-    is_mirror_dummy: bool
+from typing import List, Any, Optional
 
 class Message(BaseModel):
     id: int
@@ -18,26 +12,26 @@ class Message(BaseModel):
     sender_full_name: str
     sender_email: str
     sender_realm_str: str
-    subject: str = None
-    topic_links: List[Any] = None
-    last_edit_timestamp: int = None
-    edit_history: Any = None
-    reactions: List[Any] = None
-    submessages: List[Any] = None
-    flags: List[str] = None
-    display_recipient: str = None
-    type: str = None
-    stream_id: int = None
-    avatar_url: str = None
-    content_type: str = None
-    rendered_content: str = None
+    subject: str
+    topic_links: Optional[List[Any]] = None
+    last_edit_timestamp: Optional[int] = None
+    edit_history: Any
+    reactions: List[Any]
+    submessages: List[Any]
+    flags: List[str] = []
+    display_recipient: Optional[str] = None
+    type: Optional[str] = None
+    stream_id: int
+    avatar_url: Optional[str]
+    content_type: Optional[str]
+    rendered_content: Optional[str] = None
 
 class GetMessagesResponse(BaseModel):
     result: str
     msg: str
-    found_anchor: bool = None
-    found_oldest: bool = None
-    found_newest: bool = None
-    history_limited: bool = None
-    anchor: int = None
-    messages: List[Message] = None
+    found_anchor: Optional[bool] = None
+    found_oldest: Optional[bool] = None
+    found_newest: Optional[bool] = None
+    history_limited: Optional[bool] = None
+    anchor: Optional[bool] = None
+    messages: List[Message] = []

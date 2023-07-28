@@ -46,8 +46,8 @@ def identify_connector_class(
         DocumentSource.JIRA: JiraConnector,
         DocumentSource.PRODUCTBOARD: ProductboardConnector,
         DocumentSource.SLAB: SlabConnector,
-        DocumentSource.ZULIP: ZulipConnector,
         DocumentSource.NOTION: NotionConnector,
+        DocumentSource.ZULIP: ZulipConnector,
     }
     connector_by_source = connector_map.get(source, {})
 
