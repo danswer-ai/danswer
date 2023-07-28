@@ -6,28 +6,21 @@ from typing import Any
 from urllib.parse import urlparse
 
 from atlassian import Confluence  # type:ignore
-from bs4 import BeautifulSoup
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import HTML_SEPARATOR
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.utils.text_processing import parse_html_page_basic
 
 # Potential Improvements
 # 1. If wiki page instead of space, do a search of all the children of the page instead of index all in the space
 # 2. Include attachments, etc
 # 3. Segment into Sections for more accurate linking, can split by headers but make sure no text/ordering is lost
-
-
-class ConfluenceClientNotSetUpError(PermissionError):
-    def __init__(self) -> None:
-        super().__init__(
-            "Confluence Client is not set up, was load_credentials called?"
-        )
 
 
 def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str]:
@@ -59,8 +52,7 @@ def _comment_dfs(
 ) -> str:
     for comment_page in comment_pages:
         comment_html = comment_page["body"]["storage"]["value"]
-        soup = BeautifulSoup(comment_html, "html.parser")
-        comments_str += "\nComment:\n" + soup.get_text(HTML_SEPARATOR)
+        comments_str += "\nComment:\n" + parse_html_page_basic(comment_html)
         child_comment_pages = confluence_client.get_page_child_by_type(
             comment_page["id"],
             type="comment",
@@ -101,7 +93,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         doc_batch: list[Document] = []
 
         if self.confluence_client is None:
-            raise ConfluenceClientNotSetUpError()
+            raise ConnectorMissingCredentialError("Confluence")
 
         batch = self.confluence_client.get_all_pages_from_space(
             self.space,
@@ -116,8 +108,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
             if time_filter is None or time_filter(last_modified):
                 page_html = page["body"]["storage"]["value"]
-                soup = BeautifulSoup(page_html, "html.parser")
-                page_text = page.get("title", "") + "\n" + soup.get_text(HTML_SEPARATOR)
+                page_text = (
+                    page.get("title", "") + "\n" + parse_html_page_basic(page_html)
+                )
                 comment_pages = self.confluence_client.get_page_child_by_type(
                     page["id"],
                     type="comment",
@@ -146,7 +139,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         if self.confluence_client is None:
-            raise ConfluenceClientNotSetUpError()
+            raise ConnectorMissingCredentialError("Confluence")
 
         start_ind = 0
         while True:
@@ -162,7 +155,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
         if self.confluence_client is None:
-            raise ConfluenceClientNotSetUpError()
+            raise ConnectorMissingCredentialError("Confluence")
 
         start_time = datetime.fromtimestamp(start, tz=timezone.utc)
         end_time = datetime.fromtimestamp(end, tz=timezone.utc)

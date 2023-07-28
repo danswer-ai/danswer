@@ -6,6 +6,14 @@ from danswer.configs.constants import DocumentSource
 from pydantic import BaseModel
 
 
+class ConnectorMissingCredentialError(PermissionError):
+    def __init__(self, connector_name: str) -> None:
+        connector_name = connector_name or "Unknown"
+        super().__init__(
+            f"{connector_name} connector missing credentials, was load_credentials called?"
+        )
+
+
 @dataclass
 class Section:
     link: str

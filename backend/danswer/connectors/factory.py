@@ -9,6 +9,7 @@ from danswer.connectors.file.connector import LocalFileConnector
 from danswer.connectors.github.connector import GithubConnector
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.notion.connector import NotionConnector
+from danswer.connectors.guru.connector import GuruConnector
 from danswer.connectors.interfaces import BaseConnector
 from danswer.connectors.interfaces import EventConnector
 from danswer.connectors.interfaces import LoadConnector
@@ -46,6 +47,7 @@ def identify_connector_class(
         DocumentSource.PRODUCTBOARD: ProductboardConnector,
         DocumentSource.SLAB: SlabConnector,
         DocumentSource.NOTION: NotionConnector,
+        DocumentSource.GURU: GuruConnector,
     }
     connector_by_source = connector_map.get(source, {})
 

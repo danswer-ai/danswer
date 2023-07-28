@@ -22,6 +22,7 @@ class DocumentSource(str, Enum):
     WEB = "web"
     GOOGLE_DRIVE = "google_drive"
     GITHUB = "github"
+    GURU = "guru"
     BOOKSTACK = "bookstack"
     CONFLUENCE = "confluence"
     SLAB = "slab"

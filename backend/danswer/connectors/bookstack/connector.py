@@ -4,22 +4,17 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
-from bs4 import BeautifulSoup
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import HTML_SEPARATOR
 from danswer.connectors.bookstack.client import BookStackApiClient
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-
-
-class BookstackClientNotSetUpError(PermissionError):
-    def __init__(self) -> None:
-        super().__init__("BookStack Client is not set up, was load_credentials called?")
+from danswer.utils.text_processing import parse_html_page_basic
 
 
 class BookstackConnector(LoadConnector, PollConnector):
@@ -135,8 +130,7 @@ class BookstackConnector(LoadConnector, PollConnector):
         page_html = (
             "<h1>" + html.escape(page_name) + "</h1>" + str(page_data.get("html"))
         )
-        soup = BeautifulSoup(page_html, "html.parser")
-        text = soup.get_text(HTML_SEPARATOR)
+        text = parse_html_page_basic(page_html)
         time.sleep(0.1)
         return Document(
             id="page:" + page_id,
@@ -148,7 +142,7 @@ class BookstackConnector(LoadConnector, PollConnector):
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         if self.bookstack_client is None:
-            raise BookstackClientNotSetUpError()
+            raise ConnectorMissingCredentialError("Bookstack")
 
         return self.poll_source(None, None)
 
@@ -156,7 +150,7 @@ class BookstackConnector(LoadConnector, PollConnector):
         self, start: SecondsSinceUnixEpoch | None, end: SecondsSinceUnixEpoch | None
     ) -> GenerateDocumentsOutput:
         if self.bookstack_client is None:
-            raise BookstackClientNotSetUpError()
+            raise ConnectorMissingCredentialError("Bookstack")
 
         transform_by_endpoint: dict[
             str, Callable[[BookStackApiClient, dict], Document]

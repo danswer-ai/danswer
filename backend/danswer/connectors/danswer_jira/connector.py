@@ -9,6 +9,7 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
@@ -97,9 +98,7 @@ class JiraConnector(LoadConnector, PollConnector):
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         if self.jira_client is None:
-            raise PermissionError(
-                "Jira Client is not set up, was load_credentials called?"
-            )
+            raise ConnectorMissingCredentialError("Jira")
 
         start_ind = 0
         while True:
@@ -121,9 +120,7 @@ class JiraConnector(LoadConnector, PollConnector):
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
         if self.jira_client is None:
-            raise PermissionError(
-                "Jira Client is not set up, was load_credentials called?"
-            )
+            raise ConnectorMissingCredentialError("Jira")
 
         start_date_str = datetime.fromtimestamp(start, tz=timezone.utc).strftime(
             "%Y-%m-%d %H:%M"
