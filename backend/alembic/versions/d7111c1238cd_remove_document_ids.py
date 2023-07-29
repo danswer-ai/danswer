@@ -1,4 +1,4 @@
-"""Remove Document Index
+"""Remove Document IDs
 
 Revision ID: d7111c1238cd
 Revises: 465f78d9b7f9
