@@ -25,7 +25,7 @@ class Document:
     id: str  # This must be unique or during indexing/reindexing, chunks will be overwritten
     sections: list[Section]
     source: DocumentSource
-    semantic_identifier: str | None
+    semantic_identifier: str
     metadata: dict[str, Any]
 
 

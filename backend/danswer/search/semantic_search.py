@@ -33,7 +33,9 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
                 blurb=chunk.blurb,
                 source_type=chunk.source_type,
             )
-            for chunk in chunks if chunk.semantic_identifier
+            # semantic identifier should always exist but for really old indices, it was not enforced
+            for chunk in chunks
+            if chunk.semantic_identifier
         ]
         if chunks
         else []
