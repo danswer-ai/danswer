@@ -245,7 +245,7 @@ class WebConnector(LoadConnector):
                         id=current_url,
                         sections=[Section(link=current_url, text=page_text)],
                         source=DocumentSource.WEB,
-                        semantic_identifier=title,
+                        semantic_identifier=title or current_url,
                         metadata={},
                     )
                 )
