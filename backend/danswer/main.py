@@ -96,6 +96,9 @@ def get_application() -> FastAPI:
         tags=["users"],
     )
     if ENABLE_OAUTH:
+        if oauth_client is None:
+            raise RuntimeError("OAuth is enabled but no OAuth client is configured")
+
         if OAUTH_TYPE == "google":
             # special case for google
             application.include_router(
