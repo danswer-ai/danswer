@@ -7,9 +7,8 @@ Create Date: 2023-05-05 14:40:10.242502
 """
 import fastapi_users_db_sqlalchemy
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
-
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "6d387b3196c2"

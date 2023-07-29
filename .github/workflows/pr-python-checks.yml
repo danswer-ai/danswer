@@ -2,7 +2,7 @@ name: Python Checks
 
 on:
   pull_request:
-    branches: [ main ]  # replace with your target branch
+    branches: [ main ]
 
 jobs:
   mypy-check:
@@ -10,19 +10,20 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
-
+      uses: actions/checkout@v3
+    
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.11
-
-    - name: Install dependencies
-      run: |
+        python-version: '3.11'
+        cache: 'pip'
+        cache-dependency-path: |
+          backend/requirements/default.txt
+          backend/requirements/dev.txt
+    - run: | 
         python -m pip install --upgrade pip
-        cd backend
-        pip install -r requirements/default.txt
-        pip install -r requirements/dev.txt
+        pip install -r backend/requirements/default.txt
+        pip install -r backend/requirements/dev.txt
 
     - name: Run MyPy
       run: |
@@ -32,7 +33,7 @@ jobs:
     - name: Check import order with reorder-python-imports
       run: |
         cd backend
-        find . -name "*.py" | xargs reorder-python-imports --py311-plus
+        find ./danswer -name "*.py" | xargs reorder-python-imports --py311-plus
 
     - name: Check code formatting with Black
       run: |

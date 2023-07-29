@@ -10,6 +10,10 @@ repos:
     hooks:
     - id: reorder-python-imports
       args: ['--py311-plus', '--application-directories=backend/']
+      # need to ignore alembic files, since reorder-python-imports gets confused
+      # and thinks that alembic is a local package since there is a folder
+      # in the backend directory called `alembic`
+      exclude: ^backend/alembic/
 
   # We would like to have a mypy pre-commit hook, but due to the fact that 
   # pre-commit runs in it's own isolated environment, we would need to install 
