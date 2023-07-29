@@ -116,16 +116,14 @@ def run_indexing_jobs(db_session: Session) -> None:
             f"with credentials: '{attempt.credential_id}'"
         )
 
-        start_time = time.time()
-        start_time_str = datetime.utcfromtimestamp(start_time).strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
-        logger.info(f"Connector Starting UTC Time: {start_time_str}")
+        run_time = time.time()
+        run_time_str = datetime.utcfromtimestamp(run_time).strftime("%Y-%m-%d %H:%M:%S")
+        logger.info(f"Connector Starting UTC Time: {run_time_str}")
 
         # "official" timestamp for this run
         # used for setting time bounds when fetching updates from apps and
         # is stored in the DB as the last successful run time if this run succeeds
-        run_dt = datetime.fromtimestamp(start_time, tz=timezone.utc)
+        run_dt = datetime.fromtimestamp(run_time, tz=timezone.utc)
 
         mark_attempt_in_progress(attempt, db_session)
 
@@ -175,7 +173,7 @@ def run_indexing_jobs(db_session: Session) -> None:
                     attempt.connector_id, attempt.credential_id, db_session
                 )
                 doc_batch_generator = runnable_connector.poll_source(
-                    start=last_run_time, end=start_time
+                    start=last_run_time, end=run_time
                 )
 
             else:
@@ -209,13 +207,13 @@ def run_indexing_jobs(db_session: Session) -> None:
                 f"Indexed or updated {document_count} total documents for a total of {chunk_count} chunks"
             )
             logger.info(
-                f"Connector successfully finished, elapsed time: {time.time() - start_time} seconds"
+                f"Connector successfully finished, elapsed time: {time.time() - run_time} seconds"
             )
 
         except Exception as e:
             logger.exception(f"Indexing job with id {attempt.id} failed due to {e}")
             logger.info(
-                f"Failed connector elapsed time: {time.time() - start_time} seconds"
+                f"Failed connector elapsed time: {time.time() - run_time} seconds"
             )
             mark_attempt_failed(attempt, db_session, failure_reason=str(e))
             update_connector_credential_pair(
