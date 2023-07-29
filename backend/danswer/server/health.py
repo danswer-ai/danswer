@@ -1,5 +1,6 @@
-from danswer.server.models import StatusResponse
 from fastapi import APIRouter
+
+from danswer.server.models import StatusResponse
 
 
 router = APIRouter()

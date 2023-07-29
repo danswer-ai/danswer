@@ -3,10 +3,11 @@ import os
 from pathlib import Path
 from typing import cast
 
+from filelock import FileLock
+
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.dynamic_configs.interface import DynamicConfigStore
 from danswer.dynamic_configs.interface import JSON_ro
-from filelock import FileLock
 
 
 FILE_LOCK_TIMEOUT = 10

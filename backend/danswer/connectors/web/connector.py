@@ -10,6 +10,13 @@ from urllib.parse import urlparse
 import bs4
 import requests
 from bs4 import BeautifulSoup
+from oauthlib.oauth2 import BackendApplicationClient
+from playwright.sync_api import BrowserContext
+from playwright.sync_api import Playwright
+from playwright.sync_api import sync_playwright
+from PyPDF2 import PdfReader
+from requests_oauthlib import OAuth2Session  # type:ignore
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.app_configs import WEB_CONNECTOR_IGNORED_CLASSES
 from danswer.configs.app_configs import WEB_CONNECTOR_IGNORED_ELEMENTS
@@ -22,12 +29,6 @@ from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
-from oauthlib.oauth2 import BackendApplicationClient
-from playwright.sync_api import BrowserContext
-from playwright.sync_api import Playwright
-from playwright.sync_api import sync_playwright
-from PyPDF2 import PdfReader
-from requests_oauthlib import OAuth2Session  # type:ignore
 
 logger = setup_logger()
 

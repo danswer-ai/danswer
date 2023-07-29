@@ -7,6 +7,10 @@ from itertools import chain
 from typing import Any
 
 import docx2txt  # type:ignore
+from google.oauth2.credentials import Credentials  # type: ignore
+from googleapiclient import discovery  # type: ignore
+from PyPDF2 import PdfReader
+
 from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -20,9 +24,6 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.connectors.utils import batch_generator
 from danswer.utils.logger import setup_logger
-from google.oauth2.credentials import Credentials  # type: ignore
-from googleapiclient import discovery  # type: ignore
-from PyPDF2 import PdfReader
 
 logger = setup_logger()
 

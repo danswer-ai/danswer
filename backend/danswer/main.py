@@ -1,18 +1,26 @@
 import nltk  # type:ignore
 import uvicorn
+from fastapi import FastAPI
+from fastapi import Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
 from danswer.auth.users import fastapi_users
 from danswer.auth.users import oauth_client
-from danswer.configs.app_configs import APP_HOST, OAUTH_TYPE, OPENID_CONFIG_URL
+from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import ENABLE_OAUTH
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
+from danswer.configs.app_configs import OAUTH_TYPE
+from danswer.configs.app_configs import OPENID_CONFIG_URL
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import TYPESENSE_DEFAULT_COLLECTION
@@ -29,11 +37,6 @@ from danswer.server.health import router as health_router
 from danswer.server.manage import router as admin_router
 from danswer.server.search_backend import router as backend_router
 from danswer.utils.logger import setup_logger
-from fastapi import FastAPI
-from fastapi import Request
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 
 logger = setup_logger()
@@ -50,7 +53,7 @@ def validation_exception_handler(
 
 def value_error_handler(_: Request, exc: ValueError) -> JSONResponse:
     try:
-        raise(exc)
+        raise (exc)
     except:
         # log stacktrace
         logger.exception("ValueError")
@@ -124,9 +127,7 @@ def get_application() -> FastAPI:
             tags=["auth"],
         )
         application.include_router(
-            fastapi_users.get_oauth_associate_router(
-                oauth_client, UserRead, SECRET
-            ),
+            fastapi_users.get_oauth_associate_router(oauth_client, UserRead, SECRET),
             prefix="/auth/associate/oauth",
             tags=["auth"],
         )
@@ -161,7 +162,9 @@ def get_application() -> FastAPI:
                 if not OAUTH_CLIENT_ID:
                     logger.warning("OAuth is turned on but OAUTH_CLIENT_ID is empty")
                 if not OAUTH_CLIENT_SECRET:
-                    logger.warning("OAuth is turned on but OAUTH_CLIENT_SECRET is empty")
+                    logger.warning(
+                        "OAuth is turned on but OAUTH_CLIENT_SECRET is empty"
+                    )
                 if OAUTH_TYPE == "openid" and not OPENID_CONFIG_URL:
                     logger.warning("OpenID is turned on but OPENID_CONFIG_URL is emtpy")
                 else:

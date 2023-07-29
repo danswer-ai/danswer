@@ -6,6 +6,9 @@ from typing import Optional
 from typing import TypeVar
 from uuid import UUID
 
+from pydantic import BaseModel
+from pydantic.generics import GenericModel
+
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
 from danswer.datastores.interfaces import IndexFilter
@@ -13,8 +16,6 @@ from danswer.db.models import Connector
 from danswer.db.models import IndexingStatus
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
-from pydantic import BaseModel
-from pydantic.generics import GenericModel
 
 
 DataT = TypeVar("DataT")

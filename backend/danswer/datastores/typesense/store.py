@@ -4,6 +4,8 @@ from typing import Any
 from uuid import UUID
 
 import typesense  # type: ignore
+from typesense.exceptions import ObjectNotFound  # type: ignore
+
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import IndexChunk
 from danswer.chunking.models import InferenceChunk
@@ -27,7 +29,6 @@ from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import KeywordIndex
 from danswer.utils.clients import get_typesense_client
 from danswer.utils.logger import setup_logger
-from typesense.exceptions import ObjectNotFound  # type: ignore
 
 
 logger = setup_logger()

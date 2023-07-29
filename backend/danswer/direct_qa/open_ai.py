@@ -10,6 +10,9 @@ from typing import TypeVar
 
 import openai
 import tiktoken
+from openai.error import AuthenticationError
+from openai.error import Timeout
+
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import INCLUDE_METADATA
 from danswer.configs.app_configs import OPENAI_API_KEY
@@ -31,8 +34,6 @@ from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
-from openai.error import AuthenticationError
-from openai.error import Timeout
 
 
 logger = setup_logger()

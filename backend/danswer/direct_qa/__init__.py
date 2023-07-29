@@ -1,13 +1,14 @@
 from typing import Any
 
+from openai.error import AuthenticationError
+from openai.error import Timeout
+
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
 from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.open_ai import OpenAIChatCompletionQA
 from danswer.direct_qa.open_ai import OpenAICompletionQA
-from openai.error import AuthenticationError
-from openai.error import Timeout
 
 # Imports commented out temporarily due to incompatibility of gpt4all with M1 Mac hardware currently
 # from danswer.direct_qa.gpt_4_all import GPT4AllChatCompletionQA

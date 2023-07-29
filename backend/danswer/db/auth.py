@@ -2,12 +2,6 @@ from collections.abc import AsyncGenerator
 from typing import Any
 from typing import Dict
 
-from danswer.auth.schemas import UserRole
-from danswer.db.engine import get_async_session
-from danswer.db.engine import get_sqlalchemy_async_engine
-from danswer.db.models import AccessToken
-from danswer.db.models import OAuthAccount
-from danswer.db.models import User
 from fastapi import Depends
 from fastapi_users.db import SQLAlchemyUserDatabase
 from fastapi_users.models import UP
@@ -15,6 +9,13 @@ from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyAccessTokenDataba
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
+from danswer.auth.schemas import UserRole
+from danswer.db.engine import get_async_session
+from danswer.db.engine import get_sqlalchemy_async_engine
+from danswer.db.models import AccessToken
+from danswer.db.models import OAuthAccount
+from danswer.db.models import User
 
 
 async def get_user_count() -> int:

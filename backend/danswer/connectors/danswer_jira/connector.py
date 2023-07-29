@@ -3,6 +3,9 @@ from datetime import timezone
 from typing import Any
 from urllib.parse import urlparse
 
+from jira import JIRA
+from jira.resources import Issue
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -13,8 +16,6 @@ from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
-from jira import JIRA
-from jira.resources import Issue
 
 
 logger = setup_logger()
