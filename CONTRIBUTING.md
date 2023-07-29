@@ -125,7 +125,7 @@ DISABLE_AUTH=true npm run dev
 ```
 _for Windows, run:_
 ```bash
-$env:DISABLE_AUTH = "true"; npm run dev
+(SET "DISABLE_AUTH=true" && npm run dev)
 ```
 
 
