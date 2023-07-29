@@ -56,11 +56,9 @@ def mark_attempt_in_progress(
 
 def mark_attempt_succeeded(
     index_attempt: IndexAttempt,
-    docs_indexed: list[str],
     db_session: Session,
 ) -> None:
     index_attempt.status = IndexingStatus.SUCCESS
-    index_attempt.document_ids = docs_indexed
     db_session.add(index_attempt)
     db_session.commit()
 
