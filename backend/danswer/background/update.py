@@ -115,6 +115,18 @@ def run_indexing_jobs(db_session: Session) -> None:
             f"with config: '{attempt.connector.connector_specific_config}', and "
             f"with credentials: '{attempt.credential_id}'"
         )
+
+        start_time = time.time()
+        start_time_str = datetime.utcfromtimestamp(start_time).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+        logger.info(f"Connector Starting UTC Time: {start_time_str}")
+
+        # "official" timestamp for this run
+        # used for setting time bounds when fetching updates from apps and
+        # is stored in the DB as the last successful run time if this run succeeds
+        run_dt = datetime.fromtimestamp(start_time, tz=timezone.utc)
+
         mark_attempt_in_progress(attempt, db_session)
 
         db_connector = attempt.connector
@@ -148,11 +160,6 @@ def run_indexing_jobs(db_session: Session) -> None:
 
         net_doc_change = 0
         try:
-            # "official" timestamp for this run
-            # used for setting time bounds when fetching updates from apps + is
-            # stored in the DB as the last successful run time if this run succeeds
-            run_time = time.time()
-            run_dt = datetime.fromtimestamp(run_time, tz=timezone.utc)
             if task == InputType.LOAD_STATE:
                 assert isinstance(runnable_connector, LoadConnector)
                 doc_batch_generator = runnable_connector.load_from_state()
@@ -168,24 +175,27 @@ def run_indexing_jobs(db_session: Session) -> None:
                     attempt.connector_id, attempt.credential_id, db_session
                 )
                 doc_batch_generator = runnable_connector.poll_source(
-                    start=last_run_time, end=run_time
+                    start=last_run_time, end=start_time
                 )
 
             else:
                 # Event types cannot be handled by a background type, leave these untouched
                 continue
 
-            document_ids: list[str] = []
+            document_count = 0
+            chunk_count = 0
             for doc_batch in doc_batch_generator:
                 index_user_id = (
                     None if db_credential.public_doc else db_credential.user_id
                 )
-                net_doc_change += indexing_pipeline(
+                new_docs, total_batch_chunks = indexing_pipeline(
                     documents=doc_batch, user_id=index_user_id
                 )
-                document_ids.extend([doc.id for doc in doc_batch])
+                net_doc_change += new_docs
+                chunk_count += total_batch_chunks
+                document_count += len(doc_batch)
 
-            mark_attempt_succeeded(attempt, document_ids, db_session)
+            mark_attempt_succeeded(attempt, db_session)
             update_connector_credential_pair(
                 connector_id=db_connector.id,
                 credential_id=db_credential.id,
@@ -195,10 +205,18 @@ def run_indexing_jobs(db_session: Session) -> None:
                 db_session=db_session,
             )
 
-            logger.info(f"Indexed {len(document_ids)} documents")
+            logger.info(
+                f"Indexed or updated {document_count} total documents for a total of {chunk_count} chunks"
+            )
+            logger.info(
+                f"Connector successfully finished, elapsed time: {time.time() - start_time} seconds"
+            )
 
         except Exception as e:
             logger.exception(f"Indexing job with id {attempt.id} failed due to {e}")
+            logger.info(
+                f"Failed connector elapsed time: {time.time() - start_time} seconds"
+            )
             mark_attempt_failed(attempt, db_session, failure_reason=str(e))
             update_connector_credential_pair(
                 connector_id=db_connector.id,
@@ -214,7 +232,8 @@ def update_loop(delay: int = 10) -> None:
     engine = get_sqlalchemy_engine()
     while True:
         start = time.time()
-        logger.info(f"Running update, current time: {time.ctime(start)}")
+        start_time_utc = datetime.utcfromtimestamp(start).strftime("%Y-%m-%d %H:%M:%S")
+        logger.info(f"Running update, current UTC time: {start_time_utc}")
         try:
             with Session(engine, expire_on_commit=False) as db_session:
                 create_indexing_jobs(db_session)

@@ -18,7 +18,9 @@ logger = setup_logger()
 
 
 class IndexingPipelineProtocol(Protocol):
-    def __call__(self, documents: list[Document], user_id: UUID | None) -> int:
+    def __call__(
+        self, documents: list[Document], user_id: UUID | None
+    ) -> tuple[int, int]:
         ...
 
 
@@ -30,7 +32,10 @@ def _indexing_pipeline(
     keyword_index: KeywordIndex,
     documents: list[Document],
     user_id: UUID | None,
-) -> int:
+) -> tuple[int, int]:
+    """Takes different pieces of the indexing pipeline and applies it to a batch of documents
+    Note that the documents should already be batched at this point so that it does not inflate the
+    memory requirements"""
     # TODO: make entire indexing pipeline async to not block the entire process
     # when running on async endpoints
     chunks = list(chain(*[chunker.chunk(document) for document in documents]))
@@ -42,7 +47,7 @@ def _indexing_pipeline(
         logger.warning("Document count change from keyword/vector indices don't align")
     net_new_docs = max(net_doc_count_keyword, net_doc_count_vector)
     logger.info(f"Indexed {net_new_docs} new documents")
-    return net_new_docs
+    return net_new_docs, len(chunks)
 
 
 def build_indexing_pipeline(
@@ -52,7 +57,7 @@ def build_indexing_pipeline(
     vector_index: VectorIndex | None = None,
     keyword_index: KeywordIndex | None = None,
 ) -> IndexingPipelineProtocol:
-    """Builds a pipline which takes in a list of docs and indexes them.
+    """Builds a pipline which takes in a list (batch) of docs and indexes them.
 
     Default uses _ chunker, _ embedder, and qdrant for the datastore"""
     if chunker is None:

@@ -4,6 +4,9 @@ from typing import Any
 from typing import List
 from uuid import UUID
 
+from danswer.auth.schemas import UserRole
+from danswer.configs.constants import DocumentSource
+from danswer.connectors.models import InputType
 from fastapi_users.db import SQLAlchemyBaseOAuthAccountTableUUID
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyBaseAccessTokenTableUUID
@@ -20,10 +23,6 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
-
-from danswer.auth.schemas import UserRole
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.models import InputType
 
 
 class IndexingStatus(str, PyEnum):
@@ -161,9 +160,6 @@ class IndexAttempt(Base):
         nullable=True,
     )
     status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
-    document_ids: Mapped[list[str] | None] = mapped_column(
-        postgresql.ARRAY(String()), default=None
-    )  # only filled if status = "complete"
     error_msg: Mapped[str | None] = mapped_column(
         String(), default=None
     )  # only filled if status = "failed"
@@ -189,7 +185,6 @@ class IndexAttempt(Base):
             f"<IndexAttempt(id={self.id!r}, "
             f"connector_id={self.connector_id!r}, "
             f"status={self.status!r}, "
-            f"document_ids={self.document_ids!r}, "
             f"error_msg={self.error_msg!r})>"
             f"time_created={self.time_created!r}, "
             f"time_updated={self.time_updated!r}, "
