@@ -70,6 +70,10 @@ For convenience here's a command for it:
 python -m venv .venv
 source .venv/bin/activate
 ```
+_For Windows activate via:_
+```bash
+.venv\Scripts\activate
+```
 
 Install the required python dependencies:
 ```bash
@@ -83,7 +87,7 @@ Once the above is done, navigate to `danswer/web` run:
 npm i
 ```
 
-Install Playwright (required by the Web Connector)
+Install Playwright (required by the Web Connector), with the python venv active, run:
 ```bash
 playwright install
 ```
@@ -121,11 +125,12 @@ DISABLE_AUTH=true npm run dev
 ```
 _for Windows, run:_
 ```bash
-$env:DISABLE_AUTH = "true"; npm run dev
+(SET "DISABLE_AUTH=true" && npm run dev)
 ```
 
 
-The first time running Danswer, you will need to run the migrations. Navigate to `danswer/backend` and run:
+The first time running Danswer, you will need to run the DB migrations.
+Navigate to `danswer/backend` and with the venv active, run:
 ```bash
 alembic upgrade head
 ```
@@ -134,10 +139,18 @@ To run the backend API server, navigate to `danswer/backend` and run:
 ```bash
 DISABLE_AUTH=True TYPESENSE_API_KEY=typesense_api_key DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage uvicorn danswer.main:app --reload --port 8080
 ```
+_For Windows (for compatibility with both PowerShell and Command Prompt):_
+```bash
+powershell -Command " $env:DISABLE_AUTH='True'; $env:TYPESENSE_API_KEY='typesense_api_key'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; uvicorn danswer.main:app --reload --port 8080 "
+```
 
 To run the background job to check for connector updates and index documents, navigate to `danswer/backend` and run:
 ```bash
 PYTHONPATH=. TYPESENSE_API_KEY=typesense_api_key DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/update.py
+```
+_For Windows:_
+```bash
+powershell -Command " $env:PYTHONPATH='.'; $env:TYPESENSE_API_KEY='typesense_api_key'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/update.py "
 ```
 
 Note: if you need finer logging, add the additional environment variable `LOG_LEVEL=DEBUG` to the relevant services.
