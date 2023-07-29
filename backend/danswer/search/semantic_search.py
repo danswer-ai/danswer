@@ -33,7 +33,7 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
                 blurb=chunk.blurb,
                 source_type=chunk.source_type,
             )
-            for chunk in chunks
+            for chunk in chunks if chunk.semantic_identifier
         ]
         if chunks
         else []
