@@ -97,7 +97,7 @@ def _get_folders(
     include_shared: bool = GOOGLE_DRIVE_INCLUDE_SHARED,
     batch_size: int = INDEX_BATCH_SIZE,
 ) -> Generator[GoogleDriveFileType, None, None]:
-    query = f"mimeType='{DRIVE_FOLDER_TYPE}' "
+    query = f"mimeType = '{DRIVE_FOLDER_TYPE}' "
     if folder_id:
         query += f"and '{folder_id}' in parents "
     query = query.rstrip()  # remove the trailing space(s)
@@ -119,7 +119,7 @@ def _get_files(
     supported_drive_doc_types: list[str] = SUPPORTED_DRIVE_DOC_TYPES,
     batch_size: int = INDEX_BATCH_SIZE,
 ) -> Generator[GoogleDriveFileType, None, None]:
-    query = f"mimeType!='{DRIVE_FOLDER_TYPE}' "
+    query = f"mimeType != '{DRIVE_FOLDER_TYPE}' "
     if time_range_start is not None:
         time_start = (
             datetime.datetime.utcfromtimestamp(time_range_start).isoformat() + "Z"
@@ -328,4 +328,6 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         # need to subtract 10 minutes from start time to account for modifiedTime propogation
         # if a document is modified, it takes some time for the API to reflect these changes
         # if we do not have an offset, then we may "miss" the update when polling
-        yield from self._fetch_docs_from_drive(start - DRIVE_START_TIME_OFFSET, end)
+        yield from self._fetch_docs_from_drive(
+            max(start - DRIVE_START_TIME_OFFSET, 0, 0), end
+        )
