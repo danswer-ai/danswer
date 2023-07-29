@@ -64,7 +64,7 @@ class InferenceChunk(BaseChunk):
         else:
             init_kwargs[METADATA] = {}
         if init_kwargs.get(SEMANTIC_IDENTIFIER) is None:
-            logger.warning(
+            logger.error(
                 f"Chunk with blurb: {init_kwargs.get(BLURB, 'Unknown')[:50]}... has no Semantic Identifier"
             )
         return cls(**init_kwargs)
