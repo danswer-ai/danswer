@@ -46,8 +46,10 @@ SESSION_EXPIRE_TIME_SECONDS = int(
 VALID_EMAIL_DOMAIN = os.environ.get("VALID_EMAIL_DOMAIN", "")
 # OAuth Login Flow
 ENABLE_OAUTH = os.environ.get("ENABLE_OAUTH", "").lower() != "false"
-GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
-GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
+OAUTH_TYPE = os.environ.get("OAUTH_TYPE", "google").lower()
+OAUTH_CLIENT_ID = os.environ.get("OAUTH_CLIENT_ID", os.environ.get("GOOGLE_OAUTH_CLIENT_ID", ""))
+OAUTH_CLIENT_SECRET = os.environ.get("OAUTH_CLIENT_SECRET", os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", ""))
+OPENID_CONFIG_URL = os.environ.get("OPENID_CONFIG_URL", "")
 MASK_CREDENTIAL_PREFIX = (
     os.environ.get("MASK_CREDENTIAL_PREFIX", "True").lower() != "false"
 )

@@ -5,14 +5,14 @@ from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
 from danswer.auth.users import fastapi_users
-from danswer.auth.users import google_oauth_client
-from danswer.configs.app_configs import APP_HOST
+from danswer.auth.users import oauth_client
+from danswer.configs.app_configs import APP_HOST, OAUTH_TYPE, OPENID_CONFIG_URL
 from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import ENABLE_OAUTH
-from danswer.configs.app_configs import GOOGLE_OAUTH_CLIENT_ID
-from danswer.configs.app_configs import GOOGLE_OAUTH_CLIENT_SECRET
+from danswer.configs.app_configs import OAUTH_CLIENT_ID
+from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import TYPESENSE_DEFAULT_COLLECTION
@@ -49,6 +49,11 @@ def validation_exception_handler(
 
 
 def value_error_handler(_: Request, exc: ValueError) -> JSONResponse:
+    try:
+        raise(exc)
+    except:
+        # log stacktrace
+        logger.exception("ValueError")
     return JSONResponse(
         status_code=400,
         content={"message": str(exc)},
@@ -88,25 +93,41 @@ def get_application() -> FastAPI:
         tags=["users"],
     )
     if ENABLE_OAUTH:
+        if OAUTH_TYPE == "google":
+            # special case for google
+            application.include_router(
+                fastapi_users.get_oauth_router(
+                    oauth_client,
+                    auth_backend,
+                    SECRET,
+                    associate_by_email=True,
+                    is_verified_by_default=True,
+                    # points the user back to the login page, where we will call the
+                    # /auth/google/callback endpoint + redirect them to the main app
+                    redirect_url=f"{WEB_DOMAIN}/auth/google/callback",
+                ),
+                prefix="/auth/google",
+                tags=["auth"],
+            )
         application.include_router(
             fastapi_users.get_oauth_router(
-                google_oauth_client,
+                oauth_client,
                 auth_backend,
                 SECRET,
                 associate_by_email=True,
                 is_verified_by_default=True,
                 # points the user back to the login page, where we will call the
-                # /auth/google/callback endpoint + redirect them to the main app
-                redirect_url=f"{WEB_DOMAIN}/auth/google/callback",
+                # /auth/oauth/callback endpoint + redirect them to the main app
+                redirect_url=f"{WEB_DOMAIN}/auth/oauth/callback",
             ),
-            prefix="/auth/google",
+            prefix="/auth/oauth",
             tags=["auth"],
         )
         application.include_router(
             fastapi_users.get_oauth_associate_router(
-                google_oauth_client, UserRead, SECRET
+                oauth_client, UserRead, SECRET
             ),
-            prefix="/auth/associate/google",
+            prefix="/auth/associate/oauth",
             tags=["auth"],
         )
 
@@ -135,10 +156,14 @@ def get_application() -> FastAPI:
 
         if not DISABLE_AUTH:
             if not ENABLE_OAUTH:
-                logger.warning("OAuth is turned off")
+                logger.debug("OAuth is turned off")
             else:
-                if not GOOGLE_OAUTH_CLIENT_ID or not GOOGLE_OAUTH_CLIENT_SECRET:
-                    logger.warning("OAuth is turned on but incorrectly configured")
+                if not OAUTH_CLIENT_ID:
+                    logger.warning("OAuth is turned on but OAUTH_CLIENT_ID is empty")
+                if not OAUTH_CLIENT_SECRET:
+                    logger.warning("OAuth is turned on but OAUTH_CLIENT_SECRET is empty")
+                if OAUTH_TYPE == "openid" and not OPENID_CONFIG_URL:
+                    logger.warning("OpenID is turned on but OPENID_CONFIG_URL is emtpy")
                 else:
                     logger.debug("OAuth is turned on")
 
