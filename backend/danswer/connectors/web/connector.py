@@ -10,24 +10,24 @@ from urllib.parse import urlparse
 import bs4
 import requests
 from bs4 import BeautifulSoup
-from playwright.sync_api import BrowserContext
-from playwright.sync_api import Playwright
-from playwright.sync_api import sync_playwright
-from PyPDF2 import PdfReader
-
-from oauthlib.oauth2 import BackendApplicationClient
-from requests_oauthlib import OAuth2Session
-
-from danswer.configs.app_configs import INDEX_BATCH_SIZE, WEB_CONNECTOR_OAUTH_CLIENT_ID, \
-    WEB_CONNECTOR_OAUTH_CLIENT_SECRET, WEB_CONNECTOR_OAUTH_TOKEN_URL
+from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.app_configs import WEB_CONNECTOR_IGNORED_CLASSES
 from danswer.configs.app_configs import WEB_CONNECTOR_IGNORED_ELEMENTS
+from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_ID
+from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_SECRET
+from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_TOKEN_URL
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
+from oauthlib.oauth2 import BackendApplicationClient
+from playwright.sync_api import BrowserContext
+from playwright.sync_api import Playwright
+from playwright.sync_api import sync_playwright
+from PyPDF2 import PdfReader
+from requests_oauthlib import OAuth2Session  # type:ignore
 
 logger = setup_logger()
 
@@ -123,13 +123,21 @@ def start_playwright() -> Tuple[Playwright, BrowserContext]:
 
     context = browser.new_context()
 
-    if WEB_CONNECTOR_OAUTH_CLIENT_ID and WEB_CONNECTOR_OAUTH_CLIENT_SECRET and WEB_CONNECTOR_OAUTH_TOKEN_URL:
+    if (
+        WEB_CONNECTOR_OAUTH_CLIENT_ID
+        and WEB_CONNECTOR_OAUTH_CLIENT_SECRET
+        and WEB_CONNECTOR_OAUTH_TOKEN_URL
+    ):
         client = BackendApplicationClient(client_id=WEB_CONNECTOR_OAUTH_CLIENT_ID)
         oauth = OAuth2Session(client=client)
-        token = oauth.fetch_token(token_url=WEB_CONNECTOR_OAUTH_TOKEN_URL,
-                                  client_id=WEB_CONNECTOR_OAUTH_CLIENT_ID,
-                                  client_secret=WEB_CONNECTOR_OAUTH_CLIENT_SECRET)
-        context.set_extra_http_headers({"Authorization": "Bearer {}".format(token["access_token"])})
+        token = oauth.fetch_token(
+            token_url=WEB_CONNECTOR_OAUTH_TOKEN_URL,
+            client_id=WEB_CONNECTOR_OAUTH_CLIENT_ID,
+            client_secret=WEB_CONNECTOR_OAUTH_CLIENT_SECRET,
+        )
+        context.set_extra_http_headers(
+            {"Authorization": "Bearer {}".format(token["access_token"])}
+        )
 
     return playwright, context
 
