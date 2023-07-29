@@ -1,5 +1,12 @@
 from typing import cast
 
+from fastapi import HTTPException
+from sqlalchemy import and_
+from sqlalchemy import func
+from sqlalchemy import select
+from sqlalchemy.orm import aliased
+from sqlalchemy.orm import Session
+
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
 from danswer.db.models import Connector
@@ -8,12 +15,6 @@ from danswer.server.models import ConnectorBase
 from danswer.server.models import ObjectCreationIdResponse
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
-from fastapi import HTTPException
-from sqlalchemy import and_
-from sqlalchemy import func
-from sqlalchemy import select
-from sqlalchemy.orm import aliased
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

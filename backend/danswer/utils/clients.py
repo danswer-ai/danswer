@@ -1,4 +1,6 @@
 import typesense  # type: ignore
+from qdrant_client import QdrantClient
+
 from danswer.configs.app_configs import QDRANT_API_KEY
 from danswer.configs.app_configs import QDRANT_HOST
 from danswer.configs.app_configs import QDRANT_PORT
@@ -6,7 +8,6 @@ from danswer.configs.app_configs import QDRANT_URL
 from danswer.configs.app_configs import TYPESENSE_API_KEY
 from danswer.configs.app_configs import TYPESENSE_HOST
 from danswer.configs.app_configs import TYPESENSE_PORT
-from qdrant_client import QdrantClient
 
 
 _qdrant_client: QdrantClient | None = None

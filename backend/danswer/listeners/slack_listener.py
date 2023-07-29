@@ -1,5 +1,11 @@
 import os
 
+from retry import retry
+from slack_sdk import WebClient
+from slack_sdk.socket_mode import SocketModeClient
+from slack_sdk.socket_mode.request import SocketModeRequest
+from slack_sdk.socket_mode.response import SocketModeResponse
+
 from danswer.configs.app_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
@@ -10,11 +16,6 @@ from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchDoc
 from danswer.utils.logger import setup_logger
-from retry import retry
-from slack_sdk import WebClient
-from slack_sdk.socket_mode import SocketModeClient
-from slack_sdk.socket_mode.request import SocketModeRequest
-from slack_sdk.socket_mode.response import SocketModeResponse
 
 logger = setup_logger()
 

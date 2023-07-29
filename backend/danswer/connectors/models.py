@@ -2,8 +2,9 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from danswer.configs.constants import DocumentSource
 from pydantic import BaseModel
+
+from danswer.configs.constants import DocumentSource
 
 
 class ConnectorMissingCredentialError(PermissionError):

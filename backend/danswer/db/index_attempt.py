@@ -1,9 +1,10 @@
-from danswer.db.models import IndexAttempt
-from danswer.db.models import IndexingStatus
-from danswer.utils.logger import setup_logger
 from sqlalchemy import desc
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
+from danswer.db.models import IndexAttempt
+from danswer.db.models import IndexingStatus
+from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()

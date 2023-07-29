@@ -2,6 +2,8 @@ import time
 from datetime import datetime
 from datetime import timezone
 
+from sqlalchemy.orm import Session
+
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -25,7 +27,6 @@ from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.utils.logger import setup_logger
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

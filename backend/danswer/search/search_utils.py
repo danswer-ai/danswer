@@ -1,13 +1,14 @@
+from sentence_transformers import CrossEncoder  # type: ignore
+from sentence_transformers import SentenceTransformer  # type: ignore
+from transformers import AutoTokenizer  # type: ignore
+from transformers import TFDistilBertForSequenceClassification  # type: ignore
+
 from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
 from danswer.configs.model_configs import CROSS_ENCODER_MODEL_ENSEMBLE
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import INTENT_MODEL_VERSION
 from danswer.configs.model_configs import QUERY_MAX_CONTEXT_SIZE
-from sentence_transformers import CrossEncoder  # type: ignore
-from sentence_transformers import SentenceTransformer  # type: ignore
-from transformers import AutoTokenizer  # type: ignore
-from transformers import TFDistilBertForSequenceClassification  # type: ignore
 
 
 _TOKENIZER: None | AutoTokenizer = None

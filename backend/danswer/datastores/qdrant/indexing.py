@@ -2,6 +2,15 @@ import json
 from functools import partial
 from uuid import UUID
 
+from qdrant_client import QdrantClient
+from qdrant_client.http import models
+from qdrant_client.http.exceptions import ResponseHandlingException
+from qdrant_client.http.models.models import UpdateResult
+from qdrant_client.models import CollectionsResponse
+from qdrant_client.models import Distance
+from qdrant_client.models import PointStruct
+from qdrant_client.models import VectorParams
+
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.configs.constants import ALLOWED_GROUPS
 from danswer.configs.constants import ALLOWED_USERS
@@ -21,14 +30,6 @@ from danswer.datastores.datastore_utils import get_uuid_from_chunk
 from danswer.datastores.datastore_utils import update_doc_user_map
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logger import setup_logger
-from qdrant_client import QdrantClient
-from qdrant_client.http import models
-from qdrant_client.http.exceptions import ResponseHandlingException
-from qdrant_client.http.models.models import UpdateResult
-from qdrant_client.models import CollectionsResponse
-from qdrant_client.models import Distance
-from qdrant_client.models import PointStruct
-from qdrant_client.models import VectorParams
 
 
 logger = setup_logger()

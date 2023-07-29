@@ -1,6 +1,8 @@
 from collections.abc import Generator
 from typing import Any
 
+from gpt4all import GPT4All  # type:ignore
+
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
@@ -15,7 +17,6 @@ from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
-from gpt4all import GPT4All  # type:ignore
 
 
 logger = setup_logger()

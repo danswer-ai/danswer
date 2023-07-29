@@ -2,6 +2,8 @@ import json
 from uuid import UUID
 
 import numpy
+from sentence_transformers import SentenceTransformer  # type: ignore
+
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import IndexChunk
 from danswer.chunking.models import InferenceChunk
@@ -18,7 +20,6 @@ from danswer.search.search_utils import get_default_reranking_model_ensemble
 from danswer.server.models import SearchDoc
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
-from sentence_transformers import SentenceTransformer  # type: ignore
 
 logger = setup_logger()
 
