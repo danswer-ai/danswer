@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -36,13 +37,8 @@ class InputType(str, Enum):
     EVENT = "event"  # e.g. registered an endpoint as a listener, and processing connector events
 
 
-class ConnectorDescriptor(BaseModel):
-    source: DocumentSource
-    # how the raw data being indexed is procured
-    input_type: InputType
-    # what is passed into the __init__ of the connector described by `source`
-    # and `input_type`
-    connector_specific_config: dict[str, Any]
-
-    class Config:
-        arbitrary_types_allowed = True
+@dataclass
+class IndexAttemptMetadata:
+    user_id: UUID | None
+    connector_id: int
+    credential_id: int

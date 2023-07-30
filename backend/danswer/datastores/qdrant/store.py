@@ -1,3 +1,4 @@
+from typing import cast
 from uuid import UUID
 
 from qdrant_client.http.exceptions import ResponseHandlingException
@@ -6,24 +7,34 @@ from qdrant_client.http.models import FieldCondition
 from qdrant_client.http.models import Filter
 from qdrant_client.http.models import MatchAny
 from qdrant_client.http.models import MatchValue
+from qdrant_client.models import ExtendedPointId
+from qdrant_client.models import PointStruct
+from qdrant_client.models import VectorStruct
 
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.constants import ALLOWED_USERS
+from danswer.configs.constants import CONNECTOR_IDS
 from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
+from danswer.connectors.models import IndexAttemptMetadata
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
+from danswer.datastores.interfaces import DocumentStoreInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import VectorIndex
 from danswer.datastores.qdrant.indexing import index_qdrant_chunks
+from danswer.datastores.qdrant.utils import get_payload_from_record
 from danswer.search.search_utils import get_default_embedding_model
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
+
+# how many points we want to delete at a time when cleaning up a connector
+_DELETE_BATCH_SIZE = 50
 
 
 def _build_qdrant_filters(
@@ -78,10 +89,14 @@ class QdrantIndex(VectorIndex):
         self.collection = collection
         self.client = get_qdrant_client()
 
-    def index(self, chunks: list[EmbeddedIndexChunk], user_id: UUID | None) -> int:
+    def index(
+        self,
+        chunks: list[EmbeddedIndexChunk],
+        index_attempt_metadata: IndexAttemptMetadata,
+    ) -> list[DocumentStoreInsertionRecord]:
         return index_qdrant_chunks(
             chunks=chunks,
-            user_id=user_id,
+            index_attempt_metadata=index_attempt_metadata,
             collection=self.collection,
             client=self.client,
         )
@@ -144,6 +159,13 @@ class QdrantIndex(VectorIndex):
                     found_chunk_uuids.add(inf_chunk_id)
 
         return found_inference_chunks
+
+    def delete(self, ids: list[str]) -> None:
+        logger.info(f"Deleting {len(ids)} documents from Qdrant")
+        self.client.delete(
+            collection_name=self.collection,
+            points_selector=ids,
+        )
 
     def get_from_id(self, object_id: str) -> InferenceChunk | None:
         matches, _ = self.client.scroll(

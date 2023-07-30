@@ -27,7 +27,7 @@ const MainSection = () => {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
     error: isConnectorIndexingStatusesError,
-  } = useSWR<ConnectorIndexingStatus<any>[]>(
+  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
     fetcher
   );
@@ -56,11 +56,13 @@ const MainSection = () => {
     return <div>Failed to load credentials</div>;
   }
 
-  const slackConnectorIndexingStatuses: ConnectorIndexingStatus<SlackConfig>[] =
-    connectorIndexingStatuses.filter(
-      (connectorIndexingStatus) =>
-        connectorIndexingStatus.connector.source === "slack"
-    );
+  const slackConnectorIndexingStatuses: ConnectorIndexingStatus<
+    SlackConfig,
+    SlackCredentialJson
+  >[] = connectorIndexingStatuses.filter(
+    (connectorIndexingStatus) =>
+      connectorIndexingStatus.connector.source === "slack"
+  );
   const slackCredential = credentialsData.filter(
     (credential) => credential.credential_json?.slack_bot_token
   )[0];
@@ -142,7 +144,7 @@ const MainSection = () => {
             <b>10</b> minutes.
           </p>
           <div className="mb-2">
-            <ConnectorsTable
+            <ConnectorsTable<SlackConfig, SlackCredentialJson>
               connectorIndexingStatuses={slackConnectorIndexingStatuses}
               liveCredential={slackCredential}
               getCredential={(credential) =>

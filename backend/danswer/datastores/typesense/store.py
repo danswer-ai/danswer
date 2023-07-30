@@ -1,6 +1,7 @@
 import json
 from functools import partial
 from typing import Any
+from typing import cast
 from uuid import UUID
 
 import typesense  # type: ignore
@@ -14,6 +15,7 @@ from danswer.configs.constants import ALLOWED_GROUPS
 from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import BLURB
 from danswer.configs.constants import CHUNK_ID
+from danswer.configs.constants import CONNECTOR_IDS
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import METADATA
@@ -22,9 +24,14 @@ from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
+from danswer.connectors.models import IndexAttemptMetadata
+from danswer.datastores.datastore_utils import CrossConnectorDocumentMetadata
 from danswer.datastores.datastore_utils import DEFAULT_BATCH_SIZE
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
-from danswer.datastores.datastore_utils import update_doc_user_map
+from danswer.datastores.datastore_utils import (
+    update_cross_connector_document_metadata_map,
+)
+from danswer.datastores.interfaces import DocumentStoreInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import KeywordIndex
 from danswer.utils.clients import get_typesense_client
@@ -32,6 +39,9 @@ from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
+
+# how many points we want to delete at a time when cleaning up a connector
+_DELETE_BATCH_SIZE = 50
 
 
 def check_typesense_collection_exist(
@@ -70,21 +80,27 @@ def create_typesense_collection(
     ts_client.collections.create(collection_schema)
 
 
-def get_typesense_document_whitelists(
+def get_typesense_document_cross_connector_metadata(
     doc_chunk_id: str, collection_name: str, ts_client: typesense.Client
-) -> tuple[bool, list[str], list[str]]:
+) -> CrossConnectorDocumentMetadata | None:
     """Returns whether the document already exists and the users/group whitelists"""
     try:
-        document = (
-            ts_client.collections[collection_name].documents[doc_chunk_id].retrieve()
+        document = cast(
+            dict[str, Any],
+            ts_client.collections[collection_name].documents[doc_chunk_id].retrieve(),
         )
     except ObjectNotFound:
-        return False, [], []
+        return None
     if document[ALLOWED_USERS] is None or document[ALLOWED_GROUPS] is None:
         raise RuntimeError(
             "Typesense Index is corrupted, Document found with no access lists."
         )
-    return True, document[ALLOWED_USERS], document[ALLOWED_GROUPS]
+    return CrossConnectorDocumentMetadata(
+        allowed_users=document[ALLOWED_USERS],
+        allowed_user_groups=document[ALLOWED_GROUPS],
+        connector_ids=document.get(CONNECTOR_IDS, []),
+        already_in_index=True,
+    )
 
 
 def delete_typesense_doc_chunks(
@@ -100,38 +116,49 @@ def delete_typesense_doc_chunks(
 
 def index_typesense_chunks(
     chunks: list[IndexChunk | EmbeddedIndexChunk],
-    user_id: UUID | None,
+    index_attempt_metadata: IndexAttemptMetadata,
     collection: str,
     client: typesense.Client | None = None,
     batch_upsert: bool = True,
-) -> int:
-    user_str = PUBLIC_DOC_PAT if user_id is None else str(user_id)
+) -> list[DocumentStoreInsertionRecord]:
     ts_client: typesense.Client = client if client else get_typesense_client()
 
+    insertion_records: list[DocumentStoreInsertionRecord] = []
     new_documents: list[dict[str, Any]] = []
-    doc_user_map: dict[str, dict[str, list[str]]] = {}
-    docs_deleted = 0
+    cross_connector_document_metadata_map: dict[
+        str, CrossConnectorDocumentMetadata
+    ] = {}
     for chunk in chunks:
         document = chunk.source_document
-        doc_user_map, delete_doc = update_doc_user_map(
-            chunk,
-            doc_user_map,
-            partial(
-                get_typesense_document_whitelists,
+        (
+            cross_connector_document_metadata_map,
+            should_delete_doc,
+        ) = update_cross_connector_document_metadata_map(
+            chunk=chunk,
+            cross_connector_document_metadata_map=cross_connector_document_metadata_map,
+            doc_store_cross_connector_document_metadata_fetch_fn=partial(
+                get_typesense_document_cross_connector_metadata,
                 collection_name=collection,
                 ts_client=ts_client,
             ),
-            user_str,
+            index_attempt_metadata=index_attempt_metadata,
         )
 
-        if delete_doc:
+        if should_delete_doc:
             # Processing the first chunk of the doc and the doc exists
-            docs_deleted += 1
             delete_typesense_doc_chunks(document.id, collection, ts_client)
 
+        typesense_id = str(get_uuid_from_chunk(chunk))
+        insertion_records.append(
+            DocumentStoreInsertionRecord(
+                document_id=document.id,
+                store_id=typesense_id,
+                already_existed=should_delete_doc,
+            )
+        )
         new_documents.append(
             {
-                "id": str(get_uuid_from_chunk(chunk)),  # No minichunks for typesense
+                "id": typesense_id,  # No minichunks for typesense
                 DOCUMENT_ID: document.id,
                 CHUNK_ID: chunk.chunk_id,
                 BLURB: chunk.blurb,
@@ -140,8 +167,15 @@ def index_typesense_chunks(
                 SOURCE_LINKS: json.dumps(chunk.source_links),
                 SEMANTIC_IDENTIFIER: document.semantic_identifier,
                 SECTION_CONTINUATION: chunk.section_continuation,
-                ALLOWED_USERS: doc_user_map[document.id][ALLOWED_USERS],
-                ALLOWED_GROUPS: doc_user_map[document.id][ALLOWED_GROUPS],
+                ALLOWED_USERS: cross_connector_document_metadata_map[
+                    document.id
+                ].allowed_users,
+                ALLOWED_GROUPS: cross_connector_document_metadata_map[
+                    document.id
+                ].allowed_user_groups,
+                CONNECTOR_IDS: cross_connector_document_metadata_map[
+                    document.id
+                ].connector_ids,
                 METADATA: json.dumps(document.metadata),
             }
         )
@@ -170,7 +204,7 @@ def index_typesense_chunks(
             for document in new_documents
         ]
 
-    return len(doc_user_map.keys()) - docs_deleted
+    return insertion_records
 
 
 def _build_typesense_filters(
@@ -208,12 +242,20 @@ class TypesenseIndex(KeywordIndex):
         self.collection = collection
         self.ts_client = get_typesense_client()
 
-    def index(self, chunks: list[IndexChunk], user_id: UUID | None) -> int:
+    def index(
+        self, chunks: list[IndexChunk], index_attempt_metadata: IndexAttemptMetadata
+    ) -> list[DocumentStoreInsertionRecord]:
         return index_typesense_chunks(
             chunks=chunks,
-            user_id=user_id,
+            index_attempt_metadata=index_attempt_metadata,
             collection=self.collection,
             client=self.ts_client,
+        )
+
+    def delete(self, ids: list[str]) -> None:
+        logger.info(f"Deleting {len(ids)} documents from Typesense")
+        self.ts_client.collections[self.collection].documents.delete(
+            {"filter_by": f'id:{",".join(ids)}'}
         )
 
     def keyword_search(

@@ -1,3 +1,4 @@
+from sqlalchemy import delete
 from sqlalchemy import desc
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -86,3 +87,15 @@ def get_last_successful_attempt(
     stmt = stmt.order_by(desc(IndexAttempt.time_created))
 
     return db_session.execute(stmt).scalars().first()
+
+
+def delete_index_attempts(
+    connector_id: int,
+    credential_id: int,
+    db_session: Session,
+) -> None:
+    stmt = delete(IndexAttempt).where(
+        IndexAttempt.connector_id == connector_id,
+        IndexAttempt.credential_id == credential_id,
+    )
+    db_session.execute(stmt)

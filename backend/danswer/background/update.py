@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.models import IndexAttemptMetadata
 from danswer.connectors.models import InputType
 from danswer.datastores.indexing_pipeline import build_indexing_pipeline
 from danswer.db.connector import disable_connector
@@ -188,7 +189,12 @@ def run_indexing_jobs(db_session: Session) -> None:
                     None if db_credential.public_doc else db_credential.user_id
                 )
                 new_docs, total_batch_chunks = indexing_pipeline(
-                    documents=doc_batch, user_id=index_user_id
+                    documents=doc_batch,
+                    index_attempt_metadata=IndexAttemptMetadata(
+                        user_id=index_user_id,
+                        connector_id=db_connector.id,
+                        credential_id=db_credential.id,
+                    ),
                 )
                 net_doc_change += new_docs
                 chunk_count += total_batch_chunks

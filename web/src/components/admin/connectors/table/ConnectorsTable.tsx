@@ -5,23 +5,28 @@ import { useState } from "react";
 import { LinkBreakIcon, LinkIcon, TrashIcon } from "@/components/icons/icons";
 import { deleteConnector, updateConnector } from "@/lib/connector";
 import { AttachCredentialButtonForTable } from "@/components/admin/connectors/buttons/AttachCredentialButtonForTable";
+import { scheduleDeletionJobForConnector } from "@/lib/documentDeletion";
 
-interface StatusRowProps<ConnectorConfigType> {
-  connectorIndexingStatus: ConnectorIndexingStatus<ConnectorConfigType>;
+interface StatusRowProps<ConnectorConfigType, ConnectorCredentialType> {
+  connectorIndexingStatus: ConnectorIndexingStatus<
+    ConnectorConfigType,
+    ConnectorCredentialType
+  >;
   hasCredentialsIssue: boolean;
   setPopup: (popupSpec: PopupSpec | null) => void;
   onUpdate: () => void;
 }
 
-export function StatusRow<ConnectorConfigType>({
+export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
   connectorIndexingStatus,
   hasCredentialsIssue,
   setPopup,
   onUpdate,
-}: StatusRowProps<ConnectorConfigType>) {
+}: StatusRowProps<ConnectorConfigType, ConnectorCredentialType>) {
   const [statusHovered, setStatusHovered] = useState<boolean>(false);
   const connector = connectorIndexingStatus.connector;
 
+  let shouldDisplayDisabledToggle = !hasCredentialsIssue;
   let statusDisplay;
   switch (connectorIndexingStatus.last_status) {
     case "failed":
@@ -32,12 +37,21 @@ export function StatusRow<ConnectorConfigType>({
   }
   if (connector.disabled) {
     statusDisplay = <div className="text-red-700">Disabled</div>;
+    connectorIndexingStatus.deletion_attempts.forEach((deletionAttempt) => {
+      if (
+        deletionAttempt.status === "in_progress" ||
+        deletionAttempt.status === "not_started"
+      ) {
+        statusDisplay = <div className="text-red-700">Deleting...</div>;
+        shouldDisplayDisabledToggle = false;
+      }
+    });
   }
 
   return (
     <div className="flex">
       {statusDisplay}
-      {!hasCredentialsIssue && (
+      {shouldDisplayDisabledToggle && (
         <div
           className="cursor-pointer ml-1 my-auto relative"
           onMouseEnter={() => setStatusHovered(true)}
@@ -89,7 +103,10 @@ interface ColumnSpecification<ConnectorConfigType> {
 }
 
 interface ConnectorsTableProps<ConnectorConfigType, ConnectorCredentialType> {
-  connectorIndexingStatuses: ConnectorIndexingStatus<ConnectorConfigType>[];
+  connectorIndexingStatuses: ConnectorIndexingStatus<
+    ConnectorConfigType,
+    ConnectorCredentialType
+  >[];
   liveCredential?: Credential<ConnectorCredentialType> | null;
   getCredential?: (
     credential: Credential<ConnectorCredentialType>
@@ -140,6 +157,7 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
         columns={columns}
         data={connectorIndexingStatuses.map((connectorIndexingStatus) => {
           const connector = connectorIndexingStatus.connector;
+          // const credential = connectorIndexingStatus.credential;
           const hasValidCredentials =
             liveCredential &&
             connector.credential_ids.includes(liveCredential.id);
@@ -169,19 +187,26 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
                 onUpdate={onUpdate}
               />
             ),
-            remove: (
-              <div
-                className="cursor-pointer mx-auto"
-                onClick={() => {
-                  deleteConnector(connector.id).then((errorMsg) => {
-                    if (errorMsg) {
+            remove:
+              liveCredential && connectorIndexingStatus.is_deletable ? (
+                <div
+                  className="cursor-pointer mx-auto flex"
+                  onClick={async () => {
+                    const deletionScheduleError =
+                      await scheduleDeletionJobForConnector(
+                        connector.id,
+                        liveCredential.id
+                      );
+                    if (deletionScheduleError) {
                       setPopup({
-                        message: `Unable to delete existing connector - ${errorMsg}`,
+                        message:
+                          "Failed to schedule deletion of connector - " +
+                          deletionScheduleError,
                         type: "error",
                       });
                     } else {
                       setPopup({
-                        message: "Successfully deleted connector",
+                        message: "Scheduled deletion of connector!",
                         type: "success",
                       });
                     }
@@ -189,12 +214,15 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
                       setPopup(null);
                     }, 4000);
                     onUpdate();
-                  });
-                }}
-              >
-                <TrashIcon />
-              </div>
-            ),
+                  }}
+                >
+                  <TrashIcon />
+                </div>
+              ) : (
+                <div className="flex mx-auto text-xs">
+                  <TrashIcon className="my-auto flex flex-shrink-0 text-gray-600 mr-2" />
+                </div>
+              ),
             ...credential,
             ...(specialColumns
               ? Object.fromEntries(

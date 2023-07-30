@@ -2,6 +2,7 @@ import datetime
 from enum import Enum as PyEnum
 from typing import Any
 from typing import List
+from typing import Optional
 from uuid import UUID
 
 from fastapi_users.db import SQLAlchemyBaseOAuthAccountTableUUID
@@ -27,6 +28,14 @@ from danswer.connectors.models import InputType
 
 
 class IndexingStatus(str, PyEnum):
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    SUCCESS = "success"
+    FAILED = "failed"
+
+
+# these may differ in the future, which is why we're okay with this duplication
+class DeletionStatus(str, PyEnum):
     NOT_STARTED = "not_started"
     IN_PROGRESS = "in_progress"
     SUCCESS = "success"
@@ -75,7 +84,9 @@ class ConnectorCredentialPair(Base):
     last_successful_index_time: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
     )
-    last_attempt_status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
+    last_attempt_status: Mapped[IndexingStatus | None] = mapped_column(
+        Enum(IndexingStatus)
+    )
     total_docs_indexed: Mapped[int] = mapped_column(Integer, default=0)
 
     connector: Mapped["Connector"] = relationship(
@@ -112,8 +123,14 @@ class Connector(Base):
         back_populates="connector",
         cascade="all, delete-orphan",
     )
+    documents_by_connector: Mapped[
+        List["DocumentByConnectorCredentialPair"]
+    ] = relationship("DocumentByConnectorCredentialPair", back_populates="connector")
     index_attempts: Mapped[List["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="connector"
+    )
+    deletion_attempt: Mapped[Optional["DeletionAttempt"]] = relationship(
+        "DeletionAttempt", back_populates="connector"
     )
 
 
@@ -136,8 +153,14 @@ class Credential(Base):
         back_populates="credential",
         cascade="all, delete-orphan",
     )
+    documents_by_credential: Mapped[
+        List["DocumentByConnectorCredentialPair"]
+    ] = relationship("DocumentByConnectorCredentialPair", back_populates="credential")
     index_attempts: Mapped[List["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="credential"
+    )
+    deletion_attempt: Mapped[Optional["DeletionAttempt"]] = relationship(
+        "DeletionAttempt", back_populates="credential"
     )
     user: Mapped[User] = relationship("User", back_populates="credentials")
 
@@ -190,3 +213,109 @@ class IndexAttempt(Base):
             f"time_created={self.time_created!r}, "
             f"time_updated={self.time_updated!r}, "
         )
+
+
+class Document(Base):
+    """Represents a single documents from a source. This is used to store
+    document level metadata so we don't need to duplicate it in a bunch of
+    DocumentByConnectorCredentialPair's/DocumentStoreEntry's for documents
+    that are split into many chunks and/or indexed by many connector / credential
+    pairs."""
+
+    __tablename__ = "document"
+
+    # this should correspond to the ID of the document (as is passed around
+    # in Danswer)
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+
+    document_store_entries: Mapped["DocumentStoreEntry"] = relationship(
+        "DocumentStoreEntry", back_populates="document"
+    )
+
+
+class DocumentByConnectorCredentialPair(Base):
+    """Represents an indexing of a document by a specific connector / credential
+    pair"""
+
+    __tablename__ = "document_by_connector_credential_pair"
+
+    id: Mapped[str] = mapped_column(ForeignKey("document.id"), primary_key=True)
+    connector_id: Mapped[int] = mapped_column(
+        ForeignKey("connector.id"), primary_key=True
+    )
+    credential_id: Mapped[int] = mapped_column(
+        ForeignKey("credential.id"), primary_key=True
+    )
+
+    connector: Mapped[Connector] = relationship(
+        "Connector", back_populates="documents_by_connector"
+    )
+    credential: Mapped[Connector] = relationship(
+        "Credential", back_populates="documents_by_credential"
+    )
+
+
+class DocumentStoreEntry(Base):
+    """A row represents a single entry in a document store (e.g. a chunk in Qdrant)"""
+
+    __tablename__ = "document_store_entry"
+
+    # this should correspond to the ID in the document store
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    document_id: Mapped[str] = mapped_column(ForeignKey("document.id"))
+
+    document: Mapped[Document] = relationship(
+        "Document", back_populates="document_store_entries"
+    )
+
+
+# To delete a connector / credential pair:
+# (1) find all documents associated with connector / credential pair where there this the is only connector / credential pair that has indexed it
+# (2) delete all documents from document stores
+# (3) delete all entries from postgres
+# (4) find all documents associated with connector / credential pair where there are multiple connector / credential pairs that have indexed it
+# (5) update document store entries to remove access associated with the connector / credential pair from the access list
+# (6) delete/update all entries from postgres
+
+
+# To delete a single document for a connector / credential pair:
+# (1) find all documents with document id
+# (2) if there is only one connector / credential pair that has indexed it, delete from document stores and postgres
+# (3) else, update document store entries to remove access associated with the connector / credential pair from the access list
+
+
+class DeletionAttempt(Base):
+    """Represents an attempt to delete all documents indexed by a specific
+    connector / credential pair.
+    """
+
+    __tablename__ = "deletion_attempt"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    connector_id: Mapped[int] = mapped_column(
+        ForeignKey("connector.id"),
+    )
+    credential_id: Mapped[int] = mapped_column(
+        ForeignKey("credential.id"),
+    )
+    status: Mapped[DeletionStatus] = mapped_column(Enum(DeletionStatus))
+    num_docs_deleted: Mapped[int] = mapped_column(Integer, default=0)
+    error_msg: Mapped[str | None] = mapped_column(
+        String(), default=None
+    )  # only filled if status = "failed"
+    time_created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+    time_updated: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    connector: Mapped[Connector] = relationship(
+        "Connector", back_populates="deletion_attempt"
+    )
+    credential: Mapped[Connector] = relationship(
+        "Credential", back_populates="deletion_attempt"
+    )
