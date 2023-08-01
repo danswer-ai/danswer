@@ -2,16 +2,18 @@ import itertools
 from collections.abc import Generator
 from typing import Any
 
+from github import Github
+from github.PaginatedList import PaginatedList
+from github.PullRequest import PullRequest
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
+from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
-from github import Github
-from github.PaginatedList import PaginatedList
-from github.PullRequest import PullRequest
 
 
 logger = setup_logger()
@@ -48,9 +50,7 @@ class GithubConnector(LoadConnector):
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         if self.github_client is None:
-            raise PermissionError(
-                "Github Client is not set up, was load_credentials called?"
-            )
+            raise ConnectorMissingCredentialError("GitHub")
         repo = self.github_client.get_repo(f"{self.repo_owner}/{self.repo_name}")
         pull_requests = repo.get_pulls(state=self.state_filter)
         for pr_batch in get_pr_batches(pull_requests, self.batch_size):

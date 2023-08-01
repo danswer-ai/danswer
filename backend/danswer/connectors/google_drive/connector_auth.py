@@ -4,16 +4,17 @@ from urllib.parse import parse_qs
 from urllib.parse import ParseResult
 from urllib.parse import urlparse
 
+from google.auth.transport.requests import Request  # type: ignore
+from google.oauth2.credentials import Credentials  # type: ignore
+from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore
+from sqlalchemy.orm import Session
+
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.db.credentials import update_credential_json
 from danswer.db.models import User
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.server.models import GoogleAppCredentials
 from danswer.utils.logger import setup_logger
-from google.auth.transport.requests import Request  # type: ignore
-from google.oauth2.credentials import Credentials  # type: ignore
-from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 

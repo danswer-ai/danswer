@@ -46,8 +46,14 @@ SESSION_EXPIRE_TIME_SECONDS = int(
 VALID_EMAIL_DOMAIN = os.environ.get("VALID_EMAIL_DOMAIN", "")
 # OAuth Login Flow
 ENABLE_OAUTH = os.environ.get("ENABLE_OAUTH", "").lower() != "false"
-GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
-GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
+OAUTH_TYPE = os.environ.get("OAUTH_TYPE", "google").lower()
+OAUTH_CLIENT_ID = os.environ.get(
+    "OAUTH_CLIENT_ID", os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
+)
+OAUTH_CLIENT_SECRET = os.environ.get(
+    "OAUTH_CLIENT_SECRET", os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
+)
+OPENID_CONFIG_URL = os.environ.get("OPENID_CONFIG_URL", "")
 MASK_CREDENTIAL_PREFIX = (
     os.environ.get("MASK_CREDENTIAL_PREFIX", "True").lower() != "false"
 )
@@ -90,6 +96,16 @@ GOOGLE_DRIVE_INCLUDE_SHARED = False
 FILE_CONNECTOR_TMP_STORAGE_PATH = os.environ.get(
     "FILE_CONNECTOR_TMP_STORAGE_PATH", "/home/file_connector_storage"
 )
+# TODO these should be available for frontend configuration, via advanced options expandable
+WEB_CONNECTOR_IGNORED_CLASSES = os.environ.get(
+    "WEB_CONNECTOR_IGNORED_CLASSES", "sidebar,header,footer"
+).split(",")
+WEB_CONNECTOR_IGNORED_ELEMENTS = os.environ.get(
+    "WEB_CONNECTOR_IGNORED_ELEMENTS", "nav,header,footer,meta,script,style,symbol,aside"
+).split(",")
+WEB_CONNECTOR_OAUTH_CLIENT_ID = os.environ.get("WEB_CONNECTOR_OAUTH_CLIENT_ID")
+WEB_CONNECTOR_OAUTH_CLIENT_SECRET = os.environ.get("WEB_CONNECTOR_OAUTH_CLIENT_SECRET")
+WEB_CONNECTOR_OAUTH_TOKEN_URL = os.environ.get("WEB_CONNECTOR_OAUTH_TOKEN_URL")
 
 #####
 # Query Configs
@@ -115,9 +131,11 @@ ENABLE_MINI_CHUNK = False
 # Mini chunks for fine-grained embedding, calculated as 128 tokens for 4 additional vectors for 512 chunk size above
 # Not rounded down to not lose any context in full chunk.
 MINI_CHUNK_SIZE = 512
-# Each chunk includes an additional 5 words from previous chunk
-# in extreme cases, may cause some words at the end to be truncated by embedding model
-CHUNK_OVERLAP = 5
+# Each chunk includes an additional CHUNK_WORD_OVERLAP words from previous chunk
+CHUNK_WORD_OVERLAP = 5
+# When trying to finish the last word in the chunk or counting back CHUNK_WORD_OVERLAP backwards,
+# This is the max number of characters allowed in either direction
+CHUNK_MAX_CHAR_OVERLAP = 50
 
 
 #####

@@ -1,4 +1,5 @@
 import psycopg2
+
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
 from danswer.configs.app_configs import POSTGRES_PASSWORD

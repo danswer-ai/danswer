@@ -1,6 +1,10 @@
 import json
 from collections.abc import Generator
 
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi.responses import StreamingResponse
+
 from danswer.auth.users import current_user
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
@@ -25,9 +29,6 @@ from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchResponse
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi.responses import StreamingResponse
 
 logger = setup_logger()
 

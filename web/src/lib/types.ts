@@ -17,9 +17,10 @@ export type ValidSources =
   | "jira"
   | "productboard"
   | "slab"
-  | "file"
   | "notion"
-  | "zulip";
+  | "guru"
+  | "zulip"
+  | "file";
 export type ValidInputTypes = "load_state" | "poll" | "event";
 
 // CONNECTORS
@@ -72,6 +73,8 @@ export interface SlackConfig {
 export interface SlabConfig {
   base_url: string;
 }
+
+export interface GuruConfig {}
 
 export interface FileConfig {
   file_locations: string[];
@@ -148,4 +151,9 @@ export interface NotionCredentialJson {
 
 export interface ZulipCredentialJson {
   zuliprc_content: string;
+}
+
+export interface GuruCredentialJson {
+  guru_user: string;
+  guru_user_token: string;
 }

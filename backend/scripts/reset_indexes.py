@@ -1,12 +1,13 @@
 # This file is purely for development use, not included in any builds
+from qdrant_client.http.models import Distance
+from qdrant_client.http.models import VectorParams
+from typesense.exceptions import ObjectNotFound  # type: ignore
+
 from danswer.configs.model_configs import DOC_EMBEDDING_DIM
 from danswer.datastores.typesense.store import create_typesense_collection
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.clients import get_typesense_client
 from danswer.utils.logger import setup_logger
-from qdrant_client.http.models import Distance
-from qdrant_client.http.models import VectorParams
-from typesense.exceptions import ObjectNotFound  # type: ignore
 
 logger = setup_logger()
 

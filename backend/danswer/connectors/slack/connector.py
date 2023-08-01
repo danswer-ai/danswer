@@ -6,12 +6,16 @@ from pathlib import Path
 from typing import Any
 from typing import cast
 
+from slack_sdk import WebClient
+from slack_sdk.web import SlackResponse
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.connectors.slack.utils import get_message_link
@@ -19,8 +23,6 @@ from danswer.connectors.slack.utils import make_slack_api_call_paginated
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.connectors.slack.utils import UserIdReplacer
 from danswer.utils.logger import setup_logger
-from slack_sdk import WebClient
-from slack_sdk.web import SlackResponse
 
 logger = setup_logger()
 
@@ -47,7 +49,9 @@ def get_channel_info(client: WebClient, channel_id: str) -> ChannelType:
 def get_channels(client: WebClient, exclude_archived: bool = True) -> list[ChannelType]:
     """Get all channels in the workspace"""
     channels: list[dict[str, Any]] = []
-    for result in _make_slack_api_call(client.conversations_list, exclude_archived=exclude_archived):
+    for result in _make_slack_api_call(
+        client.conversations_list, exclude_archived=exclude_archived
+    ):
         channels.extend(result["channels"])
     return channels
 
@@ -285,9 +289,7 @@ class SlackPollConnector(PollConnector):
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
         if self.client is None:
-            raise PermissionError(
-                "Slack Client is not set up, was load_credentials called?"
-            )
+            raise ConnectorMissingCredentialError("Slack")
 
         documents: list[Document] = []
         for document in get_all_docs(

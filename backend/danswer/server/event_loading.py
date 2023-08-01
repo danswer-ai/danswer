@@ -1,9 +1,10 @@
 from typing import Any
 
-from danswer.utils.logger import setup_logger
 from fastapi import APIRouter
 from pydantic import BaseModel
 from pydantic import Extra
+
+from danswer.utils.logger import setup_logger
 
 router = APIRouter()
 

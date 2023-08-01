@@ -5,6 +5,7 @@ import urllib
 from pprint import pprint
 
 import requests
+
 from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.constants import SOURCE_TYPE

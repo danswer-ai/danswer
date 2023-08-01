@@ -2,6 +2,16 @@ from datetime import datetime
 from datetime import timedelta
 from typing import cast
 
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import HTTPException
+from fastapi import Request
+from fastapi import Response
+from fastapi import UploadFile
+from fastapi_users.db import SQLAlchemyUserDatabase
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
+
 from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
@@ -61,15 +71,6 @@ from danswer.server.models import StatusResponse
 from danswer.server.models import UserByEmail
 from danswer.server.models import UserRoleResponse
 from danswer.utils.logger import setup_logger
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import Request
-from fastapi import Response
-from fastapi import UploadFile
-from fastapi_users.db import SQLAlchemyUserDatabase
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 
 
 router = APIRouter(prefix="/manage")

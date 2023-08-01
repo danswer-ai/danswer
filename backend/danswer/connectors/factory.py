@@ -8,12 +8,13 @@ from danswer.connectors.danswer_jira.connector import JiraConnector
 from danswer.connectors.file.connector import LocalFileConnector
 from danswer.connectors.github.connector import GithubConnector
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
-from danswer.connectors.notion.connector import NotionConnector
+from danswer.connectors.guru.connector import GuruConnector
 from danswer.connectors.interfaces import BaseConnector
 from danswer.connectors.interfaces import EventConnector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import InputType
+from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.productboard.connector import ProductboardConnector
 from danswer.connectors.slab.connector import SlabConnector
 from danswer.connectors.slack.connector import SlackLoadConnector
@@ -48,6 +49,7 @@ def identify_connector_class(
         DocumentSource.SLAB: SlabConnector,
         DocumentSource.NOTION: NotionConnector,
         DocumentSource.ZULIP: ZulipConnector,
+        DocumentSource.GURU: GuruConnector,
     }
     connector_by_source = connector_map.get(source, {})
 

@@ -3,12 +3,6 @@ from collections.abc import Generator
 from datetime import datetime
 from datetime import timezone
 
-from danswer.configs.app_configs import POSTGRES_DB
-from danswer.configs.app_configs import POSTGRES_HOST
-from danswer.configs.app_configs import POSTGRES_PASSWORD
-from danswer.configs.app_configs import POSTGRES_PORT
-from danswer.configs.app_configs import POSTGRES_USER
-from danswer.utils.logger import setup_logger
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine
 from sqlalchemy.engine import Engine
@@ -16,6 +10,13 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
+
+from danswer.configs.app_configs import POSTGRES_DB
+from danswer.configs.app_configs import POSTGRES_HOST
+from danswer.configs.app_configs import POSTGRES_PASSWORD
+from danswer.configs.app_configs import POSTGRES_PORT
+from danswer.configs.app_configs import POSTGRES_USER
+from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
@@ -38,18 +39,6 @@ def get_db_current_time(db_session: Session) -> datetime:
     if result is None:
         raise ValueError("Database did not return a time")
     return result
-
-
-def translate_db_time_to_server_time(
-    db_time: datetime, db_session: Session
-) -> datetime:
-    """If a different database driver is used which does not include timezone info,
-    this should hit an exception rather than being wrong"""
-    server_now = datetime.now(timezone.utc)
-    db_now = get_db_current_time(db_session)
-    time_diff = server_now - db_now
-    logger.debug(f"Server time to DB time offset: {time_diff.total_seconds()} seconds")
-    return db_time + time_diff
 
 
 def build_connection_string(

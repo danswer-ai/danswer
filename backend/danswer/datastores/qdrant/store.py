@@ -1,5 +1,12 @@
 from uuid import UUID
 
+from qdrant_client.http.exceptions import ResponseHandlingException
+from qdrant_client.http.exceptions import UnexpectedResponse
+from qdrant_client.http.models import FieldCondition
+from qdrant_client.http.models import Filter
+from qdrant_client.http.models import MatchAny
+from qdrant_client.http.models import MatchValue
+
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_RETURNED_HITS
@@ -15,12 +22,6 @@ from danswer.search.search_utils import get_default_embedding_model
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
-from qdrant_client.http.exceptions import ResponseHandlingException
-from qdrant_client.http.exceptions import UnexpectedResponse
-from qdrant_client.http.models import FieldCondition
-from qdrant_client.http.models import Filter
-from qdrant_client.http.models import MatchAny
-from qdrant_client.http.models import MatchValue
 
 logger = setup_logger()
 

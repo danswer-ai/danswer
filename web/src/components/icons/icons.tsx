@@ -18,6 +18,7 @@ import { FaFile, FaGlobe } from "react-icons/fa";
 import Image from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
+import guruIcon from "../../../public/Guru.svg";
 
 interface IconProps {
   size?: number;
@@ -244,3 +245,15 @@ export const NotionIcon = ({
     </div>
   );
 };
+
+export const GuruIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src={guruIcon} alt="Logo" width="96" height="96" />
+  </div>
+);
