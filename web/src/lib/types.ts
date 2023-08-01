@@ -67,7 +67,7 @@ export interface ProductboardConfig {}
 
 export interface SlackConfig {
   workspace: string;
-  channels: string[];
+  channels?: string[];
 }
 
 export interface SlabConfig {

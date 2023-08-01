@@ -50,7 +50,7 @@ interface BaseProps<T extends Yup.AnyObject> {
   source: ValidSources;
   inputType: ValidInputTypes;
   credentialId?: number;
-  // If both are specified, uses formBody
+  // If both are specified, will render formBody and then formBodyBuilder
   formBody?: JSX.Element | null;
   formBodyBuilder?: FormBodyBuilder<T>;
   validationSchema: Yup.ObjectSchema<T>;

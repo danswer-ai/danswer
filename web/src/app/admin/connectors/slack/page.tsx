@@ -159,7 +159,9 @@ const MainSection = () => {
                   header: "Channels",
                   key: "channels",
                   getValue: (connector) =>
-                    connector.connector_specific_config.channels,
+                    connector.connector_specific_config.channels
+                      ? connector.connector_specific_config.channels.join(", ")
+                      : "All channels",
                 },
               ]}
               onUpdate={() =>
@@ -180,7 +182,11 @@ const MainSection = () => {
         <h2 className="font-bold mb-3">Connect to a New Workspace</h2>
         <ConnectorForm<SlackConfig>
           nameBuilder={(values) =>
-            `SlackConnector-${values.workspace}-${values.channels.join("_")}`
+            values.channels
+              ? `SlackConnector-${values.workspace}-${values.channels.join(
+                  "_"
+                )}`
+              : `SlackConnector-${values.workspace}`
           }
           source="slack"
           inputType="poll"
