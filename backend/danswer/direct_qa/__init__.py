@@ -4,9 +4,16 @@ from openai.error import AuthenticationError
 from openai.error import Timeout
 
 from danswer.configs.app_configs import QA_TIMEOUT
-from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
+from danswer.configs.model_configs import (
+    GEN_AI_HUGGINGFACE_API_TOKEN,
+    INTERNAL_MODEL_VERSION,
+)
 from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.interfaces import QAModel
+from danswer.direct_qa.huggingface_inference import (
+    HuggingFaceInferenceChatCompletionQA,
+    HuggingFaceInferenceCompletionQA,
+)
 from danswer.direct_qa.open_ai import OpenAIChatCompletionQA
 from danswer.direct_qa.open_ai import OpenAICompletionQA
 
@@ -44,6 +51,12 @@ def get_default_backend_qa_model(
         return OpenAICompletionQA(timeout=timeout, api_key=api_key, **kwargs)
     elif internal_model == "openai-chat-completion":
         return OpenAIChatCompletionQA(timeout=timeout, api_key=api_key, **kwargs)
+    elif internal_model == "huggingface-inference-completion":
+        api_key = api_key if api_key is not None else GEN_AI_HUGGINGFACE_API_TOKEN
+        return HuggingFaceInferenceCompletionQA(api_key=api_key, **kwargs)
+    elif internal_model == "huggingface-inference-chat-completion":
+        api_key = api_key if api_key is not None else GEN_AI_HUGGINGFACE_API_TOKEN
+        return HuggingFaceInferenceChatCompletionQA(api_key=api_key, **kwargs)
     # Note GPT4All is not supported for M1 Mac machines currently, removing until support is added
     # elif internal_model == "gpt4all-completion":
     #    return GPT4AllCompletionQA(**kwargs)
