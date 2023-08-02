@@ -147,6 +147,20 @@ export const GoogleDriveIcon = ({
   );
 };
 
+export const AirtableIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src="/Airtable.png" alt="Logo" width="96" height="96" />
+    </div>
+  );
+}
+
 export const BookstackIcon = ({
   size = 16,
   className = defaultTailwindCSS,

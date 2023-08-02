@@ -1,1 +1,5 @@
 .env
+backend/dynamic_config_storage/*
+*.DS_Store
+.idea
+.venv

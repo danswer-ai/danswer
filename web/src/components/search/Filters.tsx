@@ -5,17 +5,18 @@ import { ValidSources } from "@/lib/types";
 import { Source } from "@/lib/search/interfaces";
 
 const sources: Source[] = [
-  { displayName: "Google Drive", internalName: "google_drive" },
-  { displayName: "Slack", internalName: "slack" },
+  {displayName: "Airtable", internalName: "airtable"},
   { displayName: "BookStack", internalName: "bookstack" },
   { displayName: "Confluence", internalName: "confluence" },
+  { displayName: "File", internalName: "file" },
+  { displayName: "Github PRs", internalName: "github" },
+  { displayName: "Google Drive", internalName: "google_drive" },
   { displayName: "Jira", internalName: "jira" },
+  { displayName: "Notion", internalName: "notion" },
   { displayName: "Productboard", internalName: "productboard" },
   { displayName: "Slab", internalName: "slab" },
-  { displayName: "Github PRs", internalName: "github" },
+  { displayName: "Slack", internalName: "slack" },
   { displayName: "Web", internalName: "web" },
-  { displayName: "File", internalName: "file" },
-  { displayName: "Notion", internalName: "notion" },
 ];
 
 interface SourceSelectorProps {

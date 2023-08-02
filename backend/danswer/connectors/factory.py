@@ -2,18 +2,19 @@ from typing import Any
 from typing import Type
 
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.airtable.connector import AirtableConnector
 from danswer.connectors.bookstack.connector import BookstackConnector
 from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.danswer_jira.connector import JiraConnector
 from danswer.connectors.file.connector import LocalFileConnector
 from danswer.connectors.github.connector import GithubConnector
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
-from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.interfaces import BaseConnector
 from danswer.connectors.interfaces import EventConnector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import InputType
+from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.productboard.connector import ProductboardConnector
 from danswer.connectors.slab.connector import SlabConnector
 from danswer.connectors.slack.connector import SlackLoadConnector
@@ -32,20 +33,21 @@ def identify_connector_class(
     input_type: InputType | None = None,
 ) -> Type[BaseConnector]:
     connector_map = {
-        DocumentSource.WEB: WebConnector,
+        DocumentSource.AIRTABLE: AirtableConnector,
+        DocumentSource.BOOKSTACK: BookstackConnector,
+        DocumentSource.CONFLUENCE: ConfluenceConnector,
         DocumentSource.FILE: LocalFileConnector,
+        DocumentSource.GITHUB: GithubConnector,
+        DocumentSource.GOOGLE_DRIVE: GoogleDriveConnector,
+        DocumentSource.JIRA: JiraConnector,
+        DocumentSource.NOTION: NotionConnector,
+        DocumentSource.PRODUCTBOARD: ProductboardConnector,
+        DocumentSource.SLAB: SlabConnector,
         DocumentSource.SLACK: {
             InputType.LOAD_STATE: SlackLoadConnector,
             InputType.POLL: SlackPollConnector,
         },
-        DocumentSource.GITHUB: GithubConnector,
-        DocumentSource.GOOGLE_DRIVE: GoogleDriveConnector,
-        DocumentSource.BOOKSTACK: BookstackConnector,
-        DocumentSource.CONFLUENCE: ConfluenceConnector,
-        DocumentSource.JIRA: JiraConnector,
-        DocumentSource.PRODUCTBOARD: ProductboardConnector,
-        DocumentSource.SLAB: SlabConnector,
-        DocumentSource.NOTION: NotionConnector,
+        DocumentSource.WEB: WebConnector,
     }
     connector_by_source = connector_map.get(source, {})
 

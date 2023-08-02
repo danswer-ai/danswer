@@ -3,7 +3,7 @@ upstream api_server {
     # to return a good HTTP response
 
     # for UNIX domain socket setups
-    #server unix:/tmp/gunicorn.sock fail_timeout=0;
+    # server unix:/tmp/gunicorn.sock fail_timeout=0;
 
     # for a TCP configuration
     # TODO: use gunicorn to manage multiple processes

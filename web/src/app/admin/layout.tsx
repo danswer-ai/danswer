@@ -1,19 +1,19 @@
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/admin/connectors/Sidebar";
 import {
-  NotebookIcon,
-  GithubIcon,
-  GlobeIcon,
-  GoogleDriveIcon,
-  SlackIcon,
-  KeyIcon,
-  BookstackIcon,
-  ConfluenceIcon,
-  FileIcon,
-  JiraIcon,
-  SlabIcon,
-  NotionIcon,
-  ProductboardIcon,
+    NotebookIcon,
+    GithubIcon,
+    GlobeIcon,
+    GoogleDriveIcon,
+    SlackIcon,
+    KeyIcon,
+    BookstackIcon,
+    ConfluenceIcon,
+    FileIcon,
+    JiraIcon,
+    SlabIcon,
+    NotionIcon,
+    ProductboardIcon, AirtableIcon,
 } from "@/components/icons/icons";
 import { DISABLE_AUTH } from "@/lib/constants";
 import { getCurrentUserSS } from "@/lib/userSS";
@@ -59,6 +59,15 @@ export default async function AdminLayout({
             {
               name: "Connector Settings",
               items: [
+                {
+                  name: (
+                    <div className="flex">
+                      <AirtableIcon size={16} />
+                      <div className="ml-1">Airtable</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/airtable",
+                },
                 {
                   name: (
                     <div className="flex">

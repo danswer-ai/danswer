@@ -24,6 +24,7 @@ openai==0.27.6
 playwright==1.32.1
 psycopg2==2.9.6
 psycopg2-binary==2.9.6
+pyairtable==2.0.0
 pydantic==1.10.7
 PyGithub==1.58.2
 PyPDF2==3.0.1
@@ -36,7 +37,7 @@ rfc3986==1.5.0
 sentence-transformers==2.2.2
 slack-sdk==3.20.2
 SQLAlchemy[mypy]==2.0.12
-tensorflow==2.12.0
+tensorflow==2.13.0
 transformers==4.30.1
 typesense==0.15.1
 uvicorn==0.21.1

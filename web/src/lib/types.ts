@@ -8,17 +8,18 @@ export interface User {
 }
 
 export type ValidSources =
-  | "web"
-  | "github"
-  | "slack"
-  | "google_drive"
+  | "airtable"
   | "bookstack"
   | "confluence"
+  | "file"
+  | "github"
+  | "google_drive"
   | "jira"
+  | "notion"
   | "productboard"
   | "slab"
-  | "file"
-  | "notion";
+  | "slack"
+  | "web";
 export type ValidInputTypes = "load_state" | "poll" | "event";
 
 // CONNECTORS
@@ -49,6 +50,11 @@ export interface GithubConfig {
 
 export interface GoogleDriveConfig {
   folder_paths: string[];
+}
+
+export interface AirtableConfig {
+  base_id: string;
+  table_name_or_id: string;
 }
 
 export interface BookstackConfig {}
@@ -101,6 +107,11 @@ export interface Credential<T> extends CredentialBase<T> {
 
 export interface GithubCredentialJson {
   github_access_token: string;
+}
+
+export interface AirtableCredentialJson {
+  airtable_access_token: string;
+
 }
 
 export interface BookstackCredentialJson {
