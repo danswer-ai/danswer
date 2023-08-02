@@ -89,10 +89,12 @@ const Main = () => {
       ) : (
         <>
           <p className="text-sm">
-            If you don&apos;t have an access token, you can create one at https://airtable.com/create/tokens - make sure
-            you are logged in. When you make the token, make sure you give it the following scopes: data.records:read,
-            data.recordComments:read, schema.bases:read. Also ensure that the token is scoped to the base you want, or
-            to all bases. All your base are belong to us.
+            If you don&apos;t have an access token, you can create one at
+            https://airtable.com/create/tokens - make sure you are logged in.
+            When you make the token, make sure you give it the following scopes:
+            data.records:read, data.recordComments:read, schema.bases:read. Also
+            ensure that the token is scoped to the base you want, or to all
+            bases. All your base are belong to us.
           </p>
           <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
             <CredentialForm<AirtableCredentialJson>
@@ -151,13 +153,13 @@ const Main = () => {
                   header: "Base ID",
                   key: "base_id",
                   getValue: (connector) =>
-                    `${connector.connector_specific_config.base_id}/${connector.connector_specific_config.base_id}`,
+                    `${connector.connector_specific_config.base_id}`,
                 },
                 {
                   header: "Table Name or ID",
                   key: "table_name_or_id",
                   getValue: (connector) =>
-                    `${connector.connector_specific_config.table_name_or_id}/${connector.connector_specific_config.table_name_or_id}`,
+                    `${connector.connector_specific_config.table_name_or_id}`,
                 },
               ]}
               onUpdate={() =>
@@ -172,15 +174,16 @@ const Main = () => {
         <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
           <h2 className="font-bold mb-3">Connect to a new base and table</h2>
           <ConnectorForm<AirtableConfig>
-            nameBuilder={(values) =>
-              `AirtableConnector-${values.base_id}`
-            }
+            nameBuilder={(values) => `AirtableConnector-${values.base_id}`}
             source="airtable"
             inputType="load_state"
             formBody={
               <>
                 <TextFormField name="base_id" label="Base ID:" />
-                <TextFormField name="table_name_or_id" label="Table Name or ID:" />
+                <TextFormField
+                  name="table_name_or_id"
+                  label="Table Name or ID:"
+                />
               </>
             }
             validationSchema={Yup.object().shape({
@@ -206,8 +209,8 @@ const Main = () => {
         </div>
       ) : (
         <p className="text-sm">
-          Please provide your personal access token in Step 1 first! Once done with that,
-          you can then specify which bases/tables you want to make
+          Please provide your personal access token in Step 1 first! Once done
+          with that, you can then specify which bases/tables you want to make
           searchable.
         </p>
       )}

@@ -47,7 +47,9 @@ def get_channel_info(client: WebClient, channel_id: str) -> ChannelType:
 def get_channels(client: WebClient, exclude_archived: bool = True) -> list[ChannelType]:
     """Get all channels in the workspace"""
     channels: list[dict[str, Any]] = []
-    for result in _make_slack_api_call(client.conversations_list, exclude_archived=exclude_archived):
+    for result in _make_slack_api_call(
+        client.conversations_list, exclude_archived=exclude_archived
+    ):
         channels.extend(result["channels"])
     return channels
 

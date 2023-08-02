@@ -1,16 +1,15 @@
 import json
 from typing import Any
 
-from pyairtable import Api as AirtableApi
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.connectors.interfaces import (
-    LoadConnector,
-    PollConnector,
-    GenerateDocumentsOutput,
-    SecondsSinceUnixEpoch,
-)
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.models import Document, Section
+from danswer.connectors.interfaces import GenerateDocumentsOutput
+from danswer.connectors.interfaces import LoadConnector
+from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import Document
+from danswer.connectors.models import Section
+from pyairtable import Api as AirtableApi
 
 
 class AirtableClientNotSetUpError(PermissionError):
@@ -47,14 +46,15 @@ class AirtableConnector(LoadConnector, PollConnector):
         record_documents = []
         for record in all_records:
             record_document = Document(
-                id=record.get("id"),
+                id=str(record.get("id")),
                 sections=[
                     Section(
-                        link=record.get("id"), text=json.dumps(record.get("fields"))
+                        link=f"https://airtable.com/{self.base_id}/{self.table_name_or_id}/",
+                        text=json.dumps(record.get("fields")),
                     )
                 ],
                 source=DocumentSource.AIRTABLE,
-                semantic_identifier=f"Table Record: {record.get('id')}",
+                semantic_identifier=f"Airtable Base ID: {self.base_id}. Table Name (or id): {self.table_name_or_id}",
                 metadata={
                     "type": "airtable",
                     "created_time": record.get("createdTime"),

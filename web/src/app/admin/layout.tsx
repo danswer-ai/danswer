@@ -1,19 +1,20 @@
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/admin/connectors/Sidebar";
 import {
-    NotebookIcon,
-    GithubIcon,
-    GlobeIcon,
-    GoogleDriveIcon,
-    SlackIcon,
-    KeyIcon,
-    BookstackIcon,
-    ConfluenceIcon,
-    FileIcon,
-    JiraIcon,
-    SlabIcon,
-    NotionIcon,
-    ProductboardIcon, AirtableIcon,
+  NotebookIcon,
+  GithubIcon,
+  GlobeIcon,
+  GoogleDriveIcon,
+  SlackIcon,
+  KeyIcon,
+  BookstackIcon,
+  ConfluenceIcon,
+  FileIcon,
+  JiraIcon,
+  SlabIcon,
+  NotionIcon,
+  ProductboardIcon,
+  AirtableIcon,
 } from "@/components/icons/icons";
 import { DISABLE_AUTH } from "@/lib/constants";
 import { getCurrentUserSS } from "@/lib/userSS";

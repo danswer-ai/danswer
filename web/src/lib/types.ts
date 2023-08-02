@@ -111,7 +111,6 @@ export interface GithubCredentialJson {
 
 export interface AirtableCredentialJson {
   airtable_access_token: string;
-
 }
 
 export interface BookstackCredentialJson {

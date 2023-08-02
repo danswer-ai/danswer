@@ -53,11 +53,11 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         adminPageLink: "/admin/connectors/github",
       };
     case "airtable":
-        return {
-          icon: AirtableIcon,
-          displayName: "Airtable",
-          adminPageLink: "/admin/connectors/airtable",
-        };
+      return {
+        icon: AirtableIcon,
+        displayName: "Airtable",
+        adminPageLink: "/admin/connectors/airtable",
+      };
     case "bookstack":
       return {
         icon: BookstackIcon,

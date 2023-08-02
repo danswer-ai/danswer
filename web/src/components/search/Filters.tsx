@@ -5,7 +5,7 @@ import { ValidSources } from "@/lib/types";
 import { Source } from "@/lib/search/interfaces";
 
 const sources: Source[] = [
-  {displayName: "Airtable", internalName: "airtable"},
+  { displayName: "Airtable", internalName: "airtable" },
   { displayName: "BookStack", internalName: "bookstack" },
   { displayName: "Confluence", internalName: "confluence" },
   { displayName: "File", internalName: "file" },

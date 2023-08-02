@@ -124,8 +124,9 @@ CHUNK_OVERLAP = 5
 # Other API Keys
 #####
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-OPENAI_API_BASE = os.environ.get("OPENAI_API_BASE", "https://api.openai.com/v1")  # We can set our own value here to go through a proxy for example.
-
+OPENAI_API_BASE = os.environ.get(
+    "OPENAI_API_BASE", "https://api.openai.com/v1"
+)  # We can set our own value here to go through a proxy for example.
 
 
 #####

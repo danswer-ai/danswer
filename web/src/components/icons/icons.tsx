@@ -159,7 +159,7 @@ export const AirtableIcon = ({
       <Image src="/Airtable.png" alt="Logo" width="96" height="96" />
     </div>
   );
-}
+};
 
 export const BookstackIcon = ({
   size = 16,
