@@ -7,6 +7,7 @@ from typing import Optional
 from typing import Tuple
 
 import regex
+
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.configs.constants import BLURB

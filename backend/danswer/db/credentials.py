@@ -1,14 +1,15 @@
 from typing import Any
 
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import or_
+
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import Credential
 from danswer.db.models import User
 from danswer.server.models import CredentialBase
 from danswer.server.models import ObjectCreationIdResponse
 from danswer.utils.logger import setup_logger
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-from sqlalchemy.sql.expression import or_
 
 
 logger = setup_logger()

@@ -37,6 +37,36 @@ export const TextFormField = ({
   );
 };
 
+interface BooleanFormFieldProps {
+  name: string;
+  label: string;
+  subtext?: string;
+}
+
+export const BooleanFormField = ({
+  name,
+  label,
+  subtext,
+}: BooleanFormFieldProps) => {
+  return (
+    <div className="mb-4">
+      <label className="flex text-sm">
+        <Field name={name} type="checkbox" className="mx-3 px-5" />
+        <div>
+          {label}
+          {subtext && <p className="text-xs">{subtext}</p>}
+        </div>
+      </label>
+
+      <ErrorMessage
+        name={name}
+        component="div"
+        className="text-red-500 text-sm mt-1"
+      />
+    </div>
+  );
+};
+
 interface TextArrayFieldProps {
   name: string;
   label: string;
@@ -71,6 +101,8 @@ export function TextArrayFieldBuilder<T extends Yup.AnyObject>({
                       name={`${name}.${index}`}
                       id={name}
                       className="border bg-slate-700 text-gray-200 border-gray-300 rounded w-full py-2 px-3 mr-2"
+                      // Disable autocomplete since the browser doesn't know how to handle an array of text fields
+                      autoComplete="off"
                     />
                     <Button
                       type="button"

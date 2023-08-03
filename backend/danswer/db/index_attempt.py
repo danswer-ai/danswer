@@ -1,10 +1,10 @@
-from danswer.db.engine import translate_db_time_to_server_time
-from danswer.db.models import IndexAttempt
-from danswer.db.models import IndexingStatus
-from danswer.utils.logger import setup_logger
 from sqlalchemy import desc
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
+from danswer.db.models import IndexAttempt
+from danswer.db.models import IndexingStatus
+from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
@@ -57,11 +57,9 @@ def mark_attempt_in_progress(
 
 def mark_attempt_succeeded(
     index_attempt: IndexAttempt,
-    docs_indexed: list[str],
     db_session: Session,
 ) -> None:
     index_attempt.status = IndexingStatus.SUCCESS
-    index_attempt.document_ids = docs_indexed
     db_session.add(index_attempt)
     db_session.commit()
 
@@ -88,18 +86,3 @@ def get_last_successful_attempt(
     stmt = stmt.order_by(desc(IndexAttempt.time_created))
 
     return db_session.execute(stmt).scalars().first()
-
-
-def get_last_successful_attempt_start_time(
-    connector_id: int,
-    credential_id: int,
-    db_session: Session,
-) -> float:
-    """Technically the start time is a bit later than creation but for intended use, it doesn't matter"""
-    last_indexing = get_last_successful_attempt(connector_id, credential_id, db_session)
-    if last_indexing is None:
-        return 0.0
-    last_index_start = translate_db_time_to_server_time(
-        last_indexing.time_created, db_session
-    )
-    return last_index_start.timestamp()

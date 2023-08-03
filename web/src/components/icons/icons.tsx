@@ -10,12 +10,15 @@ import {
   Link,
   Plug,
   Brain,
+  PencilSimple,
+  X,
 } from "@phosphor-icons/react";
 import { SiBookstack } from "react-icons/si";
 import { FaFile, FaGlobe } from "react-icons/fa";
 import Image from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
+import guruIcon from "../../../public/Guru.svg";
 
 interface IconProps {
   size?: number;
@@ -99,6 +102,20 @@ export const BrainIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <Brain size={size} className={className} />;
+};
+
+export const PencilIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <PencilSimple size={size} className={className} />;
+};
+
+export const XIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <X size={size} className={className} />;
 };
 
 //
@@ -235,3 +252,15 @@ export const NotionIcon = ({
     </div>
   );
 };
+
+export const GuruIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src={guruIcon} alt="Logo" width="96" height="96" />
+  </div>
+);

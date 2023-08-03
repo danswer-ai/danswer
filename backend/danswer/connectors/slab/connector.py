@@ -7,26 +7,23 @@ from typing import Any
 from urllib.parse import urljoin
 
 import requests
+from dateutil import parser
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
-from dateutil import parser
 
 # Fairly generous retry because it's not understood why occasionally GraphQL requests fail even with timeout > 1 min
 SLAB_GRAPHQL_MAX_TRIES = 10
 SLAB_API_URL = "https://api.slab.com/v1/graphql"
 logger = setup_logger()
-
-
-class SlabBotTokenNotFoundError(PermissionError):
-    def __init__(self) -> None:
-        super().__init__("Slab Bot Token not found, was load_credentials called?")
 
 
 def run_graphql_request(
@@ -179,7 +176,7 @@ class SlabConnector(LoadConnector, PollConnector):
         doc_batch: list[Document] = []
 
         if self.slab_bot_token is None:
-            raise SlabBotTokenNotFoundError()
+            raise ConnectorMissingCredentialError("Slab")
 
         all_post_ids: list[str] = get_all_post_ids(self.slab_bot_token)
 

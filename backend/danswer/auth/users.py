@@ -7,11 +7,32 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Optional
 
+from fastapi import Depends
+from fastapi import HTTPException
+from fastapi import Request
+from fastapi import status
+from fastapi_users import BaseUserManager
+from fastapi_users import FastAPIUsers
+from fastapi_users import models
+from fastapi_users import schemas
+from fastapi_users import UUIDIDMixin
+from fastapi_users.authentication import AuthenticationBackend
+from fastapi_users.authentication import CookieTransport
+from fastapi_users.authentication.strategy.db import AccessTokenDatabase
+from fastapi_users.authentication.strategy.db import DatabaseStrategy
+from fastapi_users.db import SQLAlchemyUserDatabase
+from httpx_oauth.clients.google import GoogleOAuth2
+from httpx_oauth.clients.openid import OpenID
+from pydantic import EmailStr
+
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
 from danswer.configs.app_configs import DISABLE_AUTH
-from danswer.configs.app_configs import GOOGLE_OAUTH_CLIENT_ID
-from danswer.configs.app_configs import GOOGLE_OAUTH_CLIENT_SECRET
+from danswer.configs.app_configs import ENABLE_OAUTH
+from danswer.configs.app_configs import OAUTH_CLIENT_ID
+from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
+from danswer.configs.app_configs import OAUTH_TYPE
+from danswer.configs.app_configs import OPENID_CONFIG_URL
 from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
@@ -28,22 +49,6 @@ from danswer.db.engine import get_async_session
 from danswer.db.models import AccessToken
 from danswer.db.models import User
 from danswer.utils.logger import setup_logger
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import Request
-from fastapi import status
-from fastapi_users import BaseUserManager
-from fastapi_users import FastAPIUsers
-from fastapi_users import models
-from fastapi_users import schemas
-from fastapi_users import UUIDIDMixin
-from fastapi_users.authentication import AuthenticationBackend
-from fastapi_users.authentication import CookieTransport
-from fastapi_users.authentication.strategy.db import AccessTokenDatabase
-from fastapi_users.authentication.strategy.db import DatabaseStrategy
-from fastapi_users.db import SQLAlchemyUserDatabase
-from httpx_oauth.clients.google import GoogleOAuth2
-from pydantic import EmailStr
 
 logger = setup_logger()
 
@@ -193,7 +198,15 @@ auth_backend = AuthenticationBackend(
     get_strategy=get_database_strategy,
 )
 
-google_oauth_client = GoogleOAuth2(GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET)
+oauth_client = None  # type: GoogleOAuth2 | OpenID | None
+if ENABLE_OAUTH:
+    if OAUTH_TYPE == "google":
+        oauth_client = GoogleOAuth2(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET)
+    elif OAUTH_TYPE == "openid":
+        oauth_client = OpenID(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OPENID_CONFIG_URL)
+    else:
+        raise AssertionError(f"Invalid OAUTH type {OAUTH_TYPE}")
+
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 

@@ -2,8 +2,17 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from danswer.configs.constants import DocumentSource
 from pydantic import BaseModel
+
+from danswer.configs.constants import DocumentSource
+
+
+class ConnectorMissingCredentialError(PermissionError):
+    def __init__(self, connector_name: str) -> None:
+        connector_name = connector_name or "Unknown"
+        super().__init__(
+            f"{connector_name} connector missing credentials, was load_credentials called?"
+        )
 
 
 @dataclass
@@ -17,7 +26,7 @@ class Document:
     id: str  # This must be unique or during indexing/reindexing, chunks will be overwritten
     sections: list[Section]
     source: DocumentSource
-    semantic_identifier: str | None
+    semantic_identifier: str
     metadata: dict[str, Any]
 
 

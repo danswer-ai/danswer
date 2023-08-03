@@ -4,9 +4,14 @@ from dataclasses import dataclass
 from typing import Any
 from typing import cast
 
+from danswer.configs.constants import BLURB
 from danswer.configs.constants import METADATA
+from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.connectors.models import Document
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
 
 
 @dataclass
@@ -58,4 +63,8 @@ class InferenceChunk(BaseChunk):
             init_kwargs[METADATA] = json.loads(init_kwargs[METADATA])
         else:
             init_kwargs[METADATA] = {}
+        if init_kwargs.get(SEMANTIC_IDENTIFIER) is None:
+            logger.error(
+                f"Chunk with blurb: {init_kwargs.get(BLURB, 'Unknown')[:50]}... has no Semantic Identifier"
+            )
         return cls(**init_kwargs)

@@ -1,4 +1,8 @@
 import time
+from datetime import datetime
+from datetime import timezone
+
+from sqlalchemy.orm import Session
 
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import LoadConnector
@@ -7,6 +11,7 @@ from danswer.connectors.models import InputType
 from danswer.datastores.indexing_pipeline import build_indexing_pipeline
 from danswer.db.connector import disable_connector
 from danswer.db.connector import fetch_connectors
+from danswer.db.connector_credential_pair import get_last_successful_attempt_time
 from danswer.db.connector_credential_pair import update_connector_credential_pair
 from danswer.db.credentials import backend_update_credential_json
 from danswer.db.engine import get_db_current_time
@@ -14,7 +19,6 @@ from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
 from danswer.db.index_attempt import get_last_successful_attempt
-from danswer.db.index_attempt import get_last_successful_attempt_start_time
 from danswer.db.index_attempt import get_not_started_index_attempts
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.index_attempt import mark_attempt_in_progress
@@ -23,7 +27,6 @@ from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.utils.logger import setup_logger
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
@@ -62,6 +65,7 @@ def create_indexing_jobs(db_session: Session) -> None:
                     credential_id=attempt.credential_id,
                     attempt_status=IndexingStatus.FAILED,
                     net_docs=None,
+                    run_dt=None,
                     db_session=db_session,
                 )
 
@@ -82,6 +86,7 @@ def create_indexing_jobs(db_session: Session) -> None:
                 credential_id=credential.id,
                 attempt_status=IndexingStatus.NOT_STARTED,
                 net_docs=None,
+                run_dt=None,
                 db_session=db_session,
             )
 
@@ -111,6 +116,16 @@ def run_indexing_jobs(db_session: Session) -> None:
             f"with config: '{attempt.connector.connector_specific_config}', and "
             f"with credentials: '{attempt.credential_id}'"
         )
+
+        run_time = time.time()
+        run_time_str = datetime.utcfromtimestamp(run_time).strftime("%Y-%m-%d %H:%M:%S")
+        logger.info(f"Connector Starting UTC Time: {run_time_str}")
+
+        # "official" timestamp for this run
+        # used for setting time bounds when fetching updates from apps and
+        # is stored in the DB as the last successful run time if this run succeeds
+        run_dt = datetime.fromtimestamp(run_time, tz=timezone.utc)
+
         mark_attempt_in_progress(attempt, db_session)
 
         db_connector = attempt.connector
@@ -122,6 +137,7 @@ def run_indexing_jobs(db_session: Session) -> None:
             credential_id=db_credential.id,
             attempt_status=IndexingStatus.IN_PROGRESS,
             net_docs=None,
+            run_dt=None,
             db_session=db_session,
         )
 
@@ -154,49 +170,59 @@ def run_indexing_jobs(db_session: Session) -> None:
                         f"Polling attempt {attempt.id} is missing connector_id or credential_id, "
                         f"can't fetch time range."
                     )
-                last_run_time = get_last_successful_attempt_start_time(
+                last_run_time = get_last_successful_attempt_time(
                     attempt.connector_id, attempt.credential_id, db_session
                 )
-                # Covers very unlikely case that time offset check from DB having tiny variations that coincide with
-                # a new document being created
-                safe_last_run_time = max(last_run_time - 1, 0.0)
                 doc_batch_generator = runnable_connector.poll_source(
-                    safe_last_run_time, time.time()
+                    start=last_run_time, end=run_time
                 )
 
             else:
                 # Event types cannot be handled by a background type, leave these untouched
                 continue
 
-            document_ids: list[str] = []
+            document_count = 0
+            chunk_count = 0
             for doc_batch in doc_batch_generator:
                 index_user_id = (
                     None if db_credential.public_doc else db_credential.user_id
                 )
-                net_doc_change += indexing_pipeline(
+                new_docs, total_batch_chunks = indexing_pipeline(
                     documents=doc_batch, user_id=index_user_id
                 )
-                document_ids.extend([doc.id for doc in doc_batch])
+                net_doc_change += new_docs
+                chunk_count += total_batch_chunks
+                document_count += len(doc_batch)
 
-            mark_attempt_succeeded(attempt, document_ids, db_session)
+            mark_attempt_succeeded(attempt, db_session)
             update_connector_credential_pair(
                 connector_id=db_connector.id,
                 credential_id=db_credential.id,
                 attempt_status=IndexingStatus.SUCCESS,
                 net_docs=net_doc_change,
+                run_dt=run_dt,
                 db_session=db_session,
             )
 
-            logger.info(f"Indexed {len(document_ids)} documents")
+            logger.info(
+                f"Indexed or updated {document_count} total documents for a total of {chunk_count} chunks"
+            )
+            logger.info(
+                f"Connector successfully finished, elapsed time: {time.time() - run_time} seconds"
+            )
 
         except Exception as e:
             logger.exception(f"Indexing job with id {attempt.id} failed due to {e}")
+            logger.info(
+                f"Failed connector elapsed time: {time.time() - run_time} seconds"
+            )
             mark_attempt_failed(attempt, db_session, failure_reason=str(e))
             update_connector_credential_pair(
                 connector_id=db_connector.id,
                 credential_id=db_credential.id,
                 attempt_status=IndexingStatus.FAILED,
                 net_docs=net_doc_change,
+                run_dt=run_dt,
                 db_session=db_session,
             )
 
@@ -205,7 +231,8 @@ def update_loop(delay: int = 10) -> None:
     engine = get_sqlalchemy_engine()
     while True:
         start = time.time()
-        logger.info(f"Running update, current time: {time.ctime(start)}")
+        start_time_utc = datetime.utcfromtimestamp(start).strftime("%Y-%m-%d %H:%M:%S")
+        logger.info(f"Running update, current UTC time: {start_time_utc}")
         try:
             with Session(engine, expire_on_commit=False) as db_session:
                 create_indexing_jobs(db_session)

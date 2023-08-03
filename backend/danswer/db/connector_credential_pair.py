@@ -1,3 +1,9 @@
+from datetime import datetime
+
+from fastapi import HTTPException
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.models import ConnectorCredentialPair
@@ -5,10 +11,6 @@ from danswer.db.models import IndexingStatus
 from danswer.db.models import User
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
-from fastapi import HTTPException
-from sqlalchemy import func
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 logger = setup_logger()
 
@@ -35,11 +37,29 @@ def get_connector_credential_pair(
     return result.scalar_one_or_none()
 
 
+def get_last_successful_attempt_time(
+    connector_id: int,
+    credential_id: int,
+    db_session: Session,
+) -> float:
+    connector_credential_pair = get_connector_credential_pair(
+        connector_id, credential_id, db_session
+    )
+    if (
+        connector_credential_pair is None
+        or connector_credential_pair.last_successful_index_time is None
+    ):
+        return 0.0
+
+    return connector_credential_pair.last_successful_index_time.timestamp()
+
+
 def update_connector_credential_pair(
     connector_id: int,
     credential_id: int,
     attempt_status: IndexingStatus,
     net_docs: int | None,
+    run_dt: datetime | None,
     db_session: Session,
 ) -> None:
     cc_pair = get_connector_credential_pair(connector_id, credential_id, db_session)
@@ -50,8 +70,10 @@ def update_connector_credential_pair(
         )
         return
     cc_pair.last_attempt_status = attempt_status
-    if attempt_status == IndexingStatus.SUCCESS:
-        cc_pair.last_successful_index_time = func.now()  # type:ignore
+    # simply don't update last_successful_index_time if run_dt is not specified
+    # at worst, this would result in re-indexing documents that were already indexed
+    if attempt_status == IndexingStatus.SUCCESS and run_dt is not None:
+        cc_pair.last_successful_index_time = run_dt
     if net_docs is not None:
         cc_pair.total_docs_indexed += net_docs
     db_session.commit()

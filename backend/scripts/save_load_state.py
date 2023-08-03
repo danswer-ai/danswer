@@ -6,6 +6,9 @@ import subprocess
 from datetime import datetime
 
 import requests
+from qdrant_client.http.models.models import SnapshotDescription
+from typesense.exceptions import ObjectNotFound  # type: ignore
+
 from alembic import command
 from alembic.config import Config
 from danswer.configs.app_configs import POSTGRES_DB
@@ -23,8 +26,6 @@ from danswer.datastores.typesense.store import create_typesense_collection
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.clients import get_typesense_client
 from danswer.utils.logger import setup_logger
-from qdrant_client.http.models.models import SnapshotDescription
-from typesense.exceptions import ObjectNotFound  # type: ignore
 
 logger = setup_logger()
 

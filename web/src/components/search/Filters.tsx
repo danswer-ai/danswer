@@ -11,6 +11,7 @@ const sources: Source[] = [
   { displayName: "File", internalName: "file" },
   { displayName: "Github PRs", internalName: "github" },
   { displayName: "Google Drive", internalName: "google_drive" },
+  { displayName: "Guru", internalName: "guru" },
   { displayName: "Jira", internalName: "jira" },
   { displayName: "Notion", internalName: "notion" },
   { displayName: "Productboard", internalName: "productboard" },

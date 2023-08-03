@@ -24,6 +24,7 @@ class DocumentSource(str, Enum):
     FILE = "file"
     GITHUB = "github"
     GOOGLE_DRIVE = "google_drive"
+    GURU = "guru"
     JIRA = "jira"
     NOTION = "notion"
     PRODUCTBOARD = "productboard"

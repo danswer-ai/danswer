@@ -14,6 +14,7 @@ export type ValidSources =
   | "file"
   | "github"
   | "google_drive"
+  | "guru"
   | "jira"
   | "notion"
   | "productboard"
@@ -49,7 +50,8 @@ export interface GithubConfig {
 }
 
 export interface GoogleDriveConfig {
-  folder_paths: string[];
+  folder_paths?: string[];
+  include_shared?: boolean;
 }
 
 export interface AirtableConfig {
@@ -76,6 +78,8 @@ export interface SlackConfig {
 export interface SlabConfig {
   base_url: string;
 }
+
+export interface GuruConfig {}
 
 export interface FileConfig {
   file_locations: string[];
@@ -147,4 +151,8 @@ export interface SlabCredentialJson {
 
 export interface NotionCredentialJson {
   notion_integration_token: string;
+}
+export interface GuruCredentialJson {
+  guru_user: string;
+  guru_user_token: string;
 }

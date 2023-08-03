@@ -2,6 +2,8 @@ import json
 from uuid import UUID
 
 import numpy
+from sentence_transformers import SentenceTransformer  # type: ignore
+
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import IndexChunk
 from danswer.chunking.models import InferenceChunk
@@ -18,7 +20,6 @@ from danswer.search.search_utils import get_default_reranking_model_ensemble
 from danswer.server.models import SearchDoc
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
-from sentence_transformers import SentenceTransformer  # type: ignore
 
 logger = setup_logger()
 
@@ -33,7 +34,9 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
                 blurb=chunk.blurb,
                 source_type=chunk.source_type,
             )
+            # semantic identifier should always exist but for really old indices, it was not enforced
             for chunk in chunks
+            if chunk.semantic_identifier
         ]
         if chunks
         else []
@@ -58,7 +61,7 @@ def semantic_reranking(
 
     logger.debug(f"Reranked similarity scores: {ranked_sim_scores}")
 
-    return ranked_chunks
+    return list(ranked_chunks)
 
 
 @log_function_time()

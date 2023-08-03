@@ -1,15 +1,16 @@
 import json
 from uuid import UUID
 
+from nltk.corpus import stopwords  # type:ignore
+from nltk.stem import WordNetLemmatizer  # type:ignore
+from nltk.tokenize import word_tokenize  # type:ignore
+
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import KeywordIndex
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
-from nltk.corpus import stopwords  # type:ignore
-from nltk.stem import WordNetLemmatizer  # type:ignore
-from nltk.tokenize import word_tokenize  # type:ignore
 
 logger = setup_logger()
 
