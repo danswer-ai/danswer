@@ -38,12 +38,27 @@ BATCH_SIZE_ENCODE_CHUNKS = 8
 # - gpt4all-completion -> Due to M1 Macs not having compatible gpt4all version, please install dependency yourself
 # - gpt4all-chat-completion-> Due to M1 Macs not having compatible gpt4all version, please install dependency yourself
 # To use gpt4all, run: pip install --upgrade gpt4all==1.0.5
+# These support HuggingFace Inference API, Inference Endpoints and servers running the text-generation-inference backend
+# - huggingface-inference-completion
+# - huggingface-inference-chat-completion
+
 INTERNAL_MODEL_VERSION = os.environ.get(
     "INTERNAL_MODEL_VERSION", "openai-chat-completion"
 )
 # For GPT4ALL, use "ggml-model-gpt4all-falcon-q4_0.bin" for the below for a tested model
 GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION", "gpt-3.5-turbo")
-GEN_AI_MAX_OUTPUT_TOKENS = 512
+GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS", "512"))
+# Use HuggingFace API Token for Huggingface inference client
+GEN_AI_HUGGINGFACE_API_TOKEN = os.environ.get("GEN_AI_HUGGINGFACE_API_TOKEN", None)
+# Use the conversational API with the huggingface-inference-chat-completion internal model
+# Note - this only works with models that support conversational interfaces
+GEN_AI_HUGGINGFACE_USE_CONVERSATIONAL = (
+    os.environ.get("GEN_AI_HUGGINGFACE_USE_CONVERSATIONAL", "").lower() == "true"
+)
+# Disable streaming responses. Set this to true to "polyfill" streaming for models that don't support streaming
+GEN_AI_HUGGINGFACE_DISABLE_STREAM = (
+    os.environ.get("GEN_AI_HUGGINGFACE_DISABLE_STREAM", "").lower() == "true"
+)
 
 # Danswer custom Deep Learning Models
 INTENT_MODEL_VERSION = "danswer/intent-model"
