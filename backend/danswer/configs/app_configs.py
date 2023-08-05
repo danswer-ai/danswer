@@ -139,12 +139,6 @@ CHUNK_MAX_CHAR_OVERLAP = 50
 
 
 #####
-# Other API Keys
-#####
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-
-
-#####
 # Encoder Model Endpoint Configs (Currently unused, running the models in memory)
 #####
 BI_ENCODER_HOST = "localhost"

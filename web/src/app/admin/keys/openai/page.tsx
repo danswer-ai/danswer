@@ -3,13 +3,13 @@
 import { LoadingAnimation } from "@/components/Loading";
 import { KeyIcon, TrashIcon } from "@/components/icons/icons";
 import { ApiKeyForm } from "@/components/openai/ApiKeyForm";
-import { OPENAI_API_KEY_URL } from "@/components/openai/constants";
+import { GEN_AI_API_KEY_URL } from "@/components/openai/constants";
 import { fetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 
 const ExistingKeys = () => {
   const { data, isLoading, error } = useSWR<{ api_key: string }>(
-    OPENAI_API_KEY_URL,
+    GEN_AI_API_KEY_URL,
     fetcher
   );
 
@@ -33,7 +33,7 @@ const ExistingKeys = () => {
         <button
           className="ml-1 my-auto hover:bg-gray-700 rounded-full p-1"
           onClick={async () => {
-            await fetch(OPENAI_API_KEY_URL, {
+            await fetch(GEN_AI_API_KEY_URL, {
               method: "DELETE",
             });
             window.location.reload();
@@ -64,7 +64,7 @@ const Page = () => {
         <ApiKeyForm
           handleResponse={(response) => {
             if (response.ok) {
-              mutate(OPENAI_API_KEY_URL);
+              mutate(GEN_AI_API_KEY_URL);
             }
           }}
         />

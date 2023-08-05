@@ -15,8 +15,6 @@ from openai.error import Timeout
 
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import INCLUDE_METADATA
-from danswer.configs.app_configs import OPENAI_API_KEY
-from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
@@ -28,9 +26,9 @@ from danswer.direct_qa.qa_prompts import get_json_chat_reflexion_msg
 from danswer.direct_qa.qa_prompts import JsonChatProcessor
 from danswer.direct_qa.qa_prompts import JsonProcessor
 from danswer.direct_qa.qa_prompts import NonChatPromptProcessor
+from danswer.direct_qa.qa_utils import get_gen_ai_api_key
 from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
-from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
@@ -41,15 +39,9 @@ logger = setup_logger()
 F = TypeVar("F", bound=Callable)
 
 
-def get_openai_api_key() -> str:
-    return OPENAI_API_KEY or cast(
-        str, get_dynamic_config_store().load(OPENAI_API_KEY_STORAGE_KEY)
-    )
-
-
 def _ensure_openai_api_key(api_key: str | None) -> str:
     try:
-        return api_key or get_openai_api_key()
+        return api_key or get_gen_ai_api_key()
     except ConfigNotFoundError:
         raise OpenAIKeyMissing()
 
@@ -131,7 +123,7 @@ class OpenAICompletionQA(OpenAIQAModel):
         self.timeout = timeout
         self.include_metadata = include_metadata
         try:
-            self.api_key = api_key or get_openai_api_key()
+            self.api_key = api_key or get_gen_ai_api_key()
         except ConfigNotFoundError:
             raise OpenAIKeyMissing()
 

@@ -2,7 +2,7 @@ import { Form, Formik } from "formik";
 import { Popup } from "../admin/connectors/Popup";
 import { useState } from "react";
 import { TextFormField } from "../admin/connectors/Field";
-import { OPENAI_API_KEY_URL } from "./constants";
+import { GEN_AI_API_KEY_URL } from "./constants";
 import { LoadingAnimation } from "../Loading";
 
 interface Props {
@@ -21,7 +21,7 @@ export const ApiKeyForm = ({ handleResponse }: Props) => {
       <Formik
         initialValues={{ apiKey: "" }}
         onSubmit={async ({ apiKey }, formikHelpers) => {
-          const response = await fetch(OPENAI_API_KEY_URL, {
+          const response = await fetch(GEN_AI_API_KEY_URL, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",

@@ -3,6 +3,7 @@ import math
 import re
 from collections.abc import Generator
 from typing import Any
+from typing import cast
 from typing import Optional
 from typing import Tuple
 
@@ -12,19 +13,28 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.configs.constants import BLURB
 from danswer.configs.constants import DOCUMENT_ID
+from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINK
 from danswer.configs.constants import SOURCE_TYPE
+from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.direct_qa.qa_prompts import ANSWER_PAT
 from danswer.direct_qa.qa_prompts import QUOTE_PAT
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
+from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_model_quote
 from danswer.utils.text_processing import shared_precompare_cleanup
 
 logger = setup_logger()
+
+
+def get_gen_ai_api_key() -> str:
+    return GEN_AI_API_KEY or cast(
+        str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY)
+    )
 
 
 def structure_quotes_for_response(

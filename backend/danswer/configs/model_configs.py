@@ -1,5 +1,9 @@
 import os
 
+from danswer.configs.constants import DanswerGenAIModel
+from danswer.configs.constants import ModelHostType
+from danswer.configs.constants import VerifiedModels
+
 # Important considerations when choosing models
 # Max tokens count needs to be high considering use case (at least 512)
 # Models used must be MIT or Apache license
@@ -30,24 +34,33 @@ CROSS_EMBED_CONTEXT_SIZE = 512
 # Purely an optimization, memory limitation consideration
 BATCH_SIZE_ENCODE_CHUNKS = 8
 
-# QA Model API Configs
-# refer to https://platform.openai.com/docs/models/model-endpoint-compatibility for OpenAI models
-# Valid list:
-# - openai-completion
-# - openai-chat-completion
-# - gpt4all-completion -> Due to M1 Macs not having compatible gpt4all version, please install dependency yourself
-# - gpt4all-chat-completion-> Due to M1 Macs not having compatible gpt4all version, please install dependency yourself
-# To use gpt4all, run: pip install --upgrade gpt4all==1.0.5
-# These support HuggingFace Inference API, Inference Endpoints and servers running the text-generation-inference backend
-# - huggingface-inference-completion
-# - huggingface-inference-chat-completion
 
+# Sets the internal Danswer model class to use
 INTERNAL_MODEL_VERSION = os.environ.get(
-    "INTERNAL_MODEL_VERSION", "openai-chat-completion"
+    "INTERNAL_MODEL_VERSION", DanswerGenAIModel.REQUEST.value
 )
-# For GPT4ALL, use "ggml-model-gpt4all-falcon-q4_0.bin" for the below for a tested model
-GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION", "gpt-3.5-turbo")
+
+# If the Generative AI model requires an API key for access, otherwise can leave blank
+GEN_AI_API_KEY = os.environ.get("GEN_AI_API_KEY", "")
+
+# If using GPT4All or OpenAI, specify the model version
+GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION", VerifiedModels.GPT3.value)
+
+# If the Generative Model is hosted to accept requests (DanswerGenAIModel.REQUEST) then
+# set the two below to specify
+# - Where to hit the endpoint
+# - How should the request be formed
+GEN_AI_ENDPOINT = os.environ.get("GEN_AI_ENDPOINT", "")
+GEN_AI_HOST_TYPE = os.environ.get("GEN_AI_API_KEY", ModelHostType.HUGGINGFACE.value)
+
+# Set this to be enough for an answer + quotes
 GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS", "512"))
+
+# Danswer custom Deep Learning Models
+INTENT_MODEL_VERSION = "danswer/intent-model"
+
+
+# TODO rework this
 # Use HuggingFace API Token for Huggingface inference client
 GEN_AI_HUGGINGFACE_API_TOKEN = os.environ.get("GEN_AI_HUGGINGFACE_API_TOKEN", None)
 # Use the conversational API with the huggingface-inference-chat-completion internal model
@@ -59,6 +72,3 @@ GEN_AI_HUGGINGFACE_USE_CONVERSATIONAL = (
 GEN_AI_HUGGINGFACE_DISABLE_STREAM = (
     os.environ.get("GEN_AI_HUGGINGFACE_DISABLE_STREAM", "").lower() == "true"
 )
-
-# Danswer custom Deep Learning Models
-INTENT_MODEL_VERSION = "danswer/intent-model"
