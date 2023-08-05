@@ -12,7 +12,7 @@ SECTION_CONTINUATION = "section_continuation"
 ALLOWED_USERS = "allowed_users"
 ALLOWED_GROUPS = "allowed_groups"
 METADATA = "metadata"
-GEN_AI_API_KEY_STORAGE_KEY = "openai_api_key"
+GEN_AI_API_KEY_STORAGE_KEY = "genai_api_key"
 HTML_SEPARATOR = "\n"
 PUBLIC_DOC_PAT = "PUBLIC"
 
@@ -41,6 +41,8 @@ class DanswerGenAIModel(str, Enum):
     OPENAI_CHAT = "openai-chat-completion"
     GPT4ALL = "gpt4all-completion"
     GPT4ALL_CHAT = "gpt4all-chat-completion"
+    HUGGINGFACE = "huggingface-inference-completion"
+    HUGGINGFACE_CHAT = "huggingface-inference-chat-completion"
     REQUEST = "request-completion"
 
 
@@ -55,6 +57,7 @@ class VerifiedModels(str, Enum):
     # Note the Falcon model does not follow the prompt very well, often not using information in
     # the reference documents and also very rarely does it provide quotes
     FALCON = "ggml-model-gpt4all-falcon-q4_0.bin"  # GPT4All completion/chat-completion
+    LLAMA = "meta-llama/Llama-2-70b-chat-hf"  # HuggingFace
 
 
 class ModelHostType(str, Enum):

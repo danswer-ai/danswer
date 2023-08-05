@@ -19,6 +19,9 @@ services:
     environment:
       - INTERNAL_MODEL_VERSION=${INTERNAL_MODEL_VERSION:-openai-chat-completion}
       - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
+      - GEN_AI_API_KEY=${GEN_AI_API_KEY:-}
+      - GEN_AI_ENDPOINT=${GEN_AI_ENDPOINT:-}
+      - GEN_AI_HOST_TYPE=${GEN_AI_HOST_TYPE:-}
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
       - TYPESENSE_HOST=search_engine
@@ -49,6 +52,9 @@ services:
     environment:
       - INTERNAL_MODEL_VERSION=${INTERNAL_MODEL_VERSION:-openai-chat-completion}
       - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
+      - GEN_AI_API_KEY=${GEN_AI_API_KEY:-}
+      - GEN_AI_ENDPOINT=${GEN_AI_ENDPOINT:-}
+      - GEN_AI_HOST_TYPE=${GEN_AI_HOST_TYPE:-}
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
       - TYPESENSE_HOST=search_engine

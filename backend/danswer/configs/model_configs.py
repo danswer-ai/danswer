@@ -37,7 +37,7 @@ BATCH_SIZE_ENCODE_CHUNKS = 8
 
 # Sets the internal Danswer model class to use
 INTERNAL_MODEL_VERSION = os.environ.get(
-    "INTERNAL_MODEL_VERSION", DanswerGenAIModel.REQUEST.value
+    "INTERNAL_MODEL_VERSION", DanswerGenAIModel.OPENAI_CHAT.value
 )
 
 # If the Generative AI model requires an API key for access, otherwise can leave blank
@@ -51,24 +51,10 @@ GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION", VerifiedModels.GPT
 # - Where to hit the endpoint
 # - How should the request be formed
 GEN_AI_ENDPOINT = os.environ.get("GEN_AI_ENDPOINT", "")
-GEN_AI_HOST_TYPE = os.environ.get("GEN_AI_API_KEY", ModelHostType.HUGGINGFACE.value)
+GEN_AI_HOST_TYPE = os.environ.get("GEN_AI_HOST_TYPE", ModelHostType.HUGGINGFACE.value)
 
 # Set this to be enough for an answer + quotes
 GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS", "512"))
 
 # Danswer custom Deep Learning Models
 INTENT_MODEL_VERSION = "danswer/intent-model"
-
-
-# TODO rework this
-# Use HuggingFace API Token for Huggingface inference client
-GEN_AI_HUGGINGFACE_API_TOKEN = os.environ.get("GEN_AI_HUGGINGFACE_API_TOKEN", None)
-# Use the conversational API with the huggingface-inference-chat-completion internal model
-# Note - this only works with models that support conversational interfaces
-GEN_AI_HUGGINGFACE_USE_CONVERSATIONAL = (
-    os.environ.get("GEN_AI_HUGGINGFACE_USE_CONVERSATIONAL", "").lower() == "true"
-)
-# Disable streaming responses. Set this to true to "polyfill" streaming for models that don't support streaming
-GEN_AI_HUGGINGFACE_DISABLE_STREAM = (
-    os.environ.get("GEN_AI_HUGGINGFACE_DISABLE_STREAM", "").lower() == "true"
-)

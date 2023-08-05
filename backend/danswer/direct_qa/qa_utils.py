@@ -256,3 +256,9 @@ def process_model_tokens(
 
     quotes = extract_quotes_from_completed_token_stream(model_output, context_docs)
     yield structure_quotes_for_response(quotes)
+
+
+def simulate_streaming_response(model_out: str) -> Generator[str, None, None]:
+    """Mock streaming by generating the passed in model output, character by character"""
+    for token in model_out:
+        yield token

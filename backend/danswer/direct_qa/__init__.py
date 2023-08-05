@@ -7,21 +7,20 @@ from openai.error import Timeout
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import DanswerGenAIModel
 from danswer.configs.constants import ModelHostType
-from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.configs.model_configs import GEN_AI_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_HOST_TYPE
-from danswer.configs.model_configs import GEN_AI_HUGGINGFACE_API_TOKEN
 from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
 from danswer.direct_qa.exceptions import UnknownModelError
-from danswer.direct_qa.external_model import RequestCompletionQA
 from danswer.direct_qa.gpt_4_all import GPT4AllChatCompletionQA
 from danswer.direct_qa.gpt_4_all import GPT4AllCompletionQA
-from danswer.direct_qa.huggingface_inference import HuggingFaceInferenceChatCompletionQA
-from danswer.direct_qa.huggingface_inference import HuggingFaceInferenceCompletionQA
+from danswer.direct_qa.huggingface import HuggingFaceChatCompletionQA
+from danswer.direct_qa.huggingface import HuggingFaceCompletionQA
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.open_ai import OpenAIChatCompletionQA
 from danswer.direct_qa.open_ai import OpenAICompletionQA
 from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
+from danswer.direct_qa.qa_utils import get_gen_ai_api_key
+from danswer.direct_qa.request_model import RequestCompletionQA
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -50,7 +49,7 @@ def get_default_backend_qa_model(
     internal_model: str = INTERNAL_MODEL_VERSION,
     endpoint: str | None = GEN_AI_ENDPOINT,
     model_host_type: str | None = GEN_AI_HOST_TYPE,
-    api_key: str | None = GEN_AI_API_KEY,
+    api_key: str | None = get_gen_ai_api_key(),
     timeout: int = QA_TIMEOUT,
     **kwargs: Any
 ) -> QAModel:
@@ -69,12 +68,10 @@ def get_default_backend_qa_model(
         return GPT4AllCompletionQA(**kwargs)
     elif internal_model == DanswerGenAIModel.GPT4ALL_CHAT.value:
         return GPT4AllChatCompletionQA(**kwargs)
-    elif internal_model == "huggingface-inference-completion":
-        api_key = api_key if api_key is not None else GEN_AI_HUGGINGFACE_API_TOKEN
-        return HuggingFaceInferenceCompletionQA(api_key=api_key, **kwargs)
-    elif internal_model == "huggingface-inference-chat-completion":
-        api_key = api_key if api_key is not None else GEN_AI_HUGGINGFACE_API_TOKEN
-        return HuggingFaceInferenceChatCompletionQA(api_key=api_key, **kwargs)
+    elif internal_model == DanswerGenAIModel.HUGGINGFACE.value:
+        return HuggingFaceCompletionQA(api_key=api_key, **kwargs)
+    elif internal_model == DanswerGenAIModel.HUGGINGFACE_CHAT.value:
+        return HuggingFaceChatCompletionQA(api_key=api_key, **kwargs)
     elif internal_model == DanswerGenAIModel.REQUEST.value:
         if endpoint is None or model_host_type is None:
             raise ValueError(

@@ -19,6 +19,7 @@ from danswer.direct_qa.qa_prompts import JsonProcessor
 from danswer.direct_qa.qa_prompts import NonChatPromptProcessor
 from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
+from danswer.direct_qa.qa_utils import simulate_streaming_response
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
@@ -117,8 +118,7 @@ class HuggingFaceRequestModel(HostSpecificRequestModel):
         simulate streaming for the meantime but will need to be replaced in
         the future once streaming is enabled."""
         model_out = HuggingFaceRequestModel._hf_extract_model_output(response)
-        for char in model_out:
-            yield char
+        yield from simulate_streaming_response(model_out)
 
 
 def get_host_specific_model_class(model_host_type: str) -> HostSpecificRequestModel:
