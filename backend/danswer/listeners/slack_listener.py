@@ -6,6 +6,7 @@ from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 
+from danswer.configs.app_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
 from danswer.configs.app_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
@@ -151,7 +152,11 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
 
         @retry(tries=DANSWER_BOT_NUM_RETRIES, delay=0.25, backoff=2, logger=logger)
         def _get_answer(question: QuestionRequest) -> QAResponse:
-            answer = answer_question(question=question, user=None)
+            answer = answer_question(
+                question=question,
+                user=None,
+                answer_generation_timeout=DANSWER_BOT_ANSWER_GENERATION_TIMEOUT,
+            )
             if not answer.error_msg:
                 return answer
             else:
