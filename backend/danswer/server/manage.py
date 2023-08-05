@@ -293,7 +293,7 @@ def connector_run_once(
     )
 
 
-@router.head("/admin/openai-api-key/validate")
+@router.head("/admin/genai-api-key/validate")
 def validate_existing_openai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
@@ -336,7 +336,7 @@ def validate_existing_openai_api_key(
         raise HTTPException(status_code=400, detail="Invalid API key provided")
 
 
-@router.get("/admin/openai-api-key", response_model=ApiKey)
+@router.get("/admin/genai-api-key", response_model=ApiKey)
 def get_gen_ai_api_key_from_dynamic_config_store(
     _: User = Depends(current_admin_user),
 ) -> ApiKey:
@@ -354,7 +354,7 @@ def get_gen_ai_api_key_from_dynamic_config_store(
         raise HTTPException(status_code=404, detail="Key not found")
 
 
-@router.put("/admin/openai-api-key")
+@router.put("/admin/genai-api-key")
 def store_openai_api_key(
     request: ApiKey,
     _: User = Depends(current_admin_user),
@@ -368,7 +368,7 @@ def store_openai_api_key(
         raise HTTPException(400, str(e))
 
 
-@router.delete("/admin/openai-api-key")
+@router.delete("/admin/genai-api-key")
 def delete_openai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:

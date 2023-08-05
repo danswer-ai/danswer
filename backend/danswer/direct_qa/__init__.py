@@ -78,6 +78,7 @@ def get_default_backend_qa_model(
                 "Request based GenAI model requires an endpoint and host type"
             )
         if model_host_type == ModelHostType.HUGGINGFACE.value:
+            # Assuming user is hosting the smallest size LLMs with weaker capabilities and token limits
             # With the 7B Llama2 Chat model, there is a max limit of 1512 tokens
             # This is the sum of input and output tokens, so cannot take in full Danswer context
             return RequestCompletionQA(
