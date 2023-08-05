@@ -1,6 +1,7 @@
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
+from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.datastores.qdrant.store import QdrantIndex
 from danswer.datastores.typesense.store import TypesenseIndex
 from danswer.db.models import User
@@ -27,6 +28,7 @@ def answer_question(
     question: QuestionRequest,
     user: User | None,
     disable_generative_answer: bool = DISABLE_GENERATIVE_AI,
+    answer_generation_timeout: int = QA_TIMEOUT,
 ) -> QAResponse:
     query = question.query
     collection = question.collection
@@ -73,7 +75,7 @@ def answer_question(
         )
 
     try:
-        qa_model = get_default_backend_qa_model()
+        qa_model = get_default_backend_qa_model(timeout=answer_generation_timeout)
     except (UnknownModelError, OpenAIKeyMissing) as e:
         return QAResponse(
             answer=None,
