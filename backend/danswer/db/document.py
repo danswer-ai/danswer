@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from sqlalchemy import and_
 from sqlalchemy import delete
 from sqlalchemy import func
-from sqlalchemy import Select
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
@@ -19,17 +18,12 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-@dataclass(frozen=True)
-class DocumentMetadataStoreKey:
-    id: str
-    connector_id: int
-    credential_id: int
-
-
-def _build_base_query_for_document_store_entries(
-    connector_id: int, credential_id: int
-) -> Select[tuple[DocumentStoreEntry]]:
-    return (
+def get_document_store_entries_with_single_connector_credential_pair(
+    db_session: Session,
+    connector_id: int,
+    credential_id: int,
+) -> Sequence[DocumentStoreEntry]:
+    stmt = (
         select(DocumentStoreEntry)
         .join(Document, Document.id == DocumentStoreEntry.document_id)
         .join(
@@ -43,30 +37,37 @@ def _build_base_query_for_document_store_entries(
         .group_by(DocumentStoreEntry.id)
         .having(func.count(DocumentByConnectorCredentialPair.id) == 1)
     )
-
-
-def get_document_store_entries_for_single_connector_credential_pair(
-    db_session: Session,
-    connector_id: int,
-    credential_id: int,
-) -> Sequence[DocumentStoreEntry]:
-    stmt = _build_base_query_for_document_store_entries(
-        connector_id=connector_id, credential_id=credential_id
-    )
-    stmt = stmt.having(func.count(DocumentByConnectorCredentialPair.id) == 1)
     return db_session.scalars(stmt).all()
 
 
-def get_document_store_entries_for_multi_connector_credential_pair(
+def get_document_by_connector_credential_pairs_indexed_by_multiple(
     db_session: Session,
     connector_id: int,
     credential_id: int,
-) -> Sequence[DocumentStoreEntry]:
-    stmt = _build_base_query_for_document_store_entries(
-        connector_id=connector_id, credential_id=credential_id
+) -> Sequence[DocumentByConnectorCredentialPair]:
+    initial_doc_ids_stmt = select(DocumentByConnectorCredentialPair.id).where(
+        and_(
+            DocumentByConnectorCredentialPair.connector_id == connector_id,
+            DocumentByConnectorCredentialPair.credential_id == credential_id,
+        )
     )
-    stmt = stmt.having(func.count(DocumentByConnectorCredentialPair.id) > 1)
-    return db_session.scalars(stmt).all()
+
+    trimmed_doc_ids_stmt = (
+        select(Document.id)
+        .join(
+            DocumentByConnectorCredentialPair,
+            DocumentByConnectorCredentialPair.id == Document.id,
+        )
+        .where(Document.id.in_(initial_doc_ids_stmt))
+        .group_by(Document.id)
+        .having(func.count(DocumentByConnectorCredentialPair.id) > 1)
+    )
+
+    stmt = select(DocumentByConnectorCredentialPair).where(
+        DocumentByConnectorCredentialPair.id.in_(trimmed_doc_ids_stmt)
+    )
+
+    return db_session.execute(stmt).scalars().all()
 
 
 def upsert_documents(
@@ -144,17 +145,31 @@ def upsert_documents_complete(
     )
 
 
-def delete_documents_complete(db_session: Session, document_ids: list[str]) -> None:
-    logger.info(f"Deleting {len(document_ids)} documents from the DB")
+def delete_document_store_entries(db_session: Session, document_ids: list[str]) -> None:
     db_session.execute(
         delete(DocumentStoreEntry).where(
             DocumentStoreEntry.document_id.in_(document_ids)
         )
     )
+
+
+def delete_document_by_connector_credential_pair(
+    db_session: Session, document_ids: list[str]
+) -> None:
     db_session.execute(
         delete(DocumentByConnectorCredentialPair).where(
             DocumentByConnectorCredentialPair.id.in_(document_ids)
         )
     )
+
+
+def delete_documents(db_session: Session, document_ids: list[str]) -> None:
     db_session.execute(delete(Document).where(Document.id.in_(document_ids)))
+
+
+def delete_documents_complete(db_session: Session, document_ids: list[str]) -> None:
+    logger.info(f"Deleting {len(document_ids)} documents from the DB")
+    delete_document_store_entries(db_session, document_ids)
+    delete_document_by_connector_credential_pair(db_session, document_ids)
+    delete_documents(db_session, document_ids)
     db_session.commit()

@@ -12,8 +12,9 @@ def batch_generator(
     batch_size: int,
     pre_batch_yield: Callable[[list[T]], None] | None = None,
 ) -> Generator[list[T], None, None]:
+    iterable = iter(items)
     while True:
-        batch = list(islice(items, batch_size))
+        batch = list(islice(iterable, batch_size))
         if not batch:
             return
 

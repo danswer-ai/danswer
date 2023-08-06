@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import UUID
 
 from qdrant_client.http.exceptions import ResponseHandlingException
@@ -19,6 +20,7 @@ from danswer.connectors.utils import batch_generator
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
 from danswer.datastores.interfaces import DocumentStoreInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
+from danswer.datastores.interfaces import UpdateRequest
 from danswer.datastores.interfaces import VectorIndex
 from danswer.datastores.qdrant.indexing import index_qdrant_chunks
 from danswer.search.search_utils import get_default_embedding_model
@@ -28,8 +30,8 @@ from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
 
-# how many points we want to delete at a time when cleaning up a connector
-_DELETE_BATCH_SIZE = 200
+# how many points we want to delete/update at a time
+_BATCH_SIZE = 200
 
 
 def _build_qdrant_filters(
@@ -157,11 +159,26 @@ class QdrantIndex(VectorIndex):
 
     def delete(self, ids: list[str]) -> None:
         logger.info(f"Deleting {len(ids)} documents from Qdrant")
-        for id_batch in batch_generator(items=ids, batch_size=_DELETE_BATCH_SIZE):
+        for id_batch in batch_generator(items=ids, batch_size=_BATCH_SIZE):
             self.client.delete(
                 collection_name=self.collection,
                 points_selector=id_batch,
             )
+
+    def update(self, update_requests: list[UpdateRequest]) -> None:
+        logger.info(
+            f"Updating {len(update_requests)} documents' allowed_users in Qdrant"
+        )
+        for update_request in update_requests:
+            for id_batch in batch_generator(
+                items=update_request.ids,
+                batch_size=_BATCH_SIZE,
+            ):
+                self.client.set_payload(
+                    collection_name=self.collection,
+                    payload={ALLOWED_USERS: update_request.allowed_users},
+                    points=id_batch,
+                )
 
     def get_from_id(self, object_id: str) -> InferenceChunk | None:
         matches, _ = self.client.scroll(

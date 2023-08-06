@@ -250,7 +250,7 @@ class DocumentByConnectorCredentialPair(Base):
     connector: Mapped[Connector] = relationship(
         "Connector", back_populates="documents_by_connector"
     )
-    credential: Mapped[Connector] = relationship(
+    credential: Mapped[Credential] = relationship(
         "Credential", back_populates="documents_by_credential"
     )
 
@@ -316,6 +316,6 @@ class DeletionAttempt(Base):
     connector: Mapped[Connector] = relationship(
         "Connector", back_populates="deletion_attempt"
     )
-    credential: Mapped[Connector] = relationship(
+    credential: Mapped[Credential] = relationship(
         "Credential", back_populates="deletion_attempt"
     )

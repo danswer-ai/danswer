@@ -1,5 +1,6 @@
 import abc
 from dataclasses import dataclass
+from typing import Any
 from typing import Generic
 from typing import TypeVar
 from uuid import UUID
@@ -30,6 +31,13 @@ class DocumentStoreEntryMetadata:
     store_id: str
 
 
+@dataclass
+class UpdateRequest:
+    ids: list[str]
+    # all other fields will be left alone
+    allowed_users: list[str]
+
+
 class Indexable(Generic[T], abc.ABC):
     @abc.abstractmethod
     def index(
@@ -46,7 +54,14 @@ class Deletable(abc.ABC):
         raise NotImplementedError
 
 
-class VectorIndex(Indexable[EmbeddedIndexChunk], Deletable, abc.ABC):
+class Updatable(abc.ABC):
+    @abc.abstractmethod
+    def update(self, update_requests: list[UpdateRequest]) -> None:
+        """Updates metadata for the specified documents in the Index"""
+        raise NotImplementedError
+
+
+class VectorIndex(Indexable[EmbeddedIndexChunk], Deletable, Updatable, abc.ABC):
     @abc.abstractmethod
     def semantic_retrieval(
         self,
@@ -58,7 +73,7 @@ class VectorIndex(Indexable[EmbeddedIndexChunk], Deletable, abc.ABC):
         raise NotImplementedError
 
 
-class KeywordIndex(Indexable[IndexChunk], Deletable, abc.ABC):
+class KeywordIndex(Indexable[IndexChunk], Deletable, Updatable, abc.ABC):
     @abc.abstractmethod
     def keyword_search(
         self,

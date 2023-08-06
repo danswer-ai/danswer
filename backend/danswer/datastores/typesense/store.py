@@ -34,14 +34,15 @@ from danswer.datastores.datastore_utils import (
 from danswer.datastores.interfaces import DocumentStoreInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import KeywordIndex
+from danswer.datastores.interfaces import UpdateRequest
 from danswer.utils.clients import get_typesense_client
 from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
 
-# how many points we want to delete at a time when cleaning up a connector
-_DELETE_BATCH_SIZE = 200
+# how many points we want to delete/update at a time
+_BATCH_SIZE = 200
 
 
 def check_typesense_collection_exist(
@@ -250,10 +251,26 @@ class TypesenseIndex(KeywordIndex):
 
     def delete(self, ids: list[str]) -> None:
         logger.info(f"Deleting {len(ids)} documents from Typesense")
-        for id_batch in batch_generator(items=ids, batch_size=_DELETE_BATCH_SIZE):
+        for id_batch in batch_generator(items=ids, batch_size=_BATCH_SIZE):
             self.ts_client.collections[self.collection].documents.delete(
                 {"filter_by": f'id:{",".join(id_batch)}'}
             )
+
+    def update(self, update_requests: list[UpdateRequest]) -> None:
+        logger.info(
+            f"Updating {len(update_requests)} documents' allowed_users in Typesense"
+        )
+        for update_request in update_requests:
+            for id_batch in batch_generator(
+                items=update_request.ids, batch_size=_BATCH_SIZE
+            ):
+                typesense_updates = [
+                    {"id": doc_id, ALLOWED_USERS: update_request.allowed_users}
+                    for doc_id in id_batch
+                ]
+                self.ts_client.collections[self.collection].import_(
+                    typesense_updates, {"action": "update"}
+                )
 
     def keyword_search(
         self,
