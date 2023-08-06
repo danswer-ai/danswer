@@ -15,6 +15,7 @@ from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.connectors.models import IndexAttemptMetadata
+from danswer.connectors.utils import batch_generator
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
 from danswer.datastores.interfaces import DocumentStoreInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
@@ -28,7 +29,7 @@ from danswer.utils.timing import log_function_time
 logger = setup_logger()
 
 # how many points we want to delete at a time when cleaning up a connector
-_DELETE_BATCH_SIZE = 50
+_DELETE_BATCH_SIZE = 200
 
 
 def _build_qdrant_filters(
@@ -156,10 +157,11 @@ class QdrantIndex(VectorIndex):
 
     def delete(self, ids: list[str]) -> None:
         logger.info(f"Deleting {len(ids)} documents from Qdrant")
-        self.client.delete(
-            collection_name=self.collection,
-            points_selector=ids,
-        )
+        for id_batch in batch_generator(items=ids, batch_size=_DELETE_BATCH_SIZE):
+            self.client.delete(
+                collection_name=self.collection,
+                points_selector=id_batch,
+            )
 
     def get_from_id(self, object_id: str) -> InferenceChunk | None:
         matches, _ = self.client.scroll(

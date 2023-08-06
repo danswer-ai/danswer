@@ -24,6 +24,7 @@ from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.connectors.models import IndexAttemptMetadata
+from danswer.connectors.utils import batch_generator
 from danswer.datastores.datastore_utils import CrossConnectorDocumentMetadata
 from danswer.datastores.datastore_utils import DEFAULT_BATCH_SIZE
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
@@ -40,7 +41,7 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 # how many points we want to delete at a time when cleaning up a connector
-_DELETE_BATCH_SIZE = 50
+_DELETE_BATCH_SIZE = 200
 
 
 def check_typesense_collection_exist(
@@ -249,9 +250,10 @@ class TypesenseIndex(KeywordIndex):
 
     def delete(self, ids: list[str]) -> None:
         logger.info(f"Deleting {len(ids)} documents from Typesense")
-        self.ts_client.collections[self.collection].documents.delete(
-            {"filter_by": f'id:{",".join(ids)}'}
-        )
+        for id_batch in batch_generator(items=ids, batch_size=_DELETE_BATCH_SIZE):
+            self.ts_client.collections[self.collection].documents.delete(
+                {"filter_by": f'id:{",".join(id_batch)}'}
+            )
 
     def keyword_search(
         self,
