@@ -2,11 +2,11 @@ from typing import Any
 
 import pkg_resources
 from openai.error import AuthenticationError
-from openai.error import Timeout
 
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import DanswerGenAIModel
 from danswer.configs.constants import ModelHostType
+from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.configs.model_configs import GEN_AI_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_HOST_TYPE
 from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
@@ -21,6 +21,7 @@ from danswer.direct_qa.open_ai import OpenAICompletionQA
 from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
 from danswer.direct_qa.qa_utils import get_gen_ai_api_key
 from danswer.direct_qa.request_model import RequestCompletionQA
+from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -39,8 +40,8 @@ def check_model_api_key_is_valid(model_api_key: str) -> bool:
             return True
         except AuthenticationError:
             return False
-        except Timeout:
-            pass
+        except Exception as e:
+            logger.warning(f"GenAI API key failed for the following reason: {e}")
 
     return False
 
@@ -49,10 +50,16 @@ def get_default_backend_qa_model(
     internal_model: str = INTERNAL_MODEL_VERSION,
     endpoint: str | None = GEN_AI_ENDPOINT,
     model_host_type: str | None = GEN_AI_HOST_TYPE,
-    api_key: str | None = get_gen_ai_api_key(),
+    api_key: str | None = GEN_AI_API_KEY,
     timeout: int = QA_TIMEOUT,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> QAModel:
+    if not api_key:
+        try:
+            api_key = get_gen_ai_api_key()
+        except ConfigNotFoundError:
+            pass
+
     if internal_model in [
         DanswerGenAIModel.GPT4ALL.value,
         DanswerGenAIModel.GPT4ALL_CHAT.value,

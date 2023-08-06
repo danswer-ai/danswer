@@ -294,18 +294,16 @@ def connector_run_once(
 
 
 @router.head("/admin/genai-api-key/validate")
-def validate_existing_openai_api_key(
+def validate_existing_genai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
     # OpenAI key is only used for generative QA, so no need to validate this
     # if it's turned off or if a non-OpenAI model is being used
-    if DISABLE_GENERATIVE_AI or not isinstance(
-        get_default_backend_qa_model(), OpenAIQAModel
-    ):
+    if DISABLE_GENERATIVE_AI or not get_default_backend_qa_model().requires_api_key:
         return
 
     # Only validate every so often
-    check_key_time = "openai_api_key_last_check_time"
+    check_key_time = "genai_api_key_last_check_time"
     kv_store = get_dynamic_config_store()
     curr_time = datetime.now()
     try:
@@ -318,7 +316,7 @@ def validate_existing_openai_api_key(
         pass
 
     try:
-        openai_api_key = get_gen_ai_api_key()
+        genai_api_key = get_gen_ai_api_key()
     except ConfigNotFoundError:
         raise HTTPException(status_code=404, detail="Key not found")
     except ValueError as e:
@@ -327,7 +325,7 @@ def validate_existing_openai_api_key(
     get_dynamic_config_store().store(check_key_time, curr_time.timestamp())
 
     try:
-        is_valid = check_model_api_key_is_valid(openai_api_key)
+        is_valid = check_model_api_key_is_valid(genai_api_key)
     except ValueError:
         # this is the case where they aren't using an OpenAI-based model
         is_valid = True
@@ -355,7 +353,7 @@ def get_gen_ai_api_key_from_dynamic_config_store(
 
 
 @router.put("/admin/genai-api-key")
-def store_openai_api_key(
+def store_genai_api_key(
     request: ApiKey,
     _: User = Depends(current_admin_user),
 ) -> None:
@@ -369,7 +367,7 @@ def store_openai_api_key(
 
 
 @router.delete("/admin/genai-api-key")
-def delete_openai_api_key(
+def delete_genai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
     get_dynamic_config_store().delete(GEN_AI_API_KEY_STORAGE_KEY)

@@ -75,6 +75,10 @@ class GPT4AllCompletionQA(QAModel):
         self.max_output_tokens = max_output_tokens
         self.include_metadata = include_metadata
 
+    @property
+    def requires_api_key(self) -> bool:
+        return False
+
     def warm_up_model(self) -> None:
         get_gpt_4_all_model(self.model_version)
 
@@ -135,6 +139,10 @@ class GPT4AllChatCompletionQA(QAModel):
         self.model_version = model_version
         self.max_output_tokens = max_output_tokens
         self.include_metadata = include_metadata
+
+    @property
+    def requires_api_key(self) -> bool:
+        return False
 
     def warm_up_model(self) -> None:
         get_gpt_4_all_model(self.model_version)
