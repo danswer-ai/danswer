@@ -42,7 +42,6 @@ class CrossConnectorDocumentMetadata(BaseModel):
 
     allowed_users: list[str]
     allowed_user_groups: list[str]
-    connector_ids: list[int]
     already_in_index: bool
 
 
@@ -91,7 +90,6 @@ def update_cross_connector_document_metadata_map(
             ] = CrossConnectorDocumentMetadata(
                 allowed_users=[user_str],
                 allowed_user_groups=[],
-                connector_ids=[index_attempt_metadata.connector_id],
                 already_in_index=False,
             )
             # First chunk does not exist so document does not exist, no need for deletion
@@ -105,10 +103,6 @@ def update_cross_connector_document_metadata_map(
                     document_metadata_in_doc_store.allowed_users, user_str
                 ),
                 allowed_user_groups=document_metadata_in_doc_store.allowed_user_groups,
-                connector_ids=_add_if_not_exists(
-                    document_metadata_in_doc_store.connector_ids,
-                    index_attempt_metadata.connector_id,
-                ),
                 already_in_index=True,
             )
             # First chunk exists, but with update, there may be less total chunks now
@@ -121,10 +115,6 @@ def update_cross_connector_document_metadata_map(
             existing_document_metadata.allowed_users, user_str
         ),
         allowed_user_groups=existing_document_metadata.allowed_user_groups,
-        connector_ids=_add_if_not_exists(
-            existing_document_metadata.connector_ids,
-            index_attempt_metadata.connector_id,
-        ),
         already_in_index=existing_document_metadata.already_in_index,
     )
     # If document is already in the mapping, don't delete again

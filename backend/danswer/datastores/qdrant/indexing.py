@@ -16,11 +16,9 @@ from danswer.configs.constants import ALLOWED_GROUPS
 from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import BLURB
 from danswer.configs.constants import CHUNK_ID
-from danswer.configs.constants import CONNECTOR_IDS
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import METADATA
-from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
@@ -73,7 +71,6 @@ def get_qdrant_document_cross_connector_metadata(
     return CrossConnectorDocumentMetadata(
         allowed_users=payload[ALLOWED_USERS],
         allowed_user_groups=payload[ALLOWED_GROUPS],
-        connector_ids=payload.get(CONNECTOR_IDS, []),
         already_in_index=True,
     )
 
@@ -161,9 +158,6 @@ def index_qdrant_chunks(
                         ALLOWED_GROUPS: cross_connector_document_metadata_map[
                             document.id
                         ].allowed_user_groups,
-                        CONNECTOR_IDS: cross_connector_document_metadata_map[
-                            document.id
-                        ].connector_ids,
                         METADATA: json.dumps(document.metadata),
                     },
                     vector=embedding,

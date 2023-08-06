@@ -1,4 +1,3 @@
-from typing import cast
 from uuid import UUID
 
 from qdrant_client.http.exceptions import ResponseHandlingException
@@ -7,16 +6,12 @@ from qdrant_client.http.models import FieldCondition
 from qdrant_client.http.models import Filter
 from qdrant_client.http.models import MatchAny
 from qdrant_client.http.models import MatchValue
-from qdrant_client.models import ExtendedPointId
-from qdrant_client.models import PointStruct
-from qdrant_client.models import VectorStruct
 
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.constants import ALLOWED_USERS
-from danswer.configs.constants import CONNECTOR_IDS
 from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.connectors.models import IndexAttemptMetadata
@@ -25,7 +20,6 @@ from danswer.datastores.interfaces import DocumentStoreInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import VectorIndex
 from danswer.datastores.qdrant.indexing import index_qdrant_chunks
-from danswer.datastores.qdrant.utils import get_payload_from_record
 from danswer.search.search_utils import get_default_embedding_model
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logger import setup_logger
