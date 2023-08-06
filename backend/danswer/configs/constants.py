@@ -46,20 +46,6 @@ class DanswerGenAIModel(str, Enum):
     REQUEST = "request-completion"
 
 
-class VerifiedModels(str, Enum):
-    """Other models should work as well, check the library/API compatibility.
-    But these are the models that have been verified to work with the existing prompts.
-    Using a different model may require some prompt tuning. See qa_prompts.py"""
-
-    GPT3 = "gpt-3.5-turbo"  # openai-chat-completion
-    GPT4 = "gpt-4"  # openai-chat-completion
-    DAVINCI = "text-davinci-003"  # openai-completion
-    # Note the Falcon model does not follow the prompt very well, often not using information in
-    # the reference documents and also very rarely does it provide quotes
-    FALCON = "ggml-model-gpt4all-falcon-q4_0.bin"  # GPT4All completion/chat-completion
-    LLAMA = "meta-llama/Llama-2-70b-chat-hf"  # HuggingFace
-
-
 class ModelHostType(str, Enum):
     """For GenAI models interfaced via requests, different services have different
     expectations for what fields are included in the request"""

@@ -1,8 +1,8 @@
 import os
+from enum import Enum
 
 from danswer.configs.constants import DanswerGenAIModel
 from danswer.configs.constants import ModelHostType
-from danswer.configs.constants import VerifiedModels
 
 # Important considerations when choosing models
 # Max tokens count needs to be high considering use case (at least 512)
@@ -35,6 +35,22 @@ CROSS_EMBED_CONTEXT_SIZE = 512
 BATCH_SIZE_ENCODE_CHUNKS = 8
 
 
+#####
+# Generative AI Model Configs
+#####
+# Other models should work as well, check the library/API compatibility.
+# But these are the models that have been verified to work with the existing prompts.
+# Using a different model may require some prompt tuning. See qa_prompts.py
+VERIFIED_MODELS = {
+    DanswerGenAIModel.OPENAI: ["text-davinci-003"],
+    DanswerGenAIModel.OPENAI_CHAT: ["gpt-3.5-turbo", "gpt-4"],
+    DanswerGenAIModel.GPT4ALL: ["ggml-model-gpt4all-falcon-q4_0.bin"],
+    DanswerGenAIModel.GPT4ALL_CHAT: ["ggml-model-gpt4all-falcon-q4_0.bin"],
+    # The "chat" model below is actually "instruction finetuned" and does not support conversational
+    DanswerGenAIModel.HUGGINGFACE.value: ["meta-llama/Llama-2-70b-chat-hf"],
+    DanswerGenAIModel.HUGGINGFACE_CHAT.value: ["meta-llama/Llama-2-70b-hf"],
+}
+
 # Sets the internal Danswer model class to use
 INTERNAL_MODEL_VERSION = os.environ.get(
     "INTERNAL_MODEL_VERSION", DanswerGenAIModel.OPENAI_CHAT.value
@@ -44,7 +60,10 @@ INTERNAL_MODEL_VERSION = os.environ.get(
 GEN_AI_API_KEY = os.environ.get("GEN_AI_API_KEY", "")
 
 # If using GPT4All or OpenAI, specify the model version
-GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION", VerifiedModels.GPT3.value)
+GEN_AI_MODEL_VERSION = os.environ.get(
+    "GEN_AI_MODEL_VERSION",
+    VERIFIED_MODELS.get(DanswerGenAIModel(INTERNAL_MODEL_VERSION), [""])[0],
+)
 
 # If the Generative Model is hosted to accept requests (DanswerGenAIModel.REQUEST) then
 # set the two below to specify
