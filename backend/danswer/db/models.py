@@ -269,21 +269,6 @@ class DocumentStoreEntry(Base):
     )
 
 
-# To delete a connector / credential pair:
-# (1) find all documents associated with connector / credential pair where there this the is only connector / credential pair that has indexed it
-# (2) delete all documents from document stores
-# (3) delete all entries from postgres
-# (4) find all documents associated with connector / credential pair where there are multiple connector / credential pairs that have indexed it
-# (5) update document store entries to remove access associated with the connector / credential pair from the access list
-# (6) delete/update all entries from postgres
-
-
-# To delete a single document for a connector / credential pair:
-# (1) find all documents with document id
-# (2) if there is only one connector / credential pair that has indexed it, delete from document stores and postgres
-# (3) else, update document store entries to remove access associated with the connector / credential pair from the access list
-
-
 class DeletionAttempt(Base):
     """Represents an attempt to delete all documents indexed by a specific
     connector / credential pair.
