@@ -1,5 +1,7 @@
-
-export const scheduleDeletionJobForConnector = async (connectorId: number, credentialId: number) => {
+export const scheduleDeletionJobForConnector = async (
+  connectorId: number,
+  credentialId: number
+) => {
   // Will schedule a background job which will:
   // 1. Remove all documents indexed by the connector / credential pair
   // 2. Remove the connector (if this is the only pair using the connector)
@@ -17,4 +19,4 @@ export const scheduleDeletionJobForConnector = async (connectorId: number, crede
     return null;
   }
   return (await response.json()).detail;
-}
+};

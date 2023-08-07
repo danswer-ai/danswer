@@ -3,7 +3,7 @@ import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { Popup, PopupSpec } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { LinkBreakIcon, LinkIcon, TrashIcon } from "@/components/icons/icons";
-import { deleteConnector, updateConnector } from "@/lib/connector";
+import { updateConnector } from "@/lib/connector";
 import { AttachCredentialButtonForTable } from "@/components/admin/connectors/buttons/AttachCredentialButtonForTable";
 import { scheduleDeletionJobForConnector } from "@/lib/documentDeletion";
 
@@ -187,42 +187,41 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
                 onUpdate={onUpdate}
               />
             ),
-            remove:
-              liveCredential && connectorIndexingStatus.is_deletable ? (
-                <div
-                  className="cursor-pointer mx-auto flex"
-                  onClick={async () => {
-                    const deletionScheduleError =
-                      await scheduleDeletionJobForConnector(
-                        connector.id,
-                        liveCredential.id
-                      );
-                    if (deletionScheduleError) {
-                      setPopup({
-                        message:
-                          "Failed to schedule deletion of connector - " +
-                          deletionScheduleError,
-                        type: "error",
-                      });
-                    } else {
-                      setPopup({
-                        message: "Scheduled deletion of connector!",
-                        type: "success",
-                      });
-                    }
-                    setTimeout(() => {
-                      setPopup(null);
-                    }, 4000);
-                    onUpdate();
-                  }}
-                >
-                  <TrashIcon />
-                </div>
-              ) : (
-                <div className="flex mx-auto text-xs">
-                  <TrashIcon className="my-auto flex flex-shrink-0 text-gray-600 mr-2" />
-                </div>
-              ),
+            remove: connectorIndexingStatus.is_deletable ? (
+              <div
+                className="cursor-pointer mx-auto flex"
+                onClick={async () => {
+                  const deletionScheduleError =
+                    await scheduleDeletionJobForConnector(
+                      connector.id,
+                      connectorIndexingStatus.credential.id
+                    );
+                  if (deletionScheduleError) {
+                    setPopup({
+                      message:
+                        "Failed to schedule deletion of connector - " +
+                        deletionScheduleError,
+                      type: "error",
+                    });
+                  } else {
+                    setPopup({
+                      message: "Scheduled deletion of connector!",
+                      type: "success",
+                    });
+                  }
+                  setTimeout(() => {
+                    setPopup(null);
+                  }, 4000);
+                  onUpdate();
+                }}
+              >
+                <TrashIcon />
+              </div>
+            ) : (
+              <div className="flex mx-auto text-xs">
+                <TrashIcon className="my-auto flex flex-shrink-0 text-gray-600 mr-2" />
+              </div>
+            ),
             ...credential,
             ...(specialColumns
               ? Object.fromEntries(
