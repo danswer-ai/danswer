@@ -30,6 +30,8 @@ def wipe_all_rows(database: str) -> None:
 
     # have to delete from these first to not run into psycopg2.errors.ForeignKeyViolation
     cur.execute(f"DELETE FROM document_store_entry")
+    cur.execute(f"DELETE FROM document_by_connector_credential_pair")
+    cur.execute(f"DELETE FROM document")
     cur.execute(f"DELETE FROM connector_credential_pair")
     cur.execute(f"DELETE FROM index_attempt")
     conn.commit()

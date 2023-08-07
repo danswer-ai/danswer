@@ -27,7 +27,7 @@ const Main = () => {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
     error: isConnectorIndexingStatusesError,
-  } = useSWR<ConnectorIndexingStatus<any>[]>(
+  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
     fetcher
   );
@@ -54,11 +54,13 @@ const Main = () => {
     return <div>Failed to load credentials</div>;
   }
 
-  const productboardConnectorIndexingStatuses =
-    connectorIndexingStatuses.filter(
-      (connectorIndexingStatus) =>
-        connectorIndexingStatus.connector.source === "productboard"
-    );
+  const productboardConnectorIndexingStatuses: ConnectorIndexingStatus<
+    ProductboardConfig,
+    ProductboardCredentialJson
+  >[] = connectorIndexingStatuses.filter(
+    (connectorIndexingStatus) =>
+      connectorIndexingStatus.connector.source === "productboard"
+  );
   const productboardCredential = credentialsData.filter(
     (credential) => credential.credential_json?.productboard_access_token
   )[0];

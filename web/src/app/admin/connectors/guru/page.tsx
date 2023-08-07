@@ -7,7 +7,6 @@ import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import {
   Credential,
-  ProductboardConfig,
   ConnectorIndexingStatus,
   GuruConfig,
   GuruCredentialJson,
@@ -28,7 +27,7 @@ const Main = () => {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
     error: isConnectorIndexingStatusesError,
-  } = useSWR<ConnectorIndexingStatus<any>[]>(
+  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
     fetcher
   );
@@ -55,11 +54,13 @@ const Main = () => {
     return <div>Failed to load credentials</div>;
   }
 
-  const guruConnectorIndexingStatuses: ConnectorIndexingStatus<GuruConfig>[] =
-    connectorIndexingStatuses.filter(
-      (connectorIndexingStatus) =>
-        connectorIndexingStatus.connector.source === "guru"
-    );
+  const guruConnectorIndexingStatuses: ConnectorIndexingStatus<
+    GuruConfig,
+    GuruCredentialJson
+  >[] = connectorIndexingStatuses.filter(
+    (connectorIndexingStatus) =>
+      connectorIndexingStatus.connector.source === "guru"
+  );
   const guruCredential: Credential<GuruCredentialJson> = credentialsData.filter(
     (credential) => credential.credential_json?.guru_user
   )[0];

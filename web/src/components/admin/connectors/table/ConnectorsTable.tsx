@@ -6,6 +6,7 @@ import { LinkBreakIcon, LinkIcon, TrashIcon } from "@/components/icons/icons";
 import { updateConnector } from "@/lib/connector";
 import { AttachCredentialButtonForTable } from "@/components/admin/connectors/buttons/AttachCredentialButtonForTable";
 import { scheduleDeletionJobForConnector } from "@/lib/documentDeletion";
+import { DeleteColumn } from "./DeleteColumn";
 
 interface StatusRowProps<ConnectorConfigType, ConnectorCredentialType> {
   connectorIndexingStatus: ConnectorIndexingStatus<
@@ -187,40 +188,12 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
                 onUpdate={onUpdate}
               />
             ),
-            remove: connectorIndexingStatus.is_deletable ? (
-              <div
-                className="cursor-pointer mx-auto flex"
-                onClick={async () => {
-                  const deletionScheduleError =
-                    await scheduleDeletionJobForConnector(
-                      connector.id,
-                      connectorIndexingStatus.credential.id
-                    );
-                  if (deletionScheduleError) {
-                    setPopup({
-                      message:
-                        "Failed to schedule deletion of connector - " +
-                        deletionScheduleError,
-                      type: "error",
-                    });
-                  } else {
-                    setPopup({
-                      message: "Scheduled deletion of connector!",
-                      type: "success",
-                    });
-                  }
-                  setTimeout(() => {
-                    setPopup(null);
-                  }, 4000);
-                  onUpdate();
-                }}
-              >
-                <TrashIcon />
-              </div>
-            ) : (
-              <div className="flex mx-auto text-xs">
-                <TrashIcon className="my-auto flex flex-shrink-0 text-gray-600 mr-2" />
-              </div>
+            remove: (
+              <DeleteColumn
+                connectorIndexingStatus={connectorIndexingStatus}
+                setPopup={setPopup}
+                onUpdate={onUpdate}
+              />
             ),
             ...credential,
             ...(specialColumns

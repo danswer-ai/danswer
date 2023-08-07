@@ -4,13 +4,21 @@ import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { StatusRow } from "@/components/admin/connectors/table/ConnectorsTable";
 import { PencilIcon } from "@/components/icons/icons";
 import { deleteConnector } from "@/lib/connector";
-import { GoogleDriveConfig, ConnectorIndexingStatus } from "@/lib/types";
+import {
+  GoogleDriveConfig,
+  ConnectorIndexingStatus,
+  GoogleDriveCredentialJson,
+} from "@/lib/types";
 import { useSWRConfig } from "swr";
 import { useState } from "react";
 import { ConnectorEditPopup } from "./ConnectorEditPopup";
+import { DeleteColumn } from "@/components/admin/connectors/table/DeleteColumn";
 
 interface EditableColumnProps {
-  connectorIndexingStatus: ConnectorIndexingStatus<GoogleDriveConfig>;
+  connectorIndexingStatus: ConnectorIndexingStatus<
+    GoogleDriveConfig,
+    GoogleDriveCredentialJson
+  >;
 }
 
 const EditableColumn = ({ connectorIndexingStatus }: EditableColumnProps) => {
@@ -45,7 +53,10 @@ const EditableColumn = ({ connectorIndexingStatus }: EditableColumnProps) => {
 };
 
 interface TableProps {
-  googleDriveConnectorIndexingStatuses: ConnectorIndexingStatus<GoogleDriveConfig>[];
+  googleDriveConnectorIndexingStatuses: ConnectorIndexingStatus<
+    GoogleDriveConfig,
+    GoogleDriveCredentialJson
+  >[];
   setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
@@ -134,28 +145,13 @@ export const GoogleDriveConnectorsTable = ({
             />
           ),
           delete: (
-            <Button
-              onClick={() => {
-                deleteConnector(connectorIndexingStatus.connector.id).then(
-                  (errorMsg) => {
-                    if (errorMsg) {
-                      setPopup({
-                        message: `Unable to delete existing connector - ${errorMsg}`,
-                        type: "error",
-                      });
-                    } else {
-                      setPopup({
-                        message: "Successfully deleted connector!",
-                        type: "success",
-                      });
-                      mutate("/api/manage/admin/connector/indexing-status");
-                    }
-                  }
-                );
-              }}
-            >
-              Delete Connector
-            </Button>
+            <DeleteColumn
+              connectorIndexingStatus={connectorIndexingStatus}
+              setPopup={setPopup}
+              onUpdate={() =>
+                mutate("/api/manage/admin/connector/indexing-status")
+              }
+            />
           ),
         })
       )}
