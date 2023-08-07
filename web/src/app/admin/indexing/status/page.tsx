@@ -13,7 +13,7 @@ import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus } from "@/lib/types";
 
 const getSourceDisplay = (
-  connectorIndexingStatus: ConnectorIndexingStatus<any>
+  connectorIndexingStatus: ConnectorIndexingStatus<any, any>
 ) => {
   const connector = connectorIndexingStatus.connector;
   const sourceMetadata = getSourceMetadata(connector.source);
@@ -64,7 +64,7 @@ function Main() {
     data: indexAttemptData,
     isLoading: indexAttemptIsLoading,
     error: indexAttemptIsError,
-  } = useSWR<ConnectorIndexingStatus<any>[]>(
+  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
     fetcher,
     { refreshInterval: 30000 } // 30 seconds
