@@ -23,6 +23,12 @@ class DanswerQuote:
 
 
 class QAModel:
+    @property
+    def requires_api_key(self) -> bool:
+        """Is this model protected by security features
+        Does it need an api key to access the model for inference"""
+        return True
+
     def warm_up_model(self) -> None:
         """This is called during server start up to load the models into memory
         pass if model is accessed via API"""

@@ -1,4 +1,8 @@
 import os
+from enum import Enum
+
+from danswer.configs.constants import DanswerGenAIModel
+from danswer.configs.constants import ModelHostType
 
 # Important considerations when choosing models
 # Max tokens count needs to be high considering use case (at least 512)
@@ -30,35 +34,46 @@ CROSS_EMBED_CONTEXT_SIZE = 512
 # Purely an optimization, memory limitation consideration
 BATCH_SIZE_ENCODE_CHUNKS = 8
 
-# QA Model API Configs
-# refer to https://platform.openai.com/docs/models/model-endpoint-compatibility for OpenAI models
-# Valid list:
-# - openai-completion
-# - openai-chat-completion
-# - gpt4all-completion -> Due to M1 Macs not having compatible gpt4all version, please install dependency yourself
-# - gpt4all-chat-completion-> Due to M1 Macs not having compatible gpt4all version, please install dependency yourself
-# To use gpt4all, run: pip install --upgrade gpt4all==1.0.5
-# These support HuggingFace Inference API, Inference Endpoints and servers running the text-generation-inference backend
-# - huggingface-inference-completion
-# - huggingface-inference-chat-completion
 
+#####
+# Generative AI Model Configs
+#####
+# Other models should work as well, check the library/API compatibility.
+# But these are the models that have been verified to work with the existing prompts.
+# Using a different model may require some prompt tuning. See qa_prompts.py
+VERIFIED_MODELS = {
+    DanswerGenAIModel.OPENAI: ["text-davinci-003"],
+    DanswerGenAIModel.OPENAI_CHAT: ["gpt-3.5-turbo", "gpt-4"],
+    DanswerGenAIModel.GPT4ALL: ["ggml-model-gpt4all-falcon-q4_0.bin"],
+    DanswerGenAIModel.GPT4ALL_CHAT: ["ggml-model-gpt4all-falcon-q4_0.bin"],
+    # The "chat" model below is actually "instruction finetuned" and does not support conversational
+    DanswerGenAIModel.HUGGINGFACE.value: ["meta-llama/Llama-2-70b-chat-hf"],
+    DanswerGenAIModel.HUGGINGFACE_CHAT.value: ["meta-llama/Llama-2-70b-hf"],
+}
+
+# Sets the internal Danswer model class to use
 INTERNAL_MODEL_VERSION = os.environ.get(
-    "INTERNAL_MODEL_VERSION", "openai-chat-completion"
+    "INTERNAL_MODEL_VERSION", DanswerGenAIModel.OPENAI_CHAT.value
 )
-# For GPT4ALL, use "ggml-model-gpt4all-falcon-q4_0.bin" for the below for a tested model
-GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION", "gpt-3.5-turbo")
+
+# If the Generative AI model requires an API key for access, otherwise can leave blank
+GEN_AI_API_KEY = os.environ.get("GEN_AI_API_KEY", "")
+
+# If using GPT4All or OpenAI, specify the model version
+GEN_AI_MODEL_VERSION = os.environ.get(
+    "GEN_AI_MODEL_VERSION",
+    VERIFIED_MODELS.get(DanswerGenAIModel(INTERNAL_MODEL_VERSION), [""])[0],
+)
+
+# If the Generative Model is hosted to accept requests (DanswerGenAIModel.REQUEST) then
+# set the two below to specify
+# - Where to hit the endpoint
+# - How should the request be formed
+GEN_AI_ENDPOINT = os.environ.get("GEN_AI_ENDPOINT", "")
+GEN_AI_HOST_TYPE = os.environ.get("GEN_AI_HOST_TYPE", ModelHostType.HUGGINGFACE.value)
+
+# Set this to be enough for an answer + quotes
 GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS", "512"))
-# Use HuggingFace API Token for Huggingface inference client
-GEN_AI_HUGGINGFACE_API_TOKEN = os.environ.get("GEN_AI_HUGGINGFACE_API_TOKEN", None)
-# Use the conversational API with the huggingface-inference-chat-completion internal model
-# Note - this only works with models that support conversational interfaces
-GEN_AI_HUGGINGFACE_USE_CONVERSATIONAL = (
-    os.environ.get("GEN_AI_HUGGINGFACE_USE_CONVERSATIONAL", "").lower() == "true"
-)
-# Disable streaming responses. Set this to true to "polyfill" streaming for models that don't support streaming
-GEN_AI_HUGGINGFACE_DISABLE_STREAM = (
-    os.environ.get("GEN_AI_HUGGINGFACE_DISABLE_STREAM", "").lower() == "true"
-)
 
 # Danswer custom Deep Learning Models
 INTENT_MODEL_VERSION = "danswer/intent-model"

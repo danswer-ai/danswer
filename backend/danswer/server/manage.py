@@ -18,7 +18,7 @@ from danswer.auth.users import current_user
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
-from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
+from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
 from danswer.connectors.file.utils import write_temp_files
 from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_KEY
 from danswer.connectors.google_drive.connector_auth import get_auth_url
@@ -50,7 +50,7 @@ from danswer.db.index_attempt import create_index_attempt
 from danswer.db.models import User
 from danswer.direct_qa import check_model_api_key_is_valid
 from danswer.direct_qa import get_default_backend_qa_model
-from danswer.direct_qa.open_ai import get_openai_api_key
+from danswer.direct_qa.open_ai import get_gen_ai_api_key
 from danswer.direct_qa.open_ai import OpenAIQAModel
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
@@ -293,19 +293,17 @@ def connector_run_once(
     )
 
 
-@router.head("/admin/openai-api-key/validate")
-def validate_existing_openai_api_key(
+@router.head("/admin/genai-api-key/validate")
+def validate_existing_genai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
     # OpenAI key is only used for generative QA, so no need to validate this
     # if it's turned off or if a non-OpenAI model is being used
-    if DISABLE_GENERATIVE_AI or not isinstance(
-        get_default_backend_qa_model(), OpenAIQAModel
-    ):
+    if DISABLE_GENERATIVE_AI or not get_default_backend_qa_model().requires_api_key:
         return
 
     # Only validate every so often
-    check_key_time = "openai_api_key_last_check_time"
+    check_key_time = "genai_api_key_last_check_time"
     kv_store = get_dynamic_config_store()
     curr_time = datetime.now()
     try:
@@ -318,7 +316,7 @@ def validate_existing_openai_api_key(
         pass
 
     try:
-        openai_api_key = get_openai_api_key()
+        genai_api_key = get_gen_ai_api_key()
     except ConfigNotFoundError:
         raise HTTPException(status_code=404, detail="Key not found")
     except ValueError as e:
@@ -327,7 +325,7 @@ def validate_existing_openai_api_key(
     get_dynamic_config_store().store(check_key_time, curr_time.timestamp())
 
     try:
-        is_valid = check_model_api_key_is_valid(openai_api_key)
+        is_valid = check_model_api_key_is_valid(genai_api_key)
     except ValueError:
         # this is the case where they aren't using an OpenAI-based model
         is_valid = True
@@ -336,8 +334,8 @@ def validate_existing_openai_api_key(
         raise HTTPException(status_code=400, detail="Invalid API key provided")
 
 
-@router.get("/admin/openai-api-key", response_model=ApiKey)
-def get_openai_api_key_from_dynamic_config_store(
+@router.get("/admin/genai-api-key", response_model=ApiKey)
+def get_gen_ai_api_key_from_dynamic_config_store(
     _: User = Depends(current_admin_user),
 ) -> ApiKey:
     """
@@ -347,15 +345,15 @@ def get_openai_api_key_from_dynamic_config_store(
         # only get last 4 characters of key to not expose full key
         return ApiKey(
             api_key=cast(
-                str, get_dynamic_config_store().load(OPENAI_API_KEY_STORAGE_KEY)
+                str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY)
             )[-4:]
         )
     except ConfigNotFoundError:
         raise HTTPException(status_code=404, detail="Key not found")
 
 
-@router.put("/admin/openai-api-key")
-def store_openai_api_key(
+@router.put("/admin/genai-api-key")
+def store_genai_api_key(
     request: ApiKey,
     _: User = Depends(current_admin_user),
 ) -> None:
@@ -363,16 +361,16 @@ def store_openai_api_key(
         is_valid = check_model_api_key_is_valid(request.api_key)
         if not is_valid:
             raise HTTPException(400, "Invalid API key provided")
-        get_dynamic_config_store().store(OPENAI_API_KEY_STORAGE_KEY, request.api_key)
+        get_dynamic_config_store().store(GEN_AI_API_KEY_STORAGE_KEY, request.api_key)
     except RuntimeError as e:
         raise HTTPException(400, str(e))
 
 
-@router.delete("/admin/openai-api-key")
-def delete_openai_api_key(
+@router.delete("/admin/genai-api-key")
+def delete_genai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
-    get_dynamic_config_store().delete(OPENAI_API_KEY_STORAGE_KEY)
+    get_dynamic_config_store().delete(GEN_AI_API_KEY_STORAGE_KEY)
 
 
 """Endpoints for basic users"""
