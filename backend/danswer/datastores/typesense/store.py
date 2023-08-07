@@ -253,7 +253,7 @@ class TypesenseIndex(KeywordIndex):
         logger.info(f"Deleting {len(ids)} documents from Typesense")
         for id_batch in batch_generator(items=ids, batch_size=_BATCH_SIZE):
             self.ts_client.collections[self.collection].documents.delete(
-                {"filter_by": f'id:{",".join(id_batch)}'}
+                {"filter_by": f'id:[{",".join(id_batch)}]'}
             )
 
     def update(self, update_requests: list[UpdateRequest]) -> None:

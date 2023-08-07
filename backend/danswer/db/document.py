@@ -23,19 +23,26 @@ def get_document_store_entries_with_single_connector_credential_pair(
     connector_id: int,
     credential_id: int,
 ) -> Sequence[DocumentStoreEntry]:
-    stmt = (
-        select(DocumentStoreEntry)
-        .join(Document, Document.id == DocumentStoreEntry.document_id)
+    initial_doc_ids_stmt = select(DocumentByConnectorCredentialPair.id).where(
+        and_(
+            DocumentByConnectorCredentialPair.connector_id == connector_id,
+            DocumentByConnectorCredentialPair.credential_id == credential_id,
+        )
+    )
+
+    trimmed_doc_ids_stmt = (
+        select(Document.id)
         .join(
             DocumentByConnectorCredentialPair,
-            Document.id == DocumentByConnectorCredentialPair.id,
+            DocumentByConnectorCredentialPair.id == Document.id,
         )
-        .where(
-            (DocumentByConnectorCredentialPair.connector_id == connector_id)
-            & (DocumentByConnectorCredentialPair.credential_id == credential_id)
-        )
-        .group_by(DocumentStoreEntry.id)
+        .where(Document.id.in_(initial_doc_ids_stmt))
+        .group_by(Document.id)
         .having(func.count(DocumentByConnectorCredentialPair.id) == 1)
+    )
+
+    stmt = select(DocumentStoreEntry).where(
+        DocumentStoreEntry.document_id.in_(trimmed_doc_ids_stmt)
     )
     return db_session.scalars(stmt).all()
 
