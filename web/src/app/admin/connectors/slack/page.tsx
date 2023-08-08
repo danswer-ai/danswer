@@ -14,7 +14,10 @@ import {
 } from "@/lib/types";
 import { deleteCredential, linkCredential } from "@/lib/credential";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
-import { TextFormField } from "@/components/admin/connectors/Field";
+import {
+  TextFormField,
+  TextArrayFieldBuilder,
+} from "@/components/admin/connectors/Field";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 
@@ -152,6 +155,14 @@ const MainSection = () => {
                   getValue: (connector) =>
                     connector.connector_specific_config.workspace,
                 },
+                {
+                  header: "Channels",
+                  key: "channels",
+                  getValue: (connector) =>
+                    connector.connector_specific_config.channels
+                      ? connector.connector_specific_config.channels.join(", ")
+                      : "All channels",
+                },
               ]}
               onUpdate={() =>
                 mutate("/api/manage/admin/connector/indexing-status")
@@ -170,21 +181,40 @@ const MainSection = () => {
       <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
         <h2 className="font-bold mb-3">Connect to a New Workspace</h2>
         <ConnectorForm<SlackConfig>
-          nameBuilder={(values) => `SlackConnector-${values.workspace}`}
+          nameBuilder={(values) =>
+            values.channels
+              ? `SlackConnector-${values.workspace}-${values.channels.join(
+                  "_"
+                )}`
+              : `SlackConnector-${values.workspace}`
+          }
           source="slack"
           inputType="poll"
           formBody={
             <>
-              <TextFormField name="workspace" label="Workspace:" />
+              <TextFormField name="workspace" label="Workspace" />
             </>
           }
+          formBodyBuilder={TextArrayFieldBuilder({
+            name: "channels",
+            label: "Channels:",
+            subtext:
+              "Specify 0 or more channels to index. For example, specifying the channel " +
+              "'support' will cause us to only index all content " +
+              "within the '#support' channel. " +
+              "If no channels are specified, all channels in your workspace will be indexed.",
+          })}
           validationSchema={Yup.object().shape({
             workspace: Yup.string().required(
               "Please enter the workspace to index"
             ),
+            channels: Yup.array()
+              .of(Yup.string().required("Channel names must be strings"))
+              .required(),
           })}
           initialValues={{
             workspace: "",
+            channels: [],
           }}
           refreshFreq={10 * 60} // 10 minutes
           onSubmit={async (isSuccess, responseJson) => {

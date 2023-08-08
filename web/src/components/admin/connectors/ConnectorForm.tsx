@@ -50,7 +50,7 @@ interface BaseProps<T extends Yup.AnyObject> {
   source: ValidSources;
   inputType: ValidInputTypes;
   credentialId?: number;
-  // If both are specified, uses formBody
+  // If both are specified, will render formBody and then formBodyBuilder
   formBody?: JSX.Element | null;
   formBodyBuilder?: FormBodyBuilder<T>;
   validationSchema: Yup.ObjectSchema<T>;
@@ -127,7 +127,8 @@ export function ConnectorForm<T extends Yup.AnyObject>({
       >
         {({ isSubmitting, values }) => (
           <Form>
-            {formBody ? formBody : formBodyBuilder && formBodyBuilder(values)}
+            {formBody && formBody}
+            {formBodyBuilder && formBodyBuilder(values)}
             <div className="flex">
               <button
                 type="submit"
