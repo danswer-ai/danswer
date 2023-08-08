@@ -4,6 +4,7 @@ from collections.abc import Generator
 from typing import Any
 
 import requests
+from requests.exceptions import Timeout
 from requests.models import Response
 
 from danswer.chunking.models import InferenceChunk
@@ -31,6 +32,12 @@ class HostSpecificRequestModel(abc.ABC):
     """Provides a more minimal implementation requirement for extending to new models
     hosted behind REST APIs. Calling class abstracts away all Danswer internal specifics
     """
+
+    @property
+    def requires_api_key(self) -> bool:
+        """Is this model protected by security features
+        Does it need an api key to access the model for inference"""
+        return True
 
     @staticmethod
     @abc.abstractmethod
@@ -92,8 +99,8 @@ class HuggingFaceRequestModel(HostSpecificRequestModel):
         }
         try:
             return requests.post(endpoint, headers=headers, json=data, timeout=timeout)
-        except TimeoutError as error:
-            raise TimeoutError(f"Model inference to {endpoint} timed out") from error
+        except Timeout as error:
+            raise Timeout(f"Model inference to {endpoint} timed out") from error
 
     @staticmethod
     def _hf_extract_model_output(
@@ -121,14 +128,71 @@ class HuggingFaceRequestModel(HostSpecificRequestModel):
         yield from simulate_streaming_response(model_out)
 
 
+class ColabDemoRequestModel(HostSpecificRequestModel):
+    """Guide found at:
+    TODO place guide here
+    """
+
+    @property
+    def requires_api_key(self) -> bool:
+        return False
+
+    @staticmethod
+    def send_model_request(
+        filled_prompt: str,
+        endpoint: str,
+        api_key: str | None,  # ngrok basic setup doesn't require this
+        max_output_tokens: int,
+        stream: bool,
+        timeout: int | None,
+    ) -> Response:
+        headers = {
+            "Content-Type": "application/json",
+        }
+
+        data = {
+            "input": filled_prompt,
+            "parameters": {
+                "temperature": 0.0,
+                "max_tokens": max_output_tokens,
+            },
+        }
+        try:
+            return requests.post(endpoint, headers=headers, json=data, timeout=timeout)
+        except Timeout as error:
+            raise Timeout(f"Model inference to {endpoint} timed out") from error
+
+    @staticmethod
+    def _colab_demo_extract_model_output(
+        response: Response,
+    ) -> str:
+        if response.status_code != 200:
+            response.raise_for_status()
+
+        return json.loads(response.content).get("generated_text", "")
+
+    @staticmethod
+    def extract_model_output_from_response(
+        response: Response,
+    ) -> str:
+        return ColabDemoRequestModel._colab_demo_extract_model_output(response)
+
+    @staticmethod
+    def generate_model_tokens_from_response(
+        response: Response,
+    ) -> Generator[str, None, None]:
+        model_out = ColabDemoRequestModel._colab_demo_extract_model_output(response)
+        yield from simulate_streaming_response(model_out)
+
+
 def get_host_specific_model_class(model_host_type: str) -> HostSpecificRequestModel:
     if model_host_type == ModelHostType.HUGGINGFACE.value:
         return HuggingFaceRequestModel()
+    if model_host_type == ModelHostType.COLAB_DEMO.value:
+        return ColabDemoRequestModel()
     else:
         # TODO support Azure, GCP, AWS
-        raise ValueError(
-            "Invalid model hosting service selected, currently supports only huggingface"
-        )
+        raise ValueError("Invalid model hosting service selected")
 
 
 class RequestCompletionQA(QAModel):
