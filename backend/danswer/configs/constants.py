@@ -53,5 +53,5 @@ class ModelHostType(str, Enum):
     # https://huggingface.co/docs/api-inference/detailed_parameters#text-generation-task
     HUGGINGFACE = "huggingface"  # HuggingFace test-generation Inference API
     # TODO link blog here
-    COLAB_DEMO = "colab_demo"
+    COLAB_DEMO = "colab-demo"
     # TODO support for Azure, AWS, GCP GenAI model hosting
