@@ -8,9 +8,10 @@ from danswer.chunking.chunk import Chunker
 from danswer.chunking.chunk import DefaultChunker
 from danswer.connectors.models import Document
 from danswer.connectors.models import IndexAttemptMetadata
-from danswer.datastores.interfaces import DocumentStoreEntryMetadata
-from danswer.datastores.interfaces import DocumentStoreInsertionRecord
+from danswer.datastores.interfaces import ChunkInsertionRecord
+from danswer.datastores.interfaces import ChunkMetadata
 from danswer.datastores.interfaces import KeywordIndex
+from danswer.datastores.interfaces import StoreType
 from danswer.datastores.interfaces import VectorIndex
 from danswer.datastores.qdrant.store import QdrantIndex
 from danswer.datastores.typesense.store import TypesenseIndex
@@ -31,18 +32,20 @@ class IndexingPipelineProtocol(Protocol):
 
 
 def _upsert_insertion_records(
-    insertion_records: list[DocumentStoreInsertionRecord],
+    insertion_records: list[ChunkInsertionRecord],
     index_attempt_metadata: IndexAttemptMetadata,
+    document_store_type: StoreType,
 ) -> None:
-    with Session(get_sqlalchemy_engine(), expire_on_commit=False) as session:
+    with Session(get_sqlalchemy_engine()) as session:
         upsert_documents_complete(
             db_session=session,
             document_metadata_batch=[
-                DocumentStoreEntryMetadata(
+                ChunkMetadata(
                     connector_id=index_attempt_metadata.connector_id,
                     credential_id=index_attempt_metadata.credential_id,
                     document_id=insertion_record.document_id,
                     store_id=insertion_record.store_id,
+                    document_store_type=document_store_type,
                 )
                 for insertion_record in insertion_records
             ],
@@ -50,7 +53,7 @@ def _upsert_insertion_records(
 
 
 def _get_net_new_documents(
-    insertion_records: list[DocumentStoreInsertionRecord],
+    insertion_records: list[ChunkInsertionRecord],
 ) -> int:
     net_new_documents = 0
     seen_documents: set[str] = set()
@@ -81,6 +84,7 @@ def _indexing_pipeline(
     _upsert_insertion_records(
         insertion_records=keyword_store_insertion_records,
         index_attempt_metadata=index_attempt_metadata,
+        document_store_type=StoreType.KEYWORD,
     )
     net_doc_count_keyword = _get_net_new_documents(
         insertion_records=keyword_store_insertion_records
@@ -93,6 +97,7 @@ def _indexing_pipeline(
     _upsert_insertion_records(
         insertion_records=vector_store_insertion_records,
         index_attempt_metadata=index_attempt_metadata,
+        document_store_type=StoreType.VECTOR,
     )
     net_doc_count_vector = _get_net_new_documents(
         insertion_records=vector_store_insertion_records

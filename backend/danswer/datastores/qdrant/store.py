@@ -18,7 +18,7 @@ from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.connectors.utils import batch_generator
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
-from danswer.datastores.interfaces import DocumentStoreInsertionRecord
+from danswer.datastores.interfaces import ChunkInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import UpdateRequest
 from danswer.datastores.interfaces import VectorIndex
@@ -90,7 +90,7 @@ class QdrantIndex(VectorIndex):
         self,
         chunks: list[EmbeddedIndexChunk],
         index_attempt_metadata: IndexAttemptMetadata,
-    ) -> list[DocumentStoreInsertionRecord]:
+    ) -> list[ChunkInsertionRecord]:
         return index_qdrant_chunks(
             chunks=chunks,
             index_attempt_metadata=index_attempt_metadata,

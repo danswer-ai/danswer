@@ -31,7 +31,7 @@ from danswer.datastores.datastore_utils import get_uuid_from_chunk
 from danswer.datastores.datastore_utils import (
     update_cross_connector_document_metadata_map,
 )
-from danswer.datastores.interfaces import DocumentStoreInsertionRecord
+from danswer.datastores.interfaces import ChunkInsertionRecord
 from danswer.datastores.qdrant.utils import get_payload_from_record
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logger import setup_logger
@@ -100,13 +100,13 @@ def index_qdrant_chunks(
     collection: str,
     client: QdrantClient | None = None,
     batch_upsert: bool = True,
-) -> list[DocumentStoreInsertionRecord]:
+) -> list[ChunkInsertionRecord]:
     # Public documents will have the PUBLIC string in ALLOWED_USERS
     # If credential that kicked this off has no user associated, either Auth is off or the doc is public
     q_client: QdrantClient = client if client else get_qdrant_client()
 
     point_structs: list[PointStruct] = []
-    insertion_records: list[DocumentStoreInsertionRecord] = []
+    insertion_records: list[ChunkInsertionRecord] = []
     # Maps document id to dict of whitelists for users/groups each containing list of users/groups as strings
     cross_connector_document_metadata_map: dict[
         str, CrossConnectorDocumentMetadata
@@ -134,7 +134,7 @@ def index_qdrant_chunks(
         for minichunk_ind, embedding in enumerate(chunk.embeddings):
             qdrant_id = str(get_uuid_from_chunk(chunk, minichunk_ind))
             insertion_records.append(
-                DocumentStoreInsertionRecord(
+                ChunkInsertionRecord(
                     document_id=document.id,
                     store_id=qdrant_id,
                     already_existed=should_delete_doc,

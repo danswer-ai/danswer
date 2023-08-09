@@ -31,7 +31,7 @@ from danswer.datastores.datastore_utils import get_uuid_from_chunk
 from danswer.datastores.datastore_utils import (
     update_cross_connector_document_metadata_map,
 )
-from danswer.datastores.interfaces import DocumentStoreInsertionRecord
+from danswer.datastores.interfaces import ChunkInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import KeywordIndex
 from danswer.datastores.interfaces import UpdateRequest
@@ -120,10 +120,10 @@ def index_typesense_chunks(
     collection: str,
     client: typesense.Client | None = None,
     batch_upsert: bool = True,
-) -> list[DocumentStoreInsertionRecord]:
+) -> list[ChunkInsertionRecord]:
     ts_client: typesense.Client = client if client else get_typesense_client()
 
-    insertion_records: list[DocumentStoreInsertionRecord] = []
+    insertion_records: list[ChunkInsertionRecord] = []
     new_documents: list[dict[str, Any]] = []
     cross_connector_document_metadata_map: dict[
         str, CrossConnectorDocumentMetadata
@@ -150,7 +150,7 @@ def index_typesense_chunks(
 
         typesense_id = str(get_uuid_from_chunk(chunk))
         insertion_records.append(
-            DocumentStoreInsertionRecord(
+            ChunkInsertionRecord(
                 document_id=document.id,
                 store_id=typesense_id,
                 already_existed=should_delete_doc,
@@ -241,7 +241,7 @@ class TypesenseIndex(KeywordIndex):
 
     def index(
         self, chunks: list[IndexChunk], index_attempt_metadata: IndexAttemptMetadata
-    ) -> list[DocumentStoreInsertionRecord]:
+    ) -> list[ChunkInsertionRecord]:
         return index_typesense_chunks(
             chunks=chunks,
             index_attempt_metadata=index_attempt_metadata,
@@ -268,7 +268,7 @@ class TypesenseIndex(KeywordIndex):
                     {"id": doc_id, ALLOWED_USERS: update_request.allowed_users}
                     for doc_id in id_batch
                 ]
-                self.ts_client.collections[self.collection].import_(
+                self.ts_client.collections[self.collection].documents.import_(
                     typesense_updates, {"action": "update"}
                 )
 

@@ -37,6 +37,7 @@ from danswer.db.connector import fetch_connectors
 from danswer.db.connector import get_connector_credential_ids
 from danswer.db.connector import update_connector
 from danswer.db.connector_credential_pair import add_credential_to_connector
+from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import remove_credential_from_connector
 from danswer.db.credentials import create_credential
@@ -44,6 +45,7 @@ from danswer.db.credentials import delete_credential
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
 from danswer.db.credentials import update_credential
+from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.deletion_attempt import create_deletion_attempt
 from danswer.db.deletion_attempt import get_deletion_attempts
 from danswer.db.engine import get_session
@@ -219,17 +221,8 @@ def get_connector_indexing_status(
                     )
                     for deletion_attempt in deletion_attemts
                 ],
-                # to be deletable:
-                # (1) connector should be disabled
-                # (2) latest deletion attempt should be successful
-                # (3) deletion should have happened after the last index attempt AND there should
-                # be no in-progress deletion attempts
-                is_deletable=bool(
-                    connector.disabled
-                    and (
-                        cc_pair.last_attempt_status != IndexingStatus.IN_PROGRESS
-                        and cc_pair.last_attempt_status != IndexingStatus.NOT_STARTED
-                    )
+                is_deletable=check_deletion_attempt_is_allowed(
+                    connector_credential_pair=cc_pair
                 ),
             )
         )
@@ -422,18 +415,32 @@ def create_deletion_attempt_for_connector_id(
 ) -> None:
     connector_id = connector_credential_pair_identifier.connector_id
     credential_id = connector_credential_pair_identifier.credential_id
-    try:
-        create_deletion_attempt(
-            connector_id=connector_id,
-            credential_id=credential_id,
-            db_session=db_session,
-        )
-    except IntegrityError:
+
+    cc_pair = get_connector_credential_pair(
+        db_session=db_session,
+        connector_id=connector_id,
+        credential_id=credential_id,
+    )
+    if cc_pair is None:
         raise HTTPException(
             status_code=404,
             detail=f"Connector with ID '{connector_id}' and credential ID "
             f"'{credential_id}' does not exist. Has it already been deleted?",
         )
+
+    if not check_deletion_attempt_is_allowed(connector_credential_pair=cc_pair):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Connector with ID '{connector_id}' and credential ID "
+            f"'{credential_id}' is not deletable. It must be both disabled AND have"
+            "no ongoing / planned indexing attempts.",
+        )
+
+    create_deletion_attempt(
+        connector_id=connector_id,
+        credential_id=credential_id,
+        db_session=db_session,
+    )
 
 
 @router.get("/admin/deletion-attempt/{connector_id}")

@@ -70,7 +70,6 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
   const shouldDisplayQA =
     searchResponse.suggestedFlowType === FlowType.QUESTION_ANSWER ||
     defaultOverrides.forceDisplayQA;
-  console.log(shouldDisplayQA);
 
   return (
     <>

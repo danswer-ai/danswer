@@ -1,5 +1,6 @@
 import abc
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 from typing import Generic
 from typing import TypeVar
@@ -16,19 +17,25 @@ T = TypeVar("T", bound=BaseChunk)
 IndexFilter = dict[str, str | list[str] | None]
 
 
+class StoreType(str, Enum):
+    VECTOR = "vector"
+    KEYWORD = "keyword"
+
+
 @dataclass
-class DocumentStoreInsertionRecord:
+class ChunkInsertionRecord:
     document_id: str
     store_id: str
     already_existed: bool
 
 
 @dataclass
-class DocumentStoreEntryMetadata:
+class ChunkMetadata:
     connector_id: int
     credential_id: int
     document_id: str
     store_id: str
+    document_store_type: StoreType
 
 
 @dataclass
@@ -42,7 +49,7 @@ class Indexable(Generic[T], abc.ABC):
     @abc.abstractmethod
     def index(
         self, chunks: list[T], index_attempt_metadata: IndexAttemptMetadata
-    ) -> list[DocumentStoreInsertionRecord]:
+    ) -> list[ChunkInsertionRecord]:
         """Indexes document chunks into the Document Index and return the IDs of all the documents indexed"""
         raise NotImplementedError
 
