@@ -166,7 +166,7 @@ def _delete_connector_credential_pair(
 
     def _cleanup() -> None:
         # cleanup everything else up
-        # we cannot undue the deletion of the document store entries if something
+        # we cannot undo the deletion of the document store entries if something
         # goes wrong since they happen outside the postgres world. Best we can do
         # is keep everything else around and mark the deletion attempt as failed.
         # If it's a transient failure, re-deleting the connector / credential pair should
