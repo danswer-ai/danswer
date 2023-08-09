@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import UUID
 
 from qdrant_client.http.exceptions import ResponseHandlingException
@@ -14,8 +15,12 @@ from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
+from danswer.connectors.models import IndexAttemptMetadata
+from danswer.connectors.utils import batch_generator
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
+from danswer.datastores.interfaces import ChunkInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
+from danswer.datastores.interfaces import UpdateRequest
 from danswer.datastores.interfaces import VectorIndex
 from danswer.datastores.qdrant.indexing import index_qdrant_chunks
 from danswer.search.search_utils import get_default_embedding_model
@@ -24,6 +29,9 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
+
+# how many points we want to delete/update at a time
+_BATCH_SIZE = 200
 
 
 def _build_qdrant_filters(
@@ -78,10 +86,14 @@ class QdrantIndex(VectorIndex):
         self.collection = collection
         self.client = get_qdrant_client()
 
-    def index(self, chunks: list[EmbeddedIndexChunk], user_id: UUID | None) -> int:
+    def index(
+        self,
+        chunks: list[EmbeddedIndexChunk],
+        index_attempt_metadata: IndexAttemptMetadata,
+    ) -> list[ChunkInsertionRecord]:
         return index_qdrant_chunks(
             chunks=chunks,
-            user_id=user_id,
+            index_attempt_metadata=index_attempt_metadata,
             collection=self.collection,
             client=self.client,
         )
@@ -144,6 +156,29 @@ class QdrantIndex(VectorIndex):
                     found_chunk_uuids.add(inf_chunk_id)
 
         return found_inference_chunks
+
+    def delete(self, ids: list[str]) -> None:
+        logger.info(f"Deleting {len(ids)} documents from Qdrant")
+        for id_batch in batch_generator(items=ids, batch_size=_BATCH_SIZE):
+            self.client.delete(
+                collection_name=self.collection,
+                points_selector=id_batch,
+            )
+
+    def update(self, update_requests: list[UpdateRequest]) -> None:
+        logger.info(
+            f"Updating {len(update_requests)} documents' allowed_users in Qdrant"
+        )
+        for update_request in update_requests:
+            for id_batch in batch_generator(
+                items=update_request.ids,
+                batch_size=_BATCH_SIZE,
+            ):
+                self.client.set_payload(
+                    collection_name=self.collection,
+                    payload={ALLOWED_USERS: update_request.allowed_users},
+                    points=id_batch,
+                )
 
     def get_from_id(self, object_id: str) -> InferenceChunk | None:
         matches, _ = self.client.scroll(

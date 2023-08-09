@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from collections.abc import Generator
-from collections.abc import Iterator
+from collections.abc import Iterable
 from itertools import islice
 from typing import TypeVar
 
@@ -8,12 +8,13 @@ T = TypeVar("T")
 
 
 def batch_generator(
-    generator: Iterator[T],
+    items: Iterable[T],
     batch_size: int,
     pre_batch_yield: Callable[[list[T]], None] | None = None,
 ) -> Generator[list[T], None, None]:
+    iterable = iter(items)
     while True:
-        batch = list(islice(generator, batch_size))
+        batch = list(islice(iterable, batch_size))
         if not batch:
             return
 

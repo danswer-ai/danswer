@@ -9,6 +9,7 @@ from fastapi import Request
 from fastapi import Response
 from fastapi import UploadFile
 from fastapi_users.db import SQLAlchemyUserDatabase
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
@@ -36,17 +37,23 @@ from danswer.db.connector import fetch_connectors
 from danswer.db.connector import get_connector_credential_ids
 from danswer.db.connector import update_connector
 from danswer.db.connector_credential_pair import add_credential_to_connector
+from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import remove_credential_from_connector
 from danswer.db.credentials import create_credential
 from danswer.db.credentials import delete_credential
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
-from danswer.db.credentials import mask_credential_dict
 from danswer.db.credentials import update_credential
+from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
+from danswer.db.deletion_attempt import create_deletion_attempt
+from danswer.db.deletion_attempt import get_deletion_attempts
 from danswer.db.engine import get_session
 from danswer.db.engine import get_sqlalchemy_async_engine
 from danswer.db.index_attempt import create_index_attempt
+from danswer.db.models import DeletionAttempt
+from danswer.db.models import DeletionStatus
+from danswer.db.models import IndexingStatus
 from danswer.db.models import User
 from danswer.direct_qa import check_model_api_key_is_valid
 from danswer.direct_qa import get_default_backend_qa_model
@@ -58,10 +65,12 @@ from danswer.server.models import ApiKey
 from danswer.server.models import AuthStatus
 from danswer.server.models import AuthUrl
 from danswer.server.models import ConnectorBase
+from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.server.models import ConnectorIndexingStatus
 from danswer.server.models import ConnectorSnapshot
 from danswer.server.models import CredentialBase
 from danswer.server.models import CredentialSnapshot
+from danswer.server.models import DeletionAttemptSnapshot
 from danswer.server.models import FileUploadResponse
 from danswer.server.models import GDriveCallback
 from danswer.server.models import GoogleAppCredentials
@@ -179,18 +188,42 @@ def get_connector_indexing_status(
 ) -> list[ConnectorIndexingStatus]:
     indexing_statuses: list[ConnectorIndexingStatus] = []
 
+    # TODO: make this one query
     cc_pairs = get_connector_credential_pairs(db_session)
+    deletion_attempts_by_connector: dict[int, list[DeletionAttempt]] = {
+        cc_pair.connector.id: [] for cc_pair in cc_pairs
+    }
+    for deletion_attempt in get_deletion_attempts(
+        db_session=db_session,
+        connector_ids=[cc_pair.connector.id for cc_pair in cc_pairs],
+        ordered_by_time_updated=True,
+    ):
+        deletion_attempts_by_connector[deletion_attempt.connector_id].append(
+            deletion_attempt
+        )
+
     for cc_pair in cc_pairs:
         connector = cc_pair.connector
         credential = cc_pair.credential
+        deletion_attemts = deletion_attempts_by_connector.get(connector.id, [])
         indexing_statuses.append(
             ConnectorIndexingStatus(
                 connector=ConnectorSnapshot.from_connector_db_model(connector),
+                credential=CredentialSnapshot.from_credential_db_model(credential),
                 public_doc=credential.public_doc,
                 owner=credential.user.email if credential.user else "",
                 last_status=cc_pair.last_attempt_status,
                 last_success=cc_pair.last_successful_index_time,
                 docs_indexed=cc_pair.total_docs_indexed,
+                deletion_attempts=[
+                    DeletionAttemptSnapshot.from_deletion_attempt_db_model(
+                        deletion_attempt
+                    )
+                    for deletion_attempt in deletion_attemts
+                ],
+                is_deletable=check_deletion_attempt_is_allowed(
+                    connector_credential_pair=cc_pair
+                ),
             )
         )
 
@@ -244,7 +277,8 @@ def delete_connector_by_id(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
-    return delete_connector(connector_id, db_session)
+    with db_session.begin():
+        return delete_connector(db_session=db_session, connector_id=connector_id)
 
 
 @router.post("/admin/connector/run-once")
@@ -373,6 +407,62 @@ def delete_genai_api_key(
     get_dynamic_config_store().delete(GEN_AI_API_KEY_STORAGE_KEY)
 
 
+@router.post("/admin/deletion-attempt")
+def create_deletion_attempt_for_connector_id(
+    connector_credential_pair_identifier: ConnectorCredentialPairIdentifier,
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    connector_id = connector_credential_pair_identifier.connector_id
+    credential_id = connector_credential_pair_identifier.credential_id
+
+    cc_pair = get_connector_credential_pair(
+        db_session=db_session,
+        connector_id=connector_id,
+        credential_id=credential_id,
+    )
+    if cc_pair is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Connector with ID '{connector_id}' and credential ID "
+            f"'{credential_id}' does not exist. Has it already been deleted?",
+        )
+
+    if not check_deletion_attempt_is_allowed(connector_credential_pair=cc_pair):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Connector with ID '{connector_id}' and credential ID "
+            f"'{credential_id}' is not deletable. It must be both disabled AND have"
+            "no ongoing / planned indexing attempts.",
+        )
+
+    create_deletion_attempt(
+        connector_id=connector_id,
+        credential_id=credential_id,
+        db_session=db_session,
+    )
+
+
+@router.get("/admin/deletion-attempt/{connector_id}")
+def get_deletion_attempts_for_connector_id(
+    connector_id: int,
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> list[DeletionAttemptSnapshot]:
+    deletion_attempts = get_deletion_attempts(
+        db_session=db_session, connector_ids=[connector_id]
+    )
+    return [
+        DeletionAttemptSnapshot(
+            connector_id=connector_id,
+            status=deletion_attempt.status,
+            error_msg=deletion_attempt.error_msg,
+            num_docs_deleted=deletion_attempt.num_docs_deleted,
+        )
+        for deletion_attempt in deletion_attempts
+    ]
+
+
 """Endpoints for basic users"""
 
 
@@ -468,16 +558,7 @@ def get_credentials(
 ) -> list[CredentialSnapshot]:
     credentials = fetch_credentials(user, db_session)
     return [
-        CredentialSnapshot(
-            id=credential.id,
-            credential_json=mask_credential_dict(credential.credential_json)
-            if MASK_CREDENTIAL_PREFIX
-            else credential.credential_json,
-            user_id=credential.user_id,
-            public_doc=credential.public_doc,
-            time_created=credential.time_created,
-            time_updated=credential.time_updated,
-        )
+        CredentialSnapshot.from_credential_db_model(credential)
         for credential in credentials
     ]
 
@@ -495,16 +576,7 @@ def get_credential_by_id(
             detail=f"Credential {credential_id} does not exist or does not belong to user",
         )
 
-    return CredentialSnapshot(
-        id=credential.id,
-        credential_json=mask_credential_dict(credential.credential_json)
-        if MASK_CREDENTIAL_PREFIX
-        else credential.credential_json,
-        user_id=credential.user_id,
-        public_doc=credential.public_doc,
-        time_created=credential.time_created,
-        time_updated=credential.time_updated,
-    )
+    return CredentialSnapshot.from_credential_db_model(credential)
 
 
 @router.post("/credential")

@@ -102,8 +102,14 @@ interface GoogleDriveConnectorManagementProps {
   googleDrivePublicCredential:
     | Credential<GoogleDriveCredentialJson>
     | undefined;
-  googleDriveConnectorIndexingStatus: ConnectorIndexingStatus<GoogleDriveConfig> | null;
-  googleDriveConnectorIndexingStatuses: ConnectorIndexingStatus<GoogleDriveConfig>[];
+  googleDriveConnectorIndexingStatus: ConnectorIndexingStatus<
+    GoogleDriveConfig,
+    GoogleDriveCredentialJson
+  > | null;
+  googleDriveConnectorIndexingStatuses: ConnectorIndexingStatus<
+    GoogleDriveConfig,
+    GoogleDriveCredentialJson
+  >[];
   credentialIsLinked: boolean;
   setPopup: (popupSpec: PopupSpec | null) => void;
 }
@@ -323,7 +329,7 @@ const Main = () => {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
     error: isConnectorIndexingStatusesError,
-  } = useSWR<ConnectorIndexingStatus<any>[]>(
+  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
     fetcher
   );
@@ -389,11 +395,13 @@ const Main = () => {
     (credential) =>
       credential.credential_json?.google_drive_tokens && credential.public_doc
   );
-  const googleDriveConnectorIndexingStatuses: ConnectorIndexingStatus<GoogleDriveConfig>[] =
-    connectorIndexingStatuses.filter(
-      (connectorIndexingStatus) =>
-        connectorIndexingStatus.connector.source === "google_drive"
-    );
+  const googleDriveConnectorIndexingStatuses: ConnectorIndexingStatus<
+    GoogleDriveConfig,
+    GoogleDriveCredentialJson
+  >[] = connectorIndexingStatuses.filter(
+    (connectorIndexingStatus) =>
+      connectorIndexingStatus.connector.source === "google_drive"
+  );
   const googleDriveConnectorIndexingStatus =
     googleDriveConnectorIndexingStatuses[0];
 

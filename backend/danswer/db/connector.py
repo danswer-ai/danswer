@@ -128,7 +128,6 @@ def delete_connector(
         )
 
     db_session.delete(connector)
-    db_session.commit()
     return StatusResponse(
         success=True, message="Connector deleted successfully", data=connector_id
     )
