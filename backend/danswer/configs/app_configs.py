@@ -93,6 +93,7 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
 # Connector Configs
 #####
 GOOGLE_DRIVE_INCLUDE_SHARED = False
+GOOGLE_DRIVE_FOLLOW_SHORTCUTS = False
 FILE_CONNECTOR_TMP_STORAGE_PATH = os.environ.get(
     "FILE_CONNECTOR_TMP_STORAGE_PATH", "/home/file_connector_storage"
 )
