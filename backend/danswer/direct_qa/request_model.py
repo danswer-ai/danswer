@@ -151,7 +151,7 @@ class ColabDemoRequestModel(HostSpecificRequestModel):
         }
 
         data = {
-            "input": filled_prompt,
+            "inputs": filled_prompt,
             "parameters": {
                 "temperature": 0.0,
                 "max_tokens": max_output_tokens,
@@ -211,6 +211,10 @@ class RequestCompletionQA(QAModel):
         self.max_output_tokens = max_output_tokens
         self.model_class = get_host_specific_model_class(model_host_type)
         self.timeout = timeout
+
+    @property
+    def requires_api_key(self) -> bool:
+        return self.model_class.requires_api_key
 
     def _get_request_response(
         self, query: str, context_docs: list[InferenceChunk], stream: bool
