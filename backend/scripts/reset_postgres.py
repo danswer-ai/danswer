@@ -34,6 +34,7 @@ def wipe_all_rows(database: str) -> None:
     cur.execute(f"DELETE FROM document")
     cur.execute(f"DELETE FROM connector_credential_pair")
     cur.execute(f"DELETE FROM index_attempt")
+    cur.execute(f"DELETE FROM credential")
     conn.commit()
 
     for table_name in table_names:
