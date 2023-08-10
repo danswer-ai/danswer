@@ -76,9 +76,8 @@ def _run_drive_file_query(
         for file in files:
             if follow_shortcuts and "shortcutDetails" in file:
                 file = service.files().get(
-                    fileId=file["id"],
+                    fileId=file["shortcutDetails"]["targetId"],
                     supportsAllDrives=include_shared,
-                    includeItemsFromAllDrives=include_shared,
                     fields="mimeType, id, name, webViewLink, shortcutDetails",
                 )
                 file = file.execute()
@@ -130,9 +129,9 @@ def _get_folders(
     follow_shortcuts: bool = GOOGLE_DRIVE_FOLLOW_SHORTCUTS,
     batch_size: int = INDEX_BATCH_SIZE,
 ) -> Generator[GoogleDriveFileType, None, None]:
-    query = f"mimeType = '{DRIVE_FOLDER_TYPE}'"
+    query = f"mimeType = '{DRIVE_FOLDER_TYPE}' "
     if follow_shortcuts:
-        query = "(" + query + " or mimeType = '{DRIVE_SHORTCUT_TYPE}'" + ")"
+        query = "(" + query + f" or mimeType = '{DRIVE_SHORTCUT_TYPE}'" + ") "
 
     if folder_id:
         query += f"and '{folder_id}' in parents "
@@ -163,7 +162,7 @@ def _get_files(
     supported_drive_doc_types: list[str] = SUPPORTED_DRIVE_DOC_TYPES,
     batch_size: int = INDEX_BATCH_SIZE,
 ) -> Generator[GoogleDriveFileType, None, None]:
-    query = f"mimeType != '{DRIVE_FOLDER_TYPE}'"
+    query = f"mimeType != '{DRIVE_FOLDER_TYPE}' "
     if time_range_start is not None:
         time_start = (
             datetime.datetime.utcfromtimestamp(time_range_start).isoformat() + "Z"
@@ -199,7 +198,7 @@ def get_all_files_batched(
     # if True, will fetch files in sub-folders of the specified folder ID.
     # Only applies if folder_id is specified.
     traverse_subfolders: bool = True,
-    folder_ids_traversed: set[str] | None = None,
+    folder_ids_traversed: list[str] | None = None,
 ) -> Generator[list[GoogleDriveFileType], None, None]:
     """Gets all files matching the criteria specified by the args from Google Drive
     in batches of size `batch_size`.
@@ -221,9 +220,8 @@ def get_all_files_batched(
         ),
     )
 
-    folder_ids_traversed = folder_ids_traversed or set()
-
     if traverse_subfolders:
+        folder_ids_traversed = folder_ids_traversed or []
         subfolders = _get_folders(
             service=service,
             folder_id=folder_id,
@@ -231,23 +229,25 @@ def get_all_files_batched(
             follow_shortcuts=follow_shortcuts,
             batch_size=batch_size,
         )
-        subfolders_not_traversed = set(
-            [x for x in subfolders if x["id"] not in folder_ids_traversed]
-        )
-        folder_ids_traversed = folder_ids_traversed.union([x["id"] for x in subfolders])
-        for subfolder in subfolders_not_traversed:
-            logger.info("Fetching all files in subfolder: " + subfolder["name"])
-            yield from get_all_files_batched(
-                service=service,
-                include_shared=include_shared,
-                follow_shortcuts=follow_shortcuts,
-                batch_size=batch_size,
-                time_range_start=time_range_start,
-                time_range_end=time_range_end,
-                folder_id=subfolder["id"],
-                traverse_subfolders=traverse_subfolders,
-                folder_ids_traversed=folder_ids_traversed,
-            )
+        for subfolder in subfolders:
+            if subfolder["id"] not in folder_ids_traversed:
+                logger.info("Fetching all files in subfolder: " + subfolder["name"])
+                folder_ids_traversed.append(subfolder["id"])
+                yield from get_all_files_batched(
+                    service=service,
+                    include_shared=include_shared,
+                    follow_shortcuts=follow_shortcuts,
+                    batch_size=batch_size,
+                    time_range_start=time_range_start,
+                    time_range_end=time_range_end,
+                    folder_id=subfolder["id"],
+                    traverse_subfolders=traverse_subfolders,
+                    folder_ids_traversed=folder_ids_traversed,
+                )
+            else:
+                logger.debug(
+                    "Skipping subfolder since already traversed: " + subfolder["name"]
+                )
 
 
 def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
