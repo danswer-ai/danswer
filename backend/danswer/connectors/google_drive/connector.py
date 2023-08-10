@@ -62,7 +62,10 @@ def _run_drive_file_query(
                 pageSize=batch_size,
                 supportsAllDrives=include_shared,
                 includeItemsFromAllDrives=include_shared,
-                fields="nextPageToken, files(mimeType, id, name, webViewLink, shortcutDetails)",
+                fields=(
+                    "nextPageToken, files(mimeType, id, name, "
+                    "webViewLink, shortcutDetails)"
+                ),
                 pageToken=next_page_token,
                 q=query,
             )
@@ -73,7 +76,7 @@ def _run_drive_file_query(
         for file in files:
             if follow_shortcuts and "shortcutDetails" in file:
                 file = service.files().get(
-                    fileId=file[ID_KEY],
+                    fileId=file["id"],
                     supportsAllDrives=include_shared,
                     includeItemsFromAllDrives=include_shared,
                     fields="mimeType, id, name, webViewLink, shortcutDetails",
@@ -142,7 +145,7 @@ def _get_folders(
         follow_shortcuts=follow_shortcuts,
         batch_size=batch_size,
     ):
-        # Need to check this since file may have target of a shortcut
+        # Need to check this since file may have been a target of a shortcut
         # and not necessarily a folder
         if file["mimeType"] == DRIVE_FOLDER_TYPE:
             yield file
@@ -193,8 +196,10 @@ def get_all_files_batched(
     time_range_start: SecondsSinceUnixEpoch | None = None,
     time_range_end: SecondsSinceUnixEpoch | None = None,
     folder_id: str | None = None,  # if specified, only fetches files within this folder
-    # if True, will fetch files in sub-folders of the specified folder ID. Only applies if folder_id is specified.
+    # if True, will fetch files in sub-folders of the specified folder ID.
+    # Only applies if folder_id is specified.
     traverse_subfolders: bool = True,
+    folder_ids_traversed: set[str] | None = None,
 ) -> Generator[list[GoogleDriveFileType], None, None]:
     """Gets all files matching the criteria specified by the args from Google Drive
     in batches of size `batch_size`.
@@ -216,6 +221,8 @@ def get_all_files_batched(
         ),
     )
 
+    folder_ids_traversed = folder_ids_traversed or set()
+
     if traverse_subfolders:
         subfolders = _get_folders(
             service=service,
@@ -224,7 +231,11 @@ def get_all_files_batched(
             follow_shortcuts=follow_shortcuts,
             batch_size=batch_size,
         )
-        for subfolder in subfolders:
+        subfolders_not_traversed = set(
+            [x for x in subfolders if x["id"] not in folder_ids_traversed]
+        )
+        folder_ids_traversed = folder_ids_traversed.union([x["id"] for x in subfolders])
+        for subfolder in subfolders_not_traversed:
             logger.info("Fetching all files in subfolder: " + subfolder["name"])
             yield from get_all_files_batched(
                 service=service,
@@ -235,6 +246,7 @@ def get_all_files_batched(
                 time_range_end=time_range_end,
                 folder_id=subfolder["id"],
                 traverse_subfolders=traverse_subfolders,
+                folder_ids_traversed=folder_ids_traversed,
             )
 
 
@@ -311,7 +323,10 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                 )
                 if found_parent_id is None:
                     raise ValueError(
-                        f"Folder '{folder_name}' in path '{path}' not found in Google Drive"
+                        (
+                            f"Folder '{folder_name}' in path '{path}'"
+                            "not found in Google Drive"
+                        )
                     )
                 parent_id = found_parent_id
             folder_ids.append(parent_id)
@@ -383,9 +398,10 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        # need to subtract 10 minutes from start time to account for modifiedTime propogation
-        # if a document is modified, it takes some time for the API to reflect these changes
-        # if we do not have an offset, then we may "miss" the update when polling
+        # need to subtract 10 minutes from start time to account for modifiedTime
+        # propogation if a document is modified, it takes some time for the API to
+        # reflect these changes if we do not have an offset, then we may "miss" the
+        # update when polling
         yield from self._fetch_docs_from_drive(
             max(start - DRIVE_START_TIME_OFFSET, 0, 0), end
         )
