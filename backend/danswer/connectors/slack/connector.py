@@ -168,11 +168,17 @@ def get_all_docs(
             client=client, channel=channel, oldest=oldest, latest=latest
         )
 
+        seen_thread_ts: set[str] = set()
         for message_batch in channel_message_batches:
             for message in message_batch:
                 filtered_thread: ThreadType | None = None
                 thread_ts = message.get("thread_ts")
                 if thread_ts:
+                    # skip threads we've already seen, since we've already processed all
+                    # messages in that thread
+                    if thread_ts in seen_thread_ts:
+                        continue
+                    seen_thread_ts.add(thread_ts)
                     thread = get_thread(
                         client=client, channel_id=channel["id"], thread_id=thread_ts
                     )
