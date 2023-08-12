@@ -88,6 +88,7 @@ def _delete_connector_credential_pair(
         return num_docs_deleted
 
     num_docs_deleted = _delete_singly_indexed_docs()
+    logger.info(f"Deleted {num_docs_deleted} documents from document stores")
 
     def _update_multi_indexed_docs() -> None:
         # if a document is indexed by multiple connector_credential_pairs, we should
@@ -132,8 +133,8 @@ def _delete_connector_credential_pair(
         # categorize into groups of updates to try and batch them more efficiently
         update_groups: dict[tuple[str, ...], list[str]] = {}
         for document_id, allowed_users_lst in document_id_to_allowed_users.items():
-            # if document_id in document_ids_not_needing_update:
-            #     continue
+            if document_id in document_ids_not_needing_update:
+                continue
 
             allowed_users_lst.remove(to_be_deleted_user)
             allowed_users = tuple(sorted(set(allowed_users_lst)))

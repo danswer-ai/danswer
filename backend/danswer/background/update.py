@@ -19,11 +19,12 @@ from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
-from danswer.db.index_attempt import get_last_successful_attempt
+from danswer.db.index_attempt import get_last_attempt
 from danswer.db.index_attempt import get_not_started_index_attempts
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.index_attempt import mark_attempt_in_progress
 from danswer.db.index_attempt import mark_attempt_succeeded
+from danswer.db.index_attempt import update_docs_indexed
 from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
@@ -45,7 +46,9 @@ def should_create_new_indexing(
 
 
 def create_indexing_jobs(db_session: Session) -> None:
-    connectors = fetch_connectors(db_session, disabled_status=False)
+    connectors = fetch_connectors(db_session)
+
+    # clean up in-progress jobs that were never completed
     for connector in connectors:
         in_progress_indexing_attempts = get_inprogress_index_attempts(
             connector.id, db_session
@@ -59,7 +62,11 @@ def create_indexing_jobs(db_session: Session) -> None:
                 f"Marking in-progress attempt 'connector: {attempt.connector_id}, "
                 f"credential: {attempt.credential_id}' as failed"
             )
-            mark_attempt_failed(attempt, db_session)
+            mark_attempt_failed(
+                attempt,
+                db_session,
+                failure_reason="Stopped mid run, likely due to the background process being killed",
+            )
             if attempt.connector_id and attempt.credential_id:
                 update_connector_credential_pair(
                     connector_id=attempt.connector_id,
@@ -70,15 +77,16 @@ def create_indexing_jobs(db_session: Session) -> None:
                     db_session=db_session,
                 )
 
+    # potentially kick off new runs
+    enabled_connectors = [
+        connector for connector in connectors if not connector.disabled
+    ]
+    for connector in enabled_connectors:
         for association in connector.credentials:
             credential = association.credential
 
-            last_successful_attempt = get_last_successful_attempt(
-                connector.id, credential.id, db_session
-            )
-            if not should_create_new_indexing(
-                connector, last_successful_attempt, db_session
-            ):
+            last_attempt = get_last_attempt(connector.id, credential.id, db_session)
+            if not should_create_new_indexing(connector, last_attempt, db_session):
                 continue
             create_index_attempt(connector.id, credential.id, db_session)
 
@@ -199,6 +207,17 @@ def run_indexing_jobs(db_session: Session) -> None:
                 net_doc_change += new_docs
                 chunk_count += total_batch_chunks
                 document_count += len(doc_batch)
+                update_docs_indexed(
+                    db_session=db_session,
+                    index_attempt=attempt,
+                    num_docs_indexed=document_count,
+                )
+
+                # check if connector is disabled mid run and stop if so
+                db_session.refresh(db_connector)
+                if db_connector.disabled:
+                    # let the `except` block handle this
+                    raise RuntimeError("Connector was disabled mid run")
 
             mark_attempt_succeeded(attempt, db_session)
             update_connector_credential_pair(

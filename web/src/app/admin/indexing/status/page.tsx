@@ -5,12 +5,18 @@ import useSWR from "swr";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { LoadingAnimation } from "@/components/Loading";
 import { timeAgo } from "@/lib/time";
-import { NotebookIcon, XSquareIcon } from "@/components/icons/icons";
+import {
+  NotebookIcon,
+  QuestionIcon,
+  XSquareIcon,
+} from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
 import { getSourceMetadata } from "@/components/source";
 import { CheckCircle, XCircle } from "@phosphor-icons/react";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus } from "@/lib/types";
+import { useState } from "react";
+import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
 
 const getSourceDisplay = (
   connectorIndexingStatus: ConnectorIndexingStatus<any, any>
@@ -59,6 +65,33 @@ const getSourceDisplay = (
   return sourceMetadata.displayName;
 };
 
+const ErrorDisplay = ({ message }: { message: string }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => {
+        setIsHovered(true);
+      }}
+      onMouseLeave={() => setIsHovered(false)}
+      className="relative"
+    >
+      {isHovered && (
+        <div className="absolute pt-8 top-0 left-0">
+          <div className="bg-gray-700 px-3 pb-3 pt-2 rounded shadow-lg text-xs">
+            <div className="text-sm text-red-600 mb-1 flex">Error Message:</div>
+
+            {message}
+          </div>
+        </div>
+      )}
+      <div className="text-red-600 flex cursor-default">
+        <QuestionIcon className="my-auto mr-1" size={18} />
+        Error
+      </div>
+    </div>
+  );
+};
+
 function Main() {
   const {
     data: indexAttemptData,
@@ -102,7 +135,9 @@ function Main() {
         const sourceMetadata = getSourceMetadata(
           connectorIndexingStatus.connector.source
         );
-        let statusDisplay = <div className="text-gray-400">In Progress...</div>;
+        let statusDisplay = (
+          <div className="text-gray-400">Initializing...</div>
+        );
         if (connectorIndexingStatus.connector.disabled) {
           statusDisplay = (
             <div className="text-red-600 flex">
@@ -119,9 +154,35 @@ function Main() {
           );
         } else if (connectorIndexingStatus.last_status === "failed") {
           statusDisplay = (
-            <div className="text-red-600 flex">
-              <XCircle className="my-auto mr-1" size="18" />
-              Error
+            <ErrorDisplay message={connectorIndexingStatus.error_msg} />
+          );
+        } else if (connectorIndexingStatus.last_status === "not_started") {
+          statusDisplay = <div className="text-gray-400">Scheduled</div>;
+        } else if (connectorIndexingStatus.last_status === "in_progress") {
+          const docsPerMinute = getDocsProcessedPerMinute(
+            connectorIndexingStatus.latest_index_attempt
+          )?.toFixed(2);
+          statusDisplay = (
+            <div className="text-gray-400">
+              In Progress...{" "}
+              {connectorIndexingStatus?.latest_index_attempt
+                ?.num_docs_indexed ? (
+                <div className="text-xs mt-0.5">
+                  <div>
+                    <i>Current Run:</i>{" "}
+                    {
+                      connectorIndexingStatus.latest_index_attempt
+                        .num_docs_indexed
+                    }{" "}
+                    docs indexed
+                  </div>
+                  {docsPerMinute && (
+                    <div>
+                      <i>Speed:</i> ~{docsPerMinute} docs / min
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
           );
         }
@@ -132,7 +193,7 @@ function Main() {
             : "-",
           connector: (
             <a
-              className="text-blue-500 flex"
+              className="text-blue-500 flex w-fit"
               href={sourceMetadata.adminPageLink}
             >
               {sourceMetadata.icon({ size: 20 })}
