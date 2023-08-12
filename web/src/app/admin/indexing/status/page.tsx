@@ -100,7 +100,7 @@ const ConnectorTitle = ({ connectorIndexingStatus }: ConnectorTitleProps) => {
       <div className="text-xs text-gray-300 mt-1">
         {Array.from(additionalMetadata.entries()).map(([key, value]) => {
           return (
-            <div>
+            <div key={key}>
               <i>{key}:</i> {value}
             </div>
           );
