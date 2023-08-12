@@ -138,8 +138,6 @@ export const searchRequestStreamed = async ({
           ) {
             answer += ".";
             updateCurrentAnswer(answer);
-          } else {
-            updateCurrentAnswer("");
           }
           return;
         }
