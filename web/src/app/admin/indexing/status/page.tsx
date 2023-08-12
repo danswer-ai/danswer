@@ -164,12 +164,12 @@ function Main() {
           )?.toFixed(2);
           statusDisplay = (
             <div className="text-gray-400">
-              <b>In Progress...</b>{" "}
+              In Progress...{" "}
               {connectorIndexingStatus?.latest_index_attempt
                 ?.num_docs_indexed ? (
                 <div className="text-xs mt-0.5">
                   <div>
-                    Current Run:{" "}
+                    <i>Current Run:</i>{" "}
                     {
                       connectorIndexingStatus.latest_index_attempt
                         .num_docs_indexed
@@ -177,7 +177,9 @@ function Main() {
                     docs indexed
                   </div>
                   {docsPerMinute && (
-                    <div>Speed: ~{docsPerMinute} docs / min</div>
+                    <div>
+                      <i>Speed:</i> ~{docsPerMinute} docs / min
+                    </div>
                   )}
                 </div>
               ) : null}
