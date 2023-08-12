@@ -17,6 +17,7 @@ from danswer.db.models import Connector
 from danswer.db.models import Credential
 from danswer.db.models import DeletionAttempt
 from danswer.db.models import DeletionStatus
+from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
@@ -124,6 +125,28 @@ class IndexAttemptRequest(BaseModel):
     connector_specific_config: dict[str, Any]
 
 
+class IndexAttemptSnapshot(BaseModel):
+    status: IndexingStatus | None
+    num_docs_indexed: int
+    error_msg: str | None
+    time_started: str | None
+    time_updated: str
+
+    @classmethod
+    def from_index_attempt_db_model(
+        cls, index_attempt: IndexAttempt
+    ) -> "IndexAttemptSnapshot":
+        return IndexAttemptSnapshot(
+            status=index_attempt.status,
+            num_docs_indexed=index_attempt.num_docs_indexed or 0,
+            error_msg=index_attempt.error_msg,
+            time_started=index_attempt.time_started.isoformat()
+            if index_attempt.time_started
+            else None,
+            time_updated=index_attempt.time_updated.isoformat(),
+        )
+
+
 class DeletionAttemptSnapshot(BaseModel):
     connector_id: int
     status: DeletionStatus
@@ -215,6 +238,8 @@ class ConnectorIndexingStatus(BaseModel):
     last_status: IndexingStatus | None
     last_success: datetime | None
     docs_indexed: int
+    error_msg: str | None
+    latest_index_attempt: IndexAttemptSnapshot | None
     deletion_attempts: list[DeletionAttemptSnapshot]
     is_deletable: bool
 

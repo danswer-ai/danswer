@@ -328,6 +328,7 @@ class SlackPollConnector(PollConnector):
             raise ConnectorMissingCredentialError("Slack")
 
         documents: list[Document] = []
+        seen_doc_ids = set()
         for document in get_all_docs(
             client=self.client,
             workspace=self.workspace,
@@ -338,6 +339,10 @@ class SlackPollConnector(PollConnector):
             oldest=str(start) if start else None,
             latest=str(end),
         ):
+            if document.id in seen_doc_ids:
+                logger.info("DUPLICATE FOUND")
+                logger.info(document)
+            seen_doc_ids.add(document.id)
             documents.append(document)
             if len(documents) >= self.batch_size:
                 yield documents

@@ -51,8 +51,10 @@ from danswer.db.deletion_attempt import get_deletion_attempts
 from danswer.db.engine import get_session
 from danswer.db.engine import get_sqlalchemy_async_engine
 from danswer.db.index_attempt import create_index_attempt
+from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import DeletionAttempt
 from danswer.db.models import DeletionStatus
+from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import User
 from danswer.direct_qa import check_model_api_key_is_valid
@@ -74,6 +76,7 @@ from danswer.server.models import DeletionAttemptSnapshot
 from danswer.server.models import FileUploadResponse
 from danswer.server.models import GDriveCallback
 from danswer.server.models import GoogleAppCredentials
+from danswer.server.models import IndexAttemptSnapshot
 from danswer.server.models import ObjectCreationIdResponse
 from danswer.server.models import RunConnectorRequest
 from danswer.server.models import StatusResponse
@@ -190,6 +193,20 @@ def get_connector_indexing_status(
 
     # TODO: make this one query
     cc_pairs = get_connector_credential_pairs(db_session)
+    latest_index_attempts = get_latest_index_attempts(
+        db_session=db_session,
+        connector_credential_pair_identifiers=[
+            ConnectorCredentialPairIdentifier(
+                connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id
+            )
+            for cc_pair in cc_pairs
+        ],
+    )
+    cc_pair_to_latest_index_attempt = {
+        (index_attempt.connector_id, index_attempt.credential_id): index_attempt
+        for index_attempt in latest_index_attempts
+    }
+
     deletion_attempts_by_connector: dict[int, list[DeletionAttempt]] = {
         cc_pair.connector.id: [] for cc_pair in cc_pairs
     }
@@ -205,6 +222,9 @@ def get_connector_indexing_status(
     for cc_pair in cc_pairs:
         connector = cc_pair.connector
         credential = cc_pair.credential
+        latest_index_attempt = cc_pair_to_latest_index_attempt.get(
+            (connector.id, credential.id)
+        )
         deletion_attemts = deletion_attempts_by_connector.get(connector.id, [])
         indexing_statuses.append(
             ConnectorIndexingStatus(
@@ -215,6 +235,14 @@ def get_connector_indexing_status(
                 last_status=cc_pair.last_attempt_status,
                 last_success=cc_pair.last_successful_index_time,
                 docs_indexed=cc_pair.total_docs_indexed,
+                error_msg=latest_index_attempt.error_msg
+                if latest_index_attempt
+                else None,
+                latest_index_attempt=IndexAttemptSnapshot.from_index_attempt_db_model(
+                    latest_index_attempt
+                )
+                if latest_index_attempt
+                else None,
                 deletion_attempts=[
                     DeletionAttemptSnapshot.from_deletion_attempt_db_model(
                         deletion_attempt

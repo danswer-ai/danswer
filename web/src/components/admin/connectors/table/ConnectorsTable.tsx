@@ -5,7 +5,6 @@ import { useState } from "react";
 import { LinkBreakIcon, LinkIcon, TrashIcon } from "@/components/icons/icons";
 import { updateConnector } from "@/lib/connector";
 import { AttachCredentialButtonForTable } from "@/components/admin/connectors/buttons/AttachCredentialButtonForTable";
-import { scheduleDeletionJobForConnector } from "@/lib/documentDeletion";
 import { DeleteColumn } from "./DeleteColumn";
 
 interface StatusRowProps<ConnectorConfigType, ConnectorCredentialType> {
