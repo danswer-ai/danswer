@@ -14,55 +14,100 @@ import { fetcher } from "@/lib/fetcher";
 import { getSourceMetadata } from "@/components/source";
 import { CheckCircle, XCircle } from "@phosphor-icons/react";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { ConnectorIndexingStatus } from "@/lib/types";
+import {
+  ConfluenceConfig,
+  Connector,
+  ConnectorIndexingStatus,
+  GithubConfig,
+  GoogleDriveConfig,
+  JiraConfig,
+  SlackConfig,
+  WebConfig,
+} from "@/lib/types";
 import { useState } from "react";
 import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
 
-const getSourceDisplay = (
-  connectorIndexingStatus: ConnectorIndexingStatus<any, any>
-) => {
+interface ConnectorTitleProps {
+  connectorIndexingStatus: ConnectorIndexingStatus<any, any>;
+}
+
+const ConnectorTitle = ({ connectorIndexingStatus }: ConnectorTitleProps) => {
   const connector = connectorIndexingStatus.connector;
   const sourceMetadata = getSourceMetadata(connector.source);
+
+  let additionalMetadata = new Map<string, string>();
   if (connector.source === "web") {
-    return (
-      sourceMetadata.displayName +
-      (connector.connector_specific_config?.base_url &&
-        ` [${connector.connector_specific_config?.base_url}]`)
+    const typedConnector = connector as Connector<WebConfig>;
+    additionalMetadata.set(
+      "Base URL",
+      typedConnector.connector_specific_config.base_url
     );
-  }
-
-  if (connector.source === "github") {
-    return (
-      sourceMetadata.displayName +
-      ` [${connector.connector_specific_config?.repo_owner}/${connector.connector_specific_config?.repo_name}]`
+  } else if (connector.source === "github") {
+    const typedConnector = connector as Connector<GithubConfig>;
+    additionalMetadata.set(
+      "Repo",
+      `${typedConnector.connector_specific_config.repo_owner}/${typedConnector.connector_specific_config.repo_name}`
     );
-  }
-
-  if (connector.source === "confluence") {
-    return (
-      sourceMetadata.displayName +
-      ` [${connector.connector_specific_config?.wiki_page_url}]`
+  } else if (connector.source === "confluence") {
+    const typedConnector = connector as Connector<ConfluenceConfig>;
+    additionalMetadata.set(
+      "Wiki URL",
+      typedConnector.connector_specific_config.wiki_page_url
     );
-  }
-
-  if (connector.source === "jira") {
-    return (
-      sourceMetadata.displayName +
-      ` [${connector.connector_specific_config?.jira_project_url}]`
+  } else if (connector.source === "jira") {
+    const typedConnector = connector as Connector<JiraConfig>;
+    additionalMetadata.set(
+      "Jira Project URL",
+      typedConnector.connector_specific_config.jira_project_url
     );
-  }
-
-  if (
-    connector.source === "google_drive" &&
-    !connectorIndexingStatus.public_doc
-  ) {
-    if (connectorIndexingStatus.owner) {
-      return `${sourceMetadata.displayName} [${connectorIndexingStatus.owner}]`;
+  } else if (connector.source === "google_drive") {
+    const typedConnector = connector as Connector<GoogleDriveConfig>;
+    if (
+      typedConnector.connector_specific_config?.folder_paths &&
+      typedConnector.connector_specific_config?.folder_paths.length > 0
+    ) {
+      additionalMetadata.set(
+        "Folders",
+        typedConnector.connector_specific_config.folder_paths.join(", ")
+      );
     }
-    return `${sourceMetadata.displayName} [private]`;
+
+    if (!connectorIndexingStatus.public_doc && connectorIndexingStatus.owner) {
+      additionalMetadata.set("Owner", connectorIndexingStatus.owner);
+    }
+  } else if (connector.source === "slack") {
+    const typedConnector = connector as Connector<SlackConfig>;
+    if (
+      typedConnector.connector_specific_config?.channels &&
+      typedConnector.connector_specific_config?.channels.length > 0
+    ) {
+      additionalMetadata.set(
+        "Channels",
+        typedConnector.connector_specific_config.channels.join(", ")
+      );
+    }
   }
 
-  return sourceMetadata.displayName;
+  return (
+    <>
+      <a
+        className="text-blue-500 flex w-fit"
+        href={sourceMetadata.adminPageLink}
+      >
+        {sourceMetadata.icon({ size: 20 })}
+        <div className="ml-1">{sourceMetadata.displayName}</div>
+      </a>
+      <div className="text-xs text-gray-300 mt-1">
+        {Array.from(additionalMetadata.entries()).map(([key, value]) => {
+          return (
+            <div>
+              <i>{key}:</i> {value}
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
 };
 
 const ErrorDisplay = ({ message }: { message: string }) => {
@@ -195,15 +240,7 @@ function Main() {
             ? `${connectorIndexingStatus?.docs_indexed} documents`
             : "-",
           connector: (
-            <a
-              className="text-blue-500 flex w-fit"
-              href={sourceMetadata.adminPageLink}
-            >
-              {sourceMetadata.icon({ size: 20 })}
-              <div className="ml-1">
-                {getSourceDisplay(connectorIndexingStatus)}
-              </div>
-            </a>
+            <ConnectorTitle connectorIndexingStatus={connectorIndexingStatus} />
           ),
           status: statusDisplay,
           // TODO: add the below back in after this is supported in the backend
