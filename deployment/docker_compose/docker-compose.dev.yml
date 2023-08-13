@@ -25,7 +25,6 @@ services:
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-typesense_api_key}
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - DISABLE_AUTH=${DISABLE_AUTH:-True}
-      - ENABLE_OAUTH=${ENABLE_OAUTH:-False}
       - QA_TIMEOUT=${QA_TIMEOUT:-}
       - OAUTH_TYPE=${OAUTH_TYPE:-}
       - OPENID_CONFIG_URL=${OPENID_CONFIG_URL:-}
@@ -76,7 +75,6 @@ services:
     environment:
       - INTERNAL_URL=http://api_server:8080
       - DISABLE_AUTH=${DISABLE_AUTH:-True}
-      - ENABLE_OAUTH=${ENABLE_OAUTH:-False}
       - OAUTH_NAME=${OAUTH_NAME:-}
   relational_db:
     image: postgres:15.2-alpine
