@@ -1,28 +1,22 @@
 import re
 from collections.abc import Generator
 from typing import Any
-from typing import Optional
-from typing import Union
 
 from transformers import pipeline  # type:ignore
 from transformers import QuestionAnsweringPipeline  # type:ignore
 
 from danswer.chunking.models import InferenceChunk
-from danswer.configs.constants import BLURB
-from danswer.configs.constants import DOCUMENT_ID
-from danswer.configs.constants import SEMANTIC_IDENTIFIER
-from danswer.configs.constants import SOURCE_LINK
-from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
+from danswer.direct_qa.interfaces import DanswerAnswer
+from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.direct_qa.interfaces import QAModel
+from danswer.direct_qa.qa_utils import structure_quotes_for_response
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
-# Use a pipeline as a high-level helper
-
 logger = setup_logger()
 
-_TRANSFORMER_MODEL = None  # type: Optional[QuestionAnsweringPipeline]
+_TRANSFORMER_MODEL: QuestionAnsweringPipeline | None = None
 
 
 def get_default_transformer_model(
@@ -35,11 +29,7 @@ def get_default_transformer_model(
     return _TRANSFORMER_MODEL
 
 
-def strip_context_document(document) -> str:
-    return re.sub(r"[\n\r\s]+", " ", document)
-
-
-def find_extended_answer(answer, context) -> str:
+def find_extended_answer(answer: str, context: str) -> str:
     result = re.search(
         r"(^|\n\r?|\.)(?P<content>[^\n]{{0,250}}{}[^\n]{{0,250}})(\.|$|\n\r?)".format(
             re.escape(answer)
@@ -54,48 +44,15 @@ def find_extended_answer(answer, context) -> str:
 
 
 class TransformerQA(QAModel):
-    @log_function_time()
-    def answer_question(
-        self, query: str, context_docs: list[InferenceChunk]
-    ) -> tuple[str | None, dict[str, dict[str, str | int | None]] | None]:
-        collected_quotes = {}
-        answer_str = ""
-        answer_number = 1
-        for chunk in context_docs:
-            answer, quotes_dict = self._answer_one_chunk(query, chunk)
-            if answer is not None:
-                answer_str += f"({answer_number}) {answer}\n"
-                answer_number += 1
-            if quotes_dict is not None:
-                collected_quotes.update(quotes_dict)
-
-        return answer_str, collected_quotes
-
-    def answer_question_stream(
-        self, query: str, context_docs: list[InferenceChunk]
-    ) -> Generator[dict[str, Any] | None, None, None]:
-        yield {
-            "answer_data": " "
-        }  # HACK: yield something or semantic search results won't show before the first result
-        collected_quotes = {}
-        previous_answers = []
-        answer_number = 1
-        for chunk in context_docs:
-            answer, quotes_dict = self._answer_one_chunk(query, chunk)
-            if answer is not None and answer not in previous_answers:
-                previous_answers.append(answer)
-                yield {"answer_data": f"({answer_number}) {answer}\n"}
-                answer_number += 1
-            if quotes_dict is not None:
-                collected_quotes.update(quotes_dict)
-                # HACK: for some reason we have to resent all quotes every time
-                yield collected_quotes
-
     @staticmethod
     def _answer_one_chunk(
         query: str, chunk: InferenceChunk
-    ) -> tuple[str | None, dict[str, dict[str, str | int | None]] | None]:
-        quotes_dict: dict[str, dict[str, Union[str, int, None]]] = {}
+    ) -> tuple[str | None, DanswerQuote | None]:
+        """Because this type of QA model only takes 1 chunk of context with a fairly small token limit
+        We have to iterate the checks and check if the answer is found in any of the chunks.
+        If an answer is found with a confidence above a cutoff, then that chunk is the quote
+        Limitation: No actual quoted segment from the chunk, the whole chunk becomes the reference
+        """
         logger.debug(f"LLM question: {query}")
 
         model = get_default_transformer_model()
@@ -104,7 +61,6 @@ class TransformerQA(QAModel):
         logger.info(f"Answer: {answer}")
 
         if not answer.get("answer", ""):
-            # empty answer
             return None, None
 
         min_score = max(
@@ -114,15 +70,57 @@ class TransformerQA(QAModel):
             # empty answer
             return None, None
 
-        answer_str = answer["answer"]  # type: str
-        extended_answer_str = find_extended_answer(answer_str, chunk.content)
+        short_answer = answer["answer"]
+        extended_answer = find_extended_answer(short_answer, chunk.content)
 
-        quotes_dict[answer_str] = {
-            DOCUMENT_ID: chunk.document_id,
-            SOURCE_LINK: chunk.source_links[0] if chunk.source_links else None,
-            SOURCE_TYPE: chunk.source_type,
-            SEMANTIC_IDENTIFIER: chunk.semantic_identifier,
-            BLURB: chunk.blurb,
-        }
+        danswer_quote = DanswerQuote(
+            quote=short_answer,
+            document_id=chunk.document_id,
+            link=chunk.source_links[0] if chunk.source_links else None,
+            source_type=chunk.source_type,
+            semantic_identifier=chunk.semantic_identifier,
+            blurb=chunk.blurb,
+        )
 
-        return extended_answer_str, quotes_dict
+        return extended_answer, danswer_quote
+
+    @log_function_time()
+    def answer_question(
+        self, query: str, context_docs: list[InferenceChunk]
+    ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
+        danswer_quotes: list[DanswerQuote] = []
+        combined_answer: str | None = None
+        answer_number = 1
+        for chunk in context_docs:
+            answer, quote = self._answer_one_chunk(query, chunk)
+            if answer is not None:
+                if combined_answer is None:
+                    combined_answer = f"({answer_number}) {answer}\n"
+                else:
+                    combined_answer += f"({answer_number}) {answer}\n"
+                answer_number += 1
+
+                if quote is not None:
+                    danswer_quotes.append(quote)
+
+        return DanswerAnswer(answer=combined_answer), danswer_quotes
+
+    def answer_question_stream(
+        self, query: str, context_docs: list[InferenceChunk]
+    ) -> Generator[dict[str, Any] | None, None, None]:
+        yield {
+            "answer_data": " "
+        }  # HACK: yield something or semantic search results won't show before the first result
+        danswer_quotes: list[DanswerQuote] = []
+        previous_answers = []
+        answer_number = 1
+        for chunk in context_docs:
+            answer, quote = self._answer_one_chunk(query, chunk)
+            if answer is not None and answer not in previous_answers:
+                previous_answers.append(answer)
+                yield {"answer_data": f"({answer_number}) {answer}\n"}
+                answer_number += 1
+            if quote is not None:
+                danswer_quotes.append(quote)
+
+        yield structure_quotes_for_response(danswer_quotes)

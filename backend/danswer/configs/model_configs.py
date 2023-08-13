@@ -49,6 +49,9 @@ VERIFIED_MODELS = {
     # The "chat" model below is actually "instruction finetuned" and does not support conversational
     DanswerGenAIModel.HUGGINGFACE.value: ["meta-llama/Llama-2-70b-chat-hf"],
     DanswerGenAIModel.HUGGINGFACE_CHAT.value: ["meta-llama/Llama-2-70b-hf"],
+    # Created by Deepset.ai
+    # https://huggingface.co/deepset/deberta-v3-large-squad2
+    # Model provided with no modifications
     DanswerGenAIModel.TRANSFORMERS.value: ["deepset/deberta-v3-large-squad2"],
 }
 
