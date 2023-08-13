@@ -126,14 +126,12 @@ def run_indexing_jobs(db_session: Session) -> None:
             f"with credentials: '{attempt.credential_id}'"
         )
 
-        run_time = time.time()
-        run_time_str = datetime.utcfromtimestamp(run_time).strftime("%Y-%m-%d %H:%M:%S")
-        logger.info(f"Connector Starting UTC Time: {run_time_str}")
-
         # "official" timestamp for this run
         # used for setting time bounds when fetching updates from apps and
         # is stored in the DB as the last successful run time if this run succeeds
+        run_time = time.time()
         run_dt = datetime.fromtimestamp(run_time, tz=timezone.utc)
+        run_time_str = run_dt.strftime("%Y-%m-%d %H:%M:%S")
 
         mark_attempt_in_progress(attempt, db_session)
 
@@ -181,6 +179,12 @@ def run_indexing_jobs(db_session: Session) -> None:
                     )
                 last_run_time = get_last_successful_attempt_time(
                     attempt.connector_id, attempt.credential_id, db_session
+                )
+                last_run_time_str = datetime.fromtimestamp(
+                    last_run_time, tz=timezone.utc
+                ).strftime("%Y-%m-%d %H:%M:%S")
+                logger.info(
+                    f"Polling for updates between {last_run_time_str} and {run_time_str}"
                 )
                 doc_batch_generator = runnable_connector.poll_source(
                     start=last_run_time, end=run_time
