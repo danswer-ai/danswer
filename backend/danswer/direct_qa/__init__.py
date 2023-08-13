@@ -16,6 +16,7 @@ from danswer.direct_qa.gpt_4_all import GPT4AllCompletionQA
 from danswer.direct_qa.huggingface import HuggingFaceChatCompletionQA
 from danswer.direct_qa.huggingface import HuggingFaceCompletionQA
 from danswer.direct_qa.interfaces import QAModel
+from danswer.direct_qa.local_transformers import TransformerQA
 from danswer.direct_qa.open_ai import OpenAIChatCompletionQA
 from danswer.direct_qa.open_ai import OpenAICompletionQA
 from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
@@ -79,6 +80,8 @@ def get_default_backend_qa_model(
         return HuggingFaceCompletionQA(api_key=api_key, **kwargs)
     elif internal_model == DanswerGenAIModel.HUGGINGFACE_CHAT.value:
         return HuggingFaceChatCompletionQA(api_key=api_key, **kwargs)
+    elif internal_model == DanswerGenAIModel.TRANSFORMERS:
+        return TransformerQA()
     elif internal_model == DanswerGenAIModel.REQUEST.value:
         if endpoint is None or model_host_type is None:
             raise ValueError(

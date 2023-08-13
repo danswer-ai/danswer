@@ -44,6 +44,7 @@ class DanswerGenAIModel(str, Enum):
     HUGGINGFACE = "huggingface-client-completion"
     HUGGINGFACE_CHAT = "huggingface-client-chat-completion"
     REQUEST = "request-completion"
+    TRANSFORMERS = "transformers"
 
 
 class ModelHostType(str, Enum):
