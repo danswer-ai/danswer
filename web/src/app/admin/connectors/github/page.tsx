@@ -24,7 +24,7 @@ const Main = () => {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
     error: isConnectorIndexingStatusesError,
-  } = useSWR<ConnectorIndexingStatus<any>[]>(
+  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
     fetcher
   );
@@ -53,11 +53,13 @@ const Main = () => {
     return <div>Failed to load credentials</div>;
   }
 
-  const githubConnectorIndexingStatuses: ConnectorIndexingStatus<GithubConfig>[] =
-    connectorIndexingStatuses.filter(
-      (connectorIndexingStatus) =>
-        connectorIndexingStatus.connector.source === "github"
-    );
+  const githubConnectorIndexingStatuses: ConnectorIndexingStatus<
+    GithubConfig,
+    GithubCredentialJson
+  >[] = connectorIndexingStatuses.filter(
+    (connectorIndexingStatus) =>
+      connectorIndexingStatus.connector.source === "github"
+  );
   const githubCredential = credentialsData.filter(
     (credential) => credential.credential_json?.github_access_token
   )[0];

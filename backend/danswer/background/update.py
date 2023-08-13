@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.models import IndexAttemptMetadata
 from danswer.connectors.models import InputType
 from danswer.datastores.indexing_pipeline import build_indexing_pipeline
 from danswer.db.connector import disable_connector
@@ -18,11 +19,12 @@ from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
-from danswer.db.index_attempt import get_last_successful_attempt
+from danswer.db.index_attempt import get_last_attempt
 from danswer.db.index_attempt import get_not_started_index_attempts
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.index_attempt import mark_attempt_in_progress
 from danswer.db.index_attempt import mark_attempt_succeeded
+from danswer.db.index_attempt import update_docs_indexed
 from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
@@ -44,7 +46,9 @@ def should_create_new_indexing(
 
 
 def create_indexing_jobs(db_session: Session) -> None:
-    connectors = fetch_connectors(db_session, disabled_status=False)
+    connectors = fetch_connectors(db_session)
+
+    # clean up in-progress jobs that were never completed
     for connector in connectors:
         in_progress_indexing_attempts = get_inprogress_index_attempts(
             connector.id, db_session
@@ -58,7 +62,11 @@ def create_indexing_jobs(db_session: Session) -> None:
                 f"Marking in-progress attempt 'connector: {attempt.connector_id}, "
                 f"credential: {attempt.credential_id}' as failed"
             )
-            mark_attempt_failed(attempt, db_session)
+            mark_attempt_failed(
+                attempt,
+                db_session,
+                failure_reason="Stopped mid run, likely due to the background process being killed",
+            )
             if attempt.connector_id and attempt.credential_id:
                 update_connector_credential_pair(
                     connector_id=attempt.connector_id,
@@ -69,15 +77,16 @@ def create_indexing_jobs(db_session: Session) -> None:
                     db_session=db_session,
                 )
 
+    # potentially kick off new runs
+    enabled_connectors = [
+        connector for connector in connectors if not connector.disabled
+    ]
+    for connector in enabled_connectors:
         for association in connector.credentials:
             credential = association.credential
 
-            last_successful_attempt = get_last_successful_attempt(
-                connector.id, credential.id, db_session
-            )
-            if not should_create_new_indexing(
-                connector, last_successful_attempt, db_session
-            ):
+            last_attempt = get_last_attempt(connector.id, credential.id, db_session)
+            if not should_create_new_indexing(connector, last_attempt, db_session):
                 continue
             create_index_attempt(connector.id, credential.id, db_session)
 
@@ -117,14 +126,12 @@ def run_indexing_jobs(db_session: Session) -> None:
             f"with credentials: '{attempt.credential_id}'"
         )
 
-        run_time = time.time()
-        run_time_str = datetime.utcfromtimestamp(run_time).strftime("%Y-%m-%d %H:%M:%S")
-        logger.info(f"Connector Starting UTC Time: {run_time_str}")
-
         # "official" timestamp for this run
         # used for setting time bounds when fetching updates from apps and
         # is stored in the DB as the last successful run time if this run succeeds
+        run_time = time.time()
         run_dt = datetime.fromtimestamp(run_time, tz=timezone.utc)
+        run_time_str = run_dt.strftime("%Y-%m-%d %H:%M:%S")
 
         mark_attempt_in_progress(attempt, db_session)
 
@@ -173,6 +180,12 @@ def run_indexing_jobs(db_session: Session) -> None:
                 last_run_time = get_last_successful_attempt_time(
                     attempt.connector_id, attempt.credential_id, db_session
                 )
+                last_run_time_str = datetime.fromtimestamp(
+                    last_run_time, tz=timezone.utc
+                ).strftime("%Y-%m-%d %H:%M:%S")
+                logger.info(
+                    f"Polling for updates between {last_run_time_str} and {run_time_str}"
+                )
                 doc_batch_generator = runnable_connector.poll_source(
                     start=last_run_time, end=run_time
                 )
@@ -188,11 +201,27 @@ def run_indexing_jobs(db_session: Session) -> None:
                     None if db_credential.public_doc else db_credential.user_id
                 )
                 new_docs, total_batch_chunks = indexing_pipeline(
-                    documents=doc_batch, user_id=index_user_id
+                    documents=doc_batch,
+                    index_attempt_metadata=IndexAttemptMetadata(
+                        user_id=index_user_id,
+                        connector_id=db_connector.id,
+                        credential_id=db_credential.id,
+                    ),
                 )
                 net_doc_change += new_docs
                 chunk_count += total_batch_chunks
                 document_count += len(doc_batch)
+                update_docs_indexed(
+                    db_session=db_session,
+                    index_attempt=attempt,
+                    num_docs_indexed=document_count,
+                )
+
+                # check if connector is disabled mid run and stop if so
+                db_session.refresh(db_connector)
+                if db_connector.disabled:
+                    # let the `except` block handle this
+                    raise RuntimeError("Connector was disabled mid run")
 
             mark_attempt_succeeded(attempt, db_session)
             update_connector_credential_pair(

@@ -9,13 +9,19 @@ from uuid import UUID
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
 
+from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
 from danswer.datastores.interfaces import IndexFilter
 from danswer.db.models import Connector
+from danswer.db.models import Credential
+from danswer.db.models import DeletionAttempt
+from danswer.db.models import DeletionStatus
+from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
+from danswer.server.utils import mask_credential_dict
 
 
 DataT = TypeVar("DataT")
@@ -119,6 +125,46 @@ class IndexAttemptRequest(BaseModel):
     connector_specific_config: dict[str, Any]
 
 
+class IndexAttemptSnapshot(BaseModel):
+    status: IndexingStatus | None
+    num_docs_indexed: int
+    error_msg: str | None
+    time_started: str | None
+    time_updated: str
+
+    @classmethod
+    def from_index_attempt_db_model(
+        cls, index_attempt: IndexAttempt
+    ) -> "IndexAttemptSnapshot":
+        return IndexAttemptSnapshot(
+            status=index_attempt.status,
+            num_docs_indexed=index_attempt.num_docs_indexed or 0,
+            error_msg=index_attempt.error_msg,
+            time_started=index_attempt.time_started.isoformat()
+            if index_attempt.time_started
+            else None,
+            time_updated=index_attempt.time_updated.isoformat(),
+        )
+
+
+class DeletionAttemptSnapshot(BaseModel):
+    connector_id: int
+    status: DeletionStatus
+    error_msg: str | None
+    num_docs_deleted: int
+
+    @classmethod
+    def from_deletion_attempt_db_model(
+        cls, deletion_attempt: DeletionAttempt
+    ) -> "DeletionAttemptSnapshot":
+        return DeletionAttemptSnapshot(
+            connector_id=deletion_attempt.connector_id,
+            status=deletion_attempt.status,
+            error_msg=deletion_attempt.error_msg,
+            num_docs_deleted=deletion_attempt.num_docs_deleted,
+        )
+
+
 class ConnectorBase(BaseModel):
     name: str
     source: DocumentSource
@@ -152,17 +198,6 @@ class ConnectorSnapshot(ConnectorBase):
         )
 
 
-class ConnectorIndexingStatus(BaseModel):
-    """Represents the latest indexing status of a connector"""
-
-    connector: ConnectorSnapshot
-    owner: str
-    public_doc: bool
-    last_status: IndexingStatus
-    last_success: datetime | None
-    docs_indexed: int
-
-
 class RunConnectorRequest(BaseModel):
     connector_id: int
     credential_ids: list[int] | None
@@ -178,6 +213,40 @@ class CredentialSnapshot(CredentialBase):
     user_id: UUID | None
     time_created: datetime
     time_updated: datetime
+
+    @classmethod
+    def from_credential_db_model(cls, credential: Credential) -> "CredentialSnapshot":
+        return CredentialSnapshot(
+            id=credential.id,
+            credential_json=mask_credential_dict(credential.credential_json)
+            if MASK_CREDENTIAL_PREFIX
+            else credential.credential_json,
+            user_id=credential.user_id,
+            public_doc=credential.public_doc,
+            time_created=credential.time_created,
+            time_updated=credential.time_updated,
+        )
+
+
+class ConnectorIndexingStatus(BaseModel):
+    """Represents the latest indexing status of a connector"""
+
+    connector: ConnectorSnapshot
+    credential: CredentialSnapshot
+    owner: str
+    public_doc: bool
+    last_status: IndexingStatus | None
+    last_success: datetime | None
+    docs_indexed: int
+    error_msg: str | None
+    latest_index_attempt: IndexAttemptSnapshot | None
+    deletion_attempts: list[DeletionAttemptSnapshot]
+    is_deletable: bool
+
+
+class ConnectorCredentialPairIdentifier(BaseModel):
+    connector_id: int
+    credential_id: int
 
 
 class ApiKey(BaseModel):

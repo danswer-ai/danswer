@@ -153,6 +153,15 @@ _For Windows:_
 powershell -Command " $env:PYTHONPATH='.'; $env:TYPESENSE_API_KEY='typesense_api_key'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/update.py "
 ```
 
+To run the background job which handles deletion of connectors, navigate to `danswer/backend` and run:
+```bash
+PYTHONPATH=. TYPESENSE_API_KEY=typesense_api_key DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/connector_deletion.py
+```
+_For Windows:_
+```bash
+powershell -Command " $env:PYTHONPATH='.'; $env:TYPESENSE_API_KEY='typesense_api_key'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/connector_deletion.py "
+```
+
 Note: if you need finer logging, add the additional environment variable `LOG_LEVEL=DEBUG` to the relevant services.
 
 ### Formatting and Linting

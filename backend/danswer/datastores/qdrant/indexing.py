@@ -19,15 +19,20 @@ from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import METADATA
-from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.model_configs import DOC_EMBEDDING_DIM
+from danswer.connectors.models import IndexAttemptMetadata
+from danswer.datastores.datastore_utils import CrossConnectorDocumentMetadata
 from danswer.datastores.datastore_utils import DEFAULT_BATCH_SIZE
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
-from danswer.datastores.datastore_utils import update_doc_user_map
+from danswer.datastores.datastore_utils import (
+    update_cross_connector_document_metadata_map,
+)
+from danswer.datastores.interfaces import ChunkInsertionRecord
+from danswer.datastores.qdrant.utils import get_payload_from_record
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logger import setup_logger
 
@@ -51,9 +56,9 @@ def create_qdrant_collection(
         raise RuntimeError("Could not create Qdrant collection")
 
 
-def get_qdrant_document_whitelists(
+def get_qdrant_document_cross_connector_metadata(
     doc_chunk_id: str, collection_name: str, q_client: QdrantClient
-) -> tuple[bool, list[str], list[str]]:
+) -> CrossConnectorDocumentMetadata | None:
     """Get whether a document is found and the existing whitelists"""
     results = q_client.retrieve(
         collection_name=collection_name,
@@ -61,13 +66,13 @@ def get_qdrant_document_whitelists(
         with_payload=[ALLOWED_USERS, ALLOWED_GROUPS],
     )
     if len(results) == 0:
-        return False, [], []
-    payload = results[0].payload
-    if not payload:
-        raise RuntimeError(
-            "Qdrant Index is corrupted, Document found with no access lists."
-        )
-    return True, payload[ALLOWED_USERS], payload[ALLOWED_GROUPS]
+        return None
+    payload = get_payload_from_record(results[0])
+    return CrossConnectorDocumentMetadata(
+        allowed_users=payload[ALLOWED_USERS],
+        allowed_user_groups=payload[ALLOWED_GROUPS],
+        already_in_index=True,
+    )
 
 
 def delete_qdrant_doc_chunks(
@@ -91,42 +96,53 @@ def delete_qdrant_doc_chunks(
 
 def index_qdrant_chunks(
     chunks: list[EmbeddedIndexChunk],
-    user_id: UUID | None,
+    index_attempt_metadata: IndexAttemptMetadata,
     collection: str,
     client: QdrantClient | None = None,
     batch_upsert: bool = True,
-) -> int:
+) -> list[ChunkInsertionRecord]:
     # Public documents will have the PUBLIC string in ALLOWED_USERS
     # If credential that kicked this off has no user associated, either Auth is off or the doc is public
-    user_str = PUBLIC_DOC_PAT if user_id is None else str(user_id)
     q_client: QdrantClient = client if client else get_qdrant_client()
 
     point_structs: list[PointStruct] = []
+    insertion_records: list[ChunkInsertionRecord] = []
     # Maps document id to dict of whitelists for users/groups each containing list of users/groups as strings
-    doc_user_map: dict[str, dict[str, list[str]]] = {}
-    docs_deleted = 0
+    cross_connector_document_metadata_map: dict[
+        str, CrossConnectorDocumentMetadata
+    ] = {}
     for chunk in chunks:
         document = chunk.source_document
-        doc_user_map, delete_doc = update_doc_user_map(
-            chunk,
-            doc_user_map,
-            partial(
-                get_qdrant_document_whitelists,
+        (
+            cross_connector_document_metadata_map,
+            should_delete_doc,
+        ) = update_cross_connector_document_metadata_map(
+            chunk=chunk,
+            cross_connector_document_metadata_map=cross_connector_document_metadata_map,
+            doc_store_cross_connector_document_metadata_fetch_fn=partial(
+                get_qdrant_document_cross_connector_metadata,
                 collection_name=collection,
                 q_client=q_client,
             ),
-            user_str,
+            index_attempt_metadata=index_attempt_metadata,
         )
 
-        if delete_doc:
+        if should_delete_doc:
             # Processing the first chunk of the doc and the doc exists
-            docs_deleted += 1
             delete_qdrant_doc_chunks(document.id, collection, q_client)
 
-        point_structs.extend(
-            [
+        for minichunk_ind, embedding in enumerate(chunk.embeddings):
+            qdrant_id = str(get_uuid_from_chunk(chunk, minichunk_ind))
+            insertion_records.append(
+                ChunkInsertionRecord(
+                    document_id=document.id,
+                    store_id=qdrant_id,
+                    already_existed=should_delete_doc,
+                )
+            )
+            point_structs.append(
                 PointStruct(
-                    id=str(get_uuid_from_chunk(chunk, minichunk_ind)),
+                    id=qdrant_id,
                     payload={
                         DOCUMENT_ID: document.id,
                         CHUNK_ID: chunk.chunk_id,
@@ -136,15 +152,17 @@ def index_qdrant_chunks(
                         SOURCE_LINKS: chunk.source_links,
                         SEMANTIC_IDENTIFIER: document.semantic_identifier,
                         SECTION_CONTINUATION: chunk.section_continuation,
-                        ALLOWED_USERS: doc_user_map[document.id][ALLOWED_USERS],
-                        ALLOWED_GROUPS: doc_user_map[document.id][ALLOWED_GROUPS],
+                        ALLOWED_USERS: cross_connector_document_metadata_map[
+                            document.id
+                        ].allowed_users,
+                        ALLOWED_GROUPS: cross_connector_document_metadata_map[
+                            document.id
+                        ].allowed_user_groups,
                         METADATA: json.dumps(document.metadata),
                     },
                     vector=embedding,
                 )
-                for minichunk_ind, embedding in enumerate(chunk.embeddings)
-            ]
-        )
+            )
 
     if batch_upsert:
         point_struct_batches = [
@@ -179,4 +197,4 @@ def index_qdrant_chunks(
             f"Document batch of size {len(point_structs)} indexing status: {index_results.status}"
         )
 
-    return len(doc_user_map.keys()) - docs_deleted
+    return insertion_records

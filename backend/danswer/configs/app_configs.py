@@ -139,12 +139,6 @@ CHUNK_MAX_CHAR_OVERLAP = 50
 
 
 #####
-# Other API Keys
-#####
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-
-
-#####
 # Encoder Model Endpoint Configs (Currently unused, running the models in memory)
 #####
 BI_ENCODER_HOST = "localhost"
@@ -171,3 +165,6 @@ DANSWER_BOT_NUM_DOCS_TO_DISPLAY = int(
     os.environ.get("DANSWER_BOT_NUM_DOCS_TO_DISPLAY", "5")
 )
 DANSWER_BOT_NUM_RETRIES = int(os.environ.get("DANSWER_BOT_NUM_RETRIES", "5"))
+DANSWER_BOT_ANSWER_GENERATION_TIMEOUT = int(
+    os.environ.get("DANSWER_BOT_ANSWER_GENERATION_TIMEOUT", "60")
+)

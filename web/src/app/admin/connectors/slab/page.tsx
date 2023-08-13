@@ -27,7 +27,7 @@ const Main = () => {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
     error: isConnectorIndexingStatusesError,
-  } = useSWR<ConnectorIndexingStatus<any>[]>(
+  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
     fetcher
   );
@@ -54,11 +54,13 @@ const Main = () => {
     return <div>Failed to load credentials</div>;
   }
 
-  const slabConnectorIndexingStatuses: ConnectorIndexingStatus<SlabConfig>[] =
-    connectorIndexingStatuses.filter(
-      (connectorIndexingStatus) =>
-        connectorIndexingStatus.connector.source === "slab"
-    );
+  const slabConnectorIndexingStatuses: ConnectorIndexingStatus<
+    SlabConfig,
+    SlabCredentialJson
+  >[] = connectorIndexingStatuses.filter(
+    (connectorIndexingStatus) =>
+      connectorIndexingStatus.connector.source === "slab"
+  );
   const slabCredential = credentialsData.filter(
     (credential) => credential.credential_json?.slab_bot_token
   )[0];

@@ -20,12 +20,12 @@ export default function Web() {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
     error: isConnectorIndexingStatusesError,
-  } = useSWR<ConnectorIndexingStatus<any>[]>(
+  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
     fetcher
   );
 
-  const webIndexingStatuses: ConnectorIndexingStatus<WebConfig>[] =
+  const webIndexingStatuses: ConnectorIndexingStatus<WebConfig, {}>[] =
     connectorIndexingStatuses?.filter(
       (connectorIndexingStatus) =>
         connectorIndexingStatus.connector.source === "web"

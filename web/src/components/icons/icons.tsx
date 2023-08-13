@@ -12,6 +12,7 @@ import {
   Brain,
   PencilSimple,
   X,
+  Question,
 } from "@phosphor-icons/react";
 import { SiBookstack } from "react-icons/si";
 import { FaFile, FaGlobe } from "react-icons/fa";
@@ -95,6 +96,13 @@ export const InfoIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <Info size={size} className={className} />;
+};
+
+export const QuestionIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <Question size={size} className={className} />;
 };
 
 export const BrainIcon = ({

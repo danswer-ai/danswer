@@ -1,12 +1,14 @@
 from datetime import datetime
 
 from fastapi import HTTPException
+from sqlalchemy import delete
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.models import ConnectorCredentialPair
+from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import User
 from danswer.server.models import StatusResponse
@@ -79,6 +81,18 @@ def update_connector_credential_pair(
     db_session.commit()
 
 
+def delete_connector_credential_pair(
+    db_session: Session,
+    connector_id: int,
+    credential_id: int,
+) -> None:
+    stmt = delete(ConnectorCredentialPair).where(
+        ConnectorCredentialPair.connector_id == connector_id,
+        ConnectorCredentialPair.credential_id == credential_id,
+    )
+    db_session.execute(stmt)
+
+
 def add_credential_to_connector(
     connector_id: int,
     credential_id: int,
@@ -115,7 +129,6 @@ def add_credential_to_connector(
     association = ConnectorCredentialPair(
         connector_id=connector_id,
         credential_id=credential_id,
-        last_attempt_status=IndexingStatus.NOT_STARTED,
     )
     db_session.add(association)
     db_session.commit()
