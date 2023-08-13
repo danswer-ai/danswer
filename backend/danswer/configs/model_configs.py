@@ -49,6 +49,7 @@ VERIFIED_MODELS = {
     # The "chat" model below is actually "instruction finetuned" and does not support conversational
     DanswerGenAIModel.HUGGINGFACE.value: ["meta-llama/Llama-2-70b-chat-hf"],
     DanswerGenAIModel.HUGGINGFACE_CHAT.value: ["meta-llama/Llama-2-70b-hf"],
+    DanswerGenAIModel.TRANSFORMERS.value: ["deepset/deberta-v3-large-squad2"],
 }
 
 # Sets the internal Danswer model class to use
@@ -77,5 +78,3 @@ GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS", "512")
 
 # Danswer custom Deep Learning Models
 INTENT_MODEL_VERSION = "danswer/intent-model"
-
-LOCAL_LLM_MODEL = os.environ.get("LOCAL_LLM_MODEL", "deepset/deberta-v3-large-squad2")

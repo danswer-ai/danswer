@@ -13,7 +13,7 @@ from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINK
 from danswer.configs.constants import SOURCE_TYPE
-from danswer.configs.model_configs import LOCAL_LLM_MODEL
+from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.direct_qa.interfaces import QAModel
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
@@ -22,15 +22,17 @@ from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
 
-_QA_MODEL = None  # type: Optional[QuestionAnsweringPipeline]
+_TRANSFORMER_MODEL = None  # type: Optional[QuestionAnsweringPipeline]
 
 
-def get_default_qa_model() -> QuestionAnsweringPipeline:
-    global _QA_MODEL
-    if _QA_MODEL is None:
-        _QA_MODEL = pipeline("question-answering", model=LOCAL_LLM_MODEL)
+def get_default_transformer_model(
+    model_version: str = GEN_AI_MODEL_VERSION,
+) -> QuestionAnsweringPipeline:
+    global _TRANSFORMER_MODEL
+    if _TRANSFORMER_MODEL is None:
+        _TRANSFORMER_MODEL = pipeline("question-answering", model=model_version)
 
-    return _QA_MODEL
+    return _TRANSFORMER_MODEL
 
 
 def strip_context_document(document) -> str:
@@ -51,7 +53,7 @@ def find_extended_answer(answer, context) -> str:
     return answer
 
 
-class LocalModel(QAModel):
+class TransformerQA(QAModel):
     @log_function_time()
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
@@ -96,7 +98,7 @@ class LocalModel(QAModel):
         quotes_dict: dict[str, dict[str, Union[str, int, None]]] = {}
         logger.debug(f"LLM question: {query}")
 
-        model = get_default_qa_model()
+        model = get_default_transformer_model()
         answer = model(question=query, context=chunk.content, max_answer_len=128)
 
         logger.info(f"Answer: {answer}")
