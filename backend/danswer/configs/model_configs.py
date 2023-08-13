@@ -57,7 +57,7 @@ VERIFIED_MODELS = {
 
 # Sets the internal Danswer model class to use
 INTERNAL_MODEL_VERSION = os.environ.get(
-    "INTERNAL_MODEL_VERSION", DanswerGenAIModel.TRANSFORMERS.value
+    "INTERNAL_MODEL_VERSION", DanswerGenAIModel.OPENAI_CHAT.value
 )
 
 # If the Generative AI model requires an API key for access, otherwise can leave blank
