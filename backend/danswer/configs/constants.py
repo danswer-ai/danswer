@@ -41,8 +41,8 @@ class DanswerGenAIModel(str, Enum):
     OPENAI_CHAT = "openai-chat-completion"
     GPT4ALL = "gpt4all-completion"
     GPT4ALL_CHAT = "gpt4all-chat-completion"
-    HUGGINGFACE = "huggingface-inference-completion"
-    HUGGINGFACE_CHAT = "huggingface-inference-chat-completion"
+    HUGGINGFACE = "huggingface-client-completion"
+    HUGGINGFACE_CHAT = "huggingface-client-chat-completion"
     REQUEST = "request-completion"
 
 
