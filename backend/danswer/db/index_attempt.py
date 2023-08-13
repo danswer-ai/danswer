@@ -109,7 +109,9 @@ def get_latest_index_attempts(
     db_session: Session,
 ) -> Sequence[IndexAttempt]:
     ids_stmt = select(
-        IndexAttempt.id, func.max(IndexAttempt.time_created).label("max_updated_at")
+        IndexAttempt.connector_id,
+        IndexAttempt.credential_id,
+        func.max(IndexAttempt.time_created).label("max_time_created"),
     )
 
     where_stmts: list[ColumnElement] = []
@@ -124,10 +126,20 @@ def get_latest_index_attempts(
         )
     if where_stmts:
         ids_stmt = ids_stmt.where(or_(*where_stmts))
-    ids_stmt = ids_stmt.group_by(IndexAttempt.id)
+    ids_stmt = ids_stmt.group_by(IndexAttempt.connector_id, IndexAttempt.credential_id)
     ids_subqery = ids_stmt.subquery()
 
-    stmt = select(IndexAttempt).join(ids_subqery, ids_subqery.c.id == IndexAttempt.id)
+    stmt = (
+        select(IndexAttempt)
+        .join(
+            ids_subqery,
+            and_(
+                ids_subqery.c.connector_id == IndexAttempt.connector_id,
+                ids_subqery.c.credential_id == IndexAttempt.credential_id,
+            ),
+        )
+        .where(IndexAttempt.time_created == ids_subqery.c.max_time_created)
+    )
     return db_session.execute(stmt).scalars().all()
 
 
