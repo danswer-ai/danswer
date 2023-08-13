@@ -130,7 +130,7 @@ class HuggingFaceRequestModel(HostSpecificRequestModel):
 
 class ColabDemoRequestModel(HostSpecificRequestModel):
     """Guide found at:
-    TODO place guide here
+    https://medium.com/@yuhongsun96/host-a-llama-2-api-on-gpu-for-free-a5311463c183
     """
 
     @property
