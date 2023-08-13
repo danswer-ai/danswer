@@ -121,7 +121,7 @@ const ErrorDisplay = ({ message }: { message: string }) => {
       className="relative"
     >
       {isHovered && (
-        <div className="absolute pt-8 top-0 left-0">
+        <div className="absolute pt-8 top-0 left-0 z-10">
           <div className="bg-gray-700 px-3 pb-3 pt-2 rounded shadow-lg text-xs">
             <div className="text-sm text-red-600 mb-1 flex">Error Message:</div>
 
