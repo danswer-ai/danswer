@@ -111,6 +111,8 @@ def index_qdrant_chunks(
     cross_connector_document_metadata_map: dict[
         str, CrossConnectorDocumentMetadata
     ] = {}
+    # document ids of documents that existed BEFORE this indexing
+    already_existing_documents: set[str] = set()
     for chunk in chunks:
         document = chunk.source_document
         (
@@ -130,6 +132,7 @@ def index_qdrant_chunks(
         if should_delete_doc:
             # Processing the first chunk of the doc and the doc exists
             delete_qdrant_doc_chunks(document.id, collection, q_client)
+            already_existing_documents.add(document.id)
 
         for minichunk_ind, embedding in enumerate(chunk.embeddings):
             qdrant_id = str(get_uuid_from_chunk(chunk, minichunk_ind))
@@ -137,7 +140,7 @@ def index_qdrant_chunks(
                 ChunkInsertionRecord(
                     document_id=document.id,
                     store_id=qdrant_id,
-                    already_existed=should_delete_doc,
+                    already_existed=document.id in already_existing_documents,
                 )
             )
             point_structs.append(

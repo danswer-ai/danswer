@@ -58,6 +58,9 @@ def _get_net_new_documents(
     net_new_documents = 0
     seen_documents: set[str] = set()
     for insertion_record in insertion_records:
+        if insertion_record.already_existed:
+            continue
+
         if insertion_record.document_id not in seen_documents:
             net_new_documents += 1
             seen_documents.add(insertion_record.document_id)
@@ -81,6 +84,7 @@ def _indexing_pipeline(
     keyword_store_insertion_records = keyword_index.index(
         chunks=chunks, index_attempt_metadata=index_attempt_metadata
     )
+    logger.debug(f"Keyword store insertion records: {keyword_store_insertion_records}")
     _upsert_insertion_records(
         insertion_records=keyword_store_insertion_records,
         index_attempt_metadata=index_attempt_metadata,
@@ -94,6 +98,7 @@ def _indexing_pipeline(
     vector_store_insertion_records = vector_index.index(
         chunks=chunks_with_embeddings, index_attempt_metadata=index_attempt_metadata
     )
+    logger.debug(f"Vector store insertion records: {keyword_store_insertion_records}")
     _upsert_insertion_records(
         insertion_records=vector_store_insertion_records,
         index_attempt_metadata=index_attempt_metadata,
