@@ -13,6 +13,7 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.connectors.zulip.schemas import GetMessagesResponse
@@ -62,6 +63,9 @@ class ZulipConnector(LoadConnector, PollConnector):
         return narrow_link
 
     def _get_message_batch(self, anchor: str) -> Tuple[bool, List[Message]]:
+        if self.client is None:
+            raise ConnectorMissingCredentialError("Zulip")
+
         logger.info(f"Fetching messages starting with anchor={anchor}")
         request = build_search_narrow(
             limit=INDEX_BATCH_SIZE, anchor=anchor, apply_md=False
@@ -74,7 +78,7 @@ class ZulipConnector(LoadConnector, PollConnector):
 
         # reverse, so that the last message is the new anchor
         # and the order is from newest to oldest
-        return (end, response.messages[::-1])
+        return end, response.messages[::-1]
 
     def _message_to_doc(self, message: Message) -> Document:
         text = f"{message.sender_full_name}: {message.content}"
@@ -88,13 +92,14 @@ class ZulipConnector(LoadConnector, PollConnector):
                 )
             ],
             source=DocumentSource.ZULIP,
-            semantic_identifier=message.display_recipient,
+            semantic_identifier=message.display_recipient or message.subject,
             metadata={},
         )
 
     def _get_docs(
         self, anchor: str, start: SecondsSinceUnixEpoch | None = None
     ) -> Generator[Document, None, None]:
+        message: Message | None = None
         while True:
             end, message_batch = self._get_message_batch(anchor)
 
