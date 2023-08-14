@@ -8,10 +8,7 @@ from pydantic import BaseModel
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import IndexChunk
 from danswer.chunking.models import InferenceChunk
-from danswer.configs.constants import ALLOWED_GROUPS
-from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import PUBLIC_DOC_PAT
-from danswer.connectors.models import Document
 from danswer.connectors.models import IndexAttemptMetadata
 
 
@@ -55,7 +52,7 @@ T = TypeVar("T")
 
 
 def _add_if_not_exists(l: list[T], item: T) -> list[T]:
-    if item not in l:
+    if item in l:
         return l
     return l + [item]
 
