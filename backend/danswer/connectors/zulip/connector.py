@@ -36,6 +36,7 @@ class ZulipConnector(LoadConnector, PollConnector):
         self.batch_size = batch_size
         self.realm_name = realm_name
         self.realm_url = realm_url if realm_url.endswith("/") else realm_url + "/"
+        self.client: Client | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         contents = credentials["zuliprc_content"]
