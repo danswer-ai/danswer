@@ -14,7 +14,7 @@ import {
   X,
   Question,
 } from "@phosphor-icons/react";
-import { SiBookstack } from "react-icons/si";
+import { SiBookstack, SiZulip } from "react-icons/si";
 import { FaFile, FaGlobe } from "react-icons/fa";
 import Image from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
@@ -110,6 +110,13 @@ export const BrainIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <Brain size={size} className={className} />;
+};
+
+export const ZulipIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <SiZulip size={size} className={className} />;
 };
 
 export const PencilIcon = ({

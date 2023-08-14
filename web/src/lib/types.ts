@@ -19,6 +19,7 @@ export type ValidSources =
   | "slab"
   | "notion"
   | "guru"
+  | "zulip"
   | "file";
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
@@ -83,6 +84,11 @@ export interface GuruConfig {}
 
 export interface FileConfig {
   file_locations: string[];
+}
+
+export interface ZulipConfig {
+  realm_name: string;
+  realm_url: string;
 }
 
 export interface NotionConfig {}
@@ -164,6 +170,11 @@ export interface SlabCredentialJson {
 export interface NotionCredentialJson {
   notion_integration_token: string;
 }
+
+export interface ZulipCredentialJson {
+  zuliprc_content: string;
+}
+
 export interface GuruCredentialJson {
   guru_user: string;
   guru_user_token: string;

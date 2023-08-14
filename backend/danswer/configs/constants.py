@@ -30,6 +30,7 @@ class DocumentSource(str, Enum):
     PRODUCTBOARD = "productboard"
     FILE = "file"
     NOTION = "notion"
+    ZULIP = "zulip"
 
 
 class DanswerGenAIModel(str, Enum):

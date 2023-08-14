@@ -23,6 +23,7 @@ import {
   JiraConfig,
   SlackConfig,
   WebConfig,
+  ZulipConfig,
 } from "@/lib/types";
 import { useState } from "react";
 import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
@@ -86,6 +87,13 @@ const ConnectorTitle = ({ connectorIndexingStatus }: ConnectorTitleProps) => {
         typedConnector.connector_specific_config.channels.join(", ")
       );
     }
+  }
+  else if (connector.source === "zulip") {
+    const typedConnector = connector as Connector<ZulipConfig>;
+    additionalMetadata.set(
+      "Realm",
+      typedConnector.connector_specific_config.realm_name
+    );
   }
 
   return (

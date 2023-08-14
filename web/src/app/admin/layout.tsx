@@ -14,6 +14,7 @@ import {
   JiraIcon,
   SlabIcon,
   NotionIcon,
+  ZulipIcon,
   ProductboardIcon,
 } from "@/components/icons/icons";
 import { DISABLE_AUTH } from "@/lib/constants";
@@ -167,6 +168,15 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/connectors/file",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <ZulipIcon size={16} />
+                      <div className="ml-1">Zulip</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/zulip",
                 },
               ],
             },
