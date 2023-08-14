@@ -13,6 +13,7 @@ from danswer.connectors.interfaces import BaseConnector
 from danswer.connectors.interfaces import EventConnector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.linear.connector import LinearConnector
 from danswer.connectors.models import InputType
 from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.productboard.connector import ProductboardConnector
@@ -21,8 +22,6 @@ from danswer.connectors.slack.connector import SlackLoadConnector
 from danswer.connectors.slack.connector import SlackPollConnector
 from danswer.connectors.web.connector import WebConnector
 from danswer.connectors.zulip.connector import ZulipConnector
-
-_NUM_SECONDS_IN_DAY = 86400
 
 
 class ConnectorMissingException(Exception):
@@ -50,6 +49,7 @@ def identify_connector_class(
         DocumentSource.NOTION: NotionConnector,
         DocumentSource.ZULIP: ZulipConnector,
         DocumentSource.GURU: GuruConnector,
+        DocumentSource.LINEAR: LinearConnector,
     }
     connector_by_source = connector_map.get(source, {})
 
