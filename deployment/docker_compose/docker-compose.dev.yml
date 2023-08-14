@@ -34,6 +34,10 @@ services:
       - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
       - GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-}
       - DISABLE_GENERATIVE_AI=${DISABLE_GENERATIVE_AI:-}
+      - API_BASE_OPENAI${API_BASE_OPENAI:-}
+      - API_TYPE_OPENAI=${API_TYPE_OPENAI:-}
+      - API_VERSION_OPENAI=${API_VERSION_OPENAI:-}
+      - AZURE_DEPLOYMENT_ID=${AZURE_DEPLOYMENT_ID:-}
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage

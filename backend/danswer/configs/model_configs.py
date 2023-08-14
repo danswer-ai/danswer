@@ -81,3 +81,11 @@ GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS", "512")
 
 # Danswer custom Deep Learning Models
 INTENT_MODEL_VERSION = "danswer/intent-model"
+
+#####
+# OpenAI Azure
+#####
+API_BASE_OPENAI = os.environ.get("API_BASE_OPENAI", "")
+API_TYPE_OPENAI = os.environ.get("API_TYPE_OPENAI", "").lower()
+API_VERSION_OPENAI = os.environ.get("API_VERSION_OPENAI", "")
+AZURE_DEPLOYMENT_ID = os.environ.get("AZURE_DEPLOYMENT_ID", "") # used interchangeably with "engine" parameter

@@ -17,6 +17,10 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import INCLUDE_METADATA
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
+from danswer.configs.model_configs import API_BASE_OPENAI
+from danswer.configs.model_configs import API_TYPE_OPENAI
+from danswer.configs.model_configs import API_VERSION_OPENAI
+from danswer.configs.model_configs import AZURE_DEPLOYMENT_ID
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerQuote
@@ -38,6 +42,12 @@ logger = setup_logger()
 
 F = TypeVar("F", bound=Callable)
 
+if API_BASE_OPENAI:
+    openai.api_base = API_BASE_OPENAI
+if API_TYPE_OPENAI in ["azure"]: #TODO: Azure AD support ["azure_ad", "azuread"]
+    openai.api_type = API_TYPE_OPENAI
+    openai.api_version = API_VERSION_OPENAI
+
 
 def _ensure_openai_api_key(api_key: str | None) -> str:
     try:
@@ -55,6 +65,7 @@ def _build_openai_settings(**kwargs: Any) -> dict[str, Any]:
         "top_p": 1,
         "frequency_penalty": 0,
         "presence_penalty": 0,
+        **({"deployment_id": AZURE_DEPLOYMENT_ID} if AZURE_DEPLOYMENT_ID else {}),
         **kwargs,
     }
 
