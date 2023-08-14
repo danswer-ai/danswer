@@ -215,8 +215,8 @@ export const ZulipIcon = ({
 }: IconProps) => {
   return (
     <div
-      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
-      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] -m-0.5 ` + className}
     >
       <Image src={zulipIcon} alt="Logo" width="96" height="96" />
     </div>
