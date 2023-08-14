@@ -24,7 +24,7 @@ const MainSection = () => {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
     error: isConnectorIndexingStatusesError,
-  } = useSWR<ConnectorIndexingStatus<any>[]>(
+  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
     fetcher
   );
@@ -53,11 +53,13 @@ const MainSection = () => {
     return <div>Failed to load credentials</div>;
   }
 
-  const zulipConnectorIndexingStatuses: ConnectorIndexingStatus<ZulipConfig>[] =
-    connectorIndexingStatuses.filter(
-      (connectorIndexingStatus) =>
-        connectorIndexingStatus.connector.source === "zulip"
-    );
+  const zulipConnectorIndexingStatuses: ConnectorIndexingStatus<
+    ZulipConfig,
+    ZulipCredentialJson
+  >[] = connectorIndexingStatuses.filter(
+    (connectorIndexingStatus) =>
+      connectorIndexingStatus.connector.source === "zulip"
+  );
   const zulipCredential = credentialsData.filter(
     (credential) => credential.credential_json?.zuliprc_content
   )[0];
