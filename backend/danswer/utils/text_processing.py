@@ -1,3 +1,5 @@
+import re
+
 from bs4 import BeautifulSoup
 
 from danswer.configs.constants import HTML_SEPARATOR
@@ -15,23 +17,17 @@ def clean_model_quote(quote: str, trim_length: int) -> str:
 
 
 def shared_precompare_cleanup(text: str) -> str:
+    """LLMs models sometime restructure whitespaces or edits special characters to fit a more likely
+    distribution of characters found in its training data, but this hurts exact quote matching
+    """
     text = text.lower()
 
-    # GPT models like to return cleaner spacing, not good for quote matching
-    text = "".join(text.split())
-
-    # GPT models sometimes like to clean up bulletpoints represented by *
-    text = text.replace("*", "")
-
-    # GPT models sometimes like to edit the quoting, ie "Title: Contents" becomes Title: "Contents"
-    text = text.replace('\\"', "")
-    text = text.replace('"', "")
-
-    # GPT models often change up punctuations to make the text flow better.
-    text = text.replace(".", "")
-    text = text.replace(":", "")
-    text = text.replace(",", "")
-    text = text.replace("-", "")
+    # \s: matches any whitespace character (spaces, tabs, newlines, etc.)
+    # |: acts as an OR.
+    # \*: matches the asterisk character.
+    # \\": matches the \" sequence.
+    # [.,:`"#-]: matches any character inside the square brackets.
+    text = re.sub(r'\s|\*|\\"|[.,:`"#-]', "", text)
 
     return text
 
