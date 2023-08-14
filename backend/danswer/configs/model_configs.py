@@ -88,4 +88,5 @@ INTENT_MODEL_VERSION = "danswer/intent-model"
 API_BASE_OPENAI = os.environ.get("API_BASE_OPENAI", "")
 API_TYPE_OPENAI = os.environ.get("API_TYPE_OPENAI", "").lower()
 API_VERSION_OPENAI = os.environ.get("API_VERSION_OPENAI", "")
-AZURE_DEPLOYMENT_ID = os.environ.get("AZURE_DEPLOYMENT_ID", "") # used interchangeably with "engine" parameter
+# Deployment ID used interchangeably with "engine" parameter
+AZURE_DEPLOYMENT_ID = os.environ.get("AZURE_DEPLOYMENT_ID", "")
