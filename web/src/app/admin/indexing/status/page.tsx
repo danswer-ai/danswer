@@ -87,8 +87,7 @@ const ConnectorTitle = ({ connectorIndexingStatus }: ConnectorTitleProps) => {
         typedConnector.connector_specific_config.channels.join(", ")
       );
     }
-  }
-  else if (connector.source === "zulip") {
+  } else if (connector.source === "zulip") {
     const typedConnector = connector as Connector<ZulipConfig>;
     additionalMetadata.set(
       "Realm",
