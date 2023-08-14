@@ -1,5 +1,5 @@
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import {DISABLE_AUTH, OAUTH_NAME} from "@/lib/constants";
+import { DISABLE_AUTH, OAUTH_NAME } from "@/lib/constants";
 import { User } from "@/lib/types";
 import { getGoogleOAuthUrlSS, getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";

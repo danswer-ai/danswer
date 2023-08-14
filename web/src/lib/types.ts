@@ -22,6 +22,11 @@ export type ValidSources =
   | "zulip"
   | "file";
 export type ValidInputTypes = "load_state" | "poll" | "event";
+export type ValidStatuses =
+  | "success"
+  | "failed"
+  | "in_progress"
+  | "not_started";
 
 // CONNECTORS
 export interface ConnectorBase<T> {
@@ -68,6 +73,7 @@ export interface ProductboardConfig {}
 
 export interface SlackConfig {
   workspace: string;
+  channels?: string[];
 }
 
 export interface SlabConfig {
@@ -87,13 +93,29 @@ export interface ZulipConfig {
 
 export interface NotionConfig {}
 
-export interface ConnectorIndexingStatus<T> {
-  connector: Connector<T>;
+export interface IndexAttemptSnapshot {
+  status: ValidStatuses | null;
+  num_docs_indexed: number;
+  error_msg: string | null;
+  time_started: string | null;
+  time_updated: string;
+}
+
+export interface ConnectorIndexingStatus<
+  ConnectorConfigType,
+  ConnectorCredentialType
+> {
+  connector: Connector<ConnectorConfigType>;
+  credential: Credential<ConnectorCredentialType>;
   public_doc: boolean;
   owner: string;
-  last_status: "success" | "failed" | "in_progress" | "not_started";
+  last_status: ValidStatuses | null;
   last_success: string | null;
   docs_indexed: number;
+  error_msg: string;
+  latest_index_attempt: IndexAttemptSnapshot | null;
+  deletion_attempts: DeletionAttemptSnapshot[];
+  is_deletable: boolean;
 }
 
 // CREDENTIALS
@@ -156,4 +178,13 @@ export interface ZulipCredentialJson {
 export interface GuruCredentialJson {
   guru_user: string;
   guru_user_token: string;
+}
+
+// DELETION
+
+export interface DeletionAttemptSnapshot {
+  connector_id: number;
+  status: ValidStatuses;
+  error_msg?: string;
+  num_docs_deleted: number;
 }

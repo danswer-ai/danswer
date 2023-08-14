@@ -115,7 +115,7 @@ NUM_RERANKED_RESULTS = 15
 NUM_GENERATIVE_AI_INPUT_DOCS = 5
 # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
-QA_TIMEOUT = 10  # 10 seconds
+QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT", "10"))  # 10 seconds
 # Include additional document/chunk metadata in prompt to GenerativeAI
 INCLUDE_METADATA = False
 
@@ -136,12 +136,6 @@ CHUNK_WORD_OVERLAP = 5
 # When trying to finish the last word in the chunk or counting back CHUNK_WORD_OVERLAP backwards,
 # This is the max number of characters allowed in either direction
 CHUNK_MAX_CHAR_OVERLAP = 50
-
-
-#####
-# Other API Keys
-#####
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
 
 #####
@@ -171,3 +165,6 @@ DANSWER_BOT_NUM_DOCS_TO_DISPLAY = int(
     os.environ.get("DANSWER_BOT_NUM_DOCS_TO_DISPLAY", "5")
 )
 DANSWER_BOT_NUM_RETRIES = int(os.environ.get("DANSWER_BOT_NUM_RETRIES", "5"))
+DANSWER_BOT_ANSWER_GENERATION_TIMEOUT = int(
+    os.environ.get("DANSWER_BOT_ANSWER_GENERATION_TIMEOUT", "60")
+)

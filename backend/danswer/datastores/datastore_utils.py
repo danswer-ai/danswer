@@ -1,12 +1,15 @@
 import uuid
 from collections.abc import Callable
 from copy import deepcopy
+from typing import TypeVar
+
+from pydantic import BaseModel
 
 from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import IndexChunk
 from danswer.chunking.models import InferenceChunk
-from danswer.configs.constants import ALLOWED_GROUPS
-from danswer.configs.constants import ALLOWED_USERS
+from danswer.configs.constants import PUBLIC_DOC_PAT
+from danswer.connectors.models import IndexAttemptMetadata
 
 
 DEFAULT_BATCH_SIZE = 30
@@ -29,44 +32,87 @@ def get_uuid_from_chunk(
     return uuid.uuid5(uuid.NAMESPACE_X500, unique_identifier_string)
 
 
-# Takes the chunk identifier returns whether the chunk exists and the user/group whitelists
-WhitelistCallable = Callable[[str], tuple[bool, list[str], list[str]]]
+class CrossConnectorDocumentMetadata(BaseModel):
+    """Represents metadata about a single document. This is needed since the
+    `Document` class represents a document from a single connector, but that same
+    document may be indexed by multiple connectors."""
+
+    allowed_users: list[str]
+    allowed_user_groups: list[str]
+    already_in_index: bool
 
 
-def update_doc_user_map(
+# Takes the chunk identifier returns the existing metaddata about that chunk
+CrossConnectorDocumentMetadataFetchCallable = Callable[
+    [str], CrossConnectorDocumentMetadata | None
+]
+
+
+T = TypeVar("T")
+
+
+def _add_if_not_exists(l: list[T], item: T) -> list[T]:
+    if item in l:
+        return l
+    return l + [item]
+
+
+def update_cross_connector_document_metadata_map(
     chunk: IndexChunk | EmbeddedIndexChunk,
-    doc_whitelist_map: dict[str, dict[str, list[str]]],
-    doc_store_whitelist_fnc: WhitelistCallable,
-    user_str: str,
-) -> tuple[dict[str, dict[str, list[str]]], bool]:
-    """Returns an updated document id to whitelists mapping and if the document's chunks need to be wiped."""
-    doc_whitelist_map = deepcopy(doc_whitelist_map)
+    cross_connector_document_metadata_map: dict[str, CrossConnectorDocumentMetadata],
+    doc_store_cross_connector_document_metadata_fetch_fn: CrossConnectorDocumentMetadataFetchCallable,
+    index_attempt_metadata: IndexAttemptMetadata,
+) -> tuple[dict[str, CrossConnectorDocumentMetadata], bool]:
+    """Returns an updated document_id -> CrossConnectorDocumentMetadata map and
+    if the document's chunks need to be wiped."""
+    user_str = (
+        PUBLIC_DOC_PAT
+        if index_attempt_metadata.user_id is None
+        else str(index_attempt_metadata.user_id)
+    )
+
+    cross_connector_document_metadata_map = deepcopy(
+        cross_connector_document_metadata_map
+    )
     first_chunk_uuid = str(get_uuid_from_chunk(chunk))
     document = chunk.source_document
-    if document.id not in doc_whitelist_map:
-        first_chunk_found, whitelist_users, whitelist_groups = doc_store_whitelist_fnc(
-            first_chunk_uuid
+    if document.id not in cross_connector_document_metadata_map:
+        document_metadata_in_doc_store = (
+            doc_store_cross_connector_document_metadata_fetch_fn(first_chunk_uuid)
         )
 
-        if not first_chunk_found:
-            doc_whitelist_map[document.id] = {
-                ALLOWED_USERS: [user_str],
-                # TODO introduce groups logic here
-                ALLOWED_GROUPS: whitelist_groups,
-            }
+        if not document_metadata_in_doc_store:
+            cross_connector_document_metadata_map[
+                document.id
+            ] = CrossConnectorDocumentMetadata(
+                allowed_users=[user_str],
+                allowed_user_groups=[],
+                already_in_index=False,
+            )
             # First chunk does not exist so document does not exist, no need for deletion
-            return doc_whitelist_map, False
+            return cross_connector_document_metadata_map, False
         else:
-            if user_str not in whitelist_users:
-                whitelist_users.append(user_str)
             # TODO introduce groups logic here
-            doc_whitelist_map[document.id] = {
-                ALLOWED_USERS: whitelist_users,
-                ALLOWED_GROUPS: whitelist_groups,
-            }
+            cross_connector_document_metadata_map[
+                document.id
+            ] = CrossConnectorDocumentMetadata(
+                allowed_users=_add_if_not_exists(
+                    document_metadata_in_doc_store.allowed_users, user_str
+                ),
+                allowed_user_groups=document_metadata_in_doc_store.allowed_user_groups,
+                already_in_index=True,
+            )
             # First chunk exists, but with update, there may be less total chunks now
             # Must delete rest of document chunks
-            return doc_whitelist_map, True
+            return cross_connector_document_metadata_map, True
 
+    existing_document_metadata = cross_connector_document_metadata_map[document.id]
+    cross_connector_document_metadata_map[document.id] = CrossConnectorDocumentMetadata(
+        allowed_users=_add_if_not_exists(
+            existing_document_metadata.allowed_users, user_str
+        ),
+        allowed_user_groups=existing_document_metadata.allowed_user_groups,
+        already_in_index=existing_document_metadata.already_in_index,
+    )
     # If document is already in the mapping, don't delete again
-    return doc_whitelist_map, False
+    return cross_connector_document_metadata_map, False

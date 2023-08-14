@@ -166,7 +166,7 @@ def get_all_files_batched(
         batch_size=batch_size,
     )
     yield from batch_generator(
-        generator=valid_files,
+        items=valid_files,
         batch_size=batch_size,
         pre_batch_yield=lambda batch_files: logger.info(
             f"Parseable Documents in batch: {[file['name'] for file in batch_files]}"

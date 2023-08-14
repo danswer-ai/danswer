@@ -12,21 +12,16 @@ import { useState } from "react";
 import { Button } from "@/components/Button";
 import { Popup, PopupSpec } from "@/components/admin/connectors/Popup";
 import { createConnector, runConnector } from "@/lib/connector";
-import { BasicTable } from "@/components/admin/connectors/BasicTable";
-import { CheckCircle, XCircle } from "@phosphor-icons/react";
 import { Spinner } from "@/components/Spinner";
-
-const COLUMNS = [
-  { header: "File names", key: "fileNames" },
-  { header: "Status", key: "status" },
-];
+import { SingleUseConnectorsTable } from "@/components/admin/connectors/table/SingleUseConnectorsTable";
+import { LoadingAnimation } from "@/components/Loading";
 
 const getNameFromPath = (path: string) => {
   const pathParts = path.split("/");
   return pathParts[pathParts.length - 1];
 };
 
-export default function File() {
+const Main = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [filesAreUploading, setFilesAreUploading] = useState<boolean>(false);
   const [popup, setPopup] = useState<{
@@ -42,42 +37,26 @@ export default function File() {
 
   const { mutate } = useSWRConfig();
 
-  const { data: connectorIndexingStatuses } = useSWR<
-    ConnectorIndexingStatus<any>[]
-  >("/api/manage/admin/connector/indexing-status", fetcher);
+  const {
+    data: connectorIndexingStatuses,
+    isLoading: isConnectorIndexingStatusesLoading,
+  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
+    "/api/manage/admin/connector/indexing-status",
+    fetcher
+  );
 
-  const fileIndexingStatuses: ConnectorIndexingStatus<FileConfig>[] =
+  if (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) {
+    return <LoadingAnimation text="Loading" />;
+  }
+
+  const fileIndexingStatuses: ConnectorIndexingStatus<FileConfig, {}>[] =
     connectorIndexingStatuses?.filter(
       (connectorIndexingStatus) =>
         connectorIndexingStatus.connector.source === "file"
     ) ?? [];
 
-  const inProgressFileIndexingStatuses =
-    fileIndexingStatuses.filter(
-      (connectorIndexingStatus) =>
-        connectorIndexingStatus.last_status === "in_progress" ||
-        connectorIndexingStatus.last_status === "not_started"
-    ) ?? [];
-
-  const successfulFileIndexingStatuses = fileIndexingStatuses.filter(
-    (connectorIndexingStatus) =>
-      connectorIndexingStatus.last_status === "success"
-  );
-
-  const failedFileIndexingStatuses = fileIndexingStatuses.filter(
-    (connectorIndexingStatus) =>
-      connectorIndexingStatus.last_status === "failed"
-  );
-
   return (
-    <div className="mx-auto container">
-      <div className="mb-4">
-        <HealthCheckBanner />
-      </div>
-      <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <FileIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">File</h1>
-      </div>
+    <div>
       {popup && <Popup message={popup.message} type={popup.type} />}
       {filesAreUploading && <Spinner />}
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">Upload Files</h2>
@@ -201,81 +180,41 @@ export default function File() {
         </div>
       </div>
 
-      {inProgressFileIndexingStatuses.length > 0 && (
-        <>
-          <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
-            In Progress File Indexing
-          </h2>
-          <BasicTable
-            columns={COLUMNS}
-            data={inProgressFileIndexingStatuses.map(
-              (connectorIndexingStatus) => {
-                return {
-                  fileNames:
-                    connectorIndexingStatus.connector.connector_specific_config.file_locations
-                      .map(getNameFromPath)
-                      .join(", "),
-                  status: "In Progress",
-                };
-              }
-            )}
-          />
-        </>
-      )}
-
-      {successfulFileIndexingStatuses.length > 0 && (
-        <>
-          <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
-            Successful File Indexing
-          </h2>
-          <BasicTable
-            columns={COLUMNS}
-            data={successfulFileIndexingStatuses.map(
-              (connectorIndexingStatus) => {
-                return {
-                  fileNames:
-                    connectorIndexingStatus.connector.connector_specific_config.file_locations
-                      .map(getNameFromPath)
-                      .join(", "),
-                  status: (
-                    <div className="text-emerald-600 flex">
-                      <CheckCircle className="my-auto mr-1" size="18" /> Success
-                    </div>
-                  ),
-                };
-              }
-            )}
-          />
-        </>
-      )}
-
-      {failedFileIndexingStatuses.length > 0 && (
-        <>
-          <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
-            Failed File Indexing
-          </h2>
-          <p className="text-sm mb-3">
-            The following files failed to be indexed. Please contact an
-            administrator to resolve this issue.
-          </p>
-          <BasicTable
-            columns={COLUMNS}
-            data={failedFileIndexingStatuses.map((connectorIndexingStatus) => {
-              return {
-                fileNames:
-                  connectorIndexingStatus.connector.connector_specific_config.file_locations
+      {fileIndexingStatuses.length > 0 && (
+        <div className="mt-6">
+          <SingleUseConnectorsTable<FileConfig, {}>
+            connectorIndexingStatuses={fileIndexingStatuses}
+            specialColumns={[
+              {
+                header: "File Names",
+                key: "file_names",
+                getValue: (connector) =>
+                  connector.connector_specific_config.file_locations
                     .map(getNameFromPath)
                     .join(", "),
-                status: (
-                  <div className="text-red-600 flex">
-                    <XCircle className="my-auto mr-1" size="18" /> Failed
-                  </div>
-                ),
-              };
-            })}
+              },
+            ]}
+            onUpdate={() =>
+              mutate("/api/manage/admin/connector/indexing-status")
+            }
           />
-        </>
+        </div>
       )}
+    </div>
+  );
+};
+
+export default function File() {
+  return (
+    <div className="mx-auto container">
+      <div className="mb-4">
+        <HealthCheckBanner />
+      </div>
+      <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
+        <FileIcon size={32} />
+        <h1 className="text-3xl font-bold pl-2">File</h1>
+      </div>
+      <Main />
     </div>
   );
 }

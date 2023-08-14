@@ -27,7 +27,7 @@ const Main = () => {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
     error: isConnectorIndexingStatusesError,
-  } = useSWR<ConnectorIndexingStatus<any>[]>(
+  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
     fetcher
   );
@@ -55,7 +55,10 @@ const Main = () => {
     return <div>Failed to load credentials</div>;
   }
 
-  const bookstackConnectorIndexingStatuses = connectorIndexingStatuses.filter(
+  const bookstackConnectorIndexingStatuses: ConnectorIndexingStatus<
+    BookstackConfig,
+    BookstackCredentialJson
+  >[] = connectorIndexingStatuses.filter(
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "bookstack"
   );

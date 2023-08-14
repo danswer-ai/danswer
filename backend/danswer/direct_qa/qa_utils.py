@@ -3,6 +3,7 @@ import math
 import re
 from collections.abc import Generator
 from typing import Any
+from typing import cast
 from typing import Optional
 from typing import Tuple
 
@@ -12,19 +13,28 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.configs.constants import BLURB
 from danswer.configs.constants import DOCUMENT_ID
+from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINK
 from danswer.configs.constants import SOURCE_TYPE
+from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.direct_qa.qa_prompts import ANSWER_PAT
 from danswer.direct_qa.qa_prompts import QUOTE_PAT
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
+from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_model_quote
 from danswer.utils.text_processing import shared_precompare_cleanup
 
 logger = setup_logger()
+
+
+def get_gen_ai_api_key() -> str:
+    return GEN_AI_API_KEY or cast(
+        str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY)
+    )
 
 
 def structure_quotes_for_response(
@@ -192,6 +202,7 @@ def process_answer(
 def stream_json_answer_end(answer_so_far: str, next_token: str) -> bool:
     next_token = next_token.replace('\\"', "")
     # If the previous character is an escape token, don't consider the first character of next_token
+    # This does not work if it's an escaped escape sign before the " but this is rare, not worth handling
     if answer_so_far and answer_so_far[-1] == "\\":
         next_token = next_token[1:]
     if '"' in next_token:
@@ -220,9 +231,15 @@ def process_model_tokens(
     """Yields Answer tokens back out in a dict for streaming to frontend
     When Answer section ends, yields dict with answer_finished key
     Collects all the tokens at the end to form the complete model output"""
+    quote_pat = f"\n{QUOTE_PAT}"
+    # Sometimes worse model outputs new line instead of :
+    quote_loose = f"\n{quote_pat[:-1]}\n"
+    # Sometime model outputs two newlines before quote section
+    quote_pat_full = f"\n{quote_pat}"
     model_output: str = ""
     found_answer_start = False if is_json_prompt else True
     found_answer_end = False
+    hold_quote = ""
     for token in tokens:
         model_previous = model_output
         model_output += token
@@ -236,13 +253,26 @@ def process_model_tokens(
             continue
 
         if found_answer_start and not found_answer_end:
-            if (is_json_prompt and stream_json_answer_end(model_previous, token)) or (
-                not is_json_prompt and f"\n{QUOTE_PAT}" in model_output
-            ):
+            if is_json_prompt and stream_json_answer_end(model_previous, token):
                 found_answer_end = True
                 yield {"answer_finished": True}
                 continue
-            yield {"answer_data": token}
+            elif not is_json_prompt:
+                if quote_pat in hold_quote + token or quote_loose in hold_quote + token:
+                    found_answer_end = True
+                    yield {"answer_finished": True}
+                    continue
+                if hold_quote + token in quote_pat_full:
+                    hold_quote += token
+                    continue
+            yield {"answer_data": hold_quote + token}
+            hold_quote = ""
 
     quotes = extract_quotes_from_completed_token_stream(model_output, context_docs)
     yield structure_quotes_for_response(quotes)
+
+
+def simulate_streaming_response(model_out: str) -> Generator[str, None, None]:
+    """Mock streaming by generating the passed in model output, character by character"""
+    for token in model_out:
+        yield token

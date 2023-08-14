@@ -9,6 +9,7 @@ from fastapi import Request
 from fastapi import Response
 from fastapi import UploadFile
 from fastapi_users.db import SQLAlchemyUserDatabase
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
@@ -18,7 +19,7 @@ from danswer.auth.users import current_user
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
-from danswer.configs.constants import OPENAI_API_KEY_STORAGE_KEY
+from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
 from danswer.connectors.file.utils import write_temp_files
 from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_KEY
 from danswer.connectors.google_drive.connector_auth import get_auth_url
@@ -36,21 +37,29 @@ from danswer.db.connector import fetch_connectors
 from danswer.db.connector import get_connector_credential_ids
 from danswer.db.connector import update_connector
 from danswer.db.connector_credential_pair import add_credential_to_connector
+from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import remove_credential_from_connector
 from danswer.db.credentials import create_credential
 from danswer.db.credentials import delete_credential
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
-from danswer.db.credentials import mask_credential_dict
 from danswer.db.credentials import update_credential
+from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
+from danswer.db.deletion_attempt import create_deletion_attempt
+from danswer.db.deletion_attempt import get_deletion_attempts
 from danswer.db.engine import get_session
 from danswer.db.engine import get_sqlalchemy_async_engine
 from danswer.db.index_attempt import create_index_attempt
+from danswer.db.index_attempt import get_latest_index_attempts
+from danswer.db.models import DeletionAttempt
+from danswer.db.models import DeletionStatus
+from danswer.db.models import IndexAttempt
+from danswer.db.models import IndexingStatus
 from danswer.db.models import User
 from danswer.direct_qa import check_model_api_key_is_valid
 from danswer.direct_qa import get_default_backend_qa_model
-from danswer.direct_qa.open_ai import get_openai_api_key
+from danswer.direct_qa.open_ai import get_gen_ai_api_key
 from danswer.direct_qa.open_ai import OpenAIQAModel
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
@@ -58,13 +67,16 @@ from danswer.server.models import ApiKey
 from danswer.server.models import AuthStatus
 from danswer.server.models import AuthUrl
 from danswer.server.models import ConnectorBase
+from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.server.models import ConnectorIndexingStatus
 from danswer.server.models import ConnectorSnapshot
 from danswer.server.models import CredentialBase
 from danswer.server.models import CredentialSnapshot
+from danswer.server.models import DeletionAttemptSnapshot
 from danswer.server.models import FileUploadResponse
 from danswer.server.models import GDriveCallback
 from danswer.server.models import GoogleAppCredentials
+from danswer.server.models import IndexAttemptSnapshot
 from danswer.server.models import ObjectCreationIdResponse
 from danswer.server.models import RunConnectorRequest
 from danswer.server.models import StatusResponse
@@ -179,18 +191,67 @@ def get_connector_indexing_status(
 ) -> list[ConnectorIndexingStatus]:
     indexing_statuses: list[ConnectorIndexingStatus] = []
 
+    # TODO: make this one query
     cc_pairs = get_connector_credential_pairs(db_session)
+    latest_index_attempts = get_latest_index_attempts(
+        db_session=db_session,
+        connector_credential_pair_identifiers=[
+            ConnectorCredentialPairIdentifier(
+                connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id
+            )
+            for cc_pair in cc_pairs
+        ],
+    )
+    cc_pair_to_latest_index_attempt = {
+        (index_attempt.connector_id, index_attempt.credential_id): index_attempt
+        for index_attempt in latest_index_attempts
+    }
+
+    deletion_attempts_by_connector: dict[int, list[DeletionAttempt]] = {
+        cc_pair.connector.id: [] for cc_pair in cc_pairs
+    }
+    for deletion_attempt in get_deletion_attempts(
+        db_session=db_session,
+        connector_ids=[cc_pair.connector.id for cc_pair in cc_pairs],
+        ordered_by_time_updated=True,
+    ):
+        deletion_attempts_by_connector[deletion_attempt.connector_id].append(
+            deletion_attempt
+        )
+
     for cc_pair in cc_pairs:
         connector = cc_pair.connector
         credential = cc_pair.credential
+        latest_index_attempt = cc_pair_to_latest_index_attempt.get(
+            (connector.id, credential.id)
+        )
+        deletion_attemts = deletion_attempts_by_connector.get(connector.id, [])
         indexing_statuses.append(
             ConnectorIndexingStatus(
                 connector=ConnectorSnapshot.from_connector_db_model(connector),
+                credential=CredentialSnapshot.from_credential_db_model(credential),
                 public_doc=credential.public_doc,
                 owner=credential.user.email if credential.user else "",
                 last_status=cc_pair.last_attempt_status,
                 last_success=cc_pair.last_successful_index_time,
                 docs_indexed=cc_pair.total_docs_indexed,
+                error_msg=latest_index_attempt.error_msg
+                if latest_index_attempt
+                else None,
+                latest_index_attempt=IndexAttemptSnapshot.from_index_attempt_db_model(
+                    latest_index_attempt
+                )
+                if latest_index_attempt
+                else None,
+                deletion_attempts=[
+                    DeletionAttemptSnapshot.from_deletion_attempt_db_model(
+                        deletion_attempt
+                    )
+                    for deletion_attempt in deletion_attemts
+                ],
+                is_deletable=check_deletion_attempt_is_allowed(
+                    connector_credential_pair=cc_pair
+                ),
             )
         )
 
@@ -244,7 +305,8 @@ def delete_connector_by_id(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
-    return delete_connector(connector_id, db_session)
+    with db_session.begin():
+        return delete_connector(db_session=db_session, connector_id=connector_id)
 
 
 @router.post("/admin/connector/run-once")
@@ -293,19 +355,17 @@ def connector_run_once(
     )
 
 
-@router.head("/admin/openai-api-key/validate")
-def validate_existing_openai_api_key(
+@router.head("/admin/genai-api-key/validate")
+def validate_existing_genai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
     # OpenAI key is only used for generative QA, so no need to validate this
     # if it's turned off or if a non-OpenAI model is being used
-    if DISABLE_GENERATIVE_AI or not isinstance(
-        get_default_backend_qa_model(), OpenAIQAModel
-    ):
+    if DISABLE_GENERATIVE_AI or not get_default_backend_qa_model().requires_api_key:
         return
 
     # Only validate every so often
-    check_key_time = "openai_api_key_last_check_time"
+    check_key_time = "genai_api_key_last_check_time"
     kv_store = get_dynamic_config_store()
     curr_time = datetime.now()
     try:
@@ -318,7 +378,7 @@ def validate_existing_openai_api_key(
         pass
 
     try:
-        openai_api_key = get_openai_api_key()
+        genai_api_key = get_gen_ai_api_key()
     except ConfigNotFoundError:
         raise HTTPException(status_code=404, detail="Key not found")
     except ValueError as e:
@@ -327,7 +387,7 @@ def validate_existing_openai_api_key(
     get_dynamic_config_store().store(check_key_time, curr_time.timestamp())
 
     try:
-        is_valid = check_model_api_key_is_valid(openai_api_key)
+        is_valid = check_model_api_key_is_valid(genai_api_key)
     except ValueError:
         # this is the case where they aren't using an OpenAI-based model
         is_valid = True
@@ -336,8 +396,8 @@ def validate_existing_openai_api_key(
         raise HTTPException(status_code=400, detail="Invalid API key provided")
 
 
-@router.get("/admin/openai-api-key", response_model=ApiKey)
-def get_openai_api_key_from_dynamic_config_store(
+@router.get("/admin/genai-api-key", response_model=ApiKey)
+def get_gen_ai_api_key_from_dynamic_config_store(
     _: User = Depends(current_admin_user),
 ) -> ApiKey:
     """
@@ -347,15 +407,15 @@ def get_openai_api_key_from_dynamic_config_store(
         # only get last 4 characters of key to not expose full key
         return ApiKey(
             api_key=cast(
-                str, get_dynamic_config_store().load(OPENAI_API_KEY_STORAGE_KEY)
+                str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY)
             )[-4:]
         )
     except ConfigNotFoundError:
         raise HTTPException(status_code=404, detail="Key not found")
 
 
-@router.put("/admin/openai-api-key")
-def store_openai_api_key(
+@router.put("/admin/genai-api-key")
+def store_genai_api_key(
     request: ApiKey,
     _: User = Depends(current_admin_user),
 ) -> None:
@@ -363,16 +423,72 @@ def store_openai_api_key(
         is_valid = check_model_api_key_is_valid(request.api_key)
         if not is_valid:
             raise HTTPException(400, "Invalid API key provided")
-        get_dynamic_config_store().store(OPENAI_API_KEY_STORAGE_KEY, request.api_key)
+        get_dynamic_config_store().store(GEN_AI_API_KEY_STORAGE_KEY, request.api_key)
     except RuntimeError as e:
         raise HTTPException(400, str(e))
 
 
-@router.delete("/admin/openai-api-key")
-def delete_openai_api_key(
+@router.delete("/admin/genai-api-key")
+def delete_genai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
-    get_dynamic_config_store().delete(OPENAI_API_KEY_STORAGE_KEY)
+    get_dynamic_config_store().delete(GEN_AI_API_KEY_STORAGE_KEY)
+
+
+@router.post("/admin/deletion-attempt")
+def create_deletion_attempt_for_connector_id(
+    connector_credential_pair_identifier: ConnectorCredentialPairIdentifier,
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    connector_id = connector_credential_pair_identifier.connector_id
+    credential_id = connector_credential_pair_identifier.credential_id
+
+    cc_pair = get_connector_credential_pair(
+        db_session=db_session,
+        connector_id=connector_id,
+        credential_id=credential_id,
+    )
+    if cc_pair is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Connector with ID '{connector_id}' and credential ID "
+            f"'{credential_id}' does not exist. Has it already been deleted?",
+        )
+
+    if not check_deletion_attempt_is_allowed(connector_credential_pair=cc_pair):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Connector with ID '{connector_id}' and credential ID "
+            f"'{credential_id}' is not deletable. It must be both disabled AND have"
+            "no ongoing / planned indexing attempts.",
+        )
+
+    create_deletion_attempt(
+        connector_id=connector_id,
+        credential_id=credential_id,
+        db_session=db_session,
+    )
+
+
+@router.get("/admin/deletion-attempt/{connector_id}")
+def get_deletion_attempts_for_connector_id(
+    connector_id: int,
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> list[DeletionAttemptSnapshot]:
+    deletion_attempts = get_deletion_attempts(
+        db_session=db_session, connector_ids=[connector_id]
+    )
+    return [
+        DeletionAttemptSnapshot(
+            connector_id=connector_id,
+            status=deletion_attempt.status,
+            error_msg=deletion_attempt.error_msg,
+            num_docs_deleted=deletion_attempt.num_docs_deleted,
+        )
+        for deletion_attempt in deletion_attempts
+    ]
 
 
 """Endpoints for basic users"""
@@ -470,16 +586,7 @@ def get_credentials(
 ) -> list[CredentialSnapshot]:
     credentials = fetch_credentials(user, db_session)
     return [
-        CredentialSnapshot(
-            id=credential.id,
-            credential_json=mask_credential_dict(credential.credential_json)
-            if MASK_CREDENTIAL_PREFIX
-            else credential.credential_json,
-            user_id=credential.user_id,
-            public_doc=credential.public_doc,
-            time_created=credential.time_created,
-            time_updated=credential.time_updated,
-        )
+        CredentialSnapshot.from_credential_db_model(credential)
         for credential in credentials
     ]
 
@@ -497,16 +604,7 @@ def get_credential_by_id(
             detail=f"Credential {credential_id} does not exist or does not belong to user",
         )
 
-    return CredentialSnapshot(
-        id=credential.id,
-        credential_json=mask_credential_dict(credential.credential_json)
-        if MASK_CREDENTIAL_PREFIX
-        else credential.credential_json,
-        user_id=credential.user_id,
-        public_doc=credential.public_doc,
-        time_created=credential.time_created,
-        time_updated=credential.time_updated,
-    )
+    return CredentialSnapshot.from_credential_db_model(credential)
 
 
 @router.post("/credential")

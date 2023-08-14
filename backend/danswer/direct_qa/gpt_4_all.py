@@ -1,8 +1,6 @@
 from collections.abc import Generator
 from typing import Any
 
-from gpt4all import GPT4All  # type:ignore
-
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
@@ -18,8 +16,29 @@ from danswer.direct_qa.qa_utils import process_model_tokens
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
-
 logger = setup_logger()
+
+
+class DummyGPT4All:
+    """In the case of import failure due to M1 Mac incompatibility,
+    so this module does not raise exceptions during server startup,
+    as long as this module isn't actually used"""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        raise RuntimeError("GPT4All library not installed.")
+
+
+try:
+    from gpt4all import GPT4All  # type:ignore
+except ImportError:
+    logger.warning(
+        "GPT4All library not installed. "
+        "If you wish to run GPT4ALL (in memory) to power Danswer's "
+        "Generative AI features, please install gpt4all==1.0.5. "
+        "As of Aug 2023, this library is not compatible with M1 Mac."
+    )
+    GPT4All = DummyGPT4All
+
 
 GPT4ALL_MODEL: GPT4All | None = None
 
@@ -55,6 +74,10 @@ class GPT4AllCompletionQA(QAModel):
         self.model_version = model_version
         self.max_output_tokens = max_output_tokens
         self.include_metadata = include_metadata
+
+    @property
+    def requires_api_key(self) -> bool:
+        return False
 
     def warm_up_model(self) -> None:
         get_gpt_4_all_model(self.model_version)
@@ -116,6 +139,13 @@ class GPT4AllChatCompletionQA(QAModel):
         self.model_version = model_version
         self.max_output_tokens = max_output_tokens
         self.include_metadata = include_metadata
+
+    @property
+    def requires_api_key(self) -> bool:
+        return False
+
+    def warm_up_model(self) -> None:
+        get_gpt_4_all_model(self.model_version)
 
     @log_function_time()
     def answer_question(

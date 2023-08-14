@@ -42,7 +42,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
 
   const { answer, quotes, documents, error } = searchResponse;
 
-  if (isFetching && !answer) {
+  if (isFetching && !answer && !documents) {
     return (
       <div className="flex">
         <div className="mx-auto">
@@ -70,19 +70,37 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
   const shouldDisplayQA =
     searchResponse.suggestedFlowType === FlowType.QUESTION_ANSWER ||
     defaultOverrides.forceDisplayQA;
-  console.log(shouldDisplayQA);
+
+  let answerDisplay = <LoadingAnimation text="" size="text-sm" />;
+  if (error) {
+    answerDisplay = (
+      <div className="flex">
+        <InfoIcon
+          size={20}
+          className="text-red-500 my-auto flex flex-shrink-0"
+        />
+        <div className="text-red-500 text-sm my-auto ml-1">{error}</div>
+      </div>
+    );
+  } else if (answer) {
+    answerDisplay = <p className="mb-4">{answer}</p>;
+  } else if (!isFetching) {
+    answerDisplay = (
+      <div className="text-sm my-auto text-gray-300">Information not found</div>
+    );
+  }
 
   return (
     <>
-      {answer && shouldDisplayQA && (
+      {shouldDisplayQA && (
         <div className="min-h-[14rem]">
           <div className="p-4 border-2 rounded-md border-gray-700">
             <div className="flex mb-1">
               <h2 className="text font-bold my-auto">AI Answer</h2>
             </div>
-            <p className="mb-4">{answer}</p>
+            {answerDisplay}
 
-            {quotes !== null && (
+            {quotes !== null && answer && (
               <>
                 <h2 className="text-sm font-bold mb-2">Sources</h2>
                 {isFetching && dedupedQuotes.length === 0 ? (
@@ -124,20 +142,6 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
           </div>
         </div>
       )}
-
-      {(answer === null || answer === undefined) &&
-        !isFetching &&
-        shouldDisplayQA && (
-          <div className="flex">
-            <InfoIcon
-              size={20}
-              className="text-red-500 my-auto flex flex-shrink-0"
-            />
-            <div className="text-red-500 text-xs my-auto ml-1">
-              {error ?? "GPT hurt itself in its confusion :("}
-            </div>
-          </div>
-        )}
 
       {documents && documents.length > 0 && (
         <div className="mt-4">
