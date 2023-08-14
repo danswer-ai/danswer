@@ -14,12 +14,13 @@ import {
   X,
   Question,
 } from "@phosphor-icons/react";
-import { SiBookstack, SiZulip } from "react-icons/si";
+import { SiBookstack } from "react-icons/si";
 import { FaFile, FaGlobe } from "react-icons/fa";
 import Image from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
 import guruIcon from "../../../public/Guru.svg";
+import zulipIcon from "../../../public/Zulip.png";
 
 interface IconProps {
   size?: number;
@@ -110,13 +111,6 @@ export const BrainIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <Brain size={size} className={className} />;
-};
-
-export const ZulipIcon = ({
-  size = 16,
-  className = defaultTailwindCSS,
-}: IconProps) => {
-  return <SiZulip size={size} className={className} />;
 };
 
 export const PencilIcon = ({
@@ -214,6 +208,21 @@ export const JiraIcon = ({
     </div>
   );
 };
+
+export const ZulipIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] -m-0.5 ` + className}
+    >
+      <Image src={zulipIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
 export const ProductboardIcon = ({
   size = 16,
   className = defaultTailwindCSS,
