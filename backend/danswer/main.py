@@ -25,6 +25,8 @@ from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import TYPESENSE_DEFAULT_COLLECTION
 from danswer.configs.app_configs import WEB_DOMAIN
+from danswer.configs.model_configs import API_BASE_OPENAI
+from danswer.configs.model_configs import API_TYPE_OPENAI
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
 from danswer.datastores.qdrant.indexing import list_qdrant_collections
@@ -154,6 +156,8 @@ def get_application() -> FastAPI:
         else:
             logger.info(f"Using Internal Model: {INTERNAL_MODEL_VERSION}")
             logger.info(f"Actual LLM model version: {GEN_AI_MODEL_VERSION}")
+            if API_TYPE_OPENAI == "azure":
+                logger.info(f"Using Azure OpenAI with Endpoint: {API_BASE_OPENAI}")
 
         auth_status = "off" if DISABLE_AUTH else "on"
         logger.info(f"User Authentication is turned {auth_status}")
