@@ -266,7 +266,6 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
             .execute()
             .decode("utf-8")
         )
-    # Default download to PDF since most types can be exported as a PDF
     elif (
         mime_type
         == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -277,7 +276,7 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
             temp.write(word_stream.getvalue())
             temp_path = temp.name
         return docx2txt.process(temp_path)
-
+    # Default download to PDF since most types can be exported as a PDF
     else:
         response = service.files().get_media(fileId=file["id"]).execute()
         pdf_stream = io.BytesIO(response)
@@ -324,7 +323,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                 if found_parent_id is None:
                     raise ValueError(
                         (
-                            f"Folder '{folder_name}' in path '{path}'"
+                            f"Folder '{folder_name}' in path '{path}' "
                             "not found in Google Drive"
                         )
                     )

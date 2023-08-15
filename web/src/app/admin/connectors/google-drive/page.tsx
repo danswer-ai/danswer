@@ -281,6 +281,14 @@ const GoogleDriveConnectorManagement = ({
                   "that match both criteria."
                 }
               />
+              <BooleanFormField
+                name="follow_shortcuts"
+                label="Follow Shortcuts"
+                subtext={
+                  "If checked, then will follow shortcuts to files and folder and " +
+                  "attempt to index those as well."
+                }
+              />
             </>
           )}
           validationSchema={Yup.object().shape({
@@ -292,10 +300,12 @@ const GoogleDriveConnectorManagement = ({
               )
               .required(),
             include_shared: Yup.boolean().required(),
+            follow_shortcuts: Yup.boolean().required(),
           })}
           initialValues={{
             folder_paths: [],
             include_shared: false,
+            follow_shortcuts: false,
           }}
           refreshFreq={10 * 60} // 10 minutes
           onSubmit={async (isSuccess, responseJson) => {
