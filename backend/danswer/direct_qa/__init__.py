@@ -69,7 +69,7 @@ def get_default_backend_qa_model(
         pkg_resources.get_distribution("gpt4all")
 
     if internal_model == DanswerGenAIModel.OPENAI.value:
-        return OpenAICompletionQA(timeout=timeout, api_key=api_key, **kwargs)
+        return OpenAIChatCompletionQA(timeout=timeout, api_key=api_key, **kwargs)
     elif internal_model == DanswerGenAIModel.OPENAI_CHAT.value:
         return OpenAIChatCompletionQA(timeout=timeout, api_key=api_key, **kwargs)
     elif internal_model == DanswerGenAIModel.GPT4ALL.value:
@@ -77,9 +77,9 @@ def get_default_backend_qa_model(
     elif internal_model == DanswerGenAIModel.GPT4ALL_CHAT.value:
         return GPT4AllChatCompletionQA(**kwargs)
     elif internal_model == DanswerGenAIModel.HUGGINGFACE.value:
-        return HuggingFaceCompletionQA(api_key=api_key, **kwargs)
+        return OpenAIChatCompletionQA(timeout=timeout, api_key=api_key, **kwargs)
     elif internal_model == DanswerGenAIModel.HUGGINGFACE_CHAT.value:
-        return HuggingFaceChatCompletionQA(api_key=api_key, **kwargs)
+        return OpenAIChatCompletionQA(timeout=timeout, api_key=api_key, **kwargs)
     elif internal_model == DanswerGenAIModel.TRANSFORMERS:
         return TransformerQA()
     elif internal_model == DanswerGenAIModel.REQUEST.value:

@@ -22,6 +22,7 @@ Mako==1.2.4
 nltk==3.8.1
 docx2txt==0.8
 openai==0.27.6
+litellm
 oauthlib==3.2.2
 playwright==1.32.1
 psycopg2==2.9.6

@@ -9,6 +9,7 @@ from typing import cast
 from typing import TypeVar
 
 import openai
+import litellm
 import tiktoken
 from openai.error import AuthenticationError
 from openai.error import Timeout
@@ -117,7 +118,6 @@ def _tiktoken_trim_chunks(
 class OpenAIQAModel(QAModel, ABC):
     pass
 
-# litellm
 class OpenAIChatCompletionQA(OpenAIQAModel):
     def __init__(
         self,
@@ -162,7 +162,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         model_output = ""
         for _ in range(self.reflexion_try_count + 1):
             openai_call = _handle_openai_exceptions_wrapper(
-                openai_call=openai.ChatCompletion.create,
+                openai_call=litellm.completion,
                 query=query,
             )
             response = openai_call(
@@ -199,7 +199,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         logger.debug(json.dumps(messages, indent=4))
 
         openai_call = _handle_openai_exceptions_wrapper(
-            openai_call=openai.ChatCompletion.create,
+            openai_call=litellm.completion,
             query=query,
         )
         response = openai_call(
