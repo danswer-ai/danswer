@@ -1,6 +1,7 @@
 import re
 import time
 from collections.abc import Callable
+from functools import wraps
 from typing import Any
 from typing import cast
 
@@ -29,11 +30,25 @@ def get_message_link(
     )
 
 
+def make_slack_api_call_logged(
+    call: Callable[..., SlackResponse],
+) -> Callable[..., SlackResponse]:
+    @wraps(call)
+    def logged_call(**kwargs: Any) -> SlackResponse:
+        logger.debug(f"Making call to Slack API '{call.__name__}' with args '{kwargs}'")
+        result = call(**kwargs)
+        logger.debug(f"Call to Slack API '{call.__name__}' returned '{result}'")
+        return result
+
+    return logged_call
+
+
 def make_slack_api_call_paginated(
     call: Callable[..., SlackResponse],
 ) -> Callable[..., list[dict[str, Any]]]:
     """Wraps calls to slack API so that they automatically handle pagination"""
 
+    @wraps(call)
     def paginated_call(**kwargs: Any) -> list[dict[str, Any]]:
         results: list[dict[str, Any]] = []
         cursor: str | None = None
@@ -53,17 +68,17 @@ def make_slack_api_rate_limited(
 ) -> Callable[..., SlackResponse]:
     """Wraps calls to slack API so that they automatically handle rate limiting"""
 
+    @wraps(call)
     def rate_limited_call(**kwargs: Any) -> SlackResponse:
         for _ in range(max_retries):
             try:
                 # Make the API call
                 response = call(**kwargs)
 
-                # Check for errors in the response
-                if response.get("ok"):
-                    return response
-                else:
-                    raise SlackApiError("", response)
+                # Check for errors in the response, will raise `SlackApiError`
+                # if anything went wrong
+                response.validate()
+                return response
 
             except SlackApiError as e:
                 if e.response["error"] == "ratelimited":
