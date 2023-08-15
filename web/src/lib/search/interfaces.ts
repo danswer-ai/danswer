@@ -13,11 +13,12 @@ export const SearchType = {
 export type SearchType = (typeof SearchType)[keyof typeof SearchType];
 
 export interface Quote {
+  quote: string;
   document_id: string;
-  link: string;
+  link: string | null;
   source_type: ValidSources;
   blurb: string;
-  semantic_identifier: string | null;
+  semantic_identifier: string;
 }
 
 export interface DanswerDocument {
@@ -32,7 +33,7 @@ export interface SearchResponse {
   suggestedSearchType: SearchType | null;
   suggestedFlowType: FlowType | null;
   answer: string | null;
-  quotes: Record<string, Quote> | null;
+  quotes: Quote[] | null;
   documents: DanswerDocument[] | null;
   error: string | null;
 }
@@ -51,7 +52,7 @@ export interface SearchRequestArgs {
   query: string;
   sources: Source[];
   updateCurrentAnswer: (val: string) => void;
-  updateQuotes: (quotes: Record<string, Quote>) => void;
+  updateQuotes: (quotes: Quote[]) => void;
   updateDocs: (documents: DanswerDocument[]) => void;
   updateSuggestedSearchType: (searchType: SearchType) => void;
   updateSuggestedFlowType: (flowType: FlowType) => void;

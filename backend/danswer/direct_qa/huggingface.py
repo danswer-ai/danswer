@@ -8,7 +8,9 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.direct_qa.interfaces import DanswerAnswer
+from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerQuote
+from danswer.direct_qa.interfaces import DanswerQuotes
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.qa_prompts import ChatPromptProcessor
 from danswer.direct_qa.qa_prompts import FreeformProcessor
@@ -51,7 +53,7 @@ class HuggingFaceCompletionQA(QAModel):
     @log_function_time()
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
+    ) -> tuple[DanswerAnswer, DanswerQuotes]:
         filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
@@ -68,7 +70,7 @@ class HuggingFaceCompletionQA(QAModel):
 
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> Generator[dict[str, Any] | None, None, None]:
+    ) -> Generator[DanswerAnswerPiece | DanswerQuotes | None, None, None]:
         filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
@@ -165,7 +167,7 @@ class HuggingFaceChatCompletionQA(QAModel):
     @log_function_time()
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
+    ) -> tuple[DanswerAnswer, DanswerQuotes]:
         model_output = self._get_hf_model_output(query, context_docs)
 
         answer, quotes_dict = process_answer(model_output, context_docs)
@@ -174,7 +176,7 @@ class HuggingFaceChatCompletionQA(QAModel):
 
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> Generator[dict[str, Any] | None, None, None]:
+    ) -> Generator[DanswerAnswerPiece | DanswerQuotes | None, None, None]:
         """As of Aug 2023, HF conversational (chat) endpoints do not support streaming
         So here it is faked by streaming characters within Danswer from the model output
         """

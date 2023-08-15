@@ -9,7 +9,6 @@ from fastapi import Request
 from fastapi import Response
 from fastapi import UploadFile
 from fastapi_users.db import SQLAlchemyUserDatabase
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
@@ -53,14 +52,10 @@ from danswer.db.engine import get_sqlalchemy_async_engine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import DeletionAttempt
-from danswer.db.models import DeletionStatus
-from danswer.db.models import IndexAttempt
-from danswer.db.models import IndexingStatus
 from danswer.db.models import User
-from danswer.direct_qa import check_model_api_key_is_valid
-from danswer.direct_qa import get_default_backend_qa_model
+from danswer.direct_qa.on_startup import check_model_api_key_is_valid
+from danswer.direct_qa.on_startup import get_default_backend_qa_model
 from danswer.direct_qa.open_ai import get_gen_ai_api_key
-from danswer.direct_qa.open_ai import OpenAIQAModel
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.server.models import ApiKey

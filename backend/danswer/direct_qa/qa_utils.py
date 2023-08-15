@@ -2,7 +2,6 @@ import json
 import math
 import re
 from collections.abc import Generator
-from typing import Any
 from typing import cast
 from typing import Optional
 from typing import Tuple
@@ -14,12 +13,15 @@ from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.configs.constants import BLURB
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
+from danswer.configs.constants import QUOTE
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINK
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.direct_qa.interfaces import DanswerAnswer
+from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerQuote
+from danswer.direct_qa.interfaces import DanswerQuotes
 from danswer.direct_qa.qa_prompts import ANSWER_PAT
 from danswer.direct_qa.qa_prompts import QUOTE_PAT
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
@@ -35,24 +37,6 @@ def get_gen_ai_api_key() -> str:
     return GEN_AI_API_KEY or cast(
         str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY)
     )
-
-
-def structure_quotes_for_response(
-    quotes: list[DanswerQuote] | None,
-) -> dict[str, dict[str, str | None]]:
-    if quotes is None:
-        return {}
-
-    response_quotes = {}
-    for quote in quotes:
-        response_quotes[quote.quote] = {
-            DOCUMENT_ID: quote.document_id,
-            SOURCE_LINK: quote.link,
-            SOURCE_TYPE: quote.source_type,
-            SEMANTIC_IDENTIFIER: quote.semantic_identifier,
-            BLURB: quote.blurb,
-        }
-    return response_quotes
 
 
 def extract_answer_quotes_freeform(
@@ -114,8 +98,8 @@ def match_quotes_to_docs(
     max_error_percent: float = QUOTE_ALLOWED_ERROR_PERCENT,
     fuzzy_search: bool = False,
     prefix_only_length: int = 100,
-) -> list[DanswerQuote]:
-    danswer_quotes = []
+) -> DanswerQuotes:
+    danswer_quotes: list[DanswerQuote] = []
     for quote in quotes:
         max_edits = math.ceil(float(len(quote)) * max_error_percent)
 
@@ -174,24 +158,24 @@ def match_quotes_to_docs(
             )
             break
 
-    return danswer_quotes
+    return DanswerQuotes(quotes=danswer_quotes)
 
 
 def process_answer(
     answer_raw: str, chunks: list[InferenceChunk]
-) -> tuple[DanswerAnswer, list[DanswerQuote]]:
+) -> tuple[DanswerAnswer, DanswerQuotes]:
     answer, quote_strings = separate_answer_quotes(answer_raw)
     if answer == UNCERTAINTY_PAT or not answer:
         if answer == UNCERTAINTY_PAT:
             logger.debug("Answer matched UNCERTAINTY_PAT")
         else:
             logger.debug("No answer extracted from raw output")
-        return DanswerAnswer(answer=None), []
+        return DanswerAnswer(answer=None), DanswerQuotes(quotes=[])
 
     logger.info(f"Answer: {answer}")
     if not quote_strings:
         logger.debug("No quotes extracted from raw output")
-        return DanswerAnswer(answer=answer), []
+        return DanswerAnswer(answer=answer), DanswerQuotes(quotes=[])
     logger.info(f"All quotes (including unmatched): {quote_strings}")
     quotes = match_quotes_to_docs(quote_strings, chunks)
     logger.info(f"Final quotes: {quotes}")
@@ -212,7 +196,7 @@ def stream_json_answer_end(answer_so_far: str, next_token: str) -> bool:
 
 def extract_quotes_from_completed_token_stream(
     model_output: str, context_chunks: list[InferenceChunk]
-) -> list[DanswerQuote]:
+) -> DanswerQuotes:
     logger.debug(model_output)
     answer, quotes = process_answer(model_output, context_chunks)
     if answer:
@@ -227,7 +211,7 @@ def process_model_tokens(
     tokens: Generator[str, None, None],
     context_docs: list[InferenceChunk],
     is_json_prompt: bool = True,
-) -> Generator[dict[str, Any], None, None]:
+) -> Generator[DanswerAnswerPiece | DanswerQuotes, None, None]:
     """Yields Answer tokens back out in a dict for streaming to frontend
     When Answer section ends, yields dict with answer_finished key
     Collects all the tokens at the end to form the complete model output"""
@@ -255,21 +239,20 @@ def process_model_tokens(
         if found_answer_start and not found_answer_end:
             if is_json_prompt and stream_json_answer_end(model_previous, token):
                 found_answer_end = True
-                yield {"answer_finished": True}
+                yield DanswerAnswerPiece(answer_piece=None)
                 continue
             elif not is_json_prompt:
                 if quote_pat in hold_quote + token or quote_loose in hold_quote + token:
                     found_answer_end = True
-                    yield {"answer_finished": True}
+                    yield DanswerAnswerPiece(answer_piece=None)
                     continue
                 if hold_quote + token in quote_pat_full:
                     hold_quote += token
                     continue
-            yield {"answer_data": hold_quote + token}
+            yield DanswerAnswerPiece(answer_piece=token)
             hold_quote = ""
 
-    quotes = extract_quotes_from_completed_token_stream(model_output, context_docs)
-    yield structure_quotes_for_response(quotes)
+    yield extract_quotes_from_completed_token_stream(model_output, context_docs)
 
 
 def simulate_streaming_response(model_out: str) -> Generator[str, None, None]:

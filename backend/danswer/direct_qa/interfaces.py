@@ -1,7 +1,6 @@
 import abc
 from collections.abc import Generator
 from dataclasses import dataclass
-from typing import Any
 
 from danswer.chunking.models import InferenceChunk
 
@@ -9,6 +8,13 @@ from danswer.chunking.models import InferenceChunk
 @dataclass
 class DanswerAnswer:
     answer: str | None
+
+
+@dataclass
+class DanswerAnswerPiece:
+    """A small piece of a complete answer. Used for streaming back answers."""
+
+    answer_piece: str | None  # if None, specifies the end of an Answer
 
 
 @dataclass
@@ -20,6 +26,15 @@ class DanswerQuote:
     source_type: str
     semantic_identifier: str
     blurb: str
+
+
+@dataclass
+class DanswerQuotes:
+    """A little clunky, but making this into a separate class so that the result from
+    `answer_question_stream` is always a subclass of `dataclass` and can thus use `asdict()`
+    """
+
+    quotes: list[DanswerQuote]
 
 
 class QAModel:
@@ -39,7 +54,7 @@ class QAModel:
         self,
         query: str,
         context_docs: list[InferenceChunk],
-    ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
+    ) -> tuple[DanswerAnswer, DanswerQuotes]:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -47,5 +62,5 @@ class QAModel:
         self,
         query: str,
         context_docs: list[InferenceChunk],
-    ) -> Generator[dict[str, Any] | None, None, None]:
+    ) -> Generator[DanswerAnswerPiece | DanswerQuotes | None, None, None]:
         raise NotImplementedError

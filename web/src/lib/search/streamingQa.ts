@@ -69,7 +69,7 @@ export const searchRequestStreamed = async ({
   }
 
   let answer = "";
-  let quotes: Record<string, Quote> | null = null;
+  let quotes: Quote[] | null = null;
   let relevantDocuments: DanswerDocument[] | null = null;
   try {
     const response = await fetch("/api/stream-direct-qa", {
@@ -129,7 +129,7 @@ export const searchRequestStreamed = async ({
         if (answerFinished) {
           // set quotes as non-null to signify that the answer is finished and
           // we're now looking for quotes
-          updateQuotes({});
+          updateQuotes([]);
           if (
             answer &&
             !answer.endsWith(".") &&
@@ -168,9 +168,15 @@ export const searchRequestStreamed = async ({
           return;
         }
 
-        // if it doesn't match any of the above, assume it is a quote
-        quotes = chunk as Record<string, Quote>;
-        updateQuotes(quotes);
+        // Check for quote section
+        if (chunk.quotes) {
+          quotes = chunk.quotes as Quote[];
+          updateQuotes(quotes);
+          return;
+        }
+
+        // should never reach this
+        console.log("Unknown chunk:", chunk);
       });
     }
   } catch (err) {

@@ -8,9 +8,10 @@ from transformers import QuestionAnsweringPipeline  # type:ignore
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.direct_qa.interfaces import DanswerAnswer
+from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerQuote
+from danswer.direct_qa.interfaces import DanswerQuotes
 from danswer.direct_qa.interfaces import QAModel
-from danswer.direct_qa.qa_utils import structure_quotes_for_response
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
@@ -104,7 +105,7 @@ class TransformerQA(QAModel):
     @log_function_time()
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
+    ) -> tuple[DanswerAnswer, DanswerQuotes]:
         danswer_quotes: list[DanswerQuote] = []
         d_answers: list[str] = []
         for chunk in context_docs:
@@ -118,11 +119,13 @@ class TransformerQA(QAModel):
             for ind, answer in enumerate(d_answers, start=1)
         ]
         combined_answer = "\n".join(answers_list)
-        return DanswerAnswer(answer=combined_answer), danswer_quotes
+        return DanswerAnswer(answer=combined_answer), DanswerQuotes(
+            quotes=danswer_quotes
+        )
 
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> Generator[dict[str, Any] | None, None, None]:
+    ) -> Generator[DanswerAnswerPiece | DanswerQuotes | None, None, None]:
         quotes: list[DanswerQuote] = []
         answers: list[str] = []
         for chunk in context_docs:
@@ -135,13 +138,14 @@ class TransformerQA(QAModel):
         answer_count = 1
         for answer in answers:
             if answer_count == 1:
-                yield {"answer_data": "Source 1: "}
+                yield DanswerAnswerPiece(answer_piece="Source 1: ")
             else:
-                yield {"answer_data": f"\nSource {answer_count}: "}
+                yield DanswerAnswerPiece(answer_piece=f"\nSource {answer_count}: ")
             answer_count += 1
             for char in answer.strip():
-                yield {"answer_data": char}
+                yield DanswerAnswerPiece(answer_piece=char)
 
-        yield {"answer_finished": True}
+        # signal end of answer
+        yield DanswerAnswerPiece(answer_piece=None)
 
-        yield structure_quotes_for_response(quotes)
+        yield DanswerQuotes(quotes=quotes)

@@ -33,7 +33,7 @@ from danswer.datastores.qdrant.indexing import list_qdrant_collections
 from danswer.datastores.typesense.store import check_typesense_collection_exist
 from danswer.datastores.typesense.store import create_typesense_collection
 from danswer.db.credentials import create_initial_public_credential
-from danswer.direct_qa import get_default_backend_qa_model
+from danswer.direct_qa.on_startup import get_default_backend_qa_model
 from danswer.server.event_loading import router as event_processing_router
 from danswer.server.health import router as health_router
 from danswer.server.manage import router as admin_router

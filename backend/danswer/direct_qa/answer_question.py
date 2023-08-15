@@ -5,10 +5,9 @@ from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.datastores.qdrant.store import QdrantIndex
 from danswer.datastores.typesense.store import TypesenseIndex
 from danswer.db.models import User
-from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
-from danswer.direct_qa.qa_utils import structure_quotes_for_response
+from danswer.direct_qa.on_startup import get_default_backend_qa_model
 from danswer.search.danswer_helper import query_intent
 from danswer.search.keyword_search import retrieve_keyword_documents
 from danswer.search.models import QueryFlow
@@ -104,7 +103,7 @@ def answer_question(
 
     return QAResponse(
         answer=answer.answer if answer else None,
-        quotes=structure_quotes_for_response(quotes),
+        quotes=quotes.quotes if quotes else None,
         top_ranked_docs=chunks_to_search_docs(ranked_chunks),
         lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
         predicted_flow=predicted_flow,

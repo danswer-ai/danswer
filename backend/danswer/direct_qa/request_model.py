@@ -14,7 +14,9 @@ from danswer.configs.model_configs import GEN_AI_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_HOST_TYPE
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.direct_qa.interfaces import DanswerAnswer
+from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerQuote
+from danswer.direct_qa.interfaces import DanswerQuotes
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.qa_prompts import JsonProcessor
 from danswer.direct_qa.qa_prompts import NonChatPromptProcessor
@@ -236,7 +238,7 @@ class RequestCompletionQA(QAModel):
     @log_function_time()
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> tuple[DanswerAnswer, list[DanswerQuote]]:
+    ) -> tuple[DanswerAnswer, DanswerQuotes]:
         model_api_response = self._get_request_response(
             query, context_docs, stream=False
         )
@@ -253,7 +255,7 @@ class RequestCompletionQA(QAModel):
         self,
         query: str,
         context_docs: list[InferenceChunk],
-    ) -> Generator[dict[str, Any] | None, None, None]:
+    ) -> Generator[DanswerAnswerPiece | DanswerQuotes | None, None, None]:
         model_api_response = self._get_request_response(
             query, context_docs, stream=False
         )

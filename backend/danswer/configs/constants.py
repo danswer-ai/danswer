@@ -15,6 +15,7 @@ METADATA = "metadata"
 GEN_AI_API_KEY_STORAGE_KEY = "genai_api_key"
 HTML_SEPARATOR = "\n"
 PUBLIC_DOC_PAT = "PUBLIC"
+QUOTE = "quote"
 
 
 class DocumentSource(str, Enum):

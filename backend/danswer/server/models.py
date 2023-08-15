@@ -19,6 +19,7 @@ from danswer.db.models import DeletionAttempt
 from danswer.db.models import DeletionStatus
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
+from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
 from danswer.server.utils import mask_credential_dict
@@ -110,7 +111,7 @@ class SearchResponse(BaseModel):
 
 class QAResponse(SearchResponse):
     answer: str | None  # DanswerAnswer
-    quotes: dict[str, dict[str, str | None]] | None  # restructured DanswerQuote
+    quotes: list[DanswerQuote] | None
     predicted_flow: QueryFlow
     predicted_search: SearchType
     error_msg: str | None = None
