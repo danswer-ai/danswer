@@ -171,7 +171,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
                     messages=messages,
                     model=self.model_version,
                     max_tokens=self.max_output_tokens,
-                    request_timeout=self.timeout,
+                    force_timeout=self.timeout,
                 ),
             )
             model_output = cast(
@@ -208,7 +208,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
                 messages=messages,
                 model=self.model_version,
                 max_tokens=self.max_output_tokens,
-                request_timeout=self.timeout,
+                force_timeout=self.timeout,
                 stream=True,
             ),
         )

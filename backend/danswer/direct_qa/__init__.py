@@ -13,12 +13,9 @@ from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
 from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.gpt_4_all import GPT4AllChatCompletionQA
 from danswer.direct_qa.gpt_4_all import GPT4AllCompletionQA
-from danswer.direct_qa.huggingface import HuggingFaceChatCompletionQA
-from danswer.direct_qa.huggingface import HuggingFaceCompletionQA
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.local_transformers import TransformerQA
 from danswer.direct_qa.open_ai import OpenAIChatCompletionQA
-from danswer.direct_qa.open_ai import OpenAICompletionQA
 from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
 from danswer.direct_qa.qa_utils import get_gen_ai_api_key
 from danswer.direct_qa.request_model import RequestCompletionQA
