@@ -30,6 +30,13 @@ SAMPLE_JSON_RESPONSE = {
         "located on the Champ de Mars in France.",
     ],
 }
+SAMPLE_RESPONSE_COT = (
+    "Let's think step by step. The user is asking for the "
+    "location of the Eiffel Tower. The first document describes the Eiffel Tower "
+    "as being an iconic symbol of Paris and that it is located on the Champ de Mars. "
+    "Since the Champ de Mars is in Paris, we know that the Eiffel Tower is in Paris."
+    f"\n\n{json.dumps(SAMPLE_JSON_RESPONSE)}"
+)
 
 
 def _append_acknowledge_doc_messages(
@@ -154,7 +161,9 @@ class JsonChatProcessor(ChatPromptProcessor):
 
     @staticmethod
     def fill_prompt(
-        question: str, chunks: list[InferenceChunk], include_metadata: bool = False
+        question: str,
+        chunks: list[InferenceChunk],
+        include_metadata: bool = False,
     ) -> list[dict[str, str]]:
         metadata_prompt_section = (
             "with metadata and contents " if include_metadata else ""
@@ -181,7 +190,6 @@ class JsonChatProcessor(ChatPromptProcessor):
             f"Sample response:\n{json.dumps(SAMPLE_JSON_RESPONSE)}"
         )
         messages = [{"role": "system", "content": intro_msg}]
-
         for chunk in chunks:
             full_context = ""
             if include_metadata:
@@ -193,6 +201,65 @@ class JsonChatProcessor(ChatPromptProcessor):
         messages.append({"role": "system", "content": task_msg})
 
         messages.append({"role": "user", "content": f"{QUESTION_PAT}\n{question}\n"})
+
+        return messages
+
+
+class JsonCoTChatProcessor(ChatPromptProcessor):
+    """Pros: improves performance slightly over the regular JsonChatProcessor.
+    Cons: Much slower.
+    """
+
+    @property
+    def specifies_json_output(self) -> bool:
+        return True
+
+    @staticmethod
+    def fill_prompt(
+        question: str,
+        chunks: list[InferenceChunk],
+        include_metadata: bool = True,
+    ) -> list[dict[str, str]]:
+        metadata_prompt_section = (
+            "with metadata and contents " if include_metadata else ""
+        )
+        intro_msg = (
+            f"You are a Question Answering assistant that answers queries "
+            f"based on the provided documents.\n"
+            f'Start by reading the following documents {metadata_prompt_section}and responding with "Acknowledged".'
+        )
+
+        complete_answer_not_found_response = (
+            '{"answer": "' + UNCERTAINTY_PAT + '", "quotes": []}'
+        )
+        task_msg = (
+            "Now answer the user query based on documents above and quote relevant sections.\n"
+            "When answering, you should think step by step, and verbalize your thought process.\n"
+            "Then respond with a JSON containing the answer and up to three most relevant quotes from the documents.\n"
+            "All quotes MUST be EXACT substrings from provided documents.\n"
+            "Your responses should be informative, detailed, and consider all possibilities and edge cases.\n"
+            "You MUST prioritize information from provided documents over internal knowledge.\n"
+            "If the query cannot be answered based on the documents, respond with "
+            f"{complete_answer_not_found_response}\n"
+            "If the query requires aggregating the number of documents, respond with "
+            '{"answer": "Aggregations not supported", "quotes": []}\n'
+            f"Sample response:\n\n{SAMPLE_RESPONSE_COT}"
+        )
+        messages = [{"role": "system", "content": intro_msg}]
+
+        for chunk in chunks:
+            full_context = ""
+            if include_metadata:
+                full_context = _add_metadata_section(
+                    full_context, chunk, prepend_tab=False, include_sep=False
+                )
+            full_context += chunk.content
+            messages = _append_acknowledge_doc_messages(messages, full_context)
+        messages.append({"role": "user", "content": task_msg})
+
+        messages.append({"role": "user", "content": f"{QUESTION_PAT}\n{question}\n\n"})
+
+        messages.append({"role": "user", "content": "Let's think step by step."})
 
         return messages
 
