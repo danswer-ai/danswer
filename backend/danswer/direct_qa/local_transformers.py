@@ -7,6 +7,8 @@ from transformers import QuestionAnsweringPipeline  # type:ignore
 
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
+from danswer.direct_qa.interfaces import AnswerQuestionReturn
+from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerQuote
@@ -105,7 +107,7 @@ class TransformerQA(QAModel):
     @log_function_time()
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> tuple[DanswerAnswer, DanswerQuotes]:
+    ) -> AnswerQuestionReturn:
         danswer_quotes: list[DanswerQuote] = []
         d_answers: list[str] = []
         for chunk in context_docs:
@@ -125,7 +127,7 @@ class TransformerQA(QAModel):
 
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> Generator[DanswerAnswerPiece | DanswerQuotes | None, None, None]:
+    ) -> AnswerQuestionStreamReturn:
         quotes: list[DanswerQuote] = []
         answers: list[str] = []
         for chunk in context_docs:

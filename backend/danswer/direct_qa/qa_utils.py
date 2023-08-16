@@ -10,13 +10,7 @@ import regex
 
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
-from danswer.configs.constants import BLURB
-from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
-from danswer.configs.constants import QUOTE
-from danswer.configs.constants import SEMANTIC_IDENTIFIER
-from danswer.configs.constants import SOURCE_LINK
-from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerAnswerPiece

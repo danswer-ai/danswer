@@ -37,6 +37,12 @@ class DanswerQuotes:
     quotes: list[DanswerQuote]
 
 
+AnswerQuestionReturn = tuple[DanswerAnswer, DanswerQuotes]
+AnswerQuestionStreamReturn = Generator[
+    DanswerAnswerPiece | DanswerQuotes | None, None, None
+]
+
+
 class QAModel:
     @property
     def requires_api_key(self) -> bool:
@@ -54,7 +60,7 @@ class QAModel:
         self,
         query: str,
         context_docs: list[InferenceChunk],
-    ) -> tuple[DanswerAnswer, DanswerQuotes]:
+    ) -> AnswerQuestionReturn:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -62,5 +68,5 @@ class QAModel:
         self,
         query: str,
         context_docs: list[InferenceChunk],
-    ) -> Generator[DanswerAnswerPiece | DanswerQuotes | None, None, None]:
+    ) -> AnswerQuestionStreamReturn:
         raise NotImplementedError

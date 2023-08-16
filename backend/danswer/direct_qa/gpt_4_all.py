@@ -4,6 +4,8 @@ from typing import Any
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
+from danswer.direct_qa.interfaces import AnswerQuestionReturn
+from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerQuote
@@ -87,7 +89,7 @@ class GPT4AllCompletionQA(QAModel):
     @log_function_time()
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> tuple[DanswerAnswer, DanswerQuotes]:
+    ) -> AnswerQuestionReturn:
         filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
@@ -108,7 +110,7 @@ class GPT4AllCompletionQA(QAModel):
 
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> Generator[DanswerAnswerPiece | DanswerQuotes | None, None, None]:
+    ) -> AnswerQuestionStreamReturn:
         filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
@@ -152,7 +154,7 @@ class GPT4AllChatCompletionQA(QAModel):
     @log_function_time()
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> tuple[DanswerAnswer, DanswerQuotes]:
+    ) -> AnswerQuestionReturn:
         filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )
@@ -179,7 +181,7 @@ class GPT4AllChatCompletionQA(QAModel):
 
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> Generator[DanswerAnswerPiece | DanswerQuotes | None, None, None]:
+    ) -> AnswerQuestionStreamReturn:
         filled_prompt = self.prompt_processor.fill_prompt(
             query, context_docs, self.include_metadata
         )

@@ -22,6 +22,8 @@ from danswer.configs.model_configs import AZURE_DEPLOYMENT_ID
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
+from danswer.direct_qa.interfaces import AnswerQuestionReturn
+from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerQuote
@@ -149,7 +151,7 @@ class OpenAICompletionQA(OpenAIQAModel):
     @log_function_time()
     def answer_question(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> tuple[DanswerAnswer, DanswerQuotes]:
+    ) -> AnswerQuestionReturn:
         context_docs = _tiktoken_trim_chunks(context_docs, self.model_version)
 
         filled_prompt = self.prompt_processor.fill_prompt(
@@ -179,7 +181,7 @@ class OpenAICompletionQA(OpenAIQAModel):
 
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> Generator[DanswerAnswerPiece | DanswerQuotes | None, None, None]:
+    ) -> AnswerQuestionStreamReturn:
         context_docs = _tiktoken_trim_chunks(context_docs, self.model_version)
 
         filled_prompt = self.prompt_processor.fill_prompt(
@@ -245,7 +247,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
         self,
         query: str,
         context_docs: list[InferenceChunk],
-    ) -> tuple[DanswerAnswer, DanswerQuotes]:
+    ) -> AnswerQuestionReturn:
         context_docs = _tiktoken_trim_chunks(context_docs, self.model_version)
 
         messages = self.prompt_processor.fill_prompt(
@@ -283,7 +285,7 @@ class OpenAIChatCompletionQA(OpenAIQAModel):
 
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]
-    ) -> Generator[DanswerAnswerPiece | DanswerQuotes | None, None, None]:
+    ) -> AnswerQuestionStreamReturn:
         context_docs = _tiktoken_trim_chunks(context_docs, self.model_version)
 
         messages = self.prompt_processor.fill_prompt(
