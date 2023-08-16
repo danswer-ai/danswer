@@ -79,7 +79,15 @@ def _indexing_pipeline(
     """Takes different pieces of the indexing pipeline and applies it to a batch of documents
     Note that the documents should already be batched at this point so that it does not inflate the
     memory requirements"""
+    # Chunk the documents into reasonably-sized chunks so they can fit into the
+    # context-sizes of our embedding models
     chunks = list(chain(*[chunker.chunk(document=document) for document in documents]))
+    logger.debug(
+        f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in chunks]}"
+    )
+
+    # Insert the chunks into our Keyword document store + store records of these
+    # documents / chunks into our database
     # TODO keyword indexing can occur at same time as embedding
     keyword_store_insertion_records = keyword_index.index(
         chunks=chunks, index_attempt_metadata=index_attempt_metadata
@@ -94,6 +102,8 @@ def _indexing_pipeline(
         insertion_records=keyword_store_insertion_records
     )
 
+    # Embed the chunks and then insert them into our Vector document store
+    # + store records of these documents / chunks into our database
     chunks_with_embeddings = embedder.embed(chunks=chunks)
     vector_store_insertion_records = vector_index.index(
         chunks=chunks_with_embeddings, index_attempt_metadata=index_attempt_metadata
@@ -107,6 +117,7 @@ def _indexing_pipeline(
     net_doc_count_vector = _get_net_new_documents(
         insertion_records=vector_store_insertion_records
     )
+
     if net_doc_count_vector != net_doc_count_keyword:
         logger.warning("Document count change from keyword/vector indices don't align")
     net_new_docs = max(net_doc_count_keyword, net_doc_count_vector)

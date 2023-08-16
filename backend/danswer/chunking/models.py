@@ -31,6 +31,12 @@ class IndexChunk(BaseChunk):
     # During inference we only have access to the document id and do not reconstruct the Document
     source_document: Document
 
+    def to_short_descriptor(self) -> str:
+        """Used when logging the identity of a chunk"""
+        return (
+            f"Chunk ID: '{self.chunk_id}'; {self.source_document.to_short_descriptor()}"
+        )
+
 
 @dataclass
 class EmbeddedIndexChunk(IndexChunk):
