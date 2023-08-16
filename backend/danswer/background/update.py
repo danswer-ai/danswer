@@ -197,6 +197,10 @@ def run_indexing_jobs(db_session: Session) -> None:
             document_count = 0
             chunk_count = 0
             for doc_batch in doc_batch_generator:
+                logger.debug(
+                    f"Indexing batch of documents: {[doc.to_short_descriptor() for doc in doc_batch]}"
+                )
+
                 index_user_id = (
                     None if db_credential.public_doc else db_credential.user_id
                 )

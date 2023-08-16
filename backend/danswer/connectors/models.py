@@ -28,6 +28,10 @@ class Document:
     semantic_identifier: str
     metadata: dict[str, Any]
 
+    def to_short_descriptor(self) -> str:
+        """Used when logging the identity of a document"""
+        return f"ID: '{self.id}'; Semantic ID: '{self.semantic_identifier}'"
+
 
 class InputType(str, Enum):
     LOAD_STATE = "load_state"  # e.g. loading a current full state or a save state, such as from a file
