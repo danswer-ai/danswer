@@ -118,15 +118,14 @@ export const searchRequestStreamed = async ({
       previousPartialChunk = partialChunk;
       completedChunks.forEach((chunk) => {
         // TODO: clean up response / this logic
-        const answerChunk = chunk.answer_data;
+        const answerChunk = chunk.answer_piece;
         if (answerChunk) {
           answer += answerChunk;
           updateCurrentAnswer(answer);
           return;
         }
 
-        const answerFinished = chunk.answer_finished;
-        if (answerFinished) {
+        if (answerChunk === null) {
           // set quotes as non-null to signify that the answer is finished and
           // we're now looking for quotes
           updateQuotes([]);

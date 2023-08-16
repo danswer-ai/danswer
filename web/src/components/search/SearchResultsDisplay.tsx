@@ -109,7 +109,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
                         <a
                           key={quoteInfo.document_id}
                           className="p-2 ml-1 border border-gray-800 rounded-lg text-sm flex max-w-[280px] hover:bg-gray-800"
-                          href={quoteInfo.link}
+                          href={quoteInfo.link || undefined}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
