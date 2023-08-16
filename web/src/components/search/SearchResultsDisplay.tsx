@@ -14,12 +14,9 @@ const removeDuplicateDocs = (documents: DanswerDocument[]) => {
   const seen = new Set<string>();
   const output: DanswerDocument[] = [];
   documents.forEach((document) => {
-    if (
-      document.semantic_identifier &&
-      !seen.has(document.semantic_identifier)
-    ) {
+    if (document.document_id && !seen.has(document.document_id)) {
       output.push(document);
-      seen.add(document.semantic_identifier);
+      seen.add(document.document_id);
     }
   });
   return output;
