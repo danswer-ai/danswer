@@ -36,7 +36,7 @@ ThreadType = list[MessageType]
 
 def _make_paginated_slack_api_call(
     call: Callable[..., SlackResponse], **kwargs: Any
-) -> list[dict[str, Any]]:
+) -> Generator[dict[str, Any], None, None]:
     return make_slack_api_call_paginated(
         make_slack_api_rate_limited(make_slack_api_call_logged(call))
     )(**kwargs)
@@ -50,9 +50,9 @@ def _make_slack_api_call(
 
 def get_channel_info(client: WebClient, channel_id: str) -> ChannelType:
     """Get information about a channel. Needed to convert channel ID to channel name"""
-    return _make_paginated_slack_api_call(
-        client.conversations_info, channel=channel_id
-    )[0]["channel"]
+    return _make_slack_api_call(client.conversations_info, channel=channel_id)[0][
+        "channel"
+    ]
 
 
 def get_channels(
