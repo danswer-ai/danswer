@@ -53,8 +53,8 @@ from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import DeletionAttempt
 from danswer.db.models import User
-from danswer.direct_qa.on_startup import check_model_api_key_is_valid
-from danswer.direct_qa.on_startup import get_default_backend_qa_model
+from danswer.direct_qa.llm_utils import check_model_api_key_is_valid
+from danswer.direct_qa.llm_utils import get_default_llm
 from danswer.direct_qa.open_ai import get_gen_ai_api_key
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
@@ -356,7 +356,7 @@ def validate_existing_genai_api_key(
 ) -> None:
     # OpenAI key is only used for generative QA, so no need to validate this
     # if it's turned off or if a non-OpenAI model is being used
-    if DISABLE_GENERATIVE_AI or not get_default_backend_qa_model().requires_api_key:
+    if DISABLE_GENERATIVE_AI or not get_default_llm().requires_api_key:
         return
 
     # Only validate every so often

@@ -32,7 +32,7 @@ def check_model_api_key_is_valid(model_api_key: str) -> bool:
     if not model_api_key:
         return False
 
-    qa_model = get_default_backend_qa_model(api_key=model_api_key, timeout=5)
+    qa_model = get_default_llm(api_key=model_api_key, timeout=5)
 
     # try for up to 2 timeouts (e.g. 10 seconds in total)
     for _ in range(2):
@@ -47,7 +47,7 @@ def check_model_api_key_is_valid(model_api_key: str) -> bool:
     return False
 
 
-def get_default_backend_qa_model(
+def get_default_llm(
     internal_model: str = INTERNAL_MODEL_VERSION,
     endpoint: str | None = GEN_AI_ENDPOINT,
     model_host_type: str | None = GEN_AI_HOST_TYPE,
