@@ -47,6 +47,10 @@ export const ConnectorEditPopup = ({ existingConnector, onSubmit }: Props) => {
                 name="include_shared"
                 label="Include Shared Files"
               />
+              <BooleanFormField
+                name="follow_shortcuts"
+                label="Follow Shortcuts"
+              />
             </div>
           )}
           validationSchema={Yup.object().shape({
@@ -58,6 +62,7 @@ export const ConnectorEditPopup = ({ existingConnector, onSubmit }: Props) => {
               )
               .required(),
             include_shared: Yup.boolean().required(),
+            follow_shortcuts: Yup.boolean().required(),
           })}
           onSubmit={onSubmit}
         />
