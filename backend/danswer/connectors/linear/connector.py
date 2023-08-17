@@ -142,13 +142,13 @@ class LinearConnector(LoadConnector, PollConnector):
         )
 
         has_more = True
-        pagination_start = None
+        endCursor = None
         while has_more:
             graphql_query = {
                 "query": query,
                 "variables": {
                     "first": self.batch_size,
-                    "after": pagination_start,
+                    "after": endCursor,
                 },
             }
             logger.debug(f"Requesting issues from Linear with query: {graphql_query}")
@@ -187,7 +187,7 @@ class LinearConnector(LoadConnector, PollConnector):
                 )
                 yield documents
 
-            pagination_start = response_json["data"]["issues"]["pageInfo"]["endCursor"]
+            endCursor = response_json["data"]["issues"]["pageInfo"]["endCursor"]
             has_more = response_json["data"]["issues"]["pageInfo"]["hasNextPage"]
 
     def load_from_state(self) -> GenerateDocumentsOutput:
