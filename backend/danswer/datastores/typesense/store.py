@@ -92,13 +92,25 @@ def get_typesense_document_cross_connector_metadata(
         )
     except ObjectNotFound:
         return None
-    if document[ALLOWED_USERS] is None or document[ALLOWED_GROUPS] is None:
-        raise RuntimeError(
-            "Typesense Index is corrupted, Document found with no access lists."
+
+    allowed_users = cast(list[str] | None, document.get(ALLOWED_USERS))
+    allowed_groups = cast(list[str] | None, document.get(ALLOWED_GROUPS))
+    if allowed_users is None:
+        allowed_users = []
+        logger.error(
+            "Typesense Index is corrupted, Document found with no user access lists."
+            f"Assuming no users have access to chunk with ID '{doc_chunk_id}'."
         )
+    if allowed_groups is None:
+        allowed_groups = []
+        logger.error(
+            "Typesense Index is corrupted, Document found with no groups access lists."
+            f"Assuming no groups have access to chunk with ID '{doc_chunk_id}'."
+        )
+
     return CrossConnectorDocumentMetadata(
-        allowed_users=document[ALLOWED_USERS],
-        allowed_user_groups=document[ALLOWED_GROUPS],
+        allowed_users=allowed_users,
+        allowed_user_groups=allowed_groups,
         already_in_index=True,
     )
 

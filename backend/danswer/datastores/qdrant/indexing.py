@@ -1,5 +1,6 @@
 import json
 from functools import partial
+from typing import cast
 from uuid import UUID
 
 from qdrant_client import QdrantClient
@@ -68,9 +69,26 @@ def get_qdrant_document_cross_connector_metadata(
     if len(results) == 0:
         return None
     payload = get_payload_from_record(results[0])
+    allowed_users = cast(list[str] | None, payload.get(ALLOWED_USERS))
+    allowed_groups = cast(list[str] | None, payload.get(ALLOWED_GROUPS))
+    if allowed_users is None:
+        allowed_users = []
+        logger.error(
+            "Qdrant Index is corrupted, Document found with no user access lists."
+            f"Assuming no users have access to chunk with ID '{doc_chunk_id}'."
+        )
+    if allowed_groups is None:
+        allowed_groups = []
+        logger.error(
+            "Qdrant Index is corrupted, Document found with no groups access lists."
+            f"Assuming no groups have access to chunk with ID '{doc_chunk_id}'."
+        )
+
     return CrossConnectorDocumentMetadata(
-        allowed_users=payload[ALLOWED_USERS],
-        allowed_user_groups=payload[ALLOWED_GROUPS],
+        # if either `allowed_users` or `allowed_groups` are missing from the
+        # point, then assume that the document has no allowed users.
+        allowed_users=allowed_users,
+        allowed_user_groups=allowed_groups,
         already_in_index=True,
     )
 
