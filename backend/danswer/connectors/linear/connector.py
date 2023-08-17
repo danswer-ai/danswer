@@ -20,7 +20,7 @@ logger = setup_logger()
 _NUM_RETRIES = 5
 
 
-def _make_query(query: str, api_key: str) -> requests.Response:
+def _make_query(request_body: dict[str, Any], api_key: str) -> requests.Response:
     headers = {
         "Authorization": api_key,
         "Content-Type": "application/json",
@@ -32,7 +32,7 @@ def _make_query(query: str, api_key: str) -> requests.Response:
             response = requests.post(
                 "https://api.linear.app/graphql",
                 headers=headers,
-                json=query,
+                json=request_body,
                 timeout=60,
             )
             if not response.ok:
@@ -153,7 +153,7 @@ class LinearConnector(LoadConnector, PollConnector):
             }
             logger.debug(f"Requesting issues from Linear with query: {graphql_query}")
 
-            response = _make_query(query, self.linear_api_key)
+            response = _make_query(graphql_query, self.linear_api_key)
             response_json = response.json()
             logger.debug(f"Raw response from Linear: {response_json}")
             edges = response_json["data"]["issues"]["edges"]

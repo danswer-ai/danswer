@@ -140,15 +140,15 @@ const Main = () => {
       )}
 
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
-        Step 2: Create connector
+        Step 2: Start indexing
       </h2>
       {linearCredential ? (
         <>
           {linearConnectorIndexingStatuses.length > 0 ? (
             <>
               <p className="text-sm mb-2">
-                We pull the latest <i>issues</i> and <i>comments</i> from each
-                space listed below every <b>10</b> minutes.
+                We pull the latest <i>issues</i> and <i>comments</i> every{" "}
+                <b>10</b> minutes.
               </p>
               <div className="mb-2">
                 <ConnectorsTable<{}, LinearCredentialJson>
@@ -175,7 +175,12 @@ const Main = () => {
             </>
           ) : (
             <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
-              <h2 className="font-bold mb-3">Setup Connector</h2>
+              <h2 className="font-bold mb-3">Create Connector</h2>
+              <p className="text-sm mb-4">
+                Press connect below to start the connection Linear. We pull the
+                latest <i>issues</i> and <i>comments</i> every <b>10</b>{" "}
+                minutes.
+              </p>
               <ConnectorForm<{}>
                 nameBuilder={() => "LinearConnector"}
                 source="linear"
