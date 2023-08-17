@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from datetime import timezone
 from typing import Any
+from typing import cast
 
 import requests
 
@@ -11,6 +12,7 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
@@ -18,6 +20,8 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 _NUM_RETRIES = 5
+_TIMEOUT = 60
+_LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql"
 
 
 def _make_query(request_body: dict[str, Any], api_key: str) -> requests.Response:
@@ -30,10 +34,10 @@ def _make_query(request_body: dict[str, Any], api_key: str) -> requests.Response
     for i in range(_NUM_RETRIES):
         try:
             response = requests.post(
-                "https://api.linear.app/graphql",
+                _LINEAR_GRAPHQL_URL,
                 headers=headers,
                 json=request_body,
-                timeout=60,
+                timeout=_TIMEOUT,
             )
             if not response.ok:
                 raise RuntimeError(
@@ -58,14 +62,18 @@ class LinearConnector(LoadConnector, PollConnector):
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.batch_size = batch_size
+        self.linear_api_key: str | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        self.linear_api_key = credentials["linear_api_key"]
+        self.linear_api_key = cast(str, credentials["linear_api_key"])
         return None
 
     def _process_issues(
         self, start_str: datetime | None = None, end_str: datetime | None = None
     ) -> GenerateDocumentsOutput:
+        if self.linear_api_key is None:
+            raise ConnectorMissingCredentialError("Linear")
+
         lte_filter = f'lte: "{end_str}"' if end_str else ""
         gte_filter = f'gte: "{start_str}"' if start_str else ""
         updatedAtFilter = f"""
