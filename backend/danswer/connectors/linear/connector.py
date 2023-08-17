@@ -17,6 +17,40 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
+_NUM_RETRIES = 5
+
+
+def _make_query(query: str, api_key: str) -> requests.Response:
+    headers = {
+        "Authorization": api_key,
+        "Content-Type": "application/json",
+    }
+
+    response: requests.Response | None = None
+    for i in range(_NUM_RETRIES):
+        try:
+            response = requests.post(
+                "https://api.linear.app/graphql",
+                headers=headers,
+                json=query,
+                timeout=60,
+            )
+            if not response.ok:
+                raise RuntimeError(
+                    f"Error fetching issues from Linear: {response.text}"
+                )
+
+            return response
+        except Exception as e:
+            if i == _NUM_RETRIES - 1:
+                raise e
+
+            logger.warning(f"A Linear GraphQL error occurred: {e}. Retrying...")
+
+    raise RuntimeError(
+        "Unexpected execution when querying Linear. This should never happen."
+    )
+
 
 class LinearConnector(LoadConnector, PollConnector):
     def __init__(
@@ -107,11 +141,6 @@ class LinearConnector(LoadConnector, PollConnector):
         """
         )
 
-        headers = {
-            "Authorization": self.linear_api_key,
-            "Content-Type": "application/json",
-        }
-
         has_more = True
         pagination_start = None
         while has_more:
@@ -124,17 +153,7 @@ class LinearConnector(LoadConnector, PollConnector):
             }
             logger.debug(f"Requesting issues from Linear with query: {graphql_query}")
 
-            response = requests.post(
-                "https://api.linear.app/graphql",
-                headers=headers,
-                json=graphql_query,
-                timeout=60,
-            )
-            if not response.ok:
-                raise RuntimeError(
-                    f"Error fetching issues from Linear: {response.text}"
-                )
-
+            response = _make_query(query, self.linear_api_key)
             response_json = response.json()
             logger.debug(f"Raw response from Linear: {response_json}")
             edges = response_json["data"]["issues"]["edges"]
