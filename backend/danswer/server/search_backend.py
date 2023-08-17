@@ -1,5 +1,6 @@
 import json
 from collections.abc import Generator
+from dataclasses import asdict
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -12,10 +13,10 @@ from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
 from danswer.datastores.qdrant.store import QdrantIndex
 from danswer.datastores.typesense.store import TypesenseIndex
 from danswer.db.models import User
-from danswer.direct_qa import get_default_backend_qa_model
 from danswer.direct_qa.answer_question import answer_question
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
+from danswer.direct_qa.llm_utils import get_default_llm
 from danswer.search.danswer_helper import query_intent
 from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.keyword_search import retrieve_keyword_documents
@@ -166,7 +167,7 @@ def stream_direct_qa(
             return
 
         try:
-            qa_model = get_default_backend_qa_model()
+            qa_model = get_default_llm()
         except (UnknownModelError, OpenAIKeyMissing) as e:
             logger.exception("Unable to get QA model")
             yield get_json_line({"error": str(e)})
@@ -178,16 +179,16 @@ def stream_direct_qa(
                 "Chunks offset too large, should not retry this many times"
             )
         try:
-            for response_dict in qa_model.answer_question_stream(
+            for response_packet in qa_model.answer_question_stream(
                 query,
                 ranked_chunks[
                     chunk_offset : chunk_offset + NUM_GENERATIVE_AI_INPUT_DOCS
                 ],
             ):
-                if response_dict is None:
+                if response_packet is None:
                     continue
-                logger.debug(f"Sending packet: {response_dict}")
-                yield get_json_line(response_dict)
+                logger.debug(f"Sending packet: {response_packet}")
+                yield get_json_line(asdict(response_packet))
         except Exception as e:
             # exception is logged in the answer_question method, no need to re-log
             yield get_json_line({"error": str(e)})

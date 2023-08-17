@@ -24,7 +24,7 @@ export const searchRequest = async ({
   }
 
   let answer = "";
-  let quotes: Record<string, Quote> | null = null;
+  let quotes: Quote[] | null = null;
   let relevantDocuments: DanswerDocument[] | null = null;
   try {
     const response = await fetch("/api/direct-qa", {
@@ -54,7 +54,7 @@ export const searchRequest = async ({
 
     const data = (await response.json()) as {
       answer: string;
-      quotes: Record<string, Quote>;
+      quotes: Quote[];
       top_ranked_docs: DanswerDocument[];
       lower_ranked_docs: DanswerDocument[];
       predicted_flow: FlowType;

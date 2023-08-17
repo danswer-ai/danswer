@@ -71,7 +71,7 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
       ...(prevState || initialSearchResponse),
       answer,
     }));
-  const updateQuotes = (quotes: Record<string, Quote>) =>
+  const updateQuotes = (quotes: Quote[]) =>
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       quotes,

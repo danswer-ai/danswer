@@ -56,7 +56,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
   const dedupedQuotes: Quote[] = [];
   const seen = new Set<string>();
   if (quotes) {
-    Object.values(quotes).forEach((quote) => {
+    quotes.forEach((quote) => {
       if (!seen.has(quote.document_id)) {
         dedupedQuotes.push(quote);
         seen.add(quote.document_id);
@@ -109,7 +109,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
                         <a
                           key={quoteInfo.document_id}
                           className="p-2 ml-1 border border-gray-800 rounded-lg text-sm flex max-w-[280px] hover:bg-gray-800"
-                          href={quoteInfo.link}
+                          href={quoteInfo.link || undefined}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
