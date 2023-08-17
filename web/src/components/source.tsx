@@ -8,6 +8,7 @@ import {
   GoogleDriveIcon,
   GuruIcon,
   JiraIcon,
+  LinearIcon,
   NotionIcon,
   ProductboardIcon,
   SlabIcon,
@@ -100,6 +101,12 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: GuruIcon,
         displayName: "Guru",
         adminPageLink: "/admin/connectors/guru",
+      };
+    case "linear":
+      return {
+        icon: LinearIcon,
+        displayName: "Linear",
+        adminPageLink: "/admin/connectors/linear",
       };
     default:
       throw new Error("Invalid source type");

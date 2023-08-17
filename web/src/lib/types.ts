@@ -20,6 +20,7 @@ export type ValidSources =
   | "notion"
   | "guru"
   | "zulip"
+  | "linear"
   | "file";
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
@@ -179,6 +180,10 @@ export interface ZulipCredentialJson {
 export interface GuruCredentialJson {
   guru_user: string;
   guru_user_token: string;
+}
+
+export interface LinearCredentialJson {
+  linear_api_key: string;
 }
 
 // DELETION

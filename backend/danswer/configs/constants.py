@@ -32,6 +32,7 @@ class DocumentSource(str, Enum):
     FILE = "file"
     NOTION = "notion"
     ZULIP = "zulip"
+    LINEAR = "linear"
 
 
 class DanswerGenAIModel(str, Enum):

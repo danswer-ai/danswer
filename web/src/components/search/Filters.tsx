@@ -18,6 +18,7 @@ const sources: Source[] = [
   { displayName: "File", internalName: "file" },
   { displayName: "Notion", internalName: "notion" },
   { displayName: "Zulip", internalName: "zulip" },
+  { displayName: "Linear", internalName: "linear" },
 ];
 
 interface SourceSelectorProps {
