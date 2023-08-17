@@ -57,6 +57,7 @@ export interface GithubConfig {
 export interface GoogleDriveConfig {
   folder_paths?: string[];
   include_shared?: boolean;
+  follow_shortcuts?: boolean;
 }
 
 export interface BookstackConfig {}

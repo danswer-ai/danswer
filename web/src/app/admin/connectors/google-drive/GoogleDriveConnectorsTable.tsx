@@ -91,6 +91,10 @@ export const GoogleDriveConnectorsTable = ({
           key: "include_shared",
         },
         {
+          header: "Follow Shortcuts",
+          key: "follow_shortcuts",
+        },
+        {
           header: "Status",
           key: "status",
         },
@@ -126,6 +130,16 @@ export const GoogleDriveConnectorsTable = ({
             <div>
               {connectorIndexingStatus.connector.connector_specific_config
                 .include_shared ? (
+                <i>Yes</i>
+              ) : (
+                <i>No</i>
+              )}
+            </div>
+          ),
+          follow_shortcuts: (
+            <div>
+              {connectorIndexingStatus.connector.connector_specific_config
+                .follow_shortcuts ? (
                 <i>Yes</i>
               ) : (
                 <i>No</i>
