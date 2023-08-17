@@ -123,23 +123,13 @@ def match_quotes_to_docs(
             # Extracting the link from the offset
             curr_link = None
             for link_offset, link in chunk.source_links.items():
-                # Should always find one because offset is at least 0 and there must be a 0 link_offset
+                # Should always find one because offset is at least 0 and there
+                # must be a 0 link_offset
                 if int(link_offset) <= offset:
                     curr_link = link
                 else:
-                    danswer_quotes.append(
-                        DanswerQuote(
-                            quote=quote,
-                            document_id=chunk.document_id,
-                            link=curr_link,
-                            source_type=chunk.source_type,
-                            semantic_identifier=chunk.semantic_identifier,
-                            blurb=chunk.blurb,
-                        )
-                    )
                     break
 
-            # If the offset is larger than the start of the last quote, it must be the last one
             danswer_quotes.append(
                 DanswerQuote(
                     quote=quote,

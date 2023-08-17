@@ -56,7 +56,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
   const dedupedQuotes: Quote[] = [];
   const seen = new Set<string>();
   if (quotes) {
-    Object.values(quotes).forEach((quote) => {
+    quotes.forEach((quote) => {
       if (!seen.has(quote.document_id)) {
         dedupedQuotes.push(quote);
         seen.add(quote.document_id);
