@@ -16,6 +16,7 @@ import {
   NotionIcon,
   ZulipIcon,
   ProductboardIcon,
+  LinearIcon,
 } from "@/components/icons/icons";
 import { DISABLE_AUTH } from "@/lib/constants";
 import { getCurrentUserSS } from "@/lib/userSS";
@@ -105,6 +106,15 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/connectors/jira",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <LinearIcon size={16} />
+                      <div className="ml-1">Linear</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/linear",
                 },
                 {
                   name: (
