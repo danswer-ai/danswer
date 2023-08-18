@@ -2,7 +2,11 @@ from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 from itertools import islice
+from typing import Any
+from typing import Protocol
 from typing import TypeVar
+
+from danswer.connectors.models import Document
 
 T = TypeVar("T")
 

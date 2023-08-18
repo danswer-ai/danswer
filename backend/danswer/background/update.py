@@ -4,7 +4,6 @@ from datetime import timezone
 
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -101,7 +100,7 @@ def create_indexing_jobs(db_session: Session) -> None:
             )
 
 
-def run_indexing_jobs(db_session: Session, continue_on_connector_failure: bool) -> None:
+def run_indexing_jobs(db_session: Session) -> None:
     indexing_pipeline = build_indexing_pipeline()
 
     new_indexing_attempts = get_not_started_index_attempts(db_session)
@@ -261,9 +260,7 @@ def run_indexing_jobs(db_session: Session, continue_on_connector_failure: bool) 
             )
 
 
-def update_loop(
-    delay: int = 10, continue_on_connector_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE
-) -> None:
+def update_loop(delay: int = 10) -> None:
     engine = get_sqlalchemy_engine()
     while True:
         start = time.time()
@@ -272,7 +269,7 @@ def update_loop(
         try:
             with Session(engine, expire_on_commit=False) as db_session:
                 create_indexing_jobs(db_session)
-                run_indexing_jobs(db_session, continue_on_connector_failure)
+                run_indexing_jobs(db_session)
         except Exception as e:
             logger.exception(f"Failed to run update due to {e}")
         sleep_time = delay - (time.time() - start)
