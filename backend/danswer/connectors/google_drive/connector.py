@@ -11,6 +11,7 @@ from google.oauth2.credentials import Credentials  # type: ignore
 from googleapiclient import discovery  # type: ignore
 from PyPDF2 import PdfReader
 
+from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import GOOGLE_DRIVE_FOLLOW_SHORTCUTS
 from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -293,11 +294,13 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         batch_size: int = INDEX_BATCH_SIZE,
         include_shared: bool = GOOGLE_DRIVE_INCLUDE_SHARED,
         follow_shortcuts: bool = GOOGLE_DRIVE_FOLLOW_SHORTCUTS,
+        continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
     ) -> None:
         self.folder_paths = folder_paths or []
         self.batch_size = batch_size
         self.include_shared = include_shared
         self.follow_shortcuts = follow_shortcuts
+        self.continue_on_failure = continue_on_failure
         self.creds: Credentials | None = None
 
     @staticmethod
@@ -376,18 +379,28 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         for files_batch in file_batches:
             doc_batch = []
             for file in files_batch:
-                text_contents = extract_text(file, service)
-                full_context = file["name"] + " - " + text_contents
+                try:
+                    text_contents = extract_text(file, service)
+                    full_context = file["name"] + " - " + text_contents
 
-                doc_batch.append(
-                    Document(
-                        id=file["webViewLink"],
-                        sections=[Section(link=file["webViewLink"], text=full_context)],
-                        source=DocumentSource.GOOGLE_DRIVE,
-                        semantic_identifier=file["name"],
-                        metadata={},
+                    doc_batch.append(
+                        Document(
+                            id=file["webViewLink"],
+                            sections=[
+                                Section(link=file["webViewLink"], text=full_context)
+                            ],
+                            source=DocumentSource.GOOGLE_DRIVE,
+                            semantic_identifier=file["name"],
+                            metadata={},
+                        )
                     )
-                )
+                except Exception as e:
+                    if not self.continue_on_failure:
+                        raise e
+
+                    logger.exception(
+                        "Ran into exception when pulling a file from Google Drive"
+                    )
 
             yield doc_batch
 

@@ -157,6 +157,12 @@ DYNAMIC_CONFIG_STORE = os.environ.get(
 DYNAMIC_CONFIG_DIR_PATH = os.environ.get("DYNAMIC_CONFIG_DIR_PATH", "/home/storage")
 # notset, debug, info, warning, error, or critical
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "info")
+# NOTE: Currently only supported in the Confluence and Google Drive connectors +
+# only handles some failures (Confluence = handles API call failures, Google
+# Drive = handles failures pulling files / parsing them)
+CONTINUE_ON_CONNECTOR_FAILURE = os.environ.get(
+    "CONTINUE_ON_CONNECTOR_FAILURE", ""
+).lower() not in ["false", ""]
 
 
 #####
