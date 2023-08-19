@@ -62,6 +62,7 @@ MASK_CREDENTIAL_PREFIX = (
 #####
 # DB Configs
 #####
+DOCUMENT_INDEX = "danswer_index"  # Shared by vector/keyword indices
 # Qdrant is Semantic Search Vector DB
 # Url / Key are used to connect to a remote Qdrant instance
 QDRANT_URL = os.environ.get("QDRANT_URL", "")
@@ -69,13 +70,9 @@ QDRANT_API_KEY = os.environ.get("QDRANT_API_KEY", "")
 # Host / Port are used for connecting to local Qdrant instance
 QDRANT_HOST = os.environ.get("QDRANT_HOST", "localhost")
 QDRANT_PORT = 6333
-QDRANT_DEFAULT_COLLECTION = os.environ.get("QDRANT_DEFAULT_COLLECTION", "danswer_index")
 # Typesense is the Keyword Search Engine
 TYPESENSE_HOST = os.environ.get("TYPESENSE_HOST", "localhost")
 TYPESENSE_PORT = 8108
-TYPESENSE_DEFAULT_COLLECTION = os.environ.get(
-    "TYPESENSE_DEFAULT_COLLECTION", "danswer_index"
-)
 TYPESENSE_API_KEY = os.environ.get("TYPESENSE_API_KEY", "")
 # Number of documents in a batch during indexing (further batching done by chunks before passing to bi-encoder)
 INDEX_BATCH_SIZE = 16

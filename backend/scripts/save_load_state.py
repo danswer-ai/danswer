@@ -11,17 +11,16 @@ from typesense.exceptions import ObjectNotFound  # type: ignore
 
 from alembic import command
 from alembic.config import Config
+from danswer.configs.app_configs import DOCUMENT_INDEX
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
 from danswer.configs.app_configs import POSTGRES_PASSWORD
 from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
-from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.app_configs import QDRANT_HOST
 from danswer.configs.app_configs import QDRANT_PORT
-from danswer.configs.app_configs import TYPESENSE_DEFAULT_COLLECTION
-from danswer.datastores.qdrant.indexing import create_qdrant_collection
-from danswer.datastores.qdrant.indexing import list_qdrant_collections
+from danswer.datastores.qdrant.utils import create_qdrant_collection
+from danswer.datastores.qdrant.utils import list_qdrant_collections
 from danswer.datastores.typesense.store import create_typesense_collection
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.clients import get_typesense_client
@@ -60,13 +59,13 @@ def snapshot_time_compare(snap: SnapshotDescription) -> datetime:
 def save_qdrant(filename: str) -> None:
     logger.info("Attempting to take Qdrant snapshot")
     qdrant_client = get_qdrant_client()
-    qdrant_client.create_snapshot(collection_name=QDRANT_DEFAULT_COLLECTION)
-    snapshots = qdrant_client.list_snapshots(collection_name=QDRANT_DEFAULT_COLLECTION)
+    qdrant_client.create_snapshot(collection_name=DOCUMENT_INDEX)
+    snapshots = qdrant_client.list_snapshots(collection_name=DOCUMENT_INDEX)
     valid_snapshots = [snap for snap in snapshots if snap.creation_time is not None]
 
     sorted_snapshots = sorted(valid_snapshots, key=snapshot_time_compare)
     last_snapshot_name = sorted_snapshots[-1].name
-    url = f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{QDRANT_DEFAULT_COLLECTION}/snapshots/{last_snapshot_name}"
+    url = f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{DOCUMENT_INDEX}/snapshots/{last_snapshot_name}"
 
     response = requests.get(url, stream=True)
 
@@ -80,11 +79,13 @@ def save_qdrant(filename: str) -> None:
 
 def load_qdrant(filename: str) -> None:
     logger.info("Attempting to load Qdrant snapshot")
-    if QDRANT_DEFAULT_COLLECTION not in {
+    if DOCUMENT_INDEX not in {
         collection.name for collection in list_qdrant_collections().collections
     }:
-        create_qdrant_collection(QDRANT_DEFAULT_COLLECTION)
-    snapshot_url = f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{QDRANT_DEFAULT_COLLECTION}/snapshots/"
+        create_qdrant_collection(DOCUMENT_INDEX)
+    snapshot_url = (
+        f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{DOCUMENT_INDEX}/snapshots/"
+    )
 
     with open(filename, "rb") as f:
         files = {"snapshot": (os.path.basename(filename), f)}
@@ -104,7 +105,7 @@ def load_qdrant(filename: str) -> None:
 def save_typesense(filename: str) -> None:
     logger.info("Attempting to take Typesense snapshot")
     ts_client = get_typesense_client()
-    all_docs = ts_client.collections[TYPESENSE_DEFAULT_COLLECTION].documents.export()
+    all_docs = ts_client.collections[DOCUMENT_INDEX].documents.export()
     with open(filename, "w") as f:
         f.write(all_docs)
 
@@ -113,14 +114,14 @@ def load_typesense(filename: str) -> None:
     logger.info("Attempting to load Typesense snapshot")
     ts_client = get_typesense_client()
     try:
-        ts_client.collections[TYPESENSE_DEFAULT_COLLECTION].delete()
+        ts_client.collections[DOCUMENT_INDEX].delete()
     except ObjectNotFound:
         pass
 
-    create_typesense_collection(TYPESENSE_DEFAULT_COLLECTION)
+    create_typesense_collection(DOCUMENT_INDEX)
 
     with open(filename) as jsonl_file:
-        ts_client.collections[TYPESENSE_DEFAULT_COLLECTION].documents.import_(
+        ts_client.collections[DOCUMENT_INDEX].documents.import_(
             jsonl_file.read().encode("utf-8"), {"action": "create"}
         )
 

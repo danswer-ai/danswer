@@ -13,7 +13,7 @@ from slack_sdk.socket_mode.response import SocketModeResponse
 from danswer.configs.app_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
 from danswer.configs.app_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
-from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
+from danswer.configs.app_configs import DOCUMENT_INDEX
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.connectors.slack.utils import UserIdReplacer
@@ -206,7 +206,7 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
             answer = _get_answer(
                 QuestionRequest(
                     query=req.payload.get("event", {}).get("text"),
-                    collection=QDRANT_DEFAULT_COLLECTION,
+                    collection=DOCUMENT_INDEX,
                     use_keyword=None,
                     filters=None,
                     offset=None,

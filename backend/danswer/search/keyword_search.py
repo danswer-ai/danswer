@@ -42,7 +42,7 @@ def retrieve_keyword_documents(
     num_hits: int = NUM_RETURNED_HITS,
 ) -> list[InferenceChunk] | None:
     edited_query = query_processing(query)
-    top_chunks = datastore.keyword_search(edited_query, user_id, filters, num_hits)
+    top_chunks = datastore.keyword_retrieval(edited_query, user_id, filters, num_hits)
     if not top_chunks:
         filters_log_msg = json.dumps(filters, separators=(",", ":")).replace("\n", "")
         logger.warning(

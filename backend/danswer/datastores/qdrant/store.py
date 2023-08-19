@@ -1,4 +1,3 @@
-from typing import Any
 from uuid import UUID
 
 from qdrant_client.http.exceptions import ResponseHandlingException
@@ -8,22 +7,26 @@ from qdrant_client.http.models import Filter
 from qdrant_client.http.models import MatchAny
 from qdrant_client.http.models import MatchValue
 
-from danswer.chunking.models import EmbeddedIndexChunk
+from danswer.chunking.models import IndexChunk
 from danswer.chunking.models import InferenceChunk
+from danswer.configs.app_configs import DOCUMENT_INDEX
 from danswer.configs.app_configs import NUM_RETURNED_HITS
-from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.constants import ALLOWED_USERS
+from danswer.configs.constants import CHUNK_ID
+from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.connectors.models import IndexAttemptMetadata
-from danswer.connectors.utils import batch_generator
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
-from danswer.datastores.interfaces import ChunkInsertionRecord
+from danswer.datastores.interfaces import DocumentInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import UpdateRequest
 from danswer.datastores.interfaces import VectorIndex
 from danswer.datastores.qdrant.indexing import index_qdrant_chunks
+from danswer.datastores.qdrant.utils import create_qdrant_collection
+from danswer.datastores.qdrant.utils import list_qdrant_collections
 from danswer.search.search_utils import get_default_embedding_model
+from danswer.utils.batching import batch_generator
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
@@ -82,21 +85,77 @@ def _build_qdrant_filters(
 
 
 class QdrantIndex(VectorIndex):
-    def __init__(self, collection: str = QDRANT_DEFAULT_COLLECTION) -> None:
-        self.collection = collection
+    def __init__(self, index_name: str = DOCUMENT_INDEX) -> None:
+        # In Qdrant, the vector index is referred to as a collection
+        self.collection = index_name
         self.client = get_qdrant_client()
+
+    def get_points_from_document_ids(self, document_ids: str) -> InferenceChunk | None:
+        offset: int | None = 0
+        chunk_ids = []
+        while offset is not None:
+            matches, offset = self.client.scroll(
+                collection_name=self.collection,
+                scroll_filter=Filter(
+                    must=[
+                        FieldCondition(
+                            key=DOCUMENT_ID, match=MatchAny(any=document_ids)
+                        )
+                    ]
+                ),
+                limit=_BATCH_SIZE,
+            )
+            for match in matches:
+                chunk_ids.append(match.payload[CHUNK_ID])
+
+        return chunk_ids
+
+    def ensure_indices_exist(self) -> None:
+        if self.collection not in {
+            collection.name
+            for collection in list_qdrant_collections(self.client).collections
+        }:
+            logger.info(f"Creating Qdrant collection with name: {self.collection}")
+            create_qdrant_collection(
+                collection_name=self.collection, q_client=self.client
+            )
 
     def index(
         self,
-        chunks: list[EmbeddedIndexChunk],
+        chunks: list[IndexChunk],
         index_attempt_metadata: IndexAttemptMetadata,
-    ) -> list[ChunkInsertionRecord]:
+    ) -> set[DocumentInsertionRecord]:
         return index_qdrant_chunks(
             chunks=chunks,
             index_attempt_metadata=index_attempt_metadata,
             collection=self.collection,
             client=self.client,
         )
+
+    def update(self, update_requests: list[UpdateRequest]) -> None:
+        # TODO handle by doc instead of chunk
+        logger.info(
+            f"Updating {len(update_requests)} documents' allowed_users in Qdrant"
+        )
+        for update_request in update_requests:
+            for id_batch in batch_generator(
+                items=update_request.document_ids,
+                batch_size=_BATCH_SIZE,
+            ):
+                self.client.set_payload(
+                    collection_name=self.collection,
+                    payload={ALLOWED_USERS: update_request.allowed_users},
+                    points=id_batch,
+                )
+
+    def delete(self, ids: list[str]) -> None:
+        # TODO handle by doc instead of chunk
+        logger.info(f"Deleting {len(ids)} documents from Qdrant")
+        for id_batch in batch_generator(items=ids, batch_size=_BATCH_SIZE):
+            self.client.delete(
+                collection_name=self.collection,
+                points_selector=id_batch,
+            )
 
     @log_function_time()
     def semantic_retrieval(
@@ -105,8 +164,8 @@ class QdrantIndex(VectorIndex):
         user_id: UUID | None,
         filters: list[IndexFilter] | None,
         num_to_retrieve: int = NUM_RETURNED_HITS,
-        page_size: int = NUM_RETURNED_HITS,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
+        page_size: int = NUM_RETURNED_HITS,
     ) -> list[InferenceChunk]:
         query_embedding = get_default_embedding_model().encode(
             query
@@ -156,45 +215,3 @@ class QdrantIndex(VectorIndex):
                     found_chunk_uuids.add(inf_chunk_id)
 
         return found_inference_chunks
-
-    def delete(self, ids: list[str]) -> None:
-        logger.info(f"Deleting {len(ids)} documents from Qdrant")
-        for id_batch in batch_generator(items=ids, batch_size=_BATCH_SIZE):
-            self.client.delete(
-                collection_name=self.collection,
-                points_selector=id_batch,
-            )
-
-    def update(self, update_requests: list[UpdateRequest]) -> None:
-        logger.info(
-            f"Updating {len(update_requests)} documents' allowed_users in Qdrant"
-        )
-        for update_request in update_requests:
-            for id_batch in batch_generator(
-                items=update_request.ids,
-                batch_size=_BATCH_SIZE,
-            ):
-                self.client.set_payload(
-                    collection_name=self.collection,
-                    payload={ALLOWED_USERS: update_request.allowed_users},
-                    points=id_batch,
-                )
-
-    def get_from_id(self, object_id: str) -> InferenceChunk | None:
-        matches, _ = self.client.scroll(
-            collection_name=self.collection,
-            scroll_filter=Filter(
-                must=[FieldCondition(key="id", match=MatchValue(value=object_id))]
-            ),
-        )
-        if not matches:
-            return None
-
-        if len(matches) > 1:
-            logger.error(f"Found multiple matches for {logger}: {matches}")
-
-        match = matches[0]
-        if not match.payload:
-            return None
-
-        return InferenceChunk.from_dict(match.payload)

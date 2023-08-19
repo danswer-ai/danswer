@@ -21,17 +21,12 @@ from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import OAUTH_TYPE
 from danswer.configs.app_configs import OPENID_CONFIG_URL
-from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.app_configs import SECRET
-from danswer.configs.app_configs import TYPESENSE_DEFAULT_COLLECTION
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.model_configs import API_BASE_OPENAI
 from danswer.configs.model_configs import API_TYPE_OPENAI
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
-from danswer.datastores.qdrant.indexing import list_qdrant_collections
-from danswer.datastores.typesense.store import check_typesense_collection_exist
-from danswer.datastores.typesense.store import create_typesense_collection
 from danswer.db.credentials import create_initial_public_credential
 from danswer.direct_qa.llm_utils import get_default_llm
 from danswer.server.event_loading import router as event_processing_router
@@ -149,7 +144,9 @@ def get_application() -> FastAPI:
         from danswer.search.search_utils import (
             warm_up_models,
         )
-        from danswer.datastores.qdrant.indexing import create_qdrant_collection
+
+        # TODO remove this
+        from danswer.datastores.qdrant.utils import create_qdrant_collection
 
         if DISABLE_GENERATIVE_AI:
             logger.info("Generative AI Q&A disabled")
@@ -191,18 +188,7 @@ def get_application() -> FastAPI:
         create_initial_public_credential()
 
         logger.info("Verifying Document Indexes are available.")
-        if QDRANT_DEFAULT_COLLECTION not in {
-            collection.name for collection in list_qdrant_collections().collections
-        }:
-            logger.info(
-                f"Creating Qdrant collection with name: {QDRANT_DEFAULT_COLLECTION}"
-            )
-            create_qdrant_collection(collection_name=QDRANT_DEFAULT_COLLECTION)
-        if not check_typesense_collection_exist(TYPESENSE_DEFAULT_COLLECTION):
-            logger.info(
-                f"Creating Typesense collection with name: {TYPESENSE_DEFAULT_COLLECTION}"
-            )
-            create_typesense_collection(collection_name=TYPESENSE_DEFAULT_COLLECTION)
+        # TODO call wrapper for this!!!
 
     return application
 

@@ -25,7 +25,6 @@ from sqlalchemy.orm import relationship
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
-from danswer.datastores.interfaces import StoreType
 
 
 class IndexingStatus(str, PyEnum):
@@ -261,20 +260,13 @@ class DeletionAttempt(Base):
 
 class Document(Base):
     """Represents a single documents from a source. This is used to store
-    document level metadata so we don't need to duplicate it in a bunch of
-    DocumentByConnectorCredentialPair's/Chunk's for documents
-    that are split into many chunks and/or indexed by many connector / credential
-    pairs."""
+    document level metadata, but currently nothing is stored"""
 
     __tablename__ = "document"
 
     # this should correspond to the ID of the document (as is passed around
     # in Danswer)
     id: Mapped[str] = mapped_column(String, primary_key=True)
-
-    document_store_entries: Mapped["Chunk"] = relationship(
-        "Chunk", back_populates="document"
-    )
 
 
 class DocumentByConnectorCredentialPair(Base):
@@ -296,22 +288,4 @@ class DocumentByConnectorCredentialPair(Base):
     )
     credential: Mapped[Credential] = relationship(
         "Credential", back_populates="documents_by_credential"
-    )
-
-
-class Chunk(Base):
-    """A row represents a single entry in a document store (e.g. a single chunk
-    in Qdrant/Typesense)"""
-
-    __tablename__ = "chunk"
-
-    # this should correspond to the ID in the document store
-    id: Mapped[str] = mapped_column(String, primary_key=True)
-    document_store_type: Mapped[StoreType] = mapped_column(
-        Enum(StoreType), primary_key=True
-    )
-    document_id: Mapped[str] = mapped_column(ForeignKey("document.id"))
-
-    document: Mapped[Document] = relationship(
-        "Document", back_populates="document_store_entries"
     )
