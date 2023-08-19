@@ -1,6 +1,6 @@
 from enum import Enum
 
-from danswer.chunking.models import EmbeddedIndexChunk
+from danswer.chunking.models import DocAwareChunk
 from danswer.chunking.models import IndexChunk
 
 
@@ -15,5 +15,5 @@ class QueryFlow(str, Enum):
 
 
 class Embedder:
-    def embed(self, chunks: list[IndexChunk]) -> list[EmbeddedIndexChunk]:
+    def embed(self, chunks: list[DocAwareChunk]) -> list[IndexChunk]:
         raise NotImplementedError

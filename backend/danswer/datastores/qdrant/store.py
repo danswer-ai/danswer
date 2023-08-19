@@ -1,3 +1,4 @@
+from typing import cast
 from uuid import UUID
 
 from qdrant_client.http.exceptions import ResponseHandlingException
@@ -90,8 +91,8 @@ class QdrantIndex(VectorIndex):
         self.collection = index_name
         self.client = get_qdrant_client()
 
-    def get_points_from_document_ids(self, document_ids: str) -> InferenceChunk | None:
-        offset: int | None = 0
+    def get_points_from_document_ids(self, document_ids: list[str]) -> list[str] | None:
+        offset: int | str | None = 0
         chunk_ids = []
         while offset is not None:
             matches, offset = self.client.scroll(
@@ -106,7 +107,8 @@ class QdrantIndex(VectorIndex):
                 limit=_BATCH_SIZE,
             )
             for match in matches:
-                chunk_ids.append(match.payload[CHUNK_ID])
+                if match.payload:
+                    chunk_ids.append(match.payload[CHUNK_ID])
 
         return chunk_ids
 

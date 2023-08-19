@@ -135,7 +135,7 @@ def _index_typesense_chunks(
 ) -> set[DocumentInsertionRecord]:
     ts_client: typesense.Client = client if client else get_typesense_client()
 
-    insertion_records: set[DocumentInsertionRecord] = {}
+    insertion_records: set[DocumentInsertionRecord] = set()
     new_documents: list[dict[str, Any]] = []
     cross_connector_document_metadata_map: dict[
         str, CrossConnectorDocumentMetadata
