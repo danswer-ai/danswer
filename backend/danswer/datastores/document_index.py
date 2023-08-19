@@ -56,9 +56,9 @@ class SplitDocumentIndex(DocumentIndex):
         self.keyword_index.update(update_requests)
         self.vector_index.update(update_requests)
 
-    def delete(self, ids: list[str]) -> None:
-        self.keyword_index.delete(ids)
-        self.vector_index.delete(ids)
+    def delete(self, doc_ids: list[str]) -> None:
+        self.keyword_index.delete(doc_ids)
+        self.vector_index.delete(doc_ids)
 
     def keyword_retrieval(
         self,

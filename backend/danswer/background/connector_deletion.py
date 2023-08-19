@@ -62,7 +62,7 @@ def _delete_connector_credential_pair(
 
         if docs_to_delete:
             document_ids = [doc.id for doc in docs_to_delete]
-            document_index.delete(ids=document_ids)
+            document_index.delete(doc_ids=document_ids)
 
             # removes all `DocumentByConnectorCredentialPair`, and `Document`
             # rows from the DB

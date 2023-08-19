@@ -154,9 +154,9 @@ class QdrantIndex(VectorIndex):
                     points=chunk_ids,
                 )
 
-    def delete(self, ids: list[str]) -> None:
-        logger.info(f"Deleting {len(ids)} documents from Qdrant")
-        for doc_id_batch in batch_generator(items=ids, batch_size=_BATCH_SIZE):
+    def delete(self, doc_ids: list[str]) -> None:
+        logger.info(f"Deleting {len(doc_ids)} documents from Qdrant")
+        for doc_id_batch in batch_generator(items=doc_ids, batch_size=_BATCH_SIZE):
             chunk_ids = _get_points_from_document_ids(
                 doc_id_batch, self.collection, self.client
             )
