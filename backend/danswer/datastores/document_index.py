@@ -57,7 +57,6 @@ class SplitDocumentIndex(DocumentIndex):
         self.vector_index.update(update_requests)
 
     def delete(self, ids: list[str]) -> None:
-        # TODO these are index specific IDs, needs to be document IDs
         self.keyword_index.delete(ids)
         self.vector_index.delete(ids)
 
