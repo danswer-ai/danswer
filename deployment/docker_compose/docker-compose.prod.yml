@@ -31,7 +31,7 @@ services:
     build:
       context: ../../backend
       dockerfile: Dockerfile
-    command: /bin/sh ./danswer/background/start.sh
+    command: /usr/bin/supervisord
     depends_on:
       - relational_db
       - vector_db

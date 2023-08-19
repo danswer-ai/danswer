@@ -16,7 +16,7 @@ spec:
       - name: background
         image: danswer/danswer-backend:latest
         imagePullPolicy: IfNotPresent
-        command: ["/bin/sh ./danswer/background/start.sh"]
+        command: ["/usr/bin/supervisord"]
         env:
         - name: POSTGRES_HOST
           value: relational-db-service

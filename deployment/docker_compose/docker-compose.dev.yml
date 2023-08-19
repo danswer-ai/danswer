@@ -49,7 +49,7 @@ services:
     build:
       context: ../../backend
       dockerfile: Dockerfile
-    command: /bin/sh ./danswer/background/start.sh
+    command: /usr/bin/supervisord
     depends_on:
       - relational_db
       - vector_db
@@ -68,7 +68,6 @@ services:
       - API_TYPE_OPENAI=${API_TYPE_OPENAI:-}
       - API_VERSION_OPENAI=${API_VERSION_OPENAI:-}
       - AZURE_DEPLOYMENT_ID=${AZURE_DEPLOYMENT_ID:-}
-      - CONTINUE_ON_CONNECTOR_FAILURE=${CONTINUE_ON_CONNECTOR_FAILURE:-}
       - DANSWER_BOT_SLACK_APP_TOKEN=${DANSWER_BOT_SLACK_APP_TOKEN:-}
       - DANSWER_BOT_SLACK_BOT_TOKEN=${DANSWER_BOT_SLACK_BOT_TOKEN:-}
       - LOG_LEVEL=${LOG_LEVEL:-info}
