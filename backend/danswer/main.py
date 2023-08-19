@@ -27,6 +27,7 @@ from danswer.configs.model_configs import API_BASE_OPENAI
 from danswer.configs.model_configs import API_TYPE_OPENAI
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
+from danswer.datastores.document_index import SplitDocumentIndex
 from danswer.db.credentials import create_initial_public_credential
 from danswer.direct_qa.llm_utils import get_default_llm
 from danswer.server.event_loading import router as event_processing_router
@@ -145,9 +146,6 @@ def get_application() -> FastAPI:
             warm_up_models,
         )
 
-        # TODO remove this
-        from danswer.datastores.qdrant.utils import create_qdrant_collection
-
         if DISABLE_GENERATIVE_AI:
             logger.info("Generative AI Q&A disabled")
         else:
@@ -188,7 +186,8 @@ def get_application() -> FastAPI:
         create_initial_public_credential()
 
         logger.info("Verifying Document Indexes are available.")
-        # TODO call wrapper for this!!!
+        # TODO remove this assumption
+        SplitDocumentIndex().ensure_indices_exist()
 
     return application
 

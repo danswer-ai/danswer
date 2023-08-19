@@ -57,7 +57,7 @@ class Indexable(abc.ABC):
 
 class Deletable(abc.ABC):
     @abc.abstractmethod
-    def delete(self, ids: list[str]) -> None:
+    def delete(self, doc_ids: list[str]) -> None:
         """Removes the specified documents from the Index"""
         raise NotImplementedError
 

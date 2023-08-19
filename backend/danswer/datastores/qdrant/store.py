@@ -1,6 +1,6 @@
-from typing import cast
 from uuid import UUID
 
+from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import ResponseHandlingException
 from qdrant_client.http.exceptions import UnexpectedResponse
 from qdrant_client.http.models import FieldCondition
@@ -13,7 +13,6 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DOCUMENT_INDEX
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import ALLOWED_USERS
-from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
@@ -85,32 +84,35 @@ def _build_qdrant_filters(
     return filter_conditions
 
 
+def _get_points_from_document_ids(
+    document_ids: list[str],
+    collection: str,
+    client: QdrantClient,
+) -> list[int | str]:
+    offset: int | str | None = 0
+    chunk_ids = []
+    while offset is not None:
+        matches, offset = client.scroll(
+            collection_name=collection,
+            scroll_filter=Filter(
+                must=[FieldCondition(key=DOCUMENT_ID, match=MatchAny(any=document_ids))]
+            ),
+            limit=_BATCH_SIZE,
+            with_payload=False,
+            with_vectors=False,
+            offset=offset,
+        )
+        for match in matches:
+            chunk_ids.append(match.id)
+
+    return chunk_ids
+
+
 class QdrantIndex(VectorIndex):
     def __init__(self, index_name: str = DOCUMENT_INDEX) -> None:
         # In Qdrant, the vector index is referred to as a collection
         self.collection = index_name
         self.client = get_qdrant_client()
-
-    def get_points_from_document_ids(self, document_ids: list[str]) -> list[str] | None:
-        offset: int | str | None = 0
-        chunk_ids = []
-        while offset is not None:
-            matches, offset = self.client.scroll(
-                collection_name=self.collection,
-                scroll_filter=Filter(
-                    must=[
-                        FieldCondition(
-                            key=DOCUMENT_ID, match=MatchAny(any=document_ids)
-                        )
-                    ]
-                ),
-                limit=_BATCH_SIZE,
-            )
-            for match in matches:
-                if match.payload:
-                    chunk_ids.append(match.payload[CHUNK_ID])
-
-        return chunk_ids
 
     def ensure_indices_exist(self) -> None:
         if self.collection not in {
@@ -135,28 +137,32 @@ class QdrantIndex(VectorIndex):
         )
 
     def update(self, update_requests: list[UpdateRequest]) -> None:
-        # TODO handle by doc instead of chunk
         logger.info(
             f"Updating {len(update_requests)} documents' allowed_users in Qdrant"
         )
         for update_request in update_requests:
-            for id_batch in batch_generator(
+            for doc_id_batch in batch_generator(
                 items=update_request.document_ids,
                 batch_size=_BATCH_SIZE,
             ):
+                chunk_ids = _get_points_from_document_ids(
+                    doc_id_batch, self.collection, self.client
+                )
                 self.client.set_payload(
                     collection_name=self.collection,
                     payload={ALLOWED_USERS: update_request.allowed_users},
-                    points=id_batch,
+                    points=chunk_ids,
                 )
 
     def delete(self, ids: list[str]) -> None:
-        # TODO handle by doc instead of chunk
         logger.info(f"Deleting {len(ids)} documents from Qdrant")
-        for id_batch in batch_generator(items=ids, batch_size=_BATCH_SIZE):
+        for doc_id_batch in batch_generator(items=ids, batch_size=_BATCH_SIZE):
+            chunk_ids = _get_points_from_document_ids(
+                doc_id_batch, self.collection, self.client
+            )
             self.client.delete(
                 collection_name=self.collection,
-                points_selector=id_batch,
+                points_selector=chunk_ids,
             )
 
     @log_function_time()

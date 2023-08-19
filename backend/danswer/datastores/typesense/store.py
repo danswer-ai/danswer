@@ -270,7 +270,6 @@ class TypesenseIndex(KeywordIndex):
         )
 
     def update(self, update_requests: list[UpdateRequest]) -> None:
-        # TODO handle by doc instead of chunk
         logger.info(
             f"Updating {len(update_requests)} documents' allowed_users in Typesense"
         )
@@ -279,19 +278,18 @@ class TypesenseIndex(KeywordIndex):
                 items=update_request.document_ids, batch_size=_BATCH_SIZE
             ):
                 typesense_updates = [
-                    {"id": doc_id, ALLOWED_USERS: update_request.allowed_users}
+                    {DOCUMENT_ID: doc_id, ALLOWED_USERS: update_request.allowed_users}
                     for doc_id in id_batch
                 ]
                 self.ts_client.collections[self.collection].documents.import_(
                     typesense_updates, {"action": "update"}
                 )
 
-    def delete(self, ids: list[str]) -> None:
-        # TODO handle by doc instead of chunk
-        logger.info(f"Deleting {len(ids)} documents from Typesense")
-        for id_batch in batch_generator(items=ids, batch_size=_BATCH_SIZE):
+    def delete(self, doc_ids: list[str]) -> None:
+        logger.info(f"Deleting {len(doc_ids)} documents from Typesense")
+        for id_batch in batch_generator(items=doc_ids, batch_size=_BATCH_SIZE):
             self.ts_client.collections[self.collection].documents.delete(
-                {"filter_by": f'id:[{",".join(id_batch)}]'}
+                {"filter_by": f'{DOCUMENT_ID}:[{",".join(id_batch)}]'}
             )
 
     def keyword_retrieval(
