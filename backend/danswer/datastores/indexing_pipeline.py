@@ -132,7 +132,7 @@ def build_indexing_pipeline(
     vector_index: VectorIndex | None = None,
     keyword_index: KeywordIndex | None = None,
 ) -> IndexingPipelineProtocol:
-    """Builds a pipline which takes in a list (batch) of docs and indexes them.
+    """Builds a pipeline which takes in a list (batch) of docs and indexes them.
 
     Default uses _ chunker, _ embedder, and qdrant for the datastore"""
     if chunker is None:
