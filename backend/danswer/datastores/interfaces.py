@@ -115,6 +115,8 @@ class BaseIndex(Verifiable, Indexable, Updatable, Deletable, abc.ABC):
     - Can update document metadata (such as access permissions and document specific boost)
     """
 
+    pass
+
 
 class KeywordIndex(KeywordCapable, BaseIndex, abc.ABC):
     pass
