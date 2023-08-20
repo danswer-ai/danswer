@@ -1,4 +1,7 @@
 import os
+from collections.abc import Callable
+from functools import wraps
+from typing import cast
 
 from retry import retry
 from slack_sdk import WebClient
@@ -20,6 +23,16 @@ from danswer.server.models import SearchDoc
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
+
+def _wrap_logger_fn_to_include_channel(
+    log_fn: Callable[[str], None], channel: str
+) -> Callable[[str], None]:
+    @wraps(log_fn)
+    def wrapped_fn(msg: str) -> None:
+        log_fn(f"[{channel}] {msg}")
+
+    return wrapped_fn
 
 
 def _get_socket_client() -> SocketModeClient:
@@ -118,32 +131,46 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
         response = SocketModeResponse(envelope_id=req.envelope_id)
         client.send_socket_mode_response(response)
 
+        channel = cast(str | None, req.payload.get("event", {}).get("channel"))
         # Ensure that the message is a new message + of expected type
         event_type = req.payload.get("event", {}).get("type")
         if event_type != "message":
-            logger.info(f"Ignoring non-message event of type '{event_type}'")
+            logger.info(
+                f"Ignoring non-message event of type '{event_type}' for channel '{channel}'"
+            )
+
+        # this should never happen, but we can't continue without a channel since
+        # we can't send a response without it
+        if not channel:
+            logger.error(f"Found message without channel - skipping")
+            return
+
+        # utils which will preprend the channel to the log message
+        log_info = _wrap_logger_fn_to_include_channel(logger.info, channel)
+        log_error = _wrap_logger_fn_to_include_channel(logger.error, channel)
+        log_exception = _wrap_logger_fn_to_include_channel(logger.exception, channel)
 
         message_subtype = req.payload.get("event", {}).get("subtype")
         if req.payload.get("event", {}).get("subtype") is not None:
             # this covers things like channel_join, channel_leave, etc.
-            logger.info(
+            log_info(
                 f"Ignoring message with subtype '{message_subtype}' since is is a special message type"
             )
             return
 
         if req.payload.get("event", {}).get("bot_profile"):
-            logger.info("Ignoring message from bot")
+            log_info("Ignoring message from bot")
             return
 
         message_ts = req.payload.get("event", {}).get("ts")
         thread_ts = req.payload.get("event", {}).get("thread_ts")
         if thread_ts and message_ts != thread_ts:
-            logger.info("Skipping message since it is not the root of a thread")
+            log_info("Skipping message since it is not the root of a thread")
             return
 
         msg = req.payload.get("event", {}).get("text")
         if not msg:
-            logger.error("Unable to process empty message")
+            log_error("Unable to process empty message")
             return
 
         # TODO: message should be enqueued and processed elsewhere,
@@ -173,7 +200,7 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
                 )
             )
         except Exception:
-            logger.exception(
+            log_exception(
                 f"Unable to process message - did not successfully answer in {DANSWER_BOT_NUM_RETRIES} attempts"
             )
             return
@@ -210,18 +237,18 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
 
         try:
             _respond_in_thread(
-                channel=req.payload.get("event", {}).get("channel"),
+                channel=channel,
                 text=text,
                 thread_ts=thread_ts
                 or message_ts,  # pick the root of the thread (if a thread exists)
             )
         except Exception:
-            logger.exception(
+            log_exception(
                 f"Unable to process message - could not respond in slack in {DANSWER_BOT_NUM_RETRIES} attempts"
             )
             return
 
-        logger.info(f"Successfully processed message with ts: '{thread_ts}'")
+        log_info(f"Successfully processed message with ts: '{message_ts}'")
 
 
 # Follow the guide (https://docs.danswer.dev/slack_bot_setup) to set up
