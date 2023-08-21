@@ -57,12 +57,12 @@ def get_last_successful_attempt_time(
 
 
 def update_connector_credential_pair(
+    db_session: Session,
     connector_id: int,
     credential_id: int,
     attempt_status: IndexingStatus,
-    net_docs: int | None,
-    run_dt: datetime | None,
-    db_session: Session,
+    net_docs: int | None = None,
+    run_dt: datetime | None = None,
 ) -> None:
     cc_pair = get_connector_credential_pair(connector_id, credential_id, db_session)
     if not cc_pair:

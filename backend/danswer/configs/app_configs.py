@@ -163,6 +163,11 @@ LOG_LEVEL = os.environ.get("LOG_LEVEL", "info")
 CONTINUE_ON_CONNECTOR_FAILURE = os.environ.get(
     "CONTINUE_ON_CONNECTOR_FAILURE", ""
 ).lower() not in ["false", ""]
+# Controls how many worker processes we spin up to index documents in the
+# background. This is useful for speeding up indexing, but does require a
+# fairly large amount of memory in order to increase substantially, since
+# each worker loads the embedding models into memory.
+NUM_INDEXING_WORKERS = int(os.environ.get("NUM_INDEXING_WORKERS") or 1)
 
 
 #####

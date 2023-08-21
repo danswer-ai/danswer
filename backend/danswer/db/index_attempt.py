@@ -18,6 +18,13 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
+def get_index_attempt(
+    db_session: Session, index_attempt_id: int
+) -> IndexAttempt | None:
+    stmt = select(IndexAttempt).where(IndexAttempt.id == index_attempt_id)
+    return db_session.scalars(stmt).first()
+
+
 def create_index_attempt(
     connector_id: int,
     credential_id: int,
