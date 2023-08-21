@@ -181,7 +181,6 @@ def stream_json_answer_end(answer_so_far: str, next_token: str) -> bool:
 def extract_quotes_from_completed_token_stream(
     model_output: str, context_chunks: list[InferenceChunk]
 ) -> DanswerQuotes:
-    logger.debug(model_output)
     answer, quotes = process_answer(model_output, context_chunks)
     if answer:
         logger.info(answer)
@@ -235,6 +234,18 @@ def process_model_tokens(
                     continue
             yield DanswerAnswerPiece(answer_piece=token)
             hold_quote = ""
+
+    logger.debug(f"Raw model output: {model_output}")
+
+    # for a JSON prompt, make sure that we're only passing through the "JSON part"
+    # since that is what `extract_quotes_from_completed_token_stream` expects
+    if is_json_prompt:
+        try:
+            json_answer_ind = model_output.index('{"answer":')
+            if json_answer_ind != 0:
+                model_output = model_output[json_answer_ind:]
+        except ValueError:
+            logger.exception("Did not find answer pattern in response for JSON prompt")
 
     yield extract_quotes_from_completed_token_stream(model_output, context_docs)
 
