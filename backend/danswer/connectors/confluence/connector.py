@@ -3,6 +3,7 @@ from collections.abc import Collection
 from datetime import datetime
 from datetime import timezone
 from typing import Any
+from typing import cast
 from urllib.parse import urlparse
 
 from atlassian import Confluence  # type:ignore
@@ -125,17 +126,19 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
         return pages
 
-    def _fetch_comments(
-        self, confluence_client: Confluence, page_id: str
-    ) -> Collection[dict[str, Any]]:
+    def _fetch_comments(self, confluence_client: Confluence, page_id: str) -> str:
         try:
-            return confluence_client.get_page_child_by_type(
-                page_id,
-                type="comment",
-                start=None,
-                limit=None,
-                expand="body.storage.value",
+            comment_pages = cast(
+                Collection[dict[str, Any]],
+                confluence_client.get_page_child_by_type(
+                    page_id,
+                    type="comment",
+                    start=None,
+                    limit=None,
+                    expand="body.storage.value",
+                ),
             )
+            return _comment_dfs("", comment_pages, confluence_client)
         except Exception as e:
             if not self.continue_on_failure:
                 raise e
@@ -143,7 +146,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             logger.exception(
                 "Ran into exception when fetching comments from Confluence"
             )
-            return []
+            return ""
 
     def _get_doc_batch(
         self, start_ind: int, time_filter: Callable[[datetime], bool] | None = None
@@ -163,8 +166,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 page_text = (
                     page.get("title", "") + "\n" + parse_html_page_basic(page_html)
                 )
-                comment_pages = self._fetch_comments(self.confluence_client, page["id"])
-                comments_text = _comment_dfs("", comment_pages, self.confluence_client)
+                comments_text = self._fetch_comments(self.confluence_client, page["id"])
                 page_text += comments_text
 
                 page_url = self.wiki_base + page["_links"]["webui"]
