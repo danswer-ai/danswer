@@ -1,5 +1,6 @@
 import logging
 import time
+from collections.abc import MutableMapping
 from datetime import datetime
 from datetime import timezone
 from typing import Any
@@ -42,8 +43,13 @@ logger = setup_logger()
 
 
 class _ProcessLoggingAdapter(logging.LoggerAdapter):
-    def process(self, msg: str, kwargs: dict[str, Any]) -> tuple[str, dict[str, Any]]:
-        return f"[Attempt ID: {self.extra.get('process_identifier')}] {msg}", kwargs
+    def process(
+        self, msg: str, kwargs: MutableMapping[str, Any]
+    ) -> tuple[str, MutableMapping[str, Any]]:
+        attempt_id = (
+            None if self.extra is None else self.extra.get("process_identifier")
+        )
+        return f"[Attempt ID: {attempt_id}] {msg}", kwargs
 
 
 def should_create_new_indexing(
