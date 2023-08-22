@@ -143,7 +143,39 @@ class UserIdReplacer:
                 message = message.replace(f"<@{user_id}>", f"@{user_name}")
             except Exception:
                 logger.exception(
-                    f"Unable to replace user ID with username for user_id '{user_id}"
+                    f"Unable to replace user ID with username for user_id '{user_id}'"
                 )
 
+        return message
+
+    @staticmethod
+    def replace_tags_basic(message: str) -> str:
+        """Simply replaces all tags with `@<USER_ID>` in order to prevent us from
+        tagging users in Slack when we don't want to"""
+        # Find user IDs in the message
+        user_ids = re.findall("<@(.*?)>", message)
+        for user_id in user_ids:
+            message = message.replace(f"<@{user_id}>", f"@{user_id}")
+        return message
+
+    @staticmethod
+    def replace_channels_basic(message: str) -> str:
+        """Simply replaces all channel mentions with `#<CHANNEL_ID>` in order
+        to make a message work as part of a link"""
+        # Find user IDs in the message
+        channel_matches = re.findall("<#(.*?)\|(.*?)>", message)
+        for channel_id, channel_name in channel_matches:
+            message = message.replace(
+                f"<#{channel_id}|{channel_name}>", f"#{channel_name}"
+            )
+        return message
+
+    @staticmethod
+    def replace_special_mentions(message: str) -> str:
+        """Simply replaces @channel, @here, and @everyone so we don't tag
+        a bunch of people in Slack when we don't want to"""
+        # Find user IDs in the message
+        message = message.replace("<!channel>", "@channel")
+        message = message.replace("<!here>", "@here")
+        message = message.replace("<!everyone>", "@everyone")
         return message
