@@ -15,6 +15,7 @@ from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.app_configs import QDRANT_DEFAULT_COLLECTION
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
+from danswer.connectors.slack.utils import UserIdReplacer
 from danswer.direct_qa.answer_question import answer_question
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.server.models import QAResponse
@@ -65,6 +66,11 @@ def _build_custom_semantic_identifier(
         truncated_blurb = (
             f"{blurb[:_MAX_BLURB_LEN]}..." if len(blurb) > _MAX_BLURB_LEN else blurb
         )
+        # NOTE: removing tags so that we don't accidentally tag users in Slack +
+        # so that it can be used as part of a <link|text> link
+        truncated_blurb = UserIdReplacer.replace_tags_basic(truncated_blurb)
+        truncated_blurb = UserIdReplacer.replace_channels_basic(truncated_blurb)
+        truncated_blurb = UserIdReplacer.replace_special_mentions(truncated_blurb)
         if truncated_blurb:
             return f"#{semantic_identifier}: {truncated_blurb}"
         else:
@@ -118,6 +124,7 @@ def _process_documents(
             blurb=d.blurb,
             source=d.source_type,
         )
+
         top_document_lines.append(f"- <{d.link}|{custom_semantic_identifier}>")
         if len(top_document_lines) >= num_docs_to_display:
             break
@@ -226,6 +233,7 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
             text: str,
             thread_ts: str,
         ) -> None:
+            logger.info(f"Trying to send message: {text}")
             slack_call = make_slack_api_rate_limited(client.web_client.chat_postMessage)
             response = slack_call(
                 channel=channel,
