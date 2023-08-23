@@ -1,3 +1,4 @@
+import logging
 import time
 from datetime import datetime
 from datetime import timezone
@@ -384,7 +385,13 @@ def kickoff_indexing_jobs(
 
 def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> None:
     cluster = LocalCluster(
-        n_workers=num_workers, threads_per_worker=1, silence_logs=False
+        n_workers=num_workers,
+        threads_per_worker=1,
+        # there are warning about high memory usage + "Event loop unresponsive"
+        # which are not relevant to us since our workers are expected to use a
+        # lot of memory + involve CPU intensive tasks that will not relinquish
+        # the event loop
+        silence_logs=logging.ERROR,
     )
     client = Client(cluster)
     existing_jobs: dict[int, Future] = {}
