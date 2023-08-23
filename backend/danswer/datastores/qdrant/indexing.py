@@ -1,7 +1,6 @@
 import json
 from functools import partial
 from typing import cast
-from uuid import UUID
 
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
