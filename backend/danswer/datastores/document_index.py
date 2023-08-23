@@ -29,10 +29,11 @@ class SplitDocumentIndex(DocumentIndex):
 
     def __init__(
         self,
-        index_name: str = DOCUMENT_INDEX_NAME,
+        index_name: str | None = DOCUMENT_INDEX_NAME,
         keyword_index_cls: Type[KeywordIndex] = TypesenseIndex,
         vector_index_cls: Type[VectorIndex] = QdrantIndex,
     ) -> None:
+        index_name = index_name or DOCUMENT_INDEX_NAME
         self.keyword_index = keyword_index_cls(index_name)
         self.vector_index = vector_index_cls(index_name)
 
@@ -105,6 +106,6 @@ def get_default_document_index(
     if index_type == DocumentIndexType.COMBINED.value:
         return VespaIndex()  # Can't specify collection without modifying the deployment
     elif index_type == DocumentIndexType.SPLIT.value:
-        return SplitDocumentIndex(collection=collection)
+        return SplitDocumentIndex(index_name=collection)
     else:
         raise ValueError("Invalid document index type selected")

@@ -1,6 +1,7 @@
 import json
 from collections.abc import Mapping
 from functools import partial
+from typing import cast
 from uuid import UUID
 
 import requests
@@ -20,6 +21,7 @@ from danswer.configs.constants import BOOST
 from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import DOCUMENT_ID
+from danswer.configs.constants import EMBEDDINGS
 from danswer.configs.constants import METADATA
 from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.configs.constants import SECTION_CONTINUATION
@@ -153,6 +155,12 @@ def _index_vespa_chunks(
 
         vespa_chunk_id = str(get_uuid_from_chunk(chunk))
 
+        embeddings = chunk.embeddings
+        embeddings_name_vector_map = {"full_chunk": embeddings.full_embedding}
+        if embeddings.mini_chunk_embeddings:
+            for ind, m_c_embed in enumerate(embeddings.mini_chunk_embeddings):
+                embeddings_name_vector_map[f"mini_chunk_{ind}"] = m_c_embed
+
         vespa_document = {
             "fields": {
                 DOCUMENT_ID: document.id,
@@ -164,6 +172,7 @@ def _index_vespa_chunks(
                 SEMANTIC_IDENTIFIER: document.semantic_identifier,
                 SECTION_CONTINUATION: chunk.section_continuation,
                 METADATA: json.dumps(document.metadata),
+                EMBEDDINGS: embeddings_name_vector_map,
                 BOOST: 1,  # Boost value always starts at 1 for 0 impact on weight
                 ALLOWED_USERS: cross_connector_document_metadata_map[
                     document.id
@@ -222,6 +231,10 @@ def _build_vespa_filters(
 
 
 def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
+    if "query" in query_params and not cast(str, query_params["query"]).strip():
+        raise ValueError(
+            "Query only consisted of stopwords, should not use Keyword Search"
+        )
     response = requests.get(SEARCH_ENDPOINT, params=query_params)
     response.raise_for_status()
 
@@ -234,6 +247,7 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
 class VespaIndex(DocumentIndex):
     yql_base = (
         f"select "
+        f"documentid, "
         f"{DOCUMENT_ID}, "
         f"{CHUNK_ID}, "
         f"{BLURB}, "
@@ -306,6 +320,7 @@ class VespaIndex(DocumentIndex):
         for doc_id in doc_ids:
             for doc_chunk_id in _get_vespa_chunk_ids_by_document_id(doc_id):
                 url = f"{DOCUMENT_ID_ENDPOINT}/{doc_chunk_id}"
+                logger.debug("Deleting: " + url)
                 requests.delete(url)
 
     def keyword_retrieval(
