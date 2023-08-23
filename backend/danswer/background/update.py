@@ -1,9 +1,6 @@
-import logging
 import time
-from collections.abc import MutableMapping
 from datetime import datetime
 from datetime import timezone
-from typing import Any
 
 from dask.distributed import Client
 from dask.distributed import Future
@@ -37,19 +34,10 @@ from danswer.db.index_attempt import update_docs_indexed
 from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
+from danswer.utils.logger import IndexAttemptSingleton
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
-
-
-class _ProcessLoggingAdapter(logging.LoggerAdapter):
-    def process(
-        self, msg: str, kwargs: MutableMapping[str, Any]
-    ) -> tuple[str, MutableMapping[str, Any]]:
-        attempt_id = (
-            None if self.extra is None else self.extra.get("process_identifier")
-        )
-        return f"[Attempt ID: {attempt_id}] {msg}", kwargs
 
 
 def should_create_new_indexing(
@@ -161,7 +149,6 @@ def cleanup_indexing_jobs(
 def _run_indexing(
     db_session: Session,
     index_attempt: IndexAttempt,
-    logger: logging.Logger | logging.LoggerAdapter,
 ) -> None:
     """
     1. Get documents which are either new or updated from specified application
@@ -315,9 +302,10 @@ def _run_indexing_entrypoint(index_attempt_id: int) -> None:
     Wraps the actual logic in a `try` block so that we can catch any exceptions
     and mark the attempt as failed."""
     try:
-        process_specific_logger = _ProcessLoggingAdapter(
-            setup_logger(), extra={"process_identifier": index_attempt_id}
-        )
+        # set the indexing attempt ID so that all log messages from this process
+        # will have it added as a prefix
+        IndexAttemptSingleton.set_index_attempt_id(index_attempt_id)
+
         with Session(get_sqlalchemy_engine()) as db_session:
             attempt = get_index_attempt(
                 db_session=db_session, index_attempt_id=index_attempt_id
@@ -327,7 +315,7 @@ def _run_indexing_entrypoint(index_attempt_id: int) -> None:
                     f"Unable to find IndexAttempt for ID '{index_attempt_id}'"
                 )
 
-            process_specific_logger.info(
+            logger.info(
                 f"Running indexing attempt for connector: '{attempt.connector.name}', "
                 f"with config: '{attempt.connector.connector_specific_config}', and "
                 f"with credentials: '{attempt.credential_id}'"
@@ -342,10 +330,9 @@ def _run_indexing_entrypoint(index_attempt_id: int) -> None:
             _run_indexing(
                 db_session=db_session,
                 index_attempt=attempt,
-                logger=process_specific_logger,
             )
 
-            process_specific_logger.info(
+            logger.info(
                 f"Completed indexing attempt for connector: '{attempt.connector.name}', "
                 f"with config: '{attempt.connector.connector_specific_config}', and "
                 f"with credentials: '{attempt.credential_id}'"
