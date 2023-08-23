@@ -10,7 +10,7 @@ from qdrant_client.http.models import MatchValue
 
 from danswer.chunking.models import IndexChunk
 from danswer.chunking.models import InferenceChunk
-from danswer.configs.app_configs import DOCUMENT_INDEX
+from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import DOCUMENT_ID
@@ -109,7 +109,7 @@ def _get_points_from_document_ids(
 
 
 class QdrantIndex(VectorIndex):
-    def __init__(self, index_name: str = DOCUMENT_INDEX) -> None:
+    def __init__(self, index_name: str = DOCUMENT_INDEX_NAME) -> None:
         # In Qdrant, the vector index is referred to as a collection
         self.collection = index_name
         self.client = get_qdrant_client()

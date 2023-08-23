@@ -1,5 +1,7 @@
 import os
 
+from danswer.configs.constants import DocumentIndexType
+
 #####
 # App Configs
 #####
@@ -62,16 +64,27 @@ MASK_CREDENTIAL_PREFIX = (
 #####
 # DB Configs
 #####
-DOCUMENT_INDEX = "danswer_index"  # Shared by vector/keyword indices
+DOCUMENT_INDEX_NAME = "danswer_index"  # Shared by vector/keyword indices
+# Vespa is now the default document index store for both keyword and vector
+DOCUMENT_INDEX_TYPE = os.environ.get(
+    "DOCUMENT_INDEX_TYPE", DocumentIndexType.COMBINED.value
+)
+VESPA_HOST = os.environ.get("VESPA_HOST") or "localhost"
+VESPA_PORT = os.environ.get("VESPA_PORT") or "8081"
+VESPA_TENANT_PORT = os.environ.get("VESPA_TENANT_PORT") or "19071"
+# The default below is for dockerized deployment
+VESPA_DEPLOYMENT_ZIP = (
+    os.environ.get("VESPA_DEPLOYMENT_ZIP") or "/app/danswer/vespa-app.zip"
+)
 # Qdrant is Semantic Search Vector DB
 # Url / Key are used to connect to a remote Qdrant instance
 QDRANT_URL = os.environ.get("QDRANT_URL", "")
 QDRANT_API_KEY = os.environ.get("QDRANT_API_KEY", "")
 # Host / Port are used for connecting to local Qdrant instance
-QDRANT_HOST = os.environ.get("QDRANT_HOST", "localhost")
+QDRANT_HOST = os.environ.get("QDRANT_HOST") or "localhost"
 QDRANT_PORT = 6333
 # Typesense is the Keyword Search Engine
-TYPESENSE_HOST = os.environ.get("TYPESENSE_HOST", "localhost")
+TYPESENSE_HOST = os.environ.get("TYPESENSE_HOST") or "localhost"
 TYPESENSE_PORT = 8108
 TYPESENSE_API_KEY = os.environ.get("TYPESENSE_API_KEY", "")
 # Number of documents in a batch during indexing (further batching done by chunks before passing to bi-encoder)

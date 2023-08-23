@@ -3,8 +3,10 @@ from uuid import UUID
 
 from danswer.chunking.models import IndexChunk
 from danswer.chunking.models import InferenceChunk
-from danswer.configs.app_configs import DOCUMENT_INDEX
+from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
+from danswer.configs.app_configs import DOCUMENT_INDEX_TYPE
 from danswer.configs.app_configs import NUM_RETURNED_HITS
+from danswer.configs.constants import DocumentIndexType
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.datastores.interfaces import DocumentIndex
@@ -15,6 +17,7 @@ from danswer.datastores.interfaces import UpdateRequest
 from danswer.datastores.interfaces import VectorIndex
 from danswer.datastores.qdrant.store import QdrantIndex
 from danswer.datastores.typesense.store import TypesenseIndex
+from danswer.datastores.vespa.store import VespaIndex
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -26,7 +29,7 @@ class SplitDocumentIndex(DocumentIndex):
 
     def __init__(
         self,
-        index_name: str = DOCUMENT_INDEX,
+        index_name: str = DOCUMENT_INDEX_NAME,
         keyword_index_cls: Type[KeywordIndex] = TypesenseIndex,
         vector_index_cls: Type[VectorIndex] = QdrantIndex,
     ) -> None:
@@ -82,3 +85,26 @@ class SplitDocumentIndex(DocumentIndex):
         return self.vector_index.semantic_retrieval(
             query, user_id, filters, num_to_retrieve, distance_cutoff
         )
+
+    def hybrid_retrieval(
+        self,
+        query: str,
+        user_id: UUID | None,
+        filters: list[IndexFilter] | None,
+        num_to_retrieve: int,
+    ) -> list[InferenceChunk]:
+        """Currently results from vector and keyword indices are not combined post retrieval.
+        This may change in the future but for now, the default behavior is to use semantic search
+        which should be a more flexible/powerful search option"""
+        return self.semantic_retrieval(query, user_id, filters, num_to_retrieve)
+
+
+def get_default_document_index(
+    collection: str | None = DOCUMENT_INDEX_NAME, index_type: str = DOCUMENT_INDEX_TYPE
+) -> DocumentIndex:
+    if index_type == DocumentIndexType.COMBINED.value:
+        return VespaIndex()  # Can't specify collection without modifying the deployment
+    elif index_type == DocumentIndexType.SPLIT.value:
+        return SplitDocumentIndex(collection=collection)
+    else:
+        raise ValueError("Invalid document index type selected")

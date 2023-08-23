@@ -9,7 +9,7 @@ from typesense.exceptions import ObjectNotFound  # type: ignore
 
 from danswer.chunking.models import IndexChunk
 from danswer.chunking.models import InferenceChunk
-from danswer.configs.app_configs import DOCUMENT_INDEX
+from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import ALLOWED_GROUPS
 from danswer.configs.constants import ALLOWED_USERS
@@ -46,7 +46,7 @@ _BATCH_SIZE = 200
 
 
 def create_typesense_collection(
-    collection_name: str = DOCUMENT_INDEX,
+    collection_name: str = DOCUMENT_INDEX_NAME,
 ) -> None:
     ts_client = get_typesense_client()
     collection_schema = {
@@ -71,7 +71,7 @@ def create_typesense_collection(
 
 
 def _check_typesense_collection_exist(
-    collection_name: str = DOCUMENT_INDEX,
+    collection_name: str = DOCUMENT_INDEX_NAME,
 ) -> bool:
     client = get_typesense_client()
     try:
@@ -249,7 +249,7 @@ def _build_typesense_filters(
 
 
 class TypesenseIndex(KeywordIndex):
-    def __init__(self, index_name: str = DOCUMENT_INDEX) -> None:
+    def __init__(self, index_name: str = DOCUMENT_INDEX_NAME) -> None:
         # In Typesense, the document index is referred to as a collection
         self.collection = index_name
         self.ts_client = get_typesense_client()

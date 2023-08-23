@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<services version="1.0" xmlns:deploy="vespa" xmlns:preprocess="properties">
+    <container id="default" version="1.0">
+        <document-api/>
+        <search/>
+        <nodes>
+            <node hostalias="node1" />
+        </nodes>
+    </container>
+    <content id="danswer_index" version="1.0">
+        <redundancy>2</redundancy>
+        <documents>
+            <document type="danswer_chunk" mode="index" />
+        </documents>
+        <nodes>
+            <node hostalias="node1" distribution-key="0" />
+        </nodes>
+    </content>
+
+</services>

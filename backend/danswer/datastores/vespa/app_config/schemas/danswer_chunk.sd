@@ -1,0 +1,89 @@
+schema danswer_chunk {
+    document danswer_chunk {
+        # Not to be confused with the UUID generated for this chunk which is called documentid by default
+        field document_id type string {
+            indexing: summary | attribute
+        }
+        field chunk_id type int {
+            indexing: summary | attribute
+        }
+        field blurb type string {
+            indexing: summary | attribute
+        }
+        # Can separate out title in the future and give heavier bm-25 weighting
+        # Need to consider that not every doc has a separable title (ie. slack message)
+        # Set summary options to enable bolding
+        field content type string {
+            indexing: summary | attribute | index
+            index: enable-bm25
+        }
+        # https://docs.vespa.ai/en/attributes.html potential enum store for speed, but probably not worth it
+        field source_type type string {
+            indexing: summary | attribute
+        }
+        # Can also index links https://docs.vespa.ai/en/reference/schema-reference.html#attribute
+        # URL type matching
+        field source_links type string {
+            indexing: summary | attribute
+        }
+        field semantic_identifier type string {
+            indexing: summary | attribute
+        }
+        field section_continuation type bool {
+            indexing: summary | attribute
+        }
+        field boost type float {
+            indexing: summary | attribute
+        }
+        field metadata type string {
+            indexing: summary | attribute
+        }
+        field embeddings type tensor<float>(t{},x[768]) {
+            indexing: attribute
+            attribute {
+                distance-metric: angular
+            }
+        }
+        field allowed_users type array<string> {
+            indexing: summary | attribute
+            attribute: fast-search
+        }
+        field allowed_groups type array<string> {
+            indexing: summary | attribute
+            attribute: fast-search
+        }
+    }
+
+    fieldset default {
+        fields: content
+    }
+
+    rank-profile keyword_search inherits default {
+        first-phase {
+            expression: bm25(content) * attribute(boost)
+        }
+    }
+
+    rank-profile semantic_search inherits default {
+        inputs {
+            query(query_embedding) tensor<float>(x[768])
+        }
+        first-phase {
+            expression: closeness(field, embeddings) * attribute(boost)
+        }
+        match-features: closest(embeddings)
+    }
+
+    rank-profile hybrid_search inherits default {
+        inputs {
+            query(query_embedding) tensor<float>(x[768])
+        }
+        first-phase {
+            expression: bm25(content)
+        }
+        second-phase {
+            expression: closeness(field, embeddings) * attribute(boost)
+        }
+        match-features: closest(embeddings)
+    }
+}

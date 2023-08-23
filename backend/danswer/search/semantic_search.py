@@ -13,8 +13,8 @@ from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
+from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import IndexFilter
-from danswer.datastores.interfaces import VectorIndex
 from danswer.search.models import Embedder
 from danswer.search.search_utils import get_default_embedding_model
 from danswer.search.search_utils import get_default_reranking_model_ensemble
@@ -70,7 +70,7 @@ def retrieve_ranked_documents(
     query: str,
     user_id: UUID | None,
     filters: list[IndexFilter] | None,
-    datastore: VectorIndex,
+    datastore: DocumentIndex,
     num_hits: int = NUM_RETURNED_HITS,
     num_rerank: int = NUM_RERANKED_RESULTS,
 ) -> tuple[list[InferenceChunk] | None, list[InferenceChunk] | None]:

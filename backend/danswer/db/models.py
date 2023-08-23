@@ -184,7 +184,7 @@ class IndexAttempt(Base):
         nullable=True,
     )
     status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
-    num_docs_indexed: Mapped[int] = mapped_column(Integer, default=0)
+    num_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
     error_msg: Mapped[str | None] = mapped_column(
         String(), default=None
     )  # only filled if status = "failed"
@@ -194,7 +194,7 @@ class IndexAttempt(Base):
     )
     # when the actual indexing run began
     # NOTE: will use the api_server clock rather than DB server clock
-    time_started: Mapped[datetime.datetime] = mapped_column(
+    time_started: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
     )
     time_updated: Mapped[datetime.datetime] = mapped_column(

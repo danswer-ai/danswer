@@ -27,7 +27,7 @@ from danswer.configs.model_configs import API_BASE_OPENAI
 from danswer.configs.model_configs import API_TYPE_OPENAI
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
-from danswer.datastores.document_index import SplitDocumentIndex
+from danswer.datastores.document_index import get_default_document_index
 from danswer.db.credentials import create_initial_public_credential
 from danswer.direct_qa.llm_utils import get_default_llm
 from danswer.server.event_loading import router as event_processing_router
@@ -186,8 +186,7 @@ def get_application() -> FastAPI:
         create_initial_public_credential()
 
         logger.info("Verifying Document Indexes are available.")
-        # TODO remove this assumption
-        SplitDocumentIndex().ensure_indices_exist()
+        get_default_document_index().ensure_indices_exist()
 
     return application
 

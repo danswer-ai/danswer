@@ -17,7 +17,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import PUBLIC_DOC_PAT
-from danswer.datastores.document_index import SplitDocumentIndex
+from danswer.datastores.document_index import get_default_document_index
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import UpdateRequest
 from danswer.db.connector import fetch_connector_by_id
@@ -224,7 +224,7 @@ def _run_deletion(db_session: Session) -> None:
     try:
         num_docs_deleted = _delete_connector_credential_pair(
             db_session=db_session,
-            document_index=SplitDocumentIndex(),
+            document_index=get_default_document_index(),
             deletion_attempt=deletion_attempt,
         )
     except Exception as e:

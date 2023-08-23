@@ -11,7 +11,7 @@ from typesense.exceptions import ObjectNotFound  # type: ignore
 
 from alembic import command
 from alembic.config import Config
-from danswer.configs.app_configs import DOCUMENT_INDEX
+from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
 from danswer.configs.app_configs import POSTGRES_PASSWORD
@@ -59,13 +59,13 @@ def snapshot_time_compare(snap: SnapshotDescription) -> datetime:
 def save_qdrant(filename: str) -> None:
     logger.info("Attempting to take Qdrant snapshot")
     qdrant_client = get_qdrant_client()
-    qdrant_client.create_snapshot(collection_name=DOCUMENT_INDEX)
-    snapshots = qdrant_client.list_snapshots(collection_name=DOCUMENT_INDEX)
+    qdrant_client.create_snapshot(collection_name=DOCUMENT_INDEX_NAME)
+    snapshots = qdrant_client.list_snapshots(collection_name=DOCUMENT_INDEX_NAME)
     valid_snapshots = [snap for snap in snapshots if snap.creation_time is not None]
 
     sorted_snapshots = sorted(valid_snapshots, key=snapshot_time_compare)
     last_snapshot_name = sorted_snapshots[-1].name
-    url = f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{DOCUMENT_INDEX}/snapshots/{last_snapshot_name}"
+    url = f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{DOCUMENT_INDEX_NAME}/snapshots/{last_snapshot_name}"
 
     response = requests.get(url, stream=True)
 
@@ -79,13 +79,11 @@ def save_qdrant(filename: str) -> None:
 
 def load_qdrant(filename: str) -> None:
     logger.info("Attempting to load Qdrant snapshot")
-    if DOCUMENT_INDEX not in {
+    if DOCUMENT_INDEX_NAME not in {
         collection.name for collection in list_qdrant_collections().collections
     }:
-        create_qdrant_collection(DOCUMENT_INDEX)
-    snapshot_url = (
-        f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{DOCUMENT_INDEX}/snapshots/"
-    )
+        create_qdrant_collection(DOCUMENT_INDEX_NAME)
+    snapshot_url = f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{DOCUMENT_INDEX_NAME}/snapshots/"
 
     with open(filename, "rb") as f:
         files = {"snapshot": (os.path.basename(filename), f)}
@@ -105,7 +103,7 @@ def load_qdrant(filename: str) -> None:
 def save_typesense(filename: str) -> None:
     logger.info("Attempting to take Typesense snapshot")
     ts_client = get_typesense_client()
-    all_docs = ts_client.collections[DOCUMENT_INDEX].documents.export()
+    all_docs = ts_client.collections[DOCUMENT_INDEX_NAME].documents.export()
     with open(filename, "w") as f:
         f.write(all_docs)
 
@@ -114,14 +112,14 @@ def load_typesense(filename: str) -> None:
     logger.info("Attempting to load Typesense snapshot")
     ts_client = get_typesense_client()
     try:
-        ts_client.collections[DOCUMENT_INDEX].delete()
+        ts_client.collections[DOCUMENT_INDEX_NAME].delete()
     except ObjectNotFound:
         pass
 
-    create_typesense_collection(DOCUMENT_INDEX)
+    create_typesense_collection(DOCUMENT_INDEX_NAME)
 
     with open(filename) as jsonl_file:
-        ts_client.collections[DOCUMENT_INDEX].documents.import_(
+        ts_client.collections[DOCUMENT_INDEX_NAME].documents.import_(
             jsonl_file.read().encode("utf-8"), {"action": "create"}
         )
 

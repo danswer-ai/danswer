@@ -96,7 +96,7 @@ class VectorCapable(abc.ABC):
 
 class HybridCapable(abc.ABC):
     @abc.abstractmethod
-    def semantic_retrieval(
+    def hybrid_retrieval(
         self,
         query: str,
         user_id: UUID | None,

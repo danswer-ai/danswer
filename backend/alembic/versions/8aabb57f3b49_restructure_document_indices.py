@@ -18,22 +18,11 @@ depends_on = None
 
 def upgrade() -> None:
     op.drop_table("chunk")
-    op.alter_column(
-        "index_attempt",
-        "num_docs_indexed",
-        existing_type=sa.INTEGER(),
-        nullable=False,
-    )
-    op.alter_column(
-        "index_attempt",
-        "time_started",
-        existing_type=postgresql.TIMESTAMP(timezone=True),
-        nullable=False,
-    )
     op.drop_index(
         "ix_index_attempt_latest_for_connector_credential_pair",
         table_name="index_attempt",
     )
+    op.execute("DROP TYPE IF EXISTS documentstoretype")
 
 
 def downgrade() -> None:
@@ -42,18 +31,6 @@ def downgrade() -> None:
         "index_attempt",
         ["connector_id", "credential_id", "time_created"],
         unique=False,
-    )
-    op.alter_column(
-        "index_attempt",
-        "time_started",
-        existing_type=postgresql.TIMESTAMP(timezone=True),
-        nullable=True,
-    )
-    op.alter_column(
-        "index_attempt",
-        "num_docs_indexed",
-        existing_type=sa.INTEGER(),
-        nullable=True,
     )
     op.create_table(
         "chunk",
