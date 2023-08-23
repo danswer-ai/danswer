@@ -1,3 +1,4 @@
+import logging
 import os
 from collections.abc import Callable
 from functools import wraps
@@ -183,7 +184,12 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
         # TODO: message should be enqueued and processed elsewhere,
         # but doing it here for now for simplicity
 
-        @retry(tries=DANSWER_BOT_NUM_RETRIES, delay=0.25, backoff=2, logger=logger)
+        @retry(
+            tries=DANSWER_BOT_NUM_RETRIES,
+            delay=0.25,
+            backoff=2,
+            logger=cast(logging.Logger, logger),
+        )
         def _get_answer(question: QuestionRequest) -> QAResponse:
             answer = answer_question(
                 question=question,
@@ -227,7 +233,12 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
             else:
                 text = f"{answer.answer}\n\n*Warning*: no sources were quoted for this answer, so it may be unreliable 😔\n\n{top_documents_str_with_header}"
 
-        @retry(tries=DANSWER_BOT_NUM_RETRIES, delay=0.25, backoff=2, logger=logger)
+        @retry(
+            tries=DANSWER_BOT_NUM_RETRIES,
+            delay=0.25,
+            backoff=2,
+            logger=cast(logging.Logger, logger),
+        )
         def _respond_in_thread(
             channel: str,
             text: str,
