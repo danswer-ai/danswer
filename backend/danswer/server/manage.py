@@ -17,13 +17,14 @@ from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
-from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
 from danswer.connectors.file.utils import write_temp_files
-from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_KEY
+from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_TOKEN_KEY
 from danswer.connectors.google_drive.connector_auth import get_auth_url
-from danswer.connectors.google_drive.connector_auth import get_drive_tokens
 from danswer.connectors.google_drive.connector_auth import get_google_app_cred
+from danswer.connectors.google_drive.connector_auth import (
+    get_google_drive_creds_for_authorized_user,
+)
 from danswer.connectors.google_drive.connector_auth import (
     update_credential_access_tokens,
 )
@@ -139,11 +140,13 @@ def check_drive_tokens(
     db_credentials = fetch_credential_by_id(credential_id, user, db_session)
     if (
         not db_credentials
-        or DB_CREDENTIALS_DICT_KEY not in db_credentials.credential_json
+        or DB_CREDENTIALS_DICT_TOKEN_KEY not in db_credentials.credential_json
     ):
         return AuthStatus(authenticated=False)
-    token_json_str = str(db_credentials.credential_json[DB_CREDENTIALS_DICT_KEY])
-    google_drive_creds = get_drive_tokens(token_json_str=token_json_str)
+    token_json_str = str(db_credentials.credential_json[DB_CREDENTIALS_DICT_TOKEN_KEY])
+    google_drive_creds = get_google_drive_creds_for_authorized_user(
+        token_json_str=token_json_str
+    )
     if google_drive_creds is None:
         return AuthStatus(authenticated=False)
     return AuthStatus(authenticated=True)

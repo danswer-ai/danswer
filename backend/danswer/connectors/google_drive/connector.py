@@ -5,9 +5,10 @@ from collections.abc import Generator
 from collections.abc import Sequence
 from itertools import chain
 from typing import Any
+from typing import cast
 
 import docx2txt  # type:ignore
-from google.oauth2.credentials import Credentials  # type: ignore
+from google.auth.credentials import Credentials  # type: ignore
 from googleapiclient import discovery  # type: ignore
 from PyPDF2 import PdfReader
 
@@ -16,8 +17,18 @@ from danswer.configs.app_configs import GOOGLE_DRIVE_FOLLOW_SHORTCUTS
 from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_KEY
-from danswer.connectors.google_drive.connector_auth import get_drive_tokens
+from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_AUTH_TYPE
+from danswer.connectors.google_drive.connector_auth import (
+    DB_CREDENTIALS_DICT_DELEGATED_USER_KEY,
+)
+from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_TOKEN_KEY
+from danswer.connectors.google_drive.connector_auth import (
+    get_google_drive_creds_for_authorized_user,
+)
+from danswer.connectors.google_drive.connector_auth import (
+    get_google_drive_creds_for_service_account,
+)
+from danswer.connectors.google_drive.connector_auth import GoogleDriveAuthorizationType
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -335,16 +346,40 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
 
         return folder_ids
 
-    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        access_token_json_str = credentials[DB_CREDENTIALS_DICT_KEY]
-        creds = get_drive_tokens(token_json_str=access_token_json_str)
+    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, str] | None:
+        creds = None
+        new_creds_dict = None
+        credential_type = cast(
+            GoogleDriveAuthorizationType,
+            credentials.get(
+                DB_CREDENTIALS_DICT_AUTH_TYPE,
+                GoogleDriveAuthorizationType.AUTHORIZED_USER,
+            ),
+        )
+        access_token_json_str = cast(str, credentials[DB_CREDENTIALS_DICT_TOKEN_KEY])
+        if credential_type == GoogleDriveAuthorizationType.AUTHORIZED_USER:
+            creds = get_google_drive_creds_for_authorized_user(
+                token_json_str=access_token_json_str
+            )
+
+            # tell caller to update token stored in DB if it has changed
+            # (e.g. the token has been refreshed)
+            new_creds_json_str = creds.to_json() if creds else ""
+            if new_creds_json_str != access_token_json_str:
+                new_creds_dict = {DB_CREDENTIALS_DICT_TOKEN_KEY: new_creds_json_str}
+
+        if credential_type == GoogleDriveAuthorizationType.SERVICE_ACCOUNT:
+            delegated_user_email = credentials[DB_CREDENTIALS_DICT_DELEGATED_USER_KEY]
+            creds = get_google_drive_creds_for_service_account(
+                token_json_str=access_token_json_str
+            )
+            creds = creds.with_subject(delegated_user_email) if creds else None
+
         if creds is None:
             raise PermissionError("Unable to access Google Drive.")
+
         self.creds = creds
-        new_creds_json_str = creds.to_json()
-        if new_creds_json_str != access_token_json_str:
-            return {DB_CREDENTIALS_DICT_KEY: new_creds_json_str}
-        return None
+        return new_creds_dict
 
     def _fetch_docs_from_drive(
         self,
@@ -417,3 +452,25 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         yield from self._fetch_docs_from_drive(
             max(start - DRIVE_START_TIME_OFFSET, 0, 0), end
         )
+
+
+if __name__ == "__main__":
+    import json
+
+    with open("/Users/chrisweaver/Downloads/danswertest-396603-c0d0815ff886.json") as f:
+        creds = json.load(f)
+
+    connector = GoogleDriveConnector(
+        include_shared=True,
+    )
+    connector.load_credentials(
+        {
+            DB_CREDENTIALS_DICT_AUTH_TYPE: GoogleDriveAuthorizationType.SERVICE_ACCOUNT,
+            DB_CREDENTIALS_DICT_TOKEN_KEY: json.dumps(creds),
+            DB_CREDENTIALS_DICT_DELEGATED_USER_KEY: "chris@danswer.ai",
+        }
+    )
+    document_batch_generator = connector.load_from_state()
+    for document_batch in document_batch_generator:
+        print(document_batch)
+        break
