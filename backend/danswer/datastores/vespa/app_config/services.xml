@@ -16,5 +16,4 @@
             <node hostalias="node1" distribution-key="0" />
         </nodes>
     </content>
-
 </services>
