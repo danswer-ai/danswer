@@ -1,9 +1,13 @@
 from typing import Any
 
+from sqlalchemy import delete
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import or_
 
+from danswer.connectors.google_drive.constants import (
+    DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
+)
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import Credential
 from danswer.db.models import User
@@ -137,3 +141,14 @@ def create_initial_public_credential() -> None:
         )
         db_session.add(credential)
         db_session.commit()
+
+
+def delete_google_drive_service_account_credentials(
+    user: User | None, db_session: Session
+) -> None:
+    credentials = fetch_credentials(user, db_session)
+    for credential in credentials:
+        if credential.credential_json.get(DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY):
+            db_session.delete(credential)
+
+    db_session.commit()

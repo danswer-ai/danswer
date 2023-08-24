@@ -19,16 +19,24 @@ from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
 from danswer.connectors.file.utils import write_temp_files
+from danswer.connectors.google_drive.connector_auth import build_service_account_creds
+from danswer.connectors.google_drive.connector_auth import (
+    DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
+)
 from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_TOKEN_KEY
+from danswer.connectors.google_drive.connector_auth import delete_google_app_cred
+from danswer.connectors.google_drive.connector_auth import delete_service_account_key
 from danswer.connectors.google_drive.connector_auth import get_auth_url
 from danswer.connectors.google_drive.connector_auth import get_google_app_cred
 from danswer.connectors.google_drive.connector_auth import (
     get_google_drive_creds_for_authorized_user,
 )
+from danswer.connectors.google_drive.connector_auth import get_service_account_key
 from danswer.connectors.google_drive.connector_auth import (
     update_credential_access_tokens,
 )
 from danswer.connectors.google_drive.connector_auth import upsert_google_app_cred
+from danswer.connectors.google_drive.connector_auth import upsert_service_account_key
 from danswer.connectors.google_drive.connector_auth import verify_csrf
 from danswer.db.connector import create_connector
 from danswer.db.connector import delete_connector
@@ -42,6 +50,7 @@ from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import remove_credential_from_connector
 from danswer.db.credentials import create_credential
 from danswer.db.credentials import delete_credential
+from danswer.db.credentials import delete_google_drive_service_account_credentials
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.credentials import fetch_credentials
 from danswer.db.credentials import update_credential
@@ -72,6 +81,8 @@ from danswer.server.models import DeletionAttemptSnapshot
 from danswer.server.models import FileUploadResponse
 from danswer.server.models import GDriveCallback
 from danswer.server.models import GoogleAppCredentials
+from danswer.server.models import GoogleServiceAccountCredentialRequest
+from danswer.server.models import GoogleServiceAccountKey
 from danswer.server.models import IndexAttemptSnapshot
 from danswer.server.models import ObjectCreationIdResponse
 from danswer.server.models import RunConnectorRequest
@@ -118,7 +129,7 @@ def check_google_app_credentials_exist(
 
 
 @router.put("/admin/connector/google-drive/app-credential")
-def update_google_app_credentials(
+def upsert_google_app_credentials(
     app_credentials: GoogleAppCredentials, _: User = Depends(current_admin_user)
 ) -> StatusResponse:
     try:
@@ -128,6 +139,84 @@ def update_google_app_credentials(
 
     return StatusResponse(
         success=True, message="Successfully saved Google App Credentials"
+    )
+
+
+@router.delete("/admin/connector/google-drive/app-credential")
+def delete_google_app_credentials(
+    _: User = Depends(current_admin_user),
+) -> StatusResponse:
+    try:
+        delete_google_app_cred()
+    except ConfigNotFoundError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return StatusResponse(
+        success=True, message="Successfully deleted Google App Credentials"
+    )
+
+
+@router.get("/admin/connector/google-drive/service-account-key")
+def check_google_service_account_key_exist(
+    _: User = Depends(current_admin_user),
+) -> dict[str, str]:
+    try:
+        return {"service_account_email": get_service_account_key().client_email}
+    except ConfigNotFoundError:
+        raise HTTPException(
+            status_code=404, detail="Google Service Account Key not found"
+        )
+
+
+@router.put("/admin/connector/google-drive/service-account-key")
+def upsert_google_service_account_key(
+    service_account_key: GoogleServiceAccountKey, _: User = Depends(current_admin_user)
+) -> StatusResponse:
+    try:
+        upsert_service_account_key(service_account_key)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return StatusResponse(
+        success=True, message="Successfully saved Google Service Account Key"
+    )
+
+
+@router.delete("/admin/connector/google-drive/service-account-key")
+def delete_google_service_account_key(
+    _: User = Depends(current_admin_user),
+) -> StatusResponse:
+    try:
+        delete_service_account_key()
+    except ConfigNotFoundError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return StatusResponse(
+        success=True, message="Successfully deleted Google Service Account Key"
+    )
+
+
+@router.put("/admin/connector/google-drive/service-account-credential")
+def upsert_service_account_credential(
+    service_account_credential_request: GoogleServiceAccountCredentialRequest,
+    user: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> ObjectCreationIdResponse:
+    """Special API which allows the creation of a credential for a service account.
+    Combines the input with the saved service account key to create an entry in the
+    `Credential` table."""
+    try:
+        credential_base = build_service_account_creds(
+            delegated_user_email=service_account_credential_request.google_drive_delegated_user
+        )
+        print(credential_base)
+    except ConfigNotFoundError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # first delete all existing service account credentials
+    delete_google_drive_service_account_credentials(user, db_session)
+    return create_credential(
+        credential_data=credential_base, user=user, db_session=db_session
     )
 
 
