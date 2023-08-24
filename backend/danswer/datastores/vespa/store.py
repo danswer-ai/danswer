@@ -138,9 +138,7 @@ def _index_vespa_chunks(
         ) = update_cross_connector_document_metadata_map(
             chunk=chunk,
             cross_connector_document_metadata_map=cross_connector_document_metadata_map,
-            doc_store_cross_connector_document_metadata_fetch_fn=partial(
-                _get_vespa_document_cross_connector_metadata,
-            ),
+            doc_store_cross_connector_document_metadata_fetch_fn=_get_vespa_document_cross_connector_metadata,
             index_attempt_metadata=index_attempt_metadata,
         )
 
@@ -148,7 +146,7 @@ def _index_vespa_chunks(
             # Processing the first chunk of the doc and the doc exists
             deletion_success = _delete_vespa_doc_chunks(document.id)
             if not deletion_success:
-                logger.error(
+                raise RuntimeError(
                     f"Failed to delete pre-existing chunks for with document with id: {document.id}"
                 )
             already_existing_documents.add(document.id)
@@ -300,6 +298,7 @@ class VespaIndex(DocumentIndex):
         for update_request in update_requests:
             if update_request.boost is None and update_request.allowed_users is None:
                 logger.error("Update request received but nothing to update")
+                continue
 
             update_dict: dict[str, dict[str, list[str] | int]] = {"fields": {}}
             if update_request.boost:
@@ -312,16 +311,20 @@ class VespaIndex(DocumentIndex):
                     url = f"{DOCUMENT_ID_ENDPOINT}/{doc_chunk_id}"
                     res = requests.put(url, headers=json_header, json=update_dict)
 
-                    if res.status_code != 200:
-                        logger.error(f"Failed to update document: {document_id}")
+                    try:
+                        res.raise_for_status()
+                    except requests.HTTPError as e:
+                        failure_msg = f"Failed to update document: {document_id}"
+                        raise requests.HTTPError(failure_msg) from e
 
     def delete(self, doc_ids: list[str]) -> None:
         logger.info(f"Deleting {len(doc_ids)} documents from Vespa")
         for doc_id in doc_ids:
-            for doc_chunk_id in _get_vespa_chunk_ids_by_document_id(doc_id):
-                url = f"{DOCUMENT_ID_ENDPOINT}/{doc_chunk_id}"
-                logger.debug("Deleting: " + url)
-                requests.delete(url)
+            success = _delete_vespa_doc_chunks(doc_id)
+            if not success:
+                raise RuntimeError(
+                    f"Unable to delete document with document id: {doc_id}"
+                )
 
     def keyword_retrieval(
         self,
