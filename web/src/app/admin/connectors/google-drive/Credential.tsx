@@ -315,8 +315,10 @@ export const DriveOAuthSection = ({
           the service account to impersonate.
           <br />
           <br />
-          If you want to use the service account itself, make sure you have
-          shared the documents you want to index with the service account.
+          If you want to use the service account itself, leave the{" "}
+          <b>&apos;User email to impersonate&apos;</b> field blank when
+          submitting. If you do choose this option, make sure you have shared
+          the documents you want to index with the service account.
         </p>
 
         <div className="border-solid border-gray-600 border rounded-md p-6 mt-2 mb-4">
@@ -364,6 +366,7 @@ export const DriveOAuthSection = ({
                 <TextFormField
                   name="google_drive_delegated_user"
                   label="[Optional] User email to impersonate:"
+                  subtext="If left blank, Danswer will use the service account itself."
                 />
                 <div className="flex">
                   <button
