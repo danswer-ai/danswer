@@ -18,20 +18,10 @@ depends_on = None
 
 def upgrade() -> None:
     op.drop_table("chunk")
-    op.drop_index(
-        "ix_index_attempt_latest_for_connector_credential_pair",
-        table_name="index_attempt",
-    )
     op.execute("DROP TYPE IF EXISTS documentstoretype")
 
 
 def downgrade() -> None:
-    op.create_index(
-        "ix_index_attempt_latest_for_connector_credential_pair",
-        "index_attempt",
-        ["connector_id", "credential_id", "time_created"],
-        unique=False,
-    )
     op.create_table(
         "chunk",
         sa.Column("id", sa.VARCHAR(), autoincrement=False, nullable=False),
