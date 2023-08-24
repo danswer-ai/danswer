@@ -67,7 +67,7 @@ MASK_CREDENTIAL_PREFIX = (
 DOCUMENT_INDEX_NAME = "danswer_index"  # Shared by vector/keyword indices
 # Vespa is now the default document index store for both keyword and vector
 DOCUMENT_INDEX_TYPE = os.environ.get(
-    "DOCUMENT_INDEX_TYPE", DocumentIndexType.SPLIT.value
+    "DOCUMENT_INDEX_TYPE", DocumentIndexType.COMBINED.value
 )
 VESPA_HOST = os.environ.get("VESPA_HOST") or "localhost"
 VESPA_PORT = os.environ.get("VESPA_PORT") or "8081"

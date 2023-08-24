@@ -271,6 +271,7 @@ class VespaIndex(DocumentIndex):
         If the changes cannot be applied without conflict with existing data, it will fail with a non 200
         """
         deploy_url = f"{VESPA_APPLICATION_ENDPOINT}/tenant/default/prepareandactivate"
+        logger.debug(f"Sending Vespa zip to {deploy_url}")
         headers = {"Content-Type": "application/zip"}
         with open(self.deployment_zip, "rb") as f:
             response = requests.post(deploy_url, headers=headers, data=f)
