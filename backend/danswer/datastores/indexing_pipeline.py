@@ -93,11 +93,21 @@ def _indexing_pipeline(
         chunks=chunks, index_attempt_metadata=index_attempt_metadata
     )
     logger.debug(f"Keyword store insertion records: {keyword_store_insertion_records}")
-    _upsert_insertion_records(
-        insertion_records=keyword_store_insertion_records,
-        index_attempt_metadata=index_attempt_metadata,
-        document_store_type=StoreType.KEYWORD,
-    )
+    # TODO (chris): remove this try/except after issue with null document_id is resolved
+    try:
+        _upsert_insertion_records(
+            insertion_records=keyword_store_insertion_records,
+            index_attempt_metadata=index_attempt_metadata,
+            document_store_type=StoreType.KEYWORD,
+        )
+    except Exception as e:
+        logger.error(
+            f"Failed to upsert insertion records from keyword index for documents: "
+            f"{[document.to_short_descriptor() for document in documents]}, "
+            f"for chunks: {[chunk.to_short_descriptor() for chunk in chunks]},"
+            f"for insertion records: {keyword_store_insertion_records}"
+        )
+        raise e
     net_doc_count_keyword = _get_net_new_documents(
         insertion_records=keyword_store_insertion_records
     )
@@ -109,11 +119,21 @@ def _indexing_pipeline(
         chunks=chunks_with_embeddings, index_attempt_metadata=index_attempt_metadata
     )
     logger.debug(f"Vector store insertion records: {keyword_store_insertion_records}")
-    _upsert_insertion_records(
-        insertion_records=vector_store_insertion_records,
-        index_attempt_metadata=index_attempt_metadata,
-        document_store_type=StoreType.VECTOR,
-    )
+    # TODO (chris): remove this try/except after issue with null document_id is resolved
+    try:
+        _upsert_insertion_records(
+            insertion_records=vector_store_insertion_records,
+            index_attempt_metadata=index_attempt_metadata,
+            document_store_type=StoreType.VECTOR,
+        )
+    except Exception as e:
+        logger.error(
+            f"Failed to upsert insertion records from vector index for documents: "
+            f"{[document.to_short_descriptor() for document in documents]}, "
+            f"for chunks: {[chunk.to_short_descriptor() for chunk in chunks_with_embeddings]}"
+            f"for insertion records: {vector_store_insertion_records}"
+        )
+        raise e
     net_doc_count_vector = _get_net_new_documents(
         insertion_records=vector_store_insertion_records
     )
