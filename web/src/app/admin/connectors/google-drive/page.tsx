@@ -384,6 +384,7 @@ const Main = () => {
         googleDriveServiceAccountCredential={
           googleDriveServiceAccountCredential
         }
+        appCredentialData={appCredentialData}
         serviceAccountKeyData={serviceAccountKeyData}
       />
 

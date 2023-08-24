@@ -19,7 +19,6 @@ export function DeleteColumn<ConnectorConfigType, ConnectorCredentialType>({
   onUpdate,
 }: Props<ConnectorConfigType, ConnectorCredentialType>) {
   const [deleteHovered, setDeleteHovered] = useState<boolean>(false);
-  console.log(deleteHovered);
 
   const connector = connectorIndexingStatus.connector;
   const credential = connectorIndexingStatus.credential;
