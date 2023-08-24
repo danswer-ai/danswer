@@ -5,9 +5,10 @@ from collections.abc import Generator
 from collections.abc import Sequence
 from itertools import chain
 from typing import Any
+from typing import cast
 
 import docx2txt  # type:ignore
-from google.oauth2.credentials import Credentials  # type: ignore
+from google.auth.credentials import Credentials  # type: ignore
 from googleapiclient import discovery  # type: ignore
 from PyPDF2 import PdfReader
 
@@ -16,8 +17,19 @@ from danswer.configs.app_configs import GOOGLE_DRIVE_FOLLOW_SHORTCUTS
 from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_KEY
-from danswer.connectors.google_drive.connector_auth import get_drive_tokens
+from danswer.connectors.google_drive.connector_auth import (
+    get_google_drive_creds_for_authorized_user,
+)
+from danswer.connectors.google_drive.connector_auth import (
+    get_google_drive_creds_for_service_account,
+)
+from danswer.connectors.google_drive.constants import (
+    DB_CREDENTIALS_DICT_DELEGATED_USER_KEY,
+)
+from danswer.connectors.google_drive.constants import (
+    DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
+)
+from danswer.connectors.google_drive.constants import DB_CREDENTIALS_DICT_TOKEN_KEY
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -31,10 +43,6 @@ logger = setup_logger()
 
 # allow 10 minutes for modifiedTime to get propogated
 DRIVE_START_TIME_OFFSET = 60 * 10
-SCOPES = [
-    "https://www.googleapis.com/auth/drive.readonly",
-    "https://www.googleapis.com/auth/drive.metadata.readonly",
-]
 SUPPORTED_DRIVE_DOC_TYPES = [
     "application/vnd.google-apps.document",
     "application/vnd.google-apps.spreadsheet",
@@ -335,16 +343,51 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
 
         return folder_ids
 
-    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        access_token_json_str = credentials[DB_CREDENTIALS_DICT_KEY]
-        creds = get_drive_tokens(token_json_str=access_token_json_str)
+    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, str] | None:
+        """Checks for two different types of credentials.
+        (1) A credential which holds a token acquired via a user going thorugh
+        the Google OAuth flow.
+        (2) A credential which holds a service account key JSON file, which
+        can then be used to impersonate any user in the workspace.
+        """
+        creds = None
+        new_creds_dict = None
+        if DB_CREDENTIALS_DICT_TOKEN_KEY in credentials:
+            access_token_json_str = cast(
+                str, credentials[DB_CREDENTIALS_DICT_TOKEN_KEY]
+            )
+            creds = get_google_drive_creds_for_authorized_user(
+                token_json_str=access_token_json_str
+            )
+
+            # tell caller to update token stored in DB if it has changed
+            # (e.g. the token has been refreshed)
+            new_creds_json_str = creds.to_json() if creds else ""
+            if new_creds_json_str != access_token_json_str:
+                new_creds_dict = {DB_CREDENTIALS_DICT_TOKEN_KEY: new_creds_json_str}
+
+        if DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY in credentials:
+            service_account_key_json_str = credentials[
+                DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY
+            ]
+            creds = get_google_drive_creds_for_service_account(
+                service_account_key_json_str=service_account_key_json_str
+            )
+
+            # "Impersonate" a user if one is specified
+            delegated_user_email = cast(
+                str | None, credentials.get(DB_CREDENTIALS_DICT_DELEGATED_USER_KEY)
+            )
+            if delegated_user_email:
+                creds = creds.with_subject(delegated_user_email) if creds else None
+
         if creds is None:
-            raise PermissionError("Unable to access Google Drive.")
+            raise PermissionError(
+                "Unable to access Google Drive - unknown credential structure."
+            )
+
         self.creds = creds
-        new_creds_json_str = creds.to_json()
-        if new_creds_json_str != access_token_json_str:
-            return {DB_CREDENTIALS_DICT_KEY: new_creds_json_str}
-        return None
+        return new_creds_dict
 
     def _fetch_docs_from_drive(
         self,
@@ -417,3 +460,30 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         yield from self._fetch_docs_from_drive(
             max(start - DRIVE_START_TIME_OFFSET, 0, 0), end
         )
+
+
+if __name__ == "__main__":
+    import json
+    import os
+
+    service_account_json_path = os.environ.get("GOOGLE_SERVICE_ACCOUNT_KEY_JSON_PATH")
+    if not service_account_json_path:
+        raise ValueError(
+            "Please set GOOGLE_SERVICE_ACCOUNT_KEY_JSON_PATH environment variable"
+        )
+    with open(service_account_json_path) as f:
+        creds = json.load(f)
+
+    credentials_dict = {
+        DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY: json.dumps(creds),
+    }
+    delegated_user = os.environ.get("GOOGLE_DRIVE_DELEGATED_USER")
+    if delegated_user:
+        credentials_dict[DB_CREDENTIALS_DICT_DELEGATED_USER_KEY] = delegated_user
+
+    connector = GoogleDriveConnector()
+    connector.load_credentials(credentials_dict)
+    document_batch_generator = connector.load_from_state()
+    for document_batch in document_batch_generator:
+        print(document_batch)
+        break

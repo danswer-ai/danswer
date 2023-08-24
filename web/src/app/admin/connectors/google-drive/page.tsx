@@ -5,21 +5,17 @@ import { GoogleDriveIcon } from "@/components/icons/icons";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { LoadingAnimation } from "@/components/Loading";
-import { useRouter } from "next/navigation";
 import { Popup, PopupSpec } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { Button } from "@/components/Button";
 import {
   ConnectorIndexingStatus,
   Credential,
   GoogleDriveConfig,
   GoogleDriveCredentialJson,
+  GoogleDriveServiceAccountCredentialJson,
 } from "@/lib/types";
-import { setupGoogleDriveOAuth } from "@/lib/googleDrive";
-import Cookies from "js-cookie";
-import { GOOGLE_DRIVE_AUTH_IS_ADMIN_COOKIE_NAME } from "@/lib/constants";
-import { deleteCredential, linkCredential } from "@/lib/credential";
+import { linkCredential } from "@/lib/credential";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import {
   BooleanFormField,
@@ -27,81 +23,11 @@ import {
 } from "@/components/admin/connectors/Field";
 import { GoogleDriveConnectorsTable } from "./GoogleDriveConnectorsTable";
 import { googleDriveConnectorNameBuilder } from "./utils";
-
-const AppCredentialUpload = ({
-  setPopup,
-}: {
-  setPopup: (popupSpec: PopupSpec | null) => void;
-}) => {
-  const [appCredentialJsonStr, setAppCredentialJsonStr] = useState<
-    string | undefined
-  >();
-
-  return (
-    <>
-      <input
-        className={
-          "mr-3 text-sm text-gray-900 border border-gray-300 rounded-lg " +
-          "cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none " +
-          "dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-        }
-        type="file"
-        accept=".json"
-        onChange={(event) => {
-          if (!event.target.files) {
-            return;
-          }
-          const file = event.target.files[0];
-          const reader = new FileReader();
-
-          reader.onload = function (loadEvent) {
-            if (!loadEvent?.target?.result) {
-              return;
-            }
-            const fileContents = loadEvent.target.result;
-            setAppCredentialJsonStr(fileContents as string);
-          };
-
-          reader.readAsText(file);
-        }}
-      />
-
-      <Button
-        disabled={!appCredentialJsonStr}
-        onClick={async () => {
-          const response = await fetch(
-            "/api/manage/admin/connector/google-drive/app-credential",
-            {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: appCredentialJsonStr,
-            }
-          );
-          if (response.ok) {
-            setPopup({
-              message: "Successfully uploaded app credentials",
-              type: "success",
-            });
-          } else {
-            setPopup({
-              message: `Failed to upload app credentials - ${response.status}`,
-              type: "error",
-            });
-          }
-        }}
-      >
-        Upload
-      </Button>
-    </>
-  );
-};
+import { DriveOAuthSection, DriveJsonUploadSection } from "./Credential";
 
 interface GoogleDriveConnectorManagementProps {
-  googleDrivePublicCredential:
-    | Credential<GoogleDriveCredentialJson>
-    | undefined;
+  googleDrivePublicCredential?: Credential<GoogleDriveCredentialJson>;
+  googleDriveServiceAccountCredential?: Credential<GoogleDriveServiceAccountCredentialJson>;
   googleDriveConnectorIndexingStatus: ConnectorIndexingStatus<
     GoogleDriveConfig,
     GoogleDriveCredentialJson
@@ -116,6 +42,7 @@ interface GoogleDriveConnectorManagementProps {
 
 const GoogleDriveConnectorManagement = ({
   googleDrivePublicCredential,
+  googleDriveServiceAccountCredential,
   googleDriveConnectorIndexingStatus,
   googleDriveConnectorIndexingStatuses,
   credentialIsLinked,
@@ -123,7 +50,9 @@ const GoogleDriveConnectorManagement = ({
 }: GoogleDriveConnectorManagementProps) => {
   const { mutate } = useSWRConfig();
 
-  if (!googleDrivePublicCredential) {
+  const liveCredential =
+    googleDrivePublicCredential || googleDriveServiceAccountCredential;
+  if (!liveCredential) {
     return (
       <p className="text-sm">
         Please authenticate with Google Drive as described in Step 2! Once done
@@ -223,7 +152,7 @@ const GoogleDriveConnectorManagement = ({
   return (
     <div>
       <div className="text-sm">
-        <p className="my-3">
+        <div className="my-3">
           {googleDriveConnectorIndexingStatuses.length > 0 ? (
             <>
               Checkout the{" "}
@@ -239,7 +168,7 @@ const GoogleDriveConnectorManagement = ({
               latest documents from Google Drive every <b>10</b> minutes.
             </p>
           )}
-        </p>
+        </div>
       </div>
       {googleDriveConnectorIndexingStatuses.length > 0 && (
         <>
@@ -310,10 +239,7 @@ const GoogleDriveConnectorManagement = ({
           refreshFreq={10 * 60} // 10 minutes
           onSubmit={async (isSuccess, responseJson) => {
             if (isSuccess && responseJson) {
-              await linkCredential(
-                responseJson.id,
-                googleDrivePublicCredential.id
-              );
+              await linkCredential(responseJson.id, liveCredential.id);
               mutate("/api/manage/admin/connector/indexing-status");
             }
           }}
@@ -324,15 +250,20 @@ const GoogleDriveConnectorManagement = ({
 };
 
 const Main = () => {
-  const router = useRouter();
-  const { mutate } = useSWRConfig();
-
   const {
     data: appCredentialData,
     isLoading: isAppCredentialLoading,
     error: isAppCredentialError,
   } = useSWR<{ client_id: string }>(
     "/api/manage/admin/connector/google-drive/app-credential",
+    fetcher
+  );
+  const {
+    data: serviceAccountKeyData,
+    isLoading: isServiceAccountKeyLoading,
+    error: isServiceAccountKeyError,
+  } = useSWR<{ service_account_email: string }>(
+    "/api/manage/admin/connector/google-drive/service-account-key",
     fetcher
   );
   const {
@@ -347,10 +278,7 @@ const Main = () => {
     data: credentialsData,
     isLoading: isCredentialsLoading,
     error: isCredentialsError,
-  } = useSWR<Credential<GoogleDriveCredentialJson>[]>(
-    "/api/manage/credential",
-    fetcher
-  );
+  } = useSWR<Credential<any>[]>("/api/manage/credential", fetcher);
 
   const [popup, setPopup] = useState<{
     message: string;
@@ -365,6 +293,7 @@ const Main = () => {
 
   if (
     (!appCredentialData && isAppCredentialLoading) ||
+    (!serviceAccountKeyData && isServiceAccountKeyLoading) ||
     (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
     (!credentialsData && isCredentialsLoading)
   ) {
@@ -391,7 +320,7 @@ const Main = () => {
     );
   }
 
-  if (isAppCredentialError) {
+  if (isAppCredentialError || isServiceAccountKeyError) {
     return (
       <div className="mx-auto">
         <div className="text-red-500">
@@ -401,9 +330,16 @@ const Main = () => {
     );
   }
 
-  const googleDrivePublicCredential = credentialsData.find(
+  const googleDrivePublicCredential:
+    | Credential<GoogleDriveCredentialJson>
+    | undefined = credentialsData.find(
     (credential) =>
       credential.credential_json?.google_drive_tokens && credential.public_doc
+  );
+  const googleDriveServiceAccountCredential:
+    | Credential<GoogleDriveServiceAccountCredentialJson>
+    | undefined = credentialsData.find(
+    (credential) => credential.credential_json?.google_drive_service_account_key
   );
   const googleDriveConnectorIndexingStatuses: ConnectorIndexingStatus<
     GoogleDriveConfig,
@@ -416,127 +352,50 @@ const Main = () => {
     googleDriveConnectorIndexingStatuses[0];
 
   const credentialIsLinked =
-    googleDriveConnectorIndexingStatus !== undefined &&
-    googleDrivePublicCredential !== undefined &&
-    googleDriveConnectorIndexingStatus.connector.credential_ids.includes(
-      googleDrivePublicCredential.id
-    );
+    (googleDriveConnectorIndexingStatus !== undefined &&
+      googleDrivePublicCredential !== undefined &&
+      googleDriveConnectorIndexingStatus.connector.credential_ids.includes(
+        googleDrivePublicCredential.id
+      )) ||
+    (googleDriveConnectorIndexingStatus !== undefined &&
+      googleDriveServiceAccountCredential !== undefined &&
+      googleDriveConnectorIndexingStatus.connector.credential_ids.includes(
+        googleDriveServiceAccountCredential.id
+      ));
 
   return (
     <>
       {popup && <Popup message={popup.message} type={popup.type} />}
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
-        Step 1: Provide your app Credentials
+        Step 1: Provide your Credentials
       </h2>
-      <div className="mt-2">
-        {appCredentialData?.client_id ? (
-          <div className="text-sm">
-            <div>
-              Found existing app credentials with the following{" "}
-              <b>Client ID:</b>
-              <p className="italic mt-1">{appCredentialData.client_id}</p>
-            </div>
-            <div className="mt-4">
-              If you want to update these credentials, upload a new
-              credentials.json file below.
-              <div className="mt-2">
-                <AppCredentialUpload
-                  setPopup={(popup) => {
-                    mutate(
-                      "/api/manage/admin/connector/google-drive/app-credential"
-                    );
-                    setPopupWithExpiration(popup);
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <>
-            <p className="text-sm">
-              Follow the guide{" "}
-              <a
-                className="text-blue-500"
-                target="_blank"
-                href="https://docs.danswer.dev/connectors/google_drive#authorization"
-              >
-                here
-              </a>{" "}
-              to setup your google app in your company workspace. Download the
-              credentials.json, and upload it here.
-            </p>
-            <AppCredentialUpload
-              setPopup={(popup) => {
-                mutate(
-                  "/api/manage/admin/connector/google-drive/app-credential"
-                );
-                setPopupWithExpiration(popup);
-              }}
-            />
-          </>
-        )}
-      </div>
+      <DriveJsonUploadSection
+        setPopup={setPopupWithExpiration}
+        appCredentialData={appCredentialData}
+        serviceAccountCredentialData={serviceAccountKeyData}
+      />
 
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
         Step 2: Authenticate with Danswer
       </h2>
-      <div className="text-sm mb-4">
-        {googleDrivePublicCredential ? (
-          <>
-            <p className="mb-2">
-              <i>Existing credential already setup!</i>
-            </p>
-            <Button
-              onClick={async () => {
-                await deleteCredential(googleDrivePublicCredential.id);
-                setPopup({
-                  message: "Successfully revoked access to Google Drive!",
-                  type: "success",
-                });
-                mutate("/api/manage/credential");
-              }}
-            >
-              Revoke Access
-            </Button>
-          </>
-        ) : (
-          <>
-            <p className="mb-2">
-              Next, you must provide credentials via OAuth. This gives us read
-              access to the docs you have access to in your google drive
-              account.
-            </p>
-            <Button
-              onClick={async () => {
-                const [authUrl, errorMsg] = await setupGoogleDriveOAuth({
-                  isPublic: true,
-                });
-                if (authUrl) {
-                  // cookie used by callback to determine where to finally redirect to
-                  Cookies.set(GOOGLE_DRIVE_AUTH_IS_ADMIN_COOKIE_NAME, "true", {
-                    path: "/",
-                  });
-                  router.push(authUrl);
-                  return;
-                }
-
-                setPopup({
-                  message: errorMsg,
-                  type: "error",
-                });
-              }}
-            >
-              Authenticate with Google Drive
-            </Button>
-          </>
-        )}
-      </div>
+      <DriveOAuthSection
+        setPopup={setPopupWithExpiration}
+        googleDrivePublicCredential={googleDrivePublicCredential}
+        googleDriveServiceAccountCredential={
+          googleDriveServiceAccountCredential
+        }
+        appCredentialData={appCredentialData}
+        serviceAccountKeyData={serviceAccountKeyData}
+      />
 
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
         Step 3: Start Indexing!
       </h2>
       <GoogleDriveConnectorManagement
         googleDrivePublicCredential={googleDrivePublicCredential}
+        googleDriveServiceAccountCredential={
+          googleDriveServiceAccountCredential
+        }
         googleDriveConnectorIndexingStatus={googleDriveConnectorIndexingStatus}
         googleDriveConnectorIndexingStatuses={
           googleDriveConnectorIndexingStatuses

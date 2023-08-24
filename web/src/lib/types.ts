@@ -165,6 +165,11 @@ export interface GoogleDriveCredentialJson {
   google_drive_tokens: string;
 }
 
+export interface GoogleDriveServiceAccountCredentialJson {
+  google_drive_service_account_key: string;
+  google_drive_delegated_user: string;
+}
+
 export interface SlabCredentialJson {
   slab_bot_token: string;
 }
