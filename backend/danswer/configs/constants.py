@@ -9,6 +9,7 @@ SOURCE_LINKS = "source_links"
 SOURCE_LINK = "link"
 SEMANTIC_IDENTIFIER = "semantic_identifier"
 SECTION_CONTINUATION = "section_continuation"
+EMBEDDINGS = "embeddings"
 ALLOWED_USERS = "allowed_users"
 ALLOWED_GROUPS = "allowed_groups"
 METADATA = "metadata"
@@ -16,6 +17,7 @@ GEN_AI_API_KEY_STORAGE_KEY = "genai_api_key"
 HTML_SEPARATOR = "\n"
 PUBLIC_DOC_PAT = "PUBLIC"
 QUOTE = "quote"
+BOOST = "boost"
 
 
 class DocumentSource(str, Enum):
@@ -33,6 +35,11 @@ class DocumentSource(str, Enum):
     NOTION = "notion"
     ZULIP = "zulip"
     LINEAR = "linear"
+
+
+class DocumentIndexType(str, Enum):
+    COMBINED = "combined"  # Vespa
+    SPLIT = "split"  # Typesense + Qdrant
 
 
 class DanswerGenAIModel(str, Enum):

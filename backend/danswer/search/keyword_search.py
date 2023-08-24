@@ -7,8 +7,8 @@ from nltk.tokenize import word_tokenize  # type:ignore
 
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_RETURNED_HITS
+from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import IndexFilter
-from danswer.datastores.interfaces import KeywordIndex
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
@@ -38,11 +38,11 @@ def retrieve_keyword_documents(
     query: str,
     user_id: UUID | None,
     filters: list[IndexFilter] | None,
-    datastore: KeywordIndex,
+    datastore: DocumentIndex,
     num_hits: int = NUM_RETURNED_HITS,
 ) -> list[InferenceChunk] | None:
     edited_query = query_processing(query)
-    top_chunks = datastore.keyword_search(edited_query, user_id, filters, num_hits)
+    top_chunks = datastore.keyword_retrieval(edited_query, user_id, filters, num_hits)
     if not top_chunks:
         filters_log_msg = json.dumps(filters, separators=(",", ":")).replace("\n", "")
         logger.warning(

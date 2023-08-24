@@ -2,8 +2,7 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
 from danswer.configs.app_configs import QA_TIMEOUT
-from danswer.datastores.qdrant.store import QdrantIndex
-from danswer.datastores.typesense.store import TypesenseIndex
+from danswer.datastores.document_index import get_default_document_index
 from danswer.db.models import User
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
@@ -43,12 +42,12 @@ def answer_question(
     user_id = None if user is None else user.id
     if use_keyword:
         ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
-            query, user_id, filters, TypesenseIndex(collection)
+            query, user_id, filters, get_default_document_index(collection=collection)
         )
         unranked_chunks: list[InferenceChunk] | None = []
     else:
         ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-            query, user_id, filters, QdrantIndex(collection)
+            query, user_id, filters, get_default_document_index(collection=collection)
         )
     if not ranked_chunks:
         return QAResponse(

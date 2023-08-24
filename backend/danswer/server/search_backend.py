@@ -10,8 +10,7 @@ from danswer.auth.users import current_user
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
-from danswer.datastores.qdrant.store import QdrantIndex
-from danswer.datastores.typesense.store import TypesenseIndex
+from danswer.datastores.document_index import get_default_document_index
 from danswer.db.models import User
 from danswer.direct_qa.answer_question import answer_question
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
@@ -60,7 +59,7 @@ def semantic_search(
 
     user_id = None if user is None else user.id
     ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-        query, user_id, filters, QdrantIndex(collection)
+        query, user_id, filters, get_default_document_index(collection=collection)
     )
     if not ranked_chunks:
         return SearchResponse(top_ranked_docs=None, lower_ranked_docs=None)
@@ -82,7 +81,7 @@ def keyword_search(
 
     user_id = None if user is None else user.id
     ranked_chunks = retrieve_keyword_documents(
-        query, user_id, filters, TypesenseIndex(collection)
+        query, user_id, filters, get_default_document_index(collection=collection)
     )
     if not ranked_chunks:
         return SearchResponse(top_ranked_docs=None, lower_ranked_docs=None)
@@ -110,6 +109,8 @@ def stream_direct_qa(
 
     logger.debug(f"Received QA query: {question.query}")
     logger.debug(f"Query filters: {question.filters}")
+    if question.use_keyword:
+        logger.debug(f"User selected Keyword Search")
 
     @log_generator_function_time()
     def stream_qa_portions(
@@ -128,12 +129,18 @@ def stream_direct_qa(
         user_id = None if user is None else user.id
         if use_keyword:
             ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
-                query, user_id, filters, TypesenseIndex(collection)
+                query,
+                user_id,
+                filters,
+                get_default_document_index(collection=collection),
             )
             unranked_chunks: list[InferenceChunk] | None = []
         else:
             ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-                query, user_id, filters, QdrantIndex(collection)
+                query,
+                user_id,
+                filters,
+                get_default_document_index(collection=collection),
             )
         if not ranked_chunks:
             logger.debug("No Documents Found")

@@ -2,7 +2,7 @@ import abc
 import re
 from collections.abc import Callable
 
-from danswer.chunking.models import IndexChunk
+from danswer.chunking.models import DocAwareChunk
 from danswer.configs.app_configs import BLURB_LENGTH
 from danswer.configs.app_configs import CHUNK_MAX_CHAR_OVERLAP
 from danswer.configs.app_configs import CHUNK_SIZE
@@ -12,7 +12,7 @@ from danswer.connectors.models import Section
 from danswer.utils.text_processing import shared_precompare_cleanup
 
 SECTION_SEPARATOR = "\n\n"
-ChunkFunc = Callable[[Document], list[IndexChunk]]
+ChunkFunc = Callable[[Document], list[DocAwareChunk]]
 
 
 def extract_blurb(text: str, blurb_len: int) -> str:
@@ -51,7 +51,7 @@ def chunk_large_section(
     word_overlap: int = CHUNK_WORD_OVERLAP,
     blurb_len: int = BLURB_LENGTH,
     chunk_overflow_max: int = CHUNK_MAX_CHAR_OVERLAP,
-) -> list[IndexChunk]:
+) -> list[DocAwareChunk]:
     """Split large sections into multiple chunks with the final chunk having as much previous overlap as possible.
     Backtracks word_overlap words, delimited by whitespace, backtrack up to chunk_overflow_max characters max
     When chunk is finished in forward direction, attempt to finish the word, but only up to chunk_overflow_max
@@ -129,7 +129,7 @@ def chunk_large_section(
     chunks = []
     for chunk_ind, chunk_str in enumerate(chunk_strs):
         chunks.append(
-            IndexChunk(
+            DocAwareChunk(
                 source_document=document,
                 chunk_id=start_chunk_id + chunk_ind,
                 blurb=blurb,
@@ -146,8 +146,8 @@ def chunk_document(
     chunk_size: int = CHUNK_SIZE,
     subsection_overlap: int = CHUNK_WORD_OVERLAP,
     blurb_len: int = BLURB_LENGTH,
-) -> list[IndexChunk]:
-    chunks: list[IndexChunk] = []
+) -> list[DocAwareChunk]:
+    chunks: list[DocAwareChunk] = []
     link_offsets: dict[int, str] = {}
     chunk_text = ""
     for section in document.sections:
@@ -160,7 +160,7 @@ def chunk_document(
         if section_length > chunk_size:
             if chunk_text:
                 chunks.append(
-                    IndexChunk(
+                    DocAwareChunk(
                         source_document=document,
                         chunk_id=len(chunks),
                         blurb=extract_blurb(chunk_text, blurb_len),
@@ -191,7 +191,7 @@ def chunk_document(
             link_offsets[curr_offset_len] = section.link
         else:
             chunks.append(
-                IndexChunk(
+                DocAwareChunk(
                     source_document=document,
                     chunk_id=len(chunks),
                     blurb=extract_blurb(chunk_text, blurb_len),
@@ -206,7 +206,7 @@ def chunk_document(
     # Once we hit the end, if we're still in the process of building a chunk, add what we have
     if chunk_text:
         chunks.append(
-            IndexChunk(
+            DocAwareChunk(
                 source_document=document,
                 chunk_id=len(chunks),
                 blurb=extract_blurb(chunk_text, blurb_len),
@@ -220,10 +220,10 @@ def chunk_document(
 
 class Chunker:
     @abc.abstractmethod
-    def chunk(self, document: Document) -> list[IndexChunk]:
+    def chunk(self, document: Document) -> list[DocAwareChunk]:
         raise NotImplementedError
 
 
 class DefaultChunker(Chunker):
-    def chunk(self, document: Document) -> list[IndexChunk]:
+    def chunk(self, document: Document) -> list[DocAwareChunk]:
         return chunk_document(document)

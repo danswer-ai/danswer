@@ -4,7 +4,8 @@ from uuid import UUID
 import numpy
 from sentence_transformers import SentenceTransformer  # type: ignore
 
-from danswer.chunking.models import EmbeddedIndexChunk
+from danswer.chunking.models import ChunkEmbedding
+from danswer.chunking.models import DocAwareChunk
 from danswer.chunking.models import IndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import ENABLE_MINI_CHUNK
@@ -12,8 +13,8 @@ from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
+from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import IndexFilter
-from danswer.datastores.interfaces import VectorIndex
 from danswer.search.models import Embedder
 from danswer.search.search_utils import get_default_embedding_model
 from danswer.search.search_utils import get_default_reranking_model_ensemble
@@ -69,7 +70,7 @@ def retrieve_ranked_documents(
     query: str,
     user_id: UUID | None,
     filters: list[IndexFilter] | None,
-    datastore: VectorIndex,
+    datastore: DocumentIndex,
     num_hits: int = NUM_RETURNED_HITS,
     num_rerank: int = NUM_RERANKED_RESULTS,
 ) -> tuple[list[InferenceChunk] | None, list[InferenceChunk] | None]:
@@ -127,12 +128,12 @@ def split_chunk_text_into_mini_chunks(
 
 @log_function_time()
 def encode_chunks(
-    chunks: list[IndexChunk],
+    chunks: list[DocAwareChunk],
     embedding_model: SentenceTransformer | None = None,
     batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
     enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
-) -> list[EmbeddedIndexChunk]:
-    embedded_chunks: list[EmbeddedIndexChunk] = []
+) -> list[IndexChunk]:
+    embedded_chunks: list[IndexChunk] = []
     if embedding_model is None:
         embedding_model = get_default_embedding_model()
 
@@ -163,9 +164,12 @@ def encode_chunks(
         chunk_embeddings = embeddings[
             embedding_ind_start : embedding_ind_start + num_embeddings
         ]
-        new_embedded_chunk = EmbeddedIndexChunk(
+        new_embedded_chunk = IndexChunk(
             **{k: getattr(chunk, k) for k in chunk.__dataclass_fields__},
-            embeddings=chunk_embeddings,
+            embeddings=ChunkEmbedding(
+                full_embedding=chunk_embeddings[0],
+                mini_chunk_embeddings=chunk_embeddings[1:],
+            ),
         )
         embedded_chunks.append(new_embedded_chunk)
         embedding_ind_start += num_embeddings
@@ -174,5 +178,5 @@ def encode_chunks(
 
 
 class DefaultEmbedder(Embedder):
-    def embed(self, chunks: list[IndexChunk]) -> list[EmbeddedIndexChunk]:
+    def embed(self, chunks: list[DocAwareChunk]) -> list[IndexChunk]:
         return encode_chunks(chunks)

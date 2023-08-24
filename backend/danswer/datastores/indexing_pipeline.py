@@ -6,15 +6,13 @@ from sqlalchemy.orm import Session
 
 from danswer.chunking.chunk import Chunker
 from danswer.chunking.chunk import DefaultChunker
+from danswer.chunking.models import DocAwareChunk
 from danswer.connectors.models import Document
 from danswer.connectors.models import IndexAttemptMetadata
-from danswer.datastores.interfaces import ChunkInsertionRecord
-from danswer.datastores.interfaces import ChunkMetadata
-from danswer.datastores.interfaces import KeywordIndex
-from danswer.datastores.interfaces import StoreType
-from danswer.datastores.interfaces import VectorIndex
-from danswer.datastores.qdrant.store import QdrantIndex
-from danswer.datastores.typesense.store import TypesenseIndex
+from danswer.datastores.document_index import get_default_document_index
+from danswer.datastores.interfaces import DocumentIndex
+from danswer.datastores.interfaces import DocumentInsertionRecord
+from danswer.datastores.interfaces import DocumentMetadata
 from danswer.db.document import upsert_documents_complete
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.search.models import Embedder
@@ -32,20 +30,17 @@ class IndexingPipelineProtocol(Protocol):
 
 
 def _upsert_insertion_records(
-    insertion_records: list[ChunkInsertionRecord],
+    insertion_records: set[DocumentInsertionRecord],
     index_attempt_metadata: IndexAttemptMetadata,
-    document_store_type: StoreType,
 ) -> None:
     with Session(get_sqlalchemy_engine()) as session:
         upsert_documents_complete(
             db_session=session,
             document_metadata_batch=[
-                ChunkMetadata(
+                DocumentMetadata(
                     connector_id=index_attempt_metadata.connector_id,
                     credential_id=index_attempt_metadata.credential_id,
                     document_id=insertion_record.document_id,
-                    store_id=insertion_record.store_id,
-                    document_store_type=document_store_type,
                 )
                 for insertion_record in insertion_records
             ],
@@ -53,7 +48,7 @@ def _upsert_insertion_records(
 
 
 def _get_net_new_documents(
-    insertion_records: list[ChunkInsertionRecord],
+    insertion_records: list[DocumentInsertionRecord],
 ) -> int:
     net_new_documents = 0
     seen_documents: set[str] = set()
@@ -71,106 +66,61 @@ def _indexing_pipeline(
     *,
     chunker: Chunker,
     embedder: Embedder,
-    vector_index: VectorIndex,
-    keyword_index: KeywordIndex,
+    document_index: DocumentIndex,
     documents: list[Document],
     index_attempt_metadata: IndexAttemptMetadata,
 ) -> tuple[int, int]:
     """Takes different pieces of the indexing pipeline and applies it to a batch of documents
     Note that the documents should already be batched at this point so that it does not inflate the
     memory requirements"""
-    # Chunk the documents into reasonably-sized chunks so they can fit into the
-    # context-sizes of our embedding models
-    chunks = list(chain(*[chunker.chunk(document=document) for document in documents]))
+    chunks: list[DocAwareChunk] = list(
+        chain(*[chunker.chunk(document=document) for document in documents])
+    )
     logger.debug(
         f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in chunks]}"
     )
-
-    # Insert the chunks into our Keyword document store + store records of these
-    # documents / chunks into our database
-    # TODO keyword indexing can occur at same time as embedding
-    keyword_store_insertion_records = keyword_index.index(
-        chunks=chunks, index_attempt_metadata=index_attempt_metadata
-    )
-    logger.debug(f"Keyword store insertion records: {keyword_store_insertion_records}")
-    # TODO (chris): remove this try/except after issue with null document_id is resolved
-    try:
-        _upsert_insertion_records(
-            insertion_records=keyword_store_insertion_records,
-            index_attempt_metadata=index_attempt_metadata,
-            document_store_type=StoreType.KEYWORD,
-        )
-    except Exception as e:
-        logger.error(
-            f"Failed to upsert insertion records from keyword index for documents: "
-            f"{[document.to_short_descriptor() for document in documents]}, "
-            f"for chunks: {[chunk.to_short_descriptor() for chunk in chunks]},"
-            f"for insertion records: {keyword_store_insertion_records}"
-        )
-        raise e
-    net_doc_count_keyword = _get_net_new_documents(
-        insertion_records=keyword_store_insertion_records
-    )
-
-    # Embed the chunks and then insert them into our Vector document store
-    # + store records of these documents / chunks into our database
     chunks_with_embeddings = embedder.embed(chunks=chunks)
-    vector_store_insertion_records = vector_index.index(
+
+    # A document will not be spread across different batches, so all the documents with chunks in this set, are fully
+    # represented by the chunks in this set
+    insertion_records = document_index.index(
         chunks=chunks_with_embeddings, index_attempt_metadata=index_attempt_metadata
     )
-    logger.debug(f"Vector store insertion records: {keyword_store_insertion_records}")
+
     # TODO (chris): remove this try/except after issue with null document_id is resolved
     try:
         _upsert_insertion_records(
-            insertion_records=vector_store_insertion_records,
+            insertion_records=insertion_records,
             index_attempt_metadata=index_attempt_metadata,
-            document_store_type=StoreType.VECTOR,
         )
     except Exception as e:
         logger.error(
             f"Failed to upsert insertion records from vector index for documents: "
             f"{[document.to_short_descriptor() for document in documents]}, "
             f"for chunks: {[chunk.to_short_descriptor() for chunk in chunks_with_embeddings]}"
-            f"for insertion records: {vector_store_insertion_records}"
+            f"for insertion records: {insertion_records}"
         )
         raise e
-    net_doc_count_vector = _get_net_new_documents(
-        insertion_records=vector_store_insertion_records
-    )
 
-    if net_doc_count_vector != net_doc_count_keyword:
-        logger.warning("Document count change from keyword/vector indices don't align")
-    net_new_docs = max(net_doc_count_keyword, net_doc_count_vector)
-    logger.info(f"Indexed {net_new_docs} new documents")
-    return net_new_docs, len(chunks)
+    return len(insertion_records), len(chunks)
 
 
 def build_indexing_pipeline(
     *,
     chunker: Chunker | None = None,
     embedder: Embedder | None = None,
-    vector_index: VectorIndex | None = None,
-    keyword_index: KeywordIndex | None = None,
+    document_index: DocumentIndex | None = None,
 ) -> IndexingPipelineProtocol:
-    """Builds a pipeline which takes in a list (batch) of docs and indexes them.
+    """Builds a pipline which takes in a list (batch) of docs and indexes them."""
+    chunker = chunker or DefaultChunker()
 
-    Default uses _ chunker, _ embedder, and qdrant for the datastore"""
-    if chunker is None:
-        chunker = DefaultChunker()
+    embedder = embedder or DefaultEmbedder()
 
-    if embedder is None:
-        embedder = DefaultEmbedder()
-
-    if vector_index is None:
-        vector_index = QdrantIndex()
-
-    if keyword_index is None:
-        keyword_index = TypesenseIndex()
+    document_index = document_index or get_default_document_index()
 
     return partial(
         _indexing_pipeline,
         chunker=chunker,
         embedder=embedder,
-        vector_index=vector_index,
-        keyword_index=keyword_index,
+        document_index=document_index,
     )

@@ -25,7 +25,6 @@ from sqlalchemy.orm import relationship
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
-from danswer.datastores.interfaces import StoreType
 
 
 class IndexingStatus(str, PyEnum):
@@ -185,7 +184,7 @@ class IndexAttempt(Base):
         nullable=True,
     )
     status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
-    num_docs_indexed: Mapped[int] = mapped_column(Integer, default=0)
+    num_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
     error_msg: Mapped[str | None] = mapped_column(
         String(), default=None
     )  # only filled if status = "failed"
@@ -195,7 +194,7 @@ class IndexAttempt(Base):
     )
     # when the actual indexing run began
     # NOTE: will use the api_server clock rather than DB server clock
-    time_started: Mapped[datetime.datetime] = mapped_column(
+    time_started: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
     )
     time_updated: Mapped[datetime.datetime] = mapped_column(
@@ -261,20 +260,13 @@ class DeletionAttempt(Base):
 
 class Document(Base):
     """Represents a single documents from a source. This is used to store
-    document level metadata so we don't need to duplicate it in a bunch of
-    DocumentByConnectorCredentialPair's/Chunk's for documents
-    that are split into many chunks and/or indexed by many connector / credential
-    pairs."""
+    document level metadata, but currently nothing is stored"""
 
     __tablename__ = "document"
 
     # this should correspond to the ID of the document (as is passed around
     # in Danswer)
     id: Mapped[str] = mapped_column(String, primary_key=True)
-
-    document_store_entries: Mapped["Chunk"] = relationship(
-        "Chunk", back_populates="document"
-    )
 
 
 class DocumentByConnectorCredentialPair(Base):
@@ -296,22 +288,4 @@ class DocumentByConnectorCredentialPair(Base):
     )
     credential: Mapped[Credential] = relationship(
         "Credential", back_populates="documents_by_credential"
-    )
-
-
-class Chunk(Base):
-    """A row represents a single entry in a document store (e.g. a single chunk
-    in Qdrant/Typesense)"""
-
-    __tablename__ = "chunk"
-
-    # this should correspond to the ID in the document store
-    id: Mapped[str] = mapped_column(String, primary_key=True)
-    document_store_type: Mapped[StoreType] = mapped_column(
-        Enum(StoreType), primary_key=True
-    )
-    document_id: Mapped[str] = mapped_column(ForeignKey("document.id"))
-
-    document: Mapped[Document] = relationship(
-        "Document", back_populates="document_store_entries"
     )

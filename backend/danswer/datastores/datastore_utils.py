@@ -5,7 +5,6 @@ from typing import TypeVar
 
 from pydantic import BaseModel
 
-from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import IndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.constants import PUBLIC_DOC_PAT
@@ -16,7 +15,7 @@ DEFAULT_BATCH_SIZE = 30
 
 
 def get_uuid_from_chunk(
-    chunk: IndexChunk | EmbeddedIndexChunk | InferenceChunk, mini_chunk_ind: int = 0
+    chunk: IndexChunk | InferenceChunk, mini_chunk_ind: int = 0
 ) -> uuid.UUID:
     doc_str = (
         chunk.document_id
@@ -58,7 +57,7 @@ def _add_if_not_exists(l: list[T], item: T) -> list[T]:
 
 
 def update_cross_connector_document_metadata_map(
-    chunk: IndexChunk | EmbeddedIndexChunk,
+    chunk: IndexChunk,
     cross_connector_document_metadata_map: dict[str, CrossConnectorDocumentMetadata],
     doc_store_cross_connector_document_metadata_fetch_fn: CrossConnectorDocumentMetadataFetchCallable,
     index_attempt_metadata: IndexAttemptMetadata,

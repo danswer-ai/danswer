@@ -1,18 +1,14 @@
 import json
 from functools import partial
 from typing import cast
-from uuid import UUID
 
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from qdrant_client.http.exceptions import ResponseHandlingException
 from qdrant_client.http.models.models import UpdateResult
-from qdrant_client.models import CollectionsResponse
-from qdrant_client.models import Distance
 from qdrant_client.models import PointStruct
-from qdrant_client.models import VectorParams
 
-from danswer.chunking.models import EmbeddedIndexChunk
+from danswer.chunking.models import IndexChunk
 from danswer.configs.constants import ALLOWED_GROUPS
 from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import BLURB
@@ -24,7 +20,6 @@ from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
-from danswer.configs.model_configs import DOC_EMBEDDING_DIM
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.datastores.datastore_utils import CrossConnectorDocumentMetadata
 from danswer.datastores.datastore_utils import DEFAULT_BATCH_SIZE
@@ -32,29 +27,13 @@ from danswer.datastores.datastore_utils import get_uuid_from_chunk
 from danswer.datastores.datastore_utils import (
     update_cross_connector_document_metadata_map,
 )
-from danswer.datastores.interfaces import ChunkInsertionRecord
+from danswer.datastores.interfaces import DocumentInsertionRecord
 from danswer.datastores.qdrant.utils import get_payload_from_record
 from danswer.utils.clients import get_qdrant_client
 from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
-
-
-def list_qdrant_collections() -> CollectionsResponse:
-    return get_qdrant_client().get_collections()
-
-
-def create_qdrant_collection(
-    collection_name: str, embedding_dim: int = DOC_EMBEDDING_DIM
-) -> None:
-    logger.info(f"Attempting to create collection {collection_name}")
-    result = get_qdrant_client().create_collection(
-        collection_name=collection_name,
-        vectors_config=VectorParams(size=embedding_dim, distance=Distance.COSINE),
-    )
-    if not result:
-        raise RuntimeError("Could not create Qdrant collection")
 
 
 def get_qdrant_document_cross_connector_metadata(
@@ -113,18 +92,18 @@ def delete_qdrant_doc_chunks(
 
 
 def index_qdrant_chunks(
-    chunks: list[EmbeddedIndexChunk],
+    chunks: list[IndexChunk],
     index_attempt_metadata: IndexAttemptMetadata,
     collection: str,
     client: QdrantClient | None = None,
     batch_upsert: bool = True,
-) -> list[ChunkInsertionRecord]:
+) -> set[DocumentInsertionRecord]:
     # Public documents will have the PUBLIC string in ALLOWED_USERS
     # If credential that kicked this off has no user associated, either Auth is off or the doc is public
     q_client: QdrantClient = client if client else get_qdrant_client()
 
     point_structs: list[PointStruct] = []
-    insertion_records: list[ChunkInsertionRecord] = []
+    insertion_records: set[DocumentInsertionRecord] = set()
     # Maps document id to dict of whitelists for users/groups each containing list of users/groups as strings
     cross_connector_document_metadata_map: dict[
         str, CrossConnectorDocumentMetadata
@@ -152,12 +131,15 @@ def index_qdrant_chunks(
             delete_qdrant_doc_chunks(document.id, collection, q_client)
             already_existing_documents.add(document.id)
 
-        for minichunk_ind, embedding in enumerate(chunk.embeddings):
+        embeddings = chunk.embeddings
+        vector_list = [embeddings.full_embedding]
+        vector_list.extend(embeddings.mini_chunk_embeddings)
+
+        for minichunk_ind, embedding in enumerate(vector_list):
             qdrant_id = str(get_uuid_from_chunk(chunk, minichunk_ind))
-            insertion_records.append(
-                ChunkInsertionRecord(
+            insertion_records.add(
+                DocumentInsertionRecord(
                     document_id=document.id,
-                    store_id=qdrant_id,
                     already_existed=document.id in already_existing_documents,
                 )
             )

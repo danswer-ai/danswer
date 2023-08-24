@@ -1,4 +1,4 @@
-from danswer.configs.app_configs import TYPESENSE_DEFAULT_COLLECTION
+from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.utils.clients import get_typesense_client
 
 
@@ -14,9 +14,7 @@ if __name__ == "__main__":
             "page": page_number,
             "per_page": per_page,
         }
-        response = ts_client.collections[TYPESENSE_DEFAULT_COLLECTION].documents.search(
-            params
-        )
+        response = ts_client.collections[DOCUMENT_INDEX_NAME].documents.search(params)
         documents = response.get("hits")
         if not documents:
             break  # if there are no more documents, break out of the loop

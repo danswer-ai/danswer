@@ -24,7 +24,7 @@ from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.connectors.utils import batch_generator
+from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()

@@ -7,10 +7,10 @@ from uuid import UUID
 import typesense  # type: ignore
 from typesense.exceptions import ObjectNotFound  # type: ignore
 
-from danswer.chunking.models import EmbeddedIndexChunk
 from danswer.chunking.models import IndexChunk
 from danswer.chunking.models import InferenceChunk
-from danswer.configs.app_configs import TYPESENSE_DEFAULT_COLLECTION
+from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
+from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import ALLOWED_GROUPS
 from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import BLURB
@@ -24,17 +24,17 @@ from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.connectors.models import IndexAttemptMetadata
-from danswer.connectors.utils import batch_generator
 from danswer.datastores.datastore_utils import CrossConnectorDocumentMetadata
 from danswer.datastores.datastore_utils import DEFAULT_BATCH_SIZE
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
 from danswer.datastores.datastore_utils import (
     update_cross_connector_document_metadata_map,
 )
-from danswer.datastores.interfaces import ChunkInsertionRecord
+from danswer.datastores.interfaces import DocumentInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import KeywordIndex
 from danswer.datastores.interfaces import UpdateRequest
+from danswer.utils.batching import batch_generator
 from danswer.utils.clients import get_typesense_client
 from danswer.utils.logger import setup_logger
 
@@ -45,19 +45,8 @@ logger = setup_logger()
 _BATCH_SIZE = 200
 
 
-def check_typesense_collection_exist(
-    collection_name: str = TYPESENSE_DEFAULT_COLLECTION,
-) -> bool:
-    client = get_typesense_client()
-    try:
-        client.collections[collection_name].retrieve()
-    except ObjectNotFound:
-        return False
-    return True
-
-
 def create_typesense_collection(
-    collection_name: str = TYPESENSE_DEFAULT_COLLECTION,
+    collection_name: str = DOCUMENT_INDEX_NAME,
 ) -> None:
     ts_client = get_typesense_client()
     collection_schema = {
@@ -81,7 +70,18 @@ def create_typesense_collection(
     ts_client.collections.create(collection_schema)
 
 
-def get_typesense_document_cross_connector_metadata(
+def _check_typesense_collection_exist(
+    collection_name: str = DOCUMENT_INDEX_NAME,
+) -> bool:
+    client = get_typesense_client()
+    try:
+        client.collections[collection_name].retrieve()
+    except ObjectNotFound:
+        return False
+    return True
+
+
+def _get_typesense_document_cross_connector_metadata(
     doc_chunk_id: str, collection_name: str, ts_client: typesense.Client
 ) -> CrossConnectorDocumentMetadata | None:
     """Returns whether the document already exists and the users/group whitelists"""
@@ -115,7 +115,7 @@ def get_typesense_document_cross_connector_metadata(
     )
 
 
-def delete_typesense_doc_chunks(
+def _delete_typesense_doc_chunks(
     document_id: str, collection_name: str, ts_client: typesense.Client
 ) -> bool:
     doc_id_filter = {"filter_by": f"{DOCUMENT_ID}:'{document_id}'"}
@@ -126,16 +126,16 @@ def delete_typesense_doc_chunks(
     return del_result["num_deleted"] != 0
 
 
-def index_typesense_chunks(
-    chunks: list[IndexChunk | EmbeddedIndexChunk],
+def _index_typesense_chunks(
+    chunks: list[IndexChunk],
     index_attempt_metadata: IndexAttemptMetadata,
     collection: str,
     client: typesense.Client | None = None,
     batch_upsert: bool = True,
-) -> list[ChunkInsertionRecord]:
+) -> set[DocumentInsertionRecord]:
     ts_client: typesense.Client = client if client else get_typesense_client()
 
-    insertion_records: list[ChunkInsertionRecord] = []
+    insertion_records: set[DocumentInsertionRecord] = set()
     new_documents: list[dict[str, Any]] = []
     cross_connector_document_metadata_map: dict[
         str, CrossConnectorDocumentMetadata
@@ -151,7 +151,7 @@ def index_typesense_chunks(
             chunk=chunk,
             cross_connector_document_metadata_map=cross_connector_document_metadata_map,
             doc_store_cross_connector_document_metadata_fetch_fn=partial(
-                get_typesense_document_cross_connector_metadata,
+                _get_typesense_document_cross_connector_metadata,
                 collection_name=collection,
                 ts_client=ts_client,
             ),
@@ -160,14 +160,13 @@ def index_typesense_chunks(
 
         if should_delete_doc:
             # Processing the first chunk of the doc and the doc exists
-            delete_typesense_doc_chunks(document.id, collection, ts_client)
+            _delete_typesense_doc_chunks(document.id, collection, ts_client)
             already_existing_documents.add(document.id)
 
         typesense_id = str(get_uuid_from_chunk(chunk))
-        insertion_records.append(
-            ChunkInsertionRecord(
+        insertion_records.add(
+            DocumentInsertionRecord(
                 document_id=document.id,
-                store_id=typesense_id,
                 already_existed=document.id in already_existing_documents,
             )
         )
@@ -250,26 +249,25 @@ def _build_typesense_filters(
 
 
 class TypesenseIndex(KeywordIndex):
-    def __init__(self, collection: str = TYPESENSE_DEFAULT_COLLECTION) -> None:
-        self.collection = collection
+    def __init__(self, index_name: str = DOCUMENT_INDEX_NAME) -> None:
+        # In Typesense, the document index is referred to as a collection
+        self.collection = index_name
         self.ts_client = get_typesense_client()
+
+    def ensure_indices_exist(self) -> None:
+        if not _check_typesense_collection_exist(self.collection):
+            logger.info(f"Creating Typesense collection with name: {self.collection}")
+            create_typesense_collection(collection_name=self.collection)
 
     def index(
         self, chunks: list[IndexChunk], index_attempt_metadata: IndexAttemptMetadata
-    ) -> list[ChunkInsertionRecord]:
-        return index_typesense_chunks(
+    ) -> set[DocumentInsertionRecord]:
+        return _index_typesense_chunks(
             chunks=chunks,
             index_attempt_metadata=index_attempt_metadata,
             collection=self.collection,
             client=self.ts_client,
         )
-
-    def delete(self, ids: list[str]) -> None:
-        logger.info(f"Deleting {len(ids)} documents from Typesense")
-        for id_batch in batch_generator(items=ids, batch_size=_BATCH_SIZE):
-            self.ts_client.collections[self.collection].documents.delete(
-                {"filter_by": f'id:[{",".join(id_batch)}]'}
-            )
 
     def update(self, update_requests: list[UpdateRequest]) -> None:
         logger.info(
@@ -277,22 +275,29 @@ class TypesenseIndex(KeywordIndex):
         )
         for update_request in update_requests:
             for id_batch in batch_generator(
-                items=update_request.ids, batch_size=_BATCH_SIZE
+                items=update_request.document_ids, batch_size=_BATCH_SIZE
             ):
                 typesense_updates = [
-                    {"id": doc_id, ALLOWED_USERS: update_request.allowed_users}
+                    {DOCUMENT_ID: doc_id, ALLOWED_USERS: update_request.allowed_users}
                     for doc_id in id_batch
                 ]
                 self.ts_client.collections[self.collection].documents.import_(
                     typesense_updates, {"action": "update"}
                 )
 
-    def keyword_search(
+    def delete(self, doc_ids: list[str]) -> None:
+        logger.info(f"Deleting {len(doc_ids)} documents from Typesense")
+        for id_batch in batch_generator(items=doc_ids, batch_size=_BATCH_SIZE):
+            self.ts_client.collections[self.collection].documents.delete(
+                {"filter_by": f'{DOCUMENT_ID}:[{",".join(id_batch)}]'}
+            )
+
+    def keyword_retrieval(
         self,
         query: str,
         user_id: UUID | None,
         filters: list[IndexFilter] | None,
-        num_to_retrieve: int,
+        num_to_retrieve: int = NUM_RETURNED_HITS,
     ) -> list[InferenceChunk]:
         filters_str = _build_typesense_filters(user_id, filters)
 

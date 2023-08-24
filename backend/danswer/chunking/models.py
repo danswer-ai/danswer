@@ -14,6 +14,15 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
+Embedding = list[float]
+
+
+@dataclass
+class ChunkEmbedding:
+    full_embedding: Embedding
+    mini_chunk_embeddings: list[Embedding]
+
+
 @dataclass
 class BaseChunk:
     chunk_id: int
@@ -26,7 +35,7 @@ class BaseChunk:
 
 
 @dataclass
-class IndexChunk(BaseChunk):
+class DocAwareChunk(BaseChunk):
     # During indexing flow, we have access to a complete "Document"
     # During inference we only have access to the document id and do not reconstruct the Document
     source_document: Document
@@ -39,8 +48,8 @@ class IndexChunk(BaseChunk):
 
 
 @dataclass
-class EmbeddedIndexChunk(IndexChunk):
-    embeddings: list[list[float]]
+class IndexChunk(DocAwareChunk):
+    embeddings: ChunkEmbedding
 
 
 @dataclass
