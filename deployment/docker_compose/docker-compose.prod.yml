@@ -72,7 +72,7 @@ services:
       - "19071:19071"
       - "8081:8081"
     volumes:
-      - vespa_volume:/opt/vespa
+      - vespa_volume:/opt/vespa/var
   nginx:
     image: nginx:1.23.4-alpine
     restart: always
