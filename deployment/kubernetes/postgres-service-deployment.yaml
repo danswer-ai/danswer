@@ -9,13 +9,14 @@ spec:
     - protocol: TCP
       port: 5432
       targetPort: 5432
-  type: ClusterIP
+  clusterIP: None
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: relational-db-deployment
+  name: relational-db-statefulset
 spec:
+  serviceName: relational-db-service
   replicas: 1
   selector:
     matchLabels:
@@ -43,8 +44,13 @@ spec:
         - containerPort: 5432
         volumeMounts:
         - mountPath: /var/lib/postgresql/data
-          name: db-volume
-      volumes:
-      - name: db-volume
-        persistentVolumeClaim:
-          claimName: db-volume-claim
+          name: db-storage
+  volumeClaimTemplates:
+  - metadata:
+      name: db-storage
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          # Adjust the storage request size as needed.
+          storage: 1Gi

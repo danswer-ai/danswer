@@ -20,15 +20,8 @@ spec:
         env:
         - name: POSTGRES_HOST
           value: relational-db-service
-        - name: QDRANT_HOST
-          value: vector-db-service
-        - name: TYPESENSE_HOST
-          value: search-engine-service
-        - name: TYPESENSE_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: danswer-secrets
-              key: typesense_api_key
+        - name: VESPA_HOST
+          value: document-index-service
         volumeMounts:
         - name: dynamic-storage
           mountPath: /home/storage

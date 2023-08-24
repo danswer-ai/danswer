@@ -46,7 +46,7 @@ We would love to see you there!
 ## Get Started 🚀
 Danswer being a fully functional app, relies on several external pieces of software, specifically:
 - Postgres (Relational DB)
-- Vespa (Vector DB/Search Engine)
+- [Vespa](https://vespa.ai/) (Vector DB/Search Engine)
 
 This guide provides instructions to set up the Danswer specific services outside of Docker because it's easier for
 development purposes but also feel free to just use the containers and update with local changes by providing the
