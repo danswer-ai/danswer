@@ -13,6 +13,7 @@ import {
   PencilSimple,
   X,
   Question,
+  Users,
 } from "@phosphor-icons/react";
 import { SiBookstack } from "react-icons/si";
 import { FaFile, FaGlobe } from "react-icons/fa";
@@ -49,6 +50,13 @@ export const KeyIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <Key size={size} className={className} />;
+};
+
+export const UsersIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <Users size={size} className={className} />;
 };
 
 export const TrashIcon = ({
@@ -217,7 +225,7 @@ export const ZulipIcon = ({
   return (
     <div
       style={{ width: `${size}px`, height: `${size}px` }}
-      className={`w-[${size}px] h-[${size}px] -m-0.5 ` + className}
+      className={`w-[${size}px] h-[${size}px] ` + className}
     >
       <Image src={zulipIcon} alt="Logo" width="96" height="96" />
     </div>
