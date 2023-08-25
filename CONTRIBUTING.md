@@ -102,7 +102,7 @@ docker compose -f docker-compose.dev.yml -p danswer-stack up -d relational_db
 
 Vespa:
 ```bash
-docker compose -f docker-compose.dev.yml -p danswer-stack up -d document_index
+docker compose -f docker-compose.dev.yml -p danswer-stack up -d index
 ```
 
 
