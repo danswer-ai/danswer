@@ -128,7 +128,7 @@ def _index_vespa_chunks(
     index_attempt_metadata: IndexAttemptMetadata,
 ) -> set[DocumentInsertionRecord]:
     json_header = {
-        "Content-Type": "application/json; charset=UTF-8",
+        "Content-Type": "application/json",
     }
     insertion_records: set[DocumentInsertionRecord] = set()
     cross_connector_document_metadata_map: dict[
@@ -185,7 +185,7 @@ def _index_vespa_chunks(
             ].allowed_user_groups,
         }
 
-        def _feed(
+        def _index_chunk(
             url: str,
             headers: dict[str, str],
             fields: dict[str, Any],
@@ -205,7 +205,7 @@ def _index_vespa_chunks(
 
         vespa_url = f"{DOCUMENT_ID_ENDPOINT}/{vespa_chunk_id}"
         try:
-            _feed(vespa_url, json_header, vespa_document_fields)
+            _index_chunk(vespa_url, json_header, vespa_document_fields)
         except HTTPError as e:
             if cast(Response, e.response).status_code != 400:
                 raise e
@@ -222,7 +222,7 @@ def _index_vespa_chunks(
             vespa_document_fields[CONTENT] = remove_invalid_unicode_chars(
                 cast(str, vespa_document_fields[CONTENT])
             )
-            _feed(vespa_url, json_header, vespa_document_fields)
+            _index_chunk(vespa_url, json_header, vespa_document_fields)
 
         insertion_records.add(
             DocumentInsertionRecord(
