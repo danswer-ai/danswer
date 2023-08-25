@@ -30,6 +30,7 @@ from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
 from danswer.datastores.document_index import get_default_document_index
 from danswer.db.credentials import create_initial_public_credential
 from danswer.direct_qa.llm_utils import get_default_llm
+from danswer.server.credential import router as credential_router
 from danswer.server.event_loading import router as event_processing_router
 from danswer.server.health import router as health_router
 from danswer.server.manage import router as admin_router
@@ -68,6 +69,7 @@ def get_application() -> FastAPI:
     application.include_router(event_processing_router)
     application.include_router(admin_router)
     application.include_router(user_router)
+    application.include_router(credential_router)
     application.include_router(health_router)
 
     application.include_router(

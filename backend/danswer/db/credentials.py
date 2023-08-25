@@ -20,14 +20,17 @@ logger = setup_logger()
 
 
 def fetch_credentials(
-    user: User | None,
     db_session: Session,
+    user: User | None = None,
+    public_only: bool | None = None,
 ) -> list[Credential]:
     stmt = select(Credential)
     if user:
         stmt = stmt.where(
             or_(Credential.user_id == user.id, Credential.user_id.is_(None))
         )
+    if public_only is not None:
+        stmt = stmt.where(Credential.public_doc == public_only)
     results = db_session.scalars(stmt)
     return list(results.all())
 
