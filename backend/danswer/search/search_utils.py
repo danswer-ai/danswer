@@ -61,10 +61,14 @@ def get_default_intent_model() -> TFDistilBertForSequenceClassification:
     return _INTENT_MODEL
 
 
-def warm_up_models() -> None:
+def warm_up_models(indexer_only: bool = False) -> None:
     warm_up_str = "Danswer is amazing"
     get_default_tokenizer()(warm_up_str)
     get_default_embedding_model().encode(warm_up_str)
+
+    if indexer_only:
+        return
+
     cross_encoders = get_default_reranking_model_ensemble()
     [
         cross_encoder.predict((warm_up_str, warm_up_str))

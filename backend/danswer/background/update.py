@@ -35,6 +35,7 @@ from danswer.db.index_attempt import update_docs_indexed
 from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
+from danswer.search.search_utils import warm_up_models
 from danswer.utils.logger import IndexAttemptSingleton
 from danswer.utils.logger import setup_logger
 
@@ -417,4 +418,7 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
 
 
 if __name__ == "__main__":
+    logger.info("Warming up Embedding Model(s)")
+    warm_up_models(indexer_only=True)
+    logger.info("Starting Indexing Loop")
     update_loop()
