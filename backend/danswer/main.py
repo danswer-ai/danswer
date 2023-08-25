@@ -34,6 +34,7 @@ from danswer.server.event_loading import router as event_processing_router
 from danswer.server.health import router as health_router
 from danswer.server.manage import router as admin_router
 from danswer.server.search_backend import router as backend_router
+from danswer.server.users import router as user_router
 from danswer.utils.logger import setup_logger
 
 
@@ -66,6 +67,7 @@ def get_application() -> FastAPI:
     application.include_router(backend_router)
     application.include_router(event_processing_router)
     application.include_router(admin_router)
+    application.include_router(user_router)
     application.include_router(health_router)
 
     application.include_router(

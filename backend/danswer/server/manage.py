@@ -8,11 +8,8 @@ from fastapi import HTTPException
 from fastapi import Request
 from fastapi import Response
 from fastapi import UploadFile
-from fastapi_users.db import SQLAlchemyUserDatabase
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
@@ -20,9 +17,6 @@ from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
 from danswer.connectors.file.utils import write_temp_files
 from danswer.connectors.google_drive.connector_auth import build_service_account_creds
-from danswer.connectors.google_drive.connector_auth import (
-    DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
-)
 from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_TOKEN_KEY
 from danswer.connectors.google_drive.connector_auth import delete_google_app_cred
 from danswer.connectors.google_drive.connector_auth import delete_service_account_key
@@ -58,7 +52,6 @@ from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.deletion_attempt import create_deletion_attempt
 from danswer.db.deletion_attempt import get_deletion_attempts
 from danswer.db.engine import get_session
-from danswer.db.engine import get_sqlalchemy_async_engine
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import DeletionAttempt
@@ -87,7 +80,6 @@ from danswer.server.models import IndexAttemptSnapshot
 from danswer.server.models import ObjectCreationIdResponse
 from danswer.server.models import RunConnectorRequest
 from danswer.server.models import StatusResponse
-from danswer.server.models import UserByEmail
 from danswer.server.models import UserRoleResponse
 from danswer.utils.logger import setup_logger
 
@@ -99,23 +91,6 @@ _GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME = "google_drive_credential_id"
 
 
 """Admin only API endpoints"""
-
-
-@router.patch("/promote-user-to-admin", response_model=None)
-async def promote_admin(
-    user_email: UserByEmail, user: User = Depends(current_admin_user)
-) -> None:
-    if user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    async with AsyncSession(get_sqlalchemy_async_engine()) as asession:
-        user_db = SQLAlchemyUserDatabase(asession, User)  # type: ignore
-        user_to_promote = await user_db.get_by_email(user_email.user_email)
-        if not user_to_promote:
-            raise HTTPException(status_code=404, detail="User not found")
-        user_to_promote.role = UserRole.ADMIN
-        asession.add(user_to_promote)
-        await asession.commit()
-    return
 
 
 @router.get("/admin/connector/google-drive/app-credential")

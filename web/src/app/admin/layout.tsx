@@ -17,6 +17,7 @@ import {
   ZulipIcon,
   ProductboardIcon,
   LinearIcon,
+  UsersIcon,
 } from "@/components/icons/icons";
 import { DISABLE_AUTH } from "@/lib/constants";
 import { getCurrentUserSS } from "@/lib/userSS";
@@ -164,6 +165,15 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
+                      <ZulipIcon size={16} />
+                      <div className="ml-1">Zulip</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/zulip",
+                },
+                {
+                  name: (
+                    <div className="flex">
                       <GlobeIcon size={16} />
                       <div className="ml-1">Web</div>
                     </div>
@@ -179,15 +189,6 @@ export default async function AdminLayout({
                   ),
                   link: "/admin/connectors/file",
                 },
-                {
-                  name: (
-                    <div className="flex">
-                      <ZulipIcon size={16} />
-                      <div className="ml-1">Zulip</div>
-                    </div>
-                  ),
-                  link: "/admin/connectors/zulip",
-                },
               ],
             },
             {
@@ -201,6 +202,20 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/keys/openai",
+                },
+              ],
+            },
+            {
+              name: "User Management",
+              items: [
+                {
+                  name: (
+                    <div className="flex">
+                      <UsersIcon size={18} />
+                      <div className="ml-1">Users</div>
+                    </div>
+                  ),
+                  link: "/admin/users",
                 },
               ],
             },
