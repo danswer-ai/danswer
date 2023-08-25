@@ -5,7 +5,11 @@ import { GoogleDriveIcon } from "@/components/icons/icons";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { LoadingAnimation } from "@/components/Loading";
-import { Popup, PopupSpec } from "@/components/admin/connectors/Popup";
+import {
+  Popup,
+  PopupSpec,
+  usePopup,
+} from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import {
@@ -24,6 +28,7 @@ import {
 import { GoogleDriveConnectorsTable } from "./GoogleDriveConnectorsTable";
 import { googleDriveConnectorNameBuilder } from "./utils";
 import { DriveOAuthSection, DriveJsonUploadSection } from "./Credential";
+import { useGetPublicCredentials } from "@/lib/hooks";
 
 interface GoogleDriveConnectorManagementProps {
   googleDrivePublicCredential?: Credential<GoogleDriveCredentialJson>;
@@ -278,18 +283,10 @@ const Main = () => {
     data: credentialsData,
     isLoading: isCredentialsLoading,
     error: isCredentialsError,
-  } = useSWR<Credential<any>[]>("/api/manage/credential", fetcher);
+    refreshCredentials,
+  } = useGetPublicCredentials();
 
-  const [popup, setPopup] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
-  const setPopupWithExpiration = (popupSpec: PopupSpec | null) => {
-    setPopup(popupSpec);
-    setTimeout(() => {
-      setPopup(null);
-    }, 4000);
-  };
+  const { popup, setPopup } = usePopup();
 
   if (
     (!appCredentialData && isAppCredentialLoading) ||
@@ -365,12 +362,12 @@ const Main = () => {
 
   return (
     <>
-      {popup && <Popup message={popup.message} type={popup.type} />}
+      {popup}
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your Credentials
       </h2>
       <DriveJsonUploadSection
-        setPopup={setPopupWithExpiration}
+        setPopup={setPopup}
         appCredentialData={appCredentialData}
         serviceAccountCredentialData={serviceAccountKeyData}
       />
@@ -379,7 +376,7 @@ const Main = () => {
         Step 2: Authenticate with Danswer
       </h2>
       <DriveOAuthSection
-        setPopup={setPopupWithExpiration}
+        setPopup={setPopup}
         googleDrivePublicCredential={googleDrivePublicCredential}
         googleDriveServiceAccountCredential={
           googleDriveServiceAccountCredential
@@ -401,7 +398,7 @@ const Main = () => {
           googleDriveConnectorIndexingStatuses
         }
         credentialIsLinked={credentialIsLinked}
-        setPopup={setPopupWithExpiration}
+        setPopup={setPopup}
       />
     </>
   );

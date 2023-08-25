@@ -37,6 +37,19 @@ def list_credentials_admin(
     ]
 
 
+@router.delete("/admin/credential/{credential_id}")
+def delete_credential_by_id_admin(
+    credential_id: int,
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse:
+    """Same as the user endpoint, but can delete any credential (not just the user's own)"""
+    delete_credential(db_session=db_session, credential_id=credential_id, user=None)
+    return StatusResponse(
+        success=True, message="Credential deleted successfully", data=credential_id
+    )
+
+
 """Endpoints for all"""
 
 
