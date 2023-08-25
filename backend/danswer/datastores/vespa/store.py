@@ -196,6 +196,7 @@ def _index_vespa_chunks(
             res = requests.post(url, headers=headers, json={"fields": fields})
             try:
                 res.raise_for_status()
+                return res
             except Exception as e:
                 logger.error(
                     f"Failed to index document: '{document.id}'. Got response: '{res.text}'"
@@ -213,13 +214,13 @@ def _index_vespa_chunks(
             # only doing this on error to avoid having to go through the content
             # char by char every time
             vespa_document_fields[BLURB] = remove_invalid_unicode_chars(
-                vespa_document_fields[BLURB]
+                cast(str, vespa_document_fields[BLURB])
             )
             vespa_document_fields[SEMANTIC_IDENTIFIER] = remove_invalid_unicode_chars(
-                vespa_document_fields[SEMANTIC_IDENTIFIER]
+                cast(str, vespa_document_fields[SEMANTIC_IDENTIFIER])
             )
             vespa_document_fields[CONTENT] = remove_invalid_unicode_chars(
-                vespa_document_fields[CONTENT]
+                cast(str, vespa_document_fields[CONTENT])
             )
             _feed(vespa_url, json_header, vespa_document_fields)
 
