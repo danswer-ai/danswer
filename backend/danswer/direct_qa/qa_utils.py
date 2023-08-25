@@ -211,8 +211,7 @@ def process_model_tokens(
         model_previous = model_output
         model_output += token
 
-        trimmed_combine = model_output.replace(" ", "").replace("\n", "")
-        if not found_answer_start and '{"answer":"' in trimmed_combine:
+        if not found_answer_start and '{"answer":"' in re.sub(r"\s", "", model_output):
             # Note, if the token that completes the pattern has additional text, for example if the token is "?
             # Then the chars after " will not be streamed, but this is ok as it prevents streaming the ? in the
             # event that the model outputs the UNCERTAINTY_PAT
@@ -232,7 +231,7 @@ def process_model_tokens(
                 if hold_quote + token in quote_pat_full:
                     hold_quote += token
                     continue
-            yield DanswerAnswerPiece(answer_piece=token)
+            yield DanswerAnswerPiece(answer_piece=hold_quote + token)
             hold_quote = ""
 
     logger.debug(f"Raw model output: {model_output}")
