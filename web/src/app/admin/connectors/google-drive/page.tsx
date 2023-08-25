@@ -5,12 +5,7 @@ import { GoogleDriveIcon } from "@/components/icons/icons";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { LoadingAnimation } from "@/components/Loading";
-import {
-  Popup,
-  PopupSpec,
-  usePopup,
-} from "@/components/admin/connectors/Popup";
-import { useState } from "react";
+import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import {
   ConnectorIndexingStatus,
@@ -377,6 +372,7 @@ const Main = () => {
       </h2>
       <DriveOAuthSection
         setPopup={setPopup}
+        refreshCredentials={refreshCredentials}
         googleDrivePublicCredential={googleDrivePublicCredential}
         googleDriveServiceAccountCredential={
           googleDriveServiceAccountCredential
