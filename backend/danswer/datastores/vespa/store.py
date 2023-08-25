@@ -1,6 +1,5 @@
 import json
 from collections.abc import Mapping
-from functools import partial
 from typing import Any
 from typing import cast
 from uuid import UUID
@@ -256,11 +255,13 @@ def _build_vespa_filters(
             }
             for filter_key, filter_val in valid_filters.items():
                 if isinstance(filter_val, str):
-                    filter_str += f'{filter_key} = "{filter_val}" and '
+                    filter_str += f'{filter_key} contains "{filter_val}" and '
                 elif isinstance(filter_val, list):
-                    quoted_elems = [f'"{elem}"' for elem in filter_val]
-                    filters_or = ",".join(quoted_elems)
-                    filter_str += f"{filter_key} in [{filters_or}] and "
+                    eq_elems = [
+                        f'{filter_key} contains "{elem}"' for elem in filter_val
+                    ]
+                    filters_or = " or ".join(eq_elems)
+                    filter_str += f"({filters_or}) and "
                 else:
                     raise ValueError("Invalid filters provided")
     return filter_str
