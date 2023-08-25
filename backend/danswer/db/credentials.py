@@ -109,7 +109,7 @@ def backend_update_credential_json(
 
 def delete_credential(
     credential_id: int,
-    user: User,
+    user: User | None,
     db_session: Session,
 ) -> None:
     credential = fetch_credential_by_id(credential_id, user, db_session)
@@ -149,7 +149,7 @@ def create_initial_public_credential() -> None:
 def delete_google_drive_service_account_credentials(
     user: User | None, db_session: Session
 ) -> None:
-    credentials = fetch_credentials(user, db_session)
+    credentials = fetch_credentials(db_session=db_session, user=user)
     for credential in credentials:
         if credential.credential_json.get(DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY):
             db_session.delete(credential)

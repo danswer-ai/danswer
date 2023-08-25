@@ -28,7 +28,7 @@ router = APIRouter(prefix="/manage")
 def list_credentials_admin(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-):
+) -> list[CredentialSnapshot]:
     """Lists all public credentials"""
     credentials = fetch_credentials(db_session=db_session, public_only=True)
     return [
