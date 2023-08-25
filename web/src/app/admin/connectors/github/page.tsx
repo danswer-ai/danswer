@@ -17,7 +17,7 @@ import { LoadingAnimation } from "@/components/Loading";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
-import { useGetPublicCredentials } from "@/lib/hooks";
+import { usePublicCredentials } from "@/lib/hooks";
 
 const Main = () => {
   const { mutate } = useSWRConfig();
@@ -35,7 +35,7 @@ const Main = () => {
     isLoading: isCredentialsLoading,
     error: isCredentialsError,
     refreshCredentials,
-  } = useGetPublicCredentials();
+  } = usePublicCredentials();
 
   if (
     (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||

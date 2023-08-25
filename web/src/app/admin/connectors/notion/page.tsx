@@ -18,7 +18,7 @@ import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { useGetPublicCredentials } from "@/lib/hooks";
+import { usePublicCredentials } from "@/lib/hooks";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -37,7 +37,7 @@ const Main = () => {
     isLoading: isCredentialsLoading,
     error: isCredentialsError,
     refreshCredentials,
-  } = useGetPublicCredentials();
+  } = usePublicCredentials();
 
   if (
     (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||

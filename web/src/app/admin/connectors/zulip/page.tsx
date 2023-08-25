@@ -17,7 +17,7 @@ import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
-import { useGetPublicCredentials } from "@/lib/hooks";
+import { usePublicCredentials } from "@/lib/hooks";
 
 const MainSection = () => {
   const { mutate } = useSWRConfig();
@@ -35,7 +35,7 @@ const MainSection = () => {
     isLoading: isCredentialsLoading,
     error: isCredentialsError,
     refreshCredentials,
-  } = useGetPublicCredentials();
+  } = usePublicCredentials();
 
   if (
     (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||

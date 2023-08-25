@@ -23,7 +23,7 @@ import {
 import { GoogleDriveConnectorsTable } from "./GoogleDriveConnectorsTable";
 import { googleDriveConnectorNameBuilder } from "./utils";
 import { DriveOAuthSection, DriveJsonUploadSection } from "./Credential";
-import { useGetPublicCredentials } from "@/lib/hooks";
+import { usePublicCredentials } from "@/lib/hooks";
 
 interface GoogleDriveConnectorManagementProps {
   googleDrivePublicCredential?: Credential<GoogleDriveCredentialJson>;
@@ -279,7 +279,7 @@ const Main = () => {
     isLoading: isCredentialsLoading,
     error: isCredentialsError,
     refreshCredentials,
-  } = useGetPublicCredentials();
+  } = usePublicCredentials();
 
   const { popup, setPopup } = usePopup();
 
