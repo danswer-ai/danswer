@@ -159,8 +159,10 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
         log_exception = _wrap_logger_fn_to_include_channel(logger.exception, channel)
 
         message_subtype = req.payload.get("event", {}).get("subtype")
-        if req.payload.get("event", {}).get("subtype") is not None:
-            # this covers things like channel_join, channel_leave, etc.
+        # ignore things like channel_join, channel_leave, etc.
+        # NOTE: "file_share" is just a message with a file attachment, so we
+        # should not ignore it
+        if message_subtype not in [None, "file_share"]:
             log_info(
                 f"Ignoring message with subtype '{message_subtype}' since is is a special message type"
             )
