@@ -14,7 +14,11 @@ schema danswer_chunk {
         # Need to consider that not every doc has a separable title (ie. slack message)
         # Set summary options to enable bolding
         field content type string {
-            indexing: summary | attribute | index
+            indexing: summary | index
+            match {
+                gram
+                gram-size: 3
+            }
             index: enable-bm25
         }
         # https://docs.vespa.ai/en/attributes.html potential enum store for speed, but probably not worth it
