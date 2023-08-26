@@ -139,7 +139,6 @@ zip -r ../vespa-app.zip .
 To run the backend API server, navigate back to `danswer/backend` and run:
 ```bash
 DISABLE_AUTH=True \
-TYPESENSE_API_KEY=typesense_api_key \
 DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage \
 VESPA_DEPLOYMENT_ZIP=./danswer/datastores/vespa/vespa-app.zip \
 uvicorn danswer.main:app --reload --port 8080
@@ -148,7 +147,6 @@ _For Windows (for compatibility with both PowerShell and Command Prompt):_
 ```bash
 powershell -Command "
     $env:DISABLE_AUTH='True'
-    $env:TYPESENSE_API_KEY='typesense_api_key'
     $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'
     $env:VESPA_DEPLOYMENT_ZIP='./danswer/datastores/vespa/vespa-app.zip'
     uvicorn danswer.main:app --reload --port 8080 
@@ -157,20 +155,20 @@ powershell -Command "
 
 To run the background job to check for connector updates and index documents, navigate to `danswer/backend` and run:
 ```bash
-PYTHONPATH=. TYPESENSE_API_KEY=typesense_api_key DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/update.py
+PYTHONPATH=. DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/update.py
 ```
 _For Windows:_
 ```bash
-powershell -Command " $env:PYTHONPATH='.'; $env:TYPESENSE_API_KEY='typesense_api_key'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/update.py "
+powershell -Command " $env:PYTHONPATH='.'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/update.py "
 ```
 
 To run the background job which handles deletion of connectors, navigate to `danswer/backend` and run:
 ```bash
-PYTHONPATH=. TYPESENSE_API_KEY=typesense_api_key DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/connector_deletion.py
+PYTHONPATH=. DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/connector_deletion.py
 ```
 _For Windows:_
 ```bash
-powershell -Command " $env:PYTHONPATH='.'; $env:TYPESENSE_API_KEY='typesense_api_key'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/connector_deletion.py "
+powershell -Command " $env:PYTHONPATH='.'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/connector_deletion.py "
 ```
 
 Note: if you need finer logging, add the additional environment variable `LOG_LEVEL=DEBUG` to the relevant services.
