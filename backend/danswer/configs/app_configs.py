@@ -67,7 +67,7 @@ MASK_CREDENTIAL_PREFIX = (
 DOCUMENT_INDEX_NAME = "danswer_index"  # Shared by vector/keyword indices
 # Vespa is now the default document index store for both keyword and vector
 DOCUMENT_INDEX_TYPE = os.environ.get(
-    "DOCUMENT_INDEX_TYPE", DocumentIndexType.SPLIT.value
+    "DOCUMENT_INDEX_TYPE", DocumentIndexType.COMBINED.value
 )
 VESPA_HOST = os.environ.get("VESPA_HOST") or "localhost"
 VESPA_PORT = os.environ.get("VESPA_PORT") or "8081"
@@ -92,11 +92,11 @@ INDEX_BATCH_SIZE = 16
 
 # below are intended to match the env variables names used by the official postgres docker image
 # https://hub.docker.com/_/postgres
-POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
-POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "password")
-POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5432")
-POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
+POSTGRES_USER = os.environ.get("POSTGRES_USER") or "postgres"
+POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD") or "password"
+POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
+POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 
 
 #####

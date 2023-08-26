@@ -11,13 +11,16 @@ services:
       uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       - relational_db
-      - index
+      - vector_db
+      - search_engine
     restart: always
     env_file:
       - .env
     environment:
+      - DOCUMENT_INDEX_TYPE=split
       - POSTGRES_HOST=relational_db
-      - VESPA_HOST=index
+      - QDRANT_HOST=vector_db
+      - TYPESENSE_HOST=search_engine
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
@@ -32,13 +35,15 @@ services:
     command: /usr/bin/supervisord
     depends_on:
       - relational_db
-      - index
+      - vector_db
     restart: always
     env_file:
       - .env
     environment:
+      - DOCUMENT_INDEX_TYPE=split
       - POSTGRES_HOST=relational_db
-      - VESPA_HOST=index
+      - QDRANT_HOST=vector_db
+      - TYPESENSE_HOST=search_engine
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
@@ -65,14 +70,25 @@ services:
       - .env
     volumes:
       - db_volume:/var/lib/postgresql/data
-  index:
-    image: vespaengine/vespa:8
+  vector_db:
+    image: qdrant/qdrant:v1.3.0
     restart: always
-    ports:
-      - "19071:19071"
-      - "8081:8081"
+    env_file:
+      - .env
+    environment:
+      - QDRANT__TELEMETRY_DISABLED=true
     volumes:
-      - vespa_volume:/opt/vespa/var
+      - qdrant_volume:/qdrant/storage
+  search_engine:
+    image: typesense/typesense:0.24.1
+    restart: always
+    # TYPESENSE_API_KEY must be set in .env file
+    environment:
+      - TYPESENSE_DATA_DIR=/typesense/storage
+    env_file:
+      - .env
+    volumes:
+      - typesense_volume:/typesense/storage
   nginx:
     image: nginx:1.23.4-alpine
     restart: always
@@ -105,7 +121,8 @@ volumes:
   local_dynamic_storage:
   file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them
   db_volume:
-  vespa_volume:
+  qdrant_volume:
+  typesense_volume:
   model_cache_torch:
   model_cache_nltk:
   model_cache_huggingface:

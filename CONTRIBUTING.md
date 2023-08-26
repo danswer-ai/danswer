@@ -45,9 +45,8 @@ We would love to see you there!
 
 ## Get Started 🚀
 Danswer being a fully functional app, relies on several external pieces of software, specifically:
-- Postgres
-- Vector DB ([Qdrant](https://github.com/qdrant/qdrant))
-- Search Engine ([Typesense](https://github.com/typesense/typesense))
+- Postgres (Relational DB)
+- [Vespa](https://vespa.ai/) (Vector DB/Search Engine)
 
 This guide provides instructions to set up the Danswer specific services outside of Docker because it's easier for
 development purposes but also feel free to just use the containers and update with local changes by providing the
@@ -101,14 +100,9 @@ Postgres:
 docker compose -f docker-compose.dev.yml -p danswer-stack up -d relational_db
 ```
 
-Qdrant:
+Vespa:
 ```bash
-docker compose -f docker-compose.dev.yml -p danswer-stack up -d vector_db
-```
-
-Typesense:
-```bash
-docker compose -f docker-compose.dev.yml -p danswer-stack up -d search_engine
+docker compose -f docker-compose.dev.yml -p danswer-stack up -d index
 ```
 
 
@@ -129,37 +123,52 @@ _for Windows, run:_
 ```
 
 
-The first time running Danswer, you will need to run the DB migrations.
+The first time running Danswer, you will need to run the DB migrations for Postgres.
 Navigate to `danswer/backend` and with the venv active, run:
 ```bash
 alembic upgrade head
 ```
 
-To run the backend API server, navigate to `danswer/backend` and run:
+Additionally, we have to package the Vespa schema deployment:
+Nagivate to `danswer/backend/danswer/datastores/vespa/app_config` and run:
 ```bash
-DISABLE_AUTH=True TYPESENSE_API_KEY=typesense_api_key DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage uvicorn danswer.main:app --reload --port 8080
+zip -r ../vespa-app.zip .
+```
+- Note: If you don't have the `zip` utility, you will need to install it prior to running the above
+
+To run the backend API server, navigate back to `danswer/backend` and run:
+```bash
+DISABLE_AUTH=True \
+DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage \
+VESPA_DEPLOYMENT_ZIP=./danswer/datastores/vespa/vespa-app.zip \
+uvicorn danswer.main:app --reload --port 8080
 ```
 _For Windows (for compatibility with both PowerShell and Command Prompt):_
 ```bash
-powershell -Command " $env:DISABLE_AUTH='True'; $env:TYPESENSE_API_KEY='typesense_api_key'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; uvicorn danswer.main:app --reload --port 8080 "
+powershell -Command "
+    $env:DISABLE_AUTH='True'
+    $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'
+    $env:VESPA_DEPLOYMENT_ZIP='./danswer/datastores/vespa/vespa-app.zip'
+    uvicorn danswer.main:app --reload --port 8080 
+"
 ```
 
 To run the background job to check for connector updates and index documents, navigate to `danswer/backend` and run:
 ```bash
-PYTHONPATH=. TYPESENSE_API_KEY=typesense_api_key DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/update.py
+PYTHONPATH=. DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/update.py
 ```
 _For Windows:_
 ```bash
-powershell -Command " $env:PYTHONPATH='.'; $env:TYPESENSE_API_KEY='typesense_api_key'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/update.py "
+powershell -Command " $env:PYTHONPATH='.'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/update.py "
 ```
 
 To run the background job which handles deletion of connectors, navigate to `danswer/backend` and run:
 ```bash
-PYTHONPATH=. TYPESENSE_API_KEY=typesense_api_key DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/connector_deletion.py
+PYTHONPATH=. DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/connector_deletion.py
 ```
 _For Windows:_
 ```bash
-powershell -Command " $env:PYTHONPATH='.'; $env:TYPESENSE_API_KEY='typesense_api_key'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/connector_deletion.py "
+powershell -Command " $env:PYTHONPATH='.'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/connector_deletion.py "
 ```
 
 Note: if you need finer logging, add the additional environment variable `LOG_LEVEL=DEBUG` to the relevant services.

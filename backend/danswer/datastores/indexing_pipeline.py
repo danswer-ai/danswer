@@ -102,7 +102,9 @@ def _indexing_pipeline(
         )
         raise e
 
-    return len(insertion_records), len(chunks)
+    return len([r for r in insertion_records if r.already_existed is False]), len(
+        chunks
+    )
 
 
 def build_indexing_pipeline(

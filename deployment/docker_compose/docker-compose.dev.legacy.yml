@@ -1,3 +1,5 @@
+# This legacy version runs the app with typesense and qdrant together as the document indices
+# Danswer is moving forward with Vespa to offer a consolidated index and a better search experience
 version: '3'
 services:
   api_server:
@@ -11,18 +13,22 @@ services:
       uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       - relational_db
-      - index
+      - vector_db
+      - search_engine
     restart: always
     ports:
       - "8080:8080"
     environment:
+      - DOCUMENT_INDEX_TYPE=split
       - INTERNAL_MODEL_VERSION=${INTERNAL_MODEL_VERSION:-openai-chat-completion}
       - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
       - GEN_AI_API_KEY=${GEN_AI_API_KEY:-}
       - GEN_AI_ENDPOINT=${GEN_AI_ENDPOINT:-}
       - GEN_AI_HOST_TYPE=${GEN_AI_HOST_TYPE:-}
       - POSTGRES_HOST=relational_db
-      - VESPA_HOST=index
+      - QDRANT_HOST=vector_db
+      - TYPESENSE_HOST=search_engine
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-typesense_api_key}
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - DISABLE_AUTH=${DISABLE_AUTH:-True}
       - QA_TIMEOUT=${QA_TIMEOUT:-}
@@ -49,16 +55,19 @@ services:
     command: /usr/bin/supervisord
     depends_on:
       - relational_db
-      - index
+      - vector_db
     restart: always
     environment:
+      - DOCUMENT_INDEX_TYPE=split
       - INTERNAL_MODEL_VERSION=${INTERNAL_MODEL_VERSION:-openai-chat-completion}
       - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
       - GEN_AI_API_KEY=${GEN_AI_API_KEY:-}
       - GEN_AI_ENDPOINT=${GEN_AI_ENDPOINT:-}
       - GEN_AI_HOST_TYPE=${GEN_AI_HOST_TYPE:-}
       - POSTGRES_HOST=relational_db
-      - VESPA_HOST=index
+      - QDRANT_HOST=vector_db
+      - TYPESENSE_HOST=search_engine
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-typesense_api_key}
       - API_BASE_OPENAI=${API_BASE_OPENAI:-}
       - API_TYPE_OPENAI=${API_TYPE_OPENAI:-}
       - API_VERSION_OPENAI=${API_VERSION_OPENAI:-}
@@ -98,14 +107,25 @@ services:
       - "5432:5432"
     volumes:
       - db_volume:/var/lib/postgresql/data
-  index:
-    image: vespaengine/vespa:8
+  vector_db:
+    image: qdrant/qdrant:v1.3.0
     restart: always
+    environment:
+      - QDRANT__TELEMETRY_DISABLED=true
     ports:
-      - "19071:19071"
-      - "8081:8081"
+      - "6333:6333"
     volumes:
-      - vespa_volume:/opt/vespa/var
+      - qdrant_volume:/qdrant/storage
+  search_engine:
+    image: typesense/typesense:0.24.1
+    restart: always
+    environment:
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-typesense_api_key}
+      - TYPESENSE_DATA_DIR=/typesense/storage
+    ports:
+      - "8108:8108"
+    volumes:
+      - typesense_volume:/typesense/storage
   nginx:
     image: nginx:1.23.4-alpine
     restart: always
@@ -128,7 +148,8 @@ volumes:
   local_dynamic_storage:
   file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them
   db_volume:
-  vespa_volume:
+  qdrant_volume:
+  typesense_volume:
   model_cache_torch:
   model_cache_nltk:
   model_cache_huggingface:

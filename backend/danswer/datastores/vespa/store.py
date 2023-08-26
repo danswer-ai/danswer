@@ -1,10 +1,12 @@
 import json
 from collections.abc import Mapping
-from functools import partial
+from typing import Any
 from typing import cast
 from uuid import UUID
 
 import requests
+from requests import HTTPError
+from requests import Response
 
 from danswer.chunking.models import IndexChunk
 from danswer.chunking.models import InferenceChunk
@@ -39,7 +41,9 @@ from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import DocumentInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import UpdateRequest
+from danswer.datastores.vespa.utils import remove_invalid_unicode_chars
 from danswer.search.search_utils import get_default_embedding_model
+from danswer.search.semantic_search import embed_query
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -123,7 +127,9 @@ def _index_vespa_chunks(
     chunks: list[IndexChunk],
     index_attempt_metadata: IndexAttemptMetadata,
 ) -> set[DocumentInsertionRecord]:
-    json_header = {"Content-Type": "application/json"}
+    json_header = {
+        "Content-Type": "application/json",
+    }
     insertion_records: set[DocumentInsertionRecord] = set()
     cross_connector_document_metadata_map: dict[
         str, CrossConnectorDocumentMetadata
@@ -151,6 +157,7 @@ def _index_vespa_chunks(
                 )
             already_existing_documents.add(document.id)
 
+        # No minichunk documents in vespa, minichunk vectors are stored in the chunk itself
         vespa_chunk_id = str(get_uuid_from_chunk(chunk))
 
         embeddings = chunk.embeddings
@@ -159,32 +166,64 @@ def _index_vespa_chunks(
             for ind, m_c_embed in enumerate(embeddings.mini_chunk_embeddings):
                 embeddings_name_vector_map[f"mini_chunk_{ind}"] = m_c_embed
 
-        vespa_document = {
-            "fields": {
-                DOCUMENT_ID: document.id,
-                CHUNK_ID: chunk.chunk_id,
-                BLURB: chunk.blurb,
-                CONTENT: chunk.content,
-                SOURCE_TYPE: str(document.source.value),
-                SOURCE_LINKS: json.dumps(chunk.source_links),
-                SEMANTIC_IDENTIFIER: document.semantic_identifier,
-                SECTION_CONTINUATION: chunk.section_continuation,
-                METADATA: json.dumps(document.metadata),
-                EMBEDDINGS: embeddings_name_vector_map,
-                BOOST: 1,  # Boost value always starts at 1 for 0 impact on weight
-                ALLOWED_USERS: cross_connector_document_metadata_map[
-                    document.id
-                ].allowed_users,
-                ALLOWED_GROUPS: cross_connector_document_metadata_map[
-                    document.id
-                ].allowed_user_groups,
-            }
+        vespa_document_fields = {
+            DOCUMENT_ID: document.id,
+            CHUNK_ID: chunk.chunk_id,
+            BLURB: chunk.blurb,
+            CONTENT: chunk.content,
+            SOURCE_TYPE: str(document.source.value),
+            SOURCE_LINKS: json.dumps(chunk.source_links),
+            SEMANTIC_IDENTIFIER: document.semantic_identifier,
+            SECTION_CONTINUATION: chunk.section_continuation,
+            METADATA: json.dumps(document.metadata),
+            EMBEDDINGS: embeddings_name_vector_map,
+            BOOST: 1,  # Boost value always starts at 1 for 0 impact on weight
+            ALLOWED_USERS: cross_connector_document_metadata_map[
+                document.id
+            ].allowed_users,
+            ALLOWED_GROUPS: cross_connector_document_metadata_map[
+                document.id
+            ].allowed_user_groups,
         }
 
-        url = f"{DOCUMENT_ID_ENDPOINT}/{vespa_chunk_id}"
+        def _index_chunk(
+            url: str,
+            headers: dict[str, str],
+            fields: dict[str, Any],
+        ) -> Response:
+            logger.debug(
+                f"Hitting URL '{url}', with headers '{headers}', with fields '{fields}'"
+            )
+            res = requests.post(url, headers=headers, json={"fields": fields})
+            try:
+                res.raise_for_status()
+                return res
+            except Exception as e:
+                logger.error(
+                    f"Failed to index document: '{document.id}'. Got response: '{res.text}'"
+                )
+                raise e
 
-        res = requests.post(url, headers=json_header, json=vespa_document)
-        res.raise_for_status()
+        vespa_url = f"{DOCUMENT_ID_ENDPOINT}/{vespa_chunk_id}"
+        try:
+            _index_chunk(vespa_url, json_header, vespa_document_fields)
+        except HTTPError as e:
+            if cast(Response, e.response).status_code != 400:
+                raise e
+
+            # if it's a 400 response, try again with invalid unicode chars removed
+            # only doing this on error to avoid having to go through the content
+            # char by char every time
+            vespa_document_fields[BLURB] = remove_invalid_unicode_chars(
+                cast(str, vespa_document_fields[BLURB])
+            )
+            vespa_document_fields[SEMANTIC_IDENTIFIER] = remove_invalid_unicode_chars(
+                cast(str, vespa_document_fields[SEMANTIC_IDENTIFIER])
+            )
+            vespa_document_fields[CONTENT] = remove_invalid_unicode_chars(
+                cast(str, vespa_document_fields[CONTENT])
+            )
+            _index_chunk(vespa_url, json_header, vespa_document_fields)
 
         insertion_records.add(
             DocumentInsertionRecord(
@@ -218,11 +257,13 @@ def _build_vespa_filters(
             }
             for filter_key, filter_val in valid_filters.items():
                 if isinstance(filter_val, str):
-                    filter_str += f'{filter_key} = "{filter_val}" and '
+                    filter_str += f'{filter_key} contains "{filter_val}" and '
                 elif isinstance(filter_val, list):
-                    quoted_elems = [f'"{elem}"' for elem in filter_val]
-                    filters_or = ",".join(quoted_elems)
-                    filter_str += f"{filter_key} in [{filters_or}] and "
+                    eq_elems = [
+                        f'{filter_key} contains "{elem}"' for elem in filter_val
+                    ]
+                    filters_or = " or ".join(eq_elems)
+                    filter_str += f"({filters_or}) and "
                 else:
                     raise ValueError("Invalid filters provided")
     return filter_str
@@ -271,6 +312,7 @@ class VespaIndex(DocumentIndex):
         If the changes cannot be applied without conflict with existing data, it will fail with a non 200
         """
         deploy_url = f"{VESPA_APPLICATION_ENDPOINT}/tenant/default/prepareandactivate"
+        logger.debug(f"Sending Vespa zip to {deploy_url}")
         headers = {"Content-Type": "application/zip"}
         with open(self.deployment_zip, "rb") as f:
             response = requests.post(deploy_url, headers=headers, data=f)
@@ -365,9 +407,7 @@ class VespaIndex(DocumentIndex):
             + f"({{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding))"
         )
 
-        query_embedding = get_default_embedding_model().encode(query)
-        if not isinstance(query_embedding, list):
-            query_embedding = query_embedding.tolist()
+        query_embedding = embed_query(query)
 
         params = {
             "yql": yql,
@@ -388,12 +428,11 @@ class VespaIndex(DocumentIndex):
         yql = (
             VespaIndex.yql_base
             + vespa_where_clauses
-            + f'{{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding) or {{grammar: "weakAnd"}}userInput(@query)'
+            + f"{{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding) or "
+            + f'{{grammar: "weakAnd"}}userInput(@query)'
         )
 
-        query_embedding = get_default_embedding_model().encode(query)
-        if not isinstance(query_embedding, list):
-            query_embedding = query_embedding.tolist()
+        query_embedding = embed_query(query)
 
         params = {
             "yql": yql,
