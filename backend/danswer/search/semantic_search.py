@@ -12,6 +12,7 @@ from danswer.configs.app_configs import ENABLE_MINI_CHUNK
 from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
+from danswer.configs.model_configs import ASYMMETRIC_PREFIX
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.datastores.interfaces import DocumentIndex
@@ -184,6 +185,24 @@ def encode_chunks(
         embedding_ind_start += num_embeddings
 
     return embedded_chunks
+
+
+def embed_query(
+    query: str,
+    embedding_model: SentenceTransformer | None = None,
+    prefix: str = ASYMMETRIC_PREFIX,
+    normalize_embeddings: bool = NORMALIZE_EMBEDDINGS,
+) -> list[float]:
+    model = embedding_model or get_default_embedding_model()
+    prefixed_query = prefix + query
+    query_embedding = model.encode(
+        prefixed_query, normalize_embeddings=normalize_embeddings
+    )
+
+    if not isinstance(query_embedding, list):
+        query_embedding = query_embedding.tolist()
+
+    return query_embedding
 
 
 class DefaultEmbedder(Embedder):
