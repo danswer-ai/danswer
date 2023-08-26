@@ -190,3 +190,9 @@ DANSWER_BOT_NUM_RETRIES = int(os.environ.get("DANSWER_BOT_NUM_RETRIES", "5"))
 DANSWER_BOT_ANSWER_GENERATION_TIMEOUT = int(
     os.environ.get("DANSWER_BOT_ANSWER_GENERATION_TIMEOUT", "60")
 )
+DANSWER_BOT_DISPLAY_ERROR_MSGS = os.environ.get(
+    "DANSWER_BOT_DISPLAY_ERROR_MSGS", ""
+).lower() not in [
+    "false",
+    "",
+]
