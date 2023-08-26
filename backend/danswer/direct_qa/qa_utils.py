@@ -2,6 +2,7 @@ import json
 import math
 import re
 from collections.abc import Generator
+from collections.abc import Iterator
 from typing import cast
 from typing import Optional
 from typing import Tuple
@@ -191,7 +192,7 @@ def extract_quotes_from_completed_token_stream(
 
 
 def process_model_tokens(
-    tokens: Generator[str, None, None],
+    tokens: Iterator[str],
     context_docs: list[InferenceChunk],
     is_json_prompt: bool = True,
 ) -> Generator[DanswerAnswerPiece | DanswerQuotes, None, None]:

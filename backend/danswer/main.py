@@ -29,7 +29,7 @@ from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
 from danswer.datastores.document_index import get_default_document_index
 from danswer.db.credentials import create_initial_public_credential
-from danswer.direct_qa.llm_utils import get_default_llm
+from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.server.credential import router as credential_router
 from danswer.server.event_loading import router as event_processing_router
 from danswer.server.health import router as health_router
@@ -178,7 +178,7 @@ def get_application() -> FastAPI:
 
         logger.info("Warming up local NLP models.")
         warm_up_models()
-        qa_model = get_default_llm()
+        qa_model = get_default_qa_model()
         qa_model.warm_up_model()
 
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")

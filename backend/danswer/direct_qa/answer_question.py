@@ -6,7 +6,7 @@ from danswer.datastores.document_index import get_default_document_index
 from danswer.db.models import User
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
-from danswer.direct_qa.llm_utils import get_default_llm
+from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.search.danswer_helper import query_intent
 from danswer.search.keyword_search import retrieve_keyword_documents
 from danswer.search.models import QueryFlow
@@ -73,7 +73,7 @@ def answer_question(
         )
 
     try:
-        qa_model = get_default_llm(timeout=answer_generation_timeout)
+        qa_model = get_default_qa_model(timeout=answer_generation_timeout)
     except (UnknownModelError, OpenAIKeyMissing) as e:
         return QAResponse(
             answer=None,
