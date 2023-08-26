@@ -8,16 +8,16 @@ import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import {
   ConfluenceCredentialJson,
   ConfluenceConfig,
-  Credential,
   ConnectorIndexingStatus,
 } from "@/lib/types";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { LoadingAnimation } from "@/components/Loading";
-import { deleteCredential, linkCredential } from "@/lib/credential";
+import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
+import { usePublicCredentials } from "@/lib/hooks";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -35,10 +35,8 @@ const Main = () => {
     data: credentialsData,
     isLoading: isCredentialsLoading,
     error: isCredentialsError,
-  } = useSWR<Credential<ConfluenceCredentialJson>[]>(
-    "/api/manage/credential",
-    fetcher
-  );
+    refreshCredentials,
+  } = usePublicCredentials();
 
   if (
     (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
@@ -97,8 +95,8 @@ const Main = () => {
                   });
                   return;
                 }
-                await deleteCredential(confluenceCredential.id);
-                mutate("/api/manage/credential");
+                await adminDeleteCredential(confluenceCredential.id);
+                refreshCredentials();
               }}
             >
               <TrashIcon />
@@ -143,7 +141,7 @@ const Main = () => {
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
-                  mutate("/api/manage/credential");
+                  refreshCredentials();
                 }
               }}
             />

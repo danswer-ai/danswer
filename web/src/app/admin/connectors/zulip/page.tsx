@@ -12,11 +12,12 @@ import {
   ZulipCredentialJson,
   ConnectorIndexingStatus,
 } from "@/lib/types";
-import { deleteCredential, linkCredential } from "@/lib/credential";
+import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
+import { usePublicCredentials } from "@/lib/hooks";
 
 const MainSection = () => {
   const { mutate } = useSWRConfig();
@@ -33,10 +34,8 @@ const MainSection = () => {
     data: credentialsData,
     isLoading: isCredentialsLoading,
     error: isCredentialsError,
-  } = useSWR<Credential<ZulipCredentialJson>[]>(
-    "/api/manage/credential",
-    fetcher
-  );
+    refreshCredentials,
+  } = usePublicCredentials();
 
   if (
     (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
@@ -60,9 +59,10 @@ const MainSection = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "zulip"
   );
-  const zulipCredential = credentialsData.filter(
-    (credential) => credential.credential_json?.zuliprc_content
-  )[0];
+  const zulipCredential: Credential<ZulipCredentialJson> =
+    credentialsData.filter(
+      (credential) => credential.credential_json?.zuliprc_content
+    )[0];
 
   return (
     <>
@@ -79,8 +79,8 @@ const MainSection = () => {
             <button
               className="ml-1 hover:bg-gray-700 rounded-full p-1"
               onClick={async () => {
-                await deleteCredential(zulipCredential.id);
-                mutate("/api/manage/credential");
+                await adminDeleteCredential(zulipCredential.id);
+                refreshCredentials();
               }}
             >
               <TrashIcon />
@@ -122,7 +122,7 @@ const MainSection = () => {
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
-                  mutate("/api/manage/credential");
+                  refreshCredentials();
                 }
               }}
             />

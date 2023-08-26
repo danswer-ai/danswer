@@ -3,13 +3,10 @@
 import { Button } from "@/components/Button";
 import { LoadingAnimation } from "@/components/Loading";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
-import { Popup, usePopup } from "@/components/admin/connectors/Popup";
-import { KeyIcon, TrashIcon, UsersIcon } from "@/components/icons/icons";
-import { ApiKeyForm } from "@/components/openai/ApiKeyForm";
-import { GEN_AI_API_KEY_URL } from "@/components/openai/constants";
+import { usePopup } from "@/components/admin/connectors/Popup";
+import { UsersIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
 import { User } from "@/lib/types";
-import { useState } from "react";
 import useSWR, { mutate } from "swr";
 
 const columns = [

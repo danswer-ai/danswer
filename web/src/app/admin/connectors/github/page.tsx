@@ -15,8 +15,9 @@ import {
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { LoadingAnimation } from "@/components/Loading";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
-import { deleteCredential, linkCredential } from "@/lib/credential";
+import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
+import { usePublicCredentials } from "@/lib/hooks";
 
 const Main = () => {
   const { mutate } = useSWRConfig();
@@ -33,10 +34,8 @@ const Main = () => {
     data: credentialsData,
     isLoading: isCredentialsLoading,
     error: isCredentialsError,
-  } = useSWR<Credential<GithubCredentialJson>[]>(
-    "/api/manage/credential",
-    fetcher
-  );
+    refreshCredentials,
+  } = usePublicCredentials();
 
   if (
     (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
@@ -60,9 +59,10 @@ const Main = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "github"
   );
-  const githubCredential = credentialsData.filter(
-    (credential) => credential.credential_json?.github_access_token
-  )[0];
+  const githubCredential: Credential<GithubCredentialJson> =
+    credentialsData.filter(
+      (credential) => credential.credential_json?.github_access_token
+    )[0];
 
   return (
     <>
@@ -80,8 +80,8 @@ const Main = () => {
             <button
               className="ml-1 hover:bg-gray-700 rounded-full p-1"
               onClick={async () => {
-                await deleteCredential(githubCredential.id);
-                mutate("/api/manage/credential");
+                await adminDeleteCredential(githubCredential.id);
+                refreshCredentials();
               }}
             >
               <TrashIcon />
@@ -121,7 +121,7 @@ const Main = () => {
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
-                  mutate("/api/manage/credential");
+                  refreshCredentials();
                 }
               }}
             />

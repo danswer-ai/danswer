@@ -9,7 +9,7 @@ import {
   GoogleDriveCredentialJson,
   GoogleDriveServiceAccountCredentialJson,
 } from "@/lib/types";
-import { deleteCredential } from "@/lib/credential";
+import { adminDeleteCredential } from "@/lib/credential";
 import { setupGoogleDriveOAuth } from "@/lib/googleDrive";
 import { GOOGLE_DRIVE_AUTH_IS_ADMIN_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
@@ -270,6 +270,7 @@ interface DriveCredentialSectionProps {
   serviceAccountKeyData?: { service_account_email: string };
   appCredentialData?: { client_id: string };
   setPopup: (popupSpec: PopupSpec | null) => void;
+  refreshCredentials: () => void;
 }
 
 export const DriveOAuthSection = ({
@@ -278,8 +279,8 @@ export const DriveOAuthSection = ({
   serviceAccountKeyData,
   appCredentialData,
   setPopup,
+  refreshCredentials,
 }: DriveCredentialSectionProps) => {
-  const { mutate } = useSWRConfig();
   const router = useRouter();
 
   const existingCredential =
@@ -292,12 +293,12 @@ export const DriveOAuthSection = ({
         </p>
         <Button
           onClick={async () => {
-            await deleteCredential(existingCredential.id);
+            await adminDeleteCredential(existingCredential.id);
             setPopup({
               message: "Successfully revoked access to Google Drive!",
               type: "success",
             });
-            mutate("/api/manage/credential");
+            refreshCredentials();
           }}
         >
           Revoke Access
@@ -358,7 +359,7 @@ export const DriveOAuthSection = ({
                   type: "error",
                 });
               }
-              mutate("/api/manage/credential");
+              refreshCredentials();
             }}
           >
             {({ isSubmitting }) => (

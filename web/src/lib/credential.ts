@@ -1,11 +1,19 @@
-export async function deleteCredential<T>(credentialId: number) {
-  const response = await fetch(`/api/manage/credential/${credentialId}`, {
+export async function adminDeleteCredential<T>(credentialId: number) {
+  return await fetch(`/api/manage/admin/credential/${credentialId}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
     },
   });
-  return response.json();
+}
+
+export async function deleteCredential<T>(credentialId: number) {
+  return await fetch(`/api/manage/credential/${credentialId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 }
 
 export async function linkCredential(

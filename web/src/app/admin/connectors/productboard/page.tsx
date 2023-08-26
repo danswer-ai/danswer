@@ -6,18 +6,19 @@ import { TextFormField } from "@/components/admin/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import {
-  Credential,
   ProductboardConfig,
   ConnectorIndexingStatus,
   ProductboardCredentialJson,
+  Credential,
 } from "@/lib/types";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { LoadingAnimation } from "@/components/Loading";
-import { deleteCredential, linkCredential } from "@/lib/credential";
+import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
+import { usePublicCredentials } from "@/lib/hooks";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -34,9 +35,10 @@ const Main = () => {
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,
-    isValidating: isCredentialsValidating,
     error: isCredentialsError,
-  } = useSWR<Credential<any>[]>("/api/manage/credential", fetcher);
+    isValidating: isCredentialsValidating,
+    refreshCredentials,
+  } = usePublicCredentials();
 
   if (
     isConnectorIndexingStatusesLoading ||
@@ -61,9 +63,10 @@ const Main = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "productboard"
   );
-  const productboardCredential = credentialsData.filter(
-    (credential) => credential.credential_json?.productboard_access_token
-  )[0];
+  const productboardCredential: Credential<ProductboardCredentialJson> =
+    credentialsData.filter(
+      (credential) => credential.credential_json?.productboard_access_token
+    )[0];
 
   return (
     <>
@@ -100,8 +103,8 @@ const Main = () => {
                   });
                   return;
                 }
-                await deleteCredential(productboardCredential.id);
-                mutate("/api/manage/credential");
+                await adminDeleteCredential(productboardCredential.id);
+                refreshCredentials();
               }}
             >
               <TrashIcon />
@@ -141,7 +144,7 @@ const Main = () => {
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
-                  mutate("/api/manage/credential");
+                  refreshCredentials();
                 }
               }}
             />

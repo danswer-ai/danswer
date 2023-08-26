@@ -8,11 +8,10 @@ import { LoadingAnimation } from "@/components/Loading";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import {
   SlackConfig,
-  Credential,
   SlackCredentialJson,
   ConnectorIndexingStatus,
 } from "@/lib/types";
-import { deleteCredential, linkCredential } from "@/lib/credential";
+import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import {
   TextFormField,
@@ -20,6 +19,7 @@ import {
 } from "@/components/admin/connectors/Field";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
+import { usePublicCredentials } from "@/lib/hooks";
 
 const MainSection = () => {
   const { mutate } = useSWRConfig();
@@ -36,10 +36,8 @@ const MainSection = () => {
     data: credentialsData,
     isLoading: isCredentialsLoading,
     error: isCredentialsError,
-  } = useSWR<Credential<SlackCredentialJson>[]>(
-    "/api/manage/credential",
-    fetcher
-  );
+    refreshCredentials,
+  } = usePublicCredentials();
 
   if (
     (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
@@ -82,8 +80,8 @@ const MainSection = () => {
             <button
               className="ml-1 hover:bg-gray-700 rounded-full p-1"
               onClick={async () => {
-                await deleteCredential(slackCredential.id);
-                mutate("/api/manage/credential");
+                await adminDeleteCredential(slackCredential.id);
+                refreshCredentials();
               }}
             >
               <TrashIcon />
@@ -125,7 +123,7 @@ const MainSection = () => {
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
-                  mutate("/api/manage/credential");
+                  refreshCredentials();
                 }
               }}
             />
