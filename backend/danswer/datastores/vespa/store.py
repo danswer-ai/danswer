@@ -156,6 +156,7 @@ def _index_vespa_chunks(
                 )
             already_existing_documents.add(document.id)
 
+        # No minichunk documents in vespa, minichunk vectors are stored in the chunk itself
         vespa_chunk_id = str(get_uuid_from_chunk(chunk))
 
         embeddings = chunk.embeddings

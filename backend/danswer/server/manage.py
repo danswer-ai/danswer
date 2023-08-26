@@ -312,7 +312,7 @@ def get_connector_indexing_status(
         latest_index_attempt = cc_pair_to_latest_index_attempt.get(
             (connector.id, credential.id)
         )
-        deletion_attemts = deletion_attempts_by_connector.get(connector.id, [])
+        deletion_attempts = deletion_attempts_by_connector.get(connector.id, [])
         indexing_statuses.append(
             ConnectorIndexingStatus(
                 connector=ConnectorSnapshot.from_connector_db_model(connector),
@@ -334,7 +334,7 @@ def get_connector_indexing_status(
                     DeletionAttemptSnapshot.from_deletion_attempt_db_model(
                         deletion_attempt
                     )
-                    for deletion_attempt in deletion_attemts
+                    for deletion_attempt in deletion_attempts
                 ],
                 is_deletable=check_deletion_attempt_is_allowed(
                     connector_credential_pair=cc_pair

@@ -229,6 +229,14 @@ def _run_indexing(
         db_connector = attempt.connector
         db_credential = attempt.credential
 
+        update_connector_credential_pair(
+            db_session=db_session,
+            connector_id=db_connector.id,
+            credential_id=db_credential.id,
+            attempt_status=IndexingStatus.IN_PROGRESS,
+            run_dt=run_dt,
+        )
+
         try:
             net_doc_change = 0
             document_count = 0
@@ -237,7 +245,6 @@ def _run_indexing(
                 logger.debug(
                     f"Indexing batch of documents: {[doc.to_short_descriptor() for doc in doc_batch]}"
                 )
-
                 index_user_id = (
                     None if db_credential.public_doc else db_credential.user_id
                 )
@@ -285,6 +292,8 @@ def _run_indexing(
                 f"Failed connector elapsed time: {time.time() - run_time} seconds"
             )
             mark_attempt_failed(attempt, db_session, failure_reason=str(e))
+            # The last attempt won't be marked failed until the next cycle's check for still in-progress attempts
+            # The connector_credential_pair is marked failed here though to reflect correctly in UI asap
             update_connector_credential_pair(
                 db_session=db_session,
                 connector_id=attempt.connector.id,
