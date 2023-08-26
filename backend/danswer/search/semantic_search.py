@@ -97,9 +97,6 @@ def retrieve_ranked_documents(
     )
     logger.info(files_log_msg)
 
-    chunk_sections = [c.content[:200].replace("\n", " ") for c in ranked_chunks]
-    logger.debug(f"Chunk beginnings:\n" + "\n".join(chunk_sections))
-
     return ranked_chunks, top_chunks[num_rerank:]
 
 

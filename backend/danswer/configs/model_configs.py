@@ -9,12 +9,12 @@ from danswer.configs.constants import ModelHostType
 # Models used must be MIT or Apache license
 # Inference/Indexing speed
 
-# https://github.com/FlagOpen/FlagEmbedding
-DOCUMENT_ENCODER_MODEL = "BAAI/bge-small-en"
+# https://huggingface.co/thenlper/gte-small
+DOCUMENT_ENCODER_MODEL = "thenlper/gte-small"
 DOC_EMBEDDING_DIM = 384  # Depends on the document encoder model
-NORMALIZE_EMBEDDINGS = True
+NORMALIZE_EMBEDDINGS = False
 # Certain models like BGE use a prefix for asymmetric retrievals (query generally shorter than docs)
-ASYMMETRIC_PREFIX = "Represent this sentence for searching relevant passages: "
+ASYMMETRIC_PREFIX = ""
 
 # https://www.sbert.net/docs/pretrained-models/ce-msmarco.html
 CROSS_ENCODER_MODEL_ENSEMBLE = [
