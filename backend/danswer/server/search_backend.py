@@ -15,7 +15,7 @@ from danswer.db.models import User
 from danswer.direct_qa.answer_question import answer_question
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
-from danswer.direct_qa.llm_utils import get_default_llm
+from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.search.danswer_helper import query_intent
 from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.keyword_search import retrieve_keyword_documents
@@ -174,7 +174,7 @@ def stream_direct_qa(
             return
 
         try:
-            qa_model = get_default_llm()
+            qa_model = get_default_qa_model()
         except (UnknownModelError, OpenAIKeyMissing) as e:
             logger.exception("Unable to get QA model")
             yield get_json_line({"error": str(e)})
@@ -199,6 +199,7 @@ def stream_direct_qa(
         except Exception as e:
             # exception is logged in the answer_question method, no need to re-log
             yield get_json_line({"error": str(e)})
+            logger.exception("Failed to run QA")
 
         return
 

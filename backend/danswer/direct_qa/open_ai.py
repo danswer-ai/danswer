@@ -25,9 +25,6 @@ from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.interfaces import AnswerQuestionReturn
 from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
 from danswer.direct_qa.interfaces import QAModel
-from danswer.direct_qa.qa_prompts import ChatPromptProcessor
-from danswer.direct_qa.qa_prompts import get_json_chat_reflexion_msg
-from danswer.direct_qa.qa_prompts import JsonChatProcessor
 from danswer.direct_qa.qa_prompts import JsonProcessor
 from danswer.direct_qa.qa_prompts import NonChatPromptProcessor
 from danswer.direct_qa.qa_utils import get_gen_ai_api_key
@@ -193,110 +190,6 @@ class OpenAICompletionQA(OpenAIQAModel):
             **_build_openai_settings(
                 api_key=_ensure_openai_api_key(self.api_key),
                 prompt=filled_prompt,
-                model=self.model_version,
-                max_tokens=self.max_output_tokens,
-                request_timeout=self.timeout,
-                stream=True,
-            ),
-        )
-
-        tokens = self._generate_tokens_from_response(response)
-
-        yield from process_model_tokens(
-            tokens=tokens,
-            context_docs=context_docs,
-            is_json_prompt=self.prompt_processor.specifies_json_output,
-        )
-
-
-class OpenAIChatCompletionQA(OpenAIQAModel):
-    def __init__(
-        self,
-        prompt_processor: ChatPromptProcessor = JsonChatProcessor(),
-        model_version: str = GEN_AI_MODEL_VERSION,
-        max_output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
-        timeout: int | None = None,
-        reflexion_try_count: int = 0,
-        api_key: str | None = None,
-        include_metadata: bool = INCLUDE_METADATA,
-    ) -> None:
-        self.prompt_processor = prompt_processor
-        self.model_version = model_version
-        self.max_output_tokens = max_output_tokens
-        self.reflexion_try_count = reflexion_try_count
-        self.timeout = timeout
-        self.include_metadata = include_metadata
-        self.api_key = api_key
-
-    @staticmethod
-    def _generate_tokens_from_response(response: Any) -> Generator[str, None, None]:
-        for event in response:
-            event_dict = cast(dict[str, Any], event["choices"][0]["delta"])
-            if (
-                "content" not in event_dict
-            ):  # could be a role message or empty termination
-                continue
-            yield event_dict["content"]
-
-    @log_function_time()
-    def answer_question(
-        self,
-        query: str,
-        context_docs: list[InferenceChunk],
-    ) -> AnswerQuestionReturn:
-        context_docs = _tiktoken_trim_chunks(context_docs, self.model_version)
-
-        messages = self.prompt_processor.fill_prompt(
-            query, context_docs, self.include_metadata
-        )
-        logger.debug(json.dumps(messages, indent=4))
-        model_output = ""
-        for _ in range(self.reflexion_try_count + 1):
-            openai_call = _handle_openai_exceptions_wrapper(
-                openai_call=openai.ChatCompletion.create,
-                query=query,
-            )
-            response = openai_call(
-                **_build_openai_settings(
-                    api_key=_ensure_openai_api_key(self.api_key),
-                    messages=messages,
-                    model=self.model_version,
-                    max_tokens=self.max_output_tokens,
-                    request_timeout=self.timeout,
-                ),
-            )
-            model_output = cast(
-                str, response["choices"][0]["message"]["content"]
-            ).strip()
-            assistant_msg = {"content": model_output, "role": "assistant"}
-            messages.extend([assistant_msg, get_json_chat_reflexion_msg()])
-            logger.info(
-                "OpenAI Token Usage: " + str(response["usage"]).replace("\n", "")
-            )
-
-        logger.debug(model_output)
-
-        answer, quotes = process_answer(model_output, context_docs)
-        return answer, quotes
-
-    def answer_question_stream(
-        self, query: str, context_docs: list[InferenceChunk]
-    ) -> AnswerQuestionStreamReturn:
-        context_docs = _tiktoken_trim_chunks(context_docs, self.model_version)
-
-        messages = self.prompt_processor.fill_prompt(
-            query, context_docs, self.include_metadata
-        )
-        logger.debug(json.dumps(messages, indent=4))
-
-        openai_call = _handle_openai_exceptions_wrapper(
-            openai_call=openai.ChatCompletion.create,
-            query=query,
-        )
-        response = openai_call(
-            **_build_openai_settings(
-                api_key=_ensure_openai_api_key(self.api_key),
-                messages=messages,
                 model=self.model_version,
                 max_tokens=self.max_output_tokens,
                 request_timeout=self.timeout,
