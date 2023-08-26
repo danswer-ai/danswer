@@ -30,6 +30,8 @@ from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
+from danswer.configs.model_configs import ASYMMETRIC_PREFIX
+from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.datastores.datastore_utils import CrossConnectorDocumentMetadata
@@ -405,8 +407,10 @@ class VespaIndex(DocumentIndex):
             + vespa_where_clauses
             + f"({{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding))"
         )
-
-        query_embedding = get_default_embedding_model().encode(query)
+        prefixed_query = ASYMMETRIC_PREFIX + query
+        query_embedding = get_default_embedding_model().encode(
+            prefixed_query, normalize_embeddings=NORMALIZE_EMBEDDINGS
+        )
         if not isinstance(query_embedding, list):
             query_embedding = query_embedding.tolist()
 
@@ -432,7 +436,8 @@ class VespaIndex(DocumentIndex):
             + f'{{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding) or {{grammar: "weakAnd"}}userInput(@query)'
         )
 
-        query_embedding = get_default_embedding_model().encode(query)
+        prefixed_query = ASYMMETRIC_PREFIX + query
+        query_embedding = get_default_embedding_model().encode(prefixed_query)
         if not isinstance(query_embedding, list):
             query_embedding = query_embedding.tolist()
 

@@ -13,6 +13,7 @@ from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
+from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import IndexFilter
 from danswer.search.models import Embedder
@@ -90,8 +91,14 @@ def retrieve_ranked_documents(
         for ranked_chunk in ranked_chunks
         if ranked_chunk.source_links is not None
     ]
-    files_log_msg = f"Top links from semantic search: {', '.join(top_docs)}"
+
+    files_log_msg = (
+        f"Top links from semantic search: {', '.join(list(dict.fromkeys(top_docs)))}"
+    )
     logger.info(files_log_msg)
+
+    chunk_sections = [c.content[:200].replace("\n", " ") for c in ranked_chunks]
+    logger.debug(f"Chunk beginnings:\n" + "\n".join(chunk_sections))
 
     return ranked_chunks, top_chunks[num_rerank:]
 
@@ -155,7 +162,12 @@ def encode_chunks(
 
     embeddings_np: list[numpy.ndarray] = []
     for text_batch in text_batches:
-        embeddings_np.extend(embedding_model.encode(text_batch))
+        # Normalize embeddings is only configured via model_configs.py, be sure to use right value for the set loss
+        embeddings_np.extend(
+            embedding_model.encode(
+                text_batch, normalize_embeddings=NORMALIZE_EMBEDDINGS
+            )
+        )
     embeddings: list[list[float]] = [embedding.tolist() for embedding in embeddings_np]
 
     embedding_ind_start = 0

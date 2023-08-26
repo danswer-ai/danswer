@@ -9,20 +9,21 @@ from danswer.configs.constants import ModelHostType
 # Models used must be MIT or Apache license
 # Inference/Indexing speed
 
-# https://www.sbert.net/docs/pretrained_models.html
-# Use 'multi-qa-MiniLM-L6-cos-v1' if license is added because it is 3x faster (384 dimensional embedding)
-# Context size is 256 for above though
-DOCUMENT_ENCODER_MODEL = "sentence-transformers/all-distilroberta-v1"
-DOC_EMBEDDING_DIM = 768  # Depends on the document encoder model
+# https://github.com/FlagOpen/FlagEmbedding
+DOCUMENT_ENCODER_MODEL = "BAAI/bge-small-en"
+DOC_EMBEDDING_DIM = 384  # Depends on the document encoder model
+NORMALIZE_EMBEDDINGS = True
+# Certain models like BGE use a prefix for asymmetric retrievals (query generally shorter than docs)
+ASYMMETRIC_PREFIX = "Represent this sentence for searching relevant passages: "
 
 # https://www.sbert.net/docs/pretrained-models/ce-msmarco.html
-# Previously using "cross-encoder/ms-marco-MiniLM-L-6-v2" alone
 CROSS_ENCODER_MODEL_ENSEMBLE = [
     "cross-encoder/ms-marco-MiniLM-L-4-v2",
     "cross-encoder/ms-marco-TinyBERT-L-2-v2",
 ]
 
 # Better to keep it loose, surfacing more results better than missing results
+# Currently unused by Vespa
 SEARCH_DISTANCE_CUTOFF = 0.1  # Cosine similarity (currently), range of -1 to 1 with -1 being completely opposite
 
 QUERY_MAX_CONTEXT_SIZE = 256
