@@ -1,7 +1,9 @@
 import logging
 import os
 from collections.abc import Callable
+from collections.abc import MutableMapping
 from functools import wraps
+from typing import Any
 from typing import cast
 
 from retry import retry
@@ -11,6 +13,7 @@ from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 
 from danswer.configs.app_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
+from danswer.configs.app_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
 from danswer.configs.app_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
@@ -27,14 +30,21 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def _wrap_logger_fn_to_include_channel(
-    log_fn: Callable[[str], None], channel: str
-) -> Callable[[str], None]:
-    @wraps(log_fn)
-    def wrapped_fn(msg: str) -> None:
-        log_fn(f"[{channel}] {msg}")
+_CHANNEL_ID = "channel_id"
 
-    return wrapped_fn
+
+class _ChannelIdAdapter(logging.LoggerAdapter):
+    """This is used to add the channel ID to all log messages
+    emitted in this file"""
+
+    def process(
+        self, msg: str, kwargs: MutableMapping[str, Any]
+    ) -> tuple[str, MutableMapping[str, Any]]:
+        channel_id = self.extra.get(_CHANNEL_ID) if self.extra else None
+        if channel_id:
+            return f"[Channel ID: {channel_id}] {msg}", kwargs
+        else:
+            return msg, kwargs
 
 
 def _get_socket_client() -> SocketModeClient:
@@ -133,54 +143,81 @@ def _process_documents(
     return "\n".join(top_document_lines)
 
 
+@retry(
+    tries=DANSWER_BOT_NUM_RETRIES,
+    delay=0.25,
+    backoff=2,
+    logger=cast(logging.Logger, logger),
+)
+def _respond_in_thread(
+    client: SocketModeClient,
+    channel: str,
+    text: str,
+    thread_ts: str,
+) -> None:
+    logger.info(f"Trying to send message: {text}")
+    slack_call = make_slack_api_rate_limited(client.web_client.chat_postMessage)
+    response = slack_call(
+        channel=channel,
+        text=text,
+        thread_ts=thread_ts,
+    )
+    if not response.get("ok"):
+        raise RuntimeError(f"Unable to post message: {response}")
+
+
 def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> None:
     if req.type == "events_api":
         # Acknowledge the request anyway
         response = SocketModeResponse(envelope_id=req.envelope_id)
         client.send_socket_mode_response(response)
 
-        channel = cast(str | None, req.payload.get("event", {}).get("channel"))
+        event = cast(dict[str, Any], req.payload.get("event", {}))
+        channel = cast(str | None, event.get("channel"))
+        channel_specific_logger = _ChannelIdAdapter(
+            logger, extra={_CHANNEL_ID: channel}
+        )
+
         # Ensure that the message is a new message + of expected type
-        event_type = req.payload.get("event", {}).get("type")
+        event_type = event.get("type")
         if event_type != "message":
-            logger.info(
+            channel_specific_logger.info(
                 f"Ignoring non-message event of type '{event_type}' for channel '{channel}'"
             )
 
         # this should never happen, but we can't continue without a channel since
         # we can't send a response without it
         if not channel:
-            logger.error(f"Found message without channel - skipping")
+            channel_specific_logger.error(f"Found message without channel - skipping")
             return
 
-        # utils which will preprend the channel to the log message
-        log_info = _wrap_logger_fn_to_include_channel(logger.info, channel)
-        log_error = _wrap_logger_fn_to_include_channel(logger.error, channel)
-        log_exception = _wrap_logger_fn_to_include_channel(logger.exception, channel)
-
-        message_subtype = req.payload.get("event", {}).get("subtype")
+        message_subtype = event.get("subtype")
         # ignore things like channel_join, channel_leave, etc.
         # NOTE: "file_share" is just a message with a file attachment, so we
         # should not ignore it
         if message_subtype not in [None, "file_share"]:
-            log_info(
+            channel_specific_logger.info(
                 f"Ignoring message with subtype '{message_subtype}' since is is a special message type"
             )
             return
 
-        if req.payload.get("event", {}).get("bot_profile"):
-            log_info("Ignoring message from bot")
+        if event.get("bot_profile"):
+            channel_specific_logger.info("Ignoring message from bot")
             return
 
-        message_ts = req.payload.get("event", {}).get("ts")
-        thread_ts = req.payload.get("event", {}).get("thread_ts")
+        message_ts = event.get("ts")
+        thread_ts = event.get("thread_ts")
+        # pick the root of the thread (if a thread exists)
+        message_ts_to_respond_to = cast(str, thread_ts or message_ts)
         if thread_ts and message_ts != thread_ts:
-            log_info("Skipping message since it is not the root of a thread")
+            channel_specific_logger.info(
+                "Skipping message since it is not the root of a thread"
+            )
             return
 
-        msg = req.payload.get("event", {}).get("text")
+        msg = cast(str | None, event.get("text"))
         if not msg:
-            log_error("Unable to process empty message")
+            channel_specific_logger.error("Unable to process empty message")
             return
 
         # TODO: message should be enqueued and processed elsewhere,
@@ -207,17 +244,27 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
         try:
             answer = _get_answer(
                 QuestionRequest(
-                    query=req.payload.get("event", {}).get("text"),
+                    query=msg,
                     collection=DOCUMENT_INDEX_NAME,
                     use_keyword=None,
                     filters=None,
                     offset=None,
                 )
             )
-        except Exception:
-            log_exception(
-                f"Unable to process message - did not successfully answer in {DANSWER_BOT_NUM_RETRIES} attempts"
+        except Exception as e:
+            channel_specific_logger.exception(
+                f"Unable to process message - did not successfully answer "
+                f"in {DANSWER_BOT_NUM_RETRIES} attempts"
             )
+            # Optionally, respond in thread with the error message, Used primarily
+            # for debugging purposes
+            if DANSWER_BOT_DISPLAY_ERROR_MSGS:
+                _respond_in_thread(
+                    client=client,
+                    channel=channel,
+                    text=f"Encountered exception when trying to answer: \n\n```{e}```",
+                    thread_ts=message_ts_to_respond_to,
+                )
             return
 
         # convert raw response into "nicely" formatted Slack message
@@ -235,41 +282,22 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
             else:
                 text = f"{answer.answer}\n\n*Warning*: no sources were quoted for this answer, so it may be unreliable 😔\n\n{top_documents_str_with_header}"
 
-        @retry(
-            tries=DANSWER_BOT_NUM_RETRIES,
-            delay=0.25,
-            backoff=2,
-            logger=cast(logging.Logger, logger),
-        )
-        def _respond_in_thread(
-            channel: str,
-            text: str,
-            thread_ts: str,
-        ) -> None:
-            logger.info(f"Trying to send message: {text}")
-            slack_call = make_slack_api_rate_limited(client.web_client.chat_postMessage)
-            response = slack_call(
-                channel=channel,
-                text=text,
-                thread_ts=thread_ts,
-            )
-            if not response.get("ok"):
-                raise RuntimeError(f"Unable to post message: {response}")
-
         try:
             _respond_in_thread(
+                client=client,
                 channel=channel,
                 text=text,
-                thread_ts=thread_ts
-                or message_ts,  # pick the root of the thread (if a thread exists)
+                thread_ts=message_ts_to_respond_to,
             )
         except Exception:
-            log_exception(
+            channel_specific_logger.exception(
                 f"Unable to process message - could not respond in slack in {DANSWER_BOT_NUM_RETRIES} attempts"
             )
             return
 
-        log_info(f"Successfully processed message with ts: '{message_ts}'")
+        channel_specific_logger.info(
+            f"Successfully processed message with ts: '{message_ts}'"
+        )
 
 
 # Follow the guide (https://docs.danswer.dev/slack_bot_setup) to set up
