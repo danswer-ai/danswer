@@ -43,6 +43,7 @@ from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import UpdateRequest
 from danswer.datastores.vespa.utils import remove_invalid_unicode_chars
 from danswer.search.search_utils import get_default_embedding_model
+from danswer.search.semantic_search import embed_query
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -406,9 +407,7 @@ class VespaIndex(DocumentIndex):
             + f"({{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding))"
         )
 
-        query_embedding = get_default_embedding_model().encode(query)
-        if not isinstance(query_embedding, list):
-            query_embedding = query_embedding.tolist()
+        query_embedding = embed_query(query)
 
         params = {
             "yql": yql,
@@ -429,12 +428,11 @@ class VespaIndex(DocumentIndex):
         yql = (
             VespaIndex.yql_base
             + vespa_where_clauses
-            + f'{{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding) or {{grammar: "weakAnd"}}userInput(@query)'
+            + f"{{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding) or "
+            + f'{{grammar: "weakAnd"}}userInput(@query)'
         )
 
-        query_embedding = get_default_embedding_model().encode(query)
-        if not isinstance(query_embedding, list):
-            query_embedding = query_embedding.tolist()
+        query_embedding = embed_query(query)
 
         params = {
             "yql": yql,

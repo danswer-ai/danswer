@@ -42,7 +42,7 @@ schema danswer_chunk {
         field metadata type string {
             indexing: summary | attribute
         }
-        field embeddings type tensor<float>(t{},x[768]) {
+        field embeddings type tensor<float>(t{},x[384]) {
             indexing: attribute
             attribute {
                 distance-metric: angular
@@ -70,7 +70,7 @@ schema danswer_chunk {
 
     rank-profile semantic_search inherits default {
         inputs {
-            query(query_embedding) tensor<float>(x[768])
+            query(query_embedding) tensor<float>(x[384])
         }
         first-phase {
             expression: closeness(field, embeddings) * attribute(boost)
@@ -80,7 +80,7 @@ schema danswer_chunk {
 
     rank-profile hybrid_search inherits default {
         inputs {
-            query(query_embedding) tensor<float>(x[768])
+            query(query_embedding) tensor<float>(x[384])
         }
         first-phase {
             expression: bm25(content)
