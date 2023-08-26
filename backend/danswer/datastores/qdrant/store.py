@@ -15,6 +15,8 @@ from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import PUBLIC_DOC_PAT
+from danswer.configs.model_configs import ASYMMETRIC_PREFIX
+from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
@@ -175,8 +177,9 @@ class QdrantIndex(VectorIndex):
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
         page_size: int = NUM_RETURNED_HITS,
     ) -> list[InferenceChunk]:
+        prefixed_query = ASYMMETRIC_PREFIX + query
         query_embedding = get_default_embedding_model().encode(
-            query
+            prefixed_query, normalize_embeddings=NORMALIZE_EMBEDDINGS
         )  # TODO: make this part of the embedder interface
         if not isinstance(query_embedding, list):
             query_embedding = query_embedding.tolist()
