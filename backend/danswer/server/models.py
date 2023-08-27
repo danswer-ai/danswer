@@ -137,10 +137,7 @@ class QAFeedbackRequest(BaseModel):
 
 
 class SearchFeedbackRequest(BaseModel):
-<<<<<<< HEAD
     query_id: int
-=======
->>>>>>> 92fce76 (checkpoint)
     document_id: str
     document_rank: int
     click: bool
