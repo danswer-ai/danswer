@@ -33,7 +33,6 @@ def answer_qa_query(
     answer_generation_timeout: int = QA_TIMEOUT,
 ) -> QAResponse:
     query = question.query
-    collection = question.collection
     filters = question.filters
     use_keyword = question.use_keyword
     offset_count = question.offset if question.offset is not None else 0
@@ -54,12 +53,12 @@ def answer_qa_query(
     user_id = None if user is None else user.id
     if use_keyword:
         ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
-            query, user_id, filters, get_default_document_index(collection=collection)
+            query, user_id, filters, get_default_document_index()
         )
         unranked_chunks: list[InferenceChunk] | None = []
     else:
         ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-            query, user_id, filters, get_default_document_index(collection=collection)
+            query, user_id, filters, get_default_document_index()
         )
     if not ranked_chunks:
         return QAResponse(

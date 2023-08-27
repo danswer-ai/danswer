@@ -342,7 +342,7 @@ class VespaIndex(DocumentIndex):
                 logger.error("Update request received but nothing to update")
                 continue
 
-            update_dict: dict[str, dict[str, list[str] | int]] = {"fields": {}}
+            update_dict: dict[str, dict[str, list[str] | int | float]] = {"fields": {}}
             if update_request.boost:
                 update_dict["fields"][BOOST] = update_request.boost
             if update_request.allowed_users:

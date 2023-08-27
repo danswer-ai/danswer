@@ -129,6 +129,7 @@ class QAFeedbackRequest(BaseModel):
 
 
 class SearchFeedbackRequest(BaseModel):
+    query_id: int
     document_id: str
     document_rank: int
     click: bool

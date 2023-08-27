@@ -12,6 +12,15 @@ from danswer.connectors.models import IndexAttemptMetadata
 
 
 DEFAULT_BATCH_SIZE = 30
+BOOST_MULTIPLIER = 1.2
+
+
+def translate_boost_count_to_multiplier(boost: int) -> float:
+    if boost > 0:
+        return BOOST_MULTIPLIER**boost
+    elif boost < 0:
+        return 1 / (BOOST_MULTIPLIER**boost)
+    return 1
 
 
 def get_uuid_from_chunk(

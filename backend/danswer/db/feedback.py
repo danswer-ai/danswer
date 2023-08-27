@@ -5,6 +5,9 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
+from danswer.datastores.datastore_utils import translate_boost_count_to_multiplier
+from danswer.datastores.document_index import get_default_document_index
+from danswer.datastores.interfaces import UpdateRequest
 from danswer.db.models import DocumentMetadata
 from danswer.db.models import DocumentRetrievalFeedback
 from danswer.db.models import QueryEvent
@@ -92,6 +95,7 @@ def create_doc_retrieval_feedback(
     qa_event_id: int,
     document_id: str,
     document_rank: int,
+    user_id: UUID | None,
     db_session: Session,
     clicked: bool = False,
     feedback: SearchFeedbackType | None = None,
@@ -99,9 +103,10 @@ def create_doc_retrieval_feedback(
     if not clicked and feedback is None:
         raise ValueError("No action taken, not valid feedback")
 
-    # Ensure this query event is valid so we hit exception here
-    # instead of a more confusing foreign key issue
-    fetch_query_event_by_id(qa_event_id, db_session)
+    query_event = fetch_query_event_by_id(qa_event_id, db_session)
+
+    if user_id != query_event.user_id:
+        raise ValueError("User trying to give feedback on a query run by another user.")
 
     doc_m = fetch_doc_m_by_id(document_id, db_session)
 
@@ -125,6 +130,13 @@ def create_doc_retrieval_feedback(
         else:
             raise ValueError("Unhandled document feedback type")
 
-    # TODO UPDATE INDEX BOOST
+    if feedback in [SearchFeedbackType.ENDORSE, SearchFeedbackType.REJECT]:
+        document_index = get_default_document_index()
+        update = UpdateRequest(
+            document_ids=[document_id],
+            boost=translate_boost_count_to_multiplier(doc_m.boost),
+        )
+        # Updates are generally batched for efficiency, this case only 1 doc/value is updated
+        document_index.update([update])
 
     db_session.commit()

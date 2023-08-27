@@ -32,7 +32,7 @@ class UpdateRequest:
     document_ids: list[str]
     # all other fields will be left alone
     allowed_users: list[str] | None = None
-    boost: int | None = None
+    boost: float | None = None
 
 
 class Verifiable(abc.ABC):

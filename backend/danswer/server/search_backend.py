@@ -13,6 +13,7 @@ from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
 from danswer.datastores.document_index import get_default_document_index
 from danswer.db.engine import get_session
+from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.feedback import create_query_event
 from danswer.db.feedback import update_query_event_feedback
 from danswer.db.models import User
@@ -62,7 +63,6 @@ def semantic_search(
     db_session: Session = Depends(get_session),
 ) -> SearchResponse:
     query = question.query
-    collection = question.collection
     filters = question.filters
     logger.info(f"Received semantic search query: {query}")
 
@@ -76,7 +76,7 @@ def semantic_search(
 
     user_id = None if user is None else user.id
     ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-        query, user_id, filters, get_default_document_index(collection=collection)
+        query, user_id, filters, get_default_document_index()
     )
     if not ranked_chunks:
         return SearchResponse(
@@ -100,7 +100,6 @@ def keyword_search(
     db_session: Session = Depends(get_session),
 ) -> SearchResponse:
     query = question.query
-    collection = question.collection
     filters = question.filters
     logger.info(f"Received keyword search query: {query}")
 
@@ -114,7 +113,7 @@ def keyword_search(
 
     user_id = None if user is None else user.id
     ranked_chunks = retrieve_keyword_documents(
-        query, user_id, filters, get_default_document_index(collection=collection)
+        query, user_id, filters, get_default_document_index()
     )
     if not ranked_chunks:
         return SearchResponse(
@@ -160,7 +159,6 @@ def stream_direct_qa(
     ) -> Generator[str, None, None]:
         answer_so_far: str = ""
         query = question.query
-        collection = question.collection
         filters = question.filters
         use_keyword = question.use_keyword
         offset_count = question.offset if question.offset is not None else 0
@@ -175,7 +173,7 @@ def stream_direct_qa(
                 query,
                 user_id,
                 filters,
-                get_default_document_index(collection=collection),
+                get_default_document_index(),
             )
             unranked_chunks: list[InferenceChunk] | None = []
         else:
@@ -183,7 +181,7 @@ def stream_direct_qa(
                 query,
                 user_id,
                 filters,
-                get_default_document_index(collection=collection),
+                get_default_document_index(),
             )
         if not ranked_chunks:
             logger.debug("No Documents Found")
@@ -284,4 +282,12 @@ def process_doc_retrieval_feedback(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    pass
+    create_doc_retrieval_feedback(
+        qa_event_id=feedback.query_id,
+        document_id=feedback.document_id,
+        document_rank=feedback.document_rank,
+        clicked=feedback.click,
+        feedback=feedback.search_feedback,
+        user_id=user.id if user is not None else None,
+        db_session=db_session,
+    )
