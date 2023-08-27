@@ -66,3 +66,15 @@ class ModelHostType(str, Enum):
     # https://medium.com/@yuhongsun96/host-a-llama-2-api-on-gpu-for-free-a5311463c183
     COLAB_DEMO = "colab-demo"
     # TODO support for Azure, AWS, GCP GenAI model hosting
+
+
+class QAFeedbackType(str, Enum):
+    LIKE = "like"  # User likes the answer, used for metrics
+    DISLIKE = "dislike"  # User dislikes the answer, used for metrics
+
+
+class SearchFeedbackType(str, Enum):
+    ENDORSE = "endorse"  # boost this document for all future queries
+    REJECT = "reject"  # down-boost this document for all future queries
+    HIDE = "hide"  # mark this document as untrusted, hide from LLM
+    UNHIDE = "unhide"

@@ -23,6 +23,7 @@ from danswer.db.connector_credential_pair import update_connector_credential_pai
 from danswer.db.credentials import backend_update_credential_json
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.feedback import create_document_metadata
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
@@ -246,6 +247,19 @@ def _run_indexing(
                 logger.debug(
                     f"Indexing batch of documents: {[doc.to_short_descriptor() for doc in doc_batch]}"
                 )
+
+                # Save in Postgres before indexing
+                for doc in doc_batch:
+                    first_link = next(
+                        (section.link for section in doc.sections if section.link), ""
+                    )
+                    create_document_metadata(
+                        doc_id=doc.id,
+                        semantic_id=doc.semantic_identifier,
+                        link=first_link,
+                        db_session=db_session,
+                    )
+
                 index_user_id = (
                     None if db_credential.public_doc else db_credential.user_id
                 )
