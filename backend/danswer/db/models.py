@@ -64,6 +64,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     credentials: Mapped[List["Credential"]] = relationship(
         "Credential", back_populates="user", lazy="joined"
     )
+    query_events: Mapped[List["QueryEvent"]] = relationship(
+        "QueryEvent", back_populates="user"
+    )
 
 
 class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
@@ -302,7 +305,10 @@ class QueryEvent(Base):
         server_default=func.now(),
     )
 
-    user: Mapped[User | None] = relationship("User", back_populates="query_event")
+    user: Mapped[User | None] = relationship("User", back_populates="query_events")
+    document_feedbacks: Mapped[List["DocumentRetrievalFeedback"]] = relationship(
+        "DocumentRetrievalFeedback", back_populates="qa_event"
+    )
 
 
 class DocumentRetrievalFeedback(Base):
@@ -323,7 +329,10 @@ class DocumentRetrievalFeedback(Base):
     )
 
     qa_event: Mapped[QueryEvent] = relationship(
-        "QueryEvent", back_populates="document_retrieval_feedback"
+        "QueryEvent", back_populates="document_feedbacks"
+    )
+    document: Mapped["Document"] = relationship(
+        "Document", back_populates="retrieval_feedbacks"
     )
 
 
@@ -340,3 +349,7 @@ class Document(Base):
     # First Section's link
     link: Mapped[str | None] = mapped_column(String, nullable=True)
     # TODO if more sensitive data is added here for display, make sure to add user/group permission
+
+    retrieval_feedbacks: Mapped[List[DocumentRetrievalFeedback]] = relationship(
+        "DocumentRetrievalFeedback", back_populates="document"
+    )
