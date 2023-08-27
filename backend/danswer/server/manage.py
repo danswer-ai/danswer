@@ -71,6 +71,7 @@ from danswer.server.models import CredentialSnapshot
 from danswer.server.models import DeletionAttemptSnapshot
 from danswer.server.models import FileUploadResponse
 from danswer.server.models import GDriveCallback
+from danswer.server.models import GetBoostedDocsRequest
 from danswer.server.models import GoogleAppCredentials
 from danswer.server.models import GoogleServiceAccountCredentialRequest
 from danswer.server.models import GoogleServiceAccountKey
