@@ -22,6 +22,7 @@ from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.llm_utils import get_default_qa_model
+from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.search.danswer_helper import query_intent
 from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.keyword_search import retrieve_keyword_documents
@@ -68,7 +69,11 @@ def semantic_search(
 
     query_event_id = create_query_event(
         query=query,
+<<<<<<< HEAD
         selected_flow=SearchType.SEMANTIC,
+=======
+        selected_flow=SearchType.KEYWORD,
+>>>>>>> 92fce76 (checkpoint)
         llm_answer=None,
         user_id=user.id,
         db_session=db_session,
