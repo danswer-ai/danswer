@@ -165,7 +165,7 @@ class Credential(Base):
     deletion_attempt: Mapped[Optional["DeletionAttempt"]] = relationship(
         "DeletionAttempt", back_populates="credential"
     )
-    user: Mapped[User] | None = relationship("User", back_populates="credentials")
+    user: Mapped[User | None] = relationship("User", back_populates="credentials")
 
 
 class IndexAttempt(Base):
@@ -302,7 +302,7 @@ class QueryEvent(Base):
         server_default=func.now(),
     )
 
-    user: Mapped[User] | None = relationship("User", back_populates="query_event")
+    user: Mapped[User | None] = relationship("User", back_populates="query_event")
 
 
 class DocumentRetrievalFeedback(Base):
@@ -328,6 +328,8 @@ class DocumentRetrievalFeedback(Base):
 
 
 class DocumentMetadata(Base):
+    """Maps semantically to a "Document", named this way to disambiguate in code"""
+
     __tablename__ = "document"
 
     # this should correspond to the ID of the document (as is passed around
