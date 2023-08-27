@@ -339,3 +339,4 @@ class DocumentMetadata(Base):
     semantic_id: Mapped[str] = mapped_column(String)
     # First Section's link
     link: Mapped[str | None] = mapped_column(String, nullable=True)
+    # TODO if more sensitive data is added here for display, make sure to add user/group permission
