@@ -306,14 +306,10 @@ class QueryEvent(Base):
         server_default=func.now(),
     )
 
-<<<<<<< HEAD
     user: Mapped[User | None] = relationship("User", back_populates="query_events")
     document_feedbacks: Mapped[List["DocumentRetrievalFeedback"]] = relationship(
         "DocumentRetrievalFeedback", back_populates="qa_event"
     )
-=======
-    user: Mapped[User | None] = relationship("User", back_populates="query_event")
->>>>>>> 36671be (add migrations)
 
 
 class DocumentRetrievalFeedback(Base):
