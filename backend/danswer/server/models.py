@@ -123,6 +123,11 @@ class QuestionRequest(BaseModel):
     offset: int | None
 
 
+class GetBoostedDocsRequest(BaseModel):
+    ascending: bool
+    limit: int
+
+
 class QAFeedbackRequest(BaseModel):
     query_id: int
     feedback: QAFeedbackType

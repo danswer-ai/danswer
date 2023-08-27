@@ -1,5 +1,7 @@
 from uuid import UUID
 
+from sqlalchemy import asc
+from sqlalchemy import desc
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -34,6 +36,21 @@ def fetch_doc_m_by_id(doc_id: str, db_session: Session) -> DocumentMetadata:
         raise ValueError("Invalid Document provided for updating")
 
     return doc_m
+
+
+def fetch_docs_ranked_by_boost(
+    db_session: Session, ascending: bool = False, limit: int = 100
+) -> list[DocumentMetadata]:
+    order_func = asc if ascending else desc
+    stmt = (
+        select(DocumentMetadata)
+        .order_by(order_func(DocumentMetadata.boost))
+        .limit(limit)
+    )
+    result = db_session.execute(stmt)
+    doc_m_list = result.scalars().all()
+
+    return list(doc_m_list)
 
 
 def create_document_metadata(
