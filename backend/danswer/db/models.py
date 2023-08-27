@@ -327,9 +327,7 @@ class DocumentRetrievalFeedback(Base):
     )
 
 
-class DocumentMetadata(Base):
-    """Maps semantically to a "Document", named this way to disambiguate in code"""
-
+class Document(Base):
     __tablename__ = "document"
 
     # this should correspond to the ID of the document (as is passed around

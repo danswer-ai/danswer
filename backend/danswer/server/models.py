@@ -107,6 +107,14 @@ class UserRoleResponse(BaseModel):
     role: str
 
 
+class BoostDoc(BaseModel):
+    document_id: str
+    semantic_id: str
+    link: str
+    boost: int
+    hidden: bool
+
+
 class SearchDoc(BaseModel):
     document_id: str
     semantic_identifier: str

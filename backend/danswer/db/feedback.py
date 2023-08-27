@@ -10,7 +10,7 @@ from danswer.configs.constants import SearchFeedbackType
 from danswer.datastores.datastore_utils import translate_boost_count_to_multiplier
 from danswer.datastores.document_index import get_default_document_index
 from danswer.datastores.interfaces import UpdateRequest
-from danswer.db.models import DocumentMetadata
+from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentRetrievalFeedback
 from danswer.db.models import QueryEvent
 from danswer.search.models import SearchType
@@ -27,8 +27,8 @@ def fetch_query_event_by_id(query_id: int, db_session: Session) -> QueryEvent:
     return query_event
 
 
-def fetch_doc_m_by_id(doc_id: str, db_session: Session) -> DocumentMetadata:
-    stmt = select(DocumentMetadata).where(DocumentMetadata.id == doc_id)
+def fetch_doc_m_by_id(doc_id: str, db_session: Session) -> DbDocument:
+    stmt = select(DbDocument).where(DbDocument.id == doc_id)
     result = db_session.execute(stmt)
     doc_m = result.scalar_one_or_none()
 
@@ -40,13 +40,9 @@ def fetch_doc_m_by_id(doc_id: str, db_session: Session) -> DocumentMetadata:
 
 def fetch_docs_ranked_by_boost(
     db_session: Session, ascending: bool = False, limit: int = 100
-) -> list[DocumentMetadata]:
+) -> list[DbDocument]:
     order_func = asc if ascending else desc
-    stmt = (
-        select(DocumentMetadata)
-        .order_by(order_func(DocumentMetadata.boost))
-        .limit(limit)
-    )
+    stmt = select(DbDocument).order_by(order_func(DbDocument.boost)).limit(limit)
     result = db_session.execute(stmt)
     doc_m_list = result.scalars().all()
 
@@ -66,7 +62,7 @@ def create_document_metadata(
         # Document already exists, don't reset its data
         pass
 
-    DocumentMetadata(
+    DbDocument(
         id=doc_id,
         semantic_id=semantic_id,
         link=link,

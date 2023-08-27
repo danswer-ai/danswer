@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from danswer.datastores.interfaces import DocumentMetadata
-from danswer.db.models import Document
+from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentByConnectorCredentialPair
 from danswer.db.utils import model_to_dict
 from danswer.utils.logger import setup_logger
@@ -20,7 +20,7 @@ def get_documents_with_single_connector_credential_pair(
     db_session: Session,
     connector_id: int,
     credential_id: int,
-) -> Sequence[Document]:
+) -> Sequence[DbDocument]:
     initial_doc_ids_stmt = select(DocumentByConnectorCredentialPair.id).where(
         and_(
             DocumentByConnectorCredentialPair.connector_id == connector_id,
@@ -31,17 +31,17 @@ def get_documents_with_single_connector_credential_pair(
     # Filter it down to the documents with only a single connector/credential pair
     # Meaning if this connector/credential pair is removed, this doc should be gone
     trimmed_doc_ids_stmt = (
-        select(Document.id)
+        select(DbDocument.id)
         .join(
             DocumentByConnectorCredentialPair,
-            DocumentByConnectorCredentialPair.id == Document.id,
+            DocumentByConnectorCredentialPair.id == DbDocument.id,
         )
-        .where(Document.id.in_(initial_doc_ids_stmt))
-        .group_by(Document.id)
+        .where(DbDocument.id.in_(initial_doc_ids_stmt))
+        .group_by(DbDocument.id)
         .having(func.count(DocumentByConnectorCredentialPair.id) == 1)
     )
 
-    stmt = select(Document).where(Document.id.in_(trimmed_doc_ids_stmt))
+    stmt = select(DbDocument).where(DbDocument.id.in_(trimmed_doc_ids_stmt))
     return db_session.scalars(stmt).all()
 
 
@@ -60,13 +60,13 @@ def get_document_by_connector_credential_pairs_indexed_by_multiple(
     # Filter it down to the documents with more than 1 connector/credential pair
     # Meaning if this connector/credential pair is removed, this doc is still accessible
     trimmed_doc_ids_stmt = (
-        select(Document.id)
+        select(DbDocument.id)
         .join(
             DocumentByConnectorCredentialPair,
-            DocumentByConnectorCredentialPair.id == Document.id,
+            DocumentByConnectorCredentialPair.id == DbDocument.id,
         )
-        .where(Document.id.in_(initial_doc_ids_stmt))
-        .group_by(Document.id)
+        .where(DbDocument.id.in_(initial_doc_ids_stmt))
+        .group_by(DbDocument.id)
         .having(func.count(DocumentByConnectorCredentialPair.id) > 1)
     )
 
@@ -86,8 +86,8 @@ def upsert_documents(
         if document_metadata.document_id not in seen_document_ids:
             seen_document_ids.add(document_metadata.document_id)
 
-    insert_stmt = insert(Document).values(
-        [model_to_dict(Document(id=doc_id)) for doc_id in seen_document_ids]
+    insert_stmt = insert(DbDocument).values(
+        [model_to_dict(DbDocument(id=doc_id)) for doc_id in seen_document_ids]
     )
     # for now, there are no columns to update. If more metadata is added, then this
     # needs to change to an `on_conflict_do_update`
@@ -140,7 +140,7 @@ def delete_document_by_connector_credential_pair(
 
 
 def delete_documents(db_session: Session, document_ids: list[str]) -> None:
-    db_session.execute(delete(Document).where(Document.id.in_(document_ids)))
+    db_session.execute(delete(DbDocument).where(DbDocument.id.in_(document_ids)))
 
 
 def delete_documents_complete(db_session: Session, document_ids: list[str]) -> None:

@@ -62,6 +62,7 @@ from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.server.models import ApiKey
 from danswer.server.models import AuthStatus
 from danswer.server.models import AuthUrl
+from danswer.server.models import BoostDoc
 from danswer.server.models import ConnectorBase
 from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.server.models import ConnectorIndexingStatus
@@ -95,10 +96,20 @@ def get_most_boosted_docs(
     doc_options: GetBoostedDocsRequest,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> list[DocumentMetadata]:
-    return fetch_docs_ranked_by_boost(
+) -> list[BoostDoc]:
+    boost_docs = fetch_docs_ranked_by_boost(
         ascending=doc_options.ascending, limit=doc_options.limit, db_session=db_session
     )
+    return [
+        BoostDoc(
+            document_id=doc.id,
+            semantic_id=doc.semantic_id,
+            link=doc.link or "",
+            boost=doc.boost,
+            hidden=doc.hidden,
+        )
+        for doc in boost_docs
+    ]
 
 
 @router.get("/admin/connector/google-drive/app-credential")
