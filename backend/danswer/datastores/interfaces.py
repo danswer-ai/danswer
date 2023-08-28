@@ -22,6 +22,8 @@ class DocumentMetadata:
     connector_id: int
     credential_id: int
     document_id: str
+    semantic_identifier: str
+    first_link: str
 
 
 @dataclass

@@ -248,18 +248,6 @@ def _run_indexing(
                     f"Indexing batch of documents: {[doc.to_short_descriptor() for doc in doc_batch]}"
                 )
 
-                # Save in Postgres before indexing
-                for doc in doc_batch:
-                    first_link = next(
-                        (section.link for section in doc.sections if section.link), ""
-                    )
-                    create_document_metadata(
-                        doc_id=doc.id,
-                        semantic_id=doc.semantic_identifier,
-                        link=first_link,
-                        db_session=db_session,
-                    )
-
                 index_user_id = (
                     None if db_credential.public_doc else db_credential.user_id
                 )

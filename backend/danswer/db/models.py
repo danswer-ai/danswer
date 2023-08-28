@@ -23,6 +23,7 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 
 from danswer.auth.schemas import UserRole
+from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
@@ -343,7 +344,7 @@ class Document(Base):
     # in Danswer)
     id: Mapped[str] = mapped_column(String, primary_key=True)
     # 0 for neutral, positive for mostly endorse, negative for mostly reject
-    boost: Mapped[int] = mapped_column(Integer, default=0)
+    boost: Mapped[int] = mapped_column(Integer, default=DEFAULT_BOOST)
     hidden: Mapped[bool] = mapped_column(Boolean, default=False)
     semantic_id: Mapped[str] = mapped_column(String)
     # First Section's link

@@ -18,6 +18,7 @@ HTML_SEPARATOR = "\n"
 PUBLIC_DOC_PAT = "PUBLIC"
 QUOTE = "quote"
 BOOST = "boost"
+DEFAULT_BOOST = 0
 
 
 class DocumentSource(str, Enum):

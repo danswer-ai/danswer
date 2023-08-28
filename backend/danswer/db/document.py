@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from danswer.configs.constants import DEFAULT_BOOST
 from danswer.datastores.interfaces import DocumentMetadata
 from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentByConnectorCredentialPair
@@ -81,13 +82,25 @@ def upsert_documents(
     db_session: Session, document_metadata_batch: list[DocumentMetadata]
 ) -> None:
     """NOTE: this function is Postgres specific. Not all DBs support the ON CONFLICT clause."""
-    seen_document_ids: set[str] = set()
+    seen_documents: dict[str, DocumentMetadata] = {}
     for document_metadata in document_metadata_batch:
-        if document_metadata.document_id not in seen_document_ids:
-            seen_document_ids.add(document_metadata.document_id)
+        doc_id = document_metadata.document_id
+        if doc_id not in seen_documents:
+            seen_documents[doc_id] = document_metadata
 
     insert_stmt = insert(DbDocument).values(
-        [model_to_dict(DbDocument(id=doc_id)) for doc_id in seen_document_ids]
+        [
+            model_to_dict(
+                DbDocument(
+                    id=doc.document_id,
+                    boost=DEFAULT_BOOST,
+                    hidden=False,
+                    semantic_id=doc.semantic_identifier,
+                    link=doc.first_link,
+                )
+            )
+            for doc in seen_documents.values()
+        ]
     )
     # for now, there are no columns to update. If more metadata is added, then this
     # needs to change to an `on_conflict_do_update`
@@ -120,7 +133,8 @@ def upsert_document_by_connector_credential_pair(
 
 
 def upsert_documents_complete(
-    db_session: Session, document_metadata_batch: list[DocumentMetadata]
+    db_session: Session,
+    document_metadata_batch: list[DocumentMetadata],
 ) -> None:
     upsert_documents(db_session, document_metadata_batch)
     upsert_document_by_connector_credential_pair(db_session, document_metadata_batch)
