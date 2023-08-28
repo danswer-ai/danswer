@@ -123,7 +123,7 @@ def create_doc_retrieval_feedback(
 
     doc_m = fetch_doc_m_by_id(document_id, db_session)
 
-    DocumentRetrievalFeedback(
+    retrieval_feedback = DocumentRetrievalFeedback(
         qa_event_id=qa_event_id,
         document_id=document_id,
         document_rank=document_rank,
@@ -152,4 +152,5 @@ def create_doc_retrieval_feedback(
         # Updates are generally batched for efficiency, this case only 1 doc/value is updated
         document_index.update([update])
 
+    db_session.add(retrieval_feedback)
     db_session.commit()
