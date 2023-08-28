@@ -20,8 +20,8 @@ from danswer.db.models import User
 from danswer.direct_qa.answer_question import answer_qa_query
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
-from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
+from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.search.danswer_helper import query_intent
 from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.keyword_search import retrieve_keyword_documents
@@ -68,7 +68,7 @@ def semantic_search(
 
     query_event_id = create_query_event(
         query=query,
-        selected_flow=SearchType.KEYWORD,
+        selected_flow=SearchType.SEMANTIC,
         llm_answer=None,
         user_id=user.id,
         db_session=db_session,
@@ -249,7 +249,9 @@ def stream_direct_qa(
 
         query_event_id = create_query_event(
             query=query,
-            selected_flow=SearchType.KEYWORD if use_keyword else SearchType.SEMANTIC,
+            selected_flow=SearchType.KEYWORD
+            if question.use_keyword
+            else SearchType.SEMANTIC,
             llm_answer=answer_so_far,
             user_id=user_id,
             db_session=db_session,
