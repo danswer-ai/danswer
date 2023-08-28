@@ -15,6 +15,14 @@ repos:
       # in the backend directory called `alembic`
       exclude: ^backend/alembic/
 
+  # These settings will remove unused imports with side effects
+  # Note: The repo currently does not and should not have imports with side effects
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.2.0
+    hooks:
+      - id: autoflake
+        args: [ '--remove-all-unused-imports', '--remove-unused-variables', '--in-place' , '--recursive']
+
   # We would like to have a mypy pre-commit hook, but due to the fact that 
   # pre-commit runs in it's own isolated environment, we would need to install 
   # and keep in sync all dependencies so mypy has access to the appropriate type

@@ -42,7 +42,6 @@ from danswer.datastores.interfaces import DocumentInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import UpdateRequest
 from danswer.datastores.vespa.utils import remove_invalid_unicode_chars
-from danswer.search.search_utils import get_default_embedding_model
 from danswer.search.semantic_search import embed_query
 from danswer.utils.logger import setup_logger
 

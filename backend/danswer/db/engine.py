@@ -1,7 +1,6 @@
 from collections.abc import AsyncGenerator
 from collections.abc import Generator
 from datetime import datetime
-from datetime import timezone
 
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine

@@ -1,6 +1,4 @@
 import re
-from collections.abc import Generator
-from typing import Any
 
 from transformers import pipeline  # type:ignore
 from transformers import QuestionAnsweringPipeline  # type:ignore
