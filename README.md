@@ -30,7 +30,7 @@ Danswer provides a fully-featured web UI:
 https://github.com/danswer-ai/danswer/assets/25087905/619607a1-4ad2-41a0-9728-351752acc26e
 
 
-Or, if you prefer, you can plug Danswer into your existing flows:
+Or, if you prefer, you can plug Danswer into your existing Slack workflows (more integrations to come 😁):
 
 
 https://github.com/danswer-ai/danswer/assets/25087905/3e19739b-d178-4371-9a38-011430bdec1b
