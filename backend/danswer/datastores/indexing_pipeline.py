@@ -32,6 +32,7 @@ class IndexingPipelineProtocol(Protocol):
 def _upsert_insertion_records(
     insertion_records: set[DocumentInsertionRecord],
     index_attempt_metadata: IndexAttemptMetadata,
+    doc_m_data_lookup: dict[str, tuple[str, str]],
 ) -> None:
     with Session(get_sqlalchemy_engine()) as session:
         upsert_documents_complete(
@@ -40,9 +41,11 @@ def _upsert_insertion_records(
                 DocumentMetadata(
                     connector_id=index_attempt_metadata.connector_id,
                     credential_id=index_attempt_metadata.credential_id,
-                    document_id=insertion_record.document_id,
+                    document_id=i_r.document_id,
+                    semantic_identifier=doc_m_data_lookup[i_r.document_id][0],
+                    first_link=doc_m_data_lookup[i_r.document_id][1],
                 )
-                for insertion_record in insertion_records
+                for i_r in insertion_records
             ],
         )
 
@@ -62,6 +65,11 @@ def _get_net_new_documents(
     return net_new_documents
 
 
+def _extract_minimal_document_metadata(doc: Document) -> tuple[str, str]:
+    first_link = next((section.link for section in doc.sections if section.link), "")
+    return doc.semantic_identifier, first_link
+
+
 def _indexing_pipeline(
     *,
     chunker: Chunker,
@@ -73,6 +81,11 @@ def _indexing_pipeline(
     """Takes different pieces of the indexing pipeline and applies it to a batch of documents
     Note that the documents should already be batched at this point so that it does not inflate the
     memory requirements"""
+
+    document_metadata_lookup = {
+        doc.id: _extract_minimal_document_metadata(doc) for doc in documents
+    }
+
     chunks: list[DocAwareChunk] = list(
         chain(*[chunker.chunk(document=document) for document in documents])
     )
@@ -92,6 +105,7 @@ def _indexing_pipeline(
         _upsert_insertion_records(
             insertion_records=insertion_records,
             index_attempt_metadata=index_attempt_metadata,
+            doc_m_data_lookup=document_metadata_lookup,
         )
     except Exception as e:
         logger.error(

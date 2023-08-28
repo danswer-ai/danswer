@@ -9,6 +9,7 @@ from slack_sdk import WebClient
 from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
+from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
 from danswer.configs.app_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
@@ -18,7 +19,8 @@ from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.connectors.slack.utils import UserIdReplacer
-from danswer.direct_qa.answer_question import answer_question
+from danswer.db.engine import get_sqlalchemy_engine
+from danswer.direct_qa.answer_question import answer_qa_query
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
@@ -228,17 +230,19 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
             logger=cast(logging.Logger, logger),
         )
         def _get_answer(question: QuestionRequest) -> QAResponse:
-            answer = answer_question(
-                question=question,
-                user=None,
-                answer_generation_timeout=DANSWER_BOT_ANSWER_GENERATION_TIMEOUT,
-            )
-            if not answer.error_msg:
-                return answer
-            else:
-                raise RuntimeError(answer.error_msg)
+            engine = get_sqlalchemy_engine()
+            with Session(engine, expire_on_commit=False) as db_session:
+                answer = answer_qa_query(
+                    question=question,
+                    user=None,
+                    db_session=db_session,
+                    answer_generation_timeout=DANSWER_BOT_ANSWER_GENERATION_TIMEOUT,
+                )
+                if not answer.error_msg:
+                    return answer
+                else:
+                    raise RuntimeError(answer.error_msg)
 
-        answer = None
         try:
             answer = _get_answer(
                 QuestionRequest(

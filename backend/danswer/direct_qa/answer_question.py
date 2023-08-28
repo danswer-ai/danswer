@@ -1,8 +1,11 @@
+from sqlalchemy.orm import Session
+
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.datastores.document_index import get_default_document_index
+from danswer.db.feedback import create_query_event
 from danswer.db.models import User
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
@@ -22,18 +25,26 @@ logger = setup_logger()
 
 
 @log_function_time()
-def answer_question(
+def answer_qa_query(
     question: QuestionRequest,
     user: User | None,
+    db_session: Session,
     disable_generative_answer: bool = DISABLE_GENERATIVE_AI,
     answer_generation_timeout: int = QA_TIMEOUT,
 ) -> QAResponse:
     query = question.query
-    collection = question.collection
     filters = question.filters
     use_keyword = question.use_keyword
     offset_count = question.offset if question.offset is not None else 0
     logger.info(f"Received QA query: {query}")
+
+    query_event_id = create_query_event(
+        query=query,
+        selected_flow=SearchType.KEYWORD,
+        llm_answer=None,
+        user_id=user.id if user is not None else None,
+        db_session=db_session,
+    )
 
     predicted_search, predicted_flow = query_intent(query)
     if use_keyword is None:
@@ -42,12 +53,12 @@ def answer_question(
     user_id = None if user is None else user.id
     if use_keyword:
         ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
-            query, user_id, filters, get_default_document_index(collection=collection)
+            query, user_id, filters, get_default_document_index()
         )
         unranked_chunks: list[InferenceChunk] | None = []
     else:
         ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-            query, user_id, filters, get_default_document_index(collection=collection)
+            query, user_id, filters, get_default_document_index()
         )
     if not ranked_chunks:
         return QAResponse(
@@ -57,6 +68,7 @@ def answer_question(
             lower_ranked_docs=None,
             predicted_flow=predicted_flow,
             predicted_search=predicted_search,
+            query_event_id=query_event_id,
         )
 
     if disable_generative_answer:
@@ -70,6 +82,7 @@ def answer_question(
             # to run QA over more documents
             predicted_flow=QueryFlow.SEARCH,
             predicted_search=predicted_search,
+            query_event_id=query_event_id,
         )
 
     try:
@@ -83,6 +96,7 @@ def answer_question(
             predicted_flow=predicted_flow,
             predicted_search=predicted_search,
             error_msg=str(e),
+            query_event_id=query_event_id,
         )
 
     chunk_offset = offset_count * NUM_GENERATIVE_AI_INPUT_DOCS
@@ -108,4 +122,5 @@ def answer_question(
         predicted_flow=predicted_flow,
         predicted_search=predicted_search,
         error_msg=error_msg,
+        query_event_id=query_event_id,
     )

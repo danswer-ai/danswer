@@ -23,8 +23,12 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 
 from danswer.auth.schemas import UserRole
+from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import QAFeedbackType
+from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
+from danswer.search.models import SearchType
 
 
 class IndexingStatus(str, PyEnum):
@@ -60,6 +64,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     )
     credentials: Mapped[List["Credential"]] = relationship(
         "Credential", back_populates="user", lazy="joined"
+    )
+    query_events: Mapped[List["QueryEvent"]] = relationship(
+        "QueryEvent", back_populates="user"
     )
 
 
@@ -162,7 +169,7 @@ class Credential(Base):
     deletion_attempt: Mapped[Optional["DeletionAttempt"]] = relationship(
         "DeletionAttempt", back_populates="credential"
     )
-    user: Mapped[User] = relationship("User", back_populates="credentials")
+    user: Mapped[User | None] = relationship("User", back_populates="credentials")
 
 
 class IndexAttempt(Base):
@@ -258,17 +265,6 @@ class DeletionAttempt(Base):
     )
 
 
-class Document(Base):
-    """Represents a single documents from a source. This is used to store
-    document level metadata, but currently nothing is stored"""
-
-    __tablename__ = "document"
-
-    # this should correspond to the ID of the document (as is passed around
-    # in Danswer)
-    id: Mapped[str] = mapped_column(String, primary_key=True)
-
-
 class DocumentByConnectorCredentialPair(Base):
     """Represents an indexing of a document by a specific connector / credential
     pair"""
@@ -288,4 +284,73 @@ class DocumentByConnectorCredentialPair(Base):
     )
     credential: Mapped[Credential] = relationship(
         "Credential", back_populates="documents_by_credential"
+    )
+
+
+class QueryEvent(Base):
+    __tablename__ = "query_event"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    query: Mapped[str] = mapped_column(String())
+    # search_flow refers to user selection, None if user used auto
+    selected_search_flow: Mapped[SearchType | None] = mapped_column(
+        Enum(SearchType), nullable=True
+    )
+    llm_answer: Mapped[str | None] = mapped_column(String(), default=None)
+    feedback: Mapped[QAFeedbackType | None] = mapped_column(
+        Enum(QAFeedbackType), nullable=True
+    )
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    time_created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
+    user: Mapped[User | None] = relationship("User", back_populates="query_events")
+    document_feedbacks: Mapped[List["DocumentRetrievalFeedback"]] = relationship(
+        "DocumentRetrievalFeedback", back_populates="qa_event"
+    )
+
+
+class DocumentRetrievalFeedback(Base):
+    __tablename__ = "document_retrieval_feedback"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    qa_event_id: Mapped[int] = mapped_column(
+        ForeignKey("query_event.id"),
+    )
+    document_id: Mapped[str] = mapped_column(
+        ForeignKey("document.id"),
+    )
+    # How high up this document is in the results, 1 for first
+    document_rank: Mapped[int] = mapped_column(Integer)
+    clicked: Mapped[bool] = mapped_column(Boolean, default=False)
+    feedback: Mapped[SearchFeedbackType | None] = mapped_column(
+        Enum(SearchFeedbackType), nullable=True
+    )
+
+    qa_event: Mapped[QueryEvent] = relationship(
+        "QueryEvent", back_populates="document_feedbacks"
+    )
+    document: Mapped["Document"] = relationship(
+        "Document", back_populates="retrieval_feedbacks"
+    )
+
+
+class Document(Base):
+    __tablename__ = "document"
+
+    # this should correspond to the ID of the document (as is passed around
+    # in Danswer)
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    # 0 for neutral, positive for mostly endorse, negative for mostly reject
+    boost: Mapped[int] = mapped_column(Integer, default=DEFAULT_BOOST)
+    hidden: Mapped[bool] = mapped_column(Boolean, default=False)
+    semantic_id: Mapped[str] = mapped_column(String)
+    # First Section's link
+    link: Mapped[str | None] = mapped_column(String, nullable=True)
+    # TODO if more sensitive data is added here for display, make sure to add user/group permission
+
+    retrieval_feedbacks: Mapped[List[DocumentRetrievalFeedback]] = relationship(
+        "DocumentRetrievalFeedback", back_populates="document"
     )

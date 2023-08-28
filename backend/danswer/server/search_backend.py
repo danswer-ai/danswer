@@ -5,16 +5,22 @@ from dataclasses import asdict
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
 from danswer.datastores.document_index import get_default_document_index
+from danswer.db.engine import get_session
+from danswer.db.feedback import create_doc_retrieval_feedback
+from danswer.db.feedback import create_query_event
+from danswer.db.feedback import update_query_event_feedback
 from danswer.db.models import User
-from danswer.direct_qa.answer_question import answer_question
+from danswer.direct_qa.answer_question import answer_qa_query
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
+from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.search.danswer_helper import query_intent
 from danswer.search.danswer_helper import recommend_search_flow
@@ -24,8 +30,10 @@ from danswer.search.models import SearchType
 from danswer.search.semantic_search import chunks_to_search_docs
 from danswer.search.semantic_search import retrieve_ranked_documents
 from danswer.server.models import HelperResponse
+from danswer.server.models import QAFeedbackRequest
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
+from danswer.server.models import SearchFeedbackRequest
 from danswer.server.models import SearchResponse
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
@@ -50,62 +58,95 @@ def get_search_type(
 
 @router.post("/semantic-search")
 def semantic_search(
-    question: QuestionRequest, user: User = Depends(current_user)
+    question: QuestionRequest,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
 ) -> SearchResponse:
     query = question.query
-    collection = question.collection
     filters = question.filters
     logger.info(f"Received semantic search query: {query}")
 
+    query_event_id = create_query_event(
+        query=query,
+        selected_flow=SearchType.SEMANTIC,
+        llm_answer=None,
+        user_id=user.id,
+        db_session=db_session,
+    )
+
     user_id = None if user is None else user.id
     ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-        query, user_id, filters, get_default_document_index(collection=collection)
+        query, user_id, filters, get_default_document_index()
     )
     if not ranked_chunks:
-        return SearchResponse(top_ranked_docs=None, lower_ranked_docs=None)
+        return SearchResponse(
+            top_ranked_docs=None, lower_ranked_docs=None, query_event_id=query_event_id
+        )
 
     top_docs = chunks_to_search_docs(ranked_chunks)
     other_top_docs = chunks_to_search_docs(unranked_chunks)
 
-    return SearchResponse(top_ranked_docs=top_docs, lower_ranked_docs=other_top_docs)
+    return SearchResponse(
+        top_ranked_docs=top_docs,
+        lower_ranked_docs=other_top_docs,
+        query_event_id=query_event_id,
+    )
 
 
 @router.post("/keyword-search")
 def keyword_search(
-    question: QuestionRequest, user: User = Depends(current_user)
+    question: QuestionRequest,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
 ) -> SearchResponse:
     query = question.query
-    collection = question.collection
     filters = question.filters
     logger.info(f"Received keyword search query: {query}")
 
+    query_event_id = create_query_event(
+        query=query,
+        selected_flow=SearchType.KEYWORD,
+        llm_answer=None,
+        user_id=user.id,
+        db_session=db_session,
+    )
+
     user_id = None if user is None else user.id
     ranked_chunks = retrieve_keyword_documents(
-        query, user_id, filters, get_default_document_index(collection=collection)
+        query, user_id, filters, get_default_document_index()
     )
     if not ranked_chunks:
-        return SearchResponse(top_ranked_docs=None, lower_ranked_docs=None)
+        return SearchResponse(
+            top_ranked_docs=None, lower_ranked_docs=None, query_event_id=query_event_id
+        )
 
     top_docs = chunks_to_search_docs(ranked_chunks)
-    return SearchResponse(top_ranked_docs=top_docs, lower_ranked_docs=None)
+    return SearchResponse(
+        top_ranked_docs=top_docs, lower_ranked_docs=None, query_event_id=query_event_id
+    )
 
 
 @router.post("/direct-qa")
 def direct_qa(
-    question: QuestionRequest, user: User = Depends(current_user)
+    question: QuestionRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
 ) -> QAResponse:
-    return answer_question(question=question, user=user)
+    return answer_qa_query(question=question, user=user, db_session=db_session)
 
 
 @router.post("/stream-direct-qa")
 def stream_direct_qa(
-    question: QuestionRequest, user: User = Depends(current_user)
+    question: QuestionRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
     send_packet_debug_msg = "Sending Packet: {}"
     top_documents_key = "top_documents"
     unranked_top_docs_key = "unranked_top_documents"
     predicted_flow_key = "predicted_flow"
     predicted_search_key = "predicted_search"
+    query_event_id_key = "query_event_id"
 
     logger.debug(f"Received QA query: {question.query}")
     logger.debug(f"Query filters: {question.filters}")
@@ -116,8 +157,8 @@ def stream_direct_qa(
     def stream_qa_portions(
         disable_generative_answer: bool = DISABLE_GENERATIVE_AI,
     ) -> Generator[str, None, None]:
+        answer_so_far: str = ""
         query = question.query
-        collection = question.collection
         filters = question.filters
         use_keyword = question.use_keyword
         offset_count = question.offset if question.offset is not None else 0
@@ -132,7 +173,7 @@ def stream_direct_qa(
                 query,
                 user_id,
                 filters,
-                get_default_document_index(collection=collection),
+                get_default_document_index(),
             )
             unranked_chunks: list[InferenceChunk] | None = []
         else:
@@ -140,7 +181,7 @@ def stream_direct_qa(
                 query,
                 user_id,
                 filters,
-                get_default_document_index(collection=collection),
+                get_default_document_index(),
             )
         if not ranked_chunks:
             logger.debug("No Documents Found")
@@ -194,6 +235,11 @@ def stream_direct_qa(
             ):
                 if response_packet is None:
                     continue
+                if (
+                    isinstance(response_packet, DanswerAnswerPiece)
+                    and response_packet.answer_piece
+                ):
+                    answer_so_far = answer_so_far + response_packet.answer_piece
                 logger.debug(f"Sending packet: {response_packet}")
                 yield get_json_line(asdict(response_packet))
         except Exception as e:
@@ -201,6 +247,49 @@ def stream_direct_qa(
             yield get_json_line({"error": str(e)})
             logger.exception("Failed to run QA")
 
+        query_event_id = create_query_event(
+            query=query,
+            selected_flow=SearchType.KEYWORD
+            if question.use_keyword
+            else SearchType.SEMANTIC,
+            llm_answer=answer_so_far,
+            user_id=user_id,
+            db_session=db_session,
+        )
+
+        yield get_json_line({query_event_id_key: query_event_id})
+
         return
 
     return StreamingResponse(stream_qa_portions(), media_type="application/json")
+
+
+@router.post("/query-feedback")
+def process_query_feedback(
+    feedback: QAFeedbackRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    update_query_event_feedback(
+        feedback=feedback.feedback,
+        query_id=feedback.query_id,
+        user_id=user.id if user is not None else None,
+        db_session=db_session,
+    )
+
+
+@router.post("/doc-retrieval-feedback")
+def process_doc_retrieval_feedback(
+    feedback: SearchFeedbackRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    create_doc_retrieval_feedback(
+        qa_event_id=feedback.query_id,
+        document_id=feedback.document_id,
+        document_rank=feedback.document_rank,
+        clicked=feedback.click,
+        feedback=feedback.search_feedback,
+        user_id=user.id if user is not None else None,
+        db_session=db_session,
+    )

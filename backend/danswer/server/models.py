@@ -11,6 +11,8 @@ from pydantic.generics import GenericModel
 
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import QAFeedbackType
+from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
 from danswer.datastores.interfaces import IndexFilter
 from danswer.db.models import Connector
@@ -105,6 +107,14 @@ class UserRoleResponse(BaseModel):
     role: str
 
 
+class BoostDoc(BaseModel):
+    document_id: str
+    semantic_id: str
+    link: str
+    boost: int
+    hidden: bool
+
+
 class SearchDoc(BaseModel):
     document_id: str
     semantic_identifier: str
@@ -121,10 +131,24 @@ class QuestionRequest(BaseModel):
     offset: int | None
 
 
+class QAFeedbackRequest(BaseModel):
+    query_id: int
+    feedback: QAFeedbackType
+
+
+class SearchFeedbackRequest(BaseModel):
+    query_id: int
+    document_id: str
+    document_rank: int
+    click: bool
+    search_feedback: SearchFeedbackType
+
+
 class SearchResponse(BaseModel):
     # For semantic search, top docs are reranked, the remaining are as ordered from retrieval
     top_ranked_docs: list[SearchDoc] | None
     lower_ranked_docs: list[SearchDoc] | None
+    query_event_id: int
 
 
 class QAResponse(SearchResponse):

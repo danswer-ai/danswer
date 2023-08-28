@@ -22,6 +22,8 @@ class DocumentMetadata:
     connector_id: int
     credential_id: int
     document_id: str
+    semantic_identifier: str
+    first_link: str
 
 
 @dataclass
@@ -32,7 +34,7 @@ class UpdateRequest:
     document_ids: list[str]
     # all other fields will be left alone
     allowed_users: list[str] | None = None
-    boost: int | None = None
+    boost: float | None = None
 
 
 class Verifiable(abc.ABC):

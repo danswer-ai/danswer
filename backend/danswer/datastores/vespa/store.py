@@ -341,16 +341,20 @@ class VespaIndex(DocumentIndex):
                 logger.error("Update request received but nothing to update")
                 continue
 
-            update_dict: dict[str, dict[str, list[str] | int]] = {"fields": {}}
+            update_dict: dict[str, dict] = {"fields": {}}
             if update_request.boost:
-                update_dict["fields"][BOOST] = update_request.boost
+                update_dict["fields"][BOOST] = {"assign": update_request.boost}
             if update_request.allowed_users:
-                update_dict["fields"][ALLOWED_USERS] = update_request.allowed_users
+                update_dict["fields"][ALLOWED_USERS] = {
+                    "assign": update_request.allowed_users
+                }
 
             for document_id in update_request.document_ids:
                 for doc_chunk_id in _get_vespa_chunk_ids_by_document_id(document_id):
                     url = f"{DOCUMENT_ID_ENDPOINT}/{doc_chunk_id}"
-                    res = requests.put(url, headers=json_header, json=update_dict)
+                    res = requests.put(
+                        url, headers=json_header, data=json.dumps(update_dict)
+                    )
 
                     try:
                         res.raise_for_status()

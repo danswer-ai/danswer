@@ -49,6 +49,7 @@ from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.deletion_attempt import create_deletion_attempt
 from danswer.db.deletion_attempt import get_deletion_attempts
 from danswer.db.engine import get_session
+from danswer.db.feedback import fetch_docs_ranked_by_boost
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import DeletionAttempt
@@ -61,6 +62,7 @@ from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.server.models import ApiKey
 from danswer.server.models import AuthStatus
 from danswer.server.models import AuthUrl
+from danswer.server.models import BoostDoc
 from danswer.server.models import ConnectorBase
 from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.server.models import ConnectorIndexingStatus
@@ -79,7 +81,6 @@ from danswer.server.models import StatusResponse
 from danswer.server.models import UserRoleResponse
 from danswer.utils.logger import setup_logger
 
-
 router = APIRouter(prefix="/manage")
 logger = setup_logger()
 
@@ -87,6 +88,28 @@ _GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME = "google_drive_credential_id"
 
 
 """Admin only API endpoints"""
+
+
+@router.get("/admin/doc-boosts")
+def get_most_boosted_docs(
+    ascending: bool,
+    limit: int,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> list[BoostDoc]:
+    boost_docs = fetch_docs_ranked_by_boost(
+        ascending=ascending, limit=limit, db_session=db_session
+    )
+    return [
+        BoostDoc(
+            document_id=doc.id,
+            semantic_id=doc.semantic_id,
+            link=doc.link or "",
+            boost=doc.boost,
+            hidden=doc.hidden,
+        )
+        for doc in boost_docs
+    ]
 
 
 @router.get("/admin/connector/google-drive/app-credential")
