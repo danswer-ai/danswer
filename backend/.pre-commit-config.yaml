@@ -16,7 +16,7 @@ repos:
       exclude: ^backend/alembic/
 
   # These settings will remove unused imports with side effects
-  # The repo current does not have these and we strive to not use this
+  # Note: The repo currently does not and should not have imports with side effects
   - repo: https://github.com/PyCQA/autoflake
     rev: v2.2.0
     hooks:
