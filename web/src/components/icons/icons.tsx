@@ -14,6 +14,7 @@ import {
   X,
   Question,
   Users,
+  ThumbsUp,
 } from "@phosphor-icons/react";
 import { SiBookstack } from "react-icons/si";
 import { FaFile, FaGlobe } from "react-icons/fa";
@@ -134,6 +135,13 @@ export const XIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <X size={size} className={className} />;
+};
+
+export const ThumbsUpIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <ThumbsUp size={size} className={className} />;
 };
 
 //

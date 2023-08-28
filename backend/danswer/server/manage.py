@@ -71,7 +71,6 @@ from danswer.server.models import CredentialSnapshot
 from danswer.server.models import DeletionAttemptSnapshot
 from danswer.server.models import FileUploadResponse
 from danswer.server.models import GDriveCallback
-from danswer.server.models import GetBoostedDocsRequest
 from danswer.server.models import GoogleAppCredentials
 from danswer.server.models import GoogleServiceAccountCredentialRequest
 from danswer.server.models import GoogleServiceAccountKey
@@ -91,14 +90,15 @@ _GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME = "google_drive_credential_id"
 """Admin only API endpoints"""
 
 
-@router.get("/doc-boosts")
+@router.get("/admin/doc-boosts")
 def get_most_boosted_docs(
-    doc_options: GetBoostedDocsRequest,
+    ascending: bool,
+    limit: int,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[BoostDoc]:
     boost_docs = fetch_docs_ranked_by_boost(
-        ascending=doc_options.ascending, limit=doc_options.limit, db_session=db_session
+        ascending=ascending, limit=limit, db_session=db_session
     )
     return [
         BoostDoc(
