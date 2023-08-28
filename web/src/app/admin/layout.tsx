@@ -18,7 +18,6 @@ import {
   ProductboardIcon,
   LinearIcon,
   UsersIcon,
-  ThumbsUpIcon,
 } from "@/components/icons/icons";
 import { DISABLE_AUTH } from "@/lib/constants";
 import { getCurrentUserSS } from "@/lib/userSS";
@@ -217,20 +216,6 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/users",
-                },
-              ],
-            },
-            {
-              name: "Document Management",
-              items: [
-                {
-                  name: (
-                    <div className="flex">
-                      <ThumbsUpIcon size={18} />
-                      <div className="ml-1">Feedback</div>
-                    </div>
-                  ),
-                  link: "/admin/documents/feedback",
                 },
               ],
             },
