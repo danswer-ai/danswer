@@ -69,11 +69,7 @@ def semantic_search(
 
     query_event_id = create_query_event(
         query=query,
-<<<<<<< HEAD
         selected_flow=SearchType.SEMANTIC,
-=======
-        selected_flow=SearchType.KEYWORD,
->>>>>>> 92fce76 (checkpoint)
         llm_answer=None,
         user_id=user.id,
         db_session=db_session,
