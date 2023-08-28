@@ -43,11 +43,8 @@ from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import remove_credential_from_connector
 from danswer.db.credentials import create_credential
-from danswer.db.credentials import delete_credential
 from danswer.db.credentials import delete_google_drive_service_account_credentials
 from danswer.db.credentials import fetch_credential_by_id
-from danswer.db.credentials import fetch_credentials
-from danswer.db.credentials import update_credential
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.deletion_attempt import create_deletion_attempt
 from danswer.db.deletion_attempt import get_deletion_attempts
@@ -68,7 +65,6 @@ from danswer.server.models import ConnectorBase
 from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.server.models import ConnectorIndexingStatus
 from danswer.server.models import ConnectorSnapshot
-from danswer.server.models import CredentialBase
 from danswer.server.models import CredentialSnapshot
 from danswer.server.models import DeletionAttemptSnapshot
 from danswer.server.models import FileUploadResponse

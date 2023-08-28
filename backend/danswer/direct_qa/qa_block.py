@@ -1,5 +1,4 @@
 import abc
-import json
 from collections.abc import Iterator
 from copy import copy
 

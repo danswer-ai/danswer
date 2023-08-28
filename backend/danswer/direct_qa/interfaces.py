@@ -53,7 +53,6 @@ class QAModel:
     def warm_up_model(self) -> None:
         """This is called during server start up to load the models into memory
         pass if model is accessed via API"""
-        pass
 
     @abc.abstractmethod
     def answer_question(

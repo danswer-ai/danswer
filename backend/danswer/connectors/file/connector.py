@@ -2,7 +2,6 @@ import json
 import os
 import zipfile
 from collections.abc import Generator
-from enum import Enum
 from pathlib import Path
 from typing import Any
 from typing import IO

@@ -4,7 +4,6 @@ from typing import Any
 
 import requests
 from langchain.schema.language_model import LanguageModelInput
-from langchain.schema.messages import BaseMessageChunk
 from requests import Timeout
 
 from danswer.llm.llm import LLM

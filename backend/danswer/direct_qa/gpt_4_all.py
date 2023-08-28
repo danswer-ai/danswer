@@ -1,4 +1,3 @@
-from collections.abc import Generator
 from typing import Any
 
 from danswer.chunking.models import InferenceChunk
@@ -6,10 +5,6 @@ from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.direct_qa.interfaces import AnswerQuestionReturn
 from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
-from danswer.direct_qa.interfaces import DanswerAnswer
-from danswer.direct_qa.interfaces import DanswerAnswerPiece
-from danswer.direct_qa.interfaces import DanswerQuote
-from danswer.direct_qa.interfaces import DanswerQuotes
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.qa_prompts import ChatPromptProcessor
 from danswer.direct_qa.qa_prompts import NonChatPromptProcessor

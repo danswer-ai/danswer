@@ -1,5 +1,4 @@
 import os
-from enum import Enum
 
 from danswer.configs.constants import DanswerGenAIModel
 from danswer.configs.constants import ModelHostType

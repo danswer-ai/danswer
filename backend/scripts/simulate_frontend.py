@@ -1,7 +1,6 @@
 # This file is purely for development use, not included in any builds
 import argparse
 import json
-import urllib
 from pprint import pprint
 
 import requests

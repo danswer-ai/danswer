@@ -1,4 +1,3 @@
-import json
 from abc import ABC
 from collections.abc import Callable
 from collections.abc import Generator

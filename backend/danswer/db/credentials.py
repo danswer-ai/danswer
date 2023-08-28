@@ -1,6 +1,5 @@
 from typing import Any
 
-from sqlalchemy import delete
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import or_

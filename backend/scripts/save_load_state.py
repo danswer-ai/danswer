@@ -42,7 +42,7 @@ def load_postgres(filename: str) -> None:
     try:
         alembic_cfg = Config("alembic.ini")
         command.upgrade(alembic_cfg, "head")
-    except Exception as e:
+    except Exception:
         logger.info("Alembic upgrade failed, maybe already has run")
     cmd = f"pg_restore --clean -U {POSTGRES_USER} -h {POSTGRES_HOST} -p {POSTGRES_PORT} -W -d {POSTGRES_DB} -1 {filename}"
     subprocess.run(

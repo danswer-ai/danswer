@@ -1,7 +1,6 @@
 import abc
 import json
 from collections.abc import Generator
-from typing import Any
 
 import requests
 from requests.exceptions import Timeout
