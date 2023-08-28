@@ -9,6 +9,8 @@ import {
   FlowType,
   SearchDefaultOverrides,
 } from "@/lib/search/interfaces";
+import { QAFeedbackBlock } from "./QAFeedback";
+import { DocumentDisplay } from "./DocumentDisplay";
 
 const removeDuplicateDocs = (documents: DanswerDocument[]) => {
   const seen = new Set<string>();
@@ -132,6 +134,10 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
                         </div>
                       </div>
                     )}
+
+                    <div className="ml-auto mt-auto">
+                      <QAFeedbackBlock queryId={1} />
+                    </div>
                   </div>
                 )}
               </>
@@ -145,27 +151,8 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
           <div className="font-bold border-b mb-4 pb-1 border-gray-800">
             Results
           </div>
-          {removeDuplicateDocs(documents).map((doc) => (
-            <div
-              key={doc.semantic_identifier}
-              className="text-sm border-b border-gray-800 mb-3"
-            >
-              <a
-                className={
-                  "rounded-lg flex font-bold " +
-                  (doc.link ? "" : "pointer-events-none")
-                }
-                href={doc.link}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {getSourceIcon(doc.source_type, 20)}
-                <p className="truncate break-all ml-2">
-                  {doc.semantic_identifier || doc.document_id}
-                </p>
-              </a>
-              <p className="pl-1 py-3 text-gray-200">{doc.blurb}</p>
-            </div>
+          {removeDuplicateDocs(documents).map((document) => (
+            <DocumentDisplay document={document} />
           ))}
         </div>
       )}
