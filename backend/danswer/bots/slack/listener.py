@@ -11,21 +11,17 @@ from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 from sqlalchemy.orm import Session
 
+from danswer.bots.slack.blocks import build_qa_response_blocks
+from danswer.bots.slack.utils import respond_in_thread
 from danswer.configs.app_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
 from danswer.configs.app_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
 from danswer.configs.app_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
-from danswer.configs.app_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.slack.utils import make_slack_api_rate_limited
-from danswer.connectors.slack.utils import UserIdReplacer
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.direct_qa.answer_question import answer_qa_query
-from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
-from danswer.server.models import SearchDoc
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -64,110 +60,8 @@ def _get_socket_client() -> SocketModeClient:
     )
 
 
-_MAX_BLURB_LEN = 25
-
-
-def _build_custom_semantic_identifier(
-    semantic_identifier: str, blurb: str, source: str
-) -> str:
-    """
-    On slack, since we just show the semantic identifier rather than semantic + blurb, we need
-    to do some custom formatting to make sure the semantic identifier is unique and meaningful.
-    """
-    if source == DocumentSource.SLACK.value:
-        truncated_blurb = (
-            f"{blurb[:_MAX_BLURB_LEN]}..." if len(blurb) > _MAX_BLURB_LEN else blurb
-        )
-        # NOTE: removing tags so that we don't accidentally tag users in Slack +
-        # so that it can be used as part of a <link|text> link
-        truncated_blurb = UserIdReplacer.replace_tags_basic(truncated_blurb)
-        truncated_blurb = UserIdReplacer.replace_channels_basic(truncated_blurb)
-        truncated_blurb = UserIdReplacer.replace_special_mentions(truncated_blurb)
-        if truncated_blurb:
-            return f"#{semantic_identifier}: {truncated_blurb}"
-        else:
-            return f"#{semantic_identifier}"
-
-    return semantic_identifier
-
-
-def _process_quotes(quotes: list[DanswerQuote] | None) -> tuple[str | None, list[str]]:
-    if not quotes:
-        return None, []
-
-    quote_lines: list[str] = []
-    doc_identifiers: list[str] = []
-    for quote in quotes:
-        doc_id = quote.document_id
-        doc_link = quote.link
-        doc_name = quote.semantic_identifier
-        if doc_link and doc_name and doc_id and doc_id not in doc_identifiers:
-            doc_identifiers.append(doc_id)
-            custom_semantic_identifier = _build_custom_semantic_identifier(
-                semantic_identifier=doc_name,
-                blurb=quote.blurb,
-                source=quote.source_type,
-            )
-            quote_lines.append(f"- <{doc_link}|{custom_semantic_identifier}>")
-
-    if not quote_lines:
-        return None, []
-
-    return "\n".join(quote_lines), doc_identifiers
-
-
-def _process_documents(
-    documents: list[SearchDoc] | None,
-    already_displayed_doc_identifiers: list[str],
-    num_docs_to_display: int = DANSWER_BOT_NUM_DOCS_TO_DISPLAY,
-) -> str | None:
-    if not documents:
-        return None
-
-    seen_docs_identifiers = set(already_displayed_doc_identifiers)
-    top_document_lines: list[str] = []
-    for d in documents:
-        if d.document_id in seen_docs_identifiers:
-            continue
-        seen_docs_identifiers.add(d.document_id)
-
-        custom_semantic_identifier = _build_custom_semantic_identifier(
-            semantic_identifier=d.semantic_identifier,
-            blurb=d.blurb,
-            source=d.source_type,
-        )
-
-        top_document_lines.append(f"- <{d.link}|{custom_semantic_identifier}>")
-        if len(top_document_lines) >= num_docs_to_display:
-            break
-
-    return "\n".join(top_document_lines)
-
-
-@retry(
-    tries=DANSWER_BOT_NUM_RETRIES,
-    delay=0.25,
-    backoff=2,
-    logger=cast(logging.Logger, logger),
-)
-def _respond_in_thread(
-    client: SocketModeClient,
-    channel: str,
-    text: str,
-    thread_ts: str,
-) -> None:
-    logger.info(f"Trying to send message: {text}")
-    slack_call = make_slack_api_rate_limited(client.web_client.chat_postMessage)
-    response = slack_call(
-        channel=channel,
-        text=text,
-        thread_ts=thread_ts,
-    )
-    if not response.get("ok"):
-        raise RuntimeError(f"Unable to post message: {response}")
-
-
 def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> None:
+    logger.info(f"Received request of type: '{req.type}', with paylod: '{req.payload}'")
     if req.type == "events_api":
         # Acknowledge the request anyway
         response = SocketModeResponse(envelope_id=req.envelope_id)
@@ -262,41 +156,38 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
             # Optionally, respond in thread with the error message, Used primarily
             # for debugging purposes
             if DANSWER_BOT_DISPLAY_ERROR_MSGS:
-                _respond_in_thread(
-                    client=client,
+                respond_in_thread(
+                    client=client.web_client,
                     channel=channel,
                     text=f"Encountered exception when trying to answer: \n\n```{e}```",
                     thread_ts=message_ts_to_respond_to,
                 )
             return
 
-        # convert raw response into "nicely" formatted Slack message
-        quote_str, doc_identifiers = _process_quotes(answer.quotes)
-        top_documents_str = _process_documents(answer.top_ranked_docs, doc_identifiers)
-
-        if not answer.answer:
-            if DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER:
-                logger.info(
-                    "Unable to find answer - not responding since the "
-                    "`DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER` env variable is set"
-                )
-                return
-
-            text = f"Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓\n\n{top_documents_str}"
-        else:
-            top_documents_str_with_header = (
-                f"*Other potentially relevant docs:*\n{top_documents_str}"
+        if not answer.top_ranked_docs:
+            channel_specific_logger.error(
+                f"Unable to answer question: '{msg}' - no documents found"
             )
-            if quote_str:
-                text = f"{answer.answer}\n\n*Sources:*\n{quote_str}\n\n{top_documents_str_with_header}"
-            else:
-                text = f"{answer.answer}\n\n*Warning*: no sources were quoted for this answer, so it may be unreliable 😔\n\n{top_documents_str_with_header}"
+            # Optionally, respond in thread with the error message, Used primarily
+            # for debugging purposes
+            if DANSWER_BOT_DISPLAY_ERROR_MSGS:
+                respond_in_thread(
+                    client=client.web_client,
+                    channel=channel,
+                    text="Found no documents when trying to answer. Did you index any documents?",
+                    thread_ts=message_ts_to_respond_to,
+                )
+            return
 
+        # convert raw response into "nicely" formatted Slack message
+        blocks = build_qa_response_blocks(
+            answer=answer.answer, documents=answer.top_ranked_docs, quotes=answer.quotes
+        )
         try:
-            _respond_in_thread(
-                client=client,
+            respond_in_thread(
+                client=client.web_client,
                 channel=channel,
-                text=text,
+                blocks=blocks,
                 thread_ts=message_ts_to_respond_to,
             )
         except Exception:
