@@ -90,7 +90,7 @@ def _delete_connector_credential_pair(
         def _get_user(
             credential: Credential,
         ) -> str:
-            if credential.public_doc:
+            if credential.public_doc or not credential.user:
                 return PUBLIC_DOC_PAT
 
             return str(credential.user.id)

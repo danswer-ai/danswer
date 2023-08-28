@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 from langchain.chat_models.openai import ChatOpenAI
@@ -16,6 +17,11 @@ class OpenAIGPT(LangChainChatLLM):
         *args: list[Any],
         **kwargs: dict[str, Any]
     ):
+        # set a dummy API key if not specified so that LangChain doesn't throw an
+        # exception when trying to initialize the LLM which would prevent the API
+        # server from starting up
+        if not api_key:
+            api_key = os.environ.get("OPENAI_API_KEY") or "dummy_api_key"
         self._llm = ChatOpenAI(
             model=model_version,
             openai_api_key=api_key,
