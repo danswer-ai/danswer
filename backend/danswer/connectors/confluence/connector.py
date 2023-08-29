@@ -8,6 +8,7 @@ from typing import cast
 from urllib.parse import urlparse
 
 from atlassian import Confluence  # type:ignore
+from requests import HTTPError
 
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
