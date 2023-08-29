@@ -12,6 +12,7 @@ from slack_sdk.socket_mode.response import SocketModeResponse
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
+from danswer.configs.app_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
 from danswer.configs.app_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
 from danswer.configs.app_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
@@ -274,6 +275,13 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
         top_documents_str = _process_documents(answer.top_ranked_docs, doc_identifiers)
 
         if not answer.answer:
+            if DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER:
+                logger.info(
+                    "Unable to find answer - not responding since the "
+                    "`DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER` env variable is set"
+                )
+                return
+
             text = f"Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓\n\n{top_documents_str}"
         else:
             top_documents_str_with_header = (
