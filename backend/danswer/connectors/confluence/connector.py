@@ -111,7 +111,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 )
             except:
                 logger.warning(
-                    f"Batch failed with space {self.space} at offset {start_ind}"
+                    f"Batch failed with space {self.space} at offset {start_ind} with size {batch_size}, processing pages individually..."
                 )
 
                 view_pages: list[dict[str, Any]] = []
@@ -127,7 +127,10 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                                 expand="body.storage.value,version",
                             )
                         )
-                    except:
+                    except HTTPError as e:
+                        logger.warning(
+                            f"Page failed with space {self.space} at offset {start_ind + i}, trying alternative expand option: {e}"
+                        )
                         # Use view instead, which captures most info but is less complete
                         view_pages.extend(
                             confluence_client.get_all_pages_from_space(
@@ -195,16 +198,20 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
             if time_filter is None or time_filter(last_modified):
                 page_html = (
-                    page["body"].get("storage", {}).get("value")
-                    or page["body"]["view"]["value"]
+                    page["body"]
+                    .get("storage", page["body"].get("view", {}))
+                    .get("value")
                 )
+                page_url = self.wiki_base + page["_links"]["webui"]
+                if not page_html:
+                    logger.debug("Page is empty, skipping: %s", page_url)
+                    continue
                 page_text = (
                     page.get("title", "") + "\n" + parse_html_page_basic(page_html)
                 )
                 comments_text = self._fetch_comments(self.confluence_client, page["id"])
                 page_text += comments_text
 
-                page_url = self.wiki_base + page["_links"]["webui"]
 
                 doc_batch.append(
                     Document(
