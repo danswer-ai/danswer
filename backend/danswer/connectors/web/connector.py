@@ -1,5 +1,4 @@
 import io
-import re
 from datetime import datetime
 from typing import Any
 from typing import cast
@@ -7,7 +6,6 @@ from typing import Tuple
 from urllib.parse import urljoin
 from urllib.parse import urlparse
 
-import bs4
 import requests
 from bs4 import BeautifulSoup
 from oauthlib.oauth2 import BackendApplicationClient
@@ -29,6 +27,7 @@ from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
+from danswer.utils.text_processing import format_document_soup
 
 logger = setup_logger()
 
@@ -60,62 +59,6 @@ def get_internal_links(
         if urlparse(href).netloc == urlparse(url).netloc and base_url in href:
             internal_links.add(href)
     return internal_links
-
-
-def strip_excessive_newlines_and_spaces(document: str) -> str:
-    # collapse repeated spaces into one
-    document = re.sub(r" +", " ", document)
-    # remove trailing spaces
-    document = re.sub(r" +[\n\r]", "\n", document)
-    # remove repeated newlines
-    document = re.sub(r"[\n\r]+", "\n", document)
-    return document.strip()
-
-
-def strip_newlines(document: str) -> str:
-    # HTML might contain newlines which are just whitespaces to a browser
-    return re.sub(r"[\n\r]+", " ", document)
-
-
-def format_document(document: BeautifulSoup) -> str:
-    """Format html to a flat text document.
-
-    The following goals:
-    - Newlines from within the HTML are removed (as browser would ignore them as well).
-    - Repeated newlines/spaces are removed (as browsers would ignore them).
-    - Newlines only before and after headlines and paragraphs or when explicit (br or pre tag)
-    - Table columns/rows are separated by newline
-    - List elements are separated by newline and start with a hyphen
-    """
-    text = ""
-    list_element_start = False
-    verbatim_output = 0
-    for e in document.descendants:
-        verbatim_output -= 1
-        if isinstance(e, bs4.element.NavigableString):
-            if isinstance(e, (bs4.element.Comment, bs4.element.Doctype)):
-                continue
-            element_text = e.text
-            if element_text:
-                if verbatim_output > 0:
-                    text += element_text
-                else:
-                    text += strip_newlines(element_text)
-                list_element_start = False
-        elif isinstance(e, bs4.element.Tag):
-            if e.name in ["p", "div"]:
-                if not list_element_start:
-                    text += "\n"
-            elif e.name in ["br", "h1", "h2", "h3", "h4", "tr", "th", "td"]:
-                text += "\n"
-                list_element_start = False
-            elif e.name == "li":
-                text += "\n- "
-                list_element_start = True
-            elif e.name == "pre":
-                if verbatim_output <= 0:
-                    verbatim_output = len(list(e.childGenerator()))
-    return strip_excessive_newlines_and_spaces(text)
 
 
 def start_playwright() -> Tuple[Playwright, BrowserContext]:
@@ -239,7 +182,7 @@ class WebConnector(LoadConnector):
                 for undesired_tag in WEB_CONNECTOR_IGNORED_ELEMENTS:
                     [tag.extract() for tag in soup.find_all(undesired_tag)]
 
-                page_text = format_document(soup)
+                page_text = format_document_soup(soup)
 
                 doc_batch.append(
                     Document(
@@ -267,3 +210,9 @@ class WebConnector(LoadConnector):
         if doc_batch:
             playwright.stop()
             yield doc_batch
+
+
+if __name__ == "__main__":
+    connector = WebConnector("https://docs.danswer.dev/")
+    document_batches = connector.load_from_state()
+    print(next(document_batches))
