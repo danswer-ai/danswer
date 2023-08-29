@@ -213,7 +213,6 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 comments_text = self._fetch_comments(self.confluence_client, page["id"])
                 page_text += comments_text
 
-
                 doc_batch.append(
                     Document(
                         id=page_url,
