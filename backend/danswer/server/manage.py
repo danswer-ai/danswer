@@ -104,6 +104,7 @@ def get_most_boosted_docs(
         BoostDoc(
             document_id=doc.id,
             semantic_id=doc.semantic_id,
+            # source=doc.source,
             link=doc.link or "",
             boost=doc.boost,
             hidden=doc.hidden,

@@ -27,15 +27,15 @@ def fetch_query_event_by_id(query_id: int, db_session: Session) -> QueryEvent:
     return query_event
 
 
-def fetch_doc_m_by_id(doc_id: str, db_session: Session) -> DbDocument:
+def fetch_docs_by_id(doc_id: str, db_session: Session) -> DbDocument:
     stmt = select(DbDocument).where(DbDocument.id == doc_id)
     result = db_session.execute(stmt)
-    doc_m = result.scalar_one_or_none()
+    doc = result.scalar_one_or_none()
 
-    if not doc_m:
+    if not doc:
         raise ValueError("Invalid Document provided for updating")
 
-    return doc_m
+    return doc
 
 
 def fetch_docs_ranked_by_boost(
@@ -44,29 +44,9 @@ def fetch_docs_ranked_by_boost(
     order_func = asc if ascending else desc
     stmt = select(DbDocument).order_by(order_func(DbDocument.boost)).limit(limit)
     result = db_session.execute(stmt)
-    doc_m_list = result.scalars().all()
+    doc_list = result.scalars().all()
 
-    return list(doc_m_list)
-
-
-def create_document_metadata(
-    doc_id: str,
-    semantic_id: str,
-    link: str | None,
-    db_session: Session,
-) -> None:
-    try:
-        fetch_doc_m_by_id(doc_id, db_session)
-        return
-    except ValueError:
-        # Document already exists, don't reset its data
-        pass
-
-    DbDocument(
-        id=doc_id,
-        semantic_id=semantic_id,
-        link=link,
-    )
+    return list(doc_list)
 
 
 def create_query_event(
@@ -121,7 +101,7 @@ def create_doc_retrieval_feedback(
     if user_id != query_event.user_id:
         raise ValueError("User trying to give feedback on a query run by another user.")
 
-    doc_m = fetch_doc_m_by_id(document_id, db_session)
+    doc_m = fetch_docs_by_id(document_id, db_session)
 
     retrieval_feedback = DocumentRetrievalFeedback(
         qa_event_id=qa_event_id,

@@ -20,9 +20,9 @@ const buildReactedDocsUrl = (ascending: boolean, limit: number) => {
   return `/api/manage/admin/doc-boosts?ascending=${ascending}&limit=${limit}`;
 };
 
-export const useMostReactedToDocuments = () => {
+export const useMostReactedToDocuments = (ascending: boolean) => {
   const swrResponse = useSWR<DocumentBoostStatus[]>(
-    buildReactedDocsUrl(true, 100),
+    buildReactedDocsUrl(ascending, 100),
     fetcher
   );
 

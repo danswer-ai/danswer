@@ -5,6 +5,7 @@ import { LoadingAnimation } from "@/components/Loading";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { ThumbsUpIcon, UsersIcon } from "@/components/icons/icons";
+import { getSourceIcon } from "@/components/source";
 import { fetcher } from "@/lib/fetcher";
 import { useMostReactedToDocuments } from "@/lib/hooks";
 import { User } from "@/lib/types";
@@ -19,23 +20,28 @@ const columns = [
     header: "Boost",
     key: "boost",
   },
-  {
-    header: "Promote",
-    key: "promote",
-  },
 ];
 
 const DocumentFeedbackTable = () => {
   const { popup, setPopup } = usePopup();
 
-  const { data, isLoading, error, refreshDocs } = useMostReactedToDocuments();
+  const {
+    data: mostLikedDocs,
+    isLoading: isMostLikedDocsLoading,
+    error: mostLikedDocsError,
+    refreshDocs: refreshMostLikedDocs,
+  } = useMostReactedToDocuments(true);
 
-  if (isLoading) {
+  if (isMostLikedDocsLoading) {
     return <LoadingAnimation text="Loading" />;
   }
 
-  if (error || !data) {
-    return <div className="text-red-600">Error loading users</div>;
+  if (mostLikedDocsError || !mostLikedDocs) {
+    return (
+      <div className="text-red-600">
+        Error loading users - {mostLikedDocsError}
+      </div>
+    );
   }
 
   return (
@@ -43,11 +49,18 @@ const DocumentFeedbackTable = () => {
       {popup}
       <BasicTable
         columns={columns}
-        data={data.map((documentBoostStatus) => {
+        data={mostLikedDocs.map((documentBoostStatus) => {
           return {
-            name: documentBoostStatus.semantic_id,
+            name: (
+              <a
+                className="text-blue-600"
+                href={documentBoostStatus.link}
+                target="_blank"
+              >
+                {documentBoostStatus.semantic_id}
+              </a>
+            ),
             boost: documentBoostStatus.boost,
-            promote: "hi"
           };
         })}
       />
