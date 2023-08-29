@@ -196,3 +196,6 @@ DANSWER_BOT_DISPLAY_ERROR_MSGS = os.environ.get(
     "false",
     "",
 ]
+DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER = os.environ.get(
+    "DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER", ""
+).lower() not in ["false", ""]
