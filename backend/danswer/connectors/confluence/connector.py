@@ -195,16 +195,20 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
             if time_filter is None or time_filter(last_modified):
                 page_html = (
-                    page["body"].get("storage", {}).get("value")
-                    or page["body"]["view"]["value"]
+                    page["body"]
+                    .get("storage", page["body"].get("view", {}))
+                    .get("value")
                 )
+                page_url = self.wiki_base + page["_links"]["webui"]
+                if not page_html:
+                    logger.debug("Page is empty, skipping: %s", page_url)
+                    continue
                 page_text = (
                     page.get("title", "") + "\n" + parse_html_page_basic(page_html)
                 )
                 comments_text = self._fetch_comments(self.confluence_client, page["id"])
                 page_text += comments_text
 
-                page_url = self.wiki_base + page["_links"]["webui"]
 
                 doc_batch.append(
                     Document(
