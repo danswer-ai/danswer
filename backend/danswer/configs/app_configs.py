@@ -45,7 +45,22 @@ SECRET = os.environ.get("SECRET", "")
 SESSION_EXPIRE_TIME_SECONDS = int(
     os.environ.get("SESSION_EXPIRE_TIME_SECONDS", 86400)
 )  # 1 day
-VALID_EMAIL_DOMAIN = os.environ.get("VALID_EMAIL_DOMAIN", "")
+
+# set `VALID_EMAIL_DOMAINS` to a comma seperated list of domains in order to
+# restrict access to Danswer to only users with emails from those domains.
+# E.g. `VALID_EMAIL_DOMAINS=example.com,example.org` will restrict Danswer
+# signups to users with either an @example.com or an @example.org email.
+# NOTE: maintaining `VALID_EMAIL_DOMAIN` to keep backwards compatibility
+_VALID_EMAIL_DOMAIN = os.environ.get("VALID_EMAIL_DOMAIN", "")
+_VALID_EMAIL_DOMAINS_STR = (
+    os.environ.get("VALID_EMAIL_DOMAINS", "") or _VALID_EMAIL_DOMAIN
+)
+VALID_EMAIL_DOMAINS = (
+    [domain.strip() for domain in _VALID_EMAIL_DOMAINS_STR.split(",")]
+    if _VALID_EMAIL_DOMAINS_STR
+    else []
+)
+
 # OAuth Login Flow
 ENABLE_OAUTH = os.environ.get("ENABLE_OAUTH", "").lower() != "false"
 OAUTH_TYPE = os.environ.get("OAUTH_TYPE", "google").lower()
