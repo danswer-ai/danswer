@@ -138,6 +138,7 @@ const DocumentFeedbackTable = ({
                   className="text-blue-600"
                   href={document.link}
                   target="_blank"
+                  rel="noopener noreferrer"
                 >
                   {document.semantic_id}
                 </a>
