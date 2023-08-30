@@ -40,7 +40,7 @@ from danswer.configs.app_configs import SMTP_PASS
 from danswer.configs.app_configs import SMTP_PORT
 from danswer.configs.app_configs import SMTP_SERVER
 from danswer.configs.app_configs import SMTP_USER
-from danswer.configs.app_configs import VALID_EMAIL_DOMAIN
+from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_user_count
@@ -77,6 +77,21 @@ def verify_email_in_whitelist(email: str) -> None:
         raise PermissionError("User not on allowed user whitelist")
 
 
+def verify_email_domain(email: str) -> None:
+    if VALID_EMAIL_DOMAINS:
+        if email.count("@") != 1:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email is not valid",
+            )
+        domain = email.split("@")[-1]
+        if domain not in VALID_EMAIL_DOMAINS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email domain is not valid",
+            )
+
+
 def send_user_verification_email(user_email: str, token: str) -> None:
     msg = MIMEMultipart()
     msg["Subject"] = "Danswer Email Verification"
@@ -107,6 +122,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         request: Optional[Request] = None,
     ) -> models.UP:
         verify_email_in_whitelist(user_create.email)
+        verify_email_domain(user_create.email)
         if hasattr(user_create, "role"):
             user_count = await get_user_count()
             if user_count == 0:
@@ -129,6 +145,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         is_verified_by_default: bool = False,
     ) -> models.UOAP:
         verify_email_in_whitelist(account_email)
+        verify_email_domain(account_email)
 
         return await super().oauth_callback(  # type: ignore
             oauth_name=oauth_name,
@@ -155,18 +172,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_request_verify(
         self, user: User, token: str, request: Optional[Request] = None
     ) -> None:
-        if VALID_EMAIL_DOMAIN:
-            if user.email.count("@") != 1:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Email is not valid",
-                )
-            domain = user.email.split("@")[-1]
-            if domain != VALID_EMAIL_DOMAIN:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Email domain is not valid",
-                )
+        verify_email_domain(user.email)
 
         logger.info(
             f"Verification requested for user {user.id}. Verification token: {token}"
