@@ -29,9 +29,11 @@ from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
 from danswer.search.semantic_search import chunks_to_search_docs
 from danswer.search.semantic_search import retrieve_ranked_documents
+from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.server.models import HelperResponse
 from danswer.server.models import QAFeedbackRequest
 from danswer.server.models import QAResponse
+from danswer.server.models import QueryValidationResponse
 from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchFeedbackRequest
 from danswer.server.models import SearchResponse
@@ -54,6 +56,22 @@ def get_search_type(
     query = question.query
     use_keyword = question.use_keyword if question.use_keyword is not None else False
     return recommend_search_flow(query, use_keyword)
+
+
+@router.get("/query-validation")
+def query_validation(
+    question: QuestionRequest = Depends(), _: User = Depends(current_user)
+) -> QueryValidationResponse:
+    query = question.query
+    reasoning, answerable = get_query_answerability(query)
+    return QueryValidationResponse(reasoning=reasoning, answerable=answerable)
+
+
+@router.get("/stream-query-validation")
+def stream_query_validation(
+    question: QuestionRequest = Depends(), _: User = Depends(current_user)
+) -> StreamingResponse:
+    pass
 
 
 @router.post("/semantic-search")
