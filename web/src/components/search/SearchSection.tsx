@@ -65,6 +65,7 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
     suggestedSearchType: null,
     suggestedFlowType: null,
     error: null,
+    queryEventId: null,
   };
   const updateCurrentAnswer = (answer: string) =>
     setSearchResponse((prevState) => ({
@@ -95,6 +96,11 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       error,
+    }));
+  const updateQueryEventId = (queryEventId: number) =>
+    setSearchResponse((prevState) => ({
+      ...(prevState || initialSearchResponse),
+      queryEventId,
     }));
 
   let lastSearchCancellationToken = useRef<CancellationToken | null>(null);
@@ -140,6 +146,10 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
       updateError: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateError,
+      }),
+      updateQueryEventId: cancellable({
+        cancellationToken: lastSearchCancellationToken.current,
+        fn: updateQueryEventId,
       }),
       selectedSearchType: searchType ?? selectedSearchType,
       offset: offset ?? defaultOverrides.offset,

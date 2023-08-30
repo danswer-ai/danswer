@@ -2,7 +2,7 @@ import { Button } from "@/components/Button";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { StatusRow } from "@/components/admin/connectors/table/ConnectorsTable";
-import { PencilIcon } from "@/components/icons/icons";
+import { EditIcon } from "@/components/icons/icons";
 import { deleteConnector } from "@/lib/connector";
 import {
   GoogleDriveConfig,
@@ -44,7 +44,7 @@ const EditableColumn = ({ connectorIndexingStatus }: EditableColumnProps) => {
           className="cursor-pointer"
         >
           <div className="mr-2">
-            <PencilIcon size={20} />
+            <EditIcon size={20} />
           </div>
         </div>
       </div>

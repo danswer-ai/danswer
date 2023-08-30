@@ -3,7 +3,7 @@ import React, { FC } from "react";
 type Column = {
   header: string;
   key: string;
-  width?: number;
+  width?: number | string;
 };
 
 type TableData = {
@@ -25,10 +25,10 @@ export const BasicTable: FC<BasicTableProps> = ({ columns, data }) => {
               <th
                 key={index}
                 className={
+                  (column.width ? `w-${column.width} ` : "") +
                   "px-4 py-2 font-bold" +
                   (index === 0 ? " rounded-tl-sm" : "") +
-                  (index === columns.length - 1 ? " rounded-tr-sm" : "") +
-                  (column.width ? ` w-${column.width}` : "")
+                  (index === columns.length - 1 ? " rounded-tr-sm" : "")
                 }
               >
                 {column.header}
@@ -44,8 +44,8 @@ export const BasicTable: FC<BasicTableProps> = ({ columns, data }) => {
                   <td
                     key={colIndex}
                     className={
-                      "py-2 px-4 border-b border-gray-800" +
-                      (column.width ? ` w-${column.width}` : "")
+                      (column.width ? `w-${column.width} ` : "") +
+                      "py-2 px-4 border-b border-gray-800"
                     }
                   >
                     {row[column.key]}

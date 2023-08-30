@@ -23,7 +23,6 @@ from danswer.db.connector_credential_pair import update_connector_credential_pai
 from danswer.db.credentials import backend_update_credential_json
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.feedback import create_document_metadata
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts

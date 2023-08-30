@@ -29,6 +29,14 @@ export type ValidStatuses =
   | "in_progress"
   | "not_started";
 
+export interface DocumentBoostStatus {
+  document_id: string;
+  semantic_id: string;
+  link: string;
+  boost: number;
+  hidden: boolean;
+}
+
 // CONNECTORS
 export interface ConnectorBase<T> {
   name: string;
