@@ -34,6 +34,7 @@ class OpenAIGPT(LangChainChatLLM):
                 "presence_penalty": 0,
             },
             verbose=should_be_verbose(),
+            max_retries=0,  # retries are handled outside of langchain
         )
 
     @property
