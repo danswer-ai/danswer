@@ -1,4 +1,4 @@
-from collections.abc import Generator
+from collections.abc import Iterator
 
 from danswer.direct_qa.qa_block import dict_based_prompt_to_langchain_prompt
 from danswer.llm.build import get_default_llm
@@ -44,11 +44,11 @@ def get_query_validation_messages(user_query: str) -> list[dict[str, str]]:
     return messages
 
 
-def get_query_answerability(user_query) -> Generator[dict[str, str | bool], None, None]:
+def get_query_answerability(user_query: str) -> Iterator[str]:
     messages = get_query_validation_messages(user_query)
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
-    tokens = get_default_llm().stream(filled_llm_prompt)
-    yield tokens
+    return get_default_llm().stream(filled_llm_prompt)
 
 
-get_query_answerability("What is Danswer?")
+for token in get_query_answerability("What is Danswer?"):
+    print(token)
