@@ -179,6 +179,13 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
                 )
             return
 
+        if not answer.answer and DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER:
+            channel_specific_logger.info(
+                "Unable to find answer - not responding since the "
+                "`DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER` env variable is set"
+            )
+            return
+
         # convert raw response into "nicely" formatted Slack message
         blocks = build_qa_response_blocks(
             answer=answer.answer, documents=answer.top_ranked_docs, quotes=answer.quotes

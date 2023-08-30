@@ -39,7 +39,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
     return null;
   }
 
-  const { answer, quotes, documents, error } = searchResponse;
+  const { answer, quotes, documents, error, queryEventId } = searchResponse;
 
   if (isFetching && !answer && !documents) {
     return (
@@ -152,7 +152,11 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
             Results
           </div>
           {removeDuplicateDocs(documents).map((document) => (
-            <DocumentDisplay document={document} />
+            <DocumentDisplay
+              key={document.document_id}
+              document={document}
+              queryEventId={queryEventId}
+            />
           ))}
         </div>
       )}

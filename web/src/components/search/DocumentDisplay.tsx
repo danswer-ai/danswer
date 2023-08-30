@@ -1,13 +1,19 @@
 import { DanswerDocument } from "@/lib/search/interfaces";
-import { DocumentFeedbackBlock } from "./DocumentFeedback";
+import { DocumentFeedbackBlock } from "./DocumentFeedbackBlock";
 import { getSourceIcon } from "../source";
 import { useState } from "react";
+import { usePopup } from "../admin/connectors/Popup";
 
 interface DocumentDisplayProps {
   document: DanswerDocument;
+  queryEventId: number | null;
 }
 
-export const DocumentDisplay = ({ document }: DocumentDisplayProps) => {
+export const DocumentDisplay = ({
+  document,
+  queryEventId,
+}: DocumentDisplayProps) => {
+  const { popup, setPopup } = usePopup();
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -19,6 +25,7 @@ export const DocumentDisplay = ({ document }: DocumentDisplayProps) => {
       }}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {popup}
       <div className="flex">
         <a
           className={
@@ -35,7 +42,13 @@ export const DocumentDisplay = ({ document }: DocumentDisplayProps) => {
           </p>
         </a>
         <div className="ml-auto">
-          {isHovered && <DocumentFeedbackBlock queryId={0} />}
+          {isHovered && queryEventId && (
+            <DocumentFeedbackBlock
+              documentId={document.document_id}
+              queryId={queryEventId}
+              setPopup={setPopup}
+            />
+          )}
         </div>
       </div>
       <p className="pl-1 py-3 text-gray-200">{document.blurb}</p>

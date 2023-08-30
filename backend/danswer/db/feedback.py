@@ -49,6 +49,16 @@ def fetch_docs_ranked_by_boost(
     return list(doc_list)
 
 
+def update_document_boost(db_session: Session, document_id: str, boost: int) -> None:
+    stmt = select(DbDocument).where(DbDocument.id == document_id)
+    result = db_session.execute(stmt).scalar_one_or_none()
+    if result is None:
+        raise ValueError(f"No document found with ID: '{document_id}'")
+
+    result.boost = boost
+    db_session.commit()
+
+
 def create_query_event(
     query: str,
     selected_flow: SearchType | None,

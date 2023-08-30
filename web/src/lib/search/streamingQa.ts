@@ -60,6 +60,7 @@ export const searchRequestStreamed = async ({
   updateSuggestedSearchType,
   updateSuggestedFlowType,
   updateError,
+  updateQueryEventId,
   selectedSearchType,
   offset,
 }: SearchRequestArgs) => {
@@ -171,6 +172,12 @@ export const searchRequestStreamed = async ({
         if (chunk.quotes) {
           quotes = chunk.quotes as Quote[];
           updateQuotes(quotes);
+          return;
+        }
+
+        // check for query ID section
+        if (chunk.query_event_id) {
+          updateQueryEventId(chunk.query_event_id);
           return;
         }
 

@@ -17,6 +17,7 @@ import {
   ThumbsUp,
   ThumbsDown,
 } from "@phosphor-icons/react";
+import { FiCheck, FiEdit, FiThumbsDown, FiThumbsUp } from "react-icons/fi";
 import { SiBookstack } from "react-icons/si";
 import { FaFile, FaGlobe } from "react-icons/fa";
 import Image from "next/image";
@@ -124,11 +125,11 @@ export const BrainIcon = ({
   return <Brain size={size} className={className} />;
 };
 
-export const PencilIcon = ({
+export const EditIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <PencilSimple size={size} className={className} />;
+  return <FiEdit size={size} className={className} />;
 };
 
 export const XIcon = ({
@@ -142,14 +143,21 @@ export const ThumbsUpIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <ThumbsUp size={size} className={className} />;
+  return <FiThumbsUp size={size} className={className} />;
 };
 
 export const ThumbsDownIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <ThumbsDown size={size} className={className} />;
+  return <FiThumbsDown size={size} className={className} />;
+};
+
+export const CheckmarkIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiCheck size={size} className={className} />;
 };
 
 //

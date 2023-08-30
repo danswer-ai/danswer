@@ -50,6 +50,7 @@ from danswer.db.deletion_attempt import create_deletion_attempt
 from danswer.db.deletion_attempt import get_deletion_attempts
 from danswer.db.engine import get_session
 from danswer.db.feedback import fetch_docs_ranked_by_boost
+from danswer.db.feedback import update_document_boost
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import DeletionAttempt
@@ -63,6 +64,7 @@ from danswer.server.models import ApiKey
 from danswer.server.models import AuthStatus
 from danswer.server.models import AuthUrl
 from danswer.server.models import BoostDoc
+from danswer.server.models import BoostUpdateRequest
 from danswer.server.models import ConnectorBase
 from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.server.models import ConnectorIndexingStatus
@@ -111,6 +113,22 @@ def get_most_boosted_docs(
         )
         for doc in boost_docs
     ]
+
+
+@router.post("/admin/doc-boosts")
+def document_boost_update(
+    boost_update: BoostUpdateRequest,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    try:
+        update_document_boost(
+            db_session=db_session,
+            document_id=boost_update.document_id,
+            boost=boost_update.boost,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/admin/connector/google-drive/app-credential")

@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { PopupSpec, usePopup } from "../admin/connectors/Popup";
+import { PopupSpec } from "../admin/connectors/Popup";
 import { ThumbsDownIcon, ThumbsUpIcon } from "../icons/icons";
 
 type DocumentFeedbackType = "endorse" | "reject" | "hide" | "unhide";
 
 const giveDocumentFeedback = async (
+  documentId: string,
   queryId: number,
   searchFeedback: DocumentFeedbackType
-): Promise<boolean> => {
+): Promise<string | null> => {
   const response = await fetch("/api/doc-retrieval-feedback", {
     method: "POST",
     headers: {
@@ -18,29 +18,29 @@ const giveDocumentFeedback = async (
       search_feedback: searchFeedback,
       click: false,
       document_rank: 0,
-      document_id: "",
+      document_id: documentId,
     }),
   });
-  return response.ok;
+  return response.ok
+    ? null
+    : response.statusText || (await response.json()).message;
 };
 
 interface DocumentFeedbackIconProps {
+  documentId: string;
   queryId: number;
   setPopup: (popupSpec: PopupSpec | null) => void;
   feedbackType: DocumentFeedbackType;
 }
 
 const DocumentFeedback = ({
+  documentId,
   queryId,
   setPopup,
   feedbackType,
 }: DocumentFeedbackIconProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  const size = isHovered ? 18 : 16;
-  const paddingY = isHovered ? "" : "py-0.5 ";
-
   let icon = null;
+  const size = 16;
   if (feedbackType === "endorse") {
     icon = (
       <ThumbsUpIcon
@@ -65,19 +65,26 @@ const DocumentFeedback = ({
   return (
     <div
       onClick={async () => {
-        const isSuccessful = await giveDocumentFeedback(queryId, feedbackType);
-        if (isSuccessful) {
+        console.log("HI");
+        const errorMsg = await giveDocumentFeedback(
+          documentId,
+          queryId,
+          feedbackType
+        );
+        console.log(errorMsg);
+        if (!errorMsg) {
           setPopup({
             message: "Thanks for your feedback!",
             type: "success",
           });
+        } else {
+          setPopup({
+            message: `Error giving feedback - ${errorMsg}`,
+            type: "error",
+          });
         }
       }}
-      onMouseEnter={() => {
-        setIsHovered(true);
-      }}
-      onMouseLeave={() => setIsHovered(false)}
-      className={"cursor-pointer " + paddingY}
+      className="cursor-pointer"
     >
       {icon}
     </div>
@@ -85,18 +92,27 @@ const DocumentFeedback = ({
 };
 
 interface DocumentFeedbackBlockProps {
+  documentId: string;
   queryId: number;
+  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
-export const DocumentFeedbackBlock = ({ queryId }: DocumentFeedbackBlockProps) => {
-  const { popup, setPopup } = usePopup();
-
+export const DocumentFeedbackBlock = ({
+  documentId,
+  queryId,
+  setPopup,
+}: DocumentFeedbackBlockProps) => {
   return (
     <div className="flex">
-      {popup}
-      <DocumentFeedback queryId={queryId} setPopup={setPopup} feedbackType="endorse" />
+      <DocumentFeedback
+        documentId={documentId}
+        queryId={queryId}
+        setPopup={setPopup}
+        feedbackType="endorse"
+      />
       <div className="ml-2">
         <DocumentFeedback
+          documentId={documentId}
           queryId={queryId}
           setPopup={setPopup}
           feedbackType="reject"

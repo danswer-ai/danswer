@@ -36,6 +36,7 @@ export interface SearchResponse {
   quotes: Quote[] | null;
   documents: DanswerDocument[] | null;
   error: string | null;
+  queryEventId: number | null;
 }
 
 export interface Source {
@@ -57,6 +58,7 @@ export interface SearchRequestArgs {
   updateSuggestedSearchType: (searchType: SearchType) => void;
   updateSuggestedFlowType: (flowType: FlowType) => void;
   updateError: (error: string) => void;
+  updateQueryEventId: (queryEventID: number) => void;
   selectedSearchType: SearchType | null;
   offset: number | null;
 }
