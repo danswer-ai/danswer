@@ -15,8 +15,6 @@
     "@types/react": "18.0.32",
     "@types/react-dom": "18.0.11",
     "autoprefixer": "^10.4.14",
-    "eslint": "^8.48.0",
-    "eslint-config-next": "^13.4.9",
     "formik": "^2.2.9",
     "js-cookie": "^3.0.5",
     "next": "^13.4.9",
@@ -32,6 +30,8 @@
     "yup": "^1.1.1"
   },
   "devDependencies": {
-    "prettier": "2.8.8"
+    "prettier": "2.8.8",
+    "eslint": "^8.48.0",
+    "eslint-config-next": "^13.4.9"
   }
 }
