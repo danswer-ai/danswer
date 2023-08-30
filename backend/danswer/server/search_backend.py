@@ -22,7 +22,6 @@ from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.llm_utils import get_default_qa_model
-from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.search.danswer_helper import query_intent
 from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.keyword_search import retrieve_keyword_documents
