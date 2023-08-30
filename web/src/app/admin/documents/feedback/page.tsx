@@ -127,7 +127,6 @@ const DocumentFeedbackTable = ({
           {
             header: "Score",
             key: "score",
-            width: 20,
           },
         ]}
         data={documents
@@ -144,13 +143,15 @@ const DocumentFeedbackTable = ({
                 </a>
               ),
               score: (
-                <div key={document.document_id} className="h-8 w-16">
-                  <ScoreSection
-                    documentId={document.document_id}
-                    initialScore={document.boost}
-                    refresh={refresh}
-                    setPopup={setPopup}
-                  />
+                <div className="ml-auto flex w-16">
+                  <div key={document.document_id} className="h-8 ml-auto mr-8">
+                    <ScoreSection
+                      documentId={document.document_id}
+                      initialScore={document.boost}
+                      refresh={refresh}
+                      setPopup={setPopup}
+                    />
+                  </div>
                 </div>
               ),
             };

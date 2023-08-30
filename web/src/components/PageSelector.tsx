@@ -121,7 +121,10 @@ export const PageSelector = ({
           <PageLink linkText="..." unclickable={true} />
         </>
       )}
-      {paginationOptions.map((page) => {
+      {(!paginationOptions.includes(1)
+        ? paginationOptions.slice(2)
+        : paginationOptions
+      ).map((page) => {
         return (
           <PageLink
             key={page}
