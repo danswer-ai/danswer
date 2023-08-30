@@ -3,6 +3,9 @@ from slack_sdk.models.blocks import Block
 from slack_sdk.models.blocks import ButtonElement
 from slack_sdk.models.blocks import SectionBlock
 
+from danswer.bots.slack.constants import DISLIKE_BLOCK_ACTION_ID
+from danswer.bots.slack.constants import LIKE_BLOCK_ACTION_ID
+from danswer.bots.slack.utils import build_block_id_from_query_event_id
 from danswer.configs.app_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.slack.utils import UserIdReplacer
@@ -10,20 +13,21 @@ from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.server.models import SearchDoc
 
 
-def build_feedback_block() -> Block:
+def build_feedback_block(query_event_id: int) -> Block:
     return ActionsBlock(
+        block_id=build_block_id_from_query_event_id(query_event_id),
         elements=[
             ButtonElement(
-                action_id="feedback-like",
+                action_id=LIKE_BLOCK_ACTION_ID,
                 text="👍",
                 style="primary",
             ),
             ButtonElement(
-                action_id="feedback-dislike",
+                action_id=DISLIKE_BLOCK_ACTION_ID,
                 text="👎",
                 style="danger",
             ),
-        ]
+        ],
     )
 
 
@@ -119,6 +123,7 @@ def build_quotes_block(
 
 
 def build_qa_response_blocks(
+    query_event_id: int,
     answer: str | None,
     quotes: list[DanswerQuote] | None,
     documents: list[SearchDoc],
@@ -143,4 +148,8 @@ def build_qa_response_blocks(
             ]
 
     documents_block = build_documents_block(documents, doc_identifiers)
-    return [answer_block] + quotes_blocks + [documents_block, build_feedback_block()]
+    return (
+        [answer_block]
+        + quotes_blocks
+        + [documents_block, build_feedback_block(query_event_id=query_event_id)]
+    )

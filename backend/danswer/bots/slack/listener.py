@@ -4,24 +4,17 @@ from collections.abc import MutableMapping
 from typing import Any
 from typing import cast
 
-from retry import retry
 from slack_sdk import WebClient
 from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
-from sqlalchemy.orm import Session
 
-from danswer.bots.slack.blocks import build_qa_response_blocks
-from danswer.bots.slack.utils import respond_in_thread
-from danswer.configs.app_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
-from danswer.configs.app_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
-from danswer.configs.app_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
-from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
-from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.direct_qa.answer_question import answer_qa_query
-from danswer.server.models import QAResponse
-from danswer.server.models import QuestionRequest
+from danswer.bots.slack.constants import DISLIKE_BLOCK_ACTION_ID
+from danswer.bots.slack.constants import LIKE_BLOCK_ACTION_ID
+from danswer.bots.slack.handlers.handle_feedback import handle_qa_feedback
+from danswer.bots.slack.handlers.handle_message import handle_message
+from danswer.bots.slack.utils import get_query_event_id_from_block_id
+from danswer.configs.constants import QAFeedbackType
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -60,10 +53,10 @@ def _get_socket_client() -> SocketModeClient:
     )
 
 
-def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> None:
+def _process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> None:
     logger.info(f"Received request of type: '{req.type}', with paylod: '{req.payload}'")
     if req.type == "events_api":
-        # Acknowledge the request anyway
+        # Acknowledge the request immediately
         response = SocketModeResponse(envelope_id=req.envelope_id)
         client.send_socket_mode_response(response)
 
@@ -117,95 +110,56 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
 
         # TODO: message should be enqueued and processed elsewhere,
         # but doing it here for now for simplicity
-
-        @retry(
-            tries=DANSWER_BOT_NUM_RETRIES,
-            delay=0.25,
-            backoff=2,
-            logger=cast(logging.Logger, logger),
+        handle_message(
+            msg=msg,
+            channel=channel,
+            message_ts_to_respond_to=message_ts_to_respond_to,
+            client=client.web_client,
+            logger=cast(logging.Logger, channel_specific_logger),
         )
-        def _get_answer(question: QuestionRequest) -> QAResponse:
-            engine = get_sqlalchemy_engine()
-            with Session(engine, expire_on_commit=False) as db_session:
-                answer = answer_qa_query(
-                    question=question,
-                    user=None,
-                    db_session=db_session,
-                    answer_generation_timeout=DANSWER_BOT_ANSWER_GENERATION_TIMEOUT,
-                )
-                if not answer.error_msg:
-                    return answer
-                else:
-                    raise RuntimeError(answer.error_msg)
-
-        try:
-            answer = _get_answer(
-                QuestionRequest(
-                    query=msg,
-                    collection=DOCUMENT_INDEX_NAME,
-                    use_keyword=None,
-                    filters=None,
-                    offset=None,
-                )
-            )
-        except Exception as e:
-            channel_specific_logger.exception(
-                f"Unable to process message - did not successfully answer "
-                f"in {DANSWER_BOT_NUM_RETRIES} attempts"
-            )
-            # Optionally, respond in thread with the error message, Used primarily
-            # for debugging purposes
-            if DANSWER_BOT_DISPLAY_ERROR_MSGS:
-                respond_in_thread(
-                    client=client.web_client,
-                    channel=channel,
-                    text=f"Encountered exception when trying to answer: \n\n```{e}```",
-                    thread_ts=message_ts_to_respond_to,
-                )
-            return
-
-        if not answer.top_ranked_docs:
-            channel_specific_logger.error(
-                f"Unable to answer question: '{msg}' - no documents found"
-            )
-            # Optionally, respond in thread with the error message, Used primarily
-            # for debugging purposes
-            if DANSWER_BOT_DISPLAY_ERROR_MSGS:
-                respond_in_thread(
-                    client=client.web_client,
-                    channel=channel,
-                    text="Found no documents when trying to answer. Did you index any documents?",
-                    thread_ts=message_ts_to_respond_to,
-                )
-            return
-
-        if not answer.answer and DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER:
-            channel_specific_logger.info(
-                "Unable to find answer - not responding since the "
-                "`DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER` env variable is set"
-            )
-            return
-
-        # convert raw response into "nicely" formatted Slack message
-        blocks = build_qa_response_blocks(
-            answer=answer.answer, documents=answer.top_ranked_docs, quotes=answer.quotes
-        )
-        try:
-            respond_in_thread(
-                client=client.web_client,
-                channel=channel,
-                blocks=blocks,
-                thread_ts=message_ts_to_respond_to,
-            )
-        except Exception:
-            channel_specific_logger.exception(
-                f"Unable to process message - could not respond in slack in {DANSWER_BOT_NUM_RETRIES} attempts"
-            )
-            return
 
         channel_specific_logger.info(
             f"Successfully processed message with ts: '{message_ts}'"
         )
+
+    # handle button clicks
+    if req.type == "interactive" and req.payload.get("type") == "block_actions":
+        # Acknowledge the request immediately
+        response = SocketModeResponse(envelope_id=req.envelope_id)
+        client.send_socket_mode_response(response)
+
+        actions = req.payload.get("actions")
+        if not actions:
+            logger.error("Unable to process block actions - no actions found")
+            return
+
+        action = cast(dict[str, Any], actions[0])
+        action_id = action.get("action_id")
+        if action_id == LIKE_BLOCK_ACTION_ID:
+            feedback_type = QAFeedbackType.LIKE
+        elif action_id == DISLIKE_BLOCK_ACTION_ID:
+            feedback_type = QAFeedbackType.DISLIKE
+        else:
+            logger.error(
+                f"Unable to process block action - unknown action_id: '{action_id}'"
+            )
+            return
+
+        block_id = cast(str, action.get("block_id"))
+        query_event_id = get_query_event_id_from_block_id(block_id)
+        handle_qa_feedback(
+            query_id=query_event_id,
+            feedback_type=feedback_type,
+        )
+
+        logger.info(f"Successfully handled QA feedback for event: {query_event_id}")
+
+
+def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> None:
+    try:
+        _process_slack_event(client=client, req=req)
+    except Exception:
+        logger.exception("Failed to process slack event")
 
 
 # Follow the guide (https://docs.danswer.dev/slack_bot_setup) to set up

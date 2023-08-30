@@ -1,9 +1,12 @@
 import logging
+import random
+import string
 from typing import cast
 
 from retry import retry
 from slack_sdk import WebClient
 from slack_sdk.models.blocks import Block
+from slack_sdk.models.metadata import Metadata
 
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
@@ -25,6 +28,7 @@ def respond_in_thread(
     thread_ts: str,
     text: str | None = None,
     blocks: list[Block] | None = None,
+    metadata: Metadata | None = None,
 ) -> None:
     if not text and not blocks:
         raise ValueError("One of `text` or `blocks` must be provided")
@@ -40,6 +44,15 @@ def respond_in_thread(
         text=text,
         blocks=blocks,
         thread_ts=thread_ts,
+        metadata=metadata,
     )
     if not response.get("ok"):
         raise RuntimeError(f"Unable to post message: {response}")
+
+
+def build_block_id_from_query_event_id(query_event_id: int) -> str:
+    return f"{''.join(random.choice(string.ascii_letters) for _ in range(5))}:{query_event_id}"
+
+
+def get_query_event_id_from_block_id(block_id: str) -> int:
+    return int(block_id.split(":")[-1])
