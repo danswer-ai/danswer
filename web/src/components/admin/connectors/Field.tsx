@@ -1,5 +1,5 @@
 import { Button } from "@/components/Button";
-import { ErrorMessage, Field, FieldArray } from "formik";
+import { ArrayHelpers, ErrorMessage, Field, FieldArray } from "formik";
 import * as Yup from "yup";
 import { FormBodyBuilder } from "./types";
 
@@ -89,7 +89,7 @@ export function TextArrayFieldBuilder<T extends Yup.AnyObject>({
 
       <FieldArray
         name={name}
-        render={(arrayHelpers) => (
+        render={(arrayHelpers: ArrayHelpers) => (
           <div>
             {values[name] &&
               values[name].length > 0 &&
