@@ -95,7 +95,7 @@ def get_default_qa_model(
             llm=llm,
             qa_handler=qa_handler,
         )
-    except:
+    except Exception:
         logger.exception(
             "Unable to build a QABlock with the new approach, going back to the "
             "legacy approach"

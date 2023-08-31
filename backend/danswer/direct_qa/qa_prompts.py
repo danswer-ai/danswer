@@ -15,10 +15,10 @@ UNCERTAINTY_PAT = "?"
 QUOTE_PAT = "Quote:"
 
 BASE_PROMPT = (
-    f"Answer the query based on provided documents and quote relevant sections. "
-    f"Respond with a json containing a concise answer and up to three most relevant quotes from the documents. "
-    f'Respond with "?" for the answer if the query cannot be answered based on the documents. '
-    f"The quotes must be EXACT substrings from the documents."
+    "Answer the query based on provided documents and quote relevant sections. "
+    "Respond with a json containing a concise answer and up to three most relevant quotes from the documents. "
+    'Respond with "?" for the answer if the query cannot be answered based on the documents. '
+    "The quotes must be EXACT substrings from the documents."
 )
 
 SAMPLE_QUESTION = "Where is the Eiffel Tower?"
@@ -81,7 +81,7 @@ def _add_metadata_section(
 
     prompt_current += _prepend(f"DOCUMENT SOURCE: {chunk.source_type}\n", prepend_tab)
     if chunk.metadata:
-        prompt_current += _prepend(f"METADATA:\n", prepend_tab)
+        prompt_current += _prepend("METADATA:\n", prepend_tab)
         connector_class = identify_connector_class(DocumentSource(chunk.source_type))
         for metadata_line in connector_class.parse_metadata(chunk.metadata):
             prompt_current += _prepend(f"\t{metadata_line}\n", prepend_tab)

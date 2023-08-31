@@ -151,7 +151,7 @@ def stream_direct_qa(
     logger.debug(f"Received QA query: {question.query}")
     logger.debug(f"Query filters: {question.filters}")
     if question.use_keyword:
-        logger.debug(f"User selected Keyword Search")
+        logger.debug("User selected Keyword Search")
 
     @log_generator_function_time()
     def stream_qa_portions(

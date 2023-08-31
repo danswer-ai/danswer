@@ -132,7 +132,7 @@ def build_qa_response_blocks(
     quotes_blocks: list[Block] = []
     if not answer:
         answer_block = SectionBlock(
-            text=f"Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓"
+            text="Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓"
         )
     else:
         answer_block = SectionBlock(text=answer)

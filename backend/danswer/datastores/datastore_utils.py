@@ -58,10 +58,10 @@ CrossConnectorDocumentMetadataFetchCallable = Callable[
 T = TypeVar("T")
 
 
-def _add_if_not_exists(l: list[T], item: T) -> list[T]:
-    if item in l:
-        return l
-    return l + [item]
+def _add_if_not_exists(obj_list: list[T], item: T) -> list[T]:
+    if item in obj_list:
+        return obj_list
+    return obj_list + [item]
 
 
 def update_cross_connector_document_metadata_map(

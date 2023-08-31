@@ -437,7 +437,7 @@ class VespaIndex(DocumentIndex):
             VespaIndex.yql_base
             + vespa_where_clauses
             + f"{{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding) or "
-            + f'{{grammar: "weakAnd"}}userInput(@query)'
+            + '{grammar: "weakAnd"}userInput(@query)'
         )
 
         query_embedding = embed_query(query)
