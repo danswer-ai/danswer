@@ -76,7 +76,7 @@ def _process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> No
         # this should never happen, but we can't continue without a channel since
         # we can't send a response without it
         if not channel:
-            channel_specific_logger.error(f"Found message without channel - skipping")
+            channel_specific_logger.error("Found message without channel - skipping")
             return
 
         message_subtype = event.get("subtype")

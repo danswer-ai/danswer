@@ -85,8 +85,8 @@ class LinearConnector(LoadConnector, PollConnector):
             """
             query IterateIssueBatches($first: Int, $after: String) {
                 issues(
-                    orderBy: updatedAt, 
-                    first: $first, 
+                    orderBy: updatedAt,
+                    first: $first,
                     after: $after,
                     filter: {
                         updatedAt: {

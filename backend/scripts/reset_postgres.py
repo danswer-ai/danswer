@@ -29,12 +29,12 @@ def wipe_all_rows(database: str) -> None:
     table_names = cur.fetchall()
 
     # have to delete from these first to not run into psycopg2.errors.ForeignKeyViolation
-    cur.execute(f"DELETE FROM chunk")
-    cur.execute(f"DELETE FROM document_by_connector_credential_pair")
-    cur.execute(f"DELETE FROM document")
-    cur.execute(f"DELETE FROM connector_credential_pair")
-    cur.execute(f"DELETE FROM index_attempt")
-    cur.execute(f"DELETE FROM credential")
+    cur.execute("DELETE FROM chunk")
+    cur.execute("DELETE FROM document_by_connector_credential_pair")
+    cur.execute("DELETE FROM document")
+    cur.execute("DELETE FROM connector_credential_pair")
+    cur.execute("DELETE FROM index_attempt")
+    cur.execute("DELETE FROM credential")
     conn.commit()
 
     for table_name in table_names:

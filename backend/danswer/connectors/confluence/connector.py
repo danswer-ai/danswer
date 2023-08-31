@@ -110,9 +110,10 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     limit=batch_size,
                     expand="body.storage.value,version",
                 )
-            except:
+            except Exception:
                 logger.warning(
-                    f"Batch failed with space {self.space} at offset {start_ind} with size {batch_size}, processing pages individually..."
+                    f"Batch failed with space {self.space} at offset {start_ind} "
+                    f"with size {batch_size}, processing pages individually..."
                 )
 
                 view_pages: list[dict[str, Any]] = []
@@ -130,7 +131,8 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         )
                     except HTTPError as e:
                         logger.warning(
-                            f"Page failed with space {self.space} at offset {start_ind + i}, trying alternative expand option: {e}"
+                            f"Page failed with space {self.space} at offset {start_ind + i}, "
+                            f"trying alternative expand option: {e}"
                         )
                         # Use view instead, which captures most info but is less complete
                         view_pages.extend(
@@ -155,7 +157,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         for i in range(self.batch_size):
             try:
                 pages.extend(_fetch(start_ind + i, 1))
-            except:
+            except Exception:
                 logger.exception(
                     "Ran into exception when fetching pages from Confluence"
                 )

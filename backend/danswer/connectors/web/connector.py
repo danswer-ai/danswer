@@ -152,7 +152,7 @@ class WebConnector(LoadConnector):
                     logger.info(f"Redirected to {final_page}")
                     current_url = final_page
                     if current_url in visited_links:
-                        logger.info(f"Redirected page already indexed")
+                        logger.info("Redirected page already indexed")
                         continue
                     visited_links.add(current_url)
 

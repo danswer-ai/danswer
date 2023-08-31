@@ -163,7 +163,7 @@ class UserIdReplacer:
         """Simply replaces all channel mentions with `#<CHANNEL_ID>` in order
         to make a message work as part of a link"""
         # Find user IDs in the message
-        channel_matches = re.findall("<#(.*?)\|(.*?)>", message)
+        channel_matches = re.findall(r"<#(.*?)\|(.*?)>", message)
         for channel_id, channel_name in channel_matches:
             message = message.replace(
                 f"<#{channel_id}|{channel_name}>", f"#{channel_name}"

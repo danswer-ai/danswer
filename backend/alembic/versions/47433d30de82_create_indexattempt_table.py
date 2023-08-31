@@ -1,7 +1,7 @@
 """Create IndexAttempt table
 
 Revision ID: 47433d30de82
-Revises: 
+Revises:
 Create Date: 2023-05-04 00:55:32.971991
 
 """

@@ -54,7 +54,7 @@ def validation_exception_handler(
 def value_error_handler(_: Request, exc: ValueError) -> JSONResponse:
     try:
         raise (exc)
-    except:
+    except Exception:
         # log stacktrace
         logger.exception("ValueError")
     return JSONResponse(
