@@ -26,6 +26,7 @@ from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import EMBEDDINGS
 from danswer.configs.constants import METADATA
 from danswer.configs.constants import PUBLIC_DOC_PAT
+from danswer.configs.constants import SCORE
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
@@ -277,7 +278,10 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
     response.raise_for_status()
 
     hits = response.json()["root"].get("children", [])
-    inference_chunks = [InferenceChunk.from_dict(hit["fields"]) for hit in hits]
+    inference_chunks = [
+        InferenceChunk.from_dict(dict(hit["fields"], **{SCORE: hit["relevance"]}))
+        for hit in hits
+    ]
 
     return inference_chunks
 

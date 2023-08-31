@@ -17,6 +17,7 @@ GEN_AI_API_KEY_STORAGE_KEY = "genai_api_key"
 PUBLIC_DOC_PAT = "PUBLIC"
 QUOTE = "quote"
 BOOST = "boost"
+SCORE = "score"
 DEFAULT_BOOST = 0
 
 

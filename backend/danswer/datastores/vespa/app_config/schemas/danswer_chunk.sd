@@ -36,6 +36,7 @@ schema danswer_chunk {
         field section_continuation type bool {
             indexing: summary | attribute
         }
+        # Technically this one should be int, but can't change without causing breaks to existing index
         field boost type float {
             indexing: summary | attribute
         }
@@ -64,7 +65,7 @@ schema danswer_chunk {
 
     rank-profile keyword_search inherits default {
         first-phase {
-            expression: bm25(content) * attribute(boost)
+            expression: bm25(content) * pow(1.2, attribute(boost))
         }
     }
 
@@ -73,7 +74,7 @@ schema danswer_chunk {
             query(query_embedding) tensor<float>(x[384])
         }
         first-phase {
-            expression: closeness(field, embeddings) * attribute(boost)
+            expression: closeness(field, embeddings) * pow(1.2, attribute(boost))
         }
         match-features: closest(embeddings)
     }
@@ -86,7 +87,7 @@ schema danswer_chunk {
             expression: bm25(content)
         }
         second-phase {
-            expression: closeness(field, embeddings) * attribute(boost)
+            expression: closeness(field, embeddings) * pow(1.2, attribute(boost))
         }
         match-features: closest(embeddings)
     }

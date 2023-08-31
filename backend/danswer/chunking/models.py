@@ -7,6 +7,7 @@ from typing import cast
 from danswer.configs.constants import BLURB
 from danswer.configs.constants import BOOST
 from danswer.configs.constants import METADATA
+from danswer.configs.constants import SCORE
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.connectors.models import Document
@@ -58,7 +59,8 @@ class InferenceChunk(BaseChunk):
     document_id: str
     source_type: str
     semantic_identifier: str
-    boost: float
+    boost: int
+    score: float | None
     metadata: dict[str, Any]
 
     @classmethod
@@ -81,6 +83,8 @@ class InferenceChunk(BaseChunk):
         else:
             init_kwargs[METADATA] = {}
         init_kwargs[BOOST] = init_kwargs.get(BOOST, 1)
+        if SCORE not in init_kwargs:
+            init_kwargs[SCORE] = None
         if init_kwargs.get(SEMANTIC_IDENTIFIER) is None:
             logger.error(
                 f"Chunk with blurb: {init_kwargs.get(BLURB, 'Unknown')[:50]}... has no Semantic Identifier"
