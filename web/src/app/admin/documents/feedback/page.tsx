@@ -46,10 +46,19 @@ const ScoreSection = ({
   refresh: () => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [score, setScore] = useState(initialScore);
+  const [score, setScore] = useState(initialScore.toString());
 
   const onSubmit = async () => {
-    const errorMsg = await updateBoost(documentId, score);
+    const numericScore = Number(score);
+    if (isNaN(numericScore)) {
+      setPopup({
+        message: "Score must be a number",
+        type: "error",
+      });
+      return;
+    }
+
+    const errorMsg = await updateBoost(documentId, numericScore);
     if (errorMsg) {
       setPopup({
         message: errorMsg,
@@ -71,13 +80,15 @@ const ScoreSection = ({
         <input
           value={score}
           onChange={(e) => {
-            if (!isNaN(Number(e.target.value))) {
-              setScore(Number(e.target.value));
-            }
+            setScore(e.target.value);
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               onSubmit();
+            }
+            if (e.key === "Escape") {
+              setIsOpen(false);
+              setScore(initialScore.toString());
             }
           }}
           className="border bg-slate-700 text-gray-200 border-gray-300 rounded py-1 px-3 w-16"
