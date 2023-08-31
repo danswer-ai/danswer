@@ -12,6 +12,10 @@ export const SearchType = {
 };
 export type SearchType = (typeof SearchType)[keyof typeof SearchType];
 
+export interface AnswerPiece {
+  answer_piece: string;
+}
+
 export interface Quote {
   quote: string;
   document_id: string;
@@ -68,4 +72,9 @@ export interface SearchRequestArgs {
 export interface SearchRequestOverrides {
   searchType?: SearchType;
   offset?: number;
+}
+
+export interface ValidQuestionResponse {
+  answerable: boolean | null;
+  reasoning: string | null;
 }

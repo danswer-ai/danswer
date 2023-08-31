@@ -29,6 +29,11 @@ const nextConfig = {
         destination: "http://127.0.0.1:8080/stream-direct-qa:params*", // Proxy to Backend
         permanent: true,
       },
+      {
+        source: "/api/stream-query-validation:params*",
+        destination: "http://127.0.0.1:8080/stream-query-validation:params*", // Proxy to Backend
+        permanent: true,
+      },
     ];
   },
 };

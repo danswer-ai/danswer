@@ -15,6 +15,7 @@ import {
   SearchType,
   SearchDefaultOverrides,
   SearchRequestOverrides,
+  ValidQuestionResponse,
 } from "@/lib/search/interfaces";
 import { searchRequestStreamed } from "@/lib/search/streamingQa";
 import Cookies from "js-cookie";
@@ -22,10 +23,18 @@ import { SearchHelper } from "./SearchHelper";
 import { CancellationToken, cancellable } from "@/lib/search/cancellable";
 import { NEXT_PUBLIC_DISABLE_STREAMING } from "@/lib/constants";
 import { searchRequest } from "@/lib/search/qa";
+import { useObjectState } from "@/lib/hooks";
+import { questionValidationStreamed } from "@/lib/search/streamingQuestionValidation";
+import { getAIThoughtsIsOpenSavedValue } from "@/lib/search/aiThoughtUtils";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
   offset: 0,
+};
+
+const VALID_QUESTION_RESPONSE_DEFAULT: ValidQuestionResponse = {
+  reasoning: null,
+  answerable: null,
 };
 
 interface SearchSectionProps {
@@ -45,6 +54,9 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
     null
   );
   const [isFetching, setIsFetching] = useState(false);
+
+  const [validQuestionResponse, setValidQuestionResponse] =
+    useObjectState<ValidQuestionResponse>(VALID_QUESTION_RESPONSE_DEFAULT);
 
   // Filters
   const [sources, setSources] = useState<Source[]>([]);
@@ -116,11 +128,12 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
 
     setIsFetching(true);
     setSearchResponse(initialSearchResponse);
+    setValidQuestionResponse(VALID_QUESTION_RESPONSE_DEFAULT);
 
     const searchFn = NEXT_PUBLIC_DISABLE_STREAMING
       ? searchRequest
       : searchRequestStreamed;
-    await searchFn({
+    const searchFnArgs = {
       query,
       sources,
       updateCurrentAnswer: cancellable({
@@ -153,7 +166,17 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
       }),
       selectedSearchType: searchType ?? selectedSearchType,
       offset: offset ?? defaultOverrides.offset,
-    });
+    };
+
+    const questionValidationArgs = {
+      query,
+      update: setValidQuestionResponse,
+    };
+
+    await Promise.all([
+      searchFn(searchFnArgs),
+      questionValidationStreamed(questionValidationArgs),
+    ]);
 
     setIsFetching(false);
   };
@@ -213,6 +236,7 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
         <div className="mt-2">
           <SearchResultsDisplay
             searchResponse={searchResponse}
+            validQuestionResponse={validQuestionResponse}
             isFetching={isFetching}
             defaultOverrides={defaultOverrides}
           />
