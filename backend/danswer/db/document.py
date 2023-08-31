@@ -88,6 +88,10 @@ def upsert_documents(
         if doc_id not in seen_documents:
             seen_documents[doc_id] = document_metadata
 
+    if not seen_documents:
+        logger.info("No documents to upsert. Skipping.")
+        return
+
     insert_stmt = insert(DbDocument).values(
         [
             model_to_dict(
@@ -113,6 +117,10 @@ def upsert_document_by_connector_credential_pair(
     db_session: Session, document_metadata_batch: list[DocumentMetadata]
 ) -> None:
     """NOTE: this function is Postgres specific. Not all DBs support the ON CONFLICT clause."""
+    if not document_metadata_batch:
+        logger.info("`document_metadata_batch` is empty. Skipping.")
+        return
+
     insert_stmt = insert(DocumentByConnectorCredentialPair).values(
         [
             model_to_dict(
