@@ -308,10 +308,14 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
         response = service.files().get_media(fileId=file["id"]).execute()
         pdf_stream = io.BytesIO(response)
         pdf_reader = PdfReader(pdf_stream)
+
         if pdf_reader.is_encrypted:
-            logger.warning(f"Google drive file: {file['name']} is encrypted danswer will ignore it's content")
-        else:
-            return "\n".join(page.extract_text() for page in pdf_reader.pages)
+            logger.warning(
+                f"Google drive file: {file['name']} is encrypted - Danswer will ignore it's content"
+            )
+            return ""
+
+        return "\n".join(page.extract_text() for page in pdf_reader.pages)
 
 
 class GoogleDriveConnector(LoadConnector, PollConnector):
