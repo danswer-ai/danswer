@@ -76,7 +76,7 @@ def create_indexing_jobs(db_session: Session, existing_jobs: dict[int, Future]) 
                 db_session,
                 failure_reason="Stopped mid run, likely due to the background process being killed",
             )
-            if attempt.connector_id and attempt.credential_id:
+            if attempt.connector_id is not None and attempt.credential_id is not None:
                 update_connector_credential_pair(
                     db_session=db_session,
                     connector_id=attempt.connector_id,
@@ -137,7 +137,10 @@ def cleanup_indexing_jobs(
                 db_session=db_session,
                 failure_reason="Stopped mid run, likely due to the background process being killed",
             )
-            if index_attempt.connector_id and index_attempt.credential_id:
+            if (
+                index_attempt.connector_id is not None
+                and index_attempt.credential_id is not None
+            ):
                 update_connector_credential_pair(
                     db_session=db_session,
                     connector_id=index_attempt.connector_id,
