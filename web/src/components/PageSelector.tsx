@@ -53,6 +53,7 @@ const PageLink = ({
 }: PageLinkProps) => (
   <div
     className={`
+    select-none
     inline-block 
     text-sm 
     border 
