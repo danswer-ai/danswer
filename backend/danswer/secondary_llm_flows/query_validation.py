@@ -1,8 +1,12 @@
 import re
 from collections.abc import Iterator
+from dataclasses import asdict
 
+from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.qa_block import dict_based_prompt_to_langchain_prompt
 from danswer.llm.build import get_default_llm
+from danswer.server.models import QueryValidationResponse
+from danswer.server.utils import get_json_line
 
 REASONING_PAT = "REASONING: "
 ANSWERABLE_PAT = "ANSWERABLE: "
@@ -49,24 +53,55 @@ def get_query_validation_messages(user_query: str) -> list[dict[str, str]]:
     return messages
 
 
+def extract_answerability_reasoning(model_raw: str) -> str:
+    reasoning_match = re.search(
+        f"{REASONING_PAT}(.*?){ANSWERABLE_PAT}", model_raw, re.DOTALL
+    )
+    reasoning_text = reasoning_match.group(1).strip() if reasoning_match else ""
+    return reasoning_text
+
+
+def extract_answerability_bool(model_raw: str) -> bool:
+    answerable_match = re.search(f"{ANSWERABLE_PAT}(.+)", model_raw)
+    answerable_text = answerable_match.group(1).strip() if answerable_match else ""
+    answerable = True if answerable_text.strip().lower() in ["true", "yes"] else False
+    return answerable
+
+
 def get_query_answerability(user_query: str) -> tuple[str, bool]:
     messages = get_query_validation_messages(user_query)
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
     model_output = get_default_llm().invoke(filled_llm_prompt)
 
-    reasoning_match = re.search(
-        f"{REASONING_PAT}(.*?){ANSWERABLE_PAT}", model_output, re.DOTALL
-    )
-    reasoning_text = reasoning_match.group(1).strip() if reasoning_match else ""
+    reasoning = extract_answerability_reasoning(model_output)
+    answerable = extract_answerability_bool(model_output)
 
-    answerable_match = re.search(f"{ANSWERABLE_PAT}(.+)", model_output)
-    answerable_text = answerable_match.group(1).strip() if answerable_match else ""
-    answerable = True if answerable_text.strip().lower() in ["true", "yes"] else False
-
-    return reasoning_text, answerable
+    return reasoning, answerable
 
 
 def stream_query_answerability(user_query: str) -> Iterator[str]:
     messages = get_query_validation_messages(user_query)
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
-    return get_default_llm().stream(filled_llm_prompt)
+    tokens = get_default_llm().stream(filled_llm_prompt)
+    reasoning_pat_found = False
+    model_output = ""
+    for token in tokens:
+        model_output = model_output + token
+
+        if not reasoning_pat_found and REASONING_PAT in model_output:
+            reasoning_pat_found = True
+            remaining = model_output[len(REASONING_PAT) :]
+            if remaining:
+                yield get_json_line(asdict(DanswerAnswerPiece(answer_piece=remaining)))
+            continue
+
+        if reasoning_pat_found:
+            yield get_json_line(asdict(DanswerAnswerPiece(answer_piece=token)))
+
+    reasoning = extract_answerability_reasoning(model_output)
+    answerable = extract_answerability_bool(model_output)
+
+    yield get_json_line(
+        QueryValidationResponse(reasoning=reasoning, answerable=answerable).dict()
+    )
+    return

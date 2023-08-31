@@ -1,4 +1,3 @@
-import json
 from collections.abc import Generator
 from dataclasses import asdict
 
@@ -30,6 +29,7 @@ from danswer.search.models import SearchType
 from danswer.search.semantic_search import chunks_to_search_docs
 from danswer.search.semantic_search import retrieve_ranked_documents
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
+from danswer.secondary_llm_flows.query_validation import stream_query_answerability
 from danswer.server.models import HelperResponse
 from danswer.server.models import QAFeedbackRequest
 from danswer.server.models import QAResponse
@@ -37,16 +37,13 @@ from danswer.server.models import QueryValidationResponse
 from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchFeedbackRequest
 from danswer.server.models import SearchResponse
+from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
 
 logger = setup_logger()
 
 router = APIRouter()
-
-
-def get_json_line(json_dict: dict) -> str:
-    return json.dumps(json_dict) + "\n"
 
 
 @router.get("/search-intent")
@@ -71,7 +68,10 @@ def query_validation(
 def stream_query_validation(
     question: QuestionRequest = Depends(), _: User = Depends(current_user)
 ) -> StreamingResponse:
-    pass
+    query = question.query
+    return StreamingResponse(
+        stream_query_answerability(query), media_type="application/json"
+    )
 
 
 @router.post("/semantic-search")
