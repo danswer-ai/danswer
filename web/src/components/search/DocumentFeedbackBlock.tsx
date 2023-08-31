@@ -1,5 +1,5 @@
 import { PopupSpec } from "../admin/connectors/Popup";
-import { ThumbsDownIcon, ThumbsUpIcon } from "../icons/icons";
+import { ChevronsDownIcon, ChevronsUpIcon } from "../icons/icons";
 
 type DocumentFeedbackType = "endorse" | "reject" | "hide" | "unhide";
 
@@ -40,20 +40,20 @@ const DocumentFeedback = ({
   feedbackType,
 }: DocumentFeedbackIconProps) => {
   let icon = null;
-  const size = 16;
+  const size = 20;
   if (feedbackType === "endorse") {
     icon = (
-      <ThumbsUpIcon
+      <ChevronsUpIcon
         size={size}
-        className="my-auto flex flex-shrink-0 text-green-600"
+        className="my-auto flex flex-shrink-0 text-blue-400"
       />
     );
   }
   if (feedbackType === "reject") {
     icon = (
-      <ThumbsDownIcon
+      <ChevronsDownIcon
         size={size}
-        className="my-auto flex flex-shrink-0 text-red-700"
+        className="my-auto flex flex-shrink-0 text-blue-400"
       />
     );
   }
@@ -65,7 +65,6 @@ const DocumentFeedback = ({
   return (
     <div
       onClick={async () => {
-        console.log("HI");
         const errorMsg = await giveDocumentFeedback(
           documentId,
           queryId,

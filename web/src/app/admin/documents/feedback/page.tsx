@@ -127,6 +127,7 @@ const DocumentFeedbackTable = ({
           {
             header: "Score",
             key: "score",
+            alignment: "right",
           },
         ]}
         data={documents
@@ -145,7 +146,7 @@ const DocumentFeedbackTable = ({
               ),
               score: (
                 <div className="ml-auto flex w-16">
-                  <div key={document.document_id} className="h-8 ml-auto mr-8">
+                  <div key={document.document_id} className="h-10 ml-auto mr-8">
                     <ScoreSection
                       documentId={document.document_id}
                       initialScore={document.boost}
@@ -211,7 +212,7 @@ const Main = () => {
 
   return (
     <div className="mb-8">
-      <h2 className="font-bold text-xxl mb-2">Most Liked Documents</h2>
+      <h2 className="font-bold text-xl mb-2">Most Liked Documents</h2>
       <DocumentFeedbackTable documents={mostLikedDocuments} refresh={refresh} />
 
       <h2 className="font-bold text-xl mb-2 mt-4">Most Disliked Documents</h2>
