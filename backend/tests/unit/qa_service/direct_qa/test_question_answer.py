@@ -112,7 +112,8 @@ class TestQAPostprocessing(unittest.TestCase):
             blurb="anything",
             semantic_identifier="anything",
             section_continuation=False,
-            boost=1,
+            boost=0,
+            score=1,
             metadata={},
         )
         test_chunk_1 = InferenceChunk(
@@ -124,7 +125,8 @@ class TestQAPostprocessing(unittest.TestCase):
             blurb="whatever",
             semantic_identifier="whatever",
             section_continuation=False,
-            boost=1,
+            boost=0,
+            score=1,
             metadata={},
         )
 
