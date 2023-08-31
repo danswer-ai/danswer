@@ -10,6 +10,7 @@ from typing import cast
 import docx2txt  # type:ignore
 from google.auth.credentials import Credentials  # type: ignore
 from googleapiclient import discovery  # type: ignore
+from googleapiclient.errors import HttpError  # type: ignore
 from PyPDF2 import PdfReader
 
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
@@ -41,7 +42,7 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-# allow 10 minutes for modifiedTime to get propogated
+# allow 10 minutes for modifiedTime to get propagated
 DRIVE_START_TIME_OFFSET = 60 * 10
 SUPPORTED_DRIVE_DOC_TYPES = [
     "application/vnd.google-apps.document",
@@ -58,6 +59,7 @@ GoogleDriveFileType = dict[str, Any]
 def _run_drive_file_query(
     service: discovery.Resource,
     query: str,
+    continue_on_failure: bool,
     include_shared: bool = GOOGLE_DRIVE_INCLUDE_SHARED,
     follow_shortcuts: bool = GOOGLE_DRIVE_FOLLOW_SHORTCUTS,
     batch_size: int = INDEX_BATCH_SIZE,
@@ -84,12 +86,20 @@ def _run_drive_file_query(
         files = results["files"]
         for file in files:
             if follow_shortcuts and "shortcutDetails" in file:
-                file = service.files().get(
-                    fileId=file["shortcutDetails"]["targetId"],
-                    supportsAllDrives=include_shared,
-                    fields="mimeType, id, name, webViewLink, shortcutDetails",
-                )
-                file = file.execute()
+                try:
+                    file = service.files().get(
+                        fileId=file["shortcutDetails"]["targetId"],
+                        supportsAllDrives=include_shared,
+                        fields="mimeType, id, name, webViewLink, shortcutDetails",
+                    )
+                    file = file.execute()
+                except HttpError:
+                    logger.error(
+                        f"Failed to follow shortcut with details: {file['shortcutDetails']}"
+                    )
+                    if continue_on_failure:
+                        continue
+                    raise
             yield file
 
 
@@ -133,6 +143,7 @@ def _get_folder_id(
 
 def _get_folders(
     service: discovery.Resource,
+    continue_on_failure: bool,
     folder_id: str | None = None,  # if specified, only fetches files within this folder
     include_shared: bool = GOOGLE_DRIVE_INCLUDE_SHARED,
     follow_shortcuts: bool = GOOGLE_DRIVE_FOLLOW_SHORTCUTS,
@@ -149,6 +160,7 @@ def _get_folders(
     for file in _run_drive_file_query(
         service=service,
         query=query,
+        continue_on_failure=continue_on_failure,
         include_shared=include_shared,
         follow_shortcuts=follow_shortcuts,
         batch_size=batch_size,
@@ -163,6 +175,7 @@ def _get_folders(
 
 def _get_files(
     service: discovery.Resource,
+    continue_on_failure: bool,
     time_range_start: SecondsSinceUnixEpoch | None = None,
     time_range_end: SecondsSinceUnixEpoch | None = None,
     folder_id: str | None = None,  # if specified, only fetches files within this folder
@@ -187,6 +200,7 @@ def _get_files(
     files = _run_drive_file_query(
         service=service,
         query=query,
+        continue_on_failure=continue_on_failure,
         include_shared=include_shared,
         follow_shortcuts=follow_shortcuts,
         batch_size=batch_size,
@@ -198,6 +212,7 @@ def _get_files(
 
 def get_all_files_batched(
     service: discovery.Resource,
+    continue_on_failure: bool,
     include_shared: bool = GOOGLE_DRIVE_INCLUDE_SHARED,
     follow_shortcuts: bool = GOOGLE_DRIVE_FOLLOW_SHORTCUTS,
     batch_size: int = INDEX_BATCH_SIZE,
@@ -214,6 +229,7 @@ def get_all_files_batched(
     """
     valid_files = _get_files(
         service=service,
+        continue_on_failure=continue_on_failure,
         time_range_start=time_range_start,
         time_range_end=time_range_end,
         folder_id=folder_id,
@@ -234,6 +250,7 @@ def get_all_files_batched(
         subfolders = _get_folders(
             service=service,
             folder_id=folder_id,
+            continue_on_failure=continue_on_failure,
             include_shared=include_shared,
             follow_shortcuts=follow_shortcuts,
             batch_size=batch_size,
@@ -244,6 +261,7 @@ def get_all_files_batched(
                 folder_ids_traversed.append(subfolder["id"])
                 yield from get_all_files_batched(
                     service=service,
+                    continue_on_failure=continue_on_failure,
                     include_shared=include_shared,
                     follow_shortcuts=follow_shortcuts,
                     batch_size=batch_size,
@@ -408,6 +426,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
             *[
                 get_all_files_batched(
                     service=service,
+                    continue_on_failure=self.continue_on_failure,
                     include_shared=self.include_shared,
                     follow_shortcuts=self.follow_shortcuts,
                     batch_size=self.batch_size,
@@ -481,7 +500,7 @@ if __name__ == "__main__":
     if delegated_user:
         credentials_dict[DB_CREDENTIALS_DICT_DELEGATED_USER_KEY] = delegated_user
 
-    connector = GoogleDriveConnector()
+    connector = GoogleDriveConnector(include_shared=True, follow_shortcuts=True)
     connector.load_credentials(credentials_dict)
     document_batch_generator = connector.load_from_state()
     for document_batch in document_batch_generator:
