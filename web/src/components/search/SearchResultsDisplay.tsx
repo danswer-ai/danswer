@@ -101,16 +101,16 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
 
             {quotes !== null && answer && (
               <>
-                <h2 className="text-sm font-bold mb-2">Sources</h2>
+                <h2 className="text-sm font-bold">Sources</h2>
                 {isFetching && dedupedQuotes.length === 0 ? (
                   <LoadingAnimation text="Finding quotes" size="text-sm" />
                 ) : (
-                  <div className="flex">
+                  <div className="flex flex-wrap">
                     {dedupedQuotes.length > 0 ? (
                       dedupedQuotes.map((quoteInfo) => (
                         <a
                           key={quoteInfo.document_id}
-                          className="p-2 ml-1 border border-gray-800 rounded-lg text-sm flex max-w-[280px] hover:bg-gray-800"
+                          className="p-2 ml-1 mt-2 border border-gray-800 rounded-lg text-sm flex max-w-[280px] hover:bg-gray-800"
                           href={quoteInfo.link || undefined}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -148,7 +148,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
 
       {documents && documents.length > 0 && (
         <div className="mt-4">
-          <div className="font-bold border-b mb-4 pb-1 border-gray-800">
+          <div className="font-bold border-b mb-3 pb-1 border-gray-800">
             Results
           </div>
           {removeDuplicateDocs(documents).map((document) => (

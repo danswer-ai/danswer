@@ -27,6 +27,8 @@ export interface DanswerDocument {
   source_type: ValidSources;
   blurb: string;
   semantic_identifier: string | null;
+  boost: number;
+  score: number;
 }
 
 export interface SearchResponse {
