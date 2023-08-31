@@ -19,11 +19,12 @@ import {
   FiChevronsDown,
   FiChevronsUp,
   FiEdit,
+  FiFile,
+  FiGlobe,
   FiThumbsDown,
   FiThumbsUp,
 } from "react-icons/fi";
 import { SiBookstack } from "react-icons/si";
-import { FaFile, FaGlobe } from "react-icons/fa";
 import Image from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
@@ -98,14 +99,14 @@ export const GlobeIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FaGlobe size={size} className={className} />;
+  return <FiGlobe size={size} className={className} />;
 };
 
 export const FileIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FaFile size={size} className={className} />;
+  return <FiFile size={size} className={className} />;
 };
 
 export const InfoIcon = ({
