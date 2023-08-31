@@ -57,7 +57,8 @@ def semantic_reranking(
         encoder.predict([(query, chunk.content) for chunk in chunks])  # type: ignore
         for encoder in cross_encoders
     ]
-    averaged_sim_scores = sum(sim_scores) / len(sim_scores)
+    boosts = [chunk.boost for chunk in chunks]
+    averaged_sim_scores = sum(sim_scores) * boosts / len(sim_scores)
     scored_results = list(zip(averaged_sim_scores, chunks))
     scored_results.sort(key=lambda x: x[0], reverse=True)
     ranked_sim_scores, ranked_chunks = zip(*scored_results)
