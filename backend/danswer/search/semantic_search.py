@@ -60,13 +60,23 @@ def semantic_reranking(
         encoder.predict([(query, chunk.content) for chunk in chunks])  # type: ignore
         for encoder in cross_encoders
     ]
+
+    shifted_sim_scores = sum(
+        [enc_n_scores - numpy.min(enc_n_scores) for enc_n_scores in sim_scores]
+    ) / len(sim_scores)
+
     boosts = [translate_boost_count_to_multiplier(chunk.boost) for chunk in chunks]
-    averaged_sim_scores = sum(sim_scores) * boosts / len(sim_scores)
-    scored_results = list(zip(averaged_sim_scores, chunks))
+    boosted_sim_scores = shifted_sim_scores * boosts
+    scored_results = list(zip(boosted_sim_scores, chunks))
     scored_results.sort(key=lambda x: x[0], reverse=True)
     ranked_sim_scores, ranked_chunks = zip(*scored_results)
 
     logger.debug(f"Reranked similarity scores: {ranked_sim_scores}")
+
+    # Assign new chunk scores based on reranking
+    # TODO if pagination is added, the scores won't make sense with respect to the non-reranked hits
+    for ind, chunk in enumerate(ranked_chunks):
+        chunk.score = ranked_sim_scores[ind]
 
     return list(ranked_chunks)
 

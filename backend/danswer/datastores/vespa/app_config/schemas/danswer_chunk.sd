@@ -65,7 +65,7 @@ schema danswer_chunk {
 
     rank-profile keyword_search inherits default {
         first-phase {
-            expression: bm25(content) * pow(1.2, attribute(boost))
+            expression: bm25(content) * (2 / (1 + exp(-attribute(boost) / 3)))
         }
     }
 
@@ -74,7 +74,8 @@ schema danswer_chunk {
             query(query_embedding) tensor<float>(x[384])
         }
         first-phase {
-            expression: closeness(field, embeddings) * pow(1.2, attribute(boost))
+            # Cannot do boost with the chosen embedding model because of high default similarity
+            expression: closeness(field, embeddings)
         }
         match-features: closest(embeddings)
     }
@@ -84,10 +85,11 @@ schema danswer_chunk {
             query(query_embedding) tensor<float>(x[384])
         }
         first-phase {
-            expression: bm25(content)
+            expression: bm25(content) * (2 / (1 + exp(-attribute(boost) / 3)))
         }
         second-phase {
-            expression: closeness(field, embeddings) * pow(1.2, attribute(boost))
+            # Cannot do boost with the chosen embedding model because of high default similarity
+            expression: closeness(field, embeddings)
         }
         match-features: closest(embeddings)
     }

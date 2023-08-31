@@ -22,6 +22,7 @@ from danswer.configs.constants import BLURB
 from danswer.configs.constants import BOOST
 from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
+from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import EMBEDDINGS
 from danswer.configs.constants import METADATA
@@ -177,7 +178,7 @@ def _index_vespa_chunks(
             SECTION_CONTINUATION: chunk.section_continuation,
             METADATA: json.dumps(document.metadata),
             EMBEDDINGS: embeddings_name_vector_map,
-            BOOST: 1,  # Boost value always starts at 1 for 0 impact on weight
+            BOOST: DEFAULT_BOOST,
             ALLOWED_USERS: cross_connector_document_metadata_map[
                 document.id
             ].allowed_users,
@@ -346,9 +347,9 @@ class VespaIndex(DocumentIndex):
                 continue
 
             update_dict: dict[str, dict] = {"fields": {}}
-            if update_request.boost:
+            if update_request.boost is not None:
                 update_dict["fields"][BOOST] = {"assign": update_request.boost}
-            if update_request.allowed_users:
+            if update_request.allowed_users is not None:
                 update_dict["fields"][ALLOWED_USERS] = {
                     "assign": update_request.allowed_users
                 }
