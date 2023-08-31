@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
-from danswer.datastores.datastore_utils import translate_boost_count_to_multiplier
 from danswer.datastores.document_index import get_default_document_index
 from danswer.datastores.interfaces import UpdateRequest
 from danswer.db.models import Document as DbDocument
@@ -56,6 +55,14 @@ def update_document_boost(db_session: Session, document_id: str, boost: int) -> 
         raise ValueError(f"No document found with ID: '{document_id}'")
 
     result.boost = boost
+
+    update = UpdateRequest(
+        document_ids=[document_id],
+        boost=boost,
+    )
+
+    get_default_document_index().update([update])
+
     db_session.commit()
 
 
@@ -137,7 +144,7 @@ def create_doc_retrieval_feedback(
         document_index = get_default_document_index()
         update = UpdateRequest(
             document_ids=[document_id],
-            boost=translate_boost_count_to_multiplier(doc_m.boost),
+            boost=doc_m.boost,
         )
         # Updates are generally batched for efficiency, this case only 1 doc/value is updated
         document_index.update([update])

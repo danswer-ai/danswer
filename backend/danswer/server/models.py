@@ -126,6 +126,8 @@ class SearchDoc(BaseModel):
     link: str | None
     blurb: str
     source_type: str
+    boost: int
+    score: float | None
 
 
 class QuestionRequest(BaseModel):

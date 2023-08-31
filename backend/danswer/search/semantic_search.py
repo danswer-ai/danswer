@@ -15,6 +15,7 @@ from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.model_configs import ASYMMETRIC_PREFIX
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
+from danswer.datastores.datastore_utils import translate_boost_count_to_multiplier
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import IndexFilter
 from danswer.search.models import Embedder
@@ -36,6 +37,8 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
                 link=chunk.source_links.get(0) if chunk.source_links else None,
                 blurb=chunk.blurb,
                 source_type=chunk.source_type,
+                boost=chunk.boost,
+                score=chunk.score,
             )
             # semantic identifier should always exist but for really old indices, it was not enforced
             for chunk in chunks
@@ -57,12 +60,23 @@ def semantic_reranking(
         encoder.predict([(query, chunk.content) for chunk in chunks])  # type: ignore
         for encoder in cross_encoders
     ]
-    averaged_sim_scores = sum(sim_scores) / len(sim_scores)
-    scored_results = list(zip(averaged_sim_scores, chunks))
+
+    shifted_sim_scores = sum(
+        [enc_n_scores - numpy.min(enc_n_scores) for enc_n_scores in sim_scores]
+    ) / len(sim_scores)
+
+    boosts = [translate_boost_count_to_multiplier(chunk.boost) for chunk in chunks]
+    boosted_sim_scores = shifted_sim_scores * boosts
+    scored_results = list(zip(boosted_sim_scores, chunks))
     scored_results.sort(key=lambda x: x[0], reverse=True)
     ranked_sim_scores, ranked_chunks = zip(*scored_results)
 
     logger.debug(f"Reranked similarity scores: {ranked_sim_scores}")
+
+    # Assign new chunk scores based on reranking
+    # TODO if pagination is added, the scores won't make sense with respect to the non-reranked hits
+    for ind, chunk in enumerate(ranked_chunks):
+        chunk.score = ranked_sim_scores[ind]
 
     return list(ranked_chunks)
 

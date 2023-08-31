@@ -1,3 +1,4 @@
+import math
 import uuid
 from collections.abc import Callable
 from copy import deepcopy
@@ -12,15 +13,13 @@ from danswer.connectors.models import IndexAttemptMetadata
 
 
 DEFAULT_BATCH_SIZE = 30
-BOOST_MULTIPLIER = 1.2
+BOOST_MULTIPLIER = 2  # Try to keep this consistent with Vespa
 
 
 def translate_boost_count_to_multiplier(boost: int) -> float:
-    if boost > 0:
-        return BOOST_MULTIPLIER**boost
-    elif boost < 0:
-        return 1 / (BOOST_MULTIPLIER**boost)
-    return 1
+    # Sigmoid function, maxed out at BOOST_MULTIPLIER
+    # 3 here stretches it out so we hit asymptote slower
+    return BOOST_MULTIPLIER / (1 + math.exp(-1 * boost / 3))
 
 
 def get_uuid_from_chunk(

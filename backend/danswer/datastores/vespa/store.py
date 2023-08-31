@@ -22,10 +22,12 @@ from danswer.configs.constants import BLURB
 from danswer.configs.constants import BOOST
 from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
+from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import EMBEDDINGS
 from danswer.configs.constants import METADATA
 from danswer.configs.constants import PUBLIC_DOC_PAT
+from danswer.configs.constants import SCORE
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
@@ -176,7 +178,7 @@ def _index_vespa_chunks(
             SECTION_CONTINUATION: chunk.section_continuation,
             METADATA: json.dumps(document.metadata),
             EMBEDDINGS: embeddings_name_vector_map,
-            BOOST: 1,  # Boost value always starts at 1 for 0 impact on weight
+            BOOST: DEFAULT_BOOST,
             ALLOWED_USERS: cross_connector_document_metadata_map[
                 document.id
             ].allowed_users,
@@ -277,7 +279,10 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
     response.raise_for_status()
 
     hits = response.json()["root"].get("children", [])
-    inference_chunks = [InferenceChunk.from_dict(hit["fields"]) for hit in hits]
+    inference_chunks = [
+        InferenceChunk.from_dict(dict(hit["fields"], **{SCORE: hit["relevance"]}))
+        for hit in hits
+    ]
 
     return inference_chunks
 
@@ -342,9 +347,9 @@ class VespaIndex(DocumentIndex):
                 continue
 
             update_dict: dict[str, dict] = {"fields": {}}
-            if update_request.boost:
+            if update_request.boost is not None:
                 update_dict["fields"][BOOST] = {"assign": update_request.boost}
-            if update_request.allowed_users:
+            if update_request.allowed_users is not None:
                 update_dict["fields"][ALLOWED_USERS] = {
                     "assign": update_request.allowed_users
                 }
