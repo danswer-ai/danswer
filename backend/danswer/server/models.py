@@ -151,6 +151,11 @@ class SearchFeedbackRequest(BaseModel):
     search_feedback: SearchFeedbackType
 
 
+class QueryValidationResponse(BaseModel):
+    reasoning: str
+    answerable: bool
+
+
 class SearchResponse(BaseModel):
     # For semantic search, top docs are reranked, the remaining are as ordered from retrieval
     top_ranked_docs: list[SearchDoc] | None

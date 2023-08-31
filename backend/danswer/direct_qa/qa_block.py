@@ -3,10 +3,7 @@ from collections.abc import Iterator
 from copy import copy
 
 import tiktoken
-from langchain.schema.messages import AIMessage
 from langchain.schema.messages import BaseMessage
-from langchain.schema.messages import HumanMessage
-from langchain.schema.messages import SystemMessage
 
 from danswer.chunking.models import InferenceChunk
 from danswer.direct_qa.interfaces import AnswerQuestionReturn
@@ -19,32 +16,8 @@ from danswer.direct_qa.qa_prompts import JsonChatProcessor
 from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
 from danswer.direct_qa.qa_utils import process_model_tokens
 from danswer.llm.llm import LLM
-
-
-def _dict_based_prompt_to_langchain_prompt(
-    messages: list[dict[str, str]]
-) -> list[BaseMessage]:
-    prompt: list[BaseMessage] = []
-    for message in messages:
-        role = message.get("role")
-        content = message.get("content")
-        if not role:
-            raise ValueError(f"Message missing `role`: {message}")
-        if not content:
-            raise ValueError(f"Message missing `content`: {message}")
-        elif role == "user":
-            prompt.append(HumanMessage(content=content))
-        elif role == "system":
-            prompt.append(SystemMessage(content=content))
-        elif role == "assistant":
-            prompt.append(AIMessage(content=content))
-        else:
-            raise ValueError(f"Unknown role: {role}")
-    return prompt
-
-
-def _str_prompt_to_langchain_prompt(message: str) -> list[BaseMessage]:
-    return [HumanMessage(content=message)]
+from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
+from danswer.llm.utils import str_prompt_to_langchain_prompt
 
 
 class QAHandler(abc.ABC):
@@ -69,7 +42,7 @@ class JsonChatQAHandler(QAHandler):
     def build_prompt(
         self, query: str, context_chunks: list[InferenceChunk]
     ) -> list[BaseMessage]:
-        return _dict_based_prompt_to_langchain_prompt(
+        return dict_based_prompt_to_langchain_prompt(
             JsonChatProcessor.fill_prompt(
                 question=query, chunks=context_chunks, include_metadata=False
             )
@@ -91,7 +64,7 @@ class SimpleChatQAHandler(QAHandler):
     def build_prompt(
         self, query: str, context_chunks: list[InferenceChunk]
     ) -> list[BaseMessage]:
-        return _str_prompt_to_langchain_prompt(
+        return str_prompt_to_langchain_prompt(
             WeakModelFreeformProcessor.fill_prompt(
                 question=query,
                 chunks=context_chunks,
