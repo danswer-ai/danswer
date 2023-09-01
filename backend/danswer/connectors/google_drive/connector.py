@@ -47,7 +47,7 @@ logger = setup_logger()
 DRIVE_START_TIME_OFFSET = 60 * 10
 DRIVE_FOLDER_TYPE = "application/vnd.google-apps.folder"
 DRIVE_SHORTCUT_TYPE = "application/vnd.google-apps.shortcut"
-UNSUPPORTED_FILE_TYPE_CONTENT = "Unsupported File Type"
+UNSUPPORTED_FILE_TYPE_CONTENT = ""  # keep empty for now
 
 
 class GDriveMimeType(str, Enum):
@@ -454,7 +454,11 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
             for file in files_batch:
                 try:
                     text_contents = extract_text(file, service)
-                    full_context = file["name"] + " - " + text_contents
+                    full_context = (
+                        file["name"] + " - " + text_contents
+                        if text_contents
+                        else file["name"]
+                    )
 
                     doc_batch.append(
                         Document(
