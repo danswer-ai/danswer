@@ -19,6 +19,7 @@ from danswer.datastores.indexing_pipeline import build_indexing_pipeline
 from danswer.db.connector import disable_connector
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import get_last_successful_attempt_time
+from danswer.db.connector_credential_pair import mark_all_in_progress_cc_pairs_failed
 from danswer.db.connector_credential_pair import update_connector_credential_pair
 from danswer.db.credentials import backend_update_credential_json
 from danswer.db.engine import get_db_current_time
@@ -410,6 +411,12 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
     client = Client(cluster)
     existing_jobs: dict[int, Future] = {}
     engine = get_sqlalchemy_engine()
+
+    with Session(engine) as db_session:
+        # Previous version did not always clean up cc-pairs well leaving some connectors undeleteable
+        # This ensures that bad states get cleaned up
+        mark_all_in_progress_cc_pairs_failed(db_session)
+
     while True:
         start = time.time()
         start_time_utc = datetime.utcfromtimestamp(start).strftime("%Y-%m-%d %H:%M:%S")
