@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy import delete
 from sqlalchemy import select
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from danswer.db.connector import fetch_connector_by_id
@@ -90,6 +91,20 @@ def delete_connector_credential_pair(
         ConnectorCredentialPair.credential_id == credential_id,
     )
     db_session.execute(stmt)
+
+
+def mark_all_in_progress_cc_pairs_failed(
+    db_session: Session,
+) -> None:
+    stmt = (
+        update(ConnectorCredentialPair)
+        .where(
+            ConnectorCredentialPair.last_attempt_status == IndexingStatus.IN_PROGRESS
+        )
+        .values(last_attempt_status=IndexingStatus.FAILED)
+    )
+    db_session.execute(stmt)
+    db_session.commit()
 
 
 def add_credential_to_connector(
