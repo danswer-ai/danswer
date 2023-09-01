@@ -36,12 +36,12 @@ def check_model_api_key_is_valid(model_api_key: str) -> bool:
     if not model_api_key:
         return False
 
-    qa_model = get_default_qa_model(api_key=model_api_key, timeout=5)
+    llm = get_default_llm(api_key=model_api_key, timeout=5)
 
     # try for up to 2 timeouts (e.g. 10 seconds in total)
     for _ in range(2):
         try:
-            qa_model.answer_question("Do not respond", [])
+            llm.invoke("Do not respond")
             return True
         except AuthenticationError:
             return False
