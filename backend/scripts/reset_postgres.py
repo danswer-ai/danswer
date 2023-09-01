@@ -5,6 +5,7 @@ from danswer.configs.app_configs import POSTGRES_HOST
 from danswer.configs.app_configs import POSTGRES_PASSWORD
 from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
+from danswer.db.credentials import create_initial_public_credential
 
 
 def wipe_all_rows(database: str) -> None:
@@ -15,38 +16,46 @@ def wipe_all_rows(database: str) -> None:
         host=POSTGRES_HOST,
         port=POSTGRES_PORT,
     )
-
     cur = conn.cursor()
+
+    # Disable triggers to prevent foreign key constraints from being checked
+    cur.execute("SET session_replication_role = 'replica';")
+
+    # Fetch all table names in the current database
     cur.execute(
         """
-        SELECT table_name
-        FROM information_schema.tables
-        WHERE table_schema = 'public'
-        AND table_type = 'BASE TABLE'
-        """
+        SELECT tablename
+        FROM pg_tables
+        WHERE schemaname = 'public'
+    """
     )
 
-    table_names = cur.fetchall()
+    tables = cur.fetchall()
 
-    # have to delete from these first to not run into psycopg2.errors.ForeignKeyViolation
-    cur.execute("DELETE FROM chunk")
-    cur.execute("DELETE FROM document_by_connector_credential_pair")
-    cur.execute("DELETE FROM document")
-    cur.execute("DELETE FROM connector_credential_pair")
-    cur.execute("DELETE FROM index_attempt")
-    cur.execute("DELETE FROM credential")
-    conn.commit()
+    for table in tables:
+        table_name = table[0]
 
-    for table_name in table_names:
-        if table_name[0] == "alembic_version":
+        # Don't touch migration history
+        if table_name == "alembic_version":
             continue
-        cur.execute(f'DELETE FROM "{table_name[0]}"')
-        print(f"Deleted all rows from table {table_name[0]}")
-        conn.commit()
 
+        print(f"Deleting all rows from {table_name}...")
+        cur.execute(f'DELETE FROM "{table_name}"')
+
+    # Re-enable triggers
+    cur.execute("SET session_replication_role = 'origin';")
+
+    conn.commit()
     cur.close()
     conn.close()
+    print("Finished wiping all rows.")
 
 
 if __name__ == "__main__":
+    print("Cleaning up all Danswer tables")
     wipe_all_rows(POSTGRES_DB)
+    create_initial_public_credential()
+    print("To keep data consistent, it's best to wipe the document index as well.")
+    print(
+        "To be safe, it's best to restart the Danswer services (API Server and Background Tasks"
+    )
