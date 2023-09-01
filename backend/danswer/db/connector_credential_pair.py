@@ -21,7 +21,7 @@ def get_connector_credential_pairs(
 ) -> list[ConnectorCredentialPair]:
     stmt = select(ConnectorCredentialPair)
     if not include_disabled:
-        stmt = stmt.where(ConnectorCredentialPair.connector.disabled is False)
+        stmt = stmt.where(ConnectorCredentialPair.connector.disabled == False)  # noqa
     results = db_session.scalars(stmt)
     return list(results.all())
 
