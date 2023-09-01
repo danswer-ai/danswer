@@ -29,7 +29,9 @@ jobs:
         file: ./web/Dockerfile
         platforms: linux/amd64,linux/arm64
         push: true
-        tags: danswer/danswer-web-server:${{ github.ref_name }}
+        tags: |
+          danswer/danswer-web-server:${{ github.ref_name }}
+          danswer/danswer-web-server:latest
 
     - name: Api Server Docker Build and Push
       uses: docker/build-push-action@v2
@@ -38,4 +40,6 @@ jobs:
         file: ./backend/Dockerfile
         platforms: linux/amd64,linux/arm64
         push: true
-        tags: danswer/danswer-backend:${{ github.ref_name }}
+        tags: |
+          danswer/danswer-backend:${{ github.ref_name }}
+          danswer/danswer-backend:latest
