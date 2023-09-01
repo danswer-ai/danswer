@@ -85,8 +85,12 @@ def stream_query_answerability(user_query: str) -> Iterator[str]:
     tokens = get_default_llm().stream(filled_llm_prompt)
     reasoning_pat_found = False
     model_output = ""
+    hold_answerable = ""
     for token in tokens:
         model_output = model_output + token
+
+        if ANSWERABLE_PAT in model_output:
+            continue
 
         if not reasoning_pat_found and REASONING_PAT in model_output:
             reasoning_pat_found = True
@@ -96,7 +100,13 @@ def stream_query_answerability(user_query: str) -> Iterator[str]:
             continue
 
         if reasoning_pat_found:
-            yield get_json_line(asdict(DanswerAnswerPiece(answer_piece=token)))
+            hold_answerable = hold_answerable + token
+            if hold_answerable == ANSWERABLE_PAT[: len(hold_answerable)]:
+                continue
+            yield get_json_line(
+                asdict(DanswerAnswerPiece(answer_piece=hold_answerable))
+            )
+            hold_answerable = ""
 
     reasoning = extract_answerability_reasoning(model_output)
     answerable = extract_answerability_bool(model_output)
