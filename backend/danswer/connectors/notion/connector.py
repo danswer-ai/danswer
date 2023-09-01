@@ -1,4 +1,3 @@
-"""Notion reader."""
 import time
 from dataclasses import dataclass
 from dataclasses import fields
@@ -231,3 +230,14 @@ class NotionConnector(LoadConnector, PollConnector):
                 query_dict["start_cursor"] = db_res.next_cursor
             else:
                 break
+
+
+if __name__ == "__main__":
+    import os
+
+    connector = NotionConnector()
+    connector.load_credentials(
+        {"notion_integration_token": os.environ.get("NOTION_INTEGRATION_TOKEN")}
+    )
+    document_batches = connector.load_from_state()
+    print(next(document_batches))
