@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import or_
 
+from danswer.auth.schemas import UserRole
 from danswer.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
@@ -39,9 +40,19 @@ def fetch_credential_by_id(
 ) -> Credential | None:
     stmt = select(Credential).where(Credential.id == credential_id)
     if user:
-        stmt = stmt.where(
-            or_(Credential.user_id == user.id, Credential.user_id.is_(None))
-        )
+        # admins have access to all public credentials + credentials they own
+        if user.role == UserRole.ADMIN:
+            stmt = stmt.where(
+                or_(
+                    Credential.user_id == user.id,
+                    Credential.user_id.is_(None),
+                    Credential.public_doc == True,  # noqa: E712
+                )
+            )
+        else:
+            stmt = stmt.where(
+                or_(Credential.user_id == user.id, Credential.user_id.is_(None))
+            )
     result = db_session.execute(stmt)
     credential = result.scalar_one_or_none()
     return credential
