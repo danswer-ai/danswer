@@ -413,6 +413,8 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
     engine = get_sqlalchemy_engine()
 
     with Session(engine) as db_session:
+        # Previous version did not always clean up cc-pairs well leaving some connectors undeleteable
+        # This ensures that bad states get cleaned up
         mark_all_in_progress_cc_pairs_failed(db_session)
 
     while True:
