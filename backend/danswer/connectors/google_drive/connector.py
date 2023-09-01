@@ -454,11 +454,10 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
             for file in files_batch:
                 try:
                     text_contents = extract_text(file, service)
-                    full_context = (
-                        file["name"] + " - " + text_contents
-                        if text_contents
-                        else file["name"]
-                    )
+                    if text_contents:
+                        full_context = file["name"] + " - " + text_contents
+                    else:
+                        full_context = file["name"]
 
                     doc_batch.append(
                         Document(
