@@ -135,9 +135,13 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
                       </div>
                     )}
 
-                    <div className="ml-auto mt-auto">
-                      <QAFeedbackBlock queryId={1} />
-                    </div>
+                    {searchResponse.queryEventId !== null && (
+                      <div className="ml-auto mt-auto">
+                        <QAFeedbackBlock
+                          queryId={searchResponse.queryEventId}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </>
