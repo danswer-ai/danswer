@@ -9,7 +9,7 @@ RUN apt-get update \
 COPY ./requirements/default.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
 RUN playwright install
-RUN playwright install-deps
+RUN playwright install-deps chrome
 
 WORKDIR /app
 COPY ./danswer /app/danswer
