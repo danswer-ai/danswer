@@ -29,6 +29,8 @@ import {
   FiChevronRight,
   FiChevronLeft,
   FiAlertTriangle,
+  FiZoomIn,
+  FiCopy,
 } from "react-icons/fi";
 import { SiBookstack } from "react-icons/si";
 import Image from "next/image";
@@ -225,6 +227,20 @@ export const TriangleAlertIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <FiAlertTriangle size={size} className={className} />;
+};
+
+export const ZoomInIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiZoomIn size={size} className={className} />;
+};
+
+export const CopyIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiCopy size={size} className={className} />;
 };
 
 //
