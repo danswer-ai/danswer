@@ -17,19 +17,6 @@ export const SearchTypeSelector: React.FC<Props> = ({
       <div
         className={
           defaultStyle +
-          (selectedSearchType === SearchType.AUTOMATIC
-            ? "bg-blue-500"
-            : "bg-gray-800 hover:bg-gray-600")
-        }
-        onClick={() => setSelectedSearchType(SearchType.AUTOMATIC)}
-      >
-        Auto
-      </div>
-
-      <div
-        className={
-          defaultStyle +
-          "ml-2 " +
           (selectedSearchType === SearchType.SEMANTIC
             ? "bg-blue-500"
             : "bg-gray-800 hover:bg-gray-600")

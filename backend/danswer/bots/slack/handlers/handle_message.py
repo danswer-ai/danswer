@@ -53,7 +53,7 @@ def handle_message(
             QuestionRequest(
                 query=msg,
                 collection=DOCUMENT_INDEX_NAME,
-                use_keyword=None,
+                use_keyword=False,  # always use semantic search when handling slack messages
                 filters=None,
                 offset=None,
             )

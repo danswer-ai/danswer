@@ -52,7 +52,7 @@ export default async function Home() {
     storedSearchType !== undefined &&
     SearchType.hasOwnProperty(storedSearchType)
       ? (storedSearchType as SearchType)
-      : SearchType.AUTOMATIC; // default to automatic
+      : SearchType.SEMANTIC; // default to semantic
 
   return (
     <>
