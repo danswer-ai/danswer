@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export interface PopupSpec {
   message: string;
@@ -17,9 +17,17 @@ export const Popup: React.FC<PopupSpec> = ({ message, type }) => (
 
 export const usePopup = () => {
   const [popup, setPopup] = useState<PopupSpec | null>(null);
+  // using NodeJS.Timeout because setTimeout in NodeJS returns a different type than in browsers
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const setPopupWithExpiration = (popupSpec: PopupSpec | null) => {
+    // Clear any previous timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
     setPopup(popupSpec);
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       setPopup(null);
     }, 4000);
   };

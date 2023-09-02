@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PopupSpec, usePopup } from "../admin/connectors/Popup";
+import { PopupSpec } from "../admin/connectors/Popup";
 import { ThumbsDownIcon, ThumbsUpIcon } from "../icons/icons";
 
 type Feedback = "like" | "dislike";
@@ -71,14 +71,15 @@ const QAFeedback = ({
 
 interface QAFeedbackBlockProps {
   queryId: number;
+  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
-export const QAFeedbackBlock = ({ queryId }: QAFeedbackBlockProps) => {
-  const { popup, setPopup } = usePopup();
-
+export const QAFeedbackBlock = ({
+  queryId,
+  setPopup,
+}: QAFeedbackBlockProps) => {
   return (
     <div className="flex">
-      {popup}
       <QAFeedback queryId={queryId} setPopup={setPopup} feedbackType="like" />
       <div className="ml-2">
         <QAFeedback
