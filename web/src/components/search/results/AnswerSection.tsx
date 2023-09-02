@@ -1,7 +1,5 @@
 import { Quote } from "@/lib/search/interfaces";
 import { ResponseSection, StatusOptions } from "./ResponseSection";
-import { AlertIcon, InfoIcon } from "@/components/icons/icons";
-import { getSourceIcon } from "@/components/source";
 
 interface AnswerSectionProps {
   answer: string | null;

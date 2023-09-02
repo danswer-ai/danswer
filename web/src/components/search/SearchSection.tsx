@@ -25,7 +25,6 @@ import { NEXT_PUBLIC_DISABLE_STREAMING } from "@/lib/constants";
 import { searchRequest } from "@/lib/search/qa";
 import { useObjectState } from "@/lib/hooks";
 import { questionValidationStreamed } from "@/lib/search/streamingQuestionValidation";
-import { getAIThoughtsIsOpenSavedValue } from "@/lib/search/aiThoughtUtils";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,

@@ -3,7 +3,6 @@ import {
   CheckmarkIcon,
   ChevronDownIcon,
   ChevronLeftIcon,
-  ChevronRightIcon,
   TriangleAlertIcon,
 } from "@/components/icons/icons";
 import { useState } from "react";
