@@ -1,4 +1,4 @@
-FROM python:3.11.4-slim-bullseye
+FROM python:3.11.4-slim-bookworm
 
 RUN apt-get update \
     && apt-get install -y git cmake pkg-config libprotobuf-c-dev protobuf-compiler \
