@@ -22,7 +22,8 @@ const QuotesHeader = ({ quotes, isFetching }: QuotesSectionProps) => {
 
 const QuotesBody = ({ quotes, isFetching }: QuotesSectionProps) => {
   if (!quotes && isFetching) {
-    return null;
+    // height of quotes section to avoid extra "jumps" from the quotes loading
+    return <div className="h-[42px]"></div>;
   }
 
   if (!isFetching && (!quotes || !quotes.length)) {

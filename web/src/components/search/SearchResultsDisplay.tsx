@@ -98,7 +98,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
   return (
     <>
       {shouldDisplayQA && (
-        <div className="min-h-[14rem] p-4 border-2 rounded-md border-gray-700 relative">
+        <div className="min-h-[16rem] p-4 border-2 rounded-md border-gray-700 relative">
           <div>
             <div className="flex mb-1">
               <h2 className="text font-bold my-auto mb-1 w-full">AI Answer</h2>
@@ -109,9 +109,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
                 status={questionValidityCheckStatus}
                 header={
                   validQuestionResponse.answerable === null ? (
-                    <div className="flex">
-                      <div className="ml-2">Evaluating question...</div>
-                    </div>
+                    <div className="flex ml-2">Evaluating question...</div>
                   ) : (
                     <div className="flex ml-2">AI thoughts</div>
                   )

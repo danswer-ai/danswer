@@ -88,9 +88,9 @@ export const ResponseSection = ({
         {!isNotControllable && (
           <div className="ml-auto">
             {finalIsOpen ? (
-              <ChevronDownIcon size={16} className="text-gray-600" />
+              <ChevronDownIcon size={16} className="text-gray-400" />
             ) : (
-              <ChevronLeftIcon size={16} className="text-gray-600" />
+              <ChevronLeftIcon size={16} className="text-gray-400" />
             )}
           </div>
         )}

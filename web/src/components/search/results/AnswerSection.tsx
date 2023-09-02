@@ -51,7 +51,10 @@ export const AnswerSection = (props: AnswerSectionProps) => {
   let status = "in-progress" as StatusOptions;
   if (props.error) {
     status = "failed";
-  } else {
+  }
+  // if AI thoughts is visible, don't mark this as a success until that section
+  // is complete
+  else if (!props.aiThoughtsIsOpen || props.isAnswerable !== null) {
     if (props.isAnswerable === false) {
       status = "warning";
     } else if ((props.quotes !== null && props.answer) || !props.isFetching) {
