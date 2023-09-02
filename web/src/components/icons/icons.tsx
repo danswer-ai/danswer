@@ -23,6 +23,12 @@ import {
   FiGlobe,
   FiThumbsDown,
   FiThumbsUp,
+  FiChevronDown,
+  FiChevronUp,
+  FiAlertCircle,
+  FiChevronRight,
+  FiChevronLeft,
+  FiAlertTriangle,
 } from "react-icons/fi";
 import { SiBookstack } from "react-icons/si";
 import Image from "next/image";
@@ -172,11 +178,53 @@ export const ChevronsDownIcon = ({
   return <FiChevronsDown size={size} className={className} />;
 };
 
+export const ChevronUpIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiChevronUp size={size} className={className} />;
+};
+
+export const ChevronDownIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiChevronDown size={size} className={className} />;
+};
+
+export const ChevronRightIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiChevronRight size={size} className={className} />;
+};
+
+export const ChevronLeftIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiChevronLeft size={size} className={className} />;
+};
+
 export const CheckmarkIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <FiCheck size={size} className={className} />;
+};
+
+export const AlertIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiAlertCircle size={size} className={className} />;
+};
+
+export const TriangleAlertIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiAlertTriangle size={size} className={className} />;
 };
 
 //

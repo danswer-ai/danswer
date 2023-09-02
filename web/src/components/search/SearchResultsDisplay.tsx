@@ -1,16 +1,24 @@
+"use client";
+
 import React from "react";
-import { getSourceIcon } from "../source";
-import { LoadingAnimation } from "../Loading";
-import { InfoIcon } from "../icons/icons";
 import {
   DanswerDocument,
   SearchResponse,
   Quote,
   FlowType,
   SearchDefaultOverrides,
+  ValidQuestionResponse,
 } from "@/lib/search/interfaces";
 import { QAFeedbackBlock } from "./QAFeedback";
 import { DocumentDisplay } from "./DocumentDisplay";
+import { ResponseSection, StatusOptions } from "./results/ResponseSection";
+import { QuotesSection } from "./results/QuotesSection";
+import { AnswerSection } from "./results/AnswerSection";
+import {
+  getAIThoughtsIsOpenSavedValue,
+  setAIThoughtsIsOpenSavedValue,
+} from "@/lib/search/aiThoughtUtils";
+import { Grid, ThreeDots } from "react-loader-spinner";
 
 const removeDuplicateDocs = (documents: DanswerDocument[]) => {
   const seen = new Set<string>();
@@ -26,15 +34,25 @@ const removeDuplicateDocs = (documents: DanswerDocument[]) => {
 
 interface SearchResultsDisplayProps {
   searchResponse: SearchResponse | null;
+  validQuestionResponse: ValidQuestionResponse;
   isFetching: boolean;
   defaultOverrides: SearchDefaultOverrides;
 }
 
 export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
   searchResponse,
+  validQuestionResponse,
   isFetching,
   defaultOverrides,
 }) => {
+  const [isAIThoughtsOpen, setIsAIThoughtsOpen] = React.useState<boolean>(
+    getAIThoughtsIsOpenSavedValue()
+  );
+  const handleAIThoughtToggle = (newAIThoughtsOpenValue: boolean) => {
+    setAIThoughtsIsOpenSavedValue(newAIThoughtsOpenValue);
+    setIsAIThoughtsOpen(newAIThoughtsOpenValue);
+  };
+
   if (!searchResponse) {
     return null;
   }
@@ -45,7 +63,16 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
     return (
       <div className="flex">
         <div className="mx-auto">
-          <LoadingAnimation />
+          <ThreeDots
+            height="30"
+            width="40"
+            color="#3b82f6"
+            ariaLabel="grid-loading"
+            radius="12.5"
+            wrapperStyle={{}}
+            wrapperClass=""
+            visible={true}
+          />
         </div>
       </div>
     );
@@ -70,81 +97,63 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
     searchResponse.suggestedFlowType === FlowType.QUESTION_ANSWER ||
     defaultOverrides.forceDisplayQA;
 
-  let answerDisplay = <LoadingAnimation text="" size="text-sm" />;
-  if (error) {
-    answerDisplay = (
-      <div className="flex">
-        <InfoIcon
-          size={20}
-          className="text-red-500 my-auto flex flex-shrink-0"
-        />
-        <div className="text-red-500 text-sm my-auto ml-1">{error}</div>
-      </div>
-    );
-  } else if (answer) {
-    answerDisplay = <p className="mb-4">{answer}</p>;
-  } else if (!isFetching) {
-    answerDisplay = (
-      <div className="text-sm my-auto text-gray-300">Information not found</div>
-    );
+  let questionValidityCheckStatus: StatusOptions = "in-progress";
+  if (validQuestionResponse.answerable) {
+    questionValidityCheckStatus = "success";
+  } else if (validQuestionResponse.answerable === false) {
+    questionValidityCheckStatus = "failed";
   }
 
   return (
     <>
       {shouldDisplayQA && (
-        <div className="min-h-[14rem]">
-          <div className="p-4 border-2 rounded-md border-gray-700">
+        <div className="min-h-[16rem] p-4 border-2 rounded-md border-gray-700 relative">
+          <div>
             <div className="flex mb-1">
-              <h2 className="text font-bold my-auto">AI Answer</h2>
+              <h2 className="text font-bold my-auto mb-1 w-full">AI Answer</h2>
             </div>
-            {answerDisplay}
+
+            <div className="mb-2 w-full">
+              <ResponseSection
+                status={questionValidityCheckStatus}
+                header={
+                  validQuestionResponse.answerable === null ? (
+                    <div className="flex ml-2">Evaluating question...</div>
+                  ) : (
+                    <div className="flex ml-2">AI thoughts</div>
+                  )
+                }
+                body={<div>{validQuestionResponse.reasoning}</div>}
+                desiredOpenStatus={isAIThoughtsOpen}
+                setDesiredOpenStatus={handleAIThoughtToggle}
+              />
+            </div>
+
+            <div className="mb-2 pt-1 border-t border-gray-700 w-full">
+              <AnswerSection
+                answer={answer}
+                quotes={quotes}
+                error={error}
+                isAnswerable={validQuestionResponse.answerable}
+                isFetching={isFetching}
+                aiThoughtsIsOpen={isAIThoughtsOpen}
+              />
+            </div>
 
             {quotes !== null && answer && (
-              <>
-                <h2 className="text-sm font-bold">Sources</h2>
-                {isFetching && dedupedQuotes.length === 0 ? (
-                  <LoadingAnimation text="Finding quotes" size="text-sm" />
-                ) : (
-                  <div className="flex flex-wrap">
-                    {dedupedQuotes.length > 0 ? (
-                      dedupedQuotes.map((quoteInfo) => (
-                        <a
-                          key={quoteInfo.document_id}
-                          className="p-2 ml-1 mt-2 border border-gray-800 rounded-lg text-sm flex max-w-[280px] hover:bg-gray-800"
-                          href={quoteInfo.link || undefined}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {getSourceIcon(quoteInfo.source_type, 20)}
-                          <p className="truncate break-all ml-2">
-                            {quoteInfo.semantic_identifier ||
-                              quoteInfo.document_id}
-                          </p>
-                        </a>
-                      ))
-                    ) : (
-                      <div className="flex">
-                        <InfoIcon
-                          size={20}
-                          className="text-red-500 my-auto flex flex-shrink-0"
-                        />
-                        <div className="text-red-500 text-sm my-auto ml-1">
-                          Did not find any exact quotes to support the above
-                          answer.
-                        </div>
-                      </div>
-                    )}
+              <div className="pt-1 border-t border-gray-700 w-full">
+                <QuotesSection
+                  quotes={dedupedQuotes}
+                  isFetching={isFetching}
+                  isAnswerable={validQuestionResponse.answerable}
+                />
 
-                    {searchResponse.queryEventId !== null && (
-                      <div className="ml-auto mt-auto">
-                        <QAFeedbackBlock
-                          queryId={searchResponse.queryEventId}
-                        />
-                      </div>
-                    )}
+                {searchResponse.queryEventId !== null && (
+                  <div className="absolute right-3 bottom-3">
+                    <QAFeedbackBlock queryId={searchResponse.queryEventId} />
                   </div>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>

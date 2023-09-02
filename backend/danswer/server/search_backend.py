@@ -46,27 +46,27 @@ logger = setup_logger()
 router = APIRouter()
 
 
-@router.get("/search-intent")
+@router.post("/search-intent")
 def get_search_type(
-    question: QuestionRequest = Depends(), _: User = Depends(current_user)
+    question: QuestionRequest, _: User = Depends(current_user)
 ) -> HelperResponse:
     query = question.query
     use_keyword = question.use_keyword if question.use_keyword is not None else False
     return recommend_search_flow(query, use_keyword)
 
 
-@router.get("/query-validation")
+@router.post("/query-validation")
 def query_validation(
-    question: QuestionRequest = Depends(), _: User = Depends(current_user)
+    question: QuestionRequest, _: User = Depends(current_user)
 ) -> QueryValidationResponse:
     query = question.query
     reasoning, answerable = get_query_answerability(query)
     return QueryValidationResponse(reasoning=reasoning, answerable=answerable)
 
 
-@router.get("/stream-query-validation")
+@router.post("/stream-query-validation")
 def stream_query_validation(
-    question: QuestionRequest = Depends(), _: User = Depends(current_user)
+    question: QuestionRequest, _: User = Depends(current_user)
 ) -> StreamingResponse:
     query = question.query
     return StreamingResponse(

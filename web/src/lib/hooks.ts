@@ -1,6 +1,7 @@
 import { Credential, DocumentBoostStatus } from "@/lib/types";
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { fetcher } from "./fetcher";
+import { useState } from "react";
 
 const CREDENTIAL_URL = "/api/manage/admin/credential";
 
@@ -13,8 +14,6 @@ export const usePublicCredentials = () => {
     refreshCredentials: () => mutate(CREDENTIAL_URL),
   };
 };
-
-const MOST_REACTED_DOCS_URL = "/api/manage/doc-boosts";
 
 const buildReactedDocsUrl = (ascending: boolean, limit: number) => {
   return `/api/manage/admin/doc-boosts?ascending=${ascending}&limit=${limit}`;
@@ -31,4 +30,19 @@ export const useMostReactedToDocuments = (
     ...swrResponse,
     refreshDocs: () => mutate(url),
   };
+};
+
+export const useObjectState = <T>(
+  initialValue: T
+): [T, (update: Partial<T>) => void] => {
+  const [state, setState] = useState<T>(initialValue);
+  const set = (update: Partial<T>) => {
+    setState((prevState) => {
+      return {
+        ...prevState,
+        ...update,
+      };
+    });
+  };
+  return [state, set];
 };
