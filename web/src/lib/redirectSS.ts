@@ -2,8 +2,8 @@ import { NextRequest } from "next/server";
 
 export const getDomain = (request: NextRequest) => {
   // use env variable if set
-  if (process.env.BASE_URL) {
-    return process.env.BASE_URL;
+  if (process.env.WEB_DOMAIN) {
+    return process.env.WEB_DOMAIN;
   }
 
   // next, try and build domain from headers
