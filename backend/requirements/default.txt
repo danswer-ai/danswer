@@ -26,7 +26,7 @@ nltk==3.8.1
 docx2txt==0.8
 openai==0.27.6
 oauthlib==3.2.2
-playwright==1.32.1
+playwright==1.37.0
 psycopg2==2.9.6
 psycopg2-binary==2.9.6
 pydantic==1.10.7
