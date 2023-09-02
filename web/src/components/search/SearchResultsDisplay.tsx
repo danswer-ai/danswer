@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { LoadingAnimation } from "../Loading";
 import {
   DanswerDocument,
   SearchResponse,
@@ -19,6 +18,7 @@ import {
   getAIThoughtsIsOpenSavedValue,
   setAIThoughtsIsOpenSavedValue,
 } from "@/lib/search/aiThoughtUtils";
+import { Grid, ThreeDots } from "react-loader-spinner";
 
 const removeDuplicateDocs = (documents: DanswerDocument[]) => {
   const seen = new Set<string>();
@@ -63,7 +63,16 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
     return (
       <div className="flex">
         <div className="mx-auto">
-          <LoadingAnimation />
+          <ThreeDots
+            height="30"
+            width="40"
+            color="#3b82f6"
+            ariaLabel="grid-loading"
+            radius="12.5"
+            wrapperStyle={{}}
+            wrapperClass=""
+            visible={true}
+          />
         </div>
       </div>
     );

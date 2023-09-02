@@ -37,7 +37,7 @@ const QuotesBody = ({ quotes, isFetching }: QuotesSectionProps) => {
   }
 
   return (
-    <>
+    <div className="flex flex-wrap">
       {quotes!.map((quoteInfo) => (
         <a
           key={quoteInfo.document_id}
@@ -52,7 +52,7 @@ const QuotesBody = ({ quotes, isFetching }: QuotesSectionProps) => {
           </p>
         </a>
       ))}
-    </>
+    </div>
   );
 };
 
