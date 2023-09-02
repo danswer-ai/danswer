@@ -18,7 +18,8 @@ import {
   getAIThoughtsIsOpenSavedValue,
   setAIThoughtsIsOpenSavedValue,
 } from "@/lib/search/aiThoughtUtils";
-import { Grid, ThreeDots } from "react-loader-spinner";
+import { ThreeDots } from "react-loader-spinner";
+import { usePopup } from "../admin/connectors/Popup";
 
 const removeDuplicateDocs = (documents: DanswerDocument[]) => {
   const seen = new Set<string>();
@@ -45,6 +46,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
   isFetching,
   defaultOverrides,
 }) => {
+  const { popup, setPopup } = usePopup();
   const [isAIThoughtsOpen, setIsAIThoughtsOpen] = React.useState<boolean>(
     getAIThoughtsIsOpenSavedValue()
   );
@@ -106,6 +108,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
 
   return (
     <>
+      {popup}
       {shouldDisplayQA && (
         <div className="min-h-[16rem] p-4 border-2 rounded-md border-gray-700 relative">
           <div>
@@ -150,7 +153,10 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
 
                 {searchResponse.queryEventId !== null && (
                   <div className="absolute right-3 bottom-3">
-                    <QAFeedbackBlock queryId={searchResponse.queryEventId} />
+                    <QAFeedbackBlock
+                      queryId={searchResponse.queryEventId}
+                      setPopup={setPopup}
+                    />
                   </div>
                 )}
               </div>
@@ -169,6 +175,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
               key={document.document_id}
               document={document}
               queryEventId={queryEventId}
+              setPopup={setPopup}
             />
           ))}
         </div>

@@ -2,18 +2,19 @@ import { DanswerDocument } from "@/lib/search/interfaces";
 import { DocumentFeedbackBlock } from "./DocumentFeedbackBlock";
 import { getSourceIcon } from "../source";
 import { useState } from "react";
-import { usePopup } from "../admin/connectors/Popup";
+import { PopupSpec } from "../admin/connectors/Popup";
 
 interface DocumentDisplayProps {
   document: DanswerDocument;
   queryEventId: number | null;
+  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 export const DocumentDisplay = ({
   document,
   queryEventId,
+  setPopup,
 }: DocumentDisplayProps) => {
-  const { popup, setPopup } = usePopup();
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -25,7 +26,6 @@ export const DocumentDisplay = ({
       }}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {popup}
       <div className="flex relative">
         <div className="absolute -left-10 top-2/4 -translate-y-2/4 w-10 flex">
           <div

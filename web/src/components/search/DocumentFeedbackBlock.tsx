@@ -70,7 +70,6 @@ const DocumentFeedback = ({
           queryId,
           feedbackType
         );
-        console.log(errorMsg);
         if (!errorMsg) {
           setPopup({
             message: "Thanks for your feedback!",
