@@ -79,3 +79,11 @@ class SearchFeedbackType(str, Enum):
     REJECT = "reject"  # down-boost this document for all future queries
     HIDE = "hide"  # mark this document as untrusted, hide from LLM
     UNHIDE = "unhide"
+
+
+class MessageType(str, Enum):
+    # Using OpenAI standards, Langchain equivalent shown in comment
+    SYSTEM = "system"  # SystemMessage
+    USER = "user"  # HumanMessage
+    ASSISTANT = "assistant"  # AIMessage
+    DANSWER = "danswer"  # FunctionMessage

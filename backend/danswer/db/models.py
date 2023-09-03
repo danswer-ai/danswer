@@ -25,6 +25,7 @@ from sqlalchemy.orm import relationship
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
@@ -52,7 +53,7 @@ class Base(DeclarativeBase):
 
 class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
     # even an almost empty token from keycloak will not fit the default 1024 bytes
-    access_token: Mapped[str] = mapped_column(Text(), nullable=False)  # type: ignore
+    access_token: Mapped[str] = mapped_column(Text, nullable=False)  # type: ignore
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
@@ -67,6 +68,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     )
     query_events: Mapped[List["QueryEvent"]] = relationship(
         "QueryEvent", back_populates="user"
+    )
+    chat_sessions: Mapped[List["ChatSession"]] = relationship(
+        "ChatSession", back_populates="user"
     )
 
 
@@ -193,7 +197,7 @@ class IndexAttempt(Base):
     status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
     num_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
     error_msg: Mapped[str | None] = mapped_column(
-        String(), default=None
+        Text, default=None
     )  # only filled if status = "failed"
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
@@ -245,7 +249,7 @@ class DeletionAttempt(Base):
     status: Mapped[DeletionStatus] = mapped_column(Enum(DeletionStatus))
     num_docs_deleted: Mapped[int] = mapped_column(Integer, default=0)
     error_msg: Mapped[str | None] = mapped_column(
-        String(), default=None
+        Text, default=None
     )  # only filled if status = "failed"
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
@@ -291,12 +295,12 @@ class QueryEvent(Base):
     __tablename__ = "query_event"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    query: Mapped[str] = mapped_column(String())
+    query: Mapped[str] = mapped_column(Text)
     # search_flow refers to user selection, None if user used auto
     selected_search_flow: Mapped[SearchType | None] = mapped_column(
         Enum(SearchType), nullable=True
     )
-    llm_answer: Mapped[str | None] = mapped_column(String(), default=None)
+    llm_answer: Mapped[str | None] = mapped_column(Text, default=None)
     feedback: Mapped[QAFeedbackType | None] = mapped_column(
         Enum(QAFeedbackType), nullable=True
     )
@@ -340,8 +344,8 @@ class DocumentRetrievalFeedback(Base):
 class Document(Base):
     __tablename__ = "document"
 
-    # this should correspond to the ID of the document (as is passed around
-    # in Danswer)
+    # this should correspond to the ID of the document
+    # (as is passed around in Danswer)
     id: Mapped[str] = mapped_column(String, primary_key=True)
     # 0 for neutral, positive for mostly endorse, negative for mostly reject
     boost: Mapped[int] = mapped_column(Integer, default=DEFAULT_BOOST)
@@ -354,3 +358,43 @@ class Document(Base):
     retrieval_feedbacks: Mapped[List[DocumentRetrievalFeedback]] = relationship(
         "DocumentRetrievalFeedback", back_populates="document"
     )
+
+
+class ChatSession(Base):
+    __tablename__ = "chat_session"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    description: Mapped[str] = mapped_column(Text)
+    deleted: Mapped[bool] = mapped_column(Boolean, default=False)
+    time_updated: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+    time_created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    user: Mapped[User] = relationship("User", back_populates="chat_sessions")
+    messages: Mapped[List["ChatMessage"]] = relationship(
+        "ChatMessage", back_populates="chat_session"
+    )
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_message"
+
+    chat_session_id: Mapped[int] = mapped_column(
+        ForeignKey("chat_session.id"), primary_key=True
+    )
+    message_number: Mapped[int] = mapped_column(Integer, primary_key=True)
+    edit_number: Mapped[int] = mapped_column(Integer, primary_key=True)
+    latest: Mapped[bool] = mapped_column(Boolean, default=True)
+    message: Mapped[str] = mapped_column(Text)
+    message_type: Mapped[MessageType] = mapped_column(Enum(MessageType))
+    time_sent: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )  # Assuming a chat history has a timestamp for when the message was sent
+
+    chat_session: Mapped[ChatSession] = relationship("ChatSession")

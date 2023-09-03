@@ -21,7 +21,7 @@ def fetch_query_event_by_id(query_id: int, db_session: Session) -> QueryEvent:
     query_event = result.scalar_one_or_none()
 
     if not query_event:
-        raise ValueError("Invalid Query Event provided for updating")
+        raise ValueError("Invalid Query Event ID Provided")
 
     return query_event
 
@@ -32,7 +32,7 @@ def fetch_docs_by_id(doc_id: str, db_session: Session) -> DbDocument:
     doc = result.scalar_one_or_none()
 
     if not doc:
-        raise ValueError("Invalid Document provided for updating")
+        raise ValueError("Invalid Document ID Provided")
 
     return doc
 
