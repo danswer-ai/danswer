@@ -8,6 +8,10 @@ RUN apt-get update \
 
 COPY ./requirements/default.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
+
+# Remove py which is pulled in by retry, py is not needed and is a CVE
+RUN pip uninstall py
+
 RUN playwright install chromium
 RUN playwright install-deps chromium
 
