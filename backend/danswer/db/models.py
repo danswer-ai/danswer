@@ -389,7 +389,10 @@ class ChatMessage(Base):
         ForeignKey("chat_session.id"), primary_key=True
     )
     message_number: Mapped[int] = mapped_column(Integer, primary_key=True)
-    edit_number: Mapped[int] = mapped_column(Integer, primary_key=True)
+    edit_number: Mapped[int] = mapped_column(Integer, default=0, primary_key=True)
+    parent_edit_number: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )  # null if first message
     latest: Mapped[bool] = mapped_column(Boolean, default=True)
     message: Mapped[str] = mapped_column(Text)
     message_type: Mapped[MessageType] = mapped_column(Enum(MessageType))

@@ -1,6 +1,7 @@
 import time
 from collections.abc import Callable
 from collections.abc import Generator
+from collections.abc import Iterator
 from typing import Any
 from typing import cast
 from typing import TypeVar
@@ -10,7 +11,7 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 F = TypeVar("F", bound=Callable)
-FG = TypeVar("FG", bound=Callable[..., Generator])
+FG = TypeVar("FG", bound=Callable[..., Generator | Iterator])
 
 
 def log_function_time(

@@ -130,6 +130,10 @@ class SearchDoc(BaseModel):
     score: float | None
 
 
+class CreateChatID(BaseModel):
+    chat_session_id: int
+
+
 class QuestionRequest(BaseModel):
     query: str
     collection: str
@@ -149,6 +153,23 @@ class SearchFeedbackRequest(BaseModel):
     document_rank: int
     click: bool
     search_feedback: SearchFeedbackType
+
+
+class ChatRequest(BaseModel):
+    chat_session_id: int
+    message_number: int
+    parent_edit_number: int | None
+    message: str
+
+
+class ChatRenameRequest(BaseModel):
+    chat_session_id: int
+    name: str | None
+    first_message: str | None
+
+
+class SimpleTextResponse(BaseModel):
+    text: str
 
 
 class QueryValidationResponse(BaseModel):
