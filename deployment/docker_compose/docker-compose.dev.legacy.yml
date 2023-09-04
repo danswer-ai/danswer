@@ -95,6 +95,7 @@ services:
     restart: always
     environment:
       - INTERNAL_URL=http://api_server:8080
+      - WEB_DOMAIN=${WEB_DOMAIN:-}
       - DISABLE_AUTH=${DISABLE_AUTH:-True}
       - OAUTH_NAME=${OAUTH_NAME:-}
   relational_db:
