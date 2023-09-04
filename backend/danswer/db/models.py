@@ -13,6 +13,7 @@ from sqlalchemy import DateTime
 from sqlalchemy import Enum
 from sqlalchemy import ForeignKey
 from sqlalchemy import func
+from sqlalchemy import Index
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Text
@@ -219,6 +220,15 @@ class IndexAttempt(Base):
     )
     credential: Mapped[Credential] = relationship(
         "Credential", back_populates="index_attempts"
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_index_attempt_latest_for_connector_credential_pair",
+            "connector_id",
+            "credential_id",
+            "time_created",
+        ),
     )
 
     def __repr__(self) -> str:

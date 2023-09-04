@@ -11,6 +11,7 @@ from pydantic.generics import GenericModel
 
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
@@ -155,7 +156,11 @@ class SearchFeedbackRequest(BaseModel):
     search_feedback: SearchFeedbackType
 
 
-class ChatRequest(BaseModel):
+class GetChatRequest(BaseModel):
+    chat_session_id: int
+
+
+class CreateChatRequest(BaseModel):
     chat_session_id: int
     message_number: int
     parent_edit_number: int | None
@@ -170,6 +175,25 @@ class ChatRenameRequest(BaseModel):
 
 class SimpleTextResponse(BaseModel):
     text: str
+
+
+class ChatSessionIdsResponse(BaseModel):
+    sessions: list[int]
+
+
+class ChatMessageDetail(BaseModel):
+    message_number: int
+    parent_edit_number: int | None
+    edit_number: int
+    latest: bool
+    message: str
+    message_type: MessageType
+    time_sent: datetime
+
+
+class ChatSessionDetailResponse(BaseModel):
+    chat_session_id: int
+    messages: list[ChatMessageDetail]
 
 
 class QueryValidationResponse(BaseModel):

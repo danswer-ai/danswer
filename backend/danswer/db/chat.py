@@ -12,6 +12,34 @@ from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
 
 
+def fetch_chat_sessions_by_user(
+    user_id: UUID | None,
+    deleted: bool | None,
+    db_session: Session,
+) -> list[ChatSession]:
+    stmt = select(ChatSession).where(ChatSession.user_id == user_id)
+
+    if deleted is not None:
+        stmt = stmt.where(ChatSession.deleted == deleted)
+
+    result = db_session.execute(stmt)
+    chat_sessions = result.scalars().all()
+
+    return list(chat_sessions)
+
+
+def fetch_chat_messages_by_session(
+    chat_session_id: int, db_session: Session
+) -> list[ChatMessage]:
+    stmt = (
+        select(ChatMessage)
+        .where(ChatMessage.chat_session_id == chat_session_id)
+        .order_by(ChatMessage.message_number.asc(), ChatMessage.edit_number.asc())
+    )
+    result = db_session.execute(stmt).scalars().all()
+    return list(result)
+
+
 def fetch_chat_session_by_id(chat_session_id: int, db_session: Session) -> ChatSession:
     stmt = select(ChatSession).where(ChatSession.id == chat_session_id)
     result = db_session.execute(stmt)
@@ -72,35 +100,6 @@ def delete_chat_session(
         db_session.commit()
 
 
-def fetch_chat_messages_by_session(
-    chat_session_id: int, db_session: Session
-) -> list[ChatMessage]:
-    stmt = (
-        select(ChatMessage)
-        .where(ChatMessage.chat_session_id == chat_session_id)
-        .order_by(ChatMessage.message_number.asc(), ChatMessage.edit_number.asc())
-    )
-    result = db_session.execute(stmt).scalars().all()
-    return list(result)
-
-
-def _set_all_latest_false(
-    chat_session_id: int,
-    message_number: int,
-    parent_edit_number: int | None,
-    db_session: Session,
-) -> None:
-    db_session.query(ChatMessage).filter(
-        and_(
-            ChatMessage.chat_session_id == chat_session_id,
-            ChatMessage.message_number == message_number,
-            ChatMessage.parent_edit_number == parent_edit_number,
-        )
-    ).update({ChatMessage.latest: False})
-
-    db_session.commit()
-
-
 def _set_latest_chat_message_no_commit(
     chat_session_id: int,
     message_number: int,
@@ -133,6 +132,7 @@ def create_new_chat_message(
     message_type: MessageType,
     db_session: Session,
 ) -> ChatMessage:
+    # Get the count of existing edits at the provided message number
     latest_edit_number = (
         db_session.query(func.max(ChatMessage.edit_number))
         .filter_by(
@@ -142,12 +142,10 @@ def create_new_chat_message(
         .scalar()
     )
 
+    # The new message is a new edit at the provided message number
     new_edit_number = latest_edit_number + 1 if latest_edit_number is not None else 0
 
-    _set_all_latest_false(
-        chat_session_id, message_number, parent_edit_number, db_session
-    )
-
+    # Create a new message and set it to be the latest for its parent message
     new_chat_message = ChatMessage(
         chat_session_id=chat_session_id,
         message_number=message_number,
@@ -160,6 +158,7 @@ def create_new_chat_message(
     # TODO verify this order is correctly applied
     db_session.add(new_chat_message)
 
+    # Set the previous latest message of the same parent, as no longer the latest
     _set_latest_chat_message_no_commit(
         chat_session_id=chat_session_id,
         message_number=message_number,
