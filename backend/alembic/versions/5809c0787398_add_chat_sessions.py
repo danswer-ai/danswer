@@ -1,8 +1,8 @@
 """Add Chat Sessions
 
-Revision ID: a7821b9c3398
+Revision ID: 5809c0787398
 Revises: d929f0c1c6af
-Create Date: 2023-09-04 10:34:17.424768
+Create Date: 2023-09-04 15:29:44.002164
 
 """
 import fastapi_users_db_sqlalchemy
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "a7821b9c3398"
+revision = "5809c0787398"
 down_revision = "d929f0c1c6af"
 branch_labels = None
 depends_on = None

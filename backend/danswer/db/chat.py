@@ -111,12 +111,18 @@ def delete_chat_session(
         raise ValueError("User trying to delete chat of another user.")
 
     if hard_delete:
-        # TODO ensure this cascades correctly
+        stmt_messages = delete(ChatMessage).where(
+            ChatMessage.chat_session_id == chat_session_id
+        )
+        db_session.execute(stmt_messages)
+
         stmt = delete(ChatSession).where(ChatSession.id == chat_session_id)
         db_session.execute(stmt)
+
     else:
         chat_session.deleted = True
-        db_session.commit()
+
+    db_session.commit()
 
 
 def _set_latest_chat_message_no_commit(

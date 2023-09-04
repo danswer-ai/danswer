@@ -194,7 +194,7 @@ def handle_new_chat_message(
             db_session=db_session,
         )
     else:
-        if parent_edit_number:
+        if parent_edit_number is not None:
             raise ValueError("Initial message in session cannot have parent")
 
     new_message = create_new_chat_message(
