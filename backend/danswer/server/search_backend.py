@@ -244,7 +244,7 @@ def stream_direct_qa(
         # types which can't be parsed). These chunks are useful to show in the
         # search results, but not for QA.
         filtered_ranked_chunks = [
-            chunk for chunk in ranked_chunks if chunk.metadata.get(IGNORE_FOR_QA)
+            chunk for chunk in ranked_chunks if not chunk.metadata.get(IGNORE_FOR_QA)
         ]
 
         chunk_offset = offset_count * NUM_GENERATIVE_AI_INPUT_DOCS

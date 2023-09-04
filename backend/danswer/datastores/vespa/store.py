@@ -270,6 +270,10 @@ def _build_vespa_filters(
     return filter_str
 
 
+def _build_vespa_limit(num_to_retrieve: int, offset: int = 0) -> str:
+    return f" limit {num_to_retrieve} offset {offset}"
+
+
 def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError(
@@ -388,6 +392,7 @@ class VespaIndex(DocumentIndex):
             VespaIndex.yql_base
             + vespa_where_clauses
             + '({grammar: "weakAnd"}userInput(@query))'
+            + _build_vespa_limit(num_to_retrieve)
         )
 
         params: dict[str, str | int] = {
@@ -413,6 +418,7 @@ class VespaIndex(DocumentIndex):
             VespaIndex.yql_base
             + vespa_where_clauses
             + f"({{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding))"
+            + _build_vespa_limit(num_to_retrieve)
         )
 
         query_embedding = embed_query(query)
@@ -438,6 +444,7 @@ class VespaIndex(DocumentIndex):
             + vespa_where_clauses
             + f"{{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding) or "
             + '{grammar: "weakAnd"}userInput(@query)'
+            + _build_vespa_limit(num_to_retrieve)
         )
 
         query_embedding = embed_query(query)
