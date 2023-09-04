@@ -19,6 +19,7 @@ from danswer.configs.app_configs import GOOGLE_DRIVE_FOLLOW_SHORTCUTS
 from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.connectors.google_drive.connector_auth import (
     get_google_drive_creds_for_authorized_user,
 )
@@ -467,7 +468,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                             ],
                             source=DocumentSource.GOOGLE_DRIVE,
                             semantic_identifier=file["name"],
-                            metadata={},
+                            metadata={} if text_contents else {IGNORE_FOR_QA: True},
                         )
                     )
                 except Exception as e:

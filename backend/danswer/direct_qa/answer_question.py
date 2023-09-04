@@ -4,6 +4,7 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
 from danswer.configs.app_configs import QA_TIMEOUT
+from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.datastores.document_index import get_default_document_index
 from danswer.db.feedback import create_query_event
 from danswer.db.models import User
@@ -99,15 +100,24 @@ def answer_qa_query(
             query_event_id=query_event_id,
         )
 
+    # remove chunks marked as not applicable for QA (e.g. Google Drive file
+    # types which can't be parsed). These chunks are useful to show in the
+    # search results, but not for QA.
+    filtered_ranked_chunks = [
+        chunk for chunk in ranked_chunks if chunk.metadata.get(IGNORE_FOR_QA)
+    ]
+
     chunk_offset = offset_count * NUM_GENERATIVE_AI_INPUT_DOCS
-    if chunk_offset >= len(ranked_chunks):
+    if chunk_offset >= len(filtered_ranked_chunks):
         raise ValueError("Chunks offset too large, should not retry this many times")
 
     error_msg = None
     try:
         answer, quotes = qa_model.answer_question(
             query,
-            ranked_chunks[chunk_offset : chunk_offset + NUM_GENERATIVE_AI_INPUT_DOCS],
+            filtered_ranked_chunks[
+                chunk_offset : chunk_offset + NUM_GENERATIVE_AI_INPUT_DOCS
+            ],
         )
     except Exception as e:
         # exception is logged in the answer_question method, no need to re-log
