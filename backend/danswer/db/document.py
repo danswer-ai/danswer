@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.datastores.interfaces import DocumentMetadata
+from danswer.db.feedback import delete_document_feedback_for_documents
 from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentByConnectorCredentialPair
 from danswer.db.utils import model_to_dict
@@ -168,5 +169,8 @@ def delete_documents(db_session: Session, document_ids: list[str]) -> None:
 def delete_documents_complete(db_session: Session, document_ids: list[str]) -> None:
     logger.info(f"Deleting {len(document_ids)} documents from the DB")
     delete_document_by_connector_credential_pair(db_session, document_ids)
+    delete_document_feedback_for_documents(
+        document_ids=document_ids, db_session=db_session
+    )
     delete_documents(db_session, document_ids)
     db_session.commit()

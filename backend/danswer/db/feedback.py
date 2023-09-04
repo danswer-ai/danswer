@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from sqlalchemy import asc
+from sqlalchemy import delete
 from sqlalchemy import desc
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -151,3 +152,14 @@ def create_doc_retrieval_feedback(
 
     db_session.add(retrieval_feedback)
     db_session.commit()
+
+
+def delete_document_feedback_for_documents(
+    document_ids: list[str], db_session: Session
+) -> None:
+    """NOTE: does not commit transaction so that this can be used as part of a
+    larger transaction block."""
+    stmt = delete(DocumentRetrievalFeedback).where(
+        DocumentRetrievalFeedback.document_id.in_(document_ids)
+    )
+    db_session.execute(stmt)
