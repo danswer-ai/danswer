@@ -80,27 +80,21 @@ def _create_chat_chain(
 ) -> list[ChatMessage]:
     mainline_messages: list[ChatMessage] = []
     all_chat_messages = fetch_chat_messages_by_session(chat_session_id, db_session)
-    message_num = 0
-    parent_edit_num = None
-    while True:
-        latest_msg = [
-            msg
-            for msg in all_chat_messages
-            if msg.message_number == message_num
-            and msg.parent_edit_number == parent_edit_num
-            and msg.latest == True  # noqa
-        ]
-        if len(latest_msg) > 1:
-            logger.error(
-                f"This should never happen, multiple messages "
-                f"for chat session {chat_session_id} are marked latest"
-            )
-        if not latest_msg:
-            break
+    target_message_num = 0
+    target_parent_edit_num = None
 
-        mainline_messages.append(latest_msg[0])
+    for msg in all_chat_messages:
+        if (
+            msg.message_number != target_message_num
+            or msg.parent_edit_number != target_parent_edit_num
+            or not msg.latest
+        ):
+            continue
 
-        message_num += 1
+        target_parent_edit_num = msg.edit_number
+        target_message_num += 1
+
+        mainline_messages.append(msg)
 
     return mainline_messages
 
