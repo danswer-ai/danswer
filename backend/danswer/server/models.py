@@ -156,10 +156,6 @@ class SearchFeedbackRequest(BaseModel):
     search_feedback: SearchFeedbackType
 
 
-class GetChatRequest(BaseModel):
-    chat_session_id: int
-
-
 class CreateChatRequest(BaseModel):
     chat_session_id: int
     message_number: int
@@ -173,8 +169,8 @@ class ChatRenameRequest(BaseModel):
     first_message: str | None
 
 
-class SimpleTextResponse(BaseModel):
-    text: str
+class RenameChatSessionResponse(BaseModel):
+    new_name: str  # This is only really useful if the name is generated
 
 
 class ChatSessionIdsResponse(BaseModel):

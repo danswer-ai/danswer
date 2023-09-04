@@ -4,6 +4,7 @@ from sqlalchemy import and_
 from sqlalchemy import delete
 from sqlalchemy import func
 from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import HARD_DELETE_CHATS
@@ -49,6 +50,24 @@ def fetch_chat_session_by_id(chat_session_id: int, db_session: Session) -> ChatS
         raise ValueError("Invalid Chat Session ID provided")
 
     return chat_session
+
+
+def verify_parent_exists(
+    chat_session_id: int,
+    message_number: int,
+    parent_edit_number: int | None,
+    db_session: Session,
+) -> None:
+    stmt = select(ChatMessage).where(
+        (ChatMessage.chat_session_id == chat_session_id)
+        & (ChatMessage.message_number == message_number - 1)
+        & (ChatMessage.edit_number == parent_edit_number)
+    )
+
+    try:
+        db_session.execute(stmt).one()
+    except NoResultFound:
+        raise ValueError("Invalid message, parent message not found")
 
 
 def create_chat_session(
@@ -155,7 +174,6 @@ def create_new_chat_message(
         message_type=message_type,
     )
 
-    # TODO verify this order is correctly applied
     db_session.add(new_chat_message)
 
     # Set the previous latest message of the same parent, as no longer the latest

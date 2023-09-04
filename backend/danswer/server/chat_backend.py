@@ -16,18 +16,19 @@ from danswer.db.chat import fetch_chat_messages_by_session
 from danswer.db.chat import fetch_chat_session_by_id
 from danswer.db.chat import fetch_chat_sessions_by_user
 from danswer.db.chat import update_chat_session
+from danswer.db.chat import verify_parent_exists
 from danswer.db.engine import get_session
 from danswer.db.models import ChatMessage
 from danswer.db.models import User
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.secondary_llm_flows.chat_helpers import get_new_chat_name
+from danswer.server.models import ChatMessageDetail
 from danswer.server.models import ChatRenameRequest
 from danswer.server.models import ChatSessionDetailResponse
 from danswer.server.models import ChatSessionIdsResponse
 from danswer.server.models import CreateChatID
 from danswer.server.models import CreateChatRequest
-from danswer.server.models import GetChatRequest
-from danswer.server.models import SimpleTextResponse
+from danswer.server.models import RenameChatSessionResponse
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
@@ -53,14 +54,13 @@ def get_user_chat_sessions(
     return ChatSessionIdsResponse(sessions=[chat.id for chat in chat_sessions])
 
 
-@router.get("/get-chat-session")
+@router.get("/get-chat-session/{session_id}")
 def get_chat_session_messages(
-    chat_request: GetChatRequest,
+    session_id: int,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ChatSessionDetailResponse:
     user_id = user.id if user is not None else None
-    session_id = chat_request.chat_session_id
 
     session = fetch_chat_session_by_id(session_id, db_session)
     if user_id != session.user_id:
@@ -71,6 +71,26 @@ def get_chat_session_messages(
         raise PermissionError(
             f"User {user.email} is trying to read a different user's chat"
         )
+
+    session_messages = fetch_chat_messages_by_session(
+        chat_session_id=session_id, db_session=db_session
+    )
+
+    return ChatSessionDetailResponse(
+        chat_session_id=session_id,
+        messages=[
+            ChatMessageDetail(
+                message_number=msg.message_number,
+                parent_edit_number=msg.parent_edit_number,
+                edit_number=msg.edit_number,
+                latest=msg.latest,
+                message=msg.message,
+                message_type=msg.message_type,
+                time_sent=msg.time_sent,
+            )
+            for msg in session_messages
+        ],
+    )
 
 
 @router.post("/create-chat-session")
@@ -87,12 +107,12 @@ def create_new_chat_session(
     return CreateChatID(chat_session_id=new_chat_session.id)
 
 
-@router.post("/rename-chat-session")
+@router.put("/rename-chat-session")
 def rename_chat_session(
     rename: ChatRenameRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-) -> SimpleTextResponse:
+) -> RenameChatSessionResponse:
     name = rename.name
     message = rename.first_message
     user_id = user.id if user is not None else None
@@ -104,17 +124,17 @@ def rename_chat_session(
 
     update_chat_session(user_id, rename.chat_session_id, new_name, db_session)
 
-    return SimpleTextResponse(text=new_name)
+    return RenameChatSessionResponse(new_name=new_name)
 
 
-@router.delete("/delete-chat-session/{chat_session_id}")
+@router.delete("/delete-chat-session/{session_id}")
 def delete_chat_session_by_id(
-    chat_session_id: int,
+    session_id: int,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     user_id = user.id if user is not None else None
-    delete_chat_session(user_id, chat_session_id, db_session)
+    delete_chat_session(user_id, session_id, db_session)
 
 
 def _create_chat_chain(
@@ -142,7 +162,7 @@ def _create_chat_chain(
     return mainline_messages
 
 
-@router.post("/send_message")
+@router.post("/send-message")
 def handle_new_chat_message(
     chat_message: CreateChatRequest,
     user: User | None = Depends(current_user),
@@ -152,9 +172,6 @@ def handle_new_chat_message(
     message_number = chat_message.message_number
     parent_edit_number = chat_message.parent_edit_number
     user_id = user.id if user is not None else None
-
-    if message_number != 0 and parent_edit_number is None:
-        raise ValueError("Message must have a valid parent message")
 
     chat_session = fetch_chat_session_by_id(chat_session_id, db_session)
     if chat_session.user_id != user_id:
@@ -166,24 +183,52 @@ def handle_new_chat_message(
             f"User {user.email} trying to interact with a different user's chat"
         )
 
-    @log_generator_function_time()
-    def stream_chat_tokens() -> Iterator[str]:
-        create_new_chat_message(
+    if message_number != 0:
+        if parent_edit_number is None:
+            raise ValueError("Message must have a valid parent message")
+
+        verify_parent_exists(
             chat_session_id=chat_session_id,
             message_number=message_number,
             parent_edit_number=parent_edit_number,
-            message=chat_message.message,
-            message_type=MessageType.USER,
             db_session=db_session,
         )
+    else:
+        if parent_edit_number:
+            raise ValueError("Initial message in session cannot have parent")
 
-        mainline_messages = _create_chat_chain(
-            chat_session_id,
-            db_session,
-        )
+    new_message = create_new_chat_message(
+        chat_session_id=chat_session_id,
+        message_number=message_number,
+        parent_edit_number=parent_edit_number,
+        message=chat_message.message,
+        message_type=MessageType.USER,
+        db_session=db_session,
+    )
 
+    mainline_messages = _create_chat_chain(
+        chat_session_id,
+        db_session,
+    )
+
+    if not mainline_messages:
+        raise RuntimeError("Could not trace chat message history")
+
+    @log_generator_function_time()
+    def stream_chat_tokens() -> Iterator[str]:
         tokens = llm_chat_answer(mainline_messages)
+        llm_output = ""
         for token in tokens:
+            llm_output += token
             yield get_json_line(asdict(DanswerAnswerPiece(answer_piece=token)))
+
+        create_new_chat_message(
+            chat_session_id=chat_session_id,
+            message_number=message_number + 1,
+            parent_edit_number=new_message.edit_number,
+            message=llm_output,
+            message_type=MessageType.ASSISTANT,
+            db_session=db_session,
+        )
 
     return StreamingResponse(stream_chat_tokens(), media_type="application/json")
