@@ -13,6 +13,10 @@ EMBEDDINGS = "embeddings"
 ALLOWED_USERS = "allowed_users"
 ALLOWED_GROUPS = "allowed_groups"
 METADATA = "metadata"
+# stored in the `metadata` of a chunk. Used to signify that this chunk should
+# not be used for QA. For example, Google Drive file types which can't be parsed
+# are still useful as a search result but not for QA.
+IGNORE_FOR_QA = "ignore_for_qa"
 GEN_AI_API_KEY_STORAGE_KEY = "genai_api_key"
 PUBLIC_DOC_PAT = "PUBLIC"
 QUOTE = "quote"
