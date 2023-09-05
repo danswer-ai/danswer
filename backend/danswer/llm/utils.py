@@ -1,5 +1,7 @@
+from collections.abc import Callable
 from collections.abc import Iterator
 
+import tiktoken
 from langchain.prompts.base import StringPromptValue
 from langchain.prompts.chat import ChatPromptValue
 from langchain.schema import PromptValue
@@ -69,3 +71,17 @@ def convert_input(lm_input: LanguageModelInput) -> str:
 
 def should_be_verbose() -> bool:
     return LOG_LEVEL == "debug"
+
+
+def check_number_of_tokens(
+    text: str, encode_fn: Callable[[str], list] | None = None
+) -> int:
+    """Get's the number of tokens in the provided text, using the provided encoding
+    function. If none is provided, default to the tiktoken encoder used by GPT-3.5
+    and GPT-4.
+    """
+
+    if encode_fn is None:
+        encode_fn = tiktoken.get_encoding("cl100k_base").encode
+
+    return len(encode_fn(text))

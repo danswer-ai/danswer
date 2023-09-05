@@ -10,6 +10,7 @@ from typing import Tuple
 import regex
 
 from danswer.chunking.models import InferenceChunk
+from danswer.configs.app_configs import NUM_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
 from danswer.configs.model_configs import GEN_AI_API_KEY
@@ -21,6 +22,7 @@ from danswer.direct_qa.qa_prompts import ANSWER_PAT
 from danswer.direct_qa.qa_prompts import QUOTE_PAT
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.dynamic_configs import get_dynamic_config_store
+from danswer.llm.utils import check_number_of_tokens
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_model_quote
 from danswer.utils.text_processing import shared_precompare_cleanup
@@ -254,3 +256,38 @@ def simulate_streaming_response(model_out: str) -> Generator[str, None, None]:
     """Mock streaming by generating the passed in model output, character by character"""
     for token in model_out:
         yield token
+
+
+def _get_usable_chunks(
+    chunks: list[InferenceChunk], token_limit: int
+) -> list[InferenceChunk]:
+    total_token_count = 0
+    usable_chunks = []
+    for chunk in chunks:
+        chunk_token_count = check_number_of_tokens(chunk.content)
+        if total_token_count + chunk_token_count > token_limit:
+            break
+
+        usable_chunks.append(chunk)
+
+    return usable_chunks
+
+
+def get_usable_chunks(
+    chunks: list[InferenceChunk],
+    token_limit: int = NUM_TOKENS_FED_TO_GENERATIVE_MODEL,
+    offset: int = 0,
+) -> list[InferenceChunk]:
+    offset_into_chunks = 0
+    usable_chunks: list[InferenceChunk] = []
+    for _ in range(min(offset + 1, 1)):  # go through this process at least once
+        usable_chunks = _get_usable_chunks(
+            chunks=chunks[offset_into_chunks:], token_limit=token_limit
+        )
+        offset_into_chunks += len(usable_chunks)
+        if offset_into_chunks >= len(usable_chunks):
+            raise ValueError(
+                "Chunks offset too large, should not retry this many times"
+            )
+
+    return usable_chunks

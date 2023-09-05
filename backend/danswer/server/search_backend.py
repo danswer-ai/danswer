@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_user
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
-from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.datastores.document_index import get_default_document_index
 from danswer.db.engine import get_session
@@ -22,6 +21,7 @@ from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.llm_utils import get_default_qa_model
+from danswer.direct_qa.qa_utils import get_usable_chunks
 from danswer.search.danswer_helper import query_intent
 from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.keyword_search import retrieve_keyword_documents
@@ -247,17 +247,14 @@ def stream_direct_qa(
             chunk for chunk in ranked_chunks if not chunk.metadata.get(IGNORE_FOR_QA)
         ]
 
-        chunk_offset = offset_count * NUM_GENERATIVE_AI_INPUT_DOCS
-        if chunk_offset >= len(filtered_ranked_chunks):
-            raise ValueError(
-                "Chunks offset too large, should not retry this many times"
-            )
+        # get all chunks that fit into the token limit
+        usable_chunks = get_usable_chunks(
+            chunks=filtered_ranked_chunks, offset=offset_count
+        )
+
         try:
             for response_packet in qa_model.answer_question_stream(
-                query,
-                filtered_ranked_chunks[
-                    chunk_offset : chunk_offset + NUM_GENERATIVE_AI_INPUT_DOCS
-                ],
+                query, usable_chunks
             ):
                 if response_packet is None:
                     continue

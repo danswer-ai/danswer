@@ -138,7 +138,15 @@ WEB_CONNECTOR_OAUTH_TOKEN_URL = os.environ.get("WEB_CONNECTOR_OAUTH_TOKEN_URL")
 #####
 NUM_RETURNED_HITS = 50
 NUM_RERANKED_RESULTS = 15
-NUM_GENERATIVE_AI_INPUT_DOCS = 5
+# we feed in document chunks until we reach this token limit
+_NUM_TOKENS_FED_TO_GENERATIVE_MODEL = os.environ.get(
+    "NUM_TOKENS_FED_TO_GENERATIVE_MODEL"
+)
+NUM_TOKENS_FED_TO_GENERATIVE_MODEL = (
+    int(_NUM_TOKENS_FED_TO_GENERATIVE_MODEL)
+    if _NUM_TOKENS_FED_TO_GENERATIVE_MODEL
+    else 2048
+)
 # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "10")  # 10 seconds

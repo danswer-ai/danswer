@@ -2,7 +2,6 @@ from sqlalchemy.orm import Session
 
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
-from danswer.configs.app_configs import NUM_GENERATIVE_AI_INPUT_DOCS
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.datastores.document_index import get_default_document_index
@@ -11,6 +10,7 @@ from danswer.db.models import User
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.llm_utils import get_default_qa_model
+from danswer.direct_qa.qa_utils import get_usable_chunks
 from danswer.search.danswer_helper import query_intent
 from danswer.search.keyword_search import retrieve_keyword_documents
 from danswer.search.models import QueryFlow
@@ -107,18 +107,14 @@ def answer_qa_query(
         chunk for chunk in ranked_chunks if chunk.metadata.get(IGNORE_FOR_QA)
     ]
 
-    chunk_offset = offset_count * NUM_GENERATIVE_AI_INPUT_DOCS
-    if chunk_offset >= len(filtered_ranked_chunks):
-        raise ValueError("Chunks offset too large, should not retry this many times")
+    # get all chunks that fit into the token limit
+    usable_chunks = get_usable_chunks(
+        chunks=filtered_ranked_chunks, offset=offset_count
+    )
 
     error_msg = None
     try:
-        answer, quotes = qa_model.answer_question(
-            query,
-            filtered_ranked_chunks[
-                chunk_offset : chunk_offset + NUM_GENERATIVE_AI_INPUT_DOCS
-            ],
-        )
+        answer, quotes = qa_model.answer_question(query, usable_chunks)
     except Exception as e:
         # exception is logged in the answer_question method, no need to re-log
         answer, quotes = None, None
