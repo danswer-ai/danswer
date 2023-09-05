@@ -64,6 +64,7 @@ services:
       - GEN_AI_API_KEY=${GEN_AI_API_KEY:-}
       - GEN_AI_ENDPOINT=${GEN_AI_ENDPOINT:-}
       - GEN_AI_HOST_TYPE=${GEN_AI_HOST_TYPE:-}
+      - NUM_TOKENS_FED_TO_GENERATIVE_MODEL=${NUM_TOKENS_FED_TO_GENERATIVE_MODEL:-}
       - POSTGRES_HOST=relational_db
       - QDRANT_HOST=vector_db
       - TYPESENSE_HOST=search_engine
