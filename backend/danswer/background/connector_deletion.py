@@ -26,7 +26,9 @@ from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.deletion_attempt import delete_deletion_attempts
 from danswer.db.deletion_attempt import get_deletion_attempts
-from danswer.db.document import delete_document_by_connector_credential_pair
+from danswer.db.document import (
+    delete_document_by_connector_credential_pair_for_connector_credential_pair,
+)
 from danswer.db.document import delete_documents_complete
 from danswer.db.document import (
     get_document_by_connector_credential_pairs_indexed_by_multiple,
@@ -78,7 +80,7 @@ def _delete_connector_credential_pair(
 
     def _update_multi_indexed_docs() -> None:
         # if a document is indexed by multiple connector_credential_pairs, we should
-        # update it's access rather than outright delete it
+        # update its access rather than outright delete it
         document_by_connector_credential_pairs_to_update = (
             get_document_by_connector_credential_pairs_indexed_by_multiple(
                 db_session=db_session,
@@ -135,10 +137,12 @@ def _delete_connector_credential_pair(
         ]
         document_index.update(update_requests=update_requests)
 
-        # delete the `document_by_connector_credential_pair` rows for the connector / credential pair
-        delete_document_by_connector_credential_pair(
+        # delete the rest of the `document_by_connector_credential_pair` rows for
+        # this connector / credential pair
+        delete_document_by_connector_credential_pair_for_connector_credential_pair(
             db_session=db_session,
-            document_ids=list(document_id_to_allowed_users.keys()),
+            connector_id=connector_id,
+            credential_id=credential_id,
         )
 
     _update_multi_indexed_docs()

@@ -162,6 +162,19 @@ def delete_document_by_connector_credential_pair(
     )
 
 
+def delete_document_by_connector_credential_pair_for_connector_credential_pair(
+    db_session: Session, connector_id: int, credential_id: int
+) -> None:
+    db_session.execute(
+        delete(DocumentByConnectorCredentialPair).where(
+            and_(
+                DocumentByConnectorCredentialPair.connector_id == connector_id,
+                DocumentByConnectorCredentialPair.credential_id == credential_id,
+            )
+        )
+    )
+
+
 def delete_documents(db_session: Session, document_ids: list[str]) -> None:
     db_session.execute(delete(DbDocument).where(DbDocument.id.in_(document_ids)))
 
