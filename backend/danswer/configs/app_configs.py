@@ -138,7 +138,12 @@ WEB_CONNECTOR_OAUTH_TOKEN_URL = os.environ.get("WEB_CONNECTOR_OAUTH_TOKEN_URL")
 #####
 NUM_RETURNED_HITS = 50
 NUM_RERANKED_RESULTS = 15
-NUM_GENERATIVE_AI_INPUT_DOCS = 5
+# We feed in document chunks until we reach this token limit.
+# Default is ~5 full chunks (max chunk size is 2000 chars), although some chunks
+# may be smaller which could result in passing in more total chunks
+NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL = int(
+    os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL") or (512 * 5)
+)
 # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "10")  # 10 seconds
