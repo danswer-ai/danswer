@@ -270,6 +270,14 @@ def _get_usable_chunks(
 
         usable_chunks.append(chunk)
 
+    # try and return at least one chunk if possible. This chunk will
+    # get truncated later on in the pipeline. This would only occur if
+    # the first chunk is larger than the token limit (usually due to character
+    # count -> token count mismatches caused by special characters / non-ascii
+    # languages)
+    if not usable_chunks and chunks:
+        usable_chunks = [chunks[0]]
+
     return usable_chunks
 
 
