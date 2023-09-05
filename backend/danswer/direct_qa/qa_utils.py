@@ -10,7 +10,7 @@ from typing import Tuple
 import regex
 
 from danswer.chunking.models import InferenceChunk
-from danswer.configs.app_configs import NUM_TOKENS_FED_TO_GENERATIVE_MODEL
+from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
 from danswer.configs.model_configs import GEN_AI_API_KEY
@@ -275,7 +275,7 @@ def _get_usable_chunks(
 
 def get_usable_chunks(
     chunks: list[InferenceChunk],
-    token_limit: int = NUM_TOKENS_FED_TO_GENERATIVE_MODEL,
+    token_limit: int = NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
     offset: int = 0,
 ) -> list[InferenceChunk]:
     offset_into_chunks = 0
