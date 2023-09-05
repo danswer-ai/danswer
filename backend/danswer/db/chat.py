@@ -89,6 +89,9 @@ def update_chat_session(
 ) -> ChatSession:
     chat_session = fetch_chat_session_by_id(chat_session_id, db_session)
 
+    if chat_session.deleted:
+        raise ValueError("Trying to rename a deleted chat session")
+
     if user_id != chat_session.user_id:
         raise ValueError("User trying to update chat of another user.")
 

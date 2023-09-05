@@ -15,6 +15,7 @@ from danswer.db.chat import delete_chat_session
 from danswer.db.chat import fetch_chat_messages_by_session
 from danswer.db.chat import fetch_chat_session_by_id
 from danswer.db.chat import fetch_chat_sessions_by_user
+from danswer.db.chat import set_latest_chat_message
 from danswer.db.chat import update_chat_session
 from danswer.db.chat import verify_parent_exists
 from danswer.db.engine import get_session
@@ -28,6 +29,7 @@ from danswer.server.models import ChatSessionDetailResponse
 from danswer.server.models import ChatSessionIdsResponse
 from danswer.server.models import CreateChatID
 from danswer.server.models import CreateChatRequest
+from danswer.server.models import MarkChatMessageLatestRequest
 from danswer.server.models import RenameChatSessionResponse
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
@@ -63,6 +65,10 @@ def get_chat_session_messages(
     user_id = user.id if user is not None else None
 
     session = fetch_chat_session_by_id(session_id, db_session)
+
+    if session.deleted:
+        raise ValueError("Chat Session has been deleted")
+
     if user_id != session.user_id:
         if user is None:
             raise PermissionError(
@@ -174,6 +180,10 @@ def handle_new_chat_message(
     user_id = user.id if user is not None else None
 
     chat_session = fetch_chat_session_by_id(chat_session_id, db_session)
+
+    if chat_session.deleted:
+        raise ValueError("Cannot send messages to a deleted chat session")
+
     if chat_session.user_id != user_id:
         if user is None:
             raise PermissionError(
@@ -232,3 +242,19 @@ def handle_new_chat_message(
         )
 
     return StreamingResponse(stream_chat_tokens(), media_type="application/json")
+
+
+@router.put("/set-message-as-latest")
+def set_message_as_latest(
+    chat_message: MarkChatMessageLatestRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    # TODO add user logic
+    set_latest_chat_message(
+        chat_session_id=chat_message.chat_session_id,
+        message_number=chat_message.message_number,
+        parent_edit_number=chat_message.parent_edit_number,
+        edit_number=chat_message.edit_number,
+        db_session=db_session,
+    )

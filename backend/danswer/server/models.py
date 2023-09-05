@@ -163,6 +163,13 @@ class CreateChatRequest(BaseModel):
     message: str
 
 
+class MarkChatMessageLatestRequest(BaseModel):
+    chat_session_id: int
+    message_number: int
+    parent_edit_number: int | None
+    edit_number: int
+
+
 class ChatRenameRequest(BaseModel):
     chat_session_id: int
     name: str | None
