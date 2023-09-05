@@ -20,7 +20,7 @@ def llm_chat_answer(previous_messages: list[ChatMessage]) -> Iterator[str]:
             prompt.append(AIMessage(content=content))
         if (
             msg.message_type == MessageType.USER
-            or msg.message_type == MessageType.DANSWER
+            or msg.message_type == MessageType.DANSWER  # consider using FunctionMessage
         ):
             prompt.append(HumanMessage(content=content))
 
