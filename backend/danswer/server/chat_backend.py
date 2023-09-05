@@ -250,7 +250,22 @@ def set_message_as_latest(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    # TODO add user logic
+    user_id = user.id if user is not None else None
+
+    chat_session = fetch_chat_session_by_id(chat_message.chat_session_id, db_session)
+
+    if chat_session.deleted:
+        raise ValueError("Chat session has been deleted")
+
+    if chat_session.user_id != user_id:
+        if user is None:
+            raise PermissionError(
+                "The No-Auth User trying to update chat messages of another user"
+            )
+        raise PermissionError(
+            f"User {user.email} trying to update chat messages of another user"
+        )
+
     set_latest_chat_message(
         chat_session_id=chat_message.chat_session_id,
         message_number=chat_message.message_number,
