@@ -290,7 +290,7 @@ def get_usable_chunks(
     offset_into_chunks = 0
     usable_chunks: list[InferenceChunk] = []
     for _ in range(min(offset + 1, 1)):  # go through this process at least once
-        if offset_into_chunks >= len(usable_chunks) and offset_into_chunks > 0:
+        if offset_into_chunks >= len(chunks) and offset_into_chunks > 0:
             raise ValueError(
                 "Chunks offset too large, should not retry this many times"
             )
