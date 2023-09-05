@@ -114,6 +114,9 @@ def answer_qa_query(
         token_limit=NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
         offset=offset_count,
     )
+    logger.debug(
+        f"Chunks fed to LLM: {[chunk.semantic_identifier for chunk in usable_chunks]}"
+    )
 
     error_msg = None
     try:

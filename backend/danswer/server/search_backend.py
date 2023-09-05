@@ -254,6 +254,9 @@ def stream_direct_qa(
             token_limit=NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
             offset=offset_count,
         )
+        logger.debug(
+            f"Chunks fed to LLM: {[chunk.semantic_identifier for chunk in usable_chunks]}"
+        )
 
         try:
             for response_packet in qa_model.answer_question_stream(

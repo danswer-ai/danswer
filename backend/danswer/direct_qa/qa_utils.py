@@ -268,6 +268,7 @@ def _get_usable_chunks(
         if total_token_count + chunk_token_count > token_limit:
             break
 
+        total_token_count += chunk_token_count
         usable_chunks.append(chunk)
 
     # try and return at least one chunk if possible. This chunk will
@@ -289,13 +290,14 @@ def get_usable_chunks(
     offset_into_chunks = 0
     usable_chunks: list[InferenceChunk] = []
     for _ in range(min(offset + 1, 1)):  # go through this process at least once
+        if offset_into_chunks >= len(usable_chunks) and offset_into_chunks > 0:
+            raise ValueError(
+                "Chunks offset too large, should not retry this many times"
+            )
+
         usable_chunks = _get_usable_chunks(
             chunks=chunks[offset_into_chunks:], token_limit=token_limit
         )
         offset_into_chunks += len(usable_chunks)
-        if offset_into_chunks >= len(usable_chunks):
-            raise ValueError(
-                "Chunks offset too large, should not retry this many times"
-            )
 
     return usable_chunks
