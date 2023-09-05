@@ -35,6 +35,11 @@ RUN apt-get remove -y linux-libc-dev \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
+# Remove tornado test key to placate vulnerability scanners
+# More details can be found here:
+# https://github.com/tornadoweb/tornado/issues/3107
+RUN rm /usr/local/lib/python3.11/site-packages/tornado/test/test.key
+
 WORKDIR /app
 COPY ./danswer /app/danswer
 COPY ./alembic /app/alembic
