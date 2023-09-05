@@ -139,8 +139,10 @@ WEB_CONNECTOR_OAUTH_TOKEN_URL = os.environ.get("WEB_CONNECTOR_OAUTH_TOKEN_URL")
 NUM_RETURNED_HITS = 50
 NUM_RERANKED_RESULTS = 15
 # we feed in document chunks until we reach this token limit
+# default is ~5 full chunks (max chunk size is 512), although some chunks may be
+# smaller which could result in passing in more total chunks
 NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL = int(
-    os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL") or 2048
+    os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL") or (512 * 5)
 )
 # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
