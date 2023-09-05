@@ -104,9 +104,7 @@ def _get_vespa_chunk_ids_by_document_id(
     while True:
         results = requests.get(SEARCH_ENDPOINT, params=params).json()
         hits = results["root"].get("children", [])
-        doc_chunk_ids.extend(
-            [hit.get("fields", {}).get("documentid").split("::")[1] for hit in hits]
-        )
+        doc_chunk_ids.extend([hit["id"].split("::")[1] for hit in hits])
         params["offset"] += hits_per_page  # type: ignore
 
         if len(hits) < hits_per_page:
