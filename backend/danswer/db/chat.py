@@ -160,6 +160,7 @@ def create_new_chat_message(
     message_type: MessageType,
     db_session: Session,
 ) -> ChatMessage:
+    """Creates a new chat message and sets it to the latest message of its parent message"""
     # Get the count of existing edits at the provided message number
     latest_edit_number = (
         db_session.query(func.max(ChatMessage.edit_number))

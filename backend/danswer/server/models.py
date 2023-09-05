@@ -163,7 +163,7 @@ class CreateChatRequest(BaseModel):
     message: str
 
 
-class MarkChatMessageLatestRequest(BaseModel):
+class ChatMessageIdentifier(BaseModel):
     chat_session_id: int
     message_number: int
     parent_edit_number: int | None
@@ -196,6 +196,7 @@ class ChatMessageDetail(BaseModel):
 
 class ChatSessionDetailResponse(BaseModel):
     chat_session_id: int
+    description: str
     messages: list[ChatMessageDetail]
 
 

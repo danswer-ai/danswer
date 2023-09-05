@@ -24,12 +24,12 @@ from danswer.db.models import User
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.secondary_llm_flows.chat_helpers import get_new_chat_name
 from danswer.server.models import ChatMessageDetail
+from danswer.server.models import ChatMessageIdentifier
 from danswer.server.models import ChatRenameRequest
 from danswer.server.models import ChatSessionDetailResponse
 from danswer.server.models import ChatSessionIdsResponse
 from danswer.server.models import CreateChatID
 from danswer.server.models import CreateChatRequest
-from danswer.server.models import MarkChatMessageLatestRequest
 from danswer.server.models import RenameChatSessionResponse
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
@@ -84,6 +84,7 @@ def get_chat_session_messages(
 
     return ChatSessionDetailResponse(
         chat_session_id=session_id,
+        description=session.description,
         messages=[
             ChatMessageDetail(
                 message_number=msg.message_number,
@@ -146,12 +147,15 @@ def delete_chat_session_by_id(
 def _create_chat_chain(
     chat_session_id: int,
     db_session: Session,
+    stop_after: int | None = None,
 ) -> list[ChatMessage]:
     mainline_messages: list[ChatMessage] = []
     all_chat_messages = fetch_chat_messages_by_session(chat_session_id, db_session)
     target_message_num = 0
     target_parent_edit_num = None
 
+    # Chat messages must be ordered by message_number
+    # (fetch_chat_messages_by_session ensures this so no resorting here necessary)
     for msg in all_chat_messages:
         if (
             msg.message_number != target_message_num
@@ -164,6 +168,12 @@ def _create_chat_chain(
         target_message_num += 1
 
         mainline_messages.append(msg)
+
+        if stop_after is not None and target_message_num > stop_after:
+            break
+
+    if not mainline_messages:
+        raise RuntimeError("Could not trace chat message history")
 
     return mainline_messages
 
@@ -221,9 +231,6 @@ def handle_new_chat_message(
         db_session,
     )
 
-    if not mainline_messages:
-        raise RuntimeError("Could not trace chat message history")
-
     @log_generator_function_time()
     def stream_chat_tokens() -> Iterator[str]:
         tokens = llm_chat_answer(mainline_messages)
@@ -244,9 +251,67 @@ def handle_new_chat_message(
     return StreamingResponse(stream_chat_tokens(), media_type="application/json")
 
 
+@router.post("/regenerate")
+def regenerate_message_given_parent(
+    parent_message: ChatMessageIdentifier,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> StreamingResponse:
+    chat_session_id = parent_message.chat_session_id
+    message_number = parent_message.message_number
+    parent_edit_number = parent_message.parent_edit_number
+    edit_number = parent_message.edit_number
+    user_id = user.id if user is not None else None
+
+    chat_session = fetch_chat_session_by_id(parent_message.chat_session_id, db_session)
+
+    if chat_session.deleted:
+        raise ValueError("Chat session has been deleted")
+
+    if chat_session.user_id != user_id:
+        if user is None:
+            raise PermissionError(
+                "The No-Auth User trying to regenerate chat messages of another user"
+            )
+        raise PermissionError(
+            f"User {user.email} trying to regenerate chat messages of another user"
+        )
+
+    set_latest_chat_message(
+        chat_session_id,
+        message_number,
+        parent_edit_number,
+        edit_number,
+        db_session,
+    )
+
+    mainline_messages = _create_chat_chain(
+        chat_session_id, db_session, stop_after=message_number
+    )
+
+    @log_generator_function_time()
+    def stream_regenerate_tokens() -> Iterator[str]:
+        tokens = llm_chat_answer(mainline_messages)
+        llm_output = ""
+        for token in tokens:
+            llm_output += token
+            yield get_json_line(asdict(DanswerAnswerPiece(answer_piece=token)))
+
+        create_new_chat_message(
+            chat_session_id=chat_session_id,
+            message_number=message_number + 1,
+            parent_edit_number=parent_edit_number,
+            message=llm_output,
+            message_type=MessageType.ASSISTANT,
+            db_session=db_session,
+        )
+
+    return StreamingResponse(stream_regenerate_tokens(), media_type="application/json")
+
+
 @router.put("/set-message-as-latest")
 def set_message_as_latest(
-    chat_message: MarkChatMessageLatestRequest,
+    chat_message: ChatMessageIdentifier,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
