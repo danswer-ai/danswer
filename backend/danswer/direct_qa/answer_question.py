@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
+from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.datastores.document_index import get_default_document_index
@@ -109,7 +110,9 @@ def answer_qa_query(
 
     # get all chunks that fit into the token limit
     usable_chunks = get_usable_chunks(
-        chunks=filtered_ranked_chunks, offset=offset_count
+        chunks=filtered_ranked_chunks,
+        token_limit=NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
+        offset=offset_count,
     )
 
     error_msg = None
