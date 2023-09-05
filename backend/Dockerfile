@@ -29,6 +29,8 @@ RUN apt-get update
 RUN apt-get install nodejs -y
 # replace nodejs packaged with playwright (18.17.0) with the one installed above
 RUN cp /usr/bin/node /usr/local/lib/python3.11/site-packages/playwright/driver/node
+# remove nodejs (except for the binary we moved into playwright)
+RUN apt-get remove -y nodejs
 
 # Cleanup for CVEs and size reduction
 RUN apt-get remove -y linux-libc-dev \
