@@ -7,6 +7,7 @@ from typing import List
 from typing import Optional
 
 import requests
+from retry import retry
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -16,6 +17,9 @@ from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
 
 
 @dataclass
@@ -68,19 +72,23 @@ class NotionConnector(LoadConnector, PollConnector):
             "Notion-Version": "2022-06-28",
         }
 
+    @retry(tries=3, delay=1, backoff=2)
+    def _fetch_block(self, block_id: str) -> dict[str, Any]:
+        """Fetch a single block via the Notion API."""
+        logger.debug(f"Fetching block with ID '{block_id}'")
+        block_url = f"https://api.notion.com/v1/blocks/{block_id}/children"
+        query_dict: Dict[str, Any] = {}
+        res = requests.get(block_url, headers=self.headers, json=query_dict)
+        res.raise_for_status()
+        return res.json()
+
     def _read_blocks(self, block_id: str, num_tabs: int = 0) -> str:
         """Reads blocks for a page"""
         done = False
         result_lines_arr = []
         cur_block_id = block_id
         while not done:
-            block_url = f"https://api.notion.com/v1/blocks/{cur_block_id}/children"
-            query_dict: Dict[str, Any] = {}
-
-            res = requests.request(
-                "GET", block_url, headers=self.headers, json=query_dict
-            )
-            data = res.json()
+            data = self._fetch_block(cur_block_id)
 
             for result in data["results"]:
                 result_type = result["type"]
@@ -130,6 +138,7 @@ class NotionConnector(LoadConnector, PollConnector):
         """Reads pages for rich text content and generates Documents"""
         docs_batch = []
         for page in pages:
+            logger.info(f"Reading page with ID '{page.id}', with url {page.url}")
             page_text = self._read_blocks(page.id)
             page_title = self._read_page_title(page)
             docs_batch.append(
@@ -143,8 +152,11 @@ class NotionConnector(LoadConnector, PollConnector):
             )
         return docs_batch
 
+    @retry(tries=3, delay=1, backoff=2)
     def _search_notion(self, query_dict: Dict[str, Any]) -> NotionSearchResponse:
-        """Search for pages from a Notion database."""
+        """Search for pages from a Notion database. Includes some small number of
+        retries to handle misc, flakey failures."""
+        logger.debug(f"Searching for pages in Notion with query_dict: {query_dict}")
         res = requests.post(
             "https://api.notion.com/v1/search",
             headers=self.headers,
