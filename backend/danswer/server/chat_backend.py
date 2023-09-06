@@ -65,7 +65,10 @@ def get_chat_session_messages(
 ) -> ChatSessionDetailResponse:
     user_id = user.id if user is not None else None
 
-    session = fetch_chat_session_by_id(session_id, db_session)
+    try:
+        session = fetch_chat_session_by_id(session_id, db_session)
+    except ValueError:
+        raise ValueError("Chat Session has been deleted")
 
     if session.deleted:
         raise ValueError("Chat Session has been deleted")

@@ -58,6 +58,7 @@ def upgrade() -> None:
             "message_type",
             sa.Enum("SYSTEM", "USER", "ASSISTANT", "DANSWER", name="messagetype"),
             nullable=False,
+            native_enum=False,
         ),
         sa.Column(
             "time_sent",

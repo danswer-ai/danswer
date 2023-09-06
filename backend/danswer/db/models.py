@@ -408,6 +408,6 @@ class ChatMessage(Base):
     message_type: Mapped[MessageType] = mapped_column(Enum(MessageType))
     time_sent: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
-    )  # Assuming a chat history has a timestamp for when the message was sent
+    )
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
