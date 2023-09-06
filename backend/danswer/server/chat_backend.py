@@ -12,6 +12,7 @@ from danswer.configs.constants import MessageType
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import delete_chat_session
+from danswer.db.chat import fetch_chat_message
 from danswer.db.chat import fetch_chat_messages_by_session
 from danswer.db.chat import fetch_chat_session_by_id
 from danswer.db.chat import fetch_chat_sessions_by_user
@@ -88,8 +89,8 @@ def get_chat_session_messages(
         messages=[
             ChatMessageDetail(
                 message_number=msg.message_number,
-                parent_edit_number=msg.parent_edit_number,
                 edit_number=msg.edit_number,
+                parent_edit_number=msg.parent_edit_number,
                 latest=msg.latest,
                 message=msg.message,
                 message_type=msg.message_type,
@@ -217,6 +218,7 @@ def handle_new_chat_message(
         if parent_edit_number is not None:
             raise ValueError("Initial message in session cannot have parent")
 
+    # Create new message at the right place in the tree and label it latest for its parent
     new_message = create_new_chat_message(
         chat_session_id=chat_session_id,
         message_number=message_number,
@@ -251,19 +253,28 @@ def handle_new_chat_message(
     return StreamingResponse(stream_chat_tokens(), media_type="application/json")
 
 
-@router.post("/regenerate")
+@router.post("/regenerate-from-parent")
 def regenerate_message_given_parent(
     parent_message: ChatMessageIdentifier,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
+    """Regenerate an LLM response given a particular parent message
+    The parent message is set as latest and a new LLM response is set as
+    the latest following message"""
     chat_session_id = parent_message.chat_session_id
     message_number = parent_message.message_number
-    parent_edit_number = parent_message.parent_edit_number
     edit_number = parent_message.edit_number
     user_id = user.id if user is not None else None
 
-    chat_session = fetch_chat_session_by_id(parent_message.chat_session_id, db_session)
+    chat_message = fetch_chat_message(
+        chat_session_id=chat_session_id,
+        message_number=message_number,
+        edit_number=edit_number,
+        db_session=db_session,
+    )
+
+    chat_session = chat_message.chat_session
 
     if chat_session.deleted:
         raise ValueError("Chat session has been deleted")
@@ -280,11 +291,13 @@ def regenerate_message_given_parent(
     set_latest_chat_message(
         chat_session_id,
         message_number,
-        parent_edit_number,
+        chat_message.parent_edit_number,
         edit_number,
         db_session,
     )
 
+    # The parent message, now set as latest, may have follow on messages
+    # Don't want to include those in the context to LLM
     mainline_messages = _create_chat_chain(
         chat_session_id, db_session, stop_after=message_number
     )
@@ -300,7 +313,7 @@ def regenerate_message_given_parent(
         create_new_chat_message(
             chat_session_id=chat_session_id,
             message_number=message_number + 1,
-            parent_edit_number=parent_edit_number,
+            parent_edit_number=edit_number,
             message=llm_output,
             message_type=MessageType.ASSISTANT,
             db_session=db_session,
@@ -311,13 +324,20 @@ def regenerate_message_given_parent(
 
 @router.put("/set-message-as-latest")
 def set_message_as_latest(
-    chat_message: ChatMessageIdentifier,
+    message_identifier: ChatMessageIdentifier,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     user_id = user.id if user is not None else None
 
-    chat_session = fetch_chat_session_by_id(chat_message.chat_session_id, db_session)
+    chat_message = fetch_chat_message(
+        chat_session_id=message_identifier.chat_session_id,
+        message_number=message_identifier.message_number,
+        edit_number=message_identifier.edit_number,
+        db_session=db_session,
+    )
+
+    chat_session = chat_message.chat_session
 
     if chat_session.deleted:
         raise ValueError("Chat session has been deleted")

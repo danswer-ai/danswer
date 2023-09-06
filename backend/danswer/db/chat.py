@@ -41,6 +41,23 @@ def fetch_chat_messages_by_session(
     return list(result)
 
 
+def fetch_chat_message(
+    chat_session_id: int, message_number: int, edit_number: int, db_session: Session
+) -> ChatMessage:
+    stmt = select(ChatMessage).where(
+        (ChatMessage.chat_session_id == chat_session_id)
+        & (ChatMessage.message_number == message_number)
+        & (ChatMessage.edit_number == edit_number)
+    )
+
+    chat_message = db_session.execute(stmt).scalar_one_or_none()
+
+    if not chat_message:
+        raise ValueError("Invalid Chat Message specified")
+
+    return chat_message
+
+
 def fetch_chat_session_by_id(chat_session_id: int, db_session: Session) -> ChatSession:
     stmt = select(ChatSession).where(ChatSession.id == chat_session_id)
     result = db_session.execute(stmt)
@@ -135,6 +152,11 @@ def _set_latest_chat_message_no_commit(
     edit_number: int,
     db_session: Session,
 ) -> None:
+    if message_number != 0 and parent_edit_number is None:
+        raise ValueError(
+            "Only initial message in a chat is allowed to not have a parent"
+        )
+
     db_session.query(ChatMessage).filter(
         and_(
             ChatMessage.chat_session_id == chat_session_id,

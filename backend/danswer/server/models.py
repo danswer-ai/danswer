@@ -166,7 +166,6 @@ class CreateChatRequest(BaseModel):
 class ChatMessageIdentifier(BaseModel):
     chat_session_id: int
     message_number: int
-    parent_edit_number: int | None
     edit_number: int
 
 
@@ -186,8 +185,8 @@ class ChatSessionIdsResponse(BaseModel):
 
 class ChatMessageDetail(BaseModel):
     message_number: int
-    parent_edit_number: int | None
     edit_number: int
+    parent_edit_number: int | None
     latest: bool
     message: str
     message_type: MessageType
