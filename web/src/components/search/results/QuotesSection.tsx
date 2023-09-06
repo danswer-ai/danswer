@@ -1,6 +1,79 @@
 import { Quote } from "@/lib/search/interfaces";
 import { ResponseSection, StatusOptions } from "./ResponseSection";
 import { getSourceIcon } from "@/components/source";
+import { CheckmarkIcon, CopyIcon } from "@/components/icons/icons";
+import { useState } from "react";
+
+const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
+  const [detailIsOpen, setDetailIsOpen] = useState(false);
+  const [copyClicked, setCopyClicked] = useState(false);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => {
+        setDetailIsOpen(true);
+      }}
+      onMouseLeave={() => setDetailIsOpen(false)}
+    >
+      {detailIsOpen && (
+        <div className="absolute top-0 mt-10 pt-2 z-50">
+          <div className="rounded-lg shadow bg-gray-800 w-96 p-3 text-sm leading-relaxed text-gray-200">
+            <div className="flex mt-1">
+              <div>
+                <b>Quote:</b> <i>{quoteInfo.quote}</i>
+              </div>
+              <div
+                className="my-auto ml-1"
+                onClick={() => {
+                  navigator.clipboard.writeText(quoteInfo.quote);
+                  setCopyClicked(true);
+                  setTimeout(() => {
+                    setCopyClicked(false);
+                  }, 1000);
+                }}
+              >
+                {copyClicked ? (
+                  <CheckmarkIcon
+                    className="my-auto flex flex-shrink-0 text-gray-500 hover:text-gray-400 cursor-pointer"
+                    size={20}
+                  />
+                ) : (
+                  <CopyIcon
+                    className="my-auto flex flex-shrink-0 text-gray-500 hover:text-gray-400 cursor-pointer"
+                    size={20}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <button className="text-sm flex w-fit">
+        <a
+          className="flex max-w-[300px] shrink box-border p-2 border border-gray-800 rounded-lg hover:bg-gray-800"
+          href={quoteInfo.link || undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {getSourceIcon(quoteInfo.source_type, 20)}
+          <p className="truncate break-all ml-2 mr-2">
+            {quoteInfo.semantic_identifier || quoteInfo.document_id}
+          </p>
+        </a>
+
+        {/* <div
+          className="cursor-pointer h-full pt-2 pb-2 px-1 border-t border-b border-r border-gray-800 rounded-r-lg hover:bg-gray-800"
+          onClick={() => setDetailIsOpen(!detailIsOpen)}
+        >
+          <div className="pt-0.5 mx-auto h-[20px]">
+            <ZoomInIcon className="text-gray-500" size={14} />
+          </div>
+        </div> */}
+      </button>
+    </div>
+  );
+};
 
 interface QuotesSectionProps {
   quotes: Quote[] | null;
@@ -37,20 +110,9 @@ const QuotesBody = ({ quotes, isFetching }: QuotesSectionProps) => {
   }
 
   return (
-    <div className="flex flex-wrap">
+    <div className="flex flex-wrap gap-2">
       {quotes!.map((quoteInfo) => (
-        <a
-          key={quoteInfo.document_id}
-          className="p-2 mr-1 border border-gray-800 rounded-lg text-sm flex max-w-[280px] hover:bg-gray-800 w-fit"
-          href={quoteInfo.link || undefined}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {getSourceIcon(quoteInfo.source_type, 20)}
-          <p className="truncate break-all ml-2 mr-1">
-            {quoteInfo.semantic_identifier || quoteInfo.document_id}
-          </p>
-        </a>
+        <QuoteDisplay quoteInfo={quoteInfo} key={quoteInfo.document_id} />
       ))}
     </div>
   );

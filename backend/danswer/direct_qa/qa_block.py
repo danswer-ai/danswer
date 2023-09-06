@@ -1,9 +1,13 @@
 import abc
+import json
 from collections.abc import Iterator
 from copy import copy
 
 import tiktoken
+from langchain.schema.messages import AIMessage
 from langchain.schema.messages import BaseMessage
+from langchain.schema.messages import HumanMessage
+from langchain.schema.messages import SystemMessage
 
 from danswer.chunking.models import InferenceChunk
 from danswer.direct_qa.interfaces import AnswerQuestionReturn
@@ -13,11 +17,16 @@ from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerQuotes
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.qa_prompts import JsonChatProcessor
+from danswer.direct_qa.qa_prompts import SAMPLE_JSON_RESPONSE
+from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
 from danswer.direct_qa.qa_utils import process_model_tokens
 from danswer.llm.llm import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import str_prompt_to_langchain_prompt
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
 
 
 class QAHandler(abc.ABC):
@@ -81,6 +90,51 @@ class SimpleChatQAHandler(QAHandler):
             tokens=tokens,
             context_docs=context_chunks,
             is_json_prompt=False,
+        )
+
+
+class JsonChatQAUnshackledHandler(QAHandler):
+    def build_prompt(
+        self, query: str, context_chunks: list[InferenceChunk]
+    ) -> list[BaseMessage]:
+        prompt: list[BaseMessage] = []
+
+        complete_answer_not_found_response = (
+            '{"answer": "' + UNCERTAINTY_PAT + '", "quotes": []}'
+        )
+        prompt.append(
+            SystemMessage(
+                content=(
+                    "Use the following pieces of context to answer the users question. Your response "
+                    "should be in JSON format and contain an answer and (optionally) quotes that help support the answer. "
+                    "Your responses should be informative, detailed, and consider all possibilities and edge cases. "
+                    f"If you don't know the answer, respond with '{complete_answer_not_found_response}'\n"
+                    f"Sample response:\n\n{json.dumps(SAMPLE_JSON_RESPONSE)}"
+                )
+            )
+        )
+        prompt.append(
+            SystemMessage(
+                content='Start by reading the following documents and responding with "Acknowledged".'
+            )
+        )
+        for chunk in context_chunks:
+            prompt.append(SystemMessage(content=chunk.content))
+            prompt.append(AIMessage(content="Acknowledged"))
+
+        prompt.append(HumanMessage(content=f"Question: {query}\n"))
+
+        return prompt
+
+    def process_response(
+        self,
+        tokens: Iterator[str],
+        context_chunks: list[InferenceChunk],
+    ) -> AnswerQuestionStreamReturn:
+        yield from process_model_tokens(
+            tokens=tokens,
+            context_docs=context_chunks,
+            is_json_prompt=True,
         )
 
 
