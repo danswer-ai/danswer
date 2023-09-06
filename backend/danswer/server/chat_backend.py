@@ -188,8 +188,12 @@ def handle_new_chat_message(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
+    """This endpoint is both used for sending new messages and for sending edited messages.
+    To avoid extra overhead/latency, this assumes (and checks) that previous messages on the path
+    have already been set as latest"""
     chat_session_id = chat_message.chat_session_id
     message_number = chat_message.message_number
+    message_content = chat_message.message
     parent_edit_number = chat_message.parent_edit_number
     user_id = user.id if user is not None else None
 
@@ -226,7 +230,7 @@ def handle_new_chat_message(
         chat_session_id=chat_session_id,
         message_number=message_number,
         parent_edit_number=parent_edit_number,
-        message=chat_message.message,
+        message=message_content,
         message_type=MessageType.USER,
         db_session=db_session,
     )
@@ -235,6 +239,12 @@ def handle_new_chat_message(
         chat_session_id,
         db_session,
     )
+
+    if mainline_messages[-1].message != message_content:
+        raise RuntimeError(
+            "The new message was not on the mainline. "
+            "Be sure to update latests before calling this."
+        )
 
     @log_generator_function_time()
     def stream_chat_tokens() -> Iterator[str]:

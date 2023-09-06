@@ -5,6 +5,7 @@ from sqlalchemy import delete
 from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm import selectinload
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import HARD_DELETE_CHATS
@@ -44,10 +45,14 @@ def fetch_chat_messages_by_session(
 def fetch_chat_message(
     chat_session_id: int, message_number: int, edit_number: int, db_session: Session
 ) -> ChatMessage:
-    stmt = select(ChatMessage).where(
-        (ChatMessage.chat_session_id == chat_session_id)
-        & (ChatMessage.message_number == message_number)
-        & (ChatMessage.edit_number == edit_number)
+    stmt = (
+        select(ChatMessage)
+        .where(
+            (ChatMessage.chat_session_id == chat_session_id)
+            & (ChatMessage.message_number == message_number)
+            & (ChatMessage.edit_number == edit_number)
+        )
+        .options(selectinload(ChatMessage.chat_session))
     )
 
     chat_message = db_session.execute(stmt).scalar_one_or_none()
@@ -74,15 +79,17 @@ def verify_parent_exists(
     message_number: int,
     parent_edit_number: int | None,
     db_session: Session,
-) -> None:
+) -> ChatMessage:
     stmt = select(ChatMessage).where(
         (ChatMessage.chat_session_id == chat_session_id)
         & (ChatMessage.message_number == message_number - 1)
         & (ChatMessage.edit_number == parent_edit_number)
     )
 
+    result = db_session.execute(stmt)
+
     try:
-        db_session.execute(stmt).one()
+        return result.scalar_one()
     except NoResultFound:
         raise ValueError("Invalid message, parent message not found")
 
