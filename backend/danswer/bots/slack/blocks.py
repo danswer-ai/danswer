@@ -50,6 +50,9 @@ def _build_custom_semantic_identifier(
         truncated_blurb = UserIdReplacer.replace_tags_basic(truncated_blurb)
         truncated_blurb = UserIdReplacer.replace_channels_basic(truncated_blurb)
         truncated_blurb = UserIdReplacer.replace_special_mentions(truncated_blurb)
+        truncated_blurb = UserIdReplacer.replace_links(truncated_blurb)
+        # stop as soon as we see a newline, since these break the link
+        truncated_blurb = truncated_blurb.split("\n")[0]
         if truncated_blurb:
             return f"#{semantic_identifier}: {truncated_blurb}"
         else:

@@ -29,6 +29,7 @@ def respond_in_thread(
     text: str | None = None,
     blocks: list[Block] | None = None,
     metadata: Metadata | None = None,
+    unfurl: bool = True,
 ) -> None:
     if not text and not blocks:
         raise ValueError("One of `text` or `blocks` must be provided")
@@ -45,6 +46,8 @@ def respond_in_thread(
         blocks=blocks,
         thread_ts=thread_ts,
         metadata=metadata,
+        unfurl_links=unfurl,
+        unfurl_media=unfurl,
     )
     if not response.get("ok"):
         raise RuntimeError(f"Unable to post message: {response}")
