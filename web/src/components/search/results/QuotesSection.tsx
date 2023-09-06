@@ -17,34 +17,32 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
       onMouseLeave={() => setDetailIsOpen(false)}
     >
       {detailIsOpen && (
-        <div className="absolute top-0 mt-10 pt-2 z-50">
-          <div className="rounded-lg shadow bg-gray-800 w-96 p-3 text-sm leading-relaxed text-gray-200">
-            <div className="flex mt-1">
-              <div>
-                <b>Quote:</b> <i>{quoteInfo.quote}</i>
-              </div>
-              <div
-                className="my-auto ml-1"
-                onClick={() => {
-                  navigator.clipboard.writeText(quoteInfo.quote);
-                  setCopyClicked(true);
-                  setTimeout(() => {
-                    setCopyClicked(false);
-                  }, 1000);
-                }}
-              >
-                {copyClicked ? (
-                  <CheckmarkIcon
-                    className="my-auto flex flex-shrink-0 text-gray-500 hover:text-gray-400 cursor-pointer"
-                    size={20}
-                  />
-                ) : (
-                  <CopyIcon
-                    className="my-auto flex flex-shrink-0 text-gray-500 hover:text-gray-400 cursor-pointer"
-                    size={20}
-                  />
-                )}
-              </div>
+        <div className="absolute top-0 mt-9 pt-2 z-50">
+          <div className="flex flex-shrink-0 rounded-lg w-96 shadow bg-gray-800 p-3 text-sm leading-relaxed text-gray-200">
+            <div>
+              <b>Quote:</b> <i>{quoteInfo.quote}</i>
+            </div>
+            <div
+              className="my-auto pl-3 ml-auto"
+              onClick={() => {
+                navigator.clipboard.writeText(quoteInfo.quote);
+                setCopyClicked(true);
+                setTimeout(() => {
+                  setCopyClicked(false);
+                }, 1000);
+              }}
+            >
+              {copyClicked ? (
+                <CheckmarkIcon
+                  className="my-auto flex flex-shrink-0 text-gray-500 hover:text-gray-400 cursor-pointer"
+                  size={20}
+                />
+              ) : (
+                <CopyIcon
+                  className="my-auto flex flex-shrink-0 text-gray-500 hover:text-gray-400 cursor-pointer"
+                  size={20}
+                />
+              )}
             </div>
           </div>
         </div>
