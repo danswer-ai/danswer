@@ -39,6 +39,11 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
+# Remove global node modules, since they are not needed by the actual app
+# (all dependencies are copied over into the `/app` dir itself). These
+# global modules may be outdated and trigger security scans.
+RUN rm -rf /usr/local/lib/node_modules
+
 # Not needed, set by compose 
 # ENV NODE_ENV production  
 
