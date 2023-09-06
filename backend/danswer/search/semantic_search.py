@@ -55,19 +55,26 @@ def semantic_reranking(
     query: str,
     chunks: list[InferenceChunk],
 ) -> list[InferenceChunk]:
+    model_max = 12  # These are just based on observations from model selection
+    model_min = -12
     cross_encoders = get_default_reranking_model_ensemble()
     sim_scores = [
         encoder.predict([(query, chunk.content) for chunk in chunks])  # type: ignore
         for encoder in cross_encoders
     ]
 
+    cross_models_min = numpy.min(sim_scores)
+
     shifted_sim_scores = sum(
-        [enc_n_scores - numpy.min(enc_n_scores) for enc_n_scores in sim_scores]
+        [enc_n_scores - cross_models_min for enc_n_scores in sim_scores]
     ) / len(sim_scores)
 
     boosts = [translate_boost_count_to_multiplier(chunk.boost) for chunk in chunks]
     boosted_sim_scores = shifted_sim_scores * boosts
-    scored_results = list(zip(boosted_sim_scores, chunks))
+    normalized_b_s_scores = (boosted_sim_scores + cross_models_min - model_min) / (
+        model_max - model_min
+    )
+    scored_results = list(zip(normalized_b_s_scores, chunks))
     scored_results.sort(key=lambda x: x[0], reverse=True)
     ranked_sim_scores, ranked_chunks = zip(*scored_results)
 
