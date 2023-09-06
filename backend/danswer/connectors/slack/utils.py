@@ -179,3 +179,18 @@ class UserIdReplacer:
         message = message.replace("<!here>", "@here")
         message = message.replace("<!everyone>", "@everyone")
         return message
+
+    @staticmethod
+    def replace_links(message: str) -> str:
+        """Replaces slack links e.g. `<URL>` -> `URL` and `<URL|DISPLAY>` -> `DISPLAY`"""
+        # Find user IDs in the message
+        possible_link_matches = re.findall(r"<(.*?)>", message)
+        for possible_link in possible_link_matches:
+            if possible_link[0] not in ["#", "@", "!"]:
+                link_display = (
+                    possible_link
+                    if "|" not in possible_link
+                    else possible_link.split("|")[1]
+                )
+                message = message.replace(f"<{possible_link}>", link_display)
+        return message

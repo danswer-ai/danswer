@@ -107,6 +107,8 @@ def handle_message(
             channel=channel,
             blocks=blocks,
             thread_ts=message_ts_to_respond_to,
+            # don't unfurl, since otherwise we will have 5+ previews which makes the message very long
+            unfurl=False,
         )
     except Exception:
         logger.exception(

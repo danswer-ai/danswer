@@ -146,10 +146,17 @@ def _process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> No
             return
 
         block_id = cast(str, action.get("block_id"))
+        user_id = cast(str, req.payload["user"]["id"])
+        channel_id = cast(str, req.payload["container"]["channel_id"])
+        thread_ts = cast(str, req.payload["container"]["thread_ts"])
         query_event_id = get_query_event_id_from_block_id(block_id)
         handle_qa_feedback(
             query_id=query_event_id,
             feedback_type=feedback_type,
+            client=client.web_client,
+            user_id_to_post_confirmation=user_id,
+            channel_id_to_post_confirmation=channel_id,
+            thread_ts_to_post_confirmation=thread_ts,
         )
 
         logger.info(f"Successfully handled QA feedback for event: {query_event_id}")
