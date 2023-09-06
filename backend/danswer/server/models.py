@@ -11,6 +11,7 @@ from pydantic.generics import GenericModel
 
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
@@ -130,6 +131,10 @@ class SearchDoc(BaseModel):
     score: float | None
 
 
+class CreateChatID(BaseModel):
+    chat_session_id: int
+
+
 class QuestionRequest(BaseModel):
     query: str
     collection: str
@@ -149,6 +154,49 @@ class SearchFeedbackRequest(BaseModel):
     document_rank: int
     click: bool
     search_feedback: SearchFeedbackType
+
+
+class CreateChatRequest(BaseModel):
+    chat_session_id: int
+    message_number: int
+    parent_edit_number: int | None
+    message: str
+
+
+class ChatMessageIdentifier(BaseModel):
+    chat_session_id: int
+    message_number: int
+    edit_number: int
+
+
+class ChatRenameRequest(BaseModel):
+    chat_session_id: int
+    name: str | None
+    first_message: str | None
+
+
+class RenameChatSessionResponse(BaseModel):
+    new_name: str  # This is only really useful if the name is generated
+
+
+class ChatSessionIdsResponse(BaseModel):
+    sessions: list[int]
+
+
+class ChatMessageDetail(BaseModel):
+    message_number: int
+    edit_number: int
+    parent_edit_number: int | None
+    latest: bool
+    message: str
+    message_type: MessageType
+    time_sent: datetime
+
+
+class ChatSessionDetailResponse(BaseModel):
+    chat_session_id: int
+    description: str
+    messages: list[ChatMessageDetail]
 
 
 class QueryValidationResponse(BaseModel):

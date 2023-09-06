@@ -24,13 +24,13 @@ def upgrade() -> None:
         sa.Column("query", sa.String(), nullable=False),
         sa.Column(
             "selected_search_flow",
-            sa.Enum("KEYWORD", "SEMANTIC", name="searchtype"),
+            sa.Enum("KEYWORD", "SEMANTIC", name="searchtype", native_enum=False),
             nullable=True,
         ),
         sa.Column("llm_answer", sa.String(), nullable=True),
         sa.Column(
             "feedback",
-            sa.Enum("LIKE", "DISLIKE", name="qafeedbacktype"),
+            sa.Enum("LIKE", "DISLIKE", name="qafeedbacktype", native_enum=False),
             nullable=True,
         ),
         sa.Column(
@@ -65,6 +65,7 @@ def upgrade() -> None:
                 "HIDE",
                 "UNHIDE",
                 name="searchfeedbacktype",
+                native_enum=False,
             ),
             nullable=True,
         ),

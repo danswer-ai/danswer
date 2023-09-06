@@ -30,6 +30,7 @@ from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
 from danswer.datastores.document_index import get_default_document_index
 from danswer.db.credentials import create_initial_public_credential
 from danswer.direct_qa.llm_utils import get_default_qa_model
+from danswer.server.chat_backend import router as chat_router
 from danswer.server.credential import router as credential_router
 from danswer.server.event_loading import router as event_processing_router
 from danswer.server.health import router as health_router
@@ -66,6 +67,7 @@ def value_error_handler(_: Request, exc: ValueError) -> JSONResponse:
 def get_application() -> FastAPI:
     application = FastAPI(title="Internal Search QA Backend", debug=True, version="0.1")
     application.include_router(backend_router)
+    application.include_router(chat_router)
     application.include_router(event_processing_router)
     application.include_router(admin_router)
     application.include_router(user_router)
