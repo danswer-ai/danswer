@@ -32,7 +32,7 @@ def get_query_validation_messages(user_query: str) -> list[dict[str, str]]:
     )
 
     up_to_date_example = (
-        f"{QUERY_PAT}How many customers do we have?\n"
+        f"{QUERY_PAT}How many customers do we have\n"
         f"{REASONING_PAT}Assuming the retrieved documents contain up to date customer "
         f"acquisition information including a list of customers, the query can be answered. "
         f"It is important to note that if the information only exists in a database, "
