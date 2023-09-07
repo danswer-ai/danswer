@@ -167,7 +167,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
 
       {documents && documents.length > 0 && (
         <div className="mt-4">
-          <div className="font-bold border-b mb-3 pb-1 border-gray-800">
+          <div className="font-bold border-b mb-3 pb-1 border-gray-800 text-lg">
             Results
           </div>
           {removeDuplicateDocs(documents).map((document) => (

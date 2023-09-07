@@ -33,6 +33,7 @@ export interface DanswerDocument {
   semantic_identifier: string | null;
   boost: number;
   score: number;
+  match_highlights: string[];
 }
 
 export interface SearchResponse {
