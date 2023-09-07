@@ -16,7 +16,10 @@ from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerQuotes
 from danswer.direct_qa.interfaces import QAModel
+from danswer.direct_qa.qa_prompts import CODE_BLOCK_PAT
+from danswer.direct_qa.qa_prompts import GENERAL_SEP_PAT
 from danswer.direct_qa.qa_prompts import JsonChatProcessor
+from danswer.direct_qa.qa_prompts import QUESTION_PAT
 from danswer.direct_qa.qa_prompts import SAMPLE_JSON_RESPONSE
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
@@ -90,6 +93,49 @@ class SimpleChatQAHandler(QAHandler):
             tokens=tokens,
             context_docs=context_chunks,
             is_json_prompt=False,
+        )
+
+
+class SingleMessageQAHandler(QAHandler):
+    def build_prompt(
+        self, query: str, context_chunks: list[InferenceChunk]
+    ) -> list[BaseMessage]:
+        complete_answer_not_found_response = (
+            '{"answer": "' + UNCERTAINTY_PAT + '", "quotes": []}'
+        )
+
+        context_docs_str = "\n".join(
+            f"{CODE_BLOCK_PAT.format(c.content)}" for c in context_chunks
+        )
+
+        prompt: list[BaseMessage] = [
+            HumanMessage(
+                content="You are a question answering system that is constantly learning and improving. "
+                "You can process and comprehend vast amounts of text and utilize this knowledge "
+                "to provide accurate and detailed answers to diverse queries.\n"
+                "You ALWAYS responds in a json containing an answer and quotes that support the answer.\n"
+                "Your responses are as informative and detailed as possible.\n"
+                "If you don't know the answer, respond with "
+                f"{CODE_BLOCK_PAT.format(complete_answer_not_found_response)}"
+                "\nSample response:"
+                f"{CODE_BLOCK_PAT.format(json.dumps(SAMPLE_JSON_RESPONSE))}"
+                f"{GENERAL_SEP_PAT}CONTEXT:\n\n{context_docs_str}"
+                f"{GENERAL_SEP_PAT}{QUESTION_PAT} {query}"
+                "\nHint: Make the answer as informative as possible and use a JSON! "
+                "Quotes MUST be EXACT substrings from provided documents!"
+            )
+        ]
+        return prompt
+
+    def process_response(
+        self,
+        tokens: Iterator[str],
+        context_chunks: list[InferenceChunk],
+    ) -> AnswerQuestionStreamReturn:
+        yield from process_model_tokens(
+            tokens=tokens,
+            context_docs=context_chunks,
+            is_json_prompt=True,
         )
 
 

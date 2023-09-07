@@ -6,7 +6,8 @@ from danswer.configs.constants import DocumentSource
 from danswer.connectors.factory import identify_connector_class
 
 
-GENERAL_SEP_PAT = "---\n"
+GENERAL_SEP_PAT = "\n-----\n"
+CODE_BLOCK_PAT = "\n```\n{}\n```\n"
 DOC_SEP_PAT = "---NEW DOCUMENT---"
 DOC_CONTENT_START_PAT = "DOCUMENT CONTENTS:\n"
 QUESTION_PAT = "Query:"

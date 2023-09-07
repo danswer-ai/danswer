@@ -246,6 +246,9 @@ def process_model_tokens(
             json_answer_ind = model_output.index('{"answer":')
             if json_answer_ind != 0:
                 model_output = model_output[json_answer_ind:]
+            end = model_output.rfind("}")
+            if end != -1:
+                model_output = model_output[: end + 1]
         except ValueError:
             logger.exception("Did not find answer pattern in response for JSON prompt")
 

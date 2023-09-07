@@ -77,7 +77,7 @@ GEN_AI_ENDPOINT = os.environ.get("GEN_AI_ENDPOINT", "")
 GEN_AI_HOST_TYPE = os.environ.get("GEN_AI_HOST_TYPE", ModelHostType.HUGGINGFACE.value)
 
 # Set this to be enough for an answer + quotes
-GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS", "512"))
+GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS", "1024"))
 
 # Danswer custom Deep Learning Models
 INTENT_MODEL_VERSION = "danswer/intent-model"

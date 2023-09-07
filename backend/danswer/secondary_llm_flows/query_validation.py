@@ -17,19 +17,22 @@ def get_query_validation_messages(user_query: str) -> list[dict[str, str]]:
     messages = [
         {
             "role": "system",
-            "content": f"You are a helper tool to determine if a query is answerable using retrieval augmented "
-            f"generation. A system will try to answer the user query based on ONLY the top 5 most relevant "
-            f"documents found from search. Sources contain both up to date and proprietary information for "
-            f"the specific team. For named or unknown entities, assume the search will always find "
-            f"consistent knowledge about the entity. Determine if that system should attempt to answer. "
+            "content": "You are a helper tool to determine if a query is answerable using retrieval augmented "
+            "generation. A system will try to answer the user query based on ONLY the top 5 most relevant "
+            "documents found from search. Sources contain both up to date and proprietary information for "
+            "the specific team. For named or unknown entities, assume the search will always find "
+            "consistent knowledge about the entity.\n"
+            "The system is not tuned for writing code nor for interfacing with structured data "
+            "via query languages like SQL.\n"
+            "Determine if that system should attempt to answer. "
             f'"{ANSWERABLE_PAT}" must be exactly "True" or "False"',
         },
         {"role": "user", "content": "What is this Slack channel about?"},
         {
             "role": "assistant",
             "content": f"{REASONING_PAT}First the system must determine which Slack channel is being referred to."
-            f"By fetching 5 documents related to Slack channel contents, it is not possible to determine"
-            f"which Slack channel the user is referring to.\n{ANSWERABLE_PAT}False",
+            "By fetching 5 documents related to Slack channel contents, it is not possible to determine"
+            "which Slack channel the user is referring to.\n{ANSWERABLE_PAT}False",
         },
         {
             "role": "user",
