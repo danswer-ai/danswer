@@ -1,3 +1,23 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.border-blue-500 {
+    border-color: rgb(0 246 255);
+}
+.bg-blue-500 {
+    background: linear-gradient(0deg,rgba(2,5,10,.1),rgba(2,5,10,.1)),linear-gradient(90deg,#00dbde,#fc00ff);
+}
+.text-blue-400,
+.text-blue-500 {
+    color: rgb(0 246 255);
+}
+.border-blue-500 {
+    border-color: rgb(0 246 255);
+}
+.focus-within\:border-blue-500:focus-within {
+    border-color: rgb(0 246 255) !important;
+}
+.hover\:text-blue-500:hover {
+    color: rgb(0 246 255) !important;
+}

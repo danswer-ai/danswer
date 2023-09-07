@@ -44,7 +44,7 @@ const Page = async () => {
         <div className="max-w-md w-full space-y-8">
           <div>
             <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-200">
-              danswer 💃
+            AIDA LLM Semantic Search
             </h2>
           </div>
           <div className="flex">
