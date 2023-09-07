@@ -25,5 +25,11 @@
                 <disk>0.98</disk>
             </resource-limits>
         </tuning>
+        <config name="vespa.config.search.summary.juniperrc">
+            <max_matches>3</max_matches>
+            <length>750</length>
+            <surround_max>350</surround_max>
+            <min_length>300</min_length>
+        </config>
     </content>
 </services>

@@ -21,6 +21,13 @@ schema danswer_chunk {
             }
             index: enable-bm25
         }
+        # duplication of `content` is far from ideal, but is needed for 
+        # non-gram based highlighting for now. If the capability to re-use a 
+        # single field to do both is added, `content_summary` should be removed
+        field content_summary type string {
+            indexing: summary | index
+            summary: dynamic
+        }
         # https://docs.vespa.ai/en/attributes.html potential enum store for speed, but probably not worth it
         field source_type type string {
             indexing: summary | attribute
