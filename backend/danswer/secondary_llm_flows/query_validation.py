@@ -18,13 +18,13 @@ def get_query_validation_messages(user_query: str) -> list[dict[str, str]]:
         {
             "role": "system",
             "content": "You are a helper tool to determine if a query is answerable using retrieval augmented "
-            "generation. A system will try to answer the user query based on ONLY the top 5 most relevant "
-            "documents found from search. Sources contain both up to date and proprietary information for "
-            "the specific team. For named or unknown entities, assume the search will always find "
-            "consistent knowledge about the entity.\n"
-            "The system is not tuned for writing code nor for interfacing with structured data "
-            "via query languages like SQL.\n"
-            "Determine if that system should attempt to answer. "
+            f"generation. A system will try to answer the user query based on ONLY the top 5 most relevant "
+            f"documents found from search. Sources contain both up to date and proprietary information for "
+            f"the specific team. For named or unknown entities, assume the search will always find "
+            f"consistent knowledge about the entity.\n"
+            f"The system is not tuned for writing code nor for interfacing with structured data "
+            f"via query languages like SQL.\n"
+            f"Determine if that system should attempt to answer. "
             f'"{ANSWERABLE_PAT}" must be exactly "True" or "False"',
         },
         {"role": "user", "content": "What is this Slack channel about?"},
