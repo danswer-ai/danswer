@@ -1,4 +1,5 @@
 import json
+import string
 from collections.abc import Mapping
 from typing import Any
 from typing import cast
@@ -25,6 +26,7 @@ from danswer.configs.constants import CONTENT
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import EMBEDDINGS
+from danswer.configs.constants import MATCH_HIGHLIGHTS
 from danswer.configs.constants import METADATA
 from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.configs.constants import SCORE
@@ -59,6 +61,8 @@ DOCUMENT_ID_ENDPOINT = (
 )
 SEARCH_ENDPOINT = f"{VESPA_APP_CONTAINER_URL}/search/"
 _BATCH_SIZE = 100  # Specific to Vespa
+# Specific to Vespa, needed for highlighting matching keywords / section
+CONTENT_SUMMARY = "content_summary"
 
 
 def _get_vespa_document_cross_connector_metadata(
@@ -169,7 +173,9 @@ def _index_vespa_chunks(
             DOCUMENT_ID: document.id,
             CHUNK_ID: chunk.chunk_id,
             BLURB: chunk.blurb,
+            # this duplication of `content` is needed for keyword highlighting :(
             CONTENT: chunk.content,
+            CONTENT_SUMMARY: chunk.content,
             SOURCE_TYPE: str(document.source.value),
             SOURCE_LINKS: json.dumps(chunk.source_links),
             SEMANTIC_IDENTIFIER: document.semantic_identifier,
@@ -222,6 +228,9 @@ def _index_vespa_chunks(
             vespa_document_fields[CONTENT] = remove_invalid_unicode_chars(
                 cast(str, vespa_document_fields[CONTENT])
             )
+            vespa_document_fields[CONTENT_SUMMARY] = remove_invalid_unicode_chars(
+                cast(str, vespa_document_fields[CONTENT_SUMMARY])
+            )
             _index_chunk(vespa_url, json_header, vespa_document_fields)
 
         insertion_records.add(
@@ -272,6 +281,30 @@ def _build_vespa_limit(num_to_retrieve: int, offset: int = 0) -> str:
     return f" limit {num_to_retrieve} offset {offset}"
 
 
+def _process_dynamic_summary(
+    dynamic_summary: str, max_summary_length: int = 400
+) -> list[str]:
+    current_length = 0
+    processed_summary: list[str] = []
+    for summary_section in dynamic_summary.split("<sep />"):
+        force_break = False
+
+        # if we're past the desired max length, break at the last word
+        if current_length + len(summary_section) > max_summary_length:
+            summary_section = summary_section[: max_summary_length - current_length]
+            summary_section = summary_section.rsplit(" ", 1)[0]
+            if summary_section[-1] in string.punctuation:
+                summary_section = summary_section[:-1]
+            summary_section += "..."
+            force_break = True
+
+        processed_summary.append(summary_section)
+        current_length += len(summary_section)
+        if current_length >= max_summary_length or force_break:
+            break
+    return processed_summary
+
+
 def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError(
@@ -282,7 +315,21 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
 
     hits = response.json()["root"].get("children", [])
     inference_chunks = [
-        InferenceChunk.from_dict(dict(hit["fields"], **{SCORE: hit["relevance"]}))
+        InferenceChunk.from_dict(
+            dict(
+                hit["fields"],
+                **{SCORE: hit["relevance"]},
+                **{
+                    MATCH_HIGHLIGHTS: _process_dynamic_summary(
+                        # fallback to regular `content` if the `content_summary` field
+                        # isn't present
+                        dynamic_summary=hit["fields"].get(
+                            CONTENT_SUMMARY, hit["fields"][CONTENT]
+                        ),
+                    )
+                },
+            )
+        )
         for hit in hits
     ]
 
@@ -303,6 +350,7 @@ class VespaIndex(DocumentIndex):
         f"{SECTION_CONTINUATION}, "
         f"{BOOST}, "
         f"{METADATA} "
+        f"{CONTENT_SUMMARY} "
         f"from {DOCUMENT_INDEX_NAME} where "
     )
 
@@ -389,7 +437,11 @@ class VespaIndex(DocumentIndex):
         yql = (
             VespaIndex.yql_base
             + vespa_where_clauses
-            + '({grammar: "weakAnd"}userInput(@query))'
+            # `({defaultIndex: "content_summary"}userInput(@query))` section is
+            # needed for highlighting while the N-gram highlighting is broken /
+            # not working as desired
+            + '({grammar: "weakAnd"}userInput(@query) '
+            + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
             + _build_vespa_limit(num_to_retrieve)
         )
 
@@ -415,7 +467,11 @@ class VespaIndex(DocumentIndex):
         yql = (
             VespaIndex.yql_base
             + vespa_where_clauses
-            + f"({{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding))"
+            + f"(({{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding)) "
+            # `({defaultIndex: "content_summary"}userInput(@query))` section is
+            # needed for highlighting while the N-gram highlighting is broken /
+            # not working as desired
+            + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
             + _build_vespa_limit(num_to_retrieve)
         )
 
@@ -423,6 +479,7 @@ class VespaIndex(DocumentIndex):
 
         params = {
             "yql": yql,
+            "query": query,
             "input.query(query_embedding)": str(query_embedding),
             "ranking.profile": "semantic_search",
         }
@@ -440,8 +497,12 @@ class VespaIndex(DocumentIndex):
         yql = (
             VespaIndex.yql_base
             + vespa_where_clauses
-            + f"{{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding) or "
-            + '{grammar: "weakAnd"}userInput(@query)'
+            + f"({{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding)) or "
+            + '({grammar: "weakAnd"}userInput(@query) '
+            # `({defaultIndex: "content_summary"}userInput(@query))` section is
+            # needed for highlighting while the N-gram highlighting is broken /
+            # not working as desired
+            + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
             + _build_vespa_limit(num_to_retrieve)
         )
 

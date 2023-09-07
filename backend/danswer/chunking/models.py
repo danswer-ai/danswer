@@ -6,6 +6,7 @@ from typing import cast
 
 from danswer.configs.constants import BLURB
 from danswer.configs.constants import BOOST
+from danswer.configs.constants import MATCH_HIGHLIGHTS
 from danswer.configs.constants import METADATA
 from danswer.configs.constants import SCORE
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
@@ -62,6 +63,10 @@ class InferenceChunk(BaseChunk):
     boost: int
     score: float | None
     metadata: dict[str, Any]
+    # Matched sections in the chunk. Uses Vespa syntax e.g. <hi>TEXT</hi>
+    # to specify that a set of words should be highlighted. For example:
+    # ["<hi>the</hi> <hi>answer</hi> is 42", "he couldn't find an <hi>answer</hi>"]
+    match_highlights: list[str]
 
     @classmethod
     def from_dict(cls, init_dict: dict[str, Any]) -> "InferenceChunk":
@@ -85,6 +90,8 @@ class InferenceChunk(BaseChunk):
         init_kwargs[BOOST] = init_kwargs.get(BOOST, 1)
         if SCORE not in init_kwargs:
             init_kwargs[SCORE] = None
+        if MATCH_HIGHLIGHTS not in init_kwargs:
+            init_kwargs[MATCH_HIGHLIGHTS] = []
         if init_kwargs.get(SEMANTIC_IDENTIFIER) is None:
             logger.error(
                 f"Chunk with blurb: {init_kwargs.get(BLURB, 'Unknown')[:50]}... has no Semantic Identifier"

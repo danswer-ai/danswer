@@ -129,6 +129,10 @@ class SearchDoc(BaseModel):
     source_type: str
     boost: int
     score: float | None
+    # Matched sections in the doc. Uses Vespa syntax e.g. <hi>TEXT</hi>
+    # to specify that a set of words should be highlighted. For example:
+    # ["<hi>the</hi> <hi>answer</hi> is 42", "the answer is <hi>42</hi>""]
+    match_highlights: list[str]
 
 
 class CreateChatID(BaseModel):

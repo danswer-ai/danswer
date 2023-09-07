@@ -39,6 +39,7 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
                 source_type=chunk.source_type,
                 boost=chunk.boost,
                 score=chunk.score,
+                match_highlights=chunk.match_highlights,
             )
             # semantic identifier should always exist but for really old indices, it was not enforced
             for chunk in chunks
