@@ -18,10 +18,10 @@ from danswer.direct_qa.huggingface import HuggingFaceCompletionQA
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.local_transformers import TransformerQA
 from danswer.direct_qa.open_ai import OpenAICompletionQA
-from danswer.direct_qa.qa_block import JsonChatQAHandler
 from danswer.direct_qa.qa_block import QABlock
 from danswer.direct_qa.qa_block import QAHandler
 from danswer.direct_qa.qa_block import SimpleChatQAHandler
+from danswer.direct_qa.qa_block import SingleMessageQAHandler
 from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
 from danswer.direct_qa.qa_utils import get_gen_ai_api_key
 from danswer.direct_qa.request_model import RequestCompletionQA
@@ -53,7 +53,7 @@ def check_model_api_key_is_valid(model_api_key: str) -> bool:
 
 def get_default_qa_handler(model: str) -> QAHandler:
     if model == DanswerGenAIModel.OPENAI_CHAT.value:
-        return JsonChatQAHandler()
+        return SingleMessageQAHandler()
 
     return SimpleChatQAHandler()
 
