@@ -7,20 +7,20 @@
             <server id="default" port="8081"/>
         </http>
         <nodes>
-            <node hostalias="node1" />
+            <node hostalias="danswer-node" />
         </nodes>
     </container>
     <content id="danswer_index" version="1.0">
-        <redundancy>2</redundancy>
+        <redundancy>1</redundancy>
         <documents>
             <document type="danswer_chunk" mode="index" />
         </documents>
         <nodes>
-            <node hostalias="node1" distribution-key="0" />
+            <node hostalias="danswer-node" distribution-key="0" />
         </nodes>
         <tuning>
             <resource-limits>
-                <!-- Default is 75% but this should be increased for personal computer dockerized deployments -->
+                <!-- Default is 75% but this should be increased for Dockerized deployments -->
                 <!-- https://docs.vespa.ai/en/operations/feed-block.html -->
                 <disk>0.98</disk>
             </resource-limits>
