@@ -33,6 +33,7 @@ def answer_qa_query(
     db_session: Session,
     disable_generative_answer: bool = DISABLE_GENERATIVE_AI,
     answer_generation_timeout: int = QA_TIMEOUT,
+    real_time_flow: bool = True,
 ) -> QAResponse:
     query = question.query
     filters = question.filters
@@ -88,7 +89,9 @@ def answer_qa_query(
         )
 
     try:
-        qa_model = get_default_qa_model(timeout=answer_generation_timeout)
+        qa_model = get_default_qa_model(
+            timeout=answer_generation_timeout, real_time_flow=real_time_flow
+        )
     except (UnknownModelError, OpenAIKeyMissing) as e:
         return QAResponse(
             answer=None,

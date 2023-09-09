@@ -1,5 +1,6 @@
 import abc
 import json
+import re
 from collections.abc import Iterator
 from copy import copy
 
@@ -13,16 +14,20 @@ from danswer.chunking.models import InferenceChunk
 from danswer.direct_qa.interfaces import AnswerQuestionReturn
 from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
 from danswer.direct_qa.interfaces import DanswerAnswer
-from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerQuotes
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.qa_prompts import CODE_BLOCK_PAT
+from danswer.direct_qa.qa_prompts import FINAL_ANSWER_PAT
 from danswer.direct_qa.qa_prompts import GENERAL_SEP_PAT
 from danswer.direct_qa.qa_prompts import JsonChatProcessor
 from danswer.direct_qa.qa_prompts import QUESTION_PAT
+from danswer.direct_qa.qa_prompts import QUOTES_PAT_PLURAL
 from danswer.direct_qa.qa_prompts import SAMPLE_JSON_RESPONSE
+from danswer.direct_qa.qa_prompts import THOUGHT_PAT
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
+from danswer.direct_qa.qa_utils import match_quotes_to_docs
+from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
 from danswer.llm.llm import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
@@ -43,11 +48,26 @@ class QAHandler(abc.ABC):
     ) -> list[BaseMessage]:
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def process_response(
+    @property
+    def is_json_output(self) -> bool:
+        """Does the model expected to output a valid json"""
+        return True
+
+    def process_llm_output(
+        self, model_output: str, context_chunks: list[InferenceChunk]
+    ) -> tuple[DanswerAnswer, DanswerQuotes]:
+        return process_answer(
+            model_output, context_chunks, is_json_prompt=self.is_json_output
+        )
+
+    def process_llm_token_stream(
         self, tokens: Iterator[str], context_chunks: list[InferenceChunk]
     ) -> AnswerQuestionStreamReturn:
-        raise NotImplementedError
+        yield from process_model_tokens(
+            tokens=tokens,
+            context_docs=context_chunks,
+            is_json_prompt=self.is_json_output,
+        )
 
 
 class JsonChatQAHandler(QAHandler):
@@ -60,19 +80,12 @@ class JsonChatQAHandler(QAHandler):
             )
         )
 
-    def process_response(
-        self,
-        tokens: Iterator[str],
-        context_chunks: list[InferenceChunk],
-    ) -> AnswerQuestionStreamReturn:
-        yield from process_model_tokens(
-            tokens=tokens,
-            context_docs=context_chunks,
-            is_json_prompt=True,
-        )
-
 
 class SimpleChatQAHandler(QAHandler):
+    @property
+    def is_json_output(self) -> bool:
+        return False
+
     def build_prompt(
         self, query: str, context_chunks: list[InferenceChunk]
     ) -> list[BaseMessage]:
@@ -82,17 +95,6 @@ class SimpleChatQAHandler(QAHandler):
                 chunks=context_chunks,
                 include_metadata=False,
             )
-        )
-
-    def process_response(
-        self,
-        tokens: Iterator[str],
-        context_chunks: list[InferenceChunk],
-    ) -> AnswerQuestionStreamReturn:
-        yield from process_model_tokens(
-            tokens=tokens,
-            context_docs=context_chunks,
-            is_json_prompt=False,
         )
 
 
@@ -127,15 +129,79 @@ class SingleMessageQAHandler(QAHandler):
         ]
         return prompt
 
-    def process_response(
-        self,
-        tokens: Iterator[str],
-        context_chunks: list[InferenceChunk],
+
+class SingleMessageScratchpadHandler(QAHandler):
+    @property
+    def is_json_output(self) -> bool:
+        return False
+
+    def build_prompt(
+        self, query: str, context_chunks: list[InferenceChunk]
+    ) -> list[BaseMessage]:
+        cot_block = (
+            f"{THOUGHT_PAT} Let's think step by step. Use this section as a scratchpad.\n"
+            f"{FINAL_ANSWER_PAT} Place your final answer here.\n"
+            f'{QUOTES_PAT_PLURAL} ["provide quotes for the final answer", "as a list of strings"]'
+        )
+
+        context_docs_str = "\n".join(
+            f"{CODE_BLOCK_PAT.format(c.content)}" for c in context_chunks
+        )
+
+        prompt: list[BaseMessage] = [
+            HumanMessage(
+                content="You are a question answering system that is constantly learning and improving. "
+                "You can process and comprehend vast amounts of text and utilize this knowledge "
+                "to provide accurate and detailed answers to diverse queries.\n"
+                f"{GENERAL_SEP_PAT}CONTEXT:\n\n{context_docs_str}"
+                f"\n{GENERAL_SEP_PAT}You MUST use the following format:"
+                f"{CODE_BLOCK_PAT.format(cot_block)}"
+                f"\n{QUESTION_PAT} {query}"
+                # "\nHint: Make the Final Answer as detailed as possible!\n"
+                # "Make the quotes a python list of EXACT substrings from provided documents!\n"
+            )
+        ]
+        return prompt
+
+    def process_llm_output(
+        self, model_output: str, context_chunks: list[InferenceChunk]
+    ) -> tuple[DanswerAnswer, DanswerQuotes]:
+        logger.debug(model_output)
+
+        sections = re.split(rf"(?<=\n){FINAL_ANSWER_PAT}", model_output)
+
+        # Only found thoughts, no final answer
+        if len(sections) <= 1:
+            return DanswerAnswer(answer=None), DanswerQuotes(quotes=[])
+
+        answer_and_quotes = sections[-1]
+
+        sections = re.split(rf"(?<=\n){QUOTES_PAT_PLURAL}", answer_and_quotes)
+
+        if len(sections) <= 1:
+            return DanswerAnswer(answer=answer_and_quotes), DanswerQuotes(quotes=[])
+
+        answer = sections[0]
+        quotes_str = sections[-1].strip()
+
+        try:
+            clean_quote_list = eval(quotes_str)
+        except SyntaxError:
+            quote_list = quotes_str.split("\n")
+            # This is a pattern that 3.5-turbo seems to use for lists
+            clean_quote_list = [
+                quote.strip().lstrip("- ").strip('"') for quote in quote_list
+            ]
+
+        quotes = match_quotes_to_docs(clean_quote_list, context_chunks)
+
+        return DanswerAnswer(answer=answer), quotes
+
+    def process_llm_token_stream(
+        self, tokens: Iterator[str], context_chunks: list[InferenceChunk]
     ) -> AnswerQuestionStreamReturn:
-        yield from process_model_tokens(
-            tokens=tokens,
-            context_docs=context_chunks,
-            is_json_prompt=True,
+        raise ValueError(
+            "This Scratchpad approach is not suitable for real time uses like streaming"
         )
 
 
@@ -172,17 +238,6 @@ class JsonChatQAUnshackledHandler(QAHandler):
 
         return prompt
 
-    def process_response(
-        self,
-        tokens: Iterator[str],
-        context_chunks: list[InferenceChunk],
-    ) -> AnswerQuestionStreamReturn:
-        yield from process_model_tokens(
-            tokens=tokens,
-            context_docs=context_chunks,
-            is_json_prompt=True,
-        )
-
 
 def _tiktoken_trim_chunks(
     chunks: list[InferenceChunk], max_chunk_toks: int = 512
@@ -212,7 +267,7 @@ class QABlock(QAModel):
     def warm_up_model(self) -> None:
         """This is called during server start up to load the models into memory
         in case the chosen LLM is not accessed via API"""
-        self._llm.stream("Ignore this!")
+        self._llm.invoke("Ignore this!")
 
     def answer_question(
         self,
@@ -221,21 +276,9 @@ class QABlock(QAModel):
     ) -> AnswerQuestionReturn:
         trimmed_context_docs = _tiktoken_trim_chunks(context_docs)
         prompt = self._qa_handler.build_prompt(query, trimmed_context_docs)
-        tokens = self._llm.stream(prompt)
+        model_out = self._llm.invoke(prompt)
 
-        final_answer = ""
-        quotes = DanswerQuotes([])
-        for output in self._qa_handler.process_response(tokens, trimmed_context_docs):
-            if output is None:
-                continue
-
-            if isinstance(output, DanswerAnswerPiece):
-                if output.answer_piece:
-                    final_answer += output.answer_piece
-            elif isinstance(output, DanswerQuotes):
-                quotes = output
-
-        return DanswerAnswer(final_answer), quotes
+        return self._qa_handler.process_llm_output(model_out, trimmed_context_docs)
 
     def answer_question_stream(
         self,
@@ -245,4 +288,6 @@ class QABlock(QAModel):
         trimmed_context_docs = _tiktoken_trim_chunks(context_docs)
         prompt = self._qa_handler.build_prompt(query, trimmed_context_docs)
         tokens = self._llm.stream(prompt)
-        yield from self._qa_handler.process_response(tokens, trimmed_context_docs)
+        yield from self._qa_handler.process_llm_token_stream(
+            tokens, trimmed_context_docs
+        )

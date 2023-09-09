@@ -11,9 +11,12 @@ CODE_BLOCK_PAT = "\n```\n{}\n```\n"
 DOC_SEP_PAT = "---NEW DOCUMENT---"
 DOC_CONTENT_START_PAT = "DOCUMENT CONTENTS:\n"
 QUESTION_PAT = "Query:"
+THOUGHT_PAT = "Thought:"
 ANSWER_PAT = "Answer:"
+FINAL_ANSWER_PAT = "Final Answer:"
 UNCERTAINTY_PAT = "?"
 QUOTE_PAT = "Quote:"
+QUOTES_PAT_PLURAL = "Quotes:"
 
 BASE_PROMPT = (
     "Answer the query based on provided documents and quote relevant sections. "
