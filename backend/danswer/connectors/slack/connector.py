@@ -62,7 +62,10 @@ def get_channels(
     """Get all channels in the workspace"""
     channels: list[dict[str, Any]] = []
     for result in _make_paginated_slack_api_call(
-        client.conversations_list, exclude_archived=exclude_archived
+        client.conversations_list,
+        exclude_archived=exclude_archived,
+        # also get private channels the bot is added to
+        types=["public_channel", "private_channel"],
     ):
         channels.extend(result["channels"])
     return channels
