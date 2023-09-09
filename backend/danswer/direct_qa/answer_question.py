@@ -105,7 +105,7 @@ def answer_qa_query(
     # types which can't be parsed). These chunks are useful to show in the
     # search results, but not for QA.
     filtered_ranked_chunks = [
-        chunk for chunk in ranked_chunks if chunk.metadata.get(IGNORE_FOR_QA)
+        chunk for chunk in ranked_chunks if not chunk.metadata.get(IGNORE_FOR_QA)
     ]
 
     # get all chunks that fit into the token limit
