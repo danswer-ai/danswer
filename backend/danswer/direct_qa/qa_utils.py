@@ -80,7 +80,7 @@ def extract_answer_quotes_json(
 
 
 def separate_answer_quotes(
-    answer_raw: str, is_json_prompt: bool
+    answer_raw: str, is_json_prompt: bool = False
 ) -> Tuple[Optional[str], Optional[list[str]]]:
     try:
         model_raw_json = json.loads(answer_raw)
