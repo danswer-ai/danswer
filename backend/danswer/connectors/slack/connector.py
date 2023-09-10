@@ -7,6 +7,7 @@ from typing import Any
 from typing import cast
 
 from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 from slack_sdk.web import SlackResponse
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -55,20 +56,41 @@ def get_channel_info(client: WebClient, channel_id: str) -> ChannelType:
     ]
 
 
-def get_channels(
+def _get_channels(
     client: WebClient,
-    exclude_archived: bool = True,
+    exclude_archived: bool,
+    get_private: bool,
 ) -> list[ChannelType]:
-    """Get all channels in the workspace"""
     channels: list[dict[str, Any]] = []
     for result in _make_paginated_slack_api_call(
         client.conversations_list,
         exclude_archived=exclude_archived,
         # also get private channels the bot is added to
-        types=["public_channel", "private_channel"],
+        types=["public_channel", "private_channel"]
+        if get_private
+        else ["public_channel"],
     ):
         channels.extend(result["channels"])
+
     return channels
+
+
+def get_channels(
+    client: WebClient,
+    exclude_archived: bool = True,
+) -> list[ChannelType]:
+    """Get all channels in the workspace"""
+    # try getting private channels as well at first
+    try:
+        return _get_channels(
+            client=client, exclude_archived=exclude_archived, get_private=True
+        )
+    except SlackApiError as e:
+        logger.info(f"Unable to fetch private channels due to - {e}")
+
+    return _get_channels(
+        client=client, exclude_archived=exclude_archived, get_private=False
+    )
 
 
 def get_channel_messages(
