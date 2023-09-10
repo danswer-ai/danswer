@@ -1,5 +1,5 @@
 import abc
-from collections.abc import Generator
+from collections.abc import Iterator
 from typing import Any
 
 from danswer.connectors.models import Document
@@ -7,7 +7,7 @@ from danswer.connectors.models import Document
 
 SecondsSinceUnixEpoch = float
 
-GenerateDocumentsOutput = Generator[list[Document], None, None]
+GenerateDocumentsOutput = Iterator[list[Document]]
 
 
 class BaseConnector(abc.ABC):
