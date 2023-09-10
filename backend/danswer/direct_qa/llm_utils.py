@@ -75,7 +75,7 @@ def get_default_qa_model(
     try:
         # un-used arguments will be ignored by the underlying `LLM` class
         # if any args are missing, a `TypeError` will be thrown
-        llm = get_default_llm()
+        llm = get_default_llm(timeout=timeout)
         qa_handler = get_default_qa_handler(model=internal_model)
 
         return QABlock(
