@@ -76,7 +76,7 @@ class GithubConnector(LoadConnector):
         batch_size: int = INDEX_BATCH_SIZE,
         state_filter: str = "all",
         include_prs: bool = True,
-        include_issues: bool = True,
+        include_issues: bool = False,
     ) -> None:
         self.repo_owner = repo_owner
         self.repo_name = repo_name
@@ -95,6 +95,7 @@ class GithubConnector(LoadConnector):
     ) -> GenerateDocumentsOutput:
         if self.github_client is None:
             raise ConnectorMissingCredentialError("GitHub")
+
         repo = self.github_client.get_repo(f"{self.repo_owner}/{self.repo_name}")
 
         if self.include_prs:
