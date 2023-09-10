@@ -5,34 +5,35 @@ from dataclasses import asdict
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.qa_block import dict_based_prompt_to_langchain_prompt
 from danswer.direct_qa.qa_prompts import CODE_BLOCK_PAT
+from danswer.direct_qa.qa_prompts import GENERAL_SEP_PAT
 from danswer.llm.build import get_default_llm
 from danswer.server.models import QueryValidationResponse
 from danswer.server.utils import get_json_line
 
 QUERY_PAT = "QUERY: "
-REASONING_PAT = "REASONING: "
+REASONING_PAT = "THOUGHT: "
 ANSWERABLE_PAT = "ANSWERABLE: "
 
 
 def get_query_validation_messages(user_query: str) -> list[dict[str, str]]:
-    ambiguous_example = (
-        f"{QUERY_PAT}What is this Slack channel about?\n"
+    ambiguous_example_question = f"{QUERY_PAT}What is this Slack channel about?"
+    ambiguous_example_answer = (
         f"{REASONING_PAT}First the system must determine which Slack channel is "
         f"being referred to. By fetching 5 documents related to Slack channel contents, "
         f"it is not possible to determine which Slack channel the user is referring to.\n"
         f"{ANSWERABLE_PAT}False"
     )
 
-    debug_example = (
-        f"{QUERY_PAT}Danswer is unreachable.\n"
+    debug_example_question = f"{QUERY_PAT}Danswer is unreachable."
+    debug_example_answer = (
         f"{REASONING_PAT}The system searches documents related to Danswer being "
         f"unreachable. Assuming the documents from search contains situations where "
-        f"Danswer is not reachable and contains a fix, the query is answerable.\n"
+        f"Danswer is not reachable and contains a fix, the query may be answerable.\n"
         f"{ANSWERABLE_PAT}True"
     )
 
-    up_to_date_example = (
-        f"{QUERY_PAT}How many customers do we have\n"
+    up_to_date_example_question = f"{QUERY_PAT}How many customers do we have"
+    up_to_date_example_answer = (
         f"{REASONING_PAT}Assuming the retrieved documents contain up to date customer "
         f"acquisition information including a list of customers, the query can be answered. "
         f"It is important to note that if the information only exists in a database, "
@@ -44,18 +45,18 @@ def get_query_validation_messages(user_query: str) -> list[dict[str, str]]:
         {
             "role": "user",
             "content": "You are a helper tool to determine if a query is answerable using retrieval augmented "
-            f"generation. A system will try to answer the user query based on ONLY the top 5 most relevant "
-            f"documents found from search. Sources contain both up to date and proprietary information for "
-            f"the specific team. For named or unknown entities, assume the search will always find "
-            f"consistent knowledge about the entity.\n"
-            f"The system is not tuned for writing code nor for interfacing with structured data "
-            f"via query languages like SQL.\n"
-            f"Determine if that system should attempt to answer. "
-            f'"{ANSWERABLE_PAT}" must be exactly "True" or "False"\n'
-            f"{CODE_BLOCK_PAT.format(ambiguous_example)}\n"
-            f"{CODE_BLOCK_PAT.format(debug_example)}\n"
-            f"{CODE_BLOCK_PAT.format(up_to_date_example)}\n"
-            f"{CODE_BLOCK_PAT.format(QUERY_PAT + user_query)}\n",
+            f"generation.\nThe main system will try to answer the user query based on ONLY the top 5 most relevant "
+            f"documents found from search.\nSources contain both up to date and proprietary information for "
+            f"the specific team.\nFor named or unknown entities, assume the search will find "
+            f"relevant and consistent knowledge about the entity.\n"
+            f"The system is not tuned for writing code.\n"
+            f"The system is not tuned for interfacing with structured data via query languages like SQL.\n"
+            f"Determine if that system should attempt to answer.\n"
+            f'"{ANSWERABLE_PAT}" must be exactly "True" or "False"\n{GENERAL_SEP_PAT}\n'
+            f"{ambiguous_example_question}{CODE_BLOCK_PAT.format(ambiguous_example_answer)}\n"
+            f"{debug_example_question}{CODE_BLOCK_PAT.format(debug_example_answer)}\n"
+            f"{up_to_date_example_question}{CODE_BLOCK_PAT.format(up_to_date_example_answer)}\n"
+            f"{QUERY_PAT + user_query}",
         },
     ]
 
@@ -103,7 +104,8 @@ def stream_query_answerability(user_query: str) -> Iterator[str]:
 
         if not reasoning_pat_found and REASONING_PAT in model_output:
             reasoning_pat_found = True
-            remaining = model_output[len(REASONING_PAT) :]
+            reason_ind = model_output.find(REASONING_PAT)
+            remaining = model_output[reason_ind + len(REASONING_PAT) :]
             if remaining:
                 yield get_json_line(asdict(DanswerAnswerPiece(answer_piece=remaining)))
             continue

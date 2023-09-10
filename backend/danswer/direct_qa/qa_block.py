@@ -15,7 +15,6 @@ from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerQuotes
 from danswer.direct_qa.interfaces import QAModel
-from danswer.direct_qa.qa_prompts import ANSWER_NOT_FOUND_JSON
 from danswer.direct_qa.qa_prompts import CODE_BLOCK_PAT
 from danswer.direct_qa.qa_prompts import EMPTY_SAMPLE_JSON
 from danswer.direct_qa.qa_prompts import GENERAL_SEP_PAT
@@ -112,12 +111,10 @@ class SingleMessageQAHandler(QAHandler):
                 "to provide accurate and detailed answers to diverse queries.\n"
                 "You ALWAYS responds in a json containing an answer and quotes that support the answer.\n"
                 "Your responses are as INFORMATIVE and DETAILED as possible.\n"
-                "If you don't know the answer, respond with "
-                f"{CODE_BLOCK_PAT.format(ANSWER_NOT_FOUND_JSON)}"
-                "\nSample response:"
-                f"{CODE_BLOCK_PAT.format(json.dumps(SAMPLE_JSON_RESPONSE))}"
                 f"{GENERAL_SEP_PAT}CONTEXT:\n\n{context_docs_str}"
-                f"{GENERAL_SEP_PAT}{QUESTION_PAT} {query}"
+                f"{GENERAL_SEP_PAT}Sample response:"
+                f"{CODE_BLOCK_PAT.format(json.dumps(EMPTY_SAMPLE_JSON))}\n"
+                f"{QUESTION_PAT} {query}"
                 "\nHint: Make the answer as detailed as possible and use a JSON! "
                 "Quotes MUST be EXACT substrings from provided documents!"
             )
