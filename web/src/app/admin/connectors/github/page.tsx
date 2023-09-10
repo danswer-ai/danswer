@@ -190,10 +190,14 @@ const Main = () => {
               repo_name: Yup.string().required(
                 "Please enter the name of the repository to index e.g. danswer "
               ),
+              include_prs: Yup.boolean().required(),
+              include_issues: Yup.boolean().required(),
             })}
             initialValues={{
               repo_owner: "",
               repo_name: "",
+              include_prs: true,
+              include_issues: true,
             }}
             refreshFreq={10 * 60} // 10 minutes
             onSubmit={async (isSuccess, responseJson) => {
