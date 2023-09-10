@@ -42,7 +42,7 @@ def _convert_pr_to_document(pull_request: PullRequest) -> Document:
         source=DocumentSource.GITHUB,
         semantic_identifier=pull_request.title,
         metadata={
-            "last_modified": pull_request.last_modified,
+            "last_modified": str(pull_request.last_modified),
             "merged": pull_request.merged,
             "state": pull_request.state,
         },
@@ -62,7 +62,7 @@ def _convert_issue_to_document(issue: Issue) -> Document:
         source=DocumentSource.GITHUB,
         semantic_identifier=issue.title,
         metadata={
-            "last_modified": issue.updated_at,
+            "last_modified": str(issue.updated_at),
             "state": issue.state,
         },
     )
