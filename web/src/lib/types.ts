@@ -61,6 +61,8 @@ export interface WebConfig {
 export interface GithubConfig {
   repo_owner: string;
   repo_name: string;
+  include_prs: boolean;
+  include_issues: boolean;
 }
 
 export interface GoogleDriveConfig {
