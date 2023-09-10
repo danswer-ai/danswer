@@ -11,9 +11,12 @@ CODE_BLOCK_PAT = "\n```\n{}\n```\n"
 DOC_SEP_PAT = "---NEW DOCUMENT---"
 DOC_CONTENT_START_PAT = "DOCUMENT CONTENTS:\n"
 QUESTION_PAT = "Query:"
+THOUGHT_PAT = "Thought:"
 ANSWER_PAT = "Answer:"
+FINAL_ANSWER_PAT = "Final Answer:"
 UNCERTAINTY_PAT = "?"
 QUOTE_PAT = "Quote:"
+QUOTES_PAT_PLURAL = "Quotes:"
 
 BASE_PROMPT = (
     "Answer the query based on provided documents and quote relevant sections. "
@@ -31,6 +34,17 @@ SAMPLE_JSON_RESPONSE = {
         "located on the Champ de Mars in France.",
     ],
 }
+
+EMPTY_SAMPLE_JSON = {
+    "answer": "Place your final answer here. It should be as DETAILED and INFORMATIVE as possible.",
+    "quotes": [
+        "each quote must be UNEDITED and EXACTLY as shown in the provided documents!",
+        "HINT the quotes are not shown to the user!",
+    ],
+}
+
+ANSWER_NOT_FOUND_JSON = '{"answer": "' + UNCERTAINTY_PAT + '", "quotes": []}'
+
 SAMPLE_RESPONSE_COT = (
     "Let's think step by step. The user is asking for the "
     "location of the Eiffel Tower. The first document describes the Eiffel Tower "

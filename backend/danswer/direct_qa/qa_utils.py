@@ -80,12 +80,17 @@ def extract_answer_quotes_json(
 
 
 def separate_answer_quotes(
-    answer_raw: str,
+    answer_raw: str, is_json_prompt: bool = False
 ) -> Tuple[Optional[str], Optional[list[str]]]:
     try:
         model_raw_json = json.loads(answer_raw)
         return extract_answer_quotes_json(model_raw_json)
     except ValueError:
+        if is_json_prompt:
+            logger.error(
+                "Model did not output in json format as expected, "
+                "trying to parse it regardless"
+            )
         return extract_answer_quotes_freeform(answer_raw)
 
 
@@ -149,9 +154,11 @@ def match_quotes_to_docs(
 
 
 def process_answer(
-    answer_raw: str, chunks: list[InferenceChunk]
+    answer_raw: str,
+    chunks: list[InferenceChunk],
+    is_json_prompt: bool = True,
 ) -> tuple[DanswerAnswer, DanswerQuotes]:
-    answer, quote_strings = separate_answer_quotes(answer_raw)
+    answer, quote_strings = separate_answer_quotes(answer_raw, is_json_prompt)
     if answer == UNCERTAINTY_PAT or not answer:
         if answer == UNCERTAINTY_PAT:
             logger.debug("Answer matched UNCERTAINTY_PAT")

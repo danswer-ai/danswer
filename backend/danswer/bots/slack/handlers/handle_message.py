@@ -42,6 +42,7 @@ def handle_message(
                 user=None,
                 db_session=db_session,
                 answer_generation_timeout=answer_generation_timeout,
+                real_time_flow=False,
             )
             if not answer.error_msg:
                 return answer

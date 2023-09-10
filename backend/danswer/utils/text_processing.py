@@ -4,6 +4,10 @@ import bs4
 from bs4 import BeautifulSoup
 
 
+def escape_newlines(s: str) -> str:
+    return re.sub(r"(?<!\\)\n", "\\\\n", s)
+
+
 def clean_model_quote(quote: str, trim_length: int) -> str:
     quote_clean = quote.strip()
     if quote_clean[0] == '"':
