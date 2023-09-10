@@ -1,6 +1,5 @@
 import abc
 import json
-import re
 from collections.abc import Iterator
 from copy import copy
 
@@ -16,23 +15,23 @@ from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerQuotes
 from danswer.direct_qa.interfaces import QAModel
+from danswer.direct_qa.qa_prompts import ANSWER_NOT_FOUND_JSON
 from danswer.direct_qa.qa_prompts import CODE_BLOCK_PAT
-from danswer.direct_qa.qa_prompts import FINAL_ANSWER_PAT
+from danswer.direct_qa.qa_prompts import EMPTY_SAMPLE_JSON
 from danswer.direct_qa.qa_prompts import GENERAL_SEP_PAT
 from danswer.direct_qa.qa_prompts import JsonChatProcessor
 from danswer.direct_qa.qa_prompts import QUESTION_PAT
-from danswer.direct_qa.qa_prompts import QUOTES_PAT_PLURAL
 from danswer.direct_qa.qa_prompts import SAMPLE_JSON_RESPONSE
 from danswer.direct_qa.qa_prompts import THOUGHT_PAT
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
-from danswer.direct_qa.qa_utils import match_quotes_to_docs
 from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
 from danswer.llm.llm import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import str_prompt_to_langchain_prompt
 from danswer.utils.logger import setup_logger
+from danswer.utils.text_processing import escape_newlines
 
 logger = setup_logger()
 
@@ -102,10 +101,6 @@ class SingleMessageQAHandler(QAHandler):
     def build_prompt(
         self, query: str, context_chunks: list[InferenceChunk]
     ) -> list[BaseMessage]:
-        complete_answer_not_found_response = (
-            '{"answer": "' + UNCERTAINTY_PAT + '", "quotes": []}'
-        )
-
         context_docs_str = "\n".join(
             f"{CODE_BLOCK_PAT.format(c.content)}" for c in context_chunks
         )
@@ -118,7 +113,7 @@ class SingleMessageQAHandler(QAHandler):
                 "You ALWAYS responds in a json containing an answer and quotes that support the answer.\n"
                 "Your responses are as INFORMATIVE and DETAILED as possible.\n"
                 "If you don't know the answer, respond with "
-                f"{CODE_BLOCK_PAT.format(complete_answer_not_found_response)}"
+                f"{CODE_BLOCK_PAT.format(ANSWER_NOT_FOUND_JSON)}"
                 "\nSample response:"
                 f"{CODE_BLOCK_PAT.format(json.dumps(SAMPLE_JSON_RESPONSE))}"
                 f"{GENERAL_SEP_PAT}CONTEXT:\n\n{context_docs_str}"
@@ -131,17 +126,12 @@ class SingleMessageQAHandler(QAHandler):
 
 
 class SingleMessageScratchpadHandler(QAHandler):
-    @property
-    def is_json_output(self) -> bool:
-        return False
-
     def build_prompt(
         self, query: str, context_chunks: list[InferenceChunk]
     ) -> list[BaseMessage]:
         cot_block = (
             f"{THOUGHT_PAT} Let's think step by step. Use this section as a scratchpad.\n"
-            f"{FINAL_ANSWER_PAT} Place your final answer here.\n"
-            f'{QUOTES_PAT_PLURAL} ["provide quotes for the final answer", "as a list of strings"]'
+            f"{json.dumps(EMPTY_SAMPLE_JSON)}"
         )
 
         context_docs_str = "\n".join(
@@ -153,12 +143,10 @@ class SingleMessageScratchpadHandler(QAHandler):
                 content="You are a question answering system that is constantly learning and improving. "
                 "You can process and comprehend vast amounts of text and utilize this knowledge "
                 "to provide accurate and detailed answers to diverse queries.\n"
-                f"{GENERAL_SEP_PAT}CONTEXT:\n\n{context_docs_str}"
-                f"\n{GENERAL_SEP_PAT}You MUST use the following format:"
-                f"{CODE_BLOCK_PAT.format(cot_block)}"
-                f"\n{QUESTION_PAT} {query}"
-                # "\nHint: Make the Final Answer as detailed as possible!\n"
-                # "Make the quotes a python list of EXACT substrings from provided documents!\n"
+                f"{GENERAL_SEP_PAT}CONTEXT:\n\n{context_docs_str}{GENERAL_SEP_PAT}"
+                f"You MUST use the following format:\n"
+                f"{CODE_BLOCK_PAT.format(cot_block)}\n"
+                f"Begin!\n{QUESTION_PAT} {query}"
             )
         ]
         return prompt
@@ -168,34 +156,16 @@ class SingleMessageScratchpadHandler(QAHandler):
     ) -> tuple[DanswerAnswer, DanswerQuotes]:
         logger.debug(model_output)
 
-        sections = re.split(rf"(?<=\n){FINAL_ANSWER_PAT}", model_output)
-
+        answer_start = model_output.find('{"answer":')
         # Only found thoughts, no final answer
-        if len(sections) <= 1:
+        if answer_start == -1:
             return DanswerAnswer(answer=None), DanswerQuotes(quotes=[])
 
-        answer_and_quotes = sections[-1]
+        final_json = escape_newlines(model_output[answer_start:])
 
-        sections = re.split(rf"(?<=\n){QUOTES_PAT_PLURAL}", answer_and_quotes)
-
-        if len(sections) <= 1:
-            return DanswerAnswer(answer=answer_and_quotes), DanswerQuotes(quotes=[])
-
-        answer = sections[0]
-        quotes_str = sections[-1].strip()
-
-        try:
-            clean_quote_list = eval(quotes_str)
-        except SyntaxError:
-            quote_list = quotes_str.split("\n")
-            # This is a pattern that 3.5-turbo seems to use for lists
-            clean_quote_list = [
-                quote.strip().lstrip("- ").strip('"') for quote in quote_list
-            ]
-
-        quotes = match_quotes_to_docs(clean_quote_list, context_chunks)
-
-        return DanswerAnswer(answer=answer), quotes
+        return process_answer(
+            final_json, context_chunks, is_json_prompt=self.is_json_output
+        )
 
     def process_llm_token_stream(
         self, tokens: Iterator[str], context_chunks: list[InferenceChunk]

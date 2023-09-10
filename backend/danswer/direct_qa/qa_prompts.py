@@ -34,6 +34,17 @@ SAMPLE_JSON_RESPONSE = {
         "located on the Champ de Mars in France.",
     ],
 }
+
+EMPTY_SAMPLE_JSON = {
+    "answer": "Place your final answer here. It should be as DETAILED and INFORMATIVE as possible.",
+    "quotes": [
+        "each quote must be UNEDITED and EXACTLY as shown in the provided documents!",
+        "HINT the quotes are not shown to the user!",
+    ],
+}
+
+ANSWER_NOT_FOUND_JSON = '{"answer": "' + UNCERTAINTY_PAT + '", "quotes": []}'
+
 SAMPLE_RESPONSE_COT = (
     "Let's think step by step. The user is asking for the "
     "location of the Eiffel Tower. The first document describes the Eiffel Tower "
