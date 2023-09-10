@@ -34,7 +34,7 @@ logger = setup_logger()
 
 class QAHandler(abc.ABC):
     """Evolution of the `PromptProcessor` - handles both building the prompt and
-    processing the response. These are neccessarily coupled, since the prompt determines
+    processing the response. These are necessarily coupled, since the prompt determines
     the response format (and thus how it should be parsed into an answer + quotes)."""
 
     @abc.abstractmethod
