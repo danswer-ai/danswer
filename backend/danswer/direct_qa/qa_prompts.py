@@ -17,6 +17,7 @@ FINAL_ANSWER_PAT = "Final Answer:"
 UNCERTAINTY_PAT = "?"
 QUOTE_PAT = "Quote:"
 QUOTES_PAT_PLURAL = "Quotes:"
+INVALID_PAT = "Invalid:"
 
 BASE_PROMPT = (
     "Answer the query based on provided documents and quote relevant sections. "
@@ -38,8 +39,8 @@ SAMPLE_JSON_RESPONSE = {
 EMPTY_SAMPLE_JSON = {
     "answer": "Place your final answer here. It should be as DETAILED and INFORMATIVE as possible.",
     "quotes": [
-        "each quote must be UNEDITED and EXACTLY as shown in the provided documents!",
-        "HINT the quotes are not shown to the user!",
+        "each quote must be UNEDITED and EXACTLY as shown in the context documents!",
+        "HINT, quotes are not shown to the user!",
     ],
 }
 

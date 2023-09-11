@@ -220,3 +220,8 @@ DANSWER_BOT_DISPLAY_ERROR_MSGS = os.environ.get(
 DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER = os.environ.get(
     "DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER", ""
 ).lower() not in ["false", ""]
+# Add a second LLM call post Answer to verify if the Answer is valid
+# Throws out answers that don't directly or fully answer the user query
+ENABLE_DANSWERBOT_REFLEXION = (
+    os.environ.get("ENABLE_DANSWERBOT_REFLEXION", "").lower() == "true"
+)

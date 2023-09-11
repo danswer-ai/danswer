@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
+from danswer.configs.app_configs import ENABLE_DANSWERBOT_REFLEXION
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import IGNORE_FOR_QA
@@ -18,6 +19,7 @@ from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
 from danswer.search.semantic_search import chunks_to_search_docs
 from danswer.search.semantic_search import retrieve_ranked_documents
+from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.utils.logger import setup_logger
@@ -34,6 +36,7 @@ def answer_qa_query(
     disable_generative_answer: bool = DISABLE_GENERATIVE_AI,
     answer_generation_timeout: int = QA_TIMEOUT,
     real_time_flow: bool = True,
+    enable_reflexion: bool = ENABLE_DANSWERBOT_REFLEXION,
 ) -> QAResponse:
     query = question.query
     filters = question.filters
@@ -123,14 +126,31 @@ def answer_qa_query(
 
     error_msg = None
     try:
-        answer, quotes = qa_model.answer_question(query, usable_chunks)
+        d_answer, quotes = qa_model.answer_question(query, usable_chunks)
     except Exception as e:
         # exception is logged in the answer_question method, no need to re-log
-        answer, quotes = None, None
+        d_answer, quotes = None, None
         error_msg = f"Error occurred in call to LLM - {e}"
 
+    if not real_time_flow and enable_reflexion and d_answer is not None:
+        valid = False
+        if d_answer.answer is not None:
+            valid = get_answer_validity(query, d_answer.answer)
+
+        if not valid:
+            return QAResponse(
+                answer=None,
+                quotes=None,
+                top_ranked_docs=chunks_to_search_docs(ranked_chunks),
+                lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
+                predicted_flow=predicted_flow,
+                predicted_search=predicted_search,
+                error_msg=error_msg,
+                query_event_id=query_event_id,
+            )
+
     return QAResponse(
-        answer=answer.answer if answer else None,
+        answer=d_answer.answer if d_answer else None,
         quotes=quotes.quotes if quotes else None,
         top_ranked_docs=chunks_to_search_docs(ranked_chunks),
         lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
