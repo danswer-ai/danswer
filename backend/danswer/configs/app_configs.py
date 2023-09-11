@@ -18,6 +18,9 @@ GENERATIVE_MODEL_ACCESS_CHECK_FREQ = 86400  # 1 day
 # if you want to use Danswer as a search engine only and/or you are not comfortable sending
 # anything to OpenAI. TODO: update this message once we support Azure / open source generative models.
 DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "true"
+# If the real time constraint is turned off, the DanswerBot flows will apply additional LLM steps
+# which will slow down the time to response
+DANSWERBOT_REAL_TIME_FLOW = os.environ.get("DANSWERBOT_REAL_TIME_FLOW", "") != "false"
 
 #####
 # Web Configs
