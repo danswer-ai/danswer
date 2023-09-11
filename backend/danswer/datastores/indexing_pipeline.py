@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from danswer.chunking.chunk import Chunker
 from danswer.chunking.chunk import DefaultChunker
 from danswer.chunking.models import DocAwareChunk
+from danswer.chunking.models import IndexChunk
 from danswer.connectors.models import Document
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.datastores.document_index import get_default_document_index
@@ -94,10 +95,30 @@ def _indexing_pipeline(
     )
     chunks_with_embeddings = embedder.embed(chunks=chunks)
 
+    # if there are any empty chunks, remove them. This usually happens due to a
+    # bug in a connector. Handling here to prevent a bad connector from
+    # breaking retrieval completely.
+    final_chunks_with_embeddings: list[IndexChunk] = []
+    for chunk in chunks_with_embeddings:
+        if chunk.content:
+            final_chunks_with_embeddings.append(chunk)
+        else:
+            bad_chunk_link = (
+                chunk.source_document.sections[0].link
+                if chunk.source_document.sections
+                else ""
+            )
+            logger.error(
+                f"Found empty chunk, skipping. Chunk ID: '{chunk.chunk_id}', "
+                f"Document ID: '{chunk.source_document.id}', "
+                f"Document Link: '{bad_chunk_link}'"
+            )
+
     # A document will not be spread across different batches, so all the documents with chunks in this set, are fully
     # represented by the chunks in this set
     insertion_records = document_index.index(
-        chunks=chunks_with_embeddings, index_attempt_metadata=index_attempt_metadata
+        chunks=final_chunks_with_embeddings,
+        index_attempt_metadata=index_attempt_metadata,
     )
 
     # TODO (chris): remove this try/except after issue with null document_id is resolved
