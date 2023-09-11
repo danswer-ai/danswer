@@ -234,7 +234,8 @@ class QABlock(QAModel):
     def warm_up_model(self) -> None:
         """This is called during server start up to load the models into memory
         in case the chosen LLM is not accessed via API"""
-        self._llm.invoke("Ignore this!")
+        if self._llm.requires_warm_up:
+            self._llm.invoke("Ignore this!")
 
     def answer_question(
         self,

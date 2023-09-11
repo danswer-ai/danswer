@@ -45,8 +45,8 @@ class GoogleColabDemo(LLM):
         response.raise_for_status()
         return json.loads(response.content).get("generated_text", "")
 
-    def invoke(self, input: LanguageModelInput) -> str:
-        return self._execute(input)
+    def invoke(self, prompt: LanguageModelInput) -> str:
+        return self._execute(prompt)
 
-    def stream(self, input: LanguageModelInput) -> Iterator[str]:
-        yield self._execute(input)
+    def stream(self, prompt: LanguageModelInput) -> Iterator[str]:
+        yield self._execute(prompt)
