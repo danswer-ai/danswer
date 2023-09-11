@@ -114,8 +114,8 @@ class SingleMessageQAHandler(QAHandler):
                 f"{GENERAL_SEP_PAT}CONTEXT:\n\n{context_docs_str}"
                 f"{GENERAL_SEP_PAT}Sample response:"
                 f"{CODE_BLOCK_PAT.format(json.dumps(EMPTY_SAMPLE_JSON))}\n"
-                f"{QUESTION_PAT} {query}"
-                "\nHint: Make the answer as detailed as possible and use a JSON! "
+                f"{QUESTION_PAT} {query}\n"
+                "Hint: Make the answer as detailed as possible and use a JSON! "
                 "Quotes MUST be EXACT substrings from provided documents!"
             )
         ]
@@ -127,7 +127,7 @@ class SingleMessageScratchpadHandler(QAHandler):
         self, query: str, context_chunks: list[InferenceChunk]
     ) -> list[BaseMessage]:
         cot_block = (
-            f"{THOUGHT_PAT} Let's think step by step. Use this section as a scratchpad.\n"
+            f"{THOUGHT_PAT} Use this section as a scratchpad to reason through the answer.\n\n"
             f"{json.dumps(EMPTY_SAMPLE_JSON)}"
         )
 
@@ -141,9 +141,11 @@ class SingleMessageScratchpadHandler(QAHandler):
                 "You can process and comprehend vast amounts of text and utilize this knowledge "
                 "to provide accurate and detailed answers to diverse queries.\n"
                 f"{GENERAL_SEP_PAT}CONTEXT:\n\n{context_docs_str}{GENERAL_SEP_PAT}"
-                f"You MUST use the following format:\n"
+                f"You MUST respond in the following format:"
                 f"{CODE_BLOCK_PAT.format(cot_block)}\n"
-                f"Begin!\n{QUESTION_PAT} {query}"
+                f"{QUESTION_PAT} {query}\n"
+                "Hint: Make the answer as detailed as possible and use a JSON! "
+                "Quotes can ONLY be EXACT substrings from provided documents!"
             )
         ]
         return prompt
