@@ -2,3 +2,4 @@
 .DS_store
 .venv
 .mypy_cache
+secrets.yaml
