@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
+from danswer.configs.app_configs import ENABLE_DANSWERBOT_REFLEXION
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import IGNORE_FOR_QA
@@ -35,6 +36,7 @@ def answer_qa_query(
     disable_generative_answer: bool = DISABLE_GENERATIVE_AI,
     answer_generation_timeout: int = QA_TIMEOUT,
     real_time_flow: bool = True,
+    enable_reflexion: bool = ENABLE_DANSWERBOT_REFLEXION,
 ) -> QAResponse:
     query = question.query
     filters = question.filters
@@ -130,7 +132,7 @@ def answer_qa_query(
         d_answer, quotes = None, None
         error_msg = f"Error occurred in call to LLM - {e}"
 
-    if not real_time_flow and d_answer is not None:
+    if not real_time_flow and enable_reflexion and d_answer is not None:
         valid = False
         if d_answer.answer is not None:
             valid = get_answer_validity(query, d_answer.answer)

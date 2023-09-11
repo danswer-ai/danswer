@@ -10,7 +10,6 @@ from danswer.configs.app_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
 from danswer.configs.app_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
 from danswer.configs.app_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
-from danswer.configs.app_configs import DANSWERBOT_REAL_TIME_FLOW
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.direct_qa.answer_question import answer_qa_query
@@ -28,7 +27,6 @@ def handle_message(
     answer_generation_timeout: int = DANSWER_BOT_ANSWER_GENERATION_TIMEOUT,
     should_respond_with_error_msgs: bool = DANSWER_BOT_DISPLAY_ERROR_MSGS,
     disable_docs_only_answer: bool = DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER,
-    real_time_flow: bool = DANSWERBOT_REAL_TIME_FLOW,
 ) -> None:
     @retry(
         tries=num_retries,
@@ -44,7 +42,7 @@ def handle_message(
                 user=None,
                 db_session=db_session,
                 answer_generation_timeout=answer_generation_timeout,
-                real_time_flow=real_time_flow,
+                real_time_flow=False,
             )
             if not answer.error_msg:
                 return answer
