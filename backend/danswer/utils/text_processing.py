@@ -8,6 +8,10 @@ def escape_newlines(s: str) -> str:
     return re.sub(r"(?<!\\)\n", "\\\\n", s)
 
 
+def clean_up_code_blocks(model_out_raw: str) -> str:
+    return model_out_raw.strip().strip("```").strip()
+
+
 def clean_model_quote(quote: str, trim_length: int) -> str:
     quote_clean = quote.strip()
     if quote_clean[0] == '"':

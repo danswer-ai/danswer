@@ -30,6 +30,7 @@ from danswer.llm.llm import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import str_prompt_to_langchain_prompt
 from danswer.utils.logger import setup_logger
+from danswer.utils.text_processing import clean_up_code_blocks
 from danswer.utils.text_processing import escape_newlines
 
 logger = setup_logger()
@@ -155,12 +156,14 @@ class SingleMessageScratchpadHandler(QAHandler):
     ) -> tuple[DanswerAnswer, DanswerQuotes]:
         logger.debug(model_output)
 
-        answer_start = model_output.find('{"answer":')
+        model_clean = clean_up_code_blocks(model_output)
+
+        answer_start = model_clean.find('{"answer":')
         # Only found thoughts, no final answer
         if answer_start == -1:
             return DanswerAnswer(answer=None), DanswerQuotes(quotes=[])
 
-        final_json = escape_newlines(model_output[answer_start:])
+        final_json = escape_newlines(model_clean[answer_start:])
 
         return process_answer(
             final_json, context_chunks, is_json_prompt=self.is_json_output
