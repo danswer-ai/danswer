@@ -26,8 +26,12 @@ def get_message_link(
     )  # channel must either be present in the event or passed in
     message_ts = cast(str, event["ts"])
     message_ts_without_dot = message_ts.replace(".", "")
+    thread_ts = cast(str | None, event.get("thread_ts"))
     return (
         f"https://{workspace}.slack.com/archives/{channel_id}/p{message_ts_without_dot}"
+        f"?thread_ts={thread_ts}"
+        if thread_ts
+        else ""
     )
 
 
