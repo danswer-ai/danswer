@@ -24,6 +24,7 @@
     "react-dropzone": "^14.2.3",
     "react-icons": "^4.8.0",
     "react-loader-spinner": "^5.4.5",
+    "react-markdown": "^8.0.7",
     "semver": "^7.5.4",
     "swr": "^2.1.5",
     "tailwindcss": "^3.3.1",
@@ -31,6 +32,7 @@
     "yup": "^1.1.1"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.10",
     "eslint": "^8.48.0",
     "eslint-config-next": "^13.4.9",
     "prettier": "2.8.8"
