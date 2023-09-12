@@ -50,8 +50,6 @@ const buildDocumentSummaryDisplay = (
       sections.push(["...", false, false]);
     }
   });
-  console.log(blurb);
-  console.log(sections);
 
   let previousIsContinuation = sections[0][2];
   let previousIsBold = sections[0][1];

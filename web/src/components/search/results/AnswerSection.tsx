@@ -1,5 +1,6 @@
 import { Quote } from "@/lib/search/interfaces";
 import { ResponseSection, StatusOptions } from "./ResponseSection";
+import ReactMarkdown from "react-markdown";
 
 interface AnswerSectionProps {
   answer: string | null;
@@ -39,7 +40,11 @@ const AnswerBody = ({ answer, error, isFetching }: AnswerSectionProps) => {
       </div>
     );
   } else if (answer) {
-    return <p className="">{answer}</p>;
+    return (
+      <ReactMarkdown className="prose prose-invert text-gray-100 text-sm max-w-full">
+        {answer.replaceAll("\\n", "\n")}
+      </ReactMarkdown>
+    );
   } else if (!isFetching) {
     return <div className="text-gray-300">Information not found</div>;
   }
