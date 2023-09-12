@@ -25,6 +25,7 @@ from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.llm.utils import check_number_of_tokens
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_model_quote
+from danswer.utils.text_processing import clean_up_code_blocks
 from danswer.utils.text_processing import shared_precompare_cleanup
 
 logger = setup_logger()
@@ -158,7 +159,9 @@ def process_answer(
     chunks: list[InferenceChunk],
     is_json_prompt: bool = True,
 ) -> tuple[DanswerAnswer, DanswerQuotes]:
-    answer, quote_strings = separate_answer_quotes(answer_raw, is_json_prompt)
+    answer_clean = clean_up_code_blocks(answer_raw)
+
+    answer, quote_strings = separate_answer_quotes(answer_clean, is_json_prompt)
     if answer == UNCERTAINTY_PAT or not answer:
         if answer == UNCERTAINTY_PAT:
             logger.debug("Answer matched UNCERTAINTY_PAT")
@@ -226,6 +229,12 @@ def process_model_tokens(
             # Then the chars after " will not be streamed, but this is ok as it prevents streaming the ? in the
             # event that the model outputs the UNCERTAINTY_PAT
             found_answer_start = True
+
+            # Prevent heavy cases of hallucinations where model is not even providing a json until later
+            if is_json_prompt and len(model_output) > 20:
+                logger.warning("LLM did not produce json as prompted")
+                found_answer_end = True
+
             continue
 
         if found_answer_start and not found_answer_end:

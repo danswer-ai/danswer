@@ -51,6 +51,8 @@ def get_query_validation_messages(user_query: str) -> list[dict[str, str]]:
             f"relevant and consistent knowledge about the entity.\n"
             f"The system is not tuned for writing code.\n"
             f"The system is not tuned for interfacing with structured data via query languages like SQL.\n"
+            f"If the question might not require code or query language, "
+            f"then assume it can be answered without code or query language.\n"
             f"Determine if that system should attempt to answer.\n"
             f'"{ANSWERABLE_PAT}" must be exactly "True" or "False"\n{GENERAL_SEP_PAT}\n'
             f"{ambiguous_example_question}{CODE_BLOCK_PAT.format(ambiguous_example_answer)}\n"

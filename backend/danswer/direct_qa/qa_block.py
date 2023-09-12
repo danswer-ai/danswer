@@ -110,13 +110,13 @@ class SingleMessageQAHandler(QAHandler):
                 content="You are a question answering system that is constantly learning and improving. "
                 "You can process and comprehend vast amounts of text and utilize this knowledge "
                 "to provide accurate and detailed answers to diverse queries.\n"
-                "You ALWAYS responds in a json containing an answer and quotes that support the answer.\n"
+                "You ALWAYS responds with only a json containing an answer and quotes that support the answer.\n"
                 "Your responses are as INFORMATIVE and DETAILED as possible.\n"
                 f"{GENERAL_SEP_PAT}CONTEXT:\n\n{context_docs_str}"
                 f"{GENERAL_SEP_PAT}Sample response:"
                 f"{CODE_BLOCK_PAT.format(json.dumps(EMPTY_SAMPLE_JSON))}\n"
                 f"{QUESTION_PAT} {query}\n"
-                "Hint: Make the answer as detailed as possible and use a JSON! "
+                "Hint: Make the answer as DETAILED as possible and respond in JSON format!\n"
                 "Quotes MUST be EXACT substrings from provided documents!"
             )
         ]
