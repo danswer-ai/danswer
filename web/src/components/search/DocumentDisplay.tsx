@@ -50,7 +50,10 @@ const buildDocumentSummaryDisplay = (
       sections.push(["...", false, false]);
     }
   });
+  console.log(blurb);
+  console.log(sections);
 
+  let previousIsContinuation = sections[0][2];
   let previousIsBold = sections[0][1];
   let currentText = "";
   const finalJSX = [] as (JSX.Element | string)[];
@@ -61,19 +64,21 @@ const buildDocumentSummaryDisplay = (
           // remove leading space so that we don't bold the whitespace
           // in front of the matching keywords
           currentText = currentText.trim();
+          if (!previousIsContinuation) {
+            finalJSX[finalJSX.length - 1] = finalJSX[finalJSX.length - 1] + " ";
+          }
           finalJSX.push(
             <b key={index} className="text-gray-200 bg-pink-950">
               {currentText}
             </b>
           );
         } else {
-          // add in trailing space since the next section is bold
-          // and we will remove any leading spaces when that section is complete
-          finalJSX.push(<span key={index}>{currentText + " "}</span>);
+          finalJSX.push(currentText);
         }
       }
       currentText = "";
       previousIsBold = shouldBeBold;
+      previousIsContinuation = isContinuation;
     }
     if (!isContinuation || index === 0) {
       currentText += " ";
@@ -89,7 +94,7 @@ const buildDocumentSummaryDisplay = (
         </b>
       );
     } else {
-      finalJSX.push(<span key={sections.length}>{currentText}</span>);
+      finalJSX.push(currentText);
     }
   }
   return finalJSX;
