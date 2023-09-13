@@ -128,12 +128,7 @@ class NotionConnector(LoadConnector, PollConnector):
         self,
         pages: list[NotionPage],
     ) -> Generator[Document, None, None]:
-        """Reads pages for rich text content and generates Documents
-
-        NOTE: handles child pages as well, since the search API seems to mysteriously
-        miss some pages. If this is figured out / fixed, then we can remove this logic
-        from this function and simplify e.g. the `_search_notion` function should take
-        care of finding all pages to index."""
+        """Reads pages for rich text content and generates Documents"""
         for page in pages:
             logger.info(f"Reading page with ID '{page.id}', with url {page.url}")
             page_blocks = self._read_blocks(page.id)
