@@ -138,7 +138,10 @@ class NotionConnector(LoadConnector, PollConnector):
                     id=page.id,
                     sections=[Section(link=page.url, text=f"{page_title}\n")]
                     + [
-                        Section(link=f"{page.url}#{block_id}", text=block_text)
+                        Section(
+                            link=f"{page.url}#{block_id.replace('-', '')}",
+                            text=block_text,
+                        )
                         for block_text, block_id in page_blocks
                     ],
                     source=DocumentSource.NOTION,
