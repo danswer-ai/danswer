@@ -15,18 +15,17 @@ import { scheduleDeletionJobForConnector } from "@/lib/documentDeletion";
 
 const SingleUseConnectorStatus = ({
   indexingStatus,
-  deletionAttempts,
+  deletionAttempt,
 }: {
   indexingStatus: ValidStatuses | null;
-  deletionAttempts: DeletionAttemptSnapshot[];
+  deletionAttempt: DeletionAttemptSnapshot | null;
 }) => {
-  for (let deletionAttempt of deletionAttempts) {
-    if (
-      deletionAttempt.status === "in_progress" ||
-      deletionAttempt.status === "not_started"
-    ) {
-      return <div className="text-red-500">Deleting...</div>;
-    }
+  if (
+    deletionAttempt &&
+    (deletionAttempt.status === "in_progress" ||
+      deletionAttempt.status === "not_started")
+  ) {
+    return <div className="text-red-500">Deleting...</div>;
   }
 
   if (!indexingStatus || indexingStatus === "not_started") {
@@ -131,7 +130,7 @@ export function SingleUseConnectorsTable<
             status: (
               <SingleUseConnectorStatus
                 indexingStatus={connectorIndexingStatus.last_status}
-                deletionAttempts={connectorIndexingStatus.deletion_attempts}
+                deletionAttempt={connectorIndexingStatus.deletion_attempt}
               />
             ),
             remove: (

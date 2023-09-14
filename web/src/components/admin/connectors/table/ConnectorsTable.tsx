@@ -36,16 +36,17 @@ export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
       statusDisplay = <div className="text-emerald-600 flex">Enabled!</div>;
   }
   if (connector.disabled) {
-    statusDisplay = <div className="text-red-700">Disabled</div>;
-    connectorIndexingStatus.deletion_attempts.forEach((deletionAttempt) => {
-      if (
-        deletionAttempt.status === "in_progress" ||
-        deletionAttempt.status === "not_started"
-      ) {
-        statusDisplay = <div className="text-red-700">Deleting...</div>;
-        shouldDisplayDisabledToggle = false;
-      }
-    });
+    const deletionAttempt = connectorIndexingStatus.deletion_attempt;
+    if (
+      !deletionAttempt ||
+      deletionAttempt.status === "not_started" ||
+      deletionAttempt.status === "failed"
+    ) {
+      statusDisplay = <div className="text-red-700">Disabled</div>;
+    } else {
+      statusDisplay = <div className="text-red-700">Deleting...</div>;
+      shouldDisplayDisabledToggle = false;
+    }
   }
 
   return (

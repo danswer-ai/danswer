@@ -126,7 +126,7 @@ export interface ConnectorIndexingStatus<
   docs_indexed: number;
   error_msg: string;
   latest_index_attempt: IndexAttemptSnapshot | null;
-  deletion_attempts: DeletionAttemptSnapshot[];
+  deletion_attempt: DeletionAttemptSnapshot | null;
   is_deletable: boolean;
 }
 
@@ -205,6 +205,7 @@ export interface LinearCredentialJson {
 
 export interface DeletionAttemptSnapshot {
   connector_id: number;
+  credential_id: number;
   status: ValidStatuses;
   error_msg?: string;
   num_docs_deleted: number;
