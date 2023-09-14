@@ -182,6 +182,7 @@ CROSS_ENCODER_PORT = 9000
 #####
 # Miscellaneous
 #####
+PERSONAS_YAML = "./danswer/chat/personas.yaml"
 DYNAMIC_CONFIG_STORE = os.environ.get(
     "DYNAMIC_CONFIG_STORE", "FileSystemBackedDynamicConfigStore"
 )

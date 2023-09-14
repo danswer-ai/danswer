@@ -5,9 +5,10 @@ from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 
-from danswer.chat.models import ChatContext
+from danswer.configs.constants import CODE_BLOCK_PAT
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
+from danswer.db.models import Persona
 from danswer.llm.build import get_default_llm
 
 
@@ -29,32 +30,46 @@ def llm_contextless_chat_answer(previous_messages: list[ChatMessage]) -> Iterato
 
 
 def combine_chat_messages_into_single(messages: list[ChatMessage]) -> str:
-    pass
+    combined_str = ""
+    for message in messages:
+        if message.message_type == MessageType.USER:
+            combined_str = (
+                combined_str
+                + "\nUser Message:"
+                + CODE_BLOCK_PAT.format(message.message)
+            )
+        if message.message_type == MessageType.ASSISTANT:
+            combined_str = (
+                combined_str + "\nAI Message:" + CODE_BLOCK_PAT.format(message.message)
+            )
+
+    return combined_str
 
 
 def llm_contextual_chat_answer(
-    previous_messages: list[ChatMessage], chat_context: ChatContext
+    previous_messages: list[ChatMessage],
+    persona: Persona,
 ) -> Iterator[str]:
     # LLMs do not follow context well across messages, so building a single message
-    full_prompt = ""
+    system_text = persona.system_text if persona.system_text is not None else ""
+    tool_text = persona.tools_text if persona.tools_text is not None else ""
+    hint_text = persona.hint_text if persona.hint_text is not None else ""
 
-    system_text = (
-        chat_context.system_text if chat_context.system_text is not None else ""
+    full_prompt = (
+        system_text
+        + tool_text
+        + combine_chat_messages_into_single(previous_messages)
+        + hint_text
     )
-    tool_text = chat_context.tools_text if chat_context.tools_text is not None else ""
-    chat_context.hint_text if chat_context.hint_text is not None else ""
 
-    full_prompt = full_prompt + system_text + tool_text
-
-    return get_default_llm().stream("TODO")
+    return get_default_llm().stream(full_prompt)
 
 
 def llm_chat_answer(
     previous_messages: list[ChatMessage],
-    contextual: bool,
-    context: ChatContext,
+    persona: Persona | None,
 ) -> Iterator[str]:
-    if not contextual:
+    if persona is None:
         return llm_contextless_chat_answer(previous_messages)
 
-    return llm_contextual_chat_answer(previous_messages, context)
+    return llm_contextual_chat_answer(previous_messages, persona)

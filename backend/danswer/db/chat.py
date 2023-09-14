@@ -12,6 +12,7 @@ from danswer.configs.app_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
+from danswer.db.models import Persona
 
 
 def fetch_chat_sessions_by_user(
@@ -95,10 +96,9 @@ def verify_parent_exists(
 
 
 def create_chat_session(
-    description: str, contextual: bool, user_id: UUID | None, db_session: Session
+    description: str, user_id: UUID | None, db_session: Session
 ) -> ChatSession:
     chat_session = ChatSession(
-        contextual=contextual,
         user_id=user_id,
         description=description,
     )
@@ -248,26 +248,45 @@ def set_latest_chat_message(
     db_session.commit()
 
 
-def set_system_message(
-    chat_session_id: int,
+def fetch_persona_by_id(persona_id: int, db_session: Session) -> Persona:
+    stmt = select(Persona).where(Persona.id == persona_id)
+    result = db_session.execute(stmt)
+    persona = result.scalar_one_or_none()
+
+    if persona is None:
+        raise ValueError(f"Persona with ID {persona_id} does not exist")
+
+    return persona
+
+
+def create_persona(
+    persona_id: int | None,
+    name: str,
     system_text: str | None,
     tools_text: str | None,
     hint_text: str | None,
-    user_id: UUID | None,
+    default_persona: bool,
     db_session: Session,
-) -> ChatSession:
-    chat_session = fetch_chat_session_by_id(chat_session_id, db_session)
+) -> Persona:
+    persona = db_session.query(Persona).filter_by(id=persona_id).first()
 
-    if chat_session.deleted:
-        raise ValueError("Trying to update system message for a deleted chat session")
-
-    if user_id != chat_session.user_id:
-        raise ValueError("User trying to system message of another user.")
-
-    chat_session.system_text = system_text
-    chat_session.tools_text = tools_text
-    chat_session.hint_text = hint_text
+    if persona:
+        persona.name = name
+        persona.system_text = system_text
+        persona.tools_text = tools_text
+        persona.hint_text = hint_text
+        persona.default_persona = default_persona
+    else:
+        persona = Persona(
+            id=persona_id,
+            name=name,
+            system_text=system_text,
+            tools_text=tools_text,
+            hint_text=hint_text,
+            default_persona=default_persona,
+        )
+        db_session.add(persona)
 
     db_session.commit()
 
-    return chat_session
+    return persona
