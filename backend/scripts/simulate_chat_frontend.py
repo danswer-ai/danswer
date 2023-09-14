@@ -15,23 +15,11 @@ from danswer.configs.app_configs import APP_PORT
 LOCAL_CHAT_ENDPOINT = f"http://127.0.0.1:{APP_PORT}/chat/"
 
 
-def create_new_session(contextual: bool) -> int:
-    data = {"contextual": contextual}
-    response = requests.post(LOCAL_CHAT_ENDPOINT + "create-chat-session", json=data)
+def create_new_session() -> int:
+    response = requests.post(LOCAL_CHAT_ENDPOINT + "create-chat-session")
     response.raise_for_status()
     new_session_id = response.json()["chat_session_id"]
     return new_session_id
-
-
-def set_default_context(new_session_id: int) -> None:
-    data = {
-        "chat_session_id": new_session_id,
-        "system_text_preset": 0,
-        "tool_text_preset": 0,
-        "hint_text_preset": 0,
-    }
-    response = requests.post(LOCAL_CHAT_ENDPOINT + "set-system-message", json=data)
-    response.raise_for_status()
 
 
 def send_chat_message(
@@ -39,12 +27,14 @@ def send_chat_message(
     chat_session_id: int,
     message_number: int,
     parent_edit_number: int | None,
+    persona_id: int | None,
 ) -> None:
     data = {
         "message": message,
         "chat_session_id": chat_session_id,
         "message_number": message_number,
         "parent_edit_number": parent_edit_number,
+        "persona_id": persona_id,
     }
 
     with requests.post(
@@ -58,17 +48,18 @@ def send_chat_message(
 
 
 def run_chat(contextual: bool) -> None:
-    new_session_id = create_new_session(contextual)
+    new_session_id = create_new_session()
 
-    if contextual:
-        set_default_context(new_session_id)
+    persona_id = 1 if contextual else None
 
     message_num = 0
     parent_edit = None
     while True:
         new_message = input()
 
-        send_chat_message(new_message, new_session_id, message_num, parent_edit)
+        send_chat_message(
+            new_message, new_session_id, message_num, parent_edit, persona_id
+        )
 
         message_num += 2  # 1 for User message, 1 for AI response
         parent_edit = 0  # Since no edits, the parent message is always the first edit of that message number
