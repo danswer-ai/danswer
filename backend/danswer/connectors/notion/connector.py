@@ -79,7 +79,11 @@ class NotionConnector(LoadConnector, PollConnector):
         block_url = f"https://api.notion.com/v1/blocks/{block_id}/children"
         query_dict: dict[str, Any] = {} if not cursor else {"start_cursor": cursor}
         res = requests.get(block_url, headers=self.headers, json=query_dict)
-        res.raise_for_status()
+        try:
+            res.raise_for_status()
+        except Exception as e:
+            logger.exception(f"Error fetching blocks - {res.json()}")
+            raise e
         return res.json()
 
     def _read_blocks(self, page_block_id: str) -> list[tuple[str, str]]:
