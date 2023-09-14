@@ -75,9 +75,9 @@ const buildDocumentSummaryDisplay = (
         }
       }
       currentText = "";
-      previousIsBold = shouldBeBold;
-      previousIsContinuation = isContinuation;
     }
+    previousIsBold = shouldBeBold;
+    previousIsContinuation = isContinuation;
     if (!isContinuation || index === 0) {
       currentText += " ";
     }
@@ -86,6 +86,9 @@ const buildDocumentSummaryDisplay = (
   if (currentText) {
     if (previousIsBold) {
       currentText = currentText.trim();
+      if (!previousIsContinuation) {
+        finalJSX[finalJSX.length - 1] = finalJSX[finalJSX.length - 1] + " ";
+      }
       finalJSX.push(
         <b key={sections.length} className="text-gray-200 bg-pink-950">
           {currentText}
