@@ -2,7 +2,6 @@ import datetime
 from enum import Enum as PyEnum
 from typing import Any
 from typing import List
-from typing import Optional
 from uuid import UUID
 
 from fastapi_users.db import SQLAlchemyBaseOAuthAccountTableUUID
@@ -141,9 +140,6 @@ class Connector(Base):
     index_attempts: Mapped[List["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="connector"
     )
-    deletion_attempt: Mapped[Optional["DeletionAttempt"]] = relationship(
-        "DeletionAttempt", back_populates="connector"
-    )
 
 
 class Credential(Base):
@@ -170,9 +166,6 @@ class Credential(Base):
     ] = relationship("DocumentByConnectorCredentialPair", back_populates="credential")
     index_attempts: Mapped[List["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="credential"
-    )
-    deletion_attempt: Mapped[Optional["DeletionAttempt"]] = relationship(
-        "DeletionAttempt", back_populates="credential"
     )
     user: Mapped[User | None] = relationship("User", back_populates="credentials")
 
@@ -240,43 +233,6 @@ class IndexAttempt(Base):
             f"time_created={self.time_created!r}, "
             f"time_updated={self.time_updated!r}, "
         )
-
-
-class DeletionAttempt(Base):
-    """Represents an attempt to delete all documents indexed by a specific
-    connector / credential pair.
-    """
-
-    __tablename__ = "deletion_attempt"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    connector_id: Mapped[int] = mapped_column(
-        ForeignKey("connector.id"),
-    )
-    credential_id: Mapped[int] = mapped_column(
-        ForeignKey("credential.id"),
-    )
-    status: Mapped[DeletionStatus] = mapped_column(Enum(DeletionStatus))
-    num_docs_deleted: Mapped[int] = mapped_column(Integer, default=0)
-    error_msg: Mapped[str | None] = mapped_column(
-        Text, default=None
-    )  # only filled if status = "failed"
-    time_created: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-    )
-    time_updated: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-    connector: Mapped[Connector] = relationship(
-        "Connector", back_populates="deletion_attempt"
-    )
-    credential: Mapped[Credential] = relationship(
-        "Credential", back_populates="deletion_attempt"
-    )
 
 
 class DocumentByConnectorCredentialPair(Base):

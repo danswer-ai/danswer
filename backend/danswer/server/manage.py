@@ -12,6 +12,11 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
+from danswer.background.celery import cleanup_connector_credential_pair_task
+from danswer.background.celery import get_deletion_status
+from danswer.background.connector_deletion import (
+    get_cleanup_task_id,
+)
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
@@ -46,14 +51,11 @@ from danswer.db.credentials import create_credential
 from danswer.db.credentials import delete_google_drive_service_account_credentials
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
-from danswer.db.deletion_attempt import create_deletion_attempt
-from danswer.db.deletion_attempt import get_deletion_attempts
 from danswer.db.engine import get_session
 from danswer.db.feedback import fetch_docs_ranked_by_boost
 from danswer.db.feedback import update_document_boost
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_latest_index_attempts
-from danswer.db.models import DeletionAttempt
 from danswer.db.models import User
 from danswer.direct_qa.llm_utils import check_model_api_key_is_valid
 from danswer.direct_qa.llm_utils import get_default_qa_model
@@ -70,7 +72,6 @@ from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.server.models import ConnectorIndexingStatus
 from danswer.server.models import ConnectorSnapshot
 from danswer.server.models import CredentialSnapshot
-from danswer.server.models import DeletionAttemptSnapshot
 from danswer.server.models import FileUploadResponse
 from danswer.server.models import GDriveCallback
 from danswer.server.models import GoogleAppCredentials
@@ -307,25 +308,12 @@ def get_connector_indexing_status(
         for index_attempt in latest_index_attempts
     }
 
-    deletion_attempts_by_connector: dict[int, list[DeletionAttempt]] = {
-        cc_pair.connector.id: [] for cc_pair in cc_pairs
-    }
-    for deletion_attempt in get_deletion_attempts(
-        db_session=db_session,
-        connector_ids=[cc_pair.connector.id for cc_pair in cc_pairs],
-        ordered_by_time_updated=True,
-    ):
-        deletion_attempts_by_connector[deletion_attempt.connector_id].append(
-            deletion_attempt
-        )
-
     for cc_pair in cc_pairs:
         connector = cc_pair.connector
         credential = cc_pair.credential
         latest_index_attempt = cc_pair_to_latest_index_attempt.get(
             (connector.id, credential.id)
         )
-        deletion_attempts = deletion_attempts_by_connector.get(connector.id, [])
         indexing_statuses.append(
             ConnectorIndexingStatus(
                 connector=ConnectorSnapshot.from_connector_db_model(connector),
@@ -343,12 +331,9 @@ def get_connector_indexing_status(
                 )
                 if latest_index_attempt
                 else None,
-                deletion_attempts=[
-                    DeletionAttemptSnapshot.from_deletion_attempt_db_model(
-                        deletion_attempt
-                    )
-                    for deletion_attempt in deletion_attempts
-                ],
+                deletion_attempt=get_deletion_status(
+                    connector_id=connector.id, credential_id=credential.id
+                ),
                 is_deletable=check_deletion_attempt_is_allowed(
                     connector_credential_pair=cc_pair
                 ),
@@ -564,31 +549,13 @@ def create_deletion_attempt_for_connector_id(
             "no ongoing / planned indexing attempts.",
         )
 
-    create_deletion_attempt(
-        connector_id=connector_id,
-        credential_id=credential_id,
-        db_session=db_session,
+    task_id = get_cleanup_task_id(
+        connector_id=connector_id, credential_id=credential_id
     )
-
-
-@router.get("/admin/deletion-attempt/{connector_id}")
-def get_deletion_attempts_for_connector_id(
-    connector_id: int,
-    _: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> list[DeletionAttemptSnapshot]:
-    deletion_attempts = get_deletion_attempts(
-        db_session=db_session, connector_ids=[connector_id]
+    cleanup_connector_credential_pair_task.apply_async(
+        kwargs=dict(connector_id=connector_id, credential_id=credential_id),
+        task_id=task_id,
     )
-    return [
-        DeletionAttemptSnapshot(
-            connector_id=connector_id,
-            status=deletion_attempt.status,
-            error_msg=deletion_attempt.error_msg,
-            num_docs_deleted=deletion_attempt.num_docs_deleted,
-        )
-        for deletion_attempt in deletion_attempts
-    ]
 
 
 """Endpoints for basic users"""
