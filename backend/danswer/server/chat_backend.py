@@ -8,6 +8,10 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
 from danswer.chat.chat_llm import llm_chat_answer
+from danswer.chat.default_system_prompts import HINT_MESSAGE_MAP
+from danswer.chat.default_system_prompts import SYSTEM_MESSAGE_MAP
+from danswer.chat.default_system_prompts import TOOLS_MESSAGE_MAP
+from danswer.chat.models import ChatContext
 from danswer.configs.constants import MessageType
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
@@ -17,6 +21,7 @@ from danswer.db.chat import fetch_chat_messages_by_session
 from danswer.db.chat import fetch_chat_session_by_id
 from danswer.db.chat import fetch_chat_sessions_by_user
 from danswer.db.chat import set_latest_chat_message
+from danswer.db.chat import set_system_message
 from danswer.db.chat import update_chat_session
 from danswer.db.chat import verify_parent_exists
 from danswer.db.engine import get_session
@@ -29,9 +34,11 @@ from danswer.server.models import ChatMessageIdentifier
 from danswer.server.models import ChatRenameRequest
 from danswer.server.models import ChatSessionDetailResponse
 from danswer.server.models import ChatSessionIdsResponse
-from danswer.server.models import CreateChatID
 from danswer.server.models import CreateChatRequest
+from danswer.server.models import CreateChatSessionID
+from danswer.server.models import CreateChatSessionRequest
 from danswer.server.models import RenameChatSessionResponse
+from danswer.server.models import UpdateSystemMessageRequest
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
@@ -106,16 +113,20 @@ def get_chat_session_messages(
 
 @router.post("/create-chat-session")
 def create_new_chat_session(
+    session_info: CreateChatSessionRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-) -> CreateChatID:
+) -> CreateChatSessionID:
     user_id = user.id if user is not None else None
 
     new_chat_session = create_chat_session(
-        "", user_id, db_session  # Leave the naming till later to prevent delay
+        "",
+        session_info.contextual,
+        user_id,
+        db_session,  # Leave the naming till later to prevent delay
     )
 
-    return CreateChatID(chat_session_id=new_chat_session.id)
+    return CreateChatSessionID(chat_session_id=new_chat_session.id)
 
 
 @router.put("/rename-chat-session")
@@ -182,6 +193,48 @@ def _create_chat_chain(
     return mainline_messages
 
 
+def _return_one_if_any(str_1: str | None, str_2: str | None) -> str | None:
+    if str_1 is not None and str_2 is not None:
+        raise ValueError("Conflicting values, can only set one")
+    if str_1 is not None:
+        return str_1
+    if str_2 is not None:
+        return str_2
+    return None
+
+
+@router.post("/set-system-message")
+def handle_new_system_message(
+    system_message: UpdateSystemMessageRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    system_preset = None
+    if system_message.system_text_preset is not None:
+        system_preset = SYSTEM_MESSAGE_MAP[system_message.system_text_preset]
+
+    tool_preset = None
+    if system_message.tool_text_preset is not None:
+        tool_preset = TOOLS_MESSAGE_MAP[system_message.tool_text_preset]
+
+    hint_preset = None
+    if system_message.hint_text_preset is not None:
+        hint_preset = HINT_MESSAGE_MAP[system_message.hint_text_preset]
+
+    system_text = _return_one_if_any(system_message.system_text, system_preset)
+    tool_text = _return_one_if_any(system_message.tool_text, tool_preset)
+    hint_text = _return_one_if_any(system_message.hint_text, hint_preset)
+
+    set_system_message(
+        chat_session_id=system_message.chat_session_id,
+        system_text=system_text,
+        tools_text=tool_text,
+        hint_text=hint_text,
+        user_id=user.id if user is not None else None,
+        db_session=db_session,
+    )
+
+
 @router.post("/send-message")
 def handle_new_chat_message(
     chat_message: CreateChatRequest,
@@ -198,6 +251,12 @@ def handle_new_chat_message(
     user_id = user.id if user is not None else None
 
     chat_session = fetch_chat_session_by_id(chat_session_id, db_session)
+    chat_is_contextual = chat_session.contextual
+    chat_context = ChatContext(
+        system_text=chat_session.system_text,
+        tools_text=chat_session.tools_text,
+        hint_text=chat_session.hint_text,
+    )
 
     if chat_session.deleted:
         raise ValueError("Cannot send messages to a deleted chat session")
@@ -248,7 +307,9 @@ def handle_new_chat_message(
 
     @log_generator_function_time()
     def stream_chat_tokens() -> Iterator[str]:
-        tokens = llm_chat_answer(mainline_messages)
+        tokens = llm_chat_answer(
+            mainline_messages, contextual=chat_is_contextual, context=chat_context
+        )
         llm_output = ""
         for token in tokens:
             llm_output += token
@@ -288,6 +349,12 @@ def regenerate_message_given_parent(
     )
 
     chat_session = chat_message.chat_session
+    chat_is_contextual = chat_session.contextual
+    chat_context = ChatContext(
+        system_text=chat_session.system_text,
+        tools_text=chat_session.tools_text,
+        hint_text=chat_session.hint_text,
+    )
 
     if chat_session.deleted:
         raise ValueError("Chat session has been deleted")
@@ -317,7 +384,9 @@ def regenerate_message_given_parent(
 
     @log_generator_function_time()
     def stream_regenerate_tokens() -> Iterator[str]:
-        tokens = llm_chat_answer(mainline_messages)
+        tokens = llm_chat_answer(
+            mainline_messages, contextual=chat_is_contextual, context=chat_context
+        )
         llm_output = ""
         for token in tokens:
             llm_output += token

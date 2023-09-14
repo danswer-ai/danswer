@@ -146,7 +146,7 @@ NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL = int(
 )
 # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
-QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "10")  # 10 seconds
+QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "60")  # 10 seconds
 # Include additional document/chunk metadata in prompt to GenerativeAI
 INCLUDE_METADATA = False
 HARD_DELETE_CHATS = os.environ.get("HARD_DELETE_CHATS", "True").lower() != "false"

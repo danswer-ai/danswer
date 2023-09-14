@@ -377,6 +377,12 @@ class ChatSession(Base):
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     description: Mapped[str] = mapped_column(Text)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Contextual refers to access to tools such as Danswer retrieval
+    contextual: Mapped[bool] = mapped_column(Boolean, default=True)
+    # The following texts help build up the model's ability to use the context effectively
+    system_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tools_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    hint_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     time_updated: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

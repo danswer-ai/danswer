@@ -9,6 +9,9 @@ from uuid import UUID
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
 
+from danswer.chat.default_system_prompts import HintMessageDefault
+from danswer.chat.default_system_prompts import SystemMessageDefault
+from danswer.chat.default_system_prompts import ToolsMessageDefault
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
@@ -135,7 +138,11 @@ class SearchDoc(BaseModel):
     match_highlights: list[str]
 
 
-class CreateChatID(BaseModel):
+class CreateChatSessionRequest(BaseModel):
+    contextual: bool
+
+
+class CreateChatSessionID(BaseModel):
     chat_session_id: int
 
 
@@ -165,6 +172,16 @@ class CreateChatRequest(BaseModel):
     message_number: int
     parent_edit_number: int | None
     message: str
+
+
+class UpdateSystemMessageRequest(BaseModel):
+    chat_session_id: int
+    system_text: str | None
+    system_text_preset: SystemMessageDefault | None
+    tool_text: str | None
+    tool_text_preset: ToolsMessageDefault | None
+    hint_text: str | None
+    hint_text_preset: HintMessageDefault | None
 
 
 class ChatMessageIdentifier(BaseModel):

@@ -95,9 +95,10 @@ def verify_parent_exists(
 
 
 def create_chat_session(
-    description: str, user_id: UUID | None, db_session: Session
+    description: str, contextual: bool, user_id: UUID | None, db_session: Session
 ) -> ChatSession:
     chat_session = ChatSession(
+        contextual=contextual,
         user_id=user_id,
         description=description,
     )
@@ -245,3 +246,28 @@ def set_latest_chat_message(
     )
 
     db_session.commit()
+
+
+def set_system_message(
+    chat_session_id: int,
+    system_text: str | None,
+    tools_text: str | None,
+    hint_text: str | None,
+    user_id: UUID | None,
+    db_session: Session,
+) -> ChatSession:
+    chat_session = fetch_chat_session_by_id(chat_session_id, db_session)
+
+    if chat_session.deleted:
+        raise ValueError("Trying to update system message for a deleted chat session")
+
+    if user_id != chat_session.user_id:
+        raise ValueError("User trying to system message of another user.")
+
+    chat_session.system_text = system_text
+    chat_session.tools_text = tools_text
+    chat_session.hint_text = hint_text
+
+    db_session.commit()
+
+    return chat_session
