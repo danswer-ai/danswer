@@ -314,6 +314,17 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
     response.raise_for_status()
 
     hits = response.json()["root"].get("children", [])
+
+    for hit in hits:
+        if hit["fields"].get(CONTENT) is None:
+            logger.error(
+                f"Vespa Index with Vespa ID {hit['id']} has no contents. "
+                f"This is invalid because the vector is not meaningful and keywordsearch cannot "
+                f"fetch this document"
+            )
+
+    filtered_hits = [hit for hit in hits if hit["fields"].get(CONTENT) is not None]
+
     inference_chunks = [
         InferenceChunk.from_dict(
             dict(
@@ -330,7 +341,7 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
                 },
             )
         )
-        for hit in hits
+        for hit in filtered_hits
     ]
 
     return inference_chunks
