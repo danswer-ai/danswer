@@ -2,10 +2,10 @@ import re
 from collections.abc import Iterator
 from dataclasses import asdict
 
+from danswer.configs.constants import CODE_BLOCK_PAT
+from danswer.configs.constants import GENERAL_SEP_PAT
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.qa_block import dict_based_prompt_to_langchain_prompt
-from danswer.direct_qa.qa_prompts import CODE_BLOCK_PAT
-from danswer.direct_qa.qa_prompts import GENERAL_SEP_PAT
 from danswer.llm.build import get_default_llm
 from danswer.server.models import QueryValidationResponse
 from danswer.server.utils import get_json_line

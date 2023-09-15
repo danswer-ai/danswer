@@ -1,11 +1,27 @@
+import json
 import re
 
 import bs4
 from bs4 import BeautifulSoup
 
 
+def has_unescaped_quote(s: str) -> bool:
+    pattern = r'(?<!\\)"'
+    return bool(re.search(pattern, s))
+
+
 def escape_newlines(s: str) -> str:
     return re.sub(r"(?<!\\)\n", "\\\\n", s)
+
+
+def extract_embedded_json(s: str) -> dict:
+    first_brace_index = s.find("{")
+    last_brace_index = s.rfind("}")
+
+    if first_brace_index == -1 or last_brace_index == -1:
+        raise ValueError("No valid json found")
+
+    return json.loads(s[first_brace_index : last_brace_index + 1])
 
 
 def clean_up_code_blocks(model_out_raw: str) -> str:

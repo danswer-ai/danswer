@@ -134,7 +134,7 @@ class SearchDoc(BaseModel):
     match_highlights: list[str]
 
 
-class CreateChatID(BaseModel):
+class CreateChatSessionID(BaseModel):
     chat_session_id: int
 
 
@@ -159,17 +159,22 @@ class SearchFeedbackRequest(BaseModel):
     search_feedback: SearchFeedbackType
 
 
-class CreateChatRequest(BaseModel):
+class CreateChatMessageRequest(BaseModel):
     chat_session_id: int
     message_number: int
     parent_edit_number: int | None
     message: str
+    persona_id: int | None
 
 
 class ChatMessageIdentifier(BaseModel):
     chat_session_id: int
     message_number: int
     edit_number: int
+
+
+class RegenerateMessageRequest(ChatMessageIdentifier):
+    persona_id: int | None
 
 
 class ChatRenameRequest(BaseModel):

@@ -10,19 +10,18 @@ from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 
 from danswer.chunking.models import InferenceChunk
+from danswer.configs.constants import CODE_BLOCK_PAT
+from danswer.configs.constants import GENERAL_SEP_PAT
+from danswer.configs.constants import QUESTION_PAT
+from danswer.configs.constants import THOUGHT_PAT
+from danswer.configs.constants import UNCERTAINTY_PAT
 from danswer.direct_qa.interfaces import AnswerQuestionReturn
 from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerQuotes
 from danswer.direct_qa.interfaces import QAModel
-from danswer.direct_qa.qa_prompts import CODE_BLOCK_PAT
 from danswer.direct_qa.qa_prompts import EMPTY_SAMPLE_JSON
-from danswer.direct_qa.qa_prompts import GENERAL_SEP_PAT
 from danswer.direct_qa.qa_prompts import JsonChatProcessor
-from danswer.direct_qa.qa_prompts import QUESTION_PAT
-from danswer.direct_qa.qa_prompts import SAMPLE_JSON_RESPONSE
-from danswer.direct_qa.qa_prompts import THOUGHT_PAT
-from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
 from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
@@ -193,7 +192,7 @@ class JsonChatQAUnshackledHandler(QAHandler):
                     "should be in JSON format and contain an answer and (optionally) quotes that help support the answer. "
                     "Your responses should be informative, detailed, and consider all possibilities and edge cases. "
                     f"If you don't know the answer, respond with '{complete_answer_not_found_response}'\n"
-                    f"Sample response:\n\n{json.dumps(SAMPLE_JSON_RESPONSE)}"
+                    f"Sample response:\n\n{json.dumps(EMPTY_SAMPLE_JSON)}"
                 )
             )
         )
