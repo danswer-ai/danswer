@@ -77,8 +77,8 @@ class NotionConnector(LoadConnector, PollConnector):
         """Fetch all child blocks via the Notion API."""
         logger.debug(f"Fetching children of block with ID '{block_id}'")
         block_url = f"https://api.notion.com/v1/blocks/{block_id}/children"
-        query_dict: dict[str, Any] = {} if not cursor else {"start_cursor": cursor}
-        res = requests.get(block_url, headers=self.headers, json=query_dict)
+        query_params = None if not cursor else {"start_cursor": cursor}
+        res = requests.get(block_url, headers=self.headers, params=query_params)
         try:
             res.raise_for_status()
         except Exception as e:
