@@ -1,4 +1,4 @@
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Step 1. Install dependencies only when needed
 FROM base AS deps
@@ -14,9 +14,6 @@ RUN \
   elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
   fi
-# needed for image processing
-RUN npm i sharp 
-
 
 # Step 2. Rebuild the source code only when needed
 FROM base AS builder
