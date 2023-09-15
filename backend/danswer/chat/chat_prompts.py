@@ -3,7 +3,8 @@ from danswer.configs.constants import CODE_BLOCK_PAT
 
 TOOL_TEMPLATE = """TOOLS
 ------
-Assistant can ask the user to use tools to look up information that may be helpful in answering the users original question. The tools the human can use are:
+Assistant can ask the user to use tools to look up information that may be helpful in answering the users \
+original question. The tools the human can use are:
 
 {}
 
@@ -48,19 +49,21 @@ Respond with a markdown code snippet in the following schema:
 USER_INPUT = """
 USER'S INPUT
 --------------------
-Here is the user's input (remember to respond with a markdown code snippet of a json blob with a single action, and NOTHING else):
+Here is the user's input \
+(remember to respond with a markdown code snippet of a json blob with a single action, and NOTHING else):
 
 {}
 """
 
 TOOL_FOLLOWUP = """
-TOOL RESPONSE: 
+TOOL RESPONSE:
 ---------------------
 {}
 
 USER'S INPUT
 --------------------
-Okay, so what is the response to my last comment? If using information obtained from the tools you must mention it explicitly without mentioning the tool names - I have forgotten all TOOL RESPONSES!
+Okay, so what is the response to my last comment? If using information obtained from the tools you must \
+mention it explicitly without mentioning the tool names - I have forgotten all TOOL RESPONSES!
 {}
 IMPORTANT! You MUST respond with a markdown code snippet of a json blob with a single action, and NOTHING else.
 """
@@ -93,7 +96,7 @@ def form_tool_section_text(
 
     tools_intro = []
     for tool in tools:
-        description_formatted = tool['description'].replace('\n', ' ')
+        description_formatted = tool["description"].replace("\n", " ")
         tools_intro.append(f"> {tool['name']}: {description_formatted}")
 
     tools_intro_text = "\n".join(tools_intro)
@@ -104,7 +107,8 @@ def form_tool_section_text(
 
 def format_danswer_chunks_for_chat(chunks: list[InferenceChunk]) -> str:
     return "\n".join(
-        f"DOCUMENT {ind}:{CODE_BLOCK_PAT.format(chunk.content)}" for ind, chunk in enumerate(chunks, start=1)
+        f"DOCUMENT {ind}:{CODE_BLOCK_PAT.format(chunk.content)}"
+        for ind, chunk in enumerate(chunks, start=1)
     )
 
 
@@ -112,7 +116,7 @@ def form_tool_followup_text(
     tool_output: str,
     hint_text: str | None,
     tool_followup_prompt: str = TOOL_FOLLOWUP,
-    ignore_hint: bool = False
+    ignore_hint: bool = False,
 ) -> str:
     if not ignore_hint and hint_text:
         hint_text_spaced = f"\n{hint_text}\n"

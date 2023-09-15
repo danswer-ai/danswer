@@ -267,7 +267,9 @@ def handle_new_chat_message(
 
     @log_generator_function_time()
     def stream_chat_tokens() -> Iterator[str]:
-        tokens = llm_chat_answer(messages=mainline_messages, persona=persona, user_id=user_id)
+        tokens = llm_chat_answer(
+            messages=mainline_messages, persona=persona, user_id=user_id
+        )
         llm_output = ""
         for token in tokens:
             llm_output += token
@@ -341,7 +343,9 @@ def regenerate_message_given_parent(
 
     @log_generator_function_time()
     def stream_regenerate_tokens() -> Iterator[str]:
-        tokens = llm_chat_answer(messages=mainline_messages, persona=persona, user_id=user_id)
+        tokens = llm_chat_answer(
+            messages=mainline_messages, persona=persona, user_id=user_id
+        )
         llm_output = ""
         for token in tokens:
             llm_output += token

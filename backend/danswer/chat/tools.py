@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from danswer.chat.chat_prompts import format_danswer_chunks_for_chat
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT
 from danswer.configs.constants import IGNORE_FOR_QA
@@ -5,7 +7,6 @@ from danswer.datastores.document_index import get_default_document_index
 from danswer.direct_qa.interfaces import DanswerChatModelOut
 from danswer.direct_qa.qa_utils import get_usable_chunks
 from danswer.search.semantic_search import retrieve_ranked_documents
-from uuid import UUID
 
 
 def call_tool(

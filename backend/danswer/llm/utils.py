@@ -11,18 +11,21 @@ from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import BaseMessageChunk
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
-from danswer.db.models import ChatMessage
-from danswer.configs.constants import MessageType
 
 from danswer.configs.app_configs import LOG_LEVEL
+from danswer.configs.constants import MessageType
+from danswer.db.models import ChatMessage
 
 
-def translate_danswer_msg_to_langchain(
-    msg: ChatMessage
-) -> BaseMessage:
-    if msg.message_type == MessageType.SYSTEM or msg.message_type == MessageType.DANSWER:
+def translate_danswer_msg_to_langchain(msg: ChatMessage) -> BaseMessage:
+    if (
+        msg.message_type == MessageType.SYSTEM
+        or msg.message_type == MessageType.DANSWER
+    ):
         # TODO save at least the Danswer responses to postgres
-        raise ValueError("System and Danswer messages are not currently part of history")
+        raise ValueError(
+            "System and Danswer messages are not currently part of history"
+        )
     if msg.message_type == MessageType.ASSISTANT:
         return AIMessage(content=msg.message)
     if msg.message_type == MessageType.USER:

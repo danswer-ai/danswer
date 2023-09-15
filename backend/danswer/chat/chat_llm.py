@@ -6,19 +6,22 @@ from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 
-from danswer.chat.chat_prompts import form_user_prompt_text, form_tool_followup_text
+from danswer.chat.chat_prompts import form_tool_followup_text
+from danswer.chat.chat_prompts import form_user_prompt_text
 from danswer.chat.tools import call_tool
-from danswer.configs.constants import CODE_BLOCK_PAT
-from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
 from danswer.db.models import Persona
+from danswer.direct_qa.interfaces import DanswerAnswerPiece
+from danswer.direct_qa.interfaces import DanswerChatModelOut
 from danswer.llm.build import get_default_llm
 from danswer.llm.utils import translate_danswer_msg_to_langchain
-from danswer.direct_qa.interfaces import DanswerAnswerPiece, DanswerChatModelOut
-from danswer.utils.text_processing import extract_embedded_json, has_unescaped_quote
+from danswer.utils.text_processing import extract_embedded_json
+from danswer.utils.text_processing import has_unescaped_quote
 
 
-def _parse_embedded_json_streamed_response(tokens: Iterator[str]) -> Iterator[DanswerAnswerPiece | DanswerChatModelOut]:
+def _parse_embedded_json_streamed_response(
+    tokens: Iterator[str],
+) -> Iterator[DanswerAnswerPiece | DanswerChatModelOut]:
     final_answer = False
     just_start_stream = False
     model_output = ""
@@ -28,17 +31,22 @@ def _parse_embedded_json_streamed_response(tokens: Iterator[str]) -> Iterator[Da
         model_output += token
         hold += token
 
-        if final_answer is False and '"action":"finalanswer",' in model_output.lower().replace(" ", ""):
+        if (
+            final_answer is False
+            and '"action":"finalanswer",' in model_output.lower().replace(" ", "")
+        ):
             final_answer = True
 
-        if final_answer and '"actioninput":"' in model_output.lower().replace(" ", "").replace("_", ""):
+        if final_answer and '"actioninput":"' in model_output.lower().replace(
+            " ", ""
+        ).replace("_", ""):
             if not just_start_stream:
                 just_start_stream = True
                 hold = ""
 
             if has_unescaped_quote(hold):
                 finding_end += 1
-                hold = hold[:hold.find('"')]
+                hold = hold[: hold.find('"')]
 
             if finding_end <= 1:
                 if finding_end == 1:
@@ -53,8 +61,8 @@ def _parse_embedded_json_streamed_response(tokens: Iterator[str]) -> Iterator[Da
 
     yield DanswerChatModelOut(
         model_raw=model_output,
-        action=model_final['action'],
-        action_input=model_final['action_input']
+        action=model_final["action"],
+        action_input=model_final["action_input"],
     )
     return
 
@@ -88,7 +96,9 @@ def llm_contextual_chat_answer(
     if system_text:
         prompt.append(SystemMessage(content=system_text))
 
-    prompt.extend([translate_danswer_msg_to_langchain(msg) for msg in previous_messages])
+    prompt.extend(
+        [translate_danswer_msg_to_langchain(msg) for msg in previous_messages]
+    )
 
     prompt.append(HumanMessage(content=user_text))
 
@@ -114,7 +124,11 @@ def llm_contextual_chat_answer(
     tool_result_str = call_tool(final_result, user_id=user_id)
 
     prompt.append(AIMessage(content=final_result.model_raw))
-    prompt.append(HumanMessage(content=form_tool_followup_text(tool_result_str, hint_text=hint_text)))
+    prompt.append(
+        HumanMessage(
+            content=form_tool_followup_text(tool_result_str, hint_text=hint_text)
+        )
+    )
 
     tokens = get_default_llm().stream(prompt)
 
@@ -128,9 +142,7 @@ def llm_contextual_chat_answer(
 
 
 def llm_chat_answer(
-    messages: list[ChatMessage],
-    persona: Persona | None,
-    user_id: UUID | None
+    messages: list[ChatMessage], persona: Persona | None, user_id: UUID | None
 ) -> Iterator[str]:
     # TODO how to handle model giving jibberish or fail on a particular message
     # TODO how to handle model failing to choose the right tool
@@ -138,4 +150,6 @@ def llm_chat_answer(
     if persona is None:
         return llm_contextless_chat_answer(messages)
 
-    return llm_contextual_chat_answer(messages=messages, persona=persona, user_id=user_id)
+    return llm_contextual_chat_answer(
+        messages=messages, persona=persona, user_id=user_id
+    )
