@@ -144,6 +144,9 @@ NUM_RERANKED_RESULTS = 15
 NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL = int(
     os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL") or (512 * 5)
 )
+NUM_DOCUMENT_TOKENS_FED_TO_CHAT = int(
+    os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_CHAT") or (512 * 3)
+)
 # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "60")  # 10 seconds
