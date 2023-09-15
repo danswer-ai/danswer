@@ -12,6 +12,7 @@ from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
 from danswer.auth.users import fastapi_users
 from danswer.auth.users import oauth_client
+from danswer.chat.personas import load_personas_from_yaml
 from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import DISABLE_AUTH
@@ -190,6 +191,9 @@ def get_application() -> FastAPI:
 
         logger.info("Verifying public credential exists.")
         create_initial_public_credential()
+
+        logger.info("Loading default Chat Personas")
+        load_personas_from_yaml()
 
         logger.info("Verifying Document Index(s) is/are available.")
         get_default_document_index().ensure_indices_exist()

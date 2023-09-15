@@ -12,6 +12,7 @@ from danswer.configs.app_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
+from danswer.db.models import Persona
 
 
 def fetch_chat_sessions_by_user(
@@ -245,3 +246,47 @@ def set_latest_chat_message(
     )
 
     db_session.commit()
+
+
+def fetch_persona_by_id(persona_id: int, db_session: Session) -> Persona:
+    stmt = select(Persona).where(Persona.id == persona_id)
+    result = db_session.execute(stmt)
+    persona = result.scalar_one_or_none()
+
+    if persona is None:
+        raise ValueError(f"Persona with ID {persona_id} does not exist")
+
+    return persona
+
+
+def create_persona(
+    persona_id: int | None,
+    name: str,
+    system_text: str | None,
+    tools_text: str | None,
+    hint_text: str | None,
+    default_persona: bool,
+    db_session: Session,
+) -> Persona:
+    persona = db_session.query(Persona).filter_by(id=persona_id).first()
+
+    if persona:
+        persona.name = name
+        persona.system_text = system_text
+        persona.tools_text = tools_text
+        persona.hint_text = hint_text
+        persona.default_persona = default_persona
+    else:
+        persona = Persona(
+            id=persona_id,
+            name=name,
+            system_text=system_text,
+            tools_text=tools_text,
+            hint_text=hint_text,
+            default_persona=default_persona,
+        )
+        db_session.add(persona)
+
+    db_session.commit()
+
+    return persona

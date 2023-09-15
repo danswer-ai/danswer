@@ -2,22 +2,16 @@ import abc
 import json
 
 from danswer.chunking.models import InferenceChunk
+from danswer.configs.constants import ANSWER_PAT
+from danswer.configs.constants import DOC_CONTENT_START_PAT
+from danswer.configs.constants import DOC_SEP_PAT
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import GENERAL_SEP_PAT
+from danswer.configs.constants import QUESTION_PAT
+from danswer.configs.constants import QUOTE_PAT
+from danswer.configs.constants import UNCERTAINTY_PAT
 from danswer.connectors.factory import identify_connector_class
 
-
-GENERAL_SEP_PAT = "\n-----\n"
-CODE_BLOCK_PAT = "\n```\n{}\n```\n"
-DOC_SEP_PAT = "---NEW DOCUMENT---"
-DOC_CONTENT_START_PAT = "DOCUMENT CONTENTS:\n"
-QUESTION_PAT = "Query:"
-THOUGHT_PAT = "Thought:"
-ANSWER_PAT = "Answer:"
-FINAL_ANSWER_PAT = "Final Answer:"
-UNCERTAINTY_PAT = "?"
-QUOTE_PAT = "Quote:"
-QUOTES_PAT_PLURAL = "Quotes:"
-INVALID_PAT = "Invalid:"
 
 BASE_PROMPT = (
     "Answer the query based on provided documents and quote relevant sections. "
@@ -26,16 +20,6 @@ BASE_PROMPT = (
     "The quotes must be EXACT substrings from the documents."
 )
 
-SAMPLE_QUESTION = "Where is the Eiffel Tower?"
-
-SAMPLE_JSON_RESPONSE = {
-    "answer": "The Eiffel Tower is located in Paris, France.",
-    "quotes": [
-        "The Eiffel Tower is an iconic symbol of Paris",
-        "located on the Champ de Mars in France.",
-    ],
-}
-
 EMPTY_SAMPLE_JSON = {
     "answer": "Place your final answer here. It should be as DETAILED and INFORMATIVE as possible.",
     "quotes": [
@@ -43,16 +27,6 @@ EMPTY_SAMPLE_JSON = {
         "HINT, quotes are not shown to the user!",
     ],
 }
-
-ANSWER_NOT_FOUND_JSON = '{"answer": "' + UNCERTAINTY_PAT + '", "quotes": []}'
-
-SAMPLE_RESPONSE_COT = (
-    "Let's think step by step. The user is asking for the "
-    "location of the Eiffel Tower. The first document describes the Eiffel Tower "
-    "as being an iconic symbol of Paris and that it is located on the Champ de Mars. "
-    "Since the Champ de Mars is in Paris, we know that the Eiffel Tower is in Paris."
-    f"\n\n{json.dumps(SAMPLE_JSON_RESPONSE)}"
-)
 
 
 def _append_acknowledge_doc_messages(
@@ -152,7 +126,7 @@ class JsonProcessor(NonChatPromptProcessor):
         question: str, chunks: list[InferenceChunk], include_metadata: bool = False
     ) -> str:
         prompt = (
-            BASE_PROMPT + f" Sample response:\n{json.dumps(SAMPLE_JSON_RESPONSE)}\n\n"
+            BASE_PROMPT + f" Sample response:\n{json.dumps(EMPTY_SAMPLE_JSON)}\n\n"
             f'Each context document below is prefixed with "{DOC_SEP_PAT}".\n\n'
         )
 
@@ -203,7 +177,7 @@ class JsonChatProcessor(ChatPromptProcessor):
             f"{complete_answer_not_found_response}\n"
             "If the query requires aggregating the number of documents, respond with "
             '{"answer": "Aggregations not supported", "quotes": []}\n'
-            f"Sample response:\n{json.dumps(SAMPLE_JSON_RESPONSE)}"
+            f"Sample response:\n{json.dumps(EMPTY_SAMPLE_JSON)}"
         )
         messages = [{"role": "system", "content": intro_msg}]
         for chunk in chunks:
@@ -217,65 +191,6 @@ class JsonChatProcessor(ChatPromptProcessor):
         messages.append({"role": "system", "content": task_msg})
 
         messages.append({"role": "user", "content": f"{QUESTION_PAT}\n{question}\n"})
-
-        return messages
-
-
-class JsonCoTChatProcessor(ChatPromptProcessor):
-    """Pros: improves performance slightly over the regular JsonChatProcessor.
-    Cons: Much slower.
-    """
-
-    @property
-    def specifies_json_output(self) -> bool:
-        return True
-
-    @staticmethod
-    def fill_prompt(
-        question: str,
-        chunks: list[InferenceChunk],
-        include_metadata: bool = True,
-    ) -> list[dict[str, str]]:
-        metadata_prompt_section = (
-            "with metadata and contents " if include_metadata else ""
-        )
-        intro_msg = (
-            f"You are a Question Answering assistant that answers queries "
-            f"based on the provided documents.\n"
-            f'Start by reading the following documents {metadata_prompt_section}and responding with "Acknowledged".'
-        )
-
-        complete_answer_not_found_response = (
-            '{"answer": "' + UNCERTAINTY_PAT + '", "quotes": []}'
-        )
-        task_msg = (
-            "Now answer the user query based on documents above and quote relevant sections.\n"
-            "When answering, you should think step by step, and verbalize your thought process.\n"
-            "Then respond with a JSON containing the answer and up to three most relevant quotes from the documents.\n"
-            "All quotes MUST be EXACT substrings from provided documents.\n"
-            "Your responses should be informative, detailed, and consider all possibilities and edge cases.\n"
-            "You MUST prioritize information from provided documents over internal knowledge.\n"
-            "If the query cannot be answered based on the documents, respond with "
-            f"{complete_answer_not_found_response}\n"
-            "If the query requires aggregating the number of documents, respond with "
-            '{"answer": "Aggregations not supported", "quotes": []}\n'
-            f"Sample response:\n\n{SAMPLE_RESPONSE_COT}"
-        )
-        messages = [{"role": "system", "content": intro_msg}]
-
-        for chunk in chunks:
-            full_context = ""
-            if include_metadata:
-                full_context = _add_metadata_section(
-                    full_context, chunk, prepend_tab=False, include_sep=False
-                )
-            full_context += chunk.content
-            messages = _append_acknowledge_doc_messages(messages, full_context)
-        messages.append({"role": "user", "content": task_msg})
-
-        messages.append({"role": "user", "content": f"{QUESTION_PAT}\n{question}\n\n"})
-
-        messages.append({"role": "user", "content": "Let's think step by step."})
 
         return messages
 
@@ -366,117 +281,3 @@ class FreeformProcessor(NonChatPromptProcessor):
         prompt += f"{QUESTION_PAT}\n{question}\n"
         prompt += f"{ANSWER_PAT}\n"
         return prompt
-
-
-class FreeformChatProcessor(ChatPromptProcessor):
-    @property
-    def specifies_json_output(self) -> bool:
-        return False
-
-    @staticmethod
-    def fill_prompt(
-        question: str, chunks: list[InferenceChunk], include_metadata: bool = False
-    ) -> list[dict[str, str]]:
-        sample_quote = "Quote:\nThe hotdogs are freshly cooked.\n\nQuote:\nThey are very cheap at only a dollar each."
-        role_msg = (
-            f"You are a Question Answering assistant that answers queries based on provided documents. "
-            f'You will be asked to acknowledge a set of documents and then provide one "{ANSWER_PAT}" and '
-            f'as many "{QUOTE_PAT}" sections as is relevant to back up your answer. '
-            f"Answer the question directly and concisely. "
-            f"Each quote should be a single continuous segment from a document. "
-            f'If the query cannot be answered based on the documents, say "{UNCERTAINTY_PAT}". '
-            f"An example of quote sections may look like:\n{sample_quote}"
-        )
-
-        messages = [
-            {"role": "system", "content": role_msg},
-        ]
-        for chunk in chunks:
-            messages = _append_acknowledge_doc_messages(messages, chunk.content)
-
-        messages.append(
-            {
-                "role": "user",
-                "content": f"Please now answer the following query based on the previously provided "
-                f"documents and quote the relevant sections of the documents\n{question}",
-            },
-        )
-
-        return messages
-
-
-class JsonCOTProcessor(NonChatPromptProcessor):
-    """Chain of Thought allows model to explain out its reasoning to handle harder tests.
-    This prompt type works however has higher token cost (more expensive) and is slower.
-    Consider this one if users ask questions that require logical reasoning."""
-
-    @property
-    def specifies_json_output(self) -> bool:
-        return True
-
-    @staticmethod
-    def fill_prompt(
-        question: str, chunks: list[InferenceChunk], include_metadata: bool = False
-    ) -> str:
-        prompt = (
-            f"Answer the query based on provided documents and quote relevant sections. "
-            f'Respond with a freeform reasoning section followed by "Final Answer:" with a '
-            f"json containing a concise answer to the query and up to three most relevant quotes from the documents.\n"
-            f"Sample answer json:\n{json.dumps(SAMPLE_JSON_RESPONSE)}\n\n"
-            f'Each context document below is prefixed with "{DOC_SEP_PAT}".\n\n'
-        )
-
-        for chunk in chunks:
-            prompt += f"\n{DOC_SEP_PAT}\n{chunk.content}"
-
-        prompt += "\n\n---\n\n"
-        prompt += f"{QUESTION_PAT}\n{question}\n"
-        prompt += "Reasoning:\n"
-        return prompt
-
-
-class JsonReflexionProcessor(NonChatPromptProcessor):
-    """Reflexion prompting to attempt to have model evaluate its own answer.
-    This one seems largely useless when only given a single example
-    Model seems to take the one example of answering "Yes" and just does that too."""
-
-    @property
-    def specifies_json_output(self) -> bool:
-        return True
-
-    @staticmethod
-    def fill_prompt(
-        question: str, chunks: list[InferenceChunk], include_metadata: bool = False
-    ) -> str:
-        reflexion_str = "Does this fully answer the user query?"
-        prompt = (
-            BASE_PROMPT
-            + f'After each generated json, ask "{reflexion_str}" and respond Yes or No. '
-            f"If No, generate a better json response to the query.\n"
-            f"Sample question and response:\n"
-            f"{QUESTION_PAT}\n{SAMPLE_QUESTION}\n"
-            f"{json.dumps(SAMPLE_JSON_RESPONSE)}\n"
-            f"{reflexion_str} Yes\n\n"
-            f'Each context document below is prefixed with "{DOC_SEP_PAT}".\n\n'
-        )
-
-        for chunk in chunks:
-            prompt += f"\n---NEW CONTEXT DOCUMENT---\n{chunk.content}"
-
-        prompt += "\n\n---\n\n"
-        prompt += f"{QUESTION_PAT}\n{question}\n"
-        return prompt
-
-
-def get_json_chat_reflexion_msg() -> dict[str, str]:
-    """With the models tried (curent as of Jul 2023), this has not been very useful.
-    Have not seen any answers improved based on this.
-    For models like gpt-3.5-turbo, it will often answer something like:
-    'The response is a valid json that fully answers the user query with quotes exactly matching sections of the source
-    document. No revision is needed.'"""
-    reflexion_content = (
-        "Is the assistant response a valid json that fully answer the user query? "
-        "If the response needs to be fixed or if an improvement is possible, provide a revised json. "
-        "Otherwise, respond with the same json."
-    )
-    return {"role": "system", "content": reflexion_content}

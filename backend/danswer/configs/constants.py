@@ -25,6 +25,20 @@ BOOST = "boost"
 SCORE = "score"
 DEFAULT_BOOST = 0
 
+# Prompt building constants:
+GENERAL_SEP_PAT = "\n-----\n"
+CODE_BLOCK_PAT = "\n```\n{}\n```\n"
+DOC_SEP_PAT = "---NEW DOCUMENT---"
+DOC_CONTENT_START_PAT = "DOCUMENT CONTENTS:\n"
+QUESTION_PAT = "Query:"
+THOUGHT_PAT = "Thought:"
+ANSWER_PAT = "Answer:"
+FINAL_ANSWER_PAT = "Final Answer:"
+UNCERTAINTY_PAT = "?"
+QUOTE_PAT = "Quote:"
+QUOTES_PAT_PLURAL = "Quotes:"
+INVALID_PAT = "Invalid:"
+
 
 class DocumentSource(str, Enum):
     SLACK = "slack"

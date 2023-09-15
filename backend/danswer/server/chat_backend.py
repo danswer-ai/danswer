@@ -16,6 +16,7 @@ from danswer.db.chat import fetch_chat_message
 from danswer.db.chat import fetch_chat_messages_by_session
 from danswer.db.chat import fetch_chat_session_by_id
 from danswer.db.chat import fetch_chat_sessions_by_user
+from danswer.db.chat import fetch_persona_by_id
 from danswer.db.chat import set_latest_chat_message
 from danswer.db.chat import update_chat_session
 from danswer.db.chat import verify_parent_exists
@@ -29,8 +30,9 @@ from danswer.server.models import ChatMessageIdentifier
 from danswer.server.models import ChatRenameRequest
 from danswer.server.models import ChatSessionDetailResponse
 from danswer.server.models import ChatSessionIdsResponse
-from danswer.server.models import CreateChatID
-from danswer.server.models import CreateChatRequest
+from danswer.server.models import CreateChatMessageRequest
+from danswer.server.models import CreateChatSessionID
+from danswer.server.models import RegenerateMessageRequest
 from danswer.server.models import RenameChatSessionResponse
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
@@ -108,14 +110,16 @@ def get_chat_session_messages(
 def create_new_chat_session(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-) -> CreateChatID:
+) -> CreateChatSessionID:
     user_id = user.id if user is not None else None
 
     new_chat_session = create_chat_session(
-        "", user_id, db_session  # Leave the naming till later to prevent delay
+        "",
+        user_id,
+        db_session,  # Leave the naming till later to prevent delay
     )
 
-    return CreateChatID(chat_session_id=new_chat_session.id)
+    return CreateChatSessionID(chat_session_id=new_chat_session.id)
 
 
 @router.put("/rename-chat-session")
@@ -182,9 +186,19 @@ def _create_chat_chain(
     return mainline_messages
 
 
+def _return_one_if_any(str_1: str | None, str_2: str | None) -> str | None:
+    if str_1 is not None and str_2 is not None:
+        raise ValueError("Conflicting values, can only set one")
+    if str_1 is not None:
+        return str_1
+    if str_2 is not None:
+        return str_2
+    return None
+
+
 @router.post("/send-message")
 def handle_new_chat_message(
-    chat_message: CreateChatRequest,
+    chat_message: CreateChatMessageRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
@@ -198,6 +212,11 @@ def handle_new_chat_message(
     user_id = user.id if user is not None else None
 
     chat_session = fetch_chat_session_by_id(chat_session_id, db_session)
+    persona = (
+        fetch_persona_by_id(chat_message.persona_id, db_session)
+        if chat_message.persona_id is not None
+        else None
+    )
 
     if chat_session.deleted:
         raise ValueError("Cannot send messages to a deleted chat session")
@@ -248,7 +267,9 @@ def handle_new_chat_message(
 
     @log_generator_function_time()
     def stream_chat_tokens() -> Iterator[str]:
-        tokens = llm_chat_answer(mainline_messages)
+        tokens = llm_chat_answer(
+            messages=mainline_messages, persona=persona, user_id=user_id
+        )
         llm_output = ""
         for token in tokens:
             llm_output += token
@@ -268,7 +289,7 @@ def handle_new_chat_message(
 
 @router.post("/regenerate-from-parent")
 def regenerate_message_given_parent(
-    parent_message: ChatMessageIdentifier,
+    parent_message: RegenerateMessageRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
@@ -288,6 +309,11 @@ def regenerate_message_given_parent(
     )
 
     chat_session = chat_message.chat_session
+    persona = (
+        fetch_persona_by_id(parent_message.persona_id, db_session)
+        if parent_message.persona_id is not None
+        else None
+    )
 
     if chat_session.deleted:
         raise ValueError("Chat session has been deleted")
@@ -317,7 +343,9 @@ def regenerate_message_given_parent(
 
     @log_generator_function_time()
     def stream_regenerate_tokens() -> Iterator[str]:
-        tokens = llm_chat_answer(mainline_messages)
+        tokens = llm_chat_answer(
+            messages=mainline_messages, persona=persona, user_id=user_id
+        )
         llm_output = ""
         for token in tokens:
             llm_output += token

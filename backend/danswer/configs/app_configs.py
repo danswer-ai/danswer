@@ -144,9 +144,12 @@ NUM_RERANKED_RESULTS = 15
 NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL = int(
     os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL") or (512 * 5)
 )
+NUM_DOCUMENT_TOKENS_FED_TO_CHAT = int(
+    os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_CHAT") or (512 * 3)
+)
 # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
-QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "10")  # 10 seconds
+QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "60")  # 60 seconds
 # Include additional document/chunk metadata in prompt to GenerativeAI
 INCLUDE_METADATA = False
 HARD_DELETE_CHATS = os.environ.get("HARD_DELETE_CHATS", "True").lower() != "false"
@@ -182,6 +185,7 @@ CROSS_ENCODER_PORT = 9000
 #####
 # Miscellaneous
 #####
+PERSONAS_YAML = "./danswer/chat/personas.yaml"
 DYNAMIC_CONFIG_STORE = os.environ.get(
     "DYNAMIC_CONFIG_STORE", "FileSystemBackedDynamicConfigStore"
 )

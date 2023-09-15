@@ -11,6 +11,13 @@ class DanswerAnswer:
 
 
 @dataclass
+class DanswerChatModelOut:
+    model_raw: str
+    action: str
+    action_input: str
+
+
+@dataclass
 class DanswerAnswerPiece:
     """A small piece of a complete answer. Used for streaming back answers."""
 
