@@ -1,9 +1,11 @@
 import inspect
 import json
 from dataclasses import dataclass
+from dataclasses import fields
 from typing import Any
 from typing import cast
 
+from danswer.access.models import DocumentAccess
 from danswer.configs.constants import BLURB
 from danswer.configs.constants import BOOST
 from danswer.configs.constants import MATCH_HIGHLIGHTS
@@ -13,6 +15,7 @@ from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.connectors.models import Document
 from danswer.utils.logger import setup_logger
+
 
 logger = setup_logger()
 
@@ -53,6 +56,34 @@ class DocAwareChunk(BaseChunk):
 @dataclass
 class IndexChunk(DocAwareChunk):
     embeddings: ChunkEmbedding
+
+
+@dataclass
+class DocMetadataAwareIndexChunk(IndexChunk):
+    """An `IndexChunk` that contains all necessary metadata to be indexed. This includes
+    the following:
+
+    access: holds all information about which users should have access to the
+            source document for this chunk.
+    document_sets: all document sets the source document for this chunk is a part
+                   of. This is used for filtering / personas.
+    """
+
+    access: "DocumentAccess"
+    document_sets: set[str]
+
+    @classmethod
+    def from_index_chunk(
+        cls, index_chunk: IndexChunk, access: "DocumentAccess", document_sets: set[str]
+    ) -> "DocMetadataAwareIndexChunk":
+        return cls(
+            **{
+                field.name: getattr(index_chunk, field.name)
+                for field in fields(index_chunk)
+            },
+            access=access,
+            document_sets=document_sets,
+        )
 
 
 @dataclass
