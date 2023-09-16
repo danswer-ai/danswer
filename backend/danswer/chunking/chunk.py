@@ -2,6 +2,7 @@ import abc
 from collections.abc import Callable
 
 from llama_index.text_splitter import SentenceSplitter
+from transformers import AutoTokenizer  # type:ignore
 
 from danswer.chunking.models import DocAwareChunk
 from danswer.configs.app_configs import BLURB_SIZE
@@ -12,6 +13,7 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.search.search_utils import get_default_tokenizer
 from danswer.utils.text_processing import shared_precompare_cleanup
+
 
 SECTION_SEPARATOR = "\n\n"
 ChunkFunc = Callable[[Document], list[DocAwareChunk]]
@@ -30,6 +32,7 @@ def chunk_large_section(
     section: Section,
     document: Document,
     start_chunk_id: int,
+    tokenizer: AutoTokenizer,
     chunk_size: int = CHUNK_SIZE,
     chunk_overlap: int = CHUNK_OVERLAP,
     blurb_size: int = BLURB_SIZE,
@@ -37,9 +40,8 @@ def chunk_large_section(
     section_text = section.text
     blurb = extract_blurb(section_text, blurb_size)
 
-    token_count_func = get_default_tokenizer().tokenize
     sentence_aware_splitter = SentenceSplitter(
-        tokenizer=token_count_func, chunk_size=chunk_size, chunk_overlap=chunk_overlap
+        tokenizer=tokenizer.tokenize, chunk_size=chunk_size, chunk_overlap=chunk_overlap
     )
 
     split_texts = sentence_aware_splitter.split_text(section_text)
@@ -60,21 +62,23 @@ def chunk_large_section(
 
 def chunk_document(
     document: Document,
-    chunk_size: int = CHUNK_SIZE,
+    chunk_tok_size: int = CHUNK_SIZE,
     subsection_overlap: int = CHUNK_OVERLAP,
     blurb_size: int = BLURB_SIZE,
 ) -> list[DocAwareChunk]:
+    tokenizer = get_default_tokenizer()
+
     chunks: list[DocAwareChunk] = []
     link_offsets: dict[int, str] = {}
     chunk_text = ""
     for section in document.sections:
-        current_length = len(chunk_text)
+        section_tok_length = len(tokenizer.tokenize(section.text))
+        current_tok_length = len(tokenizer.tokenize(chunk_text))
         curr_offset_len = len(shared_precompare_cleanup(chunk_text))
-        section_length = len(section.text)
 
         # Large sections are considered self-contained/unique therefore they start a new chunk and are not concatenated
         # at the end by other sections
-        if section_length > chunk_size:
+        if section_tok_length > chunk_tok_size:
             if chunk_text:
                 chunks.append(
                     DocAwareChunk(
@@ -93,7 +97,8 @@ def chunk_document(
                 section=section,
                 document=document,
                 start_chunk_id=len(chunks),
-                chunk_size=chunk_size,
+                tokenizer=tokenizer,
+                chunk_size=chunk_tok_size,
                 chunk_overlap=subsection_overlap,
                 blurb_size=blurb_size,
             )
@@ -101,7 +106,12 @@ def chunk_document(
             continue
 
         # In the case where the whole section is shorter than a chunk, either adding to chunk or start a new one
-        if current_length + len(SECTION_SEPARATOR) + section_length <= chunk_size:
+        if (
+            current_tok_length
+            + len(tokenizer.tokenize(SECTION_SEPARATOR))
+            + section_tok_length
+            <= chunk_tok_size
+        ):
             chunk_text += (
                 SECTION_SEPARATOR + section.text if chunk_text else section.text
             )

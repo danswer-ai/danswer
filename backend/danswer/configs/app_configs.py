@@ -161,7 +161,7 @@ HARD_DELETE_CHATS = os.environ.get("HARD_DELETE_CHATS", "True").lower() != "fals
 CHUNK_SIZE = 512  # Tokens by embedding model
 CHUNK_OVERLAP = int(CHUNK_SIZE * 0.05)  # 5% overlap for both chunks and mini chunks
 # More accurate results at the expense of indexing speed and index size (stores additional 4 MINI_CHUNK vectors)
-ENABLE_MINI_CHUNK = False
+ENABLE_MINI_CHUNK = os.environ.get("ENABLE_MINI_CHUNK", "").lower() == "true"
 # Finer grained chunking for more detail retention
 # Slightly larger since the sentence aware split is a max cutoff so most minichunks will be under MINI_CHUNK_SIZE
 # tokens. But we need it to be at least as big as 1/4th chunk size to avoid having a tiny mini-chunk at the end
