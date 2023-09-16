@@ -12,7 +12,7 @@ APP_PORT = 8080
 #####
 # User Facing Features Configs
 #####
-BLURB_LENGTH = 200  # Characters. Blurbs will be truncated at the first punctuation after this many characters.
+BLURB_SIZE = 128  # Number Encoder Tokens included in the chunk blurb
 GENERATIVE_MODEL_ACCESS_CHECK_FREQ = 86400  # 1 day
 # DISABLE_GENERATIVE_AI will turn of the question answering part of Danswer. Use this
 # if you want to use Danswer as a search engine only and/or you are not comfortable sending
@@ -158,19 +158,14 @@ HARD_DELETE_CHATS = os.environ.get("HARD_DELETE_CHATS", "True").lower() != "fals
 #####
 # Text Processing Configs
 #####
-# Chunking docs to this number of characters not including finishing the last word and the overlap words below
-# Calculated by ~500 to 512 tokens max * average 4 chars per token
-CHUNK_SIZE = 2000
+CHUNK_SIZE = 512  # Tokens by embedding model
+CHUNK_OVERLAP = int(CHUNK_SIZE * 0.05)  # 5% overlap
 # More accurate results at the expense of indexing speed and index size (stores additional 4 MINI_CHUNK vectors)
-ENABLE_MINI_CHUNK = False
-# Mini chunks for fine-grained embedding, calculated as 128 tokens for 4 additional vectors for 512 chunk size above
-# Not rounded down to not lose any context in full chunk.
-MINI_CHUNK_SIZE = 512
-# Each chunk includes an additional CHUNK_WORD_OVERLAP words from previous chunk
-CHUNK_WORD_OVERLAP = 5
-# When trying to finish the last word in the chunk or counting back CHUNK_WORD_OVERLAP backwards,
-# This is the max number of characters allowed in either direction
-CHUNK_MAX_CHAR_OVERLAP = 50
+ENABLE_MINI_CHUNK = os.environ.get("ENABLE_MINI_CHUNK", "").lower() == "true"
+# Finer grained chunking for more detail retention
+# Slightly larger since the sentence aware split is a max cutoff so most minichunks will be under MINI_CHUNK_SIZE
+# tokens. But we need it to be at least as big as 1/4th chunk size to avoid having a tiny mini-chunk at the end
+MINI_CHUNK_SIZE = 150
 
 
 #####

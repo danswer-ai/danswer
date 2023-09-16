@@ -22,6 +22,7 @@ httpx-oauth==0.11.2
 huggingface-hub==0.16.4
 jira==3.5.1
 langchain==0.0.273
+llama-index==0.8.27
 Mako==1.2.4
 nltk==3.8.1
 docx2txt==0.8
@@ -45,7 +46,7 @@ rfc3986==1.5.0
 safetensors==0.3.1
 sentence-transformers==2.2.2
 slack-sdk==3.20.2
-SQLAlchemy[mypy]==2.0.12
+SQLAlchemy[mypy]==2.0.15
 tensorflow==2.13.0
 tiktoken==0.4.0
 transformers==4.30.1
