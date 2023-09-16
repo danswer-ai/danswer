@@ -1,7 +1,7 @@
 """Remove deletion_attempt table
 
 Revision ID: d5645c915d0e
-Revises: 5809c0787398
+Revises: 8e26726b7683
 Create Date: 2023-09-14 15:04:14.444909
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "d5645c915d0e"
-down_revision = "5809c0787398"
+down_revision = "8e26726b7683"
 branch_labels = None
 depends_on = None
 
