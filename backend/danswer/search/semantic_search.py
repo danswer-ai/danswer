@@ -4,12 +4,12 @@ from uuid import UUID
 import numpy
 from sentence_transformers import SentenceTransformer  # type: ignore
 
+from danswer.chunking.chunk import split_chunk_text_into_mini_chunks
 from danswer.chunking.models import ChunkEmbedding
 from danswer.chunking.models import DocAwareChunk
 from danswer.chunking.models import IndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import ENABLE_MINI_CHUNK
-from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.model_configs import ASYMMETRIC_PREFIX
@@ -122,36 +122,6 @@ def retrieve_ranked_documents(
     logger.info(files_log_msg)
 
     return ranked_chunks, top_chunks[num_rerank:]
-
-
-def split_chunk_text_into_mini_chunks(
-    chunk_text: str, mini_chunk_size: int = MINI_CHUNK_SIZE
-) -> list[str]:
-    chunks = []
-    start = 0
-    separators = [" ", "\n", "\r", "\t"]
-
-    while start < len(chunk_text):
-        if len(chunk_text) - start <= mini_chunk_size:
-            end = len(chunk_text)
-        else:
-            # Find the first separator character after min_chunk_length
-            end_positions = [
-                (chunk_text[start + mini_chunk_size :]).find(sep) for sep in separators
-            ]
-            # Filter out the not found cases (-1)
-            end_positions = [pos for pos in end_positions if pos != -1]
-            if not end_positions:
-                # If no more separators, the rest of the string becomes a chunk
-                end = len(chunk_text)
-            else:
-                # Add min_chunk_length and start to the end position
-                end = min(end_positions) + start + mini_chunk_size
-
-        chunks.append(chunk_text[start:end])
-        start = end + 1  # Move to the next character after the separator
-
-    return chunks
 
 
 @log_function_time()
