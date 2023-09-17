@@ -77,6 +77,14 @@ def handle_message(
             )
         return
 
+    if answer.eval_res_valid is False:
+        logger.info(
+            "Answer was evaluated to be invalid, throwing it away without responding."
+        )
+        if answer.answer:
+            logger.debug(answer.answer)
+        return
+
     if not answer.top_ranked_docs:
         logger.error(f"Unable to answer question: '{msg}' - no documents found")
         # Optionally, respond in thread with the error message, Used primarily

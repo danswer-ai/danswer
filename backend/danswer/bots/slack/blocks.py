@@ -195,10 +195,11 @@ def build_quotes_block(
         quotes_str_clean = [
             replace_whitespaces_w_space(q_str).strip() for q_str in quote_strs
         ]
-        single_quote_str = " | ".join([f"`{q_str}`" for q_str in quotes_str_clean])
+        longest_quotes = sorted(quotes_str_clean, key=len, reverse=True)[:5]
+        single_quote_str = "\n".join([f"```{q_str}```" for q_str in longest_quotes])
         link = doc_to_link[doc_id]
         sem_id = doc_to_sem_id[doc_id]
-        quote_lines.append(f"- <{link}|{sem_id}>\n{single_quote_str}")
+        quote_lines.append(f"<{link}|{sem_id}>\n{single_quote_str}")
 
     if not doc_to_quotes:
         return []
