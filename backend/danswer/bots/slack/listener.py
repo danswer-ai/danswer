@@ -54,7 +54,9 @@ def _get_socket_client() -> SocketModeClient:
 
 
 def _process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> None:
-    logger.info(f"Received request of type: '{req.type}', with paylod: '{req.payload}'")
+    logger.info(
+        f"Received request of type: '{req.type}', with payload: '{req.payload}'"
+    )
     if req.type == "events_api":
         # Acknowledge the request immediately
         response = SocketModeResponse(envelope_id=req.envelope_id)

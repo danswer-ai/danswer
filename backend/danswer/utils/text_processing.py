@@ -14,6 +14,10 @@ def escape_newlines(s: str) -> str:
     return re.sub(r"(?<!\\)\n", "\\\\n", s)
 
 
+def replace_whitespaces_w_space(s: str) -> str:
+    return re.sub(r"\s", " ", s)
+
+
 def extract_embedded_json(s: str) -> dict:
     first_brace_index = s.find("{")
     last_brace_index = s.rfind("}")

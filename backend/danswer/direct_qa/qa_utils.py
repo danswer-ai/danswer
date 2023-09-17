@@ -92,6 +92,7 @@ def separate_answer_quotes(
                 "Model did not output in json format as expected, "
                 "trying to parse it regardless"
             )
+            raise
         return extract_answer_quotes_freeform(answer_raw)
 
 
