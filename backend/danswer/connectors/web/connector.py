@@ -1,4 +1,5 @@
 import io
+from copy import copy
 from datetime import datetime
 from typing import Any
 from typing import cast
@@ -30,6 +31,9 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import format_document_soup
 
 logger = setup_logger()
+
+
+MINTLIFY_UNWANTED = ["sticky", "hidden"]
 
 
 def is_valid_url(url: str) -> bool:
@@ -90,11 +94,13 @@ class WebConnector(LoadConnector):
     def __init__(
         self,
         base_url: str,
+        mintlify_cleanup: bool = True,  # Mostly ok to apply to other websites as well
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         if "://" not in base_url:
             base_url = "https://" + base_url
         self.base_url = base_url
+        self.mintlify_cleanup = mintlify_cleanup
         self.batch_size = batch_size
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
@@ -171,7 +177,10 @@ class WebConnector(LoadConnector):
                     title_tag.extract()
 
                 # Heuristics based cleaning of elements based on css classes
-                for undesired_element in WEB_CONNECTOR_IGNORED_CLASSES:
+                unwanted_classes = copy(WEB_CONNECTOR_IGNORED_CLASSES)
+                if self.mintlify_cleanup:
+                    unwanted_classes.extend(MINTLIFY_UNWANTED)
+                for undesired_element in unwanted_classes:
                     [
                         tag.extract()
                         for tag in soup.find_all(
@@ -182,7 +191,8 @@ class WebConnector(LoadConnector):
                 for undesired_tag in WEB_CONNECTOR_IGNORED_ELEMENTS:
                     [tag.extract() for tag in soup.find_all(undesired_tag)]
 
-                page_text = format_document_soup(soup)
+                # 200B is ZeroWidthSpace which we don't care for
+                page_text = format_document_soup(soup).replace("\u200B", "")
 
                 doc_batch.append(
                     Document(
