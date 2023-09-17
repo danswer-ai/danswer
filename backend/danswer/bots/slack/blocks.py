@@ -119,7 +119,7 @@ def build_documents_blocks(
             [
                 SectionBlock(
                     fields=[
-                        f"- <{d.link}|{d.semantic_identifier}>:\n>{match_str}",
+                        f"<{d.link}|{d.semantic_identifier}>:\n>{match_str}",
                     ]
                 ),
                 build_doc_feedback_block(
