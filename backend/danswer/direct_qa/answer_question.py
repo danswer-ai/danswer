@@ -138,8 +138,8 @@ def answer_qa_query(
             valid = get_answer_validity(query, d_answer.answer)
 
         return QAResponse(
-            answer=None,
-            quotes=None,
+            answer=d_answer.answer if d_answer else None,
+            quotes=quotes.quotes if quotes else None,
             top_ranked_docs=chunks_to_search_docs(ranked_chunks),
             lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
             predicted_flow=predicted_flow,
