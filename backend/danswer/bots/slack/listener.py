@@ -9,12 +9,9 @@ from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 
-from danswer.bots.slack.constants import DISLIKE_BLOCK_ACTION_ID
-from danswer.bots.slack.constants import LIKE_BLOCK_ACTION_ID
-from danswer.bots.slack.handlers.handle_feedback import handle_qa_feedback
+from danswer.bots.slack.handlers.handle_feedback import handle_slack_feedback
 from danswer.bots.slack.handlers.handle_message import handle_message
-from danswer.bots.slack.utils import get_query_event_id_from_block_id
-from danswer.configs.constants import QAFeedbackType
+from danswer.bots.slack.utils import decompose_block_id
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -97,7 +94,7 @@ def _process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> No
 
         message_ts = event.get("ts")
         thread_ts = event.get("thread_ts")
-        # pick the root of the thread (if a thread exists)
+        # Pick the root of the thread (if a thread exists)
         message_ts_to_respond_to = cast(str, thread_ts or message_ts)
         if thread_ts and message_ts != thread_ts:
             channel_specific_logger.info(
@@ -124,7 +121,7 @@ def _process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> No
             f"Successfully processed message with ts: '{message_ts}'"
         )
 
-    # handle button clicks
+    # Handle button clicks
     if req.type == "interactive" and req.payload.get("type") == "block_actions":
         # Acknowledge the request immediately
         response = SocketModeResponse(envelope_id=req.envelope_id)
@@ -136,31 +133,22 @@ def _process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> No
             return
 
         action = cast(dict[str, Any], actions[0])
-        action_id = action.get("action_id")
-        if action_id == LIKE_BLOCK_ACTION_ID:
-            feedback_type = QAFeedbackType.LIKE
-        elif action_id == DISLIKE_BLOCK_ACTION_ID:
-            feedback_type = QAFeedbackType.DISLIKE
-        else:
-            logger.error(
-                f"Unable to process block action - unknown action_id: '{action_id}'"
-            )
-            return
-
+        action_id = cast(str, action.get("action_id"))
         block_id = cast(str, action.get("block_id"))
         user_id = cast(str, req.payload["user"]["id"])
         channel_id = cast(str, req.payload["container"]["channel_id"])
         thread_ts = cast(str, req.payload["container"]["thread_ts"])
-        query_event_id = get_query_event_id_from_block_id(block_id)
-        handle_qa_feedback(
-            query_id=query_event_id,
-            feedback_type=feedback_type,
+
+        handle_slack_feedback(
+            block_id=block_id,
+            feedback_type=action_id,
             client=client.web_client,
             user_id_to_post_confirmation=user_id,
             channel_id_to_post_confirmation=channel_id,
             thread_ts_to_post_confirmation=thread_ts,
         )
 
+        query_event_id, _, _ = decompose_block_id(block_id)
         logger.info(f"Successfully handled QA feedback for event: {query_event_id}")
 
 

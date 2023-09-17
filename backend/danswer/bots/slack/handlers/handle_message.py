@@ -38,6 +38,7 @@ def handle_message(
     def _get_answer(question: QuestionRequest) -> QAResponse:
         engine = get_sqlalchemy_engine()
         with Session(engine, expire_on_commit=False) as db_session:
+            # This also handles creating the query event in postgres
             answer = answer_qa_query(
                 question=question,
                 user=None,
@@ -106,6 +107,7 @@ def handle_message(
     document_blocks = build_documents_blocks(
         documents=answer.top_ranked_docs, query_event_id=answer.query_event_id
     )
+
     try:
         respond_in_thread(
             client=client,

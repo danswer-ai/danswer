@@ -8,10 +8,11 @@ from slack_sdk.models.blocks import SectionBlock
 
 from danswer.bots.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.bots.slack.constants import LIKE_BLOCK_ACTION_ID
-from danswer.bots.slack.utils import build_block_id_from_query_event_id
+from danswer.bots.slack.utils import build_feedback_block_id
 from danswer.bots.slack.utils import translate_vespa_highlight_to_slack
 from danswer.configs.app_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.slack.utils import UserIdReplacer
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.server.models import SearchDoc
@@ -23,7 +24,7 @@ _MAX_BLURB_LEN = 75
 
 def build_qa_feedback_block(query_event_id: int) -> Block:
     return ActionsBlock(
-        block_id=build_block_id_from_query_event_id(query_event_id),
+        block_id=build_feedback_block_id(query_event_id),
         elements=[
             ButtonElement(
                 action_id=LIKE_BLOCK_ACTION_ID,
@@ -39,26 +40,30 @@ def build_qa_feedback_block(query_event_id: int) -> Block:
     )
 
 
-def build_doc_feedback_block(query_event_id: int) -> Block:
+def build_doc_feedback_block(
+    query_event_id: int,
+    document_id: str,
+    document_rank: int,
+) -> Block:
     return ActionsBlock(
-        block_id=build_block_id_from_query_event_id(query_event_id),
+        block_id=build_feedback_block_id(query_event_id, document_id, document_rank),
         elements=[
             ButtonElement(
-                action_id=LIKE_BLOCK_ACTION_ID,
+                action_id=SearchFeedbackType.ENDORSE.value,
                 text="⬆",
                 style="primary",
                 confirm=ConfirmObject(
                     title="Endorse this Document",
-                    text="This is a *good* source of information and should be shown more often!",
+                    text="This is a good source of information and should be shown more often!",
                 ),
             ),
             ButtonElement(
-                action_id=DISLIKE_BLOCK_ACTION_ID,
+                action_id=SearchFeedbackType.REJECT.value,
                 text="⬇",
                 style="danger",
                 confirm=ConfirmObject(
                     title="Reject this Document",
-                    text="This is a *bad* source of information and should be shown less often.",
+                    text="This is a bad source of information and should be shown less often.",
                 ),
             ),
         ],
@@ -103,7 +108,7 @@ def build_documents_blocks(
 
     section_blocks: list[Block] = [HeaderBlock(text="Reference Documents")]
 
-    for d in documents:
+    for rank, d in enumerate(documents):
         if d.document_id in seen_docs_identifiers:
             continue
         seen_docs_identifiers.add(d.document_id)
@@ -117,7 +122,11 @@ def build_documents_blocks(
                         f"- <{d.link}|{d.semantic_identifier}>:\n>{match_str}",
                     ]
                 ),
-                build_doc_feedback_block(query_event_id=query_event_id),
+                build_doc_feedback_block(
+                    query_event_id=query_event_id,
+                    document_id=d.document_id,
+                    document_rank=rank,
+                ),
                 DividerBlock(),
             ]
         )
@@ -186,7 +195,7 @@ def build_quotes_block(
         quotes_str_clean = [
             replace_whitespaces_w_space(q_str).strip() for q_str in quote_strs
         ]
-        single_quote_str = ", ".join([f"`{q_str}`" for q_str in quotes_str_clean])
+        single_quote_str = " | ".join([f"`{q_str}`" for q_str in quotes_str_clean])
         link = doc_to_link[doc_id]
         sem_id = doc_to_sem_id[doc_id]
         quote_lines.append(f"- <{link}|{sem_id}>\n{single_quote_str}")

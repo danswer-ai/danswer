@@ -111,6 +111,7 @@ def create_doc_retrieval_feedback(
     clicked: bool = False,
     feedback: SearchFeedbackType | None = None,
 ) -> None:
+    """Creates a new Document feedback row and updates the boost value in Postgres and Vespa"""
     if not clicked and feedback is None:
         raise ValueError("No action taken, not valid feedback")
 
