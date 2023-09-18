@@ -89,7 +89,7 @@ def decompose_block_id(block_id: str) -> tuple[int, str | None, int | None]:
         raise ValueError("Received invalid Feedback Block Identifier")
 
 
-def translate_vespa_highlight_to_slack(match_strs: list[str]) -> str:
+def translate_vespa_highlight_to_slack(match_strs: list[str], used_chars: int) -> str:
     def _replace_highlight(s: str) -> str:
         s = re.sub(r"</hi>(?=\S)", "", s)
         s = re.sub(r"(?<=\S)<hi>", "", s)
@@ -101,5 +101,12 @@ def translate_vespa_highlight_to_slack(match_strs: list[str]) -> str:
         for match_str in match_strs
         if match_str
     ]
+    combined = "... ".join(final_matches)
 
-    return "....".join(final_matches)
+    # Slack introduces "Show More" after 300 on desktop which is ugly
+    # But don't trim the message if there is still a highlight after 300 chars
+    remaining = 300 - used_chars
+    if len(combined) > remaining and "*" not in combined[remaining:]:
+        combined = combined[: remaining - 3] + "..."
+
+    return combined

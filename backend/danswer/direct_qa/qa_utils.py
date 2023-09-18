@@ -88,10 +88,7 @@ def separate_answer_quotes(
         return extract_answer_quotes_json(model_raw_json)
     except ValueError:
         if is_json_prompt:
-            logger.error(
-                "Model did not output in json format as expected, "
-                "trying to parse it regardless"
-            )
+            logger.error("Model did not output in json format as expected.")
             raise
         return extract_answer_quotes_freeform(answer_raw)
 

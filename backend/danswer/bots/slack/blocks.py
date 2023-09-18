@@ -114,7 +114,8 @@ def build_documents_blocks(
             continue
         seen_docs_identifiers.add(d.document_id)
 
-        match_str = translate_vespa_highlight_to_slack(d.match_highlights)
+        used_chars = len(d.semantic_identifier) + 3
+        match_str = translate_vespa_highlight_to_slack(d.match_highlights, used_chars)
 
         included_docs += 1
 
