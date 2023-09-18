@@ -196,9 +196,7 @@ def _index_vespa_chunks(
             headers: dict[str, str],
             fields: dict[str, Any],
         ) -> Response:
-            logger.debug(
-                f"Hitting URL '{url}', with headers '{headers}', with fields '{fields}'"
-            )
+            logger.debug(f'Indexing to URL "{url}"')
             res = requests.post(url, headers=headers, json={"fields": fields})
             try:
                 res.raise_for_status()
