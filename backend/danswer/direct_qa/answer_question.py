@@ -137,17 +137,17 @@ def answer_qa_query(
         if d_answer.answer is not None:
             valid = get_answer_validity(query, d_answer.answer)
 
-        if not valid:
-            return QAResponse(
-                answer=None,
-                quotes=None,
-                top_ranked_docs=chunks_to_search_docs(ranked_chunks),
-                lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
-                predicted_flow=predicted_flow,
-                predicted_search=predicted_search,
-                error_msg=error_msg,
-                query_event_id=query_event_id,
-            )
+        return QAResponse(
+            answer=d_answer.answer if d_answer else None,
+            quotes=quotes.quotes if quotes else None,
+            top_ranked_docs=chunks_to_search_docs(ranked_chunks),
+            lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
+            predicted_flow=predicted_flow,
+            predicted_search=predicted_search,
+            eval_res_valid=True if valid else False,
+            error_msg=error_msg,
+            query_event_id=query_event_id,
+        )
 
     return QAResponse(
         answer=d_answer.answer if d_answer else None,

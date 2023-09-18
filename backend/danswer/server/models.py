@@ -224,6 +224,7 @@ class QAResponse(SearchResponse):
     quotes: list[DanswerQuote] | None
     predicted_flow: QueryFlow
     predicted_search: SearchType
+    eval_res_valid: bool | None = None
     error_msg: str | None = None
 
 

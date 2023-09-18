@@ -23,6 +23,7 @@ PUBLIC_DOC_PAT = "PUBLIC"
 QUOTE = "quote"
 BOOST = "boost"
 SCORE = "score"
+ID_SEPARATOR = ":;:"
 DEFAULT_BOOST = 0
 
 # Prompt building constants:

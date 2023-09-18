@@ -68,6 +68,18 @@ class InferenceChunk(BaseChunk):
     # ["<hi>the</hi> <hi>answer</hi> is 42", "he couldn't find an <hi>answer</hi>"]
     match_highlights: list[str]
 
+    def __repr__(self) -> str:
+        blurb_words = self.blurb.split()
+        short_blurb = ""
+        for word in blurb_words:
+            if not short_blurb:
+                short_blurb = word
+                continue
+            if len(short_blurb) > 25:
+                break
+            short_blurb += " " + word
+        return f"Inference Chunk: {self.document_id} - {short_blurb}..."
+
     @classmethod
     def from_dict(cls, init_dict: dict[str, Any]) -> "InferenceChunk":
         init_kwargs = {
