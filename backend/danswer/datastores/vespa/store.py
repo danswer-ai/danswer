@@ -282,24 +282,37 @@ def _build_vespa_limit(num_to_retrieve: int, offset: int = 0) -> str:
 def _process_dynamic_summary(
     dynamic_summary: str, max_summary_length: int = 400
 ) -> list[str]:
+    if not dynamic_summary:
+        return []
+
     current_length = 0
     processed_summary: list[str] = []
     for summary_section in dynamic_summary.split("<sep />"):
-        force_break = False
-
         # if we're past the desired max length, break at the last word
-        if current_length + len(summary_section) > max_summary_length:
+        if current_length + len(summary_section) >= max_summary_length:
             summary_section = summary_section[: max_summary_length - current_length]
+            summary_section = summary_section.lstrip()  # remove any leading whitespace
+
+            # handle the case where the truncated section is either just a
+            # single (partial) word or if it's empty
+            first_space = summary_section.find(" ")
+            if first_space == -1:
+                # add ``...`` to previous section
+                if processed_summary:
+                    processed_summary[-1] += "..."
+                break
+
+            # handle the valid truncated section case
             summary_section = summary_section.rsplit(" ", 1)[0]
             if summary_section[-1] in string.punctuation:
                 summary_section = summary_section[:-1]
             summary_section += "..."
-            force_break = True
+            processed_summary.append(summary_section)
+            break
 
         processed_summary.append(summary_section)
         current_length += len(summary_section)
-        if current_length >= max_summary_length or force_break:
-            break
+
     return processed_summary
 
 
