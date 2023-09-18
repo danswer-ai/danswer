@@ -12,6 +12,7 @@ from slack_sdk.models.metadata import Metadata
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.constants import ID_SEPARATOR
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
+from danswer.connectors.slack.utils import UserIdReplacer
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import replace_whitespaces_w_space
 
@@ -91,8 +92,7 @@ def decompose_block_id(block_id: str) -> tuple[int, str | None, int | None]:
 
 def translate_vespa_highlight_to_slack(match_strs: list[str], used_chars: int) -> str:
     def _replace_highlight(s: str) -> str:
-        s = re.sub(r"</hi>(?=\S)", "", s)
-        s = re.sub(r"(?<=\S)<hi>", "", s)
+        s = re.sub(r"(?<=[^\s])<hi>(.*?)</hi>", r"\1", s)
         s = s.replace("</hi>", "*").replace("<hi>", "*")
         return s
 
@@ -110,3 +110,11 @@ def translate_vespa_highlight_to_slack(match_strs: list[str], used_chars: int) -
         combined = combined[: remaining - 3] + "..."
 
     return combined
+
+
+def remove_slack_text_interactions(slack_str: str) -> str:
+    slack_str = UserIdReplacer.replace_tags_basic(slack_str)
+    slack_str = UserIdReplacer.replace_channels_basic(slack_str)
+    slack_str = UserIdReplacer.replace_special_mentions(slack_str)
+    slack_str = UserIdReplacer.replace_links(slack_str)
+    return slack_str
