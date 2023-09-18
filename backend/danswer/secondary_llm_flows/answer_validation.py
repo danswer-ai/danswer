@@ -13,7 +13,7 @@ logger = setup_logger()
 
 
 @log_function_time()
-def get_answer_validity(
+def get_answer_validity_old(
     query: str,
     answer: str,
 ) -> bool:
@@ -54,6 +54,57 @@ def get_answer_validity(
             result = model_output.split(FINAL_ANSWER_PAT)[-1].strip()
             if "invalid" in result.lower():
                 return False
+        return True  # If something is wrong, let's not toss away the answer
+
+    messages = _get_answer_validation_messages(query, answer)
+    filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
+    model_output = get_default_llm().invoke(filled_llm_prompt)
+    logger.debug(model_output)
+
+    validity = _extract_validity(model_output)
+
+    return validity
+
+
+@log_function_time()
+def get_answer_validity(
+    query: str,
+    answer: str,
+) -> bool:
+    def _get_answer_validation_messages(
+        query: str, answer: str
+    ) -> list[dict[str, str]]:
+        format_demo = (
+            "1. True or False\n"
+            "2. True or False\n"
+            "3. True or False\n"
+            "4. True or False\n"
+            "Final Answer: Valid or Invalid"
+        )
+
+        messages = [
+            {
+                "role": "user",
+                "content": (
+                    "You are an assistant to identify invalid query/answer pairs. "
+                    "The query/answer pair is invalid if any of the following are True:\n"
+                    "1. Query is asking for an opinion.\n"
+                    "2. Query may be answered differently by different people.\n"
+                    "3. Answer addresses a related but different query.\n"
+                    '4. Answer contains any form of "I don\'t know" or "not enough information".\n\n'
+                    f"{QUESTION_PAT} {query}\n{ANSWER_PAT} {answer}"
+                    "\n\n"
+                    f"You MUST answer in EXACTLY the following format:{CODE_BLOCK_PAT.format(format_demo)}\n"
+                    "Hint: Remember, if ANY of the conditions are True, it is Invalid."
+                ),
+            },
+        ]
+
+        return messages
+
+    def _extract_validity(model_output: str) -> bool:
+        if model_output.strip().strip("```").strip().split()[-1].lower() == "invalid":
+            return False
         return True  # If something is wrong, let's not toss away the answer
 
     messages = _get_answer_validation_messages(query, answer)
