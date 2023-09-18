@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import { Popup } from "./Popup";
+import { Popup, usePopup } from "./Popup";
 import {
   Connector,
   ConnectorBase,
@@ -10,6 +10,9 @@ import {
 } from "@/lib/types";
 import { deleteConnectorIfExists } from "@/lib/connector";
 import { FormBodyBuilder, RequireAtLeastOne } from "./types";
+import { TextFormField } from "./Field";
+import { linkCredential } from "@/lib/credential";
+import { useSWRConfig } from "swr";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 
@@ -45,17 +48,24 @@ export async function submitConnector<T>(
   }
 }
 
+const CCPairNameHaver = Yup.object().shape({
+  cc_pair_name: Yup.string().required("Please enter a name for the connector"),
+});
+
 interface BaseProps<T extends Yup.AnyObject> {
   nameBuilder: (values: T) => string;
   source: ValidSources;
   inputType: ValidInputTypes;
-  credentialId?: number;
+  credentialId?: number; // if specified, will automatically try and link the credential
   // If both are specified, will render formBody and then formBodyBuilder
   formBody?: JSX.Element | null;
   formBodyBuilder?: FormBodyBuilder<T>;
   validationSchema: Yup.ObjectSchema<T>;
   initialValues: T;
-  onSubmit: (isSuccess: boolean, responseJson?: Connector<T>) => void;
+  onSubmit?: (
+    isSuccess: boolean,
+    responseJson: Connector<T> | undefined
+  ) => void;
   refreshFreq?: number;
 }
 
@@ -68,6 +78,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
   nameBuilder,
   source,
   inputType,
+  credentialId,
   formBody,
   formBodyBuilder,
   validationSchema,
@@ -75,17 +86,25 @@ export function ConnectorForm<T extends Yup.AnyObject>({
   refreshFreq,
   onSubmit,
 }: ConnectorFormProps<T>): JSX.Element {
-  const [popup, setPopup] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
+  const { mutate } = useSWRConfig();
+  const { popup, setPopup } = usePopup();
+
+  const credentialPassedIn = credentialId !== undefined;
 
   return (
     <>
-      {popup && <Popup message={popup.message} type={popup.type} />}
+      {popup}
       <Formik
-        initialValues={initialValues}
-        validationSchema={validationSchema}
+        initialValues={
+          credentialPassedIn
+            ? { cc_pair_name: "", ...initialValues }
+            : initialValues
+        }
+        validationSchema={
+          credentialPassedIn
+            ? validationSchema.concat(CCPairNameHaver)
+            : validationSchema
+        }
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
           const connectorName = nameBuilder(values);
@@ -114,19 +133,46 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             disabled: false,
           });
 
+          if (!isSuccess || !response) {
+            setPopup({ message, type: "error" });
+            formikHelpers.setSubmitting(false);
+            return;
+          }
+
+          if (credentialId !== undefined) {
+            const linkCredentialResponse = await linkCredential(
+              response.id,
+              credentialId,
+              values.cc_pair_name
+            );
+            if (!linkCredentialResponse.ok) {
+              const linkCredentialErrorMsg =
+                await linkCredentialResponse.text();
+              setPopup({
+                message: `Error linking credential - ${linkCredentialErrorMsg}`,
+                type: "error",
+              });
+              formikHelpers.setSubmitting(false);
+              return;
+            }
+          }
+
+          mutate("/api/manage/admin/connector/indexing-status");
           setPopup({ message, type: isSuccess ? "success" : "error" });
           formikHelpers.setSubmitting(false);
           if (isSuccess) {
             formikHelpers.resetForm();
           }
-          setTimeout(() => {
-            setPopup(null);
-          }, 4000);
-          onSubmit(isSuccess, response);
+          if (onSubmit) {
+            onSubmit(isSuccess, response);
+          }
         }}
       >
         {({ isSubmitting, values }) => (
           <Form>
+            {credentialPassedIn && (
+              <TextFormField name="cc_pair_name" label="Connector Name" />
+            )}
             {formBody && formBody}
             {formBodyBuilder && formBodyBuilder(values)}
             <div className="flex">

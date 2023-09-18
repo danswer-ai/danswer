@@ -12,110 +12,12 @@ import {
 } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
 import { getSourceMetadata } from "@/components/source";
-import { CheckCircle, XCircle } from "@phosphor-icons/react";
+import { CheckCircle } from "@phosphor-icons/react";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import {
-  ConfluenceConfig,
-  Connector,
-  ConnectorIndexingStatus,
-  GithubConfig,
-  GoogleDriveConfig,
-  JiraConfig,
-  SlackConfig,
-  WebConfig,
-  ZulipConfig,
-} from "@/lib/types";
+import { ConnectorIndexingStatus } from "@/lib/types";
 import { useState } from "react";
 import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
-
-interface ConnectorTitleProps {
-  connectorIndexingStatus: ConnectorIndexingStatus<any, any>;
-}
-
-const ConnectorTitle = ({ connectorIndexingStatus }: ConnectorTitleProps) => {
-  const connector = connectorIndexingStatus.connector;
-  const sourceMetadata = getSourceMetadata(connector.source);
-
-  let additionalMetadata = new Map<string, string>();
-  if (connector.source === "web") {
-    const typedConnector = connector as Connector<WebConfig>;
-    additionalMetadata.set(
-      "Base URL",
-      typedConnector.connector_specific_config.base_url
-    );
-  } else if (connector.source === "github") {
-    const typedConnector = connector as Connector<GithubConfig>;
-    additionalMetadata.set(
-      "Repo",
-      `${typedConnector.connector_specific_config.repo_owner}/${typedConnector.connector_specific_config.repo_name}`
-    );
-  } else if (connector.source === "confluence") {
-    const typedConnector = connector as Connector<ConfluenceConfig>;
-    additionalMetadata.set(
-      "Wiki URL",
-      typedConnector.connector_specific_config.wiki_page_url
-    );
-  } else if (connector.source === "jira") {
-    const typedConnector = connector as Connector<JiraConfig>;
-    additionalMetadata.set(
-      "Jira Project URL",
-      typedConnector.connector_specific_config.jira_project_url
-    );
-  } else if (connector.source === "google_drive") {
-    const typedConnector = connector as Connector<GoogleDriveConfig>;
-    if (
-      typedConnector.connector_specific_config?.folder_paths &&
-      typedConnector.connector_specific_config?.folder_paths.length > 0
-    ) {
-      additionalMetadata.set(
-        "Folders",
-        typedConnector.connector_specific_config.folder_paths.join(", ")
-      );
-    }
-
-    if (!connectorIndexingStatus.public_doc && connectorIndexingStatus.owner) {
-      additionalMetadata.set("Owner", connectorIndexingStatus.owner);
-    }
-  } else if (connector.source === "slack") {
-    const typedConnector = connector as Connector<SlackConfig>;
-    if (
-      typedConnector.connector_specific_config?.channels &&
-      typedConnector.connector_specific_config?.channels.length > 0
-    ) {
-      additionalMetadata.set(
-        "Channels",
-        typedConnector.connector_specific_config.channels.join(", ")
-      );
-    }
-  } else if (connector.source === "zulip") {
-    const typedConnector = connector as Connector<ZulipConfig>;
-    additionalMetadata.set(
-      "Realm",
-      typedConnector.connector_specific_config.realm_name
-    );
-  }
-
-  return (
-    <>
-      <a
-        className="text-blue-500 flex w-fit"
-        href={sourceMetadata.adminPageLink}
-      >
-        {sourceMetadata.icon({ size: 20 })}
-        <div className="ml-1">{sourceMetadata.displayName}</div>
-      </a>
-      <div className="text-xs text-gray-300 mt-1">
-        {Array.from(additionalMetadata.entries()).map(([key, value]) => {
-          return (
-            <div key={key}>
-              <i>{key}:</i> {value}
-            </div>
-          );
-        })}
-      </div>
-    </>
-  );
-};
+import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 
 const ErrorDisplay = ({ message }: { message: string }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -247,7 +149,12 @@ function Main() {
             ? `${connectorIndexingStatus?.docs_indexed} documents`
             : "-",
           connector: (
-            <ConnectorTitle connectorIndexingStatus={connectorIndexingStatus} />
+            <ConnectorTitle
+              ccPairName={connectorIndexingStatus.name}
+              connector={connectorIndexingStatus.connector}
+              isPublic={connectorIndexingStatus.credential.public_doc}
+              owner={connectorIndexingStatus.owner}
+            />
           ),
           status: statusDisplay,
           // TODO: add the below back in after this is supported in the backend

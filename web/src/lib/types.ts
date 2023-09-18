@@ -117,6 +117,7 @@ export interface ConnectorIndexingStatus<
   ConnectorConfigType,
   ConnectorCredentialType
 > {
+  name: string | null;
   connector: Connector<ConnectorConfigType>;
   credential: Credential<ConnectorCredentialType>;
   public_doc: boolean;
@@ -209,4 +210,23 @@ export interface DeletionAttemptSnapshot {
   status: ValidStatuses;
   error_msg?: string;
   num_docs_deleted: number;
+}
+
+// DOCUMENT SETS
+export interface CCPairID {
+  connector_id: number;
+  credential_id: number;
+}
+
+export interface CCPairDescriptor<ConnectorType, CredentialType> {
+  name: string | null;
+  connector: Connector<ConnectorType>;
+  credential: Credential<CredentialType>;
+}
+
+export interface DocumentSet<ConnectorType, CredentialType> {
+  id: number;
+  name: string;
+  description: string;
+  cc_pair_descriptors: CCPairDescriptor<ConnectorType, CredentialType>[];
 }

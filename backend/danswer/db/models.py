@@ -85,6 +85,9 @@ class ConnectorCredentialPair(Base):
     """
 
     __tablename__ = "connector_credential_pair"
+    name: Mapped[str] = mapped_column(
+        String, unique=True, nullable=True
+    )  # nullable for backwards compatability
     connector_id: Mapped[int] = mapped_column(
         ForeignKey("connector.id"), primary_key=True
     )
@@ -323,6 +326,39 @@ class Document(Base):
 
     retrieval_feedbacks: Mapped[List[DocumentRetrievalFeedback]] = relationship(
         "DocumentRetrievalFeedback", back_populates="document"
+    )
+
+
+class DocumentSet(Base):
+    __tablename__ = "document_set"
+
+    id: Mapped[str] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    description: Mapped[str] = mapped_column(String)
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+
+    connector_credential_pair_relationships: Mapped[
+        list["DocumentSet_ConnectorCredentialPair"]
+    ] = relationship(
+        "DocumentSet_ConnectorCredentialPair", back_populates="document_set"
+    )
+
+
+class DocumentSet_ConnectorCredentialPair(Base):
+    __tablename__ = "document_set__connector_credential_pair"
+
+    document_set_id: Mapped[int] = mapped_column(
+        ForeignKey("document_set.id"), primary_key=True
+    )
+    connector_id: Mapped[int] = mapped_column(
+        ForeignKey("connector.id"), primary_key=True
+    )
+    credential_id: Mapped[int] = mapped_column(
+        ForeignKey("credential.id"), primary_key=True
+    )
+
+    document_set: Mapped[DocumentSet] = relationship(
+        "DocumentSet", back_populates="connector_credential_pair_relationships"
     )
 
 

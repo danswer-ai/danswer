@@ -233,6 +233,7 @@ const Main = () => {
               nameBuilder={(values) =>
                 `JiraConnector-${values.jira_project_url}`
               }
+              credentialId={jiraCredential.id}
               source="jira"
               inputType="poll"
               formBody={
@@ -252,12 +253,6 @@ const Main = () => {
                 jira_project_url: "",
               }}
               refreshFreq={10 * 60} // 10 minutes
-              onSubmit={async (isSuccess, responseJson) => {
-                if (isSuccess && responseJson) {
-                  await linkCredential(responseJson.id, jiraCredential.id);
-                  mutate("/api/manage/admin/connector/indexing-status");
-                }
-              }}
             />
           </div>
         </>

@@ -1,4 +1,8 @@
-import { Credential, DocumentBoostStatus } from "@/lib/types";
+import {
+  ConnectorIndexingStatus,
+  Credential,
+  DocumentBoostStatus,
+} from "@/lib/types";
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { fetcher } from "./fetcher";
 import { useState } from "react";
@@ -45,4 +49,22 @@ export const useObjectState = <T>(
     });
   };
   return [state, set];
+};
+
+const INDEXING_STATUS_URL = "/api/manage/admin/connector/indexing-status";
+
+export const useConnectorCredentialIndexingStatus = (
+  refreshInterval = 30000 // 30 seconds
+) => {
+  const { mutate } = useSWRConfig();
+  const swrResponse = useSWR<ConnectorIndexingStatus<any, any>[]>(
+    INDEXING_STATUS_URL,
+    fetcher,
+    { refreshInterval: refreshInterval }
+  );
+
+  return {
+    ...swrResponse,
+    refreshIndexingStatus: () => mutate(INDEXING_STATUS_URL),
+  };
 };

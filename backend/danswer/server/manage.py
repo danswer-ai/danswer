@@ -69,6 +69,7 @@ from danswer.server.models import BoostDoc
 from danswer.server.models import BoostUpdateRequest
 from danswer.server.models import ConnectorBase
 from danswer.server.models import ConnectorCredentialPairIdentifier
+from danswer.server.models import ConnectorCredentialPairMetadata
 from danswer.server.models import ConnectorIndexingStatus
 from danswer.server.models import ConnectorSnapshot
 from danswer.server.models import CredentialSnapshot
@@ -316,6 +317,7 @@ def get_connector_indexing_status(
         )
         indexing_statuses.append(
             ConnectorIndexingStatus(
+                name=cc_pair.name,
                 connector=ConnectorSnapshot.from_connector_db_model(connector),
                 credential=CredentialSnapshot.from_credential_db_model(credential),
                 public_doc=credential.public_doc,
@@ -650,10 +652,17 @@ def get_connector_by_id(
 def associate_credential_to_connector(
     connector_id: int,
     credential_id: int,
+    metadata: ConnectorCredentialPairMetadata,
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
-    return add_credential_to_connector(connector_id, credential_id, user, db_session)
+    return add_credential_to_connector(
+        connector_id=connector_id,
+        credential_id=credential_id,
+        cc_pair_name=metadata.name,
+        user=user,
+        db_session=db_session,
+    )
 
 
 @router.delete("/connector/{connector_id}/credential/{credential_id}")

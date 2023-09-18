@@ -16,18 +16,19 @@ export async function deleteCredential<T>(credentialId: number) {
   });
 }
 
-export async function linkCredential(
+export function linkCredential(
   connectorId: number,
-  credentialId: number
+  credentialId: number,
+  name?: string
 ) {
-  const response = await fetch(
+  return fetch(
     `/api/manage/connector/${connectorId}/credential/${credentialId}`,
     {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({ name: name || null }),
     }
   );
-  return response.json();
 }
