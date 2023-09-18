@@ -1,5 +1,6 @@
 import logging
 import random
+import re
 import string
 from typing import cast
 
@@ -9,9 +10,10 @@ from slack_sdk.models.blocks import Block
 from slack_sdk.models.metadata import Metadata
 
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
+from danswer.configs.constants import ID_SEPARATOR
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.utils.logger import setup_logger
-
+from danswer.utils.text_processing import replace_whitespaces_w_space
 
 logger = setup_logger()
 
@@ -34,11 +36,6 @@ def respond_in_thread(
     if not text and not blocks:
         raise ValueError("One of `text` or `blocks` must be provided")
 
-    if text:
-        logger.debug(f"Trying to send message: {text}")
-    if blocks:
-        logger.debug(f"Trying to send blocks: {blocks}")
-
     slack_call = make_slack_api_rate_limited(client.chat_postMessage)
     response = slack_call(
         channel=channel,
@@ -53,9 +50,63 @@ def respond_in_thread(
         raise RuntimeError(f"Unable to post message: {response}")
 
 
-def build_block_id_from_query_event_id(query_event_id: int) -> str:
-    return f"{''.join(random.choice(string.ascii_letters) for _ in range(5))}:{query_event_id}"
+def build_feedback_block_id(
+    query_event_id: int,
+    document_id: str | None = None,
+    document_rank: int | None = None,
+) -> str:
+    unique_prefix = "".join(random.choice(string.ascii_letters) for _ in range(10))
+    if document_id is not None:
+        if not document_id or document_rank is None:
+            raise ValueError("Invalid document, missing information")
+        if ID_SEPARATOR in document_id:
+            raise ValueError(
+                "Separator pattern should not already exist in document id"
+            )
+        block_id = ID_SEPARATOR.join(
+            [str(query_event_id), document_id, str(document_rank)]
+        )
+    else:
+        block_id = str(query_event_id)
+
+    return unique_prefix + ID_SEPARATOR + block_id
 
 
-def get_query_event_id_from_block_id(block_id: str) -> int:
-    return int(block_id.split(":")[-1])
+def decompose_block_id(block_id: str) -> tuple[int, str | None, int | None]:
+    """Decompose into query_id, document_id, document_rank, see above function"""
+    try:
+        components = block_id.split(ID_SEPARATOR)
+        if len(components) != 2 and len(components) != 4:
+            raise ValueError("Block ID does not contain right number of elements")
+
+        if len(components) == 2:
+            return int(components[-1]), None, None
+
+        return int(components[1]), components[2], int(components[3])
+
+    except Exception as e:
+        logger.error(e)
+        raise ValueError("Received invalid Feedback Block Identifier")
+
+
+def translate_vespa_highlight_to_slack(match_strs: list[str], used_chars: int) -> str:
+    def _replace_highlight(s: str) -> str:
+        s = re.sub(r"</hi>(?=\S)", "", s)
+        s = re.sub(r"(?<=\S)<hi>", "", s)
+        s = s.replace("</hi>", "*").replace("<hi>", "*")
+        return s
+
+    final_matches = [
+        replace_whitespaces_w_space(_replace_highlight(match_str)).strip()
+        for match_str in match_strs
+        if match_str
+    ]
+    combined = "... ".join(final_matches)
+
+    # Slack introduces "Show More" after 300 on desktop which is ugly
+    # But don't trim the message if there is still a highlight after 300 chars
+    remaining = 300 - used_chars
+    if len(combined) > remaining and "*" not in combined[remaining:]:
+        combined = combined[: remaining - 3] + "..."
+
+    return combined

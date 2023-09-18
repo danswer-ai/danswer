@@ -1,5 +1,6 @@
 import abc
 import json
+import re
 from collections.abc import Iterator
 from copy import copy
 
@@ -157,12 +158,11 @@ class SingleMessageScratchpadHandler(QAHandler):
 
         model_clean = clean_up_code_blocks(model_output)
 
-        answer_start = model_clean.find('{"answer":')
-        # Only found thoughts, no final answer
-        if answer_start == -1:
+        match = re.search(r'{\s*"answer":', model_clean)
+        if not match:
             return DanswerAnswer(answer=None), DanswerQuotes(quotes=[])
 
-        final_json = escape_newlines(model_clean[answer_start:])
+        final_json = escape_newlines(model_clean[match.start() :])
 
         return process_answer(
             final_json, context_chunks, is_json_prompt=self.is_json_output

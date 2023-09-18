@@ -4,6 +4,7 @@ from retry import retry
 from slack_sdk import WebClient
 from sqlalchemy.orm import Session
 
+from danswer.bots.slack.blocks import build_documents_blocks
 from danswer.bots.slack.blocks import build_qa_response_blocks
 from danswer.bots.slack.utils import respond_in_thread
 from danswer.configs.app_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
@@ -37,6 +38,7 @@ def handle_message(
     def _get_answer(question: QuestionRequest) -> QAResponse:
         engine = get_sqlalchemy_engine()
         with Session(engine, expire_on_commit=False) as db_session:
+            # This also handles creating the query event in postgres
             answer = answer_qa_query(
                 question=question,
                 user=None,
@@ -54,7 +56,7 @@ def handle_message(
             QuestionRequest(
                 query=msg,
                 collection=DOCUMENT_INDEX_NAME,
-                use_keyword=False,  # always use semantic search when handling slack messages
+                use_keyword=False,  # always use semantic search when handling Slack messages
                 filters=None,
                 offset=None,
             )
@@ -73,6 +75,14 @@ def handle_message(
                 text=f"Encountered exception when trying to answer: \n\n```{e}```",
                 thread_ts=message_ts_to_respond_to,
             )
+        return
+
+    if answer.eval_res_valid is False:
+        logger.info(
+            "Answer was evaluated to be invalid, throwing it away without responding."
+        )
+        if answer.answer:
+            logger.debug(answer.answer)
         return
 
     if not answer.top_ranked_docs:
@@ -96,21 +106,26 @@ def handle_message(
         return
 
     # convert raw response into "nicely" formatted Slack message
-    blocks = build_qa_response_blocks(
+    answer_blocks = build_qa_response_blocks(
         query_event_id=answer.query_event_id,
         answer=answer.answer,
-        documents=answer.top_ranked_docs,
         quotes=answer.quotes,
     )
+
+    document_blocks = build_documents_blocks(
+        documents=answer.top_ranked_docs, query_event_id=answer.query_event_id
+    )
+
     try:
         respond_in_thread(
             client=client,
             channel=channel,
-            blocks=blocks,
+            blocks=answer_blocks + document_blocks,
             thread_ts=message_ts_to_respond_to,
             # don't unfurl, since otherwise we will have 5+ previews which makes the message very long
             unfurl=False,
         )
+
     except Exception:
         logger.exception(
             f"Unable to process message - could not respond in slack in {num_retries} attempts"
