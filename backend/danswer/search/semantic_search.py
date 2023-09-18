@@ -107,7 +107,7 @@ def retrieve_ranked_documents(
             f"Semantic search returned no results with filters: {filters_log_msg}"
         )
         return None, None
-    logger.info(top_chunks)
+    logger.debug(top_chunks)
     ranked_chunks = semantic_reranking(query, top_chunks[:num_rerank])
 
     top_docs = [

@@ -11,6 +11,7 @@ from danswer.bots.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.bots.slack.utils import build_feedback_block_id
 from danswer.bots.slack.utils import translate_vespa_highlight_to_slack
 from danswer.configs.app_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
+from danswer.configs.app_configs import ENABLE_SLACK_DOC_FEEDBACK
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.slack.utils import UserIdReplacer
@@ -103,11 +104,11 @@ def build_documents_blocks(
     documents: list[SearchDoc],
     query_event_id: int,
     num_docs_to_display: int = DANSWER_BOT_NUM_DOCS_TO_DISPLAY,
+    include_feedback: bool = ENABLE_SLACK_DOC_FEEDBACK,
 ) -> list[Block]:
     seen_docs_identifiers = set()
-
     section_blocks: list[Block] = [HeaderBlock(text="Reference Documents")]
-
+    included_docs = 0
     for rank, d in enumerate(documents):
         if d.document_id in seen_docs_identifiers:
             continue
@@ -115,23 +116,28 @@ def build_documents_blocks(
 
         match_str = translate_vespa_highlight_to_slack(d.match_highlights)
 
-        section_blocks.extend(
-            [
-                SectionBlock(
-                    fields=[
-                        f"<{d.link}|{d.semantic_identifier}>:\n>{match_str}",
-                    ]
-                ),
+        included_docs += 1
+
+        section_blocks.append(
+            SectionBlock(
+                fields=[
+                    f"<{d.link}|{d.semantic_identifier}>:\n>{match_str}",
+                ]
+            ),
+        )
+
+        if include_feedback:
+            section_blocks.append(
                 build_doc_feedback_block(
                     query_event_id=query_event_id,
                     document_id=d.document_id,
                     document_rank=rank,
                 ),
-                DividerBlock(),
-            ]
-        )
+            )
 
-        if len(section_blocks) >= num_docs_to_display * 3:
+        section_blocks.append(DividerBlock())
+
+        if included_docs >= num_docs_to_display:
             break
 
     return section_blocks

@@ -36,11 +36,6 @@ def respond_in_thread(
     if not text and not blocks:
         raise ValueError("One of `text` or `blocks` must be provided")
 
-    if text:
-        logger.debug(f"Trying to send message: {text}")
-    if blocks:
-        logger.debug(f"Trying to send blocks: {blocks}")
-
     slack_call = make_slack_api_rate_limited(client.chat_postMessage)
     response = slack_call(
         channel=channel,

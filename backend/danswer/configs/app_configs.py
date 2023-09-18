@@ -229,3 +229,6 @@ DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER = os.environ.get(
 ENABLE_DANSWERBOT_REFLEXION = (
     os.environ.get("ENABLE_DANSWERBOT_REFLEXION", "").lower() == "true"
 )
+ENABLE_SLACK_DOC_FEEDBACK = (
+    os.environ.get("ENABLE_SLACK_DOC_FEEDBACK", "").lower() == "true"
+)

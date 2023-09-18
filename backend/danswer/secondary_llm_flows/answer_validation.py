@@ -62,8 +62,5 @@ def get_answer_validity(
     logger.debug(model_output)
 
     validity = _extract_validity(model_output)
-    logger.info(
-        f'LLM Answer of "{answer}" was determined to be {"valid" if validity else "invalid"}.'
-    )
 
     return validity
