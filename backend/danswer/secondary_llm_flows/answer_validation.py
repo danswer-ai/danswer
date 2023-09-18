@@ -17,6 +17,16 @@ def get_answer_validity(
     def _get_answer_validation_messages(
         query: str, answer: str
     ) -> list[dict[str, str]]:
+        # Below COT block is unused, keeping for reference. Chain of Thought here significantly increases the time to
+        # answer, we can get most of the way there but just having the model evaluate each individual condition with
+        # a single True/False.
+        # cot_block = (
+        #    f"{THOUGHT_PAT} Use this as a scratchpad to write out in a step by step manner your reasoning "
+        #    f"about EACH criterion to ensure that your conclusion is correct. "
+        #    f"Be brief when evaluating each condition.\n"
+        #    f"{FINAL_ANSWER_PAT} Valid or Invalid"
+        # )
+
         format_demo = (
             "1. True or False\n"
             "2. True or False\n"
