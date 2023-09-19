@@ -12,6 +12,7 @@ from danswer.bots.slack.utils import build_feedback_block_id
 from danswer.bots.slack.utils import translate_vespa_highlight_to_slack
 from danswer.configs.app_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
 from danswer.configs.app_configs import ENABLE_SLACK_DOC_FEEDBACK
+from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import SearchFeedbackType
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.server.models import SearchDoc
@@ -83,7 +84,11 @@ def build_documents_blocks(
             continue
         seen_docs_identifiers.add(d.document_id)
 
-        used_chars = len(d.semantic_identifier) + 3
+        doc_sem_id = d.semantic_identifier
+        if d.source_type == DocumentSource.SLACK.value:
+            doc_sem_id = "#" + doc_sem_id
+
+        used_chars = len(doc_sem_id) + 3
         match_str = translate_vespa_highlight_to_slack(d.match_highlights, used_chars)
 
         included_docs += 1
@@ -91,7 +96,7 @@ def build_documents_blocks(
         section_blocks.append(
             SectionBlock(
                 fields=[
-                    f"<{d.link}|{d.semantic_identifier}>:\n>{match_str}",
+                    f"<{d.link}|{doc_sem_id}>:\n>{match_str}",
                 ]
             ),
         )
