@@ -85,6 +85,9 @@ class ConnectorCredentialPair(Base):
     """
 
     __tablename__ = "connector_credential_pair"
+    id: Mapped[int] = mapped_column(
+        Integer, unique=True, nullable=False, autoincrement=True
+    )
     name: Mapped[str] = mapped_column(
         String, unique=True, nullable=True
     )  # nullable for backwards compatability
@@ -245,6 +248,7 @@ class DocumentByConnectorCredentialPair(Base):
     __tablename__ = "document_by_connector_credential_pair"
 
     id: Mapped[str] = mapped_column(ForeignKey("document.id"), primary_key=True)
+    # TODO: transition this to use the ConnectorCredentialPair id directly
     connector_id: Mapped[int] = mapped_column(
         ForeignKey("connector.id"), primary_key=True
     )
@@ -350,11 +354,8 @@ class DocumentSet_ConnectorCredentialPair(Base):
     document_set_id: Mapped[int] = mapped_column(
         ForeignKey("document_set.id"), primary_key=True
     )
-    connector_id: Mapped[int] = mapped_column(
-        ForeignKey("connector.id"), primary_key=True
-    )
-    credential_id: Mapped[int] = mapped_column(
-        ForeignKey("credential.id"), primary_key=True
+    connector_credential_pair_id: Mapped[int] = mapped_column(
+        ForeignKey("connector_credential_pair.id"), primary_key=True
     )
 
     document_set: Mapped[DocumentSet] = relationship(

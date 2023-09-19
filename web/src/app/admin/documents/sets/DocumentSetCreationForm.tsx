@@ -1,6 +1,6 @@
 import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 import * as Yup from "yup";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { createDocumentSet, updateDocumentSet } from "./lib";
 import { CCPairID, ConnectorIndexingStatus, DocumentSet } from "@/lib/types";
 import { TextFormField } from "@/components/admin/connectors/Field";
@@ -121,7 +121,7 @@ export const DocumentSetCreationForm = ({
                 <FieldArray
                   name="ccPairs"
                   render={(arrayHelpers: ArrayHelpers) => (
-                    <div className="mb-3 flex gap-2">
+                    <div className="mb-3 flex gap-2 flex-wrap">
                       {ccPairs.map((ccPair) => {
                         const ccPairDescriptor = {
                           connector_id: ccPair.connector.id,

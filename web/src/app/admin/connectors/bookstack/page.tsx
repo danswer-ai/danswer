@@ -198,21 +198,14 @@ const Main = () => {
               </p>
               <ConnectorForm<BookstackConfig>
                 nameBuilder={(values) => `BookStackConnector`}
+                ccPairNameBuilder={(values) => `BookStackConnector`}
                 source="bookstack"
                 inputType="poll"
                 formBody={<></>}
                 validationSchema={Yup.object().shape({})}
                 initialValues={{}}
                 refreshFreq={10 * 60} // 10 minutes
-                onSubmit={async (isSuccess, responseJson) => {
-                  if (isSuccess && responseJson) {
-                    await linkCredential(
-                      responseJson.id,
-                      bookstackCredential.id
-                    );
-                    mutate("/api/manage/admin/connector/indexing-status");
-                  }
-                }}
+                credentialId={bookstackCredential.id}
               />
             </div>
           </>

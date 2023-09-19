@@ -83,6 +83,10 @@ export function SingleUseConnectorsTable<
     getCredential !== undefined && onCredentialLink !== undefined;
 
   const columns = [
+    {
+      header: "Name",
+      key: "name",
+    },
     ...(specialColumns ?? []),
     {
       header: "Status",
@@ -127,6 +131,7 @@ export function SingleUseConnectorsTable<
               }
             : { credential: "" };
           return {
+            name: connectorIndexingStatus.name || "",
             status: (
               <SingleUseConnectorStatus
                 indexingStatus={connectorIndexingStatus.last_status}

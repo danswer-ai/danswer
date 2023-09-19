@@ -44,11 +44,11 @@ export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
 
 export const ThreeDotsLoader = () => {
   return (
-    <div className="flex">
+    <div className="flex my-auto">
       <div className="mx-auto">
         <ThreeDots
           height="30"
-          width="40"
+          width="50"
           color="#3b82f6"
           ariaLabel="grid-loading"
           radius="12.5"

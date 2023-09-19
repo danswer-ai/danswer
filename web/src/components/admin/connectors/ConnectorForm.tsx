@@ -54,6 +54,7 @@ const CCPairNameHaver = Yup.object().shape({
 
 interface BaseProps<T extends Yup.AnyObject> {
   nameBuilder: (values: T) => string;
+  ccPairNameBuilder?: (values: T) => string | null;
   source: ValidSources;
   inputType: ValidInputTypes;
   credentialId?: number; // if specified, will automatically try and link the credential
@@ -76,6 +77,7 @@ type ConnectorFormProps<T extends Yup.AnyObject> = RequireAtLeastOne<
 
 export function ConnectorForm<T extends Yup.AnyObject>({
   nameBuilder,
+  ccPairNameBuilder,
   source,
   inputType,
   credentialId,
@@ -89,19 +91,19 @@ export function ConnectorForm<T extends Yup.AnyObject>({
   const { mutate } = useSWRConfig();
   const { popup, setPopup } = usePopup();
 
-  const credentialPassedIn = credentialId !== undefined;
+  const shouldHaveNameInput = credentialId !== undefined && !ccPairNameBuilder;
 
   return (
     <>
       {popup}
       <Formik
         initialValues={
-          credentialPassedIn
+          shouldHaveNameInput
             ? { cc_pair_name: "", ...initialValues }
             : initialValues
         }
         validationSchema={
-          credentialPassedIn
+          shouldHaveNameInput
             ? validationSchema.concat(CCPairNameHaver)
             : validationSchema
         }
@@ -110,8 +112,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
           const connectorName = nameBuilder(values);
 
           // best effort check to see if existing connector exists
-          // delete it if it does, the current assumption is that only
-          // one google drive connector will exist at a time
+          // delete it if it does and replace it with this new version
           const errorMsg = await deleteConnectorIfExists({
             source,
             name: connectorName,
@@ -124,11 +125,14 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             return;
           }
 
+          const connectorConfig = Object.fromEntries(
+            Object.keys(initialValues).map((key) => [key, values[key]])
+          ) as T;
           const { message, isSuccess, response } = await submitConnector<T>({
             name: connectorName,
             source,
             input_type: inputType,
-            connector_specific_config: values,
+            connector_specific_config: connectorConfig,
             refresh_freq: refreshFreq || 0,
             disabled: false,
           });
@@ -140,10 +144,13 @@ export function ConnectorForm<T extends Yup.AnyObject>({
           }
 
           if (credentialId !== undefined) {
+            const ccPairName = ccPairNameBuilder
+              ? ccPairNameBuilder(values)
+              : values.cc_pair_name;
             const linkCredentialResponse = await linkCredential(
               response.id,
               credentialId,
-              values.cc_pair_name
+              ccPairName
             );
             if (!linkCredentialResponse.ok) {
               const linkCredentialErrorMsg =
@@ -170,8 +177,13 @@ export function ConnectorForm<T extends Yup.AnyObject>({
       >
         {({ isSubmitting, values }) => (
           <Form>
-            {credentialPassedIn && (
-              <TextFormField name="cc_pair_name" label="Connector Name" />
+            {shouldHaveNameInput && (
+              <TextFormField
+                name="cc_pair_name"
+                label="Connector Name"
+                autoCompleteDisabled={true}
+                subtext={`A descriptive name for the connector. This will just be used to identify the connector in the Admin UI.`}
+              />
             )}
             {formBody && formBody}
             {formBodyBuilder && formBodyBuilder(values)}

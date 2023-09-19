@@ -49,6 +49,7 @@ export default function Web() {
       <div className="border-solid border-gray-600 border rounded-md p-6">
         <ConnectorForm<WebConfig>
           nameBuilder={(values) => `WebConnector-${values.base_url}`}
+          ccPairNameBuilder={(values) => values.base_url}
           credentialId={0} // 0 is the ID of the default public credential
           source="web"
           inputType="load_state"

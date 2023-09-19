@@ -19,6 +19,17 @@ import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsT
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
 
+// Copied from the `extract_confluence_keys_from_url` function
+const extractSpaceFromUrl = (wikiUrl: string): string | null => {
+  if (!wikiUrl.includes(".atlassian.net/wiki/spaces/")) {
+    return null;
+  }
+
+  const parsedUrl = new URL(wikiUrl);
+  const space = parsedUrl.pathname.split("/")[3];
+  return space;
+};
+
 const Main = () => {
   const { popup, setPopup } = usePopup();
 
@@ -226,6 +237,9 @@ const Main = () => {
               nameBuilder={(values) =>
                 `ConfluenceConnector-${values.wiki_page_url}`
               }
+              ccPairNameBuilder={(values) =>
+                extractSpaceFromUrl(values.wiki_page_url)
+              }
               source="confluence"
               inputType="poll"
               formBody={
@@ -242,15 +256,7 @@ const Main = () => {
                 wiki_page_url: "",
               }}
               refreshFreq={10 * 60} // 10 minutes
-              onSubmit={async (isSuccess, responseJson) => {
-                if (isSuccess && responseJson) {
-                  await linkCredential(
-                    responseJson.id,
-                    confluenceCredential.id
-                  );
-                  mutate("/api/manage/admin/connector/indexing-status");
-                }
-              }}
+              credentialId={confluenceCredential.id}
             />
           </div>
         </>
