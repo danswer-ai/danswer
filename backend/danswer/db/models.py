@@ -354,9 +354,13 @@ class Persona(Base):
     __tablename__ = "persona"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
+    # Danswer retrieval, treated as a special tool
+    retrieval_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     system_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     tools_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     hint_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Default personas are configured via backend during deployment
+    # Treated specially (cannot be user edited etc.)
     default_persona: Mapped[bool] = mapped_column(Boolean, default=False)
     # If it's updated and no longer latest (should no longer be shown), it is also considered deleted
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)

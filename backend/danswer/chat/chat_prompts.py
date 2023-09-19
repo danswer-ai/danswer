@@ -1,31 +1,48 @@
+from langchain.schema.messages import BaseMessage
+from langchain.schema.messages import HumanMessage
+from langchain.schema.messages import SystemMessage
+
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.constants import CODE_BLOCK_PAT
+from danswer.db.models import ChatMessage
+from danswer.llm.utils import translate_danswer_msg_to_langchain
 
-TOOL_TEMPLATE = """TOOLS
+DANSWER_TOOL_NAME = "Current Search"
+DANSWER_TOOL_DESCRIPTION = (
+    "A search tool that can find information on any topic "
+    "including up to date and proprietary knowledge."
+)
+
+DANSWER_SYSTEM_MSG = (
+    "Given a conversation (between Human and Assistant) and a final message from Human, "
+    "rewrite the last message to be a standalone question that captures required/relevant context from the previous "
+    "conversation messages."
+)
+
+TOOL_TEMPLATE = """
+TOOLS
 ------
-Assistant can ask the user to use tools to look up information that may be helpful in answering the users \
-original question. The tools the human can use are:
+You can use tools to look up information that may be helpful in answering the user's \
+original question. The available tools are:
 
-{}
+{tool_overviews}
 
 RESPONSE FORMAT INSTRUCTIONS
 ----------------------------
-
 When responding to me, please output a response in one of two formats:
 
 **Option 1:**
-Use this if you want the human to use a tool.
-Markdown code snippet formatted in the following schema:
+Use this if you want to use a tool. Markdown code snippet formatted in the following schema:
 
 ```json
 {{
-    "action": string, \\ The action to take. Must be one of {}
+    "action": string, \\ The action to take. Must be one of {tool_names}
     "action_input": string \\ The input to the action
 }}
 ```
 
 **Option #2:**
-Use this if you want to respond directly to the human. Markdown code snippet formatted in the following schema:
+Use this if you want to respond directly to the user. Markdown code snippet formatted in the following schema:
 
 ```json
 {{
@@ -52,19 +69,19 @@ USER'S INPUT
 Here is the user's input \
 (remember to respond with a markdown code snippet of a json blob with a single action, and NOTHING else):
 
-{}
+{user_input}
 """
 
 TOOL_FOLLOWUP = """
 TOOL RESPONSE:
 ---------------------
-{}
+{tool_output}
 
 USER'S INPUT
 --------------------
 Okay, so what is the response to my last comment? If using information obtained from the tools you must \
 mention it explicitly without mentioning the tool names - I have forgotten all TOOL RESPONSES!
-{}
+{optional_reminder}{hint}
 IMPORTANT! You MUST respond with a markdown code snippet of a json blob with a single action, and NOTHING else.
 """
 
@@ -78,21 +95,26 @@ def form_user_prompt_text(
 ) -> str:
     user_prompt = tool_text or tool_less_prompt
 
-    user_prompt += user_input_prompt.format(query)
+    user_prompt += user_input_prompt.format(user_input=query)
 
     if hint_text:
         if user_prompt[-1] != "\n":
             user_prompt += "\n"
         user_prompt += "Hint: " + hint_text
 
-    return user_prompt
+    return user_prompt.strip()
 
 
 def form_tool_section_text(
-    tools: list[dict[str, str]], template: str = TOOL_TEMPLATE
+    tools: list[dict[str, str]], retrieval_enabled: bool, template: str = TOOL_TEMPLATE
 ) -> str | None:
-    if not tools:
+    if not tools and not retrieval_enabled:
         return None
+
+    if retrieval_enabled:
+        tools.append(
+            {"name": DANSWER_TOOL_NAME, "description": DANSWER_TOOL_DESCRIPTION}
+        )
 
     tools_intro = []
     for tool in tools:
@@ -102,7 +124,9 @@ def form_tool_section_text(
     tools_intro_text = "\n".join(tools_intro)
     tool_names_text = ", ".join([tool["name"] for tool in tools])
 
-    return template.format(tools_intro_text, tool_names_text)
+    return template.format(
+        tool_overviews=tools_intro_text, tool_names=tool_names_text
+    ).strip()
 
 
 def format_danswer_chunks_for_chat(chunks: list[InferenceChunk]) -> str:
@@ -114,12 +138,53 @@ def format_danswer_chunks_for_chat(chunks: list[InferenceChunk]) -> str:
 
 def form_tool_followup_text(
     tool_output: str,
+    query: str,
     hint_text: str | None,
     tool_followup_prompt: str = TOOL_FOLLOWUP,
     ignore_hint: bool = False,
 ) -> str:
-    if not ignore_hint and hint_text:
-        hint_text_spaced = f"\n{hint_text}\n"
-        return tool_followup_prompt.format(tool_output, hint_text_spaced)
+    # If multi-line query, it likely confuses the model more than helps
+    if "\n" not in query:
+        optional_reminder = f"As a reminder, my query was: {query}\n"
+    else:
+        optional_reminder = ""
 
-    return tool_followup_prompt.format(tool_output, "")
+    if not ignore_hint and hint_text:
+        hint_text_spaced = f"{hint_text}\n"
+    else:
+        hint_text_spaced = ""
+
+    return tool_followup_prompt.format(
+        tool_output=tool_output,
+        optional_reminder=optional_reminder,
+        hint=hint_text_spaced,
+    ).strip()
+
+
+def build_combined_query(
+    query_message: ChatMessage,
+    history: list[ChatMessage],
+) -> list[BaseMessage]:
+    user_query = query_message.message
+    combined_query_msgs: list[BaseMessage] = []
+
+    if not user_query:
+        raise ValueError("Can't rephrase/search an empty query")
+
+    combined_query_msgs.append(SystemMessage(content=DANSWER_SYSTEM_MSG))
+
+    combined_query_msgs.extend(
+        [translate_danswer_msg_to_langchain(msg) for msg in history]
+    )
+
+    combined_query_msgs.append(
+        HumanMessage(
+            content=(
+                "Help me rewrite this final query into a standalone question that takes into consideration the "
+                f"past messages of the conversation. You must ONLY return the rewritten query and nothing else."
+                f"\n\nQuery:\n{query_message.message}"
+            )
+        )
+    )
+
+    return combined_query_msgs
