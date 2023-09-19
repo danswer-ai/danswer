@@ -6,17 +6,29 @@ from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 
+from danswer.chat.chat_prompts import build_combined_query
+from danswer.chat.chat_prompts import DANSWER_TOOL_NAME
 from danswer.chat.chat_prompts import form_tool_followup_text
 from danswer.chat.chat_prompts import form_user_prompt_text
+from danswer.chat.chat_prompts import format_danswer_chunks_for_chat
 from danswer.chat.tools import call_tool
+from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT
+from danswer.configs.constants import IGNORE_FOR_QA
+from danswer.datastores.document_index import get_default_document_index
 from danswer.db.models import ChatMessage
 from danswer.db.models import Persona
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerChatModelOut
+from danswer.direct_qa.qa_utils import get_usable_chunks
 from danswer.llm.build import get_default_llm
+from danswer.llm.llm import LLM
 from danswer.llm.utils import translate_danswer_msg_to_langchain
+from danswer.search.semantic_search import retrieve_ranked_documents
+from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
 from danswer.utils.text_processing import has_unescaped_quote
+
+logger = setup_logger()
 
 
 def _parse_embedded_json_streamed_response(
@@ -55,6 +67,8 @@ def _parse_embedded_json_streamed_response(
                 yield DanswerAnswerPiece(answer_piece=hold)
                 hold = ""
 
+    logger.debug(model_output)
+
     model_final = extract_embedded_json(model_output)
     if "action" not in model_final or "action_input" not in model_final:
         raise ValueError("Model did not provide all required action values")
@@ -65,6 +79,43 @@ def _parse_embedded_json_streamed_response(
         action_input=model_final["action_input"],
     )
     return
+
+
+def danswer_chat_retrieval(
+    query_message: ChatMessage,
+    history: list[ChatMessage],
+    llm: LLM,
+    user_id: UUID | None,
+) -> str:
+    if history:
+        query_combination_msgs = build_combined_query(query_message, history)
+        reworded_query = llm.invoke(query_combination_msgs)
+    else:
+        reworded_query = query_message.message
+
+    ranked_chunks, unranked_chunks = retrieve_ranked_documents(
+        reworded_query,
+        user_id=user_id,
+        filters=None,
+        datastore=get_default_document_index(),
+    )
+    if not ranked_chunks:
+        return "No results found"
+
+    if unranked_chunks:
+        ranked_chunks.extend(unranked_chunks)
+
+    filtered_ranked_chunks = [
+        chunk for chunk in ranked_chunks if not chunk.metadata.get(IGNORE_FOR_QA)
+    ]
+
+    # get all chunks that fit into the token limit
+    usable_chunks = get_usable_chunks(
+        chunks=filtered_ranked_chunks,
+        token_limit=NUM_DOCUMENT_TOKENS_FED_TO_CHAT,
+    )
+
+    return format_danswer_chunks_for_chat(usable_chunks)
 
 
 def llm_contextless_chat_answer(messages: list[ChatMessage]) -> Iterator[str]:
@@ -78,11 +129,16 @@ def llm_contextual_chat_answer(
     persona: Persona,
     user_id: UUID | None,
 ) -> Iterator[str]:
+    retrieval_enabled = persona.retrieval_enabled
     system_text = persona.system_text
     tool_text = persona.tools_text
     hint_text = persona.hint_text
 
     last_message = messages[-1]
+
+    if not last_message.message:
+        raise ValueError("User chat message is empty.")
+
     previous_messages = messages[:-1]
 
     user_text = form_user_prompt_text(
@@ -102,7 +158,9 @@ def llm_contextual_chat_answer(
 
     prompt.append(HumanMessage(content=user_text))
 
-    tokens = get_default_llm().stream(prompt)
+    llm = get_default_llm()
+
+    tokens = llm.stream(prompt)
 
     final_result: DanswerChatModelOut | None = None
     final_answer_streamed = False
@@ -121,16 +179,28 @@ def llm_contextual_chat_answer(
     if final_result is None:
         raise RuntimeError("Model output finished without final output parsing.")
 
-    tool_result_str = call_tool(final_result, user_id=user_id)
+    if retrieval_enabled and final_result.action.lower() == DANSWER_TOOL_NAME.lower():
+        tool_result_str = danswer_chat_retrieval(
+            query_message=last_message,
+            history=previous_messages,
+            llm=llm,
+            user_id=user_id,
+        )
+    else:
+        tool_result_str = call_tool(final_result, user_id=user_id)
 
     prompt.append(AIMessage(content=final_result.model_raw))
     prompt.append(
         HumanMessage(
-            content=form_tool_followup_text(tool_result_str, hint_text=hint_text)
+            content=form_tool_followup_text(
+                tool_output=tool_result_str,
+                query=last_message.message,
+                hint_text=hint_text,
+            )
         )
     )
 
-    tokens = get_default_llm().stream(prompt)
+    tokens = llm.stream(prompt)
 
     for result in _parse_embedded_json_streamed_response(tokens):
         if isinstance(result, DanswerAnswerPiece) and result.answer_piece:

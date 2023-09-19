@@ -262,6 +262,7 @@ def fetch_persona_by_id(persona_id: int, db_session: Session) -> Persona:
 def create_persona(
     persona_id: int | None,
     name: str,
+    retrieval_enabled: bool,
     system_text: str | None,
     tools_text: str | None,
     hint_text: str | None,
@@ -272,6 +273,7 @@ def create_persona(
 
     if persona:
         persona.name = name
+        persona.retrieval_enabled = retrieval_enabled
         persona.system_text = system_text
         persona.tools_text = tools_text
         persona.hint_text = hint_text
@@ -280,6 +282,7 @@ def create_persona(
         persona = Persona(
             id=persona_id,
             name=name,
+            retrieval_enabled=retrieval_enabled,
             system_text=system_text,
             tools_text=tools_text,
             hint_text=hint_text,

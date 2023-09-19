@@ -14,10 +14,13 @@ def load_personas_from_yaml(personas_yaml: str = PERSONAS_YAML) -> None:
     all_personas = data.get("personas", [])
     with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
         for persona in all_personas:
-            tools = form_tool_section_text(persona["tools"])
+            tools = form_tool_section_text(
+                persona["tools"], persona["retrieval_enabled"]
+            )
             create_persona(
                 persona_id=persona["id"],
                 name=persona["name"],
+                retrieval_enabled=persona["retrieval_enabled"],
                 system_text=persona["system"],
                 tools_text=tools,
                 hint_text=persona["hint"],
