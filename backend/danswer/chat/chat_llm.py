@@ -93,6 +93,7 @@ def danswer_chat_retrieval(
     else:
         reworded_query = query_message.message
 
+    # Good Debug/Breakpoint
     ranked_chunks, unranked_chunks = retrieve_ranked_documents(
         reworded_query,
         user_id=user_id,
@@ -160,6 +161,7 @@ def llm_contextual_chat_answer(
 
     llm = get_default_llm()
 
+    # Good Debug/Breakpoint
     tokens = llm.stream(prompt)
 
     final_result: DanswerChatModelOut | None = None
@@ -200,6 +202,7 @@ def llm_contextual_chat_answer(
         )
     )
 
+    # Good Debug/Breakpoint
     tokens = llm.stream(prompt)
 
     for result in _parse_embedded_json_streamed_response(tokens):
