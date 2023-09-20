@@ -1,6 +1,7 @@
 import io
 from copy import copy
 from datetime import datetime
+from enum import Enum
 from typing import Any
 from typing import cast
 from typing import Tuple
@@ -34,6 +35,17 @@ logger = setup_logger()
 
 
 MINTLIFY_UNWANTED = ["sticky", "hidden"]
+
+
+class WEB_CONNECTOR_VALID_SETTINGS(str, Enum):
+    # Given a base site, index everything under that path
+    RECURSIVE = "recursive"
+    # Given a URL, index only the given page
+    SINGLE = "single"
+    # Given a sitemap.xml URL, parse all the pages in it
+    SITEMAP = "sitemap"
+    # Given a file upload where every line is a URL, parse all the URLs provided
+    UPLOAD = "upload"
 
 
 def is_valid_url(url: str) -> bool:
@@ -90,18 +102,58 @@ def start_playwright() -> Tuple[Playwright, BrowserContext]:
     return playwright, context
 
 
+def extract_urls_from_sitemap(sitemap_url: str) -> list[str]:
+    response = requests.get(sitemap_url)
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.content, "html.parser")
+    urls = [loc_tag.text for loc_tag in soup.find_all("loc")]
+
+    return urls
+
+
+def _ensure_valid_url(url: str) -> str:
+    if "://" not in url:
+        return "https://" + url
+    return url
+
+
+def _read_urls_file(location: str) -> list[str]:
+    with open(location, "r") as f:
+        urls = [_ensure_valid_url(line.strip()) for line in f if line.strip()]
+    return urls
+
+
 class WebConnector(LoadConnector):
     def __init__(
         self,
-        base_url: str,
+        web_connector_type: str,
+        location: str,
         mintlify_cleanup: bool = True,  # Mostly ok to apply to other websites as well
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
-        if "://" not in base_url:
-            base_url = "https://" + base_url
-        self.base_url = base_url
         self.mintlify_cleanup = mintlify_cleanup
         self.batch_size = batch_size
+        self.recursive = False
+
+        if web_connector_type == WEB_CONNECTOR_VALID_SETTINGS.RECURSIVE.value:
+            self.recursive = True
+            self.to_visit_list = [_ensure_valid_url(location)]
+            return
+
+        elif web_connector_type == WEB_CONNECTOR_VALID_SETTINGS.SINGLE.value:
+            self.to_visit_list = [_ensure_valid_url(location)]
+
+        elif web_connector_type == WEB_CONNECTOR_VALID_SETTINGS.SITEMAP:
+            self.to_visit_list = extract_urls_from_sitemap(_ensure_valid_url(location))
+
+        elif web_connector_type == WEB_CONNECTOR_VALID_SETTINGS.UPLOAD:
+            self.to_visit_list = _read_urls_file(location)
+
+        else:
+            raise ValueError(
+                "Invalid Web Connector Config, must choose a valid type between: " ""
+            )
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         if credentials:
@@ -112,7 +164,8 @@ class WebConnector(LoadConnector):
         """Traverses through all pages found on the website
         and converts them into documents"""
         visited_links: set[str] = set()
-        to_visit: list[str] = [self.base_url]
+        to_visit: list[str] = self.to_visit_list
+        base_url = to_visit[0]  # For the recursive case
         doc_batch: list[Document] = []
 
         playwright, context = start_playwright()
@@ -165,10 +218,11 @@ class WebConnector(LoadConnector):
                 content = page.content()
                 soup = BeautifulSoup(content, "html.parser")
 
-                internal_links = get_internal_links(self.base_url, current_url, soup)
-                for link in internal_links:
-                    if link not in visited_links:
-                        to_visit.append(link)
+                if self.recursive:
+                    internal_links = get_internal_links(base_url, current_url, soup)
+                    for link in internal_links:
+                        if link not in visited_links:
+                            to_visit.append(link)
 
                 title_tag = soup.find("title")
                 title = None
@@ -223,6 +277,8 @@ class WebConnector(LoadConnector):
 
 
 if __name__ == "__main__":
-    connector = WebConnector("https://docs.danswer.dev/")
+    connector = WebConnector(
+        web_connector_type="sitemap", location="https://docs.danswer.dev/sitemap.xml"
+    )
     document_batches = connector.load_from_state()
     print(next(document_batches))
