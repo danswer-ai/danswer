@@ -127,8 +127,8 @@ def _read_urls_file(location: str) -> list[str]:
 class WebConnector(LoadConnector):
     def __init__(
         self,
-        web_connector_type: str,
-        location: str,
+        base_url: str,  # Can't change this without disrupting existing users
+        web_connector_type: str = WEB_CONNECTOR_VALID_SETTINGS.RECURSIVE.value,
         mintlify_cleanup: bool = True,  # Mostly ok to apply to other websites as well
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
@@ -138,17 +138,17 @@ class WebConnector(LoadConnector):
 
         if web_connector_type == WEB_CONNECTOR_VALID_SETTINGS.RECURSIVE.value:
             self.recursive = True
-            self.to_visit_list = [_ensure_valid_url(location)]
+            self.to_visit_list = [_ensure_valid_url(base_url)]
             return
 
         elif web_connector_type == WEB_CONNECTOR_VALID_SETTINGS.SINGLE.value:
-            self.to_visit_list = [_ensure_valid_url(location)]
+            self.to_visit_list = [_ensure_valid_url(base_url)]
 
         elif web_connector_type == WEB_CONNECTOR_VALID_SETTINGS.SITEMAP:
-            self.to_visit_list = extract_urls_from_sitemap(_ensure_valid_url(location))
+            self.to_visit_list = extract_urls_from_sitemap(_ensure_valid_url(base_url))
 
         elif web_connector_type == WEB_CONNECTOR_VALID_SETTINGS.UPLOAD:
-            self.to_visit_list = _read_urls_file(location)
+            self.to_visit_list = _read_urls_file(base_url)
 
         else:
             raise ValueError(
@@ -277,8 +277,6 @@ class WebConnector(LoadConnector):
 
 
 if __name__ == "__main__":
-    connector = WebConnector(
-        web_connector_type="sitemap", location="https://docs.danswer.dev/sitemap.xml"
-    )
+    connector = WebConnector("https://docs.danswer.dev/")
     document_batches = connector.load_from_state()
     print(next(document_batches))
