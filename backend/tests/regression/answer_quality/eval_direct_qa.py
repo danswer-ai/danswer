@@ -191,8 +191,7 @@ if __name__ == "__main__":
 
             with Session(engine, expire_on_commit=False) as db_session:
                 for sample in questions_data["questions"]:
-                    # This line still goes to stdout to track progress
-                    builtins.print(
+                    print(
                         f"Running Test for Question {sample['id']}: {sample['question']}"
                     )
 
