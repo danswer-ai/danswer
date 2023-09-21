@@ -1,8 +1,10 @@
 import abc
+from collections.abc import Callable
 from collections.abc import Generator
 from dataclasses import dataclass
 
 from danswer.chunking.models import InferenceChunk
+from danswer.direct_qa.models import LLMMetricsContainer
 
 
 @dataclass
@@ -44,6 +46,7 @@ class DanswerQuotes:
     quotes: list[DanswerQuote]
 
 
+# Final int is for number of output tokens
 AnswerQuestionReturn = tuple[DanswerAnswer, DanswerQuotes]
 AnswerQuestionStreamReturn = Generator[
     DanswerAnswerPiece | DanswerQuotes | None, None, None
@@ -66,6 +69,7 @@ class QAModel:
         self,
         query: str,
         context_docs: list[InferenceChunk],
+        metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,
     ) -> AnswerQuestionReturn:
         raise NotImplementedError
 

@@ -1,6 +1,7 @@
 import abc
 import json
 import re
+from collections.abc import Callable
 from collections.abc import Iterator
 from copy import copy
 
@@ -21,13 +22,16 @@ from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerQuotes
 from danswer.direct_qa.interfaces import QAModel
+from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.direct_qa.qa_prompts import EMPTY_SAMPLE_JSON
 from danswer.direct_qa.qa_prompts import JsonChatProcessor
 from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
 from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
 from danswer.llm.llm import LLM
+from danswer.llm.utils import check_number_of_tokens
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
+from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import str_prompt_to_langchain_prompt
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_up_code_blocks
@@ -245,10 +249,31 @@ class QABlock(QAModel):
         self,
         query: str,
         context_docs: list[InferenceChunk],
+        metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,
     ) -> AnswerQuestionReturn:
         trimmed_context_docs = _tiktoken_trim_chunks(context_docs)
         prompt = self._qa_handler.build_prompt(query, trimmed_context_docs)
         model_out = self._llm.invoke(prompt)
+
+        if metrics_callback is not None:
+            prompt_tokens = sum(
+                [
+                    check_number_of_tokens(
+                        text=p.content, encode_fn=get_default_llm_tokenizer()
+                    )
+                    for p in prompt
+                ]
+            )
+
+            response_tokens = check_number_of_tokens(
+                text=model_out, encode_fn=get_default_llm_tokenizer()
+            )
+
+            metrics_callback(
+                LLMMetricsContainer(
+                    prompt_tokens=prompt_tokens, response_tokens=response_tokens
+                )
+            )
 
         return self._qa_handler.process_llm_output(model_out, trimmed_context_docs)
 

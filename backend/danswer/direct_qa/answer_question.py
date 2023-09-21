@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from sqlalchemy.orm import Session
 
 from danswer.chunking.models import InferenceChunk
@@ -12,10 +14,13 @@ from danswer.db.models import User
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.llm_utils import get_default_qa_model
+from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.direct_qa.qa_utils import get_usable_chunks
 from danswer.search.danswer_helper import query_intent
 from danswer.search.keyword_search import retrieve_keyword_documents
 from danswer.search.models import QueryFlow
+from danswer.search.models import RerankMetricsContainer
+from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SearchType
 from danswer.search.semantic_search import chunks_to_search_docs
 from danswer.search.semantic_search import retrieve_ranked_documents
@@ -37,6 +42,10 @@ def answer_qa_query(
     answer_generation_timeout: int = QA_TIMEOUT,
     real_time_flow: bool = True,
     enable_reflexion: bool = ENABLE_DANSWERBOT_REFLEXION,
+    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
+    | None = None,
+    rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
+    llm_metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,
 ) -> QAResponse:
     query = question.query
     filters = question.filters
@@ -59,12 +68,21 @@ def answer_qa_query(
     user_id = None if user is None else user.id
     if use_keyword:
         ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
-            query, user_id, filters, get_default_document_index()
+            query,
+            user_id,
+            filters,
+            get_default_document_index(),
+            retrieval_metrics_callback=retrieval_metrics_callback,
         )
         unranked_chunks: list[InferenceChunk] | None = []
     else:
         ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-            query, user_id, filters, get_default_document_index()
+            query,
+            user_id,
+            filters,
+            get_default_document_index(),
+            retrieval_metrics_callback=retrieval_metrics_callback,
+            rerank_metrics_callback=rerank_metrics_callback,
         )
     if not ranked_chunks:
         return QAResponse(
@@ -126,11 +144,13 @@ def answer_qa_query(
 
     error_msg = None
     try:
-        d_answer, quotes = qa_model.answer_question(query, usable_chunks)
+        d_answer, quotes = qa_model.answer_question(
+            query, usable_chunks, metrics_callback=llm_metrics_callback
+        )
     except Exception as e:
         # exception is logged in the answer_question method, no need to re-log
         d_answer, quotes = None, None
-        error_msg = f"Error occurred in call to LLM - {e}"
+        error_msg = f"Error occurred in call to LLM - {e}"  # Used in the QAResponse
 
     if not real_time_flow and enable_reflexion and d_answer is not None:
         valid = False
