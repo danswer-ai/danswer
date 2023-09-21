@@ -1,11 +1,16 @@
+from collections.abc import Sequence
 from typing import cast
 from uuid import UUID
 
+from sqlalchemy import and_
 from sqlalchemy import delete
+from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.db.models import ConnectorCredentialPair
+from danswer.db.models import Document
+from danswer.db.models import DocumentByConnectorCredentialPair
 from danswer.db.models import DocumentSet as DocumentSetDBModel
 from danswer.db.models import DocumentSet_ConnectorCredentialPair
 from danswer.server.models import DocumentSetCreationRequest
@@ -84,6 +89,7 @@ def update_document_set(
                 f"No document set with ID {document_set_update_request.id}"
             )
         document_set_row.description = document_set_update_request.description
+        document_set_row.is_up_to_date = False
 
         # update the attached CC pairs
         # first, delete all existing CC pairs
@@ -105,6 +111,17 @@ def update_document_set(
         raise
 
     return document_set_row, ds_cc_pairs
+
+
+def mark_document_set_as_synced(document_set_id: int, db_session: Session) -> None:
+    stmt = select(DocumentSetDBModel).where(DocumentSetDBModel.id == document_set_id)
+    document_set = db_session.scalar(stmt)
+    if document_set is None:
+        raise ValueError(f"No document set with ID: {document_set_id}")
+
+    # mark as up to date
+    document_set.is_up_to_date = True
+    db_session.commit()
 
 
 def delete_document_set(document_set_id: int, db_session: Session) -> None:
@@ -166,3 +183,70 @@ def fetch_document_sets(
         (document_set, cc_pairs)
         for document_set, cc_pairs in aggregated_results.values()
     ]
+
+
+def fetch_documents_for_document_set(
+    document_set_id: int, db_session: Session
+) -> Sequence[Document]:
+    stmt = (
+        select(Document)
+        .join(
+            DocumentByConnectorCredentialPair,
+            DocumentByConnectorCredentialPair.id == Document.id,
+        )
+        .join(
+            ConnectorCredentialPair,
+            and_(
+                ConnectorCredentialPair.connector_id
+                == DocumentByConnectorCredentialPair.connector_id,
+                ConnectorCredentialPair.credential_id
+                == DocumentByConnectorCredentialPair.credential_id,
+            ),
+        )
+        .join(
+            DocumentSet_ConnectorCredentialPair,
+            DocumentSet_ConnectorCredentialPair.connector_credential_pair_id
+            == ConnectorCredentialPair.id,
+        )
+        .join(
+            DocumentSetDBModel,
+            DocumentSetDBModel.id
+            == DocumentSet_ConnectorCredentialPair.document_set_id,
+        )
+        .where(DocumentSetDBModel.id == document_set_id)
+    )
+    return db_session.scalars(stmt).all()
+
+
+def fetch_document_sets_for_documents(
+    document_ids: list[int], db_session: Session
+) -> Sequence[tuple[int, list[str]]]:
+    stmt = (
+        select(Document.id, func.array_agg(DocumentSetDBModel.name))
+        .join(
+            DocumentSet_ConnectorCredentialPair,
+            DocumentSetDBModel.id
+            == DocumentSet_ConnectorCredentialPair.document_set_id,
+        )
+        .join(
+            ConnectorCredentialPair,
+            ConnectorCredentialPair.id
+            == DocumentSet_ConnectorCredentialPair.connector_credential_pair_id,
+        )
+        .join(
+            DocumentByConnectorCredentialPair,
+            and_(
+                DocumentByConnectorCredentialPair.connector_id
+                == ConnectorCredentialPair.connector_id,
+                DocumentByConnectorCredentialPair.credential_id
+                == ConnectorCredentialPair.credential_id,
+            ),
+        )
+        .join(
+            Document,
+            Document.id == DocumentByConnectorCredentialPair.id,
+        )
+        .where(Document.id.in_(document_ids))
+        .group_by(Document.id)
+    )
+    return db_session.execute(stmt).all()

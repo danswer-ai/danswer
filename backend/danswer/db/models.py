@@ -346,6 +346,8 @@ class DocumentSet(Base):
     name: Mapped[str] = mapped_column(String, unique=True)
     description: Mapped[str] = mapped_column(String)
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    # whether or not changes to the document set have been propogated
+    is_up_to_date: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     connector_credential_pair_relationships: Mapped[
         list["DocumentSet_ConnectorCredentialPair"]

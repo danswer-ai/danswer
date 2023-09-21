@@ -27,6 +27,7 @@ def upgrade() -> None:
             fastapi_users_db_sqlalchemy.generics.GUID(),
             nullable=True,
         ),
+        sa.Column("is_up_to_date", sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(
             ["user_id"],
             ["user.id"],

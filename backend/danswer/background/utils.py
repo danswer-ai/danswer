@@ -8,10 +8,13 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def interval_run_job(job: Callable[[], Any], delay: int | float) -> None:
+def interval_run_job(
+    job: Callable[[], Any], delay: int | float, emit_job_start_log: bool = True
+) -> None:
     while True:
         start = time.time()
-        logger.info(f"Running '{job.__name__}', current time: {time.ctime(start)}")
+        if emit_job_start_log:
+            logger.info(f"Running '{job.__name__}', current time: {time.ctime(start)}")
         try:
             job()
         except Exception as e:

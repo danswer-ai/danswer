@@ -13,8 +13,8 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.background.celery import cleanup_connector_credential_pair_task
-from danswer.background.celery import get_deletion_status
+from danswer.background.celery.celery import cleanup_connector_credential_pair_task
+from danswer.background.celery.deletion_utils import get_deletion_status
 from danswer.background.connector_deletion import (
     get_cleanup_task_id,
 )
