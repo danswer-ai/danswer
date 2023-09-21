@@ -18,6 +18,7 @@ depends_on = None
 
 def upgrade() -> None:
     op.drop_table("deletion_attempt")
+    sa.Enum(name="deletionstatus").drop(op.get_bind(), checkfirst=False)
 
 
 def downgrade() -> None:
