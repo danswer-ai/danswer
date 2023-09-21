@@ -150,7 +150,7 @@ def answer_qa_query(
     except Exception as e:
         # exception is logged in the answer_question method, no need to re-log
         d_answer, quotes = None, None
-        logger.error(f"Error occurred in call to LLM - {e}")
+        error_msg = f"Error occurred in call to LLM - {e}"  # Used in the QAResponse
 
     if not real_time_flow and enable_reflexion and d_answer is not None:
         valid = False
