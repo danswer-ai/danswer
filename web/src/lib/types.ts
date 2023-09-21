@@ -117,6 +117,7 @@ export interface ConnectorIndexingStatus<
   ConnectorConfigType,
   ConnectorCredentialType
 > {
+  cc_pair_id: number;
   name: string | null;
   connector: Connector<ConnectorConfigType>;
   credential: Credential<ConnectorCredentialType>;
@@ -213,12 +214,8 @@ export interface DeletionAttemptSnapshot {
 }
 
 // DOCUMENT SETS
-export interface CCPairID {
-  connector_id: number;
-  credential_id: number;
-}
-
 export interface CCPairDescriptor<ConnectorType, CredentialType> {
+  id: number;
   name: string | null;
   connector: Connector<ConnectorType>;
   credential: Credential<CredentialType>;

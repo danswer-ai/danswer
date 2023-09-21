@@ -226,8 +226,9 @@ const MainSection = () => {
         </div>
       ) : (
         <p className="text-sm">
-          Please provide your slack bot token in Step 1 first! Once done with that,
-          you can then specify which Slack channels you want to make searchable.
+          Please provide your slack bot token in Step 1 first! Once done with
+          that, you can then specify which Slack channels you want to make
+          searchable.
         </p>
       )}
     </>

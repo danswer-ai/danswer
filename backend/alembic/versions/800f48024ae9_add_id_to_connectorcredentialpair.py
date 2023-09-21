@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade() -> None:
     sequence = Sequence("connector_credential_pair_id_seq")
-    op.execute(CreateSequence(sequence))
+    op.execute(CreateSequence(sequence))  # type: ignore
     op.add_column(
         "connector_credential_pair",
         sa.Column(

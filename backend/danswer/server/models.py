@@ -333,6 +333,7 @@ class CredentialSnapshot(CredentialBase):
 class ConnectorIndexingStatus(BaseModel):
     """Represents the latest indexing status of a connector"""
 
+    cc_pair_id: int
     name: str | None
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
@@ -357,6 +358,7 @@ class ConnectorCredentialPairMetadata(BaseModel):
 
 
 class ConnectorCredentialPairDescriptor(BaseModel):
+    id: int
     name: str | None
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
@@ -369,13 +371,13 @@ class ApiKey(BaseModel):
 class DocumentSetCreationRequest(BaseModel):
     name: str
     description: str
-    cc_pairs: list[ConnectorCredentialPairIdentifier]
+    cc_pair_ids: list[int]
 
 
 class DocumentSetUpdateRequest(BaseModel):
     id: int
     description: str
-    cc_pairs: list[ConnectorCredentialPairIdentifier]
+    cc_pair_ids: list[int]
 
 
 class DocumentSet(BaseModel):

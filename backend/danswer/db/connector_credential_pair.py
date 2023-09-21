@@ -110,7 +110,7 @@ def mark_all_in_progress_cc_pairs_failed(
 def add_credential_to_connector(
     connector_id: int,
     credential_id: int,
-    cc_pair_name: str,
+    cc_pair_name: str | None,
     user: User,
     db_session: Session,
 ) -> StatusResponse[int]:

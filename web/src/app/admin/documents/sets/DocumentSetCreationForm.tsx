@@ -2,7 +2,7 @@ import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 import * as Yup from "yup";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { createDocumentSet, updateDocumentSet } from "./lib";
-import { CCPairID, ConnectorIndexingStatus, DocumentSet } from "@/lib/types";
+import { ConnectorIndexingStatus, DocumentSet } from "@/lib/types";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 
@@ -37,16 +37,13 @@ export const DocumentSetCreationForm = ({
               description: existingDocumentSet
                 ? existingDocumentSet.description
                 : "",
-              ccPairs: existingDocumentSet
+              ccPairIds: existingDocumentSet
                 ? existingDocumentSet.cc_pair_descriptors.map(
                     (ccPairDescriptor) => {
-                      return {
-                        connector_id: ccPairDescriptor.connector.id,
-                        credential_id: ccPairDescriptor.credential.id,
-                      };
+                      return ccPairDescriptor.id;
                     }
                   )
-                : ([] as CCPairID[]),
+                : ([] as number[]),
             }}
             validationSchema={Yup.object().shape({
               name: Yup.string().required("Please enter a name for the set"),
@@ -54,12 +51,7 @@ export const DocumentSetCreationForm = ({
                 "Please enter a description for the set"
               ),
               ccPairs: Yup.array()
-                .of(
-                  Yup.object({
-                    connector_id: Yup.number().required(),
-                    credential_id: Yup.number().required(),
-                  })
-                )
+                .of(Yup.number().required())
                 .required("Please select at least one connector"),
             })}
             onSubmit={async (values, formikHelpers) => {
@@ -119,27 +111,11 @@ export const DocumentSetCreationForm = ({
                   part of this document set.
                 </p>
                 <FieldArray
-                  name="ccPairs"
+                  name="ccPairIds"
                   render={(arrayHelpers: ArrayHelpers) => (
                     <div className="mb-3 flex gap-2 flex-wrap">
                       {ccPairs.map((ccPair) => {
-                        const ccPairDescriptor = {
-                          connector_id: ccPair.connector.id,
-                          credential_id: ccPair.credential.id,
-                        };
-
-                        let ind = -1;
-                        values.ccPairs.forEach((selectedCCPair, index) => {
-                          if (
-                            ccPairDescriptor.connector_id ===
-                              selectedCCPair.connector_id &&
-                            ccPairDescriptor.credential_id ===
-                              selectedCCPair.credential_id
-                          ) {
-                            ind = index;
-                            return;
-                          }
-                        });
+                        const ind = values.ccPairIds.indexOf(ccPair.cc_pair_id);
                         let isSelected = ind !== -1;
                         return (
                           <div
@@ -162,7 +138,7 @@ export const DocumentSetCreationForm = ({
                               if (isSelected) {
                                 arrayHelpers.remove(ind);
                               } else {
-                                arrayHelpers.push(ccPairDescriptor);
+                                arrayHelpers.push(ccPair.cc_pair_id);
                               }
                             }}
                           >

@@ -84,6 +84,7 @@ def list_document_sets(
             description=document_set_db_model.description,
             cc_pair_descriptors=[
                 ConnectorCredentialPairDescriptor(
+                    id=cc_pair.id,
                     name=cc_pair.name,
                     connector=ConnectorSnapshot.from_connector_db_model(
                         cc_pair.connector

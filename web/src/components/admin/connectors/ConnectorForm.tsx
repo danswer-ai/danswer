@@ -110,21 +110,6 @@ export function ConnectorForm<T extends Yup.AnyObject>({
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
           const connectorName = nameBuilder(values);
-
-          // best effort check to see if existing connector exists
-          // delete it if it does and replace it with this new version
-          const errorMsg = await deleteConnectorIfExists({
-            source,
-            name: connectorName,
-          });
-          if (errorMsg) {
-            setPopup({
-              message: `Unable to delete existing connector - ${errorMsg}`,
-              type: "error",
-            });
-            return;
-          }
-
           const connectorConfig = Object.fromEntries(
             Object.keys(initialValues).map((key) => [key, values[key]])
           ) as T;

@@ -1,15 +1,13 @@
-import { CCPairID } from "@/lib/types";
-
 interface DocumentSetCreationRequest {
   name: string;
   description: string;
-  ccPairs: CCPairID[];
+  ccPairIds: number[];
 }
 
 export const createDocumentSet = async ({
   name,
   description,
-  ccPairs,
+  ccPairIds,
 }: DocumentSetCreationRequest) => {
   return fetch("/api/manage/admin/document-set", {
     method: "POST",
@@ -19,7 +17,7 @@ export const createDocumentSet = async ({
     body: JSON.stringify({
       name,
       description,
-      cc_pairs: ccPairs,
+      cc_pair_ids: ccPairIds,
     }),
   });
 };
@@ -27,13 +25,13 @@ export const createDocumentSet = async ({
 interface DocumentSetUpdateRequest {
   id: number;
   description: string;
-  ccPairs: CCPairID[];
+  ccPairIds: number[];
 }
 
 export const updateDocumentSet = async ({
   id,
   description,
-  ccPairs,
+  ccPairIds,
 }: DocumentSetUpdateRequest) => {
   return fetch("/api/manage/admin/document-set", {
     method: "PATCH",
@@ -43,7 +41,7 @@ export const updateDocumentSet = async ({
     body: JSON.stringify({
       id,
       description,
-      cc_pairs: ccPairs,
+      cc_pair_ids: ccPairIds,
     }),
   });
 };

@@ -1,7 +1,6 @@
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import and_
 from sqlalchemy import delete
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -35,7 +34,7 @@ def insert_document_set(
     user_id: UUID | None,
     db_session: Session,
 ) -> tuple[DocumentSetDBModel, list[DocumentSet_ConnectorCredentialPair]]:
-    if not document_set_creation_request.cc_pairs:
+    if not document_set_creation_request.cc_pair_ids:
         raise ValueError("Cannot create a document set with no CC pairs")
 
     # start a transaction
@@ -53,10 +52,9 @@ def insert_document_set(
         ds_cc_pairs = [
             DocumentSet_ConnectorCredentialPair(
                 document_set_id=new_document_set_row.id,
-                connector_id=cc_pair.connector_id,
-                credential_id=cc_pair.credential_id,
+                connector_credential_pair_id=cc_pair_id,
             )
-            for cc_pair in document_set_creation_request.cc_pairs
+            for cc_pair_id in document_set_creation_request.cc_pair_ids
         ]
         db_session.add_all(ds_cc_pairs)
         db_session.commit()
@@ -70,7 +68,7 @@ def insert_document_set(
 def update_document_set(
     document_set_update_request: DocumentSetUpdateRequest, db_session: Session
 ) -> tuple[DocumentSetDBModel, list[DocumentSet_ConnectorCredentialPair]]:
-    if not document_set_update_request.cc_pairs:
+    if not document_set_update_request.cc_pair_ids:
         raise ValueError("Cannot create a document set with no CC pairs")
 
     # start a transaction
@@ -96,10 +94,9 @@ def update_document_set(
         ds_cc_pairs = [
             DocumentSet_ConnectorCredentialPair(
                 document_set_id=document_set_update_request.id,
-                connector_id=cc_pair.connector_id,
-                credential_id=cc_pair.credential_id,
+                connector_credential_pair_id=cc_pair_id,
             )
-            for cc_pair in document_set_update_request.cc_pairs
+            for cc_pair_id in document_set_update_request.cc_pair_ids
         ]
         db_session.add_all(ds_cc_pairs)
         db_session.commit()
@@ -150,12 +147,8 @@ def fetch_document_sets(
             )
             .join(
                 ConnectorCredentialPair,
-                and_(
-                    ConnectorCredentialPair.connector_id
-                    == DocumentSet_ConnectorCredentialPair.connector_id,
-                    ConnectorCredentialPair.credential_id
-                    == DocumentSet_ConnectorCredentialPair.credential_id,
-                ),
+                ConnectorCredentialPair.id
+                == DocumentSet_ConnectorCredentialPair.connector_credential_pair_id,
             )
         ).all(),
     )

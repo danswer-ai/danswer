@@ -14,6 +14,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import func
 from sqlalchemy import Index
 from sqlalchemy import Integer
+from sqlalchemy import Sequence
 from sqlalchemy import String
 from sqlalchemy import Text
 from sqlalchemy.dialects import postgresql
@@ -85,8 +86,13 @@ class ConnectorCredentialPair(Base):
     """
 
     __tablename__ = "connector_credential_pair"
+    # NOTE: this `id` column has to use `Sequence` instead of `autoincrement=True`
+    # due to some SQLAlchemy quirks + this not being a primary key column
     id: Mapped[int] = mapped_column(
-        Integer, unique=True, nullable=False, autoincrement=True
+        Integer,
+        Sequence("connector_credential_pair_id_seq"),
+        unique=True,
+        nullable=False,
     )
     name: Mapped[str] = mapped_column(
         String, unique=True, nullable=True
@@ -336,7 +342,7 @@ class Document(Base):
 class DocumentSet(Base):
     __tablename__ = "document_set"
 
-    id: Mapped[str] = mapped_column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True)
     description: Mapped[str] = mapped_column(String)
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)

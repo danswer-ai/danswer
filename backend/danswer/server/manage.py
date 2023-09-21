@@ -318,6 +318,7 @@ def get_connector_indexing_status(
         )
         indexing_statuses.append(
             ConnectorIndexingStatus(
+                cc_pair_id=cc_pair.id,
                 name=cc_pair.name,
                 connector=ConnectorSnapshot.from_connector_db_model(connector),
                 credential=CredentialSnapshot.from_credential_db_model(credential),
@@ -393,8 +394,11 @@ def delete_connector_by_id(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
-    with db_session.begin():
-        return delete_connector(db_session=db_session, connector_id=connector_id)
+    try:
+        with db_session.begin():
+            return delete_connector(db_session=db_session, connector_id=connector_id)
+    except AssertionError:
+        raise HTTPException(status_code=400, detail="Connector is not deletable")
 
 
 @router.post("/admin/connector/run-once")
