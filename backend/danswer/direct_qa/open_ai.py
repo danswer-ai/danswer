@@ -24,6 +24,7 @@ from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.interfaces import AnswerQuestionReturn
 from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
 from danswer.direct_qa.interfaces import QAModel
+from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.direct_qa.qa_prompts import JsonProcessor
 from danswer.direct_qa.qa_prompts import NonChatPromptProcessor
 from danswer.direct_qa.qa_utils import get_gen_ai_api_key
@@ -142,7 +143,10 @@ class OpenAICompletionQA(OpenAIQAModel):
 
     @log_function_time()
     def answer_question(
-        self, query: str, context_docs: list[InferenceChunk]
+        self,
+        query: str,
+        context_docs: list[InferenceChunk],
+        metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,  # Unused
     ) -> AnswerQuestionReturn:
         context_docs = _tiktoken_trim_chunks(context_docs, self.model_version)
 
@@ -168,8 +172,7 @@ class OpenAICompletionQA(OpenAIQAModel):
         logger.info("OpenAI Token Usage: " + str(response["usage"]).replace("\n", ""))
         logger.debug(model_output)
 
-        answer, quotes_dict = process_answer(model_output, context_docs)
-        return answer, quotes_dict
+        return process_answer(model_output, context_docs)
 
     def answer_question_stream(
         self, query: str, context_docs: list[InferenceChunk]

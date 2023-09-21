@@ -1,4 +1,5 @@
 import re
+from collections.abc import Callable
 
 from transformers import pipeline  # type:ignore
 from transformers import QuestionAnsweringPipeline  # type:ignore
@@ -12,6 +13,7 @@ from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.direct_qa.interfaces import DanswerQuotes
 from danswer.direct_qa.interfaces import QAModel
+from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
@@ -104,7 +106,10 @@ class TransformerQA(QAModel):
 
     @log_function_time()
     def answer_question(
-        self, query: str, context_docs: list[InferenceChunk]
+        self,
+        query: str,
+        context_docs: list[InferenceChunk],
+        metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,  # Unused
     ) -> AnswerQuestionReturn:
         danswer_quotes: list[DanswerQuote] = []
         d_answers: list[str] = []

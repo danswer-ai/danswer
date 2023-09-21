@@ -1,5 +1,6 @@
 import abc
 import json
+from collections.abc import Callable
 from collections.abc import Generator
 
 import requests
@@ -15,6 +16,7 @@ from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.direct_qa.interfaces import AnswerQuestionReturn
 from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
 from danswer.direct_qa.interfaces import QAModel
+from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.direct_qa.qa_prompts import JsonProcessor
 from danswer.direct_qa.qa_prompts import NonChatPromptProcessor
 from danswer.direct_qa.qa_utils import process_answer
@@ -234,7 +236,10 @@ class RequestCompletionQA(QAModel):
 
     @log_function_time()
     def answer_question(
-        self, query: str, context_docs: list[InferenceChunk]
+        self,
+        query: str,
+        context_docs: list[InferenceChunk],
+        metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,  # Unused
     ) -> AnswerQuestionReturn:
         model_api_response = self._get_request_response(
             query, context_docs, stream=False
@@ -245,8 +250,7 @@ class RequestCompletionQA(QAModel):
         )
         logger.debug(model_output)
 
-        answer, quotes_dict = process_answer(model_output, context_docs)
-        return answer, quotes_dict
+        return process_answer(model_output, context_docs)
 
     def answer_question_stream(
         self,

@@ -1,4 +1,5 @@
 import json
+from collections.abc import Callable
 from uuid import UUID
 
 import numpy
@@ -18,7 +19,11 @@ from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.datastores.datastore_utils import translate_boost_count_to_multiplier
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import IndexFilter
+from danswer.search.models import ChunkMetric
 from danswer.search.models import Embedder
+from danswer.search.models import MAX_METRICS_CONTENT
+from danswer.search.models import RerankMetricsContainer
+from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.search_utils import get_default_embedding_model
 from danswer.search.search_utils import get_default_reranking_model_ensemble
 from danswer.server.models import SearchDoc
@@ -55,6 +60,7 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
 def semantic_reranking(
     query: str,
     chunks: list[InferenceChunk],
+    rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> list[InferenceChunk]:
     model_max = 12  # These are just based on observations from model selection
     model_min = -12
@@ -63,6 +69,8 @@ def semantic_reranking(
         encoder.predict([(query, chunk.content) for chunk in chunks])  # type: ignore
         for encoder in cross_encoders
     ]
+
+    raw_sim_scores = sum(sim_scores) / len(sim_scores)
 
     cross_models_min = numpy.min(sim_scores)
 
@@ -75,9 +83,9 @@ def semantic_reranking(
     normalized_b_s_scores = (boosted_sim_scores + cross_models_min - model_min) / (
         model_max - model_min
     )
-    scored_results = list(zip(normalized_b_s_scores, chunks))
+    scored_results = list(zip(normalized_b_s_scores, raw_sim_scores, chunks))
     scored_results.sort(key=lambda x: x[0], reverse=True)
-    ranked_sim_scores, ranked_chunks = zip(*scored_results)
+    ranked_sim_scores, ranked_raw_scores, ranked_chunks = zip(*scored_results)
 
     logger.debug(f"Reranked similarity scores: {ranked_sim_scores}")
 
@@ -85,6 +93,23 @@ def semantic_reranking(
     # TODO if pagination is added, the scores won't make sense with respect to the non-reranked hits
     for ind, chunk in enumerate(ranked_chunks):
         chunk.score = ranked_sim_scores[ind]
+
+    if rerank_metrics_callback is not None:
+        chunk_metrics = [
+            ChunkMetric(
+                document_id=chunk.document_id,
+                chunk_content_start=chunk.content[:MAX_METRICS_CONTENT],
+                first_link=chunk.source_links[0] if chunk.source_links else None,
+                score=chunk.score if chunk.score is not None else 0,
+            )
+            for chunk in ranked_chunks
+        ]
+
+        rerank_metrics_callback(
+            RerankMetricsContainer(
+                metrics=chunk_metrics, raw_similarity_scores=ranked_raw_scores
+            )
+        )
 
     return list(ranked_chunks)
 
@@ -97,6 +122,9 @@ def retrieve_ranked_documents(
     datastore: DocumentIndex,
     num_hits: int = NUM_RETURNED_HITS,
     num_rerank: int = NUM_RERANKED_RESULTS,
+    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
+    | None = None,
+    rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> tuple[list[InferenceChunk] | None, list[InferenceChunk] | None]:
     """Uses vector similarity to fetch the top num_hits document chunks with a distance cutoff.
     Reranks the top num_rerank out of those (instead of all due to latency)"""
@@ -108,7 +136,24 @@ def retrieve_ranked_documents(
         )
         return None, None
     logger.debug(top_chunks)
-    ranked_chunks = semantic_reranking(query, top_chunks[:num_rerank])
+
+    if retrieval_metrics_callback is not None:
+        chunk_metrics = [
+            ChunkMetric(
+                document_id=chunk.document_id,
+                chunk_content_start=chunk.content[:MAX_METRICS_CONTENT],
+                first_link=chunk.source_links[0] if chunk.source_links else None,
+                score=chunk.score if chunk.score is not None else 0,
+            )
+            for chunk in top_chunks
+        ]
+        retrieval_metrics_callback(
+            RetrievalMetricsContainer(keyword_search=True, metrics=chunk_metrics)
+        )
+
+    ranked_chunks = semantic_reranking(
+        query, top_chunks[:num_rerank], rerank_metrics_callback=rerank_metrics_callback
+    )
 
     top_docs = [
         ranked_chunk.source_links[0]

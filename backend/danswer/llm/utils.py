@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from collections.abc import Iterator
+from typing import Any
 
 import tiktoken
 from langchain.prompts.base import StringPromptValue
@@ -15,6 +16,16 @@ from langchain.schema.messages import SystemMessage
 from danswer.configs.app_configs import LOG_LEVEL
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
+
+
+_LLM_TOKENIZER: Callable[[str], Any] | None = None
+
+
+def get_default_llm_tokenizer() -> Callable:
+    global _LLM_TOKENIZER
+    if _LLM_TOKENIZER is None:
+        _LLM_TOKENIZER = tiktoken.get_encoding("cl100k_base").encode
+    return _LLM_TOKENIZER
 
 
 def translate_danswer_msg_to_langchain(msg: ChatMessage) -> BaseMessage:
