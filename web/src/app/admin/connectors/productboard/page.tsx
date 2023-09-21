@@ -63,10 +63,11 @@ const Main = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "productboard"
   );
-  const productboardCredential: Credential<ProductboardCredentialJson> =
-    credentialsData.filter(
-      (credential) => credential.credential_json?.productboard_access_token
-    )[0];
+  const productboardCredential:
+    | Credential<ProductboardCredentialJson>
+    | undefined = credentialsData.find(
+    (credential) => credential.credential_json?.productboard_access_token
+  );
 
   return (
     <>
@@ -166,21 +167,14 @@ const Main = () => {
             <div className="flex">
               <ConnectorForm<ProductboardConfig>
                 nameBuilder={() => "ProductboardConnector"}
+                ccPairNameBuilder={() => "Productboard"}
                 source="productboard"
                 inputType="poll"
                 formBody={null}
                 validationSchema={Yup.object().shape({})}
                 initialValues={{}}
                 refreshFreq={10 * 60} // 10 minutes
-                onSubmit={async (isSuccess, responseJson) => {
-                  if (isSuccess && responseJson) {
-                    await linkCredential(
-                      responseJson.id,
-                      productboardCredential.id
-                    );
-                    mutate("/api/manage/admin/connector/indexing-status");
-                  }
-                }}
+                credentialId={productboardCredential.id}
               />
             </div>
           </>

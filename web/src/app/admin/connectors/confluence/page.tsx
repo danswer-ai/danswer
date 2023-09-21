@@ -9,6 +9,7 @@ import {
   ConfluenceCredentialJson,
   ConfluenceConfig,
   ConnectorIndexingStatus,
+  Credential,
 } from "@/lib/types";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
@@ -71,9 +72,10 @@ const Main = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "confluence"
   );
-  const confluenceCredential = credentialsData.filter(
-    (credential) => credential.credential_json?.confluence_access_token
-  )[0];
+  const confluenceCredential: Credential<ConfluenceCredentialJson> | undefined =
+    credentialsData.find(
+      (credential) => credential.credential_json?.confluence_access_token
+    );
 
   return (
     <>

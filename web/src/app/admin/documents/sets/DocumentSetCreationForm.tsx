@@ -50,7 +50,7 @@ export const DocumentSetCreationForm = ({
               description: Yup.string().required(
                 "Please enter a description for the set"
               ),
-              ccPairs: Yup.array()
+              ccPairIds: Yup.array()
                 .of(Yup.number().required())
                 .required("Please select at least one connector"),
             })}

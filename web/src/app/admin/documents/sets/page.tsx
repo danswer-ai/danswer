@@ -121,6 +121,7 @@ const DocumentSetTable = ({
                               ? "mb-3"
                               : ""
                           }
+                          key={ccPairDescriptor.id}
                         >
                           <ConnectorTitle
                             connector={ccPairDescriptor.connector}

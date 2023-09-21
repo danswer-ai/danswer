@@ -10,12 +10,7 @@ import { ConnectorIndexingStatus, FileConfig } from "@/lib/types";
 import { linkCredential } from "@/lib/credential";
 import { FileUpload } from "./FileUpload";
 import { useState } from "react";
-import { Button } from "@/components/Button";
-import {
-  Popup,
-  PopupSpec,
-  usePopup,
-} from "@/components/admin/connectors/Popup";
+import { usePopup } from "@/components/admin/connectors/Popup";
 import { createConnector, runConnector } from "@/lib/connector";
 import { Spinner } from "@/components/Spinner";
 import { SingleUseConnectorsTable } from "@/components/admin/connectors/table/SingleUseConnectorsTable";

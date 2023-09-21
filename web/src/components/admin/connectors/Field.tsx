@@ -27,7 +27,7 @@ export const TextFormField = ({
       <label htmlFor={name} className="block">
         {label}
       </label>
-      {subtext && <p className="text-xs">{subtext}</p>}
+      {subtext && <p className="text-xs mb-1">{subtext}</p>}
       <Field
         type={type}
         name={name}

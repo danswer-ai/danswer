@@ -237,12 +237,7 @@ const GoogleDriveConnectorManagement = ({
             follow_shortcuts: false,
           }}
           refreshFreq={10 * 60} // 10 minutes
-          onSubmit={async (isSuccess, responseJson) => {
-            if (isSuccess && responseJson) {
-              await linkCredential(responseJson.id, liveCredential.id);
-              mutate("/api/manage/admin/connector/indexing-status");
-            }
-          }}
+          credentialId={liveCredential.id}
         />
       </div>
     </div>

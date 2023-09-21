@@ -9,6 +9,7 @@ import {
   BookstackCredentialJson,
   BookstackConfig,
   ConnectorIndexingStatus,
+  Credential,
 } from "@/lib/types";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
@@ -60,9 +61,10 @@ const Main = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "bookstack"
   );
-  const bookstackCredential = credentialsData.filter(
-    (credential) => credential.credential_json?.bookstack_api_token_id
-  )[0];
+  const bookstackCredential: Credential<BookstackCredentialJson> | undefined =
+    credentialsData.find(
+      (credential) => credential.credential_json?.bookstack_api_token_id
+    );
 
   return (
     <>
