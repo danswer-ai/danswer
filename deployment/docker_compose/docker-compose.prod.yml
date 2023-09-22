@@ -1,7 +1,7 @@
 version: '3'
 services:
   api_server:
-    image: danswer/danswer-backend:latest
+    image: danswer/danswer-backend-no-zulip:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -25,7 +25,7 @@ services:
       - model_cache_nltk:/root/nltk_data/
       - model_cache_huggingface:/root/.cache/huggingface/
   background:
-    image: danswer/danswer-backend:latest
+    image: danswer/danswer-backend-no-zulip:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -46,7 +46,7 @@ services:
       - model_cache_nltk:/root/nltk_data/
       - model_cache_huggingface:/root/.cache/huggingface/
   web_server:
-    image: danswer/danswer-web-server:latest
+    image: danswer/danswer-web-server-no-zulip:latest
     build:
       context: ../../web
       dockerfile: Dockerfile
