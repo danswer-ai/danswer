@@ -309,6 +309,9 @@ def llm_contextual_chat_answer(
         tool_followup_msg = HumanMessage(content=tool_followup_text)
         tool_followup_tokens = len(tokenizer(tool_followup_text))
 
+        # Drop previous messages, the drop order goes: previous messages in the history,
+        # the last user prompt and generated intermediate messages from this recent prompt,
+        # the system message, then finally the tool message that was the last thing generated
         follow_up_prompt = _drop_messages_history_overflow(
             system_msg=SystemMessage(content=system_text) if system_text else None,
             system_token_count=system_tokens,
