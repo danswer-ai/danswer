@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: api-server
-        image: danswer/danswer-backend:latest
+        image: danswer/danswer-backend-no-zulip:latest
         imagePullPolicy: IfNotPresent
         command:
           - "/bin/sh"
