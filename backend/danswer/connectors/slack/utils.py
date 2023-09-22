@@ -199,5 +199,5 @@ class UserIdReplacer:
 
     @staticmethod
     def add_zero_width_whitespace_after_tag(message: str) -> str:
-        """Add a 0 width whitespace after ever @"""
+        """Add a 0 width whitespace after every @"""
         return message.replace("@", "@\u200B")
