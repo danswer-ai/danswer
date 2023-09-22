@@ -7,6 +7,7 @@ from danswer.configs.model_configs import GEN_AI_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_HOST_TYPE
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
+from danswer.configs.model_configs import GEN_AI_TEMPERATURE
 from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
 from danswer.direct_qa.qa_utils import get_gen_ai_api_key
 from danswer.dynamic_configs.interface import ConfigNotFoundError
@@ -45,5 +46,6 @@ def get_default_llm(
         endpoint=GEN_AI_ENDPOINT,
         model_host_type=GEN_AI_HOST_TYPE,
         max_output_tokens=GEN_AI_MAX_OUTPUT_TOKENS,
+        temperature=GEN_AI_TEMPERATURE,
         **kwargs,
     )

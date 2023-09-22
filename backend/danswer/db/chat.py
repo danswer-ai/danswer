@@ -186,6 +186,7 @@ def create_new_chat_message(
     chat_session_id: int,
     message_number: int,
     message: str,
+    token_count: int,
     parent_edit_number: int | None,
     message_type: MessageType,
     db_session: Session,
@@ -211,6 +212,7 @@ def create_new_chat_message(
         parent_edit_number=parent_edit_number,
         edit_number=new_edit_number,
         message=message,
+        token_count=token_count,
         message_type=message_type,
     )
 
