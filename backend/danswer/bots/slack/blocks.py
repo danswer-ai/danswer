@@ -96,9 +96,7 @@ def build_documents_blocks(
 
         section_blocks.append(
             SectionBlock(
-                fields=[
-                    f"<{d.link}|{doc_sem_id}>:\n>{remove_slack_text_interactions(match_str)}",
-                ]
+                text=f"<{d.link}|{doc_sem_id}>:\n>{remove_slack_text_interactions(match_str)}"
             ),
         )
 
