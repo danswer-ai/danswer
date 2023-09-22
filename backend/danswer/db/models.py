@@ -379,6 +379,7 @@ class ChatMessage(Base):
     )  # null if first message
     latest: Mapped[bool] = mapped_column(Boolean, default=True)
     message: Mapped[str] = mapped_column(Text)
+    token_count: Mapped[int] = mapped_column(Integer)
     message_type: Mapped[MessageType] = mapped_column(Enum(MessageType))
     persona_id: Mapped[int | None] = mapped_column(
         ForeignKey("persona.id"), nullable=True

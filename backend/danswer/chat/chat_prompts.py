@@ -81,6 +81,7 @@ USER'S INPUT
 --------------------
 Okay, so what is the response to my last comment? If using information obtained from the tools you must \
 mention it explicitly without mentioning the tool names - I have forgotten all TOOL RESPONSES!
+If the tool response is not useful, ignore it completely.
 {optional_reminder}{hint}
 IMPORTANT! You MUST respond with a markdown code snippet of a json blob with a single action, and NOTHING else.
 """
@@ -100,7 +101,7 @@ def form_user_prompt_text(
     if hint_text:
         if user_prompt[-1] != "\n":
             user_prompt += "\n"
-        user_prompt += "Hint: " + hint_text
+        user_prompt += "\nHint: " + hint_text
 
     return user_prompt.strip()
 
@@ -145,12 +146,12 @@ def form_tool_followup_text(
 ) -> str:
     # If multi-line query, it likely confuses the model more than helps
     if "\n" not in query:
-        optional_reminder = f"As a reminder, my query was: {query}\n"
+        optional_reminder = f"\nAs a reminder, my query was: {query}\n"
     else:
         optional_reminder = ""
 
     if not ignore_hint and hint_text:
-        hint_text_spaced = f"{hint_text}\n"
+        hint_text_spaced = f"\nHint: {hint_text}\n"
     else:
         hint_text_spaced = ""
 
