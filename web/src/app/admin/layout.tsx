@@ -163,6 +163,7 @@ export default async function AdminLayout({
                   ),
                   link: "/admin/connectors/bookstack",
                 },
+                /*
                 {
                   name: (
                     <div className="flex">
@@ -172,6 +173,7 @@ export default async function AdminLayout({
                   ),
                   link: "/admin/connectors/zulip",
                 },
+                */
                 {
                   name: (
                     <div className="flex">

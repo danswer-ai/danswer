@@ -86,6 +86,10 @@ def instantiate_connector(
     credentials: dict[str, Any],
 ) -> tuple[BaseConnector, dict[str, Any] | None]:
     connector_class = identify_connector_class(source, input_type)
+
+    if isinstance(connector_class, ZulipConnector):
+        raise ValueError("Zulip is disabled on this branch")
+
     connector = connector_class(**connector_specific_config)
     new_credentials = connector.load_credentials(credentials)
 
