@@ -5,8 +5,6 @@ from typing import Any
 from typing import List
 from typing import Tuple
 
-from zulip import Client
-
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -28,6 +26,23 @@ from danswer.utils.logger import setup_logger
 # 2. Add end date support once https://github.com/zulip/zulip/issues/25436 is solved
 
 logger = setup_logger()
+
+
+class DummyZulipClient:
+    """Due to certain container security scan not distinguishing Zulip client/server and mismarking
+    Zulip client as having a server only vulnerability this branch has zulip disabled"""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        raise RuntimeError("Zulip client library not installed.")
+
+
+try:
+    from zulip import Client  # type:ignore
+except ImportError:
+    logger.warning(
+        "Zulip is not installed on this branch, please check out Danswer main to use Zulip"
+    )
+    Client = DummyZulipClient
 
 
 class ZulipConnector(LoadConnector, PollConnector):

@@ -19,7 +19,7 @@ export type ValidSources =
   | "slab"
   | "notion"
   | "guru"
-  | "zulip"
+  //| "zulip"
   | "linear"
   | "file";
 export type ValidInputTypes = "load_state" | "poll" | "event";

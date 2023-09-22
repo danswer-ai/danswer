@@ -90,12 +90,14 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         displayName: "Notion",
         adminPageLink: "/admin/connectors/notion",
       };
+    /*
     case "zulip":
       return {
         icon: ZulipIcon,
         displayName: "Zulip",
         adminPageLink: "/admin/connectors/zulip",
       };
+    */
     case "guru":
       return {
         icon: GuruIcon,

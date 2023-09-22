@@ -90,16 +90,7 @@ const MainSection = () => {
       ) : (
         <>
           <p className="text-sm mb-4">
-            To use the Zulip connector, you must first provide content of the
-            zuliprc config file. For more details on setting up the Danswer
-            Zulip connector, see the{" "}
-            <a
-              className="text-blue-500"
-              href="https://docs.danswer.dev/connectors/zulip"
-            >
-              docs
-            </a>
-            .
+            WARNING: THIS CONNECTOR IS DISABLED ON THE BACKEND, THIS WILL NOT WORK
           </p>
           <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
             <CredentialForm<ZulipCredentialJson>
