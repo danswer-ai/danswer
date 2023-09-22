@@ -9,6 +9,7 @@ from slack_sdk.models.blocks import SectionBlock
 from danswer.bots.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.bots.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.bots.slack.utils import build_feedback_block_id
+from danswer.bots.slack.utils import remove_slack_text_interactions
 from danswer.bots.slack.utils import translate_vespa_highlight_to_slack
 from danswer.configs.app_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
 from danswer.configs.app_configs import ENABLE_SLACK_DOC_FEEDBACK
@@ -96,7 +97,7 @@ def build_documents_blocks(
         section_blocks.append(
             SectionBlock(
                 fields=[
-                    f"<{d.link}|{doc_sem_id}>:\n>{match_str}",
+                    f"<{d.link}|{doc_sem_id}>:\n>{remove_slack_text_interactions(match_str)}",
                 ]
             ),
         )
@@ -134,7 +135,11 @@ def build_quotes_block(
             if doc_id not in doc_to_quotes:
                 doc_to_quotes[doc_id] = [quote]
                 doc_to_link[doc_id] = doc_link
-                doc_to_sem_id[doc_id] = doc_name
+                doc_to_sem_id[doc_id] = (
+                    doc_name
+                    if q.source_type != DocumentSource.SLACK.value
+                    else "#" + doc_name
+                )
             else:
                 doc_to_quotes[doc_id].append(quote)
 
@@ -146,7 +151,9 @@ def build_quotes_block(
         single_quote_str = "\n".join([f"```{q_str}```" for q_str in longest_quotes])
         link = doc_to_link[doc_id]
         sem_id = doc_to_sem_id[doc_id]
-        quote_lines.append(f"<{link}|{sem_id}>:\n{single_quote_str}")
+        quote_lines.append(
+            f"<{link}|{sem_id}>:\n{remove_slack_text_interactions(single_quote_str)}"
+        )
 
     if not doc_to_quotes:
         return []
@@ -168,7 +175,7 @@ def build_qa_response_blocks(
             text="Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓"
         )
     else:
-        answer_block = SectionBlock(text=answer)
+        answer_block = SectionBlock(text=remove_slack_text_interactions(answer))
         if quotes:
             quotes_blocks = build_quotes_block(quotes)
 
