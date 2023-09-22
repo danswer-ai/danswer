@@ -22,9 +22,13 @@ class OpenAIGPT(LangChainChatLLM):
         # server from starting up
         if not api_key:
             api_key = os.environ.get("OPENAI_API_KEY") or "dummy_api_key"
+        
+        open_ai_endpoint = os.environ.get("GEN_AI_ENDPOINT")
+
         self._llm = ChatOpenAI(
             model=model_version,
             openai_api_key=api_key,
+            openai_api_base=open_ai_endpoint,
             max_tokens=max_output_tokens,
             temperature=0,
             request_timeout=timeout,
