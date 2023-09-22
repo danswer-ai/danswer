@@ -6,9 +6,8 @@ personas:
       You can process and comprehend vast amounts of text and utilize this knowledge to provide accurate and detailed answers to diverse queries.
       Your responses are as INFORMATIVE and DETAILED as possible.
     # Danswer custom tool flow, "Current Search" tool name is reserved if this is enabled.
-    retrieval_enabled: true
+    retrieval_enabled: false
     # Each added tool needs to have a "name" and "description"
     tools: []
     # Short tip to pass near the end of the prompt to emphasize some requirement
-    # Such as "Remember to be informative!"
-    hint: ""
+    hint: "Try to be as informative as possible!"

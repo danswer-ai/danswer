@@ -24,6 +24,7 @@ from danswer.db.engine import get_session
 from danswer.db.models import ChatMessage
 from danswer.db.models import User
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
+from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.secondary_llm_flows.chat_helpers import get_new_chat_name
 from danswer.server.models import ChatMessageDetail
 from danswer.server.models import ChatMessageIdentifier
@@ -211,6 +212,8 @@ def handle_new_chat_message(
     parent_edit_number = chat_message.parent_edit_number
     user_id = user.id if user is not None else None
 
+    llm_tokenizer = get_default_llm_tokenizer()
+
     chat_session = fetch_chat_session_by_id(chat_session_id, db_session)
     persona = (
         fetch_persona_by_id(chat_message.persona_id, db_session)
@@ -250,6 +253,7 @@ def handle_new_chat_message(
         message_number=message_number,
         parent_edit_number=parent_edit_number,
         message=message_content,
+        token_count=len(llm_tokenizer(message_content)),
         message_type=MessageType.USER,
         db_session=db_session,
     )
@@ -268,7 +272,10 @@ def handle_new_chat_message(
     @log_generator_function_time()
     def stream_chat_tokens() -> Iterator[str]:
         tokens = llm_chat_answer(
-            messages=mainline_messages, persona=persona, user_id=user_id
+            messages=mainline_messages,
+            persona=persona,
+            user_id=user_id,
+            tokenizer=llm_tokenizer,
         )
         llm_output = ""
         for token in tokens:
@@ -280,6 +287,7 @@ def handle_new_chat_message(
             message_number=message_number + 1,
             parent_edit_number=new_message.edit_number,
             message=llm_output,
+            token_count=len(llm_tokenizer(llm_output)),
             message_type=MessageType.ASSISTANT,
             db_session=db_session,
         )
@@ -300,6 +308,8 @@ def regenerate_message_given_parent(
     message_number = parent_message.message_number
     edit_number = parent_message.edit_number
     user_id = user.id if user is not None else None
+
+    llm_tokenizer = get_default_llm_tokenizer()
 
     chat_message = fetch_chat_message(
         chat_session_id=chat_session_id,
@@ -344,7 +354,10 @@ def regenerate_message_given_parent(
     @log_generator_function_time()
     def stream_regenerate_tokens() -> Iterator[str]:
         tokens = llm_chat_answer(
-            messages=mainline_messages, persona=persona, user_id=user_id
+            messages=mainline_messages,
+            persona=persona,
+            user_id=user_id,
+            tokenizer=llm_tokenizer,
         )
         llm_output = ""
         for token in tokens:
@@ -356,6 +369,7 @@ def regenerate_message_given_parent(
             message_number=message_number + 1,
             parent_edit_number=edit_number,
             message=llm_output,
+            token_count=len(llm_tokenizer(llm_output)),
             message_type=MessageType.ASSISTANT,
             db_session=db_session,
         )
