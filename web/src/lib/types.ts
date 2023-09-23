@@ -226,4 +226,5 @@ export interface DocumentSet<ConnectorType, CredentialType> {
   name: string;
   description: string;
   cc_pair_descriptors: CCPairDescriptor<ConnectorType, CredentialType>[];
+  is_up_to_date: boolean;
 }

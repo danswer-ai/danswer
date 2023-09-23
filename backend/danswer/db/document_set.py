@@ -219,7 +219,7 @@ def fetch_documents_for_document_set(
 
 
 def fetch_document_sets_for_documents(
-    document_ids: list[int], db_session: Session
+    document_ids: list[str], db_session: Session
 ) -> Sequence[tuple[str, list[str]]]:
     stmt = (
         select(Document.id, func.array_agg(DocumentSetDBModel.name))
@@ -249,4 +249,4 @@ def fetch_document_sets_for_documents(
         .where(Document.id.in_(document_ids))
         .group_by(Document.id)
     )
-    return db_session.execute(stmt).all()
+    return db_session.scalars(stmt).all()

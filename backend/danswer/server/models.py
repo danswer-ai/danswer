@@ -385,3 +385,4 @@ class DocumentSet(BaseModel):
     name: str
     description: str
     cc_pair_descriptors: list[ConnectorCredentialPairDescriptor]
+    is_up_to_date: bool

@@ -18,5 +18,5 @@ def cleanup_connector_credential_pair_task(
 
 
 @celery_app.task(soft_time_limit=60 * 60 * 6)  # 6 hour time limit
-def sync_document_set_task(document_set_id: int) -> int:
+def sync_document_set_task(document_set_id: int) -> None:
     return sync_document_set(document_set_id=document_set_id)

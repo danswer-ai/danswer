@@ -21,16 +21,17 @@ def get_celery_task_status(task_id: str) -> str | None:
 
     This should not be called on any critical flows.
     """
-    task = get_celery_task(task_id)
-    # if not pending, then we know the task really exists
-    if task.status != "PENDING":
-        return task.status
-
+    # first check for any pending tasks
     with Session(get_sqlalchemy_engine()) as session:
         rows = session.execute(text("SELECT payload FROM kombu_message WHERE visible"))
         for row in rows:
             payload = json.loads(row[0])
             if payload["headers"]["id"] == task_id:
                 return "PENDING"
+
+    task = get_celery_task(task_id)
+    # if not pending, then we know the task really exists
+    if task.status != "PENDING":
+        return task.status
 
     return None

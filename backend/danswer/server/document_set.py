@@ -95,6 +95,7 @@ def list_document_sets(
                 )
                 for cc_pair in cc_pairs
             ],
+            is_up_to_date=document_set_db_model.is_up_to_date,
         )
         for document_set_db_model, cc_pairs in document_set_info
     ]

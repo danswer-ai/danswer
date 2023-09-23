@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/Button";
-import { ThreeDotsLoader } from "@/components/Loading";
+import { LoadingAnimation, ThreeDotsLoader } from "@/components/Loading";
 import { PageSelector } from "@/components/PageSelector";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { BookmarkIcon, EditIcon, TrashIcon } from "@/components/icons/icons";
@@ -90,6 +90,10 @@ const DocumentSetTable = ({
             key: "ccPairs",
           },
           {
+            header: "Status",
+            key: "status",
+          },
+          {
             header: "Delete",
             key: "delete",
             width: "50px",
@@ -133,6 +137,11 @@ const DocumentSetTable = ({
                     }
                   )}
                 </div>
+              ),
+              status: documentSet.is_up_to_date ? (
+                <div className="text-emerald-600">Up to date!</div>
+              ) : (
+                <div className="text-gray-300 w-10"><LoadingAnimation text="Syncing" /></div>
               ),
               delete: (
                 <div
