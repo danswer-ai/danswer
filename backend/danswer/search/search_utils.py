@@ -9,6 +9,7 @@ from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import INTENT_MODEL_VERSION
 from danswer.configs.model_configs import QUERY_MAX_CONTEXT_SIZE
+from danswer.configs.model_configs import SKIP_RERANKING
 
 
 _TOKENIZER: None | AutoTokenizer = None
@@ -61,7 +62,9 @@ def get_default_intent_model() -> TFDistilBertForSequenceClassification:
     return _INTENT_MODEL
 
 
-def warm_up_models(indexer_only: bool = False) -> None:
+def warm_up_models(
+    indexer_only: bool = False, skip_cross_encoders: bool = SKIP_RERANKING
+) -> None:
     warm_up_str = "Danswer is amazing"
     get_default_tokenizer()(warm_up_str)
     get_default_embedding_model().encode(warm_up_str)
@@ -69,11 +72,13 @@ def warm_up_models(indexer_only: bool = False) -> None:
     if indexer_only:
         return
 
-    cross_encoders = get_default_reranking_model_ensemble()
-    [
-        cross_encoder.predict((warm_up_str, warm_up_str))
-        for cross_encoder in cross_encoders
-    ]
+    if not skip_cross_encoders:
+        cross_encoders = get_default_reranking_model_ensemble()
+        [
+            cross_encoder.predict((warm_up_str, warm_up_str))
+            for cross_encoder in cross_encoders
+        ]
+
     intent_tokenizer = get_default_intent_model_tokenizer()
     inputs = intent_tokenizer(
         warm_up_str, return_tensors="tf", truncation=True, padding=True

@@ -13,9 +13,12 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import ENABLE_MINI_CHUNK
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
-from danswer.configs.model_configs import ASYMMETRIC_PREFIX
+from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
+from danswer.configs.model_configs import SIM_SCORE_RANGE_HIGH
+from danswer.configs.model_configs import SIM_SCORE_RANGE_LOW
+from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.datastores.datastore_utils import translate_boost_count_to_multiplier
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import IndexFilter
@@ -114,6 +117,20 @@ def semantic_reranking(
     return list(ranked_chunks)
 
 
+def apply_boost(
+    chunks: list[InferenceChunk],
+    norm_min: float = SIM_SCORE_RANGE_LOW,
+    norm_max: float = SIM_SCORE_RANGE_HIGH,
+) -> list[InferenceChunk]:
+    # TODO finish this
+    [chunk.score for chunk in chunks]
+    [translate_boost_count_to_multiplier(chunk.boost) for chunk in chunks]
+
+    # norm_min = min(norm_min, min(scores))
+    # normed_scores = [(score - norm_min) / (norm_max - norm_min) for score in scores]
+    return []
+
+
 @log_function_time()
 def retrieve_ranked_documents(
     query: str,
@@ -122,12 +139,20 @@ def retrieve_ranked_documents(
     datastore: DocumentIndex,
     num_hits: int = NUM_RETURNED_HITS,
     num_rerank: int = NUM_RERANKED_RESULTS,
+    skip_rerank: bool = SKIP_RERANKING,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> tuple[list[InferenceChunk] | None, list[InferenceChunk] | None]:
     """Uses vector similarity to fetch the top num_hits document chunks with a distance cutoff.
     Reranks the top num_rerank out of those (instead of all due to latency)"""
+
+    def _log_top_chunk_links(chunks: list[InferenceChunk]) -> None:
+        doc_links = [c.source_links[0] for c in chunks if c.source_links is not None]
+
+        files_log_msg = f"Top links from semantic search: {', '.join(list(dict.fromkeys(doc_links)))}"
+        logger.info(files_log_msg)
+
     top_chunks = datastore.semantic_retrieval(query, user_id, filters, num_hits)
     if not top_chunks:
         filters_log_msg = json.dumps(filters, separators=(",", ":")).replace("\n", "")
@@ -151,20 +176,22 @@ def retrieve_ranked_documents(
             RetrievalMetricsContainer(keyword_search=True, metrics=chunk_metrics)
         )
 
-    ranked_chunks = semantic_reranking(
-        query, top_chunks[:num_rerank], rerank_metrics_callback=rerank_metrics_callback
+    if skip_rerank:
+        boosted_chunks = apply_boost(top_chunks)
+        _log_top_chunk_links(boosted_chunks)
+        return boosted_chunks, []
+
+    ranked_chunks = (
+        semantic_reranking(
+            query,
+            top_chunks[:num_rerank],
+            rerank_metrics_callback=rerank_metrics_callback,
+        )
+        if not skip_rerank
+        else []
     )
 
-    top_docs = [
-        ranked_chunk.source_links[0]
-        for ranked_chunk in ranked_chunks
-        if ranked_chunk.source_links is not None
-    ]
-
-    files_log_msg = (
-        f"Top links from semantic search: {', '.join(list(dict.fromkeys(top_docs)))}"
-    )
-    logger.info(files_log_msg)
+    _log_top_chunk_links(ranked_chunks)
 
     return ranked_chunks, top_chunks[num_rerank:]
 
@@ -228,7 +255,7 @@ def encode_chunks(
 def embed_query(
     query: str,
     embedding_model: SentenceTransformer | None = None,
-    prefix: str = ASYMMETRIC_PREFIX,
+    prefix: str = ASYM_QUERY_PREFIX,
     normalize_embeddings: bool = NORMALIZE_EMBEDDINGS,
 ) -> list[float]:
     model = embedding_model or get_default_embedding_model()
