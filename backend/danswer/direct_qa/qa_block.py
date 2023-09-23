@@ -243,6 +243,9 @@ class QABlock(QAModel):
         """This is called during server start up to load the models into memory
         in case the chosen LLM is not accessed via API"""
         if self._llm.requires_warm_up:
+            logger.info(
+                "Warming up LLM, this should only run for in memory LLMs like GPT4All"
+            )
             self._llm.invoke("Ignore this!")
 
     def answer_question(

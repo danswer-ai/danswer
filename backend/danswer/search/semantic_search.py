@@ -126,6 +126,8 @@ def apply_boost(
     scores = [chunk.score or 0 for chunk in chunks]
     boosts = [translate_boost_count_to_multiplier(chunk.boost) for chunk in chunks]
 
+    logger.debug(f"Raw similarity scores: {scores}")
+
     score_min = min(scores)
     score_max = max(scores)
     score_range = score_max - score_min
