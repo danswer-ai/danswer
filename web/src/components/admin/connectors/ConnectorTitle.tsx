@@ -31,13 +31,7 @@ export const ConnectorTitle = ({
   const sourceMetadata = getSourceMetadata(connector.source);
 
   let additionalMetadata = new Map<string, string>();
-  if (connector.source === "web") {
-    const typedConnector = connector as Connector<WebConfig>;
-    additionalMetadata.set(
-      "Base URL",
-      typedConnector.connector_specific_config.base_url
-    );
-  } else if (connector.source === "github") {
+  if (connector.source === "github") {
     const typedConnector = connector as Connector<GithubConfig>;
     additionalMetadata.set(
       "Repo",

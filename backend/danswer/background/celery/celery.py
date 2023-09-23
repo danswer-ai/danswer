@@ -1,9 +1,9 @@
 from celery import Celery
 
-from danswer.background.celery.document_set_utils import sync_document_set
 from danswer.background.connector_deletion import cleanup_connector_credential_pair
 from danswer.db.engine import build_connection_string
 from danswer.db.engine import SYNC_DB_API
+from danswer.document_set.document_set import sync_document_set
 
 celery_broker_url = "sqla+" + build_connection_string(db_api=SYNC_DB_API)
 celery_backend_url = "db+" + build_connection_string(db_api=SYNC_DB_API)

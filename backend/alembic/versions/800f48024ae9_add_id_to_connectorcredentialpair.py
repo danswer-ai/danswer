@@ -1,7 +1,7 @@
 """Add ID to ConnectorCredentialPair
 
 Revision ID: 800f48024ae9
-Revises: dba7f71618f5
+Revises: 767f1c2a00eb
 Create Date: 2023-09-19 16:13:42.299715
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.schema import Sequence, CreateSequence
 
 # revision identifiers, used by Alembic.
 revision = "800f48024ae9"
-down_revision = "dba7f71618f5"
+down_revision = "767f1c2a00eb"
 branch_labels = None
 depends_on = None
 

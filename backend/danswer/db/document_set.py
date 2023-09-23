@@ -220,7 +220,7 @@ def fetch_documents_for_document_set(
 
 def fetch_document_sets_for_documents(
     document_ids: list[int], db_session: Session
-) -> Sequence[tuple[int, list[str]]]:
+) -> Sequence[tuple[str, list[str]]]:
     stmt = (
         select(Document.id, func.array_agg(DocumentSetDBModel.name))
         .join(
