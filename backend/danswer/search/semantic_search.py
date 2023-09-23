@@ -13,6 +13,7 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import ENABLE_MINI_CHUNK
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
+from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
@@ -122,13 +123,43 @@ def apply_boost(
     norm_min: float = SIM_SCORE_RANGE_LOW,
     norm_max: float = SIM_SCORE_RANGE_HIGH,
 ) -> list[InferenceChunk]:
-    # TODO finish this
-    [chunk.score for chunk in chunks]
-    [translate_boost_count_to_multiplier(chunk.boost) for chunk in chunks]
+    scores = [chunk.score or 0 for chunk in chunks]
+    boosts = [translate_boost_count_to_multiplier(chunk.boost) for chunk in chunks]
 
-    # norm_min = min(norm_min, min(scores))
-    # normed_scores = [(score - norm_min) / (norm_max - norm_min) for score in scores]
-    return []
+    score_min = min(scores)
+    score_max = max(scores)
+    score_range = score_max - score_min
+
+    boosted_scores = [
+        ((score - score_min) / score_range) * boost
+        for score, boost in zip(scores, boosts)
+    ]
+
+    unnormed_boosted_scores = [
+        score * score_range + score_min for score in boosted_scores
+    ]
+
+    norm_min = min(norm_min, min(scores))
+    norm_max = max(norm_max, max(scores))
+
+    # For score display purposes
+    re_normed_scores = [
+        ((score - norm_min) / (norm_max - norm_min))
+        for score in unnormed_boosted_scores
+    ]
+
+    rescored_chunks = list(zip(re_normed_scores, chunks))
+    rescored_chunks.sort(key=lambda x: x[0], reverse=True)
+    sorted_boosted_scores, boost_sorted_chunks = zip(*rescored_chunks)
+
+    final_chunks = list(boost_sorted_chunks)
+    final_scores = list(sorted_boosted_scores)
+    for ind, chunk in enumerate(final_chunks):
+        chunk.score = final_scores[ind]
+
+    logger.debug(f"Boost sorted similary scores: {list(final_scores)}")
+
+    return final_chunks
 
 
 @log_function_time()
@@ -150,7 +181,7 @@ def retrieve_ranked_documents(
     def _log_top_chunk_links(chunks: list[InferenceChunk]) -> None:
         doc_links = [c.source_links[0] for c in chunks if c.source_links is not None]
 
-        files_log_msg = f"Top links from semantic search: {', '.join(list(dict.fromkeys(doc_links)))}"
+        files_log_msg = f"Top links from semantic search: {', '.join(doc_links)}"
         logger.info(files_log_msg)
 
     top_chunks = datastore.semantic_retrieval(query, user_id, filters, num_hits)
@@ -177,9 +208,10 @@ def retrieve_ranked_documents(
         )
 
     if skip_rerank:
-        boosted_chunks = apply_boost(top_chunks)
+        # Need the range of values to not be too spread out for applying boost
+        boosted_chunks = apply_boost(top_chunks[:num_rerank])
         _log_top_chunk_links(boosted_chunks)
-        return boosted_chunks, []
+        return boosted_chunks, top_chunks[num_rerank:]
 
     ranked_chunks = (
         semantic_reranking(
@@ -202,6 +234,7 @@ def encode_chunks(
     embedding_model: SentenceTransformer | None = None,
     batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
     enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
+    passage_prefix: str = ASYM_PASSAGE_PREFIX,
 ) -> list[IndexChunk]:
     embedded_chunks: list[IndexChunk] = []
     if embedding_model is None:
@@ -210,14 +243,15 @@ def encode_chunks(
     chunk_texts = []
     chunk_mini_chunks_count = {}
     for chunk_ind, chunk in enumerate(chunks):
-        chunk_texts.append(chunk.content)
+        chunk_texts.append(passage_prefix + chunk.content)
         mini_chunk_texts = (
             split_chunk_text_into_mini_chunks(chunk.content)
             if enable_mini_chunk
             else []
         )
-        chunk_texts.extend(mini_chunk_texts)
-        chunk_mini_chunks_count[chunk_ind] = 1 + len(mini_chunk_texts)
+        prefixed_mini_chunk_texts = [passage_prefix + text for text in mini_chunk_texts]
+        chunk_texts.extend(prefixed_mini_chunk_texts)
+        chunk_mini_chunks_count[chunk_ind] = 1 + len(prefixed_mini_chunk_texts)
 
     text_batches = [
         chunk_texts[i : i + batch_size] for i in range(0, len(chunk_texts), batch_size)
