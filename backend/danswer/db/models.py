@@ -422,6 +422,15 @@ class Persona(Base):
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
+class Persona__DocumentSet(Base):
+    __tablename__ = "persona__document_set"
+
+    persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id"), primary_key=True)
+    document_set_id: Mapped[int] = mapped_column(
+        ForeignKey("document_set.id"), primary_key=True
+    )
+
+
 class ChatMessage(Base):
     __tablename__ = "chat_message"
 
