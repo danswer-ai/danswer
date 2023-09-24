@@ -26,8 +26,12 @@ from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.model_configs import API_BASE_OPENAI
 from danswer.configs.model_configs import API_TYPE_OPENAI
+from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
+from danswer.configs.model_configs import ASYM_QUERY_PREFIX
+from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
+from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.datastores.document_index import get_default_document_index
 from danswer.db.credentials import create_initial_public_credential
 from danswer.direct_qa.llm_utils import get_default_qa_model
@@ -178,6 +182,13 @@ def get_application() -> FastAPI:
                     logger.warning("OpenID is turned on but OPENID_CONFIG_URL is emtpy")
                 else:
                     logger.debug("OAuth is turned on")
+
+        if SKIP_RERANKING:
+            logger.info("Reranking step of search flow is disabled")
+
+        logger.info(f'Using Embedding model: "{DOCUMENT_ENCODER_MODEL}"')
+        logger.info(f'Query embedding prefix: "{ASYM_QUERY_PREFIX}"')
+        logger.info(f'Passage embedding prefix: "{ASYM_PASSAGE_PREFIX}"')
 
         logger.info("Warming up local NLP models.")
         warm_up_models()

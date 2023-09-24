@@ -13,9 +13,13 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import ENABLE_MINI_CHUNK
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
-from danswer.configs.model_configs import ASYMMETRIC_PREFIX
+from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
+from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
+from danswer.configs.model_configs import SIM_SCORE_RANGE_HIGH
+from danswer.configs.model_configs import SIM_SCORE_RANGE_LOW
+from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.datastores.datastore_utils import translate_boost_count_to_multiplier
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import IndexFilter
@@ -114,6 +118,52 @@ def semantic_reranking(
     return list(ranked_chunks)
 
 
+def apply_boost(
+    chunks: list[InferenceChunk],
+    norm_min: float = SIM_SCORE_RANGE_LOW,
+    norm_max: float = SIM_SCORE_RANGE_HIGH,
+) -> list[InferenceChunk]:
+    scores = [chunk.score or 0 for chunk in chunks]
+    boosts = [translate_boost_count_to_multiplier(chunk.boost) for chunk in chunks]
+
+    logger.debug(f"Raw similarity scores: {scores}")
+
+    score_min = min(scores)
+    score_max = max(scores)
+    score_range = score_max - score_min
+
+    boosted_scores = [
+        ((score - score_min) / score_range) * boost
+        for score, boost in zip(scores, boosts)
+    ]
+
+    unnormed_boosted_scores = [
+        score * score_range + score_min for score in boosted_scores
+    ]
+
+    norm_min = min(norm_min, min(scores))
+    norm_max = max(norm_max, max(scores))
+
+    # For score display purposes
+    re_normed_scores = [
+        ((score - norm_min) / (norm_max - norm_min))
+        for score in unnormed_boosted_scores
+    ]
+
+    rescored_chunks = list(zip(re_normed_scores, chunks))
+    rescored_chunks.sort(key=lambda x: x[0], reverse=True)
+    sorted_boosted_scores, boost_sorted_chunks = zip(*rescored_chunks)
+
+    final_chunks = list(boost_sorted_chunks)
+    final_scores = list(sorted_boosted_scores)
+    for ind, chunk in enumerate(final_chunks):
+        chunk.score = final_scores[ind]
+
+    logger.debug(f"Boost sorted similary scores: {list(final_scores)}")
+
+    return final_chunks
+
+
 @log_function_time()
 def retrieve_ranked_documents(
     query: str,
@@ -122,12 +172,20 @@ def retrieve_ranked_documents(
     datastore: DocumentIndex,
     num_hits: int = NUM_RETURNED_HITS,
     num_rerank: int = NUM_RERANKED_RESULTS,
+    skip_rerank: bool = SKIP_RERANKING,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> tuple[list[InferenceChunk] | None, list[InferenceChunk] | None]:
     """Uses vector similarity to fetch the top num_hits document chunks with a distance cutoff.
     Reranks the top num_rerank out of those (instead of all due to latency)"""
+
+    def _log_top_chunk_links(chunks: list[InferenceChunk]) -> None:
+        doc_links = [c.source_links[0] for c in chunks if c.source_links is not None]
+
+        files_log_msg = f"Top links from semantic search: {', '.join(doc_links)}"
+        logger.info(files_log_msg)
+
     top_chunks = datastore.semantic_retrieval(query, user_id, filters, num_hits)
     if not top_chunks:
         filters_log_msg = json.dumps(filters, separators=(",", ":")).replace("\n", "")
@@ -151,20 +209,23 @@ def retrieve_ranked_documents(
             RetrievalMetricsContainer(keyword_search=True, metrics=chunk_metrics)
         )
 
-    ranked_chunks = semantic_reranking(
-        query, top_chunks[:num_rerank], rerank_metrics_callback=rerank_metrics_callback
+    if skip_rerank:
+        # Need the range of values to not be too spread out for applying boost
+        boosted_chunks = apply_boost(top_chunks[:num_rerank])
+        _log_top_chunk_links(boosted_chunks)
+        return boosted_chunks, top_chunks[num_rerank:]
+
+    ranked_chunks = (
+        semantic_reranking(
+            query,
+            top_chunks[:num_rerank],
+            rerank_metrics_callback=rerank_metrics_callback,
+        )
+        if not skip_rerank
+        else []
     )
 
-    top_docs = [
-        ranked_chunk.source_links[0]
-        for ranked_chunk in ranked_chunks
-        if ranked_chunk.source_links is not None
-    ]
-
-    files_log_msg = (
-        f"Top links from semantic search: {', '.join(list(dict.fromkeys(top_docs)))}"
-    )
-    logger.info(files_log_msg)
+    _log_top_chunk_links(ranked_chunks)
 
     return ranked_chunks, top_chunks[num_rerank:]
 
@@ -175,6 +236,7 @@ def encode_chunks(
     embedding_model: SentenceTransformer | None = None,
     batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
     enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
+    passage_prefix: str = ASYM_PASSAGE_PREFIX,
 ) -> list[IndexChunk]:
     embedded_chunks: list[IndexChunk] = []
     if embedding_model is None:
@@ -183,14 +245,15 @@ def encode_chunks(
     chunk_texts = []
     chunk_mini_chunks_count = {}
     for chunk_ind, chunk in enumerate(chunks):
-        chunk_texts.append(chunk.content)
+        chunk_texts.append(passage_prefix + chunk.content)
         mini_chunk_texts = (
             split_chunk_text_into_mini_chunks(chunk.content)
             if enable_mini_chunk
             else []
         )
-        chunk_texts.extend(mini_chunk_texts)
-        chunk_mini_chunks_count[chunk_ind] = 1 + len(mini_chunk_texts)
+        prefixed_mini_chunk_texts = [passage_prefix + text for text in mini_chunk_texts]
+        chunk_texts.extend(prefixed_mini_chunk_texts)
+        chunk_mini_chunks_count[chunk_ind] = 1 + len(prefixed_mini_chunk_texts)
 
     text_batches = [
         chunk_texts[i : i + batch_size] for i in range(0, len(chunk_texts), batch_size)
@@ -228,7 +291,7 @@ def encode_chunks(
 def embed_query(
     query: str,
     embedding_model: SentenceTransformer | None = None,
-    prefix: str = ASYMMETRIC_PREFIX,
+    prefix: str = ASYM_QUERY_PREFIX,
     normalize_embeddings: bool = NORMALIZE_EMBEDDINGS,
 ) -> list[float]:
     model = embedding_model or get_default_embedding_model()

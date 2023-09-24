@@ -66,7 +66,7 @@ def mark_run_failed(
     connector_credential_pair` to reflect that the run failed"""
     logger.warning(
         f"Marking in-progress attempt 'connector: {index_attempt.connector_id}, "
-        f"credential: {index_attempt.credential_id}' as failed"
+        f"credential: {index_attempt.credential_id}' as failed due to {failure_reason}"
     )
     mark_attempt_failed(
         index_attempt=index_attempt,

@@ -24,7 +24,6 @@ services:
       - NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL=${NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL:-}
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
-      - LOG_LEVEL=${LOG_LEVEL:-info}
       - DISABLE_AUTH=${DISABLE_AUTH:-True}
       - QA_TIMEOUT=${QA_TIMEOUT:-}
       - VALID_EMAIL_DOMAINS=${VALID_EMAIL_DOMAINS:-}
@@ -37,6 +36,16 @@ services:
       - API_TYPE_OPENAI=${API_TYPE_OPENAI:-}
       - API_VERSION_OPENAI=${API_VERSION_OPENAI:-}
       - AZURE_DEPLOYMENT_ID=${AZURE_DEPLOYMENT_ID:-}
+      # Don't change the NLP model configs unless you know what you're doing
+      - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
+      - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
+      - SIM_SCORE_RANGE_LOW=${SIM_SCORE_RANGE_LOW:-}
+      - SIM_SCORE_RANGE_HIGH=${SIM_SCORE_RANGE_HIGH:-}
+      - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}
+      - ASYM_PASSAGE_PREFIX=${ASYM_PASSAGE_PREFIX:-}
+      - SKIP_RERANKING=${SKIP_RERANKING:-}
+      # Set to debug to get more fine-grained logs
+      - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
@@ -71,6 +80,15 @@ services:
       - DANSWER_BOT_SLACK_BOT_TOKEN=${DANSWER_BOT_SLACK_BOT_TOKEN:-}
       - DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER=${DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER:-}
       - DANSWER_BOT_DISPLAY_ERROR_MSGS=${DANSWER_BOT_DISPLAY_ERROR_MSGS:-}
+      # Don't change the NLP model configs unless you know what you're doing
+      - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
+      - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
+      - SIM_SCORE_RANGE_LOW=${SIM_SCORE_RANGE_LOW:-}
+      - SIM_SCORE_RANGE_HIGH=${SIM_SCORE_RANGE_HIGH:-}
+      - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}
+      - ASYM_PASSAGE_PREFIX=${ASYM_PASSAGE_PREFIX:-}
+      - SKIP_RERANKING=${SKIP_RERANKING:-}
+      # Set to debug to get more fine-grained logs
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
       - local_dynamic_storage:/home/storage
