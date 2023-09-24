@@ -141,7 +141,9 @@ const DocumentSetTable = ({
               status: documentSet.is_up_to_date ? (
                 <div className="text-emerald-600">Up to date!</div>
               ) : (
-                <div className="text-gray-300 w-10"><LoadingAnimation text="Syncing" /></div>
+                <div className="text-gray-300 w-10">
+                  <LoadingAnimation text="Syncing" />
+                </div>
               ),
               delete: (
                 <div

@@ -39,6 +39,7 @@ def upgrade() -> None:
         "document_set__connector_credential_pair",
         sa.Column("document_set_id", sa.Integer(), nullable=False),
         sa.Column("connector_credential_pair_id", sa.Integer(), nullable=False),
+        sa.Column("is_current", sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(
             ["connector_credential_pair_id"],
             ["connector_credential_pair.id"],
@@ -47,7 +48,9 @@ def upgrade() -> None:
             ["document_set_id"],
             ["document_set.id"],
         ),
-        sa.PrimaryKeyConstraint("document_set_id", "connector_credential_pair_id"),
+        sa.PrimaryKeyConstraint(
+            "document_set_id", "connector_credential_pair_id", "is_current"
+        ),
     )
 
 

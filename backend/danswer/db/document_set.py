@@ -17,13 +17,27 @@ from danswer.server.models import DocumentSetCreationRequest
 from danswer.server.models import DocumentSetUpdateRequest
 
 
-def _delete_document_set_cc_pairs(db_session: Session, document_set_id: int) -> None:
+def _delete_document_set_cc_pairs(
+    db_session: Session, document_set_id: int, is_current: bool | None = None
+) -> None:
     """NOTE: does not commit transaction, this must be done by the caller"""
-    db_session.execute(
-        delete(DocumentSet_ConnectorCredentialPair).where(
-            DocumentSet_ConnectorCredentialPair.document_set_id == document_set_id
-        )
+    stmt = delete(DocumentSet_ConnectorCredentialPair).where(
+        DocumentSet_ConnectorCredentialPair.document_set_id == document_set_id
     )
+    if is_current is not None:
+        stmt = stmt.where(DocumentSet_ConnectorCredentialPair.is_current == is_current)
+    db_session.execute(stmt)
+
+
+def _mark_document_set_cc_pairs_as_outdated(
+    db_session: Session, document_set_id: int
+) -> None:
+    """NOTE: does not commit transaction, this must be done by the caller"""
+    stmt = select(DocumentSet_ConnectorCredentialPair).where(
+        DocumentSet_ConnectorCredentialPair.document_set_id == document_set_id
+    )
+    for row in db_session.scalars(stmt):
+        row.is_current = False
 
 
 def get_document_set_by_id(
@@ -58,6 +72,7 @@ def insert_document_set(
             DocumentSet_ConnectorCredentialPair(
                 document_set_id=new_document_set_row.id,
                 connector_credential_pair_id=cc_pair_id,
+                is_current=True,
             )
             for cc_pair_id in document_set_creation_request.cc_pair_ids
         ]
@@ -92,8 +107,8 @@ def update_document_set(
         document_set_row.is_up_to_date = False
 
         # update the attached CC pairs
-        # first, delete all existing CC pairs
-        _delete_document_set_cc_pairs(
+        # first, mark all existing CC pairs as not current
+        _mark_document_set_cc_pairs_as_outdated(
             db_session=db_session, document_set_id=document_set_row.id
         )
         # add in rows for the new CC pairs
@@ -101,6 +116,7 @@ def update_document_set(
             DocumentSet_ConnectorCredentialPair(
                 document_set_id=document_set_update_request.id,
                 connector_credential_pair_id=cc_pair_id,
+                is_current=True,
             )
             for cc_pair_id in document_set_update_request.cc_pair_ids
         ]
@@ -121,6 +137,10 @@ def mark_document_set_as_synced(document_set_id: int, db_session: Session) -> No
 
     # mark as up to date
     document_set.is_up_to_date = True
+    # delete outdated relationship table rows
+    _delete_document_set_cc_pairs(
+        db_session=db_session, document_set_id=document_set_id, is_current=False
+    )
     db_session.commit()
 
 
@@ -167,6 +187,7 @@ def fetch_document_sets(
                 ConnectorCredentialPair.id
                 == DocumentSet_ConnectorCredentialPair.connector_credential_pair_id,
             )
+            .where(DocumentSet_ConnectorCredentialPair.is_current == True)  # noqa: E712
         ).all(),
     )
 
@@ -186,7 +207,7 @@ def fetch_document_sets(
 
 
 def fetch_documents_for_document_set(
-    document_set_id: int, db_session: Session
+    document_set_id: int, db_session: Session, current_only: bool = True
 ) -> Sequence[Document]:
     stmt = (
         select(Document)
@@ -215,6 +236,12 @@ def fetch_documents_for_document_set(
         )
         .where(DocumentSetDBModel.id == document_set_id)
     )
+    if current_only:
+        stmt = stmt.where(
+            DocumentSet_ConnectorCredentialPair.is_current == True  # noqa: E712
+        )
+    stmt = stmt.distinct()
+
     return db_session.scalars(stmt).all()
 
 
@@ -247,6 +274,7 @@ def fetch_document_sets_for_documents(
             Document.id == DocumentByConnectorCredentialPair.id,
         )
         .where(Document.id.in_(document_ids))
+        .where(DocumentSet_ConnectorCredentialPair.is_current == True)  # noqa: E712
         .group_by(Document.id)
     )
-    return db_session.scalars(stmt).all()
+    return db_session.execute(stmt).all()  # type: ignore

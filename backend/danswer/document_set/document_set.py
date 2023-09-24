@@ -21,23 +21,26 @@ def _sync_document_batch(
 ) -> None:
     logger.debug(f"Syncing document sets for: {document_ids}")
     # begin a transaction, release lock at the end
-    with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
+    with Session(get_sqlalchemy_engine()) as db_session:
         # acquires a lock on the documents so that no other process can modify them
         prepare_to_modify_documents(db_session=db_session, document_ids=document_ids)
 
         # get current state of document sets for these documents
-        document_set_info = fetch_document_sets_for_documents(
-            document_ids=document_ids, db_session=db_session
-        )
+        document_set_map = {
+            document_id: document_sets
+            for document_id, document_sets in fetch_document_sets_for_documents(
+                document_ids=document_ids, db_session=db_session
+            )
+        }
 
         # update Vespa
         document_index.update(
             update_requests=[
                 UpdateRequest(
                     document_ids=[document_id],
-                    document_sets=set(document_set_names),
+                    document_sets=set(document_set_map.get(document_id, [])),
                 )
-                for document_id, document_set_names in document_set_info
+                for document_id in document_ids
             ]
         )
 
@@ -46,7 +49,9 @@ def sync_document_set(document_set_id: int) -> None:
     document_index = get_default_document_index()
     with Session(get_sqlalchemy_engine()) as db_session:
         documents_to_update = fetch_documents_for_document_set(
-            document_set_id=document_set_id, db_session=db_session
+            document_set_id=document_set_id,
+            db_session=db_session,
+            current_only=False,
         )
         for document_batch in batch_generator(documents_to_update, _SYNC_BATCH_SIZE):
             _sync_document_batch(
@@ -57,3 +62,4 @@ def sync_document_set(document_set_id: int) -> None:
         mark_document_set_as_synced(
             document_set_id=document_set_id, db_session=db_session
         )
+    logger.info(f"Document set sync for '{document_set_id}' complete!")

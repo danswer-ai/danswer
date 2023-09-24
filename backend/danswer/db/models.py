@@ -365,6 +365,17 @@ class DocumentSet_ConnectorCredentialPair(Base):
     connector_credential_pair_id: Mapped[int] = mapped_column(
         ForeignKey("connector_credential_pair.id"), primary_key=True
     )
+    # if `True`, then is part of the current state of the document set
+    # if `False`, then is a part of the prior state of the document set
+    # rows with `is_current=False` should be deleted when the document
+    # set is updated and should not exist for a given document set if
+    # `DocumentSet.is_up_to_date == True`
+    is_current: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        primary_key=True,
+    )
 
     document_set: Mapped[DocumentSet] = relationship(
         "DocumentSet", back_populates="connector_credential_pair_relationships"
