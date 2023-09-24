@@ -4,7 +4,7 @@ import useSWR, { mutate } from "swr";
 
 export const useDocumentSets = () => {
   const url = "/api/manage/document-set";
-  const swrResponse = useSWR<DocumentSet[]>(url, fetcher);
+  const swrResponse = useSWR<DocumentSet<any, any>[]>(url, fetcher);
 
   return {
     ...swrResponse,
