@@ -12,7 +12,7 @@ from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Document
 from danswer.db.models import DocumentByConnectorCredentialPair
 from danswer.db.models import DocumentSet as DocumentSetDBModel
-from danswer.db.models import DocumentSet_ConnectorCredentialPair
+from danswer.db.models import DocumentSet__ConnectorCredentialPair
 from danswer.server.models import DocumentSetCreationRequest
 from danswer.server.models import DocumentSetUpdateRequest
 
@@ -21,11 +21,11 @@ def _delete_document_set_cc_pairs(
     db_session: Session, document_set_id: int, is_current: bool | None = None
 ) -> None:
     """NOTE: does not commit transaction, this must be done by the caller"""
-    stmt = delete(DocumentSet_ConnectorCredentialPair).where(
-        DocumentSet_ConnectorCredentialPair.document_set_id == document_set_id
+    stmt = delete(DocumentSet__ConnectorCredentialPair).where(
+        DocumentSet__ConnectorCredentialPair.document_set_id == document_set_id
     )
     if is_current is not None:
-        stmt = stmt.where(DocumentSet_ConnectorCredentialPair.is_current == is_current)
+        stmt = stmt.where(DocumentSet__ConnectorCredentialPair.is_current == is_current)
     db_session.execute(stmt)
 
 
@@ -33,8 +33,8 @@ def _mark_document_set_cc_pairs_as_outdated(
     db_session: Session, document_set_id: int
 ) -> None:
     """NOTE: does not commit transaction, this must be done by the caller"""
-    stmt = select(DocumentSet_ConnectorCredentialPair).where(
-        DocumentSet_ConnectorCredentialPair.document_set_id == document_set_id
+    stmt = select(DocumentSet__ConnectorCredentialPair).where(
+        DocumentSet__ConnectorCredentialPair.document_set_id == document_set_id
     )
     for row in db_session.scalars(stmt):
         row.is_current = False
@@ -52,7 +52,7 @@ def insert_document_set(
     document_set_creation_request: DocumentSetCreationRequest,
     user_id: UUID | None,
     db_session: Session,
-) -> tuple[DocumentSetDBModel, list[DocumentSet_ConnectorCredentialPair]]:
+) -> tuple[DocumentSetDBModel, list[DocumentSet__ConnectorCredentialPair]]:
     if not document_set_creation_request.cc_pair_ids:
         raise ValueError("Cannot create a document set with no CC pairs")
 
@@ -69,7 +69,7 @@ def insert_document_set(
         db_session.flush()  # ensure the new document set gets assigned an ID
 
         ds_cc_pairs = [
-            DocumentSet_ConnectorCredentialPair(
+            DocumentSet__ConnectorCredentialPair(
                 document_set_id=new_document_set_row.id,
                 connector_credential_pair_id=cc_pair_id,
                 is_current=True,
@@ -87,7 +87,7 @@ def insert_document_set(
 
 def update_document_set(
     document_set_update_request: DocumentSetUpdateRequest, db_session: Session
-) -> tuple[DocumentSetDBModel, list[DocumentSet_ConnectorCredentialPair]]:
+) -> tuple[DocumentSetDBModel, list[DocumentSet__ConnectorCredentialPair]]:
     if not document_set_update_request.cc_pair_ids:
         raise ValueError("Cannot create a document set with no CC pairs")
 
@@ -113,7 +113,7 @@ def update_document_set(
         )
         # add in rows for the new CC pairs
         ds_cc_pairs = [
-            DocumentSet_ConnectorCredentialPair(
+            DocumentSet__ConnectorCredentialPair(
                 document_set_id=document_set_update_request.id,
                 connector_credential_pair_id=cc_pair_id,
                 is_current=True,
@@ -178,16 +178,18 @@ def fetch_document_sets(
         db_session.execute(
             select(DocumentSetDBModel, ConnectorCredentialPair)
             .join(
-                DocumentSet_ConnectorCredentialPair,
+                DocumentSet__ConnectorCredentialPair,
                 DocumentSetDBModel.id
-                == DocumentSet_ConnectorCredentialPair.document_set_id,
+                == DocumentSet__ConnectorCredentialPair.document_set_id,
             )
             .join(
                 ConnectorCredentialPair,
                 ConnectorCredentialPair.id
-                == DocumentSet_ConnectorCredentialPair.connector_credential_pair_id,
+                == DocumentSet__ConnectorCredentialPair.connector_credential_pair_id,
             )
-            .where(DocumentSet_ConnectorCredentialPair.is_current == True)  # noqa: E712
+            .where(
+                DocumentSet__ConnectorCredentialPair.is_current == True  # noqa: E712
+            )
         ).all(),
     )
 
@@ -225,20 +227,20 @@ def fetch_documents_for_document_set(
             ),
         )
         .join(
-            DocumentSet_ConnectorCredentialPair,
-            DocumentSet_ConnectorCredentialPair.connector_credential_pair_id
+            DocumentSet__ConnectorCredentialPair,
+            DocumentSet__ConnectorCredentialPair.connector_credential_pair_id
             == ConnectorCredentialPair.id,
         )
         .join(
             DocumentSetDBModel,
             DocumentSetDBModel.id
-            == DocumentSet_ConnectorCredentialPair.document_set_id,
+            == DocumentSet__ConnectorCredentialPair.document_set_id,
         )
         .where(DocumentSetDBModel.id == document_set_id)
     )
     if current_only:
         stmt = stmt.where(
-            DocumentSet_ConnectorCredentialPair.is_current == True  # noqa: E712
+            DocumentSet__ConnectorCredentialPair.is_current == True  # noqa: E712
         )
     stmt = stmt.distinct()
 
@@ -251,14 +253,14 @@ def fetch_document_sets_for_documents(
     stmt = (
         select(Document.id, func.array_agg(DocumentSetDBModel.name))
         .join(
-            DocumentSet_ConnectorCredentialPair,
+            DocumentSet__ConnectorCredentialPair,
             DocumentSetDBModel.id
-            == DocumentSet_ConnectorCredentialPair.document_set_id,
+            == DocumentSet__ConnectorCredentialPair.document_set_id,
         )
         .join(
             ConnectorCredentialPair,
             ConnectorCredentialPair.id
-            == DocumentSet_ConnectorCredentialPair.connector_credential_pair_id,
+            == DocumentSet__ConnectorCredentialPair.connector_credential_pair_id,
         )
         .join(
             DocumentByConnectorCredentialPair,
@@ -274,7 +276,7 @@ def fetch_document_sets_for_documents(
             Document.id == DocumentByConnectorCredentialPair.id,
         )
         .where(Document.id.in_(document_ids))
-        .where(DocumentSet_ConnectorCredentialPair.is_current == True)  # noqa: E712
+        .where(DocumentSet__ConnectorCredentialPair.is_current == True)  # noqa: E712
         .group_by(Document.id)
     )
     return db_session.execute(stmt).all()  # type: ignore

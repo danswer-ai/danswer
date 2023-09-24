@@ -350,13 +350,13 @@ class DocumentSet(Base):
     is_up_to_date: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     connector_credential_pair_relationships: Mapped[
-        list["DocumentSet_ConnectorCredentialPair"]
+        list["DocumentSet__ConnectorCredentialPair"]
     ] = relationship(
         "DocumentSet_ConnectorCredentialPair", back_populates="document_set"
     )
 
 
-class DocumentSet_ConnectorCredentialPair(Base):
+class DocumentSet__ConnectorCredentialPair(Base):
     __tablename__ = "document_set__connector_credential_pair"
 
     document_set_id: Mapped[int] = mapped_column(
