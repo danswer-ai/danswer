@@ -3,36 +3,50 @@ import os
 from danswer.configs.constants import DanswerGenAIModel
 from danswer.configs.constants import ModelHostType
 
+
+#####
+# Embedding/Reranking Model Configs
+#####
 # Important considerations when choosing models
 # Max tokens count needs to be high considering use case (at least 512)
 # Models used must be MIT or Apache license
 # Inference/Indexing speed
 
-# https://huggingface.co/thenlper/gte-small
-DOCUMENT_ENCODER_MODEL = "thenlper/gte-small"
-DOC_EMBEDDING_DIM = 384  # Depends on the document encoder model
-NORMALIZE_EMBEDDINGS = False
-# Certain models like BGE use a prefix for asymmetric retrievals (query generally shorter than docs)
-ASYMMETRIC_PREFIX = ""
+# https://huggingface.co/DOCUMENT_ENCODER_MODEL
+# The useable models configured as below must be SentenceTransformer compatible
+DOCUMENT_ENCODER_MODEL = (
+    os.environ.get("DOCUMENT_ENCODER_MODEL") or "thenlper/gte-small"
+)
+# If the below is changed, Vespa deployment must also be changed
+DOC_EMBEDDING_DIM = 384
+# Model should be chosen with 512 context size, ideally don't change this
+DOC_EMBEDDING_CONTEXT_SIZE = 512
+NORMALIZE_EMBEDDINGS = (os.environ.get("SKIP_RERANKING") or "False").lower() == "true"
+# These are only used if reranking is turned off, to normalize the direct retrieval scores for display
+SIM_SCORE_RANGE_LOW = float(os.environ.get("SIM_SCORE_RANGE_LOW") or 0.0)
+SIM_SCORE_RANGE_HIGH = float(os.environ.get("SIM_SCORE_RANGE_HIGH") or 1.0)
+# Certain models like e5, BGE, etc use a prefix for asymmetric retrievals (query generally shorter than docs)
+ASYM_QUERY_PREFIX = os.environ.get("ASYM_QUERY_PREFIX", "")
+ASYM_PASSAGE_PREFIX = os.environ.get("ASYM_PASSAGE_PREFIX", "")
+# Purely an optimization, memory limitation consideration
+BATCH_SIZE_ENCODE_CHUNKS = 8
 
+# Cross Encoder Settings
+SKIP_RERANKING = os.environ.get("SKIP_RERANKING", "").lower() == "true"
 # https://www.sbert.net/docs/pretrained-models/ce-msmarco.html
 CROSS_ENCODER_MODEL_ENSEMBLE = [
     "cross-encoder/ms-marco-MiniLM-L-4-v2",
     "cross-encoder/ms-marco-TinyBERT-L-2-v2",
 ]
+CROSS_EMBED_CONTEXT_SIZE = 512
+
 
 # Better to keep it loose, surfacing more results better than missing results
 # Currently unused by Vespa
 SEARCH_DISTANCE_CUTOFF = 0.1  # Cosine similarity (currently), range of -1 to 1 with -1 being completely opposite
 
+# Intent model max context size
 QUERY_MAX_CONTEXT_SIZE = 256
-# The below is correlated with CHUNK_SIZE in app_configs but not strictly calculated
-# To avoid extra overhead of tokenizing for chunking during indexing.
-DOC_EMBEDDING_CONTEXT_SIZE = 512
-CROSS_EMBED_CONTEXT_SIZE = 512
-
-# Purely an optimization, memory limitation consideration
-BATCH_SIZE_ENCODE_CHUNKS = 8
 
 
 #####
