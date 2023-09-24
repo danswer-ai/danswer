@@ -352,7 +352,7 @@ class DocumentSet(Base):
     connector_credential_pair_relationships: Mapped[
         list["DocumentSet__ConnectorCredentialPair"]
     ] = relationship(
-        "DocumentSet_ConnectorCredentialPair", back_populates="document_set"
+        "DocumentSet__ConnectorCredentialPair", back_populates="document_set"
     )
 
 
