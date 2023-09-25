@@ -87,20 +87,22 @@ export const BooleanFormField = ({
   );
 };
 
-interface TextArrayFieldProps {
+interface TextArrayFieldProps<T extends Yup.AnyObject> {
   name: string;
   label: string;
+  values: T;
   subtext?: string;
   type?: string;
 }
 
-export function TextArrayFieldBuilder<T extends Yup.AnyObject>({
+export function TextArrayField<T extends Yup.AnyObject>({
   name,
   label,
+  values,
   subtext,
-  type = "text",
-}: TextArrayFieldProps): FormBodyBuilder<T> {
-  const TextArrayField: FormBodyBuilder<T> = (values) => (
+  type,
+}: TextArrayFieldProps<T>) {
+  return (
     <div className="mb-4">
       <label htmlFor={name} className="block">
         {label}
@@ -153,5 +155,20 @@ export function TextArrayFieldBuilder<T extends Yup.AnyObject>({
       />
     </div>
   );
-  return TextArrayField;
+}
+
+interface TextArrayFieldBuilderProps<T extends Yup.AnyObject> {
+  name: string;
+  label: string;
+  subtext?: string;
+  type?: string;
+}
+
+export function TextArrayFieldBuilder<T extends Yup.AnyObject>(
+  props: TextArrayFieldBuilderProps<T>
+): FormBodyBuilder<T> {
+  const _TextArrayField: FormBodyBuilder<T> = (values) => (
+    <TextArrayField {...props} values={values} />
+  );
+  return _TextArrayField;
 }
