@@ -1,5 +1,4 @@
 import logging
-import os
 from collections.abc import MutableMapping
 from typing import Any
 from typing import cast
@@ -12,6 +11,8 @@ from slack_sdk.socket_mode.response import SocketModeResponse
 from danswer.bots.slack.handlers.handle_feedback import handle_slack_feedback
 from danswer.bots.slack.handlers.handle_message import handle_message
 from danswer.bots.slack.utils import decompose_block_id
+from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.server.slack_bot_management import get_tokens
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -37,16 +38,14 @@ class _ChannelIdAdapter(logging.LoggerAdapter):
 def _get_socket_client() -> SocketModeClient:
     # For more info on how to set this up, checkout the docs:
     # https://docs.danswer.dev/slack_bot_setup
-    app_token = os.environ.get("DANSWER_BOT_SLACK_APP_TOKEN")
-    if not app_token:
-        raise RuntimeError("DANSWER_BOT_SLACK_APP_TOKEN is not set")
-    bot_token = os.environ.get("DANSWER_BOT_SLACK_BOT_TOKEN")
-    if not bot_token:
-        raise RuntimeError("DANSWER_BOT_SLACK_BOT_TOKEN is not set")
+    try:
+        slack_bot_tokens = get_tokens()
+    except ConfigNotFoundError:
+        raise RuntimeError("Slack tokens not found")
     return SocketModeClient(
         # This app-level token will be used only for establishing a connection
-        app_token=app_token,
-        web_client=WebClient(token=bot_token),
+        app_token=slack_bot_tokens.app_token,
+        web_client=WebClient(token=slack_bot_tokens.bot_token),
     )
 
 

@@ -6,12 +6,16 @@ from sqlalchemy.orm import Session
 
 from danswer.bots.slack.blocks import build_documents_blocks
 from danswer.bots.slack.blocks import build_qa_response_blocks
+from danswer.bots.slack.config import get_slack_bot_config_for_channel
+from danswer.bots.slack.utils import get_channel_name_from_id
 from danswer.bots.slack.utils import respond_in_thread
 from danswer.configs.app_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
 from danswer.configs.app_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
 from danswer.configs.app_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
+from danswer.configs.app_configs import ENABLE_DANSWERBOT_REFLEXION
+from danswer.configs.constants import DOCUMENT_SETS
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.direct_qa.answer_question import answer_qa_query
 from danswer.server.models import QAResponse
@@ -29,6 +33,27 @@ def handle_message(
     should_respond_with_error_msgs: bool = DANSWER_BOT_DISPLAY_ERROR_MSGS,
     disable_docs_only_answer: bool = DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER,
 ) -> None:
+    engine = get_sqlalchemy_engine()
+    with Session(engine) as db_session:
+        channel_name = get_channel_name_from_id(client=client, channel_id=channel)
+        slack_bot_config = get_slack_bot_config_for_channel(
+            channel_name=channel_name, db_session=db_session
+        )
+        document_set_names: list[str] | None = None
+        validity_check_enabled = ENABLE_DANSWERBOT_REFLEXION
+        if slack_bot_config and slack_bot_config.persona:
+            document_set_names = [
+                document_set.name
+                for document_set in slack_bot_config.persona.document_sets
+            ]
+            validity_check_enabled = slack_bot_config.channel_config.get(
+                "answer_validity_check_enabled", validity_check_enabled
+            )
+            logger.info(
+                "Found slack bot config for channel. Restricting bot to use document "
+                f"sets: {document_set_names}, validity check enabled: {validity_check_enabled}"
+            )
+
     @retry(
         tries=num_retries,
         delay=0.25,
@@ -45,6 +70,7 @@ def handle_message(
                 db_session=db_session,
                 answer_generation_timeout=answer_generation_timeout,
                 real_time_flow=False,
+                enable_reflexion=validity_check_enabled,
             )
             if not answer.error_msg:
                 return answer
@@ -57,7 +83,9 @@ def handle_message(
                 query=msg,
                 collection=DOCUMENT_INDEX_NAME,
                 use_keyword=False,  # always use semantic search when handling Slack messages
-                filters=None,
+                filters=[{DOCUMENT_SETS: document_set_names}]
+                if document_set_names
+                else None,
                 offset=None,
             )
         )
