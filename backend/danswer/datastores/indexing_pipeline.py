@@ -16,6 +16,7 @@ from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import DocumentMetadata
 from danswer.db.document import prepare_to_modify_documents
 from danswer.db.document import upsert_documents_complete
+from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.search.models import Embedder
 from danswer.search.semantic_search import DefaultEmbedder
@@ -99,11 +100,19 @@ def _indexing_pipeline(
         document_id_to_access_info = get_access_for_documents(
             document_ids=document_ids, db_session=db_session
         )
+        document_id_to_document_set = {
+            document_id: document_sets
+            for document_id, document_sets in fetch_document_sets_for_documents(
+                document_ids=document_ids, db_session=db_session
+            )
+        }
         access_aware_chunks = [
             DocMetadataAwareIndexChunk.from_index_chunk(
                 index_chunk=chunk,
                 access=document_id_to_access_info[chunk.source_document.id],
-                document_sets=set(),
+                document_sets=set(
+                    document_id_to_document_set.get(chunk.source_document.id, [])
+                ),
             )
             for chunk in chunks_with_embeddings
         ]

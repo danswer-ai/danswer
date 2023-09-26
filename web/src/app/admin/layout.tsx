@@ -19,6 +19,7 @@ import {
   LinearIcon,
   UsersIcon,
   ThumbsUpIcon,
+  BookmarkIcon,
 } from "@/components/icons/icons";
 import { DISABLE_AUTH } from "@/lib/constants";
 import { getCurrentUserSS } from "@/lib/userSS";
@@ -223,6 +224,15 @@ export default async function AdminLayout({
             {
               name: "Document Management",
               items: [
+                {
+                  name: (
+                    <div className="flex">
+                      <BookmarkIcon size={18} />
+                      <div className="ml-1">Document Sets</div>
+                    </div>
+                  ),
+                  link: "/admin/documents/sets",
+                },
                 {
                   name: (
                     <div className="flex">

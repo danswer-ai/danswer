@@ -14,6 +14,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import func
 from sqlalchemy import Index
 from sqlalchemy import Integer
+from sqlalchemy import Sequence
 from sqlalchemy import String
 from sqlalchemy import Text
 from sqlalchemy.dialects import postgresql
@@ -85,6 +86,17 @@ class ConnectorCredentialPair(Base):
     """
 
     __tablename__ = "connector_credential_pair"
+    # NOTE: this `id` column has to use `Sequence` instead of `autoincrement=True`
+    # due to some SQLAlchemy quirks + this not being a primary key column
+    id: Mapped[int] = mapped_column(
+        Integer,
+        Sequence("connector_credential_pair_id_seq"),
+        unique=True,
+        nullable=False,
+    )
+    name: Mapped[str] = mapped_column(
+        String, unique=True, nullable=True
+    )  # nullable for backwards compatability
     connector_id: Mapped[int] = mapped_column(
         ForeignKey("connector.id"), primary_key=True
     )
@@ -242,6 +254,7 @@ class DocumentByConnectorCredentialPair(Base):
     __tablename__ = "document_by_connector_credential_pair"
 
     id: Mapped[str] = mapped_column(ForeignKey("document.id"), primary_key=True)
+    # TODO: transition this to use the ConnectorCredentialPair id directly
     connector_id: Mapped[int] = mapped_column(
         ForeignKey("connector.id"), primary_key=True
     )
@@ -323,6 +336,49 @@ class Document(Base):
 
     retrieval_feedbacks: Mapped[List[DocumentRetrievalFeedback]] = relationship(
         "DocumentRetrievalFeedback", back_populates="document"
+    )
+
+
+class DocumentSet(Base):
+    __tablename__ = "document_set"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    description: Mapped[str] = mapped_column(String)
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    # whether or not changes to the document set have been propogated
+    is_up_to_date: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    connector_credential_pair_relationships: Mapped[
+        list["DocumentSet__ConnectorCredentialPair"]
+    ] = relationship(
+        "DocumentSet__ConnectorCredentialPair", back_populates="document_set"
+    )
+
+
+class DocumentSet__ConnectorCredentialPair(Base):
+    __tablename__ = "document_set__connector_credential_pair"
+
+    document_set_id: Mapped[int] = mapped_column(
+        ForeignKey("document_set.id"), primary_key=True
+    )
+    connector_credential_pair_id: Mapped[int] = mapped_column(
+        ForeignKey("connector_credential_pair.id"), primary_key=True
+    )
+    # if `True`, then is part of the current state of the document set
+    # if `False`, then is a part of the prior state of the document set
+    # rows with `is_current=False` should be deleted when the document
+    # set is updated and should not exist for a given document set if
+    # `DocumentSet.is_up_to_date == True`
+    is_current: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        primary_key=True,
+    )
+
+    document_set: Mapped[DocumentSet] = relationship(
+        "DocumentSet", back_populates="connector_credential_pair_relationships"
     )
 
 
