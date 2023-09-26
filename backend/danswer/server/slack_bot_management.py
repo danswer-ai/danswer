@@ -41,14 +41,15 @@ def create_slack_bot_config(
             current_slack_bot_config_id=None,
             db_session=db_session,
         )
-    except ValueError:
+    except ValueError as e:
         raise HTTPException(
             status_code=400,
-            detail="Channel names already exist in another slack bot config",
+            detail=str(e),
         )
 
     channel_config: ChannelConfig = {
         "channel_names": cleaned_channel_names,
+        "answer_validity_check_enabled": slack_bot_config_creation_request.answer_validity_check_enabled,
     }
     slack_bot_config_model = insert_slack_bot_config(
         document_sets=slack_bot_config_creation_request.document_sets,
@@ -83,13 +84,13 @@ def patch_slack_bot_config(
     try:
         cleaned_channel_names = validate_channel_names(
             channel_names=slack_bot_config_creation_request.channel_names,
-            current_slack_bot_config_id=None,
+            current_slack_bot_config_id=slack_bot_config_id,
             db_session=db_session,
         )
-    except ValueError:
+    except ValueError as e:
         raise HTTPException(
             status_code=400,
-            detail="Channel names already exist in another slack bot config",
+            detail=str(e),
         )
 
     slack_bot_config_model = update_slack_bot_config(
@@ -97,6 +98,7 @@ def patch_slack_bot_config(
         document_sets=slack_bot_config_creation_request.document_sets,
         channel_config={
             "channel_names": cleaned_channel_names,
+            "answer_validity_check_enabled": slack_bot_config_creation_request.answer_validity_check_enabled,
         },
         db_session=db_session,
     )

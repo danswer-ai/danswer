@@ -45,7 +45,7 @@ export default async function AdminLayout({
   return (
     <div>
       <Header user={user} />
-      <div className="bg-gray-900 pt-8 flex">
+      <div className="bg-gray-900 pt-8 pb-8 flex">
         <Sidebar
           title="Connector"
           collections={[

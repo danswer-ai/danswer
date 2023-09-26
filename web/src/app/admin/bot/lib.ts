@@ -3,6 +3,7 @@ import { ChannelConfig, SlackBotTokens } from "@/lib/types";
 interface SlackBotConfigCreationRequest {
   document_sets: number[];
   channel_names: string[];
+  answer_validity_check_enabled: boolean;
 }
 
 export const createSlackBotConfig = async (

@@ -14,6 +14,7 @@ from danswer.configs.app_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
 from danswer.configs.app_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
+from danswer.configs.app_configs import ENABLE_DANSWERBOT_REFLEXION
 from danswer.configs.constants import DOCUMENT_SETS
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.direct_qa.answer_question import answer_qa_query
@@ -39,14 +40,18 @@ def handle_message(
             channel_name=channel_name, db_session=db_session
         )
         document_set_names: list[str] | None = None
+        validity_check_enabled = ENABLE_DANSWERBOT_REFLEXION
         if slack_bot_config and slack_bot_config.persona:
             document_set_names = [
                 document_set.name
                 for document_set in slack_bot_config.persona.document_sets
             ]
+            validity_check_enabled = slack_bot_config.channel_config.get(
+                "answer_validity_check_enabled", validity_check_enabled
+            )
             logger.info(
                 "Found slack bot config for channel. Restricting bot to use document "
-                f"sets: {document_set_names}"
+                f"sets: {document_set_names}, validity check enabled: {validity_check_enabled}"
             )
 
     @retry(
@@ -65,6 +70,7 @@ def handle_message(
                 db_session=db_session,
                 answer_generation_timeout=answer_generation_timeout,
                 real_time_flow=False,
+                enable_reflexion=validity_check_enabled,
             )
             if not answer.error_msg:
                 return answer

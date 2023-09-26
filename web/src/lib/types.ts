@@ -232,8 +232,8 @@ export interface DocumentSet<ConnectorType, CredentialType> {
 // SLACK BOT CONFIGS
 export interface ChannelConfig {
   channel_names: string[];
-  team_members?: string[];
   answer_validity_check_enabled?: boolean;
+  team_members?: string[];
 }
 
 export interface SlackBotConfig {

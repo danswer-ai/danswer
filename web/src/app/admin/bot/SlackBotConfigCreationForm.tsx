@@ -2,8 +2,12 @@ import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 import * as Yup from "yup";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { DocumentSet, SlackBotConfig } from "@/lib/types";
-import { TextArrayField } from "@/components/admin/connectors/Field";
+import {
+  BooleanFormField,
+  TextArrayField,
+} from "@/components/admin/connectors/Field";
 import { createSlackBotConfig, updateSlackBotConfig } from "./lib";
+import { channel } from "diagnostics_channel";
 
 interface SetCreationPopupProps {
   onClose: () => void;
@@ -35,6 +39,9 @@ export const SlackBotCreationForm = ({
               channel_names: existingSlackBotConfig
                 ? existingSlackBotConfig.channel_config.channel_names
                 : ([] as string[]),
+              answer_validity_check_enabled:
+                existingSlackBotConfig?.channel_config
+                  ?.answer_validity_check_enabled || false,
               document_sets: existingSlackBotConfig
                 ? existingSlackBotConfig.document_sets.map(
                     (documentSet) => documentSet.id
@@ -42,19 +49,29 @@ export const SlackBotCreationForm = ({
                 : ([] as number[]),
             }}
             validationSchema={Yup.object().shape({
-              channel_names: Yup.array().of(Yup.string().required()),
+              channel_names: Yup.array().of(Yup.string()),
+              answer_validity_check_enabled: Yup.boolean().required(),
               document_sets: Yup.array().of(Yup.number()),
             })}
             onSubmit={async (values, formikHelpers) => {
               formikHelpers.setSubmitting(true);
+
+              // remove empty channel names
+              const cleanedValues = {
+                ...values,
+                channel_names: values.channel_names.filter(
+                  (channelName) => channelName !== ""
+                ),
+              };
+
               let response;
               if (isUpdate) {
                 response = await updateSlackBotConfig(
                   existingSlackBotConfig.id,
-                  values
+                  cleanedValues
                 );
               } else {
-                response = await createSlackBotConfig(values);
+                response = await createSlackBotConfig(cleanedValues);
               }
               formikHelpers.setSubmitting(false);
               if (response.ok) {
@@ -89,6 +106,13 @@ export const SlackBotCreationForm = ({
                   values={values}
                   subtext="The names of the Slack channels you want DanswerBot to assist in. For example, '#ask-danswer'."
                 />
+                <div className="border-t border-gray-700 py-2" />
+                <BooleanFormField
+                  name="answer_validity_check_enabled"
+                  label="Hide Non-Answers"
+                  subtext="If set, will only answer questions that the model determines it can answer"
+                />
+                <div className="border-t border-gray-700 py-2" />
                 <FieldArray
                   name="document_sets"
                   render={(arrayHelpers: ArrayHelpers) => (
@@ -123,7 +147,7 @@ export const SlackBotCreationForm = ({
                               cursor-pointer ` +
                                 (isSelected
                                   ? " bg-gray-600"
-                                  : " hover:bg-gray-700")
+                                  : " bg-gray-900 hover:bg-gray-700")
                               }
                               onClick={() => {
                                 if (isSelected) {

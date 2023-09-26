@@ -424,6 +424,7 @@ class SlackBotConfigCreationRequest(BaseModel):
     # for now for simplicity / speed of development
     document_sets: list[int]
     channel_names: list[str]
+    answer_validity_check_enabled: bool
 
 
 class SlackBotConfig(BaseModel):

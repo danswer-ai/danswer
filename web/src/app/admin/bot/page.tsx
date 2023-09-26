@@ -4,8 +4,12 @@ import { Button } from "@/components/Button";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { PageSelector } from "@/components/PageSelector";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
-import { BookmarkIcon, EditIcon, TrashIcon } from "@/components/icons/icons";
-import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
+import {
+  BookmarkIcon,
+  CPUIcon,
+  EditIcon,
+  TrashIcon,
+} from "@/components/icons/icons";
 import { DocumentSet, SlackBotConfig } from "@/lib/types";
 import { useState } from "react";
 import { useSlackBotConfigs, useSlackBotTokens } from "./hooks";
@@ -91,6 +95,10 @@ const SlackBotConfigsTable = ({
             key: "document_sets",
           },
           {
+            header: "Hide Non-Answers",
+            key: "answer_validity_check_enabled",
+          },
+          {
             header: "Delete",
             key: "delete",
             width: "50px",
@@ -121,6 +129,12 @@ const SlackBotConfigsTable = ({
                     .map((documentSet) => documentSet.name)
                     .join(", ")}
                 </div>
+              ),
+              answer_validity_check_enabled: slackBotConfig.channel_config
+                .answer_validity_check_enabled ? (
+                <div className="text-gray-300">Yes</div>
+              ) : (
+                <div className="text-gray-300">No</div>
               ),
               delete: (
                 <div
@@ -274,7 +288,7 @@ const Page = () => {
   return (
     <div>
       <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <BookmarkIcon size={32} />
+        <CPUIcon size={32} />
         <h1 className="text-3xl font-bold pl-2">Slack Bot Configuration</h1>
       </div>
 

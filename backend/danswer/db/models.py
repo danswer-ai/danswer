@@ -482,8 +482,8 @@ class ChannelConfig(TypedDict):
     in Postgres"""
 
     channel_names: list[str]
+    answer_validity_check_enabled: NotRequired[bool]  # not specified => False
     team_members: NotRequired[list[str]]
-    answer_validity_check_enabled: NotRequired[bool]
 
 
 class SlackBotConfig(Base):
