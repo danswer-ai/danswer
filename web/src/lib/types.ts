@@ -228,3 +228,21 @@ export interface DocumentSet<ConnectorType, CredentialType> {
   cc_pair_descriptors: CCPairDescriptor<ConnectorType, CredentialType>[];
   is_up_to_date: boolean;
 }
+
+// SLACK BOT CONFIGS
+export interface ChannelConfig {
+  channel_names: string[];
+  answer_validity_check_enabled?: boolean;
+  team_members?: string[];
+}
+
+export interface SlackBotConfig {
+  id: number;
+  document_sets: DocumentSet<any, any>[];
+  channel_config: ChannelConfig;
+}
+
+export interface SlackBotTokens {
+  bot_token: string;
+  app_token: string;
+}

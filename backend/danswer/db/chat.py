@@ -270,6 +270,7 @@ def create_persona(
     hint_text: str | None,
     default_persona: bool,
     db_session: Session,
+    commit: bool = True,
 ) -> Persona:
     persona = db_session.query(Persona).filter_by(id=persona_id).first()
 
@@ -292,6 +293,10 @@ def create_persona(
         )
         db_session.add(persona)
 
-    db_session.commit()
+    if commit:
+        db_session.commit()
+    else:
+        # flush the session so that the persona has an ID
+        db_session.flush()
 
     return persona
