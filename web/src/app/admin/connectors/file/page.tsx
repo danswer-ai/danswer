@@ -1,6 +1,7 @@
 "use client";
 
 import useSWR, { useSWRConfig } from "swr";
+import * as Yup from "yup";
 
 import { FileIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
@@ -9,12 +10,13 @@ import { ConnectorIndexingStatus, FileConfig } from "@/lib/types";
 import { linkCredential } from "@/lib/credential";
 import { FileUpload } from "./FileUpload";
 import { useState } from "react";
-import { Button } from "@/components/Button";
-import { Popup, PopupSpec } from "@/components/admin/connectors/Popup";
+import { usePopup } from "@/components/admin/connectors/Popup";
 import { createConnector, runConnector } from "@/lib/connector";
 import { Spinner } from "@/components/Spinner";
 import { SingleUseConnectorsTable } from "@/components/admin/connectors/table/SingleUseConnectorsTable";
 import { LoadingAnimation } from "@/components/Loading";
+import { Form, Formik } from "formik";
+import { TextFormField } from "@/components/admin/connectors/Field";
 
 const getNameFromPath = (path: string) => {
   const pathParts = path.split("/");
@@ -24,16 +26,8 @@ const getNameFromPath = (path: string) => {
 const Main = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [filesAreUploading, setFilesAreUploading] = useState<boolean>(false);
-  const [popup, setPopup] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
-  const setPopupWithExpiration = (popupSpec: PopupSpec | null) => {
-    setPopup(popupSpec);
-    setTimeout(() => {
-      setPopup(null);
-    }, 4000);
-  };
+  const { popup, setPopup } = usePopup();
+  console.log(popup);
 
   const { mutate } = useSWRConfig();
 
@@ -57,9 +51,8 @@ const Main = () => {
 
   return (
     <div>
-      {popup && <Popup message={popup.message} type={popup.type} />}
+      {popup}
       {filesAreUploading && <Spinner />}
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">Upload Files</h2>
       <p className="text-sm mb-2">
         Specify files below, click the <b>Upload</b> button, and the contents of
         these files will be searchable via Danswer! Currently only <i>.txt</i>{" "}
@@ -83,18 +76,19 @@ const Main = () => {
           documentation.
         </a>
       </div>
-      <div className="flex">
+      <div className="flex mt-4">
         <div className="mx-auto max-w-3xl w-full">
-          <FileUpload
-            selectedFiles={selectedFiles}
-            setSelectedFiles={setSelectedFiles}
-          />
-
-          <Button
-            className="mt-4 w-48"
-            fullWidth
-            disabled={selectedFiles.length === 0}
-            onClick={async () => {
+          <Formik
+            initialValues={{
+              name: "",
+              selectedFiles: [],
+            }}
+            validationSchema={Yup.object().shape({
+              name: Yup.string().required(
+                "Please enter a descriptive name for the files"
+              ),
+            })}
+            onSubmit={async (values, formikHelpers) => {
               const uploadCreateAndTriggerConnector = async () => {
                 const formData = new FormData();
 
@@ -108,7 +102,7 @@ const Main = () => {
                 );
                 const responseJson = await response.json();
                 if (!response.ok) {
-                  setPopupWithExpiration({
+                  setPopup({
                     message: `Unable to upload files - ${responseJson.detail}`,
                     type: "error",
                   });
@@ -128,7 +122,7 @@ const Main = () => {
                     disabled: false,
                   });
                 if (connectorErrorMsg || !connector) {
-                  setPopupWithExpiration({
+                  setPopup({
                     message: `Unable to create connector - ${connectorErrorMsg}`,
                     type: "error",
                   });
@@ -137,11 +131,14 @@ const Main = () => {
 
                 const credentialResponse = await linkCredential(
                   connector.id,
-                  0
+                  0,
+                  values.name
                 );
-                if (credentialResponse.detail) {
-                  setPopupWithExpiration({
-                    message: `Unable to link connector to credential - ${credentialResponse.detail}`,
+                if (!credentialResponse.ok) {
+                  const credentialResponseJson =
+                    await credentialResponse.json();
+                  setPopup({
+                    message: `Unable to link connector to credential - ${credentialResponseJson.detail}`,
                     type: "error",
                   });
                   return;
@@ -151,7 +148,7 @@ const Main = () => {
                   0,
                 ]);
                 if (runConnectorErrorMsg) {
-                  setPopupWithExpiration({
+                  setPopup({
                     message: `Unable to run connector - ${runConnectorErrorMsg}`,
                     type: "error",
                   });
@@ -160,7 +157,8 @@ const Main = () => {
 
                 mutate("/api/manage/admin/connector/indexing-status");
                 setSelectedFiles([]);
-                setPopupWithExpiration({
+                formikHelpers.resetForm();
+                setPopup({
                   type: "success",
                   message: "Successfully uploaded files!",
                 });
@@ -175,13 +173,43 @@ const Main = () => {
               setFilesAreUploading(false);
             }}
           >
-            Upload!
-          </Button>
+            {({ values, isSubmitting }) => (
+              <Form className="p-3 border border-gray-600 rounded">
+                <h2 className="font-bold text-xl mb-2">Upload Files</h2>
+                <TextFormField
+                  name="name"
+                  label="Name:"
+                  placeholder={`A name that describes the files e.g. "Onboarding Documents"`}
+                  autoCompleteDisabled={true}
+                />
+
+                <p className="mb-1">Files:</p>
+                <FileUpload
+                  selectedFiles={selectedFiles}
+                  setSelectedFiles={setSelectedFiles}
+                />
+                <button
+                  className={
+                    "bg-slate-500 hover:bg-slate-700 text-white " +
+                    "font-bold py-2 px-4 rounded focus:outline-none " +
+                    "focus:shadow-outline w-full mx-auto mt-4"
+                  }
+                  type="submit"
+                  disabled={
+                    selectedFiles.length === 0 || !values.name || isSubmitting
+                  }
+                >
+                  Upload!
+                </button>
+              </Form>
+            )}
+          </Formik>
         </div>
       </div>
 
       {fileIndexingStatuses.length > 0 && (
         <div className="mt-6">
+          <h2 className="font-bold text-xl mb-2">Indexed Files</h2>
           <SingleUseConnectorsTable<FileConfig, {}>
             connectorIndexingStatuses={fileIndexingStatuses}
             specialColumns={[

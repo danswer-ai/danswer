@@ -61,10 +61,10 @@ const Main = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "notion"
   );
-  const notionCredential: Credential<NotionCredentialJson> =
-    credentialsData.filter(
+  const notionCredential: Credential<NotionCredentialJson> | undefined =
+    credentialsData.find(
       (credential) => credential.credential_json?.notion_integration_token
-    )[0];
+    );
 
   return (
     <>
@@ -185,19 +185,15 @@ const Main = () => {
               Press connect below to start the connection to Notion.
             </p>
             <ConnectorForm<NotionConfig>
-              nameBuilder={(values) => `NotionConnector`}
+              nameBuilder={() => `NotionConnector`}
+              ccPairNameBuilder={() => `Notion`}
               source="notion"
               inputType="poll"
               formBody={<></>}
               validationSchema={Yup.object().shape({})}
               initialValues={{}}
               refreshFreq={10 * 60} // 10 minutes
-              onSubmit={async (isSuccess, responseJson) => {
-                if (isSuccess && responseJson) {
-                  await linkCredential(responseJson.id, notionCredential.id);
-                  mutate("/api/manage/admin/connector/indexing-status");
-                }
-              }}
+              credentialId={notionCredential.id}
             />
           </div>
         </>

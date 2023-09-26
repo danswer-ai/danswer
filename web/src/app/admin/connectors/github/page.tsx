@@ -59,10 +59,10 @@ const Main = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "github"
   );
-  const githubCredential: Credential<GithubCredentialJson> =
-    credentialsData.filter(
+  const githubCredential: Credential<GithubCredentialJson> | undefined =
+    credentialsData.find(
       (credential) => credential.credential_json?.github_access_token
-    )[0];
+    );
 
   return (
     <>
@@ -175,6 +175,9 @@ const Main = () => {
             nameBuilder={(values) =>
               `GithubConnector-${values.repo_owner}/${values.repo_name}`
             }
+            ccPairNameBuilder={(values) =>
+              `${values.repo_owner}/${values.repo_name}`
+            }
             source="github"
             inputType="load_state"
             formBody={
@@ -200,12 +203,7 @@ const Main = () => {
               include_issues: true,
             }}
             refreshFreq={10 * 60} // 10 minutes
-            onSubmit={async (isSuccess, responseJson) => {
-              if (isSuccess && responseJson) {
-                await linkCredential(responseJson.id, githubCredential.id);
-                mutate("/api/manage/admin/connector/indexing-status");
-              }
-            }}
+            credentialId={githubCredential.id}
           />
         </div>
       ) : (

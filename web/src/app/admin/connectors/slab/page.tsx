@@ -9,6 +9,7 @@ import {
   ConnectorIndexingStatus,
   SlabCredentialJson,
   SlabConfig,
+  Credential,
 } from "@/lib/types";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
@@ -62,9 +63,10 @@ const Main = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "slab"
   );
-  const slabCredential = credentialsData.filter(
-    (credential) => credential.credential_json?.slab_bot_token
-  )[0];
+  const slabCredential: Credential<SlabCredentialJson> | undefined =
+    credentialsData.find(
+      (credential) => credential.credential_json?.slab_bot_token
+    );
 
   return (
     <>
@@ -211,6 +213,7 @@ const Main = () => {
                 <h2 className="font-bold mb-3">Add a New Space</h2>
                 <ConnectorForm<SlabConfig>
                   nameBuilder={(values) => `SlabConnector-${values.base_url}`}
+                  ccPairNameBuilder={(values) => values.base_url}
                   source="slab"
                   inputType="poll"
                   formBody={
@@ -227,12 +230,7 @@ const Main = () => {
                     base_url: "",
                   }}
                   refreshFreq={10 * 60} // 10 minutes
-                  onSubmit={async (isSuccess, responseJson) => {
-                    if (isSuccess && responseJson) {
-                      await linkCredential(responseJson.id, slabCredential.id);
-                      mutate("/api/manage/admin/connector/indexing-status");
-                    }
-                  }}
+                  credentialId={slabCredential.id}
                 />
               </div>
             </>

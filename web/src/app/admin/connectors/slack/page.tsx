@@ -10,6 +10,7 @@ import {
   SlackConfig,
   SlackCredentialJson,
   ConnectorIndexingStatus,
+  Credential,
 } from "@/lib/types";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
@@ -61,9 +62,10 @@ const MainSection = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "slack"
   );
-  const slackCredential = credentialsData.filter(
-    (credential) => credential.credential_json?.slack_bot_token
-  )[0];
+  const slackCredential: Credential<SlackCredentialJson> | undefined =
+    credentialsData.find(
+      (credential) => credential.credential_json?.slack_bot_token
+    );
 
   return (
     <>
@@ -132,7 +134,7 @@ const MainSection = () => {
       )}
 
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
-        Step 2: Which workspaces do you want to make searchable?
+        Step 2: Which channels do you want to make searchable?
       </h2>
 
       {slackConnectorIndexingStatuses.length > 0 && (
@@ -179,53 +181,56 @@ const MainSection = () => {
         </>
       )}
 
-      <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
-        <h2 className="font-bold mb-3">Connect to a New Workspace</h2>
-        <ConnectorForm<SlackConfig>
-          nameBuilder={(values) =>
-            values.channels
-              ? `SlackConnector-${values.workspace}-${values.channels.join(
-                  "_"
-                )}`
-              : `SlackConnector-${values.workspace}`
-          }
-          source="slack"
-          inputType="poll"
-          formBody={
-            <>
-              <TextFormField name="workspace" label="Workspace" />
-            </>
-          }
-          formBodyBuilder={TextArrayFieldBuilder({
-            name: "channels",
-            label: "Channels:",
-            subtext:
-              "Specify 0 or more channels to index. For example, specifying the channel " +
-              "'support' will cause us to only index all content " +
-              "within the '#support' channel. " +
-              "If no channels are specified, all channels in your workspace will be indexed.",
-          })}
-          validationSchema={Yup.object().shape({
-            workspace: Yup.string().required(
-              "Please enter the workspace to index"
-            ),
-            channels: Yup.array()
-              .of(Yup.string().required("Channel names must be strings"))
-              .required(),
-          })}
-          initialValues={{
-            workspace: "",
-            channels: [],
-          }}
-          refreshFreq={10 * 60} // 10 minutes
-          onSubmit={async (isSuccess, responseJson) => {
-            if (isSuccess && responseJson) {
-              await linkCredential(responseJson.id, slackCredential.id);
-              mutate("/api/manage/admin/connector/indexing-status");
+      {slackCredential ? (
+        <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+          <h2 className="font-bold mb-3">Connect to a New Workspace</h2>
+          <ConnectorForm<SlackConfig>
+            nameBuilder={(values) =>
+              values.channels
+                ? `SlackConnector-${values.workspace}-${values.channels.join(
+                    "_"
+                  )}`
+                : `SlackConnector-${values.workspace}`
             }
-          }}
-        />
-      </div>
+            source="slack"
+            inputType="poll"
+            formBody={
+              <>
+                <TextFormField name="workspace" label="Workspace" />
+              </>
+            }
+            formBodyBuilder={TextArrayFieldBuilder({
+              name: "channels",
+              label: "Channels:",
+              subtext:
+                "Specify 0 or more channels to index. For example, specifying the channel " +
+                "'support' will cause us to only index all content " +
+                "within the '#support' channel. " +
+                "If no channels are specified, all channels in your workspace will be indexed.",
+            })}
+            validationSchema={Yup.object().shape({
+              workspace: Yup.string().required(
+                "Please enter the workspace to index"
+              ),
+              channels: Yup.array()
+                .of(Yup.string().required("Channel names must be strings"))
+                .required(),
+            })}
+            initialValues={{
+              workspace: "",
+              channels: [],
+            }}
+            refreshFreq={10 * 60} // 10 minutes
+            credentialId={slackCredential.id}
+          />
+        </div>
+      ) : (
+        <p className="text-sm">
+          Please provide your slack bot token in Step 1 first! Once done with
+          that, you can then specify which Slack channels you want to make
+          searchable.
+        </p>
+      )}
     </>
   );
 };

@@ -49,6 +49,8 @@ export default function Web() {
       <div className="border-solid border-gray-600 border rounded-md p-6">
         <ConnectorForm<WebConfig>
           nameBuilder={(values) => `WebConnector-${values.base_url}`}
+          ccPairNameBuilder={(values) => values.base_url}
+          credentialId={0} // 0 is the ID of the default public credential
           source="web"
           inputType="load_state"
           formBody={
@@ -65,13 +67,6 @@ export default function Web() {
             base_url: "",
           }}
           refreshFreq={60 * 60 * 24} // 1 day
-          onSubmit={async (isSuccess, responseJson) => {
-            if (isSuccess && responseJson) {
-              // assumes there is a dummy credential with id 0
-              await linkCredential(responseJson.id, 0);
-              mutate("/api/manage/admin/connector/indexing-status");
-            }
-          }}
         />
       </div>
 

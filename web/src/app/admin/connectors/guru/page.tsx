@@ -64,9 +64,8 @@ const Main = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "guru"
   );
-  const guruCredential: Credential<GuruCredentialJson> = credentialsData.filter(
-    (credential) => credential.credential_json?.guru_user
-  )[0];
+  const guruCredential: Credential<GuruCredentialJson> | undefined =
+    credentialsData.find((credential) => credential.credential_json?.guru_user);
 
   return (
     <>
@@ -166,18 +165,14 @@ const Main = () => {
             <div className="flex">
               <ConnectorForm<GuruConfig>
                 nameBuilder={() => "GuruConnector"}
+                ccPairNameBuilder={() => "Guru"}
                 source="guru"
                 inputType="poll"
                 formBody={null}
                 validationSchema={Yup.object().shape({})}
                 initialValues={{}}
                 refreshFreq={10 * 60} // 10 minutes
-                onSubmit={async (isSuccess, responseJson) => {
-                  if (isSuccess && responseJson) {
-                    await linkCredential(responseJson.id, guruCredential.id);
-                    mutate("/api/manage/admin/connector/indexing-status");
-                  }
-                }}
+                credentialId={guruCredential.id}
               />
             </div>
           </>

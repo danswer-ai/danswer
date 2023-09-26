@@ -20,6 +20,18 @@ import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsT
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
 
+// Copied from the `extract_jira_project` function
+const extractJiraProject = (url: string): string | null => {
+  const parsedUrl = new URL(url);
+  const splitPath = parsedUrl.pathname.split("/");
+  const projectPos = splitPath.indexOf("projects");
+  if (projectPos !== -1 && splitPath.length > projectPos + 1) {
+    const jiraProject = splitPath[projectPos + 1];
+    return jiraProject;
+  }
+  return null;
+};
+
 const Main = () => {
   const { popup, setPopup } = usePopup();
 
@@ -233,6 +245,10 @@ const Main = () => {
               nameBuilder={(values) =>
                 `JiraConnector-${values.jira_project_url}`
               }
+              ccPairNameBuilder={(values) =>
+                extractJiraProject(values.jira_project_url)
+              }
+              credentialId={jiraCredential.id}
               source="jira"
               inputType="poll"
               formBody={
@@ -252,12 +268,6 @@ const Main = () => {
                 jira_project_url: "",
               }}
               refreshFreq={10 * 60} // 10 minutes
-              onSubmit={async (isSuccess, responseJson) => {
-                if (isSuccess && responseJson) {
-                  await linkCredential(responseJson.id, jiraCredential.id);
-                  mutate("/api/manage/admin/connector/indexing-status");
-                }
-              }}
             />
           </div>
         </>

@@ -7,26 +7,46 @@ interface TextFormFieldProps {
   name: string;
   label: string;
   subtext?: string;
+  placeholder?: string;
   type?: string;
+  disabled?: boolean;
+  autoCompleteDisabled?: boolean;
 }
 
 export const TextFormField = ({
   name,
   label,
   subtext,
+  placeholder,
   type = "text",
+  disabled = false,
+  autoCompleteDisabled = false,
 }: TextFormFieldProps) => {
   return (
     <div className="mb-4">
       <label htmlFor={name} className="block">
         {label}
       </label>
-      {subtext && <p className="text-xs">{subtext}</p>}
+      {subtext && <p className="text-xs mb-1">{subtext}</p>}
       <Field
         type={type}
         name={name}
         id={name}
-        className="border bg-slate-700 text-gray-200 border-gray-300 rounded w-full py-2 px-3 mt-1"
+        className={
+          `
+          border 
+          text-gray-200 
+          border-gray-300 
+          rounded 
+          w-full 
+          py-2 
+          px-3 
+          mt-1
+        ` + (disabled ? " bg-slate-900" : " bg-slate-700")
+        }
+        disabled={disabled}
+        placeholder={placeholder}
+        autoComplete={autoCompleteDisabled ? "off" : undefined}
       />
       <ErrorMessage
         name={name}
