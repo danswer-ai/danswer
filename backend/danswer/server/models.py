@@ -408,6 +408,7 @@ class DocumentSet(BaseModel):
                 )
                 for cc_pair in document_set_model.connector_credential_pairs
             ],
+            is_up_to_date=document_set_model.is_up_to_date,
         )
 
 

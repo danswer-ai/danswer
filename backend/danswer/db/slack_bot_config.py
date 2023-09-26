@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 
-from sqlalchemy import delete
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -11,8 +10,8 @@ from danswer.db.models import Persona__DocumentSet
 from danswer.db.models import SlackBotConfig
 
 
-def _build_persona_name(channel_name: str) -> str:
-    return f"__slack_bot_persona_{channel_name}"
+def _build_persona_name(channel_names: list[str]) -> str:
+    return f"__slack_bot_persona__{'-'.join(channel_names)}"
 
 
 def _cleanup_relationships(db_session: Session, persona_id: int) -> None:
@@ -29,13 +28,13 @@ def _cleanup_relationships(db_session: Session, persona_id: int) -> None:
 
 def _create_slack_bot_persona(
     db_session: Session,
-    channel_name: str,
+    channel_names: list[str],
     document_sets: list[int],
     existing_persona_id: int | None = None,
 ) -> Persona:
     """NOTE: does not commit changes"""
     # create/update persona associated with the slack bot
-    persona_name = _build_persona_name(channel_name)
+    persona_name = _build_persona_name(channel_names)
     persona = create_persona(
         persona_id=existing_persona_id,
         name=persona_name,
@@ -69,7 +68,7 @@ def insert_slack_bot_config(
     if document_sets:
         persona = _create_slack_bot_persona(
             db_session=db_session,
-            channel_name=channel_config["channel_name"],
+            channel_names=channel_config["channel_names"],
             document_sets=document_sets,
         )
 
@@ -103,7 +102,7 @@ def update_slack_bot_config(
     if document_sets:
         persona = _create_slack_bot_persona(
             db_session=db_session,
-            channel_name=channel_config["channel_name"],
+            channel_names=channel_config["channel_names"],
             document_sets=document_sets,
             existing_persona_id=slack_bot_config.persona_id,
         )
@@ -114,7 +113,10 @@ def update_slack_bot_config(
             _cleanup_relationships(
                 db_session=db_session, persona_id=existing_persona_id
             )
-            db_session.execute(delete(Persona).where(Persona.id == existing_persona_id))
+            existing_persona = db_session.scalar(
+                select(Persona).where(Persona.id == existing_persona_id)
+            )
+            db_session.delete(existing_persona)
 
     slack_bot_config.persona_id = persona.id if persona else None
     slack_bot_config.channel_config = channel_config

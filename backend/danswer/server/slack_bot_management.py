@@ -4,9 +4,11 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
+from danswer.bots.slack.config import validate_channel_names
 from danswer.bots.slack.tokens import fetch_tokens
 from danswer.bots.slack.tokens import save_tokens
 from danswer.db.engine import get_session
+from danswer.db.models import ChannelConfig
 from danswer.db.models import User
 from danswer.db.slack_bot_config import fetch_slack_bot_configs
 from danswer.db.slack_bot_config import insert_slack_bot_config
@@ -33,8 +35,20 @@ def create_slack_bot_config(
             detail="Must provide at least one channel name",
         )
 
-    channel_config = {
-        "channel_names": slack_bot_config_creation_request.channel_names,
+    try:
+        cleaned_channel_names = validate_channel_names(
+            channel_names=slack_bot_config_creation_request.channel_names,
+            current_slack_bot_config_id=None,
+            db_session=db_session,
+        )
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Channel names already exist in another slack bot config",
+        )
+
+    channel_config: ChannelConfig = {
+        "channel_names": cleaned_channel_names,
     }
     slack_bot_config_model = insert_slack_bot_config(
         document_sets=slack_bot_config_creation_request.document_sets,
@@ -66,11 +80,23 @@ def patch_slack_bot_config(
             detail="Must provide at least one channel name",
         )
 
+    try:
+        cleaned_channel_names = validate_channel_names(
+            channel_names=slack_bot_config_creation_request.channel_names,
+            current_slack_bot_config_id=None,
+            db_session=db_session,
+        )
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Channel names already exist in another slack bot config",
+        )
+
     slack_bot_config_model = update_slack_bot_config(
         slack_bot_config_id=slack_bot_config_id,
         document_sets=slack_bot_config_creation_request.document_sets,
         channel_config={
-            "channel_names": slack_bot_config_creation_request.channel_names,
+            "channel_names": cleaned_channel_names,
         },
         db_session=db_session,
     )

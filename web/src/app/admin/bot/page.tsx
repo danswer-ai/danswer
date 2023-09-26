@@ -6,24 +6,27 @@ import { PageSelector } from "@/components/PageSelector";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { BookmarkIcon, EditIcon, TrashIcon } from "@/components/icons/icons";
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
-import { SlackBotConfig } from "@/lib/types";
+import { DocumentSet, SlackBotConfig } from "@/lib/types";
 import { useState } from "react";
 import { useSlackBotConfigs, useSlackBotTokens } from "./hooks";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { SlackBotCreationForm } from "./SlackBotConfigCreationForm";
 import { deleteSlackBotConfig } from "./lib";
 import { SlackBotTokensForm } from "./SlackBotTokensForm";
+import { useDocumentSets } from "../documents/sets/hooks";
 
 const numToDisplay = 50;
 
 const EditRow = ({
   existingSlackBotConfig,
   setPopup,
-  refreshDocumentSets,
+  documentSets,
+  refreshSlackBotConfigs,
 }: {
   existingSlackBotConfig: SlackBotConfig;
   setPopup: (popupSpec: PopupSpec | null) => void;
-  refreshDocumentSets: () => void;
+  documentSets: DocumentSet<any, any>[];
+  refreshSlackBotConfigs: () => void;
 }) => {
   const [isEditPopupOpen, setEditPopupOpen] = useState(false);
   return (
@@ -32,9 +35,10 @@ const EditRow = ({
         <SlackBotCreationForm
           onClose={() => {
             setEditPopupOpen(false);
-            refreshDocumentSets();
+            refreshSlackBotConfigs();
           }}
           setPopup={setPopup}
+          documentSets={documentSets}
           existingSlackBotConfig={existingSlackBotConfig}
         />
       )}
@@ -50,12 +54,14 @@ const EditRow = ({
 
 interface DocumentFeedbackTableProps {
   slackBotConfigs: SlackBotConfig[];
+  documentSets: DocumentSet<any, any>[];
   refresh: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 const SlackBotConfigsTable = ({
   slackBotConfigs,
+  documentSets,
   refresh,
   setPopup,
 }: DocumentFeedbackTableProps) => {
@@ -81,6 +87,10 @@ const SlackBotConfigsTable = ({
             key: "channels",
           },
           {
+            header: "Document Sets",
+            key: "document_sets",
+          },
+          {
             header: "Delete",
             key: "delete",
             width: "50px",
@@ -95,13 +105,21 @@ const SlackBotConfigsTable = ({
                   <EditRow
                     existingSlackBotConfig={slackBotConfig}
                     setPopup={setPopup}
-                    refreshDocumentSets={refresh}
+                    refreshSlackBotConfigs={refresh}
+                    documentSets={documentSets}
                   />
                   <div className="my-auto">
                     {slackBotConfig.channel_config.channel_names
                       .map((channel_name) => `#${channel_name}`)
                       .join(", ")}
                   </div>
+                </div>
+              ),
+              document_sets: (
+                <div>
+                  {slackBotConfig.document_sets
+                    .map((documentSet) => documentSet.name)
+                    .join(", ")}
                 </div>
               ),
               delete: (
@@ -157,16 +175,15 @@ const Main = () => {
     error: slackBotConfigsError,
     refreshSlackBotConfigs,
   } = useSlackBotConfigs();
+  const {
+    data: documentSets,
+    isLoading: isDocumentSetsLoading,
+    error: documentSetsError,
+  } = useDocumentSets();
 
   const { data: slackBotTokens, refreshSlackBotTokens } = useSlackBotTokens();
 
-  const {
-    data: ccPairs,
-    isLoading: isCCPairsLoading,
-    error: ccPairsError,
-  } = useConnectorCredentialIndexingStatus();
-
-  if (isSlackBotConfigsLoading || isCCPairsLoading) {
+  if (isSlackBotConfigsLoading || isDocumentSetsLoading) {
     return <ThreeDotsLoader />;
   }
 
@@ -174,8 +191,8 @@ const Main = () => {
     return <div>Error: {slackBotConfigsError}</div>;
   }
 
-  if (ccPairsError || !ccPairs) {
-    return <div>Error: {ccPairsError}</div>;
+  if (documentSetsError || !documentSets) {
+    return <div>Error: {documentSetsError}</div>;
   }
 
   return (
@@ -232,12 +249,14 @@ const Main = () => {
 
           <SlackBotConfigsTable
             slackBotConfigs={slackBotConfigs}
+            documentSets={documentSets}
             refresh={refreshSlackBotConfigs}
             setPopup={setPopup}
           />
 
           {slackBotConfigModalIsOpen && (
             <SlackBotCreationForm
+              documentSets={documentSets}
               onClose={() => {
                 refreshSlackBotConfigs();
                 setSlackBotConfigModalIsOpen(false);

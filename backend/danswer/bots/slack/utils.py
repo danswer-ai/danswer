@@ -2,6 +2,7 @@ import logging
 import random
 import re
 import string
+from typing import Any
 from typing import cast
 
 from retry import retry
@@ -9,6 +10,7 @@ from slack_sdk import WebClient
 from slack_sdk.models.blocks import Block
 from slack_sdk.models.metadata import Metadata
 
+from danswer.bots.slack.tokens import fetch_tokens
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.constants import ID_SEPARATOR
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
@@ -17,6 +19,11 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import replace_whitespaces_w_space
 
 logger = setup_logger()
+
+
+def get_web_client() -> WebClient:
+    slack_tokens = fetch_tokens()
+    return WebClient(token=slack_tokens.bot_token)
 
 
 @retry(
@@ -119,3 +126,13 @@ def remove_slack_text_interactions(slack_str: str) -> str:
     slack_str = UserIdReplacer.replace_links(slack_str)
     slack_str = UserIdReplacer.add_zero_width_whitespace_after_tag(slack_str)
     return slack_str
+
+
+def get_channel_from_id(client: WebClient, channel_id: str) -> dict[str, Any]:
+    response = client.conversations_info(channel=channel_id)
+    response.validate()
+    return response["channel"]
+
+
+def get_channel_name_from_id(client: WebClient, channel_id: str) -> str:
+    return get_channel_from_id(client, channel_id)["name"]

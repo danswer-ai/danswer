@@ -20,6 +20,7 @@ import {
   UsersIcon,
   ThumbsUpIcon,
   BookmarkIcon,
+  CPUIcon,
 } from "@/components/icons/icons";
 import { DISABLE_AUTH } from "@/lib/constants";
 import { getCurrentUserSS } from "@/lib/userSS";
@@ -241,6 +242,20 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/documents/feedback",
+                },
+              ],
+            },
+            {
+              name: "Bots",
+              items: [
+                {
+                  name: (
+                    <div className="flex">
+                      <CPUIcon size={18} />
+                      <div className="ml-1">Slack Bot</div>
+                    </div>
+                  ),
+                  link: "/admin/bot",
                 },
               ],
             },

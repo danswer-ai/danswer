@@ -23,8 +23,6 @@ export const SlackBotTokensForm = ({
   setPopup,
   existingTokens,
 }: SlackBotTokensFormProps) => {
-  const isUpdate = existingTokens !== undefined;
-
   return (
     <div>
       <div

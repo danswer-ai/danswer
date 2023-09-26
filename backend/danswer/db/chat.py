@@ -295,5 +295,8 @@ def create_persona(
 
     if commit:
         db_session.commit()
+    else:
+        # flush the session so that the persona has an ID
+        db_session.flush()
 
     return persona
