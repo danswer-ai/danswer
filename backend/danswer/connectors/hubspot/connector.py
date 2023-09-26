@@ -20,7 +20,7 @@ class HubSpotConnector(LoadConnector, PollConnector):
         self.access_token = access_token
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        self.access_token = credentials["access_token"]
+        self.access_token = credentials["hubspot_access_token"]
         return None
 
     def _process_tickets(self) -> GenerateDocumentsOutput:
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     import time
     test_connector = HubSpotConnector()
     test_connector.load_credentials({
-        "access_token": os.environ["HUBSPOT_ACCESS_TOKEN"]
+        "hubspot_access_token": os.environ["HUBSPOT_ACCESS_TOKEN"]
     })
     all_docs = test_connector.load_from_state()
     
