@@ -64,10 +64,11 @@ class HubSpotConnector(LoadConnector, PollConnector):
 
 
 if __name__ == "__main__":
+    import os
     import time
     test_connector = HubSpotConnector()
     test_connector.load_credentials({
-        "access_token": "pat-na1-1e4f54a5-5e68-4e6a-a03e-e8f14c37835d"
+        "access_token": os.environ["HUBSPOT_ACCESS_TOKEN"]
     })
     all_docs = test_connector.load_from_state()
     
