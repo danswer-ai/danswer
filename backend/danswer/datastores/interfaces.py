@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
-from danswer.chunking.models import IndexChunk
+from danswer.access.models import DocumentAccess
+from danswer.chunking.models import DocMetadataAwareIndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
-from danswer.connectors.models import IndexAttemptMetadata
 
 IndexFilter = dict[str, str | list[str] | None]
 
@@ -33,7 +33,8 @@ class UpdateRequest:
 
     document_ids: list[str]
     # all other fields will be left alone
-    allowed_users: list[str] | None = None
+    access: DocumentAccess | None = None
+    document_sets: set[str] | None = None
     boost: float | None = None
 
 
@@ -51,7 +52,7 @@ class Verifiable(abc.ABC):
 class Indexable(abc.ABC):
     @abc.abstractmethod
     def index(
-        self, chunks: list[IndexChunk], index_attempt_metadata: IndexAttemptMetadata
+        self, chunks: list[DocMetadataAwareIndexChunk]
     ) -> set[DocumentInsertionRecord]:
         """Indexes document chunks into the Document Index and return the IDs of all the documents indexed"""
         raise NotImplementedError

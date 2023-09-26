@@ -1,17 +1,14 @@
 import json
-from functools import partial
 from typing import Any
-from typing import cast
 from uuid import UUID
 
 import typesense  # type: ignore
 from typesense.exceptions import ObjectNotFound  # type: ignore
 
-from danswer.chunking.models import IndexChunk
+from danswer.chunking.models import DocMetadataAwareIndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import NUM_RETURNED_HITS
-from danswer.configs.constants import ALLOWED_GROUPS
 from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import BLURB
 from danswer.configs.constants import CHUNK_ID
@@ -23,13 +20,8 @@ from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
-from danswer.connectors.models import IndexAttemptMetadata
-from danswer.datastores.datastore_utils import CrossConnectorDocumentMetadata
 from danswer.datastores.datastore_utils import DEFAULT_BATCH_SIZE
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
-from danswer.datastores.datastore_utils import (
-    update_cross_connector_document_metadata_map,
-)
 from danswer.datastores.interfaces import DocumentInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import KeywordIndex
@@ -63,7 +55,6 @@ def create_typesense_collection(
             {"name": SEMANTIC_IDENTIFIER, "type": "string"},
             {"name": SECTION_CONTINUATION, "type": "bool"},
             {"name": ALLOWED_USERS, "type": "string[]"},
-            {"name": ALLOWED_GROUPS, "type": "string[]"},
             {"name": METADATA, "type": "string"},
         ],
     }
@@ -81,38 +72,16 @@ def _check_typesense_collection_exist(
     return True
 
 
-def _get_typesense_document_cross_connector_metadata(
+def _does_document_exist(
     doc_chunk_id: str, collection_name: str, ts_client: typesense.Client
-) -> CrossConnectorDocumentMetadata | None:
+) -> bool:
     """Returns whether the document already exists and the users/group whitelists"""
     try:
-        document = cast(
-            dict[str, Any],
-            ts_client.collections[collection_name].documents[doc_chunk_id].retrieve(),
-        )
+        ts_client.collections[collection_name].documents[doc_chunk_id].retrieve()
     except ObjectNotFound:
-        return None
+        return False
 
-    allowed_users = cast(list[str] | None, document.get(ALLOWED_USERS))
-    allowed_groups = cast(list[str] | None, document.get(ALLOWED_GROUPS))
-    if allowed_users is None:
-        allowed_users = []
-        logger.error(
-            "Typesense Index is corrupted, Document found with no user access lists."
-            f"Assuming no users have access to chunk with ID '{doc_chunk_id}'."
-        )
-    if allowed_groups is None:
-        allowed_groups = []
-        logger.error(
-            "Typesense Index is corrupted, Document found with no groups access lists."
-            f"Assuming no groups have access to chunk with ID '{doc_chunk_id}'."
-        )
-
-    return CrossConnectorDocumentMetadata(
-        allowed_users=allowed_users,
-        allowed_user_groups=allowed_groups,
-        already_in_index=True,
-    )
+    return True
 
 
 def _delete_typesense_doc_chunks(
@@ -127,8 +96,7 @@ def _delete_typesense_doc_chunks(
 
 
 def _index_typesense_chunks(
-    chunks: list[IndexChunk],
-    index_attempt_metadata: IndexAttemptMetadata,
+    chunks: list[DocMetadataAwareIndexChunk],
     collection: str,
     client: typesense.Client | None = None,
     batch_upsert: bool = True,
@@ -137,33 +105,20 @@ def _index_typesense_chunks(
 
     insertion_records: set[DocumentInsertionRecord] = set()
     new_documents: list[dict[str, Any]] = []
-    cross_connector_document_metadata_map: dict[
-        str, CrossConnectorDocumentMetadata
-    ] = {}
     # document ids of documents that existed BEFORE this indexing
     already_existing_documents: set[str] = set()
     for chunk in chunks:
         document = chunk.source_document
-        (
-            cross_connector_document_metadata_map,
-            should_delete_doc,
-        ) = update_cross_connector_document_metadata_map(
-            chunk=chunk,
-            cross_connector_document_metadata_map=cross_connector_document_metadata_map,
-            doc_store_cross_connector_document_metadata_fetch_fn=partial(
-                _get_typesense_document_cross_connector_metadata,
-                collection_name=collection,
-                ts_client=ts_client,
-            ),
-            index_attempt_metadata=index_attempt_metadata,
-        )
+        typesense_id = str(get_uuid_from_chunk(chunk))
 
-        if should_delete_doc:
+        # Delete all chunks related to the document if (1) it already exists and
+        # (2) this is our first time running into it during this indexing attempt
+        document_exists = _does_document_exist(typesense_id, collection, ts_client)
+        if document_exists and document.id not in already_existing_documents:
             # Processing the first chunk of the doc and the doc exists
             _delete_typesense_doc_chunks(document.id, collection, ts_client)
             already_existing_documents.add(document.id)
 
-        typesense_id = str(get_uuid_from_chunk(chunk))
         insertion_records.add(
             DocumentInsertionRecord(
                 document_id=document.id,
@@ -181,12 +136,7 @@ def _index_typesense_chunks(
                 SOURCE_LINKS: json.dumps(chunk.source_links),
                 SEMANTIC_IDENTIFIER: document.semantic_identifier,
                 SECTION_CONTINUATION: chunk.section_continuation,
-                ALLOWED_USERS: cross_connector_document_metadata_map[
-                    document.id
-                ].allowed_users,
-                ALLOWED_GROUPS: cross_connector_document_metadata_map[
-                    document.id
-                ].allowed_user_groups,
+                ALLOWED_USERS: json.dumps(chunk.access.to_acl()),
                 METADATA: json.dumps(document.metadata),
             }
         )
@@ -260,11 +210,10 @@ class TypesenseIndex(KeywordIndex):
             create_typesense_collection(collection_name=self.collection)
 
     def index(
-        self, chunks: list[IndexChunk], index_attempt_metadata: IndexAttemptMetadata
+        self, chunks: list[DocMetadataAwareIndexChunk]
     ) -> set[DocumentInsertionRecord]:
         return _index_typesense_chunks(
             chunks=chunks,
-            index_attempt_metadata=index_attempt_metadata,
             collection=self.collection,
             client=self.ts_client,
         )
@@ -277,8 +226,14 @@ class TypesenseIndex(KeywordIndex):
             for id_batch in batch_generator(
                 items=update_request.document_ids, batch_size=_BATCH_SIZE
             ):
+                if update_request.access is None:
+                    continue
+
                 typesense_updates = [
-                    {DOCUMENT_ID: doc_id, ALLOWED_USERS: update_request.allowed_users}
+                    {
+                        DOCUMENT_ID: doc_id,
+                        ALLOWED_USERS: update_request.access.to_acl(),
+                    }
                     for doc_id in id_batch
                 ]
                 self.ts_client.collections[self.collection].documents.import_(

@@ -56,11 +56,11 @@ schema danswer_chunk {
                 distance-metric: angular
             }
         }
-        field allowed_users type array<string> {
+        field access_control_list type weightedset<string> {
             indexing: summary | attribute
             attribute: fast-search
         }
-        field allowed_groups type array<string> {
+        field document_sets type weightedset<string> {
             indexing: summary | attribute
             attribute: fast-search
         }

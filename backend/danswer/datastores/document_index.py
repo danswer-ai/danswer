@@ -1,14 +1,13 @@
 from typing import Type
 from uuid import UUID
 
-from danswer.chunking.models import IndexChunk
+from danswer.chunking.models import DocMetadataAwareIndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import DOCUMENT_INDEX_TYPE
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentIndexType
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
-from danswer.connectors.models import IndexAttemptMetadata
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import DocumentInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
@@ -43,11 +42,10 @@ class SplitDocumentIndex(DocumentIndex):
 
     def index(
         self,
-        chunks: list[IndexChunk],
-        index_attempt_metadata: IndexAttemptMetadata,
+        chunks: list[DocMetadataAwareIndexChunk],
     ) -> set[DocumentInsertionRecord]:
-        keyword_index_result = self.keyword_index.index(chunks, index_attempt_metadata)
-        vector_index_result = self.vector_index.index(chunks, index_attempt_metadata)
+        keyword_index_result = self.keyword_index.index(chunks)
+        vector_index_result = self.vector_index.index(chunks)
         if keyword_index_result != vector_index_result:
             logger.error(
                 f"Inconsistent document indexing:\n"
