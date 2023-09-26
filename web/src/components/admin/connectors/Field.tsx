@@ -89,9 +89,9 @@ export const BooleanFormField = ({
 
 interface TextArrayFieldProps<T extends Yup.AnyObject> {
   name: string;
-  label: string;
+  label: string | JSX.Element;
   values: T;
-  subtext?: string;
+  subtext?: string | JSX.Element;
   type?: string;
 }
 
