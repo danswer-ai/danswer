@@ -104,7 +104,18 @@ export const SlackBotCreationForm = ({
                   name="channel_names"
                   label="Channel Names:"
                   values={values}
-                  subtext="The names of the Slack channels you want DanswerBot to assist in. For example, '#ask-danswer'."
+                  subtext={
+                    <div>
+                      The names of the Slack channels you want this
+                      configuration to apply to. For example,
+                      &apos;#ask-danswer&apos;.
+                      <br />
+                      <br />
+                      <i>NOTE</i>: you still need to add DanswerBot to the
+                      channel(s) in Slack itself. Setting this config will not
+                      auto-add the bot to the channel.
+                    </div>
+                  }
                 />
                 <div className="border-t border-gray-700 py-2" />
                 <BooleanFormField
