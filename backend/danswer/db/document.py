@@ -1,4 +1,6 @@
+import time
 from collections.abc import Sequence
+from uuid import UUID
 
 from sqlalchemy import and_
 from sqlalchemy import delete
@@ -10,18 +12,18 @@ from sqlalchemy.orm import Session
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.datastores.interfaces import DocumentMetadata
 from danswer.db.feedback import delete_document_feedback_for_documents
+from danswer.db.models import Credential
 from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentByConnectorCredentialPair
 from danswer.db.utils import model_to_dict
+from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
 
-def get_documents_with_single_connector_credential_pair(
-    db_session: Session,
-    connector_id: int,
-    credential_id: int,
+def get_documents_for_connector_credential_pair(
+    db_session: Session, connector_id: int, credential_id: int, limit: int | None = None
 ) -> Sequence[DbDocument]:
     initial_doc_ids_stmt = select(DocumentByConnectorCredentialPair.id).where(
         and_(
@@ -29,54 +31,63 @@ def get_documents_with_single_connector_credential_pair(
             DocumentByConnectorCredentialPair.credential_id == credential_id,
         )
     )
-
-    # Filter it down to the documents with only a single connector/credential pair
-    # Meaning if this connector/credential pair is removed, this doc should be gone
-    trimmed_doc_ids_stmt = (
-        select(DbDocument.id)
-        .join(
-            DocumentByConnectorCredentialPair,
-            DocumentByConnectorCredentialPair.id == DbDocument.id,
-        )
-        .where(DbDocument.id.in_(initial_doc_ids_stmt))
-        .group_by(DbDocument.id)
-        .having(func.count(DocumentByConnectorCredentialPair.id) == 1)
-    )
-
-    stmt = select(DbDocument).where(DbDocument.id.in_(trimmed_doc_ids_stmt))
+    stmt = select(DbDocument).where(DbDocument.id.in_(initial_doc_ids_stmt)).distinct()
+    if limit:
+        stmt = stmt.limit(limit)
     return db_session.scalars(stmt).all()
 
 
-def get_document_by_connector_credential_pairs_indexed_by_multiple(
+def get_document_connector_cnts(
     db_session: Session,
-    connector_id: int,
-    credential_id: int,
-) -> Sequence[DocumentByConnectorCredentialPair]:
-    initial_doc_ids_stmt = select(DocumentByConnectorCredentialPair.id).where(
-        and_(
-            DocumentByConnectorCredentialPair.connector_id == connector_id,
-            DocumentByConnectorCredentialPair.credential_id == credential_id,
+    document_ids: list[str],
+) -> Sequence[tuple[str, int]]:
+    stmt = (
+        select(
+            DocumentByConnectorCredentialPair.id,
+            func.count(),
         )
+        .where(DocumentByConnectorCredentialPair.id.in_(document_ids))
+        .group_by(DocumentByConnectorCredentialPair.id)
     )
+    return db_session.execute(stmt).all()  # type: ignore
 
-    # Filter it down to the documents with more than 1 connector/credential pair
-    # Meaning if this connector/credential pair is removed, this doc is still accessible
-    trimmed_doc_ids_stmt = (
-        select(DbDocument.id)
-        .join(
-            DocumentByConnectorCredentialPair,
-            DocumentByConnectorCredentialPair.id == DbDocument.id,
+
+def get_acccess_info_for_documents(
+    db_session: Session,
+    document_ids: list[str],
+    cc_pair_to_delete: ConnectorCredentialPairIdentifier | None = None,
+) -> Sequence[tuple[str, list[UUID | None], bool]]:
+    """Gets back all relevant access info for the given documents. This includes
+    the user_ids for cc pairs that the document is associated with + whether any
+    of the associated cc pairs are intending to make the document globally public.
+
+    If `cc_pair_to_delete` is specified, gets the above access info as if that
+    pair had been deleted. This is needed since we want to delete from the Vespa
+    before deleting from Postgres to ensure that the state of Postgres never "loses"
+    documents that still exist in Vespa.
+    """
+    stmt = select(
+        DocumentByConnectorCredentialPair.id,
+        func.array_agg(Credential.user_id).label("user_ids"),
+        func.bool_or(Credential.public_doc).label("public_doc"),
+    ).where(DocumentByConnectorCredentialPair.id.in_(document_ids))
+
+    # pretend that the specified cc pair doesn't exist
+    if cc_pair_to_delete:
+        stmt = stmt.where(
+            and_(
+                DocumentByConnectorCredentialPair.connector_id
+                != cc_pair_to_delete.connector_id,
+                DocumentByConnectorCredentialPair.credential_id
+                != cc_pair_to_delete.credential_id,
+            )
         )
-        .where(DbDocument.id.in_(initial_doc_ids_stmt))
-        .group_by(DbDocument.id)
-        .having(func.count(DocumentByConnectorCredentialPair.id) > 1)
-    )
 
-    stmt = select(DocumentByConnectorCredentialPair).where(
-        DocumentByConnectorCredentialPair.id.in_(trimmed_doc_ids_stmt)
-    )
-
-    return db_session.execute(stmt).scalars().all()
+    stmt = stmt.join(
+        Credential,
+        DocumentByConnectorCredentialPair.credential_id == Credential.id,
+    ).group_by(DocumentByConnectorCredentialPair.id)
+    return db_session.execute(stmt).all()  # type: ignore
 
 
 def upsert_documents(
@@ -153,26 +164,24 @@ def upsert_documents_complete(
 
 
 def delete_document_by_connector_credential_pair(
-    db_session: Session, document_ids: list[str]
+    db_session: Session,
+    document_ids: list[str],
+    connector_credential_pair_identifier: ConnectorCredentialPairIdentifier
+    | None = None,
 ) -> None:
-    db_session.execute(
-        delete(DocumentByConnectorCredentialPair).where(
-            DocumentByConnectorCredentialPair.id.in_(document_ids)
-        )
+    stmt = delete(DocumentByConnectorCredentialPair).where(
+        DocumentByConnectorCredentialPair.id.in_(document_ids)
     )
-
-
-def delete_document_by_connector_credential_pair_for_connector_credential_pair(
-    db_session: Session, connector_id: int, credential_id: int
-) -> None:
-    db_session.execute(
-        delete(DocumentByConnectorCredentialPair).where(
+    if connector_credential_pair_identifier:
+        stmt = stmt.where(
             and_(
-                DocumentByConnectorCredentialPair.connector_id == connector_id,
-                DocumentByConnectorCredentialPair.credential_id == credential_id,
+                DocumentByConnectorCredentialPair.connector_id
+                == connector_credential_pair_identifier.connector_id,
+                DocumentByConnectorCredentialPair.credential_id
+                == connector_credential_pair_identifier.credential_id,
             )
         )
-    )
+    db_session.execute(stmt)
 
 
 def delete_documents(db_session: Session, document_ids: list[str]) -> None:
@@ -187,3 +196,48 @@ def delete_documents_complete(db_session: Session, document_ids: list[str]) -> N
     )
     delete_documents(db_session, document_ids)
     db_session.commit()
+
+
+def acquire_document_locks(db_session: Session, document_ids: list[str]) -> bool:
+    """Acquire locks for the specified documents. Ideally this shouldn't be
+    called with large list of document_ids (an exception could be made if the
+    length of holding the lock is very short).
+
+    Will simply raise an exception if any of the documents are already locked.
+    This prevents deadlocks (assuming that the caller passes in all required
+    document IDs in a single call).
+    """
+    stmt = (
+        select(DbDocument)
+        .where(DbDocument.id.in_(document_ids))
+        .with_for_update(nowait=True)
+    )
+    # will raise exception if any of the documents are already locked
+    db_session.execute(stmt)
+    return True
+
+
+_NUM_LOCK_ATTEMPTS = 10
+_LOCK_RETRY_DELAY = 30
+
+
+def prepare_to_modify_documents(db_session: Session, document_ids: list[str]) -> None:
+    """Try and acquire locks for the documents to prevent other jobs from
+    modifying them at the same time (e.g. avoid race conditions). This should be
+    called ahead of any modification to Vespa. Locks should be released by the
+    caller as soon as updates are complete by finishing the transaction."""
+    lock_acquired = False
+    for _ in range(_NUM_LOCK_ATTEMPTS):
+        try:
+            lock_acquired = acquire_document_locks(
+                db_session=db_session, document_ids=document_ids
+            )
+        except Exception as e:
+            logger.info(f"Failed to acquire locks for documents, retrying. Error: {e}")
+            time.sleep(_LOCK_RETRY_DELAY)
+
+    if not lock_acquired:
+        raise RuntimeError(
+            f"Failed to acquire locks after {_NUM_LOCK_ATTEMPTS} attempts "
+            f"for documents: {document_ids}"
+        )

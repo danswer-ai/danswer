@@ -9,7 +9,7 @@ import requests
 from requests import HTTPError
 from requests import Response
 
-from danswer.chunking.models import IndexChunk
+from danswer.chunking.models import DocMetadataAwareIndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import NUM_RETURNED_HITS
@@ -17,14 +17,14 @@ from danswer.configs.app_configs import VESPA_DEPLOYMENT_ZIP
 from danswer.configs.app_configs import VESPA_HOST
 from danswer.configs.app_configs import VESPA_PORT
 from danswer.configs.app_configs import VESPA_TENANT_PORT
-from danswer.configs.constants import ALLOWED_GROUPS
-from danswer.configs.constants import ALLOWED_USERS
+from danswer.configs.constants import ACCESS_CONTROL_LIST
 from danswer.configs.constants import BLURB
 from danswer.configs.constants import BOOST
 from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DOCUMENT_ID
+from danswer.configs.constants import DOCUMENT_SETS
 from danswer.configs.constants import EMBEDDINGS
 from danswer.configs.constants import MATCH_HIGHLIGHTS
 from danswer.configs.constants import METADATA
@@ -35,12 +35,7 @@ from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
-from danswer.connectors.models import IndexAttemptMetadata
-from danswer.datastores.datastore_utils import CrossConnectorDocumentMetadata
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
-from danswer.datastores.datastore_utils import (
-    update_cross_connector_document_metadata_map,
-)
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import DocumentInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
@@ -65,33 +60,20 @@ _BATCH_SIZE = 100  # Specific to Vespa
 CONTENT_SUMMARY = "content_summary"
 
 
-def _get_vespa_document_cross_connector_metadata(
+def _does_document_exist(
     doc_chunk_id: str,
-) -> CrossConnectorDocumentMetadata | None:
+) -> bool:
     """Returns whether the document already exists and the users/group whitelists"""
     doc_fetch_response = requests.get(f"{DOCUMENT_ID_ENDPOINT}/{doc_chunk_id}")
     if doc_fetch_response.status_code == 404:
-        return None
+        return False
 
     if doc_fetch_response.status_code != 200:
         raise RuntimeError(
             f"Unexpected fetch document by ID value from Vespa "
             f"with error {doc_fetch_response.status_code}"
         )
-
-    doc_fields = doc_fetch_response.json()["fields"]
-    allowed_users = doc_fields.get(ALLOWED_USERS)
-    allowed_groups = doc_fields.get(ALLOWED_GROUPS)
-    # Add group permission later, empty list gets saved/loaded as a null
-    if allowed_users is None:
-        raise RuntimeError(
-            "Vespa Index is corrupted, Document found with no access lists."
-        )
-    return CrossConnectorDocumentMetadata(
-        allowed_users=allowed_users or [],
-        allowed_user_groups=allowed_groups or [],
-        already_in_index=True,
-    )
+    return True
 
 
 def _get_vespa_chunk_ids_by_document_id(
@@ -127,41 +109,29 @@ def _delete_vespa_doc_chunks(document_id: str) -> bool:
 
 
 def _index_vespa_chunks(
-    chunks: list[IndexChunk],
-    index_attempt_metadata: IndexAttemptMetadata,
+    chunks: list[DocMetadataAwareIndexChunk],
 ) -> set[DocumentInsertionRecord]:
     json_header = {
         "Content-Type": "application/json",
     }
     insertion_records: set[DocumentInsertionRecord] = set()
-    cross_connector_document_metadata_map: dict[
-        str, CrossConnectorDocumentMetadata
-    ] = {}
     # document ids of documents that existed BEFORE this indexing
     already_existing_documents: set[str] = set()
     for chunk in chunks:
         document = chunk.source_document
-        (
-            cross_connector_document_metadata_map,
-            should_delete_doc,
-        ) = update_cross_connector_document_metadata_map(
-            chunk=chunk,
-            cross_connector_document_metadata_map=cross_connector_document_metadata_map,
-            doc_store_cross_connector_document_metadata_fetch_fn=_get_vespa_document_cross_connector_metadata,
-            index_attempt_metadata=index_attempt_metadata,
-        )
+        # No minichunk documents in vespa, minichunk vectors are stored in the chunk itself
+        vespa_chunk_id = str(get_uuid_from_chunk(chunk))
 
-        if should_delete_doc:
-            # Processing the first chunk of the doc and the doc exists
+        # Delete all chunks related to the document if (1) it already exists and
+        # (2) this is our first time running into it during this indexing attempt
+        chunk_exists = _does_document_exist(vespa_chunk_id)
+        if chunk_exists and document.id not in already_existing_documents:
             deletion_success = _delete_vespa_doc_chunks(document.id)
             if not deletion_success:
                 raise RuntimeError(
                     f"Failed to delete pre-existing chunks for with document with id: {document.id}"
                 )
             already_existing_documents.add(document.id)
-
-        # No minichunk documents in vespa, minichunk vectors are stored in the chunk itself
-        vespa_chunk_id = str(get_uuid_from_chunk(chunk))
 
         embeddings = chunk.embeddings
         embeddings_name_vector_map = {"full_chunk": embeddings.full_embedding}
@@ -183,12 +153,10 @@ def _index_vespa_chunks(
             METADATA: json.dumps(document.metadata),
             EMBEDDINGS: embeddings_name_vector_map,
             BOOST: DEFAULT_BOOST,
-            ALLOWED_USERS: cross_connector_document_metadata_map[
-                document.id
-            ].allowed_users,
-            ALLOWED_GROUPS: cross_connector_document_metadata_map[
-                document.id
-            ].allowed_user_groups,
+            # the only `set` vespa has is `weightedset`, so we have to give each
+            # element an arbitrary weight
+            ACCESS_CONTROL_LIST: {acl_entry: 1 for acl_entry in chunk.access.to_acl()},
+            DOCUMENT_SETS: {document_set: 1 for document_set in chunk.document_sets},
         }
 
         def _index_chunk(
@@ -244,16 +212,13 @@ def _index_vespa_chunks(
 def _build_vespa_filters(
     user_id: UUID | None, filters: list[IndexFilter] | None
 ) -> str:
-    filter_str = ""
-    # Permissions filter
-    # TODO group permissioning
+    # Permissions filters
+    acl_filter_stmts = [f'{ACCESS_CONTROL_LIST} contains "{PUBLIC_DOC_PAT}"']
     if user_id:
-        filter_str += (
-            f'({ALLOWED_USERS} contains "{user_id}" or '
-            f'{ALLOWED_USERS} contains "{PUBLIC_DOC_PAT}") and '
-        )
-    else:
-        filter_str += f'{ALLOWED_USERS} contains "{PUBLIC_DOC_PAT}" and '
+        acl_filter_stmts.append(f'{ACCESS_CONTROL_LIST} contains "{user_id}"')
+    filter_str = "(" + " or ".join(acl_filter_stmts) + ") and"
+
+    # TODO: have document sets passed in + add document set based filters
 
     # Provided query filters
     if filters:
@@ -399,31 +364,38 @@ class VespaIndex(DocumentIndex):
 
     def index(
         self,
-        chunks: list[IndexChunk],
-        index_attempt_metadata: IndexAttemptMetadata,
+        chunks: list[DocMetadataAwareIndexChunk],
     ) -> set[DocumentInsertionRecord]:
-        return _index_vespa_chunks(
-            chunks=chunks, index_attempt_metadata=index_attempt_metadata
-        )
+        return _index_vespa_chunks(chunks=chunks)
 
     def update(self, update_requests: list[UpdateRequest]) -> None:
-        logger.info(
-            f"Updating {len(update_requests)} documents' allowed_users in Vespa"
-        )
+        logger.info(f"Updating {len(update_requests)} documents in Vespa")
 
         json_header = {"Content-Type": "application/json"}
 
         for update_request in update_requests:
-            if update_request.boost is None and update_request.allowed_users is None:
+            if (
+                update_request.boost is None
+                and update_request.access is None
+                and update_request.document_sets is None
+            ):
                 logger.error("Update request received but nothing to update")
                 continue
 
             update_dict: dict[str, dict] = {"fields": {}}
             if update_request.boost is not None:
                 update_dict["fields"][BOOST] = {"assign": update_request.boost}
-            if update_request.allowed_users is not None:
-                update_dict["fields"][ALLOWED_USERS] = {
-                    "assign": update_request.allowed_users
+            if update_request.document_sets is not None:
+                update_dict["fields"][DOCUMENT_SETS] = {
+                    "assign": {
+                        document_set: 1 for document_set in update_request.document_sets
+                    }
+                }
+            if update_request.access is not None:
+                update_dict["fields"][ACCESS_CONTROL_LIST] = {
+                    "assign": {
+                        acl_entry: 1 for acl_entry in update_request.access.to_acl()
+                    }
                 }
 
             for document_id in update_request.document_ids:

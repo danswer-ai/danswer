@@ -8,7 +8,7 @@ from qdrant_client.http.models import Filter
 from qdrant_client.http.models import MatchAny
 from qdrant_client.http.models import MatchValue
 
-from danswer.chunking.models import IndexChunk
+from danswer.chunking.models import DocMetadataAwareIndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import NUM_RETURNED_HITS
@@ -16,7 +16,6 @@ from danswer.configs.constants import ALLOWED_USERS
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
-from danswer.connectors.models import IndexAttemptMetadata
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
 from danswer.datastores.interfaces import DocumentInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
@@ -126,12 +125,10 @@ class QdrantIndex(VectorIndex):
 
     def index(
         self,
-        chunks: list[IndexChunk],
-        index_attempt_metadata: IndexAttemptMetadata,
+        chunks: list[DocMetadataAwareIndexChunk],
     ) -> set[DocumentInsertionRecord]:
         return index_qdrant_chunks(
             chunks=chunks,
-            index_attempt_metadata=index_attempt_metadata,
             collection=self.collection,
             client=self.client,
         )
@@ -145,12 +142,15 @@ class QdrantIndex(VectorIndex):
                 items=update_request.document_ids,
                 batch_size=_BATCH_SIZE,
             ):
+                if update_request.access is None:
+                    continue
+
                 chunk_ids = _get_points_from_document_ids(
                     doc_id_batch, self.collection, self.client
                 )
                 self.client.set_payload(
                     collection_name=self.collection,
-                    payload={ALLOWED_USERS: update_request.allowed_users},
+                    payload={ALLOWED_USERS: update_request.access.to_acl()},
                     points=chunk_ids,
                 )
 
