@@ -14,6 +14,7 @@ import {
   SlabIcon,
   SlackIcon,
   ZulipIcon,
+  HubSpotIcon,
 } from "./icons/icons";
 
 interface SourceMetadata {
@@ -107,6 +108,12 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: LinearIcon,
         displayName: "Linear",
         adminPageLink: "/admin/connectors/linear",
+      };
+    case "hubspot":
+      return {
+        icon: HubSpotIcon,
+        displayName: "HubSpot",
+        adminPageLink: "/admin/connectors/hubspot",
       };
     default:
       throw new Error("Invalid source type");

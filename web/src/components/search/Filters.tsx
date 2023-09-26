@@ -19,6 +19,7 @@ const sources: Source[] = [
   { displayName: "Notion", internalName: "notion" },
   { displayName: "Zulip", internalName: "zulip" },
   { displayName: "Linear", internalName: "linear" },
+  { displayName: "HubSpot", internalName: "hubspot" },
 ];
 
 interface SourceSelectorProps {

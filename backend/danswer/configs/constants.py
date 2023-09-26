@@ -56,6 +56,7 @@ class DocumentSource(str, Enum):
     NOTION = "notion"
     ZULIP = "zulip"
     LINEAR = "linear"
+    HUBSPOT = "hubspot"
 
 
 class DocumentIndexType(str, Enum):
