@@ -1,4 +1,5 @@
 import os
+from typing import cast
 
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
@@ -18,7 +19,7 @@ def fetch_tokens() -> SlackBotTokens:
     dynamic_config_store = get_dynamic_config_store()
     try:
         return SlackBotTokens(
-            **dynamic_config_store.load(key=_SLACK_BOT_TOKENS_CONFIG_KEY)
+            **cast(dict, dynamic_config_store.load(key=_SLACK_BOT_TOKENS_CONFIG_KEY))
         )
     except ConfigNotFoundError as e:
         raise ValueError from e
