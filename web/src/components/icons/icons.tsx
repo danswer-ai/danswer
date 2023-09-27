@@ -31,6 +31,8 @@ import {
   FiAlertTriangle,
   FiZoomIn,
   FiCopy,
+  FiBookmark,
+  FiCpu,
 } from "react-icons/fi";
 import { SiBookstack } from "react-icons/si";
 import Image from "next/image";
@@ -242,6 +244,20 @@ export const CopyIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <FiCopy size={size} className={className} />;
+};
+
+export const BookmarkIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiBookmark size={size} className={className} />;
+};
+
+export const CPUIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiCpu size={size} className={className} />;
 };
 
 //

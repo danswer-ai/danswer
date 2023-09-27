@@ -9,6 +9,7 @@ import {
   BookstackCredentialJson,
   BookstackConfig,
   ConnectorIndexingStatus,
+  Credential,
 } from "@/lib/types";
 import useSWR, { useSWRConfig } from "swr";
 import { fetcher } from "@/lib/fetcher";
@@ -60,9 +61,10 @@ const Main = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "bookstack"
   );
-  const bookstackCredential = credentialsData.filter(
-    (credential) => credential.credential_json?.bookstack_api_token_id
-  )[0];
+  const bookstackCredential: Credential<BookstackCredentialJson> | undefined =
+    credentialsData.find(
+      (credential) => credential.credential_json?.bookstack_api_token_id
+    );
 
   return (
     <>
@@ -198,21 +200,14 @@ const Main = () => {
               </p>
               <ConnectorForm<BookstackConfig>
                 nameBuilder={(values) => `BookStackConnector`}
+                ccPairNameBuilder={(values) => `BookStackConnector`}
                 source="bookstack"
                 inputType="poll"
                 formBody={<></>}
                 validationSchema={Yup.object().shape({})}
                 initialValues={{}}
                 refreshFreq={10 * 60} // 10 minutes
-                onSubmit={async (isSuccess, responseJson) => {
-                  if (isSuccess && responseJson) {
-                    await linkCredential(
-                      responseJson.id,
-                      bookstackCredential.id
-                    );
-                    mutate("/api/manage/admin/connector/indexing-status");
-                  }
-                }}
+                credentialId={bookstackCredential.id}
               />
             </div>
           </>

@@ -2,6 +2,8 @@ import datetime
 from enum import Enum as PyEnum
 from typing import Any
 from typing import List
+from typing import NotRequired
+from typing import TypedDict
 from uuid import UUID
 
 from fastapi_users.db import SQLAlchemyBaseOAuthAccountTableUUID
@@ -14,6 +16,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import func
 from sqlalchemy import Index
 from sqlalchemy import Integer
+from sqlalchemy import Sequence
 from sqlalchemy import String
 from sqlalchemy import Text
 from sqlalchemy.dialects import postgresql
@@ -78,6 +81,43 @@ class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
     pass
 
 
+"""
+Association tables
+NOTE: must be at the top since they are referenced by other tables
+"""
+
+
+class Persona__DocumentSet(Base):
+    __tablename__ = "persona__document_set"
+
+    persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id"), primary_key=True)
+    document_set_id: Mapped[int] = mapped_column(
+        ForeignKey("document_set.id"), primary_key=True
+    )
+
+
+class DocumentSet__ConnectorCredentialPair(Base):
+    __tablename__ = "document_set__connector_credential_pair"
+
+    document_set_id: Mapped[int] = mapped_column(
+        ForeignKey("document_set.id"), primary_key=True
+    )
+    connector_credential_pair_id: Mapped[int] = mapped_column(
+        ForeignKey("connector_credential_pair.id"), primary_key=True
+    )
+    # if `True`, then is part of the current state of the document set
+    # if `False`, then is a part of the prior state of the document set
+    # rows with `is_current=False` should be deleted when the document
+    # set is updated and should not exist for a given document set if
+    # `DocumentSet.is_up_to_date == True`
+    is_current: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        primary_key=True,
+    )
+
+
 class ConnectorCredentialPair(Base):
     """Connectors and Credentials can have a many-to-many relationship
     I.e. A Confluence Connector may have multiple admin users who can run it with their own credentials
@@ -85,6 +125,17 @@ class ConnectorCredentialPair(Base):
     """
 
     __tablename__ = "connector_credential_pair"
+    # NOTE: this `id` column has to use `Sequence` instead of `autoincrement=True`
+    # due to some SQLAlchemy quirks + this not being a primary key column
+    id: Mapped[int] = mapped_column(
+        Integer,
+        Sequence("connector_credential_pair_id_seq"),
+        unique=True,
+        nullable=False,
+    )
+    name: Mapped[str] = mapped_column(
+        String, unique=True, nullable=True
+    )  # nullable for backwards compatability
     connector_id: Mapped[int] = mapped_column(
         ForeignKey("connector.id"), primary_key=True
     )
@@ -105,6 +156,11 @@ class ConnectorCredentialPair(Base):
     )
     credential: Mapped["Credential"] = relationship(
         "Credential", back_populates="connectors"
+    )
+    document_sets: Mapped[List["DocumentSet"]] = relationship(
+        "DocumentSet",
+        secondary=DocumentSet__ConnectorCredentialPair.__table__,
+        back_populates="connector_credential_pairs",
     )
 
 
@@ -242,6 +298,7 @@ class DocumentByConnectorCredentialPair(Base):
     __tablename__ = "document_by_connector_credential_pair"
 
     id: Mapped[str] = mapped_column(ForeignKey("document.id"), primary_key=True)
+    # TODO: transition this to use the ConnectorCredentialPair id directly
     connector_id: Mapped[int] = mapped_column(
         ForeignKey("connector.id"), primary_key=True
     )
@@ -326,6 +383,28 @@ class Document(Base):
     )
 
 
+class DocumentSet(Base):
+    __tablename__ = "document_set"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    description: Mapped[str] = mapped_column(String)
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    # whether or not changes to the document set have been propogated
+    is_up_to_date: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    connector_credential_pairs: Mapped[list[ConnectorCredentialPair]] = relationship(
+        "ConnectorCredentialPair",
+        secondary=DocumentSet__ConnectorCredentialPair.__table__,
+        back_populates="document_sets",
+    )
+    personas: Mapped[list["Persona"]] = relationship(
+        "Persona",
+        secondary=Persona__DocumentSet.__table__,
+        back_populates="document_sets",
+    )
+
+
 class ChatSession(Base):
     __tablename__ = "chat_session"
 
@@ -365,6 +444,12 @@ class Persona(Base):
     # If it's updated and no longer latest (should no longer be shown), it is also considered deleted
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    document_sets: Mapped[list[DocumentSet]] = relationship(
+        "DocumentSet",
+        secondary=Persona__DocumentSet.__table__,
+        back_populates="personas",
+    )
+
 
 class ChatMessage(Base):
     __tablename__ = "chat_message"
@@ -389,4 +474,28 @@ class ChatMessage(Base):
     )
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
+    persona: Mapped[Persona | None] = relationship("Persona")
+
+
+class ChannelConfig(TypedDict):
+    """NOTE: is a `TypedDict` so it can be used a type hint for a JSONB column
+    in Postgres"""
+
+    channel_names: list[str]
+    answer_validity_check_enabled: NotRequired[bool]  # not specified => False
+    team_members: NotRequired[list[str]]
+
+
+class SlackBotConfig(Base):
+    __tablename__ = "slack_bot_config"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    persona_id: Mapped[int | None] = mapped_column(
+        ForeignKey("persona.id"), nullable=True
+    )
+    # JSON for flexibility. Contains things like: channel name, team members, etc.
+    channel_config: Mapped[ChannelConfig] = mapped_column(
+        postgresql.JSONB(), nullable=False
+    )
+
     persona: Mapped[Persona | None] = relationship("Persona")

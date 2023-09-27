@@ -165,7 +165,7 @@ const MainSection = () => {
                 mutate("/api/manage/admin/connector/indexing-status")
               }
               onCredentialLink={async (connectorId) => {
-                if (Credential) {
+                if (zulipCredential) {
                   await linkCredential(connectorId, zulipCredential.id);
                   mutate("/api/manage/admin/connector/indexing-status");
                 }
@@ -179,8 +179,10 @@ const MainSection = () => {
         <h2 className="font-bold mb-3">Connect to a New Realm</h2>
         <ConnectorForm<ZulipConfig>
           nameBuilder={(values) => `ZulipConnector-${values.realm_name}`}
+          ccPairNameBuilder={(values) => values.realm_name}
           source="zulip"
           inputType="poll"
+          credentialId={zulipCredential.id}
           formBody={
             <>
               <TextFormField name="realm_name" label="Realm name:" />
@@ -196,12 +198,6 @@ const MainSection = () => {
             realm_url: "",
           }}
           refreshFreq={10 * 60} // 10 minutes
-          onSubmit={async (isSuccess, responseJson) => {
-            if (isSuccess && responseJson) {
-              await linkCredential(responseJson.id, zulipCredential.id);
-              mutate("/api/manage/admin/connector/indexing-status");
-            }
-          }}
         />
       </div>
     </>

@@ -8,12 +8,13 @@ from fastapi import HTTPException
 from fastapi import Request
 from fastapi import Response
 from fastapi import UploadFile
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.background.celery import cleanup_connector_credential_pair_task
-from danswer.background.celery import get_deletion_status
+from danswer.background.celery.celery import cleanup_connector_credential_pair_task
+from danswer.background.celery.deletion_utils import get_deletion_status
 from danswer.background.connector_deletion import (
     get_cleanup_task_id,
 )
@@ -69,6 +70,7 @@ from danswer.server.models import BoostDoc
 from danswer.server.models import BoostUpdateRequest
 from danswer.server.models import ConnectorBase
 from danswer.server.models import ConnectorCredentialPairIdentifier
+from danswer.server.models import ConnectorCredentialPairMetadata
 from danswer.server.models import ConnectorIndexingStatus
 from danswer.server.models import ConnectorSnapshot
 from danswer.server.models import CredentialSnapshot
@@ -316,6 +318,8 @@ def get_connector_indexing_status(
         )
         indexing_statuses.append(
             ConnectorIndexingStatus(
+                cc_pair_id=cc_pair.id,
+                name=cc_pair.name,
                 connector=ConnectorSnapshot.from_connector_db_model(connector),
                 credential=CredentialSnapshot.from_credential_db_model(credential),
                 public_doc=credential.public_doc,
@@ -390,8 +394,11 @@ def delete_connector_by_id(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
-    with db_session.begin():
-        return delete_connector(db_session=db_session, connector_id=connector_id)
+    try:
+        with db_session.begin():
+            return delete_connector(db_session=db_session, connector_id=connector_id)
+    except AssertionError:
+        raise HTTPException(status_code=400, detail="Connector is not deletable")
 
 
 @router.post("/admin/connector/run-once")
@@ -650,10 +657,20 @@ def get_connector_by_id(
 def associate_credential_to_connector(
     connector_id: int,
     credential_id: int,
+    metadata: ConnectorCredentialPairMetadata,
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
-    return add_credential_to_connector(connector_id, credential_id, user, db_session)
+    try:
+        return add_credential_to_connector(
+            connector_id=connector_id,
+            credential_id=credential_id,
+            cc_pair_name=metadata.name,
+            user=user,
+            db_session=db_session,
+        )
+    except IntegrityError:
+        raise HTTPException(status_code=400, detail="Name must be unique")
 
 
 @router.delete("/connector/{connector_id}/credential/{credential_id}")

@@ -52,6 +52,9 @@ WORKDIR /app/danswer/datastores/vespa/app_config
 RUN zip -r /app/danswer/vespa-app.zip .
 WORKDIR /app
 
+# TODO: remove this once all users have migrated
+COPY ./scripts/migrate_vespa_to_acl.py /app/migrate_vespa_to_acl.py
+
 ENV PYTHONPATH /app
 
 # By default this container does nothing, it is used by api server and background which specify their own CMD

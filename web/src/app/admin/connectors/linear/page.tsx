@@ -62,10 +62,10 @@ const Main = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "linear"
   );
-  const linearCredential: Credential<LinearCredentialJson> =
-    credentialsData.filter(
+  const linearCredential: Credential<LinearCredentialJson> | undefined =
+    credentialsData.find(
       (credential) => credential.credential_json?.linear_api_key
-    )[0];
+    );
 
   return (
     <>
@@ -185,18 +185,14 @@ const Main = () => {
               </p>
               <ConnectorForm<{}>
                 nameBuilder={() => "LinearConnector"}
+                ccPairNameBuilder={() => "Linear"}
                 source="linear"
                 inputType="poll"
                 formBody={<></>}
                 validationSchema={Yup.object().shape({})}
                 initialValues={{}}
                 refreshFreq={10 * 60} // 10 minutes
-                onSubmit={async (isSuccess, responseJson) => {
-                  if (isSuccess && responseJson) {
-                    await linkCredential(responseJson.id, linearCredential.id);
-                    mutate("/api/manage/admin/connector/indexing-status");
-                  }
-                }}
+                credentialId={linearCredential.id}
               />
             </div>
           )}

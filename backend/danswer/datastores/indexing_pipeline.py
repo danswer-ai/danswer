@@ -4,17 +4,19 @@ from typing import Protocol
 
 from sqlalchemy.orm import Session
 
+from danswer.access.access import get_access_for_documents
 from danswer.chunking.chunk import Chunker
 from danswer.chunking.chunk import DefaultChunker
 from danswer.chunking.models import DocAwareChunk
-from danswer.chunking.models import IndexChunk
+from danswer.chunking.models import DocMetadataAwareIndexChunk
 from danswer.connectors.models import Document
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.datastores.document_index import get_default_document_index
 from danswer.datastores.interfaces import DocumentIndex
-from danswer.datastores.interfaces import DocumentInsertionRecord
 from danswer.datastores.interfaces import DocumentMetadata
+from danswer.db.document import prepare_to_modify_documents
 from danswer.db.document import upsert_documents_complete
+from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.search.models import Embedder
 from danswer.search.semantic_search import DefaultEmbedder
@@ -30,40 +32,25 @@ class IndexingPipelineProtocol(Protocol):
         ...
 
 
-def _upsert_insertion_records(
-    insertion_records: set[DocumentInsertionRecord],
+def _upsert_documents(
+    document_ids: list[str],
     index_attempt_metadata: IndexAttemptMetadata,
     doc_m_data_lookup: dict[str, tuple[str, str]],
+    db_session: Session,
 ) -> None:
-    with Session(get_sqlalchemy_engine()) as session:
-        upsert_documents_complete(
-            db_session=session,
-            document_metadata_batch=[
-                DocumentMetadata(
-                    connector_id=index_attempt_metadata.connector_id,
-                    credential_id=index_attempt_metadata.credential_id,
-                    document_id=i_r.document_id,
-                    semantic_identifier=doc_m_data_lookup[i_r.document_id][0],
-                    first_link=doc_m_data_lookup[i_r.document_id][1],
-                )
-                for i_r in insertion_records
-            ],
-        )
-
-
-def _get_net_new_documents(
-    insertion_records: list[DocumentInsertionRecord],
-) -> int:
-    net_new_documents = 0
-    seen_documents: set[str] = set()
-    for insertion_record in insertion_records:
-        if insertion_record.already_existed:
-            continue
-
-        if insertion_record.document_id not in seen_documents:
-            net_new_documents += 1
-            seen_documents.add(insertion_record.document_id)
-    return net_new_documents
+    upsert_documents_complete(
+        db_session=db_session,
+        document_metadata_batch=[
+            DocumentMetadata(
+                connector_id=index_attempt_metadata.connector_id,
+                credential_id=index_attempt_metadata.credential_id,
+                document_id=document_id,
+                semantic_identifier=doc_m_data_lookup[document_id][0],
+                first_link=doc_m_data_lookup[document_id][1],
+            )
+            for document_id in document_ids
+        ],
+    )
 
 
 def _extract_minimal_document_metadata(doc: Document) -> tuple[str, str]:
@@ -82,60 +69,60 @@ def _indexing_pipeline(
     """Takes different pieces of the indexing pipeline and applies it to a batch of documents
     Note that the documents should already be batched at this point so that it does not inflate the
     memory requirements"""
-
+    document_ids = [document.id for document in documents]
     document_metadata_lookup = {
         doc.id: _extract_minimal_document_metadata(doc) for doc in documents
     }
 
-    chunks: list[DocAwareChunk] = list(
-        chain(*[chunker.chunk(document=document) for document in documents])
-    )
-    logger.debug(
-        f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in chunks]}"
-    )
-    chunks_with_embeddings = embedder.embed(chunks=chunks)
+    with Session(get_sqlalchemy_engine()) as db_session:
+        # acquires a lock on the documents so that no other process can modify them
+        prepare_to_modify_documents(db_session=db_session, document_ids=document_ids)
 
-    # if there are any empty chunks, remove them. This usually happens due to a
-    # bug in a connector. Handling here to prevent a bad connector from
-    # breaking retrieval completely.
-    final_chunks_with_embeddings: list[IndexChunk] = []
-    for chunk in chunks_with_embeddings:
-        if chunk.content:
-            final_chunks_with_embeddings.append(chunk)
-        else:
-            bad_chunk_link = (
-                chunk.source_document.sections[0].link
-                if chunk.source_document.sections
-                else ""
-            )
-            logger.error(
-                f"Found empty chunk, skipping. Chunk ID: '{chunk.chunk_id}', "
-                f"Document ID: '{chunk.source_document.id}', "
-                f"Document Link: '{bad_chunk_link}'"
-            )
-
-    # A document will not be spread across different batches, so all the documents with chunks in this set, are fully
-    # represented by the chunks in this set
-    insertion_records = document_index.index(
-        chunks=final_chunks_with_embeddings,
-        index_attempt_metadata=index_attempt_metadata,
-    )
-
-    # TODO (chris): remove this try/except after issue with null document_id is resolved
-    try:
-        _upsert_insertion_records(
-            insertion_records=insertion_records,
+        # create records in the source of truth about these documents
+        _upsert_documents(
+            document_ids=document_ids,
             index_attempt_metadata=index_attempt_metadata,
             doc_m_data_lookup=document_metadata_lookup,
+            db_session=db_session,
         )
-    except Exception as e:
-        logger.error(
-            f"Failed to upsert insertion records from vector index for documents: "
-            f"{[document.to_short_descriptor() for document in documents]}, "
-            f"for chunks: {[chunk.to_short_descriptor() for chunk in chunks_with_embeddings]}"
-            f"for insertion records: {insertion_records}"
+
+        chunks: list[DocAwareChunk] = list(
+            chain(*[chunker.chunk(document=document) for document in documents])
         )
-        raise e
+        logger.debug(
+            f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in chunks]}"
+        )
+        chunks_with_embeddings = embedder.embed(chunks=chunks)
+
+        # Attach the latest status from Postgres (source of truth for access) to each
+        # chunk. This access status will be attached to each chunk in the document index
+        # TODO: attach document sets to the chunk based on the status of Postgres as well
+        document_id_to_access_info = get_access_for_documents(
+            document_ids=document_ids, db_session=db_session
+        )
+        document_id_to_document_set = {
+            document_id: document_sets
+            for document_id, document_sets in fetch_document_sets_for_documents(
+                document_ids=document_ids, db_session=db_session
+            )
+        }
+        access_aware_chunks = [
+            DocMetadataAwareIndexChunk.from_index_chunk(
+                index_chunk=chunk,
+                access=document_id_to_access_info[chunk.source_document.id],
+                document_sets=set(
+                    document_id_to_document_set.get(chunk.source_document.id, [])
+                ),
+            )
+            for chunk in chunks_with_embeddings
+        ]
+
+        # A document will not be spread across different batches, so all the
+        # documents with chunks in this set, are fully represented by the chunks
+        # in this set
+        insertion_records = document_index.index(
+            chunks=access_aware_chunks,
+        )
 
     return len([r for r in insertion_records if r.already_existed is False]), len(
         chunks

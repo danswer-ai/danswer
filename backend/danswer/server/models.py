@@ -16,9 +16,11 @@ from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
 from danswer.datastores.interfaces import IndexFilter
+from danswer.db.models import ChannelConfig
 from danswer.db.models import Connector
 from danswer.db.models import Credential
 from danswer.db.models import DeletionStatus
+from danswer.db.models import DocumentSet as DocumentSetDBModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.direct_qa.interfaces import DanswerQuote
@@ -333,6 +335,8 @@ class CredentialSnapshot(CredentialBase):
 class ConnectorIndexingStatus(BaseModel):
     """Represents the latest indexing status of a connector"""
 
+    cc_pair_id: int
+    name: str | None
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
     owner: str
@@ -351,5 +355,83 @@ class ConnectorCredentialPairIdentifier(BaseModel):
     credential_id: int
 
 
+class ConnectorCredentialPairMetadata(BaseModel):
+    name: str | None
+
+
+class ConnectorCredentialPairDescriptor(BaseModel):
+    id: int
+    name: str | None
+    connector: ConnectorSnapshot
+    credential: CredentialSnapshot
+
+
 class ApiKey(BaseModel):
     api_key: str
+
+
+class DocumentSetCreationRequest(BaseModel):
+    name: str
+    description: str
+    cc_pair_ids: list[int]
+
+
+class DocumentSetUpdateRequest(BaseModel):
+    id: int
+    description: str
+    cc_pair_ids: list[int]
+
+
+class DocumentSet(BaseModel):
+    id: int
+    name: str
+    description: str
+    cc_pair_descriptors: list[ConnectorCredentialPairDescriptor]
+    is_up_to_date: bool
+
+    @classmethod
+    def from_model(cls, document_set_model: DocumentSetDBModel) -> "DocumentSet":
+        return cls(
+            id=document_set_model.id,
+            name=document_set_model.name,
+            description=document_set_model.description,
+            cc_pair_descriptors=[
+                ConnectorCredentialPairDescriptor(
+                    id=cc_pair.id,
+                    name=cc_pair.name,
+                    connector=ConnectorSnapshot.from_connector_db_model(
+                        cc_pair.connector
+                    ),
+                    credential=CredentialSnapshot.from_credential_db_model(
+                        cc_pair.credential
+                    ),
+                )
+                for cc_pair in document_set_model.connector_credential_pairs
+            ],
+            is_up_to_date=document_set_model.is_up_to_date,
+        )
+
+
+class SlackBotTokens(BaseModel):
+    bot_token: str
+    app_token: str
+
+
+class SlackBotConfigCreationRequest(BaseModel):
+    # currently, a persona is created for each slack bot config
+    # in the future, `document_sets` will probably be replaced
+    # by an optional `PersonaSnapshot` object. Keeping it like this
+    # for now for simplicity / speed of development
+    document_sets: list[int]
+    channel_names: list[str]
+    answer_validity_check_enabled: bool
+
+
+class SlackBotConfig(BaseModel):
+    id: int
+    # currently, a persona is created for each slack bot config
+    # in the future, `document_sets` will probably be replaced
+    # by an optional `PersonaSnapshot` object. Keeping it like this
+    # for now for simplicity / speed of development
+    document_sets: list[DocumentSet]
+    channel_config: ChannelConfig
