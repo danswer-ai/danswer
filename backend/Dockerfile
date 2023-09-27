@@ -53,7 +53,7 @@ RUN zip -r /app/danswer/vespa-app.zip .
 WORKDIR /app
 
 # TODO: remove this once all users have migrated
-COPY ./danswer/scripts/migrate_vespa_to_acl.py /app/migrate_vespa_to_acl.py
+COPY ./scripts/migrate_vespa_to_acl.py /app/migrate_vespa_to_acl.py
 
 ENV PYTHONPATH /app
 
