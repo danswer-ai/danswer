@@ -62,8 +62,9 @@ const Main = () => {
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">Upload Files</h2>
       <p className="text-sm mb-2">
         Specify files below, click the <b>Upload</b> button, and the contents of
-        these files will be searchable via Danswer! Currently only <i>.txt</i>{" "}
-        and <i>.zip</i> files (containing only <i>.txt</i> files) are supported.
+        these files will be searchable via Danswer! Currently only <i>.txt</i>,{" "}
+        <i>.pdf</i> and <i>.zip</i> files (containing only <i>.txt</i> files)
+        are supported.
       </p>
       <div className="text-sm mb-3">
         <b>NOTE:</b> if the original document is accessible via a link, you can
