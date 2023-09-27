@@ -1,3 +1,4 @@
+import requests
 import json
 from typing import Any
 from hubspot import HubSpot
@@ -11,16 +12,38 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
 
-HUBSPOT_BASE_URL = "https://app.hubspot.com/contacts/19928990/record/0-5/"
+HUBSPOT_BASE_URL = "https://app.hubspot.com/contacts/"
+HUBSPOT_API_URL = "https://api.hubapi.com/integrations/v1/me"
+
 logger = setup_logger()
 
 class HubSpotConnector(LoadConnector, PollConnector):
     def __init__(self, batch_size: int = INDEX_BATCH_SIZE, access_token: str | None = None) -> None:
         self.batch_size = batch_size
         self.access_token = access_token
+        self.portal_id = None
+        self.ticket_base_url = HUBSPOT_BASE_URL
+        
+    def get_portal_id(self) -> str:
+        headers = {
+            'Authorization': f'Bearer {self.access_token}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.get(HUBSPOT_API_URL, headers=headers)
+        if response.status_code != 200:
+            raise Exception("Error fetching portal ID")
+
+        data = response.json()
+        return data["portalId"]
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         self.access_token = credentials["hubspot_access_token"]
+        
+        if self.access_token:
+            self.portal_id = self.get_portal_id()
+            self.ticket_base_url = f"{HUBSPOT_BASE_URL}{self.portal_id}/ticket/"
+
         return None
 
     def _process_tickets(self) -> GenerateDocumentsOutput:
@@ -33,13 +56,13 @@ class HubSpotConnector(LoadConnector, PollConnector):
         doc_batch: list[Document] = []
         
         for ticket in all_tickets:
-            title = ticket["properties"]["subject"]
-            link = HUBSPOT_BASE_URL + ticket["id"]
-            content_text = title + "\n" + ticket["properties"]["content"]
+            title = ticket.properties["subject"]
+            link = self.ticket_base_url + ticket.id
+            content_text = title + "\n" + ticket.properties["content"]
 
             doc_batch.append(
                 Document(
-                    id=ticket["id"],
+                    id=ticket.id,
                     sections=[Section(link=link, text=content_text)],
                     source=DocumentSource.HUBSPOT,
                     semantic_identifier=title,
