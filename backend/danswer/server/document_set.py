@@ -5,9 +5,9 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.db.document_set import delete_document_set as delete_document_set_from_db
 from danswer.db.document_set import fetch_document_sets
 from danswer.db.document_set import insert_document_set
+from danswer.db.document_set import mark_document_set_as_to_be_deleted
 from danswer.db.document_set import update_document_set
 from danswer.db.engine import get_session
 from danswer.db.models import User
@@ -61,7 +61,7 @@ def delete_document_set(
     db_session: Session = Depends(get_session),
 ) -> None:
     try:
-        delete_document_set_from_db(
+        mark_document_set_as_to_be_deleted(
             document_set_id=document_set_id, db_session=db_session
         )
     except Exception as e:

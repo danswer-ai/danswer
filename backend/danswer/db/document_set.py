@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import and_
 from sqlalchemy import delete
 from sqlalchemy import func
+from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -101,8 +102,14 @@ def update_document_set(
         )
         if document_set_row is None:
             raise ValueError(
-                f"No document set with ID {document_set_update_request.id}"
+                f"No document set with ID '{document_set_update_request.id}'"
             )
+        if not document_set_row.is_up_to_date:
+            raise ValueError(
+                "Cannot update document set while it is syncing. Please wait "
+                "for it to finish syncing, and then try again."
+            )
+
         document_set_row.description = document_set_update_request.description
         document_set_row.is_up_to_date = False
 
@@ -144,7 +151,23 @@ def mark_document_set_as_synced(document_set_id: int, db_session: Session) -> No
     db_session.commit()
 
 
-def delete_document_set(document_set_id: int, db_session: Session) -> None:
+def delete_document_set(
+    document_set_row: DocumentSetDBModel, db_session: Session
+) -> None:
+    # delete all relationships to CC pairs
+    _delete_document_set_cc_pairs(
+        db_session=db_session, document_set_id=document_set_row.id
+    )
+    db_session.delete(document_set_row)
+    db_session.commit()
+
+
+def mark_document_set_as_to_be_deleted(
+    document_set_id: int, db_session: Session
+) -> None:
+    """Cleans up all document_set -> cc_pair relationships and marks the document set
+    as needing an update. The actual document set row will be deleted by the background
+    job which syncs these changes to Vespa."""
     # start a transaction
     db_session.begin()
 
@@ -154,13 +177,19 @@ def delete_document_set(document_set_id: int, db_session: Session) -> None:
         )
         if document_set_row is None:
             raise ValueError(f"No document set with ID: '{document_set_id}'")
+        if not document_set_row.is_up_to_date:
+            raise ValueError(
+                "Cannot delete document set while it is syncing. Please wait "
+                "for it to finish syncing, and then try again."
+            )
 
         # delete all relationships to CC pairs
         _delete_document_set_cc_pairs(
             db_session=db_session, document_set_id=document_set_id
         )
-        # delete the actual document set row
-        db_session.delete(document_set_row)
+        # mark the row as needing a sync, it will be deleted there since there
+        # are no more relationships to cc pairs
+        document_set_row.is_up_to_date = False
         db_session.commit()
     except:
         db_session.rollback()
@@ -174,21 +203,27 @@ def fetch_document_sets(
     1. The document set itself
     2. All CC pairs associated with the document set"""
     results = cast(
-        list[tuple[DocumentSetDBModel, ConnectorCredentialPair]],
+        list[tuple[DocumentSetDBModel, ConnectorCredentialPair | None]],
         db_session.execute(
             select(DocumentSetDBModel, ConnectorCredentialPair)
             .join(
                 DocumentSet__ConnectorCredentialPair,
                 DocumentSetDBModel.id
                 == DocumentSet__ConnectorCredentialPair.document_set_id,
+                isouter=True,  # outer join is needed to also fetch document sets with no cc pairs
             )
             .join(
                 ConnectorCredentialPair,
                 ConnectorCredentialPair.id
                 == DocumentSet__ConnectorCredentialPair.connector_credential_pair_id,
+                isouter=True,  # outer join is needed to also fetch document sets with no cc pairs
             )
             .where(
-                DocumentSet__ConnectorCredentialPair.is_current == True  # noqa: E712
+                or_(
+                    DocumentSet__ConnectorCredentialPair.is_current
+                    == True,  # noqa: E712
+                    DocumentSet__ConnectorCredentialPair.is_current.is_(None),
+                )
             )
         ).all(),
     )
@@ -198,9 +233,13 @@ def fetch_document_sets(
     ] = {}
     for document_set, cc_pair in results:
         if document_set.id not in aggregated_results:
-            aggregated_results[document_set.id] = (document_set, [cc_pair])
+            aggregated_results[document_set.id] = (
+                document_set,
+                [cc_pair] if cc_pair else [],
+            )
         else:
-            aggregated_results[document_set.id][1].append(cc_pair)
+            if cc_pair:
+                aggregated_results[document_set.id][1].append(cc_pair)
 
     return [
         (document_set, cc_pairs)

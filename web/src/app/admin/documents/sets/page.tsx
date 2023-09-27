@@ -4,7 +4,12 @@ import { Button } from "@/components/Button";
 import { LoadingAnimation, ThreeDotsLoader } from "@/components/Loading";
 import { PageSelector } from "@/components/PageSelector";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
-import { BookmarkIcon, EditIcon, TrashIcon } from "@/components/icons/icons";
+import {
+  BookmarkIcon,
+  EditIcon,
+  InfoIcon,
+  TrashIcon,
+} from "@/components/icons/icons";
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 import { ConnectorIndexingStatus, DocumentSet } from "@/lib/types";
 import { useState } from "react";
@@ -28,8 +33,9 @@ const EditRow = ({
   refreshDocumentSets: () => void;
 }) => {
   const [isEditPopupOpen, setEditPopupOpen] = useState(false);
+  const [isSyncingTooltipOpen, setIsSyncingTooltipOpen] = useState(false);
   return (
-    <>
+    <div className="relative flex">
       {isEditPopupOpen && (
         <DocumentSetCreationForm
           ccPairs={ccPairs}
@@ -41,13 +47,36 @@ const EditRow = ({
           existingDocumentSet={documentSet}
         />
       )}
+      {isSyncingTooltipOpen && (
+        <div className="flex flex-nowrap absolute w-64 top-0 left-0 mt-8 bg-gray-700 px-3 py-2 rounded shadow-lg">
+          <InfoIcon className="mt-1 flex flex-shrink-0 mr-2 text-gray-300" />{" "}
+          Cannot update while syncing! Wait for the sync to finish, then try
+          again.
+        </div>
+      )}
       <div
-        className="cursor-pointer my-auto"
-        onClick={() => setEditPopupOpen(true)}
+        className={
+          "my-auto" + (documentSet.is_up_to_date ? " cursor-pointer" : "")
+        }
+        onClick={() => {
+          if (documentSet.is_up_to_date) {
+            setEditPopupOpen(true);
+          }
+        }}
+        onMouseEnter={() => {
+          if (!documentSet.is_up_to_date) {
+            setIsSyncingTooltipOpen(true);
+          }
+        }}
+        onMouseLeave={() => {
+          if (!documentSet.is_up_to_date) {
+            setIsSyncingTooltipOpen(false);
+          }
+        }}
       >
         <EditIcon />
       </div>
-    </>
+    </div>
   );
 };
 
@@ -100,6 +129,7 @@ const DocumentSetTable = ({
           },
         ]}
         data={documentSets
+          .filter((documentSet) => documentSet.cc_pair_descriptors.length > 0)
           .slice((page - 1) * numToDisplay, page * numToDisplay)
           .map((documentSet) => {
             return {
@@ -156,7 +186,7 @@ const DocumentSetTable = ({
                         type: "success",
                       });
                     } else {
-                      const errorMsg = await response.text();
+                      const errorMsg = (await response.json()).detail;
                       setPopup({
                         message: `Failed to delete document set - ${errorMsg}`,
                         type: "error",

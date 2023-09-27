@@ -1,13 +1,18 @@
+from typing import cast
+
 from sqlalchemy.orm import Session
 
 from danswer.datastores.document_index import get_default_document_index
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import UpdateRequest
 from danswer.db.document import prepare_to_modify_documents
+from danswer.db.document_set import delete_document_set
 from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.document_set import fetch_documents_for_document_set
+from danswer.db.document_set import get_document_set_by_id
 from danswer.db.document_set import mark_document_set_as_synced
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.models import DocumentSet
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 
@@ -59,7 +64,21 @@ def sync_document_set(document_set_id: int) -> None:
                 document_index=document_index,
             )
 
-        mark_document_set_as_synced(
-            document_set_id=document_set_id, db_session=db_session
-        )
-    logger.info(f"Document set sync for '{document_set_id}' complete!")
+        # if there are no connectors, then delete the document set. Otherwise, just
+        # mark it as successfully synced.
+        document_set = cast(
+            DocumentSet,
+            get_document_set_by_id(
+                db_session=db_session, document_set_id=document_set_id
+            ),
+        )  # casting since we "know" a document set with this ID exists
+        if not document_set.connector_credential_pairs:
+            delete_document_set(document_set_row=document_set, db_session=db_session)
+            logger.info(
+                f"Successfully deleted document set with ID: '{document_set_id}'!"
+            )
+        else:
+            mark_document_set_as_synced(
+                document_set_id=document_set_id, db_session=db_session
+            )
+            logger.info(f"Document set sync for '{document_set_id}' complete!")
