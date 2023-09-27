@@ -162,13 +162,22 @@ _For Windows:_
 powershell -Command " $env:PYTHONPATH='.'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/update.py "
 ```
 
-To run the background job which handles deletion of connectors, navigate to `danswer/backend` and run:
+To run the background job to check for periodically check for document set updates, navigate to `danswer/backend` and run:
 ```bash
-PYTHONPATH=. DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/connector_deletion.py
+PYTHONPATH=. DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/document_set_sync_script.py
 ```
 _For Windows:_
 ```bash
-powershell -Command " $env:PYTHONPATH='.'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/connector_deletion.py "
+powershell -Command " $env:PYTHONPATH='.'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/document_set_sync_script.py "
+```
+
+To run Celery, which handles deletion of connectors + syncing of document sets, navigate to `danswer/backend` and run:
+```bash
+PYTHONPATH=. DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage celery -A  danswer.background.celery worker --loglevel=info --concurrency=1
+```
+_For Windows:_
+```bash
+powershell -Command " $env:PYTHONPATH='.'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; celery -A  danswer.background.celery worker --loglevel=info --concurrency=1 "
 ```
 
 Note: if you need finer logging, add the additional environment variable `LOG_LEVEL=DEBUG` to the relevant services.
