@@ -69,6 +69,7 @@ class NotionConnector(LoadConnector, PollConnector):
         self,
         batch_size: int = INDEX_BATCH_SIZE,
         recursive_index_enabled: bool = NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP,
+        root_page_id: str | None = None,
     ) -> None:
         """Initialize with parameters."""
         self.batch_size = batch_size
@@ -85,6 +86,7 @@ class NotionConnector(LoadConnector, PollConnector):
         # all pages regardless of if they are updated. If the notion workspace is
         # very large, this may not be practical.
         self.recursive_index_enabled = recursive_index_enabled
+        self.root_page_id = root_page_id
 
     @retry(tries=3, delay=1, backoff=2)
     def _fetch_blocks(self, block_id: str, cursor: str | None = None) -> dict[str, Any]:
@@ -243,6 +245,20 @@ class NotionConnector(LoadConnector, PollConnector):
                 filtered_pages += [NotionPage(**page)]
         return filtered_pages
 
+    def _recursive_load(self):
+        if self.root_page_id is None or not self.recursive_index_enabled:
+            raise RuntimeError(
+                "Recursive page lookup is not enabled, but we are trying to "
+                "recursively load pages. This should never happen."
+            )
+
+        logger.info(
+            "Recursively loading pages from Notion based on root page with "
+            f"ID: {self.root_page_id}"
+        )
+        pages = [self._fetch_page(page_id=self.root_page_id)]
+        yield from batch_generator(self._read_pages(pages), self.batch_size)
+
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         """Applies integration token to headers"""
         self.headers[
@@ -256,6 +272,11 @@ class NotionConnector(LoadConnector, PollConnector):
         Returns:
             list[Document]: list of documents.
         """
+        # TODO: remove once Notion search issue is discovered
+        if self.recursive_index_enabled and self.root_page_id:
+            yield from self._recursive_load()
+            return
+
         query_dict = {
             "filter": {"property": "object", "value": "page"},
             "page_size": self.batch_size,
@@ -278,6 +299,11 @@ class NotionConnector(LoadConnector, PollConnector):
         so until they add that, we're just going to page through results until,
         we reach ones that are older than our search criteria.
         """
+        # TODO: remove once Notion search issue is discovered
+        if self.recursive_index_enabled and self.root_page_id:
+            yield from self._recursive_load()
+            return
+
         query_dict = {
             "page_size": self.batch_size,
             "sort": {"timestamp": "last_edited_time", "direction": "descending"},
@@ -299,7 +325,8 @@ class NotionConnector(LoadConnector, PollConnector):
 if __name__ == "__main__":
     import os
 
-    connector = NotionConnector()
+    root_page_id = os.environ.get("NOTION_ROOT_PAGE_ID")
+    connector = NotionConnector(root_page_id=root_page_id)
     connector.load_credentials(
         {"notion_integration_token": os.environ.get("NOTION_INTEGRATION_TOKEN")}
     )
