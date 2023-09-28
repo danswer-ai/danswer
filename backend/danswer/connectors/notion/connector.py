@@ -245,7 +245,7 @@ class NotionConnector(LoadConnector, PollConnector):
                 filtered_pages += [NotionPage(**page)]
         return filtered_pages
 
-    def _recursive_load(self):
+    def _recursive_load(self) -> Generator[list[Document], None, None]:
         if self.root_page_id is None or not self.recursive_index_enabled:
             raise RuntimeError(
                 "Recursive page lookup is not enabled, but we are trying to "
@@ -275,7 +275,6 @@ class NotionConnector(LoadConnector, PollConnector):
         # TODO: remove once Notion search issue is discovered
         if self.recursive_index_enabled and self.root_page_id:
             yield from self._recursive_load()
-            return
 
         query_dict = {
             "filter": {"property": "object", "value": "page"},
@@ -302,7 +301,6 @@ class NotionConnector(LoadConnector, PollConnector):
         # TODO: remove once Notion search issue is discovered
         if self.recursive_index_enabled and self.root_page_id:
             yield from self._recursive_load()
-            return
 
         query_dict = {
             "page_size": self.batch_size,
@@ -331,6 +329,6 @@ if __name__ == "__main__":
         {"notion_integration_token": os.environ.get("NOTION_INTEGRATION_TOKEN")}
     )
     document_batches = connector.load_from_state()
-    batch = next(document_batches)
-    for doc in batch:
-        print(doc)
+    for doc_batch in document_batches:
+        for doc in doc_batch:
+            print(doc)
