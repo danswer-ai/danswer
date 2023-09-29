@@ -40,18 +40,26 @@ def handle_message(
             channel_name=channel_name, db_session=db_session
         )
         document_set_names: list[str] | None = None
-        validity_check_enabled = ENABLE_DANSWERBOT_REFLEXION
         if slack_bot_config and slack_bot_config.persona:
             document_set_names = [
                 document_set.name
                 for document_set in slack_bot_config.persona.document_sets
             ]
-            validity_check_enabled = slack_bot_config.channel_config.get(
-                "answer_validity_check_enabled", validity_check_enabled
-            )
+
+        reflexion = ENABLE_DANSWERBOT_REFLEXION
+        if slack_bot_config and slack_bot_config.channel_config:
+            channel_config = slack_bot_config.channel_config
+            if "answer_filters" in channel_config:
+                reflexion = (
+                    "well_answered_postfilter" in channel_config["answer_filters"]
+                )
+
+            # TODO support the other filter types
+
             logger.info(
                 "Found slack bot config for channel. Restricting bot to use document "
-                f"sets: {document_set_names}, validity check enabled: {validity_check_enabled}"
+                f"sets: {document_set_names}, "
+                f"validity checks enabled: {channel_config['answer_filters']}"
             )
 
     @retry(
@@ -70,7 +78,7 @@ def handle_message(
                 db_session=db_session,
                 answer_generation_timeout=answer_generation_timeout,
                 real_time_flow=False,
-                enable_reflexion=validity_check_enabled,
+                enable_reflexion=reflexion,
             )
             if not answer.error_msg:
                 return answer

@@ -6,9 +6,11 @@ from typing import TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel
+from pydantic import validator
 from pydantic.generics import GenericModel
 
 from danswer.auth.schemas import UserRole
+from danswer.bots.slack.config import VALID_SLACK_FILTERS
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentSource
@@ -434,7 +436,18 @@ class SlackBotConfigCreationRequest(BaseModel):
     # for now for simplicity / speed of development
     document_sets: list[int]
     channel_names: list[str]
-    answer_validity_check_enabled: bool
+    # If not responder_sender_only and no team members, assume respond in the channel to everyone
+    respond_sender_only: bool = False
+    respond_team_member_list: list[str] = []
+    answer_filters: list[str] = []
+
+    @validator("answer_filters", pre=True)
+    def validate_filters(cls, value: list[str]) -> list[str]:
+        if any(test not in VALID_SLACK_FILTERS for test in value):
+            raise ValueError(
+                f"Slack Answer filters must be one of {VALID_SLACK_FILTERS}"
+            )
+        return value
 
 
 class SlackBotConfig(BaseModel):

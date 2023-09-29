@@ -221,6 +221,7 @@ DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER = os.environ.get(
 ).lower() not in ["false", ""]
 # Add a second LLM call post Answer to verify if the Answer is valid
 # Throws out answers that don't directly or fully answer the user query
+# This is the default for all DanswerBot channels unless the bot is configured individually
 ENABLE_DANSWERBOT_REFLEXION = (
     os.environ.get("ENABLE_DANSWERBOT_REFLEXION", "").lower() == "true"
 )
