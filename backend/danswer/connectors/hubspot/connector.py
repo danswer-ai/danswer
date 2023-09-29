@@ -51,7 +51,7 @@ class HubSpotConnector(LoadConnector, PollConnector):
             raise ConnectorMissingCredentialError("HubSpot")
         
         api_client = HubSpot(access_token=self.access_token)
-        all_tickets = api_client.crm.tickets.get_all()
+        all_tickets = api_client.crm.tickets.get_all(associations=['contacts', 'notes'])
 
         doc_batch: list[Document] = []
         
@@ -59,6 +59,28 @@ class HubSpotConnector(LoadConnector, PollConnector):
             title = ticket.properties["subject"]
             link = self.ticket_base_url + ticket.id
             content_text = title + "\n" + ticket.properties["content"]
+
+            associated_emails = []
+            associated_notes = []
+
+            if ticket.associations:
+                contacts = ticket.associations.get("contacts")
+                notes = ticket.associations.get("notes")
+
+                if contacts:
+                    for contact in contacts.results:
+                        contact = api_client.crm.contacts.basic_api.get_by_id(contact_id=contact.id)
+                        associated_emails.append(contact.properties["email"])
+
+                if notes:                   
+                    for note in notes.results:
+                        note = api_client.crm.objects.notes.basic_api.get_by_id(note_id=note.id, properties=["content", "hs_body_preview"])
+                        associated_notes.append(note.properties["hs_body_preview"])
+            
+            associated_emails = " ,".join(associated_emails)
+            associated_notes = " ".join(associated_notes)
+
+            content_text = f"{content_text}\n emails: {associated_emails} \n notes: {associated_notes}"
 
             doc_batch.append(
                 Document(
