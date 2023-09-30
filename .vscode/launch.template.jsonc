@@ -1,3 +1,10 @@
+/*
+
+  Copy this file into '.vscode/launch.json' or merge its
+  contents into your existing configurations.
+
+*/
+
 {
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
@@ -5,7 +12,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Danswer backend",
+            "name": "API Server",
             "type": "python",
             "request": "launch",
             "module": "uvicorn",
@@ -14,7 +21,7 @@
                 "LOG_LEVEL": "DEBUG",
                 "DISABLE_AUTH": "True",
                 "TYPESENSE_API_KEY": "typesense_api_key",
-                "DYNAMIC_CONFIG_DIR_PATH": "./dynamic_config_storage",
+                "DYNAMIC_CONFIG_DIR_PATH": "./dynamic_config_storage"
             },
             "args": [
                 "danswer.main:app",
@@ -24,7 +31,7 @@
             ]
         },
         {
-            "name": "Danswer indexer",
+            "name": "Indexer",
             "type": "python",
             "request": "launch",
             "program": "danswer/background/update.py",
@@ -33,33 +40,43 @@
                 "LOG_LEVEL": "DEBUG",
                 "PYTHONPATH": ".",
                 "TYPESENSE_API_KEY": "typesense_api_key",
-                "DYNAMIC_CONFIG_DIR_PATH": "./dynamic_config_storage",
-            },
+                "DYNAMIC_CONFIG_DIR_PATH": "./dynamic_config_storage"
+            }
         },
         {
-            "name": "Danswer temp files deletion",
+            "name": "Temp File Deletion",
             "type": "python",
             "request": "launch",
             "program": "danswer/background/file_deletion.py",
             "cwd": "${workspaceFolder}/backend",
             "env": {
                 "LOG_LEVEL": "DEBUG",
-                "PYTHONPATH": "${workspaceFolder}/backend",
-            },
+                "PYTHONPATH": "${workspaceFolder}/backend"
+            }
         },
         // For the listner to access the Slack API,
         // DANSWER_BOT_SLACK_APP_TOKEN & DANSWER_BOT_SLACK_BOT_TOKEN need to be set in .env file located in the root of the project
         {
-            "name": "Danswer slack bot listener",
+            "name": "Slack Bot Listener",
             "type": "python",
             "request": "launch",
             "program": "danswer/listeners/slack_listener.py",
             "cwd": "${workspaceFolder}/backend",
             "envFile": "${workspaceFolder}/.env",
             "env": {
-                "LOG_LEVEL": "DEBUG",
-                "PYTHONPATH": ".",
-            },
+                "LOG_LEVEL": "DEBUG"
+            }
+        },
+        {
+            "name": "Web Server",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceRoot}/web",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run", "dev"
+            ],
+            "console": "integratedTerminal"
         }
     ]
 }
