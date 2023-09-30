@@ -203,9 +203,9 @@ const GoogleDriveConnectorManagement = ({
               })(values)}
               <BooleanFormField
                 name="include_shared"
-                label="Include Shared Files"
+                label="Include Shared Files + Shared Drives"
                 subtext={
-                  "If checked, then we will also index all documents shared with you. " +
+                  "If checked, then we will also index all documents + drives shared with you. " +
                   "If this is combined with folder paths, then we will only index documents " +
                   "that match both criteria."
                 }
