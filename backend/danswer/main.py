@@ -216,7 +216,8 @@ def get_application() -> FastAPI:
 
         # TODO: remove this once everyone is migrated to ACL
         logger.info("Populating Access Control List fields in Vespa")
-        set_acl_for_vespa()
+        # does nothing if this has been successfully run before
+        set_acl_for_vespa(should_check_if_already_done=True)
 
     return application
 
