@@ -35,27 +35,47 @@ def get_web_client() -> WebClient:
 def respond_in_thread(
     client: WebClient,
     channel: str,
-    thread_ts: str,
+    thread_ts: str | None,
     text: str | None = None,
     blocks: list[Block] | None = None,
+    receiver_ids: list[str] | None = None,
     metadata: Metadata | None = None,
     unfurl: bool = True,
 ) -> None:
     if not text and not blocks:
         raise ValueError("One of `text` or `blocks` must be provided")
 
-    slack_call = make_slack_api_rate_limited(client.chat_postMessage)
-    response = slack_call(
-        channel=channel,
-        text=text,
-        blocks=blocks,
-        thread_ts=thread_ts,
-        metadata=metadata,
-        unfurl_links=unfurl,
-        unfurl_media=unfurl,
-    )
-    if not response.get("ok"):
-        raise RuntimeError(f"Unable to post message: {response}")
+    if not receiver_ids:
+        slack_call = make_slack_api_rate_limited(client.chat_postMessage)
+    else:
+        slack_call = make_slack_api_rate_limited(client.chat_postEphemeral)
+
+    if not receiver_ids:
+        response = slack_call(
+            channel=channel,
+            text=text,
+            blocks=blocks,
+            thread_ts=thread_ts,
+            metadata=metadata,
+            unfurl_links=unfurl,
+            unfurl_media=unfurl,
+        )
+        if not response.get("ok"):
+            raise RuntimeError(f"Failed to post message: {response}")
+    else:
+        for receiver in receiver_ids:
+            response = slack_call(
+                channel=channel,
+                user=receiver,
+                text=text,
+                blocks=blocks,
+                thread_ts=thread_ts,
+                metadata=metadata,
+                unfurl_links=unfurl,
+                unfurl_media=unfurl,
+            )
+            if not response.get("ok"):
+                raise RuntimeError(f"Failed to post message: {response}")
 
 
 def build_feedback_block_id(
@@ -136,3 +156,21 @@ def get_channel_from_id(client: WebClient, channel_id: str) -> dict[str, Any]:
 
 def get_channel_name_from_id(client: WebClient, channel_id: str) -> str:
     return get_channel_from_id(client, channel_id)["name"]
+
+
+def fetch_userids_from_emails(user_emails: list[str], client: WebClient) -> list[str]:
+    user_ids: list[str] = []
+    for email in user_emails:
+        try:
+            user = client.users_lookupByEmail(email=email)
+            user_ids.append(user.data["user"]["id"])  # type: ignore
+        except Exception:
+            logger.error(f"Was not able to find slack user by email: {email}")
+
+    if not user_ids:
+        raise RuntimeError(
+            "Was not able to find any Slack users to respond to. "
+            "No email was parsed into a valid slack account."
+        )
+
+    return user_ids

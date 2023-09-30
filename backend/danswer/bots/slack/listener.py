@@ -1,4 +1,5 @@
 import logging
+import re
 from collections.abc import MutableMapping
 from typing import Any
 from typing import cast
@@ -51,42 +52,54 @@ def _get_socket_client() -> SocketModeClient:
 
 def _process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> None:
     logger.info(f"Received Slack request of type: '{req.type}'")
+
     if req.type == "events_api":
         # Acknowledge the request immediately
         response = SocketModeResponse(envelope_id=req.envelope_id)
         client.send_socket_mode_response(response)
 
+        # Verify channel is valid
         event = cast(dict[str, Any], req.payload.get("event", {}))
         channel = cast(str | None, event.get("channel"))
         channel_specific_logger = _ChannelIdAdapter(
             logger, extra={_CHANNEL_ID: channel}
         )
-
-        # Ensure that the message is a new message + of expected type
-        event_type = event.get("type")
-        if event_type != "message":
-            channel_specific_logger.info(
-                f"Ignoring non-message event of type '{event_type}' for channel '{channel}'"
-            )
-
         # this should never happen, but we can't continue without a channel since
         # we can't send a response without it
         if not channel:
             channel_specific_logger.error("Found message without channel - skipping")
             return
 
-        message_subtype = event.get("subtype")
-        # ignore things like channel_join, channel_leave, etc.
-        # NOTE: "file_share" is just a message with a file attachment, so we
-        # should not ignore it
-        if message_subtype not in [None, "file_share"]:
+        event = cast(dict[str, Any], req.payload.get("event", {}))
+
+        # Ensure that the message is a new message + of expected type
+        event_type = event.get("type")
+        if event_type not in ["app_mention", "message"]:
             channel_specific_logger.info(
-                f"Ignoring message with subtype '{message_subtype}' since is is a special message type"
+                f"Ignoring non-message event of type '{event_type}' for channel '{channel}'"
+            )
+            return
+
+        # Don't insert Danswer thoughts if there's already a long conversation
+        # Or if a bunch of blocks already came through from responding to the @DanswerBot tag
+        if len(event.get("blocks", [])) > 10:
+            channel_specific_logger.debug(
+                "Ignoring message because thread is already long or has been answered to."
             )
             return
 
         if event.get("bot_profile"):
             channel_specific_logger.info("Ignoring message from bot")
+            return
+
+        # Ignore things like channel_join, channel_leave, etc.
+        # NOTE: "file_share" is just a message with a file attachment, so we
+        # should not ignore it
+        message_subtype = event.get("subtype")
+        if message_subtype not in [None, "file_share"]:
+            channel_specific_logger.info(
+                f"Ignoring message with subtype '{message_subtype}' since is is a special message type"
+            )
             return
 
         message_ts = event.get("ts")
@@ -99,10 +112,15 @@ def _process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> No
             )
             return
 
-        msg = cast(str | None, event.get("text"))
+        msg = cast(str, event.get("text", ""))
         if not msg:
             channel_specific_logger.error("Unable to process empty message")
             return
+
+        tagged = event_type == "app_mention"
+        if tagged:
+            logger.info("User tagged DanswerBot")
+            msg = re.sub(r"<@\w+>\s", "", msg)
 
         # TODO: message should be enqueued and processed elsewhere,
         # but doing it here for now for simplicity
@@ -110,12 +128,50 @@ def _process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> No
             msg=msg,
             channel=channel,
             message_ts_to_respond_to=message_ts_to_respond_to,
+            sender_id=event.get("user") or None,
             client=client.web_client,
+            skip_filters=tagged,
             logger=cast(logging.Logger, channel_specific_logger),
         )
-
         channel_specific_logger.info(
             f"Successfully processed message with ts: '{message_ts}'"
+        )
+
+    if req.type == "slash_commands":
+        # Acknowledge the request immediately
+        response = SocketModeResponse(envelope_id=req.envelope_id)
+        client.send_socket_mode_response(response)
+
+        # Verify that there's an associated channel
+        channel = req.payload.get("channel_id")
+        channel_specific_logger = _ChannelIdAdapter(
+            logger, extra={_CHANNEL_ID: channel}
+        )
+        if not channel:
+            channel_specific_logger.error(
+                "Received DanswerBot command without channel - skipping"
+            )
+            return
+
+        msg = req.payload.get("text", "")
+        sender = req.payload.get("user_id")
+        if not sender:
+            raise ValueError(
+                "Cannot respond to DanswerBot command without sender to respond to."
+            )
+
+        handle_message(
+            msg=msg,
+            channel=channel,
+            message_ts_to_respond_to=None,
+            sender_id=sender,
+            client=client.web_client,
+            skip_filters=True,
+            is_bot_msg=True,
+            logger=cast(logging.Logger, channel_specific_logger),
+        )
+        channel_specific_logger.info(
+            f"Successfully processed DanswerBot request in channel: {req.payload.get('channel_name')}"
         )
 
     # Handle button clicks
