@@ -100,7 +100,9 @@ export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
 interface ColumnSpecification<ConnectorConfigType> {
   header: string;
   key: string;
-  getValue: (connector: Connector<ConnectorConfigType>) => JSX.Element | string;
+  getValue: (
+    connector: Connector<ConnectorConfigType>
+  ) => JSX.Element | string | undefined;
 }
 
 interface ConnectorsTableProps<ConnectorConfigType, ConnectorCredentialType> {

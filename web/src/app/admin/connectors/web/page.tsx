@@ -6,12 +6,20 @@ import * as Yup from "yup";
 import { LoadingAnimation } from "@/components/Loading";
 import { GlobeIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
-import { TextFormField } from "@/components/admin/connectors/Field";
+import {
+  SelectorFormField,
+  TextFormField,
+} from "@/components/admin/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus, WebConfig } from "@/lib/types";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
-import { linkCredential } from "@/lib/credential";
+
+const SCRAPE_TYPE_TO_PRETTY_NAME = {
+  recursive: "Recursive",
+  single: "Single Page",
+  sitemap: "Sitemap",
+};
 
 export default function Web() {
   const { mutate } = useSWRConfig();
@@ -56,15 +64,42 @@ export default function Web() {
           formBody={
             <>
               <TextFormField name="base_url" label="URL to Index:" />
+              <SelectorFormField
+                name="web_connector_type"
+                label="Scrape Method:"
+                options={[
+                  {
+                    name: "Recursive",
+                    value: "recursive",
+                    description:
+                      "Recursively index all pages that share the same base URL.",
+                  },
+                  {
+                    name: "Single Page",
+                    value: "single",
+                    description: "Index only the specified page.",
+                  },
+                  {
+                    name: "Sitemap",
+                    value: "sitemap",
+                    description:
+                      "Assumes the URL to Index points to a Sitemap. Will try and index all pages that are a mentioned in the sitemap.",
+                  },
+                ]}
+              />
             </>
           }
           validationSchema={Yup.object().shape({
             base_url: Yup.string().required(
               "Please enter the website URL to scrape e.g. https://docs.danswer.dev/"
             ),
+            web_connector_type: Yup.string()
+              .oneOf(["recursive", "single", "sitemap"])
+              .optional(),
           })}
           initialValues={{
             base_url: "",
+            web_connector_type: undefined,
           }}
           refreshFreq={60 * 60 * 24} // 1 day
         />
@@ -92,6 +127,16 @@ export default function Web() {
                   {connector.connector_specific_config.base_url}
                 </a>
               ),
+            },
+            {
+              header: "Scrape Method",
+              key: "web_connector_type",
+              getValue: (connector) =>
+                connector.connector_specific_config.web_connector_type
+                  ? SCRAPE_TYPE_TO_PRETTY_NAME[
+                      connector.connector_specific_config.web_connector_type
+                    ]
+                  : "Recursive",
             },
           ]}
           onUpdate={() => mutate("/api/manage/admin/connector/indexing-status")}
