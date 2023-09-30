@@ -75,6 +75,7 @@ def _run_drive_file_query(
         results = (
             service.files()
             .list(
+                corpora="allDrives",  # needed to search through shared drives
                 pageSize=batch_size,
                 supportsAllDrives=include_shared,
                 includeItemsFromAllDrives=include_shared,
@@ -124,6 +125,7 @@ def _get_folder_id(
     else:
         query += f"mimeType='{DRIVE_FOLDER_TYPE}'"
 
+    # TODO: support specifying folder path in shared drive rather than just `My Drive`
     results = (
         service.files()
         .list(
@@ -248,7 +250,7 @@ def get_all_files_batched(
         ),
     )
 
-    if traverse_subfolders:
+    if traverse_subfolders and folder_id is not None:
         folder_ids_traversed = folder_ids_traversed or []
         subfolders = _get_folders(
             service=service,
