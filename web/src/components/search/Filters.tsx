@@ -1,8 +1,16 @@
 import React from "react";
 import { getSourceIcon } from "../source";
 import { Funnel } from "@phosphor-icons/react";
-import { ValidSources } from "@/lib/types";
+import { DocumentSet, ValidSources } from "@/lib/types";
 import { Source } from "@/lib/search/interfaces";
+import {
+  BookmarkIcon,
+  InfoIcon,
+  NotebookIcon,
+  defaultTailwindCSS,
+} from "../icons/icons";
+import { HoverPopup } from "../HoverPopup";
+import { FiFilter } from "react-icons/fi";
 
 const sources: Source[] = [
   { displayName: "Google Drive", internalName: "google_drive" },
@@ -24,12 +32,18 @@ const sources: Source[] = [
 interface SourceSelectorProps {
   selectedSources: Source[];
   setSelectedSources: React.Dispatch<React.SetStateAction<Source[]>>;
+  selectedDocumentSets: string[];
+  setSelectedDocumentSets: React.Dispatch<React.SetStateAction<string[]>>;
+  availableDocumentSets: DocumentSet[];
   existingSources: ValidSources[];
 }
 
 export function SourceSelector({
   selectedSources,
   setSelectedSources,
+  selectedDocumentSets,
+  setSelectedDocumentSets,
+  availableDocumentSets,
   existingSources,
 }: SourceSelectorProps) {
   const handleSelect = (source: Source) => {
@@ -42,34 +56,97 @@ export function SourceSelector({
     });
   };
 
+  const handleDocumentSetSelect = (documentSetName: string) => {
+    setSelectedDocumentSets((prev: string[]) => {
+      if (prev.includes(documentSetName)) {
+        return prev.filter((s) => s !== documentSetName);
+      } else {
+        return [...prev, documentSetName];
+      }
+    });
+  };
+
   return (
-    <div className="bg-gray-900">
-      <div className="flex mb-2 pb-1 pl-2 border-b border-gray-800 mx-2">
+    <div>
+      <div className="flex mb-2 pb-1 border-b border-gray-800">
         <h2 className="font-bold my-auto">Filters</h2>
-        <Funnel className="my-auto ml-2" size="20" />
+        <FiFilter className="my-auto ml-2" size="18" />
       </div>
-      <div className="px-2">
-        {sources
-          .filter((source) => existingSources.includes(source.internalName))
-          .map((source) => (
-            <div
-              key={source.internalName}
-              className={
-                "flex cursor-pointer w-full items-center text-white " +
-                "py-1.5 my-1.5 rounded-lg px-2 " +
-                (selectedSources.includes(source)
-                  ? "bg-gray-700"
-                  : "hover:bg-gray-800")
-              }
-              onClick={() => handleSelect(source)}
-            >
-              {getSourceIcon(source.internalName, 16)}
-              <span className="ml-2 text-sm text-gray-200">
-                {source.displayName}
-              </span>
-            </div>
-          ))}
-      </div>
+
+      {existingSources.length > 0 && (
+        <>
+          <div className="font-medium text-sm flex">Sources</div>
+          <div className="px-1">
+            {sources
+              .filter((source) => existingSources.includes(source.internalName))
+              .map((source) => (
+                <div
+                  key={source.internalName}
+                  className={
+                    "flex cursor-pointer w-full items-center text-white " +
+                    "py-1.5 my-1.5 rounded-lg px-2 " +
+                    (selectedSources.includes(source)
+                      ? "bg-gray-700"
+                      : "hover:bg-gray-800")
+                  }
+                  onClick={() => handleSelect(source)}
+                >
+                  {getSourceIcon(source.internalName, 16)}
+                  <span className="ml-2 text-sm text-gray-200">
+                    {source.displayName}
+                  </span>
+                </div>
+              ))}
+          </div>
+        </>
+      )}
+
+      {availableDocumentSets.length > 0 && (
+        <>
+          <div className="mt-4">
+            <div className="font-medium text-sm flex">Knowledge Sets</div>
+          </div>
+          <div className="px-1">
+            {availableDocumentSets.map((documentSet) => (
+              <div className="my-1.5 flex">
+                <div
+                  key={documentSet.name}
+                  className={
+                    "flex cursor-pointer w-full items-center text-white " +
+                    "py-1.5 rounded-lg px-2 " +
+                    (selectedDocumentSets.includes(documentSet.name)
+                      ? "bg-gray-700"
+                      : "hover:bg-gray-800")
+                  }
+                  onClick={() => handleDocumentSetSelect(documentSet.name)}
+                >
+                  <HoverPopup
+                    mainContent={
+                      <div className="flex my-auto mr-2">
+                        <InfoIcon className={defaultTailwindCSS} />
+                      </div>
+                    }
+                    popupContent={
+                      <div className="text-sm w-64">
+                        <div className="flex font-medium text-gray-200">
+                          Description
+                        </div>
+                        <div className="mt-1 text-gray-300">
+                          {documentSet.description}
+                        </div>
+                      </div>
+                    }
+                    classNameModifications="-ml-2"
+                  />
+                  <span className="text-sm text-gray-200">
+                    {documentSet.name}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
