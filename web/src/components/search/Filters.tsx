@@ -108,7 +108,7 @@ export function SourceSelector({
           </div>
           <div className="px-1">
             {availableDocumentSets.map((documentSet) => (
-              <div className="my-1.5 flex">
+              <div key={documentSet.name} className="my-1.5 flex">
                 <div
                   key={documentSet.name}
                   className={
