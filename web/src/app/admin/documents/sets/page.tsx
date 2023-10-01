@@ -27,7 +27,7 @@ const EditRow = ({
   setPopup,
   refreshDocumentSets,
 }: {
-  documentSet: DocumentSet<any, any>;
+  documentSet: DocumentSet;
   ccPairs: ConnectorIndexingStatus<any, any>[];
   setPopup: (popupSpec: PopupSpec | null) => void;
   refreshDocumentSets: () => void;
@@ -81,7 +81,7 @@ const EditRow = ({
 };
 
 interface DocumentFeedbackTableProps {
-  documentSets: DocumentSet<any, any>[];
+  documentSets: DocumentSet[];
   ccPairs: ConnectorIndexingStatus<any, any>[];
   refresh: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;

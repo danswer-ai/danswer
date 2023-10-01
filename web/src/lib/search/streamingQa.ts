@@ -4,6 +4,7 @@ import {
   SearchRequestArgs,
   SearchType,
 } from "./interfaces";
+import { buildFilters } from "./utils";
 
 const processSingleChunk = (
   chunk: string,
@@ -54,6 +55,7 @@ const processRawChunkString = (
 export const searchRequestStreamed = async ({
   query,
   sources,
+  documentSets,
   updateCurrentAnswer,
   updateQuotes,
   updateDocs,
@@ -73,19 +75,16 @@ export const searchRequestStreamed = async ({
   let quotes: Quote[] | null = null;
   let relevantDocuments: DanswerDocument[] | null = null;
   try {
+    const filters = buildFilters(sources, documentSets);
     const response = await fetch("/api/stream-direct-qa", {
       method: "POST",
       body: JSON.stringify({
         query,
         collection: "danswer_index",
         use_keyword: useKeyword,
-        ...(sources.length > 0
+        ...(filters.length > 0
           ? {
-              filters: [
-                {
-                  source_type: sources.map((source) => source.internalName),
-                },
-              ],
+              filters,
             }
           : {}),
         offset: offset,

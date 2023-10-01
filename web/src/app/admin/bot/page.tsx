@@ -29,7 +29,7 @@ const EditRow = ({
 }: {
   existingSlackBotConfig: SlackBotConfig;
   setPopup: (popupSpec: PopupSpec | null) => void;
-  documentSets: DocumentSet<any, any>[];
+  documentSets: DocumentSet[];
   refreshSlackBotConfigs: () => void;
 }) => {
   const [isEditPopupOpen, setEditPopupOpen] = useState(false);
@@ -58,7 +58,7 @@ const EditRow = ({
 
 interface DocumentFeedbackTableProps {
   slackBotConfigs: SlackBotConfig[];
-  documentSets: DocumentSet<any, any>[];
+  documentSets: DocumentSet[];
   refresh: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
 }

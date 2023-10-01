@@ -222,11 +222,11 @@ export interface CCPairDescriptor<ConnectorType, CredentialType> {
   credential: Credential<CredentialType>;
 }
 
-export interface DocumentSet<ConnectorType, CredentialType> {
+export interface DocumentSet {
   id: number;
   name: string;
   description: string;
-  cc_pair_descriptors: CCPairDescriptor<ConnectorType, CredentialType>[];
+  cc_pair_descriptors: CCPairDescriptor<any, any>[];
   is_up_to_date: boolean;
 }
 
@@ -239,7 +239,7 @@ export interface ChannelConfig {
 
 export interface SlackBotConfig {
   id: number;
-  document_sets: DocumentSet<any, any>[];
+  document_sets: DocumentSet[];
   channel_config: ChannelConfig;
 }
 

@@ -59,6 +59,7 @@ export interface SearchDefaultOverrides {
 export interface SearchRequestArgs {
   query: string;
   sources: Source[];
+  documentSets: string[];
   updateCurrentAnswer: (val: string) => void;
   updateQuotes: (quotes: Quote[]) => void;
   updateDocs: (documents: DanswerDocument[]) => void;

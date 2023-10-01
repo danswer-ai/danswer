@@ -12,7 +12,7 @@ import { channel } from "diagnostics_channel";
 interface SetCreationPopupProps {
   onClose: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
-  documentSets: DocumentSet<any, any>[];
+  documentSets: DocumentSet[];
   existingSlackBotConfig?: SlackBotConfig;
 }
 

@@ -4,7 +4,6 @@ import {
   Notebook,
   Key,
   Trash,
-  Info,
   XSquare,
   LinkBreak,
   Link,
@@ -33,6 +32,7 @@ import {
   FiCopy,
   FiBookmark,
   FiCpu,
+  FiInfo,
 } from "react-icons/fi";
 import { SiBookstack } from "react-icons/si";
 import Image from "next/image";
@@ -47,7 +47,7 @@ interface IconProps {
   className?: string;
 }
 
-const defaultTailwindCSS = "my-auto flex flex-shrink-0 text-blue-400";
+export const defaultTailwindCSS = "my-auto flex flex-shrink-0 text-blue-400";
 
 export const PlugIcon = ({
   size = 16,
@@ -123,7 +123,7 @@ export const InfoIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <Info size={size} className={className} />;
+  return <FiInfo size={size} className={className} />;
 };
 
 export const QuestionIcon = ({
