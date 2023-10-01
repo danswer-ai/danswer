@@ -10,7 +10,7 @@ interface SetCreationPopupProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
   onClose: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
-  existingDocumentSet?: DocumentSet<any, any>;
+  existingDocumentSet?: DocumentSet;
 }
 
 export const DocumentSetCreationForm = ({

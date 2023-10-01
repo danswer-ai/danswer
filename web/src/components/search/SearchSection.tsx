@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { SearchBar } from "./SearchBar";
 import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SourceSelector } from "./Filters";
-import { Connector } from "@/lib/types";
+import { Connector, DocumentSet } from "@/lib/types";
 import { SearchTypeSelector } from "./SearchTypeSelector";
 import {
   DanswerDocument,
@@ -38,13 +38,16 @@ const VALID_QUESTION_RESPONSE_DEFAULT: ValidQuestionResponse = {
 
 interface SearchSectionProps {
   connectors: Connector<any>[];
+  documentSets: DocumentSet[];
   defaultSearchType: SearchType;
 }
 
 export const SearchSection: React.FC<SearchSectionProps> = ({
   connectors,
+  documentSets,
   defaultSearchType,
 }) => {
+  console.log(documentSets);
   // Search Bar
   const [query, setQuery] = useState<string>("");
 
@@ -59,6 +62,9 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
 
   // Filters
   const [sources, setSources] = useState<Source[]>([]);
+  const [selectedDocumentSets, setSelectedDocumentSets] = useState<string[]>(
+    []
+  );
 
   // Search Type
   const [selectedSearchType, setSelectedSearchType] =
@@ -135,6 +141,7 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
     const searchFnArgs = {
       query,
       sources,
+      documentSets: selectedDocumentSets,
       updateCurrentAnswer: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateCurrentAnswer,
@@ -183,10 +190,13 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
   return (
     <div className="relative max-w-[2000px] xl:max-w-[1400px] mx-auto">
       <div className="absolute left-0 hidden 2xl:block w-64">
-        {connectors.length > 0 && (
+        {(connectors.length > 0 || documentSets.length > 0) && (
           <SourceSelector
             selectedSources={sources}
             setSelectedSources={setSources}
+            selectedDocumentSets={selectedDocumentSets}
+            setSelectedDocumentSets={setSelectedDocumentSets}
+            availableDocumentSets={documentSets}
             existingSources={connectors.map((connector) => connector.source)}
           />
         )}

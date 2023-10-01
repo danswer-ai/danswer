@@ -6,7 +6,7 @@ import { DISABLE_AUTH } from "@/lib/constants";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
 import { buildUrl } from "@/lib/utilsSS";
-import { Connector, User } from "@/lib/types";
+import { Connector, DocumentSet, User } from "@/lib/types";
 import { cookies } from "next/headers";
 import { SearchType } from "@/lib/search/interfaces";
 
@@ -14,6 +14,12 @@ export default async function Home() {
   const tasks = [
     DISABLE_AUTH ? (async () => null)() : getCurrentUserSS(),
     fetch(buildUrl("/manage/connector"), {
+      next: { revalidate: 0 },
+      headers: {
+        cookie: processCookies(cookies()),
+      },
+    }),
+    fetch(buildUrl("/manage/document-set"), {
       next: { revalidate: 0 },
       headers: {
         cookie: processCookies(cookies()),
@@ -32,6 +38,7 @@ export default async function Home() {
   }
   const user = results[0] as User | null;
   const connectorsResponse = results[1] as Response | null;
+  const documentSetsResponse = results[2] as Response | null;
 
   if (!DISABLE_AUTH && !user) {
     return redirect("/auth/login");
@@ -42,6 +49,15 @@ export default async function Home() {
     connectors = await connectorsResponse.json();
   } else {
     console.log(`Failed to fetch connectors - ${connectorsResponse?.status}`);
+  }
+
+  let documentSets: DocumentSet[] = [];
+  if (documentSetsResponse?.ok) {
+    documentSets = await documentSetsResponse.json();
+  } else {
+    console.log(
+      `Failed to fetch document sets - ${documentSetsResponse?.status}`
+    );
   }
 
   // needs to be done in a non-client side component due to nextjs
@@ -65,6 +81,7 @@ export default async function Home() {
         <div className="w-full">
           <SearchSection
             connectors={connectors}
+            documentSets={documentSets}
             defaultSearchType={searchTypeDefault}
           />
         </div>
