@@ -238,13 +238,9 @@ async def current_user(
     user: User | None = Depends(optional_valid_user),
     db_session: Session = Depends(get_session),
 ) -> User | None:
-    if DISABLE_AUTH:
-        return None
-
     double_check_user = fetch_versioned_implementation(
         "danswer.auth.users", "double_check_user"
     )
-
     user = await double_check_user(request, user, db_session)
     return user
 

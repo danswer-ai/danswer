@@ -123,8 +123,7 @@ def get_application() -> FastAPI:
                 SECRET,
                 associate_by_email=True,
                 is_verified_by_default=True,
-                # points the user back to the login page, where we will call the
-                # /auth/google/callback endpoint + redirect them to the main app
+                # points the user back to the login page
                 redirect_url=f"{WEB_DOMAIN}/auth/oauth/callback",
             ),
             prefix="/auth/oauth",
