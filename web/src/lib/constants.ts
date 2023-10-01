@@ -1,5 +1,7 @@
-export const DISABLE_AUTH = process.env.DISABLE_AUTH?.toLowerCase() === "true";
+export type AuthType = "disabled" | "google_oauth" | "oidc" | "saml";
 
+export const AUTH_TYPE = (process.env.AUTH_TYPE || "disabled") as AuthType;
+export const DISABLE_AUTH = AUTH_TYPE === "disabled";
 export const OAUTH_NAME = process.env.OAUTH_NAME || "Google";
 
 export const INTERNAL_URL = process.env.INTERNAL_URL || "http://127.0.0.1:8080";

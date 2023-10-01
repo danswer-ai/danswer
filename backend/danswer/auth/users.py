@@ -1,4 +1,3 @@
-import contextlib
 import os
 import smtplib
 import uuid
@@ -21,18 +20,12 @@ from fastapi_users.authentication import CookieTransport
 from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
 from fastapi_users.db import SQLAlchemyUserDatabase
-from httpx_oauth.clients.google import GoogleOAuth2
-from httpx_oauth.clients.openid import OpenID
-from pydantic import EmailStr
+from sqlalchemy.orm import Session
 
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
+from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_AUTH
-from danswer.configs.app_configs import ENABLE_OAUTH
-from danswer.configs.app_configs import OAUTH_CLIENT_ID
-from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
-from danswer.configs.app_configs import OAUTH_TYPE
-from danswer.configs.app_configs import OPENID_CONFIG_URL
 from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
@@ -42,21 +35,30 @@ from danswer.configs.app_configs import SMTP_SERVER
 from danswer.configs.app_configs import SMTP_USER
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.app_configs import WEB_DOMAIN
+from danswer.configs.constants import AuthType
 from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_user_count
 from danswer.db.auth import get_user_db
-from danswer.db.engine import get_async_session
+from danswer.db.engine import get_session
 from danswer.db.models import AccessToken
 from danswer.db.models import User
 from danswer.utils.logger import setup_logger
+from danswer.utils.variable_functionality import fetch_versioned_implementation
+
 
 logger = setup_logger()
 
-FAKE_USER_EMAIL = "fakeuser@fakedanswermail.com"
-FAKE_USER_PASS = "foobar"
-
 USER_WHITELIST_FILE = "/home/danswer_whitelist.txt"
 _user_whitelist: list[str] | None = None
+
+
+def verify_auth_setting() -> None:
+    if AUTH_TYPE not in [AuthType.DISABLED, AuthType.BASIC, AuthType.GOOGLE_OAUTH]:
+        raise ValueError(
+            "User must choose a valid user authentication method: "
+            "disabled, basic, or google_oauth"
+        )
+    logger.info(f"Using Auth Type: {AUTH_TYPE.value}")
 
 
 def get_user_whitelist() -> list[str]:
@@ -204,53 +206,50 @@ auth_backend = AuthenticationBackend(
     get_strategy=get_database_strategy,
 )
 
-oauth_client = None  # type: GoogleOAuth2 | OpenID | None
-if ENABLE_OAUTH:
-    if OAUTH_TYPE == "google":
-        oauth_client = GoogleOAuth2(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET)
-    elif OAUTH_TYPE == "openid":
-        oauth_client = OpenID(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OPENID_CONFIG_URL)
-    else:
-        raise AssertionError(f"Invalid OAUTH type {OAUTH_TYPE}")
-
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 
 
-# Currently unused, maybe useful later
-async def create_get_fake_user() -> User:
-    get_async_session_context = contextlib.asynccontextmanager(
-        get_async_session
-    )  # type:ignore
-    get_user_db_context = contextlib.asynccontextmanager(get_user_db)
-    get_user_manager_context = contextlib.asynccontextmanager(get_user_manager)
-
-    logger.info("Creating fake user due to Auth being turned off")
-    async with get_async_session_context() as session:
-        async with get_user_db_context(session) as user_db:
-            async with get_user_manager_context(user_db) as user_manager:
-                user = await user_manager.get_by_email(FAKE_USER_EMAIL)
-                if user:
-                    return user
-                user = await user_manager.create(
-                    UserCreate(email=EmailStr(FAKE_USER_EMAIL), password=FAKE_USER_PASS)
-                )
-                logger.info("Created fake user.")
-                return user
-
-
-current_active_user = fastapi_users.current_user(
-    active=True, verified=REQUIRE_EMAIL_VERIFICATION, optional=DISABLE_AUTH
+optional_valid_user = fastapi_users.current_user(
+    active=True, verified=REQUIRE_EMAIL_VERIFICATION, optional=True
 )
 
 
-async def current_user(user: User = Depends(current_active_user)) -> User | None:
-    if DISABLE_AUTH:
+async def double_check_user(
+    request: Request,
+    user: User | None,
+    db_session: Session,
+    optional: bool = DISABLE_AUTH,
+) -> User | None:
+    if optional:
         return None
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. User is not authenticated.",
+        )
+
     return user
 
 
-async def current_admin_user(user: User = Depends(current_user)) -> User | None:
+async def current_user(
+    request: Request,
+    user: User | None = Depends(optional_valid_user),
+    db_session: Session = Depends(get_session),
+) -> User | None:
+    if DISABLE_AUTH:
+        return None
+
+    double_check_user = fetch_versioned_implementation(
+        "danswer.auth.users", "double_check_user"
+    )
+
+    user = await double_check_user(request, user, db_session)
+    return user
+
+
+async def current_admin_user(user: User | None = Depends(current_user)) -> User | None:
     if DISABLE_AUTH:
         return None
 

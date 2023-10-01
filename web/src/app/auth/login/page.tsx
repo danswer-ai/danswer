@@ -1,7 +1,7 @@
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { DISABLE_AUTH, OAUTH_NAME } from "@/lib/constants";
 import { User } from "@/lib/types";
-import { getGoogleOAuthUrlSS, getCurrentUserSS } from "@/lib/userSS";
+import { getCurrentUserSS, getAuthUrlSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 
 const BUTTON_STYLE =
@@ -21,10 +21,11 @@ const Page = async () => {
   // will not render
   let currentUser: User | null = null;
   let authorizationUrl: string | null = null;
+  let autoRedirect: boolean = false;
   try {
-    [currentUser, authorizationUrl] = await Promise.all([
+    [currentUser, [authorizationUrl, autoRedirect]] = await Promise.all([
       getCurrentUserSS(),
-      getGoogleOAuthUrlSS(),
+      getAuthUrlSS(),
     ]);
   } catch (e) {
     console.log(`Some fetch failed for the login page - ${e}`);
@@ -33,6 +34,10 @@ const Page = async () => {
   // if user is already logged in, take them to the main app page
   if (currentUser && currentUser.is_active && currentUser.is_verified) {
     return redirect("/");
+  }
+
+  if (autoRedirect) {
+    return redirect(authorizationUrl || "/");
   }
 
   return (

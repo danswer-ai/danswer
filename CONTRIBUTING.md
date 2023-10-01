@@ -115,11 +115,11 @@ mkdir dynamic_config_storage
 
 To start the frontend, navigate to `danswer/web` and run:
 ```bash
-DISABLE_AUTH=true npm run dev
+AUTH_TYPE=disabled npm run dev
 ```
 _for Windows, run:_
 ```bash
-(SET "DISABLE_AUTH=true" && npm run dev)
+(SET "AUTH_TYPE=disabled" && npm run dev)
 ```
 
 
@@ -138,7 +138,7 @@ zip -r ../vespa-app.zip .
 
 To run the backend API server, navigate back to `danswer/backend` and run:
 ```bash
-DISABLE_AUTH=True \
+AUTH_TYPE=disabled \
 DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage \
 VESPA_DEPLOYMENT_ZIP=./danswer/datastores/vespa/vespa-app.zip \
 uvicorn danswer.main:app --reload --port 8080
@@ -146,7 +146,7 @@ uvicorn danswer.main:app --reload --port 8080
 _For Windows (for compatibility with both PowerShell and Command Prompt):_
 ```bash
 powershell -Command "
-    $env:DISABLE_AUTH='True'
+    $env:AUTH_TYPE='disabled'
     $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'
     $env:VESPA_DEPLOYMENT_ZIP='./danswer/datastores/vespa/vespa-app.zip'
     uvicorn danswer.main:app --reload --port 8080 

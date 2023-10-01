@@ -30,12 +30,10 @@ services:
       - TYPESENSE_HOST=search_engine
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY:-typesense_api_key}
       - LOG_LEVEL=${LOG_LEVEL:-info}
-      - DISABLE_AUTH=${DISABLE_AUTH:-True}
+      - AUTH_TYPE=${AUTH_TYPE:-disabled}
       - QA_TIMEOUT=${QA_TIMEOUT:-}
-      - OAUTH_TYPE=${OAUTH_TYPE:-google}
-      - OPENID_CONFIG_URL=${OPENID_CONFIG_URL:-}
-      - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
-      - GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID:-}
+      - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET:-}
       - DISABLE_GENERATIVE_AI=${DISABLE_GENERATIVE_AI:-}
       - API_BASE_OPENAI=${API_BASE_OPENAI:-}
       - API_TYPE_OPENAI=${API_TYPE_OPENAI:-}
@@ -97,7 +95,7 @@ services:
     environment:
       - INTERNAL_URL=http://api_server:8080
       - WEB_DOMAIN=${WEB_DOMAIN:-}
-      - DISABLE_AUTH=${DISABLE_AUTH:-True}
+      - AUTH_TYPE=${AUTH_TYPE:-disabled}
       - OAUTH_NAME=${OAUTH_NAME:-}
   relational_db:
     image: postgres:15.2-alpine

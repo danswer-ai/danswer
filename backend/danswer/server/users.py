@@ -9,12 +9,13 @@ from sqlalchemy.orm import Session
 from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_user
 from danswer.db.engine import get_session
 from danswer.db.engine import get_sqlalchemy_async_engine
 from danswer.db.models import User
 from danswer.db.users import list_users
 from danswer.server.models import UserByEmail
-
+from danswer.server.models import UserInfo
 
 router = APIRouter(prefix="/manage")
 
@@ -43,3 +44,18 @@ def list_all_users(
 ) -> list[UserRead]:
     users = list_users(db_session)
     return [UserRead.from_orm(user) for user in users]
+
+
+@router.get("/me")
+def verify_user_logged_in(user: User | None = Depends(current_user)) -> UserInfo:
+    if user is None:
+        raise HTTPException(status_code=401, detail="User Not Authenticated")
+
+    return UserInfo(
+        id=str(user.id),
+        email=user.email,
+        is_active=user.is_active,
+        is_superuser=user.is_superuser,
+        is_verified=user.is_verified,
+        role=user.role,
+    )

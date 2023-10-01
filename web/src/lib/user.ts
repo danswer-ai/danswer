@@ -2,7 +2,7 @@ import { User } from "./types";
 
 // should be used client-side only
 export const getCurrentUser = async (): Promise<User | null> => {
-  const response = await fetch("/api/users/me", {
+  const response = await fetch("/api/manage/me", {
     credentials: "include",
   });
   if (!response.ok) {
@@ -13,7 +13,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
 };
 
 export const logout = async (): Promise<boolean> => {
-  const response = await fetch("/api/auth/database/logout", {
+  const response = await fetch("/auth/logout", {
     method: "POST",
     credentials: "include",
   });
