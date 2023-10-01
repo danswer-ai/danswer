@@ -85,6 +85,7 @@ def get_application() -> FastAPI:
     application.include_router(state_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
+        # Server logs this during auth setup verification step
         pass
 
     elif AUTH_TYPE == AuthType.BASIC:

@@ -211,7 +211,7 @@ auth_backend = AuthenticationBackend(
 )
 
 
-class FastAPIUserWithLogoutRouter(FastAPIUsers):
+class FastAPIUserWithLogoutRouter(FastAPIUsers[models.UP, models.ID]):
     def get_logout_router(
         self,
         backend: AuthenticationBackend,
