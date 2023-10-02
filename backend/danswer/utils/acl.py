@@ -1,3 +1,5 @@
+from threading import Thread
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -33,6 +35,7 @@ def set_acl_for_vespa(should_check_if_already_done: bool = False) -> None:
     if not isinstance(vespa_index, VespaIndex):
         raise ValueError("This script is only for Vespa indexes")
 
+    logger.info("Populating Access Control List fields in Vespa")
     with Session(get_sqlalchemy_engine()) as db_session:
         # for all documents, set the `access_control_list` field apporpriately
         # based on the state of Postgres
@@ -52,3 +55,11 @@ def set_acl_for_vespa(should_check_if_already_done: bool = False) -> None:
         )
 
     dynamic_config_store.store(_COMPLETED_ACL_UPDATE_KEY, True)
+
+
+def set_acl_for_vespa_nonblocking(should_check_if_already_done: bool = False) -> None:
+    """Kick off the ACL update in a separate thread so that other work can continue."""
+    Thread(
+        target=set_acl_for_vespa,
+        args=[should_check_if_already_done],
+    ).start()
