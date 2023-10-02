@@ -196,7 +196,7 @@ export default async function AdminLayout({
                 {
                   name: (
                     <div className="flex">
-                      <BookstackIcon size={16} />
+                      <HubSpotIcon size={16} />
                       <div className="ml-1">HubSpot</div>
                     </div>
                   ),

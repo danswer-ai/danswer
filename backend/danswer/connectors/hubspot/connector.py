@@ -1,12 +1,14 @@
 import requests
 import json
 from typing import Any
+from datetime import datetime
 from hubspot import HubSpot
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -46,7 +48,9 @@ class HubSpotConnector(LoadConnector, PollConnector):
 
         return None
 
-    def _process_tickets(self) -> GenerateDocumentsOutput:
+    def _process_tickets(
+        self, start: datetime | None = None, end: datetime | None = None
+    ) -> GenerateDocumentsOutput:
         if self.access_token is None:
             raise ConnectorMissingCredentialError("HubSpot")
         
@@ -56,6 +60,12 @@ class HubSpotConnector(LoadConnector, PollConnector):
         doc_batch: list[Document] = []
         
         for ticket in all_tickets:
+            updated_at = ticket.updated_at.replace(tzinfo=None)
+            if start is not None and updated_at < start:
+                continue
+            if end is not None and updated_at > end:
+                continue
+                
             title = ticket.properties["subject"]
             link = self.ticket_base_url + ticket.id
             content_text = title + "\n" + ticket.properties["content"]
@@ -102,9 +112,12 @@ class HubSpotConnector(LoadConnector, PollConnector):
     def load_from_state(self) -> GenerateDocumentsOutput:
         return self._process_tickets()
 
-    def poll_source(self, start: int, end: int) -> GenerateDocumentsOutput:
-        # Currently, we're loading all tickets. Adjust this method if HubSpot provides a way to load tickets by date range.
-        return self._process_tickets()
+    def poll_source(
+        self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
+    ) -> GenerateDocumentsOutput:
+        start_datetime = datetime.fromtimestamp(start)
+        end_datetime = datetime.fromtimestamp(end)
+        return self._process_tickets(start_datetime, end_datetime)
 
 
 
