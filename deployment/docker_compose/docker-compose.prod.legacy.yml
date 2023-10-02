@@ -66,6 +66,7 @@ services:
     env_file:
       - .env
     environment:
+      - AUTH_TYPE=${AUTH_TYPE:-google_oauth}
       - INTERNAL_URL=http://api_server:8080
   relational_db:
     image: postgres:15.2-alpine
