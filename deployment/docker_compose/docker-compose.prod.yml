@@ -16,6 +16,7 @@ services:
     env_file:
       - .env
     environment:
+      - AUTH_TYPE=${AUTH_TYPE:-google_oauth}
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
     volumes:
@@ -37,6 +38,7 @@ services:
     env_file:
       - .env
     environment:
+      - AUTH_TYPE=${AUTH_TYPE:-google_oauth}
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
     volumes:
@@ -52,7 +54,7 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_DISABLE_STREAMING=${NEXT_PUBLIC_DISABLE_STREAMING:-false}
-        - NEXT_PUBLIC_AUTH_TYPE=${AUTH_TYPE:-}
+        - NEXT_PUBLIC_AUTH_TYPE=${AUTH_TYPE:-google_oauth}
     depends_on:
       - api_server
     restart: always

@@ -44,12 +44,12 @@ spec:
           value: relational-db-service
         - name: VESPA_HOST
           value: document-index-service
-        - name: OAUTH_CLIENT_ID
+        - name: GOOGLE_OAUTH_CLIENT_ID
           valueFrom:
             secretKeyRef:
               name: danswer-secrets
               key: google_oauth_client_id
-        - name: OAUTH_CLIENT_SECRET
+        - name: GOOGLE_OAUTH_CLIENT_SECRET
           valueFrom:
             secretKeyRef:
               name: danswer-secrets
