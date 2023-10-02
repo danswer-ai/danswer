@@ -43,7 +43,6 @@ from danswer.server.search_backend import router as backend_router
 from danswer.server.slack_bot_management import router as slack_bot_management_router
 from danswer.server.state import router as state_router
 from danswer.server.users import router as user_router
-from danswer.utils.acl import set_acl_for_vespa
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 
@@ -196,11 +195,6 @@ def get_application() -> FastAPI:
 
         logger.info("Verifying Document Index(s) is/are available.")
         get_default_document_index().ensure_indices_exist()
-
-        # TODO: remove this once everyone is migrated to ACL
-        logger.info("Populating Access Control List fields in Vespa")
-        # does nothing if this has been successfully run before
-        set_acl_for_vespa(should_check_if_already_done=True)
 
     application.add_middleware(
         CORSMiddleware,
