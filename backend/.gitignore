@@ -8,3 +8,4 @@ qdrant-data/
 typesense-data/
 .env
 vespa-app.zip
+dynamic_config_storage/
