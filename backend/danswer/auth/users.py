@@ -11,6 +11,7 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
+from fastapi import Response
 from fastapi import status
 from fastapi_users import BaseUserManager
 from fastapi_users import FastAPIUsers
@@ -240,7 +241,7 @@ class FastAPIUserWithLogoutRouter(FastAPIUsers[models.UP, models.ID]):
         async def logout(
             user_token: Tuple[models.UP, str] = Depends(get_current_user_token),
             strategy: Strategy[models.UP, models.ID] = Depends(backend.get_strategy),
-        ):
+        ) -> Response:
             user, token = user_token
             return await backend.logout(strategy, user, token)
 
