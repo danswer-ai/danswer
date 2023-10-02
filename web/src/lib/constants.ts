@@ -1,6 +1,8 @@
 export type AuthType = "disabled" | "google_oauth" | "oidc" | "saml";
 
-export const AUTH_TYPE = (process.env.AUTH_TYPE || "disabled") as AuthType;
+export const AUTH_TYPE = (process.env.AUTH_TYPE ||
+  process.env.NEXT_PUBLIC_AUTH_TYPE ||
+  "disabled") as AuthType;
 export const DISABLE_AUTH = AUTH_TYPE === "disabled";
 export const OAUTH_NAME = process.env.OAUTH_NAME || "Google";
 

@@ -36,8 +36,8 @@ const Page = async () => {
     return redirect("/");
   }
 
-  if (autoRedirect) {
-    return redirect(authorizationUrl || "/");
+  if (autoRedirect && authorizationUrl) {
+    return redirect(authorizationUrl);
   }
 
   return (

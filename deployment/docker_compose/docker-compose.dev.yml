@@ -103,6 +103,7 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_DISABLE_STREAMING=${NEXT_PUBLIC_DISABLE_STREAMING:-false}
+        - NEXT_PUBLIC_AUTH_TYPE=${AUTH_TYPE:-disabled}
     depends_on:
       - api_server
     restart: always

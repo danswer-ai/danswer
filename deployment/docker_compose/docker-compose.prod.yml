@@ -55,6 +55,9 @@ services:
     restart: always
     env_file:
       - .env
+    args:
+      - NEXT_PUBLIC_DISABLE_STREAMING=${NEXT_PUBLIC_DISABLE_STREAMING:-false}
+      - NEXT_PUBLIC_AUTH_TYPE=${AUTH_TYPE:-}
     environment:
       - INTERNAL_URL=http://api_server:8080
   relational_db:
