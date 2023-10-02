@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Any
 from typing import Generic
-from typing import Literal
 from typing import Optional
 from typing import TypeVar
 from uuid import UUID
@@ -9,7 +8,9 @@ from uuid import UUID
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
 
+from danswer.auth.schemas import UserRole
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
+from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
@@ -38,6 +39,10 @@ class StatusResponse(GenericModel, Generic[DataT]):
     data: Optional[DataT] = None
 
 
+class AuthTypeResponse(BaseModel):
+    auth_type: AuthType
+
+
 class DataRequest(BaseModel):
     data: str
 
@@ -45,6 +50,15 @@ class DataRequest(BaseModel):
 class HelperResponse(BaseModel):
     values: dict[str, str]
     details: list[str] | None = None
+
+
+class UserInfo(BaseModel):
+    id: str
+    email: str
+    is_active: bool
+    is_superuser: bool
+    is_verified: bool
+    role: UserRole
 
 
 class GoogleAppWebCredentials(BaseModel):
@@ -82,10 +96,6 @@ class GoogleServiceAccountCredentialRequest(BaseModel):
 
 class FileUploadResponse(BaseModel):
     file_paths: list[str]
-
-
-class HealthCheckResponse(BaseModel):
-    status: Literal["ok"]
 
 
 class ObjectCreationIdResponse(BaseModel):
