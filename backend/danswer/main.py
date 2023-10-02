@@ -18,8 +18,8 @@ from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
-from danswer.configs.app_configs import GOOGLE_OAUTH_CLIENT_ID
-from danswer.configs.app_configs import GOOGLE_OAUTH_CLIENT_SECRET
+from danswer.configs.app_configs import OAUTH_CLIENT_ID
+from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
@@ -116,7 +116,7 @@ def get_application() -> FastAPI:
         )
 
     elif AUTH_TYPE == AuthType.GOOGLE_OAUTH:
-        oauth_client = GoogleOAuth2(GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET)
+        oauth_client = GoogleOAuth2(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET)
         application.include_router(
             fastapi_users.get_oauth_router(
                 oauth_client,
@@ -167,7 +167,7 @@ def get_application() -> FastAPI:
         if DISABLE_AUTH:
             logger.info("User Authentication is turned off.")
 
-        if GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET:
+        if OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET:
             logger.info("Found both OAuth Client ID and secret configured.")
 
         if SKIP_RERANKING:

@@ -58,8 +58,14 @@ VALID_EMAIL_DOMAINS = (
 )
 
 # OAuth Login Flow
-GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID") or ""
-GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET") or ""
+# Used for both Google OAuth2 and OIDC flows
+OAUTH_CLIENT_ID = (
+    os.environ.get("OAUTH_CLIENT_ID", os.environ.get("GOOGLE_OAUTH_CLIENT_ID")) or ""
+)
+OAUTH_CLIENT_SECRET = (
+    os.environ.get("OAUTH_CLIENT_SECRET", os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET"))
+    or ""
+)
 
 # The following Basic Auth configs are not supported by the frontend UI
 REQUIRE_EMAIL_VERIFICATION = (
