@@ -19,6 +19,7 @@ import {
   LinearIcon,
   UsersIcon,
   ThumbsUpIcon,
+  HubSpotIcon,
   BookmarkIcon,
   CPUIcon,
 } from "@/components/icons/icons";
@@ -191,6 +192,15 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/connectors/file",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <HubSpotIcon size={16} />
+                      <div className="ml-1">HubSpot</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/hubspot",
                 },
               ],
             },

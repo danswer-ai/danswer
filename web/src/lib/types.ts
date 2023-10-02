@@ -21,6 +21,7 @@ export type ValidSources =
   | "guru"
   | "zulip"
   | "linear"
+  | "hubspot"
   | "file";
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
@@ -105,6 +106,8 @@ export interface ZulipConfig {
 }
 
 export interface NotionConfig {}
+
+export interface HubSpotConfig {}
 
 export interface IndexAttemptSnapshot {
   status: ValidStatuses | null;
@@ -202,6 +205,10 @@ export interface GuruCredentialJson {
 
 export interface LinearCredentialJson {
   linear_api_key: string;
+}
+
+export interface HubSpotCredentialJson {
+  hubspot_access_token: string;
 }
 
 // DELETION

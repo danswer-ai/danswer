@@ -53,3 +53,4 @@ transformers==4.30.1
 typesense==0.15.1
 uvicorn==0.21.1
 zulip==0.8.2
+hubspot-api-client==8.1.0

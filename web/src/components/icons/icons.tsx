@@ -41,6 +41,7 @@ import confluenceSVG from "../../../public/Confluence.svg";
 import guruIcon from "../../../public/Guru.svg";
 import zulipIcon from "../../../public/Zulip.png";
 import linearIcon from "../../../public/Linear.png";
+import hubSpotIcon from "../../../public/HubSpot.png";
 
 interface IconProps {
   size?: number;
@@ -421,3 +422,18 @@ export const GuruIcon = ({
     <Image src={guruIcon} alt="Logo" width="96" height="96" />
   </div>
 );
+
+export const HubSpotIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      // HubSpot Icon has a bit more surrounding whitespace than other icons, which is why we need to adjust it here
+      style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
+      className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
+    >
+      <Image src={hubSpotIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
