@@ -16,7 +16,6 @@ from danswer.chat.personas import load_personas_from_yaml
 from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
-from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
@@ -164,11 +163,8 @@ def get_application() -> FastAPI:
         # Will throw exception if an issue is found
         verify_auth()
 
-        if DISABLE_AUTH:
-            logger.info("User Authentication is turned off.")
-
         if OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET:
-            logger.info("Found both OAuth Client ID and secret configured.")
+            logger.info("Both OAuth Client ID and Secret are configured.")
 
         if SKIP_RERANKING:
             logger.info("Reranking step of search flow is disabled")
