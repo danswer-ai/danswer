@@ -46,7 +46,6 @@ Additional steps for user auth and https if you do want to use Docker Compose fo
 1. Set up a `.env` file in this directory with relevant environment variables.
    - Refer to `env.prod.template`
    - To turn on user auth, set:
-     - ENABLE_OAUTH=True 
      - GOOGLE_OAUTH_CLIENT_ID=\<your GCP API client ID\>
      - GOOGLE_OAUTH_CLIENT_SECRET=\<associated client secret\>
      - Refer to https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid

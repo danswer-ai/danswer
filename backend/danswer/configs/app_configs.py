@@ -1,5 +1,6 @@
 import os
 
+from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentIndexType
 
 #####
@@ -14,32 +15,27 @@ APP_PORT = 8080
 #####
 BLURB_SIZE = 128  # Number Encoder Tokens included in the chunk blurb
 GENERATIVE_MODEL_ACCESS_CHECK_FREQ = 86400  # 1 day
-# DISABLE_GENERATIVE_AI will turn of the question answering part of Danswer. Use this
-# if you want to use Danswer as a search engine only and/or you are not comfortable sending
-# anything to OpenAI. TODO: update this message once we support Azure / open source generative models.
+# DISABLE_GENERATIVE_AI will turn of the question answering part of Danswer.
+# Use this if you want to use Danswer as a search engine only without the LLM capabilities
 DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "true"
 
 #####
 # Web Configs
 #####
-# WEB_DOMAIN is used to set the redirect_uri when doing OAuth with Google
-# TODO: investigate if this can be done cleaner by overwriting the redirect_uri
-# on the frontend and just sending a dummy value (or completely generating the URL)
-# on the frontend
-WEB_DOMAIN = os.environ.get("WEB_DOMAIN", "http://localhost:3000")
+# WEB_DOMAIN is used to set the redirect_uri after login flows
+WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
 
 
 #####
 # Auth Configs
 #####
-DISABLE_AUTH = os.environ.get("DISABLE_AUTH", "").lower() == "true"
-REQUIRE_EMAIL_VERIFICATION = (
-    os.environ.get("REQUIRE_EMAIL_VERIFICATION", "").lower() == "true"
+AUTH_TYPE = AuthType((os.environ.get("AUTH_TYPE") or AuthType.DISABLED.value).lower())
+DISABLE_AUTH = AUTH_TYPE == AuthType.DISABLED
+
+# Turn off mask if admin users should see full credentials for data connectors.
+MASK_CREDENTIAL_PREFIX = (
+    os.environ.get("MASK_CREDENTIAL_PREFIX", "True").lower() != "false"
 )
-SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
-SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
-SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
-SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
 
 SECRET = os.environ.get("SECRET", "")
 SESSION_EXPIRE_TIME_SECONDS = int(
@@ -62,18 +58,17 @@ VALID_EMAIL_DOMAINS = (
 )
 
 # OAuth Login Flow
-ENABLE_OAUTH = os.environ.get("ENABLE_OAUTH", "").lower() != "false"
-OAUTH_TYPE = os.environ.get("OAUTH_TYPE", "google").lower()
-OAUTH_CLIENT_ID = os.environ.get(
-    "OAUTH_CLIENT_ID", os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID") or ""
+GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET") or ""
+
+# The following Basic Auth configs are not supported by the frontend UI
+REQUIRE_EMAIL_VERIFICATION = (
+    os.environ.get("REQUIRE_EMAIL_VERIFICATION", "").lower() == "true"
 )
-OAUTH_CLIENT_SECRET = os.environ.get(
-    "OAUTH_CLIENT_SECRET", os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
-)
-OPENID_CONFIG_URL = os.environ.get("OPENID_CONFIG_URL", "")
-MASK_CREDENTIAL_PREFIX = (
-    os.environ.get("MASK_CREDENTIAL_PREFIX", "True").lower() != "false"
-)
+SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
+SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
 
 
 #####
@@ -105,7 +100,7 @@ TYPESENSE_API_KEY = os.environ.get("TYPESENSE_API_KEY", "")
 # Number of documents in a batch during indexing (further batching done by chunks before passing to bi-encoder)
 INDEX_BATCH_SIZE = 16
 
-# below are intended to match the env variables names used by the official postgres docker image
+# Below are intended to match the env variables names used by the official postgres docker image
 # https://hub.docker.com/_/postgres
 POSTGRES_USER = os.environ.get("POSTGRES_USER") or "postgres"
 POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD") or "password"

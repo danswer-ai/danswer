@@ -9,6 +9,10 @@ from danswer.direct_qa.qa_block import dict_based_prompt_to_langchain_prompt
 from danswer.llm.build import get_default_llm
 from danswer.server.models import QueryValidationResponse
 from danswer.server.utils import get_json_line
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
+
 
 QUERY_PAT = "QUERY: "
 REASONING_PAT = "THOUGHT: "
@@ -94,37 +98,44 @@ def get_query_answerability(user_query: str) -> tuple[str, bool]:
 def stream_query_answerability(user_query: str) -> Iterator[str]:
     messages = get_query_validation_messages(user_query)
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
-    tokens = get_default_llm().stream(filled_llm_prompt)
-    reasoning_pat_found = False
-    model_output = ""
-    hold_answerable = ""
-    for token in tokens:
-        model_output = model_output + token
+    try:
+        tokens = get_default_llm().stream(filled_llm_prompt)
+        reasoning_pat_found = False
+        model_output = ""
+        hold_answerable = ""
+        for token in tokens:
+            model_output = model_output + token
 
-        if ANSWERABLE_PAT in model_output:
-            continue
-
-        if not reasoning_pat_found and REASONING_PAT in model_output:
-            reasoning_pat_found = True
-            reason_ind = model_output.find(REASONING_PAT)
-            remaining = model_output[reason_ind + len(REASONING_PAT) :]
-            if remaining:
-                yield get_json_line(asdict(DanswerAnswerPiece(answer_piece=remaining)))
-            continue
-
-        if reasoning_pat_found:
-            hold_answerable = hold_answerable + token
-            if hold_answerable == ANSWERABLE_PAT[: len(hold_answerable)]:
+            if ANSWERABLE_PAT in model_output:
                 continue
-            yield get_json_line(
-                asdict(DanswerAnswerPiece(answer_piece=hold_answerable))
-            )
-            hold_answerable = ""
 
-    reasoning = extract_answerability_reasoning(model_output)
-    answerable = extract_answerability_bool(model_output)
+            if not reasoning_pat_found and REASONING_PAT in model_output:
+                reasoning_pat_found = True
+                reason_ind = model_output.find(REASONING_PAT)
+                remaining = model_output[reason_ind + len(REASONING_PAT) :]
+                if remaining:
+                    yield get_json_line(
+                        asdict(DanswerAnswerPiece(answer_piece=remaining))
+                    )
+                continue
 
-    yield get_json_line(
-        QueryValidationResponse(reasoning=reasoning, answerable=answerable).dict()
-    )
+            if reasoning_pat_found:
+                hold_answerable = hold_answerable + token
+                if hold_answerable == ANSWERABLE_PAT[: len(hold_answerable)]:
+                    continue
+                yield get_json_line(
+                    asdict(DanswerAnswerPiece(answer_piece=hold_answerable))
+                )
+                hold_answerable = ""
+
+        reasoning = extract_answerability_reasoning(model_output)
+        answerable = extract_answerability_bool(model_output)
+
+        yield get_json_line(
+            QueryValidationResponse(reasoning=reasoning, answerable=answerable).dict()
+        )
+    except Exception as e:
+        # exception is logged in the answer_question method, no need to re-log
+        yield get_json_line({"error": str(e)})
+        logger.exception("Failed to validate Query")
     return
