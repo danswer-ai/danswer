@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any
 from typing import IO
 
+from PyPDF2 import PdfReader
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.file.utils import check_file_ext_is_valid
@@ -38,8 +40,11 @@ def _open_files_at_location(
 
     if extension == ".zip":
         yield from _get_files_from_zip(file_path)
-    elif extension == ".txt":
-        with open(file_path, "r") as file:
+    elif extension == ".txt" or extension == ".pdf":
+        mode = "r"
+        if extension == ".pdf":
+            mode = "rb"
+        with open(file_path, mode) as file:
             yield os.path.basename(file_path), file
     else:
         logger.warning(f"Skipping file '{file_path}' with extension '{extension}'")
@@ -53,15 +58,22 @@ def _process_file(file_name: str, file: IO[Any]) -> list[Document]:
 
     metadata = {}
     file_content_raw = ""
-    for ind, line in enumerate(file):
-        if isinstance(line, bytes):
-            line = line.decode("utf-8")
-        line = str(line)
+    if extension == ".pdf":
+        pdf_reader = PdfReader(file)
+        if not pdf_reader.is_encrypted:
+            file_content_raw = "\n".join(
+                page.extract_text() for page in pdf_reader.pages
+            )
+    else:
+        for ind, line in enumerate(file):
+            if isinstance(line, bytes):
+                line = line.decode("utf-8")
+            line = str(line)
 
-        if ind == 0 and line.startswith(_METADATA_FLAG):
-            metadata = json.loads(line.replace(_METADATA_FLAG, "", 1).strip())
-        else:
-            file_content_raw += line
+            if ind == 0 and line.startswith(_METADATA_FLAG):
+                metadata = json.loads(line.replace(_METADATA_FLAG, "", 1).strip())
+            else:
+                file_content_raw += line
 
     return [
         Document(

@@ -9,7 +9,7 @@ from typing import IO
 from danswer.configs.app_configs import FILE_CONNECTOR_TMP_STORAGE_PATH
 
 _FILE_AGE_CLEANUP_THRESHOLD_HOURS = 24 * 7  # 1 week
-_VALID_FILE_EXTENSIONS = [".txt", ".zip"]
+_VALID_FILE_EXTENSIONS = [".txt", ".zip", ".pdf"]
 
 
 def get_file_ext(file_path_or_name: str | Path) -> str:
