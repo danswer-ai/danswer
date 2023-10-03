@@ -7,7 +7,6 @@ import {
   TextArrayField,
 } from "@/components/admin/connectors/Field";
 import { createSlackBotConfig, updateSlackBotConfig } from "./lib";
-import { channel } from "diagnostics_channel";
 
 interface SetCreationPopupProps {
   onClose: () => void;
@@ -39,9 +38,18 @@ export const SlackBotCreationForm = ({
               channel_names: existingSlackBotConfig
                 ? existingSlackBotConfig.channel_config.channel_names
                 : ([] as string[]),
-              answer_validity_check_enabled:
+              answer_validity_check_enabled: (
+                existingSlackBotConfig?.channel_config?.answer_filters || []
+              ).includes("well_answered_postfilter"),
+              questionmark_prefilter_enabled: (
+                existingSlackBotConfig?.channel_config?.answer_filters || []
+              ).includes("questionmark_prefilter"),
+              respond_sender_only:
+                existingSlackBotConfig?.channel_config?.respond_sender_only ||
+                false,
+              respond_team_member_list:
                 existingSlackBotConfig?.channel_config
-                  ?.answer_validity_check_enabled || false,
+                  ?.respond_team_member_list || ([] as string[]),
               document_sets: existingSlackBotConfig
                 ? existingSlackBotConfig.document_sets.map(
                     (documentSet) => documentSet.id
@@ -51,6 +59,9 @@ export const SlackBotCreationForm = ({
             validationSchema={Yup.object().shape({
               channel_names: Yup.array().of(Yup.string()),
               answer_validity_check_enabled: Yup.boolean().required(),
+              questionmark_prefilter_enabled: Yup.boolean().required(),
+              respond_sender_only: Yup.boolean().required(),
+              respond_team_member_list: Yup.array().of(Yup.string()).required(),
               document_sets: Yup.array().of(Yup.number()),
             })}
             onSubmit={async (values, formikHelpers) => {
@@ -62,6 +73,10 @@ export const SlackBotCreationForm = ({
                 channel_names: values.channel_names.filter(
                   (channelName) => channelName !== ""
                 ),
+                respond_team_member_list:
+                  values.respond_team_member_list.filter(
+                    (teamMemberEmail) => teamMemberEmail !== ""
+                  ),
               };
 
               let response;
@@ -122,6 +137,30 @@ export const SlackBotCreationForm = ({
                   name="answer_validity_check_enabled"
                   label="Hide Non-Answers"
                   subtext="If set, will only answer questions that the model determines it can answer"
+                />
+                <div className="border-t border-gray-700 py-2" />
+                <BooleanFormField
+                  name="questionmark_prefilter_enabled"
+                  label="Only respond to questions"
+                  subtext="If set, will only respond to messages that contain a question mark"
+                />
+                <div className="border-t border-gray-700 py-2" />
+                <BooleanFormField
+                  name="respond_sender_only"
+                  label="Respond to Sender Only"
+                  subtext="If set, will respond with a message that is only visible to the sender"
+                />
+                <div className="border-t border-gray-700 py-2" />
+                <TextArrayField
+                  name="respond_team_member_list"
+                  label="Team Members Emails:"
+                  subtext={`If specified, DanswerBot responses will only be 
+                  visible to members in this list. This is
+                  useful if you want DanswerBot to operate in an
+                  "assistant" mode, where it helps the team members find
+                  answers, but let's them build on top of DanswerBot's response / throw 
+                  out the occasional incorrect answer.`}
+                  values={values}
                 />
                 <div className="border-t border-gray-700 py-2" />
                 <FieldArray

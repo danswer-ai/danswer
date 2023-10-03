@@ -482,8 +482,9 @@ class ChannelConfig(TypedDict):
     in Postgres"""
 
     channel_names: list[str]
-    answer_validity_check_enabled: NotRequired[bool]  # not specified => False
-    team_members: NotRequired[list[str]]
+    respond_sender_only: NotRequired[bool]  # defaults to False
+    respond_team_member_list: NotRequired[list[str]]
+    answer_filters: NotRequired[list[str]]
 
 
 class SlackBotConfig(Base):

@@ -6,7 +6,9 @@ from sqlalchemy.orm import Session
 
 from danswer.bots.slack.blocks import build_documents_blocks
 from danswer.bots.slack.blocks import build_qa_response_blocks
+from danswer.bots.slack.blocks import get_restate_blocks
 from danswer.bots.slack.config import get_slack_bot_config_for_channel
+from danswer.bots.slack.utils import fetch_userids_from_emails
 from danswer.bots.slack.utils import get_channel_name_from_id
 from danswer.bots.slack.utils import respond_in_thread
 from danswer.configs.app_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
@@ -25,9 +27,12 @@ from danswer.server.models import QuestionRequest
 def handle_message(
     msg: str,
     channel: str,
-    message_ts_to_respond_to: str,
+    message_ts_to_respond_to: str | None,
+    sender_id: str | None,
     client: WebClient,
     logger: logging.Logger,
+    skip_filters: bool = False,
+    is_bot_msg: bool = False,
     num_retries: int = DANSWER_BOT_NUM_RETRIES,
     answer_generation_timeout: int = DANSWER_BOT_ANSWER_GENERATION_TIMEOUT,
     should_respond_with_error_msgs: bool = DANSWER_BOT_DISPLAY_ERROR_MSGS,
@@ -40,19 +45,59 @@ def handle_message(
             channel_name=channel_name, db_session=db_session
         )
         document_set_names: list[str] | None = None
-        validity_check_enabled = ENABLE_DANSWERBOT_REFLEXION
         if slack_bot_config and slack_bot_config.persona:
             document_set_names = [
                 document_set.name
                 for document_set in slack_bot_config.persona.document_sets
             ]
-            validity_check_enabled = slack_bot_config.channel_config.get(
-                "answer_validity_check_enabled", validity_check_enabled
-            )
+
+        reflexion = ENABLE_DANSWERBOT_REFLEXION
+
+        # List of user id to send message to, if None, send to everyone in channel
+        send_to: list[str] | None = None
+        respond_sender_only = False
+        respond_team_member_list = None
+        if slack_bot_config and slack_bot_config.channel_config:
+            channel_conf = slack_bot_config.channel_config
+            if not skip_filters and "answer_filters" in channel_conf:
+                reflexion = "well_answered_postfilter" in channel_conf["answer_filters"]
+
+                if (
+                    "questionmark_prefilter" in channel_conf["answer_filters"]
+                    and "?" not in msg
+                ):
+                    logger.info(
+                        "Skipping message since it does not contain a question mark"
+                    )
+                    return
+
             logger.info(
                 "Found slack bot config for channel. Restricting bot to use document "
-                f"sets: {document_set_names}, validity check enabled: {validity_check_enabled}"
+                f"sets: {document_set_names}, "
+                f"validity checks enabled: {channel_conf['answer_filters']}"
             )
+
+            respond_sender_only = channel_conf.get("respond_sender_only") or False
+            respond_team_member_list = (
+                channel_conf.get("respond_team_member_list") or None
+            )
+
+        if sender_id and (respond_sender_only or is_bot_msg):
+            send_to = [sender_id]
+        elif respond_team_member_list:
+            send_to = fetch_userids_from_emails(respond_team_member_list, client)
+
+        # If configured to respond to team members only, then cannot be used with a /danswerbot command
+        # which would just respond to the sender
+        if respond_team_member_list and is_bot_msg:
+            if sender_id:
+                respond_in_thread(
+                    client=client,
+                    channel=channel,
+                    receiver_ids=[sender_id],
+                    text="The DanswerBot slash command is not enabled for this channel",
+                    thread_ts=None,
+                )
 
     @retry(
         tries=num_retries,
@@ -70,7 +115,7 @@ def handle_message(
                 db_session=db_session,
                 answer_generation_timeout=answer_generation_timeout,
                 real_time_flow=False,
-                enable_reflexion=validity_check_enabled,
+                enable_reflexion=reflexion,
             )
             if not answer.error_msg:
                 return answer
@@ -100,6 +145,7 @@ def handle_message(
             respond_in_thread(
                 client=client,
                 channel=channel,
+                receiver_ids=None,
                 text=f"Encountered exception when trying to answer: \n\n```{e}```",
                 thread_ts=message_ts_to_respond_to,
             )
@@ -121,6 +167,7 @@ def handle_message(
             respond_in_thread(
                 client=client,
                 channel=channel,
+                receiver_ids=None,
                 text="Found no documents when trying to answer. Did you index any documents?",
                 thread_ts=message_ts_to_respond_to,
             )
@@ -134,6 +181,10 @@ def handle_message(
         return
 
     # convert raw response into "nicely" formatted Slack message
+
+    # If called with the DanswerBot slash command, the question is lost so we have to reshow it
+    restate_question_block = get_restate_blocks(msg, is_bot_msg)
+
     answer_blocks = build_qa_response_blocks(
         query_event_id=answer.query_event_id,
         answer=answer.answer,
@@ -148,11 +199,32 @@ def handle_message(
         respond_in_thread(
             client=client,
             channel=channel,
-            blocks=answer_blocks + document_blocks,
+            receiver_ids=send_to,
+            blocks=restate_question_block + answer_blocks + document_blocks,
             thread_ts=message_ts_to_respond_to,
             # don't unfurl, since otherwise we will have 5+ previews which makes the message very long
             unfurl=False,
         )
+
+        # For DM (ephemeral message), we need to create a thread via a normal message so the user can see
+        # the ephemeral message. This also will give the user a notification which ephemeral message does not.
+        if respond_sender_only:
+            respond_in_thread(
+                client=client,
+                channel=channel,
+                text="We've just DM-ed you the answer, hope you find it useful! 💃",
+                thread_ts=message_ts_to_respond_to,
+            )
+        elif respond_team_member_list:
+            respond_in_thread(
+                client=client,
+                channel=channel,
+                text=(
+                    "👋 Hi, we've just gathered and forwarded the relevant "
+                    + "information to the team. They'll get back to you shortly!"
+                ),
+                thread_ts=message_ts_to_respond_to,
+            )
 
     except Exception:
         logger.exception(

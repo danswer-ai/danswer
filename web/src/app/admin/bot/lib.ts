@@ -4,7 +4,35 @@ interface SlackBotConfigCreationRequest {
   document_sets: number[];
   channel_names: string[];
   answer_validity_check_enabled: boolean;
+  questionmark_prefilter_enabled: boolean;
+  respond_sender_only: boolean;
+  respond_team_member_list: string[];
 }
+
+const buildFiltersFromCreationRequest = (
+  creationRequest: SlackBotConfigCreationRequest
+): string[] => {
+  const answerFilters = [] as string[];
+  if (creationRequest.answer_validity_check_enabled) {
+    answerFilters.push("well_answered_postfilter");
+  }
+  if (creationRequest.questionmark_prefilter_enabled) {
+    answerFilters.push("questionmark_prefilter");
+  }
+  return answerFilters;
+};
+
+const buildRequestBodyFromCreationRequest = (
+  creationRequest: SlackBotConfigCreationRequest
+) => {
+  return JSON.stringify({
+    channel_names: creationRequest.channel_names,
+    respond_sender_only: creationRequest.respond_sender_only,
+    respond_team_member_list: creationRequest.respond_team_member_list,
+    document_sets: creationRequest.document_sets,
+    answer_filters: buildFiltersFromCreationRequest(creationRequest),
+  });
+};
 
 export const createSlackBotConfig = async (
   creationRequest: SlackBotConfigCreationRequest
@@ -14,7 +42,7 @@ export const createSlackBotConfig = async (
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(creationRequest),
+    body: buildRequestBodyFromCreationRequest(creationRequest),
   });
 };
 
@@ -27,7 +55,7 @@ export const updateSlackBotConfig = async (
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(creationRequest),
+    body: buildRequestBodyFromCreationRequest(creationRequest),
   });
 };
 

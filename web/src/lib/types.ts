@@ -238,10 +238,16 @@ export interface DocumentSet {
 }
 
 // SLACK BOT CONFIGS
+
+export type AnswerFilterOption =
+  | "well_answered_postfilter"
+  | "questionmark_prefilter";
+
 export interface ChannelConfig {
   channel_names: string[];
-  answer_validity_check_enabled?: boolean;
-  team_members?: string[];
+  respond_sender_only?: boolean;
+  respond_team_member_list?: string[];
+  answer_filters?: AnswerFilterOption[];
 }
 
 export interface SlackBotConfig {
