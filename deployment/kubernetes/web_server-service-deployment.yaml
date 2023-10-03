@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: web-server
-        image: danswer/danswer-web-server:latest
+        image: danswer/danswer-ee-web-server:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000

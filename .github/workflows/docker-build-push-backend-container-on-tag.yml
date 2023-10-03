@@ -30,8 +30,8 @@ jobs:
         platforms: linux/amd64,linux/arm64
         push: true
         tags: |
-          danswer/danswer-backend:${{ github.ref_name }}
-          danswer/danswer-backend:latest
+          danswer/danswer-ee-backend:${{ github.ref_name }}
+          danswer/danswer-ee-backend:latest
         build-args: |
           DANSWER_VERSION=${{ github.ref_name }}
 

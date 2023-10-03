@@ -42,6 +42,11 @@ RUN apt-get remove -y --allow-remove-essential perl-base xserver-common xvfb cma
     rm -rf /var/lib/apt/lists/* && \
     rm /usr/local/lib/python3.11/site-packages/tornado/test/test.key
 
+# Enterprise Install
+RUN apt-get update && apt-get install -y libxmlsec1-dev
+COPY ./requirements/ee.txt /tmp/ee-requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /tmp/ee-requirements.txt
+
 # Pre-downloading models for setups with limited egress
 RUN python -c "from transformers import AutoTokenizer; AutoTokenizer.from_pretrained('intfloat/e5-base-v2')"
 
@@ -53,6 +58,11 @@ nltk.download('punkt', quiet=True);"
 
 # Set up application files
 WORKDIR /app
+
+# Enterprise Version Files
+COPY ./ee /app/ee
+
+# Set up application files
 COPY ./danswer /app/danswer
 COPY ./shared_configs /app/shared_configs
 COPY ./alembic /app/alembic

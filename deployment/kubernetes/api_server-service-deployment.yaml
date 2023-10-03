@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: api-server
-        image: danswer/danswer-backend:latest
+        image: danswer/danswer-ee-backend:latest
         imagePullPolicy: IfNotPresent
         command:
           - "/bin/sh"
@@ -36,7 +36,7 @@ spec:
           - |
             alembic upgrade head &&
             echo "Starting Danswer Api Server" &&
-            uvicorn danswer.main:app --host 0.0.0.0 --port 8080
+            uvicorn ee.danswer.main:app --host 0.0.0.0 --port 8080
         ports:
         - containerPort: 8080
         # There are some extra values since this is shared between services
