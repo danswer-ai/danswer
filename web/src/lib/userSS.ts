@@ -2,7 +2,21 @@ import { cookies } from "next/headers";
 import { User } from "./types";
 import { buildUrl } from "./utilsSS";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
-import { AUTH_TYPE } from "./constants";
+import { AuthType } from "./constants";
+
+export const getAuthTypeSS = async (): Promise<AuthType> => {
+  const res = await fetch(buildUrl("/auth/type"));
+  if (!res.ok) {
+    throw new Error("Failed to fetch data");
+  }
+
+  const data: { auth_type: string } = await res.json();
+  return data.auth_type as AuthType;
+};
+
+export const getAuthDisabledSS = async (): Promise<boolean> => {
+  return (await getAuthTypeSS()) === "disabled";
+};
 
 const geOIDCAuthUrlSS = async (): Promise<string> => {
   const res = await fetch(buildUrl("/auth/oidc/authorize"));
@@ -34,9 +48,11 @@ const getSAMLAuthUrlSS = async (): Promise<string> => {
   return data.authorization_url;
 };
 
-export const getAuthUrlSS = async (): Promise<[string, boolean]> => {
+export const getAuthUrlSS = async (
+  authType: AuthType
+): Promise<[string, boolean]> => {
   // Returns the auth url and whether or not we should auto-redirect
-  switch (AUTH_TYPE) {
+  switch (authType) {
     case "disabled":
       return ["", true];
     case "google_oauth": {
@@ -65,8 +81,11 @@ const logoutSAMLSS = async (headers: Headers): Promise<Response> => {
   });
 };
 
-export const logoutSS = async (headers: Headers): Promise<Response | null> => {
-  switch (AUTH_TYPE) {
+export const logoutSS = async (
+  authType: AuthType,
+  headers: Headers
+): Promise<Response | null> => {
+  switch (authType) {
     case "disabled":
       return null;
     case "saml": {

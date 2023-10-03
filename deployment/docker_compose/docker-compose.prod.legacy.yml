@@ -59,14 +59,12 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_DISABLE_STREAMING=${NEXT_PUBLIC_DISABLE_STREAMING:-false}
-        - NEXT_PUBLIC_AUTH_TYPE=${AUTH_TYPE:-google_oauth}
     depends_on:
       - api_server
     restart: always
     env_file:
       - .env
     environment:
-      - AUTH_TYPE=${AUTH_TYPE:-google_oauth}
       - INTERNAL_URL=http://api_server:8080
   relational_db:
     image: postgres:15.2-alpine

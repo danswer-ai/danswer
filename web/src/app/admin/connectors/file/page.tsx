@@ -27,7 +27,6 @@ const Main = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [filesAreUploading, setFilesAreUploading] = useState<boolean>(false);
   const { popup, setPopup } = usePopup();
-  console.log(popup);
 
   const { mutate } = useSWRConfig();
 
