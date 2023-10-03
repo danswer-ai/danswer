@@ -12,6 +12,8 @@ export const metadata = {
   description: "Question answering for your documents",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({
   children,
 }: {

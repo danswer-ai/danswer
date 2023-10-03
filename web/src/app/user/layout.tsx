@@ -1,6 +1,5 @@
 import { Header } from "@/components/Header";
-import { DISABLE_AUTH } from "@/lib/constants";
-import { getCurrentUserSS } from "@/lib/userSS";
+import { getAuthDisabledSS, getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 
 export default async function AdminLayout({
@@ -8,9 +7,12 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  let user = null;
-  if (!DISABLE_AUTH) {
-    user = await getCurrentUserSS();
+  const [authDisabled, user] = await Promise.all([
+    getAuthDisabledSS(),
+    getCurrentUserSS(),
+  ]);
+
+  if (!authDisabled) {
     if (!user) {
       return redirect("/auth/login");
     }
