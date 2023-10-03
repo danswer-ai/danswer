@@ -29,7 +29,7 @@ def _form_channel_config(
     db_session: Session,
 ) -> ChannelConfig:
     raw_channel_names = slack_bot_config_creation_request.channel_names
-    respond_sender_only = slack_bot_config_creation_request.respond_sender_only
+    respond_tag_only = slack_bot_config_creation_request.respond_tag_only
     respond_team_member_list = (
         slack_bot_config_creation_request.respond_team_member_list
     )
@@ -53,17 +53,17 @@ def _form_channel_config(
             detail=str(e),
         )
 
-    if respond_sender_only and respond_team_member_list:
+    if respond_tag_only and respond_team_member_list:
         raise ValueError(
-            "Cannot set DanswerBot to only respond to sender and "
-            "also respond to a predetermined set of users. This is not logically possible..."
+            "Cannot set DanswerBot to only respond to tags only and "
+            "also respond to a predetermined set of users."
         )
 
     channel_config: ChannelConfig = {
         "channel_names": cleaned_channel_names,
     }
-    if respond_sender_only is not None:
-        channel_config["respond_sender_only"] = respond_sender_only
+    if respond_tag_only is not None:
+        channel_config["respond_tag_only"] = respond_tag_only
     if respond_team_member_list:
         channel_config["respond_team_member_list"] = respond_team_member_list
     if answer_filters:
