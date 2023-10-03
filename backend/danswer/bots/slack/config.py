@@ -4,6 +4,13 @@ from danswer.db.models import SlackBotConfig
 from danswer.db.slack_bot_config import fetch_slack_bot_configs
 
 
+VALID_SLACK_FILTERS = [
+    "answerable_prefilter",
+    "well_answered_postfilter",
+    "questionmark_prefilter",
+]
+
+
 def get_slack_bot_config_for_channel(
     channel_name: str, db_session: Session
 ) -> SlackBotConfig | None:

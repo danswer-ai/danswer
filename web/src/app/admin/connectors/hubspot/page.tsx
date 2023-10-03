@@ -64,9 +64,10 @@ const Main = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "hubspot"
   );
-  const hubSpotCredential: Credential<HubSpotCredentialJson> = credentialsData.filter(
-    (credential) => credential.credential_json?.hubspot_access_token
-  )[0];
+  const hubSpotCredential: Credential<HubSpotCredentialJson> =
+    credentialsData.filter(
+      (credential) => credential.credential_json?.hubspot_access_token
+    )[0];
 
   return (
     <>
@@ -124,7 +125,7 @@ const Main = () => {
               validationSchema={Yup.object().shape({
                 hubspot_access_token: Yup.string().required(
                   "Please enter your HubSpot Access Token"
-                )
+                ),
               })}
               initialValues={{
                 hubspot_access_token: "",
@@ -170,8 +171,8 @@ const Main = () => {
         ) : (
           <>
             <p className="text-sm mb-2">
-              HubSpot connector is setup! We are pulling the latest tickets from HubSpot
-              every <b>10</b> minutes.
+              HubSpot connector is setup! We are pulling the latest tickets from
+              HubSpot every <b>10</b> minutes.
             </p>
             <ConnectorsTable<HubSpotConfig, HubSpotCredentialJson>
               connectorIndexingStatuses={hubSpotConnectorIndexingStatuses}

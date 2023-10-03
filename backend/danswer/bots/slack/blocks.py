@@ -71,6 +71,20 @@ def build_doc_feedback_block(
     )
 
 
+def get_restate_blocks(
+    msg: str,
+    is_bot_msg: bool,
+) -> list[Block]:
+    # Only the slash command needs this context because the user doesnt see their own input
+    if not is_bot_msg:
+        return []
+
+    return [
+        HeaderBlock(text="Responding to the Query"),
+        SectionBlock(text=f"```{msg}```"),
+    ]
+
+
 def build_documents_blocks(
     documents: list[SearchDoc],
     query_event_id: int,
