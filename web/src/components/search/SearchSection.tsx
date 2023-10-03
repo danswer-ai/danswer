@@ -47,7 +47,6 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
   documentSets,
   defaultSearchType,
 }) => {
-  console.log(documentSets);
   // Search Bar
   const [query, setQuery] = useState<string>("");
 

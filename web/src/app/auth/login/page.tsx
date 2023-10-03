@@ -1,7 +1,7 @@
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { DISABLE_AUTH, OAUTH_NAME } from "@/lib/constants";
+import { AuthType, OAUTH_NAME } from "@/lib/constants";
 import { User } from "@/lib/types";
-import { getCurrentUserSS, getAuthUrlSS } from "@/lib/userSS";
+import { getCurrentUserSS, getAuthUrlSS, getAuthTypeSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 
 const BUTTON_STYLE =
@@ -11,24 +11,23 @@ const BUTTON_STYLE =
   " mx-auto";
 
 const Page = async () => {
-  // no need for any of the below if auth is disabled
-  if (DISABLE_AUTH) {
-    return redirect("/");
-  }
-
   // catch cases where the backend is completely unreachable here
   // without try / catch, will just raise an exception and the page
   // will not render
+  let authType: AuthType | null = null;
   let currentUser: User | null = null;
-  let authorizationUrl: string | null = null;
-  let autoRedirect: boolean = false;
   try {
-    [currentUser, [authorizationUrl, autoRedirect]] = await Promise.all([
+    [authType, currentUser] = await Promise.all([
+      getAuthTypeSS(),
       getCurrentUserSS(),
-      getAuthUrlSS(),
     ]);
   } catch (e) {
     console.log(`Some fetch failed for the login page - ${e}`);
+  }
+
+  // simply take the user to the home page if Auth is disabled
+  if (authType === "disabled") {
+    return redirect("/");
   }
 
   // if user is already logged in, take them to the main app page
@@ -36,8 +35,19 @@ const Page = async () => {
     return redirect("/");
   }
 
-  if (autoRedirect && authorizationUrl) {
-    return redirect(authorizationUrl);
+  // get where to send the user to authenticate
+  let authUrl: string | null = null;
+  let autoRedirect: boolean = false;
+  if (authType) {
+    try {
+      [authUrl, autoRedirect] = await getAuthUrlSS(authType);
+    } catch (e) {
+      console.log(`Some fetch failed for the login page - ${e}`);
+    }
+  }
+
+  if (autoRedirect && authUrl) {
+    return redirect(authUrl);
   }
 
   return (
@@ -53,9 +63,9 @@ const Page = async () => {
             </h2>
           </div>
           <div className="flex">
-            {authorizationUrl ? (
+            {authUrl ? (
               <a
-                href={authorizationUrl || ""}
+                href={authUrl || ""}
                 className={
                   BUTTON_STYLE +
                   " focus:outline-none focus:ring-2 hover:bg-red-700 focus:ring-offset-2 focus:ring-red-500"

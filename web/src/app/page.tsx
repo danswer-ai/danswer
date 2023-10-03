@@ -1,8 +1,11 @@
 import { SearchSection } from "@/components/search/SearchSection";
 import { Header } from "@/components/Header";
-import { getCurrentUserSS, processCookies } from "@/lib/userSS";
+import {
+  getAuthDisabledSS,
+  getCurrentUserSS,
+  processCookies,
+} from "@/lib/userSS";
 import { redirect } from "next/navigation";
-import { DISABLE_AUTH } from "@/lib/constants";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
 import { buildUrl } from "@/lib/utilsSS";
@@ -12,7 +15,8 @@ import { SearchType } from "@/lib/search/interfaces";
 
 export default async function Home() {
   const tasks = [
-    DISABLE_AUTH ? (async () => null)() : getCurrentUserSS(),
+    getAuthDisabledSS(),
+    getCurrentUserSS(),
     fetch(buildUrl("/manage/connector"), {
       next: { revalidate: 0 },
       headers: {
@@ -30,17 +34,18 @@ export default async function Home() {
   // catch cases where the backend is completely unreachable here
   // without try / catch, will just raise an exception and the page
   // will not render
-  let results: (User | Response | null)[] = [null, null];
+  let results: (User | Response | boolean | null)[] = [null, null, null, null];
   try {
     results = await Promise.all(tasks);
   } catch (e) {
     console.log(`Some fetch failed for the main search page - ${e}`);
   }
-  const user = results[0] as User | null;
-  const connectorsResponse = results[1] as Response | null;
-  const documentSetsResponse = results[2] as Response | null;
+  const authDisabled = results[0] as boolean;
+  const user = results[1] as User | null;
+  const connectorsResponse = results[2] as Response | null;
+  const documentSetsResponse = results[3] as Response | null;
 
-  if (!DISABLE_AUTH && !user) {
+  if (!authDisabled && !user) {
     return redirect("/auth/login");
   }
 

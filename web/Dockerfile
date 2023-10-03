@@ -30,9 +30,6 @@ ENV NEXT_TELEMETRY_DISABLED 1
 ARG NEXT_PUBLIC_DISABLE_STREAMING
 ENV NEXT_PUBLIC_DISABLE_STREAMING=${NEXT_PUBLIC_DISABLE_STREAMING}
 
-ARG NEXT_PUBLIC_AUTH_TYPE
-ENV NEXT_PUBLIC_AUTH_TYPE=${NEXT_PUBLIC_AUTH_TYPE}
-
 RUN npm run build
 
 # Step 3. Production image, copy all the files and run next
@@ -67,9 +64,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # NOTE: if you add something here, make sure to add it to the builder as well
 ARG NEXT_PUBLIC_DISABLE_STREAMING
 ENV NEXT_PUBLIC_DISABLE_STREAMING=${NEXT_PUBLIC_DISABLE_STREAMING}
-
-ARG NEXT_PUBLIC_AUTH_TYPE
-ENV NEXT_PUBLIC_AUTH_TYPE=${NEXT_PUBLIC_AUTH_TYPE}
 
 # Note: Don't expose ports here, Compose will handle that for us if necessary. 
 # If you want to run this without compose, specify the ports to 
