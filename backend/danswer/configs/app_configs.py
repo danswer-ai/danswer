@@ -205,6 +205,11 @@ CONTINUE_ON_CONNECTOR_FAILURE = os.environ.get(
 # each worker loads the embedding models into memory.
 NUM_INDEXING_WORKERS = int(os.environ.get("NUM_INDEXING_WORKERS") or 1)
 
+# Logs every model prompt and output, mostly used for development or exploration purposes
+LOG_ALL_MODEL_INTERACTIONS = (
+    os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
+)
+
 
 #####
 # Danswer Slack Bot Configs

@@ -73,8 +73,6 @@ def _parse_embedded_json_streamed_response(
                 yield DanswerAnswerPiece(answer_piece=hold)
                 hold = ""
 
-    logger.debug(model_output)
-
     model_final = extract_embedded_json(model_output)
     if "action" not in model_final or "action_input" not in model_final:
         raise ValueError("Model did not provide all required action values")
