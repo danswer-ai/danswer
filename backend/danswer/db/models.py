@@ -2,6 +2,7 @@ import datetime
 from enum import Enum as PyEnum
 from typing import Any
 from typing import List
+from typing import Literal
 from typing import NotRequired
 from typing import TypedDict
 from uuid import UUID
@@ -477,14 +478,19 @@ class ChatMessage(Base):
     persona: Mapped[Persona | None] = relationship("Persona")
 
 
+AllowedAnswerFilters = (
+    Literal["well_answered_postfilter"] | Literal["questionmark_prefilter"]
+)
+
+
 class ChannelConfig(TypedDict):
     """NOTE: is a `TypedDict` so it can be used a type hint for a JSONB column
     in Postgres"""
 
     channel_names: list[str]
-    respond_sender_only: NotRequired[bool]  # defaults to False
+    respond_tag_only: NotRequired[bool]  # defaults to False
     respond_team_member_list: NotRequired[list[str]]
-    answer_filters: NotRequired[list[str]]
+    answer_filters: NotRequired[list[AllowedAnswerFilters]]
 
 
 class SlackBotConfig(Base):

@@ -102,6 +102,10 @@ const SlackBotConfigsTable = ({
             key: "question_mark_only",
           },
           {
+            header: "Tags Only",
+            key: "respond_tag_only",
+          },
+          {
             header: "Delete",
             key: "delete",
             width: "50px",
@@ -154,6 +158,12 @@ const SlackBotConfigsTable = ({
               ) : (
                 <div className="text-gray-300">No</div>
               ),
+              respond_tag_only:
+                slackBotConfig.channel_config.respond_tag_only || false ? (
+                  <div className="text-gray-300">Yes</div>
+                ) : (
+                  <div className="text-gray-300">No</div>
+                ),
               delete: (
                 <div
                   className="cursor-pointer"

@@ -55,7 +55,7 @@ def handle_message(
 
         # List of user id to send message to, if None, send to everyone in channel
         send_to: list[str] | None = None
-        respond_sender_only = False
+        respond_tag_only = False
         respond_team_member_list = None
         if slack_bot_config and slack_bot_config.channel_config:
             channel_conf = slack_bot_config.channel_config
@@ -77,14 +77,20 @@ def handle_message(
                 f"validity checks enabled: {channel_conf['answer_filters']}"
             )
 
-            respond_sender_only = channel_conf.get("respond_sender_only") or False
+            respond_tag_only = channel_conf.get("respond_tag_only") or False
             respond_team_member_list = (
                 channel_conf.get("respond_team_member_list") or None
             )
 
-        if sender_id and (respond_sender_only or is_bot_msg):
-            send_to = [sender_id]
-        elif respond_team_member_list:
+        # `skip_filters=True` -> this is a tag, so we *should* respond
+        if respond_tag_only and not skip_filters:
+            logger.info(
+                "Skipping message since the channel is configured such that "
+                "DanswerBot only responds to tags"
+            )
+            return
+
+        if respond_team_member_list:
             send_to = fetch_userids_from_emails(respond_team_member_list, client)
 
         # If configured to respond to team members only, then cannot be used with a /danswerbot command
@@ -208,14 +214,7 @@ def handle_message(
 
         # For DM (ephemeral message), we need to create a thread via a normal message so the user can see
         # the ephemeral message. This also will give the user a notification which ephemeral message does not.
-        if respond_sender_only:
-            respond_in_thread(
-                client=client,
-                channel=channel,
-                text="We've just DM-ed you the answer, hope you find it useful! 💃",
-                thread_ts=message_ts_to_respond_to,
-            )
-        elif respond_team_member_list:
+        if respond_team_member_list:
             respond_in_thread(
                 client=client,
                 channel=channel,
