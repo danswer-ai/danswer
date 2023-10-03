@@ -251,7 +251,7 @@ def process_model_tokens(
             yield DanswerAnswerPiece(answer_piece=hold_quote + token)
             hold_quote = ""
 
-    logger.debug(f"Raw model output: {model_output}")
+    logger.debug(f"Raw Model QnA Output: {model_output}")
 
     # for a JSON prompt, make sure that we're only passing through the "JSON part"
     # since that is what `extract_quotes_from_completed_token_stream` expects

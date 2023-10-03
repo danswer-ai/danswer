@@ -15,8 +15,9 @@ DANSWER_TOOL_DESCRIPTION = (
 
 DANSWER_SYSTEM_MSG = (
     "Given a conversation (between Human and Assistant) and a final message from Human, "
-    "rewrite the last message to be a standalone question that captures required/relevant context from the previous "
-    "conversation messages."
+    "rewrite the last message to be a standalone question which captures required/relevant context "
+    "from previous messages. This question must be useful for a semantic search engine. "
+    "It is used for a natural language search."
 )
 
 TOOL_TEMPLATE = """
@@ -181,8 +182,9 @@ def build_combined_query(
     combined_query_msgs.append(
         HumanMessage(
             content=(
-                "Help me rewrite this final query into a standalone question that takes into consideration the "
-                f"past messages of the conversation. You must ONLY return the rewritten query and nothing else."
+                "Help me rewrite this final message into a standalone query that takes into consideration the "
+                f"past messages of the conversation if relevant. This query is used with a semantic search engine to "
+                f"retrieve documents. You must ONLY return the rewritten query and nothing else."
                 f"\n\nQuery:\n{query_message.message}"
             )
         )
