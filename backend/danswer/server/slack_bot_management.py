@@ -25,6 +25,7 @@ router = APIRouter(prefix="/manage")
 
 def _form_channel_config(
     slack_bot_config_creation_request: SlackBotConfigCreationRequest,
+    current_slack_bot_config_id: int | None,
     db_session: Session,
 ) -> ChannelConfig:
     raw_channel_names = slack_bot_config_creation_request.channel_names
@@ -43,7 +44,7 @@ def _form_channel_config(
     try:
         cleaned_channel_names = validate_channel_names(
             channel_names=raw_channel_names,
-            current_slack_bot_config_id=None,
+            current_slack_bot_config_id=current_slack_bot_config_id,
             db_session=db_session,
         )
     except ValueError as e:
@@ -77,7 +78,9 @@ def create_slack_bot_config(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
 ) -> SlackBotConfig:
-    channel_config = _form_channel_config(slack_bot_config_creation_request, db_session)
+    channel_config = _form_channel_config(
+        slack_bot_config_creation_request, None, db_session
+    )
 
     slack_bot_config_model = insert_slack_bot_config(
         document_sets=slack_bot_config_creation_request.document_sets,
@@ -103,7 +106,9 @@ def patch_slack_bot_config(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
 ) -> SlackBotConfig:
-    channel_config = _form_channel_config(slack_bot_config_creation_request, db_session)
+    channel_config = _form_channel_config(
+        slack_bot_config_creation_request, slack_bot_config_id, db_session
+    )
 
     slack_bot_config_model = update_slack_bot_config(
         slack_bot_config_id=slack_bot_config_id,

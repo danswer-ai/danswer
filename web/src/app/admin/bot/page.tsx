@@ -4,12 +4,7 @@ import { Button } from "@/components/Button";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { PageSelector } from "@/components/PageSelector";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
-import {
-  BookmarkIcon,
-  CPUIcon,
-  EditIcon,
-  TrashIcon,
-} from "@/components/icons/icons";
+import { CPUIcon, EditIcon, TrashIcon } from "@/components/icons/icons";
 import { DocumentSet, SlackBotConfig } from "@/lib/types";
 import { useState } from "react";
 import { useSlackBotConfigs, useSlackBotTokens } from "./hooks";
@@ -95,8 +90,16 @@ const SlackBotConfigsTable = ({
             key: "document_sets",
           },
           {
+            header: "Team Members",
+            key: "team_members",
+          },
+          {
             header: "Hide Non-Answers",
             key: "answer_validity_check_enabled",
+          },
+          {
+            header: "Questions Only",
+            key: "question_mark_only",
           },
           {
             header: "Delete",
@@ -130,8 +133,23 @@ const SlackBotConfigsTable = ({
                     .join(", ")}
                 </div>
               ),
-              answer_validity_check_enabled: slackBotConfig.channel_config
-                .answer_validity_check_enabled ? (
+              team_members: (
+                <div>
+                  {(
+                    slackBotConfig.channel_config.respond_team_member_list || []
+                  ).join(", ")}
+                </div>
+              ),
+              answer_validity_check_enabled: (
+                slackBotConfig.channel_config.answer_filters || []
+              ).includes("well_answered_postfilter") ? (
+                <div className="text-gray-300">Yes</div>
+              ) : (
+                <div className="text-gray-300">No</div>
+              ),
+              question_mark_only: (
+                slackBotConfig.channel_config.answer_filters || []
+              ).includes("questionmark_prefilter") ? (
                 <div className="text-gray-300">Yes</div>
               ) : (
                 <div className="text-gray-300">No</div>
