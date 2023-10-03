@@ -1,14 +1,14 @@
 version: '3'
 services:
   api_server:
-    image: danswer/danswer-backend:latest
+    image: danswer/danswer-ee-backend:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
     command: >
       /bin/sh -c "alembic upgrade head &&
       echo \"Starting Danswer Api Server\" &&
-      uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
+      uvicorn ee.danswer.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       - relational_db
       - index
@@ -30,6 +30,9 @@ services:
       - SMTP_USER=${SMTP_USER:-}
       - SMTP_PASS=${SMTP_PASS:-}
       - EMAIL_FROM=${EMAIL_FROM:-}
+      - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID:-}
+      - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET:-}
+      - OPENID_CONFIG_URL=${OPENID_CONFIG_URL:-}
       # Gen AI Settings
       - GEN_AI_MODEL_PROVIDER=${GEN_AI_MODEL_PROVIDER:-}
       - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-}
@@ -93,7 +96,7 @@ services:
 
 
   background:
-    image: danswer/danswer-backend:latest
+    image: danswer/danswer-ee-backend:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -190,7 +193,7 @@ services:
 
 
   web_server:
-    image: danswer/danswer-web-server:latest
+    image: danswer/danswer-ee-web-server:latest
     build:
       context: ../../web
       dockerfile: Dockerfile

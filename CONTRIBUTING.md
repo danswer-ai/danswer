@@ -152,13 +152,13 @@ python ./scripts/dev_run_background_jobs.py
 
 To run the backend API server, navigate back to `danswer/backend` and run:
 ```bash
-AUTH_TYPE=disabled uvicorn danswer.main:app --reload --port 8080
+AUTH_TYPE=disabled uvicorn ee.danswer.main:app --reload --port 8080
 ```
 _For Windows (for compatibility with both PowerShell and Command Prompt):_
 ```bash
 powershell -Command "
     $env:AUTH_TYPE='disabled'
-    uvicorn danswer.main:app --reload --port 8080 
+    uvicorn ee.danswer.main:app --reload --port 8080 
 "
 ```
 
