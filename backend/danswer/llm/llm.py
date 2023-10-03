@@ -42,7 +42,7 @@ class LangChainChatLLM(LLM, abc.ABC):
         )
 
     @staticmethod
-    def _log_prompt(prompt: LanguageModelInput):
+    def _log_prompt(prompt: LanguageModelInput) -> None:
         if isinstance(prompt, list):
             for ind, msg in enumerate(prompt):
                 logger.debug(f"Message {ind}:\n{msg.content}")
