@@ -33,7 +33,7 @@ export const TextFormField = ({
 }: TextFormFieldProps) => {
   return (
     <div className="mb-4">
-      <label htmlFor={name} className="block">
+      <label htmlFor={name} className="block font-medium">
         {label}
       </label>
       {subtext && <p className="text-xs mb-1">{subtext}</p>}
@@ -82,7 +82,7 @@ export const BooleanFormField = ({
       <label className="flex text-sm">
         <Field name={name} type="checkbox" className="mx-3 px-5" />
         <div>
-          {label}
+          <p className="font-medium">{label}</p>
           {subtext && <p className="text-xs">{subtext}</p>}
         </div>
       </label>
@@ -113,7 +113,7 @@ export function TextArrayField<T extends Yup.AnyObject>({
 }: TextArrayFieldProps<T>) {
   return (
     <div className="mb-4">
-      <label htmlFor={name} className="block">
+      <label htmlFor={name} className="block font-medium">
         {label}
       </label>
       {subtext && <p className="text-xs">{subtext}</p>}

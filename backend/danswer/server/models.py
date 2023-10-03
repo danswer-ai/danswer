@@ -19,6 +19,7 @@ from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
 from danswer.datastores.interfaces import IndexFilter
+from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
 from danswer.db.models import Connector
 from danswer.db.models import Credential
@@ -436,10 +437,10 @@ class SlackBotConfigCreationRequest(BaseModel):
     # for now for simplicity / speed of development
     document_sets: list[int]
     channel_names: list[str]
-    # If not responder_sender_only and no team members, assume respond in the channel to everyone
-    respond_sender_only: bool = False
+    respond_tag_only: bool = False
+    # If no team members, assume respond in the channel to everyone
     respond_team_member_list: list[str] = []
-    answer_filters: list[str] = []
+    answer_filters: list[AllowedAnswerFilters] = []
 
     @validator("answer_filters", pre=True)
     def validate_filters(cls, value: list[str]) -> list[str]:
