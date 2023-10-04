@@ -2,7 +2,7 @@ import os
 from typing import Any
 from typing import cast
 
-from langchain.chat_models.openai import ChatOpenAI
+from langchain.chat_models import ChatLiteLLM
 
 from danswer.configs.model_configs import GEN_AI_TEMPERATURE
 from danswer.llm.llm import LangChainChatLLM
@@ -26,7 +26,7 @@ class OpenAIGPT(LangChainChatLLM):
         if not api_key:
             api_key = os.environ.get("OPENAI_API_KEY") or "dummy_api_key"
 
-        self._llm = ChatOpenAI(
+        self._llm = ChatLiteLLM(
             model=model_version,
             openai_api_key=api_key,
             # Prefer using None which is the default value, endpoint could be empty string
