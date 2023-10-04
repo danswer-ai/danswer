@@ -29,7 +29,7 @@ def extract_embedded_json(s: str) -> dict:
 
 
 def clean_up_code_blocks(model_out_raw: str) -> str:
-    return model_out_raw.strip().strip("```").strip()
+    return model_out_raw.strip().strip("```").strip().replace("\\xa0", "")
 
 
 def clean_model_quote(quote: str, trim_length: int) -> str:
