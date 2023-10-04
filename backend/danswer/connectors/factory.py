@@ -9,6 +9,7 @@ from danswer.connectors.file.connector import LocalFileConnector
 from danswer.connectors.github.connector import GithubConnector
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.guru.connector import GuruConnector
+from danswer.connectors.hubspot.connector import HubSpotConnector
 from danswer.connectors.interfaces import BaseConnector
 from danswer.connectors.interfaces import EventConnector
 from danswer.connectors.interfaces import LoadConnector
@@ -22,7 +23,6 @@ from danswer.connectors.slack.connector import SlackLoadConnector
 from danswer.connectors.slack.connector import SlackPollConnector
 from danswer.connectors.web.connector import WebConnector
 from danswer.connectors.zulip.connector import ZulipConnector
-from danswer.connectors.hubspot.connector import HubSpotConnector
 
 
 class ConnectorMissingException(Exception):
