@@ -230,6 +230,12 @@ DANSWER_BOT_DISPLAY_ERROR_MSGS = os.environ.get(
 DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER = os.environ.get(
     "DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER", ""
 ).lower() not in ["false", ""]
+DANSWER_BOT_ONLY_ANSWER_WHEN_SLACK_BOT_CONFIG_IS_PRESENT = (
+    os.environ.get(
+        "DANSWER_BOT_ONLY_ANSWER_WHEN_SLACK_BOT_CONFIG_IS_PRESENT", ""
+    ).lower()
+    == "true"
+)
 # Add a second LLM call post Answer to verify if the Answer is valid
 # Throws out answers that don't directly or fully answer the user query
 # This is the default for all DanswerBot channels unless the bot is configured individually
