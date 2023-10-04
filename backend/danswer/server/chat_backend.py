@@ -29,8 +29,9 @@ from danswer.secondary_llm_flows.chat_helpers import get_new_chat_name
 from danswer.server.models import ChatMessageDetail
 from danswer.server.models import ChatMessageIdentifier
 from danswer.server.models import ChatRenameRequest
+from danswer.server.models import ChatSession
 from danswer.server.models import ChatSessionDetailResponse
-from danswer.server.models import ChatSessionIdsResponse
+from danswer.server.models import ChatSessionsResponse
 from danswer.server.models import CreateChatMessageRequest
 from danswer.server.models import CreateChatSessionID
 from danswer.server.models import RegenerateMessageRequest
@@ -49,7 +50,7 @@ router = APIRouter(prefix="/chat")
 def get_user_chat_sessions(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-) -> ChatSessionIdsResponse:
+) -> ChatSessionsResponse:
     user_id = user.id if user is not None else None
 
     # Don't included deleted chats, even if soft delete only
@@ -57,7 +58,16 @@ def get_user_chat_sessions(
         user_id=user_id, deleted=False, db_session=db_session
     )
 
-    return ChatSessionIdsResponse(sessions=[chat.id for chat in chat_sessions])
+    return ChatSessionsResponse(
+        sessions=[
+            ChatSession(
+                id=chat.id,
+                name=chat.description,
+                time_created=chat.time_created.isoformat(),
+            )
+            for chat in chat_sessions
+        ]
+    )
 
 
 @router.get("/get-chat-session/{session_id}")

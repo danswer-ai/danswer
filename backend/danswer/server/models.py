@@ -202,8 +202,14 @@ class RenameChatSessionResponse(BaseModel):
     new_name: str  # This is only really useful if the name is generated
 
 
-class ChatSessionIdsResponse(BaseModel):
-    sessions: list[int]
+class ChatSession(BaseModel):
+    id: int
+    name: str
+    time_created: str
+
+
+class ChatSessionsResponse(BaseModel):
+    sessions: list[ChatSession]
 
 
 class ChatMessageDetail(BaseModel):
