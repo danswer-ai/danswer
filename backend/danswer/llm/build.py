@@ -2,6 +2,7 @@ from typing import Any
 
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import DanswerGenAIModel
+from danswer.configs.constants import ModelHostType
 from danswer.configs.model_configs import API_TYPE_OPENAI
 from danswer.configs.model_configs import GEN_AI_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_HOST_TYPE
@@ -12,6 +13,7 @@ from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
 from danswer.direct_qa.qa_utils import get_gen_ai_api_key
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.llm.azure import AzureGPT
+from danswer.llm.google_colab_demo import GoogleColabDemo
 from danswer.llm.llm import LLM
 from danswer.llm.openai import OpenAIGPT
 
@@ -21,6 +23,11 @@ def get_llm_from_model(model: str, **kwargs: Any) -> LLM:
         if API_TYPE_OPENAI == "azure":
             return AzureGPT(**kwargs)
         return OpenAIGPT(**kwargs)
+    if (
+        model == DanswerGenAIModel.REQUEST.value
+        and kwargs.get("model_host_type") == ModelHostType.COLAB_DEMO
+    ):
+        return GoogleColabDemo(**kwargs)
 
     raise ValueError(f"Unknown LLM model: {model}")
 
