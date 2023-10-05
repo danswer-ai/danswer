@@ -179,7 +179,6 @@ def create_chat_message_feedback(
     is_positive: bool | None = None,
     feedback_text: str | None = None,
 ) -> None:
-    """Creates a new ChatMessage feedback row."""
     if is_positive is None and feedback_text is None:
         raise ValueError("No feedback provided")
 
@@ -202,7 +201,6 @@ def create_chat_message_feedback(
     if user_id is not None and chat_message.chat_session.user_id != user_id:
         raise ValueError("User trying to give feedback on a message by another user.")
 
-    # Create the feedback entry
     message_feedback = ChatMessageFeedback(
         chat_message_chat_session_id=chat_session_id,
         chat_message_message_number=message_number,
