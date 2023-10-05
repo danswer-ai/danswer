@@ -84,7 +84,7 @@ def handle_message(
             logger.info(
                 "Found slack bot config for channel. Restricting bot to use document "
                 f"sets: {document_set_names}, "
-                f"validity checks enabled: {channel_conf['answer_filters']}"
+                f"validity checks enabled: {channel_conf.get('answer_filters', 'NA')}"
             )
 
             respond_tag_only = channel_conf.get("respond_tag_only") or False
