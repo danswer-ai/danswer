@@ -13,6 +13,7 @@ from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
 from danswer.db.models import Persona
+from danswer.db.models import ToolInfo
 
 
 def fetch_chat_sessions_by_user(
@@ -261,12 +262,12 @@ def fetch_persona_by_id(persona_id: int, db_session: Session) -> Persona:
     return persona
 
 
-def create_persona(
+def upsert_persona(
     persona_id: int | None,
     name: str,
     retrieval_enabled: bool,
     system_text: str | None,
-    tools_text: str | None,
+    tools: list[ToolInfo] | None,
     hint_text: str | None,
     default_persona: bool,
     db_session: Session,
@@ -278,7 +279,7 @@ def create_persona(
         persona.name = name
         persona.retrieval_enabled = retrieval_enabled
         persona.system_text = system_text
-        persona.tools_text = tools_text
+        persona.tools = tools
         persona.hint_text = hint_text
         persona.default_persona = default_persona
     else:
@@ -287,7 +288,7 @@ def create_persona(
             name=name,
             retrieval_enabled=retrieval_enabled,
             system_text=system_text,
-            tools_text=tools_text,
+            tools=tools,
             hint_text=hint_text,
             default_persona=default_persona,
         )

@@ -10,6 +10,7 @@ from langchain.schema.messages import SystemMessage
 from danswer.chat.chat_prompts import build_combined_query
 from danswer.chat.chat_prompts import DANSWER_TOOL_NAME
 from danswer.chat.chat_prompts import form_tool_followup_text
+from danswer.chat.chat_prompts import form_tool_section_text
 from danswer.chat.chat_prompts import form_user_prompt_text
 from danswer.chat.chat_prompts import format_danswer_chunks_for_chat
 from danswer.chat.tools import call_tool
@@ -208,7 +209,7 @@ def llm_contextless_chat_answer(
         return (msg for msg in [LLM_CHAT_FAILURE_MSG])  # needs to be an Iterator
 
 
-def llm_contextual_chat_answer(
+def llm_tools_enabled_chat_answer(
     messages: list[ChatMessage],
     persona: Persona,
     user_id: UUID | None,
@@ -216,8 +217,8 @@ def llm_contextual_chat_answer(
 ) -> Iterator[str]:
     retrieval_enabled = persona.retrieval_enabled
     system_text = persona.system_text
-    tool_text = persona.tools_text
     hint_text = persona.hint_text
+    tool_text = form_tool_section_text(persona.tools, persona.retrieval_enabled)
 
     last_message = messages[-1]
     previous_messages = messages[:-1]
@@ -351,11 +352,14 @@ def llm_chat_answer(
     if persona is None:
         return llm_contextless_chat_answer(messages)
 
-    elif persona.retrieval_enabled is False and persona.tools_text is None:
+    elif persona.retrieval_enabled is False and not persona.tools:
         return llm_contextless_chat_answer(
             messages, tokenizer, system_text=persona.system_text
         )
 
-    return llm_contextual_chat_answer(
+    elif persona.retrieval_enabled and not persona.tools:
+        pass
+
+    return llm_tools_enabled_chat_answer(
         messages=messages, persona=persona, user_id=user_id, tokenizer=tokenizer
     )
