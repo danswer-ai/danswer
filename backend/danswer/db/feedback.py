@@ -4,12 +4,16 @@ from sqlalchemy import asc
 from sqlalchemy import delete
 from sqlalchemy import desc
 from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
+from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.datastores.document_index import get_default_document_index
 from danswer.datastores.interfaces import UpdateRequest
+from danswer.db.models import ChatMessage as DbChatMessage
+from danswer.db.models import ChatMessageFeedback
 from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentRetrievalFeedback
 from danswer.db.models import QueryEvent
@@ -164,3 +168,46 @@ def delete_document_feedback_for_documents(
         DocumentRetrievalFeedback.document_id.in_(document_ids)
     )
     db_session.execute(stmt)
+
+
+def create_chat_message_feedback(
+    chat_session_id: int,
+    message_number: int,
+    edit_number: int,
+    user_id: UUID | None,
+    db_session: Session,
+    is_positive: bool | None = None,
+    feedback_text: str | None = None,
+) -> None:
+    if is_positive is None and feedback_text is None:
+        raise ValueError("No feedback provided")
+
+    try:
+        chat_message = (
+            db_session.query(DbChatMessage)
+            .filter_by(
+                chat_session_id=chat_session_id,
+                message_number=message_number,
+                edit_number=edit_number,
+            )
+            .one()
+        )
+    except NoResultFound:
+        raise ValueError("ChatMessage not found")
+
+    if chat_message.message_type != MessageType.ASSISTANT:
+        raise ValueError("Can only provide feedback on LLM Outputs")
+
+    if user_id is not None and chat_message.chat_session.user_id != user_id:
+        raise ValueError("User trying to give feedback on a message by another user.")
+
+    message_feedback = ChatMessageFeedback(
+        chat_message_chat_session_id=chat_session_id,
+        chat_message_message_number=message_number,
+        chat_message_edit_number=edit_number,
+        is_positive=is_positive,
+        feedback_text=feedback_text,
+    )
+
+    db_session.add(message_feedback)
+    db_session.commit()

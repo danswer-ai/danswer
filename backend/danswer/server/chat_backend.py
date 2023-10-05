@@ -21,11 +21,13 @@ from danswer.db.chat import set_latest_chat_message
 from danswer.db.chat import update_chat_session
 from danswer.db.chat import verify_parent_exists
 from danswer.db.engine import get_session
+from danswer.db.feedback import create_chat_message_feedback
 from danswer.db.models import ChatMessage
 from danswer.db.models import User
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.secondary_llm_flows.chat_helpers import get_new_chat_name
+from danswer.server.models import ChatFeedbackRequest
 from danswer.server.models import ChatMessageDetail
 from danswer.server.models import ChatMessageIdentifier
 from danswer.server.models import ChatRenameRequest
@@ -161,6 +163,25 @@ def delete_chat_session_by_id(
 ) -> None:
     user_id = user.id if user is not None else None
     delete_chat_session(user_id, session_id, db_session)
+
+
+@router.post("/create-chat-message-feedback")
+def create_chat_feedback(
+    feedback: ChatFeedbackRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    user_id = user.id if user else None
+
+    create_chat_message_feedback(
+        chat_session_id=feedback.chat_session_id,
+        message_number=feedback.message_number,
+        edit_number=feedback.edit_number,
+        user_id=user_id,
+        db_session=db_session,
+        is_positive=feedback.is_positive,
+        feedback_text=feedback.feedback_text,
+    )
 
 
 def _create_chat_chain(

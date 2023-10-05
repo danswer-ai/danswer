@@ -166,6 +166,14 @@ class QAFeedbackRequest(BaseModel):
     feedback: QAFeedbackType
 
 
+class ChatFeedbackRequest(BaseModel):
+    chat_session_id: int
+    message_number: int
+    edit_number: int
+    is_positive: bool | None = None
+    feedback_text: str | None = None
+
+
 class SearchFeedbackRequest(BaseModel):
     query_id: int
     document_id: str
