@@ -32,6 +32,7 @@ spec:
         ports:
         - containerPort: 3000
         args:
+          - "NEXT_PUBLIC_AUTH_TYPE=google_oauth"
         env:
         - name: AUTH_TYPE
           valueFrom:
