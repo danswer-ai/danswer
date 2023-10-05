@@ -12,3 +12,11 @@ data:
   # QA_TIMEOUT:
   # GEN_AI_MODEL_VERSION:
   # GEN_AI_API_KEY
+  # Neccessary environment variables for Azure OpenAI:
+  # API_BASE_OPENAI:
+  # API_TYPE_OPENAI:
+  # API_VERSION_OPENAI:
+  # AZURE_DEPLOYMENT_ID:
+  WEB_DOMAIN: http://localhost:3000
+  # DANSWER_BOT_SLACK_APP_TOKEN:
+  # DANSWER_BOT_SLACK_BOT_TOKEN:
