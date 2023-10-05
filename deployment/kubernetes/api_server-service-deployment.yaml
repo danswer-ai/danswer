@@ -102,16 +102,6 @@ spec:
             configMapKeyRef:
               name: env-configmap
               key: VALID_EMAIL_DOMAINS
-        - name: GOOGLE_OAUTH_CLIENT_ID
-          valueFrom:
-            configMapKeyRef:
-              name: env-configmap
-              key: GOOGLE_OAUTH_CLIENT_ID
-        - name: GOOGLE_OAUTH_CLIENT_SECRET
-          valueFrom:
-            configMapKeyRef:
-              name: env-configmap
-              key: GOOGLE_OAUTH_CLIENT_SECRET
         - name: DISABLE_GENERATIVE_AI
           valueFrom:
             configMapKeyRef:
