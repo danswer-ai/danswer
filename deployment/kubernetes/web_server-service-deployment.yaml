@@ -31,6 +31,15 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
+        args:
         env:
+        - name: AUTH_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: AUTH_TYPE
         - name: INTERNAL_URL
-          value: "http://api-server-service:80"
+          valueFrom:
+              configMapKeyRef:
+                name: env-configmap
+                key: INTERNAL_URL
