@@ -3,24 +3,24 @@ kind: ConfigMap
 metadata:
   name: env-configmap
 data:
-  POSTGRES_HOST: relational-db-service
-  VESPA_HOST: document-index-service
-  AUTH_TYPE: google_oauth
+  POSTGRES_HOST: "relational-db-service"
+  VESPA_HOST: "document-index-service"
+  AUTH_TYPE: "google_oauth"
   INTERNAL_URL: "http://api-server-service:80"
-  DOMAIN: localhost
-  INTERNAL_MODEL_VERSION: openai-chat-completion
-  QA_TIMEOUT: 60
-  GEN_AI_MODEL_VERSION: gpt-3.5-turbo
-  GEN_AI_API_KEY:
-  API_BASE_OPENAI:
-  API_TYPE_OPENAI:
-  API_VERSION_OPENAI:
-  AZURE_DEPLOYMENT_ID:
-  WEB_DOMAIN: http://localhost:3000
-  DANSWER_BOT_SLACK_APP_TOKEN:
-  DANSWER_BOT_SLACK_BOT_TOKEN:
-  SECRET:
-  SESSION_EXPIRE_TIME_SECONDS:
-  OPENID_CONFIG_URL:
-  SAML_CONF_DIR:
-  VALID_EMAIL_DOMAINS:
+  DOMAIN: "localhost"
+  INTERNAL_MODEL_VERSION: "openai-chat-completion"
+  QA_TIMEOUT: "60"
+  GEN_AI_MODEL_VERSION: "gpt-3.5-turbo"
+  GEN_AI_API_KEY: ""
+  API_BASE_OPENAI: ""
+  API_TYPE_OPENAI: ""
+  API_VERSION_OPENAI: ""
+  AZURE_DEPLOYMENT_ID: ""
+  WEB_DOMAIN: "http://localhost:3000"
+  DANSWER_BOT_SLACK_APP_TOKEN: ""
+  DANSWER_BOT_SLACK_BOT_TOKEN: ""
+  SECRET: ""
+  SESSION_EXPIRE_TIME_SECONDS: ""
+  OPENID_CONFIG_URL: ""
+  SAML_CONF_DIR: ""
+  VALID_EMAIL_DOMAINS: ""
