@@ -14,6 +14,7 @@ from sqlalchemy import Boolean
 from sqlalchemy import DateTime
 from sqlalchemy import Enum
 from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKeyConstraint
 from sqlalchemy import func
 from sqlalchemy import Index
 from sqlalchemy import Integer
@@ -476,6 +477,42 @@ class ChatMessage(Base):
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
     persona: Mapped[Persona | None] = relationship("Persona")
+
+
+class ChatMessageFeedback(Base):
+    __tablename__ = "chat_feedback"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    chat_message_chat_session_id: Mapped[int] = mapped_column(Integer)
+    chat_message_message_number: Mapped[int] = mapped_column(Integer)
+    chat_message_edit_number: Mapped[int] = mapped_column(Integer)
+    is_positive: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    feedback_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            [
+                "chat_message_chat_session_id",
+                "chat_message_message_number",
+                "chat_message_edit_number",
+            ],
+            [
+                "chat_message.chat_session_id",
+                "chat_message.message_number",
+                "chat_message.edit_number",
+            ],
+        ),
+    )
+
+    chat_message: Mapped[ChatMessage] = relationship(
+        "ChatMessage",
+        foreign_keys=[
+            chat_message_chat_session_id,
+            chat_message_message_number,
+            chat_message_edit_number,
+        ],
+        backref="feedbacks",
+    )
 
 
 AllowedAnswerFilters = (
