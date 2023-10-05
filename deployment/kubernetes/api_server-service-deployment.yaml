@@ -47,8 +47,6 @@ spec:
               key: AUTH_TYPE
         - name: POSTGRES_HOST
           value: relational-db-service
-        - name: VESPA_HOST
-          value: document-index-service
         - name: GOOGLE_OAUTH_CLIENT_ID
           valueFrom:
             secretKeyRef:
@@ -59,6 +57,86 @@ spec:
             secretKeyRef:
               name: danswer-secrets
               key: google_oauth_client_secret
+        - name: INTERNAL_MODEL_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: INTERNAL_MODEL_VERSION
+        - name: GEN_AI_MODEL_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: GEN_AI_MODEL_VERSION
+        - name: GEN_AI_API_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: GEN_AI_API_KEY
+        - name: GEN_AI_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: GEN_AI_ENDPOINT
+        - name: GEN_AI_HOST_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: GEN_AI_HOST_TYPE
+        - name: NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
+        - name: VESPA_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: VESPA_HOST
+        - name: QA_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: QA_TIMEOUT
+        - name: VALID_EMAIL_DOMAINS
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: VALID_EMAIL_DOMAINS
+        - name: GOOGLE_OAUTH_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: GOOGLE_OAUTH_CLIENT_ID
+        - name: GOOGLE_OAUTH_CLIENT_SECRET
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: GOOGLE_OAUTH_CLIENT_SECRET
+        - name: DISABLE_GENERATIVE_AI
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: DISABLE_GENERATIVE_AI
+        - name: API_BASE_OPENAI
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: API_BASE_OPENAI
+        - name: API_TYPE_OPENAI
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: API_TYPE_OPENAI
+        - name: API_VERSION_OPENAI
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: API_VERSION_OPENAI
+        - name: AZURE_DEPLOYMENT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: AZURE_DEPLOYMENT_ID
         volumeMounts:
         - name: dynamic-storage
           mountPath: /home/storage
