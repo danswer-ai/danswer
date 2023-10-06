@@ -225,14 +225,14 @@ def upsert_service_account_credential(
         credential_base = build_service_account_creds(
             delegated_user_email=service_account_credential_request.google_drive_delegated_user
         )
-        print(credential_base)
     except ConfigNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     # first delete all existing service account credentials
     delete_google_drive_service_account_credentials(user, db_session)
+    # `user=None` since this credential is not a personal credential
     return create_credential(
-        credential_data=credential_base, user=user, db_session=db_session
+        credential_data=credential_base, user=None, db_session=db_session
     )
 
 
