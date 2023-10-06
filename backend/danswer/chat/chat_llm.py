@@ -16,6 +16,7 @@ from danswer.chat.chat_prompts import form_tool_section_text
 from danswer.chat.chat_prompts import form_user_prompt_text
 from danswer.chat.chat_prompts import format_danswer_chunks_for_chat
 from danswer.chat.chat_prompts import REQUIRE_DANSWER_SYSTEM_MSG
+from danswer.chat.chat_prompts import YES_SEARCH
 from danswer.chat.tools import call_tool
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT
 from danswer.configs.constants import IGNORE_FOR_QA
@@ -217,9 +218,10 @@ def llm_contextual_chat_answer(
     persona: Persona,
     user_id: UUID | None,
     tokenizer: Callable,
-    run_search_system_text=REQUIRE_DANSWER_SYSTEM_MSG,
+    run_search_system_text: str = REQUIRE_DANSWER_SYSTEM_MSG,
 ) -> Iterator[str]:
     last_message = messages[-1]
+    final_query_text = last_message.message
     previous_messages = messages[:-1]
     previous_msgs_as_basemessage = [
         translate_danswer_msg_to_langchain(msg) for msg in previous_messages
@@ -228,7 +230,7 @@ def llm_contextual_chat_answer(
     try:
         llm = get_default_llm()
 
-        if not last_message.message:
+        if not final_query_text:
             raise ValueError("User chat message is empty.")
 
         # Determine if a search is necessary to answer the user query
@@ -251,8 +253,9 @@ def llm_contextual_chat_answer(
         # Good Debug/Breakpoint
         model_out = llm.invoke(need_search_prompt)
 
-        # True for LLM has enough information to answer
-        if "yes " in model_out.lower():
+        # Model will output "Yes Search" if search is useful
+        # Be a little forgiving though, if we match yes, it's good enough
+        if (YES_SEARCH.split()[0] + " ").lower() in model_out.lower():
             tool_result_str = danswer_chat_retrieval(
                 query_message=last_message,
                 history=previous_messages,
@@ -267,28 +270,22 @@ def llm_contextual_chat_answer(
             last_user_msg_tokens = len(tokenizer(last_user_msg_text))
             last_user_msg = HumanMessage(content=last_user_msg_text)
 
-            prompt = _drop_messages_history_overflow(
-                system_msg=SystemMessage(content=persona.system_text),
-                system_token_count=len(tokenizer(persona.system_text)),
-                history_msgs=previous_msgs_as_basemessage,
-                history_token_counts=previous_msg_token_counts,
-                final_msg=last_user_msg,
-                final_msg_token_count=last_user_msg_tokens,
-            )
-
         else:
-            last_message_text = last_message.message
-            last_user_msg_tokens = len(tokenizer(last_message_text))
-            last_user_msg = HumanMessage(content=last_message_text)
+            last_user_msg_tokens = len(tokenizer(final_query_text))
+            last_user_msg = HumanMessage(content=final_query_text)
 
-            prompt = _drop_messages_history_overflow(
-                system_msg=SystemMessage(content=persona.system_text),
-                system_token_count=len(tokenizer(persona.system_text)),
-                history_msgs=previous_msgs_as_basemessage,
-                history_token_counts=previous_msg_token_counts,
-                final_msg=last_user_msg,
-                final_msg_token_count=last_user_msg_tokens,
-            )
+        system_text = persona.system_text
+        system_msg = SystemMessage(content=system_text) if system_text else None
+        system_tokens = len(tokenizer(system_text)) if system_text else 0
+
+        prompt = _drop_messages_history_overflow(
+            system_msg=system_msg,
+            system_token_count=system_tokens,
+            history_msgs=previous_msgs_as_basemessage,
+            history_token_counts=previous_msg_token_counts,
+            final_msg=last_user_msg,
+            final_msg_token_count=last_user_msg_tokens,
+        )
 
         return llm.stream(prompt)
 

@@ -6,6 +6,7 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.constants import CODE_BLOCK_PAT
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
+from danswer.db.models import ToolInfo
 from danswer.llm.utils import translate_danswer_msg_to_langchain
 
 DANSWER_TOOL_NAME = "Current Search"
@@ -21,12 +22,20 @@ DANSWER_SYSTEM_MSG = (
     "It is used for a natural language search."
 )
 
+
+YES_SEARCH = "Yes Search"
+NO_SEARCH = "No Search"
 REQUIRE_DANSWER_SYSTEM_MSG = (
-    "You are a helper tool whose only job is to determine if the main AI system needs to run a search to "
-    "be able to answer the user's last message. "
-    "If the information exists in the message history, don't run search. "
-    "The search can provide additional knowledge about entities, processes, problems, and anything else.\n"
-    'Respond with EXACTLY and ONLY "Yes Search" or "No Search"'
+    "You are a large language model whose only job is to determine if the system should call an external search tool "
+    "to be able to answer the user's last message.\n"
+    f'\nRespond with "{NO_SEARCH}" if:\n'
+    f"- there is sufficient information in chat history to fully answer the user query\n"
+    f"- there is enough knowledge in the LLM to fully answer the user query\n"
+    f"- the user query does not rely on any specific knowledge\n"
+    f'\nRespond with "{YES_SEARCH}" if:\n'
+    "- additional knowledge about entities, processes, problems, or anything else could lead to a better answer.\n"
+    "- there is some uncertainty what the user is referring to\n\n"
+    f'Respond with EXACTLY and ONLY "{YES_SEARCH}" or "{NO_SEARCH}"'
 )
 
 TOOL_TEMPLATE = """
@@ -46,7 +55,7 @@ Use this if you want to use a tool. Markdown code snippet formatted in the follo
 
 ```json
 {{
-    "action": string, \\ The action to take. Must be one of {tool_names}
+    "action": string, \\ The action to take. {tool_names}
     "action_input": string \\ The input to the action
 }}
 ```
@@ -132,23 +141,30 @@ def form_user_prompt_text(
 
 
 def form_tool_section_text(
-    tools: list[dict[str, str]], retrieval_enabled: bool, template: str = TOOL_TEMPLATE
+    tools: list[ToolInfo] | None, retrieval_enabled: bool, template: str = TOOL_TEMPLATE
 ) -> str | None:
     if not tools and not retrieval_enabled:
         return None
 
-    if retrieval_enabled:
+    if retrieval_enabled and tools:
         tools.append(
             {"name": DANSWER_TOOL_NAME, "description": DANSWER_TOOL_DESCRIPTION}
         )
 
     tools_intro = []
-    for tool in tools:
-        description_formatted = tool["description"].replace("\n", " ")
-        tools_intro.append(f"> {tool['name']}: {description_formatted}")
+    if tools:
+        num_tools = len(tools)
+        for tool in tools:
+            description_formatted = tool["description"].replace("\n", " ")
+            tools_intro.append(f"> {tool['name']}: {description_formatted}")
 
-    tools_intro_text = "\n".join(tools_intro)
-    tool_names_text = ", ".join([tool["name"] for tool in tools])
+        prefix = "Must be one of " if num_tools > 1 else "Must be "
+
+        tools_intro_text = "\n".join(tools_intro)
+        tool_names_text = prefix + ", ".join([tool["name"] for tool in tools])
+
+    else:
+        return None
 
     return template.format(
         tool_overviews=tools_intro_text, tool_names=tool_names_text
@@ -238,7 +254,8 @@ def form_require_search_single_msg_text(
 
 def form_require_search_text(query_message: ChatMessage) -> str:
     return (
-        query_message.message + "\n\nHint: respond with EXACTLY Yes Search or No Search"
+        query_message.message
+        + f"\n\nHint: respond with EXACTLY {YES_SEARCH} or {NO_SEARCH}"
     )
 
 
