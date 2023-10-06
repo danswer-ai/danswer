@@ -24,7 +24,7 @@ def upgrade() -> None:
     op.execute(
         "UPDATE connector_credential_pair SET is_public = true WHERE is_public IS NULL"
     )
-    op.alter_column("connector_credential_pair", "id", nullable=False)
+    op.alter_column("connector_credential_pair", "is_public", nullable=False)
 
     # remove notion of "public" from the credential object so that the CC Pair can be
     # the single source of truth
@@ -34,6 +34,10 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.add_column(
         "credential",
-        sa.Column("public_doc", sa.Boolean(), nullable=False),
+        sa.Column("public_doc", sa.Boolean(), nullable=True),
     )
+    # setting public_doc to false for all existing rows to be safe
+    # NOTE: this is likely not the correct state of the world but it's the best we can do
+    op.execute("UPDATE credential SET public_doc = false WHERE public_doc IS NULL")
+    op.alter_column("credential", "public_doc", nullable=False)
     op.drop_column("connector_credential_pair", "is_public")
