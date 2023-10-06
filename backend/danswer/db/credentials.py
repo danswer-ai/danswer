@@ -22,15 +22,19 @@ logger = setup_logger()
 def fetch_credentials(
     db_session: Session,
     user: User | None = None,
-    public_only: bool | None = None,
 ) -> list[Credential]:
     stmt = select(Credential)
     if user:
-        stmt = stmt.where(
-            or_(Credential.user_id == user.id, Credential.user_id.is_(None))
-        )
-    if public_only is not None:
-        stmt = stmt.where(Credential.public_doc == public_only)
+        # admins can see all "public" credentials (marked by having no user) + credentials they own
+        if user.role == UserRole.ADMIN:
+            stmt = stmt.where(
+                or_(
+                    Credential.user_id == user.id,
+                    Credential.user_id.is_(None),
+                )
+            )
+        else:
+            stmt = stmt.where(Credential.user_id == user.id)
     results = db_session.scalars(stmt)
     return list(results.all())
 
@@ -46,7 +50,6 @@ def fetch_credential_by_id(
                 or_(
                     Credential.user_id == user.id,
                     Credential.user_id.is_(None),
-                    Credential.public_doc == True,  # noqa: E712
                 )
             )
         else:
@@ -66,7 +69,6 @@ def create_credential(
     credential = Credential(
         credential_json=credential_data.credential_json,
         user_id=user.id if user else None,
-        public_doc=credential_data.public_doc,
     )
     db_session.add(credential)
     db_session.commit()
@@ -86,7 +88,6 @@ def update_credential(
 
     credential.credential_json = credential_data.credential_json
     credential.user_id = user.id if user is not None else None
-    credential.public_doc = credential_data.public_doc
 
     db_session.commit()
     return credential
@@ -144,13 +145,15 @@ def create_initial_public_credential() -> None:
         if first_credential is not None:
             if (
                 first_credential.credential_json != {}
-                or first_credential.public_doc is False
+                or first_credential.user is not None
             ):
                 raise ValueError(error_msg)
             return
 
         credential = Credential(
-            id=public_cred_id, credential_json={}, user_id=None, public_doc=True
+            id=public_cred_id,
+            credential_json={},
+            user_id=None,
         )
         db_session.add(credential)
         db_session.commit()

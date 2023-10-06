@@ -322,7 +322,7 @@ def get_connector_indexing_status(
                 name=cc_pair.name,
                 connector=ConnectorSnapshot.from_connector_db_model(connector),
                 credential=CredentialSnapshot.from_credential_db_model(credential),
-                public_doc=credential.public_doc,
+                public_doc=cc_pair.is_public,
                 owner=credential.user.email if credential.user else "",
                 last_status=cc_pair.last_attempt_status,
                 last_success=cc_pair.last_successful_index_time,

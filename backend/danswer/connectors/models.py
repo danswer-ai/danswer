@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
-from uuid import UUID
 
 from danswer.configs.constants import DocumentSource
 
@@ -41,6 +40,5 @@ class InputType(str, Enum):
 
 @dataclass
 class IndexAttemptMetadata:
-    user_id: UUID | None
     connector_id: int
     credential_id: int

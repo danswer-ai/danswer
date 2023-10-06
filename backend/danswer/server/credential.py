@@ -26,11 +26,11 @@ router = APIRouter(prefix="/manage")
 
 @router.get("/admin/credential")
 def list_credentials_admin(
-    _: User = Depends(current_admin_user),
+    user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[CredentialSnapshot]:
     """Lists all public credentials"""
-    credentials = fetch_credentials(db_session=db_session, public_only=True)
+    credentials = fetch_credentials(db_session=db_session, user=user)
     return [
         CredentialSnapshot.from_credential_db_model(credential)
         for credential in credentials
@@ -110,7 +110,6 @@ def update_credential_from_model(
         id=updated_credential.id,
         credential_json=updated_credential.credential_json,
         user_id=updated_credential.user_id,
-        public_doc=updated_credential.public_doc,
         time_created=updated_credential.time_created,
         time_updated=updated_credential.time_updated,
     )

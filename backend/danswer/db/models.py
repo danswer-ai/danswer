@@ -144,6 +144,14 @@ class ConnectorCredentialPair(Base):
     credential_id: Mapped[int] = mapped_column(
         ForeignKey("credential.id"), primary_key=True
     )
+    # controls whether the documents indexed by this CC pair are visible to all
+    # or if they are only visible to those with that are given explicit access
+    # (e.g. via owning the credential or being a part of a group that is given access)
+    is_public: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False,
+    )
     # Time finished, not used for calculating backend jobs which uses time started (created)
     last_successful_index_time: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
@@ -206,7 +214,6 @@ class Credential(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     credential_json: Mapped[dict[str, Any]] = mapped_column(postgresql.JSONB())
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
-    public_doc: Mapped[bool] = mapped_column(Boolean, default=False)
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

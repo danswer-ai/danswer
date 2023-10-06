@@ -336,7 +336,6 @@ class RunConnectorRequest(BaseModel):
 
 class CredentialBase(BaseModel):
     credential_json: dict[str, Any]
-    public_doc: bool
 
 
 class CredentialSnapshot(CredentialBase):
@@ -353,7 +352,6 @@ class CredentialSnapshot(CredentialBase):
             if MASK_CREDENTIAL_PREFIX
             else credential.credential_json,
             user_id=credential.user_id,
-            public_doc=credential.public_doc,
             time_created=credential.time_created,
             time_updated=credential.time_updated,
         )

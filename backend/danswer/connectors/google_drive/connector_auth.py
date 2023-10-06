@@ -130,7 +130,6 @@ def build_service_account_creds(
 
     return CredentialBase(
         credential_json=credential_dict,
-        public_doc=True,
     )
 
 
