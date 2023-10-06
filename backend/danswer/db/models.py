@@ -214,6 +214,8 @@ class Credential(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     credential_json: Mapped[dict[str, Any]] = mapped_column(postgresql.JSONB())
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    # if `true`, then all Admins will have access to the credential
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=True)
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

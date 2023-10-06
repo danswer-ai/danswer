@@ -3,6 +3,7 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from danswer.auth.schemas import UserRole
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.credentials import create_credential
@@ -37,15 +38,6 @@ def list_credentials_admin(
     ]
 
 
-@router.post("/admin/credential")
-def create_public_credential_from_model(
-    connector_info: CredentialBase,
-    _: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> ObjectCreationIdResponse:
-    return create_credential(connector_info, None, db_session)
-
-
 @router.delete("/admin/credential/{credential_id}")
 def delete_credential_by_id_admin(
     credential_id: int,
@@ -76,11 +68,17 @@ def list_credentials(
 
 @router.post("/credential")
 def create_credential_from_model(
-    connector_info: CredentialBase,
-    user: User = Depends(current_user),
+    credential_info: CredentialBase,
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
-    return create_credential(connector_info, user, db_session)
+    if user and not user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=400,
+            detail="Non-admin cannot create admin credential",
+        )
+
+    return create_credential(credential_info, user, db_session)
 
 
 @router.get("/credential/{credential_id}")
@@ -119,6 +117,7 @@ def update_credential_from_model(
         id=updated_credential.id,
         credential_json=updated_credential.credential_json,
         user_id=updated_credential.user_id,
+        is_admin=updated_credential.is_admin,
         time_created=updated_credential.time_created,
         time_updated=updated_credential.time_updated,
     )

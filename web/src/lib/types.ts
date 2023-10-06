@@ -139,6 +139,7 @@ export interface ConnectorIndexingStatus<
 // CREDENTIALS
 export interface CredentialBase<T> {
   credential_json: T;
+  is_admin: boolean;
 }
 
 export interface Credential<T> extends CredentialBase<T> {

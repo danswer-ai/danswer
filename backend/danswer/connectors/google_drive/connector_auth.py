@@ -130,6 +130,7 @@ def build_service_account_creds(
 
     return CredentialBase(
         credential_json=credential_dict,
+        is_admin=True,
     )
 
 

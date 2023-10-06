@@ -215,7 +215,7 @@ def delete_google_service_account_key(
 @router.put("/admin/connector/google-drive/service-account-credential")
 def upsert_service_account_credential(
     service_account_credential_request: GoogleServiceAccountCredentialRequest,
-    user: User = Depends(current_admin_user),
+    user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
     """Special API which allows the creation of a credential for a service account.
@@ -232,7 +232,7 @@ def upsert_service_account_credential(
     delete_google_drive_service_account_credentials(user, db_session)
     # `user=None` since this credential is not a personal credential
     return create_credential(
-        credential_data=credential_base, user=None, db_session=db_session
+        credential_data=credential_base, user=user, db_session=db_session
     )
 
 

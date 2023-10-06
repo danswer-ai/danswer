@@ -25,12 +25,13 @@ def fetch_credentials(
 ) -> list[Credential]:
     stmt = select(Credential)
     if user:
-        # admins can see all "public" credentials (marked by having no user) + credentials they own
+        # admins can see all "admin" credentials + credentials they own
         if user.role == UserRole.ADMIN:
             stmt = stmt.where(
                 or_(
                     Credential.user_id == user.id,
                     Credential.user_id.is_(None),
+                    Credential.is_admin == True,  # noqa: E712
                 )
             )
         else:
@@ -69,6 +70,7 @@ def create_credential(
     credential = Credential(
         credential_json=credential_data.credential_json,
         user_id=user.id if user else None,
+        is_admin=credential_data.is_admin,
     )
     db_session.add(credential)
     db_session.commit()
