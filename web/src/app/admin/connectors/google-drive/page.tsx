@@ -321,7 +321,8 @@ const Main = () => {
     | Credential<GoogleDriveCredentialJson>
     | undefined = credentialsData.find(
     (credential) =>
-      credential.credential_json?.google_drive_tokens && credential.public_doc
+      credential.credential_json?.google_drive_tokens &&
+      credential.user_id === null
   );
   const googleDriveServiceAccountCredential:
     | Credential<GoogleDriveServiceAccountCredentialJson>

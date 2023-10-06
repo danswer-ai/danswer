@@ -20,8 +20,9 @@ export const GoogleDriveCard = ({
   const existingCredential: Credential<GoogleDriveCredentialJson> | undefined =
     userCredentials?.find(
       (credential) =>
+        // user_id is set => credential is not a public credential
         credential.credential_json?.google_drive_tokens !== undefined &&
-        !credential.public_doc
+        credential.user_id !== null
     );
 
   const credentialIsLinked =
