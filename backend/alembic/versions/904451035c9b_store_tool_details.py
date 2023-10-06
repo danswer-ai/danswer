@@ -1,7 +1,7 @@
 """Store Tool Details
 
 Revision ID: 904451035c9b
-Revises: e0a68a81d434
+Revises: 3b25685ff73c
 Create Date: 2023-10-05 12:29:26.620000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "904451035c9b"
-down_revision = "e0a68a81d434"
+down_revision = "3b25685ff73c"
 branch_labels = None
 depends_on = None
 
