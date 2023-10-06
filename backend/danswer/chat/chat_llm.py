@@ -9,10 +9,13 @@ from langchain.schema.messages import SystemMessage
 
 from danswer.chat.chat_prompts import build_combined_query
 from danswer.chat.chat_prompts import DANSWER_TOOL_NAME
+from danswer.chat.chat_prompts import form_require_search_text
 from danswer.chat.chat_prompts import form_tool_followup_text
+from danswer.chat.chat_prompts import form_tool_less_followup_text
 from danswer.chat.chat_prompts import form_tool_section_text
 from danswer.chat.chat_prompts import form_user_prompt_text
 from danswer.chat.chat_prompts import format_danswer_chunks_for_chat
+from danswer.chat.chat_prompts import REQUIRE_DANSWER_SYSTEM_MSG
 from danswer.chat.tools import call_tool
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT
 from danswer.configs.constants import IGNORE_FOR_QA
@@ -176,8 +179,8 @@ def _drop_messages_history_overflow(
 
 def llm_contextless_chat_answer(
     messages: list[ChatMessage],
-    tokenizer: Callable | None = None,
     system_text: str | None = None,
+    tokenizer: Callable | None = None,
 ) -> Iterator[str]:
     try:
         prompt_msgs = [translate_danswer_msg_to_langchain(msg) for msg in messages]
@@ -203,6 +206,91 @@ def llm_contextless_chat_answer(
             all_msgs = remaining_user_msgs
 
         return get_default_llm().stream(all_msgs)
+
+    except Exception as e:
+        logger.error(f"LLM failed to produce valid chat message, error: {e}")
+        return (msg for msg in [LLM_CHAT_FAILURE_MSG])  # needs to be an Iterator
+
+
+def llm_contextual_chat_answer(
+    messages: list[ChatMessage],
+    persona: Persona,
+    user_id: UUID | None,
+    tokenizer: Callable,
+    run_search_system_text=REQUIRE_DANSWER_SYSTEM_MSG,
+) -> Iterator[str]:
+    last_message = messages[-1]
+    previous_messages = messages[:-1]
+    previous_msgs_as_basemessage = [
+        translate_danswer_msg_to_langchain(msg) for msg in previous_messages
+    ]
+
+    try:
+        llm = get_default_llm()
+
+        if not last_message.message:
+            raise ValueError("User chat message is empty.")
+
+        # Determine if a search is necessary to answer the user query
+        user_req_search_text = form_require_search_text(last_message)
+        last_user_msg = HumanMessage(content=user_req_search_text)
+
+        previous_msg_token_counts = [msg.token_count for msg in previous_messages]
+        danswer_system_tokens = len(tokenizer(run_search_system_text))
+        last_user_msg_tokens = len(tokenizer(user_req_search_text))
+
+        need_search_prompt = _drop_messages_history_overflow(
+            system_msg=SystemMessage(content=run_search_system_text),
+            system_token_count=danswer_system_tokens,
+            history_msgs=previous_msgs_as_basemessage,
+            history_token_counts=previous_msg_token_counts,
+            final_msg=last_user_msg,
+            final_msg_token_count=last_user_msg_tokens,
+        )
+
+        # Good Debug/Breakpoint
+        model_out = llm.invoke(need_search_prompt)
+
+        # True for LLM has enough information to answer
+        if "yes " in model_out.lower():
+            tool_result_str = danswer_chat_retrieval(
+                query_message=last_message,
+                history=previous_messages,
+                llm=llm,
+                user_id=user_id,
+            )
+            last_user_msg_text = form_tool_less_followup_text(
+                tool_output=tool_result_str,
+                query=last_message.message,
+                hint_text=persona.hint_text,
+            )
+            last_user_msg_tokens = len(tokenizer(last_user_msg_text))
+            last_user_msg = HumanMessage(content=last_user_msg_text)
+
+            prompt = _drop_messages_history_overflow(
+                system_msg=SystemMessage(content=persona.system_text),
+                system_token_count=len(tokenizer(persona.system_text)),
+                history_msgs=previous_msgs_as_basemessage,
+                history_token_counts=previous_msg_token_counts,
+                final_msg=last_user_msg,
+                final_msg_token_count=last_user_msg_tokens,
+            )
+
+        else:
+            last_message_text = last_message.message
+            last_user_msg_tokens = len(tokenizer(last_message_text))
+            last_user_msg = HumanMessage(content=last_message_text)
+
+            prompt = _drop_messages_history_overflow(
+                system_msg=SystemMessage(content=persona.system_text),
+                system_token_count=len(tokenizer(persona.system_text)),
+                history_msgs=previous_msgs_as_basemessage,
+                history_token_counts=previous_msg_token_counts,
+                final_msg=last_user_msg,
+                final_msg_token_count=last_user_msg_tokens,
+            )
+
+        return llm.stream(prompt)
 
     except Exception as e:
         logger.error(f"LLM failed to produce valid chat message, error: {e}")
@@ -354,12 +442,15 @@ def llm_chat_answer(
 
     elif persona.retrieval_enabled is False and not persona.tools:
         return llm_contextless_chat_answer(
-            messages, tokenizer, system_text=persona.system_text
+            messages, system_text=persona.system_text, tokenizer=tokenizer
         )
 
     elif persona.retrieval_enabled and not persona.tools:
-        pass
+        return llm_contextual_chat_answer(
+            messages=messages, persona=persona, user_id=user_id, tokenizer=tokenizer
+        )
 
-    return llm_tools_enabled_chat_answer(
-        messages=messages, persona=persona, user_id=user_id, tokenizer=tokenizer
-    )
+    else:
+        return llm_tools_enabled_chat_answer(
+            messages=messages, persona=persona, user_id=user_id, tokenizer=tokenizer
+        )

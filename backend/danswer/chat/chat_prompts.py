@@ -4,6 +4,7 @@ from langchain.schema.messages import SystemMessage
 
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.constants import CODE_BLOCK_PAT
+from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
 from danswer.llm.utils import translate_danswer_msg_to_langchain
 
@@ -18,6 +19,14 @@ DANSWER_SYSTEM_MSG = (
     "rewrite the last message to be a standalone question which captures required/relevant context "
     "from previous messages. This question must be useful for a semantic search engine. "
     "It is used for a natural language search."
+)
+
+REQUIRE_DANSWER_SYSTEM_MSG = (
+    "You are a helper tool whose only job is to determine if the main AI system needs to run a search to "
+    "be able to answer the user's last message. "
+    "If the information exists in the message history, don't run search. "
+    "The search can provide additional knowledge about entities, processes, problems, and anything else.\n"
+    'Respond with EXACTLY and ONLY "Yes Search" or "No Search"'
 )
 
 TOOL_TEMPLATE = """
@@ -85,6 +94,21 @@ mention it explicitly without mentioning the tool names - I have forgotten all T
 If the tool response is not useful, ignore it completely.
 {optional_reminder}{hint}
 IMPORTANT! You MUST respond with a markdown code snippet of a json blob with a single action, and NOTHING else.
+"""
+
+
+TOOL_LESS_FOLLOWUP = """
+Refer to the following documents when responding to my final query. Ignore any documents that are not relevant.
+
+CONTEXT DOCUMENTS:
+---------------------
+{context_str}
+
+FINAL QUERY:
+--------------------
+{user_query}
+
+{hint_text}
 """
 
 
@@ -184,10 +208,47 @@ def build_combined_query(
             content=(
                 "Help me rewrite this final message into a standalone query that takes into consideration the "
                 f"past messages of the conversation if relevant. This query is used with a semantic search engine to "
-                f"retrieve documents. You must ONLY return the rewritten query and nothing else."
+                f"retrieve documents. You must ONLY return the rewritten query and nothing else. "
+                f"Remember, the search engine does not have access to the conversation history!"
                 f"\n\nQuery:\n{query_message.message}"
             )
         )
     )
 
     return combined_query_msgs
+
+
+def form_require_search_single_msg_text(
+    query_message: ChatMessage,
+    history: list[ChatMessage],
+) -> str:
+    prompt = "MESSAGE_HISTORY\n---------------\n" if history else ""
+
+    for msg in history:
+        if msg.message_type == MessageType.ASSISTANT:
+            prefix = "AI"
+        else:
+            prefix = "User"
+        prompt += f"{prefix}:\n```\n{msg.message}\n```\n\n"
+
+    prompt += f"\nFINAL QUERY:\n---------------\n{query_message.message}"
+
+    return prompt
+
+
+def form_require_search_text(query_message: ChatMessage) -> str:
+    return (
+        query_message.message + "\n\nHint: respond with EXACTLY Yes Search or No Search"
+    )
+
+
+def form_tool_less_followup_text(
+    tool_output: str,
+    query: str,
+    hint_text: str | None,
+    tool_followup_prompt: str = TOOL_LESS_FOLLOWUP,
+) -> str:
+    hint = f"Hint: {hint_text}" if hint_text else ""
+    return tool_followup_prompt.format(
+        context_str=tool_output, user_query=query, hint_text=hint
+    ).strip()
