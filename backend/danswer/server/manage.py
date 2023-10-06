@@ -215,7 +215,7 @@ def delete_google_service_account_key(
 @router.put("/admin/connector/google-drive/service-account-credential")
 def upsert_service_account_credential(
     service_account_credential_request: GoogleServiceAccountCredentialRequest,
-    user: User = Depends(current_admin_user),
+    user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
     """Special API which allows the creation of a credential for a service account.
@@ -225,12 +225,12 @@ def upsert_service_account_credential(
         credential_base = build_service_account_creds(
             delegated_user_email=service_account_credential_request.google_drive_delegated_user
         )
-        print(credential_base)
     except ConfigNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     # first delete all existing service account credentials
     delete_google_drive_service_account_credentials(user, db_session)
+    # `user=None` since this credential is not a personal credential
     return create_credential(
         credential_data=credential_base, user=user, db_session=db_session
     )
@@ -322,7 +322,7 @@ def get_connector_indexing_status(
                 name=cc_pair.name,
                 connector=ConnectorSnapshot.from_connector_db_model(connector),
                 credential=CredentialSnapshot.from_credential_db_model(credential),
-                public_doc=credential.public_doc,
+                public_doc=cc_pair.is_public,
                 owner=credential.user.email if credential.user else "",
                 last_status=cc_pair.last_attempt_status,
                 last_success=cc_pair.last_successful_index_time,
