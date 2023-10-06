@@ -72,7 +72,7 @@ def create_credential_from_model(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
-    if user and not user.role != UserRole.ADMIN:
+    if user and user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=400,
             detail="Non-admin cannot create admin credential",

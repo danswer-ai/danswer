@@ -1,5 +1,6 @@
 from typing import Any
 
+from sqlalchemy import Select
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import or_
@@ -19,13 +20,10 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def fetch_credentials(
-    db_session: Session,
-    user: User | None = None,
-) -> list[Credential]:
-    stmt = select(Credential)
+def _attach_user_filters(stmt: Select[tuple[Credential]], user: User | None) -> Select:
+    """Attaches filters to the statement to ensure that the user can only
+    access the appropriate credentials"""
     if user:
-        # admins can see all "admin" credentials + credentials they own
         if user.role == UserRole.ADMIN:
             stmt = stmt.where(
                 or_(
@@ -36,6 +34,16 @@ def fetch_credentials(
             )
         else:
             stmt = stmt.where(Credential.user_id == user.id)
+
+    return stmt
+
+
+def fetch_credentials(
+    db_session: Session,
+    user: User | None = None,
+) -> list[Credential]:
+    stmt = select(Credential)
+    stmt = _attach_user_filters(stmt, user)
     results = db_session.scalars(stmt)
     return list(results.all())
 
@@ -44,19 +52,7 @@ def fetch_credential_by_id(
     credential_id: int, user: User | None, db_session: Session
 ) -> Credential | None:
     stmt = select(Credential).where(Credential.id == credential_id)
-    if user:
-        # admins have access to all public credentials + credentials they own
-        if user.role == UserRole.ADMIN:
-            stmt = stmt.where(
-                or_(
-                    Credential.user_id == user.id,
-                    Credential.user_id.is_(None),
-                )
-            )
-        else:
-            stmt = stmt.where(
-                or_(Credential.user_id == user.id, Credential.user_id.is_(None))
-            )
+    stmt = _attach_user_filters(stmt, user)
     result = db_session.execute(stmt)
     credential = result.scalar_one_or_none()
     return credential
