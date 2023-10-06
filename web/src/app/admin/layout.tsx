@@ -22,6 +22,7 @@ import {
   HubSpotIcon,
   BookmarkIcon,
   CPUIcon,
+  Document360Icon,
 } from "@/components/icons/icons";
 import { getAuthDisabledSS, getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
@@ -203,6 +204,15 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/connectors/hubspot",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <Document360Icon size={16} />
+                      <div className="ml-1">Document360</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/document360",
                 },
               ],
             },

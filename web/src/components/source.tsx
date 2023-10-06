@@ -15,6 +15,7 @@ import {
   SlackIcon,
   ZulipIcon,
   HubSpotIcon,
+  Document360Icon,
 } from "./icons/icons";
 
 interface SourceMetadata {
@@ -114,6 +115,12 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: HubSpotIcon,
         displayName: "HubSpot",
         adminPageLink: "/admin/connectors/hubspot",
+      };
+    case "document360":
+      return {
+        icon: Document360Icon,
+        displayName: "Document360",
+        adminPageLink: "/admin/connectors/document360",
       };
     default:
       throw new Error("Invalid source type");

@@ -22,6 +22,7 @@ export type ValidSources =
   | "zulip"
   | "linear"
   | "hubspot"
+  | "document360"
   | "file";
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
@@ -108,6 +109,11 @@ export interface ZulipConfig {
 export interface NotionConfig {}
 
 export interface HubSpotConfig {}
+
+export interface Document360Config {
+  workspace: string;
+  categories?: string[];
+}
 
 export interface IndexAttemptSnapshot {
   status: ValidStatuses | null;
@@ -209,6 +215,11 @@ export interface LinearCredentialJson {
 
 export interface HubSpotCredentialJson {
   hubspot_access_token: string;
+}
+
+export interface Document360CredentialJson {
+  portal_id: string;
+  document360_api_token: string;
 }
 
 // DELETION

@@ -60,6 +60,7 @@ class DocumentSource(str, Enum):
     ZULIP = "zulip"
     LINEAR = "linear"
     HUBSPOT = "hubspot"
+    DOCUMENT360 = "document360"
 
 
 class DocumentIndexType(str, Enum):
