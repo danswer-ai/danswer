@@ -15,9 +15,7 @@ from danswer.configs.app_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
 from danswer.configs.app_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
 from danswer.configs.app_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
-from danswer.configs.app_configs import (
-    DANSWER_BOT_ONLY_ANSWER_WHEN_SLACK_BOT_CONFIG_IS_PRESENT,
-)
+from danswer.configs.app_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import ENABLE_DANSWERBOT_REFLEXION
 from danswer.configs.constants import DOCUMENT_SETS
@@ -40,7 +38,7 @@ def handle_message(
     answer_generation_timeout: int = DANSWER_BOT_ANSWER_GENERATION_TIMEOUT,
     should_respond_with_error_msgs: bool = DANSWER_BOT_DISPLAY_ERROR_MSGS,
     disable_docs_only_answer: bool = DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER,
-    only_answer_when_config_is_present: bool = DANSWER_BOT_ONLY_ANSWER_WHEN_SLACK_BOT_CONFIG_IS_PRESENT,
+    respond_every_channel: bool = DANSWER_BOT_RESPOND_EVERY_CHANNEL,
 ) -> None:
     engine = get_sqlalchemy_engine()
     with Session(engine) as db_session:
@@ -48,7 +46,7 @@ def handle_message(
         slack_bot_config = get_slack_bot_config_for_channel(
             channel_name=channel_name, db_session=db_session
         )
-        if slack_bot_config is None and only_answer_when_config_is_present:
+        if slack_bot_config is None and not respond_every_channel:
             logger.info(
                 "Skipping message since the channel is not configured to use DanswerBot"
             )
