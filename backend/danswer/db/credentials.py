@@ -63,7 +63,7 @@ def fetch_credential_by_id(
 
 def create_credential(
     credential_data: CredentialBase,
-    user: User,
+    user: User | None,
     db_session: Session,
 ) -> ObjectCreationIdResponse:
     credential = Credential(

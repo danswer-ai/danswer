@@ -37,6 +37,15 @@ def list_credentials_admin(
     ]
 
 
+@router.post("/admin/credential")
+def create_public_credential_from_model(
+    connector_info: CredentialBase,
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> ObjectCreationIdResponse:
+    return create_credential(connector_info, None, db_session)
+
+
 @router.delete("/admin/credential/{credential_id}")
 def delete_credential_by_id_admin(
     credential_id: int,
@@ -65,6 +74,15 @@ def list_credentials(
     ]
 
 
+@router.post("/credential")
+def create_credential_from_model(
+    connector_info: CredentialBase,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> ObjectCreationIdResponse:
+    return create_credential(connector_info, user, db_session)
+
+
 @router.get("/credential/{credential_id}")
 def get_credential_by_id(
     credential_id: int,
@@ -79,15 +97,6 @@ def get_credential_by_id(
         )
 
     return CredentialSnapshot.from_credential_db_model(credential)
-
-
-@router.post("/credential")
-def create_credential_from_model(
-    connector_info: CredentialBase,
-    user: User = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> ObjectCreationIdResponse:
-    return create_credential(connector_info, user, db_session)
 
 
 @router.patch("/credential/{credential_id}")

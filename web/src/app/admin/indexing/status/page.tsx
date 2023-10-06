@@ -152,7 +152,7 @@ function Main() {
             <ConnectorTitle
               ccPairName={connectorIndexingStatus.name}
               connector={connectorIndexingStatus.connector}
-              isPublic={connectorIndexingStatus.credential.public_doc}
+              isPublic={connectorIndexingStatus.public_doc}
               owner={connectorIndexingStatus.owner}
             />
           ),
