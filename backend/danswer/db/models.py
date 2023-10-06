@@ -439,6 +439,11 @@ class ChatSession(Base):
     )
 
 
+class ToolInfo(TypedDict):
+    name: str
+    description: str
+
+
 class Persona(Base):
     # TODO introduce user and group ownership for personas
     __tablename__ = "persona"
@@ -447,7 +452,9 @@ class Persona(Base):
     # Danswer retrieval, treated as a special tool
     retrieval_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     system_text: Mapped[str | None] = mapped_column(Text, nullable=True)
-    tools_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tools: Mapped[list[ToolInfo] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
+    )
     hint_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Default personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
