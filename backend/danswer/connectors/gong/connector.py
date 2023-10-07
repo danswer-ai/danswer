@@ -95,6 +95,9 @@ class GongConnector(LoadConnector, PollConnector):
                 speaker_to_anon_name: dict[str, str] = {}
 
                 transcript_text = ""
+                if call_details["title"]:
+                    transcript_text += f"Call Title: {call_details['title']}\n\n"
+
                 if call_details["purpose"]:
                     transcript_text += (
                         f"Call Description: {call_details['purpose']}\n\n"
