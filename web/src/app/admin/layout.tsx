@@ -10,6 +10,7 @@ import {
   BookstackIcon,
   ConfluenceIcon,
   GuruIcon,
+  GongIcon,
   FileIcon,
   JiraIcon,
   SlabIcon,
@@ -158,6 +159,15 @@ export default async function AdminLayout({
                     </div>
                   ),
                   link: "/admin/connectors/guru",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <GongIcon size={16} />
+                      <div className="ml-1">Gong</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/gong",
                 },
                 {
                   name: (

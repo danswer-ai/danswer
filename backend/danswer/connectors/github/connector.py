@@ -13,6 +13,7 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
+from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
@@ -68,7 +69,7 @@ def _convert_issue_to_document(issue: Issue) -> Document:
     )
 
 
-class GithubConnector(LoadConnector):
+class GithubConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         repo_owner: str,
