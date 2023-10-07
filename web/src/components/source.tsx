@@ -106,7 +106,7 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
       };
     case "gong":
       return {
-        icon: GuruIcon,
+        icon: GongIcon,
         displayName: "Gong",
         adminPageLink: "/admin/connectors/gong",
       };
