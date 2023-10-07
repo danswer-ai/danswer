@@ -10,6 +10,7 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
+from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
@@ -22,7 +23,7 @@ logger = setup_logger()
 GONG_BASE_URL = "https://us-34014.api.gong.io"
 
 
-class GongConnector(LoadConnector):
+class GongConnector(LoadConnector, PollConnector):
     def __init__(
         self, batch_size: int = INDEX_BATCH_SIZE, use_end_time: bool = False
     ) -> None:

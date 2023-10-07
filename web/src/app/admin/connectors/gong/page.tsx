@@ -78,7 +78,7 @@ const Main = () => {
       </p>
 
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
-        Step 1: Provide your API Access Key info
+        Step 1: Provide your API Access info
       </h2>
 
       {gongCredential ? (
