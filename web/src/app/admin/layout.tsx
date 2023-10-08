@@ -36,14 +36,14 @@ export default async function AdminLayout({
     getCurrentUserSS(),
   ]);
 
-  if (!authDisabled) {
-    if (!user) {
-      return redirect("/auth/login");
-    }
-    if (user.role !== "admin") {
-      return redirect("/");
-    }
-  }
+  // if (!authDisabled) {
+  //   if (!user) {
+  //     return redirect("/auth/login");
+  //   }
+  //   if (user.role !== "admin") {
+  //     return redirect("/");
+  //   }
+  // }
 
   return (
     <div>
