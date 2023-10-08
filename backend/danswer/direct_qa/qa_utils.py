@@ -32,8 +32,9 @@ logger = setup_logger()
 
 
 def get_gen_ai_api_key() -> str:
-    return GEN_AI_API_KEY or cast(
-        str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY)
+    return (
+        cast(str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY))
+        or GEN_AI_API_KEY
     )
 
 
