@@ -1,5 +1,4 @@
 import io
-from copy import copy
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -18,23 +17,18 @@ from PyPDF2 import PdfReader
 from requests_oauthlib import OAuth2Session  # type:ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.app_configs import WEB_CONNECTOR_IGNORED_CLASSES
-from danswer.configs.app_configs import WEB_CONNECTOR_IGNORED_ELEMENTS
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_ID
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_TOKEN_URL
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.html_utils import standard_html_cleanup
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
-from danswer.utils.text_processing import format_document_soup
 
 logger = setup_logger()
-
-
-MINTLIFY_UNWANTED = ["sticky", "hidden"]
 
 
 class WEB_CONNECTOR_VALID_SETTINGS(str, Enum):
@@ -224,36 +218,16 @@ class WebConnector(LoadConnector):
                         if link not in visited_links:
                             to_visit.append(link)
 
-                title_tag = soup.find("title")
-                title = None
-                if title_tag and title_tag.text:
-                    title = title_tag.text
-                    title_tag.extract()
-
-                # Heuristics based cleaning of elements based on css classes
-                unwanted_classes = copy(WEB_CONNECTOR_IGNORED_CLASSES)
-                if self.mintlify_cleanup:
-                    unwanted_classes.extend(MINTLIFY_UNWANTED)
-                for undesired_element in unwanted_classes:
-                    [
-                        tag.extract()
-                        for tag in soup.find_all(
-                            class_=lambda x: x and undesired_element in x.split()
-                        )
-                    ]
-
-                for undesired_tag in WEB_CONNECTOR_IGNORED_ELEMENTS:
-                    [tag.extract() for tag in soup.find_all(undesired_tag)]
-
-                # 200B is ZeroWidthSpace which we don't care for
-                page_text = format_document_soup(soup).replace("\u200B", "")
+                parsed_html = standard_html_cleanup(soup, self.mintlify_cleanup)
 
                 doc_batch.append(
                     Document(
                         id=current_url,
-                        sections=[Section(link=current_url, text=page_text)],
+                        sections=[
+                            Section(link=current_url, text=parsed_html.cleaned_text)
+                        ],
                         source=DocumentSource.WEB,
-                        semantic_identifier=title or current_url,
+                        semantic_identifier=parsed_html.title or current_url,
                         metadata={},
                     )
                 )

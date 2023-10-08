@@ -1,16 +1,17 @@
-// components/FileUpload.tsx
-import { ChangeEvent, FC, useState } from "react";
+import { FC, useState } from "react";
 import React from "react";
 import Dropzone from "react-dropzone";
 
 interface FileUploadProps {
   selectedFiles: File[];
   setSelectedFiles: (files: File[]) => void;
+  message?: string;
 }
 
 export const FileUpload: FC<FileUploadProps> = ({
   selectedFiles,
   setSelectedFiles,
+  message,
 }) => {
   const [dragActive, setDragActive] = useState(false);
 
@@ -35,7 +36,10 @@ export const FileUpload: FC<FileUploadProps> = ({
               }
             >
               <input {...getInputProps()} />
-              <b>Drag and drop some files here, or click to select files</b>
+              <b>
+                {message ||
+                  "Drag and drop some files here, or click to select files"}
+              </b>
             </div>
           </section>
         )}

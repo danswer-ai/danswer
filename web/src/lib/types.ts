@@ -23,7 +23,8 @@ export type ValidSources =
   | "zulip"
   | "linear"
   | "hubspot"
-  | "file";
+  | "file"
+  | "google_sites";
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
   | "success"
@@ -113,6 +114,11 @@ export interface ZulipConfig {
 export interface NotionConfig {}
 
 export interface HubSpotConfig {}
+
+export interface GoogleSitesConfig {
+  zip_path: string;
+  base_url: string;
+}
 
 export interface IndexAttemptSnapshot {
   status: ValidStatuses | null;

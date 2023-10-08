@@ -1,7 +1,4 @@
 import {
-  Connector,
-  ConnectorIndexingStatus,
-  Credential,
   DeletionAttemptSnapshot,
   ValidStatuses,
 } from "@/lib/types";
@@ -64,17 +61,19 @@ export function SingleUseConnectorsTable<
   const connectorIncludesCredential =
     getCredential !== undefined && onCredentialLink !== undefined;
 
-  const columns = [
-    {
+  const columns = [];
+
+  if (includeName) {
+    columns.push({
       header: "Name",
       key: "name",
-    },
-    ...(specialColumns ?? []),
-    {
-      header: "Status",
-      key: "status",
-    },
-  ];
+    });
+  }
+  columns.push(...(specialColumns ?? []));
+  columns.push({
+    header: "Status",
+    key: "status",
+  });
   if (connectorIncludesCredential) {
     columns.push({
       header: "Credential",
