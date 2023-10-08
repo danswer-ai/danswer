@@ -173,15 +173,18 @@ const Main = () => {
                 {
                   header: "Workspaces",
                   key: "workspaces",
-                  getValue: (connector) =>
-                    connector.connector_specific_config.workspaces &&
-                    connector.connector_specific_config.workspaces.length > 0
-                      ? connector.connector_specific_config.workspaces.join(
+                  getValue: (ccPairStatus) =>
+                    ccPairStatus.connector.connector_specific_config
+                      .workspaces &&
+                    ccPairStatus.connector.connector_specific_config.workspaces
+                      .length > 0
+                      ? ccPairStatus.connector.connector_specific_config.workspaces.join(
                           ", "
                         )
                       : "",
                 },
               ]}
+              includeName={true}
               onUpdate={() =>
                 mutate("/api/manage/admin/connector/indexing-status")
               }
