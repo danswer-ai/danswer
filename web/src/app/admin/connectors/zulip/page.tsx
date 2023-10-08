@@ -151,14 +151,14 @@ const MainSection = () => {
                 {
                   header: "Realm name",
                   key: "realm_name",
-                  getValue: (connector) =>
-                    connector.connector_specific_config.realm_name,
+                  getValue: (ccPairStatus) =>
+                    ccPairStatus.connector.connector_specific_config.realm_name,
                 },
                 {
                   header: "Realm url",
                   key: "realm_url",
-                  getValue: (connector) =>
-                    connector.connector_specific_config.realm_url,
+                  getValue: (ccPairStatus) =>
+                    ccPairStatus.connector.connector_specific_config.realm_url,
                 },
               ]}
               onUpdate={() =>

@@ -12,6 +12,7 @@ import { TrashIcon } from "@/components/icons/icons";
 import { updateConnector } from "@/lib/connector";
 import { AttachCredentialButtonForTable } from "@/components/admin/connectors/buttons/AttachCredentialButtonForTable";
 import { scheduleDeletionJobForConnector } from "@/lib/documentDeletion";
+import { ConnectorsTableProps } from "./ConnectorsTable";
 
 const SingleUseConnectorStatus = ({
   indexingStatus,
@@ -43,26 +44,6 @@ const SingleUseConnectorStatus = ({
   return <div className="text-red-700">Failed</div>;
 };
 
-interface ColumnSpecification<ConnectorConfigType> {
-  header: string;
-  key: string;
-  getValue: (connector: Connector<ConnectorConfigType>) => JSX.Element | string;
-}
-
-interface ConnectorsTableProps<ConnectorConfigType, ConnectorCredentialType> {
-  connectorIndexingStatuses: ConnectorIndexingStatus<
-    ConnectorConfigType,
-    ConnectorCredentialType
-  >[];
-  liveCredential?: Credential<ConnectorCredentialType> | null;
-  getCredential?: (
-    credential: Credential<ConnectorCredentialType>
-  ) => JSX.Element | string;
-  onUpdate: () => void;
-  onCredentialLink?: (connectorId: number) => void;
-  specialColumns?: ColumnSpecification<ConnectorConfigType>[];
-}
-
 export function SingleUseConnectorsTable<
   ConnectorConfigType,
   ConnectorCredentialType
@@ -73,6 +54,7 @@ export function SingleUseConnectorsTable<
   specialColumns,
   onUpdate,
   onCredentialLink,
+  includeName = false,
 }: ConnectorsTableProps<ConnectorConfigType, ConnectorCredentialType>) {
   const [popup, setPopup] = useState<{
     message: string;
@@ -181,7 +163,7 @@ export function SingleUseConnectorsTable<
               ? Object.fromEntries(
                   specialColumns.map(({ key, getValue }, i) => [
                     key,
-                    getValue(connector),
+                    getValue(connectorIndexingStatus),
                   ])
                 )
               : {}),

@@ -154,17 +154,20 @@ const MainSection = () => {
                 {
                   header: "Workspace",
                   key: "workspace",
-                  getValue: (connector) =>
-                    connector.connector_specific_config.workspace,
+                  getValue: (ccPairStatus) =>
+                    ccPairStatus.connector.connector_specific_config.workspace,
                 },
                 {
                   header: "Channels",
                   key: "channels",
-                  getValue: (connector) =>
-                    connector.connector_specific_config.channels &&
-                    connector.connector_specific_config.channels.length > 0
-                      ? connector.connector_specific_config.channels.join(", ")
-                      : "",
+                  getValue: (ccPairStatus) => {
+                    const connectorConfig =
+                      ccPairStatus.connector.connector_specific_config;
+                    return connectorConfig.channels &&
+                      connectorConfig.channels.length > 0
+                      ? connectorConfig.channels.join(", ")
+                      : "";
+                  },
                 },
               ]}
               onUpdate={() =>

@@ -61,9 +61,9 @@ if __name__ == "__main__":
 ### Additional Required Changes:
 #### Backend Changes
 - Add a new type to
-[DocumentSource](https://github.com/danswer-ai/danswer/blob/main/backend/danswer/configs/constants.py#L20)
+[DocumentSource](https://github.com/danswer-ai/danswer/blob/main/backend/danswer/configs/constants.py)
 - Add a mapping from DocumentSource (and optionally connector type) to the right connector class
-[here](https://github.com/danswer-ai/danswer/blob/main/backend/danswer/connectors/factory.py#L32)
+[here](https://github.com/danswer-ai/danswer/blob/main/backend/danswer/connectors/factory.py#L33)
 
 #### Frontend Changes
 - Create the new connector directory and admin page under `danswer/web/src/app/admin/connectors/`

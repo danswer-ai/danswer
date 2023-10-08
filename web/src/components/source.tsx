@@ -7,6 +7,7 @@ import {
   GlobeIcon,
   GoogleDriveIcon,
   GuruIcon,
+  GongIcon,
   JiraIcon,
   LinearIcon,
   NotionIcon,
@@ -102,6 +103,12 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: GuruIcon,
         displayName: "Guru",
         adminPageLink: "/admin/connectors/guru",
+      };
+    case "gong":
+      return {
+        icon: GongIcon,
+        displayName: "Gong",
+        adminPageLink: "/admin/connectors/gong",
       };
     case "linear":
       return {

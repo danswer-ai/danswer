@@ -216,8 +216,8 @@ const Main = () => {
               {
                 header: "File Names",
                 key: "file_names",
-                getValue: (connector) =>
-                  connector.connector_specific_config.file_locations
+                getValue: (ccPairStatus) =>
+                  ccPairStatus.connector.connector_specific_config.file_locations
                     .map(getNameFromPath)
                     .join(", "),
               },

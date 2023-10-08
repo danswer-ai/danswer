@@ -213,14 +213,18 @@ const Main = () => {
                     {
                       header: "Url",
                       key: "url",
-                      getValue: (connector) => (
+                      getValue: (ccPairStatus) => (
                         <a
                           className="text-blue-500"
                           href={
-                            connector.connector_specific_config.wiki_page_url
+                            ccPairStatus.connector.connector_specific_config
+                              .wiki_page_url
                           }
                         >
-                          {connector.connector_specific_config.wiki_page_url}
+                          {
+                            ccPairStatus.connector.connector_specific_config
+                              .wiki_page_url
+                          }
                         </a>
                       ),
                     },
