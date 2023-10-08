@@ -12,9 +12,9 @@ from slack_sdk.socket_mode.response import SocketModeResponse
 
 from danswer.bots.slack.handlers.handle_feedback import handle_slack_feedback
 from danswer.bots.slack.handlers.handle_message import handle_message
+from danswer.bots.slack.tokens import fetch_tokens
 from danswer.bots.slack.utils import decompose_block_id
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.server.slack_bot_management import get_tokens
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -45,7 +45,7 @@ def _get_socket_client() -> SocketModeClient:
     # For more info on how to set this up, checkout the docs:
     # https://docs.danswer.dev/slack_bot_setup
     try:
-        slack_bot_tokens = get_tokens()
+        slack_bot_tokens = fetch_tokens()
     except ConfigNotFoundError:
         raise MissingTokensException("Slack tokens not found")
     return SocketModeClient(
@@ -243,4 +243,5 @@ if __name__ == "__main__":
         # try again every 30 seconds. This is needed since the user may add tokens
         # via the UI at any point in the programs lifecycle - if we just allow it to
         # fail, then the user will need to restart the containers after adding tokens
+        logger.debug("Missing Slack Bot tokens - waiting 60 seconds and trying again")
         time.sleep(60)
