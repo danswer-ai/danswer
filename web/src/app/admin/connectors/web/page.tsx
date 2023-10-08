@@ -119,24 +119,28 @@ export default function Web() {
             {
               header: "Base URL",
               key: "base_url",
-              getValue: (connector) => (
-                <a
-                  className="text-blue-500"
-                  href={connector.connector_specific_config.base_url}
-                >
-                  {connector.connector_specific_config.base_url}
-                </a>
-              ),
+              getValue: (ccPairConfig) => {
+                const connectorConfig =
+                  ccPairConfig.connector.connector_specific_config;
+                return (
+                  <a className="text-blue-500" href={connectorConfig.base_url}>
+                    {connectorConfig.base_url}
+                  </a>
+                );
+              },
             },
             {
               header: "Scrape Method",
               key: "web_connector_type",
-              getValue: (connector) =>
-                connector.connector_specific_config.web_connector_type
+              getValue: (ccPairStatus) => {
+                const connectorConfig =
+                  ccPairStatus.connector.connector_specific_config;
+                return connectorConfig.web_connector_type
                   ? SCRAPE_TYPE_TO_PRETTY_NAME[
-                      connector.connector_specific_config.web_connector_type
+                      connectorConfig.web_connector_type
                     ]
-                  : "Recursive",
+                  : "Recursive";
+              },
             },
           ]}
           onUpdate={() => mutate("/api/manage/admin/connector/indexing-status")}
