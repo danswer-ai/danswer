@@ -110,7 +110,7 @@ def _get_vespa_chunk_ids_by_document_id(
         if problematic_ids:
             logger.error(f'IDs without "::" {problematic_ids}')
 
-        doc_chunk_ids.extend([hit["id"].split("::")[1] for hit in hits])
+        doc_chunk_ids.extend([hit["id"].split("::", 1)[-1] for hit in hits])
         params["offset"] += hits_per_page  # type: ignore
 
         if len(hits) < hits_per_page:
