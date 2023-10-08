@@ -1,5 +1,6 @@
 import logging
 import re
+import time
 from collections.abc import MutableMapping
 from typing import Any
 from typing import cast
@@ -22,6 +23,10 @@ logger = setup_logger()
 _CHANNEL_ID = "channel_id"
 
 
+class MissingTokensException(Exception):
+    pass
+
+
 class _ChannelIdAdapter(logging.LoggerAdapter):
     """This is used to add the channel ID to all log messages
     emitted in this file"""
@@ -42,7 +47,7 @@ def _get_socket_client() -> SocketModeClient:
     try:
         slack_bot_tokens = get_tokens()
     except ConfigNotFoundError:
-        raise RuntimeError("Slack tokens not found")
+        raise MissingTokensException("Slack tokens not found")
     return SocketModeClient(
         # This app-level token will be used only for establishing a connection
         app_token=slack_bot_tokens.app_token,
@@ -222,14 +227,20 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
 # NOTE: we are using Web Sockets so that you can run this from within a firewalled VPC
 # without issue.
 if __name__ == "__main__":
-    socket_client = _get_socket_client()
-    socket_client.socket_mode_request_listeners.append(process_slack_event)  # type: ignore
+    try:
+        socket_client = _get_socket_client()
+        socket_client.socket_mode_request_listeners.append(process_slack_event)  # type: ignore
 
-    # Establish a WebSocket connection to the Socket Mode servers
-    logger.info("Listening for messages from Slack...")
-    socket_client.connect()
+        # Establish a WebSocket connection to the Socket Mode servers
+        logger.info("Listening for messages from Slack...")
+        socket_client.connect()
 
-    # Just not to stop this process
-    from threading import Event
+        # Just not to stop this process
+        from threading import Event
 
-    Event().wait()
+        Event().wait()
+    except MissingTokensException:
+        # try again every 30 seconds. This is needed since the user may add tokens
+        # via the UI at any point in the programs lifecycle - if we just allow it to
+        # fail, then the user will need to restart the containers after adding tokens
+        time.sleep(60)
