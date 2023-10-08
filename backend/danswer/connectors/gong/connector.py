@@ -1,8 +1,10 @@
 import base64
+from collections.abc import Generator
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 from typing import Any
+from typing import cast
 
 import requests
 
@@ -55,10 +57,10 @@ class GongConnector(LoadConnector, PollConnector):
         return {workspace["name"]: workspace["id"] for workspace in workspaces_details}
 
     def _get_transcript_batches(
-        self, start_datetime: str = None, end_datetime: str = None
-    ) -> list[str]:
+        self, start_datetime: str | None = None, end_datetime: str | None = None
+    ) -> Generator[list[dict[str, Any]], None, None]:
         url = f"{GONG_BASE_URL}/v2/calls/transcript"
-        body = {"filter": {}}
+        body: dict[str, dict] = {"filter": {}}
         if start_datetime:
             body["filter"]["fromDateTime"] = start_datetime
         if end_datetime:
@@ -66,8 +68,8 @@ class GongConnector(LoadConnector, PollConnector):
 
         # The batch_ids in the previous method appears to be batches of call_ids to process
         # In this method, we will retrieve transcripts for them in batches.
-        transcripts = []
-        workspace_list = self.workspaces or [None]
+        transcripts: list[dict[str, Any]] = []
+        workspace_list = self.workspaces or [None]  # type: ignore
         workspace_map = self._get_workspace_id_map() if self.workspaces else {}
 
         for workspace in workspace_list:
@@ -146,14 +148,17 @@ class GongConnector(LoadConnector, PollConnector):
         return id_mapping
 
     def _fetch_calls(
-        self, start_datetime: str = None, end_datetime: str = None
+        self, start_datetime: str | None = None, end_datetime: str | None = None
     ) -> GenerateDocumentsOutput:
         for transcript_batch in self._get_transcript_batches(
             start_datetime, end_datetime
         ):
             doc_batch: list[Document] = []
 
-            call_ids = [t.get("callId") for t in transcript_batch if t.get("callId")]
+            call_ids = cast(
+                list[str],
+                [t.get("callId") for t in transcript_batch if t.get("callId")],
+            )
             call_details_map = self._get_call_details_by_ids(call_ids)
 
             for transcript in transcript_batch:
@@ -176,8 +181,6 @@ class GongConnector(LoadConnector, PollConnector):
 
                 id_to_name_map = self._parse_parties(call_parties)
 
-                contents = transcript.get("transcript")
-
                 # Keeping a separate dict here in case the parties info is incomplete
                 speaker_to_name: dict[str, str] = {}
 
@@ -190,6 +193,7 @@ class GongConnector(LoadConnector, PollConnector):
                 if call_purpose:
                     transcript_text += f"Call Description: {call_purpose}\n\n"
 
+                contents = transcript["transcript"]
                 for segment in contents:
                     speaker_id = segment.get("speakerId", "")
                     if speaker_id not in speaker_to_name:
