@@ -38,6 +38,9 @@ CROSS_ENCODER_MODEL_ENSEMBLE = [
     "cross-encoder/ms-marco-MiniLM-L-4-v2",
     "cross-encoder/ms-marco-TinyBERT-L-2-v2",
 ]
+# For score normalizing purposes, only way is to know the expected ranges
+CROSS_ENCODER_RANGE_MAX = 12
+CROSS_ENCODER_RANGE_MIN = -12
 CROSS_EMBED_CONTEXT_SIZE = 512
 
 
