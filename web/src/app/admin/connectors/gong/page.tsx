@@ -77,7 +77,14 @@ const Main = () => {
       {popup}
       <p className="text-sm">
         This connector allows you to sync all your Gong Transcripts into
-        Danswer.
+        Danswer. More details on how to setup the Gong connector can be found in{" "}
+        <a
+          className="text-blue-500"
+          href="https://docs.danswer.dev/connectors/gong"
+          target="_blank"
+        >
+          this guide.
+        </a>
       </p>
 
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
@@ -112,16 +119,6 @@ const Main = () => {
         </>
       ) : (
         <>
-          <p className="text-sm">
-            To setup the Gong connector, follow the guide{" "}
-            <a
-              className="text-blue-500"
-              href="https://docs.danswer.dev/connectors/gong"
-              target="_blank"
-            >
-              here
-            </a>{" "}
-          </p>
           <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
             <CredentialForm<GongCredentialJson>
               formBody={
@@ -163,7 +160,7 @@ const Main = () => {
       {gongConnectorIndexingStatuses.length > 0 && (
         <>
           <p className="text-sm mb-2">
-            We pull the latest transcript every{" "} <b>10</b> minutes.
+            We pull the latest transcript every <b>10</b> minutes.
           </p>
           <div className="mb-2">
             <ConnectorsTable<GongConfig, GongCredentialJson>
@@ -179,7 +176,9 @@ const Main = () => {
                   getValue: (connector) =>
                     connector.connector_specific_config.workspaces &&
                     connector.connector_specific_config.workspaces.length > 0
-                      ? connector.connector_specific_config.workspaces.join(", ")
+                      ? connector.connector_specific_config.workspaces.join(
+                          ", "
+                        )
                       : "",
                 },
               ]}
@@ -198,73 +197,42 @@ const Main = () => {
       )}
 
       {gongCredential ? (
-        !gongConnectorIndexingStatuses.length ? (
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
-          <h2 className="font-bold mb-3">Connect to a New Workspace</h2>
-              <ConnectorForm<GongConfig>
-                nameBuilder={(values) =>
-                  values.workspaces
-                    ? `GongConnector-${values.workspaces.join(
-                        "_"
-                      )}`
-                    : `GongConnector-All`
-                }
-                source="gong"
-                inputType="poll"
-                formBodyBuilder={TextArrayFieldBuilder({
-                  name: "workspaces",
-                  label: "Workspaces:",
-                  subtext:
-                    "Specify 0 or more workspaces to index. Be sure to use the EXACT workspace name from Gong." +
-                    "If no workspaces are specified, transcripts from all workspaces will be indexed.",
-                })}
-                validationSchema={Yup.object().shape({
-                  workspaces: Yup.array()
-                    .of(Yup.string().required("Workspace names must be strings")),
-                })}
-                initialValues={{
-                  workspaces: [],
-                }}
-                refreshFreq={10 * 60} // 10 minutes
-                credentialId={gongCredential.id}
-              />
-            </div>
-        ) : (
-          <>
-            <p className="text-sm mb-2">
-              Gong connector is setup! We are pulling the latest transcripts
-              from Gong every <b>10</b> minutes.
-            </p>
-
-            <ConnectorsTable<GongConfig, GongCredentialJson>
-              connectorIndexingStatuses={gongConnectorIndexingStatuses}
-              liveCredential={gongCredential}
-              getCredential={(credential) => {
-                return (
-                  <div>
-                    <p>{credential.credential_json.gong_access_key}</p>
-                  </div>
-                );
-              }}
-              onCredentialLink={async (connectorId) => {
-                if (gongCredential) {
-                  await linkCredential(connectorId, gongCredential.id);
-                  mutate("/api/manage/admin/connector/indexing-status");
-                }
-              }}
-              onUpdate={() =>
-                mutate("/api/manage/admin/connector/indexing-status")
-              }
-            />
-          </>
-        )
-      ) : (
         <>
-          <p className="text-sm">
-            Please provide your API Access Info in Step 1 first! Once done with
-            that, you can then start indexing all your Gong transcripts.
-          </p>
+          <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+            <h2 className="font-bold mb-3">Create a new Gong Connector</h2>
+            <ConnectorForm<GongConfig>
+              nameBuilder={(values) =>
+                values.workspaces
+                  ? `GongConnector-${values.workspaces.join("_")}`
+                  : `GongConnector-All`
+              }
+              source="gong"
+              inputType="poll"
+              formBodyBuilder={TextArrayFieldBuilder({
+                name: "workspaces",
+                label: "Workspaces:",
+                subtext:
+                  "Specify 0 or more workspaces to index. Be sure to use the EXACT workspace name from Gong. " +
+                  "If no workspaces are specified, transcripts from all workspaces will be indexed.",
+              })}
+              validationSchema={Yup.object().shape({
+                workspaces: Yup.array().of(
+                  Yup.string().required("Workspace names must be strings")
+                ),
+              })}
+              initialValues={{
+                workspaces: [],
+              }}
+              refreshFreq={10 * 60} // 10 minutes
+              credentialId={gongCredential.id}
+            />
+          </div>
         </>
+      ) : (
+        <p className="text-sm">
+          Please provide your API Access Info in Step 1 first! Once done with
+          that, you can then start indexing all your Gong transcripts.
+        </p>
       )}
     </>
   );
