@@ -104,6 +104,10 @@ def _get_vespa_chunk_ids_by_document_id(
     while True:
         results = requests.get(SEARCH_ENDPOINT, params=params).json()
         hits = results["root"].get("children", [])
+        # Temporary logging to catch the rare index out of bounds issue
+        problematic_ids = [hit["id"] for hit in hits if len(hit["id"].split("::")) < 2]
+        logger.error(f'IDs without "::" {problematic_ids}')
+
         doc_chunk_ids.extend([hit["id"].split("::")[1] for hit in hits])
         params["offset"] += hits_per_page  # type: ignore
 
