@@ -75,7 +75,10 @@ INTERNAL_MODEL_VERSION = os.environ.get(
 )
 
 # If the Generative AI model requires an API key for access, otherwise can leave blank
-GEN_AI_API_KEY = os.environ.get("GEN_AI_API_KEY", "")
+GEN_AI_API_KEY = (
+    os.environ.get("GEN_AI_API_KEY", os.environ.get("OPENAI_API_KEY"))
+    or "dummy_llm_key"
+)
 
 # If using GPT4All, HuggingFace Inference API, or OpenAI - specify the model version
 GEN_AI_MODEL_VERSION = os.environ.get(
