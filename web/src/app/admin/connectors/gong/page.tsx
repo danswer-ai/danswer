@@ -2,7 +2,10 @@
 
 import * as Yup from "yup";
 import { GongIcon, TrashIcon } from "@/components/icons/icons";
-import { TextFormField } from "@/components/admin/connectors/Field";
+import {
+  TextFormField,
+  TextArrayFieldBuilder,
+} from "@/components/admin/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import {
@@ -154,35 +157,85 @@ const Main = () => {
       )}
 
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
-        Step 2: Start indexing!
+        Step 2: Which Workspaces do you want to make searchable?
       </h2>
+
+      {gongConnectorIndexingStatuses.length > 0 && (
+        <>
+          <p className="text-sm mb-2">
+            We pull the latest transcript every{" "} <b>10</b> minutes.
+          </p>
+          <div className="mb-2">
+            <ConnectorsTable<GongConfig, GongCredentialJson>
+              connectorIndexingStatuses={gongConnectorIndexingStatuses}
+              liveCredential={gongCredential}
+              getCredential={(credential) =>
+                credential.credential_json.gong_access_key
+              }
+              specialColumns={[
+                {
+                  header: "Workspaces",
+                  key: "workspaces",
+                  getValue: (connector) =>
+                    connector.connector_specific_config.workspaces &&
+                    connector.connector_specific_config.workspaces.length > 0
+                      ? connector.connector_specific_config.workspaces.join(", ")
+                      : "",
+                },
+              ]}
+              onUpdate={() =>
+                mutate("/api/manage/admin/connector/indexing-status")
+              }
+              onCredentialLink={async (connectorId) => {
+                if (gongCredential) {
+                  await linkCredential(connectorId, gongCredential.id);
+                  mutate("/api/manage/admin/connector/indexing-status");
+                }
+              }}
+            />
+          </div>
+        </>
+      )}
+
       {gongCredential ? (
         !gongConnectorIndexingStatuses.length ? (
-          <>
-            <p className="text-sm mb-2">
-              Click the button below to start indexing! We will pull transcripts
-              from Gong every <b>10</b> minutes.
-            </p>
-            <div className="flex">
+          <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+          <h2 className="font-bold mb-3">Connect to a New Workspace</h2>
               <ConnectorForm<GongConfig>
-                nameBuilder={() => "GongConnector"}
-                ccPairNameBuilder={() => "Gong"}
+                nameBuilder={(values) =>
+                  values.workspaces
+                    ? `GongConnector-${values.workspaces.join(
+                        "_"
+                      )}`
+                    : `GongConnector-All`
+                }
                 source="gong"
                 inputType="poll"
-                formBody={null}
-                validationSchema={Yup.object().shape({})}
-                initialValues={{}}
+                formBodyBuilder={TextArrayFieldBuilder({
+                  name: "workspaces",
+                  label: "Workspaces:",
+                  subtext:
+                    "Specify 0 or more workspaces to index. Be sure to use the EXACT workspace name from Gong." +
+                    "If no workspaces are specified, transcripts from all workspaces will be indexed.",
+                })}
+                validationSchema={Yup.object().shape({
+                  workspaces: Yup.array()
+                    .of(Yup.string().required("Workspace names must be strings")),
+                })}
+                initialValues={{
+                  workspaces: [],
+                }}
                 refreshFreq={10 * 60} // 10 minutes
                 credentialId={gongCredential.id}
               />
             </div>
-          </>
         ) : (
           <>
             <p className="text-sm mb-2">
               Gong connector is setup! We are pulling the latest transcripts
               from Gong every <b>10</b> minutes.
             </p>
+
             <ConnectorsTable<GongConfig, GongCredentialJson>
               connectorIndexingStatuses={gongConnectorIndexingStatuses}
               liveCredential={gongCredential}

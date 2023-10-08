@@ -6,6 +6,7 @@ from typing import Any
 
 import requests
 
+from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -25,17 +26,33 @@ GONG_BASE_URL = "https://us-34014.api.gong.io"
 
 class GongConnector(LoadConnector, PollConnector):
     def __init__(
-        self, batch_size: int = INDEX_BATCH_SIZE, use_end_time: bool = False
+        self,
+        workspaces: list[str] | None = None,
+        batch_size: int = INDEX_BATCH_SIZE,
+        use_end_time: bool = False,
+        continue_on_fail: bool = CONTINUE_ON_CONNECTOR_FAILURE,
+        hide_user_info: bool = False,
     ) -> None:
-        self.auth_token_basic: str | None = None
+        self.workspaces = workspaces
         self.batch_size: int = batch_size
+        self.continue_on_fail = continue_on_fail
+        self.auth_token_basic: str | None = None
         self.use_end_time = use_end_time
+        self.hide_user_info = hide_user_info
 
     def _get_auth_header(self) -> dict[str, str]:
         if self.auth_token_basic is None:
             raise ConnectorMissingCredentialError("Gong")
 
         return {"Authorization": f"Basic {self.auth_token_basic}"}
+
+    def _get_workspace_id_map(self) -> dict[str, str]:
+        url = f"{GONG_BASE_URL}/v2/workspaces"
+        response = requests.get(url, headers=self._get_auth_header())
+        response.raise_for_status()
+
+        workspaces_details = response.json().get("workspaces")
+        return {workspace["name"]: workspace["id"] for workspace in workspaces_details}
 
     def _get_transcript_batches(
         self, start_datetime: str = None, end_datetime: str = None
@@ -50,33 +67,83 @@ class GongConnector(LoadConnector, PollConnector):
         # The batch_ids in the previous method appears to be batches of call_ids to process
         # In this method, we will retrieve transcripts for them in batches.
         transcripts = []
-        while True:
-            response = requests.post(url, headers=self._get_auth_header(), json=body)
-            response.raise_for_status()
+        workspace_list = self.workspaces or [None]
+        workspace_map = self._get_workspace_id_map() if self.workspaces else {}
 
-            data = response.json()
-            call_transcripts = data.get("callTranscripts", [])
-            transcripts.extend(call_transcripts)
-
-            while len(transcripts) >= self.batch_size:
-                yield transcripts[: self.batch_size]
-                transcripts = transcripts[self.batch_size :]
-
-            cursor = data.get("records", {}).get("cursor")
-            if cursor:
-                body["cursor"] = cursor
+        for workspace in workspace_list:
+            if workspace:
+                logger.info(f"Updating workspace: {workspace}")
+                workspace_id = workspace_map.get(workspace)
+                if not workspace_id:
+                    logger.error(f"Invalid workspace: {workspace}")
+                    if not self.continue_on_fail:
+                        raise ValueError(f"Invalid workspace: {workspace}")
+                    continue
+                body["filter"]["workspaceId"] = workspace_id
             else:
-                break
+                if "workspaceId" in body["filter"]:
+                    del body["filter"]["workspaceId"]
+
+            while True:
+                response = requests.post(
+                    url, headers=self._get_auth_header(), json=body
+                )
+                response.raise_for_status()
+
+                data = response.json()
+                call_transcripts = data.get("callTranscripts", [])
+                transcripts.extend(call_transcripts)
+
+                while len(transcripts) >= self.batch_size:
+                    yield transcripts[: self.batch_size]
+                    transcripts = transcripts[self.batch_size :]
+
+                cursor = data.get("records", {}).get("cursor")
+                if cursor:
+                    body["cursor"] = cursor
+                else:
+                    break
 
         if transcripts:
             yield transcripts
 
-    def _fetch_call_details_by_id(self, call_id):
-        url = f"{GONG_BASE_URL}/v2/calls/{call_id}"
-        response = requests.get(url, headers=self._get_auth_header())
+    def _get_call_details_by_ids(self, call_ids: list[str]) -> dict:
+        url = f"{GONG_BASE_URL}/v2/calls/extensive"
+
+        body = {
+            "filter": {"callIds": call_ids},
+            "contentSelector": {"exposedFields": {"parties": True}},
+        }
+
+        response = requests.post(url, headers=self._get_auth_header(), json=body)
         response.raise_for_status()
 
-        return response.json().get("call")
+        calls = response.json().get("calls")
+        call_to_metadata = {}
+        for call in calls:
+            call_to_metadata[call["metaData"]["id"]] = call
+
+        return call_to_metadata
+
+    @staticmethod
+    def _parse_parties(parties: list[dict]) -> dict[str, str]:
+        id_mapping = {}
+        for party in parties:
+            name = party.get("name")
+            email = party.get("emailAddress")
+
+            if name and email:
+                full_identifier = f"{name} ({email})"
+            elif name:
+                full_identifier = name
+            elif email:
+                full_identifier = email
+            else:
+                full_identifier = "Unknown"
+
+            id_mapping[party["speakerId"]] = full_identifier
+
+        return id_mapping
 
     def _fetch_calls(
         self, start_datetime: str = None, end_datetime: str = None
@@ -86,30 +153,56 @@ class GongConnector(LoadConnector, PollConnector):
         ):
             doc_batch: list[Document] = []
 
+            call_ids = [t.get("callId") for t in transcript_batch if t.get("callId")]
+            call_details_map = self._get_call_details_by_ids(call_ids)
+
             for transcript in transcript_batch:
                 call_id = transcript.get("callId")
 
-                call_details = self._fetch_call_details_by_id(call_id)
+                if not call_id or call_id not in call_details_map:
+                    logger.error(
+                        f"Couldn't get call information for Call ID: {call_id}"
+                    )
+                    if not self.continue_on_fail:
+                        raise RuntimeError(
+                            f"Couldn't get call information for Call ID: {call_id}"
+                        )
+                    continue
+
+                call_details = call_details_map[call_id]
+
+                call_metadata = call_details["metaData"]
+                call_parties = call_details["parties"]
+
+                id_to_name_map = self._parse_parties(call_parties)
 
                 contents = transcript.get("transcript")
-                speaker_to_anon_name: dict[str, str] = {}
+
+                # Keeping a separate dict here in case the parties info is incomplete
+                speaker_to_name: dict[str, str] = {}
 
                 transcript_text = ""
-                if call_details["title"]:
-                    transcript_text += f"Call Title: {call_details['title']}\n\n"
+                call_title = call_metadata["title"]
+                if call_title:
+                    transcript_text += f"Call Title: {call_title}\n\n"
 
-                if call_details["purpose"]:
-                    transcript_text += (
-                        f"Call Description: {call_details['purpose']}\n\n"
-                    )
+                call_purpose = call_metadata["purpose"]
+                if call_purpose:
+                    transcript_text += f"Call Description: {call_purpose}\n\n"
 
                 for segment in contents:
-                    speaker_id = segment.get("speaker_id", "")
-                    if speaker_id not in speaker_to_anon_name:
-                        speaker_to_anon_name[
-                            speaker_id
-                        ] = f"User {len(speaker_to_anon_name) + 1}"
-                    speaker_name = speaker_to_anon_name[speaker_id]
+                    speaker_id = segment.get("speakerId", "")
+                    if speaker_id not in speaker_to_name:
+                        if self.hide_user_info:
+                            speaker_to_name[
+                                speaker_id
+                            ] = f"User {len(speaker_to_name) + 1}"
+                        else:
+                            speaker_to_name[speaker_id] = id_to_name_map.get(
+                                speaker_id, "Unknown"
+                            )
+
+                    speaker_name = speaker_to_name[speaker_id]
 
                     sentences = segment.get("sentences", {})
                     monolog = " ".join(
@@ -121,11 +214,12 @@ class GongConnector(LoadConnector, PollConnector):
                     Document(
                         id=call_id,
                         sections=[
-                            Section(link=call_details["url"], text=transcript_text)
+                            Section(link=call_metadata["url"], text=transcript_text)
                         ],
                         source=DocumentSource.GONG,
-                        semantic_identifier=call_details["title"],
-                        metadata={"Start Time": call_details["started"]},
+                        # Should not ever be Untitled as a call cannot be made without a Title
+                        semantic_identifier=call_title or "Untitled",
+                        metadata={"Start Time": call_metadata["started"]},
                     )
                 )
             yield doc_batch
@@ -161,6 +255,7 @@ class GongConnector(LoadConnector, PollConnector):
 
 if __name__ == "__main__":
     import os
+    import time
 
     connector = GongConnector()
     connector.load_credentials(
@@ -169,5 +264,8 @@ if __name__ == "__main__":
             "gong_access_key_secret": os.environ["GONG_ACCESS_KEY_SECRET"],
         }
     )
-    document_batches = connector.load_from_state()
-    print(next(document_batches))
+
+    current = time.time()
+    one_day_ago = current - 24 * 60 * 60  # 1 day
+    latest_docs = connector.poll_source(one_day_ago, current)
+    print(next(latest_docs))

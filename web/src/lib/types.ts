@@ -97,7 +97,9 @@ export interface SlabConfig {
 
 export interface GuruConfig {}
 
-export interface GongConfig {}
+export interface GongConfig {
+    workspaces?: string[];
+}
 
 export interface FileConfig {
   file_locations: string[];
