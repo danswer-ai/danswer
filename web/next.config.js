@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
   output: "standalone",
   rewrites: async () => {
     // In production, something else (nginx in the one box setup) should take
