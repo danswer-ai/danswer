@@ -75,7 +75,9 @@ def _run_drive_file_query(
         results = (
             service.files()
             .list(
-                corpora="allDrives",  # needed to search through shared drives
+                corpora="allDrives"
+                if include_shared
+                else "user",  # needed to search through shared drives
                 pageSize=batch_size,
                 supportsAllDrives=include_shared,
                 includeItemsFromAllDrives=include_shared,
