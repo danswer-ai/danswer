@@ -1,6 +1,6 @@
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { Connector, Credential } from "@/lib/types";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { ScopedMutator } from "swr/_internal";
 
 export interface CardProps {
