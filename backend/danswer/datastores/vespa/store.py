@@ -44,6 +44,7 @@ from danswer.datastores.interfaces import DocumentInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import UpdateRequest
 from danswer.datastores.vespa.utils import remove_invalid_unicode_chars
+from danswer.search.keyword_search import remove_stop_words
 from danswer.search.semantic_search import embed_query
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
@@ -540,10 +541,11 @@ class VespaIndex(DocumentIndex):
         )
 
         query_embedding = embed_query(query)
+        query_keywords = " ".join(remove_stop_words(query))
 
         params = {
             "yql": yql,
-            "query": query,
+            "query": query_keywords,
             "input.query(query_embedding)": str(query_embedding),
             "ranking.profile": "semantic_search",
         }
