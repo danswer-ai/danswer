@@ -8,7 +8,6 @@ import { fetcher } from "@/lib/fetcher";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus, FileConfig } from "@/lib/types";
 import { linkCredential } from "@/lib/credential";
-import { FileUpload } from "./FileUpload";
 import { useState } from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { createConnector, runConnector } from "@/lib/connector";
@@ -17,6 +16,7 @@ import { SingleUseConnectorsTable } from "@/components/admin/connectors/table/Si
 import { LoadingAnimation } from "@/components/Loading";
 import { Form, Formik } from "formik";
 import { TextFormField } from "@/components/admin/connectors/Field";
+import { FileUpload } from "@/components/admin/connectors/FileUpload";
 
 const getNameFromPath = (path: string) => {
   const pathParts = path.split("/");

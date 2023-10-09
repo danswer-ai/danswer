@@ -43,6 +43,7 @@ import gongIcon from "../../../public/Gong.png";
 import zulipIcon from "../../../public/Zulip.png";
 import linearIcon from "../../../public/Linear.png";
 import hubSpotIcon from "../../../public/HubSpot.png";
+import googleSitesIcon from "../../../public/GoogleSites.png";
 
 interface IconProps {
   size?: number;
@@ -447,6 +448,20 @@ export const HubSpotIcon = ({
       className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
     >
       <Image src={hubSpotIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const GoogleSitesIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src={googleSitesIcon} alt="Logo" width="96" height="96" />
     </div>
   );
 };
