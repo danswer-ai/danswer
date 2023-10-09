@@ -9,8 +9,7 @@ import {
 } from "formik";
 import * as Yup from "yup";
 import { FormBodyBuilder } from "./types";
-import { FC, useEffect, useRef, useState } from "react";
-import { ChevronDownIcon } from "@/components/icons/icons";
+import { Dropdown, Option } from "@/components/Dropdown";
 
 interface TextFormFieldProps {
   name: string;
@@ -182,12 +181,6 @@ export function TextArrayFieldBuilder<T extends Yup.AnyObject>(
   return _TextArrayField;
 }
 
-interface Option {
-  name: string;
-  value: string;
-  description?: string;
-}
-
 interface SelectorFormFieldProps {
   name: string;
   label: string;
@@ -227,101 +220,3 @@ export function SelectorFormField({
     </div>
   );
 }
-
-interface DropdownProps {
-  options: Option[];
-  selected: string;
-  onSelect: (selected: Option) => void;
-}
-
-const Dropdown: FC<DropdownProps> = ({ options, selected, onSelect }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const selectedName = options.find(
-    (option) => option.value === selected
-  )?.name;
-
-  const handleSelect = (option: Option) => {
-    onSelect(option);
-    setIsOpen(false);
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  return (
-    <div className="relative inline-block text-left w-full" ref={dropdownRef}>
-      <div>
-        <button
-          type="button"
-          className={`inline-flex 
-          justify-center 
-          w-full 
-          px-4 
-          py-3
-          text-sm 
-          bg-gray-700 
-          border 
-          border-gray-300 
-          rounded-md 
-          shadow-sm 
-          hover:bg-gray-700 
-          focus:ring focus:ring-offset-0 focus:ring-1 focus:ring-offset-gray-800 focus:ring-blue-800
-          `}
-          id="options-menu"
-          aria-expanded="true"
-          aria-haspopup="true"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {selectedName ? <p>{selectedName}</p> : "Select an option..."}
-          <ChevronDownIcon className="text-gray-400 my-auto ml-auto" />
-        </button>
-      </div>
-
-      {isOpen ? (
-        <div className="origin-top-right absolute left-0 mt-3 w-full rounded-md shadow-lg bg-gray-700 border-2 border-gray-600">
-          <div
-            role="menu"
-            aria-orientation="vertical"
-            aria-labelledby="options-menu"
-          >
-            {options.map((option, index) => (
-              <button
-                key={index}
-                onClick={() => handleSelect(option)}
-                className={
-                  `w-full text-left block px-4 py-2.5 text-sm hover:bg-gray-800` +
-                  (index !== 0 ? " border-t-2 border-gray-600" : "")
-                }
-                role="menuitem"
-              >
-                <p className="font-medium">{option.name}</p>
-                {option.description && (
-                  <div>
-                    <p className="text-xs text-gray-300">
-                      {option.description}
-                    </p>
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
-};
