@@ -17,6 +17,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 from ee.danswer.configs.app_configs import OPENID_CONFIG_URL
 from ee.danswer.server.saml import router as saml_router
+from ee.danswer.server.user_group.api import router as user_group_router
 
 logger = setup_logger()
 
@@ -50,6 +51,9 @@ def get_ee_application() -> FastAPI:
 
     elif AUTH_TYPE == AuthType.SAML:
         application.include_router(saml_router)
+
+    # RBAC / group access control
+    application.include_router(user_group_router)
 
     return application
 

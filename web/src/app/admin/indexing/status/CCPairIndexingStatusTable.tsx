@@ -17,7 +17,7 @@ import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
 import Link from "next/link";
 import { isCurrentlyDeleting } from "@/lib/documentDeletion";
-import { FiEdit } from "react-icons/fi";
+import { FiCheck, FiEdit, FiXCircle } from "react-icons/fi";
 
 const NUM_IN_PAGE = 20;
 
@@ -86,6 +86,7 @@ export function CCPairIndexingStatusTable({
           <TableRow>
             <TableHeaderCell>Connector</TableHeaderCell>
             <TableHeaderCell>Status</TableHeaderCell>
+            <TableHeaderCell>Is Public</TableHeaderCell>
             <TableHeaderCell>Last Indexed</TableHeaderCell>
             <TableHeaderCell>Docs Indexed</TableHeaderCell>
           </TableRow>
@@ -115,6 +116,13 @@ export function CCPairIndexingStatusTable({
                   <CCPairIndexingStatusDisplay
                     ccPairsIndexingStatus={ccPairsIndexingStatus}
                   />
+                </TableCell>
+                <TableCell>
+                  {ccPairsIndexingStatus.public_doc ? (
+                    <FiCheck className="my-auto text-emerald-600" size="18" />
+                  ) : (
+                    <FiXCircle className="my-auto text-red-600" />
+                  )}
                 </TableCell>
                 <TableCell>
                   {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}

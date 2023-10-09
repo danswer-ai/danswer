@@ -35,7 +35,7 @@ services:
     build:
       context: ../../backend
       dockerfile: Dockerfile
-    command: /usr/bin/supervisord
+    command: /usr/bin/supervisord -c /etc/supervisor/conf.d/ee.supervisord.conf
     depends_on:
       - relational_db
       - index
@@ -70,6 +70,7 @@ services:
         - NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS=${NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS:-}
         - NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS=${NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS:-}
         - NEXT_PUBLIC_DISABLE_LOGOUT=${NEXT_PUBLIC_DISABLE_LOGOUT:-}
+        - NEXT_PUBLIC_EE_ENABLED=${NEXT_PUBLIC_EE_ENABLED:-true}
     depends_on:
       - api_server
     restart: always

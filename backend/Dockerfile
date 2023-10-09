@@ -61,6 +61,7 @@ WORKDIR /app
 
 # Enterprise Version Files
 COPY ./ee /app/ee
+COPY ee.supervisord.conf /etc/supervisor/conf.d/ee.supervisord.conf
 
 # Set up application files
 COPY ./danswer /app/danswer
