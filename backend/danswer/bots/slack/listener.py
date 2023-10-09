@@ -14,8 +14,8 @@ from danswer.bots.slack.config import get_slack_bot_config_for_channel
 from danswer.bots.slack.constants import SLACK_CHANNEL_ID
 from danswer.bots.slack.handlers.handle_feedback import handle_slack_feedback
 from danswer.bots.slack.handlers.handle_message import handle_message
-from danswer.bots.slack.tokens import fetch_tokens
 from danswer.bots.slack.models import SlackMessageInfo
+from danswer.bots.slack.tokens import fetch_tokens
 from danswer.bots.slack.utils import _ChannelIdAdapter
 from danswer.bots.slack.utils import decompose_block_id
 from danswer.bots.slack.utils import get_channel_name_from_id
