@@ -10,10 +10,11 @@ import {
 } from "@/lib/types";
 import { deleteConnectorIfExistsAndIsUnlinked } from "@/lib/connector";
 import { FormBodyBuilder, RequireAtLeastOne } from "./types";
-import { TextFormField } from "./Field";
+import { BooleanFormField, TextFormField } from "./Field";
 import { createCredential, linkCredential } from "@/lib/credential";
 import { useSWRConfig } from "swr";
 import { Button } from "@tremor/react";
+import { EE_ENABLED } from "@/lib/constants";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 
@@ -74,6 +75,7 @@ interface BaseProps<T extends Yup.AnyObject> {
   // If specified, then we will create an empty credential and associate
   // the connector with it. If credentialId is specified, then this will be ignored
   shouldCreateEmptyCredentialForConnector?: boolean;
+  showNonPublicOption?: boolean;
 }
 
 type ConnectorFormProps<T extends Yup.AnyObject> = RequireAtLeastOne<
@@ -95,26 +97,44 @@ export function ConnectorForm<T extends Yup.AnyObject>({
   pruneFreq,
   onSubmit,
   shouldCreateEmptyCredentialForConnector,
+  // only show this option for EE, since groups are not supported in CE
+  showNonPublicOption = EE_ENABLED,
 }: ConnectorFormProps<T>): JSX.Element {
   const { mutate } = useSWRConfig();
   const { popup, setPopup } = usePopup();
 
   const shouldHaveNameInput = credentialId !== undefined && !ccPairNameBuilder;
 
+  const ccPairNameInitialValue = shouldHaveNameInput
+    ? { cc_pair_name: "" }
+    : {};
+  const publicOptionInitialValue = showNonPublicOption
+    ? { is_public: false }
+    : {};
+
+  let finalValidationSchema =
+    validationSchema as Yup.ObjectSchema<Yup.AnyObject>;
+  if (shouldHaveNameInput) {
+    finalValidationSchema = finalValidationSchema.concat(CCPairNameHaver);
+  }
+  if (showNonPublicOption) {
+    finalValidationSchema = finalValidationSchema.concat(
+      Yup.object().shape({
+        is_public: Yup.boolean(),
+      })
+    );
+  }
+
   return (
     <>
       {popup}
       <Formik
-        initialValues={
-          shouldHaveNameInput
-            ? { cc_pair_name: "", ...initialValues }
-            : initialValues
-        }
-        validationSchema={
-          shouldHaveNameInput
-            ? validationSchema.concat(CCPairNameHaver)
-            : validationSchema
-        }
+        initialValues={{
+          ...publicOptionInitialValue,
+          ...ccPairNameInitialValue,
+          ...initialValues,
+        }}
+        validationSchema={finalValidationSchema}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
           const connectorName = nameBuilder(values);
@@ -185,7 +205,8 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             const linkCredentialResponse = await linkCredential(
               response.id,
               credentialIdToLinkTo,
-              ccPairName
+              ccPairName as string,
+              values.is_public
             );
             if (!linkCredentialResponse.ok) {
               const linkCredentialErrorMsg =
@@ -222,6 +243,22 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             )}
             {formBody && formBody}
             {formBodyBuilder && formBodyBuilder(values)}
+            {showNonPublicOption && (
+              <>
+                <div className="border-t border-gray-600 py-2" />
+                <BooleanFormField
+                  name="is_public"
+                  label="Documents are Public?"
+                  subtext={
+                    "If set, then documents indexed by this connector will be " +
+                    "visible to all users. If turned off, then only users who explicitly " +
+                    "have been given access to the documents (e.g. through a User Group) " +
+                    "will have access"
+                  }
+                />
+                <div className="border-t border-gray-600 py-2" />
+              </>
+            )}
             <div className="flex">
               <Button
                 type="submit"

@@ -85,6 +85,7 @@ def associate_credential_to_connector(
             connector_id=connector_id,
             credential_id=credential_id,
             cc_pair_name=metadata.name,
+            is_public=metadata.is_public,
             user=user,
             db_session=db_session,
         )

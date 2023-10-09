@@ -11,7 +11,6 @@ import {
   Brain,
   X,
   Question,
-  Users,
   Gear,
   ArrowSquareOut,
 } from "@phosphor-icons/react";
@@ -36,6 +35,7 @@ import {
   FiCpu,
   FiInfo,
   FiUploadCloud,
+  FiUser,
   FiUsers,
 } from "react-icons/fi";
 import { SiBookstack } from "react-icons/si";
@@ -94,7 +94,7 @@ export const UsersIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <Users size={size} className={className} />;
+  return <FiUser size={size} className={className} />;
 };
 
 export const GroupsIcon = ({

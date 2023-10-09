@@ -8,6 +8,7 @@ import {
   ZoomInIcon,
   RobotIcon,
   ConnectorIcon,
+  GroupsIcon,
 } from "@/components/icons/icons";
 import { User } from "@/lib/types";
 import {
@@ -15,6 +16,7 @@ import {
   getAuthTypeMetadataSS,
   getCurrentUserSS,
 } from "@/lib/userSS";
+import { EE_ENABLED } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import { FiCpu, FiPackage, FiSettings, FiSlack, FiTool } from "react-icons/fi";
 
@@ -179,6 +181,19 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     ),
                     link: "/admin/users",
                   },
+                  ...(EE_ENABLED
+                    ? [
+                        {
+                          name: (
+                            <div className="flex">
+                              <GroupsIcon size={18} />
+                              <div className="ml-1">Groups</div>
+                            </div>
+                          ),
+                          link: "/admin/groups",
+                        },
+                      ]
+                    : []),
                 ],
               },
               {

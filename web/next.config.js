@@ -9,17 +9,31 @@ const nextConfig = {
   output: "standalone",
   swcMinify: true,
   rewrites: async () => {
+    const eeRedirects =
+      process.env.NEXT_PUBLIC_EE_ENABLED === "true"
+        ? [
+            {
+              source: "/admin/groups",
+              destination: "/ee/admin/groups",
+            },
+            {
+              source: "/admin/groups/:path*",
+              destination: "/ee/admin/groups/:path*",
+            },
+          ]
+        : [];
+
     // In production, something else (nginx in the one box setup) should take
     // care of this rewrite. TODO (chris): better support setups where
     // web_server and api_server are on different machines.
-    if (process.env.NODE_ENV === "production") return [];
+    if (process.env.NODE_ENV === "production") return eeRedirects;
 
     return [
       {
         source: "/api/:path*",
         destination: "http://127.0.0.1:8080/:path*", // Proxy to Backend
       },
-    ];
+    ].concat(eeRedirects);
   },
   redirects: async () => {
     // In production, something else (nginx in the one box setup) should take

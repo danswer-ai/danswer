@@ -36,3 +36,5 @@ spec:
         envFrom:
         - configMapRef:
             name: env-configmap
+        args:
+          - "NEXT_PUBLIC_EE_ENABLED=true"
