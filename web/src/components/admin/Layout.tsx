@@ -22,6 +22,7 @@ import {
   HubSpotIcon,
   BookmarkIcon,
   CPUIcon,
+  GoogleSitesIcon,
 } from "@/components/icons/icons";
 import { getAuthDisabledSS, getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
@@ -172,6 +173,15 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                   ),
                   link: "/admin/connectors/zulip",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <GoogleSitesIcon size={16} />
+                      <div className="ml-1">Google Sites</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/google-sites",
                 },
                 {
                   name: (

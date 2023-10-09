@@ -61,6 +61,7 @@ class DocumentSource(str, Enum):
     LINEAR = "linear"
     HUBSPOT = "hubspot"
     GONG = "gong"
+    GOOGLE_SITES = "google_sites"
 
 
 class DocumentIndexType(str, Enum):
