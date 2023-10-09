@@ -1,7 +1,4 @@
-import {
-  DeletionAttemptSnapshot,
-  ValidStatuses,
-} from "@/lib/types";
+import { DeletionAttemptSnapshot, ValidStatuses } from "@/lib/types";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { Popup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";

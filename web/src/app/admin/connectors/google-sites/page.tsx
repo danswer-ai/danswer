@@ -214,20 +214,23 @@ export default function GoogleSites() {
               {
                 header: "Base URL",
                 key: "base_url",
-                getValue: (connector) => (
-                  <a
-                    className="text-blue-500"
-                    href={connector.connector_specific_config.base_url}
-                  >
-                    {connector.connector_specific_config.base_url}
-                  </a>
-                ),
+                getValue: (ccPairStatus) => {
+                  const connectorConfig =
+                    ccPairStatus.connector.connector_specific_config;
+                  return (
+                    <a
+                      className="text-blue-500"
+                      href={connectorConfig.base_url}
+                    >
+                      {connectorConfig.base_url}
+                    </a>
+                  );
+                },
               },
             ]}
             onUpdate={() =>
               mutate("/api/manage/admin/connector/indexing-status")
             }
-            includeName={false}
           />
         ) : (
           <p className="text-sm">No indexed Google Sites found</p>
