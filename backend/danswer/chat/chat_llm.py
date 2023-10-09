@@ -19,6 +19,7 @@ from danswer.chat.chat_prompts import REQUIRE_DANSWER_SYSTEM_MSG
 from danswer.chat.chat_prompts import YES_SEARCH
 from danswer.chat.tools import call_tool
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT
+from danswer.configs.chat_configs import FORCE_TOOL_PROMPT
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
 from danswer.datastores.document_index import get_default_document_index
@@ -434,19 +435,26 @@ def llm_chat_answer(
     # - Model is too weak of an LLM, fails to follow instructions
     # - Bad persona design leads to confusing instructions to the model
     # - Bad configurations, too small token limit, mismatched tokenizer to LLM, etc.
+
+    # No setting/persona available therefore no retrieval and no additional tools
     if persona is None:
         return llm_contextless_chat_answer(messages)
 
+    # Persona is configured but with retrieval off and no tools
+    # therefore cannot retrieve any context so contextless
     elif persona.retrieval_enabled is False and not persona.tools:
         return llm_contextless_chat_answer(
             messages, system_text=persona.system_text, tokenizer=tokenizer
         )
 
-    elif persona.retrieval_enabled and not persona.tools:
+    # No additional tools outside of Danswer retrieval, can use a more basic prompt
+    # Doesn't require tool calling output format (all LLM outputs are therefore valid)
+    elif persona.retrieval_enabled and not persona.tools and not FORCE_TOOL_PROMPT:
         return llm_contextual_chat_answer(
             messages=messages, persona=persona, user_id=user_id, tokenizer=tokenizer
         )
 
+    # Use most flexible/complex prompt format
     else:
         return llm_tools_enabled_chat_answer(
             messages=messages, persona=persona, user_id=user_id, tokenizer=tokenizer
