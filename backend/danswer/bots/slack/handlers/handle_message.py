@@ -41,11 +41,11 @@ def handle_message(
 ) -> bool:
     """Potentially respond to the user message
     return True if responded, False if ignored for any reason"""
-    msg = (message_info.msg_content,)
-    channel = (message_info.channel_to_respond,)
-    message_ts_to_respond_to = (message_info.msg_to_respond,)
-    sender_id = (message_info.sender,)
-    bipass_filters = (message_info.bipass_filters,)
+    msg = message_info.msg_content
+    channel = message_info.channel_to_respond
+    message_ts_to_respond_to = message_info.msg_to_respond
+    sender_id = message_info.sender
+    bipass_filters = message_info.bipass_filters
     is_bot_msg = message_info.is_bot_msg
 
     logger = cast(
