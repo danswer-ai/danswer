@@ -57,7 +57,7 @@ export default function GoogleSites() {
         <p className="text-sm mb-2">
           For an in-depth guide on how to setup this connector, check out{" "}
           <a
-            href="https://docs.danswer.dev/connectors/google-sites"
+            href="https://docs.danswer.dev/connectors/google_sites"
             target="_blank"
             className="text-blue-500"
           >
