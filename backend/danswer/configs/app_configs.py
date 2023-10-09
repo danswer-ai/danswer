@@ -230,6 +230,7 @@ DANSWER_BOT_DISPLAY_ERROR_MSGS = os.environ.get(
 DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER = os.environ.get(
     "DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER", ""
 ).lower() not in ["false", ""]
+DANSWER_REACT_EMOJI = os.environ.get("DANSWER_REACT_EMOJI") or "eyes"
 
 # Default is only respond in channels that are included by a slack config set in the UI
 DANSWER_BOT_RESPOND_EVERY_CHANNEL = (
