@@ -16,7 +16,7 @@ from danswer.bots.slack.handlers.handle_feedback import handle_slack_feedback
 from danswer.bots.slack.handlers.handle_message import handle_message
 from danswer.bots.slack.models import SlackMessageInfo
 from danswer.bots.slack.tokens import fetch_tokens
-from danswer.bots.slack.utils import _ChannelIdAdapter
+from danswer.bots.slack.utils import ChannelIdAdapter
 from danswer.bots.slack.utils import decompose_block_id
 from danswer.bots.slack.utils import get_channel_name_from_id
 from danswer.bots.slack.utils import respond_in_thread
@@ -56,7 +56,7 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
         event = cast(dict[str, Any], req.payload.get("event", {}))
         msg = cast(str | None, event.get("text"))
         channel = cast(str | None, event.get("channel"))
-        channel_specific_logger = _ChannelIdAdapter(
+        channel_specific_logger = ChannelIdAdapter(
             logger, extra={SLACK_CHANNEL_ID: channel}
         )
 
@@ -101,7 +101,6 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
         message_ts = event.get("ts")
         thread_ts = event.get("thread_ts")
         # Pick the root of the thread (if a thread exists)
-        cast(str, thread_ts or message_ts)
         if thread_ts and message_ts != thread_ts:
             channel_specific_logger.info(
                 "Skipping message since it is not the root of a thread"
@@ -116,7 +115,7 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
     if req.type == "slash_commands":
         # Verify that there's an associated channel
         channel = req.payload.get("channel_id")
-        channel_specific_logger = _ChannelIdAdapter(
+        channel_specific_logger = ChannelIdAdapter(
             logger, extra={SLACK_CHANNEL_ID: channel}
         )
         if not channel:

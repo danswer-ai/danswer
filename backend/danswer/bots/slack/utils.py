@@ -23,7 +23,7 @@ from danswer.utils.text_processing import replace_whitespaces_w_space
 logger = setup_logger()
 
 
-class _ChannelIdAdapter(logging.LoggerAdapter):
+class ChannelIdAdapter(logging.LoggerAdapter):
     """This is used to add the channel ID to all log messages
     emitted in this file"""
 

@@ -10,7 +10,7 @@ from danswer.bots.slack.blocks import build_qa_response_blocks
 from danswer.bots.slack.blocks import get_restate_blocks
 from danswer.bots.slack.constants import SLACK_CHANNEL_ID
 from danswer.bots.slack.models import SlackMessageInfo
-from danswer.bots.slack.utils import _ChannelIdAdapter
+from danswer.bots.slack.utils import ChannelIdAdapter
 from danswer.bots.slack.utils import fetch_userids_from_emails
 from danswer.bots.slack.utils import respond_in_thread
 from danswer.configs.app_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
@@ -39,8 +39,13 @@ def handle_message(
     should_respond_with_error_msgs: bool = DANSWER_BOT_DISPLAY_ERROR_MSGS,
     disable_docs_only_answer: bool = DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER,
 ) -> bool:
-    """Potentially respond to the user message, returns bool for failure
-    Question thrown out due to filters is not considered failure"""
+    """Potentially respond to the user message depending on filters and if an answer was generated
+
+    Returns True if need to respond with an additional message to the user(s) after this
+    function is finished. True indicates an unexpected failure that needs to be communicated
+    Query thrown out by filters due to config does not count as a failure that should be notified
+    Danswer failing to answer/retrieve docs does count and should be notified
+    """
     msg = message_info.msg_content
     channel = message_info.channel_to_respond
     message_ts_to_respond_to = message_info.msg_to_respond
@@ -50,7 +55,7 @@ def handle_message(
 
     logger = cast(
         logging.Logger,
-        _ChannelIdAdapter(logger_base, extra={SLACK_CHANNEL_ID: channel}),
+        ChannelIdAdapter(logger_base, extra={SLACK_CHANNEL_ID: channel}),
     )
 
     document_set_names: list[str] | None = None
@@ -189,7 +194,7 @@ def handle_message(
             "Unable to find answer - not responding since the "
             "`DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER` env variable is set"
         )
-        return False
+        return True
 
     # convert raw response into "nicely" formatted Slack message
 
