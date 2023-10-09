@@ -39,8 +39,8 @@ def handle_message(
     should_respond_with_error_msgs: bool = DANSWER_BOT_DISPLAY_ERROR_MSGS,
     disable_docs_only_answer: bool = DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER,
 ) -> bool:
-    """Potentially respond to the user message
-    return True if responded, False if ignored for any reason"""
+    """Potentially respond to the user message, returns bool for failure
+    Question thrown out due to filters is not considered failure"""
     msg = message_info.msg_content
     channel = message_info.channel_to_respond
     message_ts_to_respond_to = message_info.msg_to_respond
@@ -160,7 +160,7 @@ def handle_message(
                 text=f"Encountered exception when trying to answer: \n\n```{e}```",
                 thread_ts=message_ts_to_respond_to,
             )
-        return False
+        return True
 
     if answer.eval_res_valid is False:
         logger.info(
@@ -168,7 +168,7 @@ def handle_message(
         )
         if answer.answer:
             logger.debug(answer.answer)
-        return False
+        return True
 
     if not answer.top_ranked_docs:
         logger.error(f"Unable to answer question: '{msg}' - no documents found")
@@ -182,7 +182,7 @@ def handle_message(
                 text="Found no documents when trying to answer. Did you index any documents?",
                 thread_ts=message_ts_to_respond_to,
             )
-        return False
+        return True
 
     if not answer.answer and disable_docs_only_answer:
         logger.info(
@@ -230,10 +230,10 @@ def handle_message(
                 thread_ts=message_ts_to_respond_to,
             )
 
-        return True
+        return False
 
     except Exception:
         logger.exception(
             f"Unable to process message - could not respond in slack in {num_retries} attempts"
         )
-        return False
+        return True

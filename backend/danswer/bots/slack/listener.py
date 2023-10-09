@@ -227,7 +227,7 @@ def apologize_for_fail(
         client=client.web_client,
         channel=details.channel_to_respond,
         thread_ts=details.msg_to_respond,
-        text="Sorry, we weren't able to find an answer :cold_sweat:",
+        text="Sorry, we weren't able to find anything relevant :cold_sweat:",
     )
 
 
@@ -266,13 +266,14 @@ def process_message(
     except SlackApiError as e:
         logger.error(f"Was not able to react to user message due to: {e}")
 
-    success = handle_message(
+    failed = handle_message(
         message_info=details,
         channel_config=slack_bot_config,
         client=client.web_client,
     )
 
-    if not success:
+    # Skipping answering due to pre-filtering is not considered a failure
+    if failed:
         apologize_for_fail(details, client)
 
     try:
