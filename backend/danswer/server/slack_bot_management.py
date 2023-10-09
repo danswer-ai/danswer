@@ -14,6 +14,7 @@ from danswer.db.slack_bot_config import fetch_slack_bot_configs
 from danswer.db.slack_bot_config import insert_slack_bot_config
 from danswer.db.slack_bot_config import remove_slack_bot_config
 from danswer.db.slack_bot_config import update_slack_bot_config
+from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.server.models import DocumentSet
 from danswer.server.models import SlackBotConfig
 from danswer.server.models import SlackBotConfigCreationRequest
@@ -169,5 +170,5 @@ def put_tokens(tokens: SlackBotTokens) -> None:
 def get_tokens() -> SlackBotTokens:
     try:
         return fetch_tokens()
-    except ValueError:
+    except ConfigNotFoundError:
         raise HTTPException(status_code=404, detail="No tokens found")
