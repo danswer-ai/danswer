@@ -4,6 +4,7 @@ from typing import Any
 from typing import cast
 
 from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
@@ -18,7 +19,10 @@ from danswer.bots.slack.models import SlackMessageInfo
 from danswer.bots.slack.utils import _ChannelIdAdapter
 from danswer.bots.slack.utils import decompose_block_id
 from danswer.bots.slack.utils import get_channel_name_from_id
+from danswer.bots.slack.utils import respond_in_thread
 from danswer.configs.app_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
+from danswer.configs.app_configs import DANSWER_REACT_EMOJI
+from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.utils.logger import setup_logger
@@ -197,6 +201,36 @@ def build_request_details(req: SocketModeRequest) -> SlackMessageInfo:
     raise RuntimeError("Programming fault, this should never happen.")
 
 
+def acknowledge_react(details: SlackMessageInfo, client: SocketModeClient) -> None:
+    slack_call = make_slack_api_rate_limited(client.web_client.reactions_add)
+    slack_call(
+        name=DANSWER_REACT_EMOJI,
+        channel=details.channel_to_respond,
+        timestamp=details.msg_to_respond,
+    )
+
+
+def remove_react(details: SlackMessageInfo, client: SocketModeClient) -> None:
+    slack_call = make_slack_api_rate_limited(client.web_client.reactions_remove)
+    slack_call(
+        name=DANSWER_REACT_EMOJI,
+        channel=details.channel_to_respond,
+        timestamp=details.msg_to_respond,
+    )
+
+
+def apologize_for_fail(
+    details: SlackMessageInfo,
+    client: SocketModeClient,
+) -> None:
+    respond_in_thread(
+        client=client.web_client,
+        channel=details.channel_to_respond,
+        thread_ts=details.msg_to_respond,
+        text="Sorry, we weren't able to find an answer :cold_sweat:",
+    )
+
+
 def process_message(
     req: SocketModeRequest,
     client: SocketModeClient,
@@ -227,11 +261,24 @@ def process_message(
         )
         return
 
-    handle_message(
+    try:
+        acknowledge_react(details, client)
+    except SlackApiError as e:
+        logger.error(f"Was not able to react to user message due to: {e}")
+
+    success = handle_message(
         message_info=details,
         channel_config=slack_bot_config,
         client=client.web_client,
     )
+
+    if not success:
+        apologize_for_fail(details, client)
+
+    try:
+        remove_react(details, client)
+    except SlackApiError as e:
+        logger.error(f"Failed to remove Reaction due to: {e}")
 
 
 def acknowledge_message(req: SocketModeRequest, client: SocketModeClient) -> None:

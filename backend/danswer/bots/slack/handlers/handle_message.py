@@ -32,7 +32,7 @@ logger_base = setup_logger()
 
 def handle_message(
     message_info: SlackMessageInfo,
-    channel_config: SlackBotConfig,
+    channel_config: SlackBotConfig | None,
     client: WebClient,
     num_retries: int = DANSWER_BOT_NUM_RETRIES,
     answer_generation_timeout: int = DANSWER_BOT_ANSWER_GENERATION_TIMEOUT,
