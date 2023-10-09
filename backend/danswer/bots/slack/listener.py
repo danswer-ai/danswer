@@ -49,7 +49,7 @@ def _get_socket_client() -> SocketModeClient:
     )
 
 
-def prefilter_requests(req: SocketModeRequest) -> bool:
+def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool:
     """True to keep going, False to ignore this Slack request"""
     if req.type == "events_api":
         # Verify channel is valid
@@ -78,13 +78,11 @@ def prefilter_requests(req: SocketModeRequest) -> bool:
             )
             return False
 
-        # Don't insert Danswer thoughts if there's already a long conversation
-        # Or if a bunch of blocks already came through from responding to the @DanswerBot tag
-        if len(event.get("blocks", [])) > 10:
-            channel_specific_logger.debug(
-                "Ignoring message because thread is already long or has been answered to."
-            )
-            return False
+        if event_type == "message":
+            bot_tag_id = client.web_client.auth_test().get("user_id")
+            if bot_tag_id and bot_tag_id in msg:
+                # Let the tag flow handle this case, don't reply twice
+                return False
 
         if event.get("bot_profile"):
             channel_specific_logger.info("Ignoring message from bot")
@@ -163,7 +161,9 @@ def process_feedback(req: SocketModeRequest, client: SocketModeClient) -> None:
     logger.info(f"Successfully handled QA feedback for event: {query_event_id}")
 
 
-def build_request_details(req: SocketModeRequest) -> SlackMessageInfo:
+def build_request_details(
+    req: SocketModeRequest, client: SocketModeClient
+) -> SlackMessageInfo:
     if req.type == "events_api":
         event = cast(dict[str, Any], req.payload["event"])
         msg = cast(str, event["text"])
@@ -173,7 +173,8 @@ def build_request_details(req: SocketModeRequest) -> SlackMessageInfo:
         thread_ts = event.get("thread_ts")
         if tagged:
             logger.info("User tagged DanswerBot")
-            msg = re.sub(r"<@\w+>\s", "", msg)
+            bot_tag_id = client.web_client.auth_test().get("user_id")
+            msg = re.sub(rf"<@{bot_tag_id}>\s", "", msg)
 
         return SlackMessageInfo(
             msg_content=msg,
@@ -201,7 +202,17 @@ def build_request_details(req: SocketModeRequest) -> SlackMessageInfo:
     raise RuntimeError("Programming fault, this should never happen.")
 
 
-def acknowledge_react(details: SlackMessageInfo, client: SocketModeClient) -> None:
+def send_msg_ack_to_user(details: SlackMessageInfo, client: SocketModeClient) -> None:
+    if details.is_bot_msg and details.sender:
+        respond_in_thread(
+            client=client.web_client,
+            channel=details.channel_to_respond,
+            thread_ts=details.msg_to_respond,
+            receiver_ids=[details.sender],
+            text="Hi, we're evaluating your query :face_with_monocle:",
+        )
+        return
+
     slack_call = make_slack_api_rate_limited(client.web_client.reactions_add)
     slack_call(
         name=DANSWER_REACT_EMOJI,
@@ -211,6 +222,9 @@ def acknowledge_react(details: SlackMessageInfo, client: SocketModeClient) -> No
 
 
 def remove_react(details: SlackMessageInfo, client: SocketModeClient) -> None:
+    if details.is_bot_msg:
+        return
+
     slack_call = make_slack_api_rate_limited(client.web_client.reactions_remove)
     slack_call(
         name=DANSWER_REACT_EMOJI,
@@ -239,10 +253,10 @@ def process_message(
     logger.info(f"Received Slack request of type: '{req.type}'")
 
     # Throw out requests that can't or shouldn't be handled
-    if not prefilter_requests(req):
+    if not prefilter_requests(req, client):
         return
 
-    details = build_request_details(req)
+    details = build_request_details(req, client)
     channel = details.channel_to_respond
     channel_name = get_channel_name_from_id(
         client=client.web_client, channel_id=channel
@@ -262,7 +276,7 @@ def process_message(
         return
 
     try:
-        acknowledge_react(details, client)
+        send_msg_ack_to_user(details, client)
     except SlackApiError as e:
         logger.error(f"Was not able to react to user message due to: {e}")
 
