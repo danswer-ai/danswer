@@ -68,14 +68,14 @@ class Document360Connector(LoadConnector, PollConnector):
 
         return workspace_id
 
-    def _get_articles_with_category(self, workspace_id) -> List[dict[str, Any]]:
+    def _get_articles_with_category(self, workspace_id) -> Any:
         all_categories = self._make_request(
             f"ProjectVersions/{workspace_id}/categories"
         )
         articles_with_category = []
 
         for category in all_categories:
-            if category["name"] in self.categories or self.categories is None:
+            if self.categories is None or category["name"] in self.categories:
                 for article in category["articles"]:
                     articles_with_category.append(
                         {"id": article["id"], "category_name": category["name"]}

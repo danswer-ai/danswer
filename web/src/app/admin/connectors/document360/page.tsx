@@ -149,16 +149,16 @@ const MainSection = () => {
                 {
                   header: "Workspace",
                   key: "workspace",
-                  getValue: (connector) =>
-                    connector.connector_specific_config.workspace,
+                  getValue: (ccPairStatus) =>
+                    ccPairStatus.connector.connector_specific_config.workspace,
                 },
                 {
                   header: "Categories",
                   key: "categories",
-                  getValue: (connector) =>
-                    connector.connector_specific_config.categories &&
-                    connector.connector_specific_config.categories.length > 0
-                      ? connector.connector_specific_config.categories.join(", ")
+                  getValue: (ccPairStatus) =>
+                    ccPairStatus.connector.connector_specific_config.categories &&
+                    ccPairStatus.connector.connector_specific_config.categories.length > 0
+                      ? ccPairStatus.connector.connector_specific_config.categories.join(", ")
                       : "",
                 },
               ]}
