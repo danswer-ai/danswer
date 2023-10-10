@@ -129,6 +129,7 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: Document360Icon,
         displayName: "Document360",
         adminPageLink: "/admin/connectors/document360",
+      };
     case "google_sites":
       return {
         icon: GoogleSitesIcon,
