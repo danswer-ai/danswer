@@ -68,7 +68,7 @@ class Document360Connector(LoadConnector, PollConnector):
 
         return workspace_id
 
-    def _get_articles_with_category(self, workspace_id) -> Any:
+    def _get_articles_with_category(self, workspace_id: str) -> Any:
         all_categories = self._make_request(
             f"ProjectVersions/{workspace_id}/categories"
         )
