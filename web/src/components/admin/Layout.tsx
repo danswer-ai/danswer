@@ -22,6 +22,7 @@ import {
   HubSpotIcon,
   BookmarkIcon,
   CPUIcon,
+  Document360Icon,
   GoogleSitesIcon,
 } from "@/components/icons/icons";
 import { getAuthDisabledSS, getCurrentUserSS } from "@/lib/userSS";
@@ -209,6 +210,15 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                   ),
                   link: "/admin/connectors/hubspot",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <Document360Icon size={16} />
+                      <div className="ml-1">Document360</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/document360",
                 },
               ],
             },
