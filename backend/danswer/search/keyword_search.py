@@ -48,7 +48,7 @@ def retrieve_keyword_documents(
     filters: list[IndexFilter] | None,
     datastore: DocumentIndex,
     num_hits: int = NUM_RETURNED_HITS,
-    edit_query=EDIT_KEYWORD_QUERY,
+    edit_query: bool = EDIT_KEYWORD_QUERY,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
 ) -> list[InferenceChunk] | None:
