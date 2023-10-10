@@ -10,6 +10,9 @@ are multiple connector / credential pairs that have indexed it
 connector / credential pair from the access list
 (6) delete all relevant entries from postgres
 """
+from collections.abc import Callable
+from typing import cast
+
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
@@ -35,6 +38,7 @@ from danswer.db.index_attempt import delete_index_attempts
 from danswer.db.models import ConnectorCredentialPair
 from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
+from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 logger = setup_logger()
 
@@ -99,6 +103,40 @@ def _delete_connector_credential_pair_batch(
         db_session.commit()
 
 
+def postgres_cc_pair_cleanup__no_commit(
+    cc_pair: ConnectorCredentialPair, db_session: Session
+) -> None:
+    """Cleans up all rows in Postgres related to the specified
+    connector_credential_pair + deletes the connector itself if there are
+    no other credentials left for the connector
+    """
+    connector_id = cc_pair.connector_id
+    credential_id = cc_pair.credential_id
+
+    delete_index_attempts(
+        db_session=db_session,
+        connector_id=connector_id,
+        credential_id=credential_id,
+    )
+    delete_document_set_relationships_for_cc_pair__no_commit(
+        cc_pair_id=cc_pair.id,
+        db_session=db_session,
+    )
+    delete_connector_credential_pair__no_commit(
+        db_session=db_session,
+        connector_id=connector_id,
+        credential_id=credential_id,
+    )
+    # if there are no credentials left, delete the connector
+    connector = fetch_connector_by_id(
+        db_session=db_session,
+        connector_id=connector_id,
+    )
+    if not connector or not len(connector.credentials):
+        logger.debug("Found no credentials left for connector, deleting connector")
+        db_session.delete(connector)
+
+
 def _delete_connector_credential_pair(
     db_session: Session,
     document_index: DocumentIndex,
@@ -127,28 +165,14 @@ def _delete_connector_credential_pair(
         num_docs_deleted += len(documents)
 
     # cleanup everything else up
-    delete_index_attempts(
-        db_session=db_session,
-        connector_id=connector_id,
-        credential_id=credential_id,
+    postgres_cleanup__no_commit = cast(
+        Callable[[ConnectorCredentialPair, Session], None],
+        fetch_versioned_implementation(
+            "danswer.background.connector_deletion",
+            "postgres_cc_pair_cleanup__no_commit",
+        ),
     )
-    delete_document_set_relationships_for_cc_pair__no_commit(
-        cc_pair_id=cc_pair.id,
-        db_session=db_session,
-    )
-    delete_connector_credential_pair__no_commit(
-        db_session=db_session,
-        connector_id=connector_id,
-        credential_id=credential_id,
-    )
-    # if there are no credentials left, delete the connector
-    connector = fetch_connector_by_id(
-        db_session=db_session,
-        connector_id=connector_id,
-    )
-    if not connector or not len(connector.credentials):
-        logger.debug("Found no credentials left for connector, deleting connector")
-        db_session.delete(connector)
+    postgres_cleanup__no_commit(cc_pair, db_session)
     db_session.commit()
 
     logger.info(
@@ -158,7 +182,10 @@ def _delete_connector_credential_pair(
     return num_docs_deleted
 
 
-def cleanup_connector_credential_pair(connector_id: int, credential_id: int) -> int:
+def cleanup_connector_credential_pair(
+    connector_id: int,
+    credential_id: int,
+) -> int:
     engine = get_sqlalchemy_engine()
     with Session(engine) as db_session:
         # validate that the connector / credential pair is deletable
