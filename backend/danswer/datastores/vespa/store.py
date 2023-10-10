@@ -15,7 +15,6 @@ from requests import Response
 from danswer.chunking.models import DocMetadataAwareIndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
-from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import VESPA_DEPLOYMENT_ZIP
 from danswer.configs.app_configs import VESPA_HOST
@@ -32,7 +31,6 @@ from danswer.configs.constants import DOCUMENT_SETS
 from danswer.configs.constants import EMBEDDINGS
 from danswer.configs.constants import MATCH_HIGHLIGHTS
 from danswer.configs.constants import METADATA
-from danswer.configs.constants import PUBLIC_DOC_PAT
 from danswer.configs.constants import SCORE
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
@@ -45,7 +43,6 @@ from danswer.datastores.interfaces import DocumentInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import UpdateRequest
 from danswer.datastores.vespa.utils import remove_invalid_unicode_chars
-from danswer.search.keyword_search import remove_stop_words
 from danswer.search.semantic_search import embed_query
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
@@ -252,18 +249,16 @@ def _index_vespa_chunks(
     return insertion_records
 
 
-def _build_vespa_filters(
-    user_id: UUID | None, filters: list[IndexFilter] | None
-) -> str:
-    # Permissions filters
-    acl_filter_stmts = [f'{ACCESS_CONTROL_LIST} contains "{PUBLIC_DOC_PAT}"']
-    if user_id:
-        acl_filter_stmts.append(f'{ACCESS_CONTROL_LIST} contains "{user_id}"')
-    filter_str = "(" + " or ".join(acl_filter_stmts) + ") and"
+def _build_vespa_filters(filters: list[IndexFilter] | None) -> str:
+    # NOTE: permissions filters are expected to be passed in directly via
+    # the `filters` arg, which is why they are not considered explicitly here
 
-    # TODO: have document sets passed in + add document set based filters
+    # NOTE: document-set filters are also expected to be passed in directly
+    # via the `filters` arg. These are set either in the Web UI or in the Slack
+    # listener
 
-    # Provided query filters
+    # Handle provided query filters
+    filter_str = ""
     if filters:
         for filter_dict in filters:
             valid_filters = {
@@ -497,7 +492,7 @@ class VespaIndex(DocumentIndex):
         filters: list[IndexFilter] | None,
         num_to_retrieve: int = NUM_RETURNED_HITS,
     ) -> list[InferenceChunk]:
-        vespa_where_clauses = _build_vespa_filters(user_id, filters)
+        vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
             VespaIndex.yql_base
             + vespa_where_clauses
@@ -527,7 +522,7 @@ class VespaIndex(DocumentIndex):
         num_to_retrieve: int,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
     ) -> list[InferenceChunk]:
-        vespa_where_clauses = _build_vespa_filters(user_id, filters)
+        vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
             VespaIndex.yql_base
             + vespa_where_clauses
@@ -540,13 +535,10 @@ class VespaIndex(DocumentIndex):
         )
 
         query_embedding = embed_query(query)
-        query_keywords = (
-            " ".join(remove_stop_words(query)) if EDIT_KEYWORD_QUERY else query
-        )
 
         params = {
             "yql": yql,
-            "query": query_keywords,
+            "query": query,
             "input.query(query_embedding)": str(query_embedding),
             "ranking.profile": "semantic_search",
         }
@@ -560,7 +552,7 @@ class VespaIndex(DocumentIndex):
         filters: list[IndexFilter] | None,
         num_to_retrieve: int,
     ) -> list[InferenceChunk]:
-        vespa_where_clauses = _build_vespa_filters(user_id, filters)
+        vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
             VespaIndex.yql_base
             + vespa_where_clauses

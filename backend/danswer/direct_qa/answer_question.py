@@ -16,6 +16,7 @@ from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.direct_qa.qa_utils import get_usable_chunks
+from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import query_intent
 from danswer.search.keyword_search import retrieve_keyword_documents
 from danswer.search.models import QueryFlow
@@ -66,11 +67,13 @@ def answer_qa_query(
         use_keyword = predicted_search == SearchType.KEYWORD
 
     user_id = None if user is None else user.id
+    user_acl_filters = build_access_filters_for_user(user, db_session)
+    final_filters = (filters or []) + user_acl_filters
     if use_keyword:
         ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
             query,
             user_id,
-            filters,
+            final_filters,
             get_default_document_index(),
             retrieval_metrics_callback=retrieval_metrics_callback,
         )
@@ -79,7 +82,7 @@ def answer_qa_query(
         ranked_chunks, unranked_chunks = retrieve_ranked_documents(
             query,
             user_id,
-            filters,
+            final_filters,
             get_default_document_index(),
             retrieval_metrics_callback=retrieval_metrics_callback,
             rerank_metrics_callback=rerank_metrics_callback,
