@@ -16,6 +16,8 @@ from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
+from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
+from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
 from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import SIM_SCORE_RANGE_HIGH
 from danswer.configs.model_configs import SIM_SCORE_RANGE_LOW
@@ -65,9 +67,9 @@ def semantic_reranking(
     query: str,
     chunks: list[InferenceChunk],
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
+    model_min: int = CROSS_ENCODER_RANGE_MIN,
+    model_max: int = CROSS_ENCODER_RANGE_MAX,
 ) -> list[InferenceChunk]:
-    model_max = 12  # These are just based on observations from model selection
-    model_min = -12
     cross_encoders = get_default_reranking_model_ensemble()
     sim_scores = [
         encoder.predict([(query, chunk.content) for chunk in chunks])  # type: ignore
@@ -132,23 +134,31 @@ def apply_boost(
     score_max = max(scores)
     score_range = score_max - score_min
 
-    boosted_scores = [
-        ((score - score_min) / score_range) * boost
-        for score, boost in zip(scores, boosts)
-    ]
-
-    unnormed_boosted_scores = [
-        score * score_range + score_min for score in boosted_scores
-    ]
+    if score_range != 0:
+        boosted_scores = [
+            ((score - score_min) / score_range) * boost
+            for score, boost in zip(scores, boosts)
+        ]
+        unnormed_boosted_scores = [
+            score * score_range + score_min for score in boosted_scores
+        ]
+    else:
+        unnormed_boosted_scores = [
+            score * boost for score, boost in zip(scores, boosts)
+        ]
 
     norm_min = min(norm_min, min(scores))
     norm_max = max(norm_max, max(scores))
+    # This should never be 0 unless user has done some weird/wrong settings
+    norm_range = norm_max - norm_min
 
     # For score display purposes
-    re_normed_scores = [
-        ((score - norm_min) / (norm_max - norm_min))
-        for score in unnormed_boosted_scores
-    ]
+    if norm_range != 0:
+        re_normed_scores = [
+            ((score - norm_min) / norm_range) for score in unnormed_boosted_scores
+        ]
+    else:
+        re_normed_scores = unnormed_boosted_scores
 
     rescored_chunks = list(zip(re_normed_scores, chunks))
     rescored_chunks.sort(key=lambda x: x[0], reverse=True)

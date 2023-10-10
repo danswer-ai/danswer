@@ -39,10 +39,12 @@ import Image from "next/image";
 import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
 import guruIcon from "../../../public/Guru.svg";
+import gongIcon from "../../../public/Gong.png";
 import zulipIcon from "../../../public/Zulip.png";
 import linearIcon from "../../../public/Linear.png";
 import hubSpotIcon from "../../../public/HubSpot.png";
 import document360Icon from "../../../public/Document360.png";
+import googleSitesIcon from "../../../public/GoogleSites.png";
 
 interface IconProps {
   size?: number;
@@ -424,6 +426,18 @@ export const GuruIcon = ({
   </div>
 );
 
+export const GongIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src={gongIcon} alt="Logo" width="96" height="96" />
+  </div>
+);
+
 export const HubSpotIcon = ({
   size = 16,
   className = defaultTailwindCSS,
@@ -445,11 +459,24 @@ export const Document360Icon = ({
 }: IconProps) => {
   return (
     <div
-      // HubSpot Icon has a bit more surrounding whitespace than other icons, which is why we need to adjust it here
       style={{ width: `${size + 4}px`, height: `${size + 4}px` }}
       className={`w-[${size + 4}px] h-[${size + 4}px] -m-0.5 ` + className}
     >
       <Image src={document360Icon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const GoogleSitesIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src={googleSitesIcon} alt="Logo" width="96" height="96" />
     </div>
   );
 };

@@ -185,14 +185,18 @@ const Main = () => {
                   {
                     header: "Url",
                     key: "url",
-                    getValue: (connector) => (
-                      <a
-                        className="text-blue-500"
-                        href={connector.connector_specific_config.base_url}
-                      >
-                        {connector.connector_specific_config.base_url}
-                      </a>
-                    ),
+                    getValue: (ccPairStatus) => {
+                      const connectorConfig =
+                        ccPairStatus.connector.connector_specific_config;
+                      return (
+                        <a
+                          className="text-blue-500"
+                          href={connectorConfig.base_url}
+                        >
+                          {connectorConfig.base_url}
+                        </a>
+                      );
+                    },
                   },
                 ]}
                 onUpdate={() =>

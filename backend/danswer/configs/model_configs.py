@@ -38,6 +38,9 @@ CROSS_ENCODER_MODEL_ENSEMBLE = [
     "cross-encoder/ms-marco-MiniLM-L-4-v2",
     "cross-encoder/ms-marco-TinyBERT-L-2-v2",
 ]
+# For score normalizing purposes, only way is to know the expected ranges
+CROSS_ENCODER_RANGE_MAX = 12
+CROSS_ENCODER_RANGE_MIN = -12
 CROSS_EMBED_CONTEXT_SIZE = 512
 
 
@@ -75,7 +78,10 @@ INTERNAL_MODEL_VERSION = os.environ.get(
 )
 
 # If the Generative AI model requires an API key for access, otherwise can leave blank
-GEN_AI_API_KEY = os.environ.get("GEN_AI_API_KEY", "")
+GEN_AI_API_KEY = (
+    os.environ.get("GEN_AI_API_KEY", os.environ.get("OPENAI_API_KEY"))
+    or "dummy_llm_key"
+)
 
 # If using GPT4All, HuggingFace Inference API, or OpenAI - specify the model version
 GEN_AI_MODEL_VERSION = os.environ.get(

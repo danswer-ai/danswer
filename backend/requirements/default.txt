@@ -21,7 +21,7 @@ httpx==0.23.3
 httpx-oauth==0.11.2
 huggingface-hub==0.16.4
 jira==3.5.1
-langchain==0.0.273
+langchain==0.0.308
 llama-index==0.8.27
 Mako==1.2.4
 nltk==3.8.1
@@ -49,6 +49,8 @@ slack-sdk==3.20.2
 SQLAlchemy[mypy]==2.0.15
 tensorflow==2.13.0
 tiktoken==0.4.0
+torch==2.0.1
+torchvision==0.15.2
 transformers==4.30.1
 typesense==0.15.1
 uvicorn==0.21.1

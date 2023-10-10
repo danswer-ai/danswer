@@ -2,6 +2,7 @@ import logging
 import random
 import re
 import string
+from collections.abc import MutableMapping
 from typing import Any
 from typing import cast
 
@@ -10,6 +11,7 @@ from slack_sdk import WebClient
 from slack_sdk.models.blocks import Block
 from slack_sdk.models.metadata import Metadata
 
+from danswer.bots.slack.constants import SLACK_CHANNEL_ID
 from danswer.bots.slack.tokens import fetch_tokens
 from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.constants import ID_SEPARATOR
@@ -19,6 +21,20 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import replace_whitespaces_w_space
 
 logger = setup_logger()
+
+
+class ChannelIdAdapter(logging.LoggerAdapter):
+    """This is used to add the channel ID to all log messages
+    emitted in this file"""
+
+    def process(
+        self, msg: str, kwargs: MutableMapping[str, Any]
+    ) -> tuple[str, MutableMapping[str, Any]]:
+        channel_id = self.extra.get(SLACK_CHANNEL_ID) if self.extra else None
+        if channel_id:
+            return f"[Channel ID: {channel_id}] {msg}", kwargs
+        else:
+            return msg, kwargs
 
 
 def get_web_client() -> WebClient:

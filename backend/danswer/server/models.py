@@ -166,6 +166,14 @@ class QAFeedbackRequest(BaseModel):
     feedback: QAFeedbackType
 
 
+class ChatFeedbackRequest(BaseModel):
+    chat_session_id: int
+    message_number: int
+    edit_number: int
+    is_positive: bool | None = None
+    feedback_text: str | None = None
+
+
 class SearchFeedbackRequest(BaseModel):
     query_id: int
     document_id: str
@@ -202,8 +210,14 @@ class RenameChatSessionResponse(BaseModel):
     new_name: str  # This is only really useful if the name is generated
 
 
-class ChatSessionIdsResponse(BaseModel):
-    sessions: list[int]
+class ChatSession(BaseModel):
+    id: int
+    name: str
+    time_created: str
+
+
+class ChatSessionsResponse(BaseModel):
+    sessions: list[ChatSession]
 
 
 class ChatMessageDetail(BaseModel):
@@ -322,7 +336,7 @@ class RunConnectorRequest(BaseModel):
 
 class CredentialBase(BaseModel):
     credential_json: dict[str, Any]
-    public_doc: bool
+    is_admin: bool
 
 
 class CredentialSnapshot(CredentialBase):
@@ -339,7 +353,7 @@ class CredentialSnapshot(CredentialBase):
             if MASK_CREDENTIAL_PREFIX
             else credential.credential_json,
             user_id=credential.user_id,
-            public_doc=credential.public_doc,
+            is_admin=credential.is_admin,
             time_created=credential.time_created,
             time_updated=credential.time_updated,
         )

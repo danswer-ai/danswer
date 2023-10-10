@@ -1,5 +1,6 @@
 from typing import Any
 
+from sqlalchemy import Select
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import or_
@@ -19,18 +20,30 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
+def _attach_user_filters(stmt: Select[tuple[Credential]], user: User | None) -> Select:
+    """Attaches filters to the statement to ensure that the user can only
+    access the appropriate credentials"""
+    if user:
+        if user.role == UserRole.ADMIN:
+            stmt = stmt.where(
+                or_(
+                    Credential.user_id == user.id,
+                    Credential.user_id.is_(None),
+                    Credential.is_admin == True,  # noqa: E712
+                )
+            )
+        else:
+            stmt = stmt.where(Credential.user_id == user.id)
+
+    return stmt
+
+
 def fetch_credentials(
     db_session: Session,
     user: User | None = None,
-    public_only: bool | None = None,
 ) -> list[Credential]:
     stmt = select(Credential)
-    if user:
-        stmt = stmt.where(
-            or_(Credential.user_id == user.id, Credential.user_id.is_(None))
-        )
-    if public_only is not None:
-        stmt = stmt.where(Credential.public_doc == public_only)
+    stmt = _attach_user_filters(stmt, user)
     results = db_session.scalars(stmt)
     return list(results.all())
 
@@ -39,20 +52,7 @@ def fetch_credential_by_id(
     credential_id: int, user: User | None, db_session: Session
 ) -> Credential | None:
     stmt = select(Credential).where(Credential.id == credential_id)
-    if user:
-        # admins have access to all public credentials + credentials they own
-        if user.role == UserRole.ADMIN:
-            stmt = stmt.where(
-                or_(
-                    Credential.user_id == user.id,
-                    Credential.user_id.is_(None),
-                    Credential.public_doc == True,  # noqa: E712
-                )
-            )
-        else:
-            stmt = stmt.where(
-                or_(Credential.user_id == user.id, Credential.user_id.is_(None))
-            )
+    stmt = _attach_user_filters(stmt, user)
     result = db_session.execute(stmt)
     credential = result.scalar_one_or_none()
     return credential
@@ -60,13 +60,13 @@ def fetch_credential_by_id(
 
 def create_credential(
     credential_data: CredentialBase,
-    user: User,
+    user: User | None,
     db_session: Session,
 ) -> ObjectCreationIdResponse:
     credential = Credential(
         credential_json=credential_data.credential_json,
         user_id=user.id if user else None,
-        public_doc=credential_data.public_doc,
+        is_admin=credential_data.is_admin,
     )
     db_session.add(credential)
     db_session.commit()
@@ -86,7 +86,6 @@ def update_credential(
 
     credential.credential_json = credential_data.credential_json
     credential.user_id = user.id if user is not None else None
-    credential.public_doc = credential_data.public_doc
 
     db_session.commit()
     return credential
@@ -144,13 +143,15 @@ def create_initial_public_credential() -> None:
         if first_credential is not None:
             if (
                 first_credential.credential_json != {}
-                or first_credential.public_doc is False
+                or first_credential.user is not None
             ):
                 raise ValueError(error_msg)
             return
 
         credential = Credential(
-            id=public_cred_id, credential_json={}, user_id=None, public_doc=True
+            id=public_cred_id,
+            credential_json={},
+            user_id=None,
         )
         db_session.add(credential)
         db_session.commit()

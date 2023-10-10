@@ -287,13 +287,9 @@ def _run_indexing(
                     f"Indexing batch of documents: {[doc.to_short_descriptor() for doc in doc_batch]}"
                 )
 
-                index_user_id = (
-                    None if db_credential.public_doc else db_credential.user_id
-                )
                 new_docs, total_batch_chunks = indexing_pipeline(
                     documents=doc_batch,
                     index_attempt_metadata=IndexAttemptMetadata(
-                        user_id=index_user_id,
                         connector_id=db_connector.id,
                         credential_id=db_credential.id,
                     ),

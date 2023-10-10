@@ -19,11 +19,14 @@ export type ValidSources =
   | "slab"
   | "notion"
   | "guru"
+  | "gong"
   | "zulip"
   | "linear"
   | "hubspot"
   | "document360"
   | "file";
+  | "google_sites";
+
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
   | "success"
@@ -97,6 +100,10 @@ export interface SlabConfig {
 
 export interface GuruConfig {}
 
+export interface GongConfig {
+  workspaces?: string[];
+}
+
 export interface FileConfig {
   file_locations: string[];
 }
@@ -113,6 +120,11 @@ export interface HubSpotConfig {}
 export interface Document360Config {
   workspace: string;
   categories?: string[];
+}
+
+export interface GoogleSitesConfig {
+  zip_path: string;
+  base_url: string;
 }
 
 export interface IndexAttemptSnapshot {
@@ -145,7 +157,7 @@ export interface ConnectorIndexingStatus<
 // CREDENTIALS
 export interface CredentialBase<T> {
   credential_json: T;
-  public_doc: boolean;
+  is_admin: boolean;
 }
 
 export interface Credential<T> extends CredentialBase<T> {
@@ -207,6 +219,11 @@ export interface ZulipCredentialJson {
 export interface GuruCredentialJson {
   guru_user: string;
   guru_user_token: string;
+}
+
+export interface GongCredentialJson {
+  gong_access_key: string;
+  gong_access_key_secret: string;
 }
 
 export interface LinearCredentialJson {

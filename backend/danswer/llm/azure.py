@@ -1,4 +1,3 @@
-import os
 from typing import Any
 
 from langchain.chat_models.azure_openai import AzureChatOpenAI
@@ -6,6 +5,7 @@ from langchain.chat_models.azure_openai import AzureChatOpenAI
 from danswer.configs.model_configs import API_BASE_OPENAI
 from danswer.configs.model_configs import API_VERSION_OPENAI
 from danswer.configs.model_configs import AZURE_DEPLOYMENT_ID
+from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.llm.llm import LangChainChatLLM
 from danswer.llm.utils import should_be_verbose
 
@@ -27,7 +27,7 @@ class AzureGPT(LangChainChatLLM):
         # exception when trying to initialize the LLM which would prevent the API
         # server from starting up
         if not api_key:
-            api_key = os.environ.get("OPENAI_API_KEY") or "dummy_api_key"
+            api_key = GEN_AI_API_KEY
         self._llm = AzureChatOpenAI(
             model=model_version,
             openai_api_type="azure",

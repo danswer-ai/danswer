@@ -7,6 +7,7 @@ import {
   GlobeIcon,
   GoogleDriveIcon,
   GuruIcon,
+  GongIcon,
   JiraIcon,
   LinearIcon,
   NotionIcon,
@@ -16,6 +17,7 @@ import {
   ZulipIcon,
   HubSpotIcon,
   Document360Icon,
+  GoogleSitesIcon,
 } from "./icons/icons";
 
 interface SourceMetadata {
@@ -104,6 +106,12 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         displayName: "Guru",
         adminPageLink: "/admin/connectors/guru",
       };
+    case "gong":
+      return {
+        icon: GongIcon,
+        displayName: "Gong",
+        adminPageLink: "/admin/connectors/gong",
+      };
     case "linear":
       return {
         icon: LinearIcon,
@@ -121,6 +129,11 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: Document360Icon,
         displayName: "Document360",
         adminPageLink: "/admin/connectors/document360",
+    case "google_sites":
+      return {
+        icon: GoogleSitesIcon,
+        displayName: "Google Sites",
+        adminPageLink: "/admin/connectors/google-sites",
       };
     default:
       throw new Error("Invalid source type");

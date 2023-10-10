@@ -15,6 +15,7 @@ from requests import Response
 from danswer.chunking.models import DocMetadataAwareIndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
+from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import VESPA_DEPLOYMENT_ZIP
 from danswer.configs.app_configs import VESPA_HOST
@@ -44,6 +45,7 @@ from danswer.datastores.interfaces import DocumentInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import UpdateRequest
 from danswer.datastores.vespa.utils import remove_invalid_unicode_chars
+from danswer.search.keyword_search import remove_stop_words
 from danswer.search.semantic_search import embed_query
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
@@ -104,7 +106,13 @@ def _get_vespa_chunk_ids_by_document_id(
     while True:
         results = requests.get(SEARCH_ENDPOINT, params=params).json()
         hits = results["root"].get("children", [])
-        doc_chunk_ids.extend([hit["id"].split("::")[1] for hit in hits])
+
+        # Temporary logging to catch the rare index out of bounds issue
+        problematic_ids = [hit["id"] for hit in hits if len(hit["id"].split("::")) < 2]
+        if problematic_ids:
+            logger.error(f'IDs without "::" {problematic_ids}')
+
+        doc_chunk_ids.extend([hit["id"].split("::", 1)[-1] for hit in hits])
         params["offset"] += hits_per_page  # type: ignore
 
         if len(hits) < hits_per_page:
@@ -318,9 +326,7 @@ def _process_dynamic_summary(
 
 def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
     if "query" in query_params and not cast(str, query_params["query"]).strip():
-        raise ValueError(
-            "Query only consisted of stopwords, should not use Keyword Search"
-        )
+        raise ValueError("No/empty query received")
     response = requests.get(SEARCH_ENDPOINT, params=query_params)
     response.raise_for_status()
 
@@ -534,10 +540,13 @@ class VespaIndex(DocumentIndex):
         )
 
         query_embedding = embed_query(query)
+        query_keywords = (
+            " ".join(remove_stop_words(query)) if EDIT_KEYWORD_QUERY else query
+        )
 
         params = {
             "yql": yql,
-            "query": query,
+            "query": query_keywords,
             "input.query(query_embedding)": str(query_embedding),
             "ranking.profile": "semantic_search",
         }

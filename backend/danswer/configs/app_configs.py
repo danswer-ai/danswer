@@ -159,6 +159,13 @@ QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "60")  # 60 seconds
 # Include additional document/chunk metadata in prompt to GenerativeAI
 INCLUDE_METADATA = False
 HARD_DELETE_CHATS = os.environ.get("HARD_DELETE_CHATS", "True").lower() != "false"
+# Keyword Search Drop Stopwords
+# If user has changed the default model, would most likely be to use a multilingual
+# model, the stopwords are NLTK english stopwords so then we would want to not drop the keywords
+if os.environ.get("EDIT_KEYWORD_QUERY"):
+    EDIT_KEYWORD_QUERY = os.environ.get("EDIT_KEYWORD_QUERY", "").lower() == "true"
+else:
+    EDIT_KEYWORD_QUERY = not os.environ.get("DOCUMENT_ENCODER_MODEL")
 
 
 #####
@@ -230,12 +237,13 @@ DANSWER_BOT_DISPLAY_ERROR_MSGS = os.environ.get(
 DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER = os.environ.get(
     "DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER", ""
 ).lower() not in ["false", ""]
-DANSWER_BOT_ONLY_ANSWER_WHEN_SLACK_BOT_CONFIG_IS_PRESENT = (
-    os.environ.get(
-        "DANSWER_BOT_ONLY_ANSWER_WHEN_SLACK_BOT_CONFIG_IS_PRESENT", ""
-    ).lower()
-    == "true"
+DANSWER_REACT_EMOJI = os.environ.get("DANSWER_REACT_EMOJI") or "eyes"
+
+# Default is only respond in channels that are included by a slack config set in the UI
+DANSWER_BOT_RESPOND_EVERY_CHANNEL = (
+    os.environ.get("DANSWER_BOT_RESPOND_EVERY_CHANNEL", "").lower() == "true"
 )
+
 # Add a second LLM call post Answer to verify if the Answer is valid
 # Throws out answers that don't directly or fully answer the user query
 # This is the default for all DanswerBot channels unless the bot is configured individually

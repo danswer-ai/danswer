@@ -23,12 +23,14 @@ const sources: Source[] = [
   { displayName: "Github PRs", internalName: "github" },
   { displayName: "Web", internalName: "web" },
   { displayName: "Guru", internalName: "guru" },
+  { displayName: "Gong", internalName: "gong" },
   { displayName: "File", internalName: "file" },
   { displayName: "Notion", internalName: "notion" },
   { displayName: "Zulip", internalName: "zulip" },
   { displayName: "Linear", internalName: "linear" },
   { displayName: "HubSpot", internalName: "hubspot" },
   { displayName: "Document360", internalName: "document360" },
+  { displayName: "Google Sites", internalName: "google_sites" },
 ];
 
 interface SourceSelectorProps {

@@ -14,6 +14,7 @@ from sqlalchemy import Boolean
 from sqlalchemy import DateTime
 from sqlalchemy import Enum
 from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKeyConstraint
 from sqlalchemy import func
 from sqlalchemy import Index
 from sqlalchemy import Integer
@@ -143,6 +144,14 @@ class ConnectorCredentialPair(Base):
     credential_id: Mapped[int] = mapped_column(
         ForeignKey("credential.id"), primary_key=True
     )
+    # controls whether the documents indexed by this CC pair are visible to all
+    # or if they are only visible to those with that are given explicit access
+    # (e.g. via owning the credential or being a part of a group that is given access)
+    is_public: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False,
+    )
     # Time finished, not used for calculating backend jobs which uses time started (created)
     last_successful_index_time: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
@@ -205,7 +214,8 @@ class Credential(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     credential_json: Mapped[dict[str, Any]] = mapped_column(postgresql.JSONB())
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
-    public_doc: Mapped[bool] = mapped_column(Boolean, default=False)
+    # if `true`, then all Admins will have access to the credential
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=True)
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -429,6 +439,11 @@ class ChatSession(Base):
     )
 
 
+class ToolInfo(TypedDict):
+    name: str
+    description: str
+
+
 class Persona(Base):
     # TODO introduce user and group ownership for personas
     __tablename__ = "persona"
@@ -437,7 +452,9 @@ class Persona(Base):
     # Danswer retrieval, treated as a special tool
     retrieval_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     system_text: Mapped[str | None] = mapped_column(Text, nullable=True)
-    tools_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tools: Mapped[list[ToolInfo] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
+    )
     hint_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Default personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
@@ -476,6 +493,42 @@ class ChatMessage(Base):
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
     persona: Mapped[Persona | None] = relationship("Persona")
+
+
+class ChatMessageFeedback(Base):
+    __tablename__ = "chat_feedback"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    chat_message_chat_session_id: Mapped[int] = mapped_column(Integer)
+    chat_message_message_number: Mapped[int] = mapped_column(Integer)
+    chat_message_edit_number: Mapped[int] = mapped_column(Integer)
+    is_positive: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    feedback_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            [
+                "chat_message_chat_session_id",
+                "chat_message_message_number",
+                "chat_message_edit_number",
+            ],
+            [
+                "chat_message.chat_session_id",
+                "chat_message.message_number",
+                "chat_message.edit_number",
+            ],
+        ),
+    )
+
+    chat_message: Mapped[ChatMessage] = relationship(
+        "ChatMessage",
+        foreign_keys=[
+            chat_message_chat_session_id,
+            chat_message_message_number,
+            chat_message_edit_number,
+        ],
+        backref="feedbacks",
+    )
 
 
 AllowedAnswerFilters = (

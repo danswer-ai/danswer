@@ -57,7 +57,7 @@ export function CredentialForm<T extends Yup.AnyObject>({
           formikHelpers.setSubmitting(true);
           submitCredential<T>({
             credential_json: values,
-            public_doc: true,
+            is_admin: true,
           }).then(({ message, isSuccess }) => {
             setPopup({ message, type: isSuccess ? "success" : "error" });
             formikHelpers.setSubmitting(false);
