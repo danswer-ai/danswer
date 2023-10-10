@@ -23,6 +23,7 @@ from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.qa_utils import get_usable_chunks
+from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import query_intent
 from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.keyword_search import retrieve_keyword_documents
@@ -95,8 +96,10 @@ def semantic_search(
     )
 
     user_id = None if user is None else user.id
+    user_acl_filters = build_access_filters_for_user(user, db_session)
+    final_filters = (filters or []) + user_acl_filters
     ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-        query, user_id, filters, get_default_document_index()
+        query, user_id, final_filters, get_default_document_index()
     )
     if not ranked_chunks:
         return SearchResponse(
@@ -132,8 +135,10 @@ def keyword_search(
     )
 
     user_id = None if user is None else user.id
+    user_acl_filters = build_access_filters_for_user(user, db_session)
+    final_filters = (filters or []) + user_acl_filters
     ranked_chunks = retrieve_keyword_documents(
-        query, user_id, filters, get_default_document_index()
+        query, user_id, final_filters, get_default_document_index()
     )
     if not ranked_chunks:
         return SearchResponse(
@@ -188,11 +193,13 @@ def stream_direct_qa(
             use_keyword = predicted_search == SearchType.KEYWORD
 
         user_id = None if user is None else user.id
+        user_acl_filters = build_access_filters_for_user(user, db_session)
+        final_filters = (filters or []) + user_acl_filters
         if use_keyword:
             ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
                 query,
                 user_id,
-                filters,
+                final_filters,
                 get_default_document_index(),
             )
             unranked_chunks: list[InferenceChunk] | None = []
@@ -200,7 +207,7 @@ def stream_direct_qa(
             ranked_chunks, unranked_chunks = retrieve_ranked_documents(
                 query,
                 user_id,
-                filters,
+                final_filters,
                 get_default_document_index(),
             )
         if not ranked_chunks:
