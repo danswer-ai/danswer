@@ -18,7 +18,7 @@ from danswer.server.models import DocumentSetCreationRequest
 from danswer.server.models import DocumentSetUpdateRequest
 
 
-def _delete_document_set_cc_pairs(
+def _delete_document_set_cc_pairs__no_commit(
     db_session: Session, document_set_id: int, is_current: bool | None = None
 ) -> None:
     """NOTE: does not commit transaction, this must be done by the caller"""
@@ -30,7 +30,7 @@ def _delete_document_set_cc_pairs(
     db_session.execute(stmt)
 
 
-def _mark_document_set_cc_pairs_as_outdated(
+def _mark_document_set_cc_pairs_as_outdated__no_commit(
     db_session: Session, document_set_id: int
 ) -> None:
     """NOTE: does not commit transaction, this must be done by the caller"""
@@ -115,7 +115,7 @@ def update_document_set(
 
         # update the attached CC pairs
         # first, mark all existing CC pairs as not current
-        _mark_document_set_cc_pairs_as_outdated(
+        _mark_document_set_cc_pairs_as_outdated__no_commit(
             db_session=db_session, document_set_id=document_set_row.id
         )
         # add in rows for the new CC pairs
@@ -145,7 +145,7 @@ def mark_document_set_as_synced(document_set_id: int, db_session: Session) -> No
     # mark as up to date
     document_set.is_up_to_date = True
     # delete outdated relationship table rows
-    _delete_document_set_cc_pairs(
+    _delete_document_set_cc_pairs__no_commit(
         db_session=db_session, document_set_id=document_set_id, is_current=False
     )
     db_session.commit()
@@ -155,7 +155,7 @@ def delete_document_set(
     document_set_row: DocumentSetDBModel, db_session: Session
 ) -> None:
     # delete all relationships to CC pairs
-    _delete_document_set_cc_pairs(
+    _delete_document_set_cc_pairs__no_commit(
         db_session=db_session, document_set_id=document_set_row.id
     )
     db_session.delete(document_set_row)
@@ -184,7 +184,7 @@ def mark_document_set_as_to_be_deleted(
             )
 
         # delete all relationships to CC pairs
-        _delete_document_set_cc_pairs(
+        _delete_document_set_cc_pairs__no_commit(
             db_session=db_session, document_set_id=document_set_id
         )
         # mark the row as needing a sync, it will be deleted there since there
