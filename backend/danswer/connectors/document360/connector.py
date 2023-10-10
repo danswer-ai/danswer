@@ -53,7 +53,7 @@ class Document360Connector(LoadConnector, PollConnector):
 
         return response.json()["data"]
 
-    def _get_workspace_id_by_name(self):
+    def _get_workspace_id_by_name(self) -> str:
         projects = self._make_request("ProjectVersions")
         workspace_id = next(
             (
@@ -68,7 +68,7 @@ class Document360Connector(LoadConnector, PollConnector):
 
         return workspace_id
 
-    def _get_articles_with_category(self, workspace_id):
+    def _get_articles_with_category(self, workspace_id) -> List[dict[str, Any]]:
         all_categories = self._make_request(
             f"ProjectVersions/{workspace_id}/categories"
         )
