@@ -7,6 +7,7 @@ from nltk.stem import WordNetLemmatizer  # type:ignore
 from nltk.tokenize import word_tokenize  # type:ignore
 
 from danswer.chunking.models import InferenceChunk
+from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import IndexFilter
@@ -28,10 +29,13 @@ def lemmatize_text(text: str) -> list[str]:
 def remove_stop_words(text: str) -> list[str]:
     stop_words = set(stopwords.words("english"))
     word_tokens = word_tokenize(text)
-    return [word for word in word_tokens if word.casefold() not in stop_words]
+    text_trimmed = [word for word in word_tokens if word.casefold() not in stop_words]
+    return text_trimmed or word_tokens
 
 
-def query_processing(query: str) -> str:
+def query_processing(
+    query: str,
+) -> str:
     query = " ".join(remove_stop_words(query))
     query = " ".join(lemmatize_text(query))
     return query
@@ -44,10 +48,12 @@ def retrieve_keyword_documents(
     filters: list[IndexFilter] | None,
     datastore: DocumentIndex,
     num_hits: int = NUM_RETURNED_HITS,
+    edit_query=EDIT_KEYWORD_QUERY,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
 ) -> list[InferenceChunk] | None:
-    edited_query = query_processing(query)
+    edited_query = query_processing(query) if edit_query else query
+
     top_chunks = datastore.keyword_retrieval(edited_query, user_id, filters, num_hits)
 
     if not top_chunks:
