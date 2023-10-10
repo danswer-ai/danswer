@@ -17,7 +17,12 @@ from danswer.datastores.document_index import get_default_document_index
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import UpdateRequest
 from danswer.db.connector import fetch_connector_by_id
-from danswer.db.connector_credential_pair import delete_connector_credential_pair
+from danswer.db.connector_credential_pair import (
+    delete_connector_credential_pair__no_commit,
+)
+from danswer.db.connector_credential_pair import (
+    delete_document_set_relationships_for_cc_pair__no_commit,
+)
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import delete_document_by_connector_credential_pair
@@ -27,6 +32,7 @@ from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.document import prepare_to_modify_documents
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import delete_index_attempts
+from danswer.db.models import ConnectorCredentialPair
 from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
 
@@ -96,9 +102,11 @@ def _delete_connector_credential_pair_batch(
 def _delete_connector_credential_pair(
     db_session: Session,
     document_index: DocumentIndex,
-    connector_id: int,
-    credential_id: int,
+    cc_pair: ConnectorCredentialPair,
 ) -> int:
+    connector_id = cc_pair.connector_id
+    credential_id = cc_pair.credential_id
+
     num_docs_deleted = 0
     while True:
         documents = get_documents_for_connector_credential_pair(
@@ -124,7 +132,11 @@ def _delete_connector_credential_pair(
         connector_id=connector_id,
         credential_id=credential_id,
     )
-    delete_connector_credential_pair(
+    delete_document_set_relationships_for_cc_pair__no_commit(
+        cc_pair_id=cc_pair.id,
+        db_session=db_session,
+    )
+    delete_connector_credential_pair__no_commit(
         db_session=db_session,
         connector_id=connector_id,
         credential_id=credential_id,
@@ -168,8 +180,7 @@ def cleanup_connector_credential_pair(connector_id: int, credential_id: int) -> 
             return _delete_connector_credential_pair(
                 db_session=db_session,
                 document_index=get_default_document_index(),
-                connector_id=connector_id,
-                credential_id=credential_id,
+                cc_pair=cc_pair,
             )
         except Exception as e:
             logger.exception(f"Failed to run connector_deletion due to {e}")
