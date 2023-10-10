@@ -89,6 +89,7 @@ services:
       - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}
       - ASYM_PASSAGE_PREFIX=${ASYM_PASSAGE_PREFIX:-}
       - SKIP_RERANKING=${SKIP_RERANKING:-}
+      - EDIT_KEYWORD_QUERY=${EDIT_KEYWORD_QUERY:-}
       # Set to debug to get more fine-grained logs
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
