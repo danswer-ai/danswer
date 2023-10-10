@@ -15,6 +15,7 @@ from requests import Response
 from danswer.chunking.models import DocMetadataAwareIndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
+from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import VESPA_DEPLOYMENT_ZIP
 from danswer.configs.app_configs import VESPA_HOST
@@ -325,9 +326,7 @@ def _process_dynamic_summary(
 
 def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
     if "query" in query_params and not cast(str, query_params["query"]).strip():
-        raise ValueError(
-            "Query only consisted of stopwords, should not use Keyword Search"
-        )
+        raise ValueError("No/empty query received")
     response = requests.get(SEARCH_ENDPOINT, params=query_params)
     response.raise_for_status()
 
@@ -541,7 +540,9 @@ class VespaIndex(DocumentIndex):
         )
 
         query_embedding = embed_query(query)
-        query_keywords = " ".join(remove_stop_words(query))
+        query_keywords = (
+            " ".join(remove_stop_words(query)) if EDIT_KEYWORD_QUERY else query
+        )
 
         params = {
             "yql": yql,
