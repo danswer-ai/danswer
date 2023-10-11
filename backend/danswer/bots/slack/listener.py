@@ -254,6 +254,7 @@ def process_message(
     req: SocketModeRequest,
     client: SocketModeClient,
     respond_every_channel: bool = DANSWER_BOT_RESPOND_EVERY_CHANNEL,
+    notify_no_answer: bool = NOTIFY_SLACKBOT_NO_ANSWER,
 ) -> None:
     logger.debug(f"Received Slack request of type: '{req.type}'")
 
@@ -270,7 +271,7 @@ def process_message(
     engine = get_sqlalchemy_engine()
     with Session(engine) as db_session:
         slack_bot_config = get_slack_bot_config_for_channel(
-            channel_name=channel_name or "Private Channel", db_session=db_session
+            channel_name=channel_name, db_session=db_session
         )
 
         # Be careful about this default, don't want to accidentally spam every channel
@@ -297,7 +298,7 @@ def process_message(
         )
 
         # Skipping answering due to pre-filtering is not considered a failure
-        if failed and NOTIFY_SLACKBOT_NO_ANSWER:
+        if failed and notify_no_answer:
             apologize_for_fail(details, client)
 
         try:

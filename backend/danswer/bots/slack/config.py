@@ -12,8 +12,11 @@ VALID_SLACK_FILTERS = [
 
 
 def get_slack_bot_config_for_channel(
-    channel_name: str, db_session: Session
+    channel_name: str | None, db_session: Session
 ) -> SlackBotConfig | None:
+    if not channel_name:
+        return None
+
     slack_bot_configs = fetch_slack_bot_configs(db_session=db_session)
     for config in slack_bot_configs:
         if channel_name in config.channel_config["channel_names"]:
