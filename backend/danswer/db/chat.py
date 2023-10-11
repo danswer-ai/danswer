@@ -284,7 +284,6 @@ def upsert_persona(
         persona.default_persona = default_persona
     else:
         persona = Persona(
-            id=persona_id,
             name=name,
             retrieval_enabled=retrieval_enabled,
             system_text=system_text,
