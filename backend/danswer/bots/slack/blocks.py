@@ -11,10 +11,10 @@ from danswer.bots.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.bots.slack.utils import build_feedback_block_id
 from danswer.bots.slack.utils import remove_slack_text_interactions
 from danswer.bots.slack.utils import translate_vespa_highlight_to_slack
-from danswer.configs.app_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
-from danswer.configs.app_configs import ENABLE_SLACK_DOC_FEEDBACK
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import SearchFeedbackType
+from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
+from danswer.configs.danswerbot_configs import ENABLE_SLACK_DOC_FEEDBACK
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.server.models import SearchDoc
 from danswer.utils.text_processing import replace_whitespaces_w_space
