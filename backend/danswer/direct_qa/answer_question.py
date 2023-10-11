@@ -7,7 +7,6 @@ from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
 from danswer.datastores.document_index import get_default_document_index
 from danswer.db.feedback import create_query_event
 from danswer.db.models import User
@@ -42,7 +41,7 @@ def answer_qa_query(
     disable_generative_answer: bool = DISABLE_GENERATIVE_AI,
     answer_generation_timeout: int = QA_TIMEOUT,
     real_time_flow: bool = True,
-    enable_reflexion: bool = ENABLE_DANSWERBOT_REFLEXION,
+    enable_reflexion: bool = False,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,

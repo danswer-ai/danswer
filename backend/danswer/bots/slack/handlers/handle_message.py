@@ -38,6 +38,7 @@ def handle_message(
     answer_generation_timeout: int = DANSWER_BOT_ANSWER_GENERATION_TIMEOUT,
     should_respond_with_error_msgs: bool = DANSWER_BOT_DISPLAY_ERROR_MSGS,
     disable_docs_only_answer: bool = DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER,
+    reflexion: bool = ENABLE_DANSWERBOT_REFLEXION,
 ) -> bool:
     """Potentially respond to the user message depending on filters and if an answer was generated
 
@@ -63,8 +64,6 @@ def handle_message(
         document_set_names = [
             document_set.name for document_set in channel_config.persona.document_sets
         ]
-
-    reflexion = ENABLE_DANSWERBOT_REFLEXION
 
     # List of user id to send message to, if None, send to everyone in channel
     send_to: list[str] | None = None
