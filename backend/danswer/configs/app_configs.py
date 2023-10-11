@@ -238,12 +238,16 @@ DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER = os.environ.get(
     "DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER", ""
 ).lower() not in ["false", ""]
 DANSWER_REACT_EMOJI = os.environ.get("DANSWER_REACT_EMOJI") or "eyes"
-
+# Should DanswerBot send an apology message if it's not able to find an answer
+# That way the user isn't confused as to why DanswerBot reacted but then said nothing
+# Off by default to be less intrusive (don't want to give a notif that just says we couldnt help)
+NOTIFY_SLACKBOT_NO_ANSWER = (
+    os.environ.get("NOTIFY_SLACKBOT_NO_ANSWER", "").lower() == "true"
+)
 # Default is only respond in channels that are included by a slack config set in the UI
 DANSWER_BOT_RESPOND_EVERY_CHANNEL = (
     os.environ.get("DANSWER_BOT_RESPOND_EVERY_CHANNEL", "").lower() == "true"
 )
-
 # Add a second LLM call post Answer to verify if the Answer is valid
 # Throws out answers that don't directly or fully answer the user query
 # This is the default for all DanswerBot channels unless the bot is configured individually

@@ -22,6 +22,7 @@ from danswer.bots.slack.utils import get_channel_name_from_id
 from danswer.bots.slack.utils import respond_in_thread
 from danswer.configs.app_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.app_configs import DANSWER_REACT_EMOJI
+from danswer.configs.app_configs import NOTIFY_SLACKBOT_NO_ANSWER
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.dynamic_configs.interface import ConfigNotFoundError
@@ -172,10 +173,13 @@ def build_request_details(
         tagged = event.get("type") == "app_mention"
         message_ts = event.get("ts")
         thread_ts = event.get("thread_ts")
+        bot_tag_id = client.web_client.auth_test().get("user_id")
+        # Might exist even if not tagged, specifically in the case of @DanswerBot
+        # in DanswerBot DM channel
+        msg = re.sub(rf"<@{bot_tag_id}>\s", "", msg)
+
         if tagged:
             logger.info("User tagged DanswerBot")
-            bot_tag_id = client.web_client.auth_test().get("user_id")
-            msg = re.sub(rf"<@{bot_tag_id}>\s", "", msg)
 
         return SlackMessageInfo(
             msg_content=msg,
@@ -293,7 +297,7 @@ def process_message(
         )
 
         # Skipping answering due to pre-filtering is not considered a failure
-        if failed:
+        if failed and NOTIFY_SLACKBOT_NO_ANSWER:
             apologize_for_fail(details, client)
 
         try:
