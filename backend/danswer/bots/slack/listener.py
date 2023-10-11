@@ -251,7 +251,7 @@ def process_message(
     client: SocketModeClient,
     respond_every_channel: bool = DANSWER_BOT_RESPOND_EVERY_CHANNEL,
 ) -> None:
-    logger.info(f"Received Slack request of type: '{req.type}'")
+    logger.debug(f"Received Slack request of type: '{req.type}'")
 
     # Throw out requests that can't or shouldn't be handled
     if not prefilter_requests(req, client):
@@ -274,11 +274,11 @@ def process_message(
         if (
             slack_bot_config is None
             and not respond_every_channel
+            # DMs are unnamed, don't filter those out
             and channel_name is not None
+            # If @DanswerBot or /DanswerBot, always respond with the default configs
+            and not (details.is_bot_msg or details.bipass_filters)
         ):
-            logger.info(
-                "Skipping message since the channel is not configured to use DanswerBot"
-            )
             return
 
         try:
