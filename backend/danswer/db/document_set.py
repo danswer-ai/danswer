@@ -49,6 +49,14 @@ def get_document_set_by_id(
     )
 
 
+def get_document_sets_by_ids(
+    db_session: Session, document_set_ids: list[int]
+) -> Sequence[DocumentSetDBModel]:
+    return db_session.scalars(
+        select(DocumentSetDBModel).where(DocumentSetDBModel.id.in_(document_set_ids))
+    ).all()
+
+
 def insert_document_set(
     document_set_creation_request: DocumentSetCreationRequest,
     user_id: UUID | None,
@@ -196,36 +204,72 @@ def mark_document_set_as_to_be_deleted(
         raise
 
 
+def mark_cc_pair__document_set_relationships_to_be_deleted__no_commit(
+    cc_pair_id: int, db_session: Session
+) -> set[int]:
+    """Marks all CC Pair -> Document Set relationships for the specified
+    `cc_pair_id` as not current and returns the list of all document set IDs
+    affected.
+
+    NOTE: rases a `ValueError` if any of the document sets are currently syncing
+    to avoid getting into a bad state."""
+    document_set__cc_pair_relationships = db_session.scalars(
+        select(DocumentSet__ConnectorCredentialPair).where(
+            DocumentSet__ConnectorCredentialPair.connector_credential_pair_id
+            == cc_pair_id
+        )
+    ).all()
+
+    document_set_ids_touched: set[int] = set()
+    for document_set__cc_pair_relationship in document_set__cc_pair_relationships:
+        document_set__cc_pair_relationship.is_current = False
+
+        if not document_set__cc_pair_relationship.document_set.is_up_to_date:
+            raise ValueError(
+                "Cannot delete CC pair while it is attached to a document set "
+                "that is syncing. Please wait for the document set to finish "
+                "syncing, and then try again."
+            )
+
+        document_set__cc_pair_relationship.document_set.is_up_to_date = False
+        document_set_ids_touched.add(document_set__cc_pair_relationship.document_set_id)
+
+    return document_set_ids_touched
+
+
 def fetch_document_sets(
-    db_session: Session,
+    db_session: Session, include_outdated: bool = False
 ) -> list[tuple[DocumentSetDBModel, list[ConnectorCredentialPair]]]:
     """Return is a list where each element contains a tuple of:
     1. The document set itself
     2. All CC pairs associated with the document set"""
+    stmt = (
+        select(DocumentSetDBModel, ConnectorCredentialPair)
+        .join(
+            DocumentSet__ConnectorCredentialPair,
+            DocumentSetDBModel.id
+            == DocumentSet__ConnectorCredentialPair.document_set_id,
+            isouter=True,  # outer join is needed to also fetch document sets with no cc pairs
+        )
+        .join(
+            ConnectorCredentialPair,
+            ConnectorCredentialPair.id
+            == DocumentSet__ConnectorCredentialPair.connector_credential_pair_id,
+            isouter=True,  # outer join is needed to also fetch document sets with no cc pairs
+        )
+    )
+    if not include_outdated:
+        stmt = stmt.where(
+            or_(
+                DocumentSet__ConnectorCredentialPair.is_current == True,  # noqa: E712
+                # `None` handles case where no CC Pairs exist for a Document Set
+                DocumentSet__ConnectorCredentialPair.is_current.is_(None),
+            )
+        )
+
     results = cast(
         list[tuple[DocumentSetDBModel, ConnectorCredentialPair | None]],
-        db_session.execute(
-            select(DocumentSetDBModel, ConnectorCredentialPair)
-            .join(
-                DocumentSet__ConnectorCredentialPair,
-                DocumentSetDBModel.id
-                == DocumentSet__ConnectorCredentialPair.document_set_id,
-                isouter=True,  # outer join is needed to also fetch document sets with no cc pairs
-            )
-            .join(
-                ConnectorCredentialPair,
-                ConnectorCredentialPair.id
-                == DocumentSet__ConnectorCredentialPair.connector_credential_pair_id,
-                isouter=True,  # outer join is needed to also fetch document sets with no cc pairs
-            )
-            .where(
-                or_(
-                    DocumentSet__ConnectorCredentialPair.is_current
-                    == True,  # noqa: E712
-                    DocumentSet__ConnectorCredentialPair.is_current.is_(None),
-                )
-            )
-        ).all(),
+        db_session.execute(stmt).all(),
     )
 
     aggregated_results: dict[

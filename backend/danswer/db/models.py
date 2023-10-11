@@ -119,6 +119,8 @@ class DocumentSet__ConnectorCredentialPair(Base):
         primary_key=True,
     )
 
+    document_set: Mapped["DocumentSet"] = relationship("DocumentSet")
+
 
 class ConnectorCredentialPair(Base):
     """Connectors and Credentials can have a many-to-many relationship
