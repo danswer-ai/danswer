@@ -14,8 +14,8 @@ from slack_sdk.models.metadata import Metadata
 
 from danswer.bots.slack.constants import SLACK_CHANNEL_ID
 from danswer.bots.slack.tokens import fetch_tokens
-from danswer.configs.app_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.constants import ID_SEPARATOR
+from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.connectors.slack.utils import UserIdReplacer
 from danswer.utils.logger import setup_logger

@@ -20,9 +20,9 @@ from danswer.bots.slack.utils import ChannelIdAdapter
 from danswer.bots.slack.utils import decompose_block_id
 from danswer.bots.slack.utils import get_channel_name_from_id
 from danswer.bots.slack.utils import respond_in_thread
-from danswer.configs.app_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
-from danswer.configs.app_configs import DANSWER_REACT_EMOJI
-from danswer.configs.app_configs import NOTIFY_SLACKBOT_NO_ANSWER
+from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
+from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
+from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.dynamic_configs.interface import ConfigNotFoundError
