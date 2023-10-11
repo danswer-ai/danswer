@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.models import ConnectorCredentialPair
-from danswer.db.models import DocumentSet__ConnectorCredentialPair
 from danswer.db.models import IndexingStatus
 from danswer.db.models import User
 from danswer.server.models import StatusResponse
@@ -80,16 +79,6 @@ def update_connector_credential_pair(
     if net_docs is not None:
         cc_pair.total_docs_indexed += net_docs
     db_session.commit()
-
-
-def delete_document_set_relationships_for_cc_pair__no_commit(
-    cc_pair_id: int, db_session: Session
-) -> None:
-    """NOTE: does not commit transaction, this must be done by the caller"""
-    stmt = delete(DocumentSet__ConnectorCredentialPair).where(
-        DocumentSet__ConnectorCredentialPair.connector_credential_pair_id == cc_pair_id
-    )
-    db_session.execute(stmt)
 
 
 def delete_connector_credential_pair__no_commit(
