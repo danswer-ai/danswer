@@ -80,7 +80,9 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
 
         if event_type == "message":
             bot_tag_id = client.web_client.auth_test().get("user_id")
-            if bot_tag_id and bot_tag_id in msg:
+            # DMs with the bot don't pick up the @DanswerBot so we have to keep the
+            # caught events_api
+            if bot_tag_id and bot_tag_id in msg and event.get("channel_type") != "im":
                 # Let the tag flow handle this case, don't reply twice
                 return False
 
@@ -264,35 +266,40 @@ def process_message(
     engine = get_sqlalchemy_engine()
     with Session(engine) as db_session:
         slack_bot_config = get_slack_bot_config_for_channel(
-            channel_name=channel_name, db_session=db_session
+            channel_name=channel_name or "Private Channel", db_session=db_session
         )
 
-    # Be careful about this default, don't want to accidentally spam every channel
-    if slack_bot_config is None and not respond_every_channel:
-        logger.info(
-            "Skipping message since the channel is not configured to use DanswerBot"
+        # Be careful about this default, don't want to accidentally spam every channel
+        # Users should be able to DM slack bot in their private channels though
+        if (
+            slack_bot_config is None
+            and not respond_every_channel
+            and channel_name is not None
+        ):
+            logger.info(
+                "Skipping message since the channel is not configured to use DanswerBot"
+            )
+            return
+
+        try:
+            send_msg_ack_to_user(details, client)
+        except SlackApiError as e:
+            logger.error(f"Was not able to react to user message due to: {e}")
+
+        failed = handle_message(
+            message_info=details,
+            channel_config=slack_bot_config,
+            client=client.web_client,
         )
-        return
 
-    try:
-        send_msg_ack_to_user(details, client)
-    except SlackApiError as e:
-        logger.error(f"Was not able to react to user message due to: {e}")
+        # Skipping answering due to pre-filtering is not considered a failure
+        if failed:
+            apologize_for_fail(details, client)
 
-    failed = handle_message(
-        message_info=details,
-        channel_config=slack_bot_config,
-        client=client.web_client,
-    )
-
-    # Skipping answering due to pre-filtering is not considered a failure
-    if failed:
-        apologize_for_fail(details, client)
-
-    try:
-        remove_react(details, client)
-    except SlackApiError as e:
-        logger.error(f"Failed to remove Reaction due to: {e}")
+        try:
+            remove_react(details, client)
+        except SlackApiError as e:
+            logger.error(f"Failed to remove Reaction due to: {e}")
 
 
 def acknowledge_message(req: SocketModeRequest, client: SocketModeClient) -> None:

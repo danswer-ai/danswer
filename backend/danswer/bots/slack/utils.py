@@ -8,6 +8,7 @@ from typing import cast
 
 from retry import retry
 from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 from slack_sdk.models.blocks import Block
 from slack_sdk.models.metadata import Metadata
 
@@ -170,8 +171,12 @@ def get_channel_from_id(client: WebClient, channel_id: str) -> dict[str, Any]:
     return response["channel"]
 
 
-def get_channel_name_from_id(client: WebClient, channel_id: str) -> str:
-    return get_channel_from_id(client, channel_id)["name"]
+def get_channel_name_from_id(client: WebClient, channel_id: str) -> str | None:
+    try:
+        return get_channel_from_id(client, channel_id).get("name")
+    except SlackApiError:
+        # Private channels such as DMs don't have a name
+        return None
 
 
 def fetch_userids_from_emails(user_emails: list[str], client: WebClient) -> list[str]:
