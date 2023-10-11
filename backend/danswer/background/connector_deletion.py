@@ -10,6 +10,7 @@ are multiple connector / credential pairs that have indexed it
 connector / credential pair from the access list
 (6) delete all relevant entries from postgres
 """
+import time
 from collections.abc import Callable
 from typing import cast
 
@@ -23,9 +24,6 @@ from danswer.db.connector import fetch_connector_by_id
 from danswer.db.connector_credential_pair import (
     delete_connector_credential_pair__no_commit,
 )
-from danswer.db.connector_credential_pair import (
-    delete_document_set_relationships_for_cc_pair__no_commit,
-)
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import delete_document_by_connector_credential_pair
@@ -33,6 +31,10 @@ from danswer.db.document import delete_documents_complete
 from danswer.db.document import get_document_connector_cnts
 from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.document import prepare_to_modify_documents
+from danswer.db.document_set import get_document_sets_by_ids
+from danswer.db.document_set import (
+    mark_cc_pair__document_set_relationships_to_be_deleted__no_commit,
+)
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import delete_index_attempts
 from danswer.db.models import ConnectorCredentialPair
@@ -103,38 +105,46 @@ def _delete_connector_credential_pair_batch(
         db_session.commit()
 
 
-def postgres_cc_pair_cleanup__no_commit(
+def cleanup_synced_entities(
     cc_pair: ConnectorCredentialPair, db_session: Session
 ) -> None:
-    """Cleans up all rows in Postgres related to the specified
-    connector_credential_pair + deletes the connector itself if there are
-    no other credentials left for the connector
-    """
-    connector_id = cc_pair.connector_id
-    credential_id = cc_pair.credential_id
+    """Updates the document sets associated with the connector / credential pair,
+    then relies on the document set sync script to kick off Celery jobs which will
+    sync these updates to Vespa.
 
-    delete_index_attempts(
-        db_session=db_session,
-        connector_id=connector_id,
-        credential_id=credential_id,
+    Waits until the document sets are synced before returning."""
+    logger.info(f"Cleaning up Document Sets for CC Pair with ID: '{cc_pair.id}'")
+    document_sets_ids_to_sync = list(
+        mark_cc_pair__document_set_relationships_to_be_deleted__no_commit(
+            cc_pair_id=cc_pair.id,
+            db_session=db_session,
+        )
     )
-    delete_document_set_relationships_for_cc_pair__no_commit(
-        cc_pair_id=cc_pair.id,
-        db_session=db_session,
+    db_session.commit()
+
+    # wait till all document sets are synced before continuing
+    while True:
+        all_synced = True
+        document_sets = get_document_sets_by_ids(
+            db_session=db_session, document_set_ids=document_sets_ids_to_sync
+        )
+        for document_set in document_sets:
+            if not document_set.is_up_to_date:
+                all_synced = False
+
+        if all_synced:
+            break
+
+        # wait for 30 seconds before checking again
+        db_session.commit()  # end transaction
+        logger.info(
+            f"Document sets '{document_sets_ids_to_sync}' not synced yet, waiting 30s"
+        )
+        time.sleep(30)
+
+    logger.info(
+        f"Finished cleaning up Document Sets for CC Pair with ID: '{cc_pair.id}'"
     )
-    delete_connector_credential_pair__no_commit(
-        db_session=db_session,
-        connector_id=connector_id,
-        credential_id=credential_id,
-    )
-    # if there are no credentials left, delete the connector
-    connector = fetch_connector_by_id(
-        db_session=db_session,
-        connector_id=connector_id,
-    )
-    if not connector or not len(connector.credentials):
-        logger.debug("Found no credentials left for connector, deleting connector")
-        db_session.delete(connector)
 
 
 def _delete_connector_credential_pair(
@@ -164,15 +174,36 @@ def _delete_connector_credential_pair(
         )
         num_docs_deleted += len(documents)
 
-    # cleanup everything else up
-    postgres_cleanup__no_commit = cast(
+    # Clean up document sets / access information from Postgres
+    # and sync these updates to Vespa
+    cleanup_synced_entities__versioned = cast(
         Callable[[ConnectorCredentialPair, Session], None],
         fetch_versioned_implementation(
             "danswer.background.connector_deletion",
-            "postgres_cc_pair_cleanup__no_commit",
+            "cleanup_synced_entities",
         ),
     )
-    postgres_cleanup__no_commit(cc_pair, db_session)
+    cleanup_synced_entities__versioned(cc_pair, db_session)
+
+    # clean up the rest of the related Postgres entities
+    delete_index_attempts(
+        db_session=db_session,
+        connector_id=connector_id,
+        credential_id=credential_id,
+    )
+    delete_connector_credential_pair__no_commit(
+        db_session=db_session,
+        connector_id=connector_id,
+        credential_id=credential_id,
+    )
+    # if there are no credentials left, delete the connector
+    connector = fetch_connector_by_id(
+        db_session=db_session,
+        connector_id=connector_id,
+    )
+    if not connector or not len(connector.credentials):
+        logger.debug("Found no credentials left for connector, deleting connector")
+        db_session.delete(connector)
     db_session.commit()
 
     logger.info(
