@@ -34,7 +34,7 @@ def get_access_for_documents(
         "danswer.access.access", "_get_access_for_documents"
     )
     return versioned_get_access_for_documents_fn(
-        document_ids, cc_pair_to_delete, db_session
+        document_ids, db_session, cc_pair_to_delete
     )  # type: ignore
 
 
