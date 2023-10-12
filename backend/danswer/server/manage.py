@@ -462,9 +462,9 @@ def validate_existing_genai_api_key(
     kv_store = get_dynamic_config_store()
     curr_time = datetime.now(tz=timezone.utc)
     try:
-        last_check = datetime.utcfromtimestamp(
-            cast(float, kv_store.load(check_key_time))
-        ).replace(tzinfo=timezone.utc)
+        last_check = datetime.fromtimestamp(
+            cast(float, kv_store.load(check_key_time)), tz=timezone.utc
+        )
         check_freq_sec = timedelta(seconds=GENERATIVE_MODEL_ACCESS_CHECK_FREQ)
         if curr_time - last_check < check_freq_sec:
             return
