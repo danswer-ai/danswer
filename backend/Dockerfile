@@ -55,5 +55,6 @@ COPY ./scripts/migrate_vespa_to_acl.py /app/migrate_vespa_to_acl.py
 
 ENV PYTHONPATH /app
 
-# Default command
+# Default command which does nothing
+# This container is used by api server and background which specify their own CMD
 CMD ["tail", "-f", "/dev/null"]
