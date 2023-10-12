@@ -101,23 +101,23 @@ def make_slack_api_rate_limited(
     return rate_limited_call
 
 
-class UserIdReplacer:
+class SlackTextCleaner:
     """Utility class to replace user IDs with usernames in a message.
     Handles caching, so the same request is not made multiple times
     for the same user ID"""
 
     def __init__(self, client: WebClient) -> None:
         self._client = client
-        self._user_id_to_name_map: dict[str, str] = {}
+        self._id_to_name_map: dict[str, str] = {}
 
-    def _get_slack_user_name(self, user_id: str) -> str:
-        if user_id not in self._user_id_to_name_map:
+    def _get_slack_name(self, user_id: str) -> str:
+        if user_id not in self._id_to_name_map:
             try:
                 response = make_slack_api_rate_limited(self._client.users_info)(
                     user=user_id
                 )
                 # prefer display name if set, since that is what is shown in Slack
-                self._user_id_to_name_map[user_id] = (
+                self._id_to_name_map[user_id] = (
                     response["user"]["profile"]["display_name"]
                     or response["user"]["profile"]["real_name"]
                 )
@@ -127,19 +127,19 @@ class UserIdReplacer:
                 )
                 raise
 
-        return self._user_id_to_name_map[user_id]
+        return self._id_to_name_map[user_id]
 
-    def replace_user_ids_with_names(self, message: str) -> str:
+    def _replace_user_ids_with_names(self, message: str) -> str:
         # Find user IDs in the message
         user_ids = re.findall("<@(.*?)>", message)
 
         # Iterate over each user ID found
         for user_id in user_ids:
             try:
-                if user_id in self._user_id_to_name_map:
-                    user_name = self._user_id_to_name_map[user_id]
+                if user_id in self._id_to_name_map:
+                    user_name = self._id_to_name_map[user_id]
                 else:
-                    user_name = self._get_slack_user_name(user_id)
+                    user_name = self._get_slack_name(user_id)
 
                 # Replace the user ID with the username in the message
                 message = message.replace(f"<@{user_id}>", f"@{user_name}")
@@ -148,6 +148,18 @@ class UserIdReplacer:
                     f"Unable to replace user ID with username for user_id '{user_id}'"
                 )
 
+        return message
+
+    def index_clean(self, message: str) -> str:
+        """During indexing, replace pattern sets that may cause confusion to the model
+        Some special patterns are left in as they can provide information
+        ie. links that contain format text|link, both the text and the link may be informative
+        """
+        message = self._replace_user_ids_with_names(message)
+        message = self.replace_tags_basic(message)
+        message = self.replace_channels_basic(message)
+        message = self.replace_special_mentions(message)
+        message = self.replace_special_catchall(message)
         return message
 
     @staticmethod
@@ -196,6 +208,15 @@ class UserIdReplacer:
                 )
                 message = message.replace(f"<{possible_link}>", link_display)
         return message
+
+    @staticmethod
+    def replace_special_catchall(message: str) -> str:
+        """Replaces pattern of <!something|another-thing> with another-thing
+        This is added for <!subteam^TEAM-ID|@team-name> but may match other cases as well
+        """
+
+        pattern = r"<!([^|]+)\|([^>]+)>"
+        return re.sub(pattern, r"\2", message)
 
     @staticmethod
     def add_zero_width_whitespace_after_tag(message: str) -> str:
