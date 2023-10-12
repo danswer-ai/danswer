@@ -157,7 +157,7 @@ class Document360Connector(LoadConnector, PollConnector):
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
         start_datetime = datetime.fromtimestamp(start, tz=timezone.utc)
-        end_datetime = datetime.fromtimestamp(start, tz=timezone.utc)
+        end_datetime = datetime.fromtimestamp(end, tz=timezone.utc)
         return self._process_articles(start_datetime, end_datetime)
 
 
