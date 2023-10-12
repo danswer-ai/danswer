@@ -17,7 +17,7 @@ from danswer.bots.slack.tokens import fetch_tokens
 from danswer.configs.constants import ID_SEPARATOR
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
-from danswer.connectors.slack.utils import UserIdReplacer
+from danswer.connectors.slack.utils import SlackTextCleaner
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import replace_whitespaces_w_space
 
@@ -157,11 +157,12 @@ def translate_vespa_highlight_to_slack(match_strs: list[str], used_chars: int) -
 
 
 def remove_slack_text_interactions(slack_str: str) -> str:
-    slack_str = UserIdReplacer.replace_tags_basic(slack_str)
-    slack_str = UserIdReplacer.replace_channels_basic(slack_str)
-    slack_str = UserIdReplacer.replace_special_mentions(slack_str)
-    slack_str = UserIdReplacer.replace_links(slack_str)
-    slack_str = UserIdReplacer.add_zero_width_whitespace_after_tag(slack_str)
+    slack_str = SlackTextCleaner.replace_tags_basic(slack_str)
+    slack_str = SlackTextCleaner.replace_channels_basic(slack_str)
+    slack_str = SlackTextCleaner.replace_special_mentions(slack_str)
+    slack_str = SlackTextCleaner.replace_links(slack_str)
+    slack_str = SlackTextCleaner.replace_special_catchall(slack_str)
+    slack_str = SlackTextCleaner.add_zero_width_whitespace_after_tag(slack_str)
     return slack_str
 
 
