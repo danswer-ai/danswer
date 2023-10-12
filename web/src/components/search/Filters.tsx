@@ -29,6 +29,7 @@ const sources: Source[] = [
   { displayName: "Zulip", internalName: "zulip" },
   { displayName: "Linear", internalName: "linear" },
   { displayName: "HubSpot", internalName: "hubspot" },
+  { displayName: "Document360", internalName: "document360" },
   { displayName: "Google Sites", internalName: "google_sites" },
 ];
 

@@ -23,8 +23,10 @@ export type ValidSources =
   | "zulip"
   | "linear"
   | "hubspot"
-  | "file"
+  | "document360"
+  | "file";
   | "google_sites";
+
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
   | "success"
@@ -114,6 +116,11 @@ export interface ZulipConfig {
 export interface NotionConfig {}
 
 export interface HubSpotConfig {}
+
+export interface Document360Config {
+  workspace: string;
+  categories?: string[];
+}
 
 export interface GoogleSitesConfig {
   zip_path: string;
@@ -225,6 +232,11 @@ export interface LinearCredentialJson {
 
 export interface HubSpotCredentialJson {
   hubspot_access_token: string;
+}
+
+export interface Document360CredentialJson {
+  portal_id: string;
+  document360_api_token: string;
 }
 
 // DELETION
