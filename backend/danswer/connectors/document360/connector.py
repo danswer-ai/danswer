@@ -1,5 +1,4 @@
 from datetime import datetime
-from datetime import timezone
 from typing import Any
 from typing import List
 from typing import Optional
@@ -114,7 +113,7 @@ class Document360Connector(LoadConnector, PollConnector):
 
             updated_at = datetime.strptime(
                 article_details["modified_at"], "%Y-%m-%dT%H:%M:%S.%fZ"
-            ).replace(tzinfo=timezone.utc)
+            )
             if start is not None and updated_at < start:
                 continue
             if end is not None and updated_at > end:
@@ -156,8 +155,8 @@ class Document360Connector(LoadConnector, PollConnector):
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        start_datetime = datetime.fromtimestamp(start, tz=timezone.utc)
-        end_datetime = datetime.fromtimestamp(end, tz=timezone.utc)
+        start_datetime = datetime.utcfromtimestamp(start)
+        end_datetime = datetime.utcfromtimestamp(end)
         return self._process_articles(start_datetime, end_datetime)
 
 

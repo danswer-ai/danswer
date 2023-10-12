@@ -1,5 +1,6 @@
 from datetime import datetime
 from datetime import timedelta
+from datetime import timezone
 from typing import cast
 
 from fastapi import APIRouter
@@ -459,9 +460,11 @@ def validate_existing_genai_api_key(
     # Only validate every so often
     check_key_time = "genai_api_key_last_check_time"
     kv_store = get_dynamic_config_store()
-    curr_time = datetime.now()
+    curr_time = datetime.now(tz=timezone.utc)
     try:
-        last_check = datetime.fromtimestamp(cast(float, kv_store.load(check_key_time)))
+        last_check = datetime.utcfromtimestamp(
+            cast(float, kv_store.load(check_key_time))
+        )
         check_freq_sec = timedelta(seconds=GENERATIVE_MODEL_ACCESS_CHECK_FREQ)
         if curr_time - last_check < check_freq_sec:
             return
