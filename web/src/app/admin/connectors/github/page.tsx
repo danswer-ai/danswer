@@ -182,7 +182,7 @@ const Main = () => {
               `${values.repo_owner}/${values.repo_name}`
             }
             source="github"
-            inputType="load_state"
+            inputType="poll"
             formBody={
               <>
                 <TextFormField name="repo_owner" label="Repository Owner:" />

@@ -141,8 +141,8 @@ class GithubConnector(LoadConnector, PollConnector):
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        start_datetime = datetime.fromtimestamp(start)
-        end_datetime = datetime.fromtimestamp(end)
+        start_datetime = datetime.utcfromtimestamp(start)
+        end_datetime = datetime.utcfromtimestamp(end)
         return self._fetch_from_github(start_datetime, end_datetime)
 
 
