@@ -108,10 +108,13 @@ def build_documents_blocks(
 
         included_docs += 1
 
+        if d.link:
+            block_text = f"<{d.link}|{doc_sem_id}>:\n>{remove_slack_text_interactions(match_str)}"
+        else:
+            block_text = f"{doc_sem_id}:\n>{remove_slack_text_interactions(match_str)}"
+
         section_blocks.append(
-            SectionBlock(
-                text=f"<{d.link}|{doc_sem_id}>:\n>{remove_slack_text_interactions(match_str)}"
-            ),
+            SectionBlock(text=block_text),
         )
 
         if include_feedback:

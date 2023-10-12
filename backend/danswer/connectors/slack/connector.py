@@ -23,7 +23,7 @@ from danswer.connectors.slack.utils import get_message_link
 from danswer.connectors.slack.utils import make_slack_api_call_logged
 from danswer.connectors.slack.utils import make_slack_api_call_paginated
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
-from danswer.connectors.slack.utils import UserIdReplacer
+from danswer.connectors.slack.utils import SlackTextCleaner
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -132,7 +132,7 @@ def thread_to_doc(
     workspace: str,
     channel: ChannelType,
     thread: ThreadType,
-    user_id_replacer: UserIdReplacer,
+    slack_cleaner: SlackTextCleaner,
 ) -> Document:
     channel_id = channel["id"]
     return Document(
@@ -142,7 +142,7 @@ def thread_to_doc(
                 link=get_message_link(
                     event=m, workspace=workspace, channel_id=channel_id
                 ),
-                text=user_id_replacer.replace_user_ids_with_names(cast(str, m["text"])),
+                text=slack_cleaner.index_clean(cast(str, m["text"])),
             )
             for m in thread
         ],
@@ -204,7 +204,7 @@ def get_all_docs(
     msg_filter_func: Callable[[MessageType], bool] = _default_msg_filter,
 ) -> Generator[Document, None, None]:
     """Get all documents in the workspace, channel by channel"""
-    user_id_replacer = UserIdReplacer(client=client)
+    slack_cleaner = SlackTextCleaner(client=client)
 
     all_channels = get_channels(client)
     filtered_channels = _filter_channels(all_channels, channels)
@@ -241,7 +241,7 @@ def get_all_docs(
                         workspace=workspace,
                         channel=channel,
                         thread=filtered_thread,
-                        user_id_replacer=user_id_replacer,
+                        slack_cleaner=slack_cleaner,
                     )
 
         logger.info(
