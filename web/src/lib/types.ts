@@ -24,7 +24,7 @@ export type ValidSources =
   | "linear"
   | "hubspot"
   | "document360"
-  | "file";
+  | "file"
   | "google_sites";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
