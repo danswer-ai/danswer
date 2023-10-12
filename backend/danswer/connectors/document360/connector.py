@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timezone
 from typing import Any
 from typing import List
 from typing import Optional
@@ -15,6 +16,11 @@ from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+
+# Limitations and Potential Improvements
+# 1. The "Categories themselves contain potentially relevant information" but they're not pulled in
+# 2. Only the HTML Articles are supported, Document360 also has a Markdown and "Block" format
+# 3. The contents are not as cleaned up as other HTML connectors
 
 DOCUMENT360_BASE_URL = "https://preview.portal.document360.io/"
 DOCUMENT360_API_BASE_URL = "https://apihub.document360.io/v2"
@@ -64,7 +70,7 @@ class Document360Connector(LoadConnector, PollConnector):
             None,
         )
         if workspace_id is None:
-            raise ConnectorMissingCredentialError("Document360")
+            raise ValueError("Not able to find Workspace ID by the user provided name")
 
         return workspace_id
 
@@ -75,7 +81,7 @@ class Document360Connector(LoadConnector, PollConnector):
         articles_with_category = []
 
         for category in all_categories:
-            if self.categories is None or category["name"] in self.categories:
+            if not self.categories or category["name"] in self.categories:
                 for article in category["articles"]:
                     articles_with_category.append(
                         {"id": article["id"], "category_name": category["name"]}
@@ -108,7 +114,7 @@ class Document360Connector(LoadConnector, PollConnector):
 
             updated_at = datetime.strptime(
                 article_details["modified_at"], "%Y-%m-%dT%H:%M:%S.%fZ"
-            ).replace(tzinfo=None)
+            ).replace(tzinfo=timezone.utc)
             if start is not None and updated_at < start:
                 continue
             if end is not None and updated_at > end:
@@ -150,8 +156,8 @@ class Document360Connector(LoadConnector, PollConnector):
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        start_datetime = datetime.fromtimestamp(start)
-        end_datetime = datetime.fromtimestamp(end)
+        start_datetime = datetime.fromtimestamp(start, tz=timezone.utc)
+        end_datetime = datetime.fromtimestamp(end, tz=timezone.utc)
         return self._process_articles(start_datetime, end_datetime)
 
 
