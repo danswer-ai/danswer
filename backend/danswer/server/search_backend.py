@@ -225,20 +225,19 @@ def stream_direct_qa(
 
         top_docs = chunks_to_search_docs(ranked_chunks)
         unranked_top_docs = chunks_to_search_docs(unranked_chunks)
-        initial_response_dict = asdict(
-            RerankedRetrievalDocs(
-                top_documents=top_docs,
-                unranked_top_documents=unranked_top_docs,
-                # if generative AI is disabled, set flow as search so frontend
-                # doesn't ask the user if they want to run QA over more documents
-                predicted_flow=QueryFlow.SEARCH
-                if disable_generative_answer
-                else predicted_flow,
-                predicted_search=predicted_search,
-            )
-        )
-        logger.debug(send_packet_debug_msg.format(initial_response_dict))
-        yield get_json_line(initial_response_dict)
+        initial_response = RerankedRetrievalDocs(
+            top_documents=top_docs,
+            unranked_top_documents=unranked_top_docs,
+            # if generative AI is disabled, set flow as search so frontend
+            # doesn't ask the user if they want to run QA over more documents
+            predicted_flow=QueryFlow.SEARCH
+            if disable_generative_answer
+            else predicted_flow,
+            predicted_search=predicted_search,
+        ).dict()
+
+        logger.debug(send_packet_debug_msg.format(initial_response))
+        yield get_json_line(initial_response)
 
         if disable_generative_answer:
             logger.debug("Skipping QA because generative AI is disabled")

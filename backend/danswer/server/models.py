@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 from typing import Generic
@@ -150,12 +149,10 @@ class SearchDoc(BaseModel):
     match_highlights: list[str]
 
 
-@dataclass()
-class RetrievalDocs:
+class RetrievalDocs(BaseModel):
     top_documents: list[SearchDoc]
 
 
-@dataclass()
 class RerankedRetrievalDocs(RetrievalDocs):
     unranked_top_documents: list[SearchDoc]
     predicted_flow: QueryFlow
