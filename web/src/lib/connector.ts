@@ -66,7 +66,7 @@ export async function runConnector(
   return null;
 }
 
-export async function deleteConnectorIfExists({
+export async function deleteConnectorIfExistsAndIsUnlinked({
   source,
   name,
 }: {
@@ -80,7 +80,10 @@ export async function deleteConnectorIfExists({
       (connector) =>
         connector.source === source && (!name || connector.name === name)
     );
-    if (matchingConnectors.length > 0) {
+    if (
+      matchingConnectors.length > 0 &&
+      matchingConnectors[0].credential_ids.length === 0
+    ) {
       const errorMsg = await deleteConnector(matchingConnectors[0].id);
       if (errorMsg) {
         return errorMsg;
