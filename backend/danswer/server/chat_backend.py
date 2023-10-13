@@ -302,16 +302,19 @@ def handle_new_chat_message(
 
     @log_generator_function_time()
     def stream_chat_tokens() -> Iterator[str]:
-        tokens = llm_chat_answer(
+        response_packets = llm_chat_answer(
             messages=mainline_messages,
             persona=persona,
             user_id=user_id,
             tokenizer=llm_tokenizer,
         )
         llm_output = ""
-        for token in tokens:
-            llm_output += token
-            yield get_json_line(asdict(DanswerAnswerPiece(answer_piece=token)))
+        for packet in response_packets:
+            if isinstance(packet, DanswerAnswerPiece):
+                token = packet.answer_piece
+                if token:
+                    llm_output += token
+            yield get_json_line(asdict(packet))
 
         create_new_chat_message(
             chat_session_id=chat_session_id,
@@ -384,16 +387,19 @@ def regenerate_message_given_parent(
 
     @log_generator_function_time()
     def stream_regenerate_tokens() -> Iterator[str]:
-        tokens = llm_chat_answer(
+        response_packets = llm_chat_answer(
             messages=mainline_messages,
             persona=persona,
             user_id=user_id,
             tokenizer=llm_tokenizer,
         )
         llm_output = ""
-        for token in tokens:
-            llm_output += token
-            yield get_json_line(asdict(DanswerAnswerPiece(answer_piece=token)))
+        for packet in response_packets:
+            if isinstance(packet, DanswerAnswerPiece):
+                token = packet.answer_piece
+                if token:
+                    llm_output += token
+            yield get_json_line(asdict(packet))
 
         create_new_chat_message(
             chat_session_id=chat_session_id,

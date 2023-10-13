@@ -11,6 +11,7 @@ import json
 import requests
 
 from danswer.configs.app_configs import APP_PORT
+from danswer.direct_qa.interfaces import DanswerCitations
 
 LOCAL_CHAT_ENDPOINT = f"http://127.0.0.1:{APP_PORT}/chat/"
 
@@ -37,14 +38,21 @@ def send_chat_message(
         "persona_id": persona_id,
     }
 
+    citations: DanswerCitations | None = None
     with requests.post(
         LOCAL_CHAT_ENDPOINT + "send-message", json=data, stream=True
     ) as r:
         for json_response in r.iter_lines():
             response_text = json.loads(json_response.decode())
             new_token = response_text.get("answer_piece")
-            print(new_token, end="", flush=True)
+            citations = response_text.get("citations")
+            if new_token:
+                print(new_token, end="", flush=True)
         print()
+
+    if citations:
+        for citation in citations.citations:
+            print(citation)
 
 
 def run_chat(contextual: bool) -> None:

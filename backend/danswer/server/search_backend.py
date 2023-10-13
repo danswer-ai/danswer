@@ -38,6 +38,7 @@ from danswer.server.models import QAFeedbackRequest
 from danswer.server.models import QAResponse
 from danswer.server.models import QueryValidationResponse
 from danswer.server.models import QuestionRequest
+from danswer.server.models import RerankedRetrievalDocs
 from danswer.server.models import SearchFeedbackRequest
 from danswer.server.models import SearchResponse
 from danswer.server.utils import get_json_line
@@ -224,16 +225,18 @@ def stream_direct_qa(
 
         top_docs = chunks_to_search_docs(ranked_chunks)
         unranked_top_docs = chunks_to_search_docs(unranked_chunks)
-        initial_response_dict = {
-            top_documents_key: [top_doc.json() for top_doc in top_docs],
-            unranked_top_docs_key: [doc.json() for doc in unranked_top_docs],
-            # if generative AI is disabled, set flow as search so frontend
-            # doesn't ask the user if they want to run QA over more documents
-            predicted_flow_key: QueryFlow.SEARCH
-            if disable_generative_answer
-            else predicted_flow,
-            predicted_search_key: predicted_search,
-        }
+        initial_response_dict = asdict(
+            RerankedRetrievalDocs(
+                top_documents=top_docs,
+                unranked_top_documents=unranked_top_docs,
+                # if generative AI is disabled, set flow as search so frontend
+                # doesn't ask the user if they want to run QA over more documents
+                predicted_flow=QueryFlow.SEARCH
+                if disable_generative_answer
+                else predicted_flow,
+                predicted_search=predicted_search,
+            )
+        )
         logger.debug(send_packet_debug_msg.format(initial_response_dict))
         yield get_json_line(initial_response_dict)
 

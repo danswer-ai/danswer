@@ -18,6 +18,7 @@ from danswer.chat.chat_prompts import format_danswer_chunks_for_chat
 from danswer.chat.chat_prompts import REQUIRE_DANSWER_SYSTEM_MSG
 from danswer.chat.chat_prompts import YES_SEARCH
 from danswer.chat.tools import call_tool
+from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT
 from danswer.configs.chat_configs import FORCE_TOOL_PROMPT
 from danswer.configs.constants import IGNORE_FOR_QA
@@ -114,7 +115,7 @@ def danswer_chat_retrieval(
     history: list[ChatMessage],
     llm: LLM,
     user_id: UUID | None,
-) -> str:
+) -> list[InferenceChunk]:
     if history:
         query_combination_msgs = build_combined_query(query_message, history)
         reworded_query = llm.invoke(query_combination_msgs)
@@ -129,7 +130,7 @@ def danswer_chat_retrieval(
         datastore=get_default_document_index(),
     )
     if not ranked_chunks:
-        return "No results found"
+        return []
 
     if unranked_chunks:
         ranked_chunks.extend(unranked_chunks)
@@ -144,7 +145,7 @@ def danswer_chat_retrieval(
         token_limit=NUM_DOCUMENT_TOKENS_FED_TO_CHAT,
     )
 
-    return format_danswer_chunks_for_chat(usable_chunks)
+    return usable_chunks
 
 
 def _drop_messages_history_overflow(
@@ -220,7 +221,7 @@ def llm_contextual_chat_answer(
     user_id: UUID | None,
     tokenizer: Callable,
     run_search_system_text: str = REQUIRE_DANSWER_SYSTEM_MSG,
-) -> Iterator[str]:
+) -> Iterator[str | list[InferenceChunk]]:
     last_message = messages[-1]
     final_query_text = last_message.message
     previous_messages = messages[:-1]
@@ -257,12 +258,15 @@ def llm_contextual_chat_answer(
         # Model will output "Yes Search" if search is useful
         # Be a little forgiving though, if we match yes, it's good enough
         if (YES_SEARCH.split()[0] + " ").lower() in model_out.lower():
-            tool_result_str = danswer_chat_retrieval(
+            retrieved_chunks = danswer_chat_retrieval(
                 query_message=last_message,
                 history=previous_messages,
                 llm=llm,
                 user_id=user_id,
             )
+            yield retrieved_chunks
+            tool_result_str = format_danswer_chunks_for_chat(retrieved_chunks)
+
             last_user_msg_text = form_tool_less_followup_text(
                 tool_output=tool_result_str,
                 query=last_message.message,
@@ -288,11 +292,11 @@ def llm_contextual_chat_answer(
             final_msg_token_count=last_user_msg_tokens,
         )
 
-        return llm.stream(prompt)
+        yield from llm.stream(prompt)
 
     except Exception as e:
         logger.error(f"LLM failed to produce valid chat message, error: {e}")
-        return (msg for msg in [LLM_CHAT_FAILURE_MSG])  # needs to be an Iterator
+        yield LLM_CHAT_FAILURE_MSG  # needs to be an Iterator
 
 
 def llm_tools_enabled_chat_answer(
@@ -372,12 +376,13 @@ def llm_tools_enabled_chat_answer(
             retrieval_enabled
             and final_result.action.lower() == DANSWER_TOOL_NAME.lower()
         ):
-            tool_result_str = danswer_chat_retrieval(
+            retrieved_chunks = danswer_chat_retrieval(
                 query_message=last_message,
                 history=previous_messages,
                 llm=llm,
                 user_id=user_id,
             )
+            tool_result_str = format_danswer_chunks_for_chat(retrieved_chunks)
         else:
             tool_result_str = call_tool(final_result, user_id=user_id)
 
@@ -428,7 +433,7 @@ def llm_chat_answer(
     persona: Persona | None,
     user_id: UUID | None,
     tokenizer: Callable,
-) -> Iterator[str]:
+) -> Iterator[DanswerAnswerPiece]:
     # Common error cases to keep in mind:
     # - User asks question about something long ago, due to context limit, the message is dropped
     # - Tool use gives wrong/irrelevant results, model gets confused by the noise
@@ -438,24 +443,32 @@ def llm_chat_answer(
 
     # No setting/persona available therefore no retrieval and no additional tools
     if persona is None:
-        return llm_contextless_chat_answer(messages)
+        for token in llm_contextless_chat_answer(messages):
+            yield DanswerAnswerPiece(answer_piece=token)
 
     # Persona is configured but with retrieval off and no tools
     # therefore cannot retrieve any context so contextless
     elif persona.retrieval_enabled is False and not persona.tools:
-        return llm_contextless_chat_answer(
+        for token in llm_contextless_chat_answer(
             messages, system_text=persona.system_text, tokenizer=tokenizer
-        )
+        ):
+            yield DanswerAnswerPiece(answer_piece=token)
 
     # No additional tools outside of Danswer retrieval, can use a more basic prompt
     # Doesn't require tool calling output format (all LLM outputs are therefore valid)
     elif persona.retrieval_enabled and not persona.tools and not FORCE_TOOL_PROMPT:
-        return llm_contextual_chat_answer(
+        for package in llm_contextual_chat_answer(
             messages=messages, persona=persona, user_id=user_id, tokenizer=tokenizer
-        )
+        ):
+            if isinstance(package, str):
+                yield DanswerAnswerPiece(answer_piece=package)
+            else:
+                # citations = [build_citation_from_chunk(chunk) for chunk in package]
+                yield None  # DanswerCitations(citations=citations)
 
     # Use most flexible/complex prompt format
     else:
-        return llm_tools_enabled_chat_answer(
+        for token in llm_tools_enabled_chat_answer(
             messages=messages, persona=persona, user_id=user_id, tokenizer=tokenizer
-        )
+        ):
+            yield DanswerAnswerPiece(answer_piece=token)

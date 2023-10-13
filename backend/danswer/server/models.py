@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 from typing import Generic
@@ -147,6 +148,18 @@ class SearchDoc(BaseModel):
     # to specify that a set of words should be highlighted. For example:
     # ["<hi>the</hi> <hi>answer</hi> is 42", "the answer is <hi>42</hi>""]
     match_highlights: list[str]
+
+
+@dataclass()
+class RetrievalDocs:
+    top_documents: list[SearchDoc]
+
+
+@dataclass()
+class RerankedRetrievalDocs(RetrievalDocs):
+    unranked_top_documents: list[SearchDoc]
+    predicted_flow: QueryFlow
+    predicted_search: SearchType
 
 
 class CreateChatSessionID(BaseModel):
