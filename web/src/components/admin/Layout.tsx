@@ -24,6 +24,7 @@ import {
   CPUIcon,
   Document360Icon,
   GoogleSitesIcon,
+  GongIcon,
 } from "@/components/icons/icons";
 import { getAuthDisabledSS, getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
@@ -174,6 +175,15 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                   ),
                   link: "/admin/connectors/zulip",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <GongIcon size={16} />
+                      <div className="ml-1">Gong</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/gong",
                 },
                 {
                   name: (
