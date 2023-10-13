@@ -37,20 +37,23 @@ def send_chat_message(
         "persona_id": persona_id,
     }
 
+    docs: list[dict] | None = None
     with requests.post(
         LOCAL_CHAT_ENDPOINT + "send-message", json=data, stream=True
     ) as r:
         for json_response in r.iter_lines():
             response_text = json.loads(json_response.decode())
             new_token = response_text.get("answer_piece")
-            citations = response_text.get("citations")
+            if docs is None:
+                docs = response_text.get("top_documents")
             if new_token:
                 print(new_token, end="", flush=True)
         print()
 
-    if citations:
-        for citation in citations.citations:
-            print(citation)
+    if docs:
+        print("\nReference Docs:")
+        for ind, doc in enumerate(docs, start=1):
+            print(f"\t - Doc {ind}: {doc.get('semantic_identifier')}")
 
 
 def run_chat(contextual: bool) -> None:
