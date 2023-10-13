@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from collections.abc import Iterator
+from typing import cast
 from uuid import UUID
 
 from langchain.schema.messages import AIMessage
@@ -33,7 +34,9 @@ from danswer.llm.build import get_default_llm
 from danswer.llm.llm import LLM
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import translate_danswer_msg_to_langchain
+from danswer.search.semantic_search import chunks_to_search_docs
 from danswer.search.semantic_search import retrieve_ranked_documents
+from danswer.server.models import RetrievalDocs
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
 from danswer.utils.text_processing import has_unescaped_quote
@@ -433,7 +436,7 @@ def llm_chat_answer(
     persona: Persona | None,
     user_id: UUID | None,
     tokenizer: Callable,
-) -> Iterator[DanswerAnswerPiece]:
+) -> Iterator[DanswerAnswerPiece | RetrievalDocs]:
     # Common error cases to keep in mind:
     # - User asks question about something long ago, due to context limit, the message is dropped
     # - Tool use gives wrong/irrelevant results, model gets confused by the noise
@@ -462,9 +465,12 @@ def llm_chat_answer(
         ):
             if isinstance(package, str):
                 yield DanswerAnswerPiece(answer_piece=package)
-            else:
-                # citations = [build_citation_from_chunk(chunk) for chunk in package]
-                yield None  # DanswerCitations(citations=citations)
+            elif isinstance(package, list):
+                yield RetrievalDocs(
+                    top_documents=chunks_to_search_docs(
+                        cast(list[InferenceChunk], package)
+                    )
+                )
 
     # Use most flexible/complex prompt format
     else:

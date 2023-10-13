@@ -152,7 +152,7 @@ export const searchRequestStreamed = async ({
           const topDocuments = chunk.top_documents as any[] | null;
           if (topDocuments) {
             relevantDocuments = topDocuments.map(
-              (doc) => JSON.parse(doc) as DanswerDocument
+              (doc) => doc as DanswerDocument
             );
             updateDocs(relevantDocuments);
           }

@@ -1,5 +1,4 @@
 from collections.abc import Generator
-from dataclasses import asdict
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -279,7 +278,7 @@ def stream_direct_qa(
                 ):
                     answer_so_far = answer_so_far + response_packet.answer_piece
                 logger.debug(f"Sending packet: {response_packet}")
-                yield get_json_line(asdict(response_packet))
+                yield get_json_line(response_packet.dict())
         except Exception as e:
             # exception is logged in the answer_question method, no need to re-log
             yield get_json_line({"error": str(e)})

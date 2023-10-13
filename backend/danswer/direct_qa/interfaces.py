@@ -1,33 +1,30 @@
 import abc
 from collections.abc import Callable
-from collections.abc import Generator
-from dataclasses import dataclass
+from collections.abc import Iterator
+
+from pydantic import BaseModel
 
 from danswer.chunking.models import InferenceChunk
 from danswer.direct_qa.models import LLMMetricsContainer
 
 
-@dataclass
-class DanswerAnswer:
+class DanswerAnswer(BaseModel):
     answer: str | None
 
 
-@dataclass
-class DanswerChatModelOut:
+class DanswerChatModelOut(BaseModel):
     model_raw: str
     action: str
     action_input: str
 
 
-@dataclass
-class DanswerAnswerPiece:
+class DanswerAnswerPiece(BaseModel):
     """A small piece of a complete answer. Used for streaming back answers."""
 
     answer_piece: str | None  # if None, specifies the end of an Answer
 
 
-@dataclass
-class DanswerQuote:
+class DanswerQuote(BaseModel):
     # This is during inference so everything is a string by this point
     quote: str
     document_id: str
@@ -37,20 +34,13 @@ class DanswerQuote:
     blurb: str
 
 
-@dataclass
-class DanswerQuotes:
-    """A little clunky, but making this into a separate class so that the result from
-    `answer_question_stream` is always a subclass of `dataclass` and can thus use `asdict()`
-    """
-
+class DanswerQuotes(BaseModel):
     quotes: list[DanswerQuote]
 
 
 # Final int is for number of output tokens
 AnswerQuestionReturn = tuple[DanswerAnswer, DanswerQuotes]
-AnswerQuestionStreamReturn = Generator[
-    DanswerAnswerPiece | DanswerQuotes | None, None, None
-]
+AnswerQuestionStreamReturn = Iterator[DanswerAnswerPiece | DanswerQuotes]
 
 
 class QAModel:

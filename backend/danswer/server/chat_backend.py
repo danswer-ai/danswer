@@ -1,5 +1,4 @@
 from collections.abc import Iterator
-from dataclasses import asdict
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -314,7 +313,7 @@ def handle_new_chat_message(
                 token = packet.answer_piece
                 if token:
                     llm_output += token
-            yield get_json_line(asdict(packet))
+            yield get_json_line(packet.dict())
 
         create_new_chat_message(
             chat_session_id=chat_session_id,
@@ -399,7 +398,7 @@ def regenerate_message_given_parent(
                 token = packet.answer_piece
                 if token:
                     llm_output += token
-            yield get_json_line(asdict(packet))
+            yield get_json_line(packet.dict())
 
         create_new_chat_message(
             chat_session_id=chat_session_id,
