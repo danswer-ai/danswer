@@ -23,48 +23,51 @@ import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { usePublicCredentials } from "@/lib/hooks";
 
 const MainSection = () => {
-	const { mutate } = useSWRConfig();
-	const {
-		data: connectorIndexingStatuses,
-		isLoading: isConnectorIndexingStatusesLoading,
-		error: isConnectorIndexingStatusesError,
-	} = useSWR<ConnectorIndexingStatus<any, any>[]>(
-		"/api/manage/admin/connector/indexing-status",
-		fetcher
-	);
+  const { mutate } = useSWRConfig();
+  const {
+    data: connectorIndexingStatuses,
+    isLoading: isConnectorIndexingStatusesLoading,
+    error: isConnectorIndexingStatusesError,
+  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
+    "/api/manage/admin/connector/indexing-status",
+    fetcher
+  );
 
-	const {
-		data: credentialsData,
-		isLoading: isCredentialsLoading,
-		error: isCredentialsError,
-		refreshCredentials,
-	} = usePublicCredentials();
+  const {
+    data: credentialsData,
+    isLoading: isCredentialsLoading,
+    error: isCredentialsError,
+    refreshCredentials,
+  } = usePublicCredentials();
 
-	if (
-		(!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
-		(!credentialsData && isCredentialsLoading)
-	) {
-		return <LoadingAnimation text="Loading" />;
-	}
+  if (
+    (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
+    (!credentialsData && isCredentialsLoading)
+  ) {
+    return <LoadingAnimation text="Loading" />;
+  }
 
-	if (isConnectorIndexingStatusesError || !connectorIndexingStatuses) {
-		return <div>Failed to load connectors</div>;
-	}
+  if (isConnectorIndexingStatusesError || !connectorIndexingStatuses) {
+    return <div>Failed to load connectors</div>;
+  }
 
-	if (isCredentialsError || !credentialsData) {
-		return <div>Failed to load credentials</div>;
-	}
+  if (isCredentialsError || !credentialsData) {
+    return <div>Failed to load credentials</div>;
+  }
 
-	const document360ConnectorIndexingStatuses: ConnectorIndexingStatus<
-		Document360Config,
-		Document360CredentialJson
-	>[] = connectorIndexingStatuses.filter(
-		(connectorIndexingStatus) =>
-			connectorIndexingStatus.connector.source === "document360"
-	);
+  const document360ConnectorIndexingStatuses: ConnectorIndexingStatus<
+    Document360Config,
+    Document360CredentialJson
+  >[] = connectorIndexingStatuses.filter(
+    (connectorIndexingStatus) =>
+      connectorIndexingStatus.connector.source === "document360"
+  );
 
-  const document360Credential: Credential<Document360CredentialJson> | undefined = 
-    credentialsData.find((credential) => credential.credential_json?.document360_api_token);
+  const document360Credential:
+    | Credential<Document360CredentialJson>
+    | undefined = credentialsData.find(
+    (credential) => credential.credential_json?.document360_api_token
+  );
 
   return (
     <>
@@ -92,9 +95,16 @@ const MainSection = () => {
       ) : (
         <>
           <p className="text-sm mb-4">
-            To use the Document360 connector, you must first provide the API token 
-            and portal ID corresponding to your Document360 setup. For more details, 
-            see the <a className="text-blue-500" href="https://apidocs.document360.com/apidocs/api-token">official Document360 documentation</a>.
+            To use the Document360 connector, you must first provide the API
+            token and portal ID corresponding to your Document360 setup. For
+            more details, see the{" "}
+            <a
+              className="text-blue-500"
+              href="https://apidocs.document360.com/apidocs/api-token"
+            >
+              official Document360 documentation
+            </a>
+            .
           </p>
           <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
             <CredentialForm<Document360CredentialJson>
@@ -105,14 +115,13 @@ const MainSection = () => {
                     label="Document360 API Token:"
                     type="password"
                   />
-                  <TextFormField
-                    name="portal_id"
-                    label="Portal ID:"
-                  />
+                  <TextFormField name="portal_id" label="Portal ID:" />
                 </>
               }
               validationSchema={Yup.object().shape({
-                document360_api_token: Yup.string().required("Please enter your Document360 API token"),
+                document360_api_token: Yup.string().required(
+                  "Please enter your Document360 API token"
+                ),
                 portal_id: Yup.string().required("Please enter your portal ID"),
               })}
               initialValues={{
@@ -129,20 +138,21 @@ const MainSection = () => {
         </>
       )}
 
-			<h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
         Step 2: Which categories do you want to make searchable?
       </h2>
 
       {document360ConnectorIndexingStatuses.length > 0 && (
         <>
           <p className="text-sm mb-2">
-            We index the latest articles from each workspace listed below regularly.
+            We index the latest articles from each workspace listed below
+            regularly.
           </p>
           <div className="mb-2">
             <ConnectorsTable<Document360Config, Document360CredentialJson>
               connectorIndexingStatuses={document360ConnectorIndexingStatuses}
               liveCredential={document360Credential}
-              getCredential={(credential) => 
+              getCredential={(credential) =>
                 credential.credential_json.document360_api_token
               }
               specialColumns={[
@@ -156,13 +166,17 @@ const MainSection = () => {
                   header: "Categories",
                   key: "categories",
                   getValue: (ccPairStatus) =>
-                    ccPairStatus.connector.connector_specific_config.categories &&
-                    ccPairStatus.connector.connector_specific_config.categories.length > 0
-                      ? ccPairStatus.connector.connector_specific_config.categories.join(", ")
+                    ccPairStatus.connector.connector_specific_config
+                      .categories &&
+                    ccPairStatus.connector.connector_specific_config.categories
+                      .length > 0
+                      ? ccPairStatus.connector.connector_specific_config.categories.join(
+                          ", "
+                        )
                       : "",
                 },
               ]}
-              onUpdate={() => 
+              onUpdate={() =>
                 mutate("/api/manage/admin/connector/indexing-status")
               }
               onCredentialLink={async (connectorId) => {
@@ -182,7 +196,9 @@ const MainSection = () => {
           <ConnectorForm<Document360Config>
             nameBuilder={(values) =>
               values.categories
-                ? `Document360Connector-${values.workspace}-${values.categories.join("_")}`
+                ? `Document360Connector-${
+                    values.workspace
+                  }-${values.categories.join("_")}`
                 : `Document360Connector-${values.workspace}`
             }
             source="document360"
@@ -219,9 +235,9 @@ const MainSection = () => {
         </div>
       ) : (
         <p className="text-sm">
-          Please provide your Document360 API token and portal ID in Step 1 first! Once done with
-          that, you can then specify which Document360 categories you want to make
-          searchable.
+          Please provide your Document360 API token and portal ID in Step 1
+          first! Once done with that, you can then specify which Document360
+          categories you want to make searchable.
         </p>
       )}
     </>
