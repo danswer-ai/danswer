@@ -8,7 +8,7 @@ import {
   ValidInputTypes,
   ValidSources,
 } from "@/lib/types";
-import { deleteConnectorIfExists } from "@/lib/connector";
+import { deleteConnectorIfExistsAndIsUnlinked } from "@/lib/connector";
 import { FormBodyBuilder, RequireAtLeastOne } from "./types";
 import { TextFormField } from "./Field";
 import { linkCredential } from "@/lib/credential";
@@ -113,6 +113,25 @@ export function ConnectorForm<T extends Yup.AnyObject>({
           const connectorConfig = Object.fromEntries(
             Object.keys(initialValues).map((key) => [key, values[key]])
           ) as T;
+
+          // best effort check to see if existing connector exists
+          // delete it if:
+          //   1. it exists
+          //   2. AND it has no credentials linked to it
+          // If the ^ are true, that means things have gotten into a bad
+          // state, and we should delete the connector to recover
+          const errorMsg = await deleteConnectorIfExistsAndIsUnlinked({
+            source,
+            name: connectorName,
+          });
+          if (errorMsg) {
+            setPopup({
+              message: `Unable to delete existing connector - ${errorMsg}`,
+              type: "error",
+            });
+            return;
+          }
+
           const { message, isSuccess, response } = await submitConnector<T>({
             name: connectorName,
             source,
