@@ -230,7 +230,7 @@ def process_message(
 
     details = build_request_details(req, client)
     channel = details.channel_to_respond
-    channel_name = get_channel_name_from_id(
+    channel_name, is_dm = get_channel_name_from_id(
         client=client.web_client, channel_id=channel
     )
 
@@ -245,8 +245,8 @@ def process_message(
         if (
             slack_bot_config is None
             and not respond_every_channel
-            # DMs are unnamed, don't filter those out
-            and channel_name is not None
+            # Can't have configs for DMs so don't toss them out
+            and not is_dm
             # If @DanswerBot or /DanswerBot, always respond with the default configs
             and not (details.is_bot_msg or details.bipass_filters)
         ):
