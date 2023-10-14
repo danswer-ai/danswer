@@ -175,9 +175,9 @@ def get_channel_from_id(client: WebClient, channel_id: str) -> dict[str, Any]:
 def get_channel_name_from_id(client: WebClient, channel_id: str) -> str | None:
     try:
         return get_channel_from_id(client, channel_id).get("name")
-    except SlackApiError:
-        # Private channels such as DMs don't have a name
-        return None
+    except SlackApiError as e:
+        logger.error(f"Couldn't fetch channel name from id: {channel_id}")
+        raise e
 
 
 def fetch_userids_from_emails(user_emails: list[str], client: WebClient) -> list[str]:
