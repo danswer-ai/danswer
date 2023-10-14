@@ -176,7 +176,7 @@ def get_channel_name_from_id(client: WebClient, channel_id: str) -> str | None:
     try:
         return get_channel_from_id(client, channel_id).get("name")
     except SlackApiError as e:
-        logger.error(f"Couldn't fetch channel name from id: {channel_id}")
+        logger.exception(f"Couldn't fetch channel name from id: {channel_id}")
         raise e
 
 
