@@ -176,6 +176,7 @@ def handle_message(
             else:
                 raise RuntimeError(answer.error_msg)
 
+    answer_failed = False
     try:
         # This includes throwing out answer via reflexion
         answer = _get_answer(
@@ -189,11 +190,8 @@ def handle_message(
                 offset=None,
             )
         )
-
-        remove_react(message_info, client)
-    except SlackApiError as e:
-        logger.error(f"Failed to remove Reaction due to: {e}")
     except Exception as e:
+        answer_failed = True
         logger.exception(
             f"Unable to process message - did not successfully answer "
             f"in {num_retries} attempts"
@@ -208,6 +206,13 @@ def handle_message(
                 text=f"Encountered exception when trying to answer: \n\n```{e}```",
                 thread_ts=message_ts_to_respond_to,
             )
+
+    try:
+        remove_react(message_info, client)
+    except SlackApiError as e:
+        logger.error(f"Failed to remove Reaction due to: {e}")
+
+    if answer_failed:
         return True
 
     if answer.eval_res_valid is False:
