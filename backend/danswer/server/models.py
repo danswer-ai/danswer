@@ -149,6 +149,16 @@ class SearchDoc(BaseModel):
     match_highlights: list[str]
 
 
+class RetrievalDocs(BaseModel):
+    top_documents: list[SearchDoc]
+
+
+class RerankedRetrievalDocs(RetrievalDocs):
+    unranked_top_documents: list[SearchDoc]
+    predicted_flow: QueryFlow
+    predicted_search: SearchType
+
+
 class CreateChatSessionID(BaseModel):
     chat_session_id: int
 

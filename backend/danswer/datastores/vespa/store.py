@@ -15,6 +15,7 @@ from requests import Response
 from danswer.chunking.models import DocMetadataAwareIndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
+from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import VESPA_DEPLOYMENT_ZIP
 from danswer.configs.app_configs import VESPA_HOST
@@ -43,6 +44,7 @@ from danswer.datastores.interfaces import DocumentInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.interfaces import UpdateRequest
 from danswer.datastores.vespa.utils import remove_invalid_unicode_chars
+from danswer.search.keyword_search import remove_stop_words
 from danswer.search.semantic_search import embed_query
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
@@ -536,9 +538,13 @@ class VespaIndex(DocumentIndex):
 
         query_embedding = embed_query(query)
 
+        query_keywords = (
+            " ".join(remove_stop_words(query)) if EDIT_KEYWORD_QUERY else query
+        )
+
         params = {
             "yql": yql,
-            "query": query,
+            "query": query_keywords,
             "input.query(query_embedding)": str(query_embedding),
             "ranking.profile": "semantic_search",
         }
