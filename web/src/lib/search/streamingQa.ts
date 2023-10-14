@@ -149,11 +149,9 @@ export const searchRequestStreamed = async ({
 
         // These all come together
         if (Object.hasOwn(chunk, "top_documents")) {
-          const topDocuments = chunk.top_documents as any[] | null;
+          const topDocuments = chunk.top_documents as DanswerDocument[] | null;
           if (topDocuments) {
-            relevantDocuments = topDocuments.map(
-              (doc) => doc as DanswerDocument
-            );
+            relevantDocuments = topDocuments;
             updateDocs(relevantDocuments);
           }
 
