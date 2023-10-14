@@ -4,8 +4,8 @@ from typing import Type
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.bookstack.connector import BookstackConnector
 from danswer.connectors.confluence.connector import ConfluenceConnector
-from danswer.connectors.document360.connector import Document360Connector
 from danswer.connectors.danswer_jira.connector import JiraConnector
+from danswer.connectors.document360.connector import Document360Connector
 from danswer.connectors.file.connector import LocalFileConnector
 from danswer.connectors.github.connector import GithubConnector
 from danswer.connectors.gong.connector import GongConnector
