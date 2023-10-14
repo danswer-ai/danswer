@@ -3,6 +3,7 @@ from typing import cast
 
 from retry import retry
 from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 from sqlalchemy.orm import Session
 
 from danswer.bots.slack.blocks import build_documents_blocks
@@ -19,7 +20,9 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_ANSWER_GENERATION_TIM
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_RETRIES
+from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
+from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
 from danswer.direct_qa.answer_question import answer_qa_query
@@ -28,6 +31,37 @@ from danswer.server.models import QuestionRequest
 from danswer.utils.logger import setup_logger
 
 logger_base = setup_logger()
+
+
+def send_msg_ack_to_user(details: SlackMessageInfo, client: WebClient) -> None:
+    if details.is_bot_msg and details.sender:
+        respond_in_thread(
+            client=client,
+            channel=details.channel_to_respond,
+            thread_ts=details.msg_to_respond,
+            receiver_ids=[details.sender],
+            text="Hi, we're evaluating your query :face_with_monocle:",
+        )
+        return
+
+    slack_call = make_slack_api_rate_limited(client.reactions_add)
+    slack_call(
+        name=DANSWER_REACT_EMOJI,
+        channel=details.channel_to_respond,
+        timestamp=details.msg_to_respond,
+    )
+
+
+def remove_react(details: SlackMessageInfo, client: WebClient) -> None:
+    if details.is_bot_msg:
+        return
+
+    slack_call = make_slack_api_rate_limited(client.reactions_remove)
+    slack_call(
+        name=DANSWER_REACT_EMOJI,
+        channel=details.channel_to_respond,
+        timestamp=details.msg_to_respond,
+    )
 
 
 def handle_message(
@@ -114,6 +148,11 @@ def handle_message(
                 thread_ts=None,
             )
 
+    try:
+        send_msg_ack_to_user(message_info, client)
+    except SlackApiError as e:
+        logger.error(f"Was not able to react to user message due to: {e}")
+
     @retry(
         tries=num_retries,
         delay=0.25,
@@ -137,7 +176,9 @@ def handle_message(
             else:
                 raise RuntimeError(answer.error_msg)
 
+    answer_failed = False
     try:
+        # This includes throwing out answer via reflexion
         answer = _get_answer(
             QuestionRequest(
                 query=msg,
@@ -150,6 +191,7 @@ def handle_message(
             )
         )
     except Exception as e:
+        answer_failed = True
         logger.exception(
             f"Unable to process message - did not successfully answer "
             f"in {num_retries} attempts"
@@ -164,6 +206,13 @@ def handle_message(
                 text=f"Encountered exception when trying to answer: \n\n```{e}```",
                 thread_ts=message_ts_to_respond_to,
             )
+
+    try:
+        remove_react(message_info, client)
+    except SlackApiError as e:
+        logger.error(f"Failed to remove Reaction due to: {e}")
+
+    if answer_failed:
         return True
 
     if answer.eval_res_valid is False:
@@ -195,8 +244,6 @@ def handle_message(
         )
         return True
 
-    # convert raw response into "nicely" formatted Slack message
-
     # If called with the DanswerBot slash command, the question is lost so we have to reshow it
     restate_question_block = get_restate_blocks(msg, is_bot_msg)
 
@@ -215,7 +262,7 @@ def handle_message(
             client=client,
             channel=channel,
             receiver_ids=send_to,
-            text="Something has gone wrong! The Slack blocks failed to load...",
+            text="Hello! Danswer has some results for you!",
             blocks=restate_question_block + answer_blocks + document_blocks,
             thread_ts=message_ts_to_respond_to,
             # don't unfurl, since otherwise we will have 5+ previews which makes the message very long

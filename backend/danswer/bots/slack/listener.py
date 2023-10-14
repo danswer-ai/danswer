@@ -4,7 +4,6 @@ from typing import Any
 from typing import cast
 
 from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
 from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
@@ -21,9 +20,7 @@ from danswer.bots.slack.utils import decompose_block_id
 from danswer.bots.slack.utils import get_channel_name_from_id
 from danswer.bots.slack.utils import respond_in_thread
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
-from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
-from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.utils.logger import setup_logger
@@ -207,37 +204,6 @@ def build_request_details(
     raise RuntimeError("Programming fault, this should never happen.")
 
 
-def send_msg_ack_to_user(details: SlackMessageInfo, client: SocketModeClient) -> None:
-    if details.is_bot_msg and details.sender:
-        respond_in_thread(
-            client=client.web_client,
-            channel=details.channel_to_respond,
-            thread_ts=details.msg_to_respond,
-            receiver_ids=[details.sender],
-            text="Hi, we're evaluating your query :face_with_monocle:",
-        )
-        return
-
-    slack_call = make_slack_api_rate_limited(client.web_client.reactions_add)
-    slack_call(
-        name=DANSWER_REACT_EMOJI,
-        channel=details.channel_to_respond,
-        timestamp=details.msg_to_respond,
-    )
-
-
-def remove_react(details: SlackMessageInfo, client: SocketModeClient) -> None:
-    if details.is_bot_msg:
-        return
-
-    slack_call = make_slack_api_rate_limited(client.web_client.reactions_remove)
-    slack_call(
-        name=DANSWER_REACT_EMOJI,
-        channel=details.channel_to_respond,
-        timestamp=details.msg_to_respond,
-    )
-
-
 def apologize_for_fail(
     details: SlackMessageInfo,
     client: SocketModeClient,
@@ -264,7 +230,7 @@ def process_message(
 
     details = build_request_details(req, client)
     channel = details.channel_to_respond
-    channel_name = get_channel_name_from_id(
+    channel_name, is_dm = get_channel_name_from_id(
         client=client.web_client, channel_id=channel
     )
 
@@ -279,17 +245,12 @@ def process_message(
         if (
             slack_bot_config is None
             and not respond_every_channel
-            # DMs are unnamed, don't filter those out
-            and channel_name is not None
+            # Can't have configs for DMs so don't toss them out
+            and not is_dm
             # If @DanswerBot or /DanswerBot, always respond with the default configs
             and not (details.is_bot_msg or details.bipass_filters)
         ):
             return
-
-        try:
-            send_msg_ack_to_user(details, client)
-        except SlackApiError as e:
-            logger.error(f"Was not able to react to user message due to: {e}")
 
         failed = handle_message(
             message_info=details,
@@ -300,11 +261,6 @@ def process_message(
         # Skipping answering due to pre-filtering is not considered a failure
         if failed and notify_no_answer:
             apologize_for_fail(details, client)
-
-        try:
-            remove_react(details, client)
-        except SlackApiError as e:
-            logger.error(f"Failed to remove Reaction due to: {e}")
 
 
 def acknowledge_message(req: SocketModeRequest, client: SocketModeClient) -> None:
