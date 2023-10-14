@@ -1,6 +1,5 @@
 import re
 from collections.abc import Iterator
-from dataclasses import asdict
 
 from danswer.configs.constants import CODE_BLOCK_PAT
 from danswer.configs.constants import GENERAL_SEP_PAT
@@ -115,7 +114,7 @@ def stream_query_answerability(user_query: str) -> Iterator[str]:
                 remaining = model_output[reason_ind + len(REASONING_PAT) :]
                 if remaining:
                     yield get_json_line(
-                        asdict(DanswerAnswerPiece(answer_piece=remaining))
+                        DanswerAnswerPiece(answer_piece=remaining).dict()
                     )
                 continue
 
@@ -124,7 +123,7 @@ def stream_query_answerability(user_query: str) -> Iterator[str]:
                 if hold_answerable == ANSWERABLE_PAT[: len(hold_answerable)]:
                     continue
                 yield get_json_line(
-                    asdict(DanswerAnswerPiece(answer_piece=hold_answerable))
+                    DanswerAnswerPiece(answer_piece=hold_answerable).dict()
                 )
                 hold_answerable = ""
 

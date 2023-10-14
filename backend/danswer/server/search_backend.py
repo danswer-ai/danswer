@@ -1,5 +1,4 @@
 from collections.abc import Generator
-from dataclasses import asdict
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -38,6 +37,7 @@ from danswer.server.models import QAFeedbackRequest
 from danswer.server.models import QAResponse
 from danswer.server.models import QueryValidationResponse
 from danswer.server.models import QuestionRequest
+from danswer.server.models import RerankedRetrievalDocs
 from danswer.server.models import SearchFeedbackRequest
 from danswer.server.models import SearchResponse
 from danswer.server.utils import get_json_line
@@ -224,18 +224,19 @@ def stream_direct_qa(
 
         top_docs = chunks_to_search_docs(ranked_chunks)
         unranked_top_docs = chunks_to_search_docs(unranked_chunks)
-        initial_response_dict = {
-            top_documents_key: [top_doc.json() for top_doc in top_docs],
-            unranked_top_docs_key: [doc.json() for doc in unranked_top_docs],
+        initial_response = RerankedRetrievalDocs(
+            top_documents=top_docs,
+            unranked_top_documents=unranked_top_docs,
             # if generative AI is disabled, set flow as search so frontend
             # doesn't ask the user if they want to run QA over more documents
-            predicted_flow_key: QueryFlow.SEARCH
+            predicted_flow=QueryFlow.SEARCH
             if disable_generative_answer
             else predicted_flow,
-            predicted_search_key: predicted_search,
-        }
-        logger.debug(send_packet_debug_msg.format(initial_response_dict))
-        yield get_json_line(initial_response_dict)
+            predicted_search=predicted_search,
+        ).dict()
+
+        logger.debug(send_packet_debug_msg.format(initial_response))
+        yield get_json_line(initial_response)
 
         if disable_generative_answer:
             logger.debug("Skipping QA because generative AI is disabled")
@@ -277,7 +278,7 @@ def stream_direct_qa(
                 ):
                     answer_so_far = answer_so_far + response_packet.answer_piece
                 logger.debug(f"Sending packet: {response_packet}")
-                yield get_json_line(asdict(response_packet))
+                yield get_json_line(response_packet.dict())
         except Exception as e:
             # exception is logged in the answer_question method, no need to re-log
             yield get_json_line({"error": str(e)})

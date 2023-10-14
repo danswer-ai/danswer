@@ -172,6 +172,9 @@ def form_tool_section_text(
 
 
 def format_danswer_chunks_for_chat(chunks: list[InferenceChunk]) -> str:
+    if not chunks:
+        return "No Results Found"
+
     return "\n".join(
         f"DOCUMENT {ind}:{CODE_BLOCK_PAT.format(chunk.content)}"
         for ind, chunk in enumerate(chunks, start=1)

@@ -173,6 +173,7 @@ class ConnectorCredentialPair(Base):
         "DocumentSet",
         secondary=DocumentSet__ConnectorCredentialPair.__table__,
         back_populates="connector_credential_pairs",
+        overlaps="document_set",
     )
 
 
@@ -410,6 +411,7 @@ class DocumentSet(Base):
         "ConnectorCredentialPair",
         secondary=DocumentSet__ConnectorCredentialPair.__table__,
         back_populates="document_sets",
+        overlaps="document_set",
     )
     personas: Mapped[list["Persona"]] = relationship(
         "Persona",
