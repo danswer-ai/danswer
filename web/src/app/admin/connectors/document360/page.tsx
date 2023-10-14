@@ -96,15 +96,14 @@ const MainSection = () => {
         <>
           <p className="text-sm mb-4">
             To use the Document360 connector, you must first provide the API
-            token and portal ID corresponding to your Document360 setup. For
-            more details, see the{" "}
+            token and portal ID corresponding to your Document360 setup. See setup guide{" "}
             <a
               className="text-blue-500"
-              href="https://apidocs.document360.com/apidocs/api-token"
+              href="https://docs.danswer.dev/connectors/document360"
             >
-              official Document360 documentation
+              here
             </a>
-            .
+            {" "}for more detail.
           </p>
           <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
             <CredentialForm<Document360CredentialJson>

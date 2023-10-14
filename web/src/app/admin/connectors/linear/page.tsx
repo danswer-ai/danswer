@@ -106,7 +106,7 @@ const Main = () => {
             To use the Linear connector, first follow the guide{" "}
             <a
               className="text-blue-500"
-              href="https://docs.danswer.dev/connectors/jira#setting-up"
+              href="https://docs.danswer.dev/connectors/linear"
             >
               here
             </a>{" "}
