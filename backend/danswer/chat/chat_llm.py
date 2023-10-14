@@ -1,3 +1,4 @@
+import re
 from collections.abc import Callable
 from collections.abc import Iterator
 from typing import cast
@@ -260,6 +261,8 @@ def llm_contextual_chat_answer(
 
         # Model will output "Yes Search" if search is useful
         # Be a little forgiving though, if we match yes, it's good enough
+        citation_max_num: int | None = None
+        retrieved_chunks: list[InferenceChunk] = []
         if (YES_SEARCH.split()[0] + " ").lower() in model_out.lower():
             retrieved_chunks = danswer_chat_retrieval(
                 query_message=last_message,
@@ -267,6 +270,7 @@ def llm_contextual_chat_answer(
                 llm=llm,
                 user_id=user_id,
             )
+            citation_max_num = len(retrieved_chunks) + 1
             yield retrieved_chunks
             tool_result_str = format_danswer_chunks_for_chat(retrieved_chunks)
 
@@ -295,7 +299,23 @@ def llm_contextual_chat_answer(
             final_msg_token_count=last_user_msg_tokens,
         )
 
-        yield from llm.stream(prompt)
+        curr_segment = ""
+        for token in llm.stream(prompt):
+            curr_segment += token
+
+            pattern = r"\[(\d+)\]"  # [1], [2] etc
+            found = re.search(pattern, curr_segment)
+
+            if found:
+                numerical_value = int(found.group(1))
+                if citation_max_num and 1 <= numerical_value <= citation_max_num:
+                    reference_chunk = retrieved_chunks[numerical_value - 1]
+                    if reference_chunk.source_links and reference_chunk.source_links[0]:
+                        link = reference_chunk.source_links[0]
+                        token = re.sub("]", f"]({link})", token)
+                curr_segment = ""
+
+            yield token
 
     except Exception as e:
         logger.error(f"LLM failed to produce valid chat message, error: {e}")
