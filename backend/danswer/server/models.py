@@ -236,6 +236,7 @@ class ChatMessageDetail(BaseModel):
     parent_edit_number: int | None
     latest: bool
     message: str
+    context_docs: RetrievalDocs | None
     message_type: MessageType
     time_sent: datetime
 

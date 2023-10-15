@@ -37,6 +37,7 @@ from danswer.server.models import CreateChatMessageRequest
 from danswer.server.models import CreateChatSessionID
 from danswer.server.models import RegenerateMessageRequest
 from danswer.server.models import RenameChatSessionResponse
+from danswer.server.models import RetrievalDocs
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
@@ -110,6 +111,9 @@ def get_chat_session_messages(
                 parent_edit_number=msg.parent_edit_number,
                 latest=msg.latest,
                 message=msg.message,
+                context_docs=RetrievalDocs(**msg.reference_docs)
+                if msg.reference_docs
+                else None,
                 message_type=msg.message_type,
                 time_sent=msg.time_sent,
             )
@@ -308,11 +312,14 @@ def handle_new_chat_message(
             tokenizer=llm_tokenizer,
         )
         llm_output = ""
+        fetched_docs: RetrievalDocs | None = None
         for packet in response_packets:
             if isinstance(packet, DanswerAnswerPiece):
                 token = packet.answer_piece
                 if token:
                     llm_output += token
+            elif isinstance(packet, RetrievalDocs):
+                fetched_docs = packet
             yield get_json_line(packet.dict())
 
         create_new_chat_message(
@@ -322,6 +329,7 @@ def handle_new_chat_message(
             message=llm_output,
             token_count=len(llm_tokenizer(llm_output)),
             message_type=MessageType.ASSISTANT,
+            retrieval_docs=fetched_docs.dict() if fetched_docs else None,
             db_session=db_session,
         )
 
@@ -393,11 +401,14 @@ def regenerate_message_given_parent(
             tokenizer=llm_tokenizer,
         )
         llm_output = ""
+        fetched_docs: RetrievalDocs | None = None
         for packet in response_packets:
             if isinstance(packet, DanswerAnswerPiece):
                 token = packet.answer_piece
                 if token:
                     llm_output += token
+            elif isinstance(packet, RetrievalDocs):
+                fetched_docs = packet
             yield get_json_line(packet.dict())
 
         create_new_chat_message(
@@ -407,6 +418,7 @@ def regenerate_message_given_parent(
             message=llm_output,
             token_count=len(llm_tokenizer(llm_output)),
             message_type=MessageType.ASSISTANT,
+            retrieval_docs=fetched_docs.dict() if fetched_docs else None,
             db_session=db_session,
         )
 
