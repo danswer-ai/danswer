@@ -114,7 +114,7 @@ export const GoogleDriveCard = ({
               <Button
                 onClick={async () => {
                   const [authUrl, errorMsg] = await setupGoogleDriveOAuth({
-                    isPublic: false,
+                    isAdmin: false,
                   });
                   if (authUrl) {
                     // cookie used by callback to determine where to finally redirect to

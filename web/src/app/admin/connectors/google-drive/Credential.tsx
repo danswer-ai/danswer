@@ -400,7 +400,7 @@ export const DriveOAuthSection = ({
         <Button
           onClick={async () => {
             const [authUrl, errorMsg] = await setupGoogleDriveOAuth({
-              isPublic: true,
+              isAdmin: true,
             });
             if (authUrl) {
               // cookie used by callback to determine where to finally redirect to
