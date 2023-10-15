@@ -50,6 +50,9 @@ def cleanup_connector_credential_pair_task(
     connector_id: int,
     credential_id: int,
 ) -> int:
+    """Connector deletion task. This is run as an async task because it is a somewhat slow job.
+    Needs to potentially update a large number of Postgres and Vespa docs, including deleting them
+    or updating the ACL"""
     engine = get_sqlalchemy_engine()
     with Session(engine) as db_session:
         # validate that the connector / credential pair is deletable
@@ -68,6 +71,7 @@ def cleanup_connector_credential_pair_task(
             )
 
         try:
+            # The bulk of the work is in here, updates Postgres and Vespa
             return _delete_connector_credential_pair(
                 db_session=db_session,
                 document_index=get_default_document_index(),
@@ -80,6 +84,9 @@ def cleanup_connector_credential_pair_task(
 
 @celery_app.task(soft_time_limit=60 * 60 * 6)  # 6 hour time limit
 def sync_document_set_task(document_set_id: int) -> None:
+    """For document sets marked as not up to date, sync the state from postgres
+    into the datastore. Also handles deletions."""
+
     def _sync_document_batch(
         document_ids: list[str], document_index: DocumentIndex
     ) -> None:
@@ -160,7 +167,10 @@ def sync_document_set_task(document_set_id: int) -> None:
     soft_time_limit=60 * 60 * 6,  # 6 hour time limit
 )
 def check_for_document_sets_sync_task() -> None:
-    # cleanup tasks
+    """Runs periodically to check if any document sets are out of sync
+    Creates a task to sync the set if needed"""
+
+    # Cleanup finished tasks
     existing_tasks = list(_ExistingTaskCache.items())
     for document_set_id, task in existing_tasks:
         if task.ready():
@@ -170,7 +180,7 @@ def check_for_document_sets_sync_task() -> None:
             )
             del _ExistingTaskCache[document_set_id]
 
-    # kick off new tasks
+    # Kick off new tasks
     with Session(get_sqlalchemy_engine()) as db_session:
         # check if any document sets are not synced
         document_set_info = fetch_document_sets(
@@ -200,6 +210,8 @@ def clean_old_temp_files_task(
     age_threshold_in_hours: float | int = 24 * 7,  # 1 week,
     base_path: Path | str = FILE_CONNECTOR_TMP_STORAGE_PATH,
 ) -> None:
+    """Files added via the File connector need to be deleted after ingestion
+    Currently handled async of the indexing job"""
     os.makedirs(base_path, exist_ok=True)
     for file in os.listdir(base_path):
         if file_age_in_hours(file) > age_threshold_in_hours:
