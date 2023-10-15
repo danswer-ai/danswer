@@ -59,6 +59,7 @@ def send_chat_message(
 def run_chat(contextual: bool) -> None:
     try:
         new_session_id = create_new_session()
+        print(f"Chat Session ID: {new_session_id}")
     except requests.exceptions.ConnectionError:
         print(
             "Looks like you haven't started the Danswer Backend server, please run the FastAPI server"
