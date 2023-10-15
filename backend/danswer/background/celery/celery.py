@@ -43,7 +43,7 @@ _SYNC_BATCH_SIZE = 1000
 #####
 # Tasks that need to be run in job queue, registered via APIs
 #
-# If celery imports are needed, use local imports to avoid circular importing
+# If imports from this module are needed, use local imports to avoid circular importing
 #####
 @celery_app.task(soft_time_limit=60 * 60 * 6)  # 6 hour time limit
 def cleanup_connector_credential_pair_task(
