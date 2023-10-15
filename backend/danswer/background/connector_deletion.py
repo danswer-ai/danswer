@@ -17,15 +17,12 @@ from typing import cast
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
-from danswer.datastores.document_index import get_default_document_index
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import UpdateRequest
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.connector_credential_pair import (
     delete_connector_credential_pair__no_commit,
 )
-from danswer.db.connector_credential_pair import get_connector_credential_pair
-from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import delete_document_by_connector_credential_pair
 from danswer.db.document import delete_documents_complete
 from danswer.db.document import get_document_connector_cnts
@@ -211,38 +208,6 @@ def _delete_connector_credential_pair(
         f" '{connector_id}' and credential_id: '{credential_id}'. Deleted {num_docs_deleted} docs."
     )
     return num_docs_deleted
-
-
-def cleanup_connector_credential_pair(
-    connector_id: int,
-    credential_id: int,
-) -> int:
-    engine = get_sqlalchemy_engine()
-    with Session(engine) as db_session:
-        # validate that the connector / credential pair is deletable
-        cc_pair = get_connector_credential_pair(
-            db_session=db_session,
-            connector_id=connector_id,
-            credential_id=credential_id,
-        )
-        if not cc_pair or not check_deletion_attempt_is_allowed(
-            connector_credential_pair=cc_pair
-        ):
-            raise ValueError(
-                "Cannot run deletion attempt - connector_credential_pair is not deletable. "
-                "This is likely because there is an ongoing / planned indexing attempt OR the "
-                "connector is not disabled."
-            )
-
-        try:
-            return _delete_connector_credential_pair(
-                db_session=db_session,
-                document_index=get_default_document_index(),
-                cc_pair=cc_pair,
-            )
-        except Exception as e:
-            logger.exception(f"Failed to run connector_deletion due to {e}")
-            raise e
 
 
 def get_cleanup_task_id(connector_id: int, credential_id: int) -> str:
