@@ -1,7 +1,6 @@
 import re
 from collections.abc import Callable
 from collections.abc import Iterator
-from typing import cast
 from uuid import UUID
 
 from langchain.schema.messages import AIMessage
@@ -219,6 +218,61 @@ def llm_contextless_chat_answer(
         return (msg for msg in [LLM_CHAT_FAILURE_MSG])  # needs to be an Iterator
 
 
+def extract_citations_from_stream(
+    tokens: Iterator[str], links: list[str | None]
+) -> Iterator[str]:
+    if not links:
+        yield from tokens
+        return
+
+    max_citation_num = len(links) + 1  # LLM is prompted to 1 index these
+    curr_segment = ""
+    prepend_bracket = False
+    for token in tokens:
+        # Special case of [1][ where ][ is a single token
+        if prepend_bracket:
+            curr_segment += "[" + curr_segment
+            prepend_bracket = False
+
+        curr_segment += token
+
+        possible_citation_pattern = r"(\[\d*$)"  # [1, [, etc
+        possible_citation_found = re.search(possible_citation_pattern, curr_segment)
+
+        citation_pattern = r"\[(\d+)\]"  # [1], [2] etc
+        citation_found = re.search(citation_pattern, curr_segment)
+
+        if citation_found:
+            numerical_value = int(citation_found.group(1))
+            if 1 <= numerical_value <= max_citation_num:
+                link = links[numerical_value - 1]
+                if link:
+                    curr_segment = re.sub(r"\[", "[[", curr_segment, count=1)
+                    curr_segment = re.sub("]", f"]]({link})", curr_segment, count=1)
+
+                # In case there's another open bracket like [1][, don't want to match this
+            possible_citation_found = None
+
+        # if we see "[", but haven't seen the right side, hold back - this may be a
+        # citation that needs to be replaced with a link
+        if possible_citation_found:
+            continue
+
+        # Special case with back to back citations [1][2]
+        if curr_segment and curr_segment[-1] == "[":
+            curr_segment = curr_segment[:-1]
+            prepend_bracket = True
+
+        yield curr_segment
+        curr_segment = ""
+
+    if curr_segment:
+        if prepend_bracket:
+            yield "[" + curr_segment
+        else:
+            yield curr_segment
+
+
 def llm_contextual_chat_answer(
     messages: list[ChatMessage],
     persona: Persona,
@@ -261,7 +315,6 @@ def llm_contextual_chat_answer(
 
         # Model will output "Yes Search" if search is useful
         # Be a little forgiving though, if we match yes, it's good enough
-        citation_max_num: int | None = None
         retrieved_chunks: list[InferenceChunk] = []
         if (YES_SEARCH.split()[0] + " ").lower() in model_out.lower():
             retrieved_chunks = danswer_chat_retrieval(
@@ -270,7 +323,6 @@ def llm_contextual_chat_answer(
                 llm=llm,
                 user_id=user_id,
             )
-            citation_max_num = len(retrieved_chunks) + 1
             yield retrieved_chunks
             tool_result_str = format_danswer_chunks_for_chat(retrieved_chunks)
 
@@ -299,23 +351,13 @@ def llm_contextual_chat_answer(
             final_msg_token_count=last_user_msg_tokens,
         )
 
-        curr_segment = ""
-        for token in llm.stream(prompt):
-            curr_segment += token
+        tokens = llm.stream(prompt)
+        links = [
+            chunk.source_links[0] if chunk.source_links else None
+            for chunk in retrieved_chunks
+        ]
 
-            pattern = r"\[(\d+)\]"  # [1], [2] etc
-            found = re.search(pattern, curr_segment)
-
-            if found:
-                numerical_value = int(found.group(1))
-                if citation_max_num and 1 <= numerical_value <= citation_max_num:
-                    reference_chunk = retrieved_chunks[numerical_value - 1]
-                    if reference_chunk.source_links and reference_chunk.source_links[0]:
-                        link = reference_chunk.source_links[0]
-                        token = re.sub("]", f"]({link})", token)
-                curr_segment = ""
-
-            yield token
+        yield from extract_citations_from_stream(tokens, links)
 
     except Exception as e:
         logger.error(f"LLM failed to produce valid chat message, error: {e}")
@@ -327,7 +369,7 @@ def llm_tools_enabled_chat_answer(
     persona: Persona,
     user_id: UUID | None,
     tokenizer: Callable,
-) -> Iterator[str]:
+) -> Iterator[str | list[InferenceChunk]]:
     retrieval_enabled = persona.retrieval_enabled
     system_text = persona.system_text
     hint_text = persona.hint_text
@@ -405,6 +447,7 @@ def llm_tools_enabled_chat_answer(
                 llm=llm,
                 user_id=user_id,
             )
+            yield retrieved_chunks
             tool_result_str = format_danswer_chunks_for_chat(retrieved_chunks)
         else:
             tool_result_str = call_tool(final_result, user_id=user_id)
@@ -451,6 +494,15 @@ def llm_tools_enabled_chat_answer(
         yield LLM_CHAT_FAILURE_MSG
 
 
+def wrap_chat_package_in_model(
+    package: str | list[InferenceChunk],
+) -> DanswerAnswerPiece | RetrievalDocs:
+    if isinstance(package, str):
+        return DanswerAnswerPiece(answer_piece=package)
+    elif isinstance(package, list):
+        return RetrievalDocs(top_documents=chunks_to_search_docs(package))
+
+
 def llm_chat_answer(
     messages: list[ChatMessage],
     persona: Persona | None,
@@ -483,18 +535,11 @@ def llm_chat_answer(
         for package in llm_contextual_chat_answer(
             messages=messages, persona=persona, user_id=user_id, tokenizer=tokenizer
         ):
-            if isinstance(package, str):
-                yield DanswerAnswerPiece(answer_piece=package)
-            elif isinstance(package, list):
-                yield RetrievalDocs(
-                    top_documents=chunks_to_search_docs(
-                        cast(list[InferenceChunk], package)
-                    )
-                )
+            yield wrap_chat_package_in_model(package)
 
     # Use most flexible/complex prompt format
     else:
-        for token in llm_tools_enabled_chat_answer(
+        for package in llm_tools_enabled_chat_answer(
             messages=messages, persona=persona, user_id=user_id, tokenizer=tokenizer
         ):
-            yield DanswerAnswerPiece(answer_piece=token)
+            yield wrap_chat_package_in_model(package)

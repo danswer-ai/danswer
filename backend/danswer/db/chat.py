@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import and_
@@ -191,6 +192,7 @@ def create_new_chat_message(
     parent_edit_number: int | None,
     message_type: MessageType,
     db_session: Session,
+    retrieval_docs: dict[str, Any] | None = None,
 ) -> ChatMessage:
     """Creates a new chat message and sets it to the latest message of its parent message"""
     # Get the count of existing edits at the provided message number
@@ -213,6 +215,7 @@ def create_new_chat_message(
         parent_edit_number=parent_edit_number,
         edit_number=new_edit_number,
         message=message,
+        reference_docs=retrieval_docs,
         token_count=token_count,
         message_type=message_type,
     )
