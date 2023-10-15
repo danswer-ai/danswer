@@ -174,6 +174,8 @@ def check_for_document_sets_sync_task() -> None:
     existing_tasks = list(_ExistingTaskCache.items())
     for document_set_id, task in existing_tasks:
         if task.ready():
+            # Most likely reason for failure on a normal flow is if lock cannot be aquired
+            # for example, could be due to indexing job
             logger.info(
                 f"Document set '{document_set_id}' is complete with status "
                 f"{task.status}. Cleaning up."
