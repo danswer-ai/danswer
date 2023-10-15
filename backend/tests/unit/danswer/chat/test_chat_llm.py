@@ -27,6 +27,11 @@ class TestChatLlm(unittest.TestCase):
         res = "".join(list(extract_citations_from_stream(iter(test_5), links)))
         self.assertEqual(res, "Something [31][[4]](link_4).")
 
+        links[3] = None
+        test_1 = "Something [2][4][5]"
+        res = "".join(list(extract_citations_from_stream(iter(test_1), links)))
+        self.assertEqual(res, "Something [[2]](link_2)[4][[5]](link_5)")
+
 
 if __name__ == "__main__":
     unittest.main()
