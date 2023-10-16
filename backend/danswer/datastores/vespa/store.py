@@ -179,6 +179,7 @@ def _index_vespa_chunk(
         url: str,
         headers: dict[str, str],
         fields: dict[str, Any],
+        log_error: bool = True,
     ) -> Response:
         logger.debug(f'Indexing to URL "{url}"')
         res = requests.post(url, headers=headers, json={"fields": fields})
@@ -186,14 +187,20 @@ def _index_vespa_chunk(
             res.raise_for_status()
             return res
         except Exception as e:
-            logger.error(
-                f"Failed to index document: '{document.id}'. Got response: '{res.text}'"
-            )
+            if log_error:
+                logger.error(
+                    f"Failed to index document: '{document.id}'. Got response: '{res.text}'"
+                )
             raise e
 
     vespa_url = f"{DOCUMENT_ID_ENDPOINT}/{vespa_chunk_id}"
     try:
-        _index_chunk(vespa_url, json_header, vespa_document_fields)
+        _index_chunk(
+            url=vespa_url,
+            headers=json_header,
+            fields=vespa_document_fields,
+            log_error=False,
+        )
     except HTTPError as e:
         if cast(Response, e.response).status_code != 400:
             raise e
@@ -213,7 +220,12 @@ def _index_vespa_chunk(
         vespa_document_fields[CONTENT_SUMMARY] = remove_invalid_unicode_chars(
             cast(str, vespa_document_fields[CONTENT_SUMMARY])
         )
-        _index_chunk(vespa_url, json_header, vespa_document_fields)
+        _index_chunk(
+            url=vespa_url,
+            headers=json_header,
+            fields=vespa_document_fields,
+            log_error=True,
+        )
 
     return chunk_exists
 
