@@ -77,10 +77,7 @@ class RequestTrackerConnector(LoadConnector, PollConnector):
                 },
             )
 
-            print(Rt.get_history(id))
-
             doc_batch.append(doc)
-            print(doc)
 
             if len(doc_batch) >= self.batch_size:
                 yield doc_batch
