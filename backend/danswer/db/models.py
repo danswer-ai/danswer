@@ -52,6 +52,14 @@ class DeletionStatus(str, PyEnum):
     FAILED = "failed"
 
 
+# Consistent with Celery task statuses
+class TaskStatus(str, PyEnum):
+    PENDING = "PENDING"
+    STARTED = "STARTED"
+    SUCCESS = "SUCCESS"
+    FAILURE = "FAILURE"
+
+
 class Base(DeclarativeBase):
     pass
 
@@ -566,3 +574,22 @@ class SlackBotConfig(Base):
     )
 
     persona: Mapped[Persona | None] = relationship("Persona")
+
+
+class TaskQueueState(Base):
+    # Currently refers to Celery Tasks
+    __tablename__ = "task_queue_jobs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # Celery task id
+    task_id: Mapped[str] = mapped_column(String)
+    # For any job type, this would be the same
+    task_name: Mapped[str] = mapped_column(String)
+    # Note that if the task dies, this won't necessarily be marked FAILED correctly
+    status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus))
+    start_time: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    register_time: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

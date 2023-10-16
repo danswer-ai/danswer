@@ -8,7 +8,6 @@ from typing import IO
 
 from danswer.configs.app_configs import FILE_CONNECTOR_TMP_STORAGE_PATH
 
-_FILE_AGE_CLEANUP_THRESHOLD_HOURS = 24 * 7  # 1 week
 _VALID_FILE_EXTENSIONS = [".txt", ".zip", ".pdf"]
 
 
@@ -53,13 +52,3 @@ def write_temp_files(
 
 def file_age_in_hours(filepath: str | Path) -> float:
     return (time.time() - os.path.getmtime(filepath)) / (60 * 60)
-
-
-def clean_old_temp_files(
-    age_threshold_in_hours: float | int = _FILE_AGE_CLEANUP_THRESHOLD_HOURS,
-    base_path: Path | str = FILE_CONNECTOR_TMP_STORAGE_PATH,
-) -> None:
-    os.makedirs(base_path, exist_ok=True)
-    for file in os.listdir(base_path):
-        if file_age_in_hours(file) > age_threshold_in_hours:
-            os.remove(Path(base_path) / file)
