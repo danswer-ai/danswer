@@ -76,6 +76,9 @@ class RequestTrackerConnector(LoadConnector, PollConnector):
                     if key not in ticket_keys_to_omit
                 },
             )
+
+            print(Rt.get_history(id))
+
             doc_batch.append(doc)
             print(doc)
 
