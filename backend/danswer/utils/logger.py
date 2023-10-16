@@ -1,4 +1,5 @@
 import logging
+import os
 from collections.abc import MutableMapping
 from typing import Any
 
@@ -52,7 +53,9 @@ class _IndexAttemptLoggingAdapter(logging.LoggerAdapter):
 
 
 def setup_logger(
-    name: str = __name__, log_level: int = get_log_level_from_str()
+    name: str = __name__,
+    log_level: int = get_log_level_from_str(),
+    logfile_name: str | None = None,
 ) -> logging.LoggerAdapter:
     logger = logging.getLogger(name)
 
@@ -72,5 +75,13 @@ def setup_logger(
     handler.setFormatter(formatter)
 
     logger.addHandler(handler)
+
+    if logfile_name:
+        is_containerized = os.path.exists("/.dockerenv")
+        file_name_template = (
+            "/var/log/{name}.log" if is_containerized else "./log/{name}.log"
+        )
+        file_handler = logging.FileHandler(file_name_template.format(name=logfile_name))
+        logger.addHandler(file_handler)
 
     return _IndexAttemptLoggingAdapter(logger)

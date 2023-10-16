@@ -14,11 +14,8 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.background.celery.celery import cleanup_connector_credential_pair_task
-from danswer.background.celery.deletion_utils import get_deletion_status
-from danswer.background.connector_deletion import (
-    get_cleanup_task_id,
-)
+from danswer.background.celery.celery_utils import get_deletion_status
+from danswer.background.task_utils import name_cc_cleanup_task
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
@@ -536,6 +533,8 @@ def create_deletion_attempt_for_connector_id(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
+    from danswer.background.celery.celery import cleanup_connector_credential_pair_task
+
     connector_id = connector_credential_pair_identifier.connector_id
     credential_id = connector_credential_pair_identifier.credential_id
 
@@ -559,7 +558,7 @@ def create_deletion_attempt_for_connector_id(
             "no ongoing / planned indexing attempts.",
         )
 
-    task_id = get_cleanup_task_id(
+    task_id = name_cc_cleanup_task(
         connector_id=connector_id, credential_id=credential_id
     )
     cleanup_connector_credential_pair_task.apply_async(
