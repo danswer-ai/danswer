@@ -61,17 +61,23 @@ class RequestTrackerConnector(LoadConnector, PollConnector):
         doc_batch: List[Document] = []
 
         for ticket in tickets:
-            print(ticket)
-            # ... and get the history
-            # document = Document(
-            #    id=x,
-            #    sections=[],
-            #    source=DocumentSource.DOCUMENT360,
-            #    semantic_identifier=
-            #    metadata={},
-            # )
-
-            # doc_batch.append(document)
+            ticket_keys_to_omit = ["id", "Subject"]
+            id: int = int(ticket["numerical_id"])
+            ticketLink: str = f"{self.base_url}/Ticket/Display.html?id={id}"
+            ticketChildLink: str = f"{self.base_url}/Ticket/Display.html?id={id}&txn="
+            doc = Document(
+                id=ticket["id"],
+                sections=[Section(link=ticketLink, text=f"{ticket['Subject']}\n")],
+                source=DocumentSource.REQUESTTRACKER,
+                semantic_identifier=ticket["Subject"],
+                metadata={
+                    key: value
+                    for key, value in ticket.items()
+                    if key not in ticket_keys_to_omit
+                },
+            )
+            doc_batch.append(doc)
+            print(doc)
 
             if len(doc_batch) >= self.batch_size:
                 yield doc_batch
@@ -111,4 +117,4 @@ if __name__ == "__main__":
     latest_docs = rt_connector.poll_source(one_day_ago, current)
 
     for doc in latest_docs:
-        print(doc)
+        print("A")
