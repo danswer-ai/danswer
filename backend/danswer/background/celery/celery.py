@@ -7,8 +7,8 @@ from celery import Celery  # type: ignore
 from celery.result import AsyncResult
 from sqlalchemy.orm import Session
 
-from danswer.background.celery.celery_utils import name_document_set_sync_task
 from danswer.background.connector_deletion import _delete_connector_credential_pair
+from danswer.background.task_utils import name_document_set_sync_task
 from danswer.configs.app_configs import FILE_CONNECTOR_TMP_STORAGE_PATH
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.connectors.file.utils import file_age_in_hours

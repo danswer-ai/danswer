@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_status
-from danswer.background.connector_deletion import name_cc_cleanup_task
+from danswer.background.task_utils import name_cc_cleanup_task
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY

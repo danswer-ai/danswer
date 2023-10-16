@@ -6,6 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.celery import celery_app
+from danswer.background.task_utils import name_cc_cleanup_task
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import DeletionStatus
 from danswer.server.models import DeletionAttemptSnapshot
@@ -72,11 +73,3 @@ def get_deletion_status(
         if deletion_status
         else None
     )
-
-
-def name_cc_cleanup_task(connector_id: int, credential_id: int) -> str:
-    return f"cleanup_connector_credential_pair_{connector_id}_{credential_id}"
-
-
-def name_document_set_sync_task(document_set_id: int) -> str:
-    return f"sync_doc_set_{document_set_id}"
