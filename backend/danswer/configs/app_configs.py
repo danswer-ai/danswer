@@ -211,7 +211,7 @@ CONTINUE_ON_CONNECTOR_FAILURE = os.environ.get(
 # fairly large amount of memory in order to increase substantially, since
 # each worker loads the embedding models into memory.
 NUM_INDEXING_WORKERS = int(os.environ.get("NUM_INDEXING_WORKERS") or 1)
-
+JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
 # Logs every model prompt and output, mostly used for development or exploration purposes
 LOG_ALL_MODEL_INTERACTIONS = (
     os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"

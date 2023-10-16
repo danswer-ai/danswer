@@ -208,7 +208,3 @@ def _delete_connector_credential_pair(
         f" '{connector_id}' and credential_id: '{credential_id}'. Deleted {num_docs_deleted} docs."
     )
     return num_docs_deleted
-
-
-def get_cleanup_task_id(connector_id: int, credential_id: int) -> str:
-    return f"cleanup_connector_credential_pair_{connector_id}_{credential_id}"

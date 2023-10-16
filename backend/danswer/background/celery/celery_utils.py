@@ -1,4 +1,5 @@
 import json
+from typing import cast
 
 from celery.result import AsyncResult
 from sqlalchemy import text
@@ -6,6 +7,8 @@ from sqlalchemy.orm import Session
 
 from danswer.background.celery.celery import celery_app
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.models import DeletionStatus
+from danswer.server.models import DeletionAttemptSnapshot
 
 
 def get_celery_task(task_id: str) -> AsyncResult:
@@ -35,3 +38,45 @@ def get_celery_task_status(task_id: str) -> str | None:
         return task.status
 
     return None
+
+
+def get_deletion_status(
+    connector_id: int, credential_id: int
+) -> DeletionAttemptSnapshot | None:
+    cleanup_task_id = name_cc_cleanup_task(
+        connector_id=connector_id, credential_id=credential_id
+    )
+    deletion_task = get_celery_task(task_id=cleanup_task_id)
+    deletion_task_status = get_celery_task_status(task_id=cleanup_task_id)
+
+    deletion_status = None
+    error_msg = None
+    num_docs_deleted = 0
+    if deletion_task_status == "SUCCESS":
+        deletion_status = DeletionStatus.SUCCESS
+        num_docs_deleted = cast(int, deletion_task.get(propagate=False))
+    elif deletion_task_status == "FAILURE":
+        deletion_status = DeletionStatus.FAILED
+        error_msg = deletion_task.get(propagate=False)
+    elif deletion_task_status == "STARTED" or deletion_task_status == "PENDING":
+        deletion_status = DeletionStatus.IN_PROGRESS
+
+    return (
+        DeletionAttemptSnapshot(
+            connector_id=connector_id,
+            credential_id=credential_id,
+            status=deletion_status,
+            error_msg=str(error_msg),
+            num_docs_deleted=num_docs_deleted,
+        )
+        if deletion_status
+        else None
+    )
+
+
+def name_cc_cleanup_task(connector_id: int, credential_id: int) -> str:
+    return f"cleanup_connector_credential_pair_{connector_id}_{credential_id}"
+
+
+def name_document_set_sync_task(document_set_id: int) -> str:
+    return f"sync_doc_set_{document_set_id}"

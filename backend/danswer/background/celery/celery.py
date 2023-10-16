@@ -7,8 +7,10 @@ from celery import Celery  # type: ignore
 from celery.result import AsyncResult
 from sqlalchemy.orm import Session
 
+from danswer.background.celery.celery_utils import name_document_set_sync_task
 from danswer.background.connector_deletion import _delete_connector_credential_pair
 from danswer.configs.app_configs import FILE_CONNECTOR_TMP_STORAGE_PATH
+from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.connectors.file.utils import file_age_in_hours
 from danswer.datastores.document_index import get_default_document_index
 from danswer.datastores.interfaces import DocumentIndex
@@ -26,6 +28,11 @@ from danswer.db.engine import build_connection_string
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.engine import SYNC_DB_API
 from danswer.db.models import DocumentSet
+from danswer.db.tasks import check_live_task_not_timed_out
+from danswer.db.tasks import get_latest_task
+from danswer.db.tasks import mark_task_finished
+from danswer.db.tasks import mark_task_start
+from danswer.db.tasks import register_task
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 
@@ -45,7 +52,7 @@ _SYNC_BATCH_SIZE = 1000
 #
 # If imports from this module are needed, use local imports to avoid circular importing
 #####
-@celery_app.task(soft_time_limit=60 * 60 * 6)  # 6 hour time limit
+@celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def cleanup_connector_credential_pair_task(
     connector_id: int,
     credential_id: int,
@@ -82,7 +89,7 @@ def cleanup_connector_credential_pair_task(
             raise e
 
 
-@celery_app.task(soft_time_limit=60 * 60 * 6)  # 6 hour time limit
+@celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def sync_document_set_task(document_set_id: int) -> None:
     """For document sets marked as not up to date, sync the state from postgres
     into the datastore. Also handles deletions."""
@@ -117,9 +124,12 @@ def sync_document_set_task(document_set_id: int) -> None:
                 ]
             )
 
-    try:
-        document_index = get_default_document_index()
-        with Session(get_sqlalchemy_engine()) as db_session:
+    with Session(get_sqlalchemy_engine()) as db_session:
+        task_name = name_document_set_sync_task(document_set_id)
+        mark_task_start(task_name, db_session)
+
+        try:
+            document_index = get_default_document_index()
             documents_to_update = fetch_documents_for_document_set(
                 document_set_id=document_set_id,
                 db_session=db_session,
@@ -154,9 +164,12 @@ def sync_document_set_task(document_set_id: int) -> None:
                 )
                 logger.info(f"Document set sync for '{document_set_id}' complete!")
 
-    except Exception:
-        logger.exception("Failed to sync document set %s", document_set_id)
-        raise
+        except Exception:
+            logger.exception("Failed to sync document set %s", document_set_id)
+            mark_task_finished(task_name, db_session, success=False)
+            raise
+
+        mark_task_finished(task_name, db_session)
 
 
 #####
@@ -164,25 +177,11 @@ def sync_document_set_task(document_set_id: int) -> None:
 #####
 @celery_app.task(
     name="check_for_document_sets_sync_task",
-    soft_time_limit=60 * 60 * 6,  # 6 hour time limit
+    soft_time_limit=JOB_TIMEOUT,
 )
 def check_for_document_sets_sync_task() -> None:
     """Runs periodically to check if any document sets are out of sync
     Creates a task to sync the set if needed"""
-
-    # Cleanup finished tasks
-    existing_tasks = list(_ExistingTaskCache.items())
-    for document_set_id, task in existing_tasks:
-        if task.ready():
-            # Most likely reason for failure on a normal flow is if lock cannot be aquired
-            # for example, could be due to indexing job
-            logger.info(
-                f"Document set '{document_set_id}' is complete with status "
-                f"{task.status}. Cleaning up."
-            )
-            del _ExistingTaskCache[document_set_id]
-
-    # Kick off new tasks
     with Session(get_sqlalchemy_engine()) as db_session:
         # check if any document sets are not synced
         document_set_info = fetch_document_sets(
@@ -190,24 +189,25 @@ def check_for_document_sets_sync_task() -> None:
         )
         for document_set, _ in document_set_info:
             if not document_set.is_up_to_date:
-                if document_set.id in _ExistingTaskCache:
+                task_name = name_document_set_sync_task(document_set.id)
+                latest_sync = get_latest_task(task_name, db_session)
+
+                if latest_sync and check_live_task_not_timed_out(
+                    latest_sync, db_session
+                ):
                     logger.info(
                         f"Document set '{document_set.id}' is already syncing. Skipping."
                     )
                     continue
 
-                logger.info(
-                    f"Document set {document_set.id} is not synced. Syncing now!"
-                )
+                logger.info(f"Document set {document_set.id} syncing now!")
                 task = sync_document_set_task.apply_async(
                     kwargs=dict(document_set_id=document_set.id),
                 )
-                _ExistingTaskCache[document_set.id] = task
+                register_task(task.id, task_name, db_session)
 
 
-@celery_app.task(
-    name="clean_old_temp_files_task", soft_time_limit=60 * 60 * 6  # 6 hour time limit
-)
+@celery_app.task(name="clean_old_temp_files_task", soft_time_limit=JOB_TIMEOUT)
 def clean_old_temp_files_task(
     age_threshold_in_hours: float | int = 24 * 7,  # 1 week,
     base_path: Path | str = FILE_CONNECTOR_TMP_STORAGE_PATH,
