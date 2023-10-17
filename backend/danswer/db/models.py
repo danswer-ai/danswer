@@ -459,10 +459,12 @@ class ToolInfo(TypedDict):
 class Persona(Base):
     # TODO introduce user and group ownership for personas
     __tablename__ = "persona"
+
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
     # Danswer retrieval, treated as a special tool
     retrieval_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    datetime_aware: Mapped[bool] = mapped_column(Boolean, default=True)
     system_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     tools: Mapped[list[ToolInfo] | None] = mapped_column(
         postgresql.JSONB(), nullable=True
@@ -478,6 +480,16 @@ class Persona(Base):
         "DocumentSet",
         secondary=Persona__DocumentSet.__table__,
         back_populates="personas",
+    )
+
+    # Default personas loaded via yaml cannot have the same name
+    __table_args__ = (
+        Index(
+            "_default_persona_name_idx",
+            "name",
+            unique=True,
+            postgresql_where=(default_persona == True),  # noqa: E712
+        ),
     )
 
 
