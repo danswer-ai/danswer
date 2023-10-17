@@ -170,7 +170,15 @@ _DISALLOWED_MSG_SUBTYPES = {
 
 
 def _default_msg_filter(message: MessageType) -> bool:
-    return message.get("subtype", "") in _DISALLOWED_MSG_SUBTYPES
+    # Don't keep messages from bots
+    if message.get("bot_id") or message.get("app_id"):
+        return True
+
+    # Uninformative
+    if message.get("subtype", "") in _DISALLOWED_MSG_SUBTYPES:
+        return True
+
+    return False
 
 
 def _filter_channels(
