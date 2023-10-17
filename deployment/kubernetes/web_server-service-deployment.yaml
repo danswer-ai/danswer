@@ -31,10 +31,6 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
-        args:
-          - "NEXT_PUBLIC_AUTH_TYPE=google_oauth"
         env:
-        - name: AUTH_TYPE
-          value: google_oauth
         - name: INTERNAL_URL
           value: "http://api-server-service:80"
