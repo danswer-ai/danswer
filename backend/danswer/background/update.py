@@ -469,6 +469,12 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
 
 
 if __name__ == "__main__":
+    import torch
+    import os
+
+    # take advantage of all CPU cores
+    torch.set_num_threads(os.cpu_count())
+
     logger.info("Warming up Embedding Model(s)")
     warm_up_models(indexer_only=True)
     logger.info("Starting Indexing Loop")
