@@ -9,6 +9,9 @@ from distributed import LocalCluster
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
+from danswer.configs.model_configs import (
+    BACKGROUND_JOB_EMBEDDING_MODEL_CPU_CORES_LEFT_UNUSED,
+)
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
@@ -351,9 +354,14 @@ def _run_indexing_entrypoint(index_attempt_id: int) -> None:
     import torch
     import os
 
-    # take advantage of all CPU cores
-    logger.info(f"Setting task to use {os.cpu_count()} threads")
-    torch.set_num_threads(os.cpu_count())
+    # force torch to use more cores if available. On VMs pytorch only takes
+    # advantage of a single core by default
+    cpu_cores_to_use = max(
+        (os.cpu_count() or 1) - BACKGROUND_JOB_EMBEDDING_MODEL_CPU_CORES_LEFT_UNUSED,
+        torch.get_num_threads(),
+    )
+    logger.info(f"Setting task to use {cpu_cores_to_use} threads")
+    torch.set_num_threads(cpu_cores_to_use)
 
     try:
         # set the indexing attempt ID so that all log messages from this process
