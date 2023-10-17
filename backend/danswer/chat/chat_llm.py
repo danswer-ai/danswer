@@ -18,6 +18,7 @@ from danswer.chat.chat_prompts import form_user_prompt_text
 from danswer.chat.chat_prompts import format_danswer_chunks_for_chat
 from danswer.chat.chat_prompts import REQUIRE_DANSWER_SYSTEM_MSG
 from danswer.chat.chat_prompts import YES_SEARCH
+from danswer.chat.personas import build_system_text_from_persona
 from danswer.chat.tools import call_tool
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT
@@ -338,7 +339,7 @@ def llm_contextual_chat_answer(
             last_user_msg_tokens = len(tokenizer(final_query_text))
             last_user_msg = HumanMessage(content=final_query_text)
 
-        system_text = persona.system_text
+        system_text = build_system_text_from_persona(persona)
         system_msg = SystemMessage(content=system_text) if system_text else None
         system_tokens = len(tokenizer(system_text)) if system_text else 0
 
@@ -351,6 +352,7 @@ def llm_contextual_chat_answer(
             final_msg_token_count=last_user_msg_tokens,
         )
 
+        # Good Debug/Breakpoint
         tokens = llm.stream(prompt)
         links = [
             chunk.source_links[0] if chunk.source_links else None
@@ -371,7 +373,7 @@ def llm_tools_enabled_chat_answer(
     tokenizer: Callable,
 ) -> Iterator[str | list[InferenceChunk]]:
     retrieval_enabled = persona.retrieval_enabled
-    system_text = persona.system_text
+    system_text = build_system_text_from_persona(persona)
     hint_text = persona.hint_text
     tool_text = form_tool_section_text(persona.tools, persona.retrieval_enabled)
 

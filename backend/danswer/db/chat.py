@@ -265,22 +265,38 @@ def fetch_persona_by_id(persona_id: int, db_session: Session) -> Persona:
     return persona
 
 
+def fetch_default_persona_by_name(
+    persona_name: str, db_session: Session
+) -> Persona | None:
+    stmt = select(Persona).where(
+        Persona.name == persona_name, Persona.default_persona == True  # noqa: E712
+    )
+    result = db_session.execute(stmt).scalar_one_or_none()
+    return result
+
+
 def upsert_persona(
-    persona_id: int | None,
     name: str,
     retrieval_enabled: bool,
+    datetime_aware: bool,
     system_text: str | None,
     tools: list[ToolInfo] | None,
     hint_text: str | None,
-    default_persona: bool,
     db_session: Session,
+    persona_id: int | None = None,
+    default_persona: bool = False,
     commit: bool = True,
 ) -> Persona:
     persona = db_session.query(Persona).filter_by(id=persona_id).first()
 
+    # Default personas are defined via yaml files at deployment time
+    if persona is None and default_persona:
+        persona = fetch_default_persona_by_name(name, db_session)
+
     if persona:
         persona.name = name
         persona.retrieval_enabled = retrieval_enabled
+        persona.datetime_aware = datetime_aware
         persona.system_text = system_text
         persona.tools = tools
         persona.hint_text = hint_text
@@ -289,6 +305,7 @@ def upsert_persona(
         persona = Persona(
             name=name,
             retrieval_enabled=retrieval_enabled,
+            datetime_aware=datetime_aware,
             system_text=system_text,
             tools=tools,
             hint_text=hint_text,

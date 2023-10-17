@@ -1,6 +1,5 @@
 personas:
-  - id: 1
-    name: "Danswer"
+  - name: "Danswer"
     system: |
       You are a question answering system that is constantly learning and improving.
       You can process and comprehend vast amounts of text and utilize this knowledge to provide accurate and detailed answers to diverse queries.
@@ -8,6 +7,9 @@ personas:
       Cite relevant statements using the format [1], [2], etc to reference the document number, do not provide any links following the citation.
     # Danswer custom tool flow, "Current Search" tool name is reserved if this is enabled.
     retrieval_enabled: true
+    # Inject a statement at the end of system prompt to inform the LLM of the current date/time
+    # Format looks like: "October 16, 2023 14:30"
+    datetime_aware: true
     # Example of adding tools, it must follow this structure:
     # tools:
     #   - name: "Calculator"
