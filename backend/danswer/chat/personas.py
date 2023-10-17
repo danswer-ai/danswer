@@ -12,9 +12,10 @@ from danswer.db.models import ToolInfo
 
 
 def build_system_text_from_persona(persona: Persona) -> str | None:
-    text = (persona.system_text or "").rstrip()
+    text = (persona.system_text or "").strip()
     if persona.datetime_aware:
         current_datetime = datetime.now()
+        # Format looks like: "October 16, 2023 14:30"
         formatted_datetime = current_datetime.strftime("%B %d, %Y %H:%M")
 
         text += (
@@ -51,8 +52,8 @@ def load_personas_from_yaml(personas_yaml: str = PERSONAS_YAML) -> None:
             upsert_persona(
                 name=persona["name"],
                 retrieval_enabled=persona.get("retrieval_enabled", True),
-                # Default to knowing the date/time if not specified, however if there should be no
-                # system prompt, do not interfere with the system-prompt-less flow by adding a
+                # Default to knowing the date/time if not specified, however if there is no
+                # system prompt, do not interfere with the flow by adding a
                 # system prompt that is ONLY the date info, this would likely not be useful
                 datetime_aware=persona.get(
                     "datetime_aware", bool(persona.get("system"))
