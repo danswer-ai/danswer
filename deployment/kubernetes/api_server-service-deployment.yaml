@@ -40,6 +40,11 @@ spec:
         ports:
         - containerPort: 8080
         env:
+        - name: WEB_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: WEB_DOMAIN
         - name: AUTH_TYPE
           valueFrom:
             configMapKeyRef:

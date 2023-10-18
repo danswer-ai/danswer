@@ -18,6 +18,11 @@ spec:
         imagePullPolicy: IfNotPresent
         command: ["/usr/bin/supervisord"]
         env:
+        - name: WEB_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: WEB_DOMAIN
         - name: GEN_AI_MODEL_VERSION
           valueFrom:
             configMapKeyRef:
