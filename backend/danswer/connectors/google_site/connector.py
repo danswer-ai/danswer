@@ -10,7 +10,7 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.file_utils import load_files_from_zip
 from danswer.connectors.cross_connector_utils.file_utils import read_file
-from danswer.connectors.cross_connector_utils.html_utils import standard_html_cleanup
+from danswer.connectors.cross_connector_utils.html_utils import web_html_cleanup
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
@@ -101,7 +101,7 @@ class GoogleSitesConnector(LoadConnector):
                 div.extract()
 
             # get the body of the page
-            parsed_html = standard_html_cleanup(
+            parsed_html = web_html_cleanup(
                 soup, additional_element_types_to_discard=["header", "nav"]
             )
 
