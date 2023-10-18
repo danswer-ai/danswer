@@ -1,4 +1,3 @@
-import os
 from collections.abc import Callable
 from collections.abc import Collection
 from datetime import datetime
@@ -13,6 +12,7 @@ from requests import HTTPError
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.html_utils import parse_html_page_basic
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -21,7 +21,6 @@ from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
-from danswer.utils.text_processing import parse_html_page_basic
 
 logger = setup_logger()
 
@@ -266,6 +265,8 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
 
 if __name__ == "__main__":
+    import os
+
     connector = ConfluenceConnector(os.environ["CONFLUENCE_TEST_SPACE_URL"])
     connector.load_credentials(
         {

@@ -21,7 +21,7 @@ from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_ID
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_TOKEN_URL
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.html_utils import standard_html_cleanup
+from danswer.connectors.cross_connector_utils.html_utils import web_html_cleanup
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
@@ -218,7 +218,7 @@ class WebConnector(LoadConnector):
                         if link not in visited_links:
                             to_visit.append(link)
 
-                parsed_html = standard_html_cleanup(soup, self.mintlify_cleanup)
+                parsed_html = web_html_cleanup(soup, self.mintlify_cleanup)
 
                 doc_batch.append(
                     Document(
