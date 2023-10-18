@@ -30,6 +30,7 @@ from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import DOCUMENT_SETS
 from danswer.configs.constants import EMBEDDINGS
+from danswer.configs.constants import HIDDEN
 from danswer.configs.constants import MATCH_HIGHLIGHTS
 from danswer.configs.constants import METADATA
 from danswer.configs.constants import SCORE
@@ -271,8 +272,10 @@ def _build_vespa_filters(filters: list[IndexFilter] | None) -> str:
     # via the `filters` arg. These are set either in the Web UI or in the Slack
     # listener
 
+    # ignore hidden docs
+    filter_str = f"!({HIDDEN}=true) and "
+
     # Handle provided query filters
-    filter_str = ""
     if filters:
         for filter_dict in filters:
             valid_filters = {
@@ -424,16 +427,26 @@ class VespaIndex(DocumentIndex):
         batch_size: int = _BATCH_SIZE,
     ) -> None:
         """Runs a batch of updates in parallel via the ThreadPoolExecutor."""
+
+        def _update_chunk(update: _VespaUpdateRequest) -> Response:
+            update_body = json.dumps(update.update_request)
+            logger.debug(
+                f"Updating with request to {update.url} with body {update_body}"
+            )
+            return requests.put(
+                update.url,
+                headers={"Content-Type": "application/json"},
+                data=update_body,
+            )
+
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=_NUM_THREADS
         ) as executor:
             for update_batch in batch_generator(updates, batch_size):
                 future_to_document_id = {
                     executor.submit(
-                        requests.put,
-                        update.url,
-                        headers={"Content-Type": "application/json"},
-                        data=json.dumps(update.update_request),
+                        _update_chunk,
+                        update,
                     ): update.document_id
                     for update in update_batch
                 }
@@ -451,14 +464,6 @@ class VespaIndex(DocumentIndex):
 
         processed_updates_requests: list[_VespaUpdateRequest] = []
         for update_request in update_requests:
-            if (
-                update_request.boost is None
-                and update_request.access is None
-                and update_request.document_sets is None
-            ):
-                logger.error("Update request received but nothing to update")
-                continue
-
             update_dict: dict[str, dict] = {"fields": {}}
             if update_request.boost is not None:
                 update_dict["fields"][BOOST] = {"assign": update_request.boost}
@@ -474,6 +479,12 @@ class VespaIndex(DocumentIndex):
                         acl_entry: 1 for acl_entry in update_request.access.to_acl()
                     }
                 }
+            if update_request.hidden is not None:
+                update_dict["fields"][HIDDEN] = {"assign": update_request.hidden}
+
+            if not update_dict["fields"]:
+                logger.error("Update request received but nothing to update")
+                continue
 
             for document_id in update_request.document_ids:
                 for doc_chunk_id in _get_vespa_chunk_ids_by_document_id(document_id):

@@ -24,6 +24,7 @@ PUBLIC_DOC_PAT = "PUBLIC"
 PUBLIC_DOCUMENT_SET = "__PUBLIC"
 QUOTE = "quote"
 BOOST = "boost"
+HIDDEN = "hidden"
 SCORE = "score"
 ID_SEPARATOR = ":;:"
 DEFAULT_BOOST = 0
