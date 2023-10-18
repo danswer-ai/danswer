@@ -37,7 +37,7 @@ def check_model_api_key_is_valid(model_api_key: str) -> bool:
     if not model_api_key:
         return False
 
-    llm = get_default_llm(api_key=model_api_key, timeout=5)
+    llm = get_default_llm(api_key=model_api_key, timeout=10)
 
     # try for up to 2 timeouts (e.g. 10 seconds in total)
     for _ in range(2):
