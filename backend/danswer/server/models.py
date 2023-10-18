@@ -135,6 +135,11 @@ class BoostUpdateRequest(BaseModel):
     boost: int
 
 
+class HiddenUpdateRequest(BaseModel):
+    document_id: str
+    hidden: bool
+
+
 class SearchDoc(BaseModel):
     document_id: str
     semantic_identifier: str

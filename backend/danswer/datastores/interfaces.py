@@ -36,6 +36,7 @@ class UpdateRequest:
     access: DocumentAccess | None = None
     document_sets: set[str] | None = None
     boost: float | None = None
+    hidden: bool | None = None
 
 
 class Verifiable(abc.ABC):
