@@ -200,6 +200,9 @@ class SlackTextCleaner:
         # Find user IDs in the message
         possible_link_matches = re.findall(r"<(.*?)>", message)
         for possible_link in possible_link_matches:
+            if not possible_link:
+                continue
+            # Special slack patterns that aren't for links
             if possible_link[0] not in ["#", "@", "!"]:
                 link_display = (
                     possible_link
