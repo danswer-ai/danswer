@@ -38,6 +38,7 @@ def _create_slack_bot_persona(
     persona = upsert_persona(
         persona_id=existing_persona_id,
         name=persona_name,
+        datetime_aware=False,
         retrieval_enabled=True,
         system_text=None,
         tools=None,
