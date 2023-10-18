@@ -53,6 +53,7 @@ from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.engine import get_session
 from danswer.db.feedback import fetch_docs_ranked_by_boost
 from danswer.db.feedback import update_document_boost
+from danswer.db.feedback import update_document_hidden
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import User
@@ -77,6 +78,7 @@ from danswer.server.models import GDriveCallback
 from danswer.server.models import GoogleAppCredentials
 from danswer.server.models import GoogleServiceAccountCredentialRequest
 from danswer.server.models import GoogleServiceAccountKey
+from danswer.server.models import HiddenUpdateRequest
 from danswer.server.models import IndexAttemptSnapshot
 from danswer.server.models import ObjectCreationIdResponse
 from danswer.server.models import RunConnectorRequest
@@ -127,6 +129,22 @@ def document_boost_update(
             db_session=db_session,
             document_id=boost_update.document_id,
             boost=boost_update.boost,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/admin/doc-hidden")
+def document_hidden_update(
+    hidden_update: HiddenUpdateRequest,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    try:
+        update_document_hidden(
+            db_session=db_session,
+            document_id=hidden_update.document_id,
+            hidden=hidden_update.hidden,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

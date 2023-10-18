@@ -47,7 +47,9 @@ schema danswer_chunk {
         field boost type float {
             indexing: summary | attribute
         }
-        field hidden type boolean {}
+        field hidden type bool {
+            indexing: summary | attribute
+        }
         field metadata type string {
             indexing: summary | attribute
         }

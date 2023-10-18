@@ -1,14 +1,8 @@
 import React from "react";
 import { getSourceIcon } from "../source";
-import { Funnel } from "@phosphor-icons/react";
 import { DocumentSet, ValidSources } from "@/lib/types";
 import { Source } from "@/lib/search/interfaces";
-import {
-  BookmarkIcon,
-  InfoIcon,
-  NotebookIcon,
-  defaultTailwindCSS,
-} from "../icons/icons";
+import { InfoIcon, defaultTailwindCSS } from "../icons/icons";
 import { HoverPopup } from "../HoverPopup";
 import { FiFilter } from "react-icons/fi";
 

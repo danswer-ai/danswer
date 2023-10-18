@@ -46,7 +46,11 @@ def fetch_docs_ranked_by_boost(
     db_session: Session, ascending: bool = False, limit: int = 100
 ) -> list[DbDocument]:
     order_func = asc if ascending else desc
-    stmt = select(DbDocument).order_by(order_func(DbDocument.boost)).limit(limit)
+    stmt = (
+        select(DbDocument)
+        .order_by(order_func(DbDocument.boost), order_func(DbDocument.semantic_id))
+        .limit(limit)
+    )
     result = db_session.execute(stmt)
     doc_list = result.scalars().all()
 
@@ -64,6 +68,24 @@ def update_document_boost(db_session: Session, document_id: str, boost: int) -> 
     update = UpdateRequest(
         document_ids=[document_id],
         boost=boost,
+    )
+
+    get_default_document_index().update([update])
+
+    db_session.commit()
+
+
+def update_document_hidden(db_session: Session, document_id: str, hidden: bool) -> None:
+    stmt = select(DbDocument).where(DbDocument.id == document_id)
+    result = db_session.execute(stmt).scalar_one_or_none()
+    if result is None:
+        raise ValueError(f"No document found with ID: '{document_id}'")
+
+    result.hidden = hidden
+
+    update = UpdateRequest(
+        document_ids=[document_id],
+        hidden=hidden,
     )
 
     get_default_document_index().update([update])
