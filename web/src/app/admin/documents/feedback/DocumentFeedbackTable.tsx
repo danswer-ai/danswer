@@ -6,11 +6,12 @@ import { DocumentBoostStatus } from "@/lib/types";
 import { updateBoost, updateHiddenStatus } from "./lib";
 import { CheckmarkIcon, EditIcon } from "@/components/icons/icons";
 import { numToDisplay } from "./constants";
-import { FiEye, FiEyeOff, FiX } from "react-icons/fi";
+import { FiCheck, FiCheckSquare, FiEye, FiEyeOff, FiX } from "react-icons/fi";
 import { getErrorMsg } from "@/lib/fetchUtils";
 import { HoverPopup } from "@/components/HoverPopup";
+import { CustomCheckbox } from "@/components/CustomCheckbox";
 
-const IsHiddenSection = ({
+const IsVisibleSection = ({
   document,
   onUpdate,
 }: {
@@ -32,7 +33,9 @@ const IsHiddenSection = ({
             className="flex text-red-700 cursor-pointer hover:bg-gray-700 py-1 px-2 w-fit rounded-full"
           >
             <div className="select-none">Hidden</div>
-            <FiEyeOff className="my-auto ml-1" />
+            <div className="ml-1 my-auto">
+              <CustomCheckbox checked={false} />
+            </div>
           </div>
         ) : (
           <div
@@ -46,7 +49,9 @@ const IsHiddenSection = ({
             className="flex text-gray-400 cursor-pointer hover:bg-gray-700 py-1 px-2 w-fit rounded-full"
           >
             <div className="text-gray-400 my-auto select-none">Visible</div>
-            <FiX className="my-auto ml-1" />
+            <div className="ml-1 my-auto">
+              <CustomCheckbox checked={true} />
+            </div>
           </div>
         )
       }
@@ -169,8 +174,8 @@ export const DocumentFeedbackTable = ({
             key: "name",
           },
           {
-            header: "Is Hidden?",
-            key: "hidden",
+            header: "Is Searchable?",
+            key: "visible",
           },
           {
             header: "Score",
@@ -192,8 +197,8 @@ export const DocumentFeedbackTable = ({
                   {document.semantic_id}
                 </a>
               ),
-              hidden: (
-                <IsHiddenSection
+              visible: (
+                <IsVisibleSection
                   document={document}
                   onUpdate={async (response) => {
                     if (response.ok) {
