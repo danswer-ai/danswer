@@ -31,9 +31,10 @@ oauthlib==3.2.2
 playwright==1.37.0
 psycopg2==2.9.6
 psycopg2-binary==2.9.6
+pycryptodome==3.19.0
 pydantic==1.10.7
 PyGithub==1.58.2
-PyPDF2==3.0.1
+pypdf==3.16.4
 pytest-playwright==0.3.2
 python-multipart==0.0.6
 qdrant-client==1.2.0
