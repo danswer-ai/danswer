@@ -153,11 +153,11 @@ NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL = int(
 NUM_DOCUMENT_TOKENS_FED_TO_CHAT = int(
     os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_CHAT") or (512 * 3)
 )
-# 1 / (1 + DOC_TIME_DECAY * number of years old for the doc)
+# 1 / (1 + DOC_TIME_DECAY * doc-age-in-years)
 # Capped in Vespa at 0.5
 DOC_TIME_DECAY = float(
-    os.environ.get("DOC_TIME_DECAY") or 0.5
-)  # Hits limit by 2 years by default
+    os.environ.get("DOC_TIME_DECAY") or 0.5  # Hits limit at 2 years by default
+)
 # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "60")  # 60 seconds

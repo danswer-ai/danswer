@@ -159,7 +159,7 @@ schema danswer_chunk {
     # used when searching from the admin UI for a specific doc to hide / boost
     rank-profile admin_search inherits default {
         first-phase {
-            expression: bm25(content) + (100 * bm25(title))
+            expression: bm25(content) + (5 * bm25(title))
         }
     }
 }

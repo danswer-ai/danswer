@@ -55,14 +55,3 @@ class InputType(str, Enum):
 class IndexAttemptMetadata:
     connector_id: int
     credential_id: int
-
-
-@dataclass
-class DbDocumentMetadata:
-    connector_id: int
-    credential_id: int
-
-
-@dataclass
-class DocBatchMetadata:
-    doc_id: DbDocumentMetadata
