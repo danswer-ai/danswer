@@ -147,6 +147,10 @@ class SearchDoc(BaseModel):
     blurb: str
     source_type: str
     boost: int
+    # whether the document is hidden when doing a standard search
+    # since a standard search will never find a hidden doc, this can only ever
+    # be `True` when doing an admin search
+    hidden: bool
     score: float | None
     # Matched sections in the doc. Uses Vespa syntax e.g. <hi>TEXT</hi>
     # to specify that a set of words should be highlighted. For example:

@@ -2,15 +2,20 @@ from collections.abc import Generator
 
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.datastores.document_index import get_default_document_index
+from danswer.datastores.interfaces import IndexFilter
+from danswer.datastores.vespa.store import VespaIndex
 from danswer.db.engine import get_session
 from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.feedback import create_query_event
@@ -38,6 +43,7 @@ from danswer.server.models import QAResponse
 from danswer.server.models import QueryValidationResponse
 from danswer.server.models import QuestionRequest
 from danswer.server.models import RerankedRetrievalDocs
+from danswer.server.models import SearchDoc
 from danswer.server.models import SearchFeedbackRequest
 from danswer.server.models import SearchResponse
 from danswer.server.utils import get_json_line
@@ -47,6 +53,57 @@ from danswer.utils.timing import log_generator_function_time
 logger = setup_logger()
 
 router = APIRouter()
+
+
+"""Admin-only search endpoints"""
+
+
+class AdminSearchRequest(BaseModel):
+    query: str
+    filters: list[IndexFilter] | None = None
+
+
+class AdminSearchResponse(BaseModel):
+    documents: list[SearchDoc]
+
+
+@router.post("/admin/search")
+def admin_search(
+    question: AdminSearchRequest,
+    user: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> AdminSearchResponse:
+    query = question.query
+    filters = question.filters
+    logger.info(f"Received admin search query: {query}")
+
+    user_id = None if user is None else user.id
+    user_acl_filters = build_access_filters_for_user(user, db_session)
+    final_filters = (filters or []) + user_acl_filters
+    document_index = get_default_document_index()
+    if not isinstance(document_index, VespaIndex):
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot use admin-search when using a non-Vespa document index",
+        )
+
+    matching_chunks = document_index.admin_retrieval(
+        query=query, user_id=user_id, filters=final_filters
+    )
+
+    documents = chunks_to_search_docs(matching_chunks)
+
+    # deduplicate documents by id
+    deduplicated_documents: list[SearchDoc] = []
+    seen_documents: set[str] = set()
+    for document in documents:
+        if document.document_id not in seen_documents:
+            deduplicated_documents.append(document)
+            seen_documents.add(document.document_id)
+    return AdminSearchResponse(documents=deduplicated_documents)
+
+
+"""Search endpoints for all"""
 
 
 @router.post("/search-intent")

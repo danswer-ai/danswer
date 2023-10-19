@@ -37,8 +37,20 @@ schema danswer_chunk {
         field source_links type string {
             indexing: summary | attribute
         }
+        # displayed in the UI as the main identifier for the doc
         field semantic_identifier type string {
             indexing: summary | attribute
+        }
+        # this is used when computing best matches based on the title of the document
+        # may not always match the `semantic_identifier` e.g. for Slack docs the 
+        # `semantic_identifier` will be the channel name, but the `title` will be empty
+        field title type string {
+            indexing: summary | index
+            match {
+                gram
+                gram-size: 3
+            }
+            index: enable-bm25
         }
         field section_continuation type bool {
             indexing: summary | attribute
@@ -70,7 +82,7 @@ schema danswer_chunk {
     }
 
     fieldset default {
-        fields: content
+        fields: content, title
     }
 
     rank-profile keyword_search inherits default {
@@ -102,5 +114,12 @@ schema danswer_chunk {
             expression: closeness(field, embeddings)
         }
         match-features: closest(embeddings)
+    }
+
+    # used when searching from the admin UI for a specific doc to hide / boost
+    rank-profile admin_search inherits default {
+        first-phase {
+            expression: bm25(content) + (100 * bm25(title))
+        }
     }
 }

@@ -148,6 +148,7 @@ def thread_to_doc(
         ],
         source=DocumentSource.SLACK,
         semantic_identifier=channel["name"],
+        title="",  # slack docs don't really have a "title"
         metadata={},
     )
 
@@ -302,6 +303,7 @@ class SlackLoadConnector(LoadConnector):
                     ],
                     source=matching_doc.source,
                     semantic_identifier=matching_doc.semantic_identifier,
+                    title="",  # slack docs don't really have a "title"
                     metadata=matching_doc.metadata,
                 )
 
@@ -319,6 +321,7 @@ class SlackLoadConnector(LoadConnector):
                 ],
                 source=DocumentSource.SLACK,
                 semantic_identifier=channel["name"],
+                title="",  # slack docs don't really have a "title"
                 metadata={},
             )
 

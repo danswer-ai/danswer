@@ -25,6 +25,7 @@ import {
   Document360Icon,
   GoogleSitesIcon,
   GongIcon,
+  ZoomInIcon,
 } from "@/components/icons/icons";
 import { getAuthDisabledSS, getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
@@ -271,6 +272,15 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                   ),
                   link: "/admin/documents/sets",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <ZoomInIcon size={18} />
+                      <div className="ml-1">Explorer</div>
+                    </div>
+                  ),
+                  link: "/admin/documents/explorer",
                 },
                 {
                   name: (
