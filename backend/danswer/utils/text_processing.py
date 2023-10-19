@@ -22,7 +22,7 @@ def extract_embedded_json(s: str) -> dict:
     if first_brace_index == -1 or last_brace_index == -1:
         raise ValueError("No valid json found")
 
-    return json.loads(s[first_brace_index : last_brace_index + 1])
+    return json.loads(s[first_brace_index : last_brace_index + 1], strict=False)
 
 
 def clean_up_code_blocks(model_out_raw: str) -> str:
