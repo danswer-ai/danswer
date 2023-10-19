@@ -49,6 +49,7 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
                 blurb=chunk.blurb,
                 source_type=chunk.source_type,
                 boost=chunk.boost,
+                hidden=chunk.hidden,
                 score=chunk.score,
                 match_highlights=chunk.match_highlights,
             )

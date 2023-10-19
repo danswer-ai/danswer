@@ -12,6 +12,7 @@ export const CustomCheckbox = ({
         className="hidden"
         checked={checked}
         onChange={onChange}
+        readOnly={onChange ? false : true}
       />
       <span className="relative">
         <span

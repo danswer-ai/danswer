@@ -32,6 +32,7 @@ export interface DanswerDocument {
   blurb: string;
   semantic_identifier: string | null;
   boost: number;
+  hidden: boolean;
   score: number;
   match_highlights: string[];
 }
