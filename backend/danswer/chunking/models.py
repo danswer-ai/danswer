@@ -92,6 +92,7 @@ class InferenceChunk(BaseChunk):
     source_type: str
     semantic_identifier: str
     boost: int
+    recency_bias: float
     score: float | None
     hidden: bool
     metadata: dict[str, Any]

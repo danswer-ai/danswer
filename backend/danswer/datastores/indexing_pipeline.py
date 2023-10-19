@@ -33,29 +33,30 @@ class IndexingPipelineProtocol(Protocol):
 
 
 def _upsert_documents(
-    document_ids: list[str],
+    documents: list[Document],
     index_attempt_metadata: IndexAttemptMetadata,
-    doc_m_data_lookup: dict[str, tuple[str, str]],
     db_session: Session,
 ) -> None:
+    doc_m_batch: list[DocumentMetadata] = []
+    for doc in documents:
+        first_link = next(
+            (section.link for section in doc.sections if section.link), ""
+        )
+        db_doc_metadata = DocumentMetadata(
+            connector_id=index_attempt_metadata.connector_id,
+            credential_id=index_attempt_metadata.credential_id,
+            document_id=doc.id,
+            semantic_identifier=doc.semantic_identifier,
+            first_link=first_link,
+            primary_owners=doc.primary_owners,
+            secondary_owners=doc.secondary_owners,
+        )
+        doc_m_batch.append(db_doc_metadata)
+
     upsert_documents_complete(
         db_session=db_session,
-        document_metadata_batch=[
-            DocumentMetadata(
-                connector_id=index_attempt_metadata.connector_id,
-                credential_id=index_attempt_metadata.credential_id,
-                document_id=document_id,
-                semantic_identifier=doc_m_data_lookup[document_id][0],
-                first_link=doc_m_data_lookup[document_id][1],
-            )
-            for document_id in document_ids
-        ],
+        document_metadata_batch=doc_m_batch,
     )
-
-
-def _extract_minimal_document_metadata(doc: Document) -> tuple[str, str]:
-    first_link = next((section.link for section in doc.sections if section.link), "")
-    return doc.semantic_identifier, first_link
 
 
 def _indexing_pipeline(
@@ -70,9 +71,6 @@ def _indexing_pipeline(
     Note that the documents should already be batched at this point so that it does not inflate the
     memory requirements"""
     document_ids = [document.id for document in documents]
-    document_metadata_lookup = {
-        doc.id: _extract_minimal_document_metadata(doc) for doc in documents
-    }
 
     with Session(get_sqlalchemy_engine()) as db_session:
         # acquires a lock on the documents so that no other process can modify them
@@ -80,9 +78,8 @@ def _indexing_pipeline(
 
         # create records in the source of truth about these documents
         _upsert_documents(
-            document_ids=document_ids,
+            documents=documents,
             index_attempt_metadata=index_attempt_metadata,
-            doc_m_data_lookup=document_metadata_lookup,
             db_session=db_session,
         )
 

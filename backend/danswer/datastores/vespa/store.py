@@ -14,6 +14,7 @@ from requests import Response
 
 from danswer.chunking.models import DocMetadataAwareIndexChunk
 from danswer.chunking.models import InferenceChunk
+from danswer.configs.app_configs import DOC_TIME_DECAY
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.app_configs import NUM_RETURNED_HITS
@@ -27,19 +28,24 @@ from danswer.configs.constants import BOOST
 from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import DEFAULT_BOOST
+from danswer.configs.constants import DOC_UPDATED_AT
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import DOCUMENT_SETS
 from danswer.configs.constants import EMBEDDINGS
 from danswer.configs.constants import HIDDEN
 from danswer.configs.constants import MATCH_HIGHLIGHTS
 from danswer.configs.constants import METADATA
+from danswer.configs.constants import PRIMARY_OWNERS
+from danswer.configs.constants import RECENCY_BIAS
 from danswer.configs.constants import SCORE
+from danswer.configs.constants import SECONDARY_OWNERS
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.constants import TITLE
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
+from danswer.datastores.datastore_utils import ensure_doc_updated_time
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import DocumentInsertionRecord
@@ -172,6 +178,9 @@ def _index_vespa_chunk(
         METADATA: json.dumps(document.metadata),
         EMBEDDINGS: embeddings_name_vector_map,
         BOOST: DEFAULT_BOOST,
+        DOC_UPDATED_AT: ensure_doc_updated_time(document.doc_updated_at),
+        PRIMARY_OWNERS: document.primary_owners,
+        SECONDARY_OWNERS: document.secondary_owners,
         # the only `set` vespa has is `weightedset`, so we have to give each
         # element an arbitrary weight
         ACCESS_CONTROL_LIST: {acl_entry: 1 for acl_entry in chunk.access.to_acl()},
@@ -363,6 +372,7 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
         InferenceChunk.from_dict(
             dict(
                 hit["fields"],
+                **{RECENCY_BIAS: hit["fields"]["matchfeatures"][RECENCY_BIAS]},
                 **{SCORE: hit["relevance"]},
                 **{
                     MATCH_HIGHLIGHTS: _process_dynamic_summary(
@@ -395,7 +405,8 @@ class VespaIndex(DocumentIndex):
         f"{SECTION_CONTINUATION}, "
         f"{BOOST}, "
         f"{HIDDEN}, "
-        f"{METADATA} "
+        f"{DOC_UPDATED_AT}, "
+        f"{METADATA}, "
         f"{CONTENT_SUMMARY} "
         f"from {DOCUMENT_INDEX_NAME} where "
     )
@@ -538,6 +549,7 @@ class VespaIndex(DocumentIndex):
         params: dict[str, str | int] = {
             "yql": yql,
             "query": query,
+            "input.query(decay_factor)": str(DOC_TIME_DECAY),
             "hits": num_to_retrieve,
             "num_to_rerank": 10 * num_to_retrieve,
             "ranking.profile": "keyword_search",
@@ -575,6 +587,7 @@ class VespaIndex(DocumentIndex):
             "yql": yql,
             "query": query_keywords,
             "input.query(query_embedding)": str(query_embedding),
+            "input.query(decay_factor)": str(DOC_TIME_DECAY),
             "ranking.profile": "semantic_search",
         }
 
@@ -606,6 +619,7 @@ class VespaIndex(DocumentIndex):
             "yql": yql,
             "query": query,
             "input.query(query_embedding)": str(query_embedding),
+            "input.query(decay_factor)": str(DOC_TIME_DECAY),
             "ranking.profile": "hybrid_search",
         }
 

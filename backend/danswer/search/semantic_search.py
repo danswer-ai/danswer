@@ -86,7 +86,8 @@ def semantic_reranking(
     ) / len(sim_scores)
 
     boosts = [translate_boost_count_to_multiplier(chunk.boost) for chunk in chunks]
-    boosted_sim_scores = shifted_sim_scores * boosts
+    recency_multiplier = [chunk.recency_bias for chunk in chunks]
+    boosted_sim_scores = shifted_sim_scores * boosts * recency_multiplier
     normalized_b_s_scores = (boosted_sim_scores + cross_models_min - model_min) / (
         model_max - model_min
     )
