@@ -168,7 +168,7 @@ const Main = ({
       {!query && (
         <div className="flex">
           <FiZap className="my-auto mr-1 text-blue-400" /> Search for a document
-          above to modify it's boost or hide it from searches.
+          above to modify it&apos;s boost or hide it from searches.
         </div>
       )}
     </div>
