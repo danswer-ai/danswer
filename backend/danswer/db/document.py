@@ -158,6 +158,9 @@ def upsert_documents(
                     hidden=False,
                     semantic_id=doc.semantic_identifier,
                     link=doc.first_link,
+                    doc_updated_at=doc.doc_updated_at,
+                    primary_owners=doc.primary_owners,
+                    secondary_owners=doc.secondary_owners,
                 )
             )
             for doc in seen_documents.values()

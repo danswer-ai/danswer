@@ -398,6 +398,19 @@ class Document(Base):
     semantic_id: Mapped[str] = mapped_column(String)
     # First Section's link
     link: Mapped[str | None] = mapped_column(String, nullable=True)
+    doc_updated_at: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # The following are not attached to User because the account/email may not be known
+    # within Danswer
+    # Something like the document creator
+    primary_owners: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
+    # Something like assignee or space owner
+    secondary_owners: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
     # TODO if more sensitive data is added here for display, make sure to add user/group permission
 
     retrieval_feedbacks: Mapped[List[DocumentRetrievalFeedback]] = relationship(
