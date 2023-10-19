@@ -4,7 +4,7 @@ import { getSourceIcon } from "../source";
 import { useState } from "react";
 import { PopupSpec } from "../admin/connectors/Popup";
 
-const buildDocumentSummaryDisplay = (
+export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
   blurb: string
 ) => {

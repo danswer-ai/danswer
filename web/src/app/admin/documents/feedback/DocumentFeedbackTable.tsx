@@ -3,13 +3,14 @@ import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { PageSelector } from "@/components/PageSelector";
 import { DocumentBoostStatus } from "@/lib/types";
-import { updateBoost, updateHiddenStatus } from "./lib";
+import { updateBoost, updateHiddenStatus } from "../lib";
 import { CheckmarkIcon, EditIcon } from "@/components/icons/icons";
 import { numToDisplay } from "./constants";
-import { FiCheck, FiCheckSquare, FiEye, FiEyeOff, FiX } from "react-icons/fi";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import { getErrorMsg } from "@/lib/fetchUtils";
 import { HoverPopup } from "@/components/HoverPopup";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
+import { ScoreSection } from "../ScoreEditor";
 
 const IsVisibleSection = ({
   document,
@@ -71,86 +72,6 @@ const IsVisibleSection = ({
       }
       direction="left"
     />
-  );
-};
-
-const ScoreSection = ({
-  documentId,
-  initialScore,
-  setPopup,
-  refresh,
-}: {
-  documentId: string;
-  initialScore: number;
-  setPopup: (popupSpec: PopupSpec | null) => void;
-  refresh: () => void;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [score, setScore] = useState(initialScore.toString());
-
-  const onSubmit = async () => {
-    const numericScore = Number(score);
-    if (isNaN(numericScore)) {
-      setPopup({
-        message: "Score must be a number",
-        type: "error",
-      });
-      return;
-    }
-
-    const errorMsg = await updateBoost(documentId, numericScore);
-    if (errorMsg) {
-      setPopup({
-        message: errorMsg,
-        type: "error",
-      });
-    } else {
-      setPopup({
-        message: "Updated score!",
-        type: "success",
-      });
-      refresh();
-      setIsOpen(false);
-    }
-  };
-
-  if (isOpen) {
-    return (
-      <div className="m-auto flex">
-        <input
-          value={score}
-          onChange={(e) => {
-            setScore(e.target.value);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              onSubmit();
-            }
-            if (e.key === "Escape") {
-              setIsOpen(false);
-              setScore(initialScore.toString());
-            }
-          }}
-          className="border bg-slate-700 text-gray-200 border-gray-300 rounded py-1 px-3 w-16"
-        />
-        <div onClick={onSubmit} className="cursor-pointer my-auto ml-2">
-          <CheckmarkIcon size={20} className="text-green-700" />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="h-full flex flex-col">
-      <div className="flex my-auto">
-        <div className="w-6 flex">
-          <div className="ml-auto">{initialScore}</div>
-        </div>
-        <div className="cursor-pointer ml-2" onClick={() => setIsOpen(true)}>
-          <EditIcon size={20} />
-        </div>
-      </div>
-    </div>
   );
 };
 

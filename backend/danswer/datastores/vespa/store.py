@@ -38,6 +38,7 @@ from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
+from danswer.configs.constants import TITLE
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
 from danswer.datastores.interfaces import DocumentIndex
@@ -166,6 +167,7 @@ def _index_vespa_chunk(
         SOURCE_TYPE: str(document.source.value),
         SOURCE_LINKS: json.dumps(chunk.source_links),
         SEMANTIC_IDENTIFIER: document.semantic_identifier,
+        TITLE: document.get_title_for_document_index(),
         SECTION_CONTINUATION: chunk.section_continuation,
         METADATA: json.dumps(document.metadata),
         EMBEDDINGS: embeddings_name_vector_map,
@@ -264,7 +266,9 @@ def _index_vespa_chunks(
     return insertion_records
 
 
-def _build_vespa_filters(filters: list[IndexFilter] | None) -> str:
+def _build_vespa_filters(
+    filters: list[IndexFilter] | None, include_hidden: bool = False
+) -> str:
     # NOTE: permissions filters are expected to be passed in directly via
     # the `filters` arg, which is why they are not considered explicitly here
 
@@ -272,8 +276,9 @@ def _build_vespa_filters(filters: list[IndexFilter] | None) -> str:
     # via the `filters` arg. These are set either in the Web UI or in the Slack
     # listener
 
-    # ignore hidden docs
-    filter_str = f"!({HIDDEN}=true) and "
+    # usually ignore hidden docs unless explicitly requested. We may want to
+    # get hidden docs on the admin panel to allow for un-hiding
+    filter_str = f"!({HIDDEN}=true) and " if include_hidden else ""
 
     # Handle provided query filters
     if filters:
@@ -389,6 +394,7 @@ class VespaIndex(DocumentIndex):
         f"{SEMANTIC_IDENTIFIER}, "
         f"{SECTION_CONTINUATION}, "
         f"{BOOST}, "
+        f"{HIDDEN}, "
         f"{METADATA} "
         f"{CONTENT_SUMMARY} "
         f"from {DOCUMENT_INDEX_NAME} where "
@@ -601,6 +607,35 @@ class VespaIndex(DocumentIndex):
             "query": query,
             "input.query(query_embedding)": str(query_embedding),
             "ranking.profile": "hybrid_search",
+        }
+
+        return _query_vespa(params)
+
+    def admin_retrieval(
+        self,
+        query: str,
+        user_id: UUID | None,
+        filters: list[IndexFilter] | None,
+        num_to_retrieve: int = NUM_RETURNED_HITS,
+    ) -> list[InferenceChunk]:
+        vespa_where_clauses = _build_vespa_filters(filters)
+        yql = (
+            VespaIndex.yql_base
+            + vespa_where_clauses
+            + '({grammar: "weakAnd"}userInput(@query) '
+            # `({defaultIndex: "content_summary"}userInput(@query))` section is
+            # needed for highlighting while the N-gram highlighting is broken /
+            # not working as desired
+            + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
+            + _build_vespa_limit(num_to_retrieve)
+        )
+
+        params: dict[str, str | int] = {
+            "yql": yql,
+            "query": query,
+            "hits": num_to_retrieve,
+            "num_to_rerank": 10 * num_to_retrieve,
+            "ranking.profile": "admin_search",
         }
 
         return _query_vespa(params)

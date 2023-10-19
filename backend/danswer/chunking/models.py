@@ -93,6 +93,7 @@ class InferenceChunk(BaseChunk):
     semantic_identifier: str
     boost: int
     score: float | None
+    hidden: bool
     metadata: dict[str, Any]
     # Matched sections in the chunk. Uses Vespa syntax e.g. <hi>TEXT</hi>
     # to specify that a set of words should be highlighted. For example:
