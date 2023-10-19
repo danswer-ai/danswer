@@ -34,7 +34,7 @@ def get_uuid_from_chunk(
     return uuid.uuid5(uuid.NAMESPACE_X500, unique_identifier_string)
 
 
-def ensure_doc_updated_time(t: datetime | None) -> int | None:
+def translate_to_epoch_seconds_ensure_tz(t: datetime | None) -> int | None:
     if not t:
         return None
 

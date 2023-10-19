@@ -45,8 +45,8 @@ from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.constants import TITLE
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
-from danswer.datastores.datastore_utils import ensure_doc_updated_time
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
+from danswer.datastores.datastore_utils import translate_to_epoch_seconds_ensure_tz
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import DocumentInsertionRecord
 from danswer.datastores.interfaces import IndexFilter
@@ -178,7 +178,7 @@ def _index_vespa_chunk(
         METADATA: json.dumps(document.metadata),
         EMBEDDINGS: embeddings_name_vector_map,
         BOOST: DEFAULT_BOOST,
-        DOC_UPDATED_AT: ensure_doc_updated_time(document.doc_updated_at),
+        DOC_UPDATED_AT: translate_to_epoch_seconds_ensure_tz(document.doc_updated_at),
         PRIMARY_OWNERS: document.primary_owners,
         SECONDARY_OWNERS: document.secondary_owners,
         # the only `set` vespa has is `weightedset`, so we have to give each
