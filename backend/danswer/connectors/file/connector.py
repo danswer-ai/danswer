@@ -1,10 +1,9 @@
-import os
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 from typing import IO
 
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -40,20 +39,41 @@ def _open_files_at_location(
         logger.warning(f"Skipping file '{file_path}' with extension '{extension}'")
 
 
-def _process_file(file_name: str, file: IO[Any]) -> list[Document]:
+def _process_file(
+    file_name: str,
+    file: IO[Any],
+    pdf_pass: str | None = None,
+) -> list[Document]:
     extension = get_file_ext(file_name)
     if not check_file_ext_is_valid(extension):
         logger.warning(f"Skipping file '{file_name}' with extension '{extension}'")
         return []
 
     metadata: dict[str, Any] = {}
-    file_content_raw = ""
     if extension == ".pdf":
         pdf_reader = PdfReader(file)
-        if not pdf_reader.is_encrypted:
-            file_content_raw = "\n".join(
-                page.extract_text() for page in pdf_reader.pages
-            )
+        if pdf_reader.is_encrypted:
+            decrypt_success = False
+            if pdf_pass is not None:
+                try:
+                    decrypt_success = pdf_reader.decrypt(pdf_pass) != 0
+                except Exception:
+                    logger.error(f"Unable to decrypt pdf {file_name}")
+            if not decrypt_success:
+                # By user request, keep files that are unreadable just so they
+                # can be discoverable by title.
+                return [
+                    Document(
+                        id=file_name,
+                        sections=[Section(link=metadata.get("link", ""), text="")],
+                        source=DocumentSource.FILE,
+                        semantic_identifier=file_name,
+                        metadata={},
+                    )
+                ]
+
+        file_content_raw = "\n".join(page.extract_text() for page in pdf_reader.pages)
+
     else:
         file_content_raw, metadata = read_file(file)
 
@@ -76,9 +96,11 @@ class LocalFileConnector(LoadConnector):
     ) -> None:
         self.file_locations = [Path(file_location) for file_location in file_locations]
         self.batch_size = batch_size
+        self.pdf_pass: str | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        pass
+        self.pdf_pass = credentials.get("pdf_password")
+        return None
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         documents: list[Document] = []
@@ -86,7 +108,7 @@ class LocalFileConnector(LoadConnector):
             files = _open_files_at_location(file_location)
 
             for file_name, file in files:
-                documents.extend(_process_file(file_name, file))
+                documents.extend(_process_file(file_name, file, self.pdf_pass))
 
                 if len(documents) >= self.batch_size:
                     yield documents
@@ -94,3 +116,13 @@ class LocalFileConnector(LoadConnector):
 
         if documents:
             yield documents
+
+
+if __name__ == "__main__":
+    import os
+
+    connector = LocalFileConnector(file_locations=[os.environ["TEST_FILE"]])
+    connector.load_credentials({"pdf_password": os.environ["PDF_PASSWORD"]})
+
+    document_batches = connector.load_from_state()
+    print(next(document_batches))
