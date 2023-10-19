@@ -1,5 +1,6 @@
 import abc
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -24,6 +25,11 @@ class DocumentMetadata:
     document_id: str
     semantic_identifier: str
     first_link: str
+    doc_updated_at: datetime | None = None
+    # Emails, not necessarily attached to users
+    # Users may not be in Danswer
+    primary_owners: list[str] | None = None
+    secondary_owners: list[str] | None = None
 
 
 @dataclass

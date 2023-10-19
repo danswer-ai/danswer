@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from typing import Any
 
@@ -26,6 +27,12 @@ class Document:
     source: DocumentSource
     semantic_identifier: str  # displayed in the UI as the main identifier for the doc
     metadata: dict[str, Any]
+    # UTC time
+    doc_updated_at: datetime | None = None
+    # Owner, creator, etc.
+    primary_owners: list[str] | None = None
+    # Assignee, space owner, etc.
+    secondary_owners: list[str] | None = None
     # `title` is used when computing best matches for a query
     # if `None`, then we will use the `semantic_identifier` as the title in Vespa
     title: str | None = None
