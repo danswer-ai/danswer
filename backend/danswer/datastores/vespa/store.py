@@ -287,7 +287,7 @@ def _build_vespa_filters(
 
     # usually ignore hidden docs unless explicitly requested. We may want to
     # get hidden docs on the admin panel to allow for un-hiding
-    filter_str = f"!({HIDDEN}=true) and " if include_hidden else ""
+    filter_str = f"!({HIDDEN}=true) and " if not include_hidden else ""
 
     # Handle provided query filters
     if filters:
@@ -632,7 +632,7 @@ class VespaIndex(DocumentIndex):
         filters: list[IndexFilter] | None,
         num_to_retrieve: int = NUM_RETURNED_HITS,
     ) -> list[InferenceChunk]:
-        vespa_where_clauses = _build_vespa_filters(filters)
+        vespa_where_clauses = _build_vespa_filters(filters, include_hidden=True)
         yql = (
             VespaIndex.yql_base
             + vespa_where_clauses
