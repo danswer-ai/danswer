@@ -12,7 +12,6 @@ import docx2txt  # type:ignore
 from google.auth.credentials import Credentials  # type: ignore
 from googleapiclient import discovery  # type: ignore
 from googleapiclient.errors import HttpError  # type: ignore
-from pypdf import PdfReader
 
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import GOOGLE_DRIVE_FOLLOW_SHORTCUTS
@@ -20,6 +19,7 @@ from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
+from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
 from danswer.connectors.google_drive.connector_auth import (
     get_google_drive_creds_for_authorized_user,
 )
@@ -313,16 +313,8 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
         return docx2txt.process(temp_path)
     elif mime_type == GDriveMimeType.PDF.value:
         response = service.files().get_media(fileId=file["id"]).execute()
-        pdf_stream = io.BytesIO(response)
-        pdf_reader = PdfReader(pdf_stream)
-
-        if pdf_reader.is_encrypted:
-            logger.warning(
-                f"Google drive file: {file['name']} is encrypted - Danswer will ignore it's content"
-            )
-            return ""
-
-        return "\n".join(page.extract_text() for page in pdf_reader.pages)
+        file_contents = read_pdf_file(file=io.BytesIO(response), file_name=file["name"])
+        return file_contents
 
     return UNSUPPORTED_FILE_TYPE_CONTENT
 
