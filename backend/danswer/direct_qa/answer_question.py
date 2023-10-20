@@ -9,6 +9,7 @@ from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.datastores.document_index import get_default_document_index
 from danswer.db.feedback import create_query_event
+from danswer.db.feedback import update_query_event_retrieved_documents
 from danswer.db.models import User
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
@@ -55,7 +56,9 @@ def answer_qa_query(
 
     query_event_id = create_query_event(
         query=query,
-        selected_flow=SearchType.KEYWORD,
+        selected_flow=SearchType.KEYWORD
+        if question.use_keyword
+        else SearchType.SEMANTIC,
         llm_answer=None,
         user_id=user.id if user is not None else None,
         db_session=db_session,
@@ -97,13 +100,22 @@ def answer_qa_query(
             query_event_id=query_event_id,
         )
 
+    top_docs = chunks_to_search_docs(ranked_chunks)
+    unranked_top_docs = chunks_to_search_docs(unranked_chunks)
+    update_query_event_retrieved_documents(
+        db_session=db_session,
+        retrieved_document_ids=[doc.document_id for doc in top_docs],
+        query_id=query_event_id,
+        user_id=user_id,
+    )
+
     if disable_generative_answer:
         logger.debug("Skipping QA because generative AI is disabled")
         return QAResponse(
             answer=None,
             quotes=None,
-            top_ranked_docs=chunks_to_search_docs(ranked_chunks),
-            lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
+            top_ranked_docs=top_docs,
+            lower_ranked_docs=unranked_top_docs,
             # set flow as search so frontend doesn't ask the user if they want
             # to run QA over more documents
             predicted_flow=QueryFlow.SEARCH,
@@ -119,8 +131,8 @@ def answer_qa_query(
         return QAResponse(
             answer=None,
             quotes=None,
-            top_ranked_docs=chunks_to_search_docs(ranked_chunks),
-            lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
+            top_ranked_docs=top_docs,
+            lower_ranked_docs=unranked_top_docs,
             predicted_flow=predicted_flow,
             predicted_search=predicted_search,
             error_msg=str(e),
@@ -162,8 +174,8 @@ def answer_qa_query(
         return QAResponse(
             answer=d_answer.answer if d_answer else None,
             quotes=quotes.quotes if quotes else None,
-            top_ranked_docs=chunks_to_search_docs(ranked_chunks),
-            lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
+            top_ranked_docs=top_docs,
+            lower_ranked_docs=unranked_top_docs,
             predicted_flow=predicted_flow,
             predicted_search=predicted_search,
             eval_res_valid=True if valid else False,
@@ -174,8 +186,8 @@ def answer_qa_query(
     return QAResponse(
         answer=d_answer.answer if d_answer else None,
         quotes=quotes.quotes if quotes else None,
-        top_ranked_docs=chunks_to_search_docs(ranked_chunks),
-        lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
+        top_ranked_docs=top_docs,
+        lower_ranked_docs=unranked_top_docs,
         predicted_flow=predicted_flow,
         predicted_search=predicted_search,
         error_msg=error_msg,
