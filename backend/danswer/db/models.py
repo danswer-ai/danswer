@@ -346,6 +346,12 @@ class QueryEvent(Base):
         Enum(SearchType), nullable=True
     )
     llm_answer: Mapped[str | None] = mapped_column(Text, default=None)
+    # Document IDs of the top context documents retrieved for the query (if any)
+    # NOTE: not using a foreign key to enable easy deletion of documents without
+    # needing to adjust `QueryEvent` rows
+    retrieved_document_ids: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
     feedback: Mapped[QAFeedbackType | None] = mapped_column(
         Enum(QAFeedbackType), nullable=True
     )
