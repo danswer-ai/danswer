@@ -20,6 +20,7 @@ from danswer.db.engine import get_session
 from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.feedback import create_query_event
 from danswer.db.feedback import update_query_event_feedback
+from danswer.db.feedback import update_query_event_retrieved_documents
 from danswer.db.models import User
 from danswer.direct_qa.answer_question import answer_qa_query
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
@@ -165,6 +166,12 @@ def semantic_search(
 
     top_docs = chunks_to_search_docs(ranked_chunks)
     other_top_docs = chunks_to_search_docs(unranked_chunks)
+    update_query_event_retrieved_documents(
+        db_session=db_session,
+        retrieved_document_ids=[doc.document_id for doc in top_docs],
+        query_id=query_event_id,
+        user_id=user_id,
+    )
 
     return SearchResponse(
         top_ranked_docs=top_docs,
@@ -203,6 +210,13 @@ def keyword_search(
         )
 
     top_docs = chunks_to_search_docs(ranked_chunks)
+    update_query_event_retrieved_documents(
+        db_session=db_session,
+        retrieved_document_ids=[doc.document_id for doc in top_docs],
+        query_id=query_event_id,
+        user_id=user_id,
+    )
+
     return SearchResponse(
         top_ranked_docs=top_docs, lower_ranked_docs=None, query_event_id=query_event_id
     )
@@ -349,6 +363,7 @@ def stream_direct_qa(
             if question.use_keyword
             else SearchType.SEMANTIC,
             llm_answer=answer_so_far,
+            retrieved_document_ids=[doc.document_id for doc in top_docs],
             user_id=user_id,
             db_session=db_session,
         )
