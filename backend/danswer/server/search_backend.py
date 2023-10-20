@@ -336,10 +336,12 @@ def stream_direct_qa(
                     answer_so_far = answer_so_far + response_packet.answer_piece
                 logger.debug(f"Sending packet: {response_packet}")
                 yield get_json_line(response_packet.dict())
-        except Exception as e:
+        except Exception:
             # exception is logged in the answer_question method, no need to re-log
-            yield get_json_line({"error": str(e)})
             logger.exception("Failed to run QA")
+            yield get_json_line(
+                {"error": "The LLM failed to produce a useable response"}
+            )
 
         query_event_id = create_query_event(
             query=query,
