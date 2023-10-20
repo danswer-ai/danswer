@@ -33,7 +33,11 @@ def read_pdf_file(file: IO[Any], file_name: str, pdf_pass: str | None = None) ->
             # can be discoverable by title.
             return ""
 
-    return "\n".join(page.extract_text() for page in pdf_reader.pages)
+    try:
+        return "\n".join(page.extract_text() for page in pdf_reader.pages)
+    except Exception:
+        logger.exception(f"Failed to read PDF {file_name}")
+        return ""
 
 
 def is_macos_resource_fork_file(file_name: str) -> bool:
