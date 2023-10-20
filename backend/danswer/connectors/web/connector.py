@@ -13,7 +13,6 @@ from oauthlib.oauth2 import BackendApplicationClient
 from playwright.sync_api import BrowserContext
 from playwright.sync_api import Playwright
 from playwright.sync_api import sync_playwright
-from pypdf import PdfReader
 from requests_oauthlib import OAuth2Session  # type:ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -21,6 +20,7 @@ from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_ID
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_TOKEN_URL
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
 from danswer.connectors.cross_connector_utils.html_utils import web_html_cleanup
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
@@ -182,10 +182,9 @@ class WebConnector(LoadConnector):
                 if current_url.split(".")[-1] == "pdf":
                     # PDF files are not checked for links
                     response = requests.get(current_url)
-                    pdf_reader = PdfReader(io.BytesIO(response.content))
-                    page_text = ""
-                    for pdf_page in pdf_reader.pages:
-                        page_text += pdf_page.extract_text()
+                    page_text = read_pdf_file(
+                        file=io.BytesIO(response.content), file_name=current_url
+                    )
 
                     doc_batch.append(
                         Document(

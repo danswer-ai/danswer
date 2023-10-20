@@ -6,7 +6,34 @@ from pathlib import Path
 from typing import Any
 from typing import IO
 
+from pypdf import PdfReader
+
+from danswer.utils.logger import setup_logger
+
+
+logger = setup_logger()
+
 _METADATA_FLAG = "#DANSWER_METADATA="
+
+
+def read_pdf_file(file: IO[Any], file_name: str, pdf_pass: str | None = None) -> str:
+    pdf_reader = PdfReader(file)
+    if pdf_reader.is_encrypted:
+        decrypt_success = False
+        if pdf_pass is not None:
+            try:
+                decrypt_success = pdf_reader.decrypt(pdf_pass) != 0
+            except Exception:
+                logger.error(f"Unable to decrypt pdf {file_name}")
+        else:
+            logger.info(f"No Password available to to decrypt pdf {file_name}")
+
+        if not decrypt_success:
+            # By user request, keep files that are unreadable just so they
+            # can be discoverable by title.
+            return ""
+
+    return "\n".join(page.extract_text() for page in pdf_reader.pages)
 
 
 def is_macos_resource_fork_file(file_name: str) -> bool:

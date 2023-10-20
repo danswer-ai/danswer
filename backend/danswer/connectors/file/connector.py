@@ -3,12 +3,11 @@ from pathlib import Path
 from typing import Any
 from typing import IO
 
-from pypdf import PdfReader
-
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.file_utils import load_files_from_zip
 from danswer.connectors.cross_connector_utils.file_utils import read_file
+from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
 from danswer.connectors.file.utils import check_file_ext_is_valid
 from danswer.connectors.file.utils import get_file_ext
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -50,30 +49,11 @@ def _process_file(
         return []
 
     metadata: dict[str, Any] = {}
+
     if extension == ".pdf":
-        pdf_reader = PdfReader(file)
-        if pdf_reader.is_encrypted:
-            decrypt_success = False
-            if pdf_pass is not None:
-                try:
-                    decrypt_success = pdf_reader.decrypt(pdf_pass) != 0
-                except Exception:
-                    logger.error(f"Unable to decrypt pdf {file_name}")
-            if not decrypt_success:
-                # By user request, keep files that are unreadable just so they
-                # can be discoverable by title.
-                return [
-                    Document(
-                        id=file_name,
-                        sections=[Section(link=metadata.get("link", ""), text="")],
-                        source=DocumentSource.FILE,
-                        semantic_identifier=file_name,
-                        metadata={},
-                    )
-                ]
-
-        file_content_raw = "\n".join(page.extract_text() for page in pdf_reader.pages)
-
+        file_content_raw = read_pdf_file(
+            file=file, file_name=file_name, pdf_pass=pdf_pass
+        )
     else:
         file_content_raw, metadata = read_file(file)
 
