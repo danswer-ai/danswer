@@ -47,6 +47,7 @@ def format_document_soup(
     list_element_start = False
     verbatim_output = 0
     in_table = False
+    last_added_newline = False
     for e in document.descendants:
         verbatim_output -= 1
         if isinstance(e, bs4.element.NavigableString):
@@ -57,11 +58,24 @@ def format_document_soup(
                 # Tables are represented in natural language with rows separated by newlines
                 # Can't have newlines then in the table elements
                 element_text = element_text.replace("\n", " ").strip()
+            if last_added_newline and element_text.startswith(" "):
+                element_text = element_text[1:]
+                last_added_newline = False
             if element_text:
-                if verbatim_output > 0:
-                    text += element_text
-                else:
-                    text += strip_newlines(element_text)
+                content_to_add = (
+                    element_text
+                    if verbatim_output > 0
+                    else strip_newlines(element_text)
+                )
+
+                # Don't join separate elements without any spacing
+                if (text and not text[-1].isspace()) and (
+                    content_to_add and not content_to_add[0].isspace()
+                ):
+                    text += " "
+
+                text += content_to_add
+
                 list_element_start = False
         elif isinstance(e, bs4.element.Tag):
             # table is standard HTML element
@@ -82,9 +96,14 @@ def format_document_soup(
             elif e.name in ["p", "div"]:
                 if not list_element_start:
                     text += "\n"
-            elif e.name in ["br", "h1", "h2", "h3", "h4", "tr", "th", "td"]:
+            elif e.name in ["h1", "h2", "h3", "h4"]:
                 text += "\n"
                 list_element_start = False
+                last_added_newline = True
+            elif e.name == "br":
+                text += "\n"
+                list_element_start = False
+                last_added_newline = True
             elif e.name == "li":
                 text += "\n- "
                 list_element_start = True

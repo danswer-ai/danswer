@@ -1,6 +1,7 @@
 import itertools
 from collections.abc import Iterator
 from datetime import datetime
+from datetime import timezone
 from typing import Any
 from typing import cast
 
@@ -42,8 +43,8 @@ def _convert_pr_to_document(pull_request: PullRequest) -> Document:
         sections=[Section(link=pull_request.html_url, text=full_context)],
         source=DocumentSource.GITHUB,
         semantic_identifier=pull_request.title,
+        doc_updated_at=pull_request.updated_at.replace(tzinfo=timezone.utc),
         metadata={
-            "last_modified": str(pull_request.last_modified),
             "merged": pull_request.merged,
             "state": pull_request.state,
         },
@@ -62,8 +63,8 @@ def _convert_issue_to_document(issue: Issue) -> Document:
         sections=[Section(link=issue.html_url, text=full_context)],
         source=DocumentSource.GITHUB,
         semantic_identifier=issue.title,
+        doc_updated_at=issue.updated_at.replace(tzinfo=timezone.utc),
         metadata={
-            "last_modified": str(issue.updated_at),
             "state": issue.state,
         },
     )

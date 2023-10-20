@@ -5,10 +5,10 @@ from typing import List
 from typing import Optional
 
 import requests
-from bs4 import BeautifulSoup
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.html_utils import parse_html_page_basic
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -120,16 +120,21 @@ class Document360Connector(LoadConnector, PollConnector):
             if end is not None and updated_at > end:
                 continue
 
+            authors = [
+                author["email_id"]
+                for author in article_details.get("authors", [])
+                if author["email_id"]
+            ]
+
             doc_link = f"{DOCUMENT360_BASE_URL}/{self.portal_id}/document/v1/view/{article['id']}"
 
             html_content = article_details["html_content"]
-            soup = BeautifulSoup(html_content, "html.parser")
-            article_content = soup.get_text()
+            article_content = parse_html_page_basic(html_content)
             doc_text = (
                 f"workspace: {self.workspace}\n"
                 f"category: {article['category_name']}\n"
                 f"article: {article_details['title']} - "
-                f"{article_details.get('description', '')} - "
+                f"{article_details.get('description', '')}\n"
                 f"{article_content}"
             )
 
@@ -138,6 +143,8 @@ class Document360Connector(LoadConnector, PollConnector):
                 sections=[Section(link=doc_link, text=doc_text)],
                 source=DocumentSource.DOCUMENT360,
                 semantic_identifier=article_details["title"],
+                doc_updated_at=updated_at,
+                primary_owners=authors,
                 metadata={},
             )
 
@@ -163,14 +170,18 @@ class Document360Connector(LoadConnector, PollConnector):
 
 if __name__ == "__main__":
     import time
+    import os
 
-    document360_connector = Document360Connector("Your Workspace", ["Your categories"])
+    document360_connector = Document360Connector(os.environ["DOCUMENT360_WORKSPACE"])
     document360_connector.load_credentials(
-        {"portal_id": "Your Portal ID", "document360_api_token": "Your API Token"}
+        {
+            "portal_id": os.environ["DOCUMENT360_PORTAL_ID"],
+            "document360_api_token": os.environ["DOCUMENT360_API_TOKEN"],
+        }
     )
 
     current = time.time()
-    one_day_ago = current - 24 * 60 * 60  # 1 days
+    one_day_ago = current - 24 * 60 * 60 * 360  # 1 year
     latest_docs = document360_connector.poll_source(one_day_ago, current)
 
     for doc in latest_docs:

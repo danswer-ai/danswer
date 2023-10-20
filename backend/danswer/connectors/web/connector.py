@@ -1,5 +1,4 @@
 import io
-from datetime import datetime
 from enum import Enum
 from typing import Any
 from typing import cast
@@ -173,8 +172,6 @@ class WebConnector(LoadConnector):
             logger.info(f"Visiting {current_url}")
 
             try:
-                current_visit_time = datetime.now().strftime("%B %d, %Y, %H:%M:%S")
-
                 if restart_playwright:
                     playwright, context = start_playwright()
                     restart_playwright = False
@@ -192,7 +189,7 @@ class WebConnector(LoadConnector):
                             sections=[Section(link=current_url, text=page_text)],
                             source=DocumentSource.WEB,
                             semantic_identifier=current_url.split(".")[-1],
-                            metadata={"Time Visited": current_visit_time},
+                            metadata={},
                         )
                     )
                     continue
