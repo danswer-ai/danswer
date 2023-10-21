@@ -1,4 +1,6 @@
 from collections.abc import Generator
+from datetime import datetime
+from datetime import timezone
 from pathlib import Path
 from typing import Any
 from typing import IO
@@ -41,6 +43,7 @@ def _open_files_at_location(
 def _process_file(
     file_name: str,
     file: IO[Any],
+    time_updated: datetime,
     pdf_pass: str | None = None,
 ) -> list[Document]:
     extension = get_file_ext(file_name)
@@ -63,6 +66,7 @@ def _process_file(
             sections=[Section(link=metadata.get("link", ""), text=file_content_raw)],
             source=DocumentSource.FILE,
             semantic_identifier=file_name,
+            doc_updated_at=time_updated,
             metadata={},
         )
     ]
@@ -85,10 +89,13 @@ class LocalFileConnector(LoadConnector):
     def load_from_state(self) -> GenerateDocumentsOutput:
         documents: list[Document] = []
         for file_location in self.file_locations:
+            current_datetime = datetime.now(timezone.utc)
             files = _open_files_at_location(file_location)
 
             for file_name, file in files:
-                documents.extend(_process_file(file_name, file, self.pdf_pass))
+                documents.extend(
+                    _process_file(file_name, file, current_datetime, self.pdf_pass)
+                )
 
                 if len(documents) >= self.batch_size:
                     yield documents

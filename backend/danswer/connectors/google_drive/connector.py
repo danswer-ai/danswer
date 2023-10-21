@@ -1,8 +1,9 @@
-import datetime
 import io
 import tempfile
 from collections.abc import Iterator
 from collections.abc import Sequence
+from datetime import datetime
+from datetime import timezone
 from enum import Enum
 from itertools import chain
 from typing import Any
@@ -83,7 +84,7 @@ def _run_drive_file_query(
                 includeItemsFromAllDrives=include_shared,
                 fields=(
                     "nextPageToken, files(mimeType, id, name, "
-                    "webViewLink, shortcutDetails)"
+                    "modifiedTime, webViewLink, shortcutDetails)"
                 ),
                 pageToken=next_page_token,
                 q=query,
@@ -194,12 +195,10 @@ def _get_files(
 ) -> Iterator[GoogleDriveFileType]:
     query = f"mimeType != '{DRIVE_FOLDER_TYPE}' "
     if time_range_start is not None:
-        time_start = (
-            datetime.datetime.utcfromtimestamp(time_range_start).isoformat() + "Z"
-        )
+        time_start = datetime.utcfromtimestamp(time_range_start).isoformat() + "Z"
         query += f"and modifiedTime >= '{time_start}' "
     if time_range_end is not None:
-        time_stop = datetime.datetime.utcfromtimestamp(time_range_end).isoformat() + "Z"
+        time_stop = datetime.utcfromtimestamp(time_range_end).isoformat() + "Z"
         query += f"and modifiedTime <= '{time_stop}' "
     if folder_id:
         query += f"and '{folder_id}' in parents "
@@ -464,6 +463,9 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                             ],
                             source=DocumentSource.GOOGLE_DRIVE,
                             semantic_identifier=file["name"],
+                            doc_updated_at=datetime.fromisoformat(
+                                file["modifiedTime"]
+                            ).astimezone(timezone.utc),
                             metadata={} if text_contents else {IGNORE_FOR_QA: True},
                         )
                     )

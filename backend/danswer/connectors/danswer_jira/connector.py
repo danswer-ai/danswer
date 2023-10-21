@@ -3,6 +3,7 @@ from datetime import timezone
 from typing import Any
 from urllib.parse import urlparse
 
+from dateutil.parser import parse
 from jira import JIRA
 from jira.resources import Issue
 
@@ -59,6 +60,8 @@ def fetch_jira_issues_batch(
             logger.warning(f"Found Jira object not of type Issue {jira}")
             continue
 
+        ticket_updated_time = parse(jira.fields.updated)
+
         semantic_rep = (
             f"Jira Ticket Summary: {jira.fields.summary}\n"
             f"Description: {jira.fields.description}\n"
@@ -75,6 +78,7 @@ def fetch_jira_issues_batch(
                 sections=[Section(link=page_url, text=semantic_rep)],
                 source=DocumentSource.JIRA,
                 semantic_identifier=jira.fields.summary,
+                doc_updated_at=ticket_updated_time.astimezone(timezone.utc),
                 metadata={},
             )
         )
@@ -151,3 +155,17 @@ class JiraConnector(LoadConnector, PollConnector):
             start_ind += fetched_batch_size
             if fetched_batch_size < self.batch_size:
                 break
+
+
+if __name__ == "__main__":
+    import os
+
+    connector = JiraConnector(os.environ["JIRA_PROJECT_URL"])
+    connector.load_credentials(
+        {
+            "jira_user_email": os.environ["JIRA_USER_EMAIL"],
+            "jira_api_token": os.environ["JIRA_API_TOKEN"],
+        }
+    )
+    document_batches = connector.load_from_state()
+    print(next(document_batches))
