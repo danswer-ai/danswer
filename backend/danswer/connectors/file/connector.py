@@ -1,10 +1,10 @@
+import os
 from collections.abc import Generator
 from datetime import datetime
 from datetime import timezone
 from pathlib import Path
 from typing import Any
 from typing import IO
-import os
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -107,8 +107,6 @@ class LocalFileConnector(LoadConnector):
 
 
 if __name__ == "__main__":
-    import os
-
     connector = LocalFileConnector(file_locations=[os.environ["TEST_FILE"]])
     connector.load_credentials({"pdf_password": os.environ["PDF_PASSWORD"]})
 
