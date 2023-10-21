@@ -74,7 +74,7 @@ module.exports = {
           },
           content: {
             subtle: "#4b5563", // gray-600
-            DEFAULT: "#6b7280", // gray-500
+            DEFAULT: "#9ca3af", // gray-400
             emphasis: "#e5e7eb", // gray-200
             strong: "#f9fafb", // gray-50
             inverted: "#000000", // black
