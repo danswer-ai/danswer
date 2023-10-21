@@ -43,6 +43,9 @@ def _convert_pr_to_document(pull_request: PullRequest) -> Document:
         sections=[Section(link=pull_request.html_url, text=full_context)],
         source=DocumentSource.GITHUB,
         semantic_identifier=pull_request.title,
+        # updated_at is UTC time but is timezone unaware, explicitly add UTC
+        # as there is logic in indexing to prevent wrong timestamped docs
+        # due to local time discrepancies with UTC
         doc_updated_at=pull_request.updated_at.replace(tzinfo=timezone.utc),
         metadata={
             "merged": pull_request.merged,
@@ -63,6 +66,7 @@ def _convert_issue_to_document(issue: Issue) -> Document:
         sections=[Section(link=issue.html_url, text=full_context)],
         source=DocumentSource.GITHUB,
         semantic_identifier=issue.title,
+        # updated_at is UTC time but is timezone unaware
         doc_updated_at=issue.updated_at.replace(tzinfo=timezone.utc),
         metadata={
             "state": issue.state,

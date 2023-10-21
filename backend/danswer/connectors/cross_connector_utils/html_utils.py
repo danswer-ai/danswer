@@ -58,9 +58,14 @@ def format_document_soup(
                 # Tables are represented in natural language with rows separated by newlines
                 # Can't have newlines then in the table elements
                 element_text = element_text.replace("\n", " ").strip()
+
+            # Some tags are translated to spaces but in the logic underneath this section, we
+            # translate them to newlines as a browser should render them such as with br
+            # This logic here avoids a space after newline when it shouldn't be there.
             if last_added_newline and element_text.startswith(" "):
                 element_text = element_text[1:]
                 last_added_newline = False
+
             if element_text:
                 content_to_add = (
                     element_text

@@ -3,6 +3,7 @@ from collections.abc import Generator
 from dataclasses import dataclass
 from dataclasses import fields
 from datetime import datetime
+from datetime import timezone
 from typing import Any
 from typing import Optional
 
@@ -192,7 +193,9 @@ class NotionConnector(LoadConnector, PollConnector):
                     ],
                     source=DocumentSource.NOTION,
                     semantic_identifier=page_title,
-                    doc_updated_at=datetime.fromisoformat(page.last_edited_time),
+                    doc_updated_at=datetime.fromisoformat(
+                        page.last_edited_time
+                    ).astimezone(timezone.utc),
                     metadata={},
                 )
             )

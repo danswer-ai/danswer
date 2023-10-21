@@ -3,6 +3,7 @@ import tempfile
 from collections.abc import Iterator
 from collections.abc import Sequence
 from datetime import datetime
+from datetime import timezone
 from enum import Enum
 from itertools import chain
 from typing import Any
@@ -462,7 +463,9 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                             ],
                             source=DocumentSource.GOOGLE_DRIVE,
                             semantic_identifier=file["name"],
-                            doc_updated_at=datetime.fromisoformat(file["modifiedTime"]),
+                            doc_updated_at=datetime.fromisoformat(
+                                file["modifiedTime"]
+                            ).astimezone(timezone.utc),
                             metadata={} if text_contents else {IGNORE_FOR_QA: True},
                         )
                     )
