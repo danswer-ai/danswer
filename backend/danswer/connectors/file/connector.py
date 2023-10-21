@@ -4,6 +4,7 @@ from datetime import timezone
 from pathlib import Path
 from typing import Any
 from typing import IO
+import os
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
