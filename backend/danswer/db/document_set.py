@@ -49,6 +49,14 @@ def get_document_set_by_id(
     )
 
 
+def get_document_set_by_name(
+    db_session: Session, document_set_name: str
+) -> DocumentSetDBModel | None:
+    return db_session.scalar(
+        select(DocumentSetDBModel).where(DocumentSetDBModel.name == document_set_name)
+    )
+
+
 def get_document_sets_by_ids(
     db_session: Session, document_set_ids: list[int]
 ) -> Sequence[DocumentSetDBModel]:
@@ -363,3 +371,28 @@ def fetch_document_sets_for_documents(
         .group_by(Document.id)
     )
     return db_session.execute(stmt).all()  # type: ignore
+
+
+def get_or_create_document_set_by_name(
+    db_session: Session,
+    document_set_name: str,
+    document_set_description: str = "Default Persona created Document-Set, "
+    "please update description",
+) -> DocumentSetDBModel:
+    """This is used by the default personas which need to attach to document sets
+    on server startup"""
+    doc_set = get_document_set_by_name(db_session, document_set_name)
+    if doc_set is not None:
+        return doc_set
+
+    new_doc_set = DocumentSetDBModel(
+        name=document_set_name,
+        description=document_set_description,
+        user_id=None,
+        is_up_to_date=True,
+    )
+
+    db_session.add(new_doc_set)
+    db_session.commit()
+
+    return new_doc_set

@@ -36,9 +36,10 @@ from danswer.llm.build import get_default_llm
 from danswer.llm.llm import LLM
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import translate_danswer_msg_to_langchain
-from danswer.search.access_filters import build_user_only_filters
+from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.semantic_search import chunks_to_search_docs
 from danswer.search.semantic_search import retrieve_ranked_documents
+from danswer.server.models import IndexFilters
 from danswer.server.models import RetrievalDocs
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
@@ -120,8 +121,7 @@ def danswer_chat_retrieval(
     query_message: ChatMessage,
     history: list[ChatMessage],
     llm: LLM,
-    user: User | None,
-    db_session: Session,
+    filters: IndexFilters,
 ) -> list[InferenceChunk]:
     if history:
         query_combination_msgs = build_combined_query(query_message, history)
@@ -132,7 +132,7 @@ def danswer_chat_retrieval(
     # Good Debug/Breakpoint
     ranked_chunks, unranked_chunks = retrieve_ranked_documents(
         query=reworded_query,
-        filters=build_user_only_filters(user, db_session),
+        filters=filters,
         favor_recent=False,
         datastore=get_default_document_index(),
     )
@@ -322,14 +322,23 @@ def llm_contextual_chat_answer(
         # Be a little forgiving though, if we match yes, it's good enough
         retrieved_chunks: list[InferenceChunk] = []
         if (YES_SEARCH.split()[0] + " ").lower() in model_out.lower():
+            user_acl_filters = build_access_filters_for_user(user, db_session)
+            doc_set_filter = [doc_set.name for doc_set in persona.document_sets] or None
+            final_filters = IndexFilters(
+                source_type=None,
+                document_set=doc_set_filter,
+                time_cutoff=None,
+                access_control_list=user_acl_filters,
+            )
+
             retrieved_chunks = danswer_chat_retrieval(
                 query_message=last_message,
                 history=previous_messages,
                 llm=llm,
-                user=user,
-                db_session=db_session,
+                filters=final_filters,
             )
             yield retrieved_chunks
+
             tool_result_str = format_danswer_chunks_for_chat(retrieved_chunks)
 
             last_user_msg_text = form_tool_less_followup_text(
@@ -449,14 +458,24 @@ def llm_tools_enabled_chat_answer(
             retrieval_enabled
             and final_result.action.lower() == DANSWER_TOOL_NAME.lower()
         ):
+            user_acl_filters = build_access_filters_for_user(user, db_session)
+            doc_set_filter = [doc_set.name for doc_set in persona.document_sets] or None
+
+            final_filters = IndexFilters(
+                source_type=None,
+                document_set=doc_set_filter,
+                time_cutoff=None,
+                access_control_list=user_acl_filters,
+            )
+
             retrieved_chunks = danswer_chat_retrieval(
                 query_message=last_message,
                 history=previous_messages,
                 llm=llm,
-                user=user,
-                db_session=db_session,
+                filters=final_filters,
             )
             yield retrieved_chunks
+
             tool_result_str = format_danswer_chunks_for_chat(retrieved_chunks)
         else:
             tool_result_str = call_tool(final_result)

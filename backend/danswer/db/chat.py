@@ -13,6 +13,7 @@ from danswer.configs.app_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
+from danswer.db.models import DocumentSet as DocumentSetDBModel
 from danswer.db.models import Persona
 from danswer.db.models import ToolInfo
 
@@ -275,6 +276,21 @@ def fetch_default_persona_by_name(
     return result
 
 
+def fetch_persona_by_name(persona_name: str, db_session: Session) -> Persona | None:
+    """Try to fetch a default persona by name first,
+    if not exist, try to find any persona with the name
+    Note that name is not guaranteed unique unless default is true"""
+    persona = fetch_default_persona_by_name(persona_name, db_session)
+    if persona is not None:
+        return persona
+
+    stmt = select(Persona).where(Persona.name == persona_name)  # noqa: E712
+    result = db_session.execute(stmt).first()
+    if result:
+        return result[0]
+    return None
+
+
 def upsert_persona(
     name: str,
     retrieval_enabled: bool,
@@ -285,6 +301,7 @@ def upsert_persona(
     db_session: Session,
     persona_id: int | None = None,
     default_persona: bool = False,
+    document_sets: list[DocumentSetDBModel] | None = None,
     commit: bool = True,
 ) -> Persona:
     persona = db_session.query(Persona).filter_by(id=persona_id).first()
@@ -301,6 +318,13 @@ def upsert_persona(
         persona.tools = tools
         persona.hint_text = hint_text
         persona.default_persona = default_persona
+
+        # Do not delete any associations manually added unless
+        # a new updated list is provided
+        if document_sets is not None:
+            persona.document_sets.clear()
+            persona.document_sets = document_sets
+
     else:
         persona = Persona(
             name=name,
@@ -310,6 +334,7 @@ def upsert_persona(
             tools=tools,
             hint_text=hint_text,
             default_persona=default_persona,
+            document_sets=document_sets if document_sets else [],
         )
         db_session.add(persona)
 
