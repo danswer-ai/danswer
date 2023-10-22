@@ -44,27 +44,25 @@ def _sync_user_group_batch(
         )
 
 
-def sync_user_groups(user_group_id: int) -> None:
+def sync_user_groups(user_group_id: int, db_session: Session) -> None:
     """Sync the status of Postgres for the specified user group"""
     document_index = get_default_document_index()
-    with Session(get_sqlalchemy_engine()) as db_session:
-        user_group = fetch_user_group(
-            db_session=db_session, user_group_id=user_group_id
-        )
-        if user_group is None:
-            raise ValueError(f"User group '{user_group_id}' does not exist")
 
-        documents_to_update = fetch_documents_for_user_group(
-            db_session=db_session,
-            user_group_id=user_group_id,
-        )
-        for document_batch in batch_generator(documents_to_update, _SYNC_BATCH_SIZE):
-            _sync_user_group_batch(
-                document_ids=[document.id for document in document_batch],
-                document_index=document_index,
-            )
+    user_group = fetch_user_group(db_session=db_session, user_group_id=user_group_id)
+    if user_group is None:
+        raise ValueError(f"User group '{user_group_id}' does not exist")
 
-        if user_group.is_up_for_deletion:
-            delete_user_group(db_session=db_session, user_group=user_group)
-        else:
-            mark_user_group_as_synced(db_session=db_session, user_group=user_group)
+    documents_to_update = fetch_documents_for_user_group(
+        db_session=db_session,
+        user_group_id=user_group_id,
+    )
+    for document_batch in batch_generator(documents_to_update, _SYNC_BATCH_SIZE):
+        _sync_user_group_batch(
+            document_ids=[document.id for document in document_batch],
+            document_index=document_index,
+        )
+
+    if user_group.is_up_for_deletion:
+        delete_user_group(db_session=db_session, user_group=user_group)
+    else:
+        mark_user_group_as_synced(db_session=db_session, user_group=user_group)
