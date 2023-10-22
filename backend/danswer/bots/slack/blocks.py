@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from slack_sdk.models.blocks import ActionsBlock
 from slack_sdk.models.blocks import Block
 from slack_sdk.models.blocks import ButtonElement
@@ -180,10 +182,24 @@ def build_qa_response_blocks(
     query_event_id: int,
     answer: str | None,
     quotes: list[DanswerQuote] | None,
+    time_cutoff: datetime | None,
+    favor_recent: bool,
 ) -> list[Block]:
     quotes_blocks: list[Block] = []
 
     ai_answer_header = HeaderBlock(text="AI Answer")
+    filter_block: Block | None = None
+    if time_cutoff or favor_recent:
+        filter_text = "Filters: "
+        if time_cutoff is not None:
+            time_str = time_cutoff.strftime("%b %d, %Y")
+            filter_text += f"`Docs Updated >= {time_str}` "
+        if favor_recent:
+            if time_cutoff is not None:
+                filter_text += "+ "
+            filter_text += "`Prioritize Recently Updated Docs`"
+
+        filter_block = SectionBlock(text=f"_{filter_text}_")
 
     if not answer:
         answer_block = SectionBlock(
@@ -203,12 +219,14 @@ def build_qa_response_blocks(
             ]
 
     feedback_block = build_qa_feedback_block(query_event_id=query_event_id)
-    return (
-        [
-            ai_answer_header,
-            answer_block,
-            feedback_block,
-        ]
-        + quotes_blocks
-        + [DividerBlock()]
+
+    response_blocks: list[Block] = [ai_answer_header]
+
+    if filter_block is not None:
+        response_blocks.append(filter_block)
+
+    response_blocks.extend(
+        [answer_block, feedback_block] + quotes_blocks + [DividerBlock()]
     )
+
+    return response_blocks

@@ -15,12 +15,12 @@ from danswer.bots.slack.utils import ChannelIdAdapter
 from danswer.bots.slack.utils import fetch_userids_from_emails
 from danswer.bots.slack.utils import respond_in_thread
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
-from danswer.configs.constants import DOCUMENT_SETS
 from danswer.configs.danswerbot_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
+from danswer.configs.danswerbot_configs import DISABLE_DANSWER_BOT_FILTER_DETECT
 from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.db.engine import get_sqlalchemy_engine
@@ -28,6 +28,7 @@ from danswer.db.models import SlackBotConfig
 from danswer.direct_qa.answer_question import answer_qa_query
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
+from danswer.server.models import RequestFilters
 from danswer.utils.logger import setup_logger
 
 logger_base = setup_logger()
@@ -72,6 +73,7 @@ def handle_message(
     answer_generation_timeout: int = DANSWER_BOT_ANSWER_GENERATION_TIMEOUT,
     should_respond_with_error_msgs: bool = DANSWER_BOT_DISPLAY_ERROR_MSGS,
     disable_docs_only_answer: bool = DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER,
+    disable_auto_detect_filters: bool = DISABLE_DANSWER_BOT_FILTER_DETECT,
     reflexion: bool = ENABLE_DANSWERBOT_REFLEXION,
 ) -> bool:
     """Potentially respond to the user message depending on filters and if an answer was generated
@@ -178,15 +180,23 @@ def handle_message(
 
     answer_failed = False
     try:
+        # By leaving time_cutoff and favor_recent as None, and setting enable_auto_detect_filters
+        # it allows the slack flow to extract out filters from the user query
+        filters = RequestFilters(
+            source_type=None,
+            document_set=document_set_names,
+            time_cutoff=None,
+        )
+
         # This includes throwing out answer via reflexion
         answer = _get_answer(
             QuestionRequest(
                 query=msg,
                 collection=DOCUMENT_INDEX_NAME,
                 use_keyword=False,  # always use semantic search when handling Slack messages
-                filters=[{DOCUMENT_SETS: document_set_names}]
-                if document_set_names
-                else None,
+                enable_auto_detect_filters=not disable_auto_detect_filters,
+                filters=filters,
+                favor_recent=None,
                 offset=None,
             )
         )
@@ -251,6 +261,8 @@ def handle_message(
         query_event_id=answer.query_event_id,
         answer=answer.answer,
         quotes=answer.quotes,
+        time_cutoff=answer.time_cutoff,
+        favor_recent=answer.favor_recent,
     )
 
     document_blocks = build_documents_blocks(

@@ -92,17 +92,6 @@ VESPA_TENANT_PORT = os.environ.get("VESPA_TENANT_PORT") or "19071"
 VESPA_DEPLOYMENT_ZIP = (
     os.environ.get("VESPA_DEPLOYMENT_ZIP") or "/app/danswer/vespa-app.zip"
 )
-# Qdrant is Semantic Search Vector DB
-# Url / Key are used to connect to a remote Qdrant instance
-QDRANT_URL = os.environ.get("QDRANT_URL", "")
-QDRANT_API_KEY = os.environ.get("QDRANT_API_KEY", "")
-# Host / Port are used for connecting to local Qdrant instance
-QDRANT_HOST = os.environ.get("QDRANT_HOST") or "localhost"
-QDRANT_PORT = 6333
-# Typesense is the Keyword Search Engine
-TYPESENSE_HOST = os.environ.get("TYPESENSE_HOST") or "localhost"
-TYPESENSE_PORT = 8108
-TYPESENSE_API_KEY = os.environ.get("TYPESENSE_API_KEY", "")
 # Number of documents in a batch during indexing (further batching done by chunks before passing to bi-encoder)
 INDEX_BATCH_SIZE = 16
 
@@ -153,10 +142,14 @@ NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL = int(
 NUM_DOCUMENT_TOKENS_FED_TO_CHAT = int(
     os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_CHAT") or (512 * 3)
 )
-# 1 / (1 + DOC_TIME_DECAY * doc-age-in-years)
+# 1 / (1 + DOC_TIME_DECAY * doc-age-in-years), set to 0 to have no decay
 # Capped in Vespa at 0.5
 DOC_TIME_DECAY = float(
     os.environ.get("DOC_TIME_DECAY") or 0.5  # Hits limit at 2 years by default
+)
+FAVOR_RECENT_DECAY_MULTIPLIER = 2
+DISABLE_TIME_FILTER_EXTRACTION = (
+    os.environ.get("DISABLE_TIME_FILTER_EXTRACTION", "").lower() == "true"
 )
 # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05

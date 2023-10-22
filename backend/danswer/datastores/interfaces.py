@@ -2,14 +2,12 @@ import abc
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
-from uuid import UUID
 
 from danswer.access.models import DocumentAccess
 from danswer.chunking.models import DocMetadataAwareIndexChunk
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
-
-IndexFilter = dict[str, str | list[str] | None]
+from danswer.server.models import IndexFilters
 
 
 @dataclass(frozen=True)
@@ -84,8 +82,8 @@ class KeywordCapable(abc.ABC):
     def keyword_retrieval(
         self,
         query: str,
-        user_id: UUID | None,
-        filters: list[IndexFilter] | None,
+        filters: IndexFilters,
+        favor_recent: bool,
         num_to_retrieve: int,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
@@ -96,8 +94,8 @@ class VectorCapable(abc.ABC):
     def semantic_retrieval(
         self,
         query: str,
-        user_id: UUID | None,
-        filters: list[IndexFilter] | None,
+        filters: IndexFilters,
+        favor_recent: bool,
         num_to_retrieve: int,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
     ) -> list[InferenceChunk]:
@@ -109,14 +107,25 @@ class HybridCapable(abc.ABC):
     def hybrid_retrieval(
         self,
         query: str,
-        user_id: UUID | None,
-        filters: list[IndexFilter] | None,
+        filters: IndexFilters,
+        favor_recent: bool,
         num_to_retrieve: int,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
 
 
-class BaseIndex(Verifiable, Indexable, Updatable, Deletable, abc.ABC):
+class AdminCapable(abc.ABC):
+    @abc.abstractmethod
+    def admin_retrieval(
+        self,
+        query: str,
+        filters: IndexFilters,
+        num_to_retrieve: int,
+    ) -> list[InferenceChunk]:
+        raise NotImplementedError
+
+
+class BaseIndex(Verifiable, AdminCapable, Indexable, Updatable, Deletable, abc.ABC):
     """All basic functionalities excluding a specific retrieval approach
     Indices need to be able to
     - Check that the index exists with a schema definition

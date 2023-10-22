@@ -1,7 +1,5 @@
 import math
 import uuid
-from datetime import datetime
-from datetime import timezone
 
 from danswer.chunking.models import IndexChunk
 from danswer.chunking.models import InferenceChunk
@@ -32,13 +30,3 @@ def get_uuid_from_chunk(
         [doc_str, str(chunk.chunk_id), str(mini_chunk_ind)]
     )
     return uuid.uuid5(uuid.NAMESPACE_X500, unique_identifier_string)
-
-
-def translate_to_epoch_seconds_ensure_tz(t: datetime | None) -> int | None:
-    if not t:
-        return None
-
-    if t.tzinfo != timezone.utc:
-        raise ValueError("Connectors must provide document update time in UTC")
-
-    return int(t.timestamp())

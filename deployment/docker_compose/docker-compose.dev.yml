@@ -34,6 +34,8 @@ services:
       - API_TYPE_OPENAI=${API_TYPE_OPENAI:-}
       - API_VERSION_OPENAI=${API_VERSION_OPENAI:-}
       - AZURE_DEPLOYMENT_ID=${AZURE_DEPLOYMENT_ID:-}
+      - NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP=${NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP:-}
+      - DISABLE_TIME_FILTER_EXTRACTION=${DISABLE_TIME_FILTER_EXTRACTION:-}
       # Don't change the NLP model configs unless you know what you're doing
       - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
       - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
@@ -44,7 +46,6 @@ services:
       - SKIP_RERANKING=${SKIP_RERANKING:-}
       # Set to debug to get more fine-grained logs
       - LOG_LEVEL=${LOG_LEVEL:-info}
-      - NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP=${NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP:-}
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
