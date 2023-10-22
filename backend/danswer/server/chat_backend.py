@@ -16,7 +16,6 @@ from danswer.db.chat import fetch_chat_messages_by_session
 from danswer.db.chat import fetch_chat_session_by_id
 from danswer.db.chat import fetch_chat_sessions_by_user
 from danswer.db.chat import fetch_persona_by_id
-from danswer.db.chat import fetch_persona_by_name
 from danswer.db.chat import set_latest_chat_message
 from danswer.db.chat import update_chat_session
 from danswer.db.chat import verify_parent_exists
@@ -251,8 +250,8 @@ def handle_new_chat_message(
 
     chat_session = fetch_chat_session_by_id(chat_session_id, db_session)
     persona = (
-        fetch_persona_by_name(chat_message.persona_name, db_session)
-        if chat_message.persona_name is not None
+        fetch_persona_by_id(chat_message.persona_id, db_session)
+        if chat_message.persona_id is not None
         else None
     )
 

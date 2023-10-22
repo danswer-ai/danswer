@@ -50,7 +50,7 @@ def get_document_set_by_id(
 
 
 def get_document_set_by_name(
-    db_session: Session, document_set_name: int
+    db_session: Session, document_set_name: str
 ) -> DocumentSetDBModel | None:
     return db_session.scalar(
         select(DocumentSetDBModel).where(DocumentSetDBModel.name == document_set_name)
@@ -375,7 +375,7 @@ def fetch_document_sets_for_documents(
 
 def get_or_create_document_set_by_name(
     db_session: Session,
-    document_set_name: int,
+    document_set_name: str,
     document_set_description: str = "Default Persona created Document-Set, "
     "please update description",
 ) -> DocumentSetDBModel:

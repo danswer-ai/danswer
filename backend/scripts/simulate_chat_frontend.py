@@ -27,14 +27,14 @@ def send_chat_message(
     chat_session_id: int,
     message_number: int,
     parent_edit_number: int | None,
-    persona_name: str | None,
+    persona_id: int | None,
 ) -> None:
     data = {
         "message": message,
         "chat_session_id": chat_session_id,
         "message_number": message_number,
         "parent_edit_number": parent_edit_number,
-        "persona_name": persona_name,
+        "persona_id": persona_id,
     }
 
     docs: list[dict] | None = None
@@ -66,7 +66,7 @@ def run_chat(contextual: bool) -> None:
         )
         exit()
 
-    persona_name = "Danswer" if contextual else None
+    persona_id = 1 if contextual else None
 
     message_num = 0
     parent_edit = None
@@ -77,7 +77,7 @@ def run_chat(contextual: bool) -> None:
         )
 
         send_chat_message(
-            new_message, new_session_id, message_num, parent_edit, persona_name
+            new_message, new_session_id, message_num, parent_edit, persona_id
         )
 
         message_num += 2  # 1 for User message, 1 for AI response
