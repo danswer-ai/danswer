@@ -14,7 +14,6 @@ from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.datastores.document_index import get_default_document_index
-from danswer.datastores.interfaces import IndexFilter
 from danswer.datastores.vespa.store import VespaIndex
 from danswer.db.engine import get_session
 from danswer.db.feedback import create_doc_retrieval_feedback
@@ -36,9 +35,11 @@ from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
 from danswer.search.semantic_search import chunks_to_search_docs
 from danswer.search.semantic_search import retrieve_ranked_documents
+from danswer.secondary_llm_flows.extract_filters import extract_question_time_filters
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
 from danswer.server.models import HelperResponse
+from danswer.server.models import IndexFilters
 from danswer.server.models import QAFeedbackRequest
 from danswer.server.models import QAResponse
 from danswer.server.models import QueryValidationResponse
@@ -61,7 +62,7 @@ router = APIRouter()
 
 class AdminSearchRequest(BaseModel):
     query: str
-    filters: list[IndexFilter] | None = None
+    filters: IndexFilters
 
 
 class AdminSearchResponse(BaseModel):
@@ -78,9 +79,13 @@ def admin_search(
     filters = question.filters
     logger.info(f"Received admin search query: {query}")
 
-    user_id = None if user is None else user.id
     user_acl_filters = build_access_filters_for_user(user, db_session)
-    final_filters = (filters or []) + user_acl_filters
+    final_filters = IndexFilters(
+        source_type=filters.source_type,
+        document_set=filters.document_set,
+        time_cutoff=filters.time_cutoff,
+        access_control_list=user_acl_filters,
+    )
     document_index = get_default_document_index()
     if not isinstance(document_index, VespaIndex):
         raise HTTPException(
@@ -88,9 +93,7 @@ def admin_search(
             detail="Cannot use admin-search when using a non-Vespa document index",
         )
 
-    matching_chunks = document_index.admin_retrieval(
-        query=query, user_id=user_id, filters=final_filters
-    )
+    matching_chunks = document_index.admin_retrieval(query=query, filters=final_filters)
 
     documents = chunks_to_search_docs(matching_chunks)
 
@@ -142,8 +145,11 @@ def semantic_search(
     db_session: Session = Depends(get_session),
 ) -> SearchResponse:
     query = question.query
-    filters = question.filters
     logger.info(f"Received semantic search query: {query}")
+
+    time_cutoff, favor_recent = extract_question_time_filters(question)
+    question.filters.time_cutoff = time_cutoff
+    filters = question.filters
 
     query_event_id = create_query_event(
         query=query,
@@ -155,13 +161,25 @@ def semantic_search(
 
     user_id = None if user is None else user.id
     user_acl_filters = build_access_filters_for_user(user, db_session)
-    final_filters = (filters or []) + user_acl_filters
+    final_filters = IndexFilters(
+        source_type=filters.source_type,
+        document_set=filters.document_set,
+        time_cutoff=filters.time_cutoff,
+        access_control_list=user_acl_filters,
+    )
     ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-        query, user_id, final_filters, get_default_document_index()
+        query=query,
+        filters=final_filters,
+        favor_recent=favor_recent,
+        datastore=get_default_document_index(),
     )
     if not ranked_chunks:
         return SearchResponse(
-            top_ranked_docs=None, lower_ranked_docs=None, query_event_id=query_event_id
+            top_ranked_docs=None,
+            lower_ranked_docs=None,
+            query_event_id=query_event_id,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
         )
 
     top_docs = chunks_to_search_docs(ranked_chunks)
@@ -177,6 +195,8 @@ def semantic_search(
         top_ranked_docs=top_docs,
         lower_ranked_docs=other_top_docs,
         query_event_id=query_event_id,
+        time_cutoff=time_cutoff,
+        favor_recent=favor_recent,
     )
 
 
@@ -187,8 +207,11 @@ def keyword_search(
     db_session: Session = Depends(get_session),
 ) -> SearchResponse:
     query = question.query
-    filters = question.filters
     logger.info(f"Received keyword search query: {query}")
+
+    time_cutoff, favor_recent = extract_question_time_filters(question)
+    question.filters.time_cutoff = time_cutoff
+    filters = question.filters
 
     query_event_id = create_query_event(
         query=query,
@@ -200,13 +223,25 @@ def keyword_search(
 
     user_id = None if user is None else user.id
     user_acl_filters = build_access_filters_for_user(user, db_session)
-    final_filters = (filters or []) + user_acl_filters
+    final_filters = IndexFilters(
+        source_type=filters.source_type,
+        document_set=filters.document_set,
+        time_cutoff=filters.time_cutoff,
+        access_control_list=user_acl_filters,
+    )
     ranked_chunks = retrieve_keyword_documents(
-        query, user_id, final_filters, get_default_document_index()
+        query=query,
+        filters=final_filters,
+        favor_recent=favor_recent,
+        datastore=get_default_document_index(),
     )
     if not ranked_chunks:
         return SearchResponse(
-            top_ranked_docs=None, lower_ranked_docs=None, query_event_id=query_event_id
+            top_ranked_docs=None,
+            lower_ranked_docs=None,
+            query_event_id=query_event_id,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
         )
 
     top_docs = chunks_to_search_docs(ranked_chunks)
@@ -218,7 +253,11 @@ def keyword_search(
     )
 
     return SearchResponse(
-        top_ranked_docs=top_docs, lower_ranked_docs=None, query_event_id=query_event_id
+        top_ranked_docs=top_docs,
+        lower_ranked_docs=None,
+        query_event_id=query_event_id,
+        time_cutoff=time_cutoff,
+        favor_recent=favor_recent,
     )
 
 
@@ -228,6 +267,8 @@ def direct_qa(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> QAResponse:
+    # Everything handled via answer_qa_query which is also used by default
+    # for the DanswerBot flow
     return answer_qa_query(question=question, user=user, db_session=db_session)
 
 
@@ -255,9 +296,12 @@ def stream_direct_qa(
     ) -> Generator[str, None, None]:
         answer_so_far: str = ""
         query = question.query
-        filters = question.filters
         use_keyword = question.use_keyword
         offset_count = question.offset if question.offset is not None else 0
+
+        time_cutoff, favor_recent = extract_question_time_filters(question)
+        question.filters.time_cutoff = time_cutoff
+        filters = question.filters
 
         predicted_search, predicted_flow = query_intent(query)
         if use_keyword is None:
@@ -265,21 +309,26 @@ def stream_direct_qa(
 
         user_id = None if user is None else user.id
         user_acl_filters = build_access_filters_for_user(user, db_session)
-        final_filters = (filters or []) + user_acl_filters
+        final_filters = IndexFilters(
+            source_type=filters.source_type,
+            document_set=filters.document_set,
+            time_cutoff=filters.time_cutoff,
+            access_control_list=user_acl_filters,
+        )
         if use_keyword:
             ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
-                query,
-                user_id,
-                final_filters,
-                get_default_document_index(),
+                query=query,
+                filters=final_filters,
+                favor_recent=favor_recent,
+                datastore=get_default_document_index(),
             )
             unranked_chunks: list[InferenceChunk] | None = []
         else:
             ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-                query,
-                user_id,
-                final_filters,
-                get_default_document_index(),
+                query=query,
+                filters=final_filters,
+                favor_recent=favor_recent,
+                datastore=get_default_document_index(),
             )
         if not ranked_chunks:
             logger.debug("No Documents Found")
@@ -304,6 +353,8 @@ def stream_direct_qa(
             if disable_generative_answer
             else predicted_flow,
             predicted_search=predicted_search,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
         ).dict()
 
         logger.debug(send_packet_debug_msg.format(initial_response))

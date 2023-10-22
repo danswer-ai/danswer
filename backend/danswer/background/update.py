@@ -196,7 +196,7 @@ def _run_indexing(
 ) -> None:
     """
     1. Get documents which are either new or updated from specified application
-    2. Embed and index these documents into the chosen datastores (e.g. Qdrant / Typesense or Vespa)
+    2. Embed and index these documents into the chosen datastore (vespa)
     3. Updates Postgres to record the indexed documents + the outcome of this run
     """
 

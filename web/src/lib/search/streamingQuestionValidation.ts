@@ -10,13 +10,20 @@ export const questionValidationStreamed = async <T>({
   query,
   update,
 }: QuestionValidationArgs) => {
+  const emptyFilters = {
+    source_type: null,
+    document_set: null,
+    time_cutoff: null,
+  };
+
   const response = await fetch("/api/stream-query-validation", {
     method: "POST",
     body: JSON.stringify({
       query,
       collection: "danswer_index",
       use_keyword: null,
-      filters: null,
+      filters: emptyFilters,
+      enable_auto_detect_filters: false,
       offset: null,
     }),
     headers: {

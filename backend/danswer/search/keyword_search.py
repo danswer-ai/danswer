@@ -1,6 +1,4 @@
-import json
 from collections.abc import Callable
-from uuid import UUID
 
 from nltk.corpus import stopwords  # type:ignore
 from nltk.stem import WordNetLemmatizer  # type:ignore
@@ -10,7 +8,7 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.datastores.interfaces import DocumentIndex
-from danswer.datastores.interfaces import IndexFilter
+from danswer.datastores.interfaces import IndexFilters
 from danswer.search.models import ChunkMetric
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RetrievalMetricsContainer
@@ -44,8 +42,8 @@ def query_processing(
 @log_function_time()
 def retrieve_keyword_documents(
     query: str,
-    user_id: UUID | None,
-    filters: list[IndexFilter] | None,
+    filters: IndexFilters,
+    favor_recent: bool,
     datastore: DocumentIndex,
     num_hits: int = NUM_RETURNED_HITS,
     edit_query: bool = EDIT_KEYWORD_QUERY,
@@ -54,12 +52,13 @@ def retrieve_keyword_documents(
 ) -> list[InferenceChunk] | None:
     edited_query = query_processing(query) if edit_query else query
 
-    top_chunks = datastore.keyword_retrieval(edited_query, user_id, filters, num_hits)
+    top_chunks = datastore.keyword_retrieval(
+        edited_query, filters, favor_recent, num_hits
+    )
 
     if not top_chunks:
-        filters_log_msg = json.dumps(filters, separators=(",", ":")).replace("\n", "")
         logger.warning(
-            f"Keyword search returned no results - Filters: {filters_log_msg}\tEdited Query: {edited_query}"
+            f"Keyword search returned no results - Filters: {filters}\tEdited Query: {edited_query}"
         )
         return None
 
