@@ -15,8 +15,7 @@ personas:
     #   - "HR Resources"
     #   - "Engineer Onboarding"
     #   - "Benefits"
-    document_sets:
-      - "TestDocSet"
+    document_sets: []
     # Danswer custom tool flow, "Current Search" tool name is reserved if this is enabled.
     retrieval_enabled: true
     # Inject a statement at the end of system prompt to inform the LLM of the current date/time
