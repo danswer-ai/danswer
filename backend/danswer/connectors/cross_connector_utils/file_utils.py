@@ -18,7 +18,9 @@ _METADATA_FLAG = "#DANSWER_METADATA="
 
 def read_pdf_file(file: IO[Any], file_name: str, pdf_pass: str | None = None) -> str:
     pdf_reader = PdfReader(file)
-    if pdf_reader.is_encrypted:
+
+    # if marked as encrypted and a password is provided, try to decrypt
+    if pdf_reader.is_encrypted and pdf_pass is not None:
         decrypt_success = False
         if pdf_pass is not None:
             try:
