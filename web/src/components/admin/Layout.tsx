@@ -9,6 +9,8 @@ import {
   RobotIcon,
   ConnectorIcon,
   GroupsIcon,
+  BarChartIcon,
+  DatabaseIcon,
 } from "@/components/icons/icons";
 import { User } from "@/lib/types";
 import {
@@ -196,6 +198,33 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     : []),
                 ],
               },
+              ...(EE_ENABLED
+                ? [
+                    {
+                      name: "Performance",
+                      items: [
+                        {
+                          name: (
+                            <div className="flex">
+                              <BarChartIcon size={18} />
+                              <div className="ml-1">Anaytics</div>
+                            </div>
+                          ),
+                          link: "/admin/performance/analytics",
+                        },
+                        {
+                          name: (
+                            <div className="flex">
+                              <DatabaseIcon size={18} />
+                              <div className="ml-1">Query History</div>
+                            </div>
+                          ),
+                          link: "/admin/performance/query-history",
+                        },
+                      ],
+                    },
+                  ]
+                : []),
               {
                 name: "Settings",
                 items: [
