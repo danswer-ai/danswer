@@ -1,4 +1,3 @@
-import json
 from collections.abc import Callable
 
 from nltk.corpus import stopwords  # type:ignore
@@ -58,9 +57,8 @@ def retrieve_keyword_documents(
     )
 
     if not top_chunks:
-        filters_log_msg = json.dumps(filters, separators=(",", ":")).replace("\n", "")
         logger.warning(
-            f"Keyword search returned no results - Filters: {filters_log_msg}\tEdited Query: {edited_query}"
+            f"Keyword search returned no results - Filters: {filters}\tEdited Query: {edited_query}"
         )
         return None
 

@@ -19,6 +19,7 @@ from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DOC_TIME_DECAY
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
+from danswer.configs.app_configs import FAVOR_RECENT_DECAY_MULTIPLIER
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import VESPA_DEPLOYMENT_ZIP
 from danswer.configs.app_configs import VESPA_HOST
@@ -308,14 +309,14 @@ def _build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) ->
 
         # For Documents that don't have an updated at, filter them out for queries asking for
         # very recent documents (2 months) default
-        include_untimed = datetime.utcnow() - untimed_doc_cutoff < cutoff
-        cutoff_secs = cutoff.timestamp()
+        include_untimed = datetime.now(timezone.utc) - untimed_doc_cutoff > cutoff
+        cutoff_secs = int(cutoff.timestamp())
 
         if include_untimed:
             # Documents without updated_at are assigned -1 as their date
             return f"!({DOC_UPDATED_AT} < {cutoff_secs}) and "
 
-        return f"({DOC_UPDATED_AT} > {cutoff_secs}) and "
+        return f"({DOC_UPDATED_AT} >= {cutoff_secs}) and "
 
     filter_str = f"!({HIDDEN}=true) and " if not include_hidden else ""
 
@@ -556,6 +557,7 @@ class VespaIndex(DocumentIndex):
         favor_recent: bool,
         num_to_retrieve: int = NUM_RETURNED_HITS,
     ) -> list[InferenceChunk]:
+        decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
             VespaIndex.yql_base
@@ -571,7 +573,7 @@ class VespaIndex(DocumentIndex):
         params: dict[str, str | int] = {
             "yql": yql,
             "query": query,
-            "input.query(decay_factor)": str(DOC_TIME_DECAY),
+            "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
             "hits": num_to_retrieve,
             "num_to_rerank": 10 * num_to_retrieve,
             "ranking.profile": "keyword_search",
@@ -587,6 +589,7 @@ class VespaIndex(DocumentIndex):
         num_to_retrieve: int = NUM_RETURNED_HITS,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
     ) -> list[InferenceChunk]:
+        decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
             VespaIndex.yql_base
@@ -609,7 +612,7 @@ class VespaIndex(DocumentIndex):
             "yql": yql,
             "query": query_keywords,
             "input.query(query_embedding)": str(query_embedding),
-            "input.query(decay_factor)": str(DOC_TIME_DECAY),
+            "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
             "ranking.profile": "semantic_search",
         }
 

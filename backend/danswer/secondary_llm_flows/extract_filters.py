@@ -179,7 +179,7 @@ def extract_question_time_filters(
             favor_recent = False
         return filters_base, favor_recent
 
-    llm_cutoff, llm_favor_recent = extract_time_filter(user_input)
+    llm_cutoff, llm_favor_recent = extract_time_filter(question.query)
 
     # For all extractable filters, don't overwrite the provided values if any is provided
     if time_cutoff is None:
@@ -197,6 +197,6 @@ if __name__ == "__main__":
     # Just for testing purposes, too tedious to unit test as it relies on an LLM
     while True:
         user_input = input("Query to Extract Time: ")
-        cutoff, favor_recent = extract_time_filter(user_input)
+        cutoff, recency_bias = extract_time_filter(user_input)
         print(f"Time Cutoff: {cutoff}")
-        print(f"Favor Recent: {favor_recent}")
+        print(f"Favor Recent: {recency_bias}")

@@ -14,7 +14,6 @@ export const questionValidationStreamed = async <T>({
     source_type: null,
     document_set: null,
     time_cutoff: null,
-    enable_auto_detect_filters: false,
   };
 
   const response = await fetch("/api/stream-query-validation", {
@@ -24,6 +23,7 @@ export const questionValidationStreamed = async <T>({
       collection: "danswer_index",
       use_keyword: null,
       filters: emptyFilters,
+      enable_auto_detect_filters: false,
       offset: null,
     }),
     headers: {

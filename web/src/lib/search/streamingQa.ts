@@ -83,6 +83,7 @@ export const searchRequestStreamed = async ({
         collection: "danswer_index",
         use_keyword: useKeyword,
         filters,
+        enable_auto_detect_filters: false,
         offset: offset,
       }),
       headers: {
