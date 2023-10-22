@@ -73,6 +73,7 @@ def handle_message(
     answer_generation_timeout: int = DANSWER_BOT_ANSWER_GENERATION_TIMEOUT,
     should_respond_with_error_msgs: bool = DANSWER_BOT_DISPLAY_ERROR_MSGS,
     disable_docs_only_answer: bool = DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER,
+    disable_auto_detect_filters: bool = DISABLE_DANSWER_BOT_FILTER_DETECT,
     reflexion: bool = ENABLE_DANSWERBOT_REFLEXION,
 ) -> bool:
     """Potentially respond to the user message depending on filters and if an answer was generated
@@ -179,7 +180,7 @@ def handle_message(
 
     answer_failed = False
     try:
-        # By leaving time_cutoff and favor_recent as done, and setting enable_auto_detect_filters
+        # By leaving time_cutoff and favor_recent as None, and setting enable_auto_detect_filters
         # it allows the slack flow to extract out filters from the user query
         filters = RequestFilters(
             source_type=None,
@@ -193,7 +194,7 @@ def handle_message(
                 query=msg,
                 collection=DOCUMENT_INDEX_NAME,
                 use_keyword=False,  # always use semantic search when handling Slack messages
-                enable_auto_detect_filters=not DISABLE_DANSWER_BOT_FILTER_DETECT,
+                enable_auto_detect_filters=not disable_auto_detect_filters,
                 filters=filters,
                 favor_recent=None,
                 offset=None,
