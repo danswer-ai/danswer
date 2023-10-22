@@ -288,7 +288,6 @@ def _index_vespa_chunks(
 
 
 def _build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) -> str:
-    # TODO DON'T PASS THIS PR WITHOUT TESTING!!!
     def _build_or_filters(key: str, vals: list[str] | None) -> str:
         if vals is None:
             return ""
@@ -302,7 +301,8 @@ def _build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) ->
         return f"({or_clause}) and "
 
     def _build_time_filter(
-        cutoff: datetime | None, untimed_doc_cutoff: timedelta = timedelta(days=60)
+        cutoff: datetime | None,
+        untimed_doc_cutoff: timedelta = timedelta(days=62),  # Slightly over 2 Months
     ) -> str:
         if not cutoff:
             return ""

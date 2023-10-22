@@ -114,7 +114,18 @@ class HybridCapable(abc.ABC):
         raise NotImplementedError
 
 
-class BaseIndex(Verifiable, Indexable, Updatable, Deletable, abc.ABC):
+class AdminCapable(abc.ABC):
+    @abc.abstractmethod
+    def admin_retrieval(
+        self,
+        query: str,
+        filters: IndexFilters,
+        num_to_retrieve: int,
+    ) -> list[InferenceChunk]:
+        raise NotImplementedError
+
+
+class BaseIndex(Verifiable, AdminCapable, Indexable, Updatable, Deletable, abc.ABC):
     """All basic functionalities excluding a specific retrieval approach
     Indices need to be able to
     - Check that the index exists with a schema definition
