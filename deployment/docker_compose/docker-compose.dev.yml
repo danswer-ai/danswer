@@ -99,6 +99,15 @@ services:
       - model_cache_torch:/root/.cache/torch/
       - model_cache_nltk:/root/nltk_data/
       - model_cache_huggingface:/root/.cache/huggingface/
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            capabilities:
+              - gpu
+              - utility # nvidia-smi
+              - compute # CUDA
   web_server:
     image: danswer/danswer-web-server:latest
     build:
