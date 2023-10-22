@@ -6,7 +6,9 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import PERSONAS_YAML
 from danswer.db.chat import upsert_persona
+from danswer.db.document_set import get_or_create_document_set_by_name
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.models import DocumentSet as DocumentSetDBModel
 from danswer.db.models import Persona
 from danswer.db.models import ToolInfo
 
@@ -49,6 +51,18 @@ def load_personas_from_yaml(personas_yaml: str = PERSONAS_YAML) -> None:
         for persona in all_personas:
             tools = [validate_tool_info(tool) for tool in persona["tools"]]
 
+            doc_set_names = persona["document_sets"]
+            doc_sets: list[DocumentSetDBModel] | None = [
+                get_or_create_document_set_by_name(db_session, name)
+                for name in doc_set_names
+            ]
+
+            # Assume if user hasn't set any document sets for the persona, the user may want
+            # to later attach document sets to the persona manually, therefore, don't overwrite/reset
+            # the document sets for the persona
+            if not doc_sets:
+                doc_sets = None
+
             upsert_persona(
                 name=persona["name"],
                 retrieval_enabled=persona.get("retrieval_enabled", True),
@@ -62,5 +76,6 @@ def load_personas_from_yaml(personas_yaml: str = PERSONAS_YAML) -> None:
                 tools=tools,
                 hint_text=persona.get("hint"),
                 default_persona=True,
+                document_sets=doc_sets,
                 db_session=db_session,
             )
