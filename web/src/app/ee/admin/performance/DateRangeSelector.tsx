@@ -1,0 +1,48 @@
+import {
+  DateRangePicker,
+  DateRangePickerItem,
+  DateRangePickerValue,
+} from "@tremor/react";
+import { getXDaysAgo } from "./dateUtils";
+
+export const THIRTY_DAYS = "30d";
+
+export function DateRangeSelector({
+  value,
+  onValueChange,
+}: {
+  value: DateRangePickerValue;
+  onValueChange: (value: DateRangePickerValue) => void;
+}) {
+  return (
+    <div>
+      <div className="text-sm my-auto mr-2 font-medium text-gray-200 mb-1">
+        Date Range
+      </div>
+      <DateRangePicker
+        className="max-w-md"
+        value={value}
+        onValueChange={onValueChange}
+        selectPlaceholder="Select"
+        enableClear={false}
+      >
+        <DateRangePickerItem
+          key={THIRTY_DAYS}
+          value={THIRTY_DAYS}
+          from={getXDaysAgo(30)}
+          to={getXDaysAgo(0)}
+        >
+          Last 30 days
+        </DateRangePickerItem>
+        <DateRangePickerItem
+          key="today"
+          value="today"
+          from={getXDaysAgo(1)}
+          to={getXDaysAgo(0)}
+        >
+          Today
+        </DateRangePickerItem>
+      </DateRangePicker>
+    </div>
+  );
+}

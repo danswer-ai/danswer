@@ -16,6 +16,8 @@ from danswer.main import get_application
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 from ee.danswer.configs.app_configs import OPENID_CONFIG_URL
+from ee.danswer.server.analytics.api import router as analytics_router
+from ee.danswer.server.query_history.api import router as query_history_router
 from ee.danswer.server.saml import router as saml_router
 from ee.danswer.server.user_group.api import router as user_group_router
 
@@ -54,6 +56,9 @@ def get_ee_application() -> FastAPI:
 
     # RBAC / group access control
     application.include_router(user_group_router)
+    # analytics endpoints
+    application.include_router(analytics_router)
+    application.include_router(query_history_router)
 
     return application
 

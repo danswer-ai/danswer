@@ -12,6 +12,7 @@ const nextConfig = {
     const eeRedirects =
       process.env.NEXT_PUBLIC_EE_ENABLED === "true"
         ? [
+            // user group pages
             {
               source: "/admin/groups",
               destination: "/ee/admin/groups",
@@ -19,6 +20,19 @@ const nextConfig = {
             {
               source: "/admin/groups/:path*",
               destination: "/ee/admin/groups/:path*",
+            },
+            // analytics / audit log pages
+            {
+              source: "/admin/performance/analytics",
+              destination: "/ee/admin/performance/analytics",
+            },
+            {
+              source: "/admin/performance/query-history",
+              destination: "/ee/admin/performance/query-history",
+            },
+            {
+              source: "/admin/performance/query-history/:path*",
+              destination: "/ee/admin/performance/query-history/:path*",
             },
           ]
         : [];
