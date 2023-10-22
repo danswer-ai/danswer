@@ -18,7 +18,6 @@ from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
-from danswer.datastores.interfaces import IndexFilter
 from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
 from danswer.db.models import Connector
@@ -172,12 +171,24 @@ class CreateChatSessionID(BaseModel):
     chat_session_id: int
 
 
+class RequestFilters(BaseModel):
+    source_type: list[str] | None
+    document_set: list[str] | None
+    time_cutoff: datetime | None = None
+
+
+class IndexFilters(RequestFilters):
+    access_control_list: list[str]
+
+
 class QuestionRequest(BaseModel):
     query: str
     collection: str
     use_keyword: bool | None
-    filters: list[IndexFilter] | None
+    filters: RequestFilters
     offset: int | None
+    enable_auto_detect_filters: bool
+    favor_recent: bool | None = None
 
 
 class QAFeedbackRequest(BaseModel):

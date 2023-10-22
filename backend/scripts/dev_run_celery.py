@@ -1,3 +1,4 @@
+# This file is purely for development use, not included in any builds
 import subprocess
 import threading
 

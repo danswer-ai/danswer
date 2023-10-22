@@ -26,6 +26,8 @@ from danswer.search.models import SearchType
 from danswer.search.semantic_search import chunks_to_search_docs
 from danswer.search.semantic_search import retrieve_ranked_documents
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
+from danswer.secondary_llm_flows.extract_filters import extract_question_time_filters
+from danswer.server.models import IndexFilters
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.utils.logger import setup_logger
@@ -49,10 +51,11 @@ def answer_qa_query(
     llm_metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,
 ) -> QAResponse:
     query = question.query
-    filters = question.filters
     use_keyword = question.use_keyword
     offset_count = question.offset if question.offset is not None else 0
     logger.info(f"Received QA query: {query}")
+
+    filters, favor_recent = extract_question_time_filters(question)
 
     query_event_id = create_query_event(
         query=query,
@@ -70,22 +73,27 @@ def answer_qa_query(
 
     user_id = None if user is None else user.id
     user_acl_filters = build_access_filters_for_user(user, db_session)
-    final_filters = (filters or []) + user_acl_filters
+    final_filters = IndexFilters(
+        source_type=filters.source_type,
+        document_set=filters.document_set,
+        time_cutoff=filters.time_cutoff,
+        access_control_list=user_acl_filters,
+    )
     if use_keyword:
         ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
-            query,
-            user_id,
-            final_filters,
-            get_default_document_index(),
+            query=query,
+            filters=final_filters,
+            favor_recent=favor_recent,
+            datastore=get_default_document_index(),
             retrieval_metrics_callback=retrieval_metrics_callback,
         )
         unranked_chunks: list[InferenceChunk] | None = []
     else:
         ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-            query,
-            user_id,
-            final_filters,
-            get_default_document_index(),
+            query=query,
+            filters=final_filters,
+            favor_recent=favor_recent,
+            datastore=get_default_document_index(),
             retrieval_metrics_callback=retrieval_metrics_callback,
             rerank_metrics_callback=rerank_metrics_callback,
         )

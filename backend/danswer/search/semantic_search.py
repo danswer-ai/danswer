@@ -1,6 +1,4 @@
-import json
 from collections.abc import Callable
-from uuid import UUID
 
 import numpy
 from sentence_transformers import SentenceTransformer  # type: ignore
@@ -24,7 +22,7 @@ from danswer.configs.model_configs import SIM_SCORE_RANGE_LOW
 from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.datastores.datastore_utils import translate_boost_count_to_multiplier
 from danswer.datastores.interfaces import DocumentIndex
-from danswer.datastores.interfaces import IndexFilter
+from danswer.datastores.interfaces import IndexFilters
 from danswer.search.models import ChunkMetric
 from danswer.search.models import Embedder
 from danswer.search.models import MAX_METRICS_CONTENT
@@ -179,8 +177,8 @@ def apply_boost(
 @log_function_time()
 def retrieve_ranked_documents(
     query: str,
-    user_id: UUID | None,
-    filters: list[IndexFilter] | None,
+    filters: IndexFilters,
+    favor_recent: bool,
     datastore: DocumentIndex,
     num_hits: int = NUM_RETURNED_HITS,
     num_rerank: int = NUM_RERANKED_RESULTS,
@@ -198,12 +196,9 @@ def retrieve_ranked_documents(
         files_log_msg = f"Top links from semantic search: {', '.join(doc_links)}"
         logger.info(files_log_msg)
 
-    top_chunks = datastore.semantic_retrieval(query, user_id, filters, num_hits)
+    top_chunks = datastore.semantic_retrieval(query, filters, favor_recent, num_hits)
     if not top_chunks:
-        filters_log_msg = json.dumps(filters, separators=(",", ":")).replace("\n", "")
-        logger.warning(
-            f"Semantic search returned no results with filters: {filters_log_msg}"
-        )
+        logger.info(f"Semantic search returned no results with filters: {filters}")
         return None, None
     logger.debug(top_chunks)
 

@@ -4,9 +4,11 @@ import string
 import time
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 from typing import Any
 from typing import cast
-from uuid import UUID
 
 import requests
 from requests import HTTPError
@@ -46,10 +48,9 @@ from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.constants import TITLE
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
-from danswer.datastores.datastore_utils import translate_to_epoch_seconds_ensure_tz
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import DocumentInsertionRecord
-from danswer.datastores.interfaces import IndexFilter
+from danswer.datastores.interfaces import IndexFilters
 from danswer.datastores.interfaces import UpdateRequest
 from danswer.datastores.vespa.utils import remove_invalid_unicode_chars
 from danswer.search.keyword_search import remove_stop_words
@@ -97,6 +98,16 @@ def _does_document_exist(
             f"with error {doc_fetch_response.status_code}"
         )
     return True
+
+
+def _vespa_get_updated_at_attribute(t: datetime | None) -> int:
+    if not t:
+        return -1
+
+    if t.tzinfo != timezone.utc:
+        raise ValueError("Connectors must provide document update time in UTC")
+
+    return int(t.timestamp())
 
 
 def _get_vespa_chunk_ids_by_document_id(
@@ -178,7 +189,7 @@ def _index_vespa_chunk(
         METADATA: json.dumps(document.metadata),
         EMBEDDINGS: embeddings_name_vector_map,
         BOOST: DEFAULT_BOOST,
-        DOC_UPDATED_AT: translate_to_epoch_seconds_ensure_tz(document.doc_updated_at),
+        DOC_UPDATED_AT: _vespa_get_updated_at_attribute(document.doc_updated_at),
         PRIMARY_OWNERS: document.primary_owners,
         SECONDARY_OWNERS: document.secondary_owners,
         # the only `set` vespa has is `weightedset`, so we have to give each
@@ -275,37 +286,48 @@ def _index_vespa_chunks(
     return insertion_records
 
 
-def _build_vespa_filters(
-    filters: list[IndexFilter] | None, include_hidden: bool = False
-) -> str:
-    # NOTE: permissions filters are expected to be passed in directly via
-    # the `filters` arg, which is why they are not considered explicitly here
+def _build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) -> str:
+    # TODO DON'T PASS THIS PR WITHOUT TESTING!!!
+    def _build_or_filters(key: str, vals: list[str] | None) -> str:
+        if vals is None:
+            return ""
 
-    # NOTE: document-set filters are also expected to be passed in directly
-    # via the `filters` arg. These are set either in the Web UI or in the Slack
-    # listener
+        valid_vals = [val for val in vals if val]
+        if not key or not valid_vals:
+            return ""
 
-    # usually ignore hidden docs unless explicitly requested. We may want to
-    # get hidden docs on the admin panel to allow for un-hiding
+        eq_elems = [f'{key} contains "{elem}"' for elem in valid_vals]
+        or_clause = " or ".join(eq_elems)
+        return f"({or_clause}) and "
+
+    def _build_time_filter(
+        cutoff: datetime | None, untimed_doc_cutoff: timedelta = timedelta(days=60)
+    ) -> str:
+        if not cutoff:
+            return ""
+
+        # For Documents that don't have an updated at, filter them out for queries asking for
+        # very recent documents (2 months) default
+        include_untimed = datetime.utcnow() - untimed_doc_cutoff < cutoff
+        cutoff_secs = cutoff.timestamp()
+
+        if include_untimed:
+            # Documents without updated_at are assigned -1 as their date
+            return f"!({DOC_UPDATED_AT} < {cutoff_secs}) and "
+
+        return f"({DOC_UPDATED_AT} > {cutoff_secs}) and "
+
     filter_str = f"!({HIDDEN}=true) and " if not include_hidden else ""
 
-    # Handle provided query filters
-    if filters:
-        for filter_dict in filters:
-            valid_filters = {
-                key: value for key, value in filter_dict.items() if value is not None
-            }
-            for filter_key, filter_val in valid_filters.items():
-                if isinstance(filter_val, str):
-                    filter_str += f'{filter_key} contains "{filter_val}" and '
-                elif isinstance(filter_val, list):
-                    eq_elems = [
-                        f'{filter_key} contains "{elem}"' for elem in filter_val
-                    ]
-                    filters_or = " or ".join(eq_elems)
-                    filter_str += f"({filters_or}) and "
-                else:
-                    raise ValueError("Invalid filters provided")
+    # CAREFUL touching this one, currently there is no second ACL double-check post retrieval
+    filter_str += _build_or_filters(ACCESS_CONTROL_LIST, filters.access_control_list)
+
+    filter_str += _build_or_filters(SOURCE_TYPE, filters.source_type)
+
+    filter_str += _build_or_filters(DOCUMENT_SETS, filters.document_set)
+
+    filter_str += _build_time_filter(filters.time_cutoff)
+
     return filter_str
 
 
@@ -530,8 +552,8 @@ class VespaIndex(DocumentIndex):
     def keyword_retrieval(
         self,
         query: str,
-        user_id: UUID | None,
-        filters: list[IndexFilter] | None,
+        filters: IndexFilters,
+        favor_recent: bool,
         num_to_retrieve: int = NUM_RETURNED_HITS,
     ) -> list[InferenceChunk]:
         vespa_where_clauses = _build_vespa_filters(filters)
@@ -560,9 +582,9 @@ class VespaIndex(DocumentIndex):
     def semantic_retrieval(
         self,
         query: str,
-        user_id: UUID | None,
-        filters: list[IndexFilter] | None,
-        num_to_retrieve: int,
+        filters: IndexFilters,
+        favor_recent: bool,
+        num_to_retrieve: int = NUM_RETURNED_HITS,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
     ) -> list[InferenceChunk]:
         vespa_where_clauses = _build_vespa_filters(filters)
@@ -596,8 +618,8 @@ class VespaIndex(DocumentIndex):
     def hybrid_retrieval(
         self,
         query: str,
-        user_id: UUID | None,
-        filters: list[IndexFilter] | None,
+        filters: IndexFilters,
+        favor_recent: bool,
         num_to_retrieve: int,
     ) -> list[InferenceChunk]:
         vespa_where_clauses = _build_vespa_filters(filters)
@@ -628,8 +650,7 @@ class VespaIndex(DocumentIndex):
     def admin_retrieval(
         self,
         query: str,
-        user_id: UUID | None,
-        filters: list[IndexFilter] | None,
+        filters: IndexFilters,
         num_to_retrieve: int = NUM_RETURNED_HITS,
     ) -> list[InferenceChunk]:
         vespa_where_clauses = _build_vespa_filters(filters, include_hidden=True)
