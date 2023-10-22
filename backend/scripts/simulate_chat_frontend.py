@@ -27,14 +27,14 @@ def send_chat_message(
     chat_session_id: int,
     message_number: int,
     parent_edit_number: int | None,
-    persona_id: int | None,
+    persona_name: str | None,
 ) -> None:
     data = {
         "message": message,
         "chat_session_id": chat_session_id,
         "message_number": message_number,
         "parent_edit_number": parent_edit_number,
-        "persona_id": persona_id,
+        "persona_name": persona_name,
     }
 
     docs: list[dict] | None = None
@@ -66,7 +66,7 @@ def run_chat(contextual: bool) -> None:
         )
         exit()
 
-    persona_id = 1 if contextual else None
+    persona_name = "Danswer" if contextual else None
 
     message_num = 0
     parent_edit = None
@@ -77,7 +77,7 @@ def run_chat(contextual: bool) -> None:
         )
 
         send_chat_message(
-            new_message, new_session_id, message_num, parent_edit, persona_id
+            new_message, new_session_id, message_num, parent_edit, persona_name
         )
 
         message_num += 2  # 1 for User message, 1 for AI response
@@ -90,7 +90,7 @@ if __name__ == "__main__":
         "-c",
         "--contextual",
         action="store_true",
-        help="If this flag is set, the chat is able to call tools.",
+        help="If this flag is set, the chat is able to use retrieval",
     )
     args = parser.parse_args()
 

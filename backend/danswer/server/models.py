@@ -219,7 +219,7 @@ class CreateChatMessageRequest(BaseModel):
     message_number: int
     parent_edit_number: int | None
     message: str
-    persona_id: int | None
+    persona_name: str | None
 
 
 class ChatMessageIdentifier(BaseModel):
