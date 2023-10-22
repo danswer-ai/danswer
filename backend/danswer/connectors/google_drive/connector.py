@@ -99,7 +99,7 @@ def _run_drive_file_query(
                     file = service.files().get(
                         fileId=file["shortcutDetails"]["targetId"],
                         supportsAllDrives=include_shared,
-                        fields="mimeType, id, name, webViewLink, shortcutDetails",
+                        fields="mimeType, id, name, modifiedTime, webViewLink, shortcutDetails",
                     )
                     file = file.execute()
                 except HttpError:
