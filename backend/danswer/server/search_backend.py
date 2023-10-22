@@ -147,7 +147,9 @@ def semantic_search(
     query = question.query
     logger.info(f"Received semantic search query: {query}")
 
-    filters, favor_recent = extract_question_time_filters(question)
+    time_cutoff, favor_recent = extract_question_time_filters(question)
+    question.filters.time_cutoff = time_cutoff
+    filters = question.filters
 
     query_event_id = create_query_event(
         query=query,
@@ -173,7 +175,11 @@ def semantic_search(
     )
     if not ranked_chunks:
         return SearchResponse(
-            top_ranked_docs=None, lower_ranked_docs=None, query_event_id=query_event_id
+            top_ranked_docs=None,
+            lower_ranked_docs=None,
+            query_event_id=query_event_id,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
         )
 
     top_docs = chunks_to_search_docs(ranked_chunks)
@@ -189,6 +195,8 @@ def semantic_search(
         top_ranked_docs=top_docs,
         lower_ranked_docs=other_top_docs,
         query_event_id=query_event_id,
+        time_cutoff=time_cutoff,
+        favor_recent=favor_recent,
     )
 
 
@@ -201,7 +209,9 @@ def keyword_search(
     query = question.query
     logger.info(f"Received keyword search query: {query}")
 
-    filters, favor_recent = extract_question_time_filters(question)
+    time_cutoff, favor_recent = extract_question_time_filters(question)
+    question.filters.time_cutoff = time_cutoff
+    filters = question.filters
 
     query_event_id = create_query_event(
         query=query,
@@ -227,7 +237,11 @@ def keyword_search(
     )
     if not ranked_chunks:
         return SearchResponse(
-            top_ranked_docs=None, lower_ranked_docs=None, query_event_id=query_event_id
+            top_ranked_docs=None,
+            lower_ranked_docs=None,
+            query_event_id=query_event_id,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
         )
 
     top_docs = chunks_to_search_docs(ranked_chunks)
@@ -239,7 +253,11 @@ def keyword_search(
     )
 
     return SearchResponse(
-        top_ranked_docs=top_docs, lower_ranked_docs=None, query_event_id=query_event_id
+        top_ranked_docs=top_docs,
+        lower_ranked_docs=None,
+        query_event_id=query_event_id,
+        time_cutoff=time_cutoff,
+        favor_recent=favor_recent,
     )
 
 
@@ -281,7 +299,9 @@ def stream_direct_qa(
         use_keyword = question.use_keyword
         offset_count = question.offset if question.offset is not None else 0
 
-        filters, favor_recent = extract_question_time_filters(question)
+        time_cutoff, favor_recent = extract_question_time_filters(question)
+        question.filters.time_cutoff = time_cutoff
+        filters = question.filters
 
         predicted_search, predicted_flow = query_intent(query)
         if use_keyword is None:
@@ -333,6 +353,8 @@ def stream_direct_qa(
             if disable_generative_answer
             else predicted_flow,
             predicted_search=predicted_search,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
         ).dict()
 
         logger.debug(send_packet_debug_msg.format(initial_response))

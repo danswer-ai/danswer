@@ -1,5 +1,4 @@
 import json
-from copy import copy
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
@@ -10,7 +9,6 @@ from danswer.configs.app_configs import DISABLE_TIME_FILTER_EXTRACTION
 from danswer.llm.build import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.server.models import QuestionRequest
-from danswer.server.models import RequestFilters
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
@@ -166,10 +164,8 @@ def extract_time_filter(query: str) -> tuple[datetime | None, bool]:
 def extract_question_time_filters(
     question: QuestionRequest,
     disable_llm_extraction: bool = DISABLE_TIME_FILTER_EXTRACTION,
-) -> tuple[RequestFilters, bool]:
-    filters_base = copy(question.filters)
-
-    time_cutoff = filters_base.time_cutoff
+) -> tuple[datetime | None, bool]:
+    time_cutoff = question.filters.time_cutoff
     favor_recent = question.favor_recent
     # Frontend needs to be able to set this flag so that if user deletes the time filter,
     # we don't automatically reapply it. The env variable is a global disable of this feature
@@ -177,7 +173,7 @@ def extract_question_time_filters(
     if not question.enable_auto_detect_filters or disable_llm_extraction:
         if favor_recent is None:
             favor_recent = False
-        return filters_base, favor_recent
+        return time_cutoff, favor_recent
 
     llm_cutoff, llm_favor_recent = extract_time_filter(question.query)
 
@@ -188,9 +184,7 @@ def extract_question_time_filters(
     if favor_recent is None:
         favor_recent = llm_favor_recent
 
-    filters_base.time_cutoff = time_cutoff
-
-    return filters_base, favor_recent
+    return time_cutoff, favor_recent
 
 
 if __name__ == "__main__":

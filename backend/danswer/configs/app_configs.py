@@ -148,7 +148,6 @@ DOC_TIME_DECAY = float(
     os.environ.get("DOC_TIME_DECAY") or 0.5  # Hits limit at 2 years by default
 )
 FAVOR_RECENT_DECAY_MULTIPLIER = 2
-# TODO disable this until frontend is ready, otherwise its just slower and nobody knows it's better
 DISABLE_TIME_FILTER_EXTRACTION = (
     os.environ.get("DISABLE_TIME_FILTER_EXTRACTION", "").lower() == "true"
 )

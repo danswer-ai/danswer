@@ -55,7 +55,9 @@ def answer_qa_query(
     offset_count = question.offset if question.offset is not None else 0
     logger.info(f"Received QA query: {query}")
 
-    filters, favor_recent = extract_question_time_filters(question)
+    time_cutoff, favor_recent = extract_question_time_filters(question)
+    question.filters.time_cutoff = time_cutoff
+    filters = question.filters
 
     query_event_id = create_query_event(
         query=query,
@@ -76,7 +78,7 @@ def answer_qa_query(
     final_filters = IndexFilters(
         source_type=filters.source_type,
         document_set=filters.document_set,
-        time_cutoff=filters.time_cutoff,
+        time_cutoff=time_cutoff,
         access_control_list=user_acl_filters,
     )
     if use_keyword:
@@ -106,6 +108,8 @@ def answer_qa_query(
             predicted_flow=predicted_flow,
             predicted_search=predicted_search,
             query_event_id=query_event_id,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
         )
 
     top_docs = chunks_to_search_docs(ranked_chunks)
@@ -129,6 +133,8 @@ def answer_qa_query(
             predicted_flow=QueryFlow.SEARCH,
             predicted_search=predicted_search,
             query_event_id=query_event_id,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
         )
 
     try:
@@ -143,8 +149,10 @@ def answer_qa_query(
             lower_ranked_docs=unranked_top_docs,
             predicted_flow=predicted_flow,
             predicted_search=predicted_search,
-            error_msg=str(e),
             query_event_id=query_event_id,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
+            error_msg=str(e),
         )
 
     # remove chunks marked as not applicable for QA (e.g. Google Drive file
@@ -187,8 +195,10 @@ def answer_qa_query(
             predicted_flow=predicted_flow,
             predicted_search=predicted_search,
             eval_res_valid=True if valid else False,
-            error_msg=error_msg,
             query_event_id=query_event_id,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
+            error_msg=error_msg,
         )
 
     return QAResponse(
@@ -198,6 +208,8 @@ def answer_qa_query(
         lower_ranked_docs=unranked_top_docs,
         predicted_flow=predicted_flow,
         predicted_search=predicted_search,
-        error_msg=error_msg,
         query_event_id=query_event_id,
+        time_cutoff=time_cutoff,
+        favor_recent=favor_recent,
+        error_msg=error_msg,
     )

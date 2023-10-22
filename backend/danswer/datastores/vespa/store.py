@@ -101,9 +101,9 @@ def _does_document_exist(
     return True
 
 
-def _vespa_get_updated_at_attribute(t: datetime | None) -> int:
+def _vespa_get_updated_at_attribute(t: datetime | None) -> int | None:
     if not t:
-        return -1
+        return None
 
     if t.tzinfo != timezone.utc:
         raise ValueError("Connectors must provide document update time in UTC")

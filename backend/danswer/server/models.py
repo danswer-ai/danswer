@@ -165,6 +165,8 @@ class RerankedRetrievalDocs(RetrievalDocs):
     unranked_top_documents: list[SearchDoc]
     predicted_flow: QueryFlow
     predicted_search: SearchType
+    time_cutoff: datetime | None
+    favor_recent: bool
 
 
 class CreateChatSessionID(BaseModel):
@@ -277,6 +279,8 @@ class SearchResponse(BaseModel):
     top_ranked_docs: list[SearchDoc] | None
     lower_ranked_docs: list[SearchDoc] | None
     query_event_id: int
+    time_cutoff: datetime | None
+    favor_recent: bool
 
 
 class QAResponse(SearchResponse):

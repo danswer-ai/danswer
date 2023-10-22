@@ -260,6 +260,8 @@ def handle_message(
         query_event_id=answer.query_event_id,
         answer=answer.answer,
         quotes=answer.quotes,
+        time_cutoff=answer.time_cutoff,
+        favor_recent=answer.favor_recent,
     )
 
     document_blocks = build_documents_blocks(
