@@ -4,10 +4,11 @@ from pathlib import Path
 from typing import cast
 
 from celery import Celery  # type: ignore
-from celery.result import AsyncResult
 from sqlalchemy.orm import Session
 
-from danswer.background.connector_deletion import _delete_connector_credential_pair
+from danswer.background.connector_deletion import delete_connector_credential_pair
+from danswer.background.task_utils import build_celery_task_wrapper
+from danswer.background.task_utils import name_cc_cleanup_task
 from danswer.background.task_utils import name_document_set_sync_task
 from danswer.configs.app_configs import FILE_CONNECTOR_TMP_STORAGE_PATH
 from danswer.configs.app_configs import JOB_TIMEOUT
@@ -30,9 +31,6 @@ from danswer.db.engine import SYNC_DB_API
 from danswer.db.models import DocumentSet
 from danswer.db.tasks import check_live_task_not_timed_out
 from danswer.db.tasks import get_latest_task
-from danswer.db.tasks import mark_task_finished
-from danswer.db.tasks import mark_task_start
-from danswer.db.tasks import register_task
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 
@@ -43,7 +41,6 @@ celery_backend_url = "db+" + build_connection_string(db_api=SYNC_DB_API)
 celery_app = Celery(__name__, broker=celery_broker_url, backend=celery_backend_url)
 
 
-_ExistingTaskCache: dict[int, AsyncResult] = {}
 _SYNC_BATCH_SIZE = 1000
 
 
@@ -52,6 +49,7 @@ _SYNC_BATCH_SIZE = 1000
 #
 # If imports from this module are needed, use local imports to avoid circular importing
 #####
+@build_celery_task_wrapper(name_cc_cleanup_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def cleanup_connector_credential_pair_task(
     connector_id: int,
@@ -79,7 +77,7 @@ def cleanup_connector_credential_pair_task(
 
         try:
             # The bulk of the work is in here, updates Postgres and Vespa
-            return _delete_connector_credential_pair(
+            return delete_connector_credential_pair(
                 db_session=db_session,
                 document_index=get_default_document_index(),
                 cc_pair=cc_pair,
@@ -89,6 +87,7 @@ def cleanup_connector_credential_pair_task(
             raise e
 
 
+@build_celery_task_wrapper(name_document_set_sync_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def sync_document_set_task(document_set_id: int) -> None:
     """For document sets marked as not up to date, sync the state from postgres
@@ -125,9 +124,6 @@ def sync_document_set_task(document_set_id: int) -> None:
             )
 
     with Session(get_sqlalchemy_engine()) as db_session:
-        task_name = name_document_set_sync_task(document_set_id)
-        mark_task_start(task_name, db_session)
-
         try:
             document_index = get_default_document_index()
             documents_to_update = fetch_documents_for_document_set(
@@ -166,10 +162,7 @@ def sync_document_set_task(document_set_id: int) -> None:
 
         except Exception:
             logger.exception("Failed to sync document set %s", document_set_id)
-            mark_task_finished(task_name, db_session, success=False)
             raise
-
-        mark_task_finished(task_name, db_session)
 
 
 #####
@@ -201,10 +194,9 @@ def check_for_document_sets_sync_task() -> None:
                     continue
 
                 logger.info(f"Document set {document_set.id} syncing now!")
-                task = sync_document_set_task.apply_async(
+                sync_document_set_task.apply_async(
                     kwargs=dict(document_set_id=document_set.id),
                 )
-                register_task(task.id, task_name, db_session)
 
 
 @celery_app.task(name="clean_old_temp_files_task", soft_time_limit=JOB_TIMEOUT)
