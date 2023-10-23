@@ -365,7 +365,9 @@ def get_connector_indexing_status(
                 if latest_index_attempt
                 else None,
                 deletion_attempt=get_deletion_status(
-                    connector_id=connector.id, credential_id=credential.id
+                    connector_id=connector.id,
+                    credential_id=credential.id,
+                    db_session=db_session,
                 ),
                 is_deletable=check_deletion_attempt_is_allowed(
                     connector_credential_pair=cc_pair
