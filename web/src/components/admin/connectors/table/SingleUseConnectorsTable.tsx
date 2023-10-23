@@ -17,8 +17,8 @@ const SingleUseConnectorStatus = ({
 }) => {
   if (
     deletionAttempt &&
-    (deletionAttempt.status === "in_progress" ||
-      deletionAttempt.status === "not_started")
+    (deletionAttempt.status === "PENDING" ||
+      deletionAttempt.status === "STARTED")
   ) {
     return <div className="text-red-500">Deleting...</div>;
   }

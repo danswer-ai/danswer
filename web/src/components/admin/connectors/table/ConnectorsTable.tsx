@@ -37,10 +37,7 @@ export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
   }
   if (connector.disabled) {
     const deletionAttempt = connectorIndexingStatus.deletion_attempt;
-    if (
-      !deletionAttempt ||
-      deletionAttempt.status === "FAILURE"
-    ) {
+    if (!deletionAttempt || deletionAttempt.status === "FAILURE") {
       statusDisplay = <div className="text-red-700">Disabled</div>;
     } else {
       statusDisplay = <div className="text-red-700">Deleting...</div>;

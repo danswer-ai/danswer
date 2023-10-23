@@ -33,11 +33,7 @@ export type ValidStatuses =
   | "failed"
   | "in_progress"
   | "not_started";
-export type TaskStatus =
-| "PENDING"
-| "STARTED"
-| "SUCCESS"
-| "FAILURE";
+export type TaskStatus = "PENDING" | "STARTED" | "SUCCESS" | "FAILURE";
 
 export interface DocumentBoostStatus {
   document_id: string;
