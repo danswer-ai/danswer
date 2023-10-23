@@ -144,7 +144,7 @@ def cleanup_synced_entities(
     )
 
 
-def _delete_connector_credential_pair(
+def delete_connector_credential_pair(
     db_session: Session,
     document_index: DocumentIndex,
     cc_pair: ConnectorCredentialPair,

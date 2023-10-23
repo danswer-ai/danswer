@@ -33,6 +33,11 @@ export type ValidStatuses =
   | "failed"
   | "in_progress"
   | "not_started";
+export type TaskStatus =
+| "PENDING"
+| "STARTED"
+| "SUCCESS"
+| "FAILURE";
 
 export interface DocumentBoostStatus {
   document_id: string;
@@ -244,9 +249,7 @@ export interface Document360CredentialJson {
 export interface DeletionAttemptSnapshot {
   connector_id: number;
   credential_id: number;
-  status: ValidStatuses;
-  error_msg?: string;
-  num_docs_deleted: number;
+  status: TaskStatus;
 }
 
 // DOCUMENT SETS
