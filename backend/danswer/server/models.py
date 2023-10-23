@@ -22,10 +22,10 @@ from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
 from danswer.db.models import Connector
 from danswer.db.models import Credential
-from danswer.db.models import DeletionStatus
 from danswer.db.models import DocumentSet as DocumentSetDBModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
+from danswer.db.models import TaskStatus
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
@@ -326,9 +326,7 @@ class IndexAttemptSnapshot(BaseModel):
 class DeletionAttemptSnapshot(BaseModel):
     connector_id: int
     credential_id: int
-    status: DeletionStatus
-    error_msg: str | None
-    num_docs_deleted: int
+    status: TaskStatus
 
 
 class ConnectorBase(BaseModel):
