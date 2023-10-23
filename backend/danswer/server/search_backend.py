@@ -62,7 +62,6 @@ router = APIRouter()
 
 class AdminSearchRequest(BaseModel):
     query: str
-    filters: IndexFilters
 
 
 class AdminSearchResponse(BaseModel):
@@ -76,14 +75,13 @@ def admin_search(
     db_session: Session = Depends(get_session),
 ) -> AdminSearchResponse:
     query = question.query
-    filters = question.filters
     logger.info(f"Received admin search query: {query}")
 
     user_acl_filters = build_access_filters_for_user(user, db_session)
     final_filters = IndexFilters(
-        source_type=filters.source_type,
-        document_set=filters.document_set,
-        time_cutoff=filters.time_cutoff,
+        source_type=None,
+        document_set=None,
+        time_cutoff=None,
         access_control_list=user_acl_filters,
     )
     document_index = get_default_document_index()
