@@ -121,6 +121,7 @@ class TestQAPostprocessing(unittest.TestCase):
             score=1,
             metadata={},
             match_highlights=[],
+            updated_at=None,
         )
         test_chunk_1 = InferenceChunk(
             document_id="test doc 1",
@@ -137,6 +138,7 @@ class TestQAPostprocessing(unittest.TestCase):
             score=1,
             metadata={},
             match_highlights=[],
+            updated_at=None,
         )
 
         test_quotes = [

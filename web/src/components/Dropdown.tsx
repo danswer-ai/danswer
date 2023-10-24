@@ -278,3 +278,45 @@ export const SearchMultiSelectDropdown: FC<MultiSelectDropdownProps> = ({
     </div>
   );
 };
+
+export const CustomDropdown = ({
+  children,
+  dropdown,
+}: {
+  children: JSX.Element | string;
+  dropdown: JSX.Element | string;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <div className="relative inline-block text-left w-full" ref={dropdownRef}>
+      <div onClick={() => setIsOpen(!isOpen)}>{children}</div>
+
+      {isOpen && (
+        <div
+          onClick={() => setIsOpen(!isOpen)}
+          className="pt-2 absolute bottom w-full z-30 bg-gray-900"
+        >
+          {dropdown}
+        </div>
+      )}
+    </div>
+  );
+};
