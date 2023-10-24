@@ -5,6 +5,8 @@ import { Source } from "@/lib/search/interfaces";
 import { InfoIcon, defaultTailwindCSS } from "../icons/icons";
 import { HoverPopup } from "../HoverPopup";
 import { FiFilter } from "react-icons/fi";
+import { DateRangeSelector } from "./DateRangeSelector";
+import { DateRangePickerValue } from "@tremor/react";
 
 const sources: Source[] = [
   { displayName: "Google Drive", internalName: "google_drive" },
@@ -27,7 +29,15 @@ const sources: Source[] = [
   { displayName: "Google Sites", internalName: "google_sites" },
 ];
 
+const SectionTitle = ({ children }: { children: string }) => (
+  <div className="font-medium text-sm flex">{children}</div>
+);
+
 interface SourceSelectorProps {
+  timeRange: DateRangePickerValue | null;
+  setTimeRange: React.Dispatch<
+    React.SetStateAction<DateRangePickerValue | null>
+  >;
   selectedSources: Source[];
   setSelectedSources: React.Dispatch<React.SetStateAction<Source[]>>;
   selectedDocumentSets: string[];
@@ -37,6 +47,8 @@ interface SourceSelectorProps {
 }
 
 export function SourceSelector({
+  timeRange,
+  setTimeRange,
   selectedSources,
   setSelectedSources,
   selectedDocumentSets,
@@ -71,9 +83,16 @@ export function SourceSelector({
         <FiFilter className="my-auto ml-2" size="18" />
       </div>
 
+      <>
+        <SectionTitle>Time Range</SectionTitle>
+        <div className="mt-2">
+          <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
+        </div>
+      </>
+
       {existingSources.length > 0 && (
-        <>
-          <div className="font-medium text-sm flex">Sources</div>
+        <div className="mt-4">
+          <SectionTitle>Sources</SectionTitle>
           <div className="px-1">
             {sources
               .filter((source) => existingSources.includes(source.internalName))
@@ -96,13 +115,13 @@ export function SourceSelector({
                 </div>
               ))}
           </div>
-        </>
+        </div>
       )}
 
       {availableDocumentSets.length > 0 && (
         <>
           <div className="mt-4">
-            <div className="font-medium text-sm flex">Knowledge Sets</div>
+            <SectionTitle>Knowledge Sets</SectionTitle>
           </div>
           <div className="px-1">
             {availableDocumentSets.map((documentSet) => (

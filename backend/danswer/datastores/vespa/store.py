@@ -36,11 +36,9 @@ from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import DOCUMENT_SETS
 from danswer.configs.constants import EMBEDDINGS
 from danswer.configs.constants import HIDDEN
-from danswer.configs.constants import MATCH_HIGHLIGHTS
 from danswer.configs.constants import METADATA
 from danswer.configs.constants import PRIMARY_OWNERS
 from danswer.configs.constants import RECENCY_BIAS
-from danswer.configs.constants import SCORE
 from danswer.configs.constants import SECONDARY_OWNERS
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
@@ -373,6 +371,54 @@ def _process_dynamic_summary(
     return processed_summary
 
 
+def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
+    fields = cast(dict[str, Any], hit["fields"])
+
+    # parse fields that are stored as strings, but are really json / datetime
+    metadata = json.loads(fields[METADATA]) if METADATA in fields else {}
+    updated_at = (
+        datetime.fromtimestamp(fields[DOC_UPDATED_AT], tz=timezone.utc)
+        if DOC_UPDATED_AT in fields
+        else None
+    )
+    match_highlights = _process_dynamic_summary(
+        # fallback to regular `content` if the `content_summary` field
+        # isn't present
+        dynamic_summary=hit["fields"].get(CONTENT_SUMMARY, hit["fields"][CONTENT]),
+    )
+    semantic_identifier = fields.get(SEMANTIC_IDENTIFIER, "")
+    if not semantic_identifier:
+        logger.error(
+            f"Chunk with blurb: {fields.get(BLURB, 'Unknown')[:50]}... has no Semantic Identifier"
+        )
+    source_links = fields.get(SOURCE_LINKS, {})
+    source_links_dict_unprocessed = (
+        json.loads(source_links) if isinstance(source_links, str) else source_links
+    )
+    source_links_dict = {
+        int(k): v
+        for k, v in cast(dict[str, str], source_links_dict_unprocessed).items()
+    }
+
+    return InferenceChunk(
+        chunk_id=fields[CHUNK_ID],
+        blurb=fields[BLURB],
+        content=fields[CONTENT],
+        source_links=source_links_dict,
+        section_continuation=fields[SECTION_CONTINUATION],
+        document_id=fields[DOCUMENT_ID],
+        source_type=fields[SOURCE_TYPE],
+        semantic_identifier=fields[SEMANTIC_IDENTIFIER],
+        boost=fields.get(BOOST, 1),
+        recency_bias=fields["matchfeatures"][RECENCY_BIAS],
+        score=hit["relevance"],
+        hidden=fields.get(HIDDEN, False),
+        metadata=metadata,
+        match_highlights=match_highlights,
+        updated_at=updated_at,
+    )
+
+
 def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError("No/empty query received")
@@ -391,26 +437,7 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
 
     filtered_hits = [hit for hit in hits if hit["fields"].get(CONTENT) is not None]
 
-    inference_chunks = [
-        InferenceChunk.from_dict(
-            dict(
-                hit["fields"],
-                **{RECENCY_BIAS: hit["fields"]["matchfeatures"][RECENCY_BIAS]},
-                **{SCORE: hit["relevance"]},
-                **{
-                    MATCH_HIGHLIGHTS: _process_dynamic_summary(
-                        # fallback to regular `content` if the `content_summary` field
-                        # isn't present
-                        dynamic_summary=hit["fields"].get(
-                            CONTENT_SUMMARY, hit["fields"][CONTENT]
-                        ),
-                    )
-                },
-            )
-        )
-        for hit in filtered_hits
-    ]
-
+    inference_chunks = [_vespa_hit_to_inference_chunk(hit) for hit in filtered_hits]
     return inference_chunks
 
 

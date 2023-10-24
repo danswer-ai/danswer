@@ -6,6 +6,7 @@ import {
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { fetcher } from "./fetcher";
 import { useState } from "react";
+import { DateRangePickerValue } from "@tremor/react";
 
 const CREDENTIAL_URL = "/api/manage/admin/credential";
 
@@ -67,4 +68,8 @@ export const useConnectorCredentialIndexingStatus = (
     ...swrResponse,
     refreshIndexingStatus: () => mutate(INDEXING_STATUS_URL),
   };
+};
+
+export const useTimeRange = (initialValue?: DateRangePickerValue) => {
+  return useState<DateRangePickerValue | null>(null);
 };

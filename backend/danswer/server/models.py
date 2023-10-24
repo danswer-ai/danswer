@@ -155,6 +155,15 @@ class SearchDoc(BaseModel):
     # to specify that a set of words should be highlighted. For example:
     # ["<hi>the</hi> <hi>answer</hi> is 42", "the answer is <hi>42</hi>""]
     match_highlights: list[str]
+    # when the doc was last updated
+    updated_at: datetime | None
+
+    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+        initial_dict["updated_at"] = (
+            self.updated_at.isoformat() if self.updated_at else None
+        )
+        return initial_dict
 
 
 class RetrievalDocs(BaseModel):
@@ -167,6 +176,13 @@ class RerankedRetrievalDocs(RetrievalDocs):
     predicted_search: SearchType
     time_cutoff: datetime | None
     favor_recent: bool
+
+    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+        initial_dict["time_cutoff"] = (
+            self.time_cutoff.isoformat() if self.time_cutoff else None
+        )
+        return initial_dict
 
 
 class CreateChatSessionID(BaseModel):
