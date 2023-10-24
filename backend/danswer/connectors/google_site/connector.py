@@ -15,6 +15,9 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
 
 
 def process_link(element: BeautifulSoup | Tag) -> str:
@@ -93,7 +96,10 @@ class GoogleSitesConnector(LoadConnector):
             nav = cast(Tag, header.find("nav"))
             path = find_google_sites_page_path_from_navbar(nav, "", True)
             if not path:
-                raise RuntimeError(f"Could not find path for {file_info.filename}")
+                logger.error(
+                    f"Could not find path for '{file_info.filename}'. "
+                    + "This page will not have a working link."
+                )
 
             # cleanup the hidden `Skip to main content` and `Skip to navigation` that
             # appears at the top of every page
@@ -113,7 +119,9 @@ class GoogleSitesConnector(LoadConnector):
                     semantic_identifier=title,
                     sections=[
                         Section(
-                            link=self.base_url.rstrip("/") + "/" + path.lstrip("/"),
+                            link=(self.base_url.rstrip("/") + "/" + path.lstrip("/"))
+                            if path
+                            else "",
                             text=parsed_html.cleaned_text,
                         )
                     ],
