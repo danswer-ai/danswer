@@ -128,6 +128,7 @@ class NotionConnector(LoadConnector, PollConnector):
             data = self._fetch_blocks(page_block_id, cursor)
 
             for result in data["results"]:
+                logger.debug(f"Found block for page '{page_block_id}': {result}")
                 result_block_id = result["id"]
                 result_type = result["type"]
                 result_obj = result[result_type]
@@ -280,6 +281,7 @@ class NotionConnector(LoadConnector, PollConnector):
         # TODO: remove once Notion search issue is discovered
         if self.recursive_index_enabled and self.root_page_id:
             yield from self._recursive_load()
+            return
 
         query_dict = {
             "filter": {"property": "object", "value": "page"},
@@ -306,6 +308,7 @@ class NotionConnector(LoadConnector, PollConnector):
         # TODO: remove once Notion search issue is discovered
         if self.recursive_index_enabled and self.root_page_id:
             yield from self._recursive_load()
+            return
 
         query_dict = {
             "page_size": self.batch_size,
@@ -328,7 +331,8 @@ class NotionConnector(LoadConnector, PollConnector):
 if __name__ == "__main__":
     import os
 
-    connector = NotionConnector()
+    root_page_id = os.environ.get("NOTION_ROOT_PAGE_ID")
+    connector = NotionConnector(root_page_id=root_page_id)
     connector.load_credentials(
         {"notion_integration_token": os.environ.get("NOTION_INTEGRATION_TOKEN")}
     )
