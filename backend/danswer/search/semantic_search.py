@@ -93,7 +93,9 @@ def semantic_reranking(
     scored_results.sort(key=lambda x: x[0], reverse=True)
     ranked_sim_scores, ranked_raw_scores, ranked_chunks = zip(*scored_results)
 
-    logger.debug(f"Reranked similarity scores: {ranked_sim_scores}")
+    logger.debug(
+        f"Reranked (Boosted + Time Weighted) similarity scores: {ranked_sim_scores}"
+    )
 
     # Assign new chunk scores based on reranking
     # TODO if pagination is added, the scores won't make sense with respect to the non-reranked hits
@@ -120,7 +122,7 @@ def semantic_reranking(
     return list(ranked_chunks)
 
 
-def apply_boost(
+def apply_boost_legacy(
     chunks: list[InferenceChunk],
     norm_min: float = SIM_SCORE_RANGE_LOW,
     norm_max: float = SIM_SCORE_RANGE_HIGH,
@@ -170,6 +172,43 @@ def apply_boost(
         chunk.score = final_scores[ind]
 
     logger.debug(f"Boost sorted similary scores: {list(final_scores)}")
+
+    return final_chunks
+
+
+def apply_boost(
+    chunks: list[InferenceChunk],
+    norm_min: float = SIM_SCORE_RANGE_LOW,
+    norm_max: float = SIM_SCORE_RANGE_HIGH,
+) -> list[InferenceChunk]:
+    scores = [chunk.score or 0.0 for chunk in chunks]
+    logger.debug(f"Raw similarity scores: {scores}")
+
+    boosts = [translate_boost_count_to_multiplier(chunk.boost) for chunk in chunks]
+    recency_multiplier = [chunk.recency_bias for chunk in chunks]
+
+    norm_min = min(norm_min, min(scores))
+    norm_max = max(norm_max, max(scores))
+    # This should never be 0 unless user has done some weird/wrong settings
+    norm_range = norm_max - norm_min
+
+    boosted_scores = [
+        (score - norm_min) * boost * recency / norm_range
+        for score, boost, recency in zip(scores, boosts, recency_multiplier)
+    ]
+
+    rescored_chunks = list(zip(boosted_scores, chunks))
+    rescored_chunks.sort(key=lambda x: x[0], reverse=True)
+    sorted_boosted_scores, boost_sorted_chunks = zip(*rescored_chunks)
+
+    final_chunks = list(boost_sorted_chunks)
+    final_scores = list(sorted_boosted_scores)
+    for ind, chunk in enumerate(final_chunks):
+        chunk.score = final_scores[ind]
+
+    logger.debug(
+        f"Boosted + Time Weighted sorted similarity scores: {list(final_scores)}"
+    )
 
     return final_chunks
 
