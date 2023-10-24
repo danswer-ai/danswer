@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import and_
 from sqlalchemy import delete
 from sqlalchemy import func
+from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
@@ -50,6 +51,37 @@ def get_document_connector_cnts(
         .where(DocumentByConnectorCredentialPair.id.in_(document_ids))
         .group_by(DocumentByConnectorCredentialPair.id)
     )
+    return db_session.execute(stmt).all()  # type: ignore
+
+
+def get_document_cnts_for_cc_pairs(
+    db_session: Session, cc_pair_identifiers: list[ConnectorCredentialPairIdentifier]
+) -> Sequence[tuple[int, int, int]]:
+    stmt = (
+        select(
+            DocumentByConnectorCredentialPair.connector_id,
+            DocumentByConnectorCredentialPair.credential_id,
+            func.count(),
+        )
+        .where(
+            or_(
+                *[
+                    and_(
+                        DocumentByConnectorCredentialPair.connector_id
+                        == cc_pair_identifier.connector_id,
+                        DocumentByConnectorCredentialPair.credential_id
+                        == cc_pair_identifier.credential_id,
+                    )
+                    for cc_pair_identifier in cc_pair_identifiers
+                ]
+            )
+        )
+        .group_by(
+            DocumentByConnectorCredentialPair.connector_id,
+            DocumentByConnectorCredentialPair.credential_id,
+        )
+    )
+
     return db_session.execute(stmt).all()  # type: ignore
 
 
@@ -126,6 +158,9 @@ def upsert_documents(
                     hidden=False,
                     semantic_id=doc.semantic_identifier,
                     link=doc.first_link,
+                    doc_updated_at=doc.doc_updated_at,
+                    primary_owners=doc.primary_owners,
+                    secondary_owners=doc.secondary_owners,
                 )
             )
             for doc in seen_documents.values()

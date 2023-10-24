@@ -4,9 +4,11 @@ import string
 import time
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 from typing import Any
 from typing import cast
-from uuid import UUID
 
 import requests
 from requests import HTTPError
@@ -14,8 +16,10 @@ from requests import Response
 
 from danswer.chunking.models import DocMetadataAwareIndexChunk
 from danswer.chunking.models import InferenceChunk
+from danswer.configs.app_configs import DOC_TIME_DECAY
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
+from danswer.configs.app_configs import FAVOR_RECENT_DECAY_MULTIPLIER
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import VESPA_DEPLOYMENT_ZIP
 from danswer.configs.app_configs import VESPA_HOST
@@ -27,21 +31,25 @@ from danswer.configs.constants import BOOST
 from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
 from danswer.configs.constants import DEFAULT_BOOST
+from danswer.configs.constants import DOC_UPDATED_AT
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import DOCUMENT_SETS
 from danswer.configs.constants import EMBEDDINGS
-from danswer.configs.constants import MATCH_HIGHLIGHTS
+from danswer.configs.constants import HIDDEN
 from danswer.configs.constants import METADATA
-from danswer.configs.constants import SCORE
+from danswer.configs.constants import PRIMARY_OWNERS
+from danswer.configs.constants import RECENCY_BIAS
+from danswer.configs.constants import SECONDARY_OWNERS
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
+from danswer.configs.constants import TITLE
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.datastores.datastore_utils import get_uuid_from_chunk
 from danswer.datastores.interfaces import DocumentIndex
 from danswer.datastores.interfaces import DocumentInsertionRecord
-from danswer.datastores.interfaces import IndexFilter
+from danswer.datastores.interfaces import IndexFilters
 from danswer.datastores.interfaces import UpdateRequest
 from danswer.datastores.vespa.utils import remove_invalid_unicode_chars
 from danswer.search.keyword_search import remove_stop_words
@@ -89,6 +97,16 @@ def _does_document_exist(
             f"with error {doc_fetch_response.status_code}"
         )
     return True
+
+
+def _vespa_get_updated_at_attribute(t: datetime | None) -> int | None:
+    if not t:
+        return None
+
+    if t.tzinfo != timezone.utc:
+        raise ValueError("Connectors must provide document update time in UTC")
+
+    return int(t.timestamp())
 
 
 def _get_vespa_chunk_ids_by_document_id(
@@ -165,10 +183,14 @@ def _index_vespa_chunk(
         SOURCE_TYPE: str(document.source.value),
         SOURCE_LINKS: json.dumps(chunk.source_links),
         SEMANTIC_IDENTIFIER: document.semantic_identifier,
+        TITLE: document.get_title_for_document_index(),
         SECTION_CONTINUATION: chunk.section_continuation,
         METADATA: json.dumps(document.metadata),
         EMBEDDINGS: embeddings_name_vector_map,
         BOOST: DEFAULT_BOOST,
+        DOC_UPDATED_AT: _vespa_get_updated_at_attribute(document.doc_updated_at),
+        PRIMARY_OWNERS: document.primary_owners,
+        SECONDARY_OWNERS: document.secondary_owners,
         # the only `set` vespa has is `weightedset`, so we have to give each
         # element an arbitrary weight
         ACCESS_CONTROL_LIST: {acl_entry: 1 for acl_entry in chunk.access.to_acl()},
@@ -263,32 +285,48 @@ def _index_vespa_chunks(
     return insertion_records
 
 
-def _build_vespa_filters(filters: list[IndexFilter] | None) -> str:
-    # NOTE: permissions filters are expected to be passed in directly via
-    # the `filters` arg, which is why they are not considered explicitly here
+def _build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) -> str:
+    def _build_or_filters(key: str, vals: list[str] | None) -> str:
+        if vals is None:
+            return ""
 
-    # NOTE: document-set filters are also expected to be passed in directly
-    # via the `filters` arg. These are set either in the Web UI or in the Slack
-    # listener
+        valid_vals = [val for val in vals if val]
+        if not key or not valid_vals:
+            return ""
 
-    # Handle provided query filters
-    filter_str = ""
-    if filters:
-        for filter_dict in filters:
-            valid_filters = {
-                key: value for key, value in filter_dict.items() if value is not None
-            }
-            for filter_key, filter_val in valid_filters.items():
-                if isinstance(filter_val, str):
-                    filter_str += f'{filter_key} contains "{filter_val}" and '
-                elif isinstance(filter_val, list):
-                    eq_elems = [
-                        f'{filter_key} contains "{elem}"' for elem in filter_val
-                    ]
-                    filters_or = " or ".join(eq_elems)
-                    filter_str += f"({filters_or}) and "
-                else:
-                    raise ValueError("Invalid filters provided")
+        eq_elems = [f'{key} contains "{elem}"' for elem in valid_vals]
+        or_clause = " or ".join(eq_elems)
+        return f"({or_clause}) and "
+
+    def _build_time_filter(
+        cutoff: datetime | None,
+        untimed_doc_cutoff: timedelta = timedelta(days=62),  # Slightly over 2 Months
+    ) -> str:
+        if not cutoff:
+            return ""
+
+        # For Documents that don't have an updated at, filter them out for queries asking for
+        # very recent documents (2 months) default
+        include_untimed = datetime.now(timezone.utc) - untimed_doc_cutoff > cutoff
+        cutoff_secs = int(cutoff.timestamp())
+
+        if include_untimed:
+            # Documents without updated_at are assigned -1 as their date
+            return f"!({DOC_UPDATED_AT} < {cutoff_secs}) and "
+
+        return f"({DOC_UPDATED_AT} >= {cutoff_secs}) and "
+
+    filter_str = f"!({HIDDEN}=true) and " if not include_hidden else ""
+
+    # CAREFUL touching this one, currently there is no second ACL double-check post retrieval
+    filter_str += _build_or_filters(ACCESS_CONTROL_LIST, filters.access_control_list)
+
+    filter_str += _build_or_filters(SOURCE_TYPE, filters.source_type)
+
+    filter_str += _build_or_filters(DOCUMENT_SETS, filters.document_set)
+
+    filter_str += _build_time_filter(filters.time_cutoff)
+
     return filter_str
 
 
@@ -333,6 +371,54 @@ def _process_dynamic_summary(
     return processed_summary
 
 
+def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
+    fields = cast(dict[str, Any], hit["fields"])
+
+    # parse fields that are stored as strings, but are really json / datetime
+    metadata = json.loads(fields[METADATA]) if METADATA in fields else {}
+    updated_at = (
+        datetime.fromtimestamp(fields[DOC_UPDATED_AT], tz=timezone.utc)
+        if DOC_UPDATED_AT in fields
+        else None
+    )
+    match_highlights = _process_dynamic_summary(
+        # fallback to regular `content` if the `content_summary` field
+        # isn't present
+        dynamic_summary=hit["fields"].get(CONTENT_SUMMARY, hit["fields"][CONTENT]),
+    )
+    semantic_identifier = fields.get(SEMANTIC_IDENTIFIER, "")
+    if not semantic_identifier:
+        logger.error(
+            f"Chunk with blurb: {fields.get(BLURB, 'Unknown')[:50]}... has no Semantic Identifier"
+        )
+    source_links = fields.get(SOURCE_LINKS, {})
+    source_links_dict_unprocessed = (
+        json.loads(source_links) if isinstance(source_links, str) else source_links
+    )
+    source_links_dict = {
+        int(k): v
+        for k, v in cast(dict[str, str], source_links_dict_unprocessed).items()
+    }
+
+    return InferenceChunk(
+        chunk_id=fields[CHUNK_ID],
+        blurb=fields[BLURB],
+        content=fields[CONTENT],
+        source_links=source_links_dict,
+        section_continuation=fields[SECTION_CONTINUATION],
+        document_id=fields[DOCUMENT_ID],
+        source_type=fields[SOURCE_TYPE],
+        semantic_identifier=fields[SEMANTIC_IDENTIFIER],
+        boost=fields.get(BOOST, 1),
+        recency_bias=fields["matchfeatures"][RECENCY_BIAS],
+        score=hit["relevance"],
+        hidden=fields.get(HIDDEN, False),
+        metadata=metadata,
+        match_highlights=match_highlights,
+        updated_at=updated_at,
+    )
+
+
 def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError("No/empty query received")
@@ -351,25 +437,7 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
 
     filtered_hits = [hit for hit in hits if hit["fields"].get(CONTENT) is not None]
 
-    inference_chunks = [
-        InferenceChunk.from_dict(
-            dict(
-                hit["fields"],
-                **{SCORE: hit["relevance"]},
-                **{
-                    MATCH_HIGHLIGHTS: _process_dynamic_summary(
-                        # fallback to regular `content` if the `content_summary` field
-                        # isn't present
-                        dynamic_summary=hit["fields"].get(
-                            CONTENT_SUMMARY, hit["fields"][CONTENT]
-                        ),
-                    )
-                },
-            )
-        )
-        for hit in filtered_hits
-    ]
-
+    inference_chunks = [_vespa_hit_to_inference_chunk(hit) for hit in filtered_hits]
     return inference_chunks
 
 
@@ -386,7 +454,9 @@ class VespaIndex(DocumentIndex):
         f"{SEMANTIC_IDENTIFIER}, "
         f"{SECTION_CONTINUATION}, "
         f"{BOOST}, "
-        f"{METADATA} "
+        f"{HIDDEN}, "
+        f"{DOC_UPDATED_AT}, "
+        f"{METADATA}, "
         f"{CONTENT_SUMMARY} "
         f"from {DOCUMENT_INDEX_NAME} where "
     )
@@ -424,16 +494,26 @@ class VespaIndex(DocumentIndex):
         batch_size: int = _BATCH_SIZE,
     ) -> None:
         """Runs a batch of updates in parallel via the ThreadPoolExecutor."""
+
+        def _update_chunk(update: _VespaUpdateRequest) -> Response:
+            update_body = json.dumps(update.update_request)
+            logger.debug(
+                f"Updating with request to {update.url} with body {update_body}"
+            )
+            return requests.put(
+                update.url,
+                headers={"Content-Type": "application/json"},
+                data=update_body,
+            )
+
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=_NUM_THREADS
         ) as executor:
             for update_batch in batch_generator(updates, batch_size):
                 future_to_document_id = {
                     executor.submit(
-                        requests.put,
-                        update.url,
-                        headers={"Content-Type": "application/json"},
-                        data=json.dumps(update.update_request),
+                        _update_chunk,
+                        update,
                     ): update.document_id
                     for update in update_batch
                 }
@@ -451,14 +531,6 @@ class VespaIndex(DocumentIndex):
 
         processed_updates_requests: list[_VespaUpdateRequest] = []
         for update_request in update_requests:
-            if (
-                update_request.boost is None
-                and update_request.access is None
-                and update_request.document_sets is None
-            ):
-                logger.error("Update request received but nothing to update")
-                continue
-
             update_dict: dict[str, dict] = {"fields": {}}
             if update_request.boost is not None:
                 update_dict["fields"][BOOST] = {"assign": update_request.boost}
@@ -474,6 +546,12 @@ class VespaIndex(DocumentIndex):
                         acl_entry: 1 for acl_entry in update_request.access.to_acl()
                     }
                 }
+            if update_request.hidden is not None:
+                update_dict["fields"][HIDDEN] = {"assign": update_request.hidden}
+
+            if not update_dict["fields"]:
+                logger.error("Update request received but nothing to update")
+                continue
 
             for document_id in update_request.document_ids:
                 for doc_chunk_id in _get_vespa_chunk_ids_by_document_id(document_id):
@@ -502,10 +580,11 @@ class VespaIndex(DocumentIndex):
     def keyword_retrieval(
         self,
         query: str,
-        user_id: UUID | None,
-        filters: list[IndexFilter] | None,
+        filters: IndexFilters,
+        favor_recent: bool,
         num_to_retrieve: int = NUM_RETURNED_HITS,
     ) -> list[InferenceChunk]:
+        decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
             VespaIndex.yql_base
@@ -521,6 +600,7 @@ class VespaIndex(DocumentIndex):
         params: dict[str, str | int] = {
             "yql": yql,
             "query": query,
+            "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
             "hits": num_to_retrieve,
             "num_to_rerank": 10 * num_to_retrieve,
             "ranking.profile": "keyword_search",
@@ -531,11 +611,12 @@ class VespaIndex(DocumentIndex):
     def semantic_retrieval(
         self,
         query: str,
-        user_id: UUID | None,
-        filters: list[IndexFilter] | None,
-        num_to_retrieve: int,
+        filters: IndexFilters,
+        favor_recent: bool,
+        num_to_retrieve: int = NUM_RETURNED_HITS,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
     ) -> list[InferenceChunk]:
+        decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
             VespaIndex.yql_base
@@ -558,6 +639,7 @@ class VespaIndex(DocumentIndex):
             "yql": yql,
             "query": query_keywords,
             "input.query(query_embedding)": str(query_embedding),
+            "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
             "ranking.profile": "semantic_search",
         }
 
@@ -566,8 +648,8 @@ class VespaIndex(DocumentIndex):
     def hybrid_retrieval(
         self,
         query: str,
-        user_id: UUID | None,
-        filters: list[IndexFilter] | None,
+        filters: IndexFilters,
+        favor_recent: bool,
         num_to_retrieve: int,
     ) -> list[InferenceChunk]:
         vespa_where_clauses = _build_vespa_filters(filters)
@@ -589,7 +671,36 @@ class VespaIndex(DocumentIndex):
             "yql": yql,
             "query": query,
             "input.query(query_embedding)": str(query_embedding),
+            "input.query(decay_factor)": str(DOC_TIME_DECAY),
             "ranking.profile": "hybrid_search",
+        }
+
+        return _query_vespa(params)
+
+    def admin_retrieval(
+        self,
+        query: str,
+        filters: IndexFilters,
+        num_to_retrieve: int = NUM_RETURNED_HITS,
+    ) -> list[InferenceChunk]:
+        vespa_where_clauses = _build_vespa_filters(filters, include_hidden=True)
+        yql = (
+            VespaIndex.yql_base
+            + vespa_where_clauses
+            + '({grammar: "weakAnd"}userInput(@query) '
+            # `({defaultIndex: "content_summary"}userInput(@query))` section is
+            # needed for highlighting while the N-gram highlighting is broken /
+            # not working as desired
+            + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
+            + _build_vespa_limit(num_to_retrieve)
+        )
+
+        params: dict[str, str | int] = {
+            "yql": yql,
+            "query": query,
+            "hits": num_to_retrieve,
+            "num_to_rerank": 10 * num_to_retrieve,
+            "ranking.profile": "admin_search",
         }
 
         return _query_vespa(params)

@@ -14,11 +14,7 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.background.celery.celery import cleanup_connector_credential_pair_task
-from danswer.background.celery.deletion_utils import get_deletion_status
-from danswer.background.connector_deletion import (
-    get_cleanup_task_id,
-)
+from danswer.background.celery.celery_utils import get_deletion_status
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
@@ -53,9 +49,11 @@ from danswer.db.credentials import create_credential
 from danswer.db.credentials import delete_google_drive_service_account_credentials
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
+from danswer.db.document import get_document_cnts_for_cc_pairs
 from danswer.db.engine import get_session
 from danswer.db.feedback import fetch_docs_ranked_by_boost
 from danswer.db.feedback import update_document_boost
+from danswer.db.feedback import update_document_hidden
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import User
@@ -80,6 +78,7 @@ from danswer.server.models import GDriveCallback
 from danswer.server.models import GoogleAppCredentials
 from danswer.server.models import GoogleServiceAccountCredentialRequest
 from danswer.server.models import GoogleServiceAccountKey
+from danswer.server.models import HiddenUpdateRequest
 from danswer.server.models import IndexAttemptSnapshot
 from danswer.server.models import ObjectCreationIdResponse
 from danswer.server.models import RunConnectorRequest
@@ -130,6 +129,22 @@ def document_boost_update(
             db_session=db_session,
             document_id=boost_update.document_id,
             boost=boost_update.boost,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/admin/doc-hidden")
+def document_hidden_update(
+    hidden_update: HiddenUpdateRequest,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    try:
+        update_document_hidden(
+            db_session=db_session,
+            document_id=hidden_update.document_id,
+            hidden=hidden_update.hidden,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -297,18 +312,29 @@ def get_connector_indexing_status(
 
     # TODO: make this one query
     cc_pairs = get_connector_credential_pairs(db_session)
+    cc_pair_identifiers = [
+        ConnectorCredentialPairIdentifier(
+            connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id
+        )
+        for cc_pair in cc_pairs
+    ]
+
     latest_index_attempts = get_latest_index_attempts(
         db_session=db_session,
-        connector_credential_pair_identifiers=[
-            ConnectorCredentialPairIdentifier(
-                connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id
-            )
-            for cc_pair in cc_pairs
-        ],
+        connector_credential_pair_identifiers=cc_pair_identifiers,
     )
     cc_pair_to_latest_index_attempt = {
         (index_attempt.connector_id, index_attempt.credential_id): index_attempt
         for index_attempt in latest_index_attempts
+    }
+
+    document_count_info = get_document_cnts_for_cc_pairs(
+        db_session=db_session,
+        cc_pair_identifiers=cc_pair_identifiers,
+    )
+    cc_pair_to_document_cnt = {
+        (connector_id, credential_id): cnt
+        for connector_id, credential_id, cnt in document_count_info
     }
 
     for cc_pair in cc_pairs:
@@ -327,7 +353,9 @@ def get_connector_indexing_status(
                 owner=credential.user.email if credential.user else "",
                 last_status=cc_pair.last_attempt_status,
                 last_success=cc_pair.last_successful_index_time,
-                docs_indexed=cc_pair.total_docs_indexed,
+                docs_indexed=cc_pair_to_document_cnt.get(
+                    (connector.id, credential.id), 0
+                ),
                 error_msg=latest_index_attempt.error_msg
                 if latest_index_attempt
                 else None,
@@ -337,7 +365,9 @@ def get_connector_indexing_status(
                 if latest_index_attempt
                 else None,
                 deletion_attempt=get_deletion_status(
-                    connector_id=connector.id, credential_id=credential.id
+                    connector_id=connector.id,
+                    credential_id=credential.id,
+                    db_session=db_session,
                 ),
                 is_deletable=check_deletion_attempt_is_allowed(
                     connector_credential_pair=cc_pair
@@ -536,6 +566,8 @@ def create_deletion_attempt_for_connector_id(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
+    from danswer.background.celery.celery import cleanup_connector_credential_pair_task
+
     connector_id = connector_credential_pair_identifier.connector_id
     credential_id = connector_credential_pair_identifier.credential_id
 
@@ -559,12 +591,8 @@ def create_deletion_attempt_for_connector_id(
             "no ongoing / planned indexing attempts.",
         )
 
-    task_id = get_cleanup_task_id(
-        connector_id=connector_id, credential_id=credential_id
-    )
     cleanup_connector_credential_pair_task.apply_async(
         kwargs=dict(connector_id=connector_id, credential_id=credential_id),
-        task_id=task_id,
     )
 
 

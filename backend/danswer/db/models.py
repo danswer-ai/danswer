@@ -52,6 +52,14 @@ class DeletionStatus(str, PyEnum):
     FAILED = "failed"
 
 
+# Consistent with Celery task statuses
+class TaskStatus(str, PyEnum):
+    PENDING = "PENDING"
+    STARTED = "STARTED"
+    SUCCESS = "SUCCESS"
+    FAILURE = "FAILURE"
+
+
 class Base(DeclarativeBase):
     pass
 
@@ -338,6 +346,12 @@ class QueryEvent(Base):
         Enum(SearchType), nullable=True
     )
     llm_answer: Mapped[str | None] = mapped_column(Text, default=None)
+    # Document IDs of the top context documents retrieved for the query (if any)
+    # NOTE: not using a foreign key to enable easy deletion of documents without
+    # needing to adjust `QueryEvent` rows
+    retrieved_document_ids: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
     feedback: Mapped[QAFeedbackType | None] = mapped_column(
         Enum(QAFeedbackType), nullable=True
     )
@@ -390,6 +404,19 @@ class Document(Base):
     semantic_id: Mapped[str] = mapped_column(String)
     # First Section's link
     link: Mapped[str | None] = mapped_column(String, nullable=True)
+    doc_updated_at: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # The following are not attached to User because the account/email may not be known
+    # within Danswer
+    # Something like the document creator
+    primary_owners: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
+    # Something like assignee or space owner
+    secondary_owners: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
     # TODO if more sensitive data is added here for display, make sure to add user/group permission
 
     retrieval_feedbacks: Mapped[List[DocumentRetrievalFeedback]] = relationship(
@@ -451,10 +478,12 @@ class ToolInfo(TypedDict):
 class Persona(Base):
     # TODO introduce user and group ownership for personas
     __tablename__ = "persona"
+
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
     # Danswer retrieval, treated as a special tool
     retrieval_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    datetime_aware: Mapped[bool] = mapped_column(Boolean, default=True)
     system_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     tools: Mapped[list[ToolInfo] | None] = mapped_column(
         postgresql.JSONB(), nullable=True
@@ -470,6 +499,16 @@ class Persona(Base):
         "DocumentSet",
         secondary=Persona__DocumentSet.__table__,
         back_populates="personas",
+    )
+
+    # Default personas loaded via yaml cannot have the same name
+    __table_args__ = (
+        Index(
+            "_default_persona_name_idx",
+            "name",
+            unique=True,
+            postgresql_where=(default_persona == True),  # noqa: E712
+        ),
     )
 
 
@@ -566,3 +605,22 @@ class SlackBotConfig(Base):
     )
 
     persona: Mapped[Persona | None] = relationship("Persona")
+
+
+class TaskQueueState(Base):
+    # Currently refers to Celery Tasks
+    __tablename__ = "task_queue_jobs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # Celery task id
+    task_id: Mapped[str] = mapped_column(String)
+    # For any job type, this would be the same
+    task_name: Mapped[str] = mapped_column(String)
+    # Note that if the task dies, this won't necessarily be marked FAILED correctly
+    status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus))
+    start_time: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    register_time: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

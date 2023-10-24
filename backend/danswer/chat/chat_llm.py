@@ -1,12 +1,12 @@
 import re
 from collections.abc import Callable
 from collections.abc import Iterator
-from uuid import UUID
 
 from langchain.schema.messages import AIMessage
 from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
+from sqlalchemy.orm import Session
 
 from danswer.chat.chat_prompts import build_combined_query
 from danswer.chat.chat_prompts import DANSWER_TOOL_NAME
@@ -18,6 +18,7 @@ from danswer.chat.chat_prompts import form_user_prompt_text
 from danswer.chat.chat_prompts import format_danswer_chunks_for_chat
 from danswer.chat.chat_prompts import REQUIRE_DANSWER_SYSTEM_MSG
 from danswer.chat.chat_prompts import YES_SEARCH
+from danswer.chat.personas import build_system_text_from_persona
 from danswer.chat.tools import call_tool
 from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT
@@ -27,6 +28,7 @@ from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
 from danswer.datastores.document_index import get_default_document_index
 from danswer.db.models import ChatMessage
 from danswer.db.models import Persona
+from danswer.db.models import User
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerChatModelOut
 from danswer.direct_qa.qa_utils import get_usable_chunks
@@ -34,8 +36,10 @@ from danswer.llm.build import get_default_llm
 from danswer.llm.llm import LLM
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import translate_danswer_msg_to_langchain
+from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.semantic_search import chunks_to_search_docs
 from danswer.search.semantic_search import retrieve_ranked_documents
+from danswer.server.models import IndexFilters
 from danswer.server.models import RetrievalDocs
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
@@ -117,7 +121,7 @@ def danswer_chat_retrieval(
     query_message: ChatMessage,
     history: list[ChatMessage],
     llm: LLM,
-    user_id: UUID | None,
+    filters: IndexFilters,
 ) -> list[InferenceChunk]:
     if history:
         query_combination_msgs = build_combined_query(query_message, history)
@@ -127,9 +131,9 @@ def danswer_chat_retrieval(
 
     # Good Debug/Breakpoint
     ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-        reworded_query,
-        user_id=user_id,
-        filters=None,
+        query=reworded_query,
+        filters=filters,
+        favor_recent=False,
         datastore=get_default_document_index(),
     )
     if not ranked_chunks:
@@ -276,8 +280,9 @@ def extract_citations_from_stream(
 def llm_contextual_chat_answer(
     messages: list[ChatMessage],
     persona: Persona,
-    user_id: UUID | None,
+    user: User | None,
     tokenizer: Callable,
+    db_session: Session,
     run_search_system_text: str = REQUIRE_DANSWER_SYSTEM_MSG,
 ) -> Iterator[str | list[InferenceChunk]]:
     last_message = messages[-1]
@@ -317,13 +322,23 @@ def llm_contextual_chat_answer(
         # Be a little forgiving though, if we match yes, it's good enough
         retrieved_chunks: list[InferenceChunk] = []
         if (YES_SEARCH.split()[0] + " ").lower() in model_out.lower():
+            user_acl_filters = build_access_filters_for_user(user, db_session)
+            doc_set_filter = [doc_set.name for doc_set in persona.document_sets] or None
+            final_filters = IndexFilters(
+                source_type=None,
+                document_set=doc_set_filter,
+                time_cutoff=None,
+                access_control_list=user_acl_filters,
+            )
+
             retrieved_chunks = danswer_chat_retrieval(
                 query_message=last_message,
                 history=previous_messages,
                 llm=llm,
-                user_id=user_id,
+                filters=final_filters,
             )
             yield retrieved_chunks
+
             tool_result_str = format_danswer_chunks_for_chat(retrieved_chunks)
 
             last_user_msg_text = form_tool_less_followup_text(
@@ -338,7 +353,7 @@ def llm_contextual_chat_answer(
             last_user_msg_tokens = len(tokenizer(final_query_text))
             last_user_msg = HumanMessage(content=final_query_text)
 
-        system_text = persona.system_text
+        system_text = build_system_text_from_persona(persona)
         system_msg = SystemMessage(content=system_text) if system_text else None
         system_tokens = len(tokenizer(system_text)) if system_text else 0
 
@@ -351,6 +366,7 @@ def llm_contextual_chat_answer(
             final_msg_token_count=last_user_msg_tokens,
         )
 
+        # Good Debug/Breakpoint
         tokens = llm.stream(prompt)
         links = [
             chunk.source_links[0] if chunk.source_links else None
@@ -367,11 +383,12 @@ def llm_contextual_chat_answer(
 def llm_tools_enabled_chat_answer(
     messages: list[ChatMessage],
     persona: Persona,
-    user_id: UUID | None,
+    user: User | None,
     tokenizer: Callable,
+    db_session: Session,
 ) -> Iterator[str | list[InferenceChunk]]:
     retrieval_enabled = persona.retrieval_enabled
-    system_text = persona.system_text
+    system_text = build_system_text_from_persona(persona)
     hint_text = persona.hint_text
     tool_text = form_tool_section_text(persona.tools, persona.retrieval_enabled)
 
@@ -441,16 +458,27 @@ def llm_tools_enabled_chat_answer(
             retrieval_enabled
             and final_result.action.lower() == DANSWER_TOOL_NAME.lower()
         ):
+            user_acl_filters = build_access_filters_for_user(user, db_session)
+            doc_set_filter = [doc_set.name for doc_set in persona.document_sets] or None
+
+            final_filters = IndexFilters(
+                source_type=None,
+                document_set=doc_set_filter,
+                time_cutoff=None,
+                access_control_list=user_acl_filters,
+            )
+
             retrieved_chunks = danswer_chat_retrieval(
                 query_message=last_message,
                 history=previous_messages,
                 llm=llm,
-                user_id=user_id,
+                filters=final_filters,
             )
             yield retrieved_chunks
+
             tool_result_str = format_danswer_chunks_for_chat(retrieved_chunks)
         else:
-            tool_result_str = call_tool(final_result, user_id=user_id)
+            tool_result_str = call_tool(final_result)
 
         # The AI's tool calling message
         tool_call_msg_text = final_result.model_raw
@@ -506,8 +534,9 @@ def wrap_chat_package_in_model(
 def llm_chat_answer(
     messages: list[ChatMessage],
     persona: Persona | None,
-    user_id: UUID | None,
     tokenizer: Callable,
+    user: User | None,
+    db_session: Session,
 ) -> Iterator[DanswerAnswerPiece | RetrievalDocs]:
     # Common error cases to keep in mind:
     # - User asks question about something long ago, due to context limit, the message is dropped
@@ -533,13 +562,21 @@ def llm_chat_answer(
     # Doesn't require tool calling output format (all LLM outputs are therefore valid)
     elif persona.retrieval_enabled and not persona.tools and not FORCE_TOOL_PROMPT:
         for package in llm_contextual_chat_answer(
-            messages=messages, persona=persona, user_id=user_id, tokenizer=tokenizer
+            messages=messages,
+            persona=persona,
+            tokenizer=tokenizer,
+            user=user,
+            db_session=db_session,
         ):
             yield wrap_chat_package_in_model(package)
 
     # Use most flexible/complex prompt format
     else:
         for package in llm_tools_enabled_chat_answer(
-            messages=messages, persona=persona, user_id=user_id, tokenizer=tokenizer
+            messages=messages,
+            persona=persona,
+            tokenizer=tokenizer,
+            user=user,
+            db_session=db_session,
         ):
             yield wrap_chat_package_in_model(package)

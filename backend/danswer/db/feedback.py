@@ -46,7 +46,11 @@ def fetch_docs_ranked_by_boost(
     db_session: Session, ascending: bool = False, limit: int = 100
 ) -> list[DbDocument]:
     order_func = asc if ascending else desc
-    stmt = select(DbDocument).order_by(order_func(DbDocument.boost)).limit(limit)
+    stmt = (
+        select(DbDocument)
+        .order_by(order_func(DbDocument.boost), order_func(DbDocument.semantic_id))
+        .limit(limit)
+    )
     result = db_session.execute(stmt)
     doc_list = result.scalars().all()
 
@@ -71,17 +75,37 @@ def update_document_boost(db_session: Session, document_id: str, boost: int) -> 
     db_session.commit()
 
 
+def update_document_hidden(db_session: Session, document_id: str, hidden: bool) -> None:
+    stmt = select(DbDocument).where(DbDocument.id == document_id)
+    result = db_session.execute(stmt).scalar_one_or_none()
+    if result is None:
+        raise ValueError(f"No document found with ID: '{document_id}'")
+
+    result.hidden = hidden
+
+    update = UpdateRequest(
+        document_ids=[document_id],
+        hidden=hidden,
+    )
+
+    get_default_document_index().update([update])
+
+    db_session.commit()
+
+
 def create_query_event(
+    db_session: Session,
     query: str,
     selected_flow: SearchType | None,
     llm_answer: str | None,
     user_id: UUID | None,
-    db_session: Session,
+    retrieved_document_ids: list[str] | None = None,
 ) -> int:
     query_event = QueryEvent(
         query=query,
         selected_search_flow=selected_flow,
         llm_answer=llm_answer,
+        retrieved_document_ids=retrieved_document_ids,
         user_id=user_id,
     )
     db_session.add(query_event)
@@ -91,10 +115,10 @@ def create_query_event(
 
 
 def update_query_event_feedback(
+    db_session: Session,
     feedback: QAFeedbackType,
     query_id: int,
     user_id: UUID | None,
-    db_session: Session,
 ) -> None:
     query_event = fetch_query_event_by_id(query_id, db_session)
 
@@ -102,7 +126,21 @@ def update_query_event_feedback(
         raise ValueError("User trying to give feedback on a query run by another user.")
 
     query_event.feedback = feedback
+    db_session.commit()
 
+
+def update_query_event_retrieved_documents(
+    db_session: Session,
+    retrieved_document_ids: list[str],
+    query_id: int,
+    user_id: UUID | None,
+) -> None:
+    query_event = fetch_query_event_by_id(query_id, db_session)
+
+    if user_id != query_event.user_id:
+        raise ValueError("User trying to update docs on a query run by another user.")
+
+    query_event.retrieved_document_ids = retrieved_document_ids
     db_session.commit()
 
 

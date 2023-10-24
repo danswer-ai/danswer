@@ -2,6 +2,8 @@ import time
 from collections.abc import Generator
 from dataclasses import dataclass
 from dataclasses import fields
+from datetime import datetime
+from datetime import timezone
 from typing import Any
 from typing import Optional
 
@@ -191,6 +193,9 @@ class NotionConnector(LoadConnector, PollConnector):
                     ],
                     source=DocumentSource.NOTION,
                     semantic_identifier=page_title,
+                    doc_updated_at=datetime.fromisoformat(
+                        page.last_edited_time
+                    ).astimezone(timezone.utc),
                     metadata={},
                 )
             )
@@ -323,8 +328,7 @@ class NotionConnector(LoadConnector, PollConnector):
 if __name__ == "__main__":
     import os
 
-    root_page_id = os.environ.get("NOTION_ROOT_PAGE_ID")
-    connector = NotionConnector(root_page_id=root_page_id)
+    connector = NotionConnector()
     connector.load_credentials(
         {"notion_integration_token": os.environ.get("NOTION_INTEGRATION_TOKEN")}
     )

@@ -37,14 +37,29 @@ schema danswer_chunk {
         field source_links type string {
             indexing: summary | attribute
         }
+        # displayed in the UI as the main identifier for the doc
         field semantic_identifier type string {
             indexing: summary | attribute
+        }
+        # this is used when computing best matches based on the title of the document
+        # may not always match the `semantic_identifier` e.g. for Slack docs the 
+        # `semantic_identifier` will be the channel name, but the `title` will be empty
+        field title type string {
+            indexing: summary | index
+            match {
+                gram
+                gram-size: 3
+            }
+            index: enable-bm25
         }
         field section_continuation type bool {
             indexing: summary | attribute
         }
         # Technically this one should be int, but can't change without causing breaks to existing index
         field boost type float {
+            indexing: summary | attribute
+        }
+        field hidden type bool {
             indexing: summary | attribute
         }
         field metadata type string {
@@ -55,6 +70,15 @@ schema danswer_chunk {
             attribute {
                 distance-metric: angular
             }
+        }
+        field doc_updated_at type int {
+            indexing: summary | attribute
+        }
+        field primary_owners type array<string> {
+            indexing : summary | attribute
+        }
+        field secondary_owners type array<string> {
+            indexing : summary | attribute
         }
         field access_control_list type weightedset<string> {
             indexing: summary | attribute
@@ -67,37 +91,75 @@ schema danswer_chunk {
     }
 
     fieldset default {
-        fields: content
+        fields: content, title
     }
 
-    rank-profile keyword_search inherits default {
+    rank-profile default_rank {
+        inputs {
+            query(decay_factor) float
+        }
+
+        function inline document_boost() {
+            # 0 to 2x score following sigmoid function stretched out by factor of 3
+            # meaning requires 3x the number of feedback votes to have default sigmoid effect
+            expression: 2 / (1 + exp(-attribute(boost) / 3))
+        }
+
+        function inline document_age() {
+            # Time in years (3 Months if no age found)
+            expression: max(if(isNan(attribute(doc_updated_at)) == 1, 7890000, now() - attribute(doc_updated_at)) / 31536000, 0)
+        }
+
+        function inline recency_bias() {
+            # Cap the loss at 50% score reduction
+            expression: max(1 / (1 + query(decay_factor) * document_age), 0.5)
+        }
+
+        match-features: recency_bias
+    }
+
+    rank-profile keyword_search inherits default, default_rank {
         first-phase {
-            expression: bm25(content) * (2 / (1 + exp(-attribute(boost) / 3)))
+            expression: bm25(content) * document_boost * recency_bias
         }
     }
 
-    rank-profile semantic_search inherits default {
+    rank-profile semantic_search inherits default, default_rank {
         inputs {
             query(query_embedding) tensor<float>(x[384])
         }
+
         first-phase {
             # Cannot do boost with the chosen embedding model because of high default similarity
+            # This depends on the embedding model chosen
             expression: closeness(field, embeddings)
         }
-        match-features: closest(embeddings)
+
+        match-features: recency_bias closest(embeddings)
     }
 
-    rank-profile hybrid_search inherits default {
+    # TODO this isn't used and needs to be reworked
+    rank-profile hybrid_search inherits default, default_rank {
         inputs {
             query(query_embedding) tensor<float>(x[384])
         }
+
         first-phase {
-            expression: bm25(content) * (2 / (1 + exp(-attribute(boost) / 3)))
+            expression: bm25(content) * document_boost * recency_bias
         }
+
         second-phase {
             # Cannot do boost with the chosen embedding model because of high default similarity
             expression: closeness(field, embeddings)
         }
-        match-features: closest(embeddings)
+
+        match-features: recency_bias closest(embeddings)
+    }
+
+    # used when searching from the admin UI for a specific doc to hide / boost
+    rank-profile admin_search inherits default, default_rank {
+        first-phase {
+            expression: bm25(content) + (5 * bm25(title))
+        }
     }
 }

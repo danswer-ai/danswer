@@ -4,8 +4,6 @@ site_crawls/
 .ipynb_checkpoints/
 api_keys.py
 *ipynb
-qdrant-data/
-typesense-data/
 .env
 vespa-app.zip
 dynamic_config_storage/

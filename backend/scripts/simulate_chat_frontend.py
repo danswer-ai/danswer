@@ -90,7 +90,7 @@ if __name__ == "__main__":
         "-c",
         "--contextual",
         action="store_true",
-        help="If this flag is set, the chat is able to call tools.",
+        help="If this flag is set, the chat is able to use retrieval",
     )
     args = parser.parse_args()
 

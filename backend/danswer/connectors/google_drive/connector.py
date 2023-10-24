@@ -1,8 +1,9 @@
-import datetime
 import io
 import tempfile
 from collections.abc import Iterator
 from collections.abc import Sequence
+from datetime import datetime
+from datetime import timezone
 from enum import Enum
 from itertools import chain
 from typing import Any
@@ -12,7 +13,6 @@ import docx2txt  # type:ignore
 from google.auth.credentials import Credentials  # type: ignore
 from googleapiclient import discovery  # type: ignore
 from googleapiclient.errors import HttpError  # type: ignore
-from PyPDF2 import PdfReader
 
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import GOOGLE_DRIVE_FOLLOW_SHORTCUTS
@@ -20,6 +20,7 @@ from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
+from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
 from danswer.connectors.google_drive.connector_auth import (
     get_google_drive_creds_for_authorized_user,
 )
@@ -83,7 +84,7 @@ def _run_drive_file_query(
                 includeItemsFromAllDrives=include_shared,
                 fields=(
                     "nextPageToken, files(mimeType, id, name, "
-                    "webViewLink, shortcutDetails)"
+                    "modifiedTime, webViewLink, shortcutDetails)"
                 ),
                 pageToken=next_page_token,
                 q=query,
@@ -98,7 +99,7 @@ def _run_drive_file_query(
                     file = service.files().get(
                         fileId=file["shortcutDetails"]["targetId"],
                         supportsAllDrives=include_shared,
-                        fields="mimeType, id, name, webViewLink, shortcutDetails",
+                        fields="mimeType, id, name, modifiedTime, webViewLink, shortcutDetails",
                     )
                     file = file.execute()
                 except HttpError:
@@ -194,12 +195,10 @@ def _get_files(
 ) -> Iterator[GoogleDriveFileType]:
     query = f"mimeType != '{DRIVE_FOLDER_TYPE}' "
     if time_range_start is not None:
-        time_start = (
-            datetime.datetime.utcfromtimestamp(time_range_start).isoformat() + "Z"
-        )
+        time_start = datetime.utcfromtimestamp(time_range_start).isoformat() + "Z"
         query += f"and modifiedTime >= '{time_start}' "
     if time_range_end is not None:
-        time_stop = datetime.datetime.utcfromtimestamp(time_range_end).isoformat() + "Z"
+        time_stop = datetime.utcfromtimestamp(time_range_end).isoformat() + "Z"
         query += f"and modifiedTime <= '{time_stop}' "
     if folder_id:
         query += f"and '{folder_id}' in parents "
@@ -313,16 +312,8 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
         return docx2txt.process(temp_path)
     elif mime_type == GDriveMimeType.PDF.value:
         response = service.files().get_media(fileId=file["id"]).execute()
-        pdf_stream = io.BytesIO(response)
-        pdf_reader = PdfReader(pdf_stream)
-
-        if pdf_reader.is_encrypted:
-            logger.warning(
-                f"Google drive file: {file['name']} is encrypted - Danswer will ignore it's content"
-            )
-            return ""
-
-        return "\n".join(page.extract_text() for page in pdf_reader.pages)
+        file_contents = read_pdf_file(file=io.BytesIO(response), file_name=file["name"])
+        return file_contents
 
     return UNSUPPORTED_FILE_TYPE_CONTENT
 
@@ -472,6 +463,9 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                             ],
                             source=DocumentSource.GOOGLE_DRIVE,
                             semantic_identifier=file["name"],
+                            doc_updated_at=datetime.fromisoformat(
+                                file["modifiedTime"]
+                            ).astimezone(timezone.utc),
                             metadata={} if text_contents else {IGNORE_FOR_QA: True},
                         )
                     )

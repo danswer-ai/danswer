@@ -11,6 +11,7 @@ export const searchRequest = async ({
   query,
   sources,
   documentSets,
+  timeRange,
   updateCurrentAnswer,
   updateQuotes,
   updateDocs,
@@ -29,18 +30,15 @@ export const searchRequest = async ({
   let quotes: Quote[] | null = null;
   let relevantDocuments: DanswerDocument[] | null = null;
   try {
-    const filters = buildFilters(sources, documentSets);
+    const filters = buildFilters(sources, documentSets, timeRange);
     const response = await fetch("/api/direct-qa", {
       method: "POST",
       body: JSON.stringify({
         query,
         collection: "danswer_index",
         use_keyword: useKeyword,
-        ...(filters.length > 0
-          ? {
-              filters,
-            }
-          : {}),
+        filters,
+        enable_auto_detect_filters: false,
         offset: offset,
       }),
       headers: {

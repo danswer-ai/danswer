@@ -18,15 +18,14 @@ from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
-from danswer.datastores.interfaces import IndexFilter
 from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
 from danswer.db.models import Connector
 from danswer.db.models import Credential
-from danswer.db.models import DeletionStatus
 from danswer.db.models import DocumentSet as DocumentSetDBModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
+from danswer.db.models import TaskStatus
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
@@ -135,6 +134,11 @@ class BoostUpdateRequest(BaseModel):
     boost: int
 
 
+class HiddenUpdateRequest(BaseModel):
+    document_id: str
+    hidden: bool
+
+
 class SearchDoc(BaseModel):
     document_id: str
     semantic_identifier: str
@@ -142,11 +146,24 @@ class SearchDoc(BaseModel):
     blurb: str
     source_type: str
     boost: int
+    # whether the document is hidden when doing a standard search
+    # since a standard search will never find a hidden doc, this can only ever
+    # be `True` when doing an admin search
+    hidden: bool
     score: float | None
     # Matched sections in the doc. Uses Vespa syntax e.g. <hi>TEXT</hi>
     # to specify that a set of words should be highlighted. For example:
     # ["<hi>the</hi> <hi>answer</hi> is 42", "the answer is <hi>42</hi>""]
     match_highlights: list[str]
+    # when the doc was last updated
+    updated_at: datetime | None
+
+    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+        initial_dict["updated_at"] = (
+            self.updated_at.isoformat() if self.updated_at else None
+        )
+        return initial_dict
 
 
 class RetrievalDocs(BaseModel):
@@ -157,18 +174,39 @@ class RerankedRetrievalDocs(RetrievalDocs):
     unranked_top_documents: list[SearchDoc]
     predicted_flow: QueryFlow
     predicted_search: SearchType
+    time_cutoff: datetime | None
+    favor_recent: bool
+
+    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+        initial_dict["time_cutoff"] = (
+            self.time_cutoff.isoformat() if self.time_cutoff else None
+        )
+        return initial_dict
 
 
 class CreateChatSessionID(BaseModel):
     chat_session_id: int
 
 
+class RequestFilters(BaseModel):
+    source_type: list[str] | None
+    document_set: list[str] | None
+    time_cutoff: datetime | None = None
+
+
+class IndexFilters(RequestFilters):
+    access_control_list: list[str]
+
+
 class QuestionRequest(BaseModel):
     query: str
     collection: str
     use_keyword: bool | None
-    filters: list[IndexFilter] | None
+    filters: RequestFilters
     offset: int | None
+    enable_auto_detect_filters: bool
+    favor_recent: bool | None = None
 
 
 class QAFeedbackRequest(BaseModel):
@@ -257,6 +295,8 @@ class SearchResponse(BaseModel):
     top_ranked_docs: list[SearchDoc] | None
     lower_ranked_docs: list[SearchDoc] | None
     query_event_id: int
+    time_cutoff: datetime | None
+    favor_recent: bool
 
 
 class QAResponse(SearchResponse):
@@ -302,9 +342,7 @@ class IndexAttemptSnapshot(BaseModel):
 class DeletionAttemptSnapshot(BaseModel):
     connector_id: int
     credential_id: int
-    status: DeletionStatus
-    error_msg: str | None
-    num_docs_deleted: int
+    status: TaskStatus
 
 
 class ConnectorBase(BaseModel):

@@ -308,8 +308,9 @@ def handle_new_chat_message(
         response_packets = llm_chat_answer(
             messages=mainline_messages,
             persona=persona,
-            user_id=user_id,
             tokenizer=llm_tokenizer,
+            user=user,
+            db_session=db_session,
         )
         llm_output = ""
         fetched_docs: RetrievalDocs | None = None
@@ -397,8 +398,9 @@ def regenerate_message_given_parent(
         response_packets = llm_chat_answer(
             messages=mainline_messages,
             persona=persona,
-            user_id=user_id,
             tokenizer=llm_tokenizer,
+            user=user,
+            db_session=db_session,
         )
         llm_output = ""
         fetched_docs: RetrievalDocs | None = None

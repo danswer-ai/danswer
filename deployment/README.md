@@ -27,7 +27,6 @@ Requirements: Docker and docker compose
    - `docker compose -f docker-compose.dev.yml -p danswer-stack up -d --pull always --force-recreate`
       - or run: `docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build --force-recreate`
 to build from source
-   - This will start Web/API servers, Postgres (backend DB), Qdrant (vector DB), and the background indexing job.
    - Downloading images or packages/requirements may take 15+ minutes depending on your internet connection.
 
 

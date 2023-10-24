@@ -1,7 +1,8 @@
 import json
-import os
 from collections.abc import Callable
 from collections.abc import Generator
+from datetime import datetime
+from datetime import timezone
 from pathlib import Path
 from typing import Any
 from typing import cast
@@ -128,6 +129,18 @@ def get_thread(client: WebClient, channel_id: str, thread_id: str) -> ThreadType
     return threads
 
 
+def get_latest_message_time(thread: ThreadType) -> datetime:
+    max_ts = max([float(msg.get("ts", 0)) for msg in thread])
+    return datetime.fromtimestamp(max_ts, tz=timezone.utc)
+
+
+def get_event_time(event: dict[str, Any]) -> datetime | None:
+    ts = event.get("ts")
+    if not ts:
+        return None
+    return datetime.fromtimestamp(float(ts), tz=timezone.utc)
+
+
 def thread_to_doc(
     workspace: str,
     channel: ChannelType,
@@ -148,6 +161,8 @@ def thread_to_doc(
         ],
         source=DocumentSource.SLACK,
         semantic_identifier=channel["name"],
+        doc_updated_at=get_latest_message_time(thread),
+        title="",  # slack docs don't really have a "title"
         metadata={},
     )
 
@@ -170,7 +185,15 @@ _DISALLOWED_MSG_SUBTYPES = {
 
 
 def _default_msg_filter(message: MessageType) -> bool:
-    return message.get("subtype", "") in _DISALLOWED_MSG_SUBTYPES
+    # Don't keep messages from bots
+    if message.get("bot_id") or message.get("app_id"):
+        return True
+
+    # Uninformative
+    if message.get("subtype", "") in _DISALLOWED_MSG_SUBTYPES:
+        return True
+
+    return False
 
 
 def _filter_channels(
@@ -294,6 +317,8 @@ class SlackLoadConnector(LoadConnector):
                     ],
                     source=matching_doc.source,
                     semantic_identifier=matching_doc.semantic_identifier,
+                    title="",  # slack docs don't really have a "title"
+                    doc_updated_at=get_event_time(slack_event),
                     metadata=matching_doc.metadata,
                 )
 
@@ -311,6 +336,8 @@ class SlackLoadConnector(LoadConnector):
                 ],
                 source=DocumentSource.SLACK,
                 semantic_identifier=channel["name"],
+                title="",  # slack docs don't really have a "title"
+                doc_updated_at=get_event_time(slack_event),
                 metadata={},
             )
 
@@ -392,3 +419,19 @@ class SlackPollConnector(PollConnector):
 
         if documents:
             yield documents
+
+
+if __name__ == "__main__":
+    import os
+    import time
+
+    connector = SlackPollConnector(
+        workspace=os.environ["SLACK_WORKSPACE"], channels=[os.environ["SLACK_CHANNEL"]]
+    )
+    connector.load_credentials({"slack_bot_token": os.environ["SLACK_BOT_TOKEN"]})
+
+    current = time.time()
+    one_day_ago = current - 24 * 60 * 60  # 1 day
+    document_batches = connector.poll_source(one_day_ago, current)
+
+    print(next(document_batches))

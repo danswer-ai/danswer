@@ -10,11 +10,14 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.file_utils import load_files_from_zip
 from danswer.connectors.cross_connector_utils.file_utils import read_file
-from danswer.connectors.cross_connector_utils.html_utils import standard_html_cleanup
+from danswer.connectors.cross_connector_utils.html_utils import web_html_cleanup
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
 
 
 def process_link(element: BeautifulSoup | Tag) -> str:
@@ -93,7 +96,10 @@ class GoogleSitesConnector(LoadConnector):
             nav = cast(Tag, header.find("nav"))
             path = find_google_sites_page_path_from_navbar(nav, "", True)
             if not path:
-                raise RuntimeError(f"Could not find path for {file_info.filename}")
+                logger.error(
+                    f"Could not find path for '{file_info.filename}'. "
+                    + "This page will not have a working link."
+                )
 
             # cleanup the hidden `Skip to main content` and `Skip to navigation` that
             # appears at the top of every page
@@ -101,7 +107,7 @@ class GoogleSitesConnector(LoadConnector):
                 div.extract()
 
             # get the body of the page
-            parsed_html = standard_html_cleanup(
+            parsed_html = web_html_cleanup(
                 soup, additional_element_types_to_discard=["header", "nav"]
             )
 
@@ -113,7 +119,9 @@ class GoogleSitesConnector(LoadConnector):
                     semantic_identifier=title,
                     sections=[
                         Section(
-                            link=self.base_url.rstrip("/") + "/" + path.lstrip("/"),
+                            link=(self.base_url.rstrip("/") + "/" + path.lstrip("/"))
+                            if path
+                            else "",
                             text=parsed_html.cleaned_text,
                         )
                     ],

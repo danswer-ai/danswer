@@ -1,18 +1,9 @@
-import inspect
-import json
 from dataclasses import dataclass
 from dataclasses import fields
+from datetime import datetime
 from typing import Any
-from typing import cast
 
 from danswer.access.models import DocumentAccess
-from danswer.configs.constants import BLURB
-from danswer.configs.constants import BOOST
-from danswer.configs.constants import MATCH_HIGHLIGHTS
-from danswer.configs.constants import METADATA
-from danswer.configs.constants import SCORE
-from danswer.configs.constants import SEMANTIC_IDENTIFIER
-from danswer.configs.constants import SOURCE_LINKS
 from danswer.connectors.models import Document
 from danswer.utils.logger import setup_logger
 
@@ -92,12 +83,16 @@ class InferenceChunk(BaseChunk):
     source_type: str
     semantic_identifier: str
     boost: int
+    recency_bias: float
     score: float | None
+    hidden: bool
     metadata: dict[str, Any]
     # Matched sections in the chunk. Uses Vespa syntax e.g. <hi>TEXT</hi>
     # to specify that a set of words should be highlighted. For example:
     # ["<hi>the</hi> <hi>answer</hi> is 42", "he couldn't find an <hi>answer</hi>"]
     match_highlights: list[str]
+    # when the doc was last updated
+    updated_at: datetime | None
 
     def __repr__(self) -> str:
         blurb_words = self.blurb.split()
@@ -110,33 +105,3 @@ class InferenceChunk(BaseChunk):
                 break
             short_blurb += " " + word
         return f"Inference Chunk: {self.document_id} - {short_blurb}..."
-
-    @classmethod
-    def from_dict(cls, init_dict: dict[str, Any]) -> "InferenceChunk":
-        init_kwargs = {
-            k: v for k, v in init_dict.items() if k in inspect.signature(cls).parameters
-        }
-        if SOURCE_LINKS in init_kwargs:
-            source_links = init_kwargs[SOURCE_LINKS]
-            source_links_dict = (
-                json.loads(source_links)
-                if isinstance(source_links, str)
-                else source_links
-            )
-            init_kwargs[SOURCE_LINKS] = {
-                int(k): v for k, v in cast(dict[str, str], source_links_dict).items()
-            }
-        if METADATA in init_kwargs:
-            init_kwargs[METADATA] = json.loads(init_kwargs[METADATA])
-        else:
-            init_kwargs[METADATA] = {}
-        init_kwargs[BOOST] = init_kwargs.get(BOOST, 1)
-        if SCORE not in init_kwargs:
-            init_kwargs[SCORE] = None
-        if MATCH_HIGHLIGHTS not in init_kwargs:
-            init_kwargs[MATCH_HIGHLIGHTS] = []
-        if init_kwargs.get(SEMANTIC_IDENTIFIER) is None:
-            logger.error(
-                f"Chunk with blurb: {init_kwargs.get(BLURB, 'Unknown')[:50]}... has no Semantic Identifier"
-            )
-        return cls(**init_kwargs)

@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timezone
 from typing import Any
 
 import requests
@@ -106,6 +107,8 @@ class HubSpotConnector(LoadConnector, PollConnector):
                     sections=[Section(link=link, text=content_text)],
                     source=DocumentSource.HUBSPOT,
                     semantic_identifier=title,
+                    # Is already in tzutc, just replacing the timezone format
+                    doc_updated_at=ticket.updated_at.replace(tzinfo=timezone.utc),
                     metadata={},
                 )
             )
@@ -130,15 +133,11 @@ class HubSpotConnector(LoadConnector, PollConnector):
 
 if __name__ == "__main__":
     import os
-    import time
 
-    test_connector = HubSpotConnector()
-    test_connector.load_credentials(
+    connector = HubSpotConnector()
+    connector.load_credentials(
         {"hubspot_access_token": os.environ["HUBSPOT_ACCESS_TOKEN"]}
     )
-    all_docs = test_connector.load_from_state()
 
-    current = time.time()
-    one_day_ago = current - 24 * 60 * 60  # 1 day
-    latest_docs = test_connector.poll_source(one_day_ago, current)
-    print(latest_docs)
+    document_batches = connector.load_from_state()
+    print(next(document_batches))

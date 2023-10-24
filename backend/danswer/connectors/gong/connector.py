@@ -90,6 +90,9 @@ class GongConnector(LoadConnector, PollConnector):
                 response = requests.post(
                     url, headers=self._get_auth_header(), json=body
                 )
+                # If no calls in the range, just break out
+                if response.status_code == 404:
+                    break
                 response.raise_for_status()
 
                 data = response.json()
@@ -223,6 +226,9 @@ class GongConnector(LoadConnector, PollConnector):
                         source=DocumentSource.GONG,
                         # Should not ever be Untitled as a call cannot be made without a Title
                         semantic_identifier=call_title or "Untitled",
+                        doc_updated_at=datetime.fromisoformat(
+                            call_metadata["started"]
+                        ).astimezone(timezone.utc),
                         metadata={"Start Time": call_metadata["started"]},
                     )
                 )
@@ -270,6 +276,5 @@ if __name__ == "__main__":
     )
 
     current = time.time()
-    one_day_ago = current - 24 * 60 * 60  # 1 day
-    latest_docs = connector.poll_source(one_day_ago, current)
+    latest_docs = connector.load_from_state()
     print(next(latest_docs))
