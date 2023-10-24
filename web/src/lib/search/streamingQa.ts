@@ -56,6 +56,7 @@ export const searchRequestStreamed = async ({
   query,
   sources,
   documentSets,
+  timeRange,
   updateCurrentAnswer,
   updateQuotes,
   updateDocs,
@@ -75,7 +76,7 @@ export const searchRequestStreamed = async ({
   let quotes: Quote[] | null = null;
   let relevantDocuments: DanswerDocument[] | null = null;
   try {
-    const filters = buildFilters(sources, documentSets);
+    const filters = buildFilters(sources, documentSets, timeRange);
     const response = await fetch("/api/stream-direct-qa", {
       method: "POST",
       body: JSON.stringify({
