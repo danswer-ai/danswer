@@ -61,6 +61,7 @@ class RequestTrackerConnector(LoadConnector, PollConnector):
         self.rt_password = credentials.get("requesttracker_password")
         return None
 
+    # This does not include RT file attachments yet.
     def _process_tickets(
         self, start: datetime | None = None, end: datetime | None = None
     ) -> GenerateDocumentsOutput:
