@@ -24,6 +24,7 @@ export type ValidSources =
   | "linear"
   | "hubspot"
   | "document360"
+  | "requesttracker"
   | "file"
   | "google_sites";
 
@@ -78,7 +79,7 @@ export interface GoogleDriveConfig {
   follow_shortcuts?: boolean;
 }
 
-export interface BookstackConfig {}
+export interface BookstackConfig { }
 
 export interface ConfluenceConfig {
   wiki_page_url: string;
@@ -88,7 +89,7 @@ export interface JiraConfig {
   jira_project_url: string;
 }
 
-export interface ProductboardConfig {}
+export interface ProductboardConfig { }
 
 export interface SlackConfig {
   workspace: string;
@@ -99,7 +100,7 @@ export interface SlabConfig {
   base_url: string;
 }
 
-export interface GuruConfig {}
+export interface GuruConfig { }
 
 export interface GongConfig {
   workspaces?: string[];
@@ -114,9 +115,13 @@ export interface ZulipConfig {
   realm_url: string;
 }
 
-export interface NotionConfig {}
+export interface NotionConfig { }
 
-export interface HubSpotConfig {}
+export interface HubSpotConfig { }
+
+export interface RequestTrackerConfig {
+  base_url: string;
+}
 
 export interface Document360Config {
   workspace: string;
@@ -233,6 +238,11 @@ export interface LinearCredentialJson {
 
 export interface HubSpotCredentialJson {
   hubspot_access_token: string;
+}
+
+export interface RequestTrackerCredentialJson {
+  requesttracker_username: string;
+  requesttracker_password: string;
 }
 
 export interface Document360CredentialJson {
