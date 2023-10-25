@@ -1,3 +1,4 @@
+import time
 from functools import partial
 from itertools import chain
 from typing import Protocol
@@ -21,6 +22,7 @@ from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.search.models import Embedder
 from danswer.utils.logger import setup_logger
+from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
 
@@ -74,29 +76,36 @@ def _indexing_pipeline(
 
     with Session(get_sqlalchemy_engine()) as db_session:
         # acquires a lock on the documents so that no other process can modify them
-        prepare_to_modify_documents(db_session=db_session, document_ids=document_ids)
+        log_function_time()(prepare_to_modify_documents)(
+            db_session=db_session, document_ids=document_ids
+        )
 
         # create records in the source of truth about these documents
-        _upsert_documents(
+        log_function_time()(_upsert_documents)(
             documents=documents,
             index_attempt_metadata=index_attempt_metadata,
             db_session=db_session,
         )
 
+        start_time = time.time()
         chunks: list[DocAwareChunk] = list(
             chain(*[chunker.chunk(document=document) for document in documents])
         )
+        logger.info(f"Chunking took {time.time() - start_time} seconds")
+
         logger.debug(
             f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in chunks]}"
         )
-        chunks_with_embeddings = embedder.embed(chunks=chunks)
+        chunks_with_embeddings = log_function_time()(embedder.embed)(chunks=chunks)
 
         # Attach the latest status from Postgres (source of truth for access) to each
         # chunk. This access status will be attached to each chunk in the document index
         # TODO: attach document sets to the chunk based on the status of Postgres as well
-        document_id_to_access_info = get_access_for_documents(
+        document_id_to_access_info = log_function_time()(get_access_for_documents)(
             document_ids=document_ids, db_session=db_session
         )
+
+        start_time = time.time()
         document_id_to_document_set = {
             document_id: document_sets
             for document_id, document_sets in fetch_document_sets_for_documents(
@@ -113,11 +122,12 @@ def _indexing_pipeline(
             )
             for chunk in chunks_with_embeddings
         ]
+        logger.info(f"Getting access info took {time.time() - start_time} seconds")
 
         # A document will not be spread across different batches, so all the
         # documents with chunks in this set, are fully represented by the chunks
         # in this set
-        insertion_records = document_index.index(
+        insertion_records = log_function_time()(document_index.index)(
             chunks=access_aware_chunks,
         )
 
