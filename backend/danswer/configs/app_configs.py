@@ -109,9 +109,11 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 #####
 GOOGLE_DRIVE_INCLUDE_SHARED = False
 GOOGLE_DRIVE_FOLLOW_SHORTCUTS = False
+
 FILE_CONNECTOR_TMP_STORAGE_PATH = os.environ.get(
     "FILE_CONNECTOR_TMP_STORAGE_PATH", "/home/file_connector_storage"
 )
+
 # TODO these should be available for frontend configuration, via advanced options expandable
 WEB_CONNECTOR_IGNORED_CLASSES = os.environ.get(
     "WEB_CONNECTOR_IGNORED_CLASSES", "sidebar,footer"
@@ -127,6 +129,14 @@ NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP = (
     os.environ.get("NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP", "").lower()
     == "true"
 )
+
+CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
+    ignored_tag
+    for ignored_tag in os.environ.get("CONFLUENCE_CONNECTOR_LABELS_TO_SKIP", "").split(
+        ","
+    )
+    if ignored_tag
+]
 
 #####
 # Query Configs
