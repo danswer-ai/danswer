@@ -18,6 +18,7 @@ import {
   HubSpotIcon,
   Document360Icon,
   GoogleSitesIcon,
+  RequestTrackerIcon,
 } from "./icons/icons";
 
 interface SourceMetadata {
@@ -129,6 +130,12 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: Document360Icon,
         displayName: "Document360",
         adminPageLink: "/admin/connectors/document360",
+      };
+    case "requesttracker":
+      return {
+        icon: RequestTrackerIcon,
+        displayName: "Request Tracker",
+        adminPageLink: "/admin/connectors/requesttracker",
       };
     case "google_sites":
       return {
