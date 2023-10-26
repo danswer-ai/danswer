@@ -156,6 +156,32 @@ def split_chunk_text_into_mini_chunks(
     return sentence_aware_splitter.split_text(chunk_text)
 
 
+def split_string(s: str, chunk_size: int = 1024) -> str:
+    return [s[i : i + chunk_size] for i in range(0, len(s), chunk_size)]
+
+
+def chunk_document_FAST(
+    document: Document,
+    chunk_tok_size: int = CHUNK_SIZE,
+    subsection_overlap: int = CHUNK_OVERLAP,
+    blurb_size: int = BLURB_SIZE,
+) -> list[DocAwareChunk]:
+    chunks: list[DocAwareChunk] = []
+    for section in document.sections:
+        for ind, text in enumerate(split_string(section.text, 1024)):
+            chunks.append(
+                DocAwareChunk(
+                    source_document=document,
+                    chunk_id=len(chunks),
+                    blurb="",
+                    content=text,
+                    source_links={0: section.link},
+                    section_continuation=ind == 0,
+                )
+            )
+    return chunks
+
+
 class Chunker:
     @abc.abstractmethod
     def chunk(self, document: Document) -> list[DocAwareChunk]:
@@ -164,4 +190,4 @@ class Chunker:
 
 class DefaultChunker(Chunker):
     def chunk(self, document: Document) -> list[DocAwareChunk]:
-        return chunk_document(document)
+        return chunk_document_FAST(document)
