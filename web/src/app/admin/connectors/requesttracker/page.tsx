@@ -167,7 +167,7 @@ const MainSection = () => {
           <ConnectorForm<RequestTrackerConfig>
             nameBuilder={(values) => `RequestTracker-${values.base_url}`}
             ccPairNameBuilder={(values) => values.base_url}
-            //source="requesttracker"
+            source="requesttracker"
             inputType="poll"
             formBody={
               <>
