@@ -10,9 +10,7 @@ from distributed import LocalCluster
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
-from danswer.configs.model_configs import (
-    MIN_THREADS_ML_MODELS,
-)
+from danswer.configs.model_configs import MIN_THREADS_ML_MODELS
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
