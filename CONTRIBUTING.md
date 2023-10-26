@@ -56,7 +56,7 @@ development purposes but also feel free to just use the containers and update wi
 
 
 ### Local Set Up
-It is recommended to use Python versions >= 3.11 but Danswer will run with older versions with minimal changes.
+It is recommended to use Python versions >= 3.11.
 
 This guide skips setting up User Authentication for the purpose of simplicity
 
@@ -111,8 +111,7 @@ To start the frontend, navigate to `danswer/web` and run:
 npm run dev
 ```
 
-Package the Vespa schema which outline how to store and fetch indexed documents.
-This will only need to be done when the Vespa schema is updated locally.
+Package the Vespa schema. This will only need to be done when the Vespa schema is updated locally.
 
 Nagivate to `danswer/backend/danswer/datastores/vespa/app_config` and run:
 ```bash
@@ -121,7 +120,7 @@ zip -r ../vespa-app.zip .
 - Note: If you don't have the `zip` utility, you will need to install it prior to running the above
 
 The first time running Danswer, you will also need to run the DB migrations for Postgres.
-After the first time, this is no longer required.
+After the first time, this is no longer required unless the DB models change.
 Navigate to `danswer/backend` and with the venv active, run:
 ```bash
 alembic upgrade head
