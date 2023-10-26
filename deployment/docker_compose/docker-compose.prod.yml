@@ -9,14 +9,14 @@ services:
       /bin/sh -c "alembic upgrade head && echo \"Starting Danswer Api Server\" && uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       - relational_db
-      - index
+      - document_index
     restart: always
     env_file:
       - .env
     environment:
       - AUTH_TYPE=${AUTH_TYPE:-google_oauth}
       - POSTGRES_HOST=relational_db
-      - VESPA_HOST=index
+      - VESPA_HOST=document_index
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
@@ -31,14 +31,14 @@ services:
     command: /usr/bin/supervisord
     depends_on:
       - relational_db
-      - index
+      - document_index
     restart: always
     env_file:
       - .env
     environment:
       - AUTH_TYPE=${AUTH_TYPE:-google_oauth}
       - POSTGRES_HOST=relational_db
-      - VESPA_HOST=index
+      - VESPA_HOST=document_index
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
@@ -69,7 +69,7 @@ services:
       - .env
     volumes:
       - db_volume:/var/lib/postgresql/data
-  index:
+  document_index:
     image: vespaengine/vespa:8
     restart: always
     ports:
