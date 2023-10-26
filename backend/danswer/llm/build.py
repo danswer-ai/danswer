@@ -27,7 +27,7 @@ def get_default_llm(
 
     model_args = {
         # provide a dummy key since LangChain will throw an exception if not
-        # given, which would present server startup
+        # given, which would prevent server startup
         "api_key": api_key or "dummy_api_key",
         "timeout": timeout,
         "model_version": GEN_AI_MODEL_VERSION,
