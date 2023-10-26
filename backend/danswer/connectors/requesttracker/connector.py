@@ -124,7 +124,7 @@ class RequestTrackerConnector(LoadConnector, PollConnector):
         _start: int = start if start > one_day_ago else one_day_ago
         start_datetime = datetime.fromtimestamp(_start, tz=timezone.utc)
         end_datetime = datetime.fromtimestamp(end, tz=timezone.utc)
-        return self._process_tickets(start_datetime, end_datetime)
+        yield from self._process_tickets(start_datetime, end_datetime)
 
 
 if __name__ == "__main__":
