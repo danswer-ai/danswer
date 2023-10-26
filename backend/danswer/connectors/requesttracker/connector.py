@@ -26,14 +26,14 @@ class RequestTrackerConnector(LoadConnector, PollConnector):
         base_url: str,
         queues: List[str] | None = None,
         batch_size: int = INDEX_BATCH_SIZE,
-        rt_username: Optional[str] = None,
-        rt_password: Optional[str] = None,
+        requesttracker_username: Optional[str] = None,
+        requesttracker_password: Optional[str] = None,
     ) -> None:
         self.queues = queues
         self.base_url = base_url
         self.batch_size = batch_size
-        self.rt_username = rt_username
-        self.rt_password = rt_password
+        self.rt_username = requesttracker_username
+        self.rt_password = requesttracker_password
 
     def txn_link(self, tid: int, txn: int):
         return f"{self.base_url}/Ticket/Display.html?id={tid}&txn={txn}"

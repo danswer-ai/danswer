@@ -163,7 +163,7 @@ const MainSection = () => {
 
       {requestTrackerCredential ? (
         <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
-          <h2 className="font-bold mb-3">Connect to Request Tracker installation</h2>
+          <h2 className="font-bold mb-3">Step 1: Connect to Request Tracker installation</h2>
           <ConnectorForm<RequestTrackerConfig>
             nameBuilder={(values) => `RequestTracker-${values.base_url}`}
             ccPairNameBuilder={(values) => values.base_url}
@@ -180,8 +180,8 @@ const MainSection = () => {
             initialValues={{
               base_url: "",
             }}
-            refreshFreq={10 * 60} // 10 minutes
             credentialId={requestTrackerCredential.id}
+            refreshFreq={10 * 60} // 10 minutes
           />
         </div>
       ) : (
