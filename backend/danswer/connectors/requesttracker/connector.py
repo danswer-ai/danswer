@@ -119,7 +119,10 @@ class RequestTrackerConnector(LoadConnector, PollConnector):
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        start_datetime = datetime.fromtimestamp(start, tz=timezone.utc)
+        # Keep query short, only look behind 1 day at maximum
+        one_day_ago: int = end - (24 * 60 * 60)
+        _start: int = start if start < one_day_ago else one_day_ago
+        start_datetime = datetime.fromtimestamp(_start, tz=timezone.utc)
         end_datetime = datetime.fromtimestamp(end, tz=timezone.utc)
         return self._process_tickets(start_datetime, end_datetime)
 
