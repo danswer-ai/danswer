@@ -121,7 +121,7 @@ class RequestTrackerConnector(LoadConnector, PollConnector):
     ) -> GenerateDocumentsOutput:
         # Keep query short, only look behind 1 day at maximum
         one_day_ago: int = end - (24 * 60 * 60)
-        _start: int = start if start < one_day_ago else one_day_ago
+        _start: int = start if start > one_day_ago else one_day_ago
         start_datetime = datetime.fromtimestamp(_start, tz=timezone.utc)
         end_datetime = datetime.fromtimestamp(end, tz=timezone.utc)
         return self._process_tickets(start_datetime, end_datetime)
