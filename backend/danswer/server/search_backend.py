@@ -25,6 +25,7 @@ from danswer.direct_qa.answer_question import answer_qa_query
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
+from danswer.direct_qa.interfaces import StreamingError
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.qa_utils import get_usable_chunks
 from danswer.search.access_filters import build_access_filters_for_user
@@ -366,7 +367,8 @@ def stream_direct_qa(
             qa_model = get_default_qa_model()
         except (UnknownModelError, OpenAIKeyMissing) as e:
             logger.exception("Unable to get QA model")
-            yield get_json_line({"error": str(e)})
+            error = StreamingError(error=str(e))
+            yield get_json_line(error.dict())
             return
 
         # remove chunks marked as not applicable for QA (e.g. Google Drive file

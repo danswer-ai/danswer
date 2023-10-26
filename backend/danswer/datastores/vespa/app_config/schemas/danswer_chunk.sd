@@ -100,9 +100,9 @@ schema danswer_chunk {
         }
 
         function inline document_boost() {
-            # 0 to 2x score following sigmoid function stretched out by factor of 3
+            # 0.5 to 2x score: piecewise sigmoid function stretched out by factor of 3
             # meaning requires 3x the number of feedback votes to have default sigmoid effect
-            expression: 2 / (1 + exp(-attribute(boost) / 3))
+            expression: if(attribute(boost) < 0, 0.5 + (1 / (1 + exp(-attribute(boost) / 3))), 2 / (1 + exp(-attribute(boost) / 3)))
         }
 
         function inline document_age() {

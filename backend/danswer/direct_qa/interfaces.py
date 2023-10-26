@@ -8,6 +8,10 @@ from danswer.chunking.models import InferenceChunk
 from danswer.direct_qa.models import LLMMetricsContainer
 
 
+class StreamingError(BaseModel):
+    error: str
+
+
 class DanswerAnswer(BaseModel):
     answer: str | None
 
