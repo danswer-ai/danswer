@@ -248,7 +248,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         batch = self._fetch_pages(self.confluence_client, start_ind)
         for page in batch:
             last_modified_str = page["version"]["when"]
-            author = page["version"].get("by", {}).get("email")
+            author = cast(str | None, page["version"].get("by", {}).get("email"))
             last_modified = datetime.fromisoformat(last_modified_str)
 
             if last_modified.tzinfo is None:
@@ -294,7 +294,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         source=DocumentSource.CONFLUENCE,
                         semantic_identifier=page["title"],
                         doc_updated_at=last_modified,
-                        primary_owners=[author] or None,
+                        primary_owners=[author] if author else None,
                         metadata={
                             "Wiki Space Name": self.space,
                         },
