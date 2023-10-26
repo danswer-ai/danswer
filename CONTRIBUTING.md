@@ -121,6 +121,7 @@ zip -r ../vespa-app.zip .
 
 The first time running Danswer, you will also need to run the DB migrations for Postgres.
 After the first time, this is no longer required unless the DB models change.
+
 Navigate to `danswer/backend` and with the venv active, run:
 ```bash
 alembic upgrade head
@@ -131,7 +132,7 @@ Jobs that take more time are run async from the API server.
 
 Still in `danswer/backend`, run:
 ```bash
-python ./scripts/dev_run_celery.py
+python ./scripts/dev_run_background_jobs.py
 ```
 
 To run the backend API server, navigate back to `danswer/backend` and run:
