@@ -22,6 +22,7 @@ from danswer.direct_qa.qa_prompts import ANSWER_PAT
 from danswer.direct_qa.qa_prompts import QUOTE_PAT
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.dynamic_configs import get_dynamic_config_store
+from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.llm.utils import check_number_of_tokens
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_model_quote
@@ -31,11 +32,15 @@ from danswer.utils.text_processing import shared_precompare_cleanup
 logger = setup_logger()
 
 
-def get_gen_ai_api_key() -> str:
-    return (
-        cast(str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY))
-        or GEN_AI_API_KEY
-    )
+def get_gen_ai_api_key() -> str | None:
+    # first check if the key has been provided by the UI
+    try:
+        return cast(str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY))
+    except ConfigNotFoundError:
+        pass
+
+    # if not provided by the UI, fallback to the env variable
+    return GEN_AI_API_KEY
 
 
 def extract_answer_quotes_freeform(

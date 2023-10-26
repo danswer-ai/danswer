@@ -48,10 +48,11 @@ if API_TYPE_OPENAI in ["azure"]:  # TODO: Azure AD support ["azure_ad", "azuread
 
 
 def _ensure_openai_api_key(api_key: str | None) -> str:
-    try:
-        return api_key or get_gen_ai_api_key()
-    except ConfigNotFoundError:
+    final_api_key = api_key or get_gen_ai_api_key()
+    if final_api_key is None:
         raise OpenAIKeyMissing()
+
+    return final_api_key
 
 
 def _build_openai_settings(**kwargs: Any) -> dict[str, Any]:
