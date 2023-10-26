@@ -22,6 +22,8 @@ def run_celery() -> None:
         "-A",
         "danswer.background.celery",
         "worker",
+        "--pool=threads",
+        "--autoscale=3,10",
         "--loglevel=INFO",
         "--concurrency=1",
     ]

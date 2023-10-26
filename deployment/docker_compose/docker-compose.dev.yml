@@ -11,7 +11,7 @@ services:
       uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       - relational_db
-      - index
+      - document_index
     restart: always
     ports:
       - "8080:8080"
@@ -23,7 +23,7 @@ services:
       - GEN_AI_HOST_TYPE=${GEN_AI_HOST_TYPE:-}
       - NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL=${NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL:-}
       - POSTGRES_HOST=relational_db
-      - VESPA_HOST=index
+      - VESPA_HOST=document_index
       - AUTH_TYPE=${AUTH_TYPE:-disabled}
       - QA_TIMEOUT=${QA_TIMEOUT:-}
       - VALID_EMAIL_DOMAINS=${VALID_EMAIL_DOMAINS:-}
@@ -60,7 +60,7 @@ services:
     command: /usr/bin/supervisord
     depends_on:
       - relational_db
-      - index
+      - document_index
     restart: always
     environment:
       - INTERNAL_MODEL_VERSION=${INTERNAL_MODEL_VERSION:-openai-chat-completion}
@@ -69,7 +69,7 @@ services:
       - GEN_AI_ENDPOINT=${GEN_AI_ENDPOINT:-}
       - GEN_AI_HOST_TYPE=${GEN_AI_HOST_TYPE:-}
       - POSTGRES_HOST=relational_db
-      - VESPA_HOST=index
+      - VESPA_HOST=document_index
       - API_BASE_OPENAI=${API_BASE_OPENAI:-}
       - API_TYPE_OPENAI=${API_TYPE_OPENAI:-}
       - API_VERSION_OPENAI=${API_VERSION_OPENAI:-}
@@ -129,7 +129,7 @@ services:
       - "5432:5432"
     volumes:
       - db_volume:/var/lib/postgresql/data
-  index:
+  document_index:
     image: vespaengine/vespa:8
     restart: always
     ports:

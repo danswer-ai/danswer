@@ -6,7 +6,7 @@ As an open source project in a rapidly changing space, we welcome all contributi
 
 ## 💃 Guidelines
 ### Contribution Opportunities
-The [GitHub issues](https://github.com/danswer-ai/danswer/issues) page is a great place to start for contribution ideas.
+The [GitHub Issues](https://github.com/danswer-ai/danswer/issues) page is a great place to start for contribution ideas.
 
 Issues that have been explicitly approved by the maintainers (aligned with the direction of the project)
 will be marked with the `approved by maintainers` label.
@@ -19,7 +19,9 @@ If you have a new/different contribution in mind, we'd love to hear about it!
 Your input is vital to making sure that Danswer moves in the right direction.
 Before starting on implementation, please raise a GitHub issue.
 
-And always feel free to message us (Chris Weaver / Yuhong Sun) on Slack / Discord directly about anything at all. 
+And always feel free to message us (Chris Weaver / Yuhong Sun) on 
+[Slack](https://join.slack.com/t/danswer/shared_invite/zt-1u3h3ke3b-VGh1idW19R8oiNRiKBYv2w) / 
+[Discord](https://discord.gg/TDJ59cGV2X) directly about anything at all. 
 
 
 ### Contributing Code
@@ -44,8 +46,8 @@ We would love to see you there!
 
 
 ## Get Started 🚀
-Danswer being a fully functional app, relies on several external pieces of software, specifically:
-- Postgres (Relational DB)
+Danswer being a fully functional app, relies on some external pieces of software, specifically:
+- [Postgres](https://www.postgresql.org/) (Relational DB)
 - [Vespa](https://vespa.ai/) (Vector DB/Search Engine)
 
 This guide provides instructions to set up the Danswer specific services outside of Docker because it's easier for
@@ -54,11 +56,9 @@ development purposes but also feel free to just use the containers and update wi
 
 
 ### Local Set Up
-We've tested primarily with Python versions >= 3.11 but the code should work with Python >= 3.9.
+It is recommended to use Python versions >= 3.11 but Danswer will run with older versions with minimal changes.
 
-This guide skips a few optional features for simplicity, reach out if you need any of these:
-- User Authentication feature
-- File Connector background job
+This guide skips setting up User Authentication for the purpose of simplicity
 
 
 #### Installing Requirements
@@ -93,18 +93,11 @@ playwright install
 
 
 #### Dependent Docker Containers
-First navigate to `danswer/deployment/docker_compose`, then start up the containers with:
-
-Postgres:
+First navigate to `danswer/deployment/docker_compose`, then start up Vespa and Postgres with:
 ```bash
-docker compose -f docker-compose.dev.yml -p danswer-stack up -d relational_db
+docker compose -f docker-compose.dev.yml -p danswer-stack up -d document_index relational_db
 ```
-
-Vespa:
-```bash
-docker compose -f docker-compose.dev.yml -p danswer-stack up -d index
-```
-
+(document_index refers to Vespa and relational_db refers to Postgres)
 
 #### Running Danswer
 
@@ -115,26 +108,32 @@ mkdir dynamic_config_storage
 
 To start the frontend, navigate to `danswer/web` and run:
 ```bash
-AUTH_TYPE=disabled npm run dev
-```
-_for Windows, run:_
-```bash
-(SET "AUTH_TYPE=disabled" && npm run dev)
+npm run dev
 ```
 
+Package the Vespa schema which outline how to store and fetch indexed documents.
+This will only need to be done when the Vespa schema is updated locally.
 
-The first time running Danswer, you will need to run the DB migrations for Postgres.
-Navigate to `danswer/backend` and with the venv active, run:
-```bash
-alembic upgrade head
-```
-
-Additionally, we have to package the Vespa schema deployment:
 Nagivate to `danswer/backend/danswer/datastores/vespa/app_config` and run:
 ```bash
 zip -r ../vespa-app.zip .
 ```
 - Note: If you don't have the `zip` utility, you will need to install it prior to running the above
+
+The first time running Danswer, you will also need to run the DB migrations for Postgres.
+After the first time, this is no longer required.
+Navigate to `danswer/backend` and with the venv active, run:
+```bash
+alembic upgrade head
+```
+
+Next, start the task queue which orchestrates the background jobs.
+Jobs that take more time are run async from the API server.
+
+Still in `danswer/backend`, run:
+```bash
+python ./scripts/dev_run_celery.py
+```
 
 To run the backend API server, navigate back to `danswer/backend` and run:
 ```bash
@@ -151,33 +150,6 @@ powershell -Command "
     $env:VESPA_DEPLOYMENT_ZIP='./danswer/datastores/vespa/vespa-app.zip'
     uvicorn danswer.main:app --reload --port 8080 
 "
-```
-
-To run the background job to check for connector updates and index documents, navigate to `danswer/backend` and run:
-```bash
-PYTHONPATH=. DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/update.py
-```
-_For Windows:_
-```bash
-powershell -Command " $env:PYTHONPATH='.'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/update.py "
-```
-
-To run the background job to check for periodically check for document set updates, navigate to `danswer/backend` and run:
-```bash
-PYTHONPATH=. DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage python danswer/background/document_set_sync_script.py
-```
-_For Windows:_
-```bash
-powershell -Command " $env:PYTHONPATH='.'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; python danswer/background/document_set_sync_script.py "
-```
-
-To run Celery, which handles deletion of connectors + syncing of document sets, navigate to `danswer/backend` and run:
-```bash
-PYTHONPATH=. DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage celery -A  danswer.background.celery worker --loglevel=info --concurrency=1
-```
-_For Windows:_
-```bash
-powershell -Command " $env:PYTHONPATH='.'; $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'; celery -A  danswer.background.celery worker --loglevel=info --concurrency=1 "
 ```
 
 Note: if you need finer logging, add the additional environment variable `LOG_LEVEL=DEBUG` to the relevant services.
