@@ -502,14 +502,9 @@ def validate_existing_genai_api_key(
         # First time checking the key, nothing unusual
         pass
 
-    try:
-        genai_api_key = get_gen_ai_api_key()
-    except ConfigNotFoundError:
+    genai_api_key = get_gen_ai_api_key()
+    if genai_api_key is None:
         raise HTTPException(status_code=404, detail="Key not found")
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    get_dynamic_config_store().store(check_key_time, curr_time.timestamp())
 
     try:
         is_valid = check_model_api_key_is_valid(genai_api_key)
@@ -519,6 +514,9 @@ def validate_existing_genai_api_key(
 
     if not is_valid:
         raise HTTPException(status_code=400, detail="Invalid API key provided")
+
+    # mark check as successful
+    get_dynamic_config_store().store(check_key_time, curr_time.timestamp())
 
 
 @router.get("/admin/genai-api-key", response_model=ApiKey)

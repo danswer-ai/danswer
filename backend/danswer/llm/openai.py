@@ -3,7 +3,6 @@ from typing import cast
 
 from langchain.chat_models.openai import ChatOpenAI
 
-from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.configs.model_configs import GEN_AI_TEMPERATURE
 from danswer.llm.llm import LangChainChatLLM
 from danswer.llm.utils import should_be_verbose
@@ -20,12 +19,6 @@ class OpenAIGPT(LangChainChatLLM):
         *args: list[Any],
         **kwargs: dict[str, Any]
     ):
-        # set a dummy API key if not specified so that LangChain doesn't throw an
-        # exception when trying to initialize the LLM which would prevent the API
-        # server from starting up
-        if not api_key:
-            api_key = GEN_AI_API_KEY
-
         self._llm = ChatOpenAI(
             model=model_version,
             openai_api_key=api_key,
