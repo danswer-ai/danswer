@@ -19,6 +19,7 @@ from danswer.configs.app_configs import DOC_TIME_DECAY
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.app_configs import FAVOR_RECENT_DECAY_MULTIPLIER
+from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import VESPA_DEPLOYMENT_ZIP
 from danswer.configs.app_configs import VESPA_HOST
@@ -71,9 +72,7 @@ DOCUMENT_ID_ENDPOINT = (
 )
 SEARCH_ENDPOINT = f"{VESPA_APP_CONTAINER_URL}/search/"
 _BATCH_SIZE = 100  # Specific to Vespa
-_NUM_THREADS = (
-    16  # since Vespa doesn't allow batching of inserts / updates, we use threads
-)
+_NUM_THREADS = INDEX_BATCH_SIZE  # since Vespa doesn't allow batching of inserts / updates, we use threads
 # Specific to Vespa, needed for highlighting matching keywords / section
 CONTENT_SUMMARY = "content_summary"
 
