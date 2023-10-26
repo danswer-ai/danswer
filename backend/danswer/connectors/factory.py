@@ -53,7 +53,7 @@ def identify_connector_class(
         DocumentSource.SLAB: SlabConnector,
         DocumentSource.NOTION: NotionConnector,
         DocumentSource.ZULIP: ZulipConnector,
-        DocumentSource.REQUESTTRACKER: RequestTrackerConnector,
+        DocumentSource.REQUESTTRACK: RequestTrackerConnector,
         DocumentSource.GURU: GuruConnector,
         DocumentSource.LINEAR: LinearConnector,
         DocumentSource.HUBSPOT: HubSpotConnector,
