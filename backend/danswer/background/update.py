@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 from datetime import timezone
 
+import torch
 from dask.distributed import Client
 from dask.distributed import Future
 from distributed import LocalCluster
@@ -10,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.configs.model_configs import (
-    BACKGROUND_JOB_EMBEDDING_MODEL_CPU_CORES_LEFT_UNUSED,
+    MIN_THREADS_ML_MODELS,
 )
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -351,15 +352,9 @@ def _run_indexing_entrypoint(index_attempt_id: int) -> None:
     """Entrypoint for indexing run when using dask distributed.
     Wraps the actual logic in a `try` block so that we can catch any exceptions
     and mark the attempt as failed."""
-    import torch
-    import os
 
-    # force torch to use more cores if available. On VMs pytorch only takes
-    # advantage of a single core by default
-    cpu_cores_to_use = max(
-        (os.cpu_count() or 1) - BACKGROUND_JOB_EMBEDDING_MODEL_CPU_CORES_LEFT_UNUSED,
-        torch.get_num_threads(),
-    )
+    cpu_cores_to_use = max(MIN_THREADS_ML_MODELS, torch.get_num_threads())
+
     logger.info(f"Setting task to use {cpu_cores_to_use} threads")
     torch.set_num_threads(cpu_cores_to_use)
 
