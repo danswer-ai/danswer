@@ -95,9 +95,9 @@ playwright install
 #### Dependent Docker Containers
 First navigate to `danswer/deployment/docker_compose`, then start up Vespa and Postgres with:
 ```bash
-docker compose -f docker-compose.dev.yml -p danswer-stack up -d document_index relational_db
+docker compose -f docker-compose.dev.yml -p danswer-stack up -d index relational_db
 ```
-(document_index refers to Vespa and relational_db refers to Postgres)
+(index refers to Vespa and relational_db refers to Postgres)
 
 #### Running Danswer
 
