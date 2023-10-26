@@ -294,7 +294,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         source=DocumentSource.CONFLUENCE,
                         semantic_identifier=page["title"],
                         doc_updated_at=last_modified,
-                        primary_owners=[author],
+                        primary_owners=[author] or None,
                         metadata={
                             "Wiki Space Name": self.space,
                         },
