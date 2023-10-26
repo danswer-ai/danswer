@@ -131,7 +131,8 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             url=self.wiki_base,
             # passing in username causes issues for Confluence data center
             username=username if self.is_cloud else None,
-            password=access_token,
+            password=access_token if self.is_cloud else None,
+            token=access_token if not self.is_cloud else None,
             cloud=self.is_cloud,
         )
         return None
@@ -249,6 +250,13 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             last_modified_str = page["version"]["when"]
             author = page["version"].get("by", {}).get("email")
             last_modified = datetime.fromisoformat(last_modified_str)
+
+            if last_modified.tzinfo is None:
+                # If no timezone info, assume it is UTC
+                last_modified = last_modified.replace(tzinfo=timezone.utc)
+            else:
+                # If not in UTC, translate it
+                last_modified = last_modified.astimezone(timezone.utc)
 
             if time_filter is None or time_filter(last_modified):
                 page_id = page["id"]
