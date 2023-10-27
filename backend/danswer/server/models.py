@@ -202,11 +202,11 @@ class IndexFilters(RequestFilters):
 class QuestionRequest(BaseModel):
     query: str
     collection: str
-    use_keyword: bool | None
     filters: RequestFilters
     offset: int | None
     enable_auto_detect_filters: bool
     favor_recent: bool | None = None
+    search_flow: SearchType | None = None  # Default hybrid
 
 
 class QAFeedbackRequest(BaseModel):

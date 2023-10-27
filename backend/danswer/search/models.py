@@ -12,8 +12,9 @@ MAX_METRICS_CONTENT = (
 
 
 class SearchType(str, Enum):
-    KEYWORD = "keyword"  # May be better to also try keyword search if Semantic (AI Search) is on
-    SEMANTIC = "semantic"  # Really should try Semantic (AI Search) if keyword is on
+    KEYWORD = "keyword"
+    SEMANTIC = "semantic"
+    HYBRID = "hybrid"
 
 
 class QueryFlow(str, Enum):

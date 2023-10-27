@@ -138,19 +138,18 @@ schema danswer_chunk {
         match-features: recency_bias closest(embeddings)
     }
 
-    # TODO this isn't used and needs to be reworked
     rank-profile hybrid_search inherits default, default_rank {
         inputs {
             query(query_embedding) tensor<float>(x[384])
         }
 
         first-phase {
-            expression: bm25(content) * document_boost * recency_bias
+            expression: closeness(field, embeddings)
         }
 
-        second-phase {
-            # Cannot do boost with the chosen embedding model because of high default similarity
-            expression: closeness(field, embeddings)
+        global-phase {
+            expression: (normalize_linear(closeness(field, embeddings)) + normalize_linear(bm25(content))) * document_boost * recency_bias
+            rerank-count: 1000
         }
 
         match-features: recency_bias closest(embeddings)
