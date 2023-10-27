@@ -67,15 +67,13 @@ export function CCPairStatus({
         Deleting
       </Badge>
     );
-  }
-  else if (disabled) {
+  } else if (disabled) {
     badge = (
       <Badge size={size} color="yellow" icon={FiPauseCircle}>
         Disabled
       </Badge>
     );
-  }
-  else if (status === "failed") {
+  } else if (status === "failed") {
     badge = (
       <Badge size={size} color="red" icon={FiAlertTriangle}>
         Error

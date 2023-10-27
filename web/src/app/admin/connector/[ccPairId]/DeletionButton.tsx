@@ -12,14 +12,14 @@ export function DeletionButton({ ccPair }: { ccPair: CCPairFullInfo }) {
   const { popup, setPopup } = usePopup();
 
   const isDeleting =
-  ccPair?.latest_deletion_attempt?.status === "PENDING" ||
-  ccPair?.latest_deletion_attempt?.status === "STARTED";
+    ccPair?.latest_deletion_attempt?.status === "PENDING" ||
+    ccPair?.latest_deletion_attempt?.status === "STARTED";
 
   let tooltip: string;
   if (ccPair.connector.disabled) {
     if (isDeleting) {
       tooltip = "This connector is currently being deleted";
-    } else{
+    } else {
       tooltip = "Click to delete";
     }
   } else {

@@ -6,7 +6,7 @@ export function buildUrl(path: string) {
     return `${INTERNAL_URL}${path}`;
   }
   return `${INTERNAL_URL}/${path}`;
-};
+}
 
 export function fetchSS(url: string, options?: RequestInit) {
   const init = options || {

@@ -11,7 +11,7 @@ import { ConfigDisplay } from "./ConfigDisplay";
 import { ModifyStatusButtonCluster } from "./ModifyStatusButtonCluster";
 import { DeletionButton } from "./DeletionButton";
 import { SSRAutoRefresh } from "@/components/SSRAutoRefresh";
-import { ErrorPage } from "@/components/ErrorPage";
+import { ErrorCallout } from "@/components/ErrorCallout";
 
 export default async function Page({
   params,
@@ -23,7 +23,12 @@ export default async function Page({
   const ccPairResponse = await getCCPairSS(ccPairId);
   if (!ccPairResponse.ok) {
     const errorMsg = await getErrorMsg(ccPairResponse);
-    return <ErrorPage errorMsg={errorMsg} />;
+    return (
+      <div className="mx-auto container">
+        <BackButton />
+        <ErrorCallout errorTitle={errorMsg} />
+      </div>
+    );
   }
 
   const ccPair = (await ccPairResponse.json()) as CCPairFullInfo;
@@ -57,14 +62,13 @@ export default async function Page({
 
         <div className="text-gray-400 text-sm mt-1">
           Total Documents Indexed:{" "}
-          <b className="text-gray-200">{ccPair.num_docs_indexed}</b>
+          <b className="text-gray-300">{ccPair.num_docs_indexed}</b>
         </div>
 
         <div className="mt-4">
-          <Title className="mb-2">Configuration</Title>
-
           <ConfigDisplay
             connectorSpecificConfig={ccPair.connector.connector_specific_config}
+            sourceType={ccPair.connector.source}
           />
         </div>
 

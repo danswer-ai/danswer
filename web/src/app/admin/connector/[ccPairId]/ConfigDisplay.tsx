@@ -1,7 +1,7 @@
-import { List, ListItem, Card } from "@tremor/react";
+import { ValidSources } from "@/lib/types";
+import { List, ListItem, Card, Title } from "@tremor/react";
 
 function convertObjectToString(obj: any): string | any {
-  console.log(obj);
   // Check if obj is an object and not an array or null
   if (typeof obj === "object" && obj !== null) {
     if (!Array.isArray(obj)) {
@@ -19,21 +19,47 @@ function convertObjectToString(obj: any): string | any {
   return obj;
 }
 
+function buildConfigEntries(
+  obj: any,
+  sourceType: ValidSources
+): { [key: string]: string } {
+  if (sourceType === "file") {
+    return {};
+  } else if (sourceType === "google_sites") {
+    return {
+      base_url: obj.base_url,
+    };
+  }
+  return obj;
+}
+
 export function ConfigDisplay({
   connectorSpecificConfig,
+  sourceType,
 }: {
   connectorSpecificConfig: any;
+  sourceType: ValidSources;
 }) {
+  const configEntries = Object.entries(
+    buildConfigEntries(connectorSpecificConfig, sourceType)
+  );
+  if (!configEntries.length) {
+    return null;
+  }
+
   return (
-    <Card className="max-w-xxl">
-      <List>
-        {Object.entries(connectorSpecificConfig).map(([key, value]) => (
-          <ListItem key={key}>
-            <span>{key}</span>
-            <span>{convertObjectToString(value) || "-"}</span>
-          </ListItem>
-        ))}
-      </List>
-    </Card>
+    <>
+      <Title className="mb-2">Configuration</Title>
+      <Card className="max-w-xxl">
+        <List>
+          {configEntries.map(([key, value]) => (
+            <ListItem key={key}>
+              <span>{key}</span>
+              <span>{convertObjectToString(value) || "-"}</span>
+            </ListItem>
+          ))}
+        </List>
+      </Card>
+    </>
   );
 }

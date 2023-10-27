@@ -15,5 +15,5 @@ export function SSRAutoRefresh({ refreshFreq = 5 }: { refreshFreq?: number }) {
     return () => clearInterval(interval);
   });
 
-  return <></>
+  return <></>;
 }

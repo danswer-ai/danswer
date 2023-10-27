@@ -35,7 +35,9 @@ export function DeleteColumn<ConnectorConfigType, ConnectorCredentialType>({
       {connectorIndexingStatus.is_deletable ? (
         <div
           className="cursor-pointer mx-auto flex"
-          onClick={() => deleteCCPair(connector.id, credential.id, setPopup, onUpdate)}
+          onClick={() =>
+            deleteCCPair(connector.id, credential.id, setPopup, onUpdate)
+          }
         >
           <TrashIcon />
         </div>
