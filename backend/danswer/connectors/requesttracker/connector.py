@@ -76,8 +76,8 @@ class RequestTrackerConnector(LoadConnector, PollConnector):
 
         Rt0.login()
 
-        d0 = start.strftime("%Y-%m-%d")
-        d1 = end.strftime("%Y-%m-%d")
+        d0 = start.strftime("%Y-%m-%d %H:%M:%S")
+        d1 = end.strftime("%Y-%m-%d %H:%M:%S")
 
         tickets = Rt0.search(
             Queue=ALL_QUEUES,
