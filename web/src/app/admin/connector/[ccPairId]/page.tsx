@@ -4,12 +4,14 @@ import { getErrorMsg } from "@/lib/fetchUtils";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CCPairStatus } from "@/components/Status";
 import { BackButton } from "@/components/BackButton";
-import { Divider, Title } from "@tremor/react";
+import { Title } from "@tremor/react";
 import { IndexingAttemptsTable } from "./IndexingAttemptsTable";
 import { Text } from "@tremor/react";
 import { ConfigDisplay } from "./ConfigDisplay";
 import { ModifyStatusButtonCluster } from "./ModifyStatusButtonCluster";
 import { DeletionButton } from "./DeletionButton";
+import { SSRAutoRefresh } from "@/components/SSRAutoRefresh";
+import { ErrorPage } from "@/components/ErrorPage";
 
 export default async function Page({
   params,
@@ -21,7 +23,7 @@ export default async function Page({
   const ccPairResponse = await getCCPairSS(ccPairId);
   if (!ccPairResponse.ok) {
     const errorMsg = await getErrorMsg(ccPairResponse);
-    return <div>{errorMsg}</div>;
+    return <ErrorPage errorMsg={errorMsg} />;
   }
 
   const ccPair = (await ccPairResponse.json()) as CCPairFullInfo;
@@ -31,61 +33,62 @@ export default async function Page({
     ccPair?.latest_deletion_attempt?.status === "STARTED";
 
   return (
-    <div className="mx-auto container dark">
-      <div className="mb-4">
-        <HealthCheckBanner />
-      </div>
-
-      <BackButton />
-      <div className="pb-1 flex mt-1">
-        <h1 className="text-3xl font-bold">{ccPair.name}</h1>
-
-        <div className="ml-auto">
-          <ModifyStatusButtonCluster ccPair={ccPair} />
+    <>
+      <SSRAutoRefresh />
+      <div className="mx-auto container dark">
+        <div className="mb-4">
+          <HealthCheckBanner />
         </div>
-      </div>
 
-      <CCPairStatus
-        status={lastIndexAttempt?.status || "not_started"}
-        disabled={ccPair.connector.disabled}
-        isDeleting={isDeleting}
-      />
+        <BackButton />
+        <div className="pb-1 flex mt-1">
+          <h1 className="text-3xl font-bold">{ccPair.name}</h1>
 
-      <div className="text-gray-400 text-sm mt-1">
-        Total Documents Indexed:{" "}
-        <b className="text-gray-200">{ccPair.num_docs_indexed}</b>
-      </div>
-
-      <div className="mt-4">
-        <Title className="mb-2">Configuration</Title>
-
-        <ConfigDisplay
-          connectorSpecificConfig={ccPair.connector.connector_specific_config}
-        />
-      </div>
-
-      <div className="mt-6">
-        <Title>Indexing Attempts</Title>
-
-        <IndexingAttemptsTable ccPair={ccPair} />
-      </div>
-
-      <Divider />
-
-      <div className="mt-4">
-        <Title>Delete Connector</Title>
-        <Text>
-          Deleting the connector will also delete all associated documents.
-        </Text>
-
-        <div className="flex mt-16">
-          <div className="mx-auto">
-            <DeletionButton ccPair={ccPair} />
+          <div className="ml-auto">
+            <ModifyStatusButtonCluster ccPair={ccPair} />
           </div>
         </div>
-      </div>
 
-      {/* TODO: add document search*/}
-    </div>
+        <CCPairStatus
+          status={lastIndexAttempt?.status || "not_started"}
+          disabled={ccPair.connector.disabled}
+          isDeleting={isDeleting}
+        />
+
+        <div className="text-gray-400 text-sm mt-1">
+          Total Documents Indexed:{" "}
+          <b className="text-gray-200">{ccPair.num_docs_indexed}</b>
+        </div>
+
+        <div className="mt-4">
+          <Title className="mb-2">Configuration</Title>
+
+          <ConfigDisplay
+            connectorSpecificConfig={ccPair.connector.connector_specific_config}
+          />
+        </div>
+
+        <div className="mt-6">
+          <Title>Indexing Attempts</Title>
+
+          <IndexingAttemptsTable ccPair={ccPair} />
+        </div>
+
+        <div className="mt-4">
+          <Title>Delete Connector</Title>
+          <Text>
+            Deleting the connector will also delete all associated documents.
+          </Text>
+
+          <div className="flex mt-16">
+            <div className="mx-auto">
+              <DeletionButton ccPair={ccPair} />
+            </div>
+          </div>
+        </div>
+
+        {/* TODO: add document search*/}
+      </div>
+    </>
   );
 }
