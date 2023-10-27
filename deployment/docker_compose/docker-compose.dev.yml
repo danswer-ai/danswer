@@ -96,7 +96,7 @@ services:
       - ASYM_PASSAGE_PREFIX=${ASYM_PASSAGE_PREFIX:-}
       - SKIP_RERANKING=${SKIP_RERANKING:-}
       - EDIT_KEYWORD_QUERY=${EDIT_KEYWORD_QUERY:-}
-      - BACKGROUND_JOB_EMBEDDING_MODEL_CPU_CORES_LEFT_UNUSED=${BACKGROUND_JOB_EMBEDDING_MODEL_CPU_CORES_LEFT_UNUSED:-}
+      - MIN_THREADS_ML_MODELS=${MIN_THREADS_ML_MODELS:-}
       # Set to debug to get more fine-grained logs
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
@@ -129,6 +129,7 @@ services:
       - "5432:5432"
     volumes:
       - db_volume:/var/lib/postgresql/data
+  # This container name cannot have an underscore in it due to Vespa expectations of the URL
   index:
     image: vespaengine/vespa:8
     restart: always

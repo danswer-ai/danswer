@@ -30,13 +30,9 @@ ASYM_QUERY_PREFIX = os.environ.get("ASYM_QUERY_PREFIX", "")
 ASYM_PASSAGE_PREFIX = os.environ.get("ASYM_PASSAGE_PREFIX", "")
 # Purely an optimization, memory limitation consideration
 BATCH_SIZE_ENCODE_CHUNKS = 8
-# This controls the number of pytorch "threads" to allocate to the embedding
-# model. Specifically, this is computed as `num_cpu_cores - BACKGROUND_JOB_EMBEDDING_MODEL_CPU_CORES_LEFT_UNUSED`.
-# This is useful for limiting the number of CPU cores that the background job consumes to leave some
-# compute for other processes (most importantly the api_server and web_server).
-BACKGROUND_JOB_EMBEDDING_MODEL_CPU_CORES_LEFT_UNUSED = int(
-    os.environ.get("BACKGROUND_JOB_EMBEDDING_MODEL_CPU_CORES_LEFT_UNUSED") or 1
-)
+# This controls the minimum number of pytorch "threads" to allocate to the embedding
+# model. If torch finds more threads on its own, this value is not used.
+MIN_THREADS_ML_MODELS = int(os.environ.get("MIN_THREADS_ML_MODELS") or 1)
 
 
 # Cross Encoder Settings
@@ -86,10 +82,7 @@ INTERNAL_MODEL_VERSION = os.environ.get(
 )
 
 # If the Generative AI model requires an API key for access, otherwise can leave blank
-GEN_AI_API_KEY = (
-    os.environ.get("GEN_AI_API_KEY", os.environ.get("OPENAI_API_KEY"))
-    or "dummy_llm_key"
-)
+GEN_AI_API_KEY = os.environ.get("GEN_AI_API_KEY", os.environ.get("OPENAI_API_KEY"))
 
 # If using GPT4All, HuggingFace Inference API, or OpenAI - specify the model version
 GEN_AI_MODEL_VERSION = os.environ.get(

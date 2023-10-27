@@ -13,6 +13,7 @@ from typing import cast
 import requests
 from requests import HTTPError
 from requests import Response
+from retry import retry
 
 from danswer.chunking.models import DocMetadataAwareIndexChunk
 from danswer.chunking.models import InferenceChunk
@@ -147,6 +148,7 @@ def _delete_vespa_doc_chunks(document_id: str) -> bool:
     return not any(failures)
 
 
+@retry(tries=3, delay=1, backoff=2)
 def _index_vespa_chunk(
     chunk: DocMetadataAwareIndexChunk, already_existing_documents: set[str]
 ) -> bool:
