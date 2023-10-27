@@ -59,6 +59,7 @@ def upgrade() -> None:
                 "SUCCESS",
                 "FAILED",
                 name="indexingstatus",
+                native_enum=False,
             ),
             nullable=False,
         ),
@@ -70,4 +71,3 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table("index_attempt")
-    sa.Enum(name="indexingstatus").drop(op.get_bind(), checkfirst=False)
