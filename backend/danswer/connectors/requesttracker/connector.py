@@ -20,7 +20,7 @@ from danswer.connectors.models import Section
 logger = setup_logger()
 
 
-class RequestTrackerConnector(LoadConnector, PollConnector):
+class RequestTrackerConnector(PollConnector):
     def __init__(
         self,
         base_url: str,
@@ -112,9 +112,6 @@ class RequestTrackerConnector(LoadConnector, PollConnector):
 
         if doc_batch:
             yield doc_batch
-
-    def load_from_state(self) -> GenerateDocumentsOutput:
-        return self._process_tickets()
 
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
