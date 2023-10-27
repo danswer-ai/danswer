@@ -22,6 +22,7 @@ def upgrade() -> None:
     # To remove those complications, all Enums are only handled application side moving forward.
     # This migration exists to ensure that existing users don't run into upgrade issues.
     op.alter_column("index_attempt", "status", type_=String)
+    op.alter_column("connector_credential_pair", "last_attempt_status", type_=String)
     op.execute("DROP TYPE IF EXISTS indexingstatus")
 
 
