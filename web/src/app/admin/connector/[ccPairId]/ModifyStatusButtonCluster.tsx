@@ -1,0 +1,50 @@
+"use client";
+
+import { Button } from "@tremor/react";
+import { CCPairFullInfo } from "./types";
+import { usePopup } from "@/components/admin/connectors/Popup";
+import { disableConnector } from "@/lib/connector";
+import { useRouter } from "next/navigation";
+
+export function ModifyStatusButtonCluster({
+  ccPair,
+}: {
+  ccPair: CCPairFullInfo;
+}) {
+  const router = useRouter();
+  const { popup, setPopup } = usePopup();
+
+  return (
+    <>
+      {popup}
+      {ccPair.connector.disabled ? (
+        <Button
+          variant="secondary"
+          size="xs"
+          color="green"
+          onClick={() =>
+            disableConnector(ccPair.connector, setPopup, () => router.refresh())
+          }
+          tooltip="Click to start indexing again!"
+        >
+          Re-Enable
+        </Button>
+      ) : (
+        <Button
+          variant="secondary"
+          size="xs"
+          color="yellow"
+          onClick={() =>
+            disableConnector(ccPair.connector, setPopup, () => router.refresh())
+          }
+          tooltip={
+            "When disabled, the connectors documents will still" +
+            " be visible. However, no new documents will be indexed."
+          }
+        >
+          Disable
+        </Button>
+      )}
+    </>
+  );
+}

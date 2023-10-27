@@ -151,6 +151,7 @@ function Main() {
           connector: (
             <ConnectorTitle
               ccPairName={connectorIndexingStatus.name}
+              ccPairId={connectorIndexingStatus.cc_pair_id}
               connector={connectorIndexingStatus.connector}
               isPublic={connectorIndexingStatus.public_doc}
               owner={connectorIndexingStatus.owner}
