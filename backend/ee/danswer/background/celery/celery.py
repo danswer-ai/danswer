@@ -11,11 +11,15 @@ from danswer.db.tasks import mark_task_finished
 from danswer.db.tasks import mark_task_start
 from danswer.db.tasks import register_task
 from danswer.utils.logger import setup_logger
+from danswer.utils.variable_functionality import global_version
 from ee.danswer.background.user_group_sync import name_user_group_sync_task
 from ee.danswer.db.user_group import fetch_user_groups
 from ee.danswer.user_groups.sync import sync_user_groups
 
 logger = setup_logger()
+
+# mark as EE for all tasks in this file
+global_version.set_ee()
 
 
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
@@ -25,9 +29,14 @@ def sync_user_group_task(user_group_id: int) -> None:
         mark_task_start(task_name, db_session)
 
         # actual sync logic
-        sync_user_groups(user_group_id=user_group_id, db_session=db_session)
+        error_msg = None
+        try:
+            sync_user_groups(user_group_id=user_group_id, db_session=db_session)
+        except Exception as e:
+            error_msg = str(e)
+            logger.exception(f"Failed to sync user group - {error_msg}")
 
-        mark_task_finished(task_name, db_session)
+        mark_task_finished(task_name, db_session, success=error_msg is None)
 
 
 #####
