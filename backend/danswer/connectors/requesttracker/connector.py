@@ -4,20 +4,25 @@ from logging import DEBUG as LOG_LVL_DEBUG
 from typing import Any
 from typing import List
 from typing import Optional
-from rt.rest1 import Rt
+
 from rt.rest1 import ALL_QUEUES
-from danswer.utils.logger import setup_logger
+from rt.rest1 import Rt
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
+
+class RequestTrackerError(Exception):
+    pass
 
 
 class RequestTrackerConnector(PollConnector):
@@ -35,14 +40,20 @@ class RequestTrackerConnector(PollConnector):
         self.rt_username = requesttracker_username
         self.rt_password = requesttracker_password
 
-    def txn_link(self, tid: int, txn: int):
+    def txn_link(self, tid: int, txn: int) -> str:
         return f"{self.base_url}/Ticket/Display.html?id={tid}&txn={txn}"
 
     def build_doc_sections_from_txn(
         self, connection: Rt, ticket_id: int
     ) -> List[Section]:
         Sections: List[Section] = []
-        for tx in connection.get_history(ticket_id):
+
+        get_history_resp = connection.get_history(ticket_id)
+
+        if get_history_resp is None:
+            raise RequestTrackerError(f"Ticket {ticket_id} cannot be found")
+
+        for tx in get_history_resp:
             Sections.append(
                 Section(
                     link=self.txn_link(int(tx["id"]), ticket_id),
@@ -63,7 +74,7 @@ class RequestTrackerConnector(PollConnector):
 
     # This does not include RT file attachments yet.
     def _process_tickets(
-        self, start: datetime | None = None, end: datetime | None = None
+        self, start: datetime, end: datetime
     ) -> GenerateDocumentsOutput:
         if self.rt_username is None or self.rt_password is None:
             raise ConnectorMissingCredentialError("requesttracker")
@@ -117,8 +128,8 @@ class RequestTrackerConnector(PollConnector):
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
         # Keep query short, only look behind 1 day at maximum
-        one_day_ago: int = end - (24 * 60 * 60)
-        _start: int = start if start > one_day_ago else one_day_ago
+        one_day_ago: float = end - (24 * 60 * 60)
+        _start: float = start if start > one_day_ago else one_day_ago
         start_datetime = datetime.fromtimestamp(_start, tz=timezone.utc)
         end_datetime = datetime.fromtimestamp(end, tz=timezone.utc)
         yield from self._process_tickets(start_datetime, end_datetime)
