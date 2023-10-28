@@ -4,7 +4,6 @@ from collections.abc import Callable
 from transformers import pipeline  # type:ignore
 from transformers import QuestionAnsweringPipeline  # type:ignore
 
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.direct_qa.interfaces import AnswerQuestionReturn
 from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
@@ -14,6 +13,7 @@ from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.direct_qa.interfaces import DanswerQuotes
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.models import LLMMetricsContainer
+from danswer.indexing.models import InferenceChunk
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 

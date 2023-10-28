@@ -9,12 +9,9 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.datastores.document_index import get_default_document_index
-from danswer.datastores.vespa.store import VespaIndex
 from danswer.db.engine import get_session
 from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.feedback import create_query_event
@@ -28,14 +25,17 @@ from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import StreamingError
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.qa_utils import get_usable_chunks
+from danswer.document_index import get_default_document_index
+from danswer.document_index.vespa.store import VespaIndex
+from danswer.indexing.models import InferenceChunk
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import query_intent
 from danswer.search.danswer_helper import recommend_search_flow
-from danswer.search.keyword_search import retrieve_keyword_documents
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
-from danswer.search.semantic_search import chunks_to_search_docs
-from danswer.search.semantic_search import retrieve_ranked_documents
+from danswer.search.search_runner import chunks_to_search_docs
+from danswer.search.search_runner import retrieve_keyword_documents
+from danswer.search.search_runner import retrieve_ranked_documents
 from danswer.secondary_llm_flows.extract_filters import extract_question_time_filters
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability

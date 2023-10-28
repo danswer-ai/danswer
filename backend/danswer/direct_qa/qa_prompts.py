@@ -1,7 +1,6 @@
 import abc
 import json
 
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.constants import ANSWER_PAT
 from danswer.configs.constants import DOC_CONTENT_START_PAT
 from danswer.configs.constants import DOC_SEP_PAT
@@ -11,6 +10,7 @@ from danswer.configs.constants import QUESTION_PAT
 from danswer.configs.constants import QUOTE_PAT
 from danswer.configs.constants import UNCERTAINTY_PAT
 from danswer.connectors.factory import identify_connector_class
+from danswer.indexing.models import InferenceChunk
 
 
 BASE_PROMPT = (

@@ -2,8 +2,8 @@ from enum import Enum
 
 from pydantic import BaseModel
 
-from danswer.chunking.models import DocAwareChunk
-from danswer.chunking.models import IndexChunk
+from danswer.indexing.models import DocAwareChunk
+from danswer.indexing.models import IndexChunk
 
 
 MAX_METRICS_CONTENT = (

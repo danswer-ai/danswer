@@ -7,7 +7,6 @@ import requests
 from requests.exceptions import Timeout
 from requests.models import Response
 
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.constants import ModelHostType
 from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.configs.model_configs import GEN_AI_ENDPOINT
@@ -22,6 +21,7 @@ from danswer.direct_qa.qa_prompts import NonChatPromptProcessor
 from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
 from danswer.direct_qa.qa_utils import simulate_streaming_response
+from danswer.indexing.models import InferenceChunk
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 

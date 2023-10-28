@@ -13,7 +13,7 @@ from danswer.configs.app_configs import POSTGRES_HOST
 from danswer.configs.app_configs import POSTGRES_PASSWORD
 from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
-from danswer.datastores.vespa.store import DOCUMENT_ID_ENDPOINT
+from danswer.document_index.vespa.store import DOCUMENT_ID_ENDPOINT
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()

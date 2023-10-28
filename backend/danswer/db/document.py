@@ -11,13 +11,13 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import DEFAULT_BOOST
-from danswer.datastores.interfaces import DocumentMetadata
 from danswer.db.feedback import delete_document_feedback_for_documents
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
 from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentByConnectorCredentialPair
 from danswer.db.utils import model_to_dict
+from danswer.document_index.interfaces import DocumentMetadata
 from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
 

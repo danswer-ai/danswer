@@ -2,7 +2,7 @@
 import requests
 
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
-from danswer.datastores.vespa.store import DOCUMENT_ID_ENDPOINT
+from danswer.document_index.vespa.store import DOCUMENT_ID_ENDPOINT
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
