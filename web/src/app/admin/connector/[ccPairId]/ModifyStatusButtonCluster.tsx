@@ -21,7 +21,6 @@ export function ModifyStatusButtonCluster({
         <Button
           variant="secondary"
           size="xs"
-          color="green"
           onClick={() =>
             disableConnector(ccPair.connector, setPopup, () => router.refresh())
           }
@@ -33,7 +32,6 @@ export function ModifyStatusButtonCluster({
         <Button
           variant="secondary"
           size="xs"
-          color="yellow"
           onClick={() =>
             disableConnector(ccPair.connector, setPopup, () => router.refresh())
           }
