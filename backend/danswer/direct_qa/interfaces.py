@@ -4,8 +4,8 @@ from collections.abc import Iterator
 
 from pydantic import BaseModel
 
-from danswer.chunking.models import InferenceChunk
 from danswer.direct_qa.models import LLMMetricsContainer
+from danswer.indexing.models import InferenceChunk
 
 
 class StreamingError(BaseModel):

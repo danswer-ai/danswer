@@ -4,9 +4,9 @@ from datetime import datetime
 from typing import Any
 
 from danswer.access.models import DocumentAccess
-from danswer.chunking.models import DocMetadataAwareIndexChunk
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
+from danswer.indexing.models import DocMetadataAwareIndexChunk
+from danswer.indexing.models import InferenceChunk
 from danswer.server.models import IndexFilters
 
 

@@ -1,40 +1,59 @@
 from collections.abc import Callable
 
 import numpy
+from nltk.corpus import stopwords  # type:ignore
+from nltk.stem import WordNetLemmatizer  # type:ignore
+from nltk.tokenize import word_tokenize  # type:ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
-from danswer.chunking.chunk import split_chunk_text_into_mini_chunks
-from danswer.chunking.models import ChunkEmbedding
-from danswer.chunking.models import DocAwareChunk
-from danswer.chunking.models import IndexChunk
-from danswer.chunking.models import InferenceChunk
-from danswer.configs.app_configs import ENABLE_MINI_CHUNK
+from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
-from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
-from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
 from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import SIM_SCORE_RANGE_HIGH
 from danswer.configs.model_configs import SIM_SCORE_RANGE_LOW
 from danswer.configs.model_configs import SKIP_RERANKING
-from danswer.datastores.datastore_utils import translate_boost_count_to_multiplier
-from danswer.datastores.interfaces import DocumentIndex
-from danswer.datastores.interfaces import IndexFilters
+from danswer.document_index.document_index_utils import (
+    translate_boost_count_to_multiplier,
+)
+from danswer.document_index.interfaces import DocumentIndex
+from danswer.document_index.interfaces import IndexFilters
+from danswer.indexing.models import InferenceChunk
 from danswer.search.models import ChunkMetric
-from danswer.search.models import Embedder
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
-from danswer.search.search_utils import get_default_embedding_model
-from danswer.search.search_utils import get_default_reranking_model_ensemble
+from danswer.search.search_nlp_models import get_default_embedding_model
+from danswer.search.search_nlp_models import get_default_reranking_model_ensemble
 from danswer.server.models import SearchDoc
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
+
+
+def lemmatize_text(text: str) -> list[str]:
+    lemmatizer = WordNetLemmatizer()
+    word_tokens = word_tokenize(text)
+    return [lemmatizer.lemmatize(word) for word in word_tokens]
+
+
+def remove_stop_words(text: str) -> list[str]:
+    stop_words = set(stopwords.words("english"))
+    word_tokens = word_tokenize(text)
+    text_trimmed = [word for word in word_tokens if word.casefold() not in stop_words]
+    return text_trimmed or word_tokens
+
+
+def query_processing(
+    query: str,
+) -> str:
+    query = " ".join(remove_stop_words(query))
+    query = " ".join(lemmatize_text(query))
+    return query
 
 
 def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc]:
@@ -215,6 +234,46 @@ def apply_boost(
 
 
 @log_function_time()
+def retrieve_keyword_documents(
+    query: str,
+    filters: IndexFilters,
+    favor_recent: bool,
+    datastore: DocumentIndex,
+    num_hits: int = NUM_RETURNED_HITS,
+    edit_query: bool = EDIT_KEYWORD_QUERY,
+    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
+    | None = None,
+) -> list[InferenceChunk] | None:
+    edited_query = query_processing(query) if edit_query else query
+
+    top_chunks = datastore.keyword_retrieval(
+        edited_query, filters, favor_recent, num_hits
+    )
+
+    if not top_chunks:
+        logger.warning(
+            f"Keyword search returned no results - Filters: {filters}\tEdited Query: {edited_query}"
+        )
+        return None
+
+    if retrieval_metrics_callback is not None:
+        chunk_metrics = [
+            ChunkMetric(
+                document_id=chunk.document_id,
+                chunk_content_start=chunk.content[:MAX_METRICS_CONTENT],
+                first_link=chunk.source_links[0] if chunk.source_links else None,
+                score=chunk.score if chunk.score is not None else 0,
+            )
+            for chunk in top_chunks
+        ]
+        retrieval_metrics_callback(
+            RetrievalMetricsContainer(keyword_search=True, metrics=chunk_metrics)
+        )
+
+    return top_chunks
+
+
+@log_function_time()
 def retrieve_ranked_documents(
     query: str,
     filters: IndexFilters,
@@ -277,64 +336,6 @@ def retrieve_ranked_documents(
     return ranked_chunks, top_chunks[num_rerank:]
 
 
-@log_function_time()
-def encode_chunks(
-    chunks: list[DocAwareChunk],
-    embedding_model: SentenceTransformer | None = None,
-    batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
-    enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
-    passage_prefix: str = ASYM_PASSAGE_PREFIX,
-) -> list[IndexChunk]:
-    embedded_chunks: list[IndexChunk] = []
-    if embedding_model is None:
-        embedding_model = get_default_embedding_model()
-
-    chunk_texts = []
-    chunk_mini_chunks_count = {}
-    for chunk_ind, chunk in enumerate(chunks):
-        chunk_texts.append(passage_prefix + chunk.content)
-        mini_chunk_texts = (
-            split_chunk_text_into_mini_chunks(chunk.content)
-            if enable_mini_chunk
-            else []
-        )
-        prefixed_mini_chunk_texts = [passage_prefix + text for text in mini_chunk_texts]
-        chunk_texts.extend(prefixed_mini_chunk_texts)
-        chunk_mini_chunks_count[chunk_ind] = 1 + len(prefixed_mini_chunk_texts)
-
-    text_batches = [
-        chunk_texts[i : i + batch_size] for i in range(0, len(chunk_texts), batch_size)
-    ]
-
-    embeddings_np: list[numpy.ndarray] = []
-    for text_batch in text_batches:
-        # Normalize embeddings is only configured via model_configs.py, be sure to use right value for the set loss
-        embeddings_np.extend(
-            embedding_model.encode(
-                text_batch, normalize_embeddings=NORMALIZE_EMBEDDINGS
-            )
-        )
-    embeddings: list[list[float]] = [embedding.tolist() for embedding in embeddings_np]
-
-    embedding_ind_start = 0
-    for chunk_ind, chunk in enumerate(chunks):
-        num_embeddings = chunk_mini_chunks_count[chunk_ind]
-        chunk_embeddings = embeddings[
-            embedding_ind_start : embedding_ind_start + num_embeddings
-        ]
-        new_embedded_chunk = IndexChunk(
-            **{k: getattr(chunk, k) for k in chunk.__dataclass_fields__},
-            embeddings=ChunkEmbedding(
-                full_embedding=chunk_embeddings[0],
-                mini_chunk_embeddings=chunk_embeddings[1:],
-            ),
-        )
-        embedded_chunks.append(new_embedded_chunk)
-        embedding_ind_start += num_embeddings
-
-    return embedded_chunks
-
-
 def embed_query(
     query: str,
     embedding_model: SentenceTransformer | None = None,
@@ -351,8 +352,3 @@ def embed_query(
         query_embedding = query_embedding.tolist()
 
     return query_embedding
-
-
-class DefaultEmbedder(Embedder):
-    def embed(self, chunks: list[DocAwareChunk]) -> list[IndexChunk]:
-        return encode_chunks(chunks)

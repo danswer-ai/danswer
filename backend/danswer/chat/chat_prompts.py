@@ -2,11 +2,11 @@ from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.constants import CODE_BLOCK_PAT
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
 from danswer.db.models import ToolInfo
+from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import translate_danswer_msg_to_langchain
 
 DANSWER_TOOL_NAME = "Current Search"

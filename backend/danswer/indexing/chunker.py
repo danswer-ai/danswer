@@ -4,14 +4,14 @@ from collections.abc import Callable
 from llama_index.text_splitter import SentenceSplitter
 from transformers import AutoTokenizer  # type:ignore
 
-from danswer.chunking.models import DocAwareChunk
 from danswer.configs.app_configs import BLURB_SIZE
 from danswer.configs.app_configs import CHUNK_OVERLAP
 from danswer.configs.app_configs import CHUNK_SIZE
 from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.search.search_utils import get_default_tokenizer
+from danswer.indexing.models import DocAwareChunk
+from danswer.search.search_nlp_models import get_default_tokenizer
 from danswer.utils.text_processing import shared_precompare_cleanup
 
 

@@ -9,7 +9,6 @@ from typing import Tuple
 
 import regex
 
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
@@ -23,6 +22,7 @@ from danswer.direct_qa.qa_prompts import QUOTE_PAT
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import check_number_of_tokens
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_model_quote

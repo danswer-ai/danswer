@@ -2,8 +2,8 @@ from enum import Enum
 
 from pydantic import BaseModel
 
-from danswer.chunking.models import DocAwareChunk
-from danswer.chunking.models import IndexChunk
+from danswer.indexing.models import DocAwareChunk
+from danswer.indexing.models import IndexChunk
 
 
 MAX_METRICS_CONTENT = (
@@ -12,8 +12,9 @@ MAX_METRICS_CONTENT = (
 
 
 class SearchType(str, Enum):
-    KEYWORD = "keyword"  # May be better to also try keyword search if Semantic (AI Search) is on
-    SEMANTIC = "semantic"  # Really should try Semantic (AI Search) if keyword is on
+    KEYWORD = "keyword"
+    SEMANTIC = "semantic"
+    HYBRID = "hybrid"
 
 
 class QueryFlow(str, Enum):

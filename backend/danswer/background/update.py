@@ -17,7 +17,6 @@ from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.connectors.models import InputType
-from danswer.datastores.indexing_pipeline import build_indexing_pipeline
 from danswer.db.connector import disable_connector
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import get_last_successful_attempt_time
@@ -38,7 +37,8 @@ from danswer.db.index_attempt import update_docs_indexed
 from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
-from danswer.search.search_utils import warm_up_models
+from danswer.indexing.indexing_pipeline import build_indexing_pipeline
+from danswer.search.search_nlp_models import warm_up_models
 from danswer.utils.logger import IndexAttemptSingleton
 from danswer.utils.logger import setup_logger
 

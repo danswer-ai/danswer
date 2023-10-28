@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from typing import Any
 
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.direct_qa.interfaces import AnswerQuestionReturn
@@ -14,6 +13,7 @@ from danswer.direct_qa.qa_prompts import WeakChatModelFreeformProcessor
 from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
 from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
+from danswer.indexing.models import InferenceChunk
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
