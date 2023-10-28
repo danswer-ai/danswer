@@ -7,12 +7,9 @@ from nltk.tokenize import word_tokenize  # type:ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
 from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
-from danswer.configs.app_configs import ENABLE_MINI_CHUNK
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
-from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
-from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
 from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
@@ -24,13 +21,8 @@ from danswer.document_index.document_index_utils import (
 )
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import IndexFilters
-from danswer.indexing.chunker import split_chunk_text_into_mini_chunks
-from danswer.indexing.models import ChunkEmbedding
-from danswer.indexing.models import DocAwareChunk
-from danswer.indexing.models import IndexChunk
 from danswer.indexing.models import InferenceChunk
 from danswer.search.models import ChunkMetric
-from danswer.search.models import Embedder
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
@@ -360,66 +352,3 @@ def embed_query(
         query_embedding = query_embedding.tolist()
 
     return query_embedding
-
-
-@log_function_time()
-def encode_chunks(
-    chunks: list[DocAwareChunk],
-    embedding_model: SentenceTransformer | None = None,
-    batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
-    enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
-    passage_prefix: str = ASYM_PASSAGE_PREFIX,
-) -> list[IndexChunk]:
-    embedded_chunks: list[IndexChunk] = []
-    if embedding_model is None:
-        embedding_model = get_default_embedding_model()
-
-    chunk_texts = []
-    chunk_mini_chunks_count = {}
-    for chunk_ind, chunk in enumerate(chunks):
-        chunk_texts.append(passage_prefix + chunk.content)
-        mini_chunk_texts = (
-            split_chunk_text_into_mini_chunks(chunk.content)
-            if enable_mini_chunk
-            else []
-        )
-        prefixed_mini_chunk_texts = [passage_prefix + text for text in mini_chunk_texts]
-        chunk_texts.extend(prefixed_mini_chunk_texts)
-        chunk_mini_chunks_count[chunk_ind] = 1 + len(prefixed_mini_chunk_texts)
-
-    text_batches = [
-        chunk_texts[i : i + batch_size] for i in range(0, len(chunk_texts), batch_size)
-    ]
-
-    embeddings_np: list[numpy.ndarray] = []
-    for text_batch in text_batches:
-        # Normalize embeddings is only configured via model_configs.py, be sure to use right value for the set loss
-        embeddings_np.extend(
-            embedding_model.encode(
-                text_batch, normalize_embeddings=NORMALIZE_EMBEDDINGS
-            )
-        )
-    embeddings: list[list[float]] = [embedding.tolist() for embedding in embeddings_np]
-
-    embedding_ind_start = 0
-    for chunk_ind, chunk in enumerate(chunks):
-        num_embeddings = chunk_mini_chunks_count[chunk_ind]
-        chunk_embeddings = embeddings[
-            embedding_ind_start : embedding_ind_start + num_embeddings
-        ]
-        new_embedded_chunk = IndexChunk(
-            **{k: getattr(chunk, k) for k in chunk.__dataclass_fields__},
-            embeddings=ChunkEmbedding(
-                full_embedding=chunk_embeddings[0],
-                mini_chunk_embeddings=chunk_embeddings[1:],
-            ),
-        )
-        embedded_chunks.append(new_embedded_chunk)
-        embedding_ind_start += num_embeddings
-
-    return embedded_chunks
-
-
-class DefaultEmbedder(Embedder):
-    def embed(self, chunks: list[DocAwareChunk]) -> list[IndexChunk]:
-        return encode_chunks(chunks)

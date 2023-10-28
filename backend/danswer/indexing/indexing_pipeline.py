@@ -16,10 +16,10 @@ from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentMetadata
 from danswer.indexing.chunker import Chunker
 from danswer.indexing.chunker import DefaultChunker
+from danswer.indexing.embedder import DefaultEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.search.models import Embedder
-from danswer.search.search_runner import DefaultEmbedder
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
