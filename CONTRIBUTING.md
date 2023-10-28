@@ -113,7 +113,7 @@ npm run dev
 
 Package the Vespa schema. This will only need to be done when the Vespa schema is updated locally.
 
-Nagivate to `danswer/backend/danswer/datastores/vespa/app_config` and run:
+Nagivate to `danswer/backend/danswer/document_index/vespa/app_config` and run:
 ```bash
 zip -r ../vespa-app.zip .
 ```
@@ -139,7 +139,7 @@ To run the backend API server, navigate back to `danswer/backend` and run:
 ```bash
 AUTH_TYPE=disabled \
 DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage \
-VESPA_DEPLOYMENT_ZIP=./danswer/datastores/vespa/vespa-app.zip \
+VESPA_DEPLOYMENT_ZIP=./danswer/document_index/vespa/vespa-app.zip \
 uvicorn danswer.main:app --reload --port 8080
 ```
 _For Windows (for compatibility with both PowerShell and Command Prompt):_
@@ -147,7 +147,7 @@ _For Windows (for compatibility with both PowerShell and Command Prompt):_
 powershell -Command "
     $env:AUTH_TYPE='disabled'
     $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'
-    $env:VESPA_DEPLOYMENT_ZIP='./danswer/datastores/vespa/vespa-app.zip'
+    $env:VESPA_DEPLOYMENT_ZIP='./danswer/document_index/vespa/vespa-app.zip'
     uvicorn danswer.main:app --reload --port 8080 
 "
 ```

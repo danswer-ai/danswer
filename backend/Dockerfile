@@ -46,7 +46,7 @@ COPY ./alembic.ini /app/alembic.ini
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Create Vespa app zip
-WORKDIR /app/danswer/datastores/vespa/app_config
+WORKDIR /app/danswer/document_index/vespa/app_config
 RUN zip -r /app/danswer/vespa-app.zip .
 WORKDIR /app
 

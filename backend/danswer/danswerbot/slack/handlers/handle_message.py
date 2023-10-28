@@ -6,14 +6,6 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from sqlalchemy.orm import Session
 
-from danswer.bots.slack.blocks import build_documents_blocks
-from danswer.bots.slack.blocks import build_qa_response_blocks
-from danswer.bots.slack.blocks import get_restate_blocks
-from danswer.bots.slack.constants import SLACK_CHANNEL_ID
-from danswer.bots.slack.models import SlackMessageInfo
-from danswer.bots.slack.utils import ChannelIdAdapter
-from danswer.bots.slack.utils import fetch_userids_from_emails
-from danswer.bots.slack.utils import respond_in_thread
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.danswerbot_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
@@ -23,6 +15,14 @@ from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.configs.danswerbot_configs import DISABLE_DANSWER_BOT_FILTER_DETECT
 from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
+from danswer.danswerbot.slack.blocks import build_documents_blocks
+from danswer.danswerbot.slack.blocks import build_qa_response_blocks
+from danswer.danswerbot.slack.blocks import get_restate_blocks
+from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
+from danswer.danswerbot.slack.models import SlackMessageInfo
+from danswer.danswerbot.slack.utils import ChannelIdAdapter
+from danswer.danswerbot.slack.utils import fetch_userids_from_emails
+from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
 from danswer.direct_qa.answer_question import answer_qa_query
