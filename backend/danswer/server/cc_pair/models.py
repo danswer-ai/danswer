@@ -23,12 +23,12 @@ class CCPairFullInfo(BaseModel):
         cc_pair_model: ConnectorCredentialPair,
         index_attempt_models: list[IndexAttempt],
         latest_deletion_attempt: DeletionAttemptSnapshot | None,
-        new_docs_indexed: int,  # not ideal, but this must be computed seperately
+        num_docs_indexed: int,  # not ideal, but this must be computed seperately
     ) -> "CCPairFullInfo":
         return cls(
             id=cc_pair_model.id,
             name=cc_pair_model.name,
-            new_docs_indexed=new_docs_indexed,
+            num_docs_indexed=num_docs_indexed,
             connector=ConnectorSnapshot.from_connector_db_model(
                 cc_pair_model.connector
             ),
