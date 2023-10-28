@@ -11,7 +11,7 @@ from danswer.server.models import IndexAttemptSnapshot
 class CCPairFullInfo(BaseModel):
     id: int
     name: str
-    new_docs_indexed: int
+    num_docs_indexed: int
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
     index_attempts: list[IndexAttemptSnapshot]
