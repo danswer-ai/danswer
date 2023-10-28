@@ -1,3 +1,4 @@
+import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { Connector, ConnectorBase, ValidSources } from "./types";
 
 async function handleResponse(
@@ -34,6 +35,28 @@ export async function updateConnector<T>(
     body: JSON.stringify(connector),
   });
   return await response.json();
+}
+
+export async function disableConnector(
+  connector: Connector<any>,
+  setPopup: (popupSpec: PopupSpec | null) => void,
+  onUpdate: () => void
+) {
+  updateConnector({
+    ...connector,
+    disabled: !connector.disabled,
+  }).then(() => {
+    setPopup({
+      message: connector.disabled
+        ? "Enabled connector!"
+        : "Disabled connector!",
+      type: "success",
+    });
+    setTimeout(() => {
+      setPopup(null);
+    }, 4000);
+    onUpdate && onUpdate();
+  });
 }
 
 export async function deleteConnector(

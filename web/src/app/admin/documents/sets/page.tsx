@@ -159,6 +159,7 @@ const DocumentSetTable = ({
                           <ConnectorTitle
                             connector={ccPairDescriptor.connector}
                             ccPairName={ccPairDescriptor.name}
+                            ccPairId={ccPairDescriptor.id}
                             showMetadata={false}
                           />
                         </div>
