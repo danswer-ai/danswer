@@ -26,7 +26,7 @@ from danswer.direct_qa.interfaces import StreamingError
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.qa_utils import get_usable_chunks
 from danswer.document_index import get_default_document_index
-from danswer.document_index.vespa.store import VespaIndex
+from danswer.document_index.vespa.index import VespaIndex
 from danswer.indexing.models import InferenceChunk
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import query_intent

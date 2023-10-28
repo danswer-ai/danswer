@@ -9,7 +9,7 @@ from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import Document
 from danswer.document_index import get_default_document_index
 from danswer.document_index.interfaces import UpdateRequest
-from danswer.document_index.vespa.store import VespaIndex
+from danswer.document_index.vespa.index import VespaIndex
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.utils.logger import setup_logger
