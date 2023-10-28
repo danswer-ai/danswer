@@ -1,8 +1,8 @@
 import math
 import uuid
 
-from danswer.chunking.models import IndexChunk
-from danswer.chunking.models import InferenceChunk
+from danswer.indexing.models import IndexChunk
+from danswer.indexing.models import InferenceChunk
 
 
 DEFAULT_BATCH_SIZE = 30

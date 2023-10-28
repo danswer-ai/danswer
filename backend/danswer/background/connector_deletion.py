@@ -17,8 +17,6 @@ from typing import cast
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
-from danswer.datastores.interfaces import DocumentIndex
-from danswer.datastores.interfaces import UpdateRequest
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.connector_credential_pair import (
     delete_connector_credential_pair__no_commit,
@@ -35,6 +33,8 @@ from danswer.db.document_set import (
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import delete_index_attempts
 from danswer.db.models import ConnectorCredentialPair
+from danswer.document_index.interfaces import DocumentIndex
+from danswer.document_index.interfaces import UpdateRequest
 from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation

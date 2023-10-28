@@ -11,7 +11,6 @@ from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.constants import CODE_BLOCK_PAT
 from danswer.configs.constants import GENERAL_SEP_PAT
 from danswer.configs.constants import QUESTION_PAT
@@ -28,6 +27,7 @@ from danswer.direct_qa.qa_prompts import JsonChatProcessor
 from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
 from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
+from danswer.indexing.models import InferenceChunk
 from danswer.llm.llm import LLM
 from danswer.llm.utils import check_number_of_tokens
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt

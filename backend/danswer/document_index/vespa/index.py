@@ -15,8 +15,6 @@ from requests import HTTPError
 from requests import Response
 from retry import retry
 
-from danswer.chunking.models import DocMetadataAwareIndexChunk
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DOC_TIME_DECAY
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
@@ -47,14 +45,16 @@ from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.constants import TITLE
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
-from danswer.datastores.datastore_utils import get_uuid_from_chunk
-from danswer.datastores.interfaces import DocumentIndex
-from danswer.datastores.interfaces import DocumentInsertionRecord
-from danswer.datastores.interfaces import IndexFilters
-from danswer.datastores.interfaces import UpdateRequest
-from danswer.datastores.vespa.utils import remove_invalid_unicode_chars
-from danswer.search.keyword_search import remove_stop_words
-from danswer.search.semantic_search import embed_query
+from danswer.document_index.document_index_utils import get_uuid_from_chunk
+from danswer.document_index.interfaces import DocumentIndex
+from danswer.document_index.interfaces import DocumentInsertionRecord
+from danswer.document_index.interfaces import IndexFilters
+from danswer.document_index.interfaces import UpdateRequest
+from danswer.document_index.vespa.utils import remove_invalid_unicode_chars
+from danswer.indexing.models import DocMetadataAwareIndexChunk
+from danswer.indexing.models import InferenceChunk
+from danswer.search.search_runner import embed_query
+from danswer.search.search_runner import remove_stop_words
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 

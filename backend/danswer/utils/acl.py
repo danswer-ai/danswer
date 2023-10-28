@@ -4,12 +4,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.access.models import DocumentAccess
-from danswer.datastores.document_index import get_default_document_index
-from danswer.datastores.interfaces import UpdateRequest
-from danswer.datastores.vespa.store import VespaIndex
 from danswer.db.document import get_acccess_info_for_documents
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import Document
+from danswer.document_index import get_default_document_index
+from danswer.document_index.interfaces import UpdateRequest
+from danswer.document_index.vespa.index import VespaIndex
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.utils.logger import setup_logger

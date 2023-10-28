@@ -2,12 +2,12 @@ import numpy as np
 import tensorflow as tf  # type:ignore
 from transformers import AutoTokenizer  # type:ignore
 
-from danswer.search.keyword_search import remove_stop_words
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
-from danswer.search.search_utils import get_default_intent_model
-from danswer.search.search_utils import get_default_intent_model_tokenizer
-from danswer.search.search_utils import get_default_tokenizer
+from danswer.search.search_nlp_models import get_default_intent_model
+from danswer.search.search_nlp_models import get_default_intent_model_tokenizer
+from danswer.search.search_nlp_models import get_default_tokenizer
+from danswer.search.search_runner import remove_stop_words
 from danswer.server.models import HelperResponse
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time

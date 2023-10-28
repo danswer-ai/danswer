@@ -2,12 +2,10 @@ from collections.abc import Callable
 
 from sqlalchemy.orm import Session
 
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.datastores.document_index import get_default_document_index
 from danswer.db.feedback import create_query_event
 from danswer.db.feedback import update_query_event_retrieved_documents
 from danswer.db.models import User
@@ -16,15 +14,17 @@ from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.direct_qa.qa_utils import get_usable_chunks
+from danswer.document_index import get_default_document_index
+from danswer.indexing.models import InferenceChunk
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import query_intent
-from danswer.search.keyword_search import retrieve_keyword_documents
 from danswer.search.models import QueryFlow
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SearchType
-from danswer.search.semantic_search import chunks_to_search_docs
-from danswer.search.semantic_search import retrieve_ranked_documents
+from danswer.search.search_runner import chunks_to_search_docs
+from danswer.search.search_runner import retrieve_keyword_documents
+from danswer.search.search_runner import retrieve_ranked_documents
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.secondary_llm_flows.extract_filters import extract_question_time_filters
 from danswer.server.models import IndexFilters

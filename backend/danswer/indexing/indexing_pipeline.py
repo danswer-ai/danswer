@@ -5,21 +5,21 @@ from typing import Protocol
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
-from danswer.chunking.chunk import Chunker
-from danswer.chunking.chunk import DefaultChunker
-from danswer.chunking.models import DocAwareChunk
-from danswer.chunking.models import DocMetadataAwareIndexChunk
 from danswer.connectors.models import Document
 from danswer.connectors.models import IndexAttemptMetadata
-from danswer.datastores.document_index import get_default_document_index
-from danswer.datastores.interfaces import DocumentIndex
-from danswer.datastores.interfaces import DocumentMetadata
 from danswer.db.document import prepare_to_modify_documents
 from danswer.db.document import upsert_documents_complete
 from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.document_index import get_default_document_index
+from danswer.document_index.interfaces import DocumentIndex
+from danswer.document_index.interfaces import DocumentMetadata
+from danswer.indexing.chunker import Chunker
+from danswer.indexing.chunker import DefaultChunker
+from danswer.indexing.embedder import DefaultEmbedder
+from danswer.indexing.models import DocAwareChunk
+from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.search.models import Embedder
-from danswer.search.semantic_search import DefaultEmbedder
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()

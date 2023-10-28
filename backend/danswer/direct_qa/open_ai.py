@@ -12,7 +12,6 @@ import tiktoken
 from openai.error import AuthenticationError
 from openai.error import Timeout
 
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import INCLUDE_METADATA
 from danswer.configs.model_configs import API_BASE_OPENAI
 from danswer.configs.model_configs import API_TYPE_OPENAI
@@ -31,6 +30,7 @@ from danswer.direct_qa.qa_utils import get_gen_ai_api_key
 from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.indexing.models import InferenceChunk
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
