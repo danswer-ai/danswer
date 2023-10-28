@@ -312,13 +312,28 @@ def _run_indexing(
                     f"Indexing batch of documents: {[doc.to_short_descriptor() for doc in doc_batch]}"
                 )
 
-                new_docs, total_batch_chunks = indexing_pipeline(
-                    documents=doc_batch,
-                    index_attempt_metadata=IndexAttemptMetadata(
-                        connector_id=db_connector.id,
-                        credential_id=db_credential.id,
-                    ),
-                )
+                success = False
+                for _ in range(4):
+                    try:
+                        new_docs, total_batch_chunks = indexing_pipeline(
+                            documents=doc_batch,
+                            index_attempt_metadata=IndexAttemptMetadata(
+                                connector_id=db_connector.id,
+                                credential_id=db_credential.id,
+                            ),
+                        )
+                        success = True
+                        break
+                    except Exception:
+                        logger.exception("Failed to run indexing pipeline")
+                        time.sleep(5)
+
+                if not success:
+                    logger.error(
+                        "Failed to run indexing pipeline 4 times, skipping batch"
+                    )
+                    continue
+
                 net_doc_change += new_docs
                 chunk_count += total_batch_chunks
                 document_count += len(doc_batch)
