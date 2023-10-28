@@ -220,8 +220,8 @@ celery_app.conf.beat_schedule = {
         "task": "check_for_document_sets_sync_task",
         "schedule": timedelta(seconds=5),
     },
-    "clean-old-temp-files": {
-        "task": "clean_old_temp_files_task",
-        "schedule": timedelta(minutes=30),
-    },
+    # "clean-old-temp-files": {
+    #     "task": "clean_old_temp_files_task",
+    #     "schedule": timedelta(minutes=30),
+    # },
 }
