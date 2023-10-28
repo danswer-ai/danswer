@@ -164,18 +164,18 @@ def cleanup_indexing_jobs(
         )
         for index_attempt in in_progress_indexing_attempts:
             if index_attempt.id in existing_jobs:
-                # check to see if the job has been updated in the last hour, if not
+                # check to see if the job has been updated in the 3 hours, if not
                 # assume it to frozen in some bad state and just mark it as failed. Note: this relies
                 # on the fact that the `time_updated` field is constantly updated every
                 # batch of documents indexed
                 current_db_time = get_db_current_time(db_session=db_session)
                 time_since_update = current_db_time - index_attempt.time_updated
-                if time_since_update.seconds > 60 * 60:
+                if time_since_update.seconds > 3 * 60 * 60:
                     existing_jobs[index_attempt.id].cancel()
                     mark_run_failed(
                         db_session=db_session,
                         index_attempt=index_attempt,
-                        failure_reason="Indexing run frozen - no updates in last hour. "
+                        failure_reason="Indexing run frozen - no updates in 3 hours. "
                         "The run will be re-attempted at next scheduled indexing time.",
                     )
             else:
@@ -298,6 +298,13 @@ def _run_indexing(
                 net_doc_change += new_docs
                 chunk_count += total_batch_chunks
                 document_count += len(doc_batch)
+
+                # commit transaction so that the `update` below begins
+                # with a brand new tracsaction. Postgres uses the start
+                # of the transactions when computing `NOW()`, so if we have
+                # a long running transaction, the `time_updated` field will
+                # be inaccurate
+                db_session.commit()
                 update_docs_indexed(
                     db_session=db_session,
                     index_attempt=attempt,
