@@ -8,7 +8,7 @@ import {
 export interface CCPairFullInfo {
   id: number;
   name: string;
-  num_docs_indexed: number;
+  new_docs_indexed: number;
   connector: Connector<any>;
   credential: Credential<any>;
   index_attempts: IndexAttemptSnapshot[];

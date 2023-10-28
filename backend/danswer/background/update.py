@@ -300,15 +300,18 @@ def _run_indexing(
                 document_count += len(doc_batch)
 
                 # commit transaction so that the `update` below begins
-                # with a brand new tracsaction. Postgres uses the start
+                # with a brand new transaction. Postgres uses the start
                 # of the transactions when computing `NOW()`, so if we have
                 # a long running transaction, the `time_updated` field will
                 # be inaccurate
                 db_session.commit()
+
+                # This new value is updated every batch, so UI can refresh per batch update
                 update_docs_indexed(
                     db_session=db_session,
                     index_attempt=attempt,
-                    num_docs_indexed=document_count,
+                    total_docs_indexed=document_count,
+                    new_docs_indexed=net_doc_change,
                 )
 
                 # check if connector is disabled mid run and stop if so

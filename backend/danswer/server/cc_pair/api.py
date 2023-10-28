@@ -63,5 +63,5 @@ def get_cc_pair_full_info(
         cc_pair_model=cc_pair,
         index_attempt_models=list(index_attempts),
         latest_deletion_attempt=latest_deletion_attempt,
-        num_docs_indexed=documents_indexed,
+        new_docs_indexed=documents_indexed,
     )

@@ -311,7 +311,7 @@ class IndexAttemptRequest(BaseModel):
 class IndexAttemptSnapshot(BaseModel):
     id: int
     status: IndexingStatus | None
-    num_docs_indexed: int
+    new_docs_indexed: int
     error_msg: str | None
     time_started: str | None
     time_updated: str
@@ -323,7 +323,7 @@ class IndexAttemptSnapshot(BaseModel):
         return IndexAttemptSnapshot(
             id=index_attempt.id,
             status=index_attempt.status,
-            num_docs_indexed=index_attempt.num_docs_indexed or 0,
+            new_docs_indexed=index_attempt.new_docs_indexed or 0,
             error_msg=index_attempt.error_msg,
             time_started=index_attempt.time_started.isoformat()
             if index_attempt.time_started

@@ -63,7 +63,7 @@ export default async function Page({
 
         <div className="text-gray-400 text-sm mt-1">
           Total Documents Indexed:{" "}
-          <b className="text-gray-300">{ccPair.num_docs_indexed}</b>
+          <b className="text-gray-300">{ccPair.new_docs_indexed}</b>
         </div>
 
         <Divider />
