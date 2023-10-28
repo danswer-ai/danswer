@@ -319,6 +319,7 @@ class IndexAttemptRequest(BaseModel):
 
 
 class IndexAttemptSnapshot(BaseModel):
+    id: int
     status: IndexingStatus | None
     num_docs_indexed: int
     error_msg: str | None
@@ -330,6 +331,7 @@ class IndexAttemptSnapshot(BaseModel):
         cls, index_attempt: IndexAttempt
     ) -> "IndexAttemptSnapshot":
         return IndexAttemptSnapshot(
+            id=index_attempt.id,
             status=index_attempt.status,
             num_docs_indexed=index_attempt.num_docs_indexed or 0,
             error_msg=index_attempt.error_msg,

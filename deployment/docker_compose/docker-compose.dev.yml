@@ -153,9 +153,13 @@ services:
       - "3000:80"  # allow for localhost:3000 usage, since that is the norm
     volumes:
       - ../data/nginx:/etc/nginx/conf.d
+    # sleep a little bit to allow the web_server / api_server to start up. 
+    # Without this we've seen issues where nginx shows no error logs but 
+    # does not recieve any traffic
     command: > 
-      /bin/sh -c "envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template.dev > /etc/nginx/conf.d/app.conf &&
-      while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
+      /bin/sh -c "sleep 10 &&
+        envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template.dev > /etc/nginx/conf.d/app.conf &&
+        while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
 volumes:
   local_dynamic_storage:
   file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them

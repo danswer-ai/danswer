@@ -33,7 +33,9 @@ from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.db.credentials import create_initial_public_credential
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.document_index import get_default_document_index
+from danswer.server.cc_pair.api import router as cc_pair_router
 from danswer.server.chat_backend import router as chat_router
+from danswer.server.connector import router as connector_router
 from danswer.server.credential import router as credential_router
 from danswer.server.document_set import router as document_set_router
 from danswer.server.event_loading import router as event_processing_router
@@ -77,7 +79,9 @@ def get_application() -> FastAPI:
     application.include_router(event_processing_router)
     application.include_router(admin_router)
     application.include_router(user_router)
+    application.include_router(connector_router)
     application.include_router(credential_router)
+    application.include_router(cc_pair_router)
     application.include_router(document_set_router)
     application.include_router(slack_bot_management_router)
     application.include_router(state_router)
