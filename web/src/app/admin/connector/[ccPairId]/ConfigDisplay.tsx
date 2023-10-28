@@ -1,5 +1,6 @@
+import { getNameFromPath } from "@/lib/fileUtils";
 import { ValidSources } from "@/lib/types";
-import { List, ListItem, Card, Title } from "@tremor/react";
+import { List, ListItem, Card, Title, Divider } from "@tremor/react";
 
 function convertObjectToString(obj: any): string | any {
   // Check if obj is an object and not an array or null
@@ -24,7 +25,11 @@ function buildConfigEntries(
   sourceType: ValidSources
 ): { [key: string]: string } {
   if (sourceType === "file") {
-    return {};
+    return obj.file_locations
+      ? {
+          file_names: obj.file_locations.map(getNameFromPath),
+        }
+      : {};
   } else if (sourceType === "google_sites") {
     return {
       base_url: obj.base_url,
@@ -50,7 +55,7 @@ export function ConfigDisplay({
   return (
     <>
       <Title className="mb-2">Configuration</Title>
-      <Card className="max-w-xxl">
+      <Card>
         <List>
           {configEntries.map(([key, value]) => (
             <ListItem key={key}>

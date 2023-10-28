@@ -4,7 +4,7 @@ import { getErrorMsg } from "@/lib/fetchUtils";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CCPairStatus } from "@/components/Status";
 import { BackButton } from "@/components/BackButton";
-import { Title } from "@tremor/react";
+import { Divider, Title } from "@tremor/react";
 import { IndexingAttemptsTable } from "./IndexingAttemptsTable";
 import { Text } from "@tremor/react";
 import { ConfigDisplay } from "./ConfigDisplay";
@@ -65,18 +65,22 @@ export default async function Page({
           <b className="text-gray-300">{ccPair.num_docs_indexed}</b>
         </div>
 
-        <div className="mt-4">
-          <ConfigDisplay
-            connectorSpecificConfig={ccPair.connector.connector_specific_config}
-            sourceType={ccPair.connector.source}
-          />
-        </div>
+        <Divider />
+
+        <ConfigDisplay
+          connectorSpecificConfig={ccPair.connector.connector_specific_config}
+          sourceType={ccPair.connector.source}
+        />
+        {/* NOTE: no divider / title here for `ConfigDisplay` since it is optional and we need
+        to render these conditionally.*/}
 
         <div className="mt-6">
           <Title>Indexing Attempts</Title>
 
           <IndexingAttemptsTable ccPair={ccPair} />
         </div>
+
+        <Divider />
 
         <div className="mt-4">
           <Title>Delete Connector</Title>
