@@ -260,6 +260,7 @@ def semantic_search(
     )
 
 
+# TODO don't use this, not done yet
 @router.post("/hybrid-search")
 def hybrid_search(
     question: QuestionRequest,
