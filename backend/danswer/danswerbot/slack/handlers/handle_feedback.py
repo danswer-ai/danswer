@@ -1,11 +1,11 @@
 from slack_sdk import WebClient
 from sqlalchemy.orm import Session
 
-from danswer.bots.slack.constants import DISLIKE_BLOCK_ACTION_ID
-from danswer.bots.slack.constants import LIKE_BLOCK_ACTION_ID
-from danswer.bots.slack.utils import decompose_block_id
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
+from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
+from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
+from danswer.danswerbot.slack.utils import decompose_block_id
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.feedback import update_query_event_feedback

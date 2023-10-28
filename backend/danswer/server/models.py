@@ -10,7 +10,6 @@ from pydantic import validator
 from pydantic.generics import GenericModel
 
 from danswer.auth.schemas import UserRole
-from danswer.bots.slack.config import VALID_SLACK_FILTERS
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentSource
@@ -18,6 +17,7 @@ from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
+from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
 from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
 from danswer.db.models import Connector
