@@ -32,7 +32,7 @@ export function IndexAttemptStatus({
     );
   } else if (status === "in_progress" || status === "not_started") {
     badge = (
-      <Badge size={size} color="green" icon={FiClock}>
+      <Badge size={size} color="fuchsia" icon={FiClock}>
         In Progress
       </Badge>
     );

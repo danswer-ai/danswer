@@ -4,7 +4,7 @@ import { getErrorMsg } from "@/lib/fetchUtils";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CCPairStatus } from "@/components/Status";
 import { BackButton } from "@/components/BackButton";
-import { Divider, Title } from "@tremor/react";
+import { Button, Divider, Title } from "@tremor/react";
 import { IndexingAttemptsTable } from "./IndexingAttemptsTable";
 import { Text } from "@tremor/react";
 import { ConfigDisplay } from "./ConfigDisplay";
@@ -12,6 +12,7 @@ import { ModifyStatusButtonCluster } from "./ModifyStatusButtonCluster";
 import { DeletionButton } from "./DeletionButton";
 import { SSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { ErrorCallout } from "@/components/ErrorCallout";
+import { ReIndexButton } from "./ReIndexButton";
 
 export default async function Page({
   params,
@@ -75,7 +76,14 @@ export default async function Page({
         to render these conditionally.*/}
 
         <div className="mt-6">
-          <Title>Indexing Attempts</Title>
+          <div className="flex">
+            <Title>Indexing Attempts</Title>
+
+            <ReIndexButton
+              connectorId={ccPair.connector.id}
+              credentialId={ccPair.credential.id}
+            />
+          </div>
 
           <IndexingAttemptsTable ccPair={ccPair} />
         </div>
