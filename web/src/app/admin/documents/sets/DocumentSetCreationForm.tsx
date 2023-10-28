@@ -145,6 +145,7 @@ export const DocumentSetCreationForm = ({
                             <div className="my-auto">
                               <ConnectorTitle
                                 connector={ccPair.connector}
+                                ccPairId={ccPair.cc_pair_id}
                                 ccPairName={ccPair.name}
                                 isLink={false}
                                 showMetadata={false}

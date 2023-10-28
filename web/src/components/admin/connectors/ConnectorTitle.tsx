@@ -10,9 +10,11 @@ import {
   WebConfig,
   ZulipConfig,
 } from "@/lib/types";
+import Link from "next/link";
 
 interface ConnectorTitleProps {
   connector: Connector<any>;
+  ccPairId: number;
   ccPairName: string | null | undefined;
   isPublic?: boolean;
   owner?: string;
@@ -22,6 +24,7 @@ interface ConnectorTitleProps {
 
 export const ConnectorTitle = ({
   connector,
+  ccPairId,
   ccPairName,
   owner,
   isPublic = true,
@@ -82,17 +85,28 @@ export const ConnectorTitle = ({
       typedConnector.connector_specific_config.realm_name
     );
   }
+
+  const mainSectionClassName = "text-blue-500 flex w-fit";
+  const mainDisplay = (
+    <>
+      {sourceMetadata.icon({ size: 20 })}
+      <div className="ml-1 my-auto">
+        {ccPairName || sourceMetadata.displayName}
+      </div>
+    </>
+  );
   return (
     <div>
-      <a
-        className="text-blue-500 flex w-fit"
-        href={isLink ? sourceMetadata.adminPageLink : undefined}
-      >
-        {sourceMetadata.icon({ size: 20 })}
-        <div className="ml-1 my-auto">
-          {ccPairName || sourceMetadata.displayName}
-        </div>
-      </a>
+      {isLink ? (
+        <Link
+          className={mainSectionClassName}
+          href={`/admin/connector/${ccPairId}`}
+        >
+          {mainDisplay}
+        </Link>
+      ) : (
+        <div className={mainSectionClassName}>{mainDisplay}</div>
+      )}
       {showMetadata && (
         <div className="text-xs text-gray-300 mt-1">
           {Array.from(additionalMetadata.entries()).map(([key, value]) => {
