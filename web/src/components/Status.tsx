@@ -8,32 +8,55 @@ import {
   FiClock,
   FiPauseCircle,
 } from "react-icons/fi";
+import { HoverPopup } from "./HoverPopup";
 
 export function IndexAttemptStatus({
   status,
+  errorMsg,
   size = "md",
 }: {
   status: ValidStatuses;
+  errorMsg?: string | null;
   size?: "xs" | "sm" | "md" | "lg";
 }) {
   let badge;
 
   if (status === "failed") {
-    badge = (
+    const icon = (
       <Badge size={size} color="red" icon={FiAlertTriangle}>
         Failed
       </Badge>
     );
+    if (errorMsg) {
+      badge = (
+        <HoverPopup
+          mainContent={<div className="cursor-pointer">{icon}</div>}
+          popupContent={
+            <div className="flex flex-wrap whitespace-normal w-64">
+              {errorMsg}
+            </div>
+          }
+        />
+      );
+    } else {
+      badge = icon;
+    }
   } else if (status === "success") {
     badge = (
       <Badge size={size} color="green" icon={FiCheckCircle}>
         Succeeded
       </Badge>
     );
-  } else if (status === "in_progress" || status === "not_started") {
+  } else if (status === "in_progress") {
     badge = (
       <Badge size={size} color="fuchsia" icon={FiClock}>
         In Progress
+      </Badge>
+    );
+  } else if (status === "not_started") {
+    badge = (
+      <Badge size={size} color="fuchsia" icon={FiClock}>
+        Scheduled
       </Badge>
     );
   } else {
