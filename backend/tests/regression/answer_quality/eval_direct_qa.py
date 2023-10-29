@@ -85,7 +85,6 @@ def get_answer_for_question(
     question = QuestionRequest(
         query=query,
         collection="danswer_index",
-        use_keyword=False,
         filters=filters,
         enable_auto_detect_filters=False,
         offset=None,
