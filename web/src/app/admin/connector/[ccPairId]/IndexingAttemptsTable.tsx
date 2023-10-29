@@ -46,7 +46,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                     size="xs"
                   />
                 </TableCell>
-                <TableCell>{indexAttempt.num_docs_indexed}</TableCell>
+                <TableCell>{indexAttempt.new_docs_indexed}</TableCell>
                 <TableCell>
                   <Text className="flex flex-wrap whitespace-normal">
                     {indexAttempt.error_msg || "-"}

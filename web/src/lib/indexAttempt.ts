@@ -7,7 +7,7 @@ export const getDocsProcessedPerMinute = (
     !indexAttempt ||
     !indexAttempt.time_started ||
     !indexAttempt.time_updated ||
-    indexAttempt.num_docs_indexed === 0
+    indexAttempt.new_docs_indexed === 0
   ) {
     return null;
   }
@@ -22,5 +22,5 @@ export const getDocsProcessedPerMinute = (
   if (seconds < 10) {
     return null;
   }
-  return (indexAttempt.num_docs_indexed / seconds) * 60;
+  return (indexAttempt.new_docs_indexed / seconds) * 60;
 };

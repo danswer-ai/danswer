@@ -277,6 +277,13 @@ def _index_vespa_chunks(
                 if chunk_already_existed:
                     already_existing_documents.add(chunk.source_document.id)
 
+                # In the logic below, we check if the chunk comes from a doc that has already been
+                # added to already_existing_document. This works because the chunks are ordered
+                # and because the Document chunks are not separated into different batches.
+                # The first chunk is processed first and if it exists, then its entire document
+                # is marked as already existing, so if the document length increases and new chunks
+                # are added, they must come last in processing and the doc would already be in
+                # already existing documents.
                 insertion_records.add(
                     DocumentInsertionRecord(
                         document_id=chunk.source_document.id,
