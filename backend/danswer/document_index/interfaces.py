@@ -84,7 +84,6 @@ class KeywordCapable(abc.ABC):
         filters: IndexFilters,
         favor_recent: bool,
         num_to_retrieve: int,
-        edit_keyword_query: bool,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
 
@@ -97,8 +96,6 @@ class VectorCapable(abc.ABC):
         filters: IndexFilters,
         favor_recent: bool,
         num_to_retrieve: int,
-        distance_cutoff: float | None,
-        edit_keyword_query: bool,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
 
@@ -111,7 +108,6 @@ class HybridCapable(abc.ABC):
         filters: IndexFilters,
         favor_recent: bool,
         num_to_retrieve: int,
-        edit_keyword_query: bool,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
 
