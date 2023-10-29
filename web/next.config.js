@@ -1,3 +1,5 @@
+const { version } = require('./package.json');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
@@ -32,6 +34,9 @@ const nextConfig = {
         permanent: true,
       },
     ];
+  },
+  publicRuntimeConfig: {
+    version,
   },
 };
 

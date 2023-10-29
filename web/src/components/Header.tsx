@@ -10,9 +10,11 @@ import React, { useEffect, useRef, useState } from "react";
 
 interface HeaderProps {
   user: User | null;
+  web_version: string | null;
+  backend_version: string | null;
 }
 
-export const Header: React.FC<HeaderProps> = ({ user }) => {
+export const Header: React.FC<HeaderProps> = ({ user, web_version, backend_version }) => {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -57,7 +59,7 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
             <div className="h-[32px] w-[30px]">
               <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
             </div>
-            <h1 className="flex text-2xl font-bold my-auto">Danswer</h1>
+            <h1 className="flex text-2xl font-bold my-auto">Danswer</h1><p className="flex text-base my-auto ml-2 text-slate-500"> w{web_version} b{backend_version}</p>
           </div>
         </Link>
 

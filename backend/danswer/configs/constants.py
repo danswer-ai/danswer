@@ -1,5 +1,6 @@
 from enum import Enum
 
+BACKEND_VERSION = "1.0.0"
 DOCUMENT_ID = "document_id"
 CHUNK_ID = "chunk_id"
 BLURB = "blurb"

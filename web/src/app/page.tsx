@@ -12,6 +12,7 @@ import { buildUrl } from "@/lib/utilsSS";
 import { Connector, DocumentSet, User } from "@/lib/types";
 import { cookies } from "next/headers";
 import { SearchType } from "@/lib/search/interfaces";
+import { getBackendVersion, getWebVersion } from "@/lib/version";
 
 export default async function Home() {
   const tasks = [
@@ -75,9 +76,20 @@ export default async function Home() {
       ? (storedSearchType as SearchType)
       : SearchType.SEMANTIC; // default to semantic
 
+  let web_version: string | null = null;
+  let backend_version: string | null = null;
+  try {
+    [web_version, backend_version] = await Promise.all([
+      getWebVersion(),
+      getBackendVersion(),
+    ]);
+  } catch (e) {
+    console.log(`Version info fetch failed - ${e}`);
+  }
+
   return (
     <>
-      <Header user={user} />
+      <Header user={user} web_version={web_version} backend_version={backend_version} />
       <div className="m-3">
         <HealthCheckBanner />
       </div>
