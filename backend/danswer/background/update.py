@@ -375,6 +375,7 @@ def _run_indexing_entrypoint(index_attempt_id: int) -> None:
                 f"with config: '{attempt.connector.connector_specific_config}', and "
                 f"with credentials: '{attempt.credential_id}'"
             )
+            mark_attempt_in_progress(attempt, db_session)
             update_connector_credential_pair(
                 db_session=db_session,
                 connector_id=attempt.connector.id,
@@ -425,12 +426,14 @@ def kickoff_indexing_jobs(
             )
             continue
 
+        if attempt.id in existing_jobs:
+            continue
+
         logger.info(
             f"Kicking off indexing attempt for connector: '{attempt.connector.name}', "
             f"with config: '{attempt.connector.connector_specific_config}', and "
             f"with credentials: '{attempt.credential_id}'"
         )
-        mark_attempt_in_progress(attempt, db_session)
         run = client.submit(_run_indexing_entrypoint, attempt.id, pure=False)
         existing_jobs_copy[attempt.id] = run
 
