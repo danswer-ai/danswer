@@ -4,7 +4,6 @@ from datetime import datetime
 from typing import Any
 
 from danswer.access.models import DocumentAccess
-from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.indexing.models import InferenceChunk
 from danswer.search.models import IndexFilters
@@ -85,6 +84,7 @@ class KeywordCapable(abc.ABC):
         filters: IndexFilters,
         favor_recent: bool,
         num_to_retrieve: int,
+        edit_keyword_query: bool,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
 
@@ -97,7 +97,8 @@ class VectorCapable(abc.ABC):
         filters: IndexFilters,
         favor_recent: bool,
         num_to_retrieve: int,
-        distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
+        distance_cutoff: float | None,
+        edit_keyword_query: bool,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
 
@@ -110,6 +111,7 @@ class HybridCapable(abc.ABC):
         filters: IndexFilters,
         favor_recent: bool,
         num_to_retrieve: int,
+        edit_keyword_query: bool,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
 

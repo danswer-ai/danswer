@@ -3,7 +3,6 @@ from enum import Enum
 
 from pydantic import BaseModel
 
-from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.model_configs import SKIP_RERANKING
@@ -57,8 +56,6 @@ class SearchQuery(BaseModel):
     skip_rerank: bool = SKIP_RERANKING
     # Only used if not skip_rerank
     num_rerank: int | None = NUM_RERANKED_RESULTS
-    # Only used for keyword flow
-    edit_keyword_query: bool = EDIT_KEYWORD_QUERY
 
 
 class RetrievalMetricsContainer(BaseModel):

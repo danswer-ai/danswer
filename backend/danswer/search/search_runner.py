@@ -263,12 +263,8 @@ def search_chunks(
         logger.info(f"Top links from {search_flow} search: {', '.join(top_links)}")
 
     if query.search_type == SearchType.KEYWORD:
-        edited_query = (
-            query_processing(query.query) if query.edit_keyword_query else query.query
-        )
-
         top_chunks = document_index.keyword_retrieval(
-            edited_query, query.filters, query.favor_recent, query.num_hits
+            query.query, query.filters, query.favor_recent, query.num_hits
         )
 
     elif query.search_type == SearchType.SEMANTIC:
