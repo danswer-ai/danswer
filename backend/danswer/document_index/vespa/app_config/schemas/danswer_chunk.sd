@@ -148,7 +148,9 @@ schema danswer_chunk {
         }
 
         global-phase {
-            expression: (normalize_linear(closeness(field, embeddings)) + normalize_linear(bm25(content))) * document_boost * recency_bias
+            #expression: (normalize_linear(closeness(field, embeddings)) + normalize_linear(bm25(content))) / 2 * document_boost * recency_bias
+            #expression: (normalize_linear(closeness(field, embeddings)) + normalize_linear(bm25(content))) * 0.5
+            expression: normalize_linear(bm25(content))
             rerank-count: 1000
         }
 

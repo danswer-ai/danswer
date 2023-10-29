@@ -668,8 +668,34 @@ class VespaIndex(DocumentIndex):
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
-        # TODO introduce the real hybrid search
-        return self.semantic_retrieval(query, filters, favor_recent, num_to_retrieve)
+        decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
+        vespa_where_clauses = _build_vespa_filters(filters)
+        yql = (
+            VespaIndex.yql_base
+            + vespa_where_clauses
+            + f"(({{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding)) "
+            # `({defaultIndex: "content_summary"}userInput(@query))` section is
+            # needed for highlighting while the N-gram highlighting is broken /
+            # not working as desired
+            + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
+            + _build_vespa_limit(num_to_retrieve)
+        )
+
+        query_embedding = embed_query(query)
+
+        query_keywords = (
+            " ".join(remove_stop_words(query)) if edit_keyword_query else query
+        )
+
+        params = {
+            "yql": yql,
+            "query": query_keywords,
+            "input.query(query_embedding)": str(query_embedding),
+            "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
+            "ranking.profile": "semantic_search",
+        }
+
+        return _query_vespa(params)
 
     def admin_retrieval(
         self,
