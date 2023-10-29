@@ -1,10 +1,9 @@
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
+import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { PageSelector } from "@/components/PageSelector";
 import { DocumentBoostStatus } from "@/lib/types";
-import { updateBoost, updateHiddenStatus } from "../lib";
-import { CheckmarkIcon, EditIcon } from "@/components/icons/icons";
+import { updateHiddenStatus } from "../lib";
 import { numToDisplay } from "./constants";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { getErrorMsg } from "@/lib/fetchUtils";
