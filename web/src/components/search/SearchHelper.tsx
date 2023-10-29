@@ -53,44 +53,6 @@ const getAssistantMessage = ({
   }
 
   if (
-    selectedSearchType !== SearchType.AUTOMATIC &&
-    searchResponse.suggestedSearchType !== selectedSearchType
-  ) {
-    if (searchResponse.suggestedSearchType === SearchType.SEMANTIC) {
-      return (
-        <div>
-          Your query looks more like natural language, Semantic Search may yield
-          better results. Would you like to{" "}
-          <span
-            className={CLICKABLE_CLASS_NAME}
-            onClick={() => {
-              setSelectedSearchType(SearchType.SEMANTIC);
-              restartSearch({ searchType: SearchType.SEMANTIC });
-            }}
-          >
-            try AI search?
-          </span>
-        </div>
-      );
-    }
-    return (
-      <div>
-        Your query seems to be a better fit for keyword search. Would you like
-        to{" "}
-        <span
-          className={CLICKABLE_CLASS_NAME}
-          onClick={() => {
-            setSelectedSearchType(SearchType.KEYWORD);
-            restartSearch({ searchType: SearchType.KEYWORD });
-          }}
-        >
-          try Keyword search?
-        </span>
-      </div>
-    );
-  }
-
-  if (
     (searchResponse.suggestedFlowType === FlowType.QUESTION_ANSWER ||
       defaultOverrides.forceDisplayQA) &&
     !isFetching &&

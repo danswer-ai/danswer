@@ -27,20 +27,18 @@ from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.qa_utils import get_usable_chunks
 from danswer.document_index import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
-from danswer.indexing.models import InferenceChunk
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import query_intent
 from danswer.search.danswer_helper import recommend_search_flow
+from danswer.search.models import IndexFilters
 from danswer.search.models import QueryFlow
-from danswer.search.models import SearchType
+from danswer.search.models import SearchQuery
 from danswer.search.search_runner import chunks_to_search_docs
-from danswer.search.search_runner import retrieve_keyword_documents
-from danswer.search.search_runner import retrieve_ranked_documents
+from danswer.search.search_runner import search_chunks
 from danswer.secondary_llm_flows.extract_filters import extract_question_time_filters
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
 from danswer.server.models import HelperResponse
-from danswer.server.models import IndexFilters
 from danswer.server.models import QAFeedbackRequest
 from danswer.server.models import QAResponse
 from danswer.server.models import QueryValidationResponse
@@ -114,8 +112,7 @@ def get_search_type(
     question: QuestionRequest, _: User = Depends(current_user)
 ) -> HelperResponse:
     query = question.query
-    use_keyword = question.use_keyword if question.use_keyword is not None else False
-    return recommend_search_flow(query, use_keyword)
+    return recommend_search_flow(query)
 
 
 @router.post("/query-validation")
@@ -137,14 +134,14 @@ def stream_query_validation(
     )
 
 
-@router.post("/keyword-search")
-def keyword_search(
+@router.post("/document-search")
+def handle_search_request(
     question: QuestionRequest,
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> SearchResponse:
     query = question.query
-    logger.info(f"Received keyword search query: {query}")
+    logger.info(f"Received {question.search_type.value} " f"search query: {query}")
 
     time_cutoff, favor_recent = extract_question_time_filters(question)
     question.filters.time_cutoff = time_cutoff
@@ -152,7 +149,7 @@ def keyword_search(
 
     query_event_id = create_query_event(
         query=query,
-        selected_flow=SearchType.KEYWORD,
+        search_type=question.search_type,
         llm_answer=None,
         user_id=user.id,
         db_session=db_session,
@@ -166,12 +163,18 @@ def keyword_search(
         time_cutoff=filters.time_cutoff,
         access_control_list=user_acl_filters,
     )
-    ranked_chunks = retrieve_keyword_documents(
+
+    search_query = SearchQuery(
         query=query,
+        search_type=question.search_type,
         filters=final_filters,
         favor_recent=favor_recent,
-        datastore=get_default_document_index(),
     )
+
+    ranked_chunks, unranked_chunks = search_chunks(
+        query=search_query, document_index=get_default_document_index()
+    )
+
     if not ranked_chunks:
         return SearchResponse(
             top_ranked_docs=None,
@@ -182,6 +185,8 @@ def keyword_search(
         )
 
     top_docs = chunks_to_search_docs(ranked_chunks)
+    lower_top_docs = chunks_to_search_docs(unranked_chunks)
+
     update_query_event_retrieved_documents(
         db_session=db_session,
         retrieved_document_ids=[doc.document_id for doc in top_docs],
@@ -191,132 +196,7 @@ def keyword_search(
 
     return SearchResponse(
         top_ranked_docs=top_docs,
-        lower_ranked_docs=None,
-        query_event_id=query_event_id,
-        time_cutoff=time_cutoff,
-        favor_recent=favor_recent,
-    )
-
-
-@router.post("/semantic-search")
-def semantic_search(
-    question: QuestionRequest,
-    user: User = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> SearchResponse:
-    query = question.query
-    logger.info(f"Received semantic search query: {query}")
-
-    time_cutoff, favor_recent = extract_question_time_filters(question)
-    question.filters.time_cutoff = time_cutoff
-    filters = question.filters
-
-    query_event_id = create_query_event(
-        query=query,
-        selected_flow=SearchType.SEMANTIC,
-        llm_answer=None,
-        user_id=user.id,
-        db_session=db_session,
-    )
-
-    user_id = None if user is None else user.id
-    user_acl_filters = build_access_filters_for_user(user, db_session)
-    final_filters = IndexFilters(
-        source_type=filters.source_type,
-        document_set=filters.document_set,
-        time_cutoff=filters.time_cutoff,
-        access_control_list=user_acl_filters,
-    )
-    ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-        query=query,
-        filters=final_filters,
-        favor_recent=favor_recent,
-        datastore=get_default_document_index(),
-    )
-    if not ranked_chunks:
-        return SearchResponse(
-            top_ranked_docs=None,
-            lower_ranked_docs=None,
-            query_event_id=query_event_id,
-            time_cutoff=time_cutoff,
-            favor_recent=favor_recent,
-        )
-
-    top_docs = chunks_to_search_docs(ranked_chunks)
-    other_top_docs = chunks_to_search_docs(unranked_chunks)
-    update_query_event_retrieved_documents(
-        db_session=db_session,
-        retrieved_document_ids=[doc.document_id for doc in top_docs],
-        query_id=query_event_id,
-        user_id=user_id,
-    )
-
-    return SearchResponse(
-        top_ranked_docs=top_docs,
-        lower_ranked_docs=other_top_docs,
-        query_event_id=query_event_id,
-        time_cutoff=time_cutoff,
-        favor_recent=favor_recent,
-    )
-
-
-# TODO don't use this, not done yet
-@router.post("/hybrid-search")
-def hybrid_search(
-    question: QuestionRequest,
-    user: User = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> SearchResponse:
-    query = question.query
-    logger.info(f"Received hybrid search query: {query}")
-
-    time_cutoff, favor_recent = extract_question_time_filters(question)
-    question.filters.time_cutoff = time_cutoff
-    filters = question.filters
-
-    query_event_id = create_query_event(
-        query=query,
-        selected_flow=SearchType.HYBRID,
-        llm_answer=None,
-        user_id=user.id,
-        db_session=db_session,
-    )
-
-    user_id = None if user is None else user.id
-    user_acl_filters = build_access_filters_for_user(user, db_session)
-    final_filters = IndexFilters(
-        source_type=filters.source_type,
-        document_set=filters.document_set,
-        time_cutoff=filters.time_cutoff,
-        access_control_list=user_acl_filters,
-    )
-    ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-        query=query,
-        filters=final_filters,
-        favor_recent=favor_recent,
-        datastore=get_default_document_index(),
-    )
-    if not ranked_chunks:
-        return SearchResponse(
-            top_ranked_docs=None,
-            lower_ranked_docs=None,
-            query_event_id=query_event_id,
-            time_cutoff=time_cutoff,
-            favor_recent=favor_recent,
-        )
-
-    top_docs = chunks_to_search_docs(ranked_chunks)
-    other_top_docs = chunks_to_search_docs(unranked_chunks)
-    update_query_event_retrieved_documents(
-        db_session=db_session,
-        retrieved_document_ids=[doc.document_id for doc in top_docs],
-        query_id=query_event_id,
-        user_id=user_id,
-    )
-
-    return SearchResponse(
-        top_ranked_docs=top_docs,
-        lower_ranked_docs=other_top_docs,
+        lower_ranked_docs=lower_top_docs or None,
         query_event_id=query_event_id,
         time_cutoff=time_cutoff,
         favor_recent=favor_recent,
@@ -347,10 +227,10 @@ def stream_direct_qa(
     predicted_search_key = "predicted_search"
     query_event_id_key = "query_event_id"
 
-    logger.debug(f"Received QA query: {question.query}")
+    logger.debug(
+        f"Received QA query ({question.search_type.value} search): {question.query}"
+    )
     logger.debug(f"Query filters: {question.filters}")
-    if question.use_keyword:
-        logger.debug("User selected Keyword Search")
 
     @log_generator_function_time()
     def stream_qa_portions(
@@ -358,40 +238,34 @@ def stream_direct_qa(
     ) -> Generator[str, None, None]:
         answer_so_far: str = ""
         query = question.query
-        use_keyword = question.use_keyword
         offset_count = question.offset if question.offset is not None else 0
 
         time_cutoff, favor_recent = extract_question_time_filters(question)
-        question.filters.time_cutoff = time_cutoff
+        question.filters.time_cutoff = time_cutoff  # not used but just in case
         filters = question.filters
 
-        predicted_search, predicted_flow = query_intent(query)
-        if use_keyword is None:
-            use_keyword = predicted_search == SearchType.KEYWORD
-
-        user_id = None if user is None else user.id
         user_acl_filters = build_access_filters_for_user(user, db_session)
         final_filters = IndexFilters(
             source_type=filters.source_type,
             document_set=filters.document_set,
-            time_cutoff=filters.time_cutoff,
+            time_cutoff=time_cutoff,
             access_control_list=user_acl_filters,
         )
-        if use_keyword:
-            ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
-                query=query,
-                filters=final_filters,
-                favor_recent=favor_recent,
-                datastore=get_default_document_index(),
-            )
-            unranked_chunks: list[InferenceChunk] | None = []
-        else:
-            ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-                query=query,
-                filters=final_filters,
-                favor_recent=favor_recent,
-                datastore=get_default_document_index(),
-            )
+
+        search_query = SearchQuery(
+            query=query,
+            search_type=question.search_type,
+            filters=final_filters,
+            favor_recent=favor_recent,
+        )
+
+        ranked_chunks, unranked_chunks = search_chunks(
+            query=search_query, document_index=get_default_document_index()
+        )
+
+        # TODO retire this
+        predicted_search, predicted_flow = query_intent(query)
+
         if not ranked_chunks:
             logger.debug("No Documents Found")
             empty_docs_result = {
@@ -473,17 +347,14 @@ def stream_direct_qa(
 
         query_event_id = create_query_event(
             query=query,
-            selected_flow=SearchType.KEYWORD
-            if question.use_keyword
-            else SearchType.SEMANTIC,
+            search_type=question.search_type,
             llm_answer=answer_so_far,
             retrieved_document_ids=[doc.document_id for doc in top_docs],
-            user_id=user_id,
+            user_id=None if user is None else user.id,
             db_session=db_session,
         )
 
         yield get_json_line({query_event_id_key: query_event_id})
-
         return
 
     return StreamingResponse(stream_qa_portions(), media_type="application/json")

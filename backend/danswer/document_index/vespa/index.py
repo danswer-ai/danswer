@@ -48,12 +48,13 @@ from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.document_index.document_index_utils import get_uuid_from_chunk
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentInsertionRecord
-from danswer.document_index.interfaces import IndexFilters
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.document_index.vespa.utils import remove_invalid_unicode_chars
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.indexing.models import InferenceChunk
+from danswer.search.models import IndexFilters
 from danswer.search.search_runner import embed_query
+from danswer.search.search_runner import query_processing
 from danswer.search.search_runner import remove_stop_words
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
@@ -585,6 +586,7 @@ class VespaIndex(DocumentIndex):
         filters: IndexFilters,
         favor_recent: bool,
         num_to_retrieve: int = NUM_RETURNED_HITS,
+        edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
         decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
@@ -599,9 +601,11 @@ class VespaIndex(DocumentIndex):
             + _build_vespa_limit(num_to_retrieve)
         )
 
+        final_query = query_processing(query) if edit_keyword_query else query
+
         params: dict[str, str | int] = {
             "yql": yql,
-            "query": query,
+            "query": final_query,
             "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
             "hits": num_to_retrieve,
             "num_to_rerank": 10 * num_to_retrieve,
@@ -617,6 +621,7 @@ class VespaIndex(DocumentIndex):
         favor_recent: bool,
         num_to_retrieve: int = NUM_RETURNED_HITS,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
+        edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
         decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
@@ -634,7 +639,7 @@ class VespaIndex(DocumentIndex):
         query_embedding = embed_query(query)
 
         query_keywords = (
-            " ".join(remove_stop_words(query)) if EDIT_KEYWORD_QUERY else query
+            " ".join(remove_stop_words(query)) if edit_keyword_query else query
         )
 
         params = {
@@ -653,31 +658,11 @@ class VespaIndex(DocumentIndex):
         filters: IndexFilters,
         favor_recent: bool,
         num_to_retrieve: int,
+        distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
+        edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
-        vespa_where_clauses = _build_vespa_filters(filters)
-        yql = (
-            VespaIndex.yql_base
-            + vespa_where_clauses
-            + f"({{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding)) or "
-            + '({grammar: "weakAnd"}userInput(@query) '
-            # `({defaultIndex: "content_summary"}userInput(@query))` section is
-            # needed for highlighting while the N-gram highlighting is broken /
-            # not working as desired
-            + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
-            + _build_vespa_limit(num_to_retrieve)
-        )
-
-        query_embedding = embed_query(query)
-
-        params = {
-            "yql": yql,
-            "query": query,
-            "input.query(query_embedding)": str(query_embedding),
-            "input.query(decay_factor)": str(DOC_TIME_DECAY),
-            "ranking.profile": "hybrid_search",
-        }
-
-        return _query_vespa(params)
+        # TODO introduce the real hybrid search
+        return self.semantic_retrieval(query, filters, favor_recent, num_to_retrieve)
 
     def admin_retrieval(
         self,

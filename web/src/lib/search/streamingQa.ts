@@ -64,14 +64,8 @@ export const searchRequestStreamed = async ({
   updateSuggestedFlowType,
   updateError,
   updateQueryEventId,
-  selectedSearchType,
   offset,
 }: SearchRequestArgs) => {
-  let useKeyword = null;
-  if (selectedSearchType !== SearchType.AUTOMATIC) {
-    useKeyword = selectedSearchType === SearchType.KEYWORD ? true : false;
-  }
-
   let answer = "";
   let quotes: Quote[] | null = null;
   let relevantDocuments: DanswerDocument[] | null = null;
@@ -82,7 +76,6 @@ export const searchRequestStreamed = async ({
       body: JSON.stringify({
         query,
         collection: "danswer_index",
-        use_keyword: useKeyword,
         filters,
         enable_auto_detect_filters: false,
         offset: offset,

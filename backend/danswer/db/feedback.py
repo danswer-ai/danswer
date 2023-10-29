@@ -96,14 +96,14 @@ def update_document_hidden(db_session: Session, document_id: str, hidden: bool) 
 def create_query_event(
     db_session: Session,
     query: str,
-    selected_flow: SearchType | None,
+    search_type: SearchType | None,
     llm_answer: str | None,
     user_id: UUID | None,
     retrieved_document_ids: list[str] | None = None,
 ) -> int:
     query_event = QueryEvent(
         query=query,
-        selected_search_flow=selected_flow,
+        selected_search_flow=search_type,
         llm_answer=llm_answer,
         retrieved_document_ids=retrieved_document_ids,
         user_id=user_id,
