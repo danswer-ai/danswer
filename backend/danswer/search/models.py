@@ -32,8 +32,8 @@ class Embedder:
 
 
 class BaseFilters(BaseModel):
-    source_type: list[str] | None
-    document_set: list[str] | None
+    source_type: list[str] | None = None
+    document_set: list[str] | None = None
     time_cutoff: datetime | None = None
 
 
