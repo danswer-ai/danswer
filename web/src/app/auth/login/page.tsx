@@ -13,11 +13,6 @@ const BUTTON_STYLE =
   " mx-auto";
 
 const Page = async () => {
-
-
-  console.log("Hello from the login page");
-  console.log("Web version: " + getWebVersion() + ", Backend version: " + getBackendVersion());
-
   // catch cases where the backend is completely unreachable here
   // without try / catch, will just raise an exception and the page
   // will not render
