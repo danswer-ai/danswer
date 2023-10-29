@@ -3,6 +3,7 @@ import math
 import re
 from collections.abc import Generator
 from collections.abc import Iterator
+from json.decoder import JSONDecodeError
 from typing import cast
 from typing import Optional
 from typing import Tuple
@@ -92,11 +93,18 @@ def separate_answer_quotes(
     try:
         model_raw_json = json.loads(answer_raw, strict=False)
         return extract_answer_quotes_json(model_raw_json)
-    except ValueError:
-        if is_json_prompt:
-            logger.error("Model did not output in json format as expected.")
-            raise
-        return extract_answer_quotes_freeform(answer_raw)
+    except JSONDecodeError:
+        # LLMs get confused when handling the list in the json. Sometimes it doesn't attend
+        # enough to the previous { token so it just ends the list of quotes and stops there
+        # here, we add logic to try to fix this LLM error.
+        try:
+            model_raw_json = json.loads(answer_raw + "}", strict=False)
+            return extract_answer_quotes_json(model_raw_json)
+        except JSONDecodeError:
+            if is_json_prompt:
+                logger.error("Model did not output in json format as expected.")
+                raise
+            return extract_answer_quotes_freeform(answer_raw)
 
 
 def match_quotes_to_docs(

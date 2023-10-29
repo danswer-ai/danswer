@@ -90,9 +90,14 @@ def mark_attempt_failed(
 
 
 def update_docs_indexed(
-    db_session: Session, index_attempt: IndexAttempt, num_docs_indexed: int
+    db_session: Session,
+    index_attempt: IndexAttempt,
+    total_docs_indexed: int,
+    new_docs_indexed: int,
 ) -> None:
-    index_attempt.num_docs_indexed = num_docs_indexed
+    index_attempt.total_docs_indexed = total_docs_indexed
+    index_attempt.new_docs_indexed = new_docs_indexed
+
     db_session.add(index_attempt)
     db_session.commit()
 

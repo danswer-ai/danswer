@@ -44,12 +44,12 @@ function CCPairIndexingStatusDisplay({
         errorMsg={ccPairsIndexingStatus?.latest_index_attempt?.error_msg}
         size="xs"
       />
-      {ccPairsIndexingStatus?.latest_index_attempt?.num_docs_indexed &&
+      {ccPairsIndexingStatus?.latest_index_attempt?.new_docs_indexed &&
       ccPairsIndexingStatus?.latest_index_attempt?.status === "in_progress" ? (
         <div className="text-xs mt-0.5">
           <div>
             <i>Current Run:</i>{" "}
-            {ccPairsIndexingStatus.latest_index_attempt.num_docs_indexed} docs
+            {ccPairsIndexingStatus.latest_index_attempt.new_docs_indexed} docs
             indexed
           </div>
           <div>
