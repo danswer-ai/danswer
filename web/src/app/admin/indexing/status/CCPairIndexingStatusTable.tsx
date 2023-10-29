@@ -72,10 +72,14 @@ export function CCPairIndexingStatusTable({
   ccPairsIndexingStatuses: ConnectorIndexingStatus<any, any>[];
 }) {
   const [page, setPage] = useState(1);
+  const ccPairsIndexingStatusesForPage = ccPairsIndexingStatuses.slice(
+    NUM_IN_PAGE * (page - 1),
+    NUM_IN_PAGE * page
+  );
 
   return (
-    <div className="dark">
-      <Table>
+    <div className="dark overflow-x-scroll">
+      <Table className="overflow-visible">
         <TableHead>
           <TableRow>
             <TableHeaderCell>Connector</TableHeaderCell>
@@ -85,40 +89,40 @@ export function CCPairIndexingStatusTable({
           </TableRow>
         </TableHead>
         <TableBody>
-          {ccPairsIndexingStatuses
-            .slice(NUM_IN_PAGE * (page - 1), NUM_IN_PAGE * page)
-            .map((ccPairsIndexingStatus) => {
-              return (
-                <TableRow
-                  key={ccPairsIndexingStatus.cc_pair_id}
-                  className="hover:bg-gradient-to-r hover:from-gray-800 hover:to-indigo-950 cursor-pointer relative"
-                >
-                  <TableCell className="whitespace-normal">
-                    <ConnectorTitle
-                      connector={ccPairsIndexingStatus.connector}
-                      ccPairId={ccPairsIndexingStatus.cc_pair_id}
-                      ccPairName={ccPairsIndexingStatus.name}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <CCPairIndexingStatusDisplay
-                      ccPairsIndexingStatus={ccPairsIndexingStatus}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
-                  </TableCell>
-                  <TableCell>{ccPairsIndexingStatus.docs_indexed}</TableCell>
-                  {/* Wrapping in <td> to avoid console warnings */}
-                  <td className="w-0 p-0">
-                    <Link
-                      href={`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`}
-                      className="absolute w-full h-full left-0"
-                    ></Link>
-                  </td>
-                </TableRow>
-              );
-            })}
+          {ccPairsIndexingStatusesForPage.map((ccPairsIndexingStatus, ind) => {
+            return (
+              <TableRow
+                key={ccPairsIndexingStatus.cc_pair_id}
+                className={
+                  "hover:bg-gradient-to-r hover:from-gray-800 hover:to-indigo-950 cursor-pointer relative"
+                }
+              >
+                <TableCell className="whitespace-normal">
+                  <ConnectorTitle
+                    connector={ccPairsIndexingStatus.connector}
+                    ccPairId={ccPairsIndexingStatus.cc_pair_id}
+                    ccPairName={ccPairsIndexingStatus.name}
+                  />
+                </TableCell>
+                <TableCell>
+                  <CCPairIndexingStatusDisplay
+                    ccPairsIndexingStatus={ccPairsIndexingStatus}
+                  />
+                </TableCell>
+                <TableCell>
+                  {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
+                </TableCell>
+                <TableCell>{ccPairsIndexingStatus.docs_indexed}</TableCell>
+                {/* Wrapping in <td> to avoid console warnings */}
+                <td className="w-0 p-0">
+                  <Link
+                    href={`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`}
+                    className="absolute w-full h-full left-0"
+                  ></Link>
+                </td>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
       {ccPairsIndexingStatuses.length > NUM_IN_PAGE && (
