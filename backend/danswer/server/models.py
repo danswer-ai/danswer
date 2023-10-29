@@ -27,6 +27,7 @@ from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import TaskStatus
 from danswer.direct_qa.interfaces import DanswerQuote
+from danswer.search.models import BaseFilters
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
 from danswer.server.utils import mask_credential_dict
@@ -189,25 +190,14 @@ class CreateChatSessionID(BaseModel):
     chat_session_id: int
 
 
-class RequestFilters(BaseModel):
-    source_type: list[str] | None
-    document_set: list[str] | None
-    time_cutoff: datetime | None = None
-
-
-class IndexFilters(RequestFilters):
-    access_control_list: list[str]
-
-
 class QuestionRequest(BaseModel):
     query: str
     collection: str
-    filters: RequestFilters
+    filters: BaseFilters
     offset: int | None
     enable_auto_detect_filters: bool
     favor_recent: bool | None = None
-    use_keyword: bool | None  # TODO remove this for hybrid search
-    search_flow: SearchType | None = None  # Default hybrid
+    search_type: SearchType = SearchType.HYBRID
 
 
 class QAFeedbackRequest(BaseModel):

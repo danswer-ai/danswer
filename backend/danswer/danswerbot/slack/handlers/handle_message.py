@@ -26,9 +26,9 @@ from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
 from danswer.direct_qa.answer_question import answer_qa_query
+from danswer.search.models import BaseFilters
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
-from danswer.server.models import RequestFilters
 from danswer.utils.logger import setup_logger
 
 logger_base = setup_logger()
@@ -182,7 +182,7 @@ def handle_message(
     try:
         # By leaving time_cutoff and favor_recent as None, and setting enable_auto_detect_filters
         # it allows the slack flow to extract out filters from the user query
-        filters = RequestFilters(
+        filters = BaseFilters(
             source_type=None,
             document_set=document_set_names,
             time_cutoff=None,
@@ -193,7 +193,6 @@ def handle_message(
             QuestionRequest(
                 query=msg,
                 collection=DOCUMENT_INDEX_NAME,
-                use_keyword=False,  # always use semantic search when handling Slack messages
                 enable_auto_detect_filters=not disable_auto_detect_filters,
                 filters=filters,
                 favor_recent=None,

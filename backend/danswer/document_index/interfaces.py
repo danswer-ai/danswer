@@ -4,10 +4,9 @@ from datetime import datetime
 from typing import Any
 
 from danswer.access.models import DocumentAccess
-from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.indexing.models import InferenceChunk
-from danswer.server.models import IndexFilters
+from danswer.search.models import IndexFilters
 
 
 @dataclass(frozen=True)
@@ -97,7 +96,6 @@ class VectorCapable(abc.ABC):
         filters: IndexFilters,
         favor_recent: bool,
         num_to_retrieve: int,
-        distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
 
