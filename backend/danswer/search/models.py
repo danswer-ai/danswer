@@ -1,10 +1,14 @@
+from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel
 
+from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
+from danswer.configs.app_configs import NUM_RERANKED_RESULTS
+from danswer.configs.app_configs import NUM_RETURNED_HITS
+from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import IndexChunk
-
 
 MAX_METRICS_CONTENT = (
     200  # Just need enough characters to identify where in the doc the chunk is
@@ -27,11 +31,34 @@ class Embedder:
         raise NotImplementedError
 
 
+class BaseFilters(BaseModel):
+    source_type: list[str] | None
+    document_set: list[str] | None
+    time_cutoff: datetime | None = None
+
+
+class IndexFilters(BaseFilters):
+    access_control_list: list[str]
+
+
 class ChunkMetric(BaseModel):
     document_id: str
     chunk_content_start: str
     first_link: str | None
     score: float
+
+
+class SearchQuery(BaseModel):
+    query: str
+    search_type: SearchType
+    filters: IndexFilters
+    favor_recent: bool
+    num_hits: int = NUM_RETURNED_HITS
+    skip_rerank: bool = SKIP_RERANKING
+    # Only used if not skip_rerank
+    num_rerank: int | None = NUM_RERANKED_RESULTS
+    # Only used for keyword flow
+    edit_keyword_query: bool = EDIT_KEYWORD_QUERY
 
 
 class RetrievalMetricsContainer(BaseModel):

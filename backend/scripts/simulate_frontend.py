@@ -95,7 +95,6 @@ if __name__ == "__main__":
             query_json = {
                 "query": query,
                 "collection": DOCUMENT_INDEX_NAME,
-                "use_keyword": flow_type == "keyword",  # Ignore if not QA Endpoints
                 "filters": [{SOURCE_TYPE: source_types}],
             }
 

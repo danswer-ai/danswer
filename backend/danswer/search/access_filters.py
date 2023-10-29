@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from danswer.access.access import get_acl_for_user
 from danswer.db.models import User
-from danswer.server.models import IndexFilters
+from danswer.search.models import IndexFilters
 
 
 def build_access_filters_for_user(user: User | None, session: Session) -> list[str]:

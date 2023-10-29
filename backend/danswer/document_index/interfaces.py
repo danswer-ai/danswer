@@ -7,7 +7,7 @@ from danswer.access.models import DocumentAccess
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.indexing.models import InferenceChunk
-from danswer.server.models import IndexFilters
+from danswer.search.models import IndexFilters
 
 
 @dataclass(frozen=True)

@@ -38,9 +38,11 @@ from danswer.llm.llm import LLM
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import translate_danswer_msg_to_langchain
 from danswer.search.access_filters import build_access_filters_for_user
+from danswer.search.models import IndexFilters
+from danswer.search.models import SearchQuery
+from danswer.search.models import SearchType
 from danswer.search.search_runner import chunks_to_search_docs
-from danswer.search.search_runner import retrieve_ranked_documents
-from danswer.server.models import IndexFilters
+from danswer.search.search_runner import search_chunks
 from danswer.server.models import RetrievalDocs
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
@@ -130,13 +132,18 @@ def danswer_chat_retrieval(
     else:
         reworded_query = query_message.message
 
-    # Good Debug/Breakpoint
-    ranked_chunks, unranked_chunks = retrieve_ranked_documents(
+    search_query = SearchQuery(
         query=reworded_query,
+        search_type=SearchType.HYBRID,
         filters=filters,
         favor_recent=False,
-        datastore=get_default_document_index(),
     )
+
+    # Good Debug/Breakpoint
+    ranked_chunks, unranked_chunks = search_chunks(
+        query=search_query, document_index=get_default_document_index()
+    )
+
     if not ranked_chunks:
         return []
 
