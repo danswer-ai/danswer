@@ -31,7 +31,7 @@ export const HoverPopup = ({
       onMouseEnter={() => {
         setHovered(true);
       }}
-      // onMouseLeave={() => setHovered(false)}
+      onMouseLeave={() => setHovered(false)}
     >
       {hovered && (
         <div className={`absolute ${popupDirectionClass}`}>

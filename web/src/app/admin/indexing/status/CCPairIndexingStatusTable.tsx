@@ -16,6 +16,7 @@ import { ConnectorIndexingStatus } from "@/lib/types";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
 import Link from "next/link";
+import { isCurrentlyDeleting } from "@/lib/documentDeletion";
 
 const NUM_IN_PAGE = 20;
 
@@ -29,7 +30,7 @@ function CCPairIndexingStatusDisplay({
       <CCPairStatus
         status="not_started"
         disabled={true}
-        isDeleting={ccPairsIndexingStatus?.deletion_attempt !== null}
+        isDeleting={isCurrentlyDeleting(ccPairsIndexingStatus.deletion_attempt)}
       />
     );
   }
@@ -78,7 +79,7 @@ export function CCPairIndexingStatusTable({
   );
 
   return (
-    <div className="dark overflow-x-scroll">
+    <div className="dark">
       <Table className="overflow-visible">
         <TableHead>
           <TableRow>
@@ -89,7 +90,7 @@ export function CCPairIndexingStatusTable({
           </TableRow>
         </TableHead>
         <TableBody>
-          {ccPairsIndexingStatusesForPage.map((ccPairsIndexingStatus, ind) => {
+          {ccPairsIndexingStatusesForPage.map((ccPairsIndexingStatus) => {
             return (
               <TableRow
                 key={ccPairsIndexingStatus.cc_pair_id}
@@ -97,7 +98,7 @@ export function CCPairIndexingStatusTable({
                   "hover:bg-gradient-to-r hover:from-gray-800 hover:to-indigo-950 cursor-pointer relative"
                 }
               >
-                <TableCell className="whitespace-normal">
+                <TableCell className="whitespace-normal break-all">
                   <ConnectorTitle
                     connector={ccPairsIndexingStatus.connector}
                     ccPairId={ccPairsIndexingStatus.cc_pair_id}

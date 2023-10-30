@@ -4,7 +4,7 @@ import { getErrorMsg } from "@/lib/fetchUtils";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CCPairStatus } from "@/components/Status";
 import { BackButton } from "@/components/BackButton";
-import { Button, Divider, Title } from "@tremor/react";
+import { Divider, Title } from "@tremor/react";
 import { IndexingAttemptsTable } from "./IndexingAttemptsTable";
 import { Text } from "@tremor/react";
 import { ConfigDisplay } from "./ConfigDisplay";
@@ -13,6 +13,7 @@ import { DeletionButton } from "./DeletionButton";
 import { SSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { ReIndexButton } from "./ReIndexButton";
+import { isCurrentlyDeleting } from "@/lib/documentDeletion";
 
 export default async function Page({
   params,
@@ -34,9 +35,7 @@ export default async function Page({
 
   const ccPair = (await ccPairResponse.json()) as CCPairFullInfo;
   const lastIndexAttempt = ccPair.index_attempts[0];
-  const isDeleting =
-    ccPair?.latest_deletion_attempt?.status === "PENDING" ||
-    ccPair?.latest_deletion_attempt?.status === "STARTED";
+  const isDeleting = isCurrentlyDeleting(ccPair.latest_deletion_attempt);
 
   return (
     <>
@@ -82,6 +81,7 @@ export default async function Page({
             <ReIndexButton
               connectorId={ccPair.connector.id}
               credentialId={ccPair.credential.id}
+              isDisabled={ccPair.connector.disabled}
             />
           </div>
 
