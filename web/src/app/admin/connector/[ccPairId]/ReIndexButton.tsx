@@ -8,9 +8,11 @@ import { useRouter } from "next/navigation";
 export function ReIndexButton({
   connectorId,
   credentialId,
+  isDisabled,
 }: {
   connectorId: number;
   credentialId: number;
+  isDisabled: boolean;
 }) {
   const router = useRouter();
   const { popup, setPopup } = usePopup();
@@ -37,6 +39,12 @@ export function ReIndexButton({
           }
           router.refresh();
         }}
+        disabled={isDisabled}
+        tooltip={
+          isDisabled
+            ? "Connector must be active in order to run indexing"
+            : undefined
+        }
       >
         Run Indexing
       </Button>

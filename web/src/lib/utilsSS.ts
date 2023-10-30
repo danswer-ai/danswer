@@ -11,7 +11,7 @@ export function buildUrl(path: string) {
 export function fetchSS(url: string, options?: RequestInit) {
   const init = options || {
     credentials: "include",
-    next: { revalidate: 0 },
+    cache: "no-store",
     headers: {
       cookie: cookies()
         .getAll()

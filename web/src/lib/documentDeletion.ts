@@ -1,4 +1,5 @@
 import { PopupSpec } from "@/components/admin/connectors/Popup";
+import { DeletionAttemptSnapshot } from "./types";
 
 export async function scheduleDeletionJobForConnector(
   connectorId: number,
@@ -46,4 +47,16 @@ export async function deleteCCPair(
     });
   }
   onCompletion();
+}
+
+export function isCurrentlyDeleting(
+  deletionAttempt: DeletionAttemptSnapshot | null
+) {
+  if (!deletionAttempt) {
+    return false;
+  }
+
+  return (
+    deletionAttempt.status === "PENDING" || deletionAttempt.status === "STARTED"
+  );
 }

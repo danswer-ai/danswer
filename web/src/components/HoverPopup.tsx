@@ -27,7 +27,7 @@ export const HoverPopup = ({
 
   return (
     <div
-      className="relative flex z-30"
+      className="relative flex z-20"
       onMouseEnter={() => {
         setHovered(true);
       }}
