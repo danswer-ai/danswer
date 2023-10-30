@@ -617,6 +617,7 @@ class VespaIndex(DocumentIndex):
             "hits": num_to_retrieve,
             "offset": 0,
             "ranking.profile": "keyword_search",
+            "timeout": "10s",
         }
 
         return _query_vespa(params)
@@ -656,6 +657,7 @@ class VespaIndex(DocumentIndex):
             "hits": num_to_retrieve,
             "offset": 0,
             "ranking.profile": "semantic_search",
+            "timeout": "10s",
         }
 
         return _query_vespa(params)
