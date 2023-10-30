@@ -674,7 +674,7 @@ class VespaIndex(DocumentIndex):
         decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
         # Needs to be at least as much as the value set in Vespa schema config
-        target_hits = max(10 * num_to_retrieve, 1000)
+        target_hits = max(10 * num_to_retrieve, 250)
         yql = (
             VespaIndex.yql_base
             + vespa_where_clauses

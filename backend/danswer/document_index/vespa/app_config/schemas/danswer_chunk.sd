@@ -151,7 +151,7 @@ schema danswer_chunk {
 
         global-phase {
             expression: (normalize_linear(closeness(field, embeddings)) + normalize_linear(bm25(content))) / 2 * document_boost * recency_bias
-            rerank-count: 1000
+            rerank-count: 250
         }
 
         # Cannot pass normalize_linear features in match-features
