@@ -28,17 +28,9 @@ class RequestTrackerError(Exception):
 class RequestTrackerConnector(PollConnector):
     def __init__(
         self,
-        requesttracker_base_url: str,
-        queues: List[str] | None = None,
         batch_size: int = INDEX_BATCH_SIZE,
-        requesttracker_username: Optional[str] = None,
-        requesttracker_password: Optional[str] = None,
     ) -> None:
-        self.queues = queues
-        self.rt_base_url = requesttracker_base_url
         self.batch_size = batch_size
-        self.rt_username = requesttracker_username
-        self.rt_password = requesttracker_password
 
     def txn_link(self, tid: int, txn: int) -> str:
         return f"{self.rt_base_url}/Ticket/Display.html?id={tid}&txn={txn}"
@@ -77,7 +69,7 @@ class RequestTrackerConnector(PollConnector):
     def _process_tickets(
         self, start: datetime, end: datetime
     ) -> GenerateDocumentsOutput:
-        if self.rt_username is None or self.rt_password is None:
+        if any([self.rt_username, self.rt_password, self.rt_base_url]) is None:
             raise ConnectorMissingCredentialError("requesttracker")
 
         Rt0 = Rt(
@@ -143,7 +135,7 @@ if __name__ == "__main__":
 
     load_dotenv()
     logger.setLevel(LOG_LVL_DEBUG)
-    rt_connector = RequestTrackerConnector("https://help.hmdc.harvard.edu")
+    rt_connector = RequestTrackerConnector()
     rt_connector.load_credentials(
         {
             "requesttracker_username": os.getenv("RT_USERNAME"),
