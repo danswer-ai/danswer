@@ -310,13 +310,15 @@ def _build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) ->
 
     def _build_time_filter(
         cutoff: datetime | None,
-        untimed_doc_cutoff: timedelta = timedelta(days=62),  # Slightly over 2 Months
+        # Slightly over 3 Months, approximately 1 fiscal quarter
+        untimed_doc_cutoff: timedelta = timedelta(days=92),
     ) -> str:
         if not cutoff:
             return ""
 
         # For Documents that don't have an updated at, filter them out for queries asking for
-        # very recent documents (2 months) default
+        # very recent documents (3 months) default. Documents that don't have an updated at
+        # time are assigned 3 months for time decay value
         include_untimed = datetime.now(timezone.utc) - untimed_doc_cutoff > cutoff
         cutoff_secs = int(cutoff.timestamp())
 
@@ -338,10 +340,6 @@ def _build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) ->
     filter_str += _build_time_filter(filters.time_cutoff)
 
     return filter_str
-
-
-def _build_vespa_limit(num_to_retrieve: int, offset: int = 0) -> str:
-    return f" limit {num_to_retrieve} offset {offset}"
 
 
 def _process_dynamic_summary(
@@ -605,7 +603,6 @@ class VespaIndex(DocumentIndex):
             # not working as desired
             + '({grammar: "weakAnd"}userInput(@query) '
             + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
-            + _build_vespa_limit(num_to_retrieve)
         )
 
         final_query = query_processing(query) if edit_keyword_query else query
@@ -615,7 +612,7 @@ class VespaIndex(DocumentIndex):
             "query": final_query,
             "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
             "hits": num_to_retrieve,
-            "num_to_rerank": 10 * num_to_retrieve,
+            "offset": 0,
             "ranking.profile": "keyword_search",
         }
 
@@ -640,7 +637,6 @@ class VespaIndex(DocumentIndex):
             # needed for highlighting while the N-gram highlighting is broken /
             # not working as desired
             + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
-            + _build_vespa_limit(num_to_retrieve)
         )
 
         query_embedding = embed_query(query)
@@ -649,11 +645,13 @@ class VespaIndex(DocumentIndex):
             " ".join(remove_stop_words(query)) if edit_keyword_query else query
         )
 
-        params = {
+        params: dict[str, str | int] = {
             "yql": yql,
-            "query": query_keywords,
+            "query": query_keywords,  # Needed for highlighting
             "input.query(query_embedding)": str(query_embedding),
             "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
+            "hits": num_to_retrieve,
+            "offset": 0,
             "ranking.profile": "semantic_search",
         }
 
@@ -668,8 +666,35 @@ class VespaIndex(DocumentIndex):
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
-        # TODO introduce the real hybrid search
-        return self.semantic_retrieval(query, filters, favor_recent, num_to_retrieve)
+        decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
+        vespa_where_clauses = _build_vespa_filters(filters)
+        # Needs to be at least as much as the value set in Vespa schema config
+        target_hits = max(10 * num_to_retrieve, 1000)
+        yql = (
+            VespaIndex.yql_base
+            + vespa_where_clauses
+            + f"(({{targetHits: {target_hits}}}nearestNeighbor(embeddings, query_embedding)) "
+            + 'or ({grammar: "weakAnd"}userInput(@query)) '
+            + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
+        )
+
+        query_embedding = embed_query(query)
+
+        query_keywords = (
+            " ".join(remove_stop_words(query)) if edit_keyword_query else query
+        )
+
+        params: dict[str, str | int] = {
+            "yql": yql,
+            "query": query_keywords,
+            "input.query(query_embedding)": str(query_embedding),
+            "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
+            "hits": num_to_retrieve,
+            "offset": 0,
+            "ranking.profile": "hybrid_search",
+        }
+
+        return _query_vespa(params)
 
     def admin_retrieval(
         self,
@@ -686,14 +711,13 @@ class VespaIndex(DocumentIndex):
             # needed for highlighting while the N-gram highlighting is broken /
             # not working as desired
             + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
-            + _build_vespa_limit(num_to_retrieve)
         )
 
         params: dict[str, str | int] = {
             "yql": yql,
             "query": query,
             "hits": num_to_retrieve,
-            "num_to_rerank": 10 * num_to_retrieve,
+            "offset": 0,
             "ranking.profile": "admin_search",
         }
 
