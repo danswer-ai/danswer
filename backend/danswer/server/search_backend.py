@@ -137,7 +137,7 @@ def stream_query_validation(
 @router.post("/document-search")
 def handle_search_request(
     question: QuestionRequest,
-    user: User = Depends(current_user),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> SearchResponse:
     query = question.query
@@ -146,16 +146,16 @@ def handle_search_request(
     time_cutoff, favor_recent = extract_question_time_filters(question)
     question.filters.time_cutoff = time_cutoff
     filters = question.filters
+    user_id = None if user is None else user.id
 
     query_event_id = create_query_event(
         query=query,
         search_type=question.search_type,
         llm_answer=None,
-        user_id=user.id,
+        user_id=user_id,
         db_session=db_session,
     )
 
-    user_id = None if user is None else user.id
     user_acl_filters = build_access_filters_for_user(user, db_session)
     final_filters = IndexFilters(
         source_type=filters.source_type,
