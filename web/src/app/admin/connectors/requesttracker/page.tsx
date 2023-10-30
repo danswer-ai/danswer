@@ -72,7 +72,7 @@ const MainSection = () => {
   return (
     <>
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
-        Step 1: Provide Credentials
+        Step 1: Provide Request Tracker credentials
       </h2>
       {requestTrackerCredential ? (
         <>
@@ -95,8 +95,8 @@ const MainSection = () => {
       ) : (
         <>
           <p className="text-sm mb-4">
-            To use the Request Tracker connector, you must first provide a Request Tracker
-            username and password.
+            To use the Request Tracker connector, provide a Request Tracker username, password, and base url.
+            This connector currently supports <a href="https://rt-wiki.bestpractical.com/wiki/REST">Request Tracker REST API 1.0</a>, <b>not the latest REST API 2.0 introduced in Request Tracker 5.0</b>.
           </p>
           <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
             <CredentialForm<RequestTrackerCredentialJson>
@@ -140,8 +140,10 @@ const MainSection = () => {
       {requestTrackerConnectorIndexingStatuses.length > 0 && (
         <>
           <p className="text-sm mb-2">
-            We index the latest articles from each workspace listed below
+            We index the most recently updated tickets from each Request Tracker instance listed below
             regularly.
+
+            The initial poll at this time retrieves tickets updated in the past hour. All subsequent polls execute every ten minutes. This should be configurable in the future.
           </p>
           <div className="mb-2">
             <ConnectorsTable<RequestTrackerConfig, RequestTrackerCredentialJson>
@@ -180,10 +182,9 @@ const MainSection = () => {
           />
         </div>
       ) : (
-        <p className="text-sm">
-          Please provide your Request Tracker username and password
-        </p>
-      )}
+        <></>
+      )
+      }
     </>
   );
 };
