@@ -58,6 +58,7 @@ from danswer.search.search_runner import query_processing
 from danswer.search.search_runner import remove_stop_words
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
+from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
 
@@ -429,6 +430,7 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
     )
 
 
+@log_function_time()
 def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError("No/empty query received")

@@ -61,6 +61,7 @@ def query_processing(
     return query
 
 
+@log_function_time()
 def embed_query(
     query: str,
     embedding_model: SentenceTransformer | None = None,
