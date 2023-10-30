@@ -54,7 +54,15 @@ class GongConnector(LoadConnector, PollConnector):
         response.raise_for_status()
 
         workspaces_details = response.json().get("workspaces")
-        return {workspace["name"]: workspace["id"] for workspace in workspaces_details}
+        name_id_map = {
+            workspace["name"]: workspace["id"] for workspace in workspaces_details
+        }
+        id_id_map = {
+            workspace["id"]: workspace["id"] for workspace in workspaces_details
+        }
+        # In very rare case, if a workspace is given a name which is the id of another workspace,
+        # Then the user input is treated as the name
+        return {**id_id_map, **name_id_map}
 
     def _get_transcript_batches(
         self, start_datetime: str | None = None, end_datetime: str | None = None
@@ -178,8 +186,14 @@ class GongConnector(LoadConnector, PollConnector):
                     continue
 
                 call_details = call_details_map[call_id]
-
                 call_metadata = call_details["metaData"]
+
+                call_time_str = call_metadata["started"]
+                call_title = call_metadata["title"]
+                logger.info(
+                    f"Indexing Gong call from {call_time_str.split('T', 1)[0]}: {call_title}"
+                )
+
                 call_parties = call_details["parties"]
 
                 id_to_name_map = self._parse_parties(call_parties)
@@ -188,7 +202,6 @@ class GongConnector(LoadConnector, PollConnector):
                 speaker_to_name: dict[str, str] = {}
 
                 transcript_text = ""
-                call_title = call_metadata["title"]
                 if call_title:
                     transcript_text += f"Call Title: {call_title}\n\n"
 
@@ -226,10 +239,10 @@ class GongConnector(LoadConnector, PollConnector):
                         source=DocumentSource.GONG,
                         # Should not ever be Untitled as a call cannot be made without a Title
                         semantic_identifier=call_title or "Untitled",
-                        doc_updated_at=datetime.fromisoformat(
-                            call_metadata["started"]
-                        ).astimezone(timezone.utc),
-                        metadata={"Start Time": call_metadata["started"]},
+                        doc_updated_at=datetime.fromisoformat(call_time_str).astimezone(
+                            timezone.utc
+                        ),
+                        metadata={},
                     )
                 )
             yield doc_batch
