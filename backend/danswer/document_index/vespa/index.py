@@ -126,12 +126,9 @@ def _get_vespa_chunk_ids_by_document_id(
         results = requests.get(SEARCH_ENDPOINT, params=params).json()
         hits = results["root"].get("children", [])
 
-        # Temporary logging to catch the rare index out of bounds issue
-        problematic_ids = [hit["id"] for hit in hits if len(hit["id"].split("::")) < 2]
-        if problematic_ids:
-            logger.error(f'IDs without "::" {problematic_ids}')
-
-        doc_chunk_ids.extend([hit["id"].split("::", 1)[-1] for hit in hits])
+        doc_chunk_ids.extend(
+            [hit["fields"]["documentid"].split("::", 1)[-1] for hit in hits]
+        )
         params["offset"] += hits_per_page  # type: ignore
 
         if len(hits) < hits_per_page:
@@ -142,11 +139,16 @@ def _get_vespa_chunk_ids_by_document_id(
 def _delete_vespa_doc_chunks(document_id: str) -> bool:
     doc_chunk_ids = _get_vespa_chunk_ids_by_document_id(document_id)
 
-    failures = [
-        requests.delete(f"{DOCUMENT_ID_ENDPOINT}/{doc}").status_code != 200
-        for doc in doc_chunk_ids
-    ]
-    return not any(failures)
+    failed = False
+    for chunk_id in doc_chunk_ids:
+        success = (
+            requests.delete(f"{DOCUMENT_ID_ENDPOINT}/{chunk_id}").status_code == 200
+        )
+        if not success:
+            failed = True
+            logger.error(f"Failed to delete chunk: {chunk_id}")
+
+    return not failed
 
 
 @retry(tries=3, delay=1, backoff=2)
@@ -437,8 +439,9 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
 
     for hit in hits:
         if hit["fields"].get(CONTENT) is None:
+            identifier = hit["fields"].get("documentid") or hit["id"]
             logger.error(
-                f"Vespa Index with Vespa ID {hit['id']} has no contents. "
+                f"Vespa Index with Vespa ID {identifier} has no contents. "
                 f"This is invalid because the vector is not meaningful and keywordsearch cannot "
                 f"fetch this document"
             )
