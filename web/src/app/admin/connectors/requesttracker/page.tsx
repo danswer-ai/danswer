@@ -94,8 +94,10 @@ const MainSection = () => {
         </>
       ) : (
         <>
-          <p className="text-sm mb-4">
+          <p className="text-sm mb-2">
             To use the Request Tracker connector, provide a Request Tracker username, password, and base url.
+          </p>
+          <p className="text-sm mb-2">
             This connector currently supports <a href="https://rt-wiki.bestpractical.com/wiki/REST">Request Tracker REST API 1.0</a>, <b>not the latest REST API 2.0 introduced in Request Tracker 5.0</b>.
           </p>
           <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
@@ -133,16 +135,13 @@ const MainSection = () => {
         </>
       )}
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
-        Step 2: Enter the base url for your Request Tracker installation
-      </h2>
-
       {requestTrackerConnectorIndexingStatuses.length > 0 && (
         <>
           <p className="text-sm mb-2">
             We index the most recently updated tickets from each Request Tracker instance listed below
             regularly.
-
+          </p>
+          <p className="text-sm mb-2">
             The initial poll at this time retrieves tickets updated in the past hour. All subsequent polls execute every ten minutes. This should be configurable in the future.
           </p>
           <div className="mb-2">
@@ -166,12 +165,12 @@ const MainSection = () => {
         </>
       )}
 
-      {requestTrackerCredential ? (
+      {requestTrackerCredential && requestTrackerConnectorIndexingStatuses.length === 0 ? (
         <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
-          <h2 className="font-bold mb-3">Step 1: Connect to Request Tracker installation</h2>
+          <h2 className="font-bold mb-3">Step 2: (Re)initialize connection to Request Tracker installation</h2>
           <ConnectorForm<RequestTrackerConfig>
             nameBuilder={(values) => `RequestTracker-${requestTrackerCredential.credential_json.requesttracker_base_url}`}
-            ccPairNameBuilder={(values) => requestTrackerCredential.credential_json.requesttracker_base_url}
+            ccPairNameBuilder={(values) => `Request Tracker ${requestTrackerCredential.credential_json.requesttracker_base_url}`}
             source="requesttracker"
             inputType="poll"
             validationSchema={Yup.object().shape({})}
