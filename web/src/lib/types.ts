@@ -119,9 +119,7 @@ export interface NotionConfig { }
 
 export interface HubSpotConfig { }
 
-export interface RequestTrackerConfig {
-  base_url: string;
-}
+export interface RequestTrackerConfig { }
 
 export interface Document360Config {
   workspace: string;
@@ -244,6 +242,7 @@ export interface HubSpotCredentialJson {
 export interface RequestTrackerCredentialJson {
   requesttracker_username: string;
   requesttracker_password: string;
+  requesttracker_base_url: string;
 }
 
 export interface Document360CredentialJson {
