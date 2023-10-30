@@ -106,7 +106,7 @@ schema danswer_chunk {
         }
 
         function inline document_age() {
-            # Time in years (3 Months if no age found)
+            # Time in years (91.3 days ~= 3 Months ~= 1 fiscal quarter if no age found)
             expression: max(if(isNan(attribute(doc_updated_at)) == 1, 7890000, now() - attribute(doc_updated_at)) / 31536000, 0)
         }
 
@@ -122,6 +122,8 @@ schema danswer_chunk {
         first-phase {
             expression: bm25(content) * document_boost * recency_bias
         }
+
+        match-features: recency_bias document_boost bm25(content)
     }
 
     rank-profile semantic_search inherits default, default_rank {
@@ -135,7 +137,7 @@ schema danswer_chunk {
             expression: closeness(field, embeddings)
         }
 
-        match-features: recency_bias closest(embeddings)
+        match-features: recency_bias document_boost closest(embeddings)
     }
 
     rank-profile hybrid_search inherits default, default_rank {
@@ -148,11 +150,12 @@ schema danswer_chunk {
         }
 
         global-phase {
-            expression: (normalize_linear(closeness(field, embeddings)) + normalize_linear(bm25(content))) * document_boost * recency_bias
+            expression: (normalize_linear(closeness(field, embeddings)) + normalize_linear(bm25(content))) / 2 * document_boost * recency_bias
             rerank-count: 1000
         }
 
-        match-features: recency_bias closest(embeddings)
+        # Cannot pass normalize_linear features in match-features
+        match-features: recency_bias document_boost closest(embeddings)
     }
 
     # used when searching from the admin UI for a specific doc to hide / boost
