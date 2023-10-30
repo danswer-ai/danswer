@@ -17,11 +17,7 @@ import { LoadingAnimation } from "@/components/Loading";
 import { Form, Formik } from "formik";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { FileUpload } from "@/components/admin/connectors/FileUpload";
-
-const getNameFromPath = (path: string) => {
-  const pathParts = path.split("/");
-  return pathParts[pathParts.length - 1];
-};
+import { getNameFromPath } from "@/lib/fileUtils";
 
 const Main = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);

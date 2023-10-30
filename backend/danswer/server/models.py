@@ -10,7 +10,6 @@ from pydantic import validator
 from pydantic.generics import GenericModel
 
 from danswer.auth.schemas import UserRole
-from danswer.bots.slack.config import VALID_SLACK_FILTERS
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentSource
@@ -18,6 +17,7 @@ from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
+from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
 from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
 from danswer.db.models import Connector
@@ -27,6 +27,7 @@ from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import TaskStatus
 from danswer.direct_qa.interfaces import DanswerQuote
+from danswer.search.models import BaseFilters
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
 from danswer.server.utils import mask_credential_dict
@@ -189,24 +190,14 @@ class CreateChatSessionID(BaseModel):
     chat_session_id: int
 
 
-class RequestFilters(BaseModel):
-    source_type: list[str] | None
-    document_set: list[str] | None
-    time_cutoff: datetime | None = None
-
-
-class IndexFilters(RequestFilters):
-    access_control_list: list[str]
-
-
 class QuestionRequest(BaseModel):
     query: str
     collection: str
-    use_keyword: bool | None
-    filters: RequestFilters
+    filters: BaseFilters
     offset: int | None
     enable_auto_detect_filters: bool
     favor_recent: bool | None = None
+    search_type: SearchType = SearchType.HYBRID
 
 
 class QAFeedbackRequest(BaseModel):
@@ -318,8 +309,9 @@ class IndexAttemptRequest(BaseModel):
 
 
 class IndexAttemptSnapshot(BaseModel):
+    id: int
     status: IndexingStatus | None
-    num_docs_indexed: int
+    new_docs_indexed: int
     error_msg: str | None
     time_started: str | None
     time_updated: str
@@ -329,8 +321,9 @@ class IndexAttemptSnapshot(BaseModel):
         cls, index_attempt: IndexAttempt
     ) -> "IndexAttemptSnapshot":
         return IndexAttemptSnapshot(
+            id=index_attempt.id,
             status=index_attempt.status,
-            num_docs_indexed=index_attempt.num_docs_indexed or 0,
+            new_docs_indexed=index_attempt.new_docs_indexed or 0,
             error_msg=index_attempt.error_msg,
             time_started=index_attempt.time_started.isoformat()
             if index_attempt.time_started

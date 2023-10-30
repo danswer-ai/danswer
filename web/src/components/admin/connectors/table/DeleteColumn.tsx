@@ -1,5 +1,8 @@
 import { InfoIcon, TrashIcon } from "@/components/icons/icons";
-import { scheduleDeletionJobForConnector } from "@/lib/documentDeletion";
+import {
+  deleteCCPair,
+  scheduleDeletionJobForConnector,
+} from "@/lib/documentDeletion";
 import { ConnectorIndexingStatus } from "@/lib/types";
 import { PopupSpec } from "../Popup";
 import { useState } from "react";
@@ -32,29 +35,9 @@ export function DeleteColumn<ConnectorConfigType, ConnectorCredentialType>({
       {connectorIndexingStatus.is_deletable ? (
         <div
           className="cursor-pointer mx-auto flex"
-          onClick={async () => {
-            const deletionScheduleError = await scheduleDeletionJobForConnector(
-              connector.id,
-              credential.id
-            );
-            if (deletionScheduleError) {
-              setPopup({
-                message:
-                  "Failed to schedule deletion of connector - " +
-                  deletionScheduleError,
-                type: "error",
-              });
-            } else {
-              setPopup({
-                message: "Scheduled deletion of connector!",
-                type: "success",
-              });
-            }
-            setTimeout(() => {
-              setPopup(null);
-            }, 4000);
-            onUpdate();
-          }}
+          onClick={() =>
+            deleteCCPair(connector.id, credential.id, setPopup, onUpdate)
+          }
         >
           <TrashIcon />
         </div>

@@ -134,8 +134,9 @@ export interface GoogleSitesConfig {
 }
 
 export interface IndexAttemptSnapshot {
+  id: number;
   status: ValidStatuses | null;
-  num_docs_indexed: number;
+  new_docs_indexed: number;
   error_msg: string | null;
   time_started: string | null;
   time_updated: string;

@@ -4,9 +4,9 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
-from danswer.bots.slack.config import validate_channel_names
-from danswer.bots.slack.tokens import fetch_tokens
-from danswer.bots.slack.tokens import save_tokens
+from danswer.danswerbot.slack.config import validate_channel_names
+from danswer.danswerbot.slack.tokens import fetch_tokens
+from danswer.danswerbot.slack.tokens import save_tokens
 from danswer.db.engine import get_session
 from danswer.db.models import ChannelConfig
 from danswer.db.models import User

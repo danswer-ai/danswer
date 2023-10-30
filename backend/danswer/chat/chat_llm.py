@@ -20,12 +20,10 @@ from danswer.chat.chat_prompts import REQUIRE_DANSWER_SYSTEM_MSG
 from danswer.chat.chat_prompts import YES_SEARCH
 from danswer.chat.personas import build_system_text_from_persona
 from danswer.chat.tools import call_tool
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT
 from danswer.configs.chat_configs import FORCE_TOOL_PROMPT
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
-from danswer.datastores.document_index import get_default_document_index
 from danswer.db.models import ChatMessage
 from danswer.db.models import Persona
 from danswer.db.models import User
@@ -33,14 +31,18 @@ from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerChatModelOut
 from danswer.direct_qa.interfaces import StreamingError
 from danswer.direct_qa.qa_utils import get_usable_chunks
+from danswer.document_index import get_default_document_index
+from danswer.indexing.models import InferenceChunk
 from danswer.llm.build import get_default_llm
 from danswer.llm.llm import LLM
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import translate_danswer_msg_to_langchain
 from danswer.search.access_filters import build_access_filters_for_user
-from danswer.search.semantic_search import chunks_to_search_docs
-from danswer.search.semantic_search import retrieve_ranked_documents
-from danswer.server.models import IndexFilters
+from danswer.search.models import IndexFilters
+from danswer.search.models import SearchQuery
+from danswer.search.models import SearchType
+from danswer.search.search_runner import chunks_to_search_docs
+from danswer.search.search_runner import search_chunks
 from danswer.server.models import RetrievalDocs
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
@@ -130,13 +132,18 @@ def danswer_chat_retrieval(
     else:
         reworded_query = query_message.message
 
-    # Good Debug/Breakpoint
-    ranked_chunks, unranked_chunks = retrieve_ranked_documents(
+    search_query = SearchQuery(
         query=reworded_query,
+        search_type=SearchType.HYBRID,
         filters=filters,
         favor_recent=False,
-        datastore=get_default_document_index(),
     )
+
+    # Good Debug/Breakpoint
+    ranked_chunks, unranked_chunks = search_chunks(
+        query=search_query, document_index=get_default_document_index()
+    )
+
     if not ranked_chunks:
         return []
 

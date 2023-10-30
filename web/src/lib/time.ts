@@ -54,3 +54,8 @@ export const timeAgo = (
   const yearsDiff = Math.floor(monthsDiff / 12);
   return `${yearsDiff} ${conditionallyAddPlural("year", yearsDiff)} ago`;
 };
+
+export function localizeAndPrettify(dateString: string) {
+  const date = new Date(dateString);
+  return date.toLocaleString();
+}

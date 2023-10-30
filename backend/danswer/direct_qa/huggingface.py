@@ -4,7 +4,6 @@ from typing import Any
 from huggingface_hub import InferenceClient  # type:ignore
 from huggingface_hub.utils import HfHubHTTPError  # type:ignore
 
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.direct_qa.interfaces import AnswerQuestionReturn
@@ -18,6 +17,7 @@ from danswer.direct_qa.qa_prompts import NonChatPromptProcessor
 from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
 from danswer.direct_qa.qa_utils import simulate_streaming_response
+from danswer.indexing.models import InferenceChunk
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 

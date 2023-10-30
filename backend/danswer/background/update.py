@@ -17,7 +17,6 @@ from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.connectors.models import InputType
-from danswer.datastores.indexing_pipeline import build_indexing_pipeline
 from danswer.db.connector import disable_connector
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import get_last_successful_attempt_time
@@ -38,7 +37,8 @@ from danswer.db.index_attempt import update_docs_indexed
 from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
-from danswer.search.search_utils import warm_up_models
+from danswer.indexing.indexing_pipeline import build_indexing_pipeline
+from danswer.search.search_nlp_models import warm_up_models
 from danswer.utils.logger import IndexAttemptSingleton
 from danswer.utils.logger import setup_logger
 
@@ -164,18 +164,18 @@ def cleanup_indexing_jobs(
         )
         for index_attempt in in_progress_indexing_attempts:
             if index_attempt.id in existing_jobs:
-                # check to see if the job has been updated in the last hour, if not
+                # check to see if the job has been updated in the 3 hours, if not
                 # assume it to frozen in some bad state and just mark it as failed. Note: this relies
                 # on the fact that the `time_updated` field is constantly updated every
                 # batch of documents indexed
                 current_db_time = get_db_current_time(db_session=db_session)
                 time_since_update = current_db_time - index_attempt.time_updated
-                if time_since_update.seconds > 60 * 60:
+                if time_since_update.seconds > 3 * 60 * 60:
                     existing_jobs[index_attempt.id].cancel()
                     mark_run_failed(
                         db_session=db_session,
                         index_attempt=index_attempt,
-                        failure_reason="Indexing run frozen - no updates in last hour. "
+                        failure_reason="Indexing run frozen - no updates in 3 hours. "
                         "The run will be re-attempted at next scheduled indexing time.",
                     )
             else:
@@ -298,10 +298,20 @@ def _run_indexing(
                 net_doc_change += new_docs
                 chunk_count += total_batch_chunks
                 document_count += len(doc_batch)
+
+                # commit transaction so that the `update` below begins
+                # with a brand new transaction. Postgres uses the start
+                # of the transactions when computing `NOW()`, so if we have
+                # a long running transaction, the `time_updated` field will
+                # be inaccurate
+                db_session.commit()
+
+                # This new value is updated every batch, so UI can refresh per batch update
                 update_docs_indexed(
                     db_session=db_session,
                     index_attempt=attempt,
-                    num_docs_indexed=document_count,
+                    total_docs_indexed=document_count,
+                    new_docs_indexed=net_doc_change,
                 )
 
                 # check if connector is disabled mid run and stop if so
@@ -375,6 +385,7 @@ def _run_indexing_entrypoint(index_attempt_id: int) -> None:
                 f"with config: '{attempt.connector.connector_specific_config}', and "
                 f"with credentials: '{attempt.credential_id}'"
             )
+            mark_attempt_in_progress(attempt, db_session)
             update_connector_credential_pair(
                 db_session=db_session,
                 connector_id=attempt.connector.id,
@@ -425,12 +436,14 @@ def kickoff_indexing_jobs(
             )
             continue
 
+        if attempt.id in existing_jobs:
+            continue
+
         logger.info(
             f"Kicking off indexing attempt for connector: '{attempt.connector.name}', "
             f"with config: '{attempt.connector.connector_specific_config}', and "
             f"with credentials: '{attempt.credential_id}'"
         )
-        mark_attempt_in_progress(attempt, db_session)
         run = client.submit(_run_indexing_entrypoint, attempt.id, pure=False)
         existing_jobs_copy[attempt.id] = run
 

@@ -2,12 +2,10 @@ from collections.abc import Callable
 
 from sqlalchemy.orm import Session
 
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.datastores.document_index import get_default_document_index
 from danswer.db.feedback import create_query_event
 from danswer.db.feedback import update_query_event_retrieved_documents
 from danswer.db.models import User
@@ -16,18 +14,18 @@ from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.direct_qa.qa_utils import get_usable_chunks
+from danswer.document_index import get_default_document_index
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import query_intent
-from danswer.search.keyword_search import retrieve_keyword_documents
+from danswer.search.models import IndexFilters
 from danswer.search.models import QueryFlow
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
-from danswer.search.models import SearchType
-from danswer.search.semantic_search import chunks_to_search_docs
-from danswer.search.semantic_search import retrieve_ranked_documents
+from danswer.search.models import SearchQuery
+from danswer.search.search_runner import chunks_to_search_docs
+from danswer.search.search_runner import search_chunks
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.secondary_llm_flows.extract_filters import extract_question_time_filters
-from danswer.server.models import IndexFilters
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.utils.logger import setup_logger
@@ -51,7 +49,6 @@ def answer_qa_query(
     llm_metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,
 ) -> QAResponse:
     query = question.query
-    use_keyword = question.use_keyword
     offset_count = question.offset if question.offset is not None else 0
     logger.info(f"Received QA query: {query}")
 
@@ -61,17 +58,11 @@ def answer_qa_query(
 
     query_event_id = create_query_event(
         query=query,
-        selected_flow=SearchType.KEYWORD
-        if question.use_keyword
-        else SearchType.SEMANTIC,
+        search_type=question.search_type,
         llm_answer=None,
         user_id=user.id if user is not None else None,
         db_session=db_session,
     )
-
-    predicted_search, predicted_flow = query_intent(query)
-    if use_keyword is None:
-        use_keyword = predicted_search == SearchType.KEYWORD
 
     user_id = None if user is None else user.id
     user_acl_filters = build_access_filters_for_user(user, db_session)
@@ -81,24 +72,23 @@ def answer_qa_query(
         time_cutoff=time_cutoff,
         access_control_list=user_acl_filters,
     )
-    if use_keyword:
-        ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
-            query=query,
-            filters=final_filters,
-            favor_recent=favor_recent,
-            datastore=get_default_document_index(),
-            retrieval_metrics_callback=retrieval_metrics_callback,
-        )
-        unranked_chunks: list[InferenceChunk] | None = []
-    else:
-        ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-            query=query,
-            filters=final_filters,
-            favor_recent=favor_recent,
-            datastore=get_default_document_index(),
-            retrieval_metrics_callback=retrieval_metrics_callback,
-            rerank_metrics_callback=rerank_metrics_callback,
-        )
+    search_query = SearchQuery(
+        query=query,
+        search_type=question.search_type,
+        filters=final_filters,
+        favor_recent=True if question.favor_recent is None else question.favor_recent,
+    )
+
+    # TODO retire this
+    predicted_search, predicted_flow = query_intent(query)
+
+    ranked_chunks, unranked_chunks = search_chunks(
+        query=search_query,
+        document_index=get_default_document_index(),
+        retrieval_metrics_callback=retrieval_metrics_callback,
+        rerank_metrics_callback=rerank_metrics_callback,
+    )
+
     if not ranked_chunks:
         return QAResponse(
             answer=None,
@@ -114,6 +104,7 @@ def answer_qa_query(
 
     top_docs = chunks_to_search_docs(ranked_chunks)
     unranked_top_docs = chunks_to_search_docs(unranked_chunks)
+
     update_query_event_retrieved_documents(
         db_session=db_session,
         retrieved_document_ids=[doc.document_id for doc in top_docs],
