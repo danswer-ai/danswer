@@ -9,6 +9,10 @@ import requests
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.html_utils import parse_html_page_basic
+from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (
+    rate_limit_builder,
+)
+from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -46,6 +50,11 @@ class Document360Connector(LoadConnector, PollConnector):
         self.portal_id = credentials.get("portal_id")
         return None
 
+    # rate limiting set based on the enterprise plan: https://apidocs.document360.com/apidocs/rate-limiting
+    # NOTE: retry will handle cases where user is not on enterprise plan - we will just hit the rate limit
+    # and then retry after a period
+    @retry_builder()
+    @rate_limit_builder(max_calls=100, period=60)
     def _make_request(self, endpoint: str, params: Optional[dict] = None) -> Any:
         if not self.api_token:
             raise ConnectorMissingCredentialError("Document360")
