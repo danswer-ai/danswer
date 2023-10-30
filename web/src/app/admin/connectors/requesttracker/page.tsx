@@ -108,6 +108,7 @@ const MainSection = () => {
                     label="Request Tracker password:"
                     type="password"
                   />
+                  <TextFormField name="requesttracker_base_url" label="Request Tracker base url:" />
                 </>
               }
               validationSchema={Yup.object().shape({
@@ -115,10 +116,12 @@ const MainSection = () => {
                   "Please enter your Request Tracker username"
                 ),
                 requesttracker_password: Yup.string().required("Please enter your Request Tracker password"),
+                requesttracker_base_url: Yup.string().url().required("Please enter the base url of your RT installation")
               })}
               initialValues={{
                 requesttracker_username: "",
                 requesttracker_password: "",
+                requesttracker_base_url: "",
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
@@ -145,7 +148,7 @@ const MainSection = () => {
               connectorIndexingStatuses={requestTrackerConnectorIndexingStatuses}
               liveCredential={requestTrackerCredential}
               getCredential={(credential) =>
-                credential.credential_json.requesttracker_username
+                credential.credential_json.requesttracker_base_url
               }
               onUpdate={() =>
                 mutate("/api/manage/admin/connector/indexing-status")
@@ -165,21 +168,13 @@ const MainSection = () => {
         <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
           <h2 className="font-bold mb-3">Step 1: Connect to Request Tracker installation</h2>
           <ConnectorForm<RequestTrackerConfig>
-            nameBuilder={(values) => `RequestTracker-${values.base_url}`}
-            ccPairNameBuilder={(values) => values.base_url}
+            nameBuilder={(values) => `RequestTracker-${requestTrackerCredential.credential_json.requesttracker_base_url}`}
+            ccPairNameBuilder={(values) => requestTrackerCredential.credential_json.requesttracker_base_url}
             source="requesttracker"
             inputType="poll"
-            formBody={
-              <>
-                <TextFormField name="base_url" label="Base URL" />
-              </>
-            }
-            validationSchema={Yup.object().shape({
-              base_url: Yup.string().url().required("Please enter the base url for the RT Installation"),
-            })}
-            initialValues={{
-              base_url: "",
-            }}
+            validationSchema={Yup.object().shape({})}
+            formBody={<></>}
+            initialValues={{}}
             credentialId={requestTrackerCredential.id}
             refreshFreq={10 * 60} // 10 minutes
           />

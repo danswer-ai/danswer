@@ -28,20 +28,20 @@ class RequestTrackerError(Exception):
 class RequestTrackerConnector(PollConnector):
     def __init__(
         self,
-        base_url: str,
+        requesttracker_base_url: str,
         queues: List[str] | None = None,
         batch_size: int = INDEX_BATCH_SIZE,
         requesttracker_username: Optional[str] = None,
         requesttracker_password: Optional[str] = None,
     ) -> None:
         self.queues = queues
-        self.base_url = base_url
+        self.rt_base_url = requesttracker_base_url
         self.batch_size = batch_size
         self.rt_username = requesttracker_username
         self.rt_password = requesttracker_password
 
     def txn_link(self, tid: int, txn: int) -> str:
-        return f"{self.base_url}/Ticket/Display.html?id={tid}&txn={txn}"
+        return f"{self.rt_base_url}/Ticket/Display.html?id={tid}&txn={txn}"
 
     def build_doc_sections_from_txn(
         self, connection: Rt, ticket_id: int
@@ -56,7 +56,7 @@ class RequestTrackerConnector(PollConnector):
         for tx in get_history_resp:
             Sections.append(
                 Section(
-                    link=self.txn_link(int(tx["id"]), ticket_id),
+                    link=self.txn_link(ticket_id, int(tx["id"])),
                     text="\n".join(
                         [
                             f"{k}:\n{v}\n" if k != "Attachments" else ""
@@ -70,6 +70,7 @@ class RequestTrackerConnector(PollConnector):
     def load_credentials(self, credentials: dict[str, Any]) -> Optional[dict[str, Any]]:
         self.rt_username = credentials.get("requesttracker_username")
         self.rt_password = credentials.get("requesttracker_password")
+        self.rt_base_url = credentials.get("requesttracker_base_url")
         return None
 
     # This does not include RT file attachments yet.
@@ -80,7 +81,7 @@ class RequestTrackerConnector(PollConnector):
             raise ConnectorMissingCredentialError("requesttracker")
 
         Rt0 = Rt(
-            f"{self.base_url}/REST/1.0/",
+            f"{self.rt_base_url}/REST/1.0/",
             self.rt_username,
             self.rt_password,
         )
@@ -100,7 +101,7 @@ class RequestTrackerConnector(PollConnector):
         for ticket in tickets:
             ticket_keys_to_omit = ["id", "Subject"]
             tid: int = int(ticket["numerical_id"])
-            ticketLink: str = f"{self.base_url}/Ticket/Display.html?id={tid}"
+            ticketLink: str = f"{self.rt_base_url}/Ticket/Display.html?id={tid}"
             logger.info(f"Processing ticket {tid}")
             doc = Document(
                 id=ticket["id"],
@@ -147,6 +148,7 @@ if __name__ == "__main__":
         {
             "requesttracker_username": os.getenv("RT_USERNAME"),
             "requesttracker_password": os.getenv("RT_PASSWORD"),
+            "requesttracker_base_url": os.getenv("RT_BASE_URL"),
         }
     )
 
