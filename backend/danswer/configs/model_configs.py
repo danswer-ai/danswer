@@ -49,10 +49,8 @@ CROSS_ENCODER_RANGE_MAX = 12
 CROSS_ENCODER_RANGE_MIN = -12
 CROSS_EMBED_CONTEXT_SIZE = 512
 
-
-# Better to keep it loose, surfacing more results better than missing results
-# Currently unused by Vespa
-SEARCH_DISTANCE_CUTOFF = 0.1  # Cosine similarity (currently), range of -1 to 1 with -1 being completely opposite
+# Unused currently, can't be used with the current default encoder model due to its output range
+SEARCH_DISTANCE_CUTOFF = 0
 
 # Intent model max context size
 QUERY_MAX_CONTEXT_SIZE = 256
