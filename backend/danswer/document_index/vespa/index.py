@@ -412,7 +412,7 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
 
     return InferenceChunk(
         chunk_id=fields[CHUNK_ID],
-        blurb=fields[BLURB],
+        blurb=fields.get(BLURB, ""),
         content=fields[CONTENT],
         source_links=source_links_dict,
         section_continuation=fields[SECTION_CONTINUATION],
@@ -695,6 +695,7 @@ class VespaIndex(DocumentIndex):
             "hits": num_to_retrieve,
             "offset": 0,
             "ranking.profile": "hybrid_search",
+            "timeout": "10s",
         }
 
         return _query_vespa(params)
