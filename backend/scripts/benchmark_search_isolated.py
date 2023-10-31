@@ -1,8 +1,10 @@
 import random
 import time
 
+from danswer.configs.app_configs import DOC_TIME_DECAY
 from danswer.document_index.vespa.index import _query_vespa
 from danswer.document_index.vespa.index import VespaIndex
+from danswer.search.search_runner import embed_query
 
 question_bank = [
     "Who was the first president of the United States?",
@@ -119,10 +121,13 @@ def _measure_vespa_latency(filters: dict = {}):
     # )
     yql = VespaIndex.yql_base + '({grammar: "weakAnd"}userInput(@query))'
     query = random.choice(additional_questions)
+    query_embedding = embed_query(query)
     num_to_retrieve = 50
     params: dict[str, str | int] = {
         "yql": yql,
         "query": query,
+        "input.query(query_embedding)": str(query_embedding),
+        "input.query(decay_factor)": str(DOC_TIME_DECAY),
         "hits": num_to_retrieve,
         "offset": 0,
         "ranking.profile": "hybrid_search",
