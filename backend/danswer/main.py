@@ -25,6 +25,8 @@ from danswer.configs.constants import AuthType
 from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
+from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
+from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.db.credentials import create_initial_public_credential
 from danswer.direct_qa.llm_utils import get_default_qa_model
@@ -151,12 +153,8 @@ def get_application() -> FastAPI:
         if DISABLE_GENERATIVE_AI:
             logger.info("Generative AI Q&A disabled")
         else:
-            pass
-            # TODO rework
-            # logger.info(f"Using Internal Model: {INTERNAL_MODEL_VERSION}")
-            # logger.info(f"Actual LLM model version: {GEN_AI_MODEL_VERSION}")
-            # if API_TYPE_OPENAI == "azure":
-            #    logger.info(f"Using Azure OpenAI with Endpoint: {API_BASE_OPENAI}")
+            logger.info(f"Using LLM Provider: {GEN_AI_MODEL_PROVIDER}")
+            logger.info(f"Using LLM Model Version: {GEN_AI_MODEL_VERSION}")
 
         verify_auth = fetch_versioned_implementation(
             "danswer.auth.users", "verify_auth_setting"
