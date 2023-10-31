@@ -70,6 +70,7 @@ class DocumentSource(str, Enum):
     DOCUMENT360 = "document360"
     GONG = "gong"
     GOOGLE_SITES = "google_sites"
+    ZENDESK = "zendesk"
 
 
 class DocumentIndexType(str, Enum):
