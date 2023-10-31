@@ -125,7 +125,7 @@ def _measure_vespa_latency(filters: dict = {}):
         "query": query,
         "hits": num_to_retrieve,
         "offset": 0,
-        "ranking.profile": "keyword_search",
+        "ranking.profile": "hybrid_search",
         "timeout": "10s",
     }
     start = time.monotonic()
