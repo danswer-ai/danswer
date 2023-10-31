@@ -1,0 +1,29 @@
+import { Connector, DocumentSet } from "../types";
+import { fetchSS } from "../utilsSS";
+
+export async function fetchValidFilterInfo() {
+  const [connectorsResponse, documentSetResponse] = await Promise.all([
+    fetchSS("/manage/connector"),
+    fetchSS("/manage/document-set"),
+  ]);
+
+  let connectors = [] as Connector<any>[];
+  if (connectorsResponse.ok) {
+    connectors = (await connectorsResponse.json()) as Connector<any>[];
+  } else {
+    console.log(
+      `Failed to fetch connectors - ${connectorsResponse.status} - ${connectorsResponse.statusText}`
+    );
+  }
+
+  let documentSets = [] as DocumentSet[];
+  if (documentSetResponse.ok) {
+    documentSets = (await documentSetResponse.json()) as DocumentSet[];
+  } else {
+    console.log(
+      `Failed to fetch document sets - ${documentSetResponse.status} - ${documentSetResponse.statusText}`
+    );
+  }
+
+  return { connectors, documentSets };
+}
