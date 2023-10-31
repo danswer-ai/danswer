@@ -22,6 +22,7 @@ _LLM_TOKENIZER: Callable[[str], Any] | None = None
 
 
 def get_default_llm_tokenizer() -> Callable:
+    """Currently only supports the OpenAI default tokenizer: tiktoken"""
     global _LLM_TOKENIZER
     if _LLM_TOKENIZER is None:
         _LLM_TOKENIZER = tiktoken.get_encoding("cl100k_base").encode

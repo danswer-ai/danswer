@@ -6,7 +6,7 @@ import requests
 from langchain.schema.language_model import LanguageModelInput
 from requests import Timeout
 
-from danswer.llm.llm import LLM
+from danswer.llm.interfaces import LLM
 from danswer.llm.utils import convert_input
 
 
