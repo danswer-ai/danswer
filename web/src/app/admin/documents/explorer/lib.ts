@@ -1,4 +1,6 @@
-export const adminSearch = async (query: string) => {
+import { Filters } from "@/lib/search/interfaces";
+
+export const adminSearch = async (query: string, filters: Filters) => {
   const response = await fetch("/api/admin/search", {
     method: "POST",
     headers: {
@@ -6,6 +8,7 @@ export const adminSearch = async (query: string) => {
     },
     body: JSON.stringify({
       query,
+      filters,
     }),
   });
   return response;

@@ -4,6 +4,7 @@ import { getSourceIcon } from "../source";
 import { useState } from "react";
 import { PopupSpec } from "../admin/connectors/Popup";
 import { timeAgo } from "@/lib/time";
+import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -167,25 +168,7 @@ export const DocumentDisplay = ({
         </div>
       </div>
       {document.updated_at && (
-        <div className="flex flex-wrap gap-x-2 mt-1">
-          <div
-            className={`
-            text-xs 
-            text-gray-200 
-            bg-gray-800 
-            rounded-full 
-            px-1
-            py-0.5 
-            w-fit 
-            my-auto 
-            select-none 
-            mr-2`}
-          >
-            <div className="mr-1 my-auto flex">
-              {"Updated " + timeAgo(document.updated_at)}
-            </div>
-          </div>
-        </div>
+        <DocumentUpdatedAtBadge updatedAt={document.updated_at} />
       )}
       <p className="pl-1 pt-2 pb-3 text-gray-200 break-words">
         {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)}
