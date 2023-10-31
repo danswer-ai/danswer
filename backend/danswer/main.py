@@ -22,13 +22,9 @@ from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
-from danswer.configs.model_configs import API_BASE_OPENAI
-from danswer.configs.model_configs import API_TYPE_OPENAI
 from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
-from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
-from danswer.configs.model_configs import INTERNAL_MODEL_VERSION
 from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.db.credentials import create_initial_public_credential
 from danswer.direct_qa.llm_utils import get_default_qa_model
@@ -155,10 +151,12 @@ def get_application() -> FastAPI:
         if DISABLE_GENERATIVE_AI:
             logger.info("Generative AI Q&A disabled")
         else:
-            logger.info(f"Using Internal Model: {INTERNAL_MODEL_VERSION}")
-            logger.info(f"Actual LLM model version: {GEN_AI_MODEL_VERSION}")
-            if API_TYPE_OPENAI == "azure":
-                logger.info(f"Using Azure OpenAI with Endpoint: {API_BASE_OPENAI}")
+            pass
+            # TODO rework
+            # logger.info(f"Using Internal Model: {INTERNAL_MODEL_VERSION}")
+            # logger.info(f"Actual LLM model version: {GEN_AI_MODEL_VERSION}")
+            # if API_TYPE_OPENAI == "azure":
+            #    logger.info(f"Using Azure OpenAI with Endpoint: {API_BASE_OPENAI}")
 
         verify_auth = fetch_versioned_implementation(
             "danswer.auth.users", "verify_auth_setting"

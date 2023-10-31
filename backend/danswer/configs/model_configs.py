@@ -1,9 +1,5 @@
 import os
 
-from danswer.configs.constants import DanswerGenAIModel
-from danswer.configs.constants import ModelHostType
-
-
 #####
 # Embedding/Reranking Model Configs
 #####
@@ -62,36 +58,29 @@ INTENT_MODEL_VERSION = "danswer/intent-model"
 #####
 # Generative AI Model Configs
 #####
-# Sets the internal Danswer model class to use
-INTERNAL_MODEL_VERSION = os.environ.get(
-    "INTERNAL_MODEL_VERSION", DanswerGenAIModel.OPENAI_CHAT.value
-)
+
+# If changing GEN_AI_MODEL_PROVIDER or GEN_AI_MODEL_VERSION from the default,
+# be sure to use one that is LiteLLM compatible:
+# https://litellm.vercel.app/docs/providers/azure#completion---using-env-variables
+# The provider is the prefix before / in the model argument
+
+# Additionally Danswer supports GPT4All and custom request library based models
+# TODO re-enable GPT4ALL and request models
+GEN_AI_MODEL_PROVIDER = os.environ.get("GEN_AI_MODEL_PROVIDER") or "openai"
+GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION") or "gpt-3.5-turbo"
 
 # If the Generative AI model requires an API key for access, otherwise can leave blank
-GEN_AI_API_KEY = os.environ.get("GEN_AI_API_KEY", os.environ.get("OPENAI_API_KEY"))
+GEN_AI_API_KEY = (
+    os.environ.get("GEN_AI_API_KEY", os.environ.get("OPENAI_API_KEY")) or None
+)
 
-# TODO fix this
-GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION", "gpt-3.5-turbo")
-
-# If the Generative Model is hosted to accept requests (DanswerGenAIModel.REQUEST) then
-# set the two below to specify
-# - Where to hit the endpoint
-# - How should the request be formed
-GEN_AI_ENDPOINT = os.environ.get("GEN_AI_ENDPOINT", "")
-GEN_AI_HOST_TYPE = os.environ.get("GEN_AI_HOST_TYPE", ModelHostType.HUGGINGFACE.value)
+# API Base, such as (for Azure): https://danswer.openai.azure.com/
+GEN_AI_ENDPOINT = os.environ.get("GEN_AI_ENDPOINT") or None
+# API Version, such as (for Azure): 2023-09-15-preview
+GEN_AI_API_VERSION = os.environ.get("GEN_AI_API_VERSION") or None
 
 # Set this to be enough for an answer + quotes. Also used for Chat
 GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS") or 1024)
 # This next restriction is only used for chat ATM, used to expire old messages as needed
 GEN_AI_MAX_INPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_INPUT_TOKENS") or 3000)
 GEN_AI_TEMPERATURE = float(os.environ.get("GEN_AI_TEMPERATURE") or 0)
-
-#####
-# OpenAI Azure
-#####
-# TODO CHECK ALL THESE, MAKE SURE STILL USEFUL
-API_BASE_OPENAI = os.environ.get("API_BASE_OPENAI", "")
-API_TYPE_OPENAI = os.environ.get("API_TYPE_OPENAI", "").lower()
-API_VERSION_OPENAI = os.environ.get("API_VERSION_OPENAI", "")
-# Deployment ID used interchangeably with "engine" parameter
-AZURE_DEPLOYMENT_ID = os.environ.get("AZURE_DEPLOYMENT_ID", "")
