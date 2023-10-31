@@ -2,7 +2,6 @@ import random
 import time
 
 from danswer.document_index.vespa.index import _query_vespa
-from danswer.document_index.vespa.index import CONTENT_SUMMARY
 from danswer.document_index.vespa.index import VespaIndex
 
 question_bank = [
@@ -113,11 +112,12 @@ additional_questions = [
 
 
 def _measure_vespa_latency(filters: dict = {}):
-    yql = (
-        VespaIndex.yql_base
-        + '({grammar: "weakAnd"}userInput(@query) '
-        + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
-    )
+    # yql = (
+    #     VespaIndex.yql_base
+    #     + '({grammar: "weakAnd"}userInput(@query) '
+    #     + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
+    # )
+    yql = VespaIndex.yql_base + '({grammar: "weakAnd"}userInput(@query))'
     query = random.choice(additional_questions)
     num_to_retrieve = 50
     params: dict[str, str | int] = {
