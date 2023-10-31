@@ -20,8 +20,9 @@ export const GoogleDriveCard = ({
   const existingCredential: Credential<GoogleDriveCredentialJson> | undefined =
     userCredentials?.find(
       (credential) =>
+        // user_id is set => credential is not a public credential
         credential.credential_json?.google_drive_tokens !== undefined &&
-        !credential.public_doc
+        credential.user_id !== null
     );
 
   const credentialIsLinked =
@@ -113,7 +114,7 @@ export const GoogleDriveCard = ({
               <Button
                 onClick={async () => {
                   const [authUrl, errorMsg] = await setupGoogleDriveOAuth({
-                    isPublic: false,
+                    isAdmin: false,
                   });
                   if (authUrl) {
                     // cookie used by callback to determine where to finally redirect to

@@ -14,6 +14,7 @@ from sqlalchemy import Boolean
 from sqlalchemy import DateTime
 from sqlalchemy import Enum
 from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKeyConstraint
 from sqlalchemy import func
 from sqlalchemy import Index
 from sqlalchemy import Integer
@@ -49,6 +50,14 @@ class DeletionStatus(str, PyEnum):
     IN_PROGRESS = "in_progress"
     SUCCESS = "success"
     FAILED = "failed"
+
+
+# Consistent with Celery task statuses
+class TaskStatus(str, PyEnum):
+    PENDING = "PENDING"
+    STARTED = "STARTED"
+    SUCCESS = "SUCCESS"
+    FAILURE = "FAILURE"
 
 
 class Base(DeclarativeBase):
@@ -118,6 +127,8 @@ class DocumentSet__ConnectorCredentialPair(Base):
         primary_key=True,
     )
 
+    document_set: Mapped["DocumentSet"] = relationship("DocumentSet")
+
 
 class ConnectorCredentialPair(Base):
     """Connectors and Credentials can have a many-to-many relationship
@@ -143,6 +154,14 @@ class ConnectorCredentialPair(Base):
     credential_id: Mapped[int] = mapped_column(
         ForeignKey("credential.id"), primary_key=True
     )
+    # controls whether the documents indexed by this CC pair are visible to all
+    # or if they are only visible to those with that are given explicit access
+    # (e.g. via owning the credential or being a part of a group that is given access)
+    is_public: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False,
+    )
     # Time finished, not used for calculating backend jobs which uses time started (created)
     last_successful_index_time: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
@@ -162,6 +181,7 @@ class ConnectorCredentialPair(Base):
         "DocumentSet",
         secondary=DocumentSet__ConnectorCredentialPair.__table__,
         back_populates="connector_credential_pairs",
+        overlaps="document_set",
     )
 
 
@@ -205,7 +225,8 @@ class Credential(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     credential_json: Mapped[dict[str, Any]] = mapped_column(postgresql.JSONB())
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
-    public_doc: Mapped[bool] = mapped_column(Boolean, default=False)
+    # if `true`, then all Admins will have access to the credential
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=True)
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -246,7 +267,8 @@ class IndexAttempt(Base):
         nullable=True,
     )
     status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
-    num_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
+    new_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
+    total_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
     error_msg: Mapped[str | None] = mapped_column(
         Text, default=None
     )  # only filled if status = "failed"
@@ -325,6 +347,12 @@ class QueryEvent(Base):
         Enum(SearchType), nullable=True
     )
     llm_answer: Mapped[str | None] = mapped_column(Text, default=None)
+    # Document IDs of the top context documents retrieved for the query (if any)
+    # NOTE: not using a foreign key to enable easy deletion of documents without
+    # needing to adjust `QueryEvent` rows
+    retrieved_document_ids: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
     feedback: Mapped[QAFeedbackType | None] = mapped_column(
         Enum(QAFeedbackType), nullable=True
     )
@@ -377,6 +405,19 @@ class Document(Base):
     semantic_id: Mapped[str] = mapped_column(String)
     # First Section's link
     link: Mapped[str | None] = mapped_column(String, nullable=True)
+    doc_updated_at: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # The following are not attached to User because the account/email may not be known
+    # within Danswer
+    # Something like the document creator
+    primary_owners: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
+    # Something like assignee or space owner
+    secondary_owners: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
     # TODO if more sensitive data is added here for display, make sure to add user/group permission
 
     retrieval_feedbacks: Mapped[List[DocumentRetrievalFeedback]] = relationship(
@@ -398,6 +439,7 @@ class DocumentSet(Base):
         "ConnectorCredentialPair",
         secondary=DocumentSet__ConnectorCredentialPair.__table__,
         back_populates="document_sets",
+        overlaps="document_set",
     )
     personas: Mapped[list["Persona"]] = relationship(
         "Persona",
@@ -429,15 +471,24 @@ class ChatSession(Base):
     )
 
 
+class ToolInfo(TypedDict):
+    name: str
+    description: str
+
+
 class Persona(Base):
     # TODO introduce user and group ownership for personas
     __tablename__ = "persona"
+
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
     # Danswer retrieval, treated as a special tool
     retrieval_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    datetime_aware: Mapped[bool] = mapped_column(Boolean, default=True)
     system_text: Mapped[str | None] = mapped_column(Text, nullable=True)
-    tools_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tools: Mapped[list[ToolInfo] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
+    )
     hint_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Default personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
@@ -449,6 +500,16 @@ class Persona(Base):
         "DocumentSet",
         secondary=Persona__DocumentSet.__table__,
         back_populates="personas",
+    )
+
+    # Default personas loaded via yaml cannot have the same name
+    __table_args__ = (
+        Index(
+            "_default_persona_name_idx",
+            "name",
+            unique=True,
+            postgresql_where=(default_persona == True),  # noqa: E712
+        ),
     )
 
 
@@ -467,6 +528,9 @@ class ChatMessage(Base):
     message: Mapped[str] = mapped_column(Text)
     token_count: Mapped[int] = mapped_column(Integer)
     message_type: Mapped[MessageType] = mapped_column(Enum(MessageType))
+    reference_docs: Mapped[dict[str, Any] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
+    )
     persona_id: Mapped[int | None] = mapped_column(
         ForeignKey("persona.id"), nullable=True
     )
@@ -476,6 +540,42 @@ class ChatMessage(Base):
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
     persona: Mapped[Persona | None] = relationship("Persona")
+
+
+class ChatMessageFeedback(Base):
+    __tablename__ = "chat_feedback"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    chat_message_chat_session_id: Mapped[int] = mapped_column(Integer)
+    chat_message_message_number: Mapped[int] = mapped_column(Integer)
+    chat_message_edit_number: Mapped[int] = mapped_column(Integer)
+    is_positive: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    feedback_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            [
+                "chat_message_chat_session_id",
+                "chat_message_message_number",
+                "chat_message_edit_number",
+            ],
+            [
+                "chat_message.chat_session_id",
+                "chat_message.message_number",
+                "chat_message.edit_number",
+            ],
+        ),
+    )
+
+    chat_message: Mapped[ChatMessage] = relationship(
+        "ChatMessage",
+        foreign_keys=[
+            chat_message_chat_session_id,
+            chat_message_message_number,
+            chat_message_edit_number,
+        ],
+        backref="feedbacks",
+    )
 
 
 AllowedAnswerFilters = (
@@ -506,3 +606,22 @@ class SlackBotConfig(Base):
     )
 
     persona: Mapped[Persona | None] = relationship("Persona")
+
+
+class TaskQueueState(Base):
+    # Currently refers to Celery Tasks
+    __tablename__ = "task_queue_jobs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # Celery task id
+    task_id: Mapped[str] = mapped_column(String)
+    # For any job type, this would be the same
+    task_name: Mapped[str] = mapped_column(String)
+    # Note that if the task dies, this won't necessarily be marked FAILED correctly
+    status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus))
+    start_time: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    register_time: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

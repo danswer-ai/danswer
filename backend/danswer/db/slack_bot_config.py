@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from danswer.db.chat import create_persona
+from danswer.db.chat import upsert_persona
 from danswer.db.models import ChannelConfig
 from danswer.db.models import Persona
 from danswer.db.models import Persona__DocumentSet
@@ -35,12 +35,13 @@ def _create_slack_bot_persona(
     """NOTE: does not commit changes"""
     # create/update persona associated with the slack bot
     persona_name = _build_persona_name(channel_names)
-    persona = create_persona(
+    persona = upsert_persona(
         persona_id=existing_persona_id,
         name=persona_name,
+        datetime_aware=False,
         retrieval_enabled=True,
         system_text=None,
-        tools_text=None,
+        tools=None,
         hint_text=None,
         default_persona=False,
         db_session=db_session,

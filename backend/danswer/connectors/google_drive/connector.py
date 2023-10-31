@@ -1,8 +1,9 @@
-import datetime
 import io
 import tempfile
 from collections.abc import Iterator
 from collections.abc import Sequence
+from datetime import datetime
+from datetime import timezone
 from enum import Enum
 from itertools import chain
 from typing import Any
@@ -12,7 +13,6 @@ import docx2txt  # type:ignore
 from google.auth.credentials import Credentials  # type: ignore
 from googleapiclient import discovery  # type: ignore
 from googleapiclient.errors import HttpError  # type: ignore
-from PyPDF2 import PdfReader
 
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import GOOGLE_DRIVE_FOLLOW_SHORTCUTS
@@ -20,6 +20,8 @@ from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
+from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
+from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
 from danswer.connectors.google_drive.connector_auth import (
     get_google_drive_creds_for_authorized_user,
 )
@@ -60,6 +62,8 @@ class GDriveMimeType(str, Enum):
 
 GoogleDriveFileType = dict[str, Any]
 
+add_retries = retry_builder()
+
 
 def _run_drive_file_query(
     service: discovery.Resource,
@@ -72,22 +76,26 @@ def _run_drive_file_query(
     next_page_token = ""
     while next_page_token is not None:
         logger.debug(f"Running Google Drive fetch with query: {query}")
-        results = (
-            service.files()
-            .list(
-                corpora="allDrives",  # needed to search through shared drives
-                pageSize=batch_size,
-                supportsAllDrives=include_shared,
-                includeItemsFromAllDrives=include_shared,
-                fields=(
-                    "nextPageToken, files(mimeType, id, name, "
-                    "webViewLink, shortcutDetails)"
-                ),
-                pageToken=next_page_token,
-                q=query,
+        results = add_retries(
+            lambda: (
+                service.files()
+                .list(
+                    corpora="allDrives"
+                    if include_shared
+                    else "user",  # needed to search through shared drives
+                    pageSize=batch_size,
+                    supportsAllDrives=include_shared,
+                    includeItemsFromAllDrives=include_shared,
+                    fields=(
+                        "nextPageToken, files(mimeType, id, name, "
+                        "modifiedTime, webViewLink, shortcutDetails)"
+                    ),
+                    pageToken=next_page_token,
+                    q=query,
+                )
+                .execute()
             )
-            .execute()
-        )
+        )()
         next_page_token = results.get("nextPageToken")
         files = results["files"]
         for file in files:
@@ -96,9 +104,9 @@ def _run_drive_file_query(
                     file = service.files().get(
                         fileId=file["shortcutDetails"]["targetId"],
                         supportsAllDrives=include_shared,
-                        fields="mimeType, id, name, webViewLink, shortcutDetails",
+                        fields="mimeType, id, name, modifiedTime, webViewLink, shortcutDetails",
                     )
-                    file = file.execute()
+                    file = add_retries(lambda: file.execute())()
                 except HttpError:
                     logger.error(
                         f"Failed to follow shortcut with details: {file['shortcutDetails']}"
@@ -126,17 +134,19 @@ def _get_folder_id(
         query += f"mimeType='{DRIVE_FOLDER_TYPE}'"
 
     # TODO: support specifying folder path in shared drive rather than just `My Drive`
-    results = (
-        service.files()
-        .list(
-            q=query,
-            spaces="drive",
-            fields="nextPageToken, files(id, name, shortcutDetails)",
-            supportsAllDrives=include_shared,
-            includeItemsFromAllDrives=include_shared,
+    results = add_retries(
+        lambda: (
+            service.files()
+            .list(
+                q=query,
+                spaces="drive",
+                fields="nextPageToken, files(id, name, shortcutDetails)",
+                supportsAllDrives=include_shared,
+                includeItemsFromAllDrives=include_shared,
+            )
+            .execute()
         )
-        .execute()
-    )
+    )()
     items = results.get("files", [])
 
     folder_id = None
@@ -192,12 +202,10 @@ def _get_files(
 ) -> Iterator[GoogleDriveFileType]:
     query = f"mimeType != '{DRIVE_FOLDER_TYPE}' "
     if time_range_start is not None:
-        time_start = (
-            datetime.datetime.utcfromtimestamp(time_range_start).isoformat() + "Z"
-        )
+        time_start = datetime.utcfromtimestamp(time_range_start).isoformat() + "Z"
         query += f"and modifiedTime >= '{time_start}' "
     if time_range_end is not None:
-        time_stop = datetime.datetime.utcfromtimestamp(time_range_end).isoformat() + "Z"
+        time_stop = datetime.utcfromtimestamp(time_range_end).isoformat() + "Z"
         query += f"and modifiedTime <= '{time_stop}' "
     if folder_id:
         query += f"and '{folder_id}' in parents "
@@ -311,16 +319,8 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
         return docx2txt.process(temp_path)
     elif mime_type == GDriveMimeType.PDF.value:
         response = service.files().get_media(fileId=file["id"]).execute()
-        pdf_stream = io.BytesIO(response)
-        pdf_reader = PdfReader(pdf_stream)
-
-        if pdf_reader.is_encrypted:
-            logger.warning(
-                f"Google drive file: {file['name']} is encrypted - Danswer will ignore it's content"
-            )
-            return ""
-
-        return "\n".join(page.extract_text() for page in pdf_reader.pages)
+        file_contents = read_pdf_file(file=io.BytesIO(response), file_name=file["name"])
+        return file_contents
 
     return UNSUPPORTED_FILE_TYPE_CONTENT
 
@@ -470,6 +470,9 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                             ],
                             source=DocumentSource.GOOGLE_DRIVE,
                             semantic_identifier=file["name"],
+                            doc_updated_at=datetime.fromisoformat(
+                                file["modifiedTime"]
+                            ).astimezone(timezone.utc),
                             metadata={} if text_contents else {IGNORE_FOR_QA: True},
                         )
                     )

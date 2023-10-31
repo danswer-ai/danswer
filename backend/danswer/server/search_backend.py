@@ -1,35 +1,41 @@
 from collections.abc import Generator
-from dataclasses import asdict
 
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.datastores.document_index import get_default_document_index
 from danswer.db.engine import get_session
 from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.feedback import create_query_event
 from danswer.db.feedback import update_query_event_feedback
+from danswer.db.feedback import update_query_event_retrieved_documents
 from danswer.db.models import User
 from danswer.direct_qa.answer_question import answer_qa_query
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
+from danswer.direct_qa.interfaces import StreamingError
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.qa_utils import get_usable_chunks
+from danswer.document_index import get_default_document_index
+from danswer.document_index.vespa.index import VespaIndex
+from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import query_intent
 from danswer.search.danswer_helper import recommend_search_flow
-from danswer.search.keyword_search import retrieve_keyword_documents
+from danswer.search.models import IndexFilters
 from danswer.search.models import QueryFlow
-from danswer.search.models import SearchType
-from danswer.search.semantic_search import chunks_to_search_docs
-from danswer.search.semantic_search import retrieve_ranked_documents
+from danswer.search.models import SearchQuery
+from danswer.search.search_runner import chunks_to_search_docs
+from danswer.search.search_runner import search_chunks
+from danswer.secondary_llm_flows.extract_filters import extract_question_time_filters
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
 from danswer.server.models import HelperResponse
@@ -37,6 +43,8 @@ from danswer.server.models import QAFeedbackRequest
 from danswer.server.models import QAResponse
 from danswer.server.models import QueryValidationResponse
 from danswer.server.models import QuestionRequest
+from danswer.server.models import RerankedRetrievalDocs
+from danswer.server.models import SearchDoc
 from danswer.server.models import SearchFeedbackRequest
 from danswer.server.models import SearchResponse
 from danswer.server.utils import get_json_line
@@ -48,13 +56,63 @@ logger = setup_logger()
 router = APIRouter()
 
 
+"""Admin-only search endpoints"""
+
+
+class AdminSearchRequest(BaseModel):
+    query: str
+
+
+class AdminSearchResponse(BaseModel):
+    documents: list[SearchDoc]
+
+
+@router.post("/admin/search")
+def admin_search(
+    question: AdminSearchRequest,
+    user: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> AdminSearchResponse:
+    query = question.query
+    logger.info(f"Received admin search query: {query}")
+
+    user_acl_filters = build_access_filters_for_user(user, db_session)
+    final_filters = IndexFilters(
+        source_type=None,
+        document_set=None,
+        time_cutoff=None,
+        access_control_list=user_acl_filters,
+    )
+    document_index = get_default_document_index()
+    if not isinstance(document_index, VespaIndex):
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot use admin-search when using a non-Vespa document index",
+        )
+
+    matching_chunks = document_index.admin_retrieval(query=query, filters=final_filters)
+
+    documents = chunks_to_search_docs(matching_chunks)
+
+    # deduplicate documents by id
+    deduplicated_documents: list[SearchDoc] = []
+    seen_documents: set[str] = set()
+    for document in documents:
+        if document.document_id not in seen_documents:
+            deduplicated_documents.append(document)
+            seen_documents.add(document.document_id)
+    return AdminSearchResponse(documents=deduplicated_documents)
+
+
+"""Search endpoints for all"""
+
+
 @router.post("/search-intent")
 def get_search_type(
     question: QuestionRequest, _: User = Depends(current_user)
 ) -> HelperResponse:
     query = question.query
-    use_keyword = question.use_keyword if question.use_keyword is not None else False
-    return recommend_search_flow(query, use_keyword)
+    return recommend_search_flow(query)
 
 
 @router.post("/query-validation")
@@ -76,73 +134,72 @@ def stream_query_validation(
     )
 
 
-@router.post("/semantic-search")
-def semantic_search(
+@router.post("/document-search")
+def handle_search_request(
     question: QuestionRequest,
-    user: User = Depends(current_user),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> SearchResponse:
     query = question.query
+    logger.info(f"Received {question.search_type.value} " f"search query: {query}")
+
+    time_cutoff, favor_recent = extract_question_time_filters(question)
+    question.filters.time_cutoff = time_cutoff
     filters = question.filters
-    logger.info(f"Received semantic search query: {query}")
+    user_id = None if user is None else user.id
 
     query_event_id = create_query_event(
         query=query,
-        selected_flow=SearchType.SEMANTIC,
+        search_type=question.search_type,
         llm_answer=None,
-        user_id=user.id,
+        user_id=user_id,
         db_session=db_session,
     )
 
-    user_id = None if user is None else user.id
-    ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-        query, user_id, filters, get_default_document_index()
+    user_acl_filters = build_access_filters_for_user(user, db_session)
+    final_filters = IndexFilters(
+        source_type=filters.source_type,
+        document_set=filters.document_set,
+        time_cutoff=filters.time_cutoff,
+        access_control_list=user_acl_filters,
     )
+
+    search_query = SearchQuery(
+        query=query,
+        search_type=question.search_type,
+        filters=final_filters,
+        favor_recent=favor_recent,
+    )
+
+    ranked_chunks, unranked_chunks = search_chunks(
+        query=search_query, document_index=get_default_document_index()
+    )
+
     if not ranked_chunks:
         return SearchResponse(
-            top_ranked_docs=None, lower_ranked_docs=None, query_event_id=query_event_id
+            top_ranked_docs=None,
+            lower_ranked_docs=None,
+            query_event_id=query_event_id,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
         )
 
     top_docs = chunks_to_search_docs(ranked_chunks)
-    other_top_docs = chunks_to_search_docs(unranked_chunks)
+    lower_top_docs = chunks_to_search_docs(unranked_chunks)
+
+    update_query_event_retrieved_documents(
+        db_session=db_session,
+        retrieved_document_ids=[doc.document_id for doc in top_docs],
+        query_id=query_event_id,
+        user_id=user_id,
+    )
 
     return SearchResponse(
         top_ranked_docs=top_docs,
-        lower_ranked_docs=other_top_docs,
+        lower_ranked_docs=lower_top_docs or None,
         query_event_id=query_event_id,
-    )
-
-
-@router.post("/keyword-search")
-def keyword_search(
-    question: QuestionRequest,
-    user: User = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> SearchResponse:
-    query = question.query
-    filters = question.filters
-    logger.info(f"Received keyword search query: {query}")
-
-    query_event_id = create_query_event(
-        query=query,
-        selected_flow=SearchType.KEYWORD,
-        llm_answer=None,
-        user_id=user.id,
-        db_session=db_session,
-    )
-
-    user_id = None if user is None else user.id
-    ranked_chunks = retrieve_keyword_documents(
-        query, user_id, filters, get_default_document_index()
-    )
-    if not ranked_chunks:
-        return SearchResponse(
-            top_ranked_docs=None, lower_ranked_docs=None, query_event_id=query_event_id
-        )
-
-    top_docs = chunks_to_search_docs(ranked_chunks)
-    return SearchResponse(
-        top_ranked_docs=top_docs, lower_ranked_docs=None, query_event_id=query_event_id
+        time_cutoff=time_cutoff,
+        favor_recent=favor_recent,
     )
 
 
@@ -152,6 +209,8 @@ def direct_qa(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> QAResponse:
+    # Everything handled via answer_qa_query which is also used by default
+    # for the DanswerBot flow
     return answer_qa_query(question=question, user=user, db_session=db_session)
 
 
@@ -168,10 +227,10 @@ def stream_direct_qa(
     predicted_search_key = "predicted_search"
     query_event_id_key = "query_event_id"
 
-    logger.debug(f"Received QA query: {question.query}")
+    logger.debug(
+        f"Received QA query ({question.search_type.value} search): {question.query}"
+    )
     logger.debug(f"Query filters: {question.filters}")
-    if question.use_keyword:
-        logger.debug("User selected Keyword Search")
 
     @log_generator_function_time()
     def stream_qa_portions(
@@ -179,30 +238,34 @@ def stream_direct_qa(
     ) -> Generator[str, None, None]:
         answer_so_far: str = ""
         query = question.query
-        filters = question.filters
-        use_keyword = question.use_keyword
         offset_count = question.offset if question.offset is not None else 0
 
-        predicted_search, predicted_flow = query_intent(query)
-        if use_keyword is None:
-            use_keyword = predicted_search == SearchType.KEYWORD
+        time_cutoff, favor_recent = extract_question_time_filters(question)
+        question.filters.time_cutoff = time_cutoff  # not used but just in case
+        filters = question.filters
 
-        user_id = None if user is None else user.id
-        if use_keyword:
-            ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
-                query,
-                user_id,
-                filters,
-                get_default_document_index(),
-            )
-            unranked_chunks: list[InferenceChunk] | None = []
-        else:
-            ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-                query,
-                user_id,
-                filters,
-                get_default_document_index(),
-            )
+        user_acl_filters = build_access_filters_for_user(user, db_session)
+        final_filters = IndexFilters(
+            source_type=filters.source_type,
+            document_set=filters.document_set,
+            time_cutoff=time_cutoff,
+            access_control_list=user_acl_filters,
+        )
+
+        search_query = SearchQuery(
+            query=query,
+            search_type=question.search_type,
+            filters=final_filters,
+            favor_recent=favor_recent,
+        )
+
+        ranked_chunks, unranked_chunks = search_chunks(
+            query=search_query, document_index=get_default_document_index()
+        )
+
+        # TODO retire this
+        predicted_search, predicted_flow = query_intent(query)
+
         if not ranked_chunks:
             logger.debug("No Documents Found")
             empty_docs_result = {
@@ -217,18 +280,21 @@ def stream_direct_qa(
 
         top_docs = chunks_to_search_docs(ranked_chunks)
         unranked_top_docs = chunks_to_search_docs(unranked_chunks)
-        initial_response_dict = {
-            top_documents_key: [top_doc.json() for top_doc in top_docs],
-            unranked_top_docs_key: [doc.json() for doc in unranked_top_docs],
+        initial_response = RerankedRetrievalDocs(
+            top_documents=top_docs,
+            unranked_top_documents=unranked_top_docs,
             # if generative AI is disabled, set flow as search so frontend
             # doesn't ask the user if they want to run QA over more documents
-            predicted_flow_key: QueryFlow.SEARCH
+            predicted_flow=QueryFlow.SEARCH
             if disable_generative_answer
             else predicted_flow,
-            predicted_search_key: predicted_search,
-        }
-        logger.debug(send_packet_debug_msg.format(initial_response_dict))
-        yield get_json_line(initial_response_dict)
+            predicted_search=predicted_search,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
+        ).dict()
+
+        logger.debug(send_packet_debug_msg.format(initial_response))
+        yield get_json_line(initial_response)
 
         if disable_generative_answer:
             logger.debug("Skipping QA because generative AI is disabled")
@@ -238,7 +304,8 @@ def stream_direct_qa(
             qa_model = get_default_qa_model()
         except (UnknownModelError, OpenAIKeyMissing) as e:
             logger.exception("Unable to get QA model")
-            yield get_json_line({"error": str(e)})
+            error = StreamingError(error=str(e))
+            yield get_json_line(error.dict())
             return
 
         # remove chunks marked as not applicable for QA (e.g. Google Drive file
@@ -270,24 +337,24 @@ def stream_direct_qa(
                 ):
                     answer_so_far = answer_so_far + response_packet.answer_piece
                 logger.debug(f"Sending packet: {response_packet}")
-                yield get_json_line(asdict(response_packet))
-        except Exception as e:
+                yield get_json_line(response_packet.dict())
+        except Exception:
             # exception is logged in the answer_question method, no need to re-log
-            yield get_json_line({"error": str(e)})
             logger.exception("Failed to run QA")
+            yield get_json_line(
+                {"error": "The LLM failed to produce a useable response"}
+            )
 
         query_event_id = create_query_event(
             query=query,
-            selected_flow=SearchType.KEYWORD
-            if question.use_keyword
-            else SearchType.SEMANTIC,
+            search_type=question.search_type,
             llm_answer=answer_so_far,
-            user_id=user_id,
+            retrieved_document_ids=[doc.document_id for doc in top_docs],
+            user_id=None if user is None else user.id,
             db_session=db_session,
         )
 
         yield get_json_line({query_event_id_key: query_event_id})
-
         return
 
     return StreamingResponse(stream_qa_portions(), media_type="application/json")

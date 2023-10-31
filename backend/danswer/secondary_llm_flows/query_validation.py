@@ -1,10 +1,10 @@
 import re
 from collections.abc import Iterator
-from dataclasses import asdict
 
 from danswer.configs.constants import CODE_BLOCK_PAT
 from danswer.configs.constants import GENERAL_SEP_PAT
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
+from danswer.direct_qa.interfaces import StreamingError
 from danswer.direct_qa.qa_block import dict_based_prompt_to_langchain_prompt
 from danswer.llm.build import get_default_llm
 from danswer.server.models import QueryValidationResponse
@@ -115,7 +115,7 @@ def stream_query_answerability(user_query: str) -> Iterator[str]:
                 remaining = model_output[reason_ind + len(REASONING_PAT) :]
                 if remaining:
                     yield get_json_line(
-                        asdict(DanswerAnswerPiece(answer_piece=remaining))
+                        DanswerAnswerPiece(answer_piece=remaining).dict()
                     )
                 continue
 
@@ -124,7 +124,7 @@ def stream_query_answerability(user_query: str) -> Iterator[str]:
                 if hold_answerable == ANSWERABLE_PAT[: len(hold_answerable)]:
                     continue
                 yield get_json_line(
-                    asdict(DanswerAnswerPiece(answer_piece=hold_answerable))
+                    DanswerAnswerPiece(answer_piece=hold_answerable).dict()
                 )
                 hold_answerable = ""
 
@@ -136,6 +136,7 @@ def stream_query_answerability(user_query: str) -> Iterator[str]:
         )
     except Exception as e:
         # exception is logged in the answer_question method, no need to re-log
-        yield get_json_line({"error": str(e)})
+        error = StreamingError(error=str(e))
+        yield get_json_line(error.dict())
         logger.exception("Failed to validate Query")
     return

@@ -129,7 +129,6 @@ const DocumentSetTable = ({
           },
         ]}
         data={documentSets
-          .filter((documentSet) => documentSet.cc_pair_descriptors.length > 0)
           .slice((page - 1) * numToDisplay, page * numToDisplay)
           .map((documentSet) => {
             return {
@@ -160,6 +159,7 @@ const DocumentSetTable = ({
                           <ConnectorTitle
                             connector={ccPairDescriptor.connector}
                             ccPairName={ccPairDescriptor.name}
+                            ccPairId={ccPairDescriptor.id}
                             showMetadata={false}
                           />
                         </div>
@@ -170,9 +170,13 @@ const DocumentSetTable = ({
               ),
               status: documentSet.is_up_to_date ? (
                 <div className="text-emerald-600">Up to date!</div>
-              ) : (
+              ) : documentSet.cc_pair_descriptors.length > 0 ? (
                 <div className="text-gray-300 w-10">
                   <LoadingAnimation text="Syncing" />
+                </div>
+              ) : (
+                <div className="text-red-500 w-10">
+                  <LoadingAnimation text="Deleting" />
                 </div>
               ),
               delete: (
@@ -182,13 +186,13 @@ const DocumentSetTable = ({
                     const response = await deleteDocumentSet(documentSet.id);
                     if (response.ok) {
                       setPopup({
-                        message: `Document set "${documentSet.name}" deleted`,
+                        message: `Document set "${documentSet.name}" scheduled for deletion`,
                         type: "success",
                       });
                     } else {
                       const errorMsg = (await response.json()).detail;
                       setPopup({
-                        message: `Failed to delete document set - ${errorMsg}`,
+                        message: `Failed to schedule document set for deletion - ${errorMsg}`,
                         type: "error",
                       });
                     }

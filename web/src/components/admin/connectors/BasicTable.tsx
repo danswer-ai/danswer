@@ -14,9 +14,14 @@ type TableData = {
 interface BasicTableProps {
   columns: Column[];
   data: TableData[];
+  onSelect?: (row: TableData) => void;
 }
 
-export const BasicTable: FC<BasicTableProps> = ({ columns, data }) => {
+export const BasicTable: FC<BasicTableProps> = ({
+  columns,
+  data,
+  onSelect,
+}) => {
   return (
     <div>
       <table className="w-full table-auto">
@@ -46,7 +51,14 @@ export const BasicTable: FC<BasicTableProps> = ({ columns, data }) => {
         </thead>
         <tbody>
           {data.map((row, rowIndex) => (
-            <tr key={rowIndex} className="text-sm">
+            <tr
+              key={rowIndex}
+              className={
+                "text-sm" +
+                (onSelect ? " hover:bg-gray-800 cursor-pointer" : "")
+              }
+              onClick={() => onSelect && onSelect(row)}
+            >
               {columns.map((column, colIndex) => {
                 const isRightAligned = column?.alignment === "right";
                 return (

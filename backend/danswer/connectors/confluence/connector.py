@@ -1,4 +1,3 @@
-import os
 from collections.abc import Callable
 from collections.abc import Collection
 from datetime import datetime
@@ -10,9 +9,11 @@ from urllib.parse import urlparse
 from atlassian import Confluence  # type:ignore
 from requests import HTTPError
 
+from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.html_utils import parse_html_page_basic
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -21,7 +22,6 @@ from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
-from danswer.utils.text_processing import parse_html_page_basic
 
 logger = setup_logger()
 
@@ -31,17 +31,12 @@ logger = setup_logger()
 # 3. Segment into Sections for more accurate linking, can split by headers but make sure no text/ordering is lost
 
 
-def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str]:
+def _extract_confluence_keys_from_cloud_url(wiki_url: str) -> tuple[str, str]:
     """Sample
     https://danswer.atlassian.net/wiki/spaces/1234abcd/overview
-    wiki_base is danswer.atlassian.net/wiki
+    wiki_base is https://danswer.atlassian.net/wiki
     space is 1234abcd
     """
-    if ".atlassian.net/wiki/spaces/" not in wiki_url:
-        raise ValueError(
-            "Not a valid Confluence Wiki Link, unable to extract wiki base and space names"
-        )
-
     parsed_url = urlparse(wiki_url)
     wiki_base = (
         parsed_url.scheme
@@ -51,6 +46,42 @@ def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str]:
     )
     space = parsed_url.path.split("/")[3]
     return wiki_base, space
+
+
+def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, str]:
+    """Sample
+    https://danswer.ai/confluence/display/1234abcd/overview
+    wiki_base is https://danswer.ai/confluence
+    space is 1234abcd
+    """
+    # /display/ is always right before the space and at the end of the base url
+    DISPLAY = "/display/"
+
+    parsed_url = urlparse(wiki_url)
+    wiki_base = (
+        parsed_url.scheme
+        + "://"
+        + parsed_url.netloc
+        + parsed_url.path.split(DISPLAY)[0]
+    )
+    space = DISPLAY.join(parsed_url.path.split(DISPLAY)[1:]).split("/")[0]
+    return wiki_base, space
+
+
+def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str, bool]:
+    is_confluence_cloud = ".atlassian.net/wiki/spaces/" in wiki_url
+
+    try:
+        if is_confluence_cloud:
+            wiki_base, space = _extract_confluence_keys_from_cloud_url(wiki_url)
+        else:
+            wiki_base, space = _extract_confluence_keys_from_datacenter_url(wiki_url)
+    except Exception as e:
+        error_msg = f"Not a valid Confluence Wiki Link, unable to extract wiki base and space names. Exception: {e}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
+    return wiki_base, space, is_confluence_cloud
 
 
 def _comment_dfs(
@@ -80,10 +111,17 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         wiki_page_url: str,
         batch_size: int = INDEX_BATCH_SIZE,
         continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
+        # if a page has one of the labels specified in this list, we will just
+        # skip it. This is generally used to avoid indexing extra sensitive
+        # pages.
+        labels_to_skip: list[str] = CONFLUENCE_CONNECTOR_LABELS_TO_SKIP,
     ) -> None:
         self.batch_size = batch_size
         self.continue_on_failure = continue_on_failure
-        self.wiki_base, self.space = extract_confluence_keys_from_url(wiki_page_url)
+        self.labels_to_skip = set(labels_to_skip)
+        self.wiki_base, self.space, self.is_cloud = extract_confluence_keys_from_url(
+            wiki_page_url
+        )
         self.confluence_client: Confluence | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
@@ -91,9 +129,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         access_token = credentials["confluence_access_token"]
         self.confluence_client = Confluence(
             url=self.wiki_base,
-            username=username,
-            password=access_token,
-            cloud=True,
+            # passing in username causes issues for Confluence data center
+            username=username if self.is_cloud else None,
+            password=access_token if self.is_cloud else None,
+            token=access_token if not self.is_cloud else None,
+            cloud=self.is_cloud,
         )
         return None
 
@@ -186,6 +226,17 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             )
             return ""
 
+    def _fetch_labels(self, confluence_client: Confluence, page_id: str) -> list[str]:
+        try:
+            labels_response = confluence_client.get_page_labels(page_id)
+            return [label["name"] for label in labels_response["results"]]
+        except Exception as e:
+            if not self.continue_on_failure:
+                raise e
+
+            logger.exception("Ran into exception when fetching labels from Confluence")
+            return []
+
     def _get_doc_batch(
         self, start_ind: int, time_filter: Callable[[datetime], bool] | None = None
     ) -> tuple[list[Document], int]:
@@ -197,9 +248,30 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         batch = self._fetch_pages(self.confluence_client, start_ind)
         for page in batch:
             last_modified_str = page["version"]["when"]
+            author = cast(str | None, page["version"].get("by", {}).get("email"))
             last_modified = datetime.fromisoformat(last_modified_str)
 
+            if last_modified.tzinfo is None:
+                # If no timezone info, assume it is UTC
+                last_modified = last_modified.replace(tzinfo=timezone.utc)
+            else:
+                # If not in UTC, translate it
+                last_modified = last_modified.astimezone(timezone.utc)
+
             if time_filter is None or time_filter(last_modified):
+                page_id = page["id"]
+
+                # check disallowed labels
+                if self.labels_to_skip:
+                    page_labels = self._fetch_labels(self.confluence_client, page_id)
+                    label_intersection = self.labels_to_skip.intersection(page_labels)
+                    if label_intersection:
+                        logger.info(
+                            f"Page with ID '{page_id}' has a label which has been "
+                            f"designated as disallowed: {label_intersection}. Skipping."
+                        )
+                        continue
+
                 page_html = (
                     page["body"]
                     .get("storage", page["body"].get("view", {}))
@@ -212,7 +284,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 page_text = (
                     page.get("title", "") + "\n" + parse_html_page_basic(page_html)
                 )
-                comments_text = self._fetch_comments(self.confluence_client, page["id"])
+                comments_text = self._fetch_comments(self.confluence_client, page_id)
                 page_text += comments_text
 
                 doc_batch.append(
@@ -221,9 +293,10 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         sections=[Section(link=page_url, text=page_text)],
                         source=DocumentSource.CONFLUENCE,
                         semantic_identifier=page["title"],
+                        doc_updated_at=last_modified,
+                        primary_owners=[author] if author else None,
                         metadata={
                             "Wiki Space Name": self.space,
-                            "Updated At": page["version"]["friendlyWhen"],
                         },
                     )
                 )
@@ -266,6 +339,8 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
 
 if __name__ == "__main__":
+    import os
+
     connector = ConfluenceConnector(os.environ["CONFLUENCE_TEST_SPACE_URL"])
     connector.load_credentials(
         {

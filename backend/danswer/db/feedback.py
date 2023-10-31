@@ -4,15 +4,19 @@ from sqlalchemy import asc
 from sqlalchemy import delete
 from sqlalchemy import desc
 from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
+from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
-from danswer.datastores.document_index import get_default_document_index
-from danswer.datastores.interfaces import UpdateRequest
+from danswer.db.models import ChatMessage as DbChatMessage
+from danswer.db.models import ChatMessageFeedback
 from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentRetrievalFeedback
 from danswer.db.models import QueryEvent
+from danswer.document_index import get_default_document_index
+from danswer.document_index.interfaces import UpdateRequest
 from danswer.search.models import SearchType
 
 
@@ -42,7 +46,11 @@ def fetch_docs_ranked_by_boost(
     db_session: Session, ascending: bool = False, limit: int = 100
 ) -> list[DbDocument]:
     order_func = asc if ascending else desc
-    stmt = select(DbDocument).order_by(order_func(DbDocument.boost)).limit(limit)
+    stmt = (
+        select(DbDocument)
+        .order_by(order_func(DbDocument.boost), order_func(DbDocument.semantic_id))
+        .limit(limit)
+    )
     result = db_session.execute(stmt)
     doc_list = result.scalars().all()
 
@@ -67,17 +75,37 @@ def update_document_boost(db_session: Session, document_id: str, boost: int) -> 
     db_session.commit()
 
 
+def update_document_hidden(db_session: Session, document_id: str, hidden: bool) -> None:
+    stmt = select(DbDocument).where(DbDocument.id == document_id)
+    result = db_session.execute(stmt).scalar_one_or_none()
+    if result is None:
+        raise ValueError(f"No document found with ID: '{document_id}'")
+
+    result.hidden = hidden
+
+    update = UpdateRequest(
+        document_ids=[document_id],
+        hidden=hidden,
+    )
+
+    get_default_document_index().update([update])
+
+    db_session.commit()
+
+
 def create_query_event(
+    db_session: Session,
     query: str,
-    selected_flow: SearchType | None,
+    search_type: SearchType | None,
     llm_answer: str | None,
     user_id: UUID | None,
-    db_session: Session,
+    retrieved_document_ids: list[str] | None = None,
 ) -> int:
     query_event = QueryEvent(
         query=query,
-        selected_search_flow=selected_flow,
+        selected_search_flow=search_type,
         llm_answer=llm_answer,
+        retrieved_document_ids=retrieved_document_ids,
         user_id=user_id,
     )
     db_session.add(query_event)
@@ -87,10 +115,10 @@ def create_query_event(
 
 
 def update_query_event_feedback(
+    db_session: Session,
     feedback: QAFeedbackType,
     query_id: int,
     user_id: UUID | None,
-    db_session: Session,
 ) -> None:
     query_event = fetch_query_event_by_id(query_id, db_session)
 
@@ -98,7 +126,21 @@ def update_query_event_feedback(
         raise ValueError("User trying to give feedback on a query run by another user.")
 
     query_event.feedback = feedback
+    db_session.commit()
 
+
+def update_query_event_retrieved_documents(
+    db_session: Session,
+    retrieved_document_ids: list[str],
+    query_id: int,
+    user_id: UUID | None,
+) -> None:
+    query_event = fetch_query_event_by_id(query_id, db_session)
+
+    if user_id != query_event.user_id:
+        raise ValueError("User trying to update docs on a query run by another user.")
+
+    query_event.retrieved_document_ids = retrieved_document_ids
     db_session.commit()
 
 
@@ -164,3 +206,46 @@ def delete_document_feedback_for_documents(
         DocumentRetrievalFeedback.document_id.in_(document_ids)
     )
     db_session.execute(stmt)
+
+
+def create_chat_message_feedback(
+    chat_session_id: int,
+    message_number: int,
+    edit_number: int,
+    user_id: UUID | None,
+    db_session: Session,
+    is_positive: bool | None = None,
+    feedback_text: str | None = None,
+) -> None:
+    if is_positive is None and feedback_text is None:
+        raise ValueError("No feedback provided")
+
+    try:
+        chat_message = (
+            db_session.query(DbChatMessage)
+            .filter_by(
+                chat_session_id=chat_session_id,
+                message_number=message_number,
+                edit_number=edit_number,
+            )
+            .one()
+        )
+    except NoResultFound:
+        raise ValueError("ChatMessage not found")
+
+    if chat_message.message_type != MessageType.ASSISTANT:
+        raise ValueError("Can only provide feedback on LLM Outputs")
+
+    if user_id is not None and chat_message.chat_session.user_id != user_id:
+        raise ValueError("User trying to give feedback on a message by another user.")
+
+    message_feedback = ChatMessageFeedback(
+        chat_message_chat_session_id=chat_session_id,
+        chat_message_message_number=message_number,
+        chat_message_edit_number=edit_number,
+        is_positive=is_positive,
+        feedback_text=feedback_text,
+    )
+
+    db_session.add(message_feedback)
+    db_session.commit()

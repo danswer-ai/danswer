@@ -3,19 +3,21 @@ import time
 from datetime import datetime
 from datetime import timezone
 
+import dask
+import torch
 from dask.distributed import Client
 from dask.distributed import Future
 from distributed import LocalCluster
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
+from danswer.configs.model_configs import MIN_THREADS_ML_MODELS
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.connectors.models import InputType
-from danswer.datastores.indexing_pipeline import build_indexing_pipeline
 from danswer.db.connector import disable_connector
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import get_last_successful_attempt_time
@@ -36,16 +38,27 @@ from danswer.db.index_attempt import update_docs_indexed
 from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
-from danswer.search.search_utils import warm_up_models
-from danswer.utils.acl import set_acl_for_vespa_nonblocking
+from danswer.indexing.indexing_pipeline import build_indexing_pipeline
+from danswer.search.search_nlp_models import warm_up_models
 from danswer.utils.logger import IndexAttemptSingleton
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
+# If the indexing dies, it's most likely due to resource constraints,
+# restarting just delays the eventual failure, not useful to the user
+dask.config.set({"distributed.scheduler.allowed-failures": 0})
+
 _UNEXPECTED_STATE_FAILURE_REASON = (
     "Stopped mid run, likely due to the background process being killed"
 )
+
+
+def _get_num_threads() -> int:
+    """Get # of "threads" to use for ML models in an indexing job. By default uses
+    the torch implementation, which returns the # of physical cores on the machine.
+    """
+    return max(MIN_THREADS_ML_MODELS, torch.get_num_threads())
 
 
 def should_create_new_indexing(
@@ -136,6 +149,9 @@ def cleanup_indexing_jobs(
         if not job.done():
             continue
 
+        if job.status == "error":
+            logger.error(job.exception())
+
         job.release()
         del existing_jobs_copy[attempt_id]
         index_attempt = get_index_attempt(
@@ -148,7 +164,7 @@ def cleanup_indexing_jobs(
             )
             continue
 
-        if index_attempt.status == IndexingStatus.IN_PROGRESS:
+        if index_attempt.status == IndexingStatus.IN_PROGRESS or job.status == "error":
             mark_run_failed(
                 db_session=db_session,
                 index_attempt=index_attempt,
@@ -163,18 +179,18 @@ def cleanup_indexing_jobs(
         )
         for index_attempt in in_progress_indexing_attempts:
             if index_attempt.id in existing_jobs:
-                # check to see if the job has been updated in the last hour, if not
+                # check to see if the job has been updated in the 3 hours, if not
                 # assume it to frozen in some bad state and just mark it as failed. Note: this relies
                 # on the fact that the `time_updated` field is constantly updated every
                 # batch of documents indexed
                 current_db_time = get_db_current_time(db_session=db_session)
                 time_since_update = current_db_time - index_attempt.time_updated
-                if time_since_update.seconds > 60 * 60:
+                if time_since_update.seconds > 3 * 60 * 60:
                     existing_jobs[index_attempt.id].cancel()
                     mark_run_failed(
                         db_session=db_session,
                         index_attempt=index_attempt,
-                        failure_reason="Indexing run frozen - no updates in last hour. "
+                        failure_reason="Indexing run frozen - no updates in 3 hours. "
                         "The run will be re-attempted at next scheduled indexing time.",
                     )
             else:
@@ -194,7 +210,7 @@ def _run_indexing(
 ) -> None:
     """
     1. Get documents which are either new or updated from specified application
-    2. Embed and index these documents into the chosen datastores (e.g. Qdrant / Typesense or Vespa)
+    2. Embed and index these documents into the chosen datastore (vespa)
     3. Updates Postgres to record the indexed documents + the outcome of this run
     """
 
@@ -278,22 +294,18 @@ def _run_indexing(
             run_dt=run_dt,
         )
 
+        net_doc_change = 0
+        document_count = 0
+        chunk_count = 0
         try:
-            net_doc_change = 0
-            document_count = 0
-            chunk_count = 0
             for doc_batch in doc_batch_generator:
                 logger.debug(
                     f"Indexing batch of documents: {[doc.to_short_descriptor() for doc in doc_batch]}"
                 )
 
-                index_user_id = (
-                    None if db_credential.public_doc else db_credential.user_id
-                )
                 new_docs, total_batch_chunks = indexing_pipeline(
                     documents=doc_batch,
                     index_attempt_metadata=IndexAttemptMetadata(
-                        user_id=index_user_id,
                         connector_id=db_connector.id,
                         credential_id=db_credential.id,
                     ),
@@ -301,10 +313,20 @@ def _run_indexing(
                 net_doc_change += new_docs
                 chunk_count += total_batch_chunks
                 document_count += len(doc_batch)
+
+                # commit transaction so that the `update` below begins
+                # with a brand new transaction. Postgres uses the start
+                # of the transactions when computing `NOW()`, so if we have
+                # a long running transaction, the `time_updated` field will
+                # be inaccurate
+                db_session.commit()
+
+                # This new value is updated every batch, so UI can refresh per batch update
                 update_docs_indexed(
                     db_session=db_session,
                     index_attempt=attempt,
-                    num_docs_indexed=document_count,
+                    total_docs_indexed=document_count,
+                    new_docs_indexed=net_doc_change,
                 )
 
                 # check if connector is disabled mid run and stop if so
@@ -349,7 +371,7 @@ def _run_indexing(
     _index(db_session, index_attempt, doc_batch_generator, run_time)
 
 
-def _run_indexing_entrypoint(index_attempt_id: int) -> None:
+def _run_indexing_entrypoint(index_attempt_id: int, num_threads: int) -> None:
     """Entrypoint for indexing run when using dask distributed.
     Wraps the actual logic in a `try` block so that we can catch any exceptions
     and mark the attempt as failed."""
@@ -357,6 +379,9 @@ def _run_indexing_entrypoint(index_attempt_id: int) -> None:
         # set the indexing attempt ID so that all log messages from this process
         # will have it added as a prefix
         IndexAttemptSingleton.set_index_attempt_id(index_attempt_id)
+
+        logger.info(f"Setting task to use {num_threads} threads")
+        torch.set_num_threads(num_threads)
 
         with Session(get_sqlalchemy_engine()) as db_session:
             attempt = get_index_attempt(
@@ -372,6 +397,7 @@ def _run_indexing_entrypoint(index_attempt_id: int) -> None:
                 f"with config: '{attempt.connector.connector_specific_config}', and "
                 f"with credentials: '{attempt.credential_id}'"
             )
+            mark_attempt_in_progress(attempt, db_session)
             update_connector_credential_pair(
                 db_session=db_session,
                 connector_id=attempt.connector.id,
@@ -400,7 +426,14 @@ def kickoff_indexing_jobs(
 ) -> dict[int, Future]:
     existing_jobs_copy = existing_jobs.copy()
 
-    new_indexing_attempts = get_not_started_index_attempts(db_session)
+    # Don't include jobs waiting in the Dask queue that just haven't started running
+    # Also (rarely) don't include for jobs that started but haven't updated the indexing tables yet
+    new_indexing_attempts = [
+        attempt
+        for attempt in get_not_started_index_attempts(db_session)
+        if attempt.id not in existing_jobs
+    ]
+
     logger.info(f"Found {len(new_indexing_attempts)} new indexing tasks.")
 
     if not new_indexing_attempts:
@@ -427,8 +460,9 @@ def kickoff_indexing_jobs(
             f"with config: '{attempt.connector.connector_specific_config}', and "
             f"with credentials: '{attempt.credential_id}'"
         )
-        mark_attempt_in_progress(attempt, db_session)
-        run = client.submit(_run_indexing_entrypoint, attempt.id, pure=False)
+        run = client.submit(
+            _run_indexing_entrypoint, attempt.id, _get_num_threads(), pure=False
+        )
         existing_jobs_copy[attempt.id] = run
 
     return existing_jobs_copy
@@ -452,12 +486,6 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
         # Previous version did not always clean up cc-pairs well leaving some connectors undeleteable
         # This ensures that bad states get cleaned up
         mark_all_in_progress_cc_pairs_failed(db_session)
-
-    # TODO: remove this once everyone is migrated to ACL
-    # does nothing if this has been successfully run before
-    # NOTE: is done in another thread, to not block indexing runs from
-    # getting kicked off
-    set_acl_for_vespa_nonblocking(should_check_if_already_done=True)
 
     while True:
         start = time.time()

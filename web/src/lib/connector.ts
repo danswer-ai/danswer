@@ -1,3 +1,4 @@
+import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { Connector, ConnectorBase, ValidSources } from "./types";
 
 async function handleResponse(
@@ -36,6 +37,28 @@ export async function updateConnector<T>(
   return await response.json();
 }
 
+export async function disableConnector(
+  connector: Connector<any>,
+  setPopup: (popupSpec: PopupSpec | null) => void,
+  onUpdate: () => void
+) {
+  updateConnector({
+    ...connector,
+    disabled: !connector.disabled,
+  }).then(() => {
+    setPopup({
+      message: connector.disabled
+        ? "Enabled connector!"
+        : "Disabled connector!",
+      type: "success",
+    });
+    setTimeout(() => {
+      setPopup(null);
+    }, 4000);
+    onUpdate && onUpdate();
+  });
+}
+
 export async function deleteConnector(
   connectorId: number
 ): Promise<string | null> {
@@ -66,7 +89,7 @@ export async function runConnector(
   return null;
 }
 
-export async function deleteConnectorIfExists({
+export async function deleteConnectorIfExistsAndIsUnlinked({
   source,
   name,
 }: {
@@ -80,7 +103,10 @@ export async function deleteConnectorIfExists({
       (connector) =>
         connector.source === source && (!name || connector.name === name)
     );
-    if (matchingConnectors.length > 0) {
+    if (
+      matchingConnectors.length > 0 &&
+      matchingConnectors[0].credential_ids.length === 0
+    ) {
       const errorMsg = await deleteConnector(matchingConnectors[0].id);
       if (errorMsg) {
         return errorMsg;

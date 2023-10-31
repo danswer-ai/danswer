@@ -4,9 +4,9 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
-from danswer.bots.slack.config import validate_channel_names
-from danswer.bots.slack.tokens import fetch_tokens
-from danswer.bots.slack.tokens import save_tokens
+from danswer.danswerbot.slack.config import validate_channel_names
+from danswer.danswerbot.slack.tokens import fetch_tokens
+from danswer.danswerbot.slack.tokens import save_tokens
 from danswer.db.engine import get_session
 from danswer.db.models import ChannelConfig
 from danswer.db.models import User
@@ -14,6 +14,7 @@ from danswer.db.slack_bot_config import fetch_slack_bot_configs
 from danswer.db.slack_bot_config import insert_slack_bot_config
 from danswer.db.slack_bot_config import remove_slack_bot_config
 from danswer.db.slack_bot_config import update_slack_bot_config
+from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.server.models import DocumentSet
 from danswer.server.models import SlackBotConfig
 from danswer.server.models import SlackBotConfigCreationRequest
@@ -169,5 +170,5 @@ def put_tokens(tokens: SlackBotTokens) -> None:
 def get_tokens() -> SlackBotTokens:
     try:
         return fetch_tokens()
-    except ValueError:
+    except ConfigNotFoundError:
         raise HTTPException(status_code=404, detail="No tokens found")

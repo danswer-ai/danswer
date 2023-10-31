@@ -19,16 +19,21 @@ export type ValidSources =
   | "slab"
   | "notion"
   | "guru"
+  | "gong"
   | "zulip"
   | "linear"
   | "hubspot"
-  | "file";
+  | "document360"
+  | "file"
+  | "google_sites";
+
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
   | "success"
   | "failed"
   | "in_progress"
   | "not_started";
+export type TaskStatus = "PENDING" | "STARTED" | "SUCCESS" | "FAILURE";
 
 export interface DocumentBoostStatus {
   document_id: string;
@@ -96,6 +101,10 @@ export interface SlabConfig {
 
 export interface GuruConfig {}
 
+export interface GongConfig {
+  workspaces?: string[];
+}
+
 export interface FileConfig {
   file_locations: string[];
 }
@@ -109,9 +118,20 @@ export interface NotionConfig {}
 
 export interface HubSpotConfig {}
 
+export interface Document360Config {
+  workspace: string;
+  categories?: string[];
+}
+
+export interface GoogleSitesConfig {
+  zip_path: string;
+  base_url: string;
+}
+
 export interface IndexAttemptSnapshot {
+  id: number;
   status: ValidStatuses | null;
-  num_docs_indexed: number;
+  new_docs_indexed: number;
   error_msg: string | null;
   time_started: string | null;
   time_updated: string;
@@ -139,7 +159,7 @@ export interface ConnectorIndexingStatus<
 // CREDENTIALS
 export interface CredentialBase<T> {
   credential_json: T;
-  public_doc: boolean;
+  is_admin: boolean;
 }
 
 export interface Credential<T> extends CredentialBase<T> {
@@ -203,6 +223,11 @@ export interface GuruCredentialJson {
   guru_user_token: string;
 }
 
+export interface GongCredentialJson {
+  gong_access_key: string;
+  gong_access_key_secret: string;
+}
+
 export interface LinearCredentialJson {
   linear_api_key: string;
 }
@@ -211,14 +236,17 @@ export interface HubSpotCredentialJson {
   hubspot_access_token: string;
 }
 
+export interface Document360CredentialJson {
+  portal_id: string;
+  document360_api_token: string;
+}
+
 // DELETION
 
 export interface DeletionAttemptSnapshot {
   connector_id: number;
   credential_id: number;
-  status: ValidStatuses;
-  error_msg?: string;
-  num_docs_deleted: number;
+  status: TaskStatus;
 }
 
 // DOCUMENT SETS

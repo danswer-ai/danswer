@@ -10,25 +10,34 @@ are multiple connector / credential pairs that have indexed it
 connector / credential pair from the access list
 (6) delete all relevant entries from postgres
 """
+import time
+from collections.abc import Callable
+from typing import cast
+
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
-from danswer.datastores.document_index import get_default_document_index
-from danswer.datastores.interfaces import DocumentIndex
-from danswer.datastores.interfaces import UpdateRequest
 from danswer.db.connector import fetch_connector_by_id
-from danswer.db.connector_credential_pair import delete_connector_credential_pair
-from danswer.db.connector_credential_pair import get_connector_credential_pair
-from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
+from danswer.db.connector_credential_pair import (
+    delete_connector_credential_pair__no_commit,
+)
 from danswer.db.document import delete_document_by_connector_credential_pair
 from danswer.db.document import delete_documents_complete
 from danswer.db.document import get_document_connector_cnts
 from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.document import prepare_to_modify_documents
+from danswer.db.document_set import get_document_sets_by_ids
+from danswer.db.document_set import (
+    mark_cc_pair__document_set_relationships_to_be_deleted__no_commit,
+)
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import delete_index_attempts
+from danswer.db.models import ConnectorCredentialPair
+from danswer.document_index.interfaces import DocumentIndex
+from danswer.document_index.interfaces import UpdateRequest
 from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
+from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 logger = setup_logger()
 
@@ -93,12 +102,56 @@ def _delete_connector_credential_pair_batch(
         db_session.commit()
 
 
-def _delete_connector_credential_pair(
+def cleanup_synced_entities(
+    cc_pair: ConnectorCredentialPair, db_session: Session
+) -> None:
+    """Updates the document sets associated with the connector / credential pair,
+    then relies on the document set sync script to kick off Celery jobs which will
+    sync these updates to Vespa.
+
+    Waits until the document sets are synced before returning."""
+    logger.info(f"Cleaning up Document Sets for CC Pair with ID: '{cc_pair.id}'")
+    document_sets_ids_to_sync = list(
+        mark_cc_pair__document_set_relationships_to_be_deleted__no_commit(
+            cc_pair_id=cc_pair.id,
+            db_session=db_session,
+        )
+    )
+    db_session.commit()
+
+    # wait till all document sets are synced before continuing
+    while True:
+        all_synced = True
+        document_sets = get_document_sets_by_ids(
+            db_session=db_session, document_set_ids=document_sets_ids_to_sync
+        )
+        for document_set in document_sets:
+            if not document_set.is_up_to_date:
+                all_synced = False
+
+        if all_synced:
+            break
+
+        # wait for 30 seconds before checking again
+        db_session.commit()  # end transaction
+        logger.info(
+            f"Document sets '{document_sets_ids_to_sync}' not synced yet, waiting 30s"
+        )
+        time.sleep(30)
+
+    logger.info(
+        f"Finished cleaning up Document Sets for CC Pair with ID: '{cc_pair.id}'"
+    )
+
+
+def delete_connector_credential_pair(
     db_session: Session,
     document_index: DocumentIndex,
-    connector_id: int,
-    credential_id: int,
+    cc_pair: ConnectorCredentialPair,
 ) -> int:
+    connector_id = cc_pair.connector_id
+    credential_id = cc_pair.credential_id
+
     num_docs_deleted = 0
     while True:
         documents = get_documents_for_connector_credential_pair(
@@ -118,13 +171,24 @@ def _delete_connector_credential_pair(
         )
         num_docs_deleted += len(documents)
 
-    # cleanup everything else up
+    # Clean up document sets / access information from Postgres
+    # and sync these updates to Vespa
+    cleanup_synced_entities__versioned = cast(
+        Callable[[ConnectorCredentialPair, Session], None],
+        fetch_versioned_implementation(
+            "danswer.background.connector_deletion",
+            "cleanup_synced_entities",
+        ),
+    )
+    cleanup_synced_entities__versioned(cc_pair, db_session)
+
+    # clean up the rest of the related Postgres entities
     delete_index_attempts(
         db_session=db_session,
         connector_id=connector_id,
         credential_id=credential_id,
     )
-    delete_connector_credential_pair(
+    delete_connector_credential_pair__no_commit(
         db_session=db_session,
         connector_id=connector_id,
         credential_id=credential_id,
@@ -144,37 +208,3 @@ def _delete_connector_credential_pair(
         f" '{connector_id}' and credential_id: '{credential_id}'. Deleted {num_docs_deleted} docs."
     )
     return num_docs_deleted
-
-
-def cleanup_connector_credential_pair(connector_id: int, credential_id: int) -> int:
-    engine = get_sqlalchemy_engine()
-    with Session(engine) as db_session:
-        # validate that the connector / credential pair is deletable
-        cc_pair = get_connector_credential_pair(
-            db_session=db_session,
-            connector_id=connector_id,
-            credential_id=credential_id,
-        )
-        if not cc_pair or not check_deletion_attempt_is_allowed(
-            connector_credential_pair=cc_pair
-        ):
-            raise ValueError(
-                "Cannot run deletion attempt - connector_credential_pair is not deletable. "
-                "This is likely because there is an ongoing / planned indexing attempt OR the "
-                "connector is not disabled."
-            )
-
-        try:
-            return _delete_connector_credential_pair(
-                db_session=db_session,
-                document_index=get_default_document_index(),
-                connector_id=connector_id,
-                credential_id=credential_id,
-            )
-        except Exception as e:
-            logger.exception(f"Failed to run connector_deletion due to {e}")
-            raise e
-
-
-def get_cleanup_task_id(connector_id: int, credential_id: int) -> str:
-    return f"cleanup_connector_credential_pair_{connector_id}_{credential_id}"

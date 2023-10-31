@@ -1,10 +1,4 @@
-import {
-  Connector,
-  ConnectorIndexingStatus,
-  Credential,
-  DeletionAttemptSnapshot,
-  ValidStatuses,
-} from "@/lib/types";
+import { DeletionAttemptSnapshot, ValidStatuses } from "@/lib/types";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { Popup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
@@ -12,6 +6,7 @@ import { TrashIcon } from "@/components/icons/icons";
 import { updateConnector } from "@/lib/connector";
 import { AttachCredentialButtonForTable } from "@/components/admin/connectors/buttons/AttachCredentialButtonForTable";
 import { scheduleDeletionJobForConnector } from "@/lib/documentDeletion";
+import { ConnectorsTableProps } from "./ConnectorsTable";
 
 const SingleUseConnectorStatus = ({
   indexingStatus,
@@ -22,8 +17,8 @@ const SingleUseConnectorStatus = ({
 }) => {
   if (
     deletionAttempt &&
-    (deletionAttempt.status === "in_progress" ||
-      deletionAttempt.status === "not_started")
+    (deletionAttempt.status === "PENDING" ||
+      deletionAttempt.status === "STARTED")
   ) {
     return <div className="text-red-500">Deleting...</div>;
   }
@@ -43,26 +38,6 @@ const SingleUseConnectorStatus = ({
   return <div className="text-red-700">Failed</div>;
 };
 
-interface ColumnSpecification<ConnectorConfigType> {
-  header: string;
-  key: string;
-  getValue: (connector: Connector<ConnectorConfigType>) => JSX.Element | string;
-}
-
-interface ConnectorsTableProps<ConnectorConfigType, ConnectorCredentialType> {
-  connectorIndexingStatuses: ConnectorIndexingStatus<
-    ConnectorConfigType,
-    ConnectorCredentialType
-  >[];
-  liveCredential?: Credential<ConnectorCredentialType> | null;
-  getCredential?: (
-    credential: Credential<ConnectorCredentialType>
-  ) => JSX.Element | string;
-  onUpdate: () => void;
-  onCredentialLink?: (connectorId: number) => void;
-  specialColumns?: ColumnSpecification<ConnectorConfigType>[];
-}
-
 export function SingleUseConnectorsTable<
   ConnectorConfigType,
   ConnectorCredentialType
@@ -73,6 +48,7 @@ export function SingleUseConnectorsTable<
   specialColumns,
   onUpdate,
   onCredentialLink,
+  includeName = false,
 }: ConnectorsTableProps<ConnectorConfigType, ConnectorCredentialType>) {
   const [popup, setPopup] = useState<{
     message: string;
@@ -82,17 +58,19 @@ export function SingleUseConnectorsTable<
   const connectorIncludesCredential =
     getCredential !== undefined && onCredentialLink !== undefined;
 
-  const columns = [
-    {
+  const columns = [];
+
+  if (includeName) {
+    columns.push({
       header: "Name",
       key: "name",
-    },
-    ...(specialColumns ?? []),
-    {
-      header: "Status",
-      key: "status",
-    },
-  ];
+    });
+  }
+  columns.push(...(specialColumns ?? []));
+  columns.push({
+    header: "Status",
+    key: "status",
+  });
   if (connectorIncludesCredential) {
     columns.push({
       header: "Credential",
@@ -181,7 +159,7 @@ export function SingleUseConnectorsTable<
               ? Object.fromEntries(
                   specialColumns.map(({ key, getValue }, i) => [
                     key,
-                    getValue(connector),
+                    getValue(connectorIndexingStatus),
                   ])
                 )
               : {}),

@@ -21,7 +21,9 @@ DOCUMENT_ENCODER_MODEL = (
 DOC_EMBEDDING_DIM = 384
 # Model should be chosen with 512 context size, ideally don't change this
 DOC_EMBEDDING_CONTEXT_SIZE = 512
-NORMALIZE_EMBEDDINGS = (os.environ.get("SKIP_RERANKING") or "False").lower() == "true"
+NORMALIZE_EMBEDDINGS = (
+    os.environ.get("NORMALIZE_EMBEDDINGS") or "False"
+).lower() == "true"
 # These are only used if reranking is turned off, to normalize the direct retrieval scores for display
 SIM_SCORE_RANGE_LOW = float(os.environ.get("SIM_SCORE_RANGE_LOW") or 0.0)
 SIM_SCORE_RANGE_HIGH = float(os.environ.get("SIM_SCORE_RANGE_HIGH") or 1.0)
@@ -30,6 +32,10 @@ ASYM_QUERY_PREFIX = os.environ.get("ASYM_QUERY_PREFIX", "")
 ASYM_PASSAGE_PREFIX = os.environ.get("ASYM_PASSAGE_PREFIX", "")
 # Purely an optimization, memory limitation consideration
 BATCH_SIZE_ENCODE_CHUNKS = 8
+# This controls the minimum number of pytorch "threads" to allocate to the embedding
+# model. If torch finds more threads on its own, this value is not used.
+MIN_THREADS_ML_MODELS = int(os.environ.get("MIN_THREADS_ML_MODELS") or 1)
+
 
 # Cross Encoder Settings
 SKIP_RERANKING = os.environ.get("SKIP_RERANKING", "").lower() == "true"
@@ -38,12 +44,13 @@ CROSS_ENCODER_MODEL_ENSEMBLE = [
     "cross-encoder/ms-marco-MiniLM-L-4-v2",
     "cross-encoder/ms-marco-TinyBERT-L-2-v2",
 ]
+# For score normalizing purposes, only way is to know the expected ranges
+CROSS_ENCODER_RANGE_MAX = 12
+CROSS_ENCODER_RANGE_MIN = -12
 CROSS_EMBED_CONTEXT_SIZE = 512
 
-
-# Better to keep it loose, surfacing more results better than missing results
-# Currently unused by Vespa
-SEARCH_DISTANCE_CUTOFF = 0.1  # Cosine similarity (currently), range of -1 to 1 with -1 being completely opposite
+# Unused currently, can't be used with the current default encoder model due to its output range
+SEARCH_DISTANCE_CUTOFF = 0
 
 # Intent model max context size
 QUERY_MAX_CONTEXT_SIZE = 256
@@ -75,7 +82,7 @@ INTERNAL_MODEL_VERSION = os.environ.get(
 )
 
 # If the Generative AI model requires an API key for access, otherwise can leave blank
-GEN_AI_API_KEY = os.environ.get("GEN_AI_API_KEY", "")
+GEN_AI_API_KEY = os.environ.get("GEN_AI_API_KEY", os.environ.get("OPENAI_API_KEY"))
 
 # If using GPT4All, HuggingFace Inference API, or OpenAI - specify the model version
 GEN_AI_MODEL_VERSION = os.environ.get(

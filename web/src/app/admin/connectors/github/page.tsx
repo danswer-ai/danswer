@@ -156,8 +156,11 @@ const Main = () => {
                 {
                   header: "Repository",
                   key: "repository",
-                  getValue: (connector) =>
-                    `${connector.connector_specific_config.repo_owner}/${connector.connector_specific_config.repo_name}`,
+                  getValue: (ccPairStatus) => {
+                    const connectorConfig =
+                      ccPairStatus.connector.connector_specific_config;
+                    return `${connectorConfig.repo_owner}/${connectorConfig.repo_name}`;
+                  },
                 },
               ]}
               onUpdate={() =>
@@ -179,7 +182,7 @@ const Main = () => {
               `${values.repo_owner}/${values.repo_name}`
             }
             source="github"
-            inputType="load_state"
+            inputType="poll"
             formBody={
               <>
                 <TextFormField name="repo_owner" label="Repository Owner:" />

@@ -1,6 +1,7 @@
 import itertools
 from collections.abc import Iterator
 from datetime import datetime
+from datetime import timezone
 from typing import Any
 from typing import cast
 
@@ -13,6 +14,7 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
+from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
@@ -41,8 +43,11 @@ def _convert_pr_to_document(pull_request: PullRequest) -> Document:
         sections=[Section(link=pull_request.html_url, text=full_context)],
         source=DocumentSource.GITHUB,
         semantic_identifier=pull_request.title,
+        # updated_at is UTC time but is timezone unaware, explicitly add UTC
+        # as there is logic in indexing to prevent wrong timestamped docs
+        # due to local time discrepancies with UTC
+        doc_updated_at=pull_request.updated_at.replace(tzinfo=timezone.utc),
         metadata={
-            "last_modified": str(pull_request.last_modified),
             "merged": pull_request.merged,
             "state": pull_request.state,
         },
@@ -61,14 +66,15 @@ def _convert_issue_to_document(issue: Issue) -> Document:
         sections=[Section(link=issue.html_url, text=full_context)],
         source=DocumentSource.GITHUB,
         semantic_identifier=issue.title,
+        # updated_at is UTC time but is timezone unaware
+        doc_updated_at=issue.updated_at.replace(tzinfo=timezone.utc),
         metadata={
-            "last_modified": str(issue.updated_at),
             "state": issue.state,
         },
     )
 
 
-class GithubConnector(LoadConnector):
+class GithubConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         repo_owner: str,
@@ -140,8 +146,8 @@ class GithubConnector(LoadConnector):
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        start_datetime = datetime.fromtimestamp(start)
-        end_datetime = datetime.fromtimestamp(end)
+        start_datetime = datetime.utcfromtimestamp(start)
+        end_datetime = datetime.utcfromtimestamp(end)
         return self._fetch_from_github(start_datetime, end_datetime)
 
 

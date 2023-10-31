@@ -1,9 +1,9 @@
-import { Connector, ConnectorIndexingStatus, Credential } from "@/lib/types";
+import { ConnectorIndexingStatus, Credential } from "@/lib/types";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
-import { Popup, PopupSpec } from "@/components/admin/connectors/Popup";
+import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
-import { LinkBreakIcon, LinkIcon, TrashIcon } from "@/components/icons/icons";
-import { updateConnector } from "@/lib/connector";
+import { LinkBreakIcon, LinkIcon } from "@/components/icons/icons";
+import { disableConnector } from "@/lib/connector";
 import { AttachCredentialButtonForTable } from "@/components/admin/connectors/buttons/AttachCredentialButtonForTable";
 import { DeleteColumn } from "./DeleteColumn";
 
@@ -37,11 +37,7 @@ export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
   }
   if (connector.disabled) {
     const deletionAttempt = connectorIndexingStatus.deletion_attempt;
-    if (
-      !deletionAttempt ||
-      deletionAttempt.status === "not_started" ||
-      deletionAttempt.status === "failed"
-    ) {
+    if (!deletionAttempt || deletionAttempt.status === "FAILURE") {
       statusDisplay = <div className="text-red-700">Disabled</div>;
     } else {
       statusDisplay = <div className="text-red-700">Deleting...</div>;
@@ -57,23 +53,7 @@ export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
           className="cursor-pointer ml-1 my-auto relative"
           onMouseEnter={() => setStatusHovered(true)}
           onMouseLeave={() => setStatusHovered(false)}
-          onClick={() => {
-            updateConnector({
-              ...connector,
-              disabled: !connector.disabled,
-            }).then(() => {
-              setPopup({
-                message: connector.disabled
-                  ? "Enabled connector!"
-                  : "Disabled connector!",
-                type: "success",
-              });
-              setTimeout(() => {
-                setPopup(null);
-              }, 4000);
-              onUpdate();
-            });
-          }}
+          onClick={() => disableConnector(connector, setPopup, onUpdate)}
         >
           {statusHovered && (
             <div className="flex flex-nowrap absolute top-0 left-0 ml-8 bg-gray-700 px-3 py-2 rounded shadow-lg">
@@ -97,15 +77,24 @@ export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
   );
 }
 
-interface ColumnSpecification<ConnectorConfigType> {
+export interface ColumnSpecification<
+  ConnectorConfigType,
+  ConnectorCredentialType
+> {
   header: string;
   key: string;
   getValue: (
-    connector: Connector<ConnectorConfigType>
+    ccPairStatus: ConnectorIndexingStatus<
+      ConnectorConfigType,
+      ConnectorCredentialType
+    >
   ) => JSX.Element | string | undefined;
 }
 
-interface ConnectorsTableProps<ConnectorConfigType, ConnectorCredentialType> {
+export interface ConnectorsTableProps<
+  ConnectorConfigType,
+  ConnectorCredentialType
+> {
   connectorIndexingStatuses: ConnectorIndexingStatus<
     ConnectorConfigType,
     ConnectorCredentialType
@@ -116,7 +105,11 @@ interface ConnectorsTableProps<ConnectorConfigType, ConnectorCredentialType> {
   ) => JSX.Element | string;
   onUpdate: () => void;
   onCredentialLink?: (connectorId: number) => void;
-  specialColumns?: ColumnSpecification<ConnectorConfigType>[];
+  specialColumns?: ColumnSpecification<
+    ConnectorConfigType,
+    ConnectorCredentialType
+  >[];
+  includeName?: boolean;
 }
 
 export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
@@ -126,16 +119,15 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
   specialColumns,
   onUpdate,
   onCredentialLink,
+  includeName = false,
 }: ConnectorsTableProps<ConnectorConfigType, ConnectorCredentialType>) {
-  const [popup, setPopup] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
+  const { popup, setPopup } = usePopup();
 
   const connectorIncludesCredential =
     getCredential !== undefined && onCredentialLink !== undefined;
 
   const columns = [
+    ...(includeName ? [{ header: "Name", key: "name" }] : []),
     ...(specialColumns ?? []),
     {
       header: "Status",
@@ -155,7 +147,7 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
 
   return (
     <>
-      {popup && <Popup message={popup.message} type={popup.type} />}
+      {popup}
       <BasicTable
         columns={columns}
         data={connectorIndexingStatuses.map((connectorIndexingStatus) => {
@@ -202,9 +194,14 @@ export function ConnectorsTable<ConnectorConfigType, ConnectorCredentialType>({
               ? Object.fromEntries(
                   specialColumns.map(({ key, getValue }, i) => [
                     key,
-                    getValue(connector),
+                    getValue(connectorIndexingStatus),
                   ])
                 )
+              : {}),
+            ...(includeName
+              ? {
+                  name: connectorIndexingStatus.name || "",
+                }
               : {}),
           };
           // index: (

@@ -5,9 +5,12 @@ from danswer.configs.constants import DocumentSource
 from danswer.connectors.bookstack.connector import BookstackConnector
 from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.danswer_jira.connector import JiraConnector
+from danswer.connectors.document360.connector import Document360Connector
 from danswer.connectors.file.connector import LocalFileConnector
 from danswer.connectors.github.connector import GithubConnector
+from danswer.connectors.gong.connector import GongConnector
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
+from danswer.connectors.google_site.connector import GoogleSitesConnector
 from danswer.connectors.guru.connector import GuruConnector
 from danswer.connectors.hubspot.connector import HubSpotConnector
 from danswer.connectors.interfaces import BaseConnector
@@ -52,6 +55,9 @@ def identify_connector_class(
         DocumentSource.GURU: GuruConnector,
         DocumentSource.LINEAR: LinearConnector,
         DocumentSource.HUBSPOT: HubSpotConnector,
+        DocumentSource.DOCUMENT360: Document360Connector,
+        DocumentSource.GONG: GongConnector,
+        DocumentSource.GOOGLE_SITES: GoogleSitesConnector,
     }
     connector_by_source = connector_map.get(source, {})
 

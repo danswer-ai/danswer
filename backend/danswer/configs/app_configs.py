@@ -92,17 +92,6 @@ VESPA_TENANT_PORT = os.environ.get("VESPA_TENANT_PORT") or "19071"
 VESPA_DEPLOYMENT_ZIP = (
     os.environ.get("VESPA_DEPLOYMENT_ZIP") or "/app/danswer/vespa-app.zip"
 )
-# Qdrant is Semantic Search Vector DB
-# Url / Key are used to connect to a remote Qdrant instance
-QDRANT_URL = os.environ.get("QDRANT_URL", "")
-QDRANT_API_KEY = os.environ.get("QDRANT_API_KEY", "")
-# Host / Port are used for connecting to local Qdrant instance
-QDRANT_HOST = os.environ.get("QDRANT_HOST") or "localhost"
-QDRANT_PORT = 6333
-# Typesense is the Keyword Search Engine
-TYPESENSE_HOST = os.environ.get("TYPESENSE_HOST") or "localhost"
-TYPESENSE_PORT = 8108
-TYPESENSE_API_KEY = os.environ.get("TYPESENSE_API_KEY", "")
 # Number of documents in a batch during indexing (further batching done by chunks before passing to bi-encoder)
 INDEX_BATCH_SIZE = 16
 
@@ -120,9 +109,11 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 #####
 GOOGLE_DRIVE_INCLUDE_SHARED = False
 GOOGLE_DRIVE_FOLLOW_SHORTCUTS = False
+
 FILE_CONNECTOR_TMP_STORAGE_PATH = os.environ.get(
     "FILE_CONNECTOR_TMP_STORAGE_PATH", "/home/file_connector_storage"
 )
+
 # TODO these should be available for frontend configuration, via advanced options expandable
 WEB_CONNECTOR_IGNORED_CLASSES = os.environ.get(
     "WEB_CONNECTOR_IGNORED_CLASSES", "sidebar,footer"
@@ -139,6 +130,14 @@ NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP = (
     == "true"
 )
 
+CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
+    ignored_tag
+    for ignored_tag in os.environ.get("CONFLUENCE_CONNECTOR_LABELS_TO_SKIP", "").split(
+        ","
+    )
+    if ignored_tag
+]
+
 #####
 # Query Configs
 #####
@@ -153,12 +152,28 @@ NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL = int(
 NUM_DOCUMENT_TOKENS_FED_TO_CHAT = int(
     os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_CHAT") or (512 * 3)
 )
+# 1 / (1 + DOC_TIME_DECAY * doc-age-in-years), set to 0 to have no decay
+# Capped in Vespa at 0.5
+DOC_TIME_DECAY = float(
+    os.environ.get("DOC_TIME_DECAY") or 0.5  # Hits limit at 2 years by default
+)
+FAVOR_RECENT_DECAY_MULTIPLIER = 2
+DISABLE_TIME_FILTER_EXTRACTION = (
+    os.environ.get("DISABLE_TIME_FILTER_EXTRACTION", "").lower() == "true"
+)
 # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "60")  # 60 seconds
 # Include additional document/chunk metadata in prompt to GenerativeAI
 INCLUDE_METADATA = False
 HARD_DELETE_CHATS = os.environ.get("HARD_DELETE_CHATS", "True").lower() != "false"
+# Keyword Search Drop Stopwords
+# If user has changed the default model, would most likely be to use a multilingual
+# model, the stopwords are NLTK english stopwords so then we would want to not drop the keywords
+if os.environ.get("EDIT_KEYWORD_QUERY"):
+    EDIT_KEYWORD_QUERY = os.environ.get("EDIT_KEYWORD_QUERY", "").lower() == "true"
+else:
+    EDIT_KEYWORD_QUERY = not os.environ.get("DOCUMENT_ENCODER_MODEL")
 
 
 #####
@@ -204,44 +219,8 @@ CONTINUE_ON_CONNECTOR_FAILURE = os.environ.get(
 # fairly large amount of memory in order to increase substantially, since
 # each worker loads the embedding models into memory.
 NUM_INDEXING_WORKERS = int(os.environ.get("NUM_INDEXING_WORKERS") or 1)
-
+JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
 # Logs every model prompt and output, mostly used for development or exploration purposes
 LOG_ALL_MODEL_INTERACTIONS = (
     os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
-)
-
-
-#####
-# Danswer Slack Bot Configs
-#####
-DANSWER_BOT_NUM_DOCS_TO_DISPLAY = int(
-    os.environ.get("DANSWER_BOT_NUM_DOCS_TO_DISPLAY", "5")
-)
-DANSWER_BOT_NUM_RETRIES = int(os.environ.get("DANSWER_BOT_NUM_RETRIES", "5"))
-DANSWER_BOT_ANSWER_GENERATION_TIMEOUT = int(
-    os.environ.get("DANSWER_BOT_ANSWER_GENERATION_TIMEOUT", "90")
-)
-DANSWER_BOT_DISPLAY_ERROR_MSGS = os.environ.get(
-    "DANSWER_BOT_DISPLAY_ERROR_MSGS", ""
-).lower() not in [
-    "false",
-    "",
-]
-DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER = os.environ.get(
-    "DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER", ""
-).lower() not in ["false", ""]
-DANSWER_BOT_ONLY_ANSWER_WHEN_SLACK_BOT_CONFIG_IS_PRESENT = (
-    os.environ.get(
-        "DANSWER_BOT_ONLY_ANSWER_WHEN_SLACK_BOT_CONFIG_IS_PRESENT", ""
-    ).lower()
-    == "true"
-)
-# Add a second LLM call post Answer to verify if the Answer is valid
-# Throws out answers that don't directly or fully answer the user query
-# This is the default for all DanswerBot channels unless the bot is configured individually
-ENABLE_DANSWERBOT_REFLEXION = (
-    os.environ.get("ENABLE_DANSWERBOT_REFLEXION", "").lower() == "true"
-)
-ENABLE_SLACK_DOC_FEEDBACK = (
-    os.environ.get("ENABLE_SLACK_DOC_FEEDBACK", "").lower() == "true"
 )

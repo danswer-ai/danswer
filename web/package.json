@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.0.8",
+    "@tremor/react": "^3.9.2",
     "@types/js-cookie": "^3.0.3",
     "@types/node": "18.15.11",
     "@types/react": "18.0.32",
@@ -17,8 +18,8 @@
     "autoprefixer": "^10.4.14",
     "formik": "^2.2.9",
     "js-cookie": "^3.0.5",
-    "next": "^13.4.9",
-    "postcss": "^8.4.23",
+    "next": "^14.0.0",
+    "postcss": "^8.4.31",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3",
@@ -35,7 +36,7 @@
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.10",
     "eslint": "^8.48.0",
-    "eslint-config-next": "^13.4.9",
+    "eslint-config-next": "^14.0.0",
     "prettier": "2.8.8"
   }
 }

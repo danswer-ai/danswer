@@ -35,6 +35,7 @@ def upgrade() -> None:
                 "SUCCESS",
                 "FAILED",
                 name="indexingstatus",
+                native_enum=False,
             ),
             nullable=False,
         ),

@@ -20,15 +20,35 @@ import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsT
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
 
-// Copied from the `extract_confluence_keys_from_url` function
-const extractSpaceFromUrl = (wikiUrl: string): string | null => {
-  if (!wikiUrl.includes(".atlassian.net/wiki/spaces/")) {
-    return null;
-  }
-
+const extractSpaceFromCloudUrl = (wikiUrl: string): string => {
   const parsedUrl = new URL(wikiUrl);
   const space = parsedUrl.pathname.split("/")[3];
   return space;
+};
+
+const extractSpaceFromDataCenterUrl = (wikiUrl: string): string => {
+  const DISPLAY = "/display/";
+
+  const parsedUrl = new URL(wikiUrl);
+  const spaceSpecificSection = parsedUrl.pathname
+    .split(DISPLAY)
+    .slice(1)
+    .join(DISPLAY);
+  const space = spaceSpecificSection.split("/")[0];
+  return space;
+};
+
+// Copied from the `extract_confluence_keys_from_url` function
+const extractSpaceFromUrl = (wikiUrl: string): string | null => {
+  try {
+    if (wikiUrl.includes(".atlassian.net/wiki/spaces/")) {
+      return extractSpaceFromCloudUrl(wikiUrl);
+    }
+    return extractSpaceFromDataCenterUrl(wikiUrl);
+  } catch (e) {
+    console.log("Failed to extract space from url", e);
+    return null;
+  }
 };
 
 const Main = () => {
@@ -213,14 +233,18 @@ const Main = () => {
                     {
                       header: "Url",
                       key: "url",
-                      getValue: (connector) => (
+                      getValue: (ccPairStatus) => (
                         <a
                           className="text-blue-500"
                           href={
-                            connector.connector_specific_config.wiki_page_url
+                            ccPairStatus.connector.connector_specific_config
+                              .wiki_page_url
                           }
                         >
-                          {connector.connector_specific_config.wiki_page_url}
+                          {
+                            ccPairStatus.connector.connector_specific_config
+                              .wiki_page_url
+                          }
                         </a>
                       ),
                     },

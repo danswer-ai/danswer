@@ -1,3 +1,4 @@
+import { DateRangePickerValue } from "@tremor/react";
 import { ValidSources } from "../types";
 
 export const FlowType = {
@@ -32,8 +33,10 @@ export interface DanswerDocument {
   blurb: string;
   semantic_identifier: string | null;
   boost: number;
+  hidden: boolean;
   score: number;
   match_highlights: string[];
+  updated_at: string | null;
 }
 
 export interface SearchResponse {
@@ -60,6 +63,7 @@ export interface SearchRequestArgs {
   query: string;
   sources: Source[];
   documentSets: string[];
+  timeRange: DateRangePickerValue | null;
   updateCurrentAnswer: (val: string) => void;
   updateQuotes: (quotes: Quote[]) => void;
   updateDocs: (documents: DanswerDocument[]) => void;

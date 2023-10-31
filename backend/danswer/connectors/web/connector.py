@@ -1,6 +1,4 @@
 import io
-from copy import copy
-from datetime import datetime
 from enum import Enum
 from typing import Any
 from typing import cast
@@ -14,27 +12,22 @@ from oauthlib.oauth2 import BackendApplicationClient
 from playwright.sync_api import BrowserContext
 from playwright.sync_api import Playwright
 from playwright.sync_api import sync_playwright
-from PyPDF2 import PdfReader
 from requests_oauthlib import OAuth2Session  # type:ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.app_configs import WEB_CONNECTOR_IGNORED_CLASSES
-from danswer.configs.app_configs import WEB_CONNECTOR_IGNORED_ELEMENTS
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_ID
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_TOKEN_URL
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
+from danswer.connectors.cross_connector_utils.html_utils import web_html_cleanup
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
-from danswer.utils.text_processing import format_document_soup
 
 logger = setup_logger()
-
-
-MINTLIFY_UNWANTED = ["sticky", "hidden"]
 
 
 class WEB_CONNECTOR_VALID_SETTINGS(str, Enum):
@@ -179,8 +172,6 @@ class WebConnector(LoadConnector):
             logger.info(f"Visiting {current_url}")
 
             try:
-                current_visit_time = datetime.now().strftime("%B %d, %Y, %H:%M:%S")
-
                 if restart_playwright:
                     playwright, context = start_playwright()
                     restart_playwright = False
@@ -188,10 +179,9 @@ class WebConnector(LoadConnector):
                 if current_url.split(".")[-1] == "pdf":
                     # PDF files are not checked for links
                     response = requests.get(current_url)
-                    pdf_reader = PdfReader(io.BytesIO(response.content))
-                    page_text = ""
-                    for pdf_page in pdf_reader.pages:
-                        page_text += pdf_page.extract_text()
+                    page_text = read_pdf_file(
+                        file=io.BytesIO(response.content), file_name=current_url
+                    )
 
                     doc_batch.append(
                         Document(
@@ -199,7 +189,7 @@ class WebConnector(LoadConnector):
                             sections=[Section(link=current_url, text=page_text)],
                             source=DocumentSource.WEB,
                             semantic_identifier=current_url.split(".")[-1],
-                            metadata={"Time Visited": current_visit_time},
+                            metadata={},
                         )
                     )
                     continue
@@ -224,36 +214,16 @@ class WebConnector(LoadConnector):
                         if link not in visited_links:
                             to_visit.append(link)
 
-                title_tag = soup.find("title")
-                title = None
-                if title_tag and title_tag.text:
-                    title = title_tag.text
-                    title_tag.extract()
-
-                # Heuristics based cleaning of elements based on css classes
-                unwanted_classes = copy(WEB_CONNECTOR_IGNORED_CLASSES)
-                if self.mintlify_cleanup:
-                    unwanted_classes.extend(MINTLIFY_UNWANTED)
-                for undesired_element in unwanted_classes:
-                    [
-                        tag.extract()
-                        for tag in soup.find_all(
-                            class_=lambda x: x and undesired_element in x.split()
-                        )
-                    ]
-
-                for undesired_tag in WEB_CONNECTOR_IGNORED_ELEMENTS:
-                    [tag.extract() for tag in soup.find_all(undesired_tag)]
-
-                # 200B is ZeroWidthSpace which we don't care for
-                page_text = format_document_soup(soup).replace("\u200B", "")
+                parsed_html = web_html_cleanup(soup, self.mintlify_cleanup)
 
                 doc_batch.append(
                     Document(
                         id=current_url,
-                        sections=[Section(link=current_url, text=page_text)],
+                        sections=[
+                            Section(link=current_url, text=parsed_html.cleaned_text)
+                        ],
                         source=DocumentSource.WEB,
-                        semantic_identifier=title or current_url,
+                        semantic_identifier=parsed_html.title or current_url,
                         metadata={},
                     )
                 )

@@ -2,29 +2,30 @@ from collections.abc import Callable
 
 from sqlalchemy.orm import Session
 
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
-from danswer.configs.app_configs import ENABLE_DANSWERBOT_REFLEXION
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.datastores.document_index import get_default_document_index
 from danswer.db.feedback import create_query_event
+from danswer.db.feedback import update_query_event_retrieved_documents
 from danswer.db.models import User
 from danswer.direct_qa.exceptions import OpenAIKeyMissing
 from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.direct_qa.qa_utils import get_usable_chunks
+from danswer.document_index import get_default_document_index
+from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import query_intent
-from danswer.search.keyword_search import retrieve_keyword_documents
+from danswer.search.models import IndexFilters
 from danswer.search.models import QueryFlow
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
-from danswer.search.models import SearchType
-from danswer.search.semantic_search import chunks_to_search_docs
-from danswer.search.semantic_search import retrieve_ranked_documents
+from danswer.search.models import SearchQuery
+from danswer.search.search_runner import chunks_to_search_docs
+from danswer.search.search_runner import search_chunks
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
+from danswer.secondary_llm_flows.extract_filters import extract_question_time_filters
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.utils.logger import setup_logger
@@ -41,49 +42,53 @@ def answer_qa_query(
     disable_generative_answer: bool = DISABLE_GENERATIVE_AI,
     answer_generation_timeout: int = QA_TIMEOUT,
     real_time_flow: bool = True,
-    enable_reflexion: bool = ENABLE_DANSWERBOT_REFLEXION,
+    enable_reflexion: bool = False,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
     llm_metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,
 ) -> QAResponse:
     query = question.query
-    filters = question.filters
-    use_keyword = question.use_keyword
     offset_count = question.offset if question.offset is not None else 0
     logger.info(f"Received QA query: {query}")
 
+    time_cutoff, favor_recent = extract_question_time_filters(question)
+    question.filters.time_cutoff = time_cutoff
+    filters = question.filters
+
     query_event_id = create_query_event(
         query=query,
-        selected_flow=SearchType.KEYWORD,
+        search_type=question.search_type,
         llm_answer=None,
         user_id=user.id if user is not None else None,
         db_session=db_session,
     )
 
-    predicted_search, predicted_flow = query_intent(query)
-    if use_keyword is None:
-        use_keyword = predicted_search == SearchType.KEYWORD
-
     user_id = None if user is None else user.id
-    if use_keyword:
-        ranked_chunks: list[InferenceChunk] | None = retrieve_keyword_documents(
-            query,
-            user_id,
-            filters,
-            get_default_document_index(),
-            retrieval_metrics_callback=retrieval_metrics_callback,
-        )
-        unranked_chunks: list[InferenceChunk] | None = []
-    else:
-        ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-            query,
-            user_id,
-            filters,
-            get_default_document_index(),
-            retrieval_metrics_callback=retrieval_metrics_callback,
-            rerank_metrics_callback=rerank_metrics_callback,
-        )
+    user_acl_filters = build_access_filters_for_user(user, db_session)
+    final_filters = IndexFilters(
+        source_type=filters.source_type,
+        document_set=filters.document_set,
+        time_cutoff=time_cutoff,
+        access_control_list=user_acl_filters,
+    )
+    search_query = SearchQuery(
+        query=query,
+        search_type=question.search_type,
+        filters=final_filters,
+        favor_recent=True if question.favor_recent is None else question.favor_recent,
+    )
+
+    # TODO retire this
+    predicted_search, predicted_flow = query_intent(query)
+
+    ranked_chunks, unranked_chunks = search_chunks(
+        query=search_query,
+        document_index=get_default_document_index(),
+        retrieval_metrics_callback=retrieval_metrics_callback,
+        rerank_metrics_callback=rerank_metrics_callback,
+    )
+
     if not ranked_chunks:
         return QAResponse(
             answer=None,
@@ -93,20 +98,34 @@ def answer_qa_query(
             predicted_flow=predicted_flow,
             predicted_search=predicted_search,
             query_event_id=query_event_id,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
         )
+
+    top_docs = chunks_to_search_docs(ranked_chunks)
+    unranked_top_docs = chunks_to_search_docs(unranked_chunks)
+
+    update_query_event_retrieved_documents(
+        db_session=db_session,
+        retrieved_document_ids=[doc.document_id for doc in top_docs],
+        query_id=query_event_id,
+        user_id=user_id,
+    )
 
     if disable_generative_answer:
         logger.debug("Skipping QA because generative AI is disabled")
         return QAResponse(
             answer=None,
             quotes=None,
-            top_ranked_docs=chunks_to_search_docs(ranked_chunks),
-            lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
+            top_ranked_docs=top_docs,
+            lower_ranked_docs=unranked_top_docs,
             # set flow as search so frontend doesn't ask the user if they want
             # to run QA over more documents
             predicted_flow=QueryFlow.SEARCH,
             predicted_search=predicted_search,
             query_event_id=query_event_id,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
         )
 
     try:
@@ -117,12 +136,14 @@ def answer_qa_query(
         return QAResponse(
             answer=None,
             quotes=None,
-            top_ranked_docs=chunks_to_search_docs(ranked_chunks),
-            lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
+            top_ranked_docs=top_docs,
+            lower_ranked_docs=unranked_top_docs,
             predicted_flow=predicted_flow,
             predicted_search=predicted_search,
-            error_msg=str(e),
             query_event_id=query_event_id,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
+            error_msg=str(e),
         )
 
     # remove chunks marked as not applicable for QA (e.g. Google Drive file
@@ -160,22 +181,26 @@ def answer_qa_query(
         return QAResponse(
             answer=d_answer.answer if d_answer else None,
             quotes=quotes.quotes if quotes else None,
-            top_ranked_docs=chunks_to_search_docs(ranked_chunks),
-            lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
+            top_ranked_docs=top_docs,
+            lower_ranked_docs=unranked_top_docs,
             predicted_flow=predicted_flow,
             predicted_search=predicted_search,
             eval_res_valid=True if valid else False,
-            error_msg=error_msg,
             query_event_id=query_event_id,
+            time_cutoff=time_cutoff,
+            favor_recent=favor_recent,
+            error_msg=error_msg,
         )
 
     return QAResponse(
         answer=d_answer.answer if d_answer else None,
         quotes=quotes.quotes if quotes else None,
-        top_ranked_docs=chunks_to_search_docs(ranked_chunks),
-        lower_ranked_docs=chunks_to_search_docs(unranked_chunks),
+        top_ranked_docs=top_docs,
+        lower_ranked_docs=unranked_top_docs,
         predicted_flow=predicted_flow,
         predicted_search=predicted_search,
-        error_msg=error_msg,
         query_event_id=query_event_id,
+        time_cutoff=time_cutoff,
+        favor_recent=favor_recent,
+        error_msg=error_msg,
     )

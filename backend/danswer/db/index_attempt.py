@@ -90,9 +90,14 @@ def mark_attempt_failed(
 
 
 def update_docs_indexed(
-    db_session: Session, index_attempt: IndexAttempt, num_docs_indexed: int
+    db_session: Session,
+    index_attempt: IndexAttempt,
+    total_docs_indexed: int,
+    new_docs_indexed: int,
 ) -> None:
-    index_attempt.num_docs_indexed = num_docs_indexed
+    index_attempt.total_docs_indexed = total_docs_indexed
+    index_attempt.new_docs_indexed = new_docs_indexed
+
     db_session.add(index_attempt)
     db_session.commit()
 
@@ -146,6 +151,24 @@ def get_latest_index_attempts(
             ),
         )
         .where(IndexAttempt.time_created == ids_subqery.c.max_time_created)
+    )
+    return db_session.execute(stmt).scalars().all()
+
+
+def get_index_attempts_for_cc_pair(
+    db_session: Session, cc_pair_identifier: ConnectorCredentialPairIdentifier
+) -> Sequence[IndexAttempt]:
+    stmt = (
+        select(IndexAttempt)
+        .where(
+            and_(
+                IndexAttempt.connector_id == cc_pair_identifier.connector_id,
+                IndexAttempt.credential_id == cc_pair_identifier.credential_id,
+            )
+        )
+        .order_by(
+            IndexAttempt.time_created.desc(),
+        )
     )
     return db_session.execute(stmt).scalars().all()
 

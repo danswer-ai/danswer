@@ -2,6 +2,8 @@ import time
 from collections.abc import Generator
 from dataclasses import dataclass
 from dataclasses import fields
+from datetime import datetime
+from datetime import timezone
 from typing import Any
 from typing import Optional
 
@@ -126,6 +128,7 @@ class NotionConnector(LoadConnector, PollConnector):
             data = self._fetch_blocks(page_block_id, cursor)
 
             for result in data["results"]:
+                logger.debug(f"Found block for page '{page_block_id}': {result}")
                 result_block_id = result["id"]
                 result_type = result["type"]
                 result_obj = result[result_type]
@@ -191,6 +194,9 @@ class NotionConnector(LoadConnector, PollConnector):
                     ],
                     source=DocumentSource.NOTION,
                     semantic_identifier=page_title,
+                    doc_updated_at=datetime.fromisoformat(
+                        page.last_edited_time
+                    ).astimezone(timezone.utc),
                     metadata={},
                 )
             )
@@ -275,6 +281,7 @@ class NotionConnector(LoadConnector, PollConnector):
         # TODO: remove once Notion search issue is discovered
         if self.recursive_index_enabled and self.root_page_id:
             yield from self._recursive_load()
+            return
 
         query_dict = {
             "filter": {"property": "object", "value": "page"},
@@ -301,6 +308,7 @@ class NotionConnector(LoadConnector, PollConnector):
         # TODO: remove once Notion search issue is discovered
         if self.recursive_index_enabled and self.root_page_id:
             yield from self._recursive_load()
+            return
 
         query_dict = {
             "page_size": self.batch_size,

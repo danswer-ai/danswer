@@ -12,7 +12,6 @@ import tiktoken
 from openai.error import AuthenticationError
 from openai.error import Timeout
 
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import INCLUDE_METADATA
 from danswer.configs.model_configs import API_BASE_OPENAI
 from danswer.configs.model_configs import API_TYPE_OPENAI
@@ -31,6 +30,7 @@ from danswer.direct_qa.qa_utils import get_gen_ai_api_key
 from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.indexing.models import InferenceChunk
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
@@ -48,10 +48,11 @@ if API_TYPE_OPENAI in ["azure"]:  # TODO: Azure AD support ["azure_ad", "azuread
 
 
 def _ensure_openai_api_key(api_key: str | None) -> str:
-    try:
-        return api_key or get_gen_ai_api_key()
-    except ConfigNotFoundError:
+    final_api_key = api_key or get_gen_ai_api_key()
+    if final_api_key is None:
         raise OpenAIKeyMissing()
+
+    return final_api_key
 
 
 def _build_openai_settings(**kwargs: Any) -> dict[str, Any]:

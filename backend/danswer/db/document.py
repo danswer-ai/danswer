@@ -5,17 +5,19 @@ from uuid import UUID
 from sqlalchemy import and_
 from sqlalchemy import delete
 from sqlalchemy import func
+from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import DEFAULT_BOOST
-from danswer.datastores.interfaces import DocumentMetadata
 from danswer.db.feedback import delete_document_feedback_for_documents
+from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
 from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentByConnectorCredentialPair
 from danswer.db.utils import model_to_dict
+from danswer.document_index.interfaces import DocumentMetadata
 from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
 
@@ -52,6 +54,37 @@ def get_document_connector_cnts(
     return db_session.execute(stmt).all()  # type: ignore
 
 
+def get_document_cnts_for_cc_pairs(
+    db_session: Session, cc_pair_identifiers: list[ConnectorCredentialPairIdentifier]
+) -> Sequence[tuple[int, int, int]]:
+    stmt = (
+        select(
+            DocumentByConnectorCredentialPair.connector_id,
+            DocumentByConnectorCredentialPair.credential_id,
+            func.count(),
+        )
+        .where(
+            or_(
+                *[
+                    and_(
+                        DocumentByConnectorCredentialPair.connector_id
+                        == cc_pair_identifier.connector_id,
+                        DocumentByConnectorCredentialPair.credential_id
+                        == cc_pair_identifier.credential_id,
+                    )
+                    for cc_pair_identifier in cc_pair_identifiers
+                ]
+            )
+        )
+        .group_by(
+            DocumentByConnectorCredentialPair.connector_id,
+            DocumentByConnectorCredentialPair.credential_id,
+        )
+    )
+
+    return db_session.execute(stmt).all()  # type: ignore
+
+
 def get_acccess_info_for_documents(
     db_session: Session,
     document_ids: list[str],
@@ -69,7 +102,7 @@ def get_acccess_info_for_documents(
     stmt = select(
         DocumentByConnectorCredentialPair.id,
         func.array_agg(Credential.user_id).label("user_ids"),
-        func.bool_or(Credential.public_doc).label("public_doc"),
+        func.bool_or(ConnectorCredentialPair.is_public).label("public_doc"),
     ).where(DocumentByConnectorCredentialPair.id.in_(document_ids))
 
     # pretend that the specified cc pair doesn't exist
@@ -83,10 +116,22 @@ def get_acccess_info_for_documents(
             )
         )
 
-    stmt = stmt.join(
-        Credential,
-        DocumentByConnectorCredentialPair.credential_id == Credential.id,
-    ).group_by(DocumentByConnectorCredentialPair.id)
+    stmt = (
+        stmt.join(
+            Credential,
+            DocumentByConnectorCredentialPair.credential_id == Credential.id,
+        )
+        .join(
+            ConnectorCredentialPair,
+            and_(
+                DocumentByConnectorCredentialPair.connector_id
+                == ConnectorCredentialPair.connector_id,
+                DocumentByConnectorCredentialPair.credential_id
+                == ConnectorCredentialPair.credential_id,
+            ),
+        )
+        .group_by(DocumentByConnectorCredentialPair.id)
+    )
     return db_session.execute(stmt).all()  # type: ignore
 
 
@@ -113,6 +158,9 @@ def upsert_documents(
                     hidden=False,
                     semantic_id=doc.semantic_identifier,
                     link=doc.first_link,
+                    doc_updated_at=doc.doc_updated_at,
+                    primary_owners=doc.primary_owners,
+                    secondary_owners=doc.secondary_owners,
                 )
             )
             for doc in seen_documents.values()

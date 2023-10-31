@@ -23,7 +23,7 @@ import { SearchHelper } from "./SearchHelper";
 import { CancellationToken, cancellable } from "@/lib/search/cancellable";
 import { NEXT_PUBLIC_DISABLE_STREAMING } from "@/lib/constants";
 import { searchRequest } from "@/lib/search/qa";
-import { useObjectState } from "@/lib/hooks";
+import { useObjectState, useTimeRange } from "@/lib/hooks";
 import { questionValidationStreamed } from "@/lib/search/streamingQuestionValidation";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
@@ -60,6 +60,7 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
     useObjectState<ValidQuestionResponse>(VALID_QUESTION_RESPONSE_DEFAULT);
 
   // Filters
+  const [timeRange, setTimeRange] = useTimeRange();
   const [sources, setSources] = useState<Source[]>([]);
   const [selectedDocumentSets, setSelectedDocumentSets] = useState<string[]>(
     []
@@ -141,6 +142,7 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
       query,
       sources,
       documentSets: selectedDocumentSets,
+      timeRange,
       updateCurrentAnswer: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateCurrentAnswer,
@@ -191,6 +193,8 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
       <div className="absolute left-0 hidden 2xl:block w-64">
         {(connectors.length > 0 || documentSets.length > 0) && (
           <SourceSelector
+            timeRange={timeRange}
+            setTimeRange={setTimeRange}
             selectedSources={sources}
             setSelectedSources={setSources}
             selectedDocumentSets={selectedDocumentSets}
@@ -200,7 +204,7 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
           />
         )}
 
-        <div className="mt-10">
+        <div className="mt-10 pr-2">
           <SearchHelper
             isFetching={isFetching}
             searchResponse={searchResponse}
@@ -224,14 +228,6 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
         </div>
       </div>
       <div className="w-[800px] mx-auto">
-        <SearchTypeSelector
-          selectedSearchType={selectedSearchType}
-          setSelectedSearchType={(searchType) => {
-            Cookies.set("searchType", searchType);
-            setSelectedSearchType(searchType);
-          }}
-        />
-
         <SearchBar
           query={query}
           setQuery={setQuery}

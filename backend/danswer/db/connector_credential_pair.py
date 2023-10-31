@@ -39,6 +39,16 @@ def get_connector_credential_pair(
     return result.scalar_one_or_none()
 
 
+def get_connector_credential_pair_from_id(
+    cc_pair_id: int,
+    db_session: Session,
+) -> ConnectorCredentialPair | None:
+    stmt = select(ConnectorCredentialPair)
+    stmt = stmt.where(ConnectorCredentialPair.id == cc_pair_id)
+    result = db_session.execute(stmt)
+    return result.scalar_one_or_none()
+
+
 def get_last_successful_attempt_time(
     connector_id: int,
     credential_id: int,
@@ -81,7 +91,7 @@ def update_connector_credential_pair(
     db_session.commit()
 
 
-def delete_connector_credential_pair(
+def delete_connector_credential_pair__no_commit(
     db_session: Session,
     connector_id: int,
     credential_id: int,

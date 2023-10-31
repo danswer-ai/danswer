@@ -56,6 +56,7 @@ export const searchRequestStreamed = async ({
   query,
   sources,
   documentSets,
+  timeRange,
   updateCurrentAnswer,
   updateQuotes,
   updateDocs,
@@ -63,30 +64,20 @@ export const searchRequestStreamed = async ({
   updateSuggestedFlowType,
   updateError,
   updateQueryEventId,
-  selectedSearchType,
   offset,
 }: SearchRequestArgs) => {
-  let useKeyword = null;
-  if (selectedSearchType !== SearchType.AUTOMATIC) {
-    useKeyword = selectedSearchType === SearchType.KEYWORD ? true : false;
-  }
-
   let answer = "";
   let quotes: Quote[] | null = null;
   let relevantDocuments: DanswerDocument[] | null = null;
   try {
-    const filters = buildFilters(sources, documentSets);
+    const filters = buildFilters(sources, documentSets, timeRange);
     const response = await fetch("/api/stream-direct-qa", {
       method: "POST",
       body: JSON.stringify({
         query,
         collection: "danswer_index",
-        use_keyword: useKeyword,
-        ...(filters.length > 0
-          ? {
-              filters,
-            }
-          : {}),
+        filters,
+        enable_auto_detect_filters: false,
         offset: offset,
       }),
       headers: {
@@ -149,11 +140,9 @@ export const searchRequestStreamed = async ({
 
         // These all come together
         if (Object.hasOwn(chunk, "top_documents")) {
-          const topDocuments = chunk.top_documents as any[] | null;
+          const topDocuments = chunk.top_documents as DanswerDocument[] | null;
           if (topDocuments) {
-            relevantDocuments = topDocuments.map(
-              (doc) => JSON.parse(doc) as DanswerDocument
-            );
+            relevantDocuments = topDocuments;
             updateDocs(relevantDocuments);
           }
 

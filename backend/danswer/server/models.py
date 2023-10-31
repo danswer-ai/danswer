@@ -10,7 +10,6 @@ from pydantic import validator
 from pydantic.generics import GenericModel
 
 from danswer.auth.schemas import UserRole
-from danswer.bots.slack.config import VALID_SLACK_FILTERS
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentSource
@@ -18,16 +17,17 @@ from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
-from danswer.datastores.interfaces import IndexFilter
+from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
 from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
 from danswer.db.models import Connector
 from danswer.db.models import Credential
-from danswer.db.models import DeletionStatus
 from danswer.db.models import DocumentSet as DocumentSetDBModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
+from danswer.db.models import TaskStatus
 from danswer.direct_qa.interfaces import DanswerQuote
+from danswer.search.models import BaseFilters
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
 from danswer.server.utils import mask_credential_dict
@@ -135,6 +135,11 @@ class BoostUpdateRequest(BaseModel):
     boost: int
 
 
+class HiddenUpdateRequest(BaseModel):
+    document_id: str
+    hidden: bool
+
+
 class SearchDoc(BaseModel):
     document_id: str
     semantic_identifier: str
@@ -142,11 +147,43 @@ class SearchDoc(BaseModel):
     blurb: str
     source_type: str
     boost: int
+    # whether the document is hidden when doing a standard search
+    # since a standard search will never find a hidden doc, this can only ever
+    # be `True` when doing an admin search
+    hidden: bool
     score: float | None
     # Matched sections in the doc. Uses Vespa syntax e.g. <hi>TEXT</hi>
     # to specify that a set of words should be highlighted. For example:
     # ["<hi>the</hi> <hi>answer</hi> is 42", "the answer is <hi>42</hi>""]
     match_highlights: list[str]
+    # when the doc was last updated
+    updated_at: datetime | None
+
+    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+        initial_dict["updated_at"] = (
+            self.updated_at.isoformat() if self.updated_at else None
+        )
+        return initial_dict
+
+
+class RetrievalDocs(BaseModel):
+    top_documents: list[SearchDoc]
+
+
+class RerankedRetrievalDocs(RetrievalDocs):
+    unranked_top_documents: list[SearchDoc]
+    predicted_flow: QueryFlow
+    predicted_search: SearchType
+    time_cutoff: datetime | None
+    favor_recent: bool
+
+    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+        initial_dict["time_cutoff"] = (
+            self.time_cutoff.isoformat() if self.time_cutoff else None
+        )
+        return initial_dict
 
 
 class CreateChatSessionID(BaseModel):
@@ -156,14 +193,24 @@ class CreateChatSessionID(BaseModel):
 class QuestionRequest(BaseModel):
     query: str
     collection: str
-    use_keyword: bool | None
-    filters: list[IndexFilter] | None
+    filters: BaseFilters
     offset: int | None
+    enable_auto_detect_filters: bool
+    favor_recent: bool | None = None
+    search_type: SearchType = SearchType.HYBRID
 
 
 class QAFeedbackRequest(BaseModel):
     query_id: int
     feedback: QAFeedbackType
+
+
+class ChatFeedbackRequest(BaseModel):
+    chat_session_id: int
+    message_number: int
+    edit_number: int
+    is_positive: bool | None = None
+    feedback_text: str | None = None
 
 
 class SearchFeedbackRequest(BaseModel):
@@ -202,8 +249,14 @@ class RenameChatSessionResponse(BaseModel):
     new_name: str  # This is only really useful if the name is generated
 
 
-class ChatSessionIdsResponse(BaseModel):
-    sessions: list[int]
+class ChatSession(BaseModel):
+    id: int
+    name: str
+    time_created: str
+
+
+class ChatSessionsResponse(BaseModel):
+    sessions: list[ChatSession]
 
 
 class ChatMessageDetail(BaseModel):
@@ -212,6 +265,7 @@ class ChatMessageDetail(BaseModel):
     parent_edit_number: int | None
     latest: bool
     message: str
+    context_docs: RetrievalDocs | None
     message_type: MessageType
     time_sent: datetime
 
@@ -232,6 +286,8 @@ class SearchResponse(BaseModel):
     top_ranked_docs: list[SearchDoc] | None
     lower_ranked_docs: list[SearchDoc] | None
     query_event_id: int
+    time_cutoff: datetime | None
+    favor_recent: bool
 
 
 class QAResponse(SearchResponse):
@@ -253,8 +309,9 @@ class IndexAttemptRequest(BaseModel):
 
 
 class IndexAttemptSnapshot(BaseModel):
+    id: int
     status: IndexingStatus | None
-    num_docs_indexed: int
+    new_docs_indexed: int
     error_msg: str | None
     time_started: str | None
     time_updated: str
@@ -264,8 +321,9 @@ class IndexAttemptSnapshot(BaseModel):
         cls, index_attempt: IndexAttempt
     ) -> "IndexAttemptSnapshot":
         return IndexAttemptSnapshot(
+            id=index_attempt.id,
             status=index_attempt.status,
-            num_docs_indexed=index_attempt.num_docs_indexed or 0,
+            new_docs_indexed=index_attempt.new_docs_indexed or 0,
             error_msg=index_attempt.error_msg,
             time_started=index_attempt.time_started.isoformat()
             if index_attempt.time_started
@@ -277,9 +335,7 @@ class IndexAttemptSnapshot(BaseModel):
 class DeletionAttemptSnapshot(BaseModel):
     connector_id: int
     credential_id: int
-    status: DeletionStatus
-    error_msg: str | None
-    num_docs_deleted: int
+    status: TaskStatus
 
 
 class ConnectorBase(BaseModel):
@@ -322,7 +378,7 @@ class RunConnectorRequest(BaseModel):
 
 class CredentialBase(BaseModel):
     credential_json: dict[str, Any]
-    public_doc: bool
+    is_admin: bool
 
 
 class CredentialSnapshot(CredentialBase):
@@ -339,7 +395,7 @@ class CredentialSnapshot(CredentialBase):
             if MASK_CREDENTIAL_PREFIX
             else credential.credential_json,
             user_id=credential.user_id,
-            public_doc=credential.public_doc,
+            is_admin=credential.is_admin,
             time_created=credential.time_created,
             time_updated=credential.time_updated,
         )

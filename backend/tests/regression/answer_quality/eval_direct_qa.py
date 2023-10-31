@@ -8,9 +8,11 @@ from typing import TextIO
 import yaml
 from sqlalchemy.orm import Session
 
+from danswer.access.access import get_acl_for_user
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.direct_qa.answer_question import answer_qa_query
 from danswer.direct_qa.models import LLMMetricsContainer
+from danswer.search.models import IndexFilters
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.server.models import QuestionRequest
@@ -74,11 +76,17 @@ def get_answer_for_question(
     RerankMetricsContainer | None,
     LLMMetricsContainer | None,
 ]:
+    filters = IndexFilters(
+        source_type=None,
+        document_set=None,
+        time_cutoff=None,
+        access_control_list=list(get_acl_for_user(user=None)),
+    )
     question = QuestionRequest(
         query=query,
         collection="danswer_index",
-        use_keyword=False,
-        filters=None,
+        filters=filters,
+        enable_auto_detect_filters=False,
         offset=None,
     )
 

@@ -15,26 +15,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "-f",
-        "--flow",
-        type=str,
-        default="QA",
-        help='"Search" or "QA", defaults to "QA"',
-    )
-
-    parser.add_argument(
         "-t",
         "--type",
         type=str,
-        default="Semantic",
-        help='"Semantic" or "Keyword", defaults to "Semantic"',
+        default="hybrid",
+        help='"hybrid" "semantic" or "keyword", defaults to "hybrid"',
     )
 
     parser.add_argument(
         "-s",
         "--stream",
         action="store_true",
-        help='Enable streaming response, only for flow="QA"',
+        help="Enable streaming response",
     )
 
     parser.add_argument(
@@ -50,7 +42,7 @@ if __name__ == "__main__":
         try:
             user_input = input(
                 "\n\nAsk any question:\n"
-                "  - Use -f (QA/Search) and -t (Semantic/Keyword) flags to set endpoint.\n"
+                "  - Use -t (hybrid/semantic/keyword) flag to choose search flow.\n"
                 "  - prefix with -s to stream answer, --filters web,slack etc. for filters.\n"
                 "  - input an empty string to rerun last query.\n\t"
             )
@@ -66,25 +58,15 @@ if __name__ == "__main__":
 
             args = parser.parse_args(user_input.split())
 
-            flow = str(args.flow).lower()
-            flow_type = str(args.type).lower()
+            search_type = str(args.type).lower()
             stream = args.stream
             source_types = args.filters.split(",") if args.filters else None
-            if source_types and len(source_types) == 1:
-                source_types = source_types[0]
+
             query = " ".join(args.query)
 
-            if flow not in ["qa", "search"]:
-                raise ValueError("Flow value must be QA or Search")
-            if flow_type not in ["keyword", "semantic"]:
-                raise ValueError("Type value must be keyword or semantic")
-            if flow != "qa" and stream:
-                raise ValueError("Can only stream results for QA")
+            if search_type not in ["hybrid", "semantic", "keyword"]:
+                raise ValueError("Invalid Search")
 
-            if (flow, flow_type) == ("search", "keyword"):
-                path = "keyword-search"
-            elif (flow, flow_type) == ("search", "semantic"):
-                path = "semantic-search"
             elif stream:
                 path = "stream-direct-qa"
             else:
@@ -95,8 +77,9 @@ if __name__ == "__main__":
             query_json = {
                 "query": query,
                 "collection": DOCUMENT_INDEX_NAME,
-                "use_keyword": flow_type == "keyword",  # Ignore if not QA Endpoints
-                "filters": [{SOURCE_TYPE: source_types}],
+                "filters": {SOURCE_TYPE: source_types},
+                "enable_auto_detect_filters": True,
+                "search_type": search_type,
             }
 
             if args.stream:

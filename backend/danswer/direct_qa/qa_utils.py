@@ -3,13 +3,13 @@ import math
 import re
 from collections.abc import Generator
 from collections.abc import Iterator
+from json.decoder import JSONDecodeError
 from typing import cast
 from typing import Optional
 from typing import Tuple
 
 import regex
 
-from danswer.chunking.models import InferenceChunk
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
@@ -22,6 +22,8 @@ from danswer.direct_qa.qa_prompts import ANSWER_PAT
 from danswer.direct_qa.qa_prompts import QUOTE_PAT
 from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.dynamic_configs import get_dynamic_config_store
+from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import check_number_of_tokens
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_model_quote
@@ -31,10 +33,15 @@ from danswer.utils.text_processing import shared_precompare_cleanup
 logger = setup_logger()
 
 
-def get_gen_ai_api_key() -> str:
-    return GEN_AI_API_KEY or cast(
-        str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY)
-    )
+def get_gen_ai_api_key() -> str | None:
+    # first check if the key has been provided by the UI
+    try:
+        return cast(str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY))
+    except ConfigNotFoundError:
+        pass
+
+    # if not provided by the UI, fallback to the env variable
+    return GEN_AI_API_KEY
 
 
 def extract_answer_quotes_freeform(
@@ -84,13 +91,20 @@ def separate_answer_quotes(
     answer_raw: str, is_json_prompt: bool = False
 ) -> Tuple[Optional[str], Optional[list[str]]]:
     try:
-        model_raw_json = json.loads(answer_raw)
+        model_raw_json = json.loads(answer_raw, strict=False)
         return extract_answer_quotes_json(model_raw_json)
-    except ValueError:
-        if is_json_prompt:
-            logger.error("Model did not output in json format as expected.")
-            raise
-        return extract_answer_quotes_freeform(answer_raw)
+    except JSONDecodeError:
+        # LLMs get confused when handling the list in the json. Sometimes it doesn't attend
+        # enough to the previous { token so it just ends the list of quotes and stops there
+        # here, we add logic to try to fix this LLM error.
+        try:
+            model_raw_json = json.loads(answer_raw + "}", strict=False)
+            return extract_answer_quotes_json(model_raw_json)
+        except JSONDecodeError:
+            if is_json_prompt:
+                logger.error("Model did not output in json format as expected.")
+                raise
+            return extract_answer_quotes_freeform(answer_raw)
 
 
 def match_quotes_to_docs(

@@ -1,32 +1,49 @@
+import re
 from collections.abc import Callable
 from collections.abc import Iterator
-from uuid import UUID
 
 from langchain.schema.messages import AIMessage
 from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
+from sqlalchemy.orm import Session
 
 from danswer.chat.chat_prompts import build_combined_query
 from danswer.chat.chat_prompts import DANSWER_TOOL_NAME
+from danswer.chat.chat_prompts import form_require_search_text
 from danswer.chat.chat_prompts import form_tool_followup_text
+from danswer.chat.chat_prompts import form_tool_less_followup_text
+from danswer.chat.chat_prompts import form_tool_section_text
 from danswer.chat.chat_prompts import form_user_prompt_text
 from danswer.chat.chat_prompts import format_danswer_chunks_for_chat
+from danswer.chat.chat_prompts import REQUIRE_DANSWER_SYSTEM_MSG
+from danswer.chat.chat_prompts import YES_SEARCH
+from danswer.chat.personas import build_system_text_from_persona
 from danswer.chat.tools import call_tool
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT
+from danswer.configs.chat_configs import FORCE_TOOL_PROMPT
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
-from danswer.datastores.document_index import get_default_document_index
 from danswer.db.models import ChatMessage
 from danswer.db.models import Persona
+from danswer.db.models import User
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerChatModelOut
+from danswer.direct_qa.interfaces import StreamingError
 from danswer.direct_qa.qa_utils import get_usable_chunks
+from danswer.document_index import get_default_document_index
+from danswer.indexing.models import InferenceChunk
 from danswer.llm.build import get_default_llm
 from danswer.llm.llm import LLM
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import translate_danswer_msg_to_langchain
-from danswer.search.semantic_search import retrieve_ranked_documents
+from danswer.search.access_filters import build_access_filters_for_user
+from danswer.search.models import IndexFilters
+from danswer.search.models import SearchQuery
+from danswer.search.models import SearchType
+from danswer.search.search_runner import chunks_to_search_docs
+from danswer.search.search_runner import search_chunks
+from danswer.server.models import RetrievalDocs
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
 from danswer.utils.text_processing import has_unescaped_quote
@@ -107,23 +124,28 @@ def danswer_chat_retrieval(
     query_message: ChatMessage,
     history: list[ChatMessage],
     llm: LLM,
-    user_id: UUID | None,
-) -> str:
+    filters: IndexFilters,
+) -> list[InferenceChunk]:
     if history:
         query_combination_msgs = build_combined_query(query_message, history)
         reworded_query = llm.invoke(query_combination_msgs)
     else:
         reworded_query = query_message.message
 
-    # Good Debug/Breakpoint
-    ranked_chunks, unranked_chunks = retrieve_ranked_documents(
-        reworded_query,
-        user_id=user_id,
-        filters=None,
-        datastore=get_default_document_index(),
+    search_query = SearchQuery(
+        query=reworded_query,
+        search_type=SearchType.HYBRID,
+        filters=filters,
+        favor_recent=False,
     )
+
+    # Good Debug/Breakpoint
+    ranked_chunks, unranked_chunks = search_chunks(
+        query=search_query, document_index=get_default_document_index()
+    )
+
     if not ranked_chunks:
-        return "No results found"
+        return []
 
     if unranked_chunks:
         ranked_chunks.extend(unranked_chunks)
@@ -138,7 +160,7 @@ def danswer_chat_retrieval(
         token_limit=NUM_DOCUMENT_TOKENS_FED_TO_CHAT,
     )
 
-    return format_danswer_chunks_for_chat(usable_chunks)
+    return usable_chunks
 
 
 def _drop_messages_history_overflow(
@@ -173,11 +195,66 @@ def _drop_messages_history_overflow(
     return prompt
 
 
+def extract_citations_from_stream(
+    tokens: Iterator[str], links: list[str | None]
+) -> Iterator[str]:
+    if not links:
+        yield from tokens
+        return
+
+    max_citation_num = len(links) + 1  # LLM is prompted to 1 index these
+    curr_segment = ""
+    prepend_bracket = False
+    for token in tokens:
+        # Special case of [1][ where ][ is a single token
+        if prepend_bracket:
+            curr_segment += "[" + curr_segment
+            prepend_bracket = False
+
+        curr_segment += token
+
+        possible_citation_pattern = r"(\[\d*$)"  # [1, [, etc
+        possible_citation_found = re.search(possible_citation_pattern, curr_segment)
+
+        citation_pattern = r"\[(\d+)\]"  # [1], [2] etc
+        citation_found = re.search(citation_pattern, curr_segment)
+
+        if citation_found:
+            numerical_value = int(citation_found.group(1))
+            if 1 <= numerical_value <= max_citation_num:
+                link = links[numerical_value - 1]
+                if link:
+                    curr_segment = re.sub(r"\[", "[[", curr_segment, count=1)
+                    curr_segment = re.sub("]", f"]]({link})", curr_segment, count=1)
+
+                # In case there's another open bracket like [1][, don't want to match this
+            possible_citation_found = None
+
+        # if we see "[", but haven't seen the right side, hold back - this may be a
+        # citation that needs to be replaced with a link
+        if possible_citation_found:
+            continue
+
+        # Special case with back to back citations [1][2]
+        if curr_segment and curr_segment[-1] == "[":
+            curr_segment = curr_segment[:-1]
+            prepend_bracket = True
+
+        yield curr_segment
+        curr_segment = ""
+
+    if curr_segment:
+        if prepend_bracket:
+            yield "[" + curr_segment
+        else:
+            yield curr_segment
+
+
 def llm_contextless_chat_answer(
     messages: list[ChatMessage],
-    tokenizer: Callable | None = None,
     system_text: str | None = None,
-) -> Iterator[str]:
+    tokenizer: Callable | None = None,
+) -> Iterator[DanswerAnswerPiece | StreamingError]:
     try:
         prompt_msgs = [translate_danswer_msg_to_langchain(msg) for msg in messages]
 
@@ -201,23 +278,130 @@ def llm_contextless_chat_answer(
         else:
             all_msgs = remaining_user_msgs
 
-        return get_default_llm().stream(all_msgs)
+        for token in get_default_llm().stream(all_msgs):
+            yield DanswerAnswerPiece(answer_piece=token)
 
     except Exception as e:
-        logger.error(f"LLM failed to produce valid chat message, error: {e}")
-        return (msg for msg in [LLM_CHAT_FAILURE_MSG])  # needs to be an Iterator
+        logger.exception(f"LLM failed to produce valid chat message, error: {e}")
+        yield StreamingError(error=str(e))
 
 
 def llm_contextual_chat_answer(
     messages: list[ChatMessage],
     persona: Persona,
-    user_id: UUID | None,
+    user: User | None,
     tokenizer: Callable,
-) -> Iterator[str]:
+    db_session: Session,
+    run_search_system_text: str = REQUIRE_DANSWER_SYSTEM_MSG,
+) -> Iterator[DanswerAnswerPiece | RetrievalDocs | StreamingError]:
+    last_message = messages[-1]
+    final_query_text = last_message.message
+    previous_messages = messages[:-1]
+    previous_msgs_as_basemessage = [
+        translate_danswer_msg_to_langchain(msg) for msg in previous_messages
+    ]
+
+    try:
+        llm = get_default_llm()
+
+        if not final_query_text:
+            raise ValueError("User chat message is empty.")
+
+        # Determine if a search is necessary to answer the user query
+        user_req_search_text = form_require_search_text(last_message)
+        last_user_msg = HumanMessage(content=user_req_search_text)
+
+        previous_msg_token_counts = [msg.token_count for msg in previous_messages]
+        danswer_system_tokens = len(tokenizer(run_search_system_text))
+        last_user_msg_tokens = len(tokenizer(user_req_search_text))
+
+        need_search_prompt = _drop_messages_history_overflow(
+            system_msg=SystemMessage(content=run_search_system_text),
+            system_token_count=danswer_system_tokens,
+            history_msgs=previous_msgs_as_basemessage,
+            history_token_counts=previous_msg_token_counts,
+            final_msg=last_user_msg,
+            final_msg_token_count=last_user_msg_tokens,
+        )
+
+        # Good Debug/Breakpoint
+        model_out = llm.invoke(need_search_prompt)
+
+        # Model will output "Yes Search" if search is useful
+        # Be a little forgiving though, if we match yes, it's good enough
+        retrieved_chunks: list[InferenceChunk] = []
+        if (YES_SEARCH.split()[0] + " ").lower() in model_out.lower():
+            user_acl_filters = build_access_filters_for_user(user, db_session)
+            doc_set_filter = [doc_set.name for doc_set in persona.document_sets] or None
+            final_filters = IndexFilters(
+                source_type=None,
+                document_set=doc_set_filter,
+                time_cutoff=None,
+                access_control_list=user_acl_filters,
+            )
+
+            retrieved_chunks = danswer_chat_retrieval(
+                query_message=last_message,
+                history=previous_messages,
+                llm=llm,
+                filters=final_filters,
+            )
+
+            yield RetrievalDocs(top_documents=chunks_to_search_docs(retrieved_chunks))
+
+            tool_result_str = format_danswer_chunks_for_chat(retrieved_chunks)
+
+            last_user_msg_text = form_tool_less_followup_text(
+                tool_output=tool_result_str,
+                query=last_message.message,
+                hint_text=persona.hint_text,
+            )
+            last_user_msg_tokens = len(tokenizer(last_user_msg_text))
+            last_user_msg = HumanMessage(content=last_user_msg_text)
+
+        else:
+            last_user_msg_tokens = len(tokenizer(final_query_text))
+            last_user_msg = HumanMessage(content=final_query_text)
+
+        system_text = build_system_text_from_persona(persona)
+        system_msg = SystemMessage(content=system_text) if system_text else None
+        system_tokens = len(tokenizer(system_text)) if system_text else 0
+
+        prompt = _drop_messages_history_overflow(
+            system_msg=system_msg,
+            system_token_count=system_tokens,
+            history_msgs=previous_msgs_as_basemessage,
+            history_token_counts=previous_msg_token_counts,
+            final_msg=last_user_msg,
+            final_msg_token_count=last_user_msg_tokens,
+        )
+
+        # Good Debug/Breakpoint
+        tokens = llm.stream(prompt)
+        links = [
+            chunk.source_links[0] if chunk.source_links else None
+            for chunk in retrieved_chunks
+        ]
+
+        for segment in extract_citations_from_stream(tokens, links):
+            yield DanswerAnswerPiece(answer_piece=segment)
+
+    except Exception as e:
+        logger.exception(f"LLM failed to produce valid chat message, error: {e}")
+        yield StreamingError(error=str(e))
+
+
+def llm_tools_enabled_chat_answer(
+    messages: list[ChatMessage],
+    persona: Persona,
+    user: User | None,
+    tokenizer: Callable,
+    db_session: Session,
+) -> Iterator[DanswerAnswerPiece | RetrievalDocs | StreamingError]:
     retrieval_enabled = persona.retrieval_enabled
-    system_text = persona.system_text
-    tool_text = persona.tools_text
+    system_text = build_system_text_from_persona(persona)
     hint_text = persona.hint_text
+    tool_text = form_tool_section_text(persona.tools, persona.retrieval_enabled)
 
     last_message = messages[-1]
     previous_messages = messages[:-1]
@@ -268,7 +452,7 @@ def llm_contextual_chat_answer(
 
         for result in _parse_embedded_json_streamed_response(tokens):
             if isinstance(result, DanswerAnswerPiece) and result.answer_piece:
-                yield result.answer_piece
+                yield result
                 final_answer_streamed = True
 
             if isinstance(result, DanswerChatModelOut):
@@ -285,14 +469,27 @@ def llm_contextual_chat_answer(
             retrieval_enabled
             and final_result.action.lower() == DANSWER_TOOL_NAME.lower()
         ):
-            tool_result_str = danswer_chat_retrieval(
+            user_acl_filters = build_access_filters_for_user(user, db_session)
+            doc_set_filter = [doc_set.name for doc_set in persona.document_sets] or None
+
+            final_filters = IndexFilters(
+                source_type=None,
+                document_set=doc_set_filter,
+                time_cutoff=None,
+                access_control_list=user_acl_filters,
+            )
+
+            retrieved_chunks = danswer_chat_retrieval(
                 query_message=last_message,
                 history=previous_messages,
                 llm=llm,
-                user_id=user_id,
+                filters=final_filters,
             )
+            yield RetrievalDocs(top_documents=chunks_to_search_docs(retrieved_chunks))
+
+            tool_result_str = format_danswer_chunks_for_chat(retrieved_chunks)
         else:
-            tool_result_str = call_tool(final_result, user_id=user_id)
+            tool_result_str = call_tool(final_result)
 
         # The AI's tool calling message
         tool_call_msg_text = final_result.model_raw
@@ -326,36 +523,59 @@ def llm_contextual_chat_answer(
 
         for result in _parse_embedded_json_streamed_response(tokens):
             if isinstance(result, DanswerAnswerPiece) and result.answer_piece:
-                yield result.answer_piece
+                yield result
                 final_answer_streamed = True
 
         if final_answer_streamed is False:
             raise RuntimeError("LLM did not to produce a Final Answer after tool call")
     except Exception as e:
-        logger.error(f"LLM failed to produce valid chat message, error: {e}")
-        yield LLM_CHAT_FAILURE_MSG
+        logger.exception(f"LLM failed to produce valid chat message, error: {e}")
+        yield StreamingError(error=str(e))
 
 
 def llm_chat_answer(
     messages: list[ChatMessage],
     persona: Persona | None,
-    user_id: UUID | None,
     tokenizer: Callable,
-) -> Iterator[str]:
+    user: User | None,
+    db_session: Session,
+) -> Iterator[DanswerAnswerPiece | RetrievalDocs | StreamingError]:
     # Common error cases to keep in mind:
     # - User asks question about something long ago, due to context limit, the message is dropped
     # - Tool use gives wrong/irrelevant results, model gets confused by the noise
     # - Model is too weak of an LLM, fails to follow instructions
     # - Bad persona design leads to confusing instructions to the model
     # - Bad configurations, too small token limit, mismatched tokenizer to LLM, etc.
+
+    # No setting/persona available therefore no retrieval and no additional tools
     if persona is None:
         return llm_contextless_chat_answer(messages)
 
-    elif persona.retrieval_enabled is False and persona.tools_text is None:
+    # Persona is configured but with retrieval off and no tools
+    # therefore cannot retrieve any context so contextless
+    elif persona.retrieval_enabled is False and not persona.tools:
         return llm_contextless_chat_answer(
-            messages, tokenizer, system_text=persona.system_text
+            messages, system_text=persona.system_text, tokenizer=tokenizer
         )
 
-    return llm_contextual_chat_answer(
-        messages=messages, persona=persona, user_id=user_id, tokenizer=tokenizer
+    # No additional tools outside of Danswer retrieval, can use a more basic prompt
+    # Doesn't require tool calling output format (all LLM outputs are therefore valid)
+    elif persona.retrieval_enabled and not persona.tools and not FORCE_TOOL_PROMPT:
+        return llm_contextual_chat_answer(
+            messages=messages,
+            persona=persona,
+            tokenizer=tokenizer,
+            user=user,
+            db_session=db_session,
+        )
+
+    # Use most flexible/complex prompt format that allows arbitrary tool calls
+    # that are configured in the persona file
+    # WARNING: this flow does not work well with weaker LLMs (anything below GPT-4)
+    return llm_tools_enabled_chat_answer(
+        messages=messages,
+        persona=persona,
+        tokenizer=tokenizer,
+        user=user,
+        db_session=db_session,
     )
