@@ -1,3 +1,4 @@
+import os
 import random
 import time
 
@@ -131,7 +132,7 @@ def _measure_vespa_latency(filters: dict = {}):
         "input.query(decay_factor)": str(DOC_TIME_DECAY),
         "hits": num_to_retrieve,
         "offset": 0,
-        "ranking.profile": "hybrid_search",
+        "ranking.profile": os.environ.get("VESPA_RANKING_PROFILE", "hybrid_search"),
         "timeout": "10s",
     }
     start = time.monotonic()
