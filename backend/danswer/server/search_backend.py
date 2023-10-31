@@ -19,6 +19,7 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import recommend_search_flow
+from danswer.search.models import BaseFilters
 from danswer.search.models import IndexFilters
 from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import danswer_search
@@ -47,6 +48,7 @@ router = APIRouter()
 
 class AdminSearchRequest(BaseModel):
     query: str
+    filters: BaseFilters
 
 
 class AdminSearchResponse(BaseModel):
@@ -64,9 +66,9 @@ def admin_search(
 
     user_acl_filters = build_access_filters_for_user(user, db_session)
     final_filters = IndexFilters(
-        source_type=None,
-        document_set=None,
-        time_cutoff=None,
+        source_type=question.filters.source_type,
+        document_set=question.filters.document_set,
+        time_cutoff=question.filters.time_cutoff,
         access_control_list=user_acl_filters,
     )
     document_index = get_default_document_index()

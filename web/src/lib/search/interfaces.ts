@@ -59,6 +59,12 @@ export interface SearchDefaultOverrides {
   offset: number;
 }
 
+export interface Filters {
+  source_type: string[] | null;
+  document_set: string[] | null;
+  time_cutoff: Date | null;
+}
+
 export interface SearchRequestArgs {
   query: string;
   sources: Source[];
