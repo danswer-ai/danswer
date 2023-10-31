@@ -66,7 +66,7 @@ def query_intent(query: str) -> tuple[SearchType, QueryFlow]:
 
 def recommend_search_flow(
     query: str,
-    keyword: bool,
+    keyword: bool = False,
     max_percent_stopwords: float = 0.30,  # ~Every third word max, ie "effects of caffeine" still viable keyword search
 ) -> HelperResponse:
     heuristic_search_type: SearchType | None = None

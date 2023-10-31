@@ -6,26 +6,23 @@ from nltk.stem import WordNetLemmatizer  # type:ignore
 from nltk.tokenize import word_tokenize  # type:ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
-from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
-from danswer.configs.app_configs import NUM_RERANKED_RESULTS
-from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
 from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import SIM_SCORE_RANGE_HIGH
 from danswer.configs.model_configs import SIM_SCORE_RANGE_LOW
-from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.document_index.document_index_utils import (
     translate_boost_count_to_multiplier,
 )
 from danswer.document_index.interfaces import DocumentIndex
-from danswer.document_index.interfaces import IndexFilters
 from danswer.indexing.models import InferenceChunk
 from danswer.search.models import ChunkMetric
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
+from danswer.search.models import SearchQuery
+from danswer.search.models import SearchType
 from danswer.search.search_nlp_models import get_default_embedding_model
 from danswer.search.search_nlp_models import get_default_reranking_model_ensemble
 from danswer.server.models import SearchDoc
@@ -54,6 +51,24 @@ def query_processing(
     query = " ".join(remove_stop_words(query))
     query = " ".join(lemmatize_text(query))
     return query
+
+
+def embed_query(
+    query: str,
+    embedding_model: SentenceTransformer | None = None,
+    prefix: str = ASYM_QUERY_PREFIX,
+    normalize_embeddings: bool = NORMALIZE_EMBEDDINGS,
+) -> list[float]:
+    model = embedding_model or get_default_embedding_model()
+    prefixed_query = prefix + query
+    query_embedding = model.encode(
+        prefixed_query, normalize_embeddings=normalize_embeddings
+    )
+
+    if not isinstance(query_embedding, list):
+        query_embedding = query_embedding.tolist()
+
+    return query_embedding
 
 
 def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc]:
@@ -233,73 +248,44 @@ def apply_boost(
     return final_chunks
 
 
-@log_function_time()
-def retrieve_keyword_documents(
-    query: str,
-    filters: IndexFilters,
-    favor_recent: bool,
-    datastore: DocumentIndex,
-    num_hits: int = NUM_RETURNED_HITS,
-    edit_query: bool = EDIT_KEYWORD_QUERY,
-    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-    | None = None,
-) -> list[InferenceChunk] | None:
-    edited_query = query_processing(query) if edit_query else query
-
-    top_chunks = datastore.keyword_retrieval(
-        edited_query, filters, favor_recent, num_hits
-    )
-
-    if not top_chunks:
-        logger.warning(
-            f"Keyword search returned no results - Filters: {filters}\tEdited Query: {edited_query}"
-        )
-        return None
-
-    if retrieval_metrics_callback is not None:
-        chunk_metrics = [
-            ChunkMetric(
-                document_id=chunk.document_id,
-                chunk_content_start=chunk.content[:MAX_METRICS_CONTENT],
-                first_link=chunk.source_links[0] if chunk.source_links else None,
-                score=chunk.score if chunk.score is not None else 0,
-            )
-            for chunk in top_chunks
-        ]
-        retrieval_metrics_callback(
-            RetrievalMetricsContainer(keyword_search=True, metrics=chunk_metrics)
-        )
-
-    return top_chunks
-
-
-@log_function_time()
-def retrieve_ranked_documents(
-    query: str,
-    filters: IndexFilters,
-    favor_recent: bool,
-    datastore: DocumentIndex,
-    num_hits: int = NUM_RETURNED_HITS,
-    num_rerank: int = NUM_RERANKED_RESULTS,
-    skip_rerank: bool = SKIP_RERANKING,
+def search_chunks(
+    query: SearchQuery,
+    document_index: DocumentIndex,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> tuple[list[InferenceChunk] | None, list[InferenceChunk] | None]:
-    """Uses vector similarity to fetch the top num_hits document chunks with a distance cutoff.
-    Reranks the top num_rerank out of those (instead of all due to latency)"""
+    def _log_top_chunk_links(search_flow: str, chunks: list[InferenceChunk]) -> None:
+        top_links = [
+            c.source_links[0] if c.source_links is not None else "No Link"
+            for c in chunks
+        ]
+        logger.info(f"Top links from {search_flow} search: {', '.join(top_links)}")
 
-    def _log_top_chunk_links(chunks: list[InferenceChunk]) -> None:
-        doc_links = [c.source_links[0] for c in chunks if c.source_links is not None]
+    if query.search_type == SearchType.KEYWORD:
+        top_chunks = document_index.keyword_retrieval(
+            query.query, query.filters, query.favor_recent, query.num_hits
+        )
 
-        files_log_msg = f"Top links from semantic search: {', '.join(doc_links)}"
-        logger.info(files_log_msg)
+    elif query.search_type == SearchType.SEMANTIC:
+        top_chunks = document_index.semantic_retrieval(
+            query.query, query.filters, query.favor_recent, query.num_hits
+        )
 
-    top_chunks = datastore.semantic_retrieval(query, filters, favor_recent, num_hits)
+    elif query.search_type == SearchType.HYBRID:
+        top_chunks = document_index.hybrid_retrieval(
+            query.query, query.filters, query.favor_recent, query.num_hits
+        )
+
+    else:
+        raise RuntimeError("Invalid Search Flow")
+
     if not top_chunks:
-        logger.info(f"Semantic search returned no results with filters: {filters}")
+        logger.info(
+            f"{query.search_type.value.capitalize()} search returned no results "
+            f"with filters: {query.filters}"
+        )
         return None, None
-    logger.debug(top_chunks)
 
     if retrieval_metrics_callback is not None:
         chunk_metrics = [
@@ -315,40 +301,24 @@ def retrieve_ranked_documents(
             RetrievalMetricsContainer(keyword_search=True, metrics=chunk_metrics)
         )
 
-    if skip_rerank:
+    # Keyword Search should never do reranking, no transformers involved in this flow
+    if query.search_type == SearchType.KEYWORD:
+        _log_top_chunk_links(query.search_type.value, top_chunks)
+        return top_chunks, None
+
+    if query.skip_rerank:
         # Need the range of values to not be too spread out for applying boost
-        boosted_chunks = apply_boost(top_chunks[:num_rerank])
-        _log_top_chunk_links(boosted_chunks)
-        return boosted_chunks, top_chunks[num_rerank:]
+        # Therefore pass in smaller set of chunks to limit the range for norm-ing
+        boosted_chunks = apply_boost(top_chunks[: query.num_rerank])
+        _log_top_chunk_links(query.search_type.value, boosted_chunks)
+        return boosted_chunks, top_chunks[query.num_rerank :]
 
-    ranked_chunks = (
-        semantic_reranking(
-            query,
-            top_chunks[:num_rerank],
-            rerank_metrics_callback=rerank_metrics_callback,
-        )
-        if not skip_rerank
-        else []
+    ranked_chunks = semantic_reranking(
+        query.query,
+        top_chunks[: query.num_rerank],
+        rerank_metrics_callback=rerank_metrics_callback,
     )
 
-    _log_top_chunk_links(ranked_chunks)
+    _log_top_chunk_links(query.search_type.value, ranked_chunks)
 
-    return ranked_chunks, top_chunks[num_rerank:]
-
-
-def embed_query(
-    query: str,
-    embedding_model: SentenceTransformer | None = None,
-    prefix: str = ASYM_QUERY_PREFIX,
-    normalize_embeddings: bool = NORMALIZE_EMBEDDINGS,
-) -> list[float]:
-    model = embedding_model or get_default_embedding_model()
-    prefixed_query = prefix + query
-    query_embedding = model.encode(
-        prefixed_query, normalize_embeddings=normalize_embeddings
-    )
-
-    if not isinstance(query_embedding, list):
-        query_embedding = query_embedding.tolist()
-
-    return query_embedding
+    return ranked_chunks, top_chunks[query.num_rerank :]

@@ -131,7 +131,7 @@ export interface GoogleSitesConfig {
 export interface IndexAttemptSnapshot {
   id: number;
   status: ValidStatuses | null;
-  num_docs_indexed: number;
+  new_docs_indexed: number;
   error_msg: string | null;
   time_started: string | null;
   time_updated: string;
@@ -164,7 +164,7 @@ export interface CredentialBase<T> {
 
 export interface Credential<T> extends CredentialBase<T> {
   id: number;
-  user_id: number | null;
+  user_id: string | null;
   time_created: string;
   time_updated: string;
 }

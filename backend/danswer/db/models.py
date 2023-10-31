@@ -267,7 +267,8 @@ class IndexAttempt(Base):
         nullable=True,
     )
     status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
-    num_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
+    new_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
+    total_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
     error_msg: Mapped[str | None] = mapped_column(
         Text, default=None
     )  # only filled if status = "failed"

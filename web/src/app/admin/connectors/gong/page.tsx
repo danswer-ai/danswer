@@ -215,8 +215,9 @@ const Main = () => {
                 name: "workspaces",
                 label: "Workspaces:",
                 subtext:
-                  "Specify 0 or more workspaces to index. Be sure to use the EXACT workspace name from Gong. " +
-                  "If no workspaces are specified, transcripts from all workspaces will be indexed.",
+                  "Specify 0 or more workspaces to index. Provide the workspace ID or the EXACT workspace " +
+                  "name from Gong. If no workspaces are specified, transcripts from all workspaces will " +
+                  "be indexed.",
               })}
               validationSchema={Yup.object().shape({
                 workspaces: Yup.array().of(

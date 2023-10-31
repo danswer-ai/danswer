@@ -228,14 +228,6 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
         </div>
       </div>
       <div className="w-[800px] mx-auto">
-        <SearchTypeSelector
-          selectedSearchType={selectedSearchType}
-          setSelectedSearchType={(searchType) => {
-            Cookies.set("searchType", searchType);
-            setSelectedSearchType(searchType);
-          }}
-        />
-
         <SearchBar
           query={query}
           setQuery={setQuery}

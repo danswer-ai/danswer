@@ -105,7 +105,7 @@ export function CCPairStatus({
   } else {
     badge = (
       <Badge size={size} color="green" icon={FiCheckCircle}>
-        Running
+        Active
       </Badge>
     );
   }

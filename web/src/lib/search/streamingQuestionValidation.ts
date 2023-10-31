@@ -21,7 +21,6 @@ export const questionValidationStreamed = async <T>({
     body: JSON.stringify({
       query,
       collection: "danswer_index",
-      use_keyword: null,
       filters: emptyFilters,
       enable_auto_detect_filters: false,
       offset: null,

@@ -48,12 +48,13 @@ from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.document_index.document_index_utils import get_uuid_from_chunk
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentInsertionRecord
-from danswer.document_index.interfaces import IndexFilters
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.document_index.vespa.utils import remove_invalid_unicode_chars
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.indexing.models import InferenceChunk
+from danswer.search.models import IndexFilters
 from danswer.search.search_runner import embed_query
+from danswer.search.search_runner import query_processing
 from danswer.search.search_runner import remove_stop_words
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
@@ -125,12 +126,9 @@ def _get_vespa_chunk_ids_by_document_id(
         results = requests.get(SEARCH_ENDPOINT, params=params).json()
         hits = results["root"].get("children", [])
 
-        # Temporary logging to catch the rare index out of bounds issue
-        problematic_ids = [hit["id"] for hit in hits if len(hit["id"].split("::")) < 2]
-        if problematic_ids:
-            logger.error(f'IDs without "::" {problematic_ids}')
-
-        doc_chunk_ids.extend([hit["id"].split("::", 1)[-1] for hit in hits])
+        doc_chunk_ids.extend(
+            [hit["fields"]["documentid"].split("::", 1)[-1] for hit in hits]
+        )
         params["offset"] += hits_per_page  # type: ignore
 
         if len(hits) < hits_per_page:
@@ -141,11 +139,16 @@ def _get_vespa_chunk_ids_by_document_id(
 def _delete_vespa_doc_chunks(document_id: str) -> bool:
     doc_chunk_ids = _get_vespa_chunk_ids_by_document_id(document_id)
 
-    failures = [
-        requests.delete(f"{DOCUMENT_ID_ENDPOINT}/{doc}").status_code != 200
-        for doc in doc_chunk_ids
-    ]
-    return not any(failures)
+    failed = False
+    for chunk_id in doc_chunk_ids:
+        success = (
+            requests.delete(f"{DOCUMENT_ID_ENDPOINT}/{chunk_id}").status_code == 200
+        )
+        if not success:
+            failed = True
+            logger.error(f"Failed to delete chunk: {chunk_id}")
+
+    return not failed
 
 
 @retry(tries=3, delay=1, backoff=2)
@@ -276,6 +279,13 @@ def _index_vespa_chunks(
                 if chunk_already_existed:
                     already_existing_documents.add(chunk.source_document.id)
 
+                # In the logic below, we check if the chunk comes from a doc that has already been
+                # added to already_existing_document. This works because the chunks are ordered
+                # and because the Document chunks are not separated into different batches.
+                # The first chunk is processed first and if it exists, then its entire document
+                # is marked as already existing, so if the document length increases and new chunks
+                # are added, they must come last in processing and the doc would already be in
+                # already existing documents.
                 insertion_records.add(
                     DocumentInsertionRecord(
                         document_id=chunk.source_document.id,
@@ -302,13 +312,15 @@ def _build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) ->
 
     def _build_time_filter(
         cutoff: datetime | None,
-        untimed_doc_cutoff: timedelta = timedelta(days=62),  # Slightly over 2 Months
+        # Slightly over 3 Months, approximately 1 fiscal quarter
+        untimed_doc_cutoff: timedelta = timedelta(days=92),
     ) -> str:
         if not cutoff:
             return ""
 
         # For Documents that don't have an updated at, filter them out for queries asking for
-        # very recent documents (2 months) default
+        # very recent documents (3 months) default. Documents that don't have an updated at
+        # time are assigned 3 months for time decay value
         include_untimed = datetime.now(timezone.utc) - untimed_doc_cutoff > cutoff
         cutoff_secs = int(cutoff.timestamp())
 
@@ -330,10 +342,6 @@ def _build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) ->
     filter_str += _build_time_filter(filters.time_cutoff)
 
     return filter_str
-
-
-def _build_vespa_limit(num_to_retrieve: int, offset: int = 0) -> str:
-    return f" limit {num_to_retrieve} offset {offset}"
 
 
 def _process_dynamic_summary(
@@ -431,8 +439,9 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
 
     for hit in hits:
         if hit["fields"].get(CONTENT) is None:
+            identifier = hit["fields"].get("documentid") or hit["id"]
             logger.error(
-                f"Vespa Index with Vespa ID {hit['id']} has no contents. "
+                f"Vespa Index with Vespa ID {identifier} has no contents. "
                 f"This is invalid because the vector is not meaningful and keywordsearch cannot "
                 f"fetch this document"
             )
@@ -585,6 +594,7 @@ class VespaIndex(DocumentIndex):
         filters: IndexFilters,
         favor_recent: bool,
         num_to_retrieve: int = NUM_RETURNED_HITS,
+        edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
         decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
@@ -596,15 +606,16 @@ class VespaIndex(DocumentIndex):
             # not working as desired
             + '({grammar: "weakAnd"}userInput(@query) '
             + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
-            + _build_vespa_limit(num_to_retrieve)
         )
+
+        final_query = query_processing(query) if edit_keyword_query else query
 
         params: dict[str, str | int] = {
             "yql": yql,
-            "query": query,
+            "query": final_query,
             "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
             "hits": num_to_retrieve,
-            "num_to_rerank": 10 * num_to_retrieve,
+            "offset": 0,
             "ranking.profile": "keyword_search",
         }
 
@@ -617,6 +628,7 @@ class VespaIndex(DocumentIndex):
         favor_recent: bool,
         num_to_retrieve: int = NUM_RETURNED_HITS,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
+        edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
         decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
@@ -628,20 +640,21 @@ class VespaIndex(DocumentIndex):
             # needed for highlighting while the N-gram highlighting is broken /
             # not working as desired
             + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
-            + _build_vespa_limit(num_to_retrieve)
         )
 
         query_embedding = embed_query(query)
 
         query_keywords = (
-            " ".join(remove_stop_words(query)) if EDIT_KEYWORD_QUERY else query
+            " ".join(remove_stop_words(query)) if edit_keyword_query else query
         )
 
-        params = {
+        params: dict[str, str | int] = {
             "yql": yql,
-            "query": query_keywords,
+            "query": query_keywords,  # Needed for highlighting
             "input.query(query_embedding)": str(query_embedding),
             "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
+            "hits": num_to_retrieve,
+            "offset": 0,
             "ranking.profile": "semantic_search",
         }
 
@@ -653,27 +666,34 @@ class VespaIndex(DocumentIndex):
         filters: IndexFilters,
         favor_recent: bool,
         num_to_retrieve: int,
+        distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
+        edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
+        decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
+        # Needs to be at least as much as the value set in Vespa schema config
+        target_hits = max(10 * num_to_retrieve, 1000)
         yql = (
             VespaIndex.yql_base
             + vespa_where_clauses
-            + f"({{targetHits: {10 * num_to_retrieve}}}nearestNeighbor(embeddings, query_embedding)) or "
-            + '({grammar: "weakAnd"}userInput(@query) '
-            # `({defaultIndex: "content_summary"}userInput(@query))` section is
-            # needed for highlighting while the N-gram highlighting is broken /
-            # not working as desired
+            + f"(({{targetHits: {target_hits}}}nearestNeighbor(embeddings, query_embedding)) "
+            + 'or ({grammar: "weakAnd"}userInput(@query)) '
             + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
-            + _build_vespa_limit(num_to_retrieve)
         )
 
         query_embedding = embed_query(query)
 
-        params = {
+        query_keywords = (
+            " ".join(remove_stop_words(query)) if edit_keyword_query else query
+        )
+
+        params: dict[str, str | int] = {
             "yql": yql,
-            "query": query,
+            "query": query_keywords,
             "input.query(query_embedding)": str(query_embedding),
-            "input.query(decay_factor)": str(DOC_TIME_DECAY),
+            "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
+            "hits": num_to_retrieve,
+            "offset": 0,
             "ranking.profile": "hybrid_search",
         }
 
@@ -694,14 +714,13 @@ class VespaIndex(DocumentIndex):
             # needed for highlighting while the N-gram highlighting is broken /
             # not working as desired
             + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
-            + _build_vespa_limit(num_to_retrieve)
         )
 
         params: dict[str, str | int] = {
             "yql": yql,
             "query": query,
             "hits": num_to_retrieve,
-            "num_to_rerank": 10 * num_to_retrieve,
+            "offset": 0,
             "ranking.profile": "admin_search",
         }
 
