@@ -121,7 +121,7 @@ def _measure_vespa_latency(filters: dict = {}):
         + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
     )
     # yql = VespaIndex.yql_base + '({grammar: "weakAnd"}userInput(@query))'
-    query = random.choice(additional_questions)
+    query = random.choice(question_bank)
     query_embedding = embed_query(query)
     num_to_retrieve = 50
     params: dict[str, str | int] = {
