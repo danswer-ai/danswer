@@ -434,6 +434,8 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
 def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError("No/empty query received")
+
+    logger.info("Making query with params: %s", query_params)
     response = requests.get(SEARCH_ENDPOINT, params=query_params)
     response.raise_for_status()
 
