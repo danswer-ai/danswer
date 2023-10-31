@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 from datetime import timezone
 
+import dask
 import torch
 from dask.distributed import Client
 from dask.distributed import Future
@@ -43,6 +44,10 @@ from danswer.utils.logger import IndexAttemptSingleton
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
+# If the indexing dies, it's most likely due to resource constraints,
+# restarting just delays the eventual failure, not useful to the user
+dask.config.set({"distributed.scheduler.allowed-failures": 0})
 
 _UNEXPECTED_STATE_FAILURE_REASON = (
     "Stopped mid run, likely due to the background process being killed"
@@ -144,6 +149,9 @@ def cleanup_indexing_jobs(
         if not job.done():
             continue
 
+        if job.status == "error":
+            logger.error(job.exception())
+
         job.release()
         del existing_jobs_copy[attempt_id]
         index_attempt = get_index_attempt(
@@ -156,7 +164,7 @@ def cleanup_indexing_jobs(
             )
             continue
 
-        if index_attempt.status == IndexingStatus.IN_PROGRESS:
+        if index_attempt.status == IndexingStatus.IN_PROGRESS or job.status == "error":
             mark_run_failed(
                 db_session=db_session,
                 index_attempt=index_attempt,
@@ -286,10 +294,10 @@ def _run_indexing(
             run_dt=run_dt,
         )
 
+        net_doc_change = 0
+        document_count = 0
+        chunk_count = 0
         try:
-            net_doc_change = 0
-            document_count = 0
-            chunk_count = 0
             for doc_batch in doc_batch_generator:
                 logger.debug(
                     f"Indexing batch of documents: {[doc.to_short_descriptor() for doc in doc_batch]}"
@@ -418,7 +426,14 @@ def kickoff_indexing_jobs(
 ) -> dict[int, Future]:
     existing_jobs_copy = existing_jobs.copy()
 
-    new_indexing_attempts = get_not_started_index_attempts(db_session)
+    # Don't include jobs waiting in the Dask queue that just haven't started running
+    # Also (rarely) don't include for jobs that started but haven't updated the indexing tables yet
+    new_indexing_attempts = [
+        attempt
+        for attempt in get_not_started_index_attempts(db_session)
+        if attempt.id not in existing_jobs
+    ]
+
     logger.info(f"Found {len(new_indexing_attempts)} new indexing tasks.")
 
     if not new_indexing_attempts:
@@ -438,9 +453,6 @@ def kickoff_indexing_jobs(
             mark_attempt_failed(
                 attempt, db_session, failure_reason="Credential is null"
             )
-            continue
-
-        if attempt.id in existing_jobs:
             continue
 
         logger.info(
