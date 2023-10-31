@@ -22,6 +22,7 @@ httpx-oauth==0.11.2
 huggingface-hub==0.16.4
 jira==3.5.1
 langchain==0.0.325
+litellm==0.12.5
 llama-index==0.8.27
 Mako==1.2.4
 nltk==3.8.1
