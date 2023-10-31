@@ -34,7 +34,7 @@ from danswer.direct_qa.qa_utils import get_usable_chunks
 from danswer.document_index import get_default_document_index
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.build import get_default_llm
-from danswer.llm.llm import LLM
+from danswer.llm.interfaces import LLM
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import translate_danswer_msg_to_langchain
 from danswer.search.access_filters import build_access_filters_for_user

@@ -55,27 +55,13 @@ SEARCH_DISTANCE_CUTOFF = 0
 # Intent model max context size
 QUERY_MAX_CONTEXT_SIZE = 256
 
+# Danswer custom Deep Learning Models
+INTENT_MODEL_VERSION = "danswer/intent-model"
+
 
 #####
 # Generative AI Model Configs
 #####
-# Other models should work as well, check the library/API compatibility.
-# But these are the models that have been verified to work with the existing prompts.
-# Using a different model may require some prompt tuning. See qa_prompts.py
-VERIFIED_MODELS = {
-    DanswerGenAIModel.OPENAI: ["text-davinci-003"],
-    DanswerGenAIModel.OPENAI_CHAT: ["gpt-3.5-turbo", "gpt-4"],
-    DanswerGenAIModel.GPT4ALL: ["ggml-model-gpt4all-falcon-q4_0.bin"],
-    DanswerGenAIModel.GPT4ALL_CHAT: ["ggml-model-gpt4all-falcon-q4_0.bin"],
-    # The "chat" model below is actually "instruction finetuned" and does not support conversational
-    DanswerGenAIModel.HUGGINGFACE.value: ["meta-llama/Llama-2-70b-chat-hf"],
-    DanswerGenAIModel.HUGGINGFACE_CHAT.value: ["meta-llama/Llama-2-70b-hf"],
-    # Created by Deepset.ai
-    # https://huggingface.co/deepset/deberta-v3-large-squad2
-    # Model provided with no modifications
-    DanswerGenAIModel.TRANSFORMERS.value: ["deepset/deberta-v3-large-squad2"],
-}
-
 # Sets the internal Danswer model class to use
 INTERNAL_MODEL_VERSION = os.environ.get(
     "INTERNAL_MODEL_VERSION", DanswerGenAIModel.OPENAI_CHAT.value
@@ -84,11 +70,8 @@ INTERNAL_MODEL_VERSION = os.environ.get(
 # If the Generative AI model requires an API key for access, otherwise can leave blank
 GEN_AI_API_KEY = os.environ.get("GEN_AI_API_KEY", os.environ.get("OPENAI_API_KEY"))
 
-# If using GPT4All, HuggingFace Inference API, or OpenAI - specify the model version
-GEN_AI_MODEL_VERSION = os.environ.get(
-    "GEN_AI_MODEL_VERSION",
-    VERIFIED_MODELS.get(DanswerGenAIModel(INTERNAL_MODEL_VERSION), [""])[0],
-)
+# TODO fix this
+GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION", "gpt-3.5-turbo")
 
 # If the Generative Model is hosted to accept requests (DanswerGenAIModel.REQUEST) then
 # set the two below to specify
@@ -103,12 +86,10 @@ GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS") or 102
 GEN_AI_MAX_INPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_INPUT_TOKENS") or 3000)
 GEN_AI_TEMPERATURE = float(os.environ.get("GEN_AI_TEMPERATURE") or 0)
 
-# Danswer custom Deep Learning Models
-INTENT_MODEL_VERSION = "danswer/intent-model"
-
 #####
 # OpenAI Azure
 #####
+# TODO CHECK ALL THESE, MAKE SURE STILL USEFUL
 API_BASE_OPENAI = os.environ.get("API_BASE_OPENAI", "")
 API_TYPE_OPENAI = os.environ.get("API_TYPE_OPENAI", "").lower()
 API_VERSION_OPENAI = os.environ.get("API_VERSION_OPENAI", "")
