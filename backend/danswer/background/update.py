@@ -426,15 +426,15 @@ def kickoff_indexing_jobs(
 ) -> dict[int, Future]:
     existing_jobs_copy = existing_jobs.copy()
 
-    new_indexing_attempts = get_not_started_index_attempts(db_session)
-    new_tasks = len(
-        [
-            attempt.id
-            for attempt in new_indexing_attempts
-            if attempt.id not in existing_jobs
-        ]
-    )
-    logger.info(f"Found {new_tasks} new indexing tasks.")
+    # Don't include jobs waiting in the Dask queue that just haven't started running
+    # Also (rarely) don't include for jobs that started but haven't updated the indexing tables yet
+    new_indexing_attempts = [
+        attempt
+        for attempt in get_not_started_index_attempts(db_session)
+        if attempt.id not in existing_jobs
+    ]
+
+    logger.info(f"Found {len(new_indexing_attempts)} new indexing tasks.")
 
     if not new_indexing_attempts:
         return existing_jobs
@@ -453,11 +453,6 @@ def kickoff_indexing_jobs(
             mark_attempt_failed(
                 attempt, db_session, failure_reason="Credential is null"
             )
-            continue
-
-        # For jobs waiting in the queue that haven't started
-        # Also rarely for jobs that started but haven't updated the indexing tables yet
-        if attempt.id in existing_jobs:
             continue
 
         logger.info(
