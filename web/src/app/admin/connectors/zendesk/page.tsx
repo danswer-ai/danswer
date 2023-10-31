@@ -102,12 +102,13 @@ const Main = () => {
       ) : (
         <>
           <p className="text-sm">
-            To get started you&apos;ll need API token details for your BookStack
-            instance. You can get these by editing your (or another) user
-            account in BookStack and creating a token via the &apos;API
-            Tokens&apos; section at the bottom. Your user account will require
-            to be assigned a BookStack role which has the &apos;Access system
-            API&apos; system permission assigned.
+            To get started you&apos;ll need API token details for your Zendesk
+            instance. You can generate this by access the Admin Center of your instance
+            (e.g. https://&lt;subdomain&gt;.zendesk.com/admin/). Proceed to the "Apps and
+            Integrations" section and "Zendesk API" page. Add a new API token and provide
+            it with a name. You will also need to provide the e-mail address of a user that
+            the system will impersonate. This is of little consequence as we are only performing
+            read actions.
           </p>
           <div className="border-solid border-gray-600 border rounded-md p-6 mt-2 mb-4">
             <CredentialForm<ZendeskCredentialJson>
