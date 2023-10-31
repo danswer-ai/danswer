@@ -133,10 +133,12 @@ def _measure_vespa_latency(filters: dict = {}):
         "hits": num_to_retrieve,
         "offset": 0,
         "ranking.profile": os.environ.get("VESPA_RANKING_PROFILE", "hybrid_search"),
+        "presentation.timing": True,
         "timeout": "10s",
     }
     start = time.monotonic()
-    _query_vespa(params)
+    response = _query_vespa(params)
+    print(response)
     return time.monotonic() - start
 
 

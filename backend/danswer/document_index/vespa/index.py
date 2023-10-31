@@ -436,10 +436,20 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
         raise ValueError("No/empty query received")
 
     logger.info("Making query with params: %s", query_params)
-    response = requests.get(SEARCH_ENDPOINT, params=query_params)
+    response = requests.get(
+        SEARCH_ENDPOINT,
+        params=dict(
+            **query_params,
+            **{
+                "presentation.timing": True,
+            },
+        ),
+    )
     response.raise_for_status()
 
-    hits = response.json()["root"].get("children", [])
+    response_json = response.json()
+    logger.info("Response: %s", response_json)
+    hits = response_json["root"].get("children", [])
 
     for hit in hits:
         if hit["fields"].get(CONTENT) is None:
