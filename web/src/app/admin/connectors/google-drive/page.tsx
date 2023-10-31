@@ -13,7 +13,6 @@ import {
   GoogleDriveConfig,
   GoogleDriveCredentialJson,
   GoogleDriveServiceAccountCredentialJson,
-  User,
 } from "@/lib/types";
 import { linkCredential } from "@/lib/credential";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
@@ -277,24 +276,13 @@ const Main = () => {
     refreshCredentials,
   } = usePublicCredentials();
 
-  const {
-    data: currentUserData,
-    isLoading: iscurrentUserLoading,
-    error: iscurrentUserError,
-  } = useSWR<User>(
-    "/api/manage/me",
-    fetcher
-  );
-
-
   const { popup, setPopup } = usePopup();
 
   if (
     (!appCredentialData && isAppCredentialLoading) ||
     (!serviceAccountKeyData && isServiceAccountKeyLoading) ||
     (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
-    (!credentialsData && isCredentialsLoading) ||
-    (!currentUserData && iscurrentUserLoading)
+    (!credentialsData && isCredentialsLoading)
   ) {
     return (
       <div className="mx-auto">
@@ -329,15 +317,6 @@ const Main = () => {
     );
   }
 
-  if (iscurrentUserError || !credentialsData) {
-    return (
-      <div className="mx-auto">
-        <div className="text-red-500">
-          Error loading user profile. Contact an administrator.
-        </div>
-      </div>
-    );
-  }
   const googleDrivePublicCredential:
     | Credential<GoogleDriveCredentialJson>
     | undefined = credentialsData.find(
