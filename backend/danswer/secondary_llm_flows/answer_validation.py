@@ -2,7 +2,7 @@ from danswer.configs.constants import ANSWER_PAT
 from danswer.configs.constants import CODE_BLOCK_PAT
 from danswer.configs.constants import QUESTION_PAT
 from danswer.direct_qa.qa_block import dict_based_prompt_to_langchain_prompt
-from danswer.llm.build import get_default_llm
+from danswer.llm.factory import get_default_llm
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 

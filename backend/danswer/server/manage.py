@@ -26,6 +26,7 @@ from danswer.db.models import User
 from danswer.direct_qa.llm_utils import check_model_api_key_is_valid
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.qa_utils import get_gen_ai_api_key
+from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.server.models import ApiKey
@@ -79,6 +80,7 @@ def document_boost_update(
             db_session=db_session,
             document_id=boost_update.document_id,
             boost=boost_update.boost,
+            document_index=get_default_document_index(),
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -95,6 +97,7 @@ def document_hidden_update(
             db_session=db_session,
             document_id=hidden_update.document_id,
             hidden=hidden_update.hidden,
+            document_index=get_default_document_index(),
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

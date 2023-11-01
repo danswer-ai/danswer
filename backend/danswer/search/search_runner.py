@@ -5,6 +5,7 @@ from nltk.corpus import stopwords  # type:ignore
 from nltk.stem import WordNetLemmatizer  # type:ignore
 from nltk.tokenize import word_tokenize  # type:ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
+from sqlalchemy.orm import Session
 
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
@@ -12,12 +13,17 @@ from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
 from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import SIM_SCORE_RANGE_HIGH
 from danswer.configs.model_configs import SIM_SCORE_RANGE_LOW
+from danswer.db.feedback import create_query_event
+from danswer.db.feedback import update_query_event_retrieved_documents
+from danswer.db.models import User
 from danswer.document_index.document_index_utils import (
     translate_boost_count_to_multiplier,
 )
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.indexing.models import InferenceChunk
+from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.models import ChunkMetric
+from danswer.search.models import IndexFilters
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
@@ -25,9 +31,11 @@ from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.search.search_nlp_models import get_default_embedding_model
 from danswer.search.search_nlp_models import get_default_reranking_model_ensemble
+from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchDoc
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
+
 
 logger = setup_logger()
 
@@ -322,3 +330,54 @@ def search_chunks(
     _log_top_chunk_links(query.search_type.value, ranked_chunks)
 
     return ranked_chunks, top_chunks[query.num_rerank :]
+
+
+def danswer_search(
+    question: QuestionRequest,
+    user: User | None,
+    db_session: Session,
+    document_index: DocumentIndex,
+    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
+    | None = None,
+    rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
+) -> tuple[list[InferenceChunk] | None, list[InferenceChunk] | None, int]:
+    query_event_id = create_query_event(
+        query=question.query,
+        search_type=question.search_type,
+        llm_answer=None,
+        user_id=user.id if user is not None else None,
+        db_session=db_session,
+    )
+
+    user_acl_filters = build_access_filters_for_user(user, db_session)
+    final_filters = IndexFilters(
+        source_type=question.filters.source_type,
+        document_set=question.filters.document_set,
+        time_cutoff=question.filters.time_cutoff,
+        access_control_list=user_acl_filters,
+    )
+
+    search_query = SearchQuery(
+        query=question.query,
+        search_type=question.search_type,
+        filters=final_filters,
+        favor_recent=True if question.favor_recent is None else question.favor_recent,
+    )
+
+    ranked_chunks, unranked_chunks = search_chunks(
+        query=search_query,
+        document_index=document_index,
+        retrieval_metrics_callback=retrieval_metrics_callback,
+        rerank_metrics_callback=rerank_metrics_callback,
+    )
+
+    retrieved_ids = [doc.document_id for doc in ranked_chunks] if ranked_chunks else []
+
+    update_query_event_retrieved_documents(
+        db_session=db_session,
+        retrieved_document_ids=retrieved_ids,
+        query_id=query_event_id,
+        user_id=None if user is None else user.id,
+    )
+
+    return ranked_chunks, unranked_chunks, query_event_id
