@@ -15,7 +15,11 @@ class CustomModelServer(LLM):
     """This class is to provide an example for how to use Danswer
     with any LLM, even servers with custom API definitions.
     To use with your own model server, simply implement the functions
-    below to fit your model server expectation"""
+    below to fit your model server expectation
+
+    The implementation below works against the custom FastAPI server from the blog:
+    https://medium.com/@yuhongsun96/how-to-augment-llms-with-private-data-29349bd8ae9f
+    """
 
     def __init__(
         self,
