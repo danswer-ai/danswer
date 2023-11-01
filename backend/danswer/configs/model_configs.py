@@ -68,6 +68,7 @@ INTENT_MODEL_VERSION = "danswer/intent-model"
 # Set GEN_AI_MODEL_PROVIDER to "custom" to use the custom requests approach
 # Set GEN_AI_MODEL_PROVIDER to "gpt4all" to use gpt4all models running locally
 GEN_AI_MODEL_PROVIDER = os.environ.get("GEN_AI_MODEL_PROVIDER") or "openai"
+# If using Azure, it's the engine name, for example: Danswer
 GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION") or "gpt-3.5-turbo"
 
 # If the Generative AI model requires an API key for access, otherwise can leave blank
@@ -76,7 +77,7 @@ GEN_AI_API_KEY = (
 )
 
 # API Base, such as (for Azure): https://danswer.openai.azure.com/
-GEN_AI_ENDPOINT = os.environ.get("GEN_AI_ENDPOINT") or None
+GEN_AI_API_ENDPOINT = os.environ.get("GEN_AI_API_ENDPOINT") or None
 # API Version, such as (for Azure): 2023-09-15-preview
 GEN_AI_API_VERSION = os.environ.get("GEN_AI_API_VERSION") or None
 

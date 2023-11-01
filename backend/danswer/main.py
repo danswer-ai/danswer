@@ -25,7 +25,7 @@ from danswer.configs.constants import AuthType
 from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
-from danswer.configs.model_configs import GEN_AI_ENDPOINT
+from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import SKIP_RERANKING
@@ -165,8 +165,8 @@ def get_application() -> FastAPI:
         else:
             logger.info(f"Using LLM Provider: {GEN_AI_MODEL_PROVIDER}")
             logger.info(f"Using LLM Model Version: {GEN_AI_MODEL_VERSION}")
-            if GEN_AI_ENDPOINT:
-                logger.info(f"Using LLM Endpoint: {GEN_AI_ENDPOINT}")
+            if GEN_AI_API_ENDPOINT:
+                logger.info(f"Using LLM Endpoint: {GEN_AI_API_ENDPOINT}")
 
         if SKIP_RERANKING:
             logger.info("Reranking step of search flow is disabled")

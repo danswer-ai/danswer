@@ -1,8 +1,8 @@
 import litellm  # type:ignore
 from langchain.chat_models import ChatLiteLLM
 
+from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_API_VERSION
-from danswer.configs.model_configs import GEN_AI_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
@@ -48,7 +48,7 @@ class DefaultMultiLLM(LangChainChatLLM):
         timeout: int,
         model_provider: str | None = GEN_AI_MODEL_PROVIDER,
         model_version: str | None = GEN_AI_MODEL_VERSION,
-        api_base: str | None = GEN_AI_ENDPOINT,
+        api_base: str | None = GEN_AI_API_ENDPOINT,
         api_version: str | None = GEN_AI_API_VERSION,
         max_output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
         temperature: float = GEN_AI_TEMPERATURE,
