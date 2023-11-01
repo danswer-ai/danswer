@@ -9,8 +9,6 @@ from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.db.feedback import create_query_event
 from danswer.db.feedback import update_query_event_retrieved_documents
 from danswer.db.models import User
-from danswer.direct_qa.exceptions import OpenAIKeyMissing
-from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.direct_qa.qa_utils import get_usable_chunks
@@ -132,7 +130,7 @@ def answer_qa_query(
         qa_model = get_default_qa_model(
             timeout=answer_generation_timeout, real_time_flow=real_time_flow
         )
-    except (UnknownModelError, OpenAIKeyMissing) as e:
+    except Exception as e:
         return QAResponse(
             answer=None,
             quotes=None,
