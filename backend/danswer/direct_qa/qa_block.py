@@ -28,7 +28,7 @@ from danswer.direct_qa.qa_prompts import WeakModelFreeformProcessor
 from danswer.direct_qa.qa_utils import process_answer
 from danswer.direct_qa.qa_utils import process_model_tokens
 from danswer.indexing.models import InferenceChunk
-from danswer.llm.llm import LLM
+from danswer.llm.interfaces import LLM
 from danswer.llm.utils import check_number_of_tokens
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import get_default_llm_tokenizer
