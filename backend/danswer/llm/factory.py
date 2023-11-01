@@ -1,9 +1,9 @@
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
+from danswer.llm.chat_llm import DefaultMultiLLM
 from danswer.llm.custom_llm import CustomModelServer
 from danswer.llm.gpt_4_all import DanswerGPT4All
 from danswer.llm.interfaces import LLM
-from danswer.llm.multi_llm import DefaultMultiLLM
 from danswer.llm.utils import get_gen_ai_api_key
 
 
