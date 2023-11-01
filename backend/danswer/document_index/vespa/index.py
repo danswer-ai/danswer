@@ -299,6 +299,8 @@ def _index_vespa_chunks(
 
 
 def _build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) -> str:
+    return ""
+
     def _build_or_filters(key: str, vals: list[str] | None) -> str:
         if vals is None:
             return ""
@@ -440,15 +442,15 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
         SEARCH_ENDPOINT,
         params=dict(
             **query_params,
-            **{
-                "presentation.timing": True,
-            },
+            # **{
+            #     "presentation.timing": True,
+            # },
         ),
     )
     response.raise_for_status()
 
     response_json = response.json()
-    logger.info("Response: %s", response_json)
+    logger.debug("Response: %s", response_json)
     hits = response_json["root"].get("children", [])
 
     for hit in hits:
