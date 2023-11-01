@@ -6,7 +6,6 @@ import nltk
 
 from danswer.configs.app_configs import DOC_TIME_DECAY
 from danswer.document_index.vespa.index import _query_vespa
-from danswer.document_index.vespa.index import CONTENT_SUMMARY
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.search.search_runner import embed_query
 
@@ -129,12 +128,12 @@ def generate_random_sentence():
 
 
 def _measure_vespa_latency(filters: dict = {}):
-    yql = (
-        VespaIndex.yql_base
-        + '({grammar: "weakAnd"}userInput(@query) '
-        + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
-    )
-    # yql = VespaIndex.yql_base + '({grammar: "weakAnd"}userInput(@query))'
+    # yql = (
+    #     VespaIndex.yql_base
+    #     + '({grammar: "weakAnd"}userInput(@query) '
+    #     + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
+    # )
+    yql = VespaIndex.yql_base + '({grammar: "weakAnd"}userInput(@query))'
     query = generate_random_sentence()
     query_embedding = embed_query(query)
     num_to_retrieve = 50
@@ -150,8 +149,8 @@ def _measure_vespa_latency(filters: dict = {}):
         "timeout": "10s",
     }
     start = time.monotonic()
-    response = _query_vespa(params)
-    print(response)
+    _query_vespa(params)
+    # print(response)
     return time.monotonic() - start
 
 

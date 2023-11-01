@@ -484,7 +484,7 @@ class VespaIndex(DocumentIndex):
         f"{HIDDEN}, "
         f"{DOC_UPDATED_AT}, "
         f"{METADATA}, "
-        f"{CONTENT_SUMMARY} "
+        # f"{CONTENT_SUMMARY} "
         f"from {DOCUMENT_INDEX_NAME} where "
     )
 
