@@ -78,38 +78,12 @@ class DocumentIndexType(str, Enum):
     SPLIT = "split"  # Typesense + Qdrant
 
 
-class DanswerGenAIModel(str, Enum):
-    """This represents the internal Danswer GenAI model which determines the class that is used
-    to generate responses to the user query. Different models/services require different internal
-    handling, this allows for modularity of implementation within Danswer"""
-
-    OPENAI = "openai-completion"
-    OPENAI_CHAT = "openai-chat-completion"
-    GPT4ALL = "gpt4all-completion"
-    GPT4ALL_CHAT = "gpt4all-chat-completion"
-    HUGGINGFACE = "huggingface-client-completion"
-    HUGGINGFACE_CHAT = "huggingface-client-chat-completion"
-    REQUEST = "request-completion"
-    TRANSFORMERS = "transformers"
-
-
 class AuthType(str, Enum):
     DISABLED = "disabled"
     BASIC = "basic"
     GOOGLE_OAUTH = "google_oauth"
     OIDC = "oidc"
     SAML = "saml"
-
-
-class ModelHostType(str, Enum):
-    """For GenAI models interfaced via requests, different services have different
-    expectations for what fields are included in the request"""
-
-    # https://huggingface.co/docs/api-inference/detailed_parameters#text-generation-task
-    HUGGINGFACE = "huggingface"  # HuggingFace test-generation Inference API
-    # https://medium.com/@yuhongsun96/host-a-llama-2-api-on-gpu-for-free-a5311463c183
-    COLAB_DEMO = "colab-demo"
-    # TODO support for Azure, AWS, GCP GenAI model hosting
 
 
 class QAFeedbackType(str, Enum):

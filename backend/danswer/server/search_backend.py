@@ -19,8 +19,6 @@ from danswer.db.feedback import update_query_event_feedback
 from danswer.db.feedback import update_query_event_retrieved_documents
 from danswer.db.models import User
 from danswer.direct_qa.answer_question import answer_qa_query
-from danswer.direct_qa.exceptions import OpenAIKeyMissing
-from danswer.direct_qa.exceptions import UnknownModelError
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import StreamingError
 from danswer.direct_qa.llm_utils import get_default_qa_model
@@ -302,7 +300,7 @@ def stream_direct_qa(
 
         try:
             qa_model = get_default_qa_model()
-        except (UnknownModelError, OpenAIKeyMissing) as e:
+        except Exception as e:
             logger.exception("Unable to get QA model")
             error = StreamingError(error=str(e))
             yield get_json_line(error.dict())
