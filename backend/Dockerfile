@@ -1,8 +1,11 @@
 FROM python:3.11.4-slim-bookworm
 
-# Default DANSWER_VERSION set here. 
+# Default DANSWER_VERSION build argument set here. 
 # This can be overridden by passing in a build arg, typically from GitHub Actions.
 ARG DANSWER_VERSION=0.1.0
+# Then passed to the container environment.
+ENV DANSWER_VERSION=${DANSWER_VERSION}
+
 
 # Install system dependencies
 RUN apt-get update && \
