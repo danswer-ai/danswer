@@ -12,7 +12,7 @@ from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.feedback import update_query_event_feedback
 from danswer.db.models import User
 from danswer.direct_qa.answer_question import answer_qa_query
-from danswer.direct_qa.answer_question import stream_qa_portions
+from danswer.direct_qa.answer_question import answer_qa_query_stream
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.search.access_filters import build_access_filters_for_user
@@ -174,7 +174,9 @@ def stream_direct_qa(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
-    packets = stream_qa_portions(question=question, user=user, db_session=db_session)
+    packets = answer_qa_query_stream(
+        question=question, user=user, db_session=db_session
+    )
     return StreamingResponse(packets, media_type="application/json")
 
 

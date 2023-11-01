@@ -179,7 +179,7 @@ def answer_qa_query(
 
 
 @log_generator_function_time()
-def stream_qa_portions(
+def answer_qa_query_stream(
     question: QuestionRequest,
     user: User | None,
     db_session: Session,
