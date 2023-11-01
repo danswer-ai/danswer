@@ -7,7 +7,7 @@ from danswer.access.models import DocumentAccess
 from danswer.db.document import get_acccess_info_for_documents
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import Document
-from danswer.document_index import get_default_document_index
+from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.dynamic_configs import get_dynamic_config_store

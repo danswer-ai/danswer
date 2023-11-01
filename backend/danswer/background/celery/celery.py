@@ -28,7 +28,7 @@ from danswer.db.engine import SYNC_DB_API
 from danswer.db.models import DocumentSet
 from danswer.db.tasks import check_live_task_not_timed_out
 from danswer.db.tasks import get_latest_task
-from danswer.document_index import get_default_document_index
+from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.utils.batching import batch_generator

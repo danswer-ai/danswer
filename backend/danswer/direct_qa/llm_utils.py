@@ -6,7 +6,7 @@ from danswer.direct_qa.qa_block import QABlock
 from danswer.direct_qa.qa_block import QAHandler
 from danswer.direct_qa.qa_block import SingleMessageQAHandler
 from danswer.direct_qa.qa_block import SingleMessageScratchpadHandler
-from danswer.llm.build import get_default_llm
+from danswer.llm.factory import get_default_llm
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()

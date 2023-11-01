@@ -15,7 +15,7 @@ from danswer.db.models import ChatMessageFeedback
 from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentRetrievalFeedback
 from danswer.db.models import QueryEvent
-from danswer.document_index import get_default_document_index
+from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.search.models import SearchType
 
@@ -57,7 +57,9 @@ def fetch_docs_ranked_by_boost(
     return list(doc_list)
 
 
-def update_document_boost(db_session: Session, document_id: str, boost: int) -> None:
+def update_document_boost(
+    db_session: Session, document_id: str, boost: int, document_index: DocumentIndex
+) -> None:
     stmt = select(DbDocument).where(DbDocument.id == document_id)
     result = db_session.execute(stmt).scalar_one_or_none()
     if result is None:
@@ -70,12 +72,14 @@ def update_document_boost(db_session: Session, document_id: str, boost: int) -> 
         boost=boost,
     )
 
-    get_default_document_index().update([update])
+    document_index.update([update])
 
     db_session.commit()
 
 
-def update_document_hidden(db_session: Session, document_id: str, hidden: bool) -> None:
+def update_document_hidden(
+    db_session: Session, document_id: str, hidden: bool, document_index: DocumentIndex
+) -> None:
     stmt = select(DbDocument).where(DbDocument.id == document_id)
     result = db_session.execute(stmt).scalar_one_or_none()
     if result is None:
@@ -88,7 +92,7 @@ def update_document_hidden(db_session: Session, document_id: str, hidden: bool) 
         hidden=hidden,
     )
 
-    get_default_document_index().update([update])
+    document_index.update([update])
 
     db_session.commit()
 
@@ -149,6 +153,7 @@ def create_doc_retrieval_feedback(
     document_id: str,
     document_rank: int,
     user_id: UUID | None,
+    document_index: DocumentIndex,
     db_session: Session,
     clicked: bool = False,
     feedback: SearchFeedbackType | None = None,
@@ -185,7 +190,6 @@ def create_doc_retrieval_feedback(
             raise ValueError("Unhandled document feedback type")
 
     if feedback in [SearchFeedbackType.ENDORSE, SearchFeedbackType.REJECT]:
-        document_index = get_default_document_index()
         update = UpdateRequest(
             document_ids=[document_id],
             boost=doc_m.boost,

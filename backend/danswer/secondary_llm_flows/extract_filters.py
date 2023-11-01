@@ -6,7 +6,7 @@ from datetime import timezone
 from dateutil.parser import parse
 
 from danswer.configs.app_configs import DISABLE_TIME_FILTER_EXTRACTION
-from danswer.llm.build import get_default_llm
+from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.server.models import QuestionRequest
 from danswer.utils.logger import setup_logger

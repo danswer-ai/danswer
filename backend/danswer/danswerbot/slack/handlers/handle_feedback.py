@@ -9,6 +9,7 @@ from danswer.danswerbot.slack.utils import decompose_block_id
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.feedback import update_query_event_feedback
+from danswer.document_index.factory import get_default_document_index
 
 
 def handle_slack_feedback(
@@ -45,6 +46,7 @@ def handle_slack_feedback(
                 document_id=doc_id,
                 document_rank=doc_rank,
                 user_id=None,
+                document_index=get_default_document_index(),
                 db_session=db_session,
                 clicked=False,  # Not tracking this for Slack
                 feedback=SearchFeedbackType.ENDORSE
