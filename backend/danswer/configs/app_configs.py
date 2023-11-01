@@ -138,6 +138,8 @@ CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
     if ignored_tag
 ]
 
+GONG_CONNECTOR_START_TIME = os.environ.get("GONG_CONNECTOR_START_TIME")
+
 #####
 # Query Configs
 #####
