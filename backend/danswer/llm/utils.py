@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from collections.abc import Iterator
 from typing import Any
+from typing import cast
 
 import tiktoken
 from langchain.prompts.base import StringPromptValue
@@ -14,9 +15,16 @@ from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 
 from danswer.configs.app_configs import LOG_LEVEL
+from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
 from danswer.configs.constants import MessageType
+from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.db.models import ChatMessage
+from danswer.dynamic_configs import get_dynamic_config_store
+from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.llm.interfaces import LLM
+from danswer.utils.logger import setup_logger
 
+logger = setup_logger()
 
 _LLM_TOKENIZER: Callable[[str], Any] | None = None
 
@@ -107,7 +115,7 @@ def should_be_verbose() -> bool:
 def check_number_of_tokens(
     text: str, encode_fn: Callable[[str], list] | None = None
 ) -> int:
-    """Get's the number of tokens in the provided text, using the provided encoding
+    """Gets the number of tokens in the provided text, using the provided encoding
     function. If none is provided, default to the tiktoken encoder used by GPT-3.5
     and GPT-4.
     """
@@ -116,3 +124,26 @@ def check_number_of_tokens(
         encode_fn = tiktoken.get_encoding("cl100k_base").encode
 
     return len(encode_fn(text))
+
+
+def get_gen_ai_api_key() -> str | None:
+    # first check if the key has been provided by the UI
+    try:
+        return cast(str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY))
+    except ConfigNotFoundError:
+        pass
+
+    # if not provided by the UI, fallback to the env variable
+    return GEN_AI_API_KEY
+
+
+def test_llm(llm: LLM) -> bool:
+    # try for up to 2 timeouts (e.g. 10 seconds in total)
+    for _ in range(2):
+        try:
+            llm.invoke("Do not respond")
+            return True
+        except Exception as e:
+            logger.warning(f"GenAI API key failed for the following reason: {e}")
+
+    return False
