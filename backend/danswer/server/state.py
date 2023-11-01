@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from danswer.configs.constants import BACKEND_VERSION
+from danswer import __version__
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.server.models import AuthTypeResponse
 from danswer.server.models import StatusResponse
@@ -21,4 +21,4 @@ def get_auth_type() -> AuthTypeResponse:
 
 @router.get("/version")
 def get_version() -> VersionResponse:
-    return VersionResponse(backend_version=BACKEND_VERSION)
+    return VersionResponse(backend_version=__version__)
