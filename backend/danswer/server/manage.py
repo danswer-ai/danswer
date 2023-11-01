@@ -23,12 +23,12 @@ from danswer.db.feedback import fetch_docs_ranked_by_boost
 from danswer.db.feedback import update_document_boost
 from danswer.db.feedback import update_document_hidden
 from danswer.db.models import User
-from danswer.direct_qa.llm_utils import check_model_api_key_is_valid
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.qa_utils import get_gen_ai_api_key
 from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.llm.utils import check_model_api_key_is_valid
 from danswer.server.models import ApiKey
 from danswer.server.models import BoostDoc
 from danswer.server.models import BoostUpdateRequest
