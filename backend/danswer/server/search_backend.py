@@ -16,14 +16,13 @@ from danswer.db.engine import get_session
 from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.feedback import create_query_event
 from danswer.db.feedback import update_query_event_feedback
-from danswer.db.feedback import update_query_event_retrieved_documents
 from danswer.db.models import User
 from danswer.direct_qa.answer_question import answer_qa_query
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import StreamingError
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.qa_utils import get_usable_chunks
-from danswer.document_index import get_default_document_index
+from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import query_intent
@@ -32,6 +31,7 @@ from danswer.search.models import IndexFilters
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchQuery
 from danswer.search.search_runner import chunks_to_search_docs
+from danswer.search.search_runner import danswer_search
 from danswer.search.search_runner import search_chunks
 from danswer.secondary_llm_flows.extract_filters import extract_question_time_filters
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
@@ -143,34 +143,13 @@ def handle_search_request(
 
     time_cutoff, favor_recent = extract_question_time_filters(question)
     question.filters.time_cutoff = time_cutoff
-    filters = question.filters
-    user_id = None if user is None else user.id
+    question.favor_recent = favor_recent
 
-    query_event_id = create_query_event(
-        query=query,
-        search_type=question.search_type,
-        llm_answer=None,
-        user_id=user_id,
+    ranked_chunks, unranked_chunks, query_event_id = danswer_search(
+        question=question,
+        user=user,
         db_session=db_session,
-    )
-
-    user_acl_filters = build_access_filters_for_user(user, db_session)
-    final_filters = IndexFilters(
-        source_type=filters.source_type,
-        document_set=filters.document_set,
-        time_cutoff=filters.time_cutoff,
-        access_control_list=user_acl_filters,
-    )
-
-    search_query = SearchQuery(
-        query=query,
-        search_type=question.search_type,
-        filters=final_filters,
-        favor_recent=favor_recent,
-    )
-
-    ranked_chunks, unranked_chunks = search_chunks(
-        query=search_query, document_index=get_default_document_index()
+        document_index=get_default_document_index(),
     )
 
     if not ranked_chunks:
@@ -184,13 +163,6 @@ def handle_search_request(
 
     top_docs = chunks_to_search_docs(ranked_chunks)
     lower_top_docs = chunks_to_search_docs(unranked_chunks)
-
-    update_query_event_retrieved_documents(
-        db_session=db_session,
-        retrieved_document_ids=[doc.document_id for doc in top_docs],
-        query_id=query_event_id,
-        user_id=user_id,
-    )
 
     return SearchResponse(
         top_ranked_docs=top_docs,
@@ -385,5 +357,6 @@ def process_doc_retrieval_feedback(
         clicked=feedback.click,
         feedback=feedback.search_feedback,
         user_id=user.id if user is not None else None,
+        document_index=get_default_document_index(),
         db_session=db_session,
     )

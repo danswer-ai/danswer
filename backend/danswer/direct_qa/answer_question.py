@@ -6,22 +6,17 @@ from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.db.feedback import create_query_event
-from danswer.db.feedback import update_query_event_retrieved_documents
 from danswer.db.models import User
 from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.direct_qa.qa_utils import get_usable_chunks
-from danswer.document_index import get_default_document_index
-from danswer.search.access_filters import build_access_filters_for_user
+from danswer.document_index.factory import get_default_document_index
 from danswer.search.danswer_helper import query_intent
-from danswer.search.models import IndexFilters
 from danswer.search.models import QueryFlow
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
-from danswer.search.models import SearchQuery
 from danswer.search.search_runner import chunks_to_search_docs
-from danswer.search.search_runner import search_chunks
+from danswer.search.search_runner import danswer_search
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.secondary_llm_flows.extract_filters import extract_question_time_filters
 from danswer.server.models import QAResponse
@@ -52,40 +47,19 @@ def answer_qa_query(
 
     time_cutoff, favor_recent = extract_question_time_filters(question)
     question.filters.time_cutoff = time_cutoff
-    filters = question.filters
+    question.favor_recent = favor_recent
 
-    query_event_id = create_query_event(
-        query=query,
-        search_type=question.search_type,
-        llm_answer=None,
-        user_id=user.id if user is not None else None,
+    ranked_chunks, unranked_chunks, query_event_id = danswer_search(
+        question=question,
+        user=user,
         db_session=db_session,
-    )
-
-    user_id = None if user is None else user.id
-    user_acl_filters = build_access_filters_for_user(user, db_session)
-    final_filters = IndexFilters(
-        source_type=filters.source_type,
-        document_set=filters.document_set,
-        time_cutoff=time_cutoff,
-        access_control_list=user_acl_filters,
-    )
-    search_query = SearchQuery(
-        query=query,
-        search_type=question.search_type,
-        filters=final_filters,
-        favor_recent=True if question.favor_recent is None else question.favor_recent,
-    )
-
-    # TODO retire this
-    predicted_search, predicted_flow = query_intent(query)
-
-    ranked_chunks, unranked_chunks = search_chunks(
-        query=search_query,
         document_index=get_default_document_index(),
         retrieval_metrics_callback=retrieval_metrics_callback,
         rerank_metrics_callback=rerank_metrics_callback,
     )
+
+    # TODO retire this
+    predicted_search, predicted_flow = query_intent(query)
 
     if not ranked_chunks:
         return QAResponse(
@@ -102,13 +76,6 @@ def answer_qa_query(
 
     top_docs = chunks_to_search_docs(ranked_chunks)
     unranked_top_docs = chunks_to_search_docs(unranked_chunks)
-
-    update_query_event_retrieved_documents(
-        db_session=db_session,
-        retrieved_document_ids=[doc.document_id for doc in top_docs],
-        query_id=query_event_id,
-        user_id=user_id,
-    )
 
     if disable_generative_answer:
         logger.debug("Skipping QA because generative AI is disabled")
