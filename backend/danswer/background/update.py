@@ -185,12 +185,12 @@ def cleanup_indexing_jobs(
                 # batch of documents indexed
                 current_db_time = get_db_current_time(db_session=db_session)
                 time_since_update = current_db_time - index_attempt.time_updated
-                if time_since_update.seconds > 3 * 60 * 60:
+                if time_since_update.total_seconds() > 60 * 60:
                     existing_jobs[index_attempt.id].cancel()
                     mark_run_failed(
                         db_session=db_session,
                         index_attempt=index_attempt,
-                        failure_reason="Indexing run frozen - no updates in 3 hours. "
+                        failure_reason="Indexing run frozen - no updates in an hour. "
                         "The run will be re-attempted at next scheduled indexing time.",
                     )
             else:
