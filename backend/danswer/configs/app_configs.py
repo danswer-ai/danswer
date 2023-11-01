@@ -23,7 +23,7 @@ DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "
 # Web Configs
 #####
 # WEB_DOMAIN is used to set the redirect_uri after login flows
-WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
+WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://34.132.215.41:3000"
 
 
 #####
@@ -85,7 +85,7 @@ DOCUMENT_INDEX_NAME = "danswer_index"  # Shared by vector/keyword indices
 DOCUMENT_INDEX_TYPE = os.environ.get(
     "DOCUMENT_INDEX_TYPE", DocumentIndexType.COMBINED.value
 )
-VESPA_HOST = os.environ.get("VESPA_HOST") or "localhost"
+VESPA_HOST = os.environ.get("VESPA_HOST") or "34.132.215.41"
 VESPA_PORT = os.environ.get("VESPA_PORT") or "8081"
 VESPA_TENANT_PORT = os.environ.get("VESPA_TENANT_PORT") or "19071"
 # The default below is for dockerized deployment
@@ -99,7 +99,7 @@ INDEX_BATCH_SIZE = 16
 # https://hub.docker.com/_/postgres
 POSTGRES_USER = os.environ.get("POSTGRES_USER") or "postgres"
 POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD") or "password"
-POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
+POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "34.132.215.41"
 POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 
@@ -192,9 +192,9 @@ MINI_CHUNK_SIZE = 150
 #####
 # Encoder Model Endpoint Configs (Currently unused, running the models in memory)
 #####
-BI_ENCODER_HOST = "localhost"
+BI_ENCODER_HOST = "34.132.215.41"
 BI_ENCODER_PORT = 9000
-CROSS_ENCODER_HOST = "localhost"
+CROSS_ENCODER_HOST = "34.132.215.41"
 CROSS_ENCODER_PORT = 9000
 
 

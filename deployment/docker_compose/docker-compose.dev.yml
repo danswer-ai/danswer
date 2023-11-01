@@ -139,7 +139,7 @@ services:
       - api_server
       - web_server
     environment:
-      - DOMAIN=localhost
+      - DOMAIN=34.132.215.41
     ports:
       - "80:80"
       - "3000:80"  # allow for localhost:3000 usage, since that is the norm
