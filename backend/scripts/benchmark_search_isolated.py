@@ -2,11 +2,17 @@ import os
 import random
 import time
 
+import nltk
+
 from danswer.configs.app_configs import DOC_TIME_DECAY
 from danswer.document_index.vespa.index import _query_vespa
 from danswer.document_index.vespa.index import CONTENT_SUMMARY
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.search.search_runner import embed_query
+
+# Download the wordlist
+nltk.download("words")
+from nltk.corpus import words  # noqa: E402
 
 question_bank = [
     "Who was the first president of the United States?",
@@ -115,6 +121,13 @@ additional_questions = [
 ]
 
 
+def generate_random_sentence():
+    word_list = words.words()
+    sentence_length = random.randint(5, 10)
+    sentence = " ".join(random.choices(word_list, k=sentence_length))
+    return sentence
+
+
 def _measure_vespa_latency(filters: dict = {}):
     yql = (
         VespaIndex.yql_base
@@ -122,7 +135,7 @@ def _measure_vespa_latency(filters: dict = {}):
         + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
     )
     # yql = VespaIndex.yql_base + '({grammar: "weakAnd"}userInput(@query))'
-    query = random.choice(question_bank)
+    query = generate_random_sentence()
     query_embedding = embed_query(query)
     num_to_retrieve = 50
     params: dict[str, str | int] = {
