@@ -1,5 +1,8 @@
 from danswer.configs.app_configs import QA_TIMEOUT
+from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.direct_qa.qa_utils import get_gen_ai_api_key
+from danswer.llm.custom_llm import CustomModelServer
+from danswer.llm.gpt_4_all import DanswerGPT4All
 from danswer.llm.interfaces import LLM
 from danswer.llm.multi_llm import DefaultMultiLLM
 
@@ -13,11 +16,10 @@ def get_default_llm(
     if api_key is None:
         api_key = get_gen_ai_api_key()
 
-    # TODO rework
-    # if (
-    #    INTERNAL_MODEL_VERSION == DanswerGenAIModel.REQUEST.value
-    #    and GEN_AI_HOST_TYPE == ModelHostType.COLAB_DEMO
-    # ):
-    #    return GoogleColabDemo(**model_args)  # type: ignore
+    if GEN_AI_MODEL_PROVIDER.lower() == "custom":
+        return CustomModelServer(api_key=api_key, timeout=timeout)
+
+    if GEN_AI_MODEL_PROVIDER.lower() == "gpt4all":
+        DanswerGPT4All(timeout=timeout)
 
     return DefaultMultiLLM(api_key=api_key, timeout=timeout)

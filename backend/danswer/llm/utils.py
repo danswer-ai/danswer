@@ -72,14 +72,7 @@ def str_prompt_to_langchain_prompt(message: str) -> list[BaseMessage]:
     return [HumanMessage(content=message)]
 
 
-def message_generator_to_string_generator(
-    messages: Iterator[BaseMessageChunk],
-) -> Iterator[str]:
-    for message in messages:
-        yield message.content
-
-
-def convert_input(lm_input: LanguageModelInput) -> str:
+def convert_lm_input_to_basic_string(lm_input: LanguageModelInput) -> str:
     """Heavily inspired by:
     https://github.com/langchain-ai/langchain/blob/master/libs/langchain/langchain/chat_models/base.py#L86
     """
@@ -98,6 +91,13 @@ def convert_input(lm_input: LanguageModelInput) -> str:
         )
 
     return prompt_value.to_string()
+
+
+def message_generator_to_string_generator(
+    messages: Iterator[BaseMessageChunk],
+) -> Iterator[str]:
+    for message in messages:
+        yield message.content
 
 
 def should_be_verbose() -> bool:

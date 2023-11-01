@@ -65,7 +65,8 @@ INTENT_MODEL_VERSION = "danswer/intent-model"
 # The provider is the prefix before / in the model argument
 
 # Additionally Danswer supports GPT4All and custom request library based models
-# TODO re-enable GPT4ALL and request models
+# Set GEN_AI_MODEL_PROVIDER to "custom" to use the custom requests approach
+# Set GEN_AI_MODEL_PROVIDER to "gpt4all" to use gpt4all models running locally
 GEN_AI_MODEL_PROVIDER = os.environ.get("GEN_AI_MODEL_PROVIDER") or "openai"
 GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION") or "gpt-3.5-turbo"
 
