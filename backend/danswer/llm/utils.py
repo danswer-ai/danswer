@@ -21,7 +21,7 @@ from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.db.models import ChatMessage
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.llm.factory import get_default_llm
+from danswer.llm.interfaces import LLM
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -137,12 +137,7 @@ def get_gen_ai_api_key() -> str | None:
     return GEN_AI_API_KEY
 
 
-def check_model_api_key_is_valid(model_api_key: str) -> bool:
-    if not model_api_key:
-        return False
-
-    llm = get_default_llm(api_key=model_api_key, timeout=10)
-
+def test_llm(llm: LLM) -> bool:
     # try for up to 2 timeouts (e.g. 10 seconds in total)
     for _ in range(2):
         try:

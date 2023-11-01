@@ -24,11 +24,12 @@ from danswer.db.feedback import update_document_boost
 from danswer.db.feedback import update_document_hidden
 from danswer.db.models import User
 from danswer.direct_qa.llm_utils import get_default_qa_model
-from danswer.direct_qa.qa_utils import get_gen_ai_api_key
 from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.llm.utils import check_model_api_key_is_valid
+from danswer.llm.factory import get_default_llm
+from danswer.llm.utils import get_gen_ai_api_key
+from danswer.llm.utils import test_llm
 from danswer.server.models import ApiKey
 from danswer.server.models import BoostDoc
 from danswer.server.models import BoostUpdateRequest
@@ -132,7 +133,8 @@ def validate_existing_genai_api_key(
         raise HTTPException(status_code=404, detail="Key not found")
 
     try:
-        is_valid = check_model_api_key_is_valid(genai_api_key)
+        llm = get_default_llm(api_key=genai_api_key, timeout=10)
+        is_valid = test_llm(llm)
     except ValueError:
         # this is the case where they aren't using an OpenAI-based model
         is_valid = True
@@ -168,9 +170,15 @@ def store_genai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
     try:
-        is_valid = check_model_api_key_is_valid(request.api_key)
+        if not request.api_key:
+            raise HTTPException(400, "No API key provided")
+
+        llm = get_default_llm(api_key=request.api_key, timeout=10)
+        is_valid = test_llm(llm)
+
         if not is_valid:
             raise HTTPException(400, "Invalid API key provided")
+
         get_dynamic_config_store().store(GEN_AI_API_KEY_STORAGE_KEY, request.api_key)
     except RuntimeError as e:
         raise HTTPException(400, str(e))
