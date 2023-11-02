@@ -8,6 +8,7 @@ import requests
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.html_utils import parse_html_page_basic
+from danswer.connectors.cross_connector_utils.time_utils import time_str_to_utc
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -77,13 +78,25 @@ class GuruConnector(LoadConnector, PollConnector):
                 title = card["preferredPhrase"]
                 link = GURU_CARDS_URL + card["slug"]
                 content_text = title + "\n" + parse_html_page_basic(card["content"])
+                last_updated = time_str_to_utc(card["lastModified"])
+                last_verified = (
+                    time_str_to_utc(card.get("lastVerified"))
+                    if card.get("lastVerified")
+                    else None
+                )
 
+                # For Danswer, we decay document score overtime, either last_updated or
+                # last_verified is a good enough signal for the document's recency
+                latest_time = (
+                    max(last_verified, last_updated) if last_verified else last_updated
+                )
                 doc_batch.append(
                     Document(
                         id=card["id"],
                         sections=[Section(link=link, text=content_text)],
                         source=DocumentSource.GURU,
                         semantic_identifier=title,
+                        doc_updated_at=latest_time,
                         metadata={},
                     )
                 )
@@ -109,3 +122,18 @@ class GuruConnector(LoadConnector, PollConnector):
         end_time = unixtime_to_guru_time_str(end)
 
         return self._process_cards(start_time, end_time)
+
+
+if __name__ == "__main__":
+    import os
+
+    connector = GuruConnector()
+    connector.load_credentials(
+        {
+            "guru_user": os.environ["GURU_USER"],
+            "guru_user_token": os.environ["GURU_USER_TOKEN"],
+        }
+    )
+
+    latest_docs = connector.load_from_state()
+    print(next(latest_docs))

@@ -190,8 +190,8 @@ if __name__ == "__main__":
     )
 
     current = time.time()
-    one_day_ago = current - 24 * 60 * 60 * 360  # 1 year
-    latest_docs = document360_connector.poll_source(one_day_ago, current)
+    one_year_ago = current - 24 * 60 * 60 * 360
+    latest_docs = document360_connector.poll_source(one_year_ago, current)
 
     for doc in latest_docs:
         print(doc)
