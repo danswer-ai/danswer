@@ -154,7 +154,11 @@ def _measure_vespa_latency(filters: dict = {}):
         "timeout": "10s",
     }
     start = time.monotonic()
-    _query_vespa(params)
+    hits = _query_vespa(params)
+    hit_content_len = 0
+    for hit in hits:
+        hit_content_len += len(hit["fields"].get("content", ""))
+    print("Content length", hit_content_len)
     # print(response)
     return time.monotonic() - start
 
