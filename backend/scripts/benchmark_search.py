@@ -1,6 +1,7 @@
 import random
 import time
 
+import nltk
 import requests
 
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
@@ -112,13 +113,24 @@ additional_questions = [
     "What is the study of fossils called?",
 ]
 
+# Download the wordlist
+nltk.download("words")
+from nltk.corpus import words  # noqa: E402
+
+
+def generate_random_sentence():
+    word_list = words.words()
+    sentence_length = random.randint(5, 10)
+    sentence = " ".join(random.choices(word_list, k=sentence_length))
+    return sentence
+
 
 def _measure_hybrid_search_latency(filters: dict = {}):
     start = time.monotonic()
     response = requests.post(
         "http://localhost:8080/document-search",
         json={
-            "query": random.choice(additional_questions),
+            "query": generate_random_sentence(),
             "collection": DOCUMENT_INDEX_NAME,
             "filters": filters,
             "enable_auto_detect_filters": False,
@@ -132,15 +144,19 @@ def _measure_hybrid_search_latency(filters: dict = {}):
 
 if __name__ == "__main__":
     latencies: list[float] = []
-    for _ in range(50):
+    num_trials = 100
+    for _ in range(num_trials):
         latencies.append(_measure_hybrid_search_latency())
         print("Latency", latencies[-1])
-    print(f"Average latency: {sum(latencies) / len(latencies)}")
 
-    print("Testing with filters")
-    for _ in range(50):
-        latencies.append(
-            _measure_hybrid_search_latency(filters={"source_type": ["file"]})
-        )
-        print("Latency", latencies[-1])
     print(f"Average latency: {sum(latencies) / len(latencies)}")
+    print(f"P50: {latencies[num_trials * 0.5]}")
+    print(f"P95: {latencies[num_trials * 0.95]}")
+
+    # print("Testing with filters")
+    # for _ in range(50):
+    #     latencies.append(
+    #         _measure_hybrid_search_latency(filters={"source_type": ["file"]})
+    #     )
+    #     print("Latency", latencies[-1])
+    # print(f"Average latency: {sum(latencies) / len(latencies)}")

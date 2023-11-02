@@ -442,9 +442,9 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
         SEARCH_ENDPOINT,
         params=dict(
             **query_params,
-            # **{
-            #     "presentation.timing": True,
-            # },
+            **{
+                "presentation.timing": True,
+            },
         ),
     )
     response.raise_for_status()
