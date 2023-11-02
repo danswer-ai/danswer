@@ -451,6 +451,7 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
 
     response_json = response.json()
     logger.debug("Response: %s", response_json)
+    logger.info("timing info: %s", response_json.get("timing"))
     hits = response_json["root"].get("children", [])
 
     for hit in hits:
