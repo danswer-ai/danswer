@@ -5,8 +5,8 @@ import time
 import nltk
 
 from danswer.configs.app_configs import DOC_TIME_DECAY
+from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.document_index.vespa.index import _query_vespa
-from danswer.document_index.vespa.index import VespaIndex
 from danswer.search.search_runner import embed_query
 
 # Download the wordlist
@@ -133,7 +133,11 @@ def _measure_vespa_latency(filters: dict = {}):
     #     + '({grammar: "weakAnd"}userInput(@query) '
     #     + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
     # )
-    yql = VespaIndex.yql_base + '({grammar: "weakAnd"}userInput(@query))'
+    yql = (
+        f"select "
+        f"documentid, "
+        f"from {DOCUMENT_INDEX_NAME} where " + '({grammar: "weakAnd"}userInput(@query))'
+    )
     query = generate_random_sentence()
     query_embedding = embed_query(query)
     num_to_retrieve = 50
