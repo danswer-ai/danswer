@@ -1,3 +1,4 @@
+import os
 import random
 import time
 
@@ -126,6 +127,8 @@ def generate_random_sentence():
 
 
 def _measure_hybrid_search_latency(filters: dict = {}):
+    search_type = os.environ.get("VESPA_RANKING_PROFILE", "hybrid_search")
+
     start = time.monotonic()
     response = requests.post(
         "http://localhost:8080/document-search",
@@ -134,7 +137,9 @@ def _measure_hybrid_search_latency(filters: dict = {}):
             "collection": DOCUMENT_INDEX_NAME,
             "filters": filters,
             "enable_auto_detect_filters": False,
-            "search_type": SearchType.HYBRID.value,
+            "search_type": SearchType.HYBRID.value
+            if search_type == "hybrid_search"
+            else SearchType.KEYWORD.value,
         },
     )
     if not response.ok:
@@ -150,8 +155,8 @@ if __name__ == "__main__":
         print("Latency", latencies[-1])
 
     print(f"Average latency: {sum(latencies) / len(latencies)}")
-    print(f"P50: {latencies[num_trials * 0.5]}")
-    print(f"P95: {latencies[num_trials * 0.95]}")
+    print(f"P50: {latencies[int(num_trials * 0.5)]}")
+    print(f"P95: {latencies[int(num_trials * 0.95)]}")
 
     # print("Testing with filters")
     # for _ in range(50):
