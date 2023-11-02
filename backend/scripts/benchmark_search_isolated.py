@@ -1,12 +1,14 @@
 import os
 import random
 import time
+from collections.abc import Mapping
 
 import nltk
+import requests
 
 from danswer.configs.app_configs import DOC_TIME_DECAY
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
-from danswer.document_index.vespa.index import _query_vespa
+from danswer.document_index.vespa.index import SEARCH_ENDPOINT
 from danswer.search.search_runner import embed_query
 
 # Download the wordlist
@@ -127,6 +129,25 @@ def generate_random_sentence():
     return sentence
 
 
+def _query_vespa(query_params: Mapping[str, str | int]) -> list:
+    response = requests.get(
+        SEARCH_ENDPOINT,
+        params=dict(
+            **query_params,
+            **{
+                "presentation.timing": True,
+            },
+        ),
+    )
+    response.raise_for_status()
+
+    response_json = response.json()
+    print("timing info", response_json.get("timing"))
+    hits = response_json["root"].get("children", [])
+
+    return hits
+
+
 def _measure_vespa_latency(filters: dict = {}):
     # yql = (
     #     VespaIndex.yql_base
@@ -135,8 +156,8 @@ def _measure_vespa_latency(filters: dict = {}):
     # )
     yql = (
         f"select "
-        f"documentid, "
-        f"content "
+        f"documentid "
+        # f"content "
         f"from {DOCUMENT_INDEX_NAME} where " + '({grammar: "weakAnd"}userInput(@query))'
     )
     query = generate_random_sentence()

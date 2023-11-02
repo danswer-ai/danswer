@@ -126,7 +126,7 @@ def generate_random_sentence():
     return sentence
 
 
-def _measure_hybrid_search_latency(filters: dict = {}):
+def _measure_hybrid_search_latency(filters: dict | None = None):
     search_type = os.environ.get("VESPA_RANKING_PROFILE", "hybrid_search")
 
     start = time.monotonic()
@@ -135,7 +135,7 @@ def _measure_hybrid_search_latency(filters: dict = {}):
         json={
             "query": generate_random_sentence(),
             "collection": DOCUMENT_INDEX_NAME,
-            "filters": filters,
+            "filters": filters or {},
             "enable_auto_detect_filters": False,
             "search_type": SearchType.HYBRID.value
             if search_type == "hybrid_search"
