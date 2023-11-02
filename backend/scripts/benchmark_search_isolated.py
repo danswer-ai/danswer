@@ -141,7 +141,7 @@ def _measure_vespa_latency(filters: dict = {}):
     )
     query = generate_random_sentence()
     query_embedding = embed_query(query)
-    num_to_retrieve = 1
+    num_to_retrieve = 50
     params: dict[str, str | int] = {
         "yql": yql,
         "query": query,
