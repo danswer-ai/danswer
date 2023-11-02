@@ -4,11 +4,13 @@ not follow the expected behavior, etc.
 
 NOTE: cannot use Celery directly due to
 https://github.com/celery/celery/issues/7007#issuecomment-1740139367"""
-import multiprocessing
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 from typing import Literal
+
+import torch
+from torch import multiprocessing as mp
 
 from danswer.utils.logger import setup_logger
 
@@ -29,7 +31,7 @@ class SimpleJob:
     """Drop in replacement for `dask.distributed.Future`"""
 
     id: int
-    process: multiprocessing.Process | None = None
+    process: mp.Process | None = None
 
     def cancel(self) -> bool:
         return self.release()
@@ -76,6 +78,11 @@ class SimpleJobClient:
         self.job_id_counter = 0
         self.jobs: dict[int, SimpleJob] = {}
 
+        # required to spin up new processes from within a process
+        # when using pytorch based models on GPU
+        if torch.cuda.is_available():
+            mp.set_start_method("spawn")
+
     def _cleanup_completed_jobs(self) -> None:
         current_job_ids = list(self.jobs.keys())
         for job_id in current_job_ids:
@@ -94,7 +101,7 @@ class SimpleJobClient:
         job_id = self.job_id_counter
         self.job_id_counter += 1
 
-        process = multiprocessing.Process(target=func, args=args)
+        process = mp.Process(target=func, args=args)
         job = SimpleJob(id=job_id, process=process)
         process.start()
 
