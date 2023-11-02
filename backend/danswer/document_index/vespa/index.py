@@ -464,9 +464,8 @@ def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
             )
 
     filtered_hits = [hit for hit in hits if hit["fields"].get(CONTENT) is not None]
-    return filtered_hits
-    # inference_chunks = [_vespa_hit_to_inference_chunk(hit) for hit in filtered_hits]
-    # return inference_chunks
+    inference_chunks = [_vespa_hit_to_inference_chunk(hit) for hit in filtered_hits]
+    return inference_chunks
 
 
 class VespaIndex(DocumentIndex):
