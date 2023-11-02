@@ -128,6 +128,7 @@ def generate_random_sentence():
 
 def _measure_hybrid_search_latency(filters: dict | None = None):
     search_type = os.environ.get("VESPA_RANKING_PROFILE", "hybrid_search")
+    auto_detect_filters = os.environ.get("AUTO_DETECT_FILTERS", "false") == "true"
 
     start = time.monotonic()
     response = requests.post(
@@ -136,7 +137,7 @@ def _measure_hybrid_search_latency(filters: dict | None = None):
             "query": generate_random_sentence(),
             "collection": DOCUMENT_INDEX_NAME,
             "filters": filters or {},
-            "enable_auto_detect_filters": False,
+            "enable_auto_detect_filters": auto_detect_filters,
             "search_type": SearchType.HYBRID.value
             if search_type == "hybrid_search"
             else SearchType.KEYWORD.value,
