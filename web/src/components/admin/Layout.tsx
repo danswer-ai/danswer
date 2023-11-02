@@ -26,7 +26,7 @@ import {
   GoogleSitesIcon,
   GongIcon,
   ZoomInIcon,
-  ZendeskIcon
+  ZendeskIcon,
 } from "@/components/icons/icons";
 import { getAuthDisabledSS, getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
@@ -240,7 +240,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                   ),
                   link: "/admin/connectors/zendesk",
-                }
+                },
               ],
             },
             {

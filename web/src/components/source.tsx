@@ -142,7 +142,7 @@ export const getSourceMetadata = (sourceType: ValidSources): SourceMetadata => {
         icon: ZendeskIcon,
         displayName: "Zendesk",
         adminPageLink: "/admin/connectors/zendesk",
-      }
+      };
     default:
       throw new Error("Invalid source type");
   }

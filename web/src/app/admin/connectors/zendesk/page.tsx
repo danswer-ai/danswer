@@ -103,12 +103,13 @@ const Main = () => {
         <>
           <p className="text-sm">
             To get started you&apos;ll need API token details for your Zendesk
-            instance. You can generate this by access the Admin Center of your instance
-            (e.g. https://&lt;subdomain&gt;.zendesk.com/admin/). Proceed to the "Apps and
-            Integrations" section and "Zendesk API" page. Add a new API token and provide
-            it with a name. You will also need to provide the e-mail address of a user that
-            the system will impersonate. This is of little consequence as we are only performing
-            read actions.
+            instance. You can generate this by access the Admin Center of your
+            instance (e.g. https://&lt;subdomain&gt;.zendesk.com/admin/).
+            Proceed to the &quot;Apps and Integrations&quot; section and
+            &quot;Zendesk API&quot; page. Add a new API token and provide it
+            with a name. You will also need to provide the e-mail address of a
+            user that the system will impersonate. This is of little consequence
+            as we are only performing read actions.
           </p>
           <div className="border-solid border-gray-600 border rounded-md p-6 mt-2 mb-4">
             <CredentialForm<ZendeskCredentialJson>
@@ -189,29 +190,28 @@ const Main = () => {
         </>
       )}
 
-      {zendeskCredential &&
-        zendeskConnectorIndexingStatuses.length === 0 && (
-          <>
-            <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
-              <h2 className="font-bold mb-3">Create Connection</h2>
-              <p className="text-sm mb-4">
-                Press connect below to start the connection to your Zendesk
-                instance.
-              </p>
-              <ConnectorForm<ZendeskConfig>
-                nameBuilder={(values) => `ZendeskConnector`}
-                ccPairNameBuilder={(values) => `ZendeskConnector`}
-                source="zendesk"
-                inputType="poll"
-                formBody={<></>}
-                validationSchema={Yup.object().shape({})}
-                initialValues={{}}
-                refreshFreq={10 * 60} // 10 minutes
-                credentialId={zendeskCredential.id}
-              />
-            </div>
-          </>
-        )}
+      {zendeskCredential && zendeskConnectorIndexingStatuses.length === 0 && (
+        <>
+          <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+            <h2 className="font-bold mb-3">Create Connection</h2>
+            <p className="text-sm mb-4">
+              Press connect below to start the connection to your Zendesk
+              instance.
+            </p>
+            <ConnectorForm<ZendeskConfig>
+              nameBuilder={(values) => `ZendeskConnector`}
+              ccPairNameBuilder={(values) => `ZendeskConnector`}
+              source="zendesk"
+              inputType="poll"
+              formBody={<></>}
+              validationSchema={Yup.object().shape({})}
+              initialValues={{}}
+              refreshFreq={10 * 60} // 10 minutes
+              credentialId={zendeskCredential.id}
+            />
+          </div>
+        </>
+      )}
 
       {!zendeskCredential && (
         <>

@@ -25,8 +25,8 @@ from danswer.connectors.slab.connector import SlabConnector
 from danswer.connectors.slack.connector import SlackLoadConnector
 from danswer.connectors.slack.connector import SlackPollConnector
 from danswer.connectors.web.connector import WebConnector
-from danswer.connectors.zulip.connector import ZulipConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
+from danswer.connectors.zulip.connector import ZulipConnector
 
 
 class ConnectorMissingException(Exception):
