@@ -37,6 +37,16 @@ export default async function Page({
   const lastIndexAttempt = ccPair.index_attempts[0];
   const isDeleting = isCurrentlyDeleting(ccPair.latest_deletion_attempt);
 
+  // figure out if we need to artificially deflate the number of docs indexed.
+  // This is required since the total number of docs indexed by a CC Pair is
+  // updated before the new docs for an indexing attempt. If we don't do this,
+  // there is a mismatch between these two numbers which may confuse users.
+  const totalDocsIndexed =
+    lastIndexAttempt?.status === "in_progress" &&
+    ccPair.index_attempts.length === 1
+      ? lastIndexAttempt.total_docs_indexed
+      : ccPair.num_docs_indexed;
+
   return (
     <>
       <SSRAutoRefresh />
@@ -62,7 +72,7 @@ export default async function Page({
 
         <div className="text-gray-400 text-sm mt-1">
           Total Documents Indexed:{" "}
-          <b className="text-gray-300">{ccPair.num_docs_indexed}</b>
+          <b className="text-gray-300">{totalDocsIndexed}</b>
         </div>
 
         <Divider />

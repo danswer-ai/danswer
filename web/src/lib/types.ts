@@ -132,6 +132,7 @@ export interface IndexAttemptSnapshot {
   id: number;
   status: ValidStatuses | null;
   new_docs_indexed: number;
+  total_docs_indexed: number;
   error_msg: string | null;
   time_started: string | null;
   time_updated: string;
