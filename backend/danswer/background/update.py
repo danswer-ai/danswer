@@ -10,6 +10,9 @@ from dask.distributed import Future
 from distributed import LocalCluster
 from sqlalchemy.orm import Session
 
+from danswer.background.indexing.job_client import SimpleJob
+from danswer.background.indexing.job_client import SimpleJobClient
+from danswer.configs.app_configs import EXPERIMENTAL_SIMPLE_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.configs.model_configs import MIN_THREADS_ML_MODELS
 from danswer.connectors.factory import instantiate_connector
@@ -99,7 +102,9 @@ def mark_run_failed(
         )
 
 
-def create_indexing_jobs(db_session: Session, existing_jobs: dict[int, Future]) -> None:
+def create_indexing_jobs(
+    db_session: Session, existing_jobs: dict[int, Future | SimpleJob]
+) -> None:
     """Creates new indexing jobs for each connector / credential pair which is:
     1. Enabled
     2. `refresh_frequency` time has passed since the last indexing run for this pair
@@ -139,8 +144,8 @@ def create_indexing_jobs(db_session: Session, existing_jobs: dict[int, Future]) 
 
 
 def cleanup_indexing_jobs(
-    db_session: Session, existing_jobs: dict[int, Future]
-) -> dict[int, Future]:
+    db_session: Session, existing_jobs: dict[int, Future | SimpleJob]
+) -> dict[int, Future | SimpleJob]:
     existing_jobs_copy = existing_jobs.copy()
 
     # clean up completed jobs
@@ -421,9 +426,9 @@ def _run_indexing_entrypoint(index_attempt_id: int, num_threads: int) -> None:
 
 def kickoff_indexing_jobs(
     db_session: Session,
-    existing_jobs: dict[int, Future],
-    client: Client,
-) -> dict[int, Future]:
+    existing_jobs: dict[int, Future | SimpleJob],
+    client: Client | SimpleJobClient,
+) -> dict[int, Future | SimpleJob]:
     existing_jobs_copy = existing_jobs.copy()
 
     # Don't include jobs waiting in the Dask queue that just haven't started running
@@ -455,31 +460,37 @@ def kickoff_indexing_jobs(
             )
             continue
 
-        logger.info(
-            f"Kicking off indexing attempt for connector: '{attempt.connector.name}', "
-            f"with config: '{attempt.connector.connector_specific_config}', and "
-            f"with credentials: '{attempt.credential_id}'"
-        )
         run = client.submit(
             _run_indexing_entrypoint, attempt.id, _get_num_threads(), pure=False
         )
-        existing_jobs_copy[attempt.id] = run
+        if run:
+            logger.info(
+                f"Kicked off indexing attempt for connector: '{attempt.connector.name}', "
+                f"with config: '{attempt.connector.connector_specific_config}', and "
+                f"with credentials: '{attempt.credential_id}'"
+            )
+            existing_jobs_copy[attempt.id] = run
 
     return existing_jobs_copy
 
 
 def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> None:
-    cluster = LocalCluster(
-        n_workers=num_workers,
-        threads_per_worker=1,
-        # there are warning about high memory usage + "Event loop unresponsive"
-        # which are not relevant to us since our workers are expected to use a
-        # lot of memory + involve CPU intensive tasks that will not relinquish
-        # the event loop
-        silence_logs=logging.ERROR,
-    )
-    client = Client(cluster)
-    existing_jobs: dict[int, Future] = {}
+    client: Client | SimpleJobClient
+    if EXPERIMENTAL_SIMPLE_JOB_CLIENT_ENABLED:
+        client = SimpleJobClient(n_workers=num_workers)
+    else:
+        cluster = LocalCluster(
+            n_workers=num_workers,
+            threads_per_worker=1,
+            # there are warning about high memory usage + "Event loop unresponsive"
+            # which are not relevant to us since our workers are expected to use a
+            # lot of memory + involve CPU intensive tasks that will not relinquish
+            # the event loop
+            silence_logs=logging.ERROR,
+        )
+        client = Client(cluster)
+
+    existing_jobs: dict[int, Future | SimpleJob] = {}
     engine = get_sqlalchemy_engine()
 
     with Session(engine) as db_session:
