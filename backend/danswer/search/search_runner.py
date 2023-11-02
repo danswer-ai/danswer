@@ -311,10 +311,7 @@ def search_chunks(
         )
 
     # Keyword Search should never do reranking, no transformers involved in this flow
-    if (
-        query.search_type == SearchType.KEYWORD
-        or query.search_type == SearchType.HYBRID
-    ):
+    if query.search_type == SearchType.KEYWORD:
         _log_top_chunk_links(query.search_type.value, top_chunks)
         return top_chunks, None
 
