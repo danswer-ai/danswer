@@ -10,6 +10,7 @@ from retry import retry
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.time_utils import time_str_to_utc
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
@@ -108,11 +109,11 @@ class ProductboardConnector(PollConnector):
                 ],
                 semantic_identifier=feature["name"],
                 source=DocumentSource.PRODUCTBOARD,
+                doc_updated_at=time_str_to_utc(feature["updatedAt"]),
                 metadata={
                     "productboard_entity_type": feature["type"],
                     "status": feature["status"]["name"],
                     "owner": self._get_owner_email(feature),
-                    "updated_at": feature["updatedAt"],
                 },
             )
 
@@ -136,10 +137,10 @@ class ProductboardConnector(PollConnector):
                 ],
                 semantic_identifier=component["name"],
                 source=DocumentSource.PRODUCTBOARD,
+                doc_updated_at=time_str_to_utc(component["updatedAt"]),
                 metadata={
                     "productboard_entity_type": "component",
                     "owner": self._get_owner_email(component),
-                    "updated_at": component["updatedAt"],
                 },
             )
 
@@ -164,10 +165,10 @@ class ProductboardConnector(PollConnector):
                 ],
                 semantic_identifier=product["name"],
                 source=DocumentSource.PRODUCTBOARD,
+                doc_updated_at=time_str_to_utc(product["updatedAt"]),
                 metadata={
                     "productboard_entity_type": "product",
                     "owner": self._get_owner_email(product),
-                    "updated_at": product["updatedAt"],
                 },
             )
 
@@ -190,11 +191,11 @@ class ProductboardConnector(PollConnector):
                 ],
                 semantic_identifier=objective["name"],
                 source=DocumentSource.PRODUCTBOARD,
+                doc_updated_at=time_str_to_utc(objective["updatedAt"]),
                 metadata={
                     "productboard_entity_type": "release",
                     "state": objective["state"],
                     "owner": self._get_owner_email(objective),
-                    "updated_at": objective["updatedAt"],
                 },
             )
 
@@ -252,3 +253,20 @@ class ProductboardConnector(PollConnector):
 
         if document_batch:
             yield document_batch
+
+
+if __name__ == "__main__":
+    import os
+    import time
+
+    connector = ProductboardConnector()
+    connector.load_credentials(
+        {
+            "productboard_access_token": os.environ["PRODUCTBOARD_ACCESS_TOKEN"],
+        }
+    )
+
+    current = time.time()
+    one_year_ago = current - 24 * 60 * 60 * 360
+    latest_docs = connector.poll_source(one_year_ago, current)
+    print(next(latest_docs))

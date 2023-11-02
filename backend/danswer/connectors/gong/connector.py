@@ -292,7 +292,6 @@ class GongConnector(LoadConnector, PollConnector):
 
 if __name__ == "__main__":
     import os
-    import time
 
     connector = GongConnector()
     connector.load_credentials(
@@ -302,6 +301,5 @@ if __name__ == "__main__":
         }
     )
 
-    current = time.time()
     latest_docs = connector.load_from_state()
     print(next(latest_docs))
