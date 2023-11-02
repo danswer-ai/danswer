@@ -200,14 +200,11 @@ def cleanup_indexing_jobs(
                     )
             else:
                 # If job isn't known, simply mark it as failed
-                logger.error(
-                    "Would have marked just as failed due to not being found in existing jobs dict"
+                mark_run_failed(
+                    db_session=db_session,
+                    index_attempt=index_attempt,
+                    failure_reason=_UNEXPECTED_STATE_FAILURE_REASON,
                 )
-                # mark_run_failed(
-                #     db_session=db_session,
-                #     index_attempt=index_attempt,
-                #     failure_reason=_UNEXPECTED_STATE_FAILURE_REASON,
-                # )
 
     return existing_jobs_copy
 
