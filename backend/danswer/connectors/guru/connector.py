@@ -8,6 +8,7 @@ import requests
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.html_utils import parse_html_page_basic
+from danswer.connectors.cross_connector_utils.time_utils import time_str_to_utc
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -77,13 +78,9 @@ class GuruConnector(LoadConnector, PollConnector):
                 title = card["preferredPhrase"]
                 link = GURU_CARDS_URL + card["slug"]
                 content_text = title + "\n" + parse_html_page_basic(card["content"])
-                last_updated = datetime.strptime(
-                    card["lastModified"], "%Y-%m-%dT%H:%M:%S.%f%z"
-                ).astimezone(timezone.utc)
+                last_updated = time_str_to_utc(card["lastModified"])
                 last_verified = (
-                    datetime.strptime(
-                        card["lastVerified"], "%Y-%m-%dT%H:%M:%S.%f%z"
-                    ).astimezone(timezone.utc)
+                    time_str_to_utc(card.get("lastVerified"))
                     if card.get("lastVerified")
                     else None
                 )
