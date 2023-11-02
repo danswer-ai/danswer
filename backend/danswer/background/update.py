@@ -9,6 +9,7 @@ from dask.distributed import Client
 from dask.distributed import Future
 from distributed import LocalCluster
 from sqlalchemy.orm import Session
+from torch import multiprocessing as mp
 
 from danswer.background.indexing.job_client import SimpleJob
 from danswer.background.indexing.job_client import SimpleJobClient
@@ -540,6 +541,11 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
 
 
 if __name__ == "__main__":
+    # required to spin up new processes from within a process
+    # when using pytorch based models on GPU
+    if torch.cuda.is_available():
+        mp.set_start_method("spawn")
+
     logger.info("Warming up Embedding Model(s)")
     warm_up_models(indexer_only=True)
     logger.info("Starting Indexing Loop")

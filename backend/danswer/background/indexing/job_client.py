@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from typing import Any
 from typing import Literal
 
-import torch
 from torch import multiprocessing as mp
 
 from danswer.utils.logger import setup_logger
@@ -77,11 +76,6 @@ class SimpleJobClient:
         self.n_workers = n_workers
         self.job_id_counter = 0
         self.jobs: dict[int, SimpleJob] = {}
-
-        # required to spin up new processes from within a process
-        # when using pytorch based models on GPU
-        if torch.cuda.is_available():
-            mp.set_start_method("spawn")
 
     def _cleanup_completed_jobs(self) -> None:
         current_job_ids = list(self.jobs.keys())
