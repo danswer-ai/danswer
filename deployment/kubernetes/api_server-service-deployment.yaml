@@ -87,6 +87,11 @@ spec:
             configMapKeyRef:
               name: env-configmap
               key: GEN_AI_HOST_TYPE
+        - name: GEN_AI_MODEL_PROVIDER
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: GEN_AI_MODEL_PROVIDER
         - name: NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
           valueFrom:
             configMapKeyRef:

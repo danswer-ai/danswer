@@ -28,6 +28,11 @@ spec:
             configMapKeyRef:
               name: env-configmap
               key: GEN_AI_MODEL_VERSION
+        - name: GEN_AI_MODEL_PROVIDER
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: GEN_AI_MODEL_PROVIDER
         - name: API_BASE_OPENAI
           valueFrom:
             configMapKeyRef:
