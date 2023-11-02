@@ -154,6 +154,8 @@ if __name__ == "__main__":
         latencies.append(_measure_hybrid_search_latency())
         print("Latency", latencies[-1])
 
+    latencies = sorted(latencies)
+
     print(f"Average latency: {sum(latencies) / len(latencies)}")
     print(f"P50: {latencies[int(num_trials * 0.5)]}")
     print(f"P95: {latencies[int(num_trials * 0.95)]}")
