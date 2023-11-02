@@ -129,7 +129,7 @@ export interface GoogleSitesConfig {
   base_url: string;
 }
 
-export interface ZendeskConfig{}
+export interface ZendeskConfig {}
 
 export interface IndexAttemptSnapshot {
   id: number;
