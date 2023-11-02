@@ -77,13 +77,29 @@ class GuruConnector(LoadConnector, PollConnector):
                 title = card["preferredPhrase"]
                 link = GURU_CARDS_URL + card["slug"]
                 content_text = title + "\n" + parse_html_page_basic(card["content"])
+                last_updated = datetime.strptime(
+                    card["lastModified"], "%Y-%m-%dT%H:%M:%S.%f%z"
+                ).astimezone(timezone.utc)
+                last_verified = (
+                    datetime.strptime(
+                        card["lastVerified"], "%Y-%m-%dT%H:%M:%S.%f%z"
+                    ).astimezone(timezone.utc)
+                    if card.get("lastVerified")
+                    else None
+                )
 
+                # For Danswer, we decay document score overtime, either last_updated or
+                # last_verified is a good enough signal for the document's recency
+                latest_time = (
+                    max(last_verified, last_updated) if last_verified else last_updated
+                )
                 doc_batch.append(
                     Document(
                         id=card["id"],
                         sections=[Section(link=link, text=content_text)],
                         source=DocumentSource.GURU,
                         semantic_identifier=title,
+                        doc_updated_at=latest_time,
                         metadata={},
                     )
                 )
@@ -109,3 +125,18 @@ class GuruConnector(LoadConnector, PollConnector):
         end_time = unixtime_to_guru_time_str(end)
 
         return self._process_cards(start_time, end_time)
+
+
+if __name__ == "__main__":
+    import os
+
+    connector = GuruConnector()
+    connector.load_credentials(
+        {
+            "guru_user": os.environ["GURU_USER"],
+            "guru_user_token": os.environ["GURU_USER_TOKEN"],
+        }
+    )
+
+    latest_docs = connector.load_from_state()
+    print(next(latest_docs))
