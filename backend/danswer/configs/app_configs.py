@@ -143,6 +143,10 @@ GONG_CONNECTOR_START_TIME = os.environ.get("GONG_CONNECTOR_START_TIME")
 EXPERIMENTAL_SIMPLE_JOB_CLIENT_ENABLED = (
     os.environ.get("EXPERIMENTAL_SIMPLE_JOB_CLIENT_ENABLED", "").lower() == "true"
 )
+EXPERIMENTAL_CHECKPOINTING_ENABLED = (
+    os.environ.get("EXPERIMENTAL_CHECKPOINTING_ENABLED", "").lower() == "true"
+)
+
 
 #####
 # Query Configs

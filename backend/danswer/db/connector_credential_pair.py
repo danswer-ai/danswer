@@ -54,6 +54,8 @@ def get_last_successful_attempt_time(
     credential_id: int,
     db_session: Session,
 ) -> float:
+    """Gets the timestamp of the last successful index run stored in
+    the CC Pair row in the database"""
     connector_credential_pair = get_connector_credential_pair(
         connector_id, credential_id, db_session
     )
