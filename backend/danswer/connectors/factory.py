@@ -26,6 +26,7 @@ from danswer.connectors.slack.connector import SlackLoadConnector
 from danswer.connectors.slack.connector import SlackPollConnector
 from danswer.connectors.web.connector import WebConnector
 from danswer.connectors.zulip.connector import ZulipConnector
+from danswer.connectors.zendesk.connector import ZendeskConnector
 
 
 class ConnectorMissingException(Exception):
@@ -58,6 +59,7 @@ def identify_connector_class(
         DocumentSource.DOCUMENT360: Document360Connector,
         DocumentSource.GONG: GongConnector,
         DocumentSource.GOOGLE_SITES: GoogleSitesConnector,
+        DocumentSource.ZENDESK: ZendeskConnector,
     }
     connector_by_source = connector_map.get(source, {})
 

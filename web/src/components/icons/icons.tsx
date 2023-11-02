@@ -45,6 +45,7 @@ import linearIcon from "../../../public/Linear.png";
 import hubSpotIcon from "../../../public/HubSpot.png";
 import document360Icon from "../../../public/Document360.png";
 import googleSitesIcon from "../../../public/GoogleSites.png";
+import zendeskIcon from "../../../public/Zendesk.svg";
 
 interface IconProps {
   size?: number;
@@ -480,3 +481,15 @@ export const GoogleSitesIcon = ({
     </div>
   );
 };
+
+export const ZendeskIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src={zendeskIcon} alt="Logo" width="96" height="96" />
+  </div>
+);

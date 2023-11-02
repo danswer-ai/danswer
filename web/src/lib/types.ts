@@ -25,7 +25,8 @@ export type ValidSources =
   | "hubspot"
   | "document360"
   | "file"
-  | "google_sites";
+  | "google_sites"
+  | "zendesk";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
@@ -127,6 +128,8 @@ export interface GoogleSitesConfig {
   zip_path: string;
   base_url: string;
 }
+
+export interface ZendeskConfig{}
 
 export interface IndexAttemptSnapshot {
   id: number;
@@ -240,6 +243,12 @@ export interface HubSpotCredentialJson {
 export interface Document360CredentialJson {
   portal_id: string;
   document360_api_token: string;
+}
+
+export interface ZendeskCredentialJson {
+  zendesk_subdomain: string;
+  zendesk_email: string;
+  zendesk_token: string;
 }
 
 // DELETION
