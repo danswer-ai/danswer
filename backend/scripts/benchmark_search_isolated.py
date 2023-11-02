@@ -135,7 +135,8 @@ def _measure_vespa_latency(filters: dict = {}):
     # )
     yql = (
         f"select "
-        f"documentid "
+        f"documentid, "
+        f"content "
         f"from {DOCUMENT_INDEX_NAME} where " + '({grammar: "weakAnd"}userInput(@query))'
     )
     query = generate_random_sentence()
