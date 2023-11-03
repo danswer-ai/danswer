@@ -21,6 +21,10 @@ class CustomModelServer(LLM):
     https://medium.com/@yuhongsun96/how-to-augment-llms-with-private-data-29349bd8ae9f
     """
 
+    @property
+    def requires_api_key(self) -> bool:
+        return False
+
     def __init__(
         self,
         # Not used here but you probably want a model server that isn't completely open
