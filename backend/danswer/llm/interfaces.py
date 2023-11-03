@@ -18,6 +18,10 @@ class LLM(abc.ABC):
         """Is this model running in memory and needs an initial call to warm it up?"""
         return False
 
+    @property
+    def requires_api_key(self) -> bool:
+        return True
+
     @abc.abstractmethod
     def invoke(self, prompt: LanguageModelInput) -> str:
         raise NotImplementedError

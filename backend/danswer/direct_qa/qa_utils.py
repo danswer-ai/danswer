@@ -15,11 +15,11 @@ from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.direct_qa.interfaces import DanswerQuotes
-from danswer.direct_qa.qa_prompts import ANSWER_PAT
-from danswer.direct_qa.qa_prompts import QUOTE_PAT
-from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import check_number_of_tokens
+from danswer.prompts.constants import ANSWER_PAT
+from danswer.prompts.constants import QUOTE_PAT
+from danswer.prompts.constants import UNCERTAINTY_PAT
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_model_quote
 from danswer.utils.text_processing import clean_up_code_blocks

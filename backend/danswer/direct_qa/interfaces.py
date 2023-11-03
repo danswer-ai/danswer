@@ -52,7 +52,6 @@ class QAModel:
     def requires_api_key(self) -> bool:
         """Is this model protected by security features
         Does it need an api key to access the model for inference"""
-        # TODO, this should be false for custom request model and gpt4all
         return True
 
     def warm_up_model(self) -> None:
