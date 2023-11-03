@@ -126,9 +126,14 @@ def generate_random_sentence():
     return sentence
 
 
-def _measure_hybrid_search_latency(query: str, filters: dict | None = None):
+def _measure_hybrid_search_latency(
+    query: str,
+    search_type: SearchType,
+    skip_rerank: bool = True,
+    enable_auto_detect_filters: bool = False,
+    filters: dict | None = None,
+):
     search_type = os.environ.get("VESPA_RANKING_PROFILE", "hybrid_search")
-    auto_detect_filters = os.environ.get("AUTO_DETECT_FILTERS", "false") == "true"
 
     start = time.monotonic()
     response = requests.post(
@@ -137,10 +142,9 @@ def _measure_hybrid_search_latency(query: str, filters: dict | None = None):
             "query": query,
             "collection": DOCUMENT_INDEX_NAME,
             "filters": filters or {},
-            "enable_auto_detect_filters": auto_detect_filters,
-            "search_type": SearchType.HYBRID.value
-            if search_type == "hybrid_search"
-            else SearchType.KEYWORD.value,
+            "enable_auto_detect_filters": enable_auto_detect_filters,
+            "search_type": search_type,
+            "skip_rerank": skip_rerank,
         },
     )
     if not response.ok:
@@ -150,22 +154,70 @@ def _measure_hybrid_search_latency(query: str, filters: dict | None = None):
 
 if __name__ == "__main__":
     sentences = question_bank + additional_questions
-    latencies: list[float] = []
     num_trials = 100
+
+    latencies: list[float] = []
     for i in range(num_trials):
-        latencies.append(_measure_hybrid_search_latency(sentences[i]))
+        latencies.append(
+            _measure_hybrid_search_latency(
+                query=sentences[i], search_type=SearchType.KEYWORD
+            )
+        )
         print("Latency", latencies[-1])
 
     latencies = sorted(latencies)
 
-    print(f"Average latency: {sum(latencies) / len(latencies)}")
-    print(f"P50: {latencies[int(num_trials * 0.5)]}")
-    print(f"P95: {latencies[int(num_trials * 0.95)]}")
+    print(f"[Keyword] Average latency: {sum(latencies) / len(latencies)}")
+    print(f"[Keyword] P50: {latencies[int(num_trials * 0.5)]}")
+    print(f"[Keyword] P95: {latencies[int(num_trials * 0.95)]}")
 
-    # print("Testing with filters")
-    # for _ in range(50):
-    #     latencies.append(
-    #         _measure_hybrid_search_latency(filters={"source_type": ["file"]})
-    #     )
-    #     print("Latency", latencies[-1])
-    # print(f"Average latency: {sum(latencies) / len(latencies)}")
+    latencies: list[float] = []
+    for i in range(num_trials):
+        latencies.append(
+            _measure_hybrid_search_latency(
+                query=sentences[i], search_type=SearchType.HYBRID
+            )
+        )
+        print("Latency", latencies[-1])
+
+    latencies = sorted(latencies)
+
+    print(f"[Hybrid] Average latency: {sum(latencies) / len(latencies)}")
+    print(f"[Hybrid] P50: {latencies[int(num_trials * 0.5)]}")
+    print(f"[Hybrid] P95: {latencies[int(num_trials * 0.95)]}")
+
+    latencies: list[float] = []
+    for i in range(num_trials):
+        latencies.append(
+            _measure_hybrid_search_latency(
+                query=sentences[i],
+                search_type=SearchType.HYBRID,
+                skip_rerank=False,
+                enable_auto_detect_filters=True,
+            )
+        )
+        print("Latency", latencies[-1])
+
+    latencies = sorted(latencies)
+
+    print(f"[Hybrid + CE] Average latency: {sum(latencies) / len(latencies)}")
+    print(f"[Hybrid + CE] P50: {latencies[int(num_trials * 0.5)]}")
+    print(f"[Hybrid + CE] P95: {latencies[int(num_trials * 0.95)]}")
+
+    latencies: list[float] = []
+    for i in range(num_trials):
+        latencies.append(
+            _measure_hybrid_search_latency(
+                query=sentences[i],
+                search_type=SearchType.HYBRID,
+                skip_rerank=False,
+                enable_auto_detect_filters=True,
+            )
+        )
+        print("Latency", latencies[-1])
+
+    latencies = sorted(latencies)
+
+    print(f"[Hybrid + CE + filters] Average latency: {sum(latencies) / len(latencies)}")
+    print(f"[Hybrid + CE + filters] P50: {latencies[int(num_trials * 0.5)]}")
+    print(f"[Hybrid + CE + filters] P95: {latencies[int(num_trials * 0.95)]}")
