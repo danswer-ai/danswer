@@ -24,7 +24,7 @@ from danswer.db.feedback import create_chat_message_feedback
 from danswer.db.models import ChatMessage
 from danswer.db.models import User
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
-from danswer.llm.utils import get_default_llm_tokenizer
+from danswer.llm.utils import get_default_llm_token_encode
 from danswer.secondary_llm_flows.chat_helpers import get_new_chat_name
 from danswer.server.models import ChatFeedbackRequest
 from danswer.server.models import ChatMessageDetail
@@ -246,7 +246,7 @@ def handle_new_chat_message(
     parent_edit_number = chat_message.parent_edit_number
     user_id = user.id if user is not None else None
 
-    llm_tokenizer = get_default_llm_tokenizer()
+    llm_tokenizer = get_default_llm_token_encode()
 
     chat_session = fetch_chat_session_by_id(chat_session_id, db_session)
     persona = (
@@ -351,7 +351,7 @@ def regenerate_message_given_parent(
     edit_number = parent_message.edit_number
     user_id = user.id if user is not None else None
 
-    llm_tokenizer = get_default_llm_tokenizer()
+    llm_tokenizer = get_default_llm_token_encode()
 
     chat_message = fetch_chat_message(
         chat_session_id=chat_session_id,

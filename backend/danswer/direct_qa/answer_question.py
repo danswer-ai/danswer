@@ -9,9 +9,9 @@ from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.db.feedback import create_query_event
 from danswer.db.models import User
+from danswer.direct_qa.factory import get_default_qa_model
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import StreamingError
-from danswer.direct_qa.llm_utils import get_default_qa_model
 from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.direct_qa.qa_utils import get_usable_chunks
 from danswer.document_index.factory import get_default_document_index

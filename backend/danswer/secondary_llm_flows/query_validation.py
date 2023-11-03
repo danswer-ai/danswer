@@ -1,12 +1,13 @@
 import re
 from collections.abc import Iterator
 
-from danswer.configs.constants import CODE_BLOCK_PAT
-from danswer.configs.constants import GENERAL_SEP_PAT
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import StreamingError
-from danswer.direct_qa.qa_block import dict_based_prompt_to_langchain_prompt
 from danswer.llm.factory import get_default_llm
+from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
+from danswer.prompts.constants import ANSWERABLE_PAT
+from danswer.prompts.constants import THOUGHT_PAT
+from danswer.prompts.secondary_llm_flows import ANSWERABLE_PROMPT
 from danswer.server.models import QueryValidationResponse
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
@@ -14,55 +15,11 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-QUERY_PAT = "QUERY: "
-REASONING_PAT = "THOUGHT: "
-ANSWERABLE_PAT = "ANSWERABLE: "
-
-
 def get_query_validation_messages(user_query: str) -> list[dict[str, str]]:
-    ambiguous_example_question = f"{QUERY_PAT}What is this Slack channel about?"
-    ambiguous_example_answer = (
-        f"{REASONING_PAT}First the system must determine which Slack channel is "
-        f"being referred to. By fetching 5 documents related to Slack channel contents, "
-        f"it is not possible to determine which Slack channel the user is referring to.\n"
-        f"{ANSWERABLE_PAT}False"
-    )
-
-    debug_example_question = f"{QUERY_PAT}Danswer is unreachable."
-    debug_example_answer = (
-        f"{REASONING_PAT}The system searches documents related to Danswer being "
-        f"unreachable. Assuming the documents from search contains situations where "
-        f"Danswer is not reachable and contains a fix, the query may be answerable.\n"
-        f"{ANSWERABLE_PAT}True"
-    )
-
-    up_to_date_example_question = f"{QUERY_PAT}How many customers do we have"
-    up_to_date_example_answer = (
-        f"{REASONING_PAT}Assuming the retrieved documents contain up to date customer "
-        f"acquisition information including a list of customers, the query can be answered. "
-        f"It is important to note that if the information only exists in a database, "
-        f"the system is unable to execute SQL and won't find an answer."
-        f"\n{ANSWERABLE_PAT}True"
-    )
-
     messages = [
         {
             "role": "user",
-            "content": "You are a helper tool to determine if a query is answerable using retrieval augmented "
-            f"generation.\nThe main system will try to answer the user query based on ONLY the top 5 most relevant "
-            f"documents found from search.\nSources contain both up to date and proprietary information for "
-            f"the specific team.\nFor named or unknown entities, assume the search will find "
-            f"relevant and consistent knowledge about the entity.\n"
-            f"The system is not tuned for writing code.\n"
-            f"The system is not tuned for interfacing with structured data via query languages like SQL.\n"
-            f"If the question might not require code or query language, "
-            f"then assume it can be answered without code or query language.\n"
-            f"Determine if that system should attempt to answer.\n"
-            f'"{ANSWERABLE_PAT}" must be exactly "True" or "False"\n{GENERAL_SEP_PAT}\n'
-            f"{ambiguous_example_question}{CODE_BLOCK_PAT.format(ambiguous_example_answer)}\n"
-            f"{debug_example_question}{CODE_BLOCK_PAT.format(debug_example_answer)}\n"
-            f"{up_to_date_example_question}{CODE_BLOCK_PAT.format(up_to_date_example_answer)}\n"
-            f"{QUERY_PAT + user_query}",
+            "content": ANSWERABLE_PROMPT.format(user_query=user_query),
         },
     ]
 
@@ -71,14 +28,14 @@ def get_query_validation_messages(user_query: str) -> list[dict[str, str]]:
 
 def extract_answerability_reasoning(model_raw: str) -> str:
     reasoning_match = re.search(
-        f"{REASONING_PAT}(.*?){ANSWERABLE_PAT}", model_raw, re.DOTALL
+        f"{THOUGHT_PAT.upper()}(.*?){ANSWERABLE_PAT.upper()}", model_raw, re.DOTALL
     )
     reasoning_text = reasoning_match.group(1).strip() if reasoning_match else ""
     return reasoning_text
 
 
 def extract_answerability_bool(model_raw: str) -> bool:
-    answerable_match = re.search(f"{ANSWERABLE_PAT}(.+)", model_raw)
+    answerable_match = re.search(f"{ANSWERABLE_PAT.upper()}(.+)", model_raw)
     answerable_text = answerable_match.group(1).strip() if answerable_match else ""
     answerable = True if answerable_text.strip().lower() in ["true", "yes"] else False
     return answerable
@@ -106,13 +63,13 @@ def stream_query_answerability(user_query: str) -> Iterator[str]:
         for token in tokens:
             model_output = model_output + token
 
-            if ANSWERABLE_PAT in model_output:
+            if ANSWERABLE_PAT.upper() in model_output:
                 continue
 
-            if not reasoning_pat_found and REASONING_PAT in model_output:
+            if not reasoning_pat_found and THOUGHT_PAT.upper() in model_output:
                 reasoning_pat_found = True
-                reason_ind = model_output.find(REASONING_PAT)
-                remaining = model_output[reason_ind + len(REASONING_PAT) :]
+                reason_ind = model_output.find(THOUGHT_PAT.upper())
+                remaining = model_output[reason_ind + len(THOUGHT_PAT.upper()) :]
                 if remaining:
                     yield get_json_line(
                         DanswerAnswerPiece(answer_piece=remaining).dict()
@@ -121,7 +78,7 @@ def stream_query_answerability(user_query: str) -> Iterator[str]:
 
             if reasoning_pat_found:
                 hold_answerable = hold_answerable + token
-                if hold_answerable == ANSWERABLE_PAT[: len(hold_answerable)]:
+                if hold_answerable == ANSWERABLE_PAT.upper()[: len(hold_answerable)]:
                     continue
                 yield get_json_line(
                     DanswerAnswerPiece(answer_piece=hold_answerable).dict()

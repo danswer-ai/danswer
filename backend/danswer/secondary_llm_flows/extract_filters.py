@@ -8,6 +8,7 @@ from dateutil.parser import parse
 from danswer.configs.app_configs import DISABLE_TIME_FILTER_EXTRACTION
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
+from danswer.prompts.secondary_llm_flows import TIME_FILTER_PROMPT
 from danswer.server.models import QuestionRequest
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
@@ -50,19 +51,7 @@ def extract_time_filter(query: str) -> tuple[datetime | None, bool]:
         messages = [
             {
                 "role": "system",
-                "content": "You are a tool to identify time filters to apply to a user query for "
-                "a downstream search application. The downstream application is able to "
-                "use a recency bias or apply a hard cutoff to remove all documents "
-                "before the cutoff. Identify the correct filters to apply for the user "
-                "query.\n\n"
-                "Always answer with ONLY a json which contains the keys "
-                '"filter_type", "filter_value", "value_multiple" and "date".\n\n'
-                'The valid values for "filter_type" are "hard cutoff", '
-                '"favors recent", or "not time sensitive".\n'
-                'The valid values for "filter_value" are "day", "week", "month", '
-                '"quarter", "half", or "year".\n'
-                'The valid values for "value_multiple" is any number.\n'
-                'The valid values for "date" is a date in format MM/DD/YYYY.',
+                "content": TIME_FILTER_PROMPT,
             },
             {
                 "role": "user",
