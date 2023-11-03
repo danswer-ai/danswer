@@ -59,7 +59,9 @@ If the question might not require code or query language, then assume it can be 
 code or query language.
 Determine if that system should attempt to answer.
 "ANSWERABLE" must be exactly "True" or "False"
+
 {GENERAL_SEP_PAT}
+
 {QUESTION_PAT.upper()} What is this Slack channel about?
 ```
 {THOUGHT_PAT.upper()} First the system must determine which Slack channel is being referred to. \

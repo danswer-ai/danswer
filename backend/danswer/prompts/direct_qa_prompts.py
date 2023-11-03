@@ -27,6 +27,7 @@ Quotes MUST be EXACT substrings from provided documents!
 """.strip()
 
 
+# This has to be doubly escaped due to json containing { } which are also used for format strings
 EMPTY_SAMPLE_JSON = {
     "answer": "Place your final answer here. It should be as DETAILED and INFORMATIVE as possible.",
     "quotes": [
@@ -49,7 +50,7 @@ CONTEXT:
 {GENERAL_SEP_PAT}
 SAMPLE_RESPONSE:
 ```
-{json.dumps(EMPTY_SAMPLE_JSON)}
+{{{json.dumps(EMPTY_SAMPLE_JSON)}}}
 ```
 {QUESTION_PAT} {{user_query}}
 {JSON_HELPFUL_HINT}
@@ -69,7 +70,7 @@ You MUST respond in the following format:
 ```
 {THOUGHT_PAT} Use this section as a scratchpad to reason through the answer.
 
-{json.dumps(EMPTY_SAMPLE_JSON)}
+{{{json.dumps(EMPTY_SAMPLE_JSON)}}}
 ```
 
 {QUESTION_PAT} {{user_query}}

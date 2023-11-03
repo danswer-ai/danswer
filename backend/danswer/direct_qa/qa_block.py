@@ -155,6 +155,10 @@ class QABlock(QAModel):
         self._llm = llm
         self._qa_handler = qa_handler
 
+    @property
+    def requires_api_key(self) -> bool:
+        return self._llm.requires_api_key
+
     def warm_up_model(self) -> None:
         """This is called during server start up to load the models into memory
         in case the chosen LLM is not accessed via API"""

@@ -45,6 +45,10 @@ class DanswerGPT4All(LLM):
         first inference isn't extremely delayed"""
         return True
 
+    @property
+    def requires_api_key(self) -> bool:
+        return False
+
     def __init__(
         self,
         timeout: int,
