@@ -86,7 +86,8 @@ Reference Document:
 {{single_reference_doc}}
 {GENERAL_SEP_PAT}
 Answer the user query below based on the reference document above.
-Respond with an "{ANSWER_PAT}" section and as many "{QUOTE_PAT}" sections as needed to support the answer.'
+Respond with an "{ANSWER_PAT}" section and as many "{QUOTE_PAT}" sections as needed to support \
+the answer.'
 
 {QUESTION_PAT} {{user_query}}
 {ANSWER_PAT}
