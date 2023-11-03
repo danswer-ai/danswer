@@ -1,4 +1,5 @@
 import os
+import re
 import urllib.parse
 from typing import Any
 from typing import cast
@@ -29,7 +30,9 @@ def process_link(element: BeautifulSoup | Tag) -> str:
     href = urllib.parse.unquote(href)
     href = href.rstrip(".html").lower()
     href = href.replace("_", "")
-    href = href.replace(" ", "-")
+    href = re.sub(
+        r"([\s-]+)", "-", href
+    )  # replace all whitespace/'-' groups with a single '-'
 
     return href
 
