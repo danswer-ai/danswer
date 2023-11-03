@@ -129,6 +129,15 @@ class NotionConnector(LoadConnector, PollConnector):
         try:
             res.raise_for_status()
         except Exception as e:
+            if res.json().get("code") == "object_not_found":
+                # this happens when a database is not shared with the integration
+                # in this case, we should just ignore the database
+                logger.error(
+                    f"Unable to access database with ID '{database_id}'. "
+                    f"This is likely due to the database not being shared "
+                    f"with the Danswer integration. Exact exception:\n{e}"
+                )
+                return {"results": [], "next_cursor": None}
             logger.exception(f"Error fetching database - {res.json()}")
             raise e
         return res.json()
