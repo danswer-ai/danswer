@@ -1,4 +1,3 @@
-import os
 import random
 import time
 
@@ -126,15 +125,13 @@ def generate_random_sentence():
     return sentence
 
 
-def _measure_hybrid_search_latency(
+def _measure_search_latency(
     query: str,
     search_type: SearchType,
     skip_rerank: bool = True,
     enable_auto_detect_filters: bool = False,
     filters: dict | None = None,
 ):
-    search_type = os.environ.get("VESPA_RANKING_PROFILE", "hybrid_search")
-
     start = time.monotonic()
     response = requests.post(
         "http://localhost:8080/document-search",
@@ -159,9 +156,7 @@ if __name__ == "__main__":
     latencies: list[float] = []
     for i in range(num_trials):
         latencies.append(
-            _measure_hybrid_search_latency(
-                query=sentences[i], search_type=SearchType.KEYWORD
-            )
+            _measure_search_latency(query=sentences[i], search_type=SearchType.KEYWORD)
         )
         print("Latency", latencies[-1])
 
@@ -174,9 +169,7 @@ if __name__ == "__main__":
     latencies: list[float] = []
     for i in range(num_trials):
         latencies.append(
-            _measure_hybrid_search_latency(
-                query=sentences[i], search_type=SearchType.HYBRID
-            )
+            _measure_search_latency(query=sentences[i], search_type=SearchType.HYBRID)
         )
         print("Latency", latencies[-1])
 
@@ -189,7 +182,7 @@ if __name__ == "__main__":
     latencies: list[float] = []
     for i in range(num_trials):
         latencies.append(
-            _measure_hybrid_search_latency(
+            _measure_search_latency(
                 query=sentences[i],
                 search_type=SearchType.HYBRID,
                 skip_rerank=False,
@@ -207,7 +200,7 @@ if __name__ == "__main__":
     latencies: list[float] = []
     for i in range(num_trials):
         latencies.append(
-            _measure_hybrid_search_latency(
+            _measure_search_latency(
                 query=sentences[i],
                 search_type=SearchType.HYBRID,
                 skip_rerank=False,
