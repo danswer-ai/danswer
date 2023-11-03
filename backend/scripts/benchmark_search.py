@@ -143,7 +143,7 @@ def _measure_hybrid_search_latency(
             "collection": DOCUMENT_INDEX_NAME,
             "filters": filters or {},
             "enable_auto_detect_filters": enable_auto_detect_filters,
-            "search_type": search_type.value,
+            "search_type": search_type,
             "skip_rerank": skip_rerank,
         },
     )
