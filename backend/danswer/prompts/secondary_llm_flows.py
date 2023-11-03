@@ -4,6 +4,7 @@ from danswer.prompts.constants import GENERAL_SEP_PAT
 from danswer.prompts.constants import QUESTION_PAT
 from danswer.prompts.constants import THOUGHT_PAT
 
+
 ANSWER_VALIDITY_PROMPT = f"""
 You are an assistant to identify invalid query/answer pairs coming from a large language model.
 The query/answer pair is invalid if any of the following are True:
@@ -43,6 +44,7 @@ The valid values for "filter_value" are "day", "week", "month", "quarter", "half
 The valid values for "value_multiple" is any number.
 The valid values for "date" is a date in format MM/DD/YYYY.
 """.strip()
+
 
 ANSWERABLE_PROMPT = f"""
 You are a helper tool to determine if a query is answerable using retrieval augmented generation.
@@ -85,3 +87,8 @@ won't find an answer.
 
 {QUESTION_PAT.upper()} {{user_query}}
 """.strip()
+
+
+# User the following for easy viewing of prompts
+if __name__ == "__main__":
+    print(ANSWERABLE_PROMPT)

@@ -105,6 +105,6 @@ Answer the user query based on the following document:
 """.strip()
 
 
-# The following is provided for easy viewing of prompts
+# User the following for easy viewing of prompts
 if __name__ == "__main__":
     print(JSON_PROMPT)

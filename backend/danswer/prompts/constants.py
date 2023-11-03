@@ -1,7 +1,5 @@
 GENERAL_SEP_PAT = "-----"
 CODE_BLOCK_PAT = "```\n{}\n```"
-DOC_SEP_PAT = "---NEW DOCUMENT---"
-DOC_CONTENT_START_PAT = "DOCUMENT CONTENTS:\n"
 QUESTION_PAT = "Query:"
 THOUGHT_PAT = "Thought:"
 ANSWER_PAT = "Answer:"
