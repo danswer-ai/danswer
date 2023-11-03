@@ -1,4 +1,4 @@
-from danswer.llm.build import get_default_llm
+from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 
 

@@ -26,6 +26,7 @@ import {
   GoogleSitesIcon,
   GongIcon,
   ZoomInIcon,
+  ZendeskIcon,
 } from "@/components/icons/icons";
 import { getAuthDisabledSS, getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
@@ -242,6 +243,15 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                   ),
                   link: "/admin/connectors/document360",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <ZendeskIcon size={16} />
+                      <div className="ml-1">Zendesk</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/zendesk",
                 },
               ],
             },

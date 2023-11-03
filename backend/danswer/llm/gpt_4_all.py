@@ -39,6 +39,16 @@ class DanswerGPT4All(LLM):
     """Option to run an LLM locally, however this is significantly slower and
     answers tend to be much worse"""
 
+    @property
+    def requires_warm_up(self) -> bool:
+        """GPT4All models are lazy loaded, load them on server start so that the
+        first inference isn't extremely delayed"""
+        return True
+
+    @property
+    def requires_api_key(self) -> bool:
+        return False
+
     def __init__(
         self,
         timeout: int,

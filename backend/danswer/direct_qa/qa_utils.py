@@ -4,7 +4,6 @@ import re
 from collections.abc import Generator
 from collections.abc import Iterator
 from json.decoder import JSONDecodeError
-from typing import cast
 from typing import Optional
 from typing import Tuple
 
@@ -12,36 +11,21 @@ import regex
 
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
-from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
-from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.direct_qa.interfaces import DanswerQuotes
-from danswer.direct_qa.qa_prompts import ANSWER_PAT
-from danswer.direct_qa.qa_prompts import QUOTE_PAT
-from danswer.direct_qa.qa_prompts import UNCERTAINTY_PAT
-from danswer.dynamic_configs import get_dynamic_config_store
-from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import check_number_of_tokens
+from danswer.prompts.constants import ANSWER_PAT
+from danswer.prompts.constants import QUOTE_PAT
+from danswer.prompts.constants import UNCERTAINTY_PAT
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_model_quote
 from danswer.utils.text_processing import clean_up_code_blocks
 from danswer.utils.text_processing import shared_precompare_cleanup
 
 logger = setup_logger()
-
-
-def get_gen_ai_api_key() -> str | None:
-    # first check if the key has been provided by the UI
-    try:
-        return cast(str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY))
-    except ConfigNotFoundError:
-        pass
-
-    # if not provided by the UI, fallback to the env variable
-    return GEN_AI_API_KEY
 
 
 def extract_answer_quotes_freeform(

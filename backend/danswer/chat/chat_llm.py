@@ -31,11 +31,11 @@ from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerChatModelOut
 from danswer.direct_qa.interfaces import StreamingError
 from danswer.direct_qa.qa_utils import get_usable_chunks
-from danswer.document_index import get_default_document_index
+from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import InferenceChunk
-from danswer.llm.build import get_default_llm
+from danswer.llm.factory import get_default_llm
 from danswer.llm.interfaces import LLM
-from danswer.llm.utils import get_default_llm_tokenizer
+from danswer.llm.utils import get_default_llm_token_encode
 from danswer.llm.utils import translate_danswer_msg_to_langchain
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.models import IndexFilters
@@ -259,7 +259,7 @@ def llm_contextless_chat_answer(
         prompt_msgs = [translate_danswer_msg_to_langchain(msg) for msg in messages]
 
         if system_text:
-            tokenizer = tokenizer or get_default_llm_tokenizer()
+            tokenizer = tokenizer or get_default_llm_token_encode()
             system_tokens = len(tokenizer(system_text))
             system_msg = SystemMessage(content=system_text)
 

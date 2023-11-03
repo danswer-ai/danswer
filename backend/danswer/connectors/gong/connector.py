@@ -9,6 +9,7 @@ from typing import cast
 import requests
 
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
+from danswer.configs.app_configs import GONG_CONNECTOR_START_TIME
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -262,9 +263,21 @@ class GongConnector(LoadConnector, PollConnector):
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
+        # if this env variable is set, don't start from a timestamp before the specified
+        # start time
+        # TODO: remove this once this is globally available
+        if GONG_CONNECTOR_START_TIME:
+            special_start_datetime = datetime.fromisoformat(GONG_CONNECTOR_START_TIME)
+            special_start_datetime = special_start_datetime.replace(tzinfo=timezone.utc)
+        else:
+            special_start_datetime = datetime.fromtimestamp(0, tz=timezone.utc)
+
+        start_datetime = max(
+            datetime.fromtimestamp(start, tz=timezone.utc), special_start_datetime
+        )
+
         # Because these are meeting start times, the meeting needs to end and be processed
         # so adding a 1 day buffer and fetching by default till current time
-        start_datetime = datetime.fromtimestamp(start, tz=timezone.utc)
         start_one_day_offset = start_datetime - timedelta(days=1)
         start_time = start_one_day_offset.isoformat()
         end_time = (
@@ -273,12 +286,12 @@ class GongConnector(LoadConnector, PollConnector):
             else None
         )
 
+        logger.info(f"Fetching Gong calls between {start_time} and {end_time}")
         return self._fetch_calls(start_time, end_time)
 
 
 if __name__ == "__main__":
     import os
-    import time
 
     connector = GongConnector()
     connector.load_credentials(
@@ -288,6 +301,5 @@ if __name__ == "__main__":
         }
     )
 
-    current = time.time()
     latest_docs = connector.load_from_state()
     print(next(latest_docs))

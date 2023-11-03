@@ -2,12 +2,12 @@ from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 
-from danswer.configs.constants import CODE_BLOCK_PAT
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
 from danswer.db.models import ToolInfo
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import translate_danswer_msg_to_langchain
+from danswer.prompts.constants import CODE_BLOCK_PAT
 
 DANSWER_TOOL_NAME = "Current Search"
 DANSWER_TOOL_DESCRIPTION = (
@@ -176,7 +176,7 @@ def format_danswer_chunks_for_chat(chunks: list[InferenceChunk]) -> str:
         return "No Results Found"
 
     return "\n".join(
-        f"DOCUMENT {ind}:{CODE_BLOCK_PAT.format(chunk.content)}"
+        f"DOCUMENT {ind}:\n{CODE_BLOCK_PAT.format(chunk.content)}\n"
         for ind, chunk in enumerate(chunks, start=1)
     )
 
