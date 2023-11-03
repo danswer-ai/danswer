@@ -30,7 +30,6 @@ import {
 } from "@/components/icons/icons";
 import { getAuthDisabledSS, getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
-import { getWebVersion, getBackendVersion } from "@/lib/version";
 
 export async function Layout({ children }: { children: React.ReactNode }) {
   const [authDisabled, user] = await Promise.all([
@@ -47,20 +46,9 @@ export async function Layout({ children }: { children: React.ReactNode }) {
     }
   }
 
-  let web_version: string | null = null;
-  let backend_version: string | null = null;
-  try {
-    [web_version, backend_version] = await Promise.all([
-      getWebVersion(),
-      getBackendVersion(),
-    ]);
-  } catch (e) {
-    console.log(`Version info fetch failed - ${e}`);
-  }
-
   return (
     <div>
-      <Header user={user} web_version={web_version} backend_version={backend_version} />
+      <Header user={user} />
       <div className="bg-gray-900 pt-8 pb-8 flex">
         <Sidebar
           title="Connector"

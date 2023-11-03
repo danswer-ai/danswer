@@ -25,6 +25,3 @@ export const getBackendVersion = async (): Promise<string | null> => {
 export const getWebVersion = (): string | null => {
     return version;
 };
-
-//process.env.npm_package_version
-
