@@ -186,7 +186,6 @@ if __name__ == "__main__":
                 query=sentences[i],
                 search_type=SearchType.HYBRID,
                 skip_rerank=False,
-                enable_auto_detect_filters=True,
             )
         )
         print("Latency", latencies[-1])
