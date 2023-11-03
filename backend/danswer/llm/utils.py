@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from collections.abc import Iterator
+from copy import copy
 from typing import Any
 from typing import cast
 
@@ -13,28 +14,59 @@ from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import BaseMessageChunk
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
+from tiktoken.core import Encoding
 
 from danswer.configs.app_configs import LOG_LEVEL
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
 from danswer.configs.constants import MessageType
+from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.db.models import ChatMessage
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.indexing.models import InferenceChunk
 from danswer.llm.interfaces import LLM
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-_LLM_TOKENIZER: Callable[[str], Any] | None = None
+_LLM_TOKENIZER: Any = None
+_LLM_TOKENIZER_ENCODE: Callable[[str], Any] | None = None
 
 
-def get_default_llm_tokenizer() -> Callable:
+def get_default_llm_tokenizer() -> Any:
     """Currently only supports the OpenAI default tokenizer: tiktoken"""
     global _LLM_TOKENIZER
     if _LLM_TOKENIZER is None:
-        _LLM_TOKENIZER = tiktoken.get_encoding("cl100k_base").encode
+        _LLM_TOKENIZER = tiktoken.get_encoding("cl100k_base")
     return _LLM_TOKENIZER
+
+
+def get_default_llm_token_encode() -> Callable[[str], Any]:
+    global _LLM_TOKENIZER_ENCODE
+    if _LLM_TOKENIZER_ENCODE is None:
+        tokenizer = get_default_llm_tokenizer()
+        if isinstance(tokenizer, Encoding):
+            return tokenizer.encode  # type: ignore
+
+        # Currently only supports OpenAI encoder
+        raise ValueError("Invalid Encoder selected")
+
+    return _LLM_TOKENIZER_ENCODE
+
+
+def tokenizer_trim_chunks(
+    chunks: list[InferenceChunk], max_chunk_toks: int = DOC_EMBEDDING_CONTEXT_SIZE
+) -> list[InferenceChunk]:
+    tokenizer = get_default_llm_tokenizer()
+    new_chunks = copy(chunks)
+    for ind, chunk in enumerate(new_chunks):
+        tokens = tokenizer.encode(chunk.content)
+        if len(tokens) > max_chunk_toks:
+            new_chunk = copy(chunk)
+            new_chunk.content = tokenizer.decode(tokens[:max_chunk_toks])
+            new_chunks[ind] = new_chunk
+    return new_chunks
 
 
 def translate_danswer_msg_to_langchain(msg: ChatMessage) -> BaseMessage:

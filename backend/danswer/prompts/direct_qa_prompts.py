@@ -39,32 +39,7 @@ EMPTY_SAMPLE_JSON = {
 ANSWER_NOT_FOUND_RESPONSE = f'{{"answer": "{UNCERTAINTY_PAT}", "quotes": []}}'
 
 
-# For weak LLM which only takes one chunk and cannot output json
-WEAK_LLM_PROMPT = f"""
-Reference Document:
-{{reference_doc}}
-{GENERAL_SEP_PAT}
-Answer the user query below based on the reference document above.
-Respond with an "{ANSWER_PAT}" section and as many "{QUOTE_PAT}" sections as needed to support the answer.'
-
-{QUESTION_PAT} {{question}}
-{ANSWER_PAT}
-""".strip()
-
-
-# For weak chat LLM which takes one chunk and cannot output json
-# The next message should have the user query
-WEAK_CHAT_LLM_PROMPT = f"""
-You are a question answering assistant
-Respond to the user query with an "{ANSWER_PAT}" section and \
-as many "{QUOTE_PAT}" sections as needed to support the answer.
-Answer the user query based on the following document:
-
-{{first_chunk_content}}
-""".strip()
-
-
-# Default json prompt which can use multiple docs
+# Default json prompt which can reference multiple docs and provide answer + quotes
 JSON_PROMPT = f"""
 {QA_HEADER}
 {REQUIRE_JSON}
@@ -102,6 +77,34 @@ You MUST respond in the following format:
 """.strip()
 
 
+# For weak LLM which only takes one chunk and cannot output json
+WEAK_LLM_PROMPT = f"""
+Respond to the user query using a reference document.
+{GENERAL_SEP_PAT}
+Reference Document:
+{{single_reference_doc}}
+{GENERAL_SEP_PAT}
+Answer the user query below based on the reference document above.
+Respond with an "{ANSWER_PAT}" section and as many "{QUOTE_PAT}" sections as needed to support the answer.'
+
+{QUESTION_PAT} {{user_query}}
+{ANSWER_PAT}
+""".strip()
+
+
+# For weak chat LLM which takes one chunk and cannot output json
+# The next message should have the user query
+# Note, no flow/config currently uses this one
+WEAK_CHAT_LLM_PROMPT = f"""
+You are a question answering assistant
+Respond to the user query with an "{ANSWER_PAT}" section and \
+as many "{QUOTE_PAT}" sections as needed to support the answer.
+Answer the user query based on the following document:
+
+{{first_chunk_content}}
+""".strip()
+
+
 # The following is provided for easy viewing of prompts
 if __name__ == "__main__":
-    print(COT_PROMPT)
+    print(JSON_PROMPT)

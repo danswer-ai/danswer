@@ -207,6 +207,7 @@ CROSS_ENCODER_PORT = 9000
 #####
 # Miscellaneous
 #####
+QA_PROMPT_OVERRIDE = os.environ.get("QA_PROMPT_OVERRIDE") or None
 PERSONAS_YAML = "./danswer/chat/personas.yaml"
 DYNAMIC_CONFIG_STORE = os.environ.get(
     "DYNAMIC_CONFIG_STORE", "FileSystemBackedDynamicConfigStore"

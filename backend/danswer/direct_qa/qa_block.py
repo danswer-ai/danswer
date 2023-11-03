@@ -2,9 +2,7 @@ import abc
 import re
 from collections.abc import Callable
 from collections.abc import Iterator
-from copy import copy
 
-import tiktoken
 from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 
@@ -19,10 +17,12 @@ from danswer.direct_qa.qa_utils import process_model_tokens
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import check_number_of_tokens
-from danswer.llm.utils import get_default_llm_tokenizer
+from danswer.llm.utils import get_default_llm_token_encode
+from danswer.llm.utils import tokenizer_trim_chunks
 from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.prompts.direct_qa_prompts import COT_PROMPT
 from danswer.prompts.direct_qa_prompts import JSON_PROMPT
+from danswer.prompts.direct_qa_prompts import WEAK_LLM_PROMPT
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_up_code_blocks
 from danswer.utils.text_processing import escape_newlines
@@ -40,31 +40,11 @@ class QAHandler(abc.ABC):
     @property
     @abc.abstractmethod
     def is_json_output(self) -> bool:
+        """Does the model output a valid json with answer and quotes keys? Most flows with a
+        capable model should output a json. This hints to the model that the output is used
+        with a downstream system rather than freeform creative output. Most models should be
+        finetuned to recognize this."""
         raise NotImplementedError
-
-    @abc.abstractmethod
-    def process_llm_output(
-        self, model_output: str, context_chunks: list[InferenceChunk]
-    ) -> tuple[DanswerAnswer, DanswerQuotes]:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def process_llm_token_stream(
-        self, tokens: Iterator[str], context_chunks: list[InferenceChunk]
-    ) -> AnswerQuestionStreamReturn:
-        raise NotImplementedError
-
-
-class JsonQAHandler(abc.ABC):
-    @abc.abstractmethod
-    def build_prompt(
-        self, query: str, context_chunks: list[InferenceChunk]
-    ) -> list[BaseMessage]:
-        raise NotImplementedError
-
-    @property
-    def is_json_output(self) -> bool:
-        return True
 
     def process_llm_output(
         self, model_output: str, context_chunks: list[InferenceChunk]
@@ -83,7 +63,30 @@ class JsonQAHandler(abc.ABC):
         )
 
 
-class SingleMessageQAHandler(JsonQAHandler):
+class WeakLLMQAHandler(QAHandler):
+    """Since Danswer supports a variety of LLMs, this less demanding prompt is provided
+    as an option to use with weaker LLMs such as small version, low float precision, quantized,
+    or distilled models. It only uses one context document and has very weak requirements of
+    output format.
+    """
+
+    @property
+    def is_json_output(self) -> bool:
+        return False
+
+    def build_prompt(
+        self, query: str, context_chunks: list[InferenceChunk]
+    ) -> list[BaseMessage]:
+        message = WEAK_LLM_PROMPT.format(single_reference_doc=context_chunks[0].content)
+
+        return [HumanMessage(content=message)]
+
+
+class SingleMessageQAHandler(QAHandler):
+    @property
+    def is_json_output(self) -> bool:
+        return True
+
     def build_prompt(
         self, query: str, context_chunks: list[InferenceChunk]
     ) -> list[BaseMessage]:
@@ -104,7 +107,7 @@ class SingleMessageScratchpadHandler(QAHandler):
     def is_json_output(self) -> bool:
         # Even though the full LLM output isn't a valid json
         # only the valid json portion is kept and passed along
-        # therefore it should be treated as a json output
+        # therefore it is treated as a json output
         return True
 
     def build_prompt(
@@ -147,45 +150,6 @@ class SingleMessageScratchpadHandler(QAHandler):
         )
 
 
-"""
-class SimpleChatQAHandler(QAHandler):
-    @property
-    def is_json_output(self) -> bool:
-        return False
-
-    def build_prompt(
-        self, query: str, context_chunks: list[InferenceChunk]
-    ) -> list[BaseMessage]:
-        return str_prompt_to_langchain_prompt(
-            WeakModelFreeformProcessor.fill_prompt(
-                question=query,
-                chunks=context_chunks,
-                include_metadata=False,
-            )
-        )
-"""
-
-
-def _tiktoken_trim_chunks(
-    chunks: list[InferenceChunk], max_chunk_toks: int = 512
-) -> list[InferenceChunk]:
-    """Edit chunks that have too high token count. Generally due to parsing issues or
-    characters from another language that are 1 char = 1 token
-    Trimming by tokens leads to information loss but currently no better way of handling
-    NOTE: currently gpt-3.5  / gpt-4 tokenizer across all LLMs currently
-    TODO: make "chunk modification" its own step in the pipeline
-    """
-    encoder = tiktoken.get_encoding("cl100k_base")
-    new_chunks = copy(chunks)
-    for ind, chunk in enumerate(new_chunks):
-        tokens = encoder.encode(chunk.content)
-        if len(tokens) > max_chunk_toks:
-            new_chunk = copy(chunk)
-            new_chunk.content = encoder.decode(tokens[:max_chunk_toks])
-            new_chunks[ind] = new_chunk
-    return new_chunks
-
-
 class QABlock(QAModel):
     def __init__(self, llm: LLM, qa_handler: QAHandler) -> None:
         self._llm = llm
@@ -204,7 +168,7 @@ class QABlock(QAModel):
         context_docs: list[InferenceChunk],
         metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,
     ) -> AnswerQuestionReturn:
-        trimmed_context_docs = _tiktoken_trim_chunks(context_docs)
+        trimmed_context_docs = tokenizer_trim_chunks(context_docs)
         prompt = self._qa_handler.build_prompt(query, trimmed_context_docs)
         model_out = self._llm.invoke(prompt)
 
@@ -212,14 +176,14 @@ class QABlock(QAModel):
             prompt_tokens = sum(
                 [
                     check_number_of_tokens(
-                        text=p.content, encode_fn=get_default_llm_tokenizer()
+                        text=p.content, encode_fn=get_default_llm_token_encode()
                     )
                     for p in prompt
                 ]
             )
 
             response_tokens = check_number_of_tokens(
-                text=model_out, encode_fn=get_default_llm_tokenizer()
+                text=model_out, encode_fn=get_default_llm_token_encode()
             )
 
             metrics_callback(
@@ -235,7 +199,7 @@ class QABlock(QAModel):
         query: str,
         context_docs: list[InferenceChunk],
     ) -> AnswerQuestionStreamReturn:
-        trimmed_context_docs = _tiktoken_trim_chunks(context_docs)
+        trimmed_context_docs = tokenizer_trim_chunks(context_docs)
         prompt = self._qa_handler.build_prompt(query, trimmed_context_docs)
         tokens = self._llm.stream(prompt)
         yield from self._qa_handler.process_llm_token_stream(
