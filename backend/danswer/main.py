@@ -179,6 +179,7 @@ def get_application() -> FastAPI:
         logger.info("Warming up local NLP models.")
         warm_up_models()
         qa_model = get_default_qa_model()
+        # This is for the LLM, most LLMs will not need warming up
         qa_model.warm_up_model()
 
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")

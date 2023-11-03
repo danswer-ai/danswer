@@ -40,6 +40,8 @@ services:
       - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}
       - ASYM_PASSAGE_PREFIX=${ASYM_PASSAGE_PREFIX:-}
       - SKIP_RERANKING=${SKIP_RERANKING:-}
+      - QA_PROMPT_OVERRIDE=${QA_PROMPT_OVERRIDE:-}
+      - EDIT_KEYWORD_QUERY=${EDIT_KEYWORD_QUERY:-}
       # Set to debug to get more fine-grained logs
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
@@ -89,6 +91,7 @@ services:
       - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}
       - ASYM_PASSAGE_PREFIX=${ASYM_PASSAGE_PREFIX:-}
       - SKIP_RERANKING=${SKIP_RERANKING:-}
+      - QA_PROMPT_OVERRIDE=${QA_PROMPT_OVERRIDE:-}
       - EDIT_KEYWORD_QUERY=${EDIT_KEYWORD_QUERY:-}
       - MIN_THREADS_ML_MODELS=${MIN_THREADS_ML_MODELS:-}
       # Set to debug to get more fine-grained logs

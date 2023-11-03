@@ -17,12 +17,14 @@ def get_default_qa_handler(
     user_selection: str | None = QA_PROMPT_OVERRIDE,
 ) -> QAHandler:
     if user_selection:
+        if user_selection.lower() == "default":
+            return SingleMessageQAHandler()
+        if user_selection.lower() == "cot":
+            return SingleMessageScratchpadHandler()
         if user_selection.lower() == "weak":
             return WeakLLMQAHandler()
-        elif user_selection.lower() == "default":
-            return SingleMessageQAHandler()
-        elif user_selection.lower() == "cot":
-            SingleMessageScratchpadHandler()
+
+        raise ValueError("Invalid Question-Answering prompt selected")
 
     if not real_time_flow:
         return SingleMessageScratchpadHandler()

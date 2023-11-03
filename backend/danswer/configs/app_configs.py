@@ -207,12 +207,14 @@ CROSS_ENCODER_PORT = 9000
 #####
 # Miscellaneous
 #####
-QA_PROMPT_OVERRIDE = os.environ.get("QA_PROMPT_OVERRIDE") or None
 PERSONAS_YAML = "./danswer/chat/personas.yaml"
 DYNAMIC_CONFIG_STORE = os.environ.get(
     "DYNAMIC_CONFIG_STORE", "FileSystemBackedDynamicConfigStore"
 )
 DYNAMIC_CONFIG_DIR_PATH = os.environ.get("DYNAMIC_CONFIG_DIR_PATH", "/home/storage")
+# For selecting a different LLM question-answering prompt format
+# Valid values: default, cot, weak
+QA_PROMPT_OVERRIDE = os.environ.get("QA_PROMPT_OVERRIDE") or None
 # notset, debug, info, warning, error, or critical
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "info")
 # NOTE: Currently only supported in the Confluence and Google Drive connectors +
