@@ -93,7 +93,7 @@ Respond with an "{ANSWER_PAT}" section and as many "{QUOTE_PAT}" sections as nee
 """.strip()
 
 
-# For weak chat LLM which takes one chunk and cannot output json
+# For weak CHAT LLM which takes one chunk and cannot output json
 # The next message should have the user query
 # Note, no flow/config currently uses this one
 WEAK_CHAT_LLM_PROMPT = f"""
@@ -108,4 +108,4 @@ Answer the user query based on the following document:
 
 # User the following for easy viewing of prompts
 if __name__ == "__main__":
-    print(JSON_PROMPT)
+    print(JSON_PROMPT)  # Default prompt used in the Danswer UI flow
