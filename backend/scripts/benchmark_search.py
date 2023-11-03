@@ -126,7 +126,7 @@ def generate_random_sentence():
     return sentence
 
 
-def _measure_hybrid_search_latency(filters: dict | None = None):
+def _measure_hybrid_search_latency(query: str, filters: dict | None = None):
     search_type = os.environ.get("VESPA_RANKING_PROFILE", "hybrid_search")
     auto_detect_filters = os.environ.get("AUTO_DETECT_FILTERS", "false") == "true"
 
@@ -134,7 +134,7 @@ def _measure_hybrid_search_latency(filters: dict | None = None):
     response = requests.post(
         "http://localhost:8080/document-search",
         json={
-            "query": generate_random_sentence(),
+            "query": query,
             "collection": DOCUMENT_INDEX_NAME,
             "filters": filters or {},
             "enable_auto_detect_filters": auto_detect_filters,
@@ -149,10 +149,11 @@ def _measure_hybrid_search_latency(filters: dict | None = None):
 
 
 if __name__ == "__main__":
+    sentences = question_bank + additional_questions
     latencies: list[float] = []
     num_trials = 100
-    for _ in range(num_trials):
-        latencies.append(_measure_hybrid_search_latency())
+    for i in range(num_trials):
+        latencies.append(_measure_hybrid_search_latency(sentences[i]))
         print("Latency", latencies[-1])
 
     latencies = sorted(latencies)
