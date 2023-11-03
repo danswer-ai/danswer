@@ -66,7 +66,10 @@ spec:
         - name: POSTGRES_HOST
           value: relational-db-service
         - name: VESPA_HOST
-          value: document-index-service
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: VESPA_HOST
         volumeMounts:
         - name: dynamic-storage
           mountPath: /home/storage
