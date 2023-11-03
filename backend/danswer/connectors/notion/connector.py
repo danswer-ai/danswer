@@ -141,8 +141,15 @@ class NotionConnector(LoadConnector, PollConnector):
                             text = rich_text["text"]["content"]
                             cur_result_text_arr.append(text)
 
-                if result["has_children"] and result_type == "child_page":
-                    child_pages.append(result_block_id)
+                if result["has_children"]:
+                    if result_type == "child_page":
+                        child_pages.append(result_block_id)
+                    else:
+                        subblock_result_lines, subblock_child_pages = self._read_blocks(
+                            result_block_id
+                        )
+                        result_lines.extend(subblock_result_lines)
+                        child_pages.extend(subblock_child_pages)
 
                 cur_result_text = "\n".join(cur_result_text_arr)
                 if cur_result_text:
