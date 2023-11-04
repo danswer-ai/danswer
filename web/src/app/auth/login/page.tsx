@@ -3,8 +3,7 @@ import { AuthType, OAUTH_NAME } from "@/lib/constants";
 import { User } from "@/lib/types";
 import { getCurrentUserSS, getAuthUrlSS, getAuthTypeSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
-import { getWebVersion, getBackendVersion } from "@/lib/version"
-
+import { getWebVersion, getBackendVersion } from "@/lib/version";
 
 const BUTTON_STYLE =
   "group relative w-64 flex justify-center " +
@@ -94,7 +93,7 @@ const Page = async () => {
           </div>
         </div>
         <div className="fixed bottom-4 right-4 z-50 text-slate-400 p-2">
-          VERSION w{ web_version } b{ backend_version }
+          VERSION w{web_version} b{backend_version}
         </div>
       </div>
     </main>
