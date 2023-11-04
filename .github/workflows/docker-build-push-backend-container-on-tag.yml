@@ -32,3 +32,5 @@ jobs:
         tags: |
           danswer/danswer-backend:${{ github.ref_name }}
           danswer/danswer-backend:latest
+        build-args: |
+          DANSWER_VERSION: ${{ github.ref_name }}

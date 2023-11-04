@@ -3,6 +3,8 @@ import { AuthType, OAUTH_NAME } from "@/lib/constants";
 import { User } from "@/lib/types";
 import { getCurrentUserSS, getAuthUrlSS, getAuthTypeSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
+import { getWebVersion, getBackendVersion } from "@/lib/version"
+
 
 const BUTTON_STYLE =
   "group relative w-64 flex justify-center " +
@@ -23,6 +25,17 @@ const Page = async () => {
     ]);
   } catch (e) {
     console.log(`Some fetch failed for the login page - ${e}`);
+  }
+
+  let web_version: string | null = null;
+  let backend_version: string | null = null;
+  try {
+    [web_version, backend_version] = await Promise.all([
+      getWebVersion(),
+      getBackendVersion(),
+    ]);
+  } catch (e) {
+    console.log(`Version info fetch failed for the login page - ${e}`);
   }
 
   // simply take the user to the home page if Auth is disabled
@@ -79,6 +92,9 @@ const Page = async () => {
               </button>
             )}
           </div>
+        </div>
+        <div className="fixed bottom-4 right-4 z-50 text-slate-400 p-2">
+          VERSION w{ web_version } b{ backend_version }
         </div>
       </div>
     </main>

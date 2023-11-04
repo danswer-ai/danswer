@@ -317,6 +317,20 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                 },
               ],
             },
+            {
+              name: "Info",
+              items: [
+                {
+                  name: (
+                    <div className="flex">
+                      <NotebookIcon size={18} />
+                      <div className="ml-1">System Information</div>
+                    </div>
+                  ),
+                  link: "/admin/systeminfo",
+                },
+              ],
+            },
           ]}
         />
         <div className="px-12 min-h-screen bg-gray-900 text-gray-100 w-full">

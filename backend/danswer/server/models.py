@@ -46,6 +46,10 @@ class AuthTypeResponse(BaseModel):
     auth_type: AuthType
 
 
+class VersionResponse(BaseModel):
+    backend_version: str
+
+
 class DataRequest(BaseModel):
     data: str
 
