@@ -1,9 +1,7 @@
 FROM node:20-alpine AS base
 
-# Default DANSWER_VERSION build argument set here. 
-# This can be overridden by passing in a build arg, typically from GitHub Actions.
-ARG DANSWER_VERSION=0.1.0
-# Then passed to the container environment.
+# Default DANSWER_VERSION, typically overriden during builds by GitHub Actions.
+ARG DANSWER_VERSION=0.2-dev
 ENV DANSWER_VERSION=${DANSWER_VERSION}
 
 # Step 1. Install dependencies only when needed
