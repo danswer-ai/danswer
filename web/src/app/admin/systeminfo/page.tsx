@@ -1,5 +1,6 @@
 import { NotebookIcon } from "@/components/icons/icons";
 import { getWebVersion, getBackendVersion } from "@/lib/version";
+import { EE_ENABLED } from "@/lib/constants";
 
 const Page = async () => {
   let web_version: string | null = null;
@@ -21,7 +22,9 @@ const Page = async () => {
       </div>
 
       <div>
-        <p className="font-bold text-lg my-auto mb-2">Danswer MIT</p>
+        <p className="font-bold text-lg my-auto mb-2">
+          {EE_ENABLED ? "Danswer Enterprise Edition" : "Danswer MIT"}
+        </p>
         <div className="flex mb-2">
           <p className="my-auto mr-1">Backend Version: </p>
           <p className="text-base my-auto text-slate-400 italic">
