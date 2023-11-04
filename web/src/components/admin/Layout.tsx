@@ -318,13 +318,13 @@ export async function Layout({ children }: { children: React.ReactNode }) {
               ],
             },
             {
-              name: "Info",
+              name: "System Information",
               items: [
                 {
                   name: (
                     <div className="flex">
                       <NotebookIcon size={18} />
-                      <div className="ml-1">System Information</div>
+                      <div className="ml-1">Version</div>
                     </div>
                   ),
                   link: "/admin/systeminfo",

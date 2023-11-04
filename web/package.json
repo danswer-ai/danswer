@@ -1,6 +1,6 @@
 {
   "name": "qa",
-  "version": "0.1.0dev",
+  "version": "0.2-dev",
   "private": true,
   "scripts": {
     "dev": "next dev",
