@@ -1,3 +1,4 @@
+import torch
 import uvicorn
 from fastapi import FastAPI
 
@@ -23,6 +24,13 @@ def get_model_app() -> FastAPI:
 
     @application.on_event("startup")
     def startup_event() -> None:
+        if torch.cuda.is_available():
+            logger.info("GPU is available")
+        else:
+            logger.info("GPU is not available")
+
+        logger.info(f"Torch Threads: {torch.get_num_threads()}")
+
         warm_up_bi_encoder()
         warm_up_cross_encoders()
         warm_up_intent_model()

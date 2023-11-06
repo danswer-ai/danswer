@@ -1,4 +1,5 @@
 import nltk  # type:ignore
+import torch
 import uvicorn
 from fastapi import FastAPI
 from fastapi import Request
@@ -19,6 +20,7 @@ from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import MODEL_SERVER_HOST
+from danswer.configs.app_configs import MODEL_SERVER_PORT
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import SECRET
@@ -178,8 +180,16 @@ def get_application() -> FastAPI:
             logger.info(f'Query embedding prefix: "{ASYM_QUERY_PREFIX}"')
             logger.info(f'Passage embedding prefix: "{ASYM_PASSAGE_PREFIX}"')
 
-        if not MODEL_SERVER_HOST:
+        if MODEL_SERVER_HOST:
+            logger.info(f"Using Model Server: {MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
+        else:
             logger.info("Warming up local NLP models.")
+            if torch.cuda.is_available():
+                logger.info("GPU is available")
+            else:
+                logger.info("GPU is not available")
+            logger.info(f"Torch Threads: {torch.get_num_threads()}")
+
             warm_up_models()
 
         # This is for the LLM, most LLMs will not need warming up

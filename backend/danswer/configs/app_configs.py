@@ -3,6 +3,7 @@ import os
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentIndexType
 
+
 #####
 # App Configs
 #####
@@ -18,6 +19,7 @@ GENERATIVE_MODEL_ACCESS_CHECK_FREQ = 86400  # 1 day
 # DISABLE_GENERATIVE_AI will turn of the question answering part of Danswer.
 # Use this if you want to use Danswer as a search engine only without the LLM capabilities
 DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "true"
+
 
 #####
 # Web Configs
@@ -56,7 +58,6 @@ VALID_EMAIL_DOMAINS = (
     if _VALID_EMAIL_DOMAINS_STR
     else []
 )
-
 # OAuth Login Flow
 # Used for both Google OAuth2 and OIDC flows
 OAUTH_CLIENT_ID = (
@@ -198,7 +199,8 @@ MINI_CHUNK_SIZE = 150
 #####
 # Model Server Configs
 #####
-# Model Server Host is used to determine if Danswer should use a model server to run its models
+# If MODEL_SERVER_HOST is set, the NLP models required for Danswer are offloaded to the server via
+# requests. Be sure to include the scheme in the MODEL_SERVER_HOST value.
 MODEL_SERVER_HOST = os.environ.get("MODEL_SERVER_HOST") or None
 MODEL_SERVER_ALLOWED_HOST = os.environ.get("MODEL_SERVER_HOST") or "0.0.0.0"
 MODEL_SERVER_PORT = int(os.environ.get("MODEL_SERVER_PORT") or "9000")

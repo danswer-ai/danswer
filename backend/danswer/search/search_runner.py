@@ -103,6 +103,31 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
 
 
 @log_function_time()
+def doc_index_retrieval(
+    query: SearchQuery, document_index: DocumentIndex
+) -> list[InferenceChunk]:
+    if query.search_type == SearchType.KEYWORD:
+        top_chunks = document_index.keyword_retrieval(
+            query.query, query.filters, query.favor_recent, query.num_hits
+        )
+
+    elif query.search_type == SearchType.SEMANTIC:
+        top_chunks = document_index.semantic_retrieval(
+            query.query, query.filters, query.favor_recent, query.num_hits
+        )
+
+    elif query.search_type == SearchType.HYBRID:
+        top_chunks = document_index.hybrid_retrieval(
+            query.query, query.filters, query.favor_recent, query.num_hits
+        )
+
+    else:
+        raise RuntimeError("Invalid Search Flow")
+
+    return top_chunks
+
+
+@log_function_time()
 def semantic_reranking(
     query: str,
     chunks: list[InferenceChunk],
@@ -268,23 +293,7 @@ def search_chunks(
         ]
         logger.info(f"Top links from {search_flow} search: {', '.join(top_links)}")
 
-    if query.search_type == SearchType.KEYWORD:
-        top_chunks = document_index.keyword_retrieval(
-            query.query, query.filters, query.favor_recent, query.num_hits
-        )
-
-    elif query.search_type == SearchType.SEMANTIC:
-        top_chunks = document_index.semantic_retrieval(
-            query.query, query.filters, query.favor_recent, query.num_hits
-        )
-
-    elif query.search_type == SearchType.HYBRID:
-        top_chunks = document_index.hybrid_retrieval(
-            query.query, query.filters, query.favor_recent, query.num_hits
-        )
-
-    else:
-        raise RuntimeError("Invalid Search Flow")
+    top_chunks = doc_index_retrieval(query=query, document_index=document_index)
 
     if not top_chunks:
         logger.info(
