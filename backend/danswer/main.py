@@ -181,7 +181,9 @@ def get_application() -> FastAPI:
             logger.info(f'Passage embedding prefix: "{ASYM_PASSAGE_PREFIX}"')
 
         if MODEL_SERVER_HOST:
-            logger.info(f"Using Model Server: {MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
+            logger.info(
+                f"Using Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}"
+            )
         else:
             logger.info("Warming up local NLP models.")
             if torch.cuda.is_available():

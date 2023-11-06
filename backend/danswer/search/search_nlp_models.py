@@ -1,6 +1,6 @@
 import numpy as np
 import requests
-import tensorflow as tf
+import tensorflow as tf  # type: ignore
 from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 from transformers import AutoTokenizer  # type: ignore
@@ -119,7 +119,7 @@ class EmbeddingModel:
         self.model_name = model_name
         self.max_seq_length = max_seq_length
         self.embed_server_endpoint = (
-            f"{model_server_host}:{model_server_port}/encoder/bi-encoder-embed"
+            f"http://{model_server_host}:{model_server_port}/encoder/bi-encoder-embed"
             if model_server_host
             else None
         )
@@ -170,7 +170,7 @@ class CrossEncoderEnsembleModel:
         self.model_names = model_names
         self.max_seq_length = max_seq_length
         self.rerank_server_endpoint = (
-            f"{model_server_host}:{model_server_port}/encoder/cross-encoder-scores"
+            f"http://{model_server_host}:{model_server_port}/encoder/cross-encoder-scores"
             if model_server_host
             else None
         )
@@ -222,7 +222,7 @@ class IntentModel:
         self.model_name = model_name
         self.max_seq_length = max_seq_length
         self.intent_server_endpoint = (
-            f"{model_server_host}:{model_server_port}/custom/intent-model"
+            f"http://{model_server_host}:{model_server_port}/custom/intent-model"
             if model_server_host
             else None
         )

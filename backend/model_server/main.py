@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from danswer import __version__
 from danswer.configs.app_configs import MODEL_SERVER_ALLOWED_HOST
 from danswer.configs.app_configs import MODEL_SERVER_PORT
+from danswer.configs.model_configs import MIN_THREADS_ML_MODELS
 from danswer.utils.logger import setup_logger
 from model_server.custom_models import router as custom_models_router
 from model_server.custom_models import warm_up_intent_model
@@ -29,6 +30,7 @@ def get_model_app() -> FastAPI:
         else:
             logger.info("GPU is not available")
 
+        torch.set_num_threads(max(MIN_THREADS_ML_MODELS, torch.get_num_threads()))
         logger.info(f"Torch Threads: {torch.get_num_threads()}")
 
         warm_up_bi_encoder()
@@ -45,4 +47,5 @@ if __name__ == "__main__":
     logger.info(
         f"Starting Danswer Model Server on http://{MODEL_SERVER_ALLOWED_HOST}:{str(MODEL_SERVER_PORT)}/"
     )
+    logger.info(f"Model Server Version: {__version__}")
     uvicorn.run(app, host=MODEL_SERVER_ALLOWED_HOST, port=MODEL_SERVER_PORT)
