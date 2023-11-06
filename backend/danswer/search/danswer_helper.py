@@ -1,12 +1,9 @@
-import numpy as np
-import tensorflow as tf  # type:ignore
 from transformers import AutoTokenizer  # type:ignore
 
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
-from danswer.search.search_nlp_models import get_default_intent_model
-from danswer.search.search_nlp_models import get_default_intent_model_tokenizer
 from danswer.search.search_nlp_models import get_default_tokenizer
+from danswer.search.search_nlp_models import IntentModel
 from danswer.search.search_runner import remove_stop_words
 from danswer.server.models import HelperResponse
 from danswer.utils.logger import setup_logger
@@ -28,15 +25,11 @@ def count_unk_tokens(text: str, tokenizer: AutoTokenizer) -> int:
 
 @log_function_time()
 def query_intent(query: str) -> tuple[SearchType, QueryFlow]:
-    tokenizer = get_default_intent_model_tokenizer()
-    intent_model = get_default_intent_model()
-    model_input = tokenizer(query, return_tensors="tf", truncation=True, padding=True)
-
-    predictions = intent_model(model_input)[0]
-    probabilities = tf.nn.softmax(predictions, axis=-1)
-    class_percentages = np.round(probabilities.numpy() * 100, 2)
-
-    keyword, semantic, qa = class_percentages.tolist()[0]
+    intent_model = IntentModel()
+    class_probs = intent_model.predict(query)
+    keyword = class_probs[0]
+    semantic = class_probs[1]
+    qa = class_probs[2]
 
     # Heavily bias towards QA, from user perspective, answering a statement is not as bad as not answering a question
     if qa > 20:

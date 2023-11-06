@@ -1,4 +1,6 @@
+import numpy as np
 import requests
+import tensorflow as tf
 from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 from transformers import AutoTokenizer  # type: ignore
@@ -17,6 +19,8 @@ from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.utils.logger import setup_logger
 from model_server.models import EmbedRequest
 from model_server.models import EmbedResponse
+from model_server.models import IntentRequest
+from model_server.models import IntentResponse
 from model_server.models import RerankRequest
 from model_server.models import RerankResponse
 
@@ -60,20 +64,23 @@ def get_local_reranking_model_ensemble(
     return _RERANK_MODELS
 
 
-def get_default_intent_model_tokenizer() -> AutoTokenizer:
+def get_intent_model_tokenizer(model_name: str = INTENT_MODEL_VERSION) -> AutoTokenizer:
     global _INTENT_TOKENIZER
     if _INTENT_TOKENIZER is None:
-        _INTENT_TOKENIZER = AutoTokenizer.from_pretrained(INTENT_MODEL_VERSION)
+        _INTENT_TOKENIZER = AutoTokenizer.from_pretrained(model_name)
     return _INTENT_TOKENIZER
 
 
-def get_default_intent_model() -> TFDistilBertForSequenceClassification:
+def get_local_intent_model(
+    model_name: str = INTENT_MODEL_VERSION,
+    max_context_length: int = QUERY_MAX_CONTEXT_SIZE,
+) -> TFDistilBertForSequenceClassification:
     global _INTENT_MODEL
     if _INTENT_MODEL is None:
         _INTENT_MODEL = TFDistilBertForSequenceClassification.from_pretrained(
-            INTENT_MODEL_VERSION
+            model_name
         )
-        _INTENT_MODEL.max_seq_length = QUERY_MAX_CONTEXT_SIZE
+        _INTENT_MODEL.max_seq_length = max_context_length
     return _INTENT_MODEL
 
 
@@ -94,11 +101,11 @@ def warm_up_models(
             for cross_encoder in cross_encoders
         ]
 
-    intent_tokenizer = get_default_intent_model_tokenizer()
+    intent_tokenizer = get_intent_model_tokenizer()
     inputs = intent_tokenizer(
         warm_up_str, return_tensors="tf", truncation=True, padding=True
     )
-    get_default_intent_model()(inputs)
+    get_local_intent_model()(inputs)
 
 
 class EmbeddingModel:
@@ -202,3 +209,63 @@ class CrossEncoderEnsembleModel:
         ]
 
         return scores
+
+
+class IntentModel:
+    def __init__(
+        self,
+        model_name: str = INTENT_MODEL_VERSION,
+        max_seq_length: int = QUERY_MAX_CONTEXT_SIZE,
+        model_server_host: str | None = MODEL_SERVER_HOST,
+        model_server_port: int = MODEL_SERVER_PORT,
+    ) -> None:
+        self.model_name = model_name
+        self.max_seq_length = max_seq_length
+        self.intent_server_endpoint = (
+            f"{model_server_host}:{model_server_port}/custom/intent-model"
+            if model_server_host
+            else None
+        )
+
+    def load_model(self) -> SentenceTransformer | None:
+        if self.intent_server_endpoint:
+            return None
+
+        return get_local_intent_model(
+            model_name=self.model_name, max_context_length=self.max_seq_length
+        )
+
+    def predict(
+        self,
+        query: str,
+    ) -> list[float]:
+        if self.intent_server_endpoint:
+            intent_request = IntentRequest(query=query)
+
+            try:
+                response = requests.post(
+                    self.intent_server_endpoint, json=intent_request.dict()
+                )
+                response.raise_for_status()
+
+                return IntentResponse(**response.json()).class_probs
+            except requests.RequestException as e:
+                logger.exception(f"Failed to get Embedding: {e}")
+                raise
+
+        tokenizer = get_intent_model_tokenizer()
+        local_model = self.load_model()
+
+        if local_model is None:
+            raise RuntimeError("Failed to load local Intent Model")
+
+        intent_model = get_local_intent_model()
+        model_input = tokenizer(
+            query, return_tensors="tf", truncation=True, padding=True
+        )
+
+        predictions = intent_model(model_input)[0]
+        probabilities = tf.nn.softmax(predictions, axis=-1)
+        class_percentages = np.round(probabilities.numpy() * 100, 2)
+
+        return list(class_percentages.tolist()[0])
