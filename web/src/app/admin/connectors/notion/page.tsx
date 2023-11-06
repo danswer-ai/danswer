@@ -103,7 +103,7 @@ const Main = () => {
         <>
           <p className="text-sm">
             To get started you&apos;ll need to create an internal integration in
-            Notion for Danswer. Follow the instructions in the&nbsp;
+            Notion for System. Follow the instructions in the&nbsp;
             <a
               href="https://developers.notion.com/docs/create-a-notion-integration"
               target="_blank"
@@ -113,7 +113,7 @@ const Main = () => {
             &nbsp; on the Notion website, to create a new integration. Once
             you&apos;ve created an integration, copy the integration secret
             token and paste it below. Follow the remaining instructions on the
-            Notion docs to allow Danswer to read Notion Databases and Pages
+            Notion docs to allow the system to read Notion Databases and Pages
             using the new integration.
           </p>
           <div className="border-solid border-gray-600 border rounded-md p-6 mt-2 mb-4">
@@ -127,7 +127,7 @@ const Main = () => {
               }
               validationSchema={Yup.object().shape({
                 notion_integration_token: Yup.string().required(
-                  "Please enter the Notion Integration token for the Danswer integration."
+                  "Please enter the Notion Integration token for the System integration."
                 ),
               })}
               initialValues={{

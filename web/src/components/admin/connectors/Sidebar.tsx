@@ -19,7 +19,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ collections }) => {
   return (
-    <aside className="w-64 bg-gray-900 text-gray-100 pl-4">
+    <aside className="w-64 bg-gray-100 text-gray-800 pl-4">
       <nav className="space-y-2 pl-4">
         {collections.map((collection, collectionInd) => (
           <div key={collectionInd}>
@@ -28,8 +28,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collections }) => {
             </h2>
             {collection.items.map((item) => (
               <Link key={item.link} href={item.link}>
-                <button className="text-sm block w-full py-2 pl-2 text-left border-l border-gray-800">
-                  <div className="text-gray-400 hover:text-gray-300">
+                <button className="text-sm block w-full py-2 pl-2 text-left border-l border-gray-900">
+                  <div className="text-gray-900 hover:text-gray-500">
                     {item.name}
                   </div>
                 </button>

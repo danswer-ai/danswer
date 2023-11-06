@@ -71,7 +71,7 @@ const Main = () => {
     <>
       {popup}
       <p className="text-sm">
-        This connector allows you to sync all your Guru Cards into Danswer.
+        This connector allows you to sync all your Guru Cards into the System.
       </p>
 
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
@@ -109,7 +109,7 @@ const Main = () => {
           <p className="text-sm">
             To use the Guru connector, first follow the guide{" "}
             <a
-              className="text-blue-500"
+              className="text-gray-900"
               href="https://help.getguru.com/s/article/how-to-obtain-your-api-credentials"
               target="_blank"
             >

@@ -41,12 +41,12 @@ const AnswerBody = ({ answer, error, isFetching }: AnswerSectionProps) => {
     );
   } else if (answer) {
     return (
-      <ReactMarkdown className="prose prose-invert text-gray-100 text-sm max-w-full">
+      <ReactMarkdown className="prose prose-invert text-gray-800 text-sm max-w-full">
         {answer.replaceAll("\\n", "\n")}
       </ReactMarkdown>
     );
   } else if (!isFetching) {
-    return <div className="text-gray-300">Information not found</div>;
+    return <div className="text-gray-900">Information not found</div>;
   }
 
   return null;

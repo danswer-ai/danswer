@@ -141,7 +141,7 @@ const Main = () => {
           <p className="text-sm">
             To use the Confluence connector, first follow the guide{" "}
             <a
-              className="text-blue-500"
+              className="text-gray-900"
               href="https://docs.danswer.dev/connectors/confluence#setting-up"
             >
               here
@@ -235,7 +235,7 @@ const Main = () => {
                       key: "url",
                       getValue: (ccPairStatus) => (
                         <a
-                          className="text-blue-500"
+                          className="text-gray-900"
                           href={
                             ccPairStatus.connector.connector_specific_config
                               .wiki_page_url

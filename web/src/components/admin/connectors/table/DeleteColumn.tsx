@@ -44,14 +44,14 @@ export function DeleteColumn<ConnectorConfigType, ConnectorCredentialType>({
       ) : (
         <div>
           {deleteHovered && (
-            <div className="flex flex-nowrap absolute mt-8 top-0 left-0 bg-gray-700 px-3 py-2 rounded shadow-lg text-xs">
-              <InfoIcon className="flex flex-shrink-0 text-blue-300 mr-2" />
+            <div className="flex flex-nowrap absolute mt-8 top-0 left-0 bg-gray-00 px-3 py-2 rounded shadow-lg text-xs">
+              <InfoIcon className="flex flex-shrink-0 text-gray-900 mr-2" />
               In order to delete a connector it must be disabled and have no
               ongoing / planned index jobs.
             </div>
           )}
           <div className="flex mx-auto text-xs">
-            <TrashIcon className="my-auto flex flex-shrink-0 text-gray-600 mr-2" />
+            <TrashIcon className="my-auto flex flex-shrink-0 text-gray-900 mr-2" />
           </div>
         </div>
       )}

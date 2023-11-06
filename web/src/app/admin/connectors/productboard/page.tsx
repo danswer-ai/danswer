@@ -117,7 +117,7 @@ const Main = () => {
           <p className="text-sm">
             To use the Productboard connector, first follow the guide{" "}
             <a
-              className="text-blue-500"
+              className="text-gray-900"
               href="https://developer.productboard.com/#section/Authentication/Public-API-Access-Token"
             >
               here

@@ -106,7 +106,7 @@ const Main = () => {
           <p className="text-sm">
             To use the Slab connector, first follow the guide{" "}
             <a
-              className="text-blue-500"
+              className="text-gray-900"
               href="https://docs.danswer.dev/connectors/slab"
             >
               here
@@ -190,7 +190,7 @@ const Main = () => {
                         ccPairStatus.connector.connector_specific_config;
                       return (
                         <a
-                          className="text-blue-500"
+                          className="text-gray-900"
                           href={connectorConfig.base_url}
                         >
                           {connectorConfig.base_url}

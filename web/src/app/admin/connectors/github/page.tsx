@@ -93,7 +93,7 @@ const Main = () => {
           <p className="text-sm">
             If you don&apos;t have an access token, read the guide{" "}
             <a
-              className="text-blue-500"
+              className="text-gray-900"
               href="https://docs.danswer.dev/connectors/github"
             >
               here
@@ -191,10 +191,10 @@ const Main = () => {
             }
             validationSchema={Yup.object().shape({
               repo_owner: Yup.string().required(
-                "Please enter the owner of the repository to index e.g. danswer-ai"
+                "Please enter the owner of the repository to index e.g. system-ai"
               ),
               repo_name: Yup.string().required(
-                "Please enter the name of the repository to index e.g. danswer "
+                "Please enter the name of the repository to index e.g. system "
               ),
               include_prs: Yup.boolean().required(),
               include_issues: Yup.boolean().required(),

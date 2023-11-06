@@ -105,7 +105,7 @@ const Main = () => {
           <p className="text-sm">
             To use the Linear connector, first follow the guide{" "}
             <a
-              className="text-blue-500"
+              className="text-gray"
               href="https://docs.danswer.dev/connectors/linear"
             >
               here

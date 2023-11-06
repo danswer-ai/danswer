@@ -67,7 +67,7 @@ export const buildDocumentSummaryDisplay = (
             finalJSX[finalJSX.length - 1] = finalJSX[finalJSX.length - 1] + " ";
           }
           finalJSX.push(
-            <b key={index} className="text-gray-200 bg-pink-950">
+            <b key={index} className="text-gray-800 bg-white">
               {currentText}
             </b>
           );
@@ -91,7 +91,7 @@ export const buildDocumentSummaryDisplay = (
         finalJSX[finalJSX.length - 1] = finalJSX[finalJSX.length - 1] + " ";
       }
       finalJSX.push(
-        <b key={sections.length} className="text-gray-200 bg-pink-950">
+        <b key={sections.length} className="text-gray-800 bg-white">
           {currentText}
         </b>
       );
@@ -171,8 +171,8 @@ export const DocumentDisplay = ({
           <div
             className={`
             text-xs 
-            text-gray-200 
-            bg-gray-800 
+            text-gray-800 
+            bg-gray-200 
             rounded-full 
             px-1
             py-0.5 
@@ -187,7 +187,7 @@ export const DocumentDisplay = ({
           </div>
         </div>
       )}
-      <p className="pl-1 pt-2 pb-3 text-gray-200 break-words">
+      <p className="pl-1 pt-2 pb-3 text-gray-800 break-words">
         {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)}
       </p>
     </div>

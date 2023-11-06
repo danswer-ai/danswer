@@ -13,7 +13,7 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-_METADATA_FLAG = "#DANSWER_METADATA="
+_METADATA_FLAG = "#DOCUMENTS_METADATA="
 
 
 def read_pdf_file(file: IO[Any], file_name: str, pdf_pass: str | None = None) -> str:

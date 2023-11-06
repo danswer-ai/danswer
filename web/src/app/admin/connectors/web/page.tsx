@@ -91,7 +91,7 @@ export default function Web() {
           }
           validationSchema={Yup.object().shape({
             base_url: Yup.string().required(
-              "Please enter the website URL to scrape e.g. https://docs.danswer.dev/"
+              "Please enter the website URL to scrape e.g. https://www.turing.com"
             ),
             web_connector_type: Yup.string()
               .oneOf(["recursive", "single", "sitemap"])
@@ -123,7 +123,7 @@ export default function Web() {
                 const connectorConfig =
                   ccPairConfig.connector.connector_specific_config;
                 return (
-                  <a className="text-blue-500" href={connectorConfig.base_url}>
+                  <a className="text-gray-500" href={connectorConfig.base_url}>
                     {connectorConfig.base_url}
                   </a>
                 );

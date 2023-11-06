@@ -17,12 +17,12 @@ function DateSelectorItem({
       className={`
       px-3 
       text-sm 
-      text-gray-200 
+      text-white 
       hover:bg-dark-tremor-background-muted 
       py-2.5 
       select-none 
       cursor-pointer 
-      ${skipBottomBorder ? "" : "border-b border-gray-800"} 
+      ${skipBottomBorder ? "" : "border-b border-gray-900"} 
       `}
       onClick={onClick}
     >
@@ -42,7 +42,7 @@ export function DateRangeSelector({
     <div>
       <CustomDropdown
         dropdown={
-          <div className="border border-gray-800 rounded-lg flex flex-col">
+          <div className="border border-gray-200 rounded-lg flex flex-col">
             <DateSelectorItem
               onClick={() =>
                 onValueChange({

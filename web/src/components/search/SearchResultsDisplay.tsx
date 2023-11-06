@@ -81,7 +81,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
   }
 
   if (answer === null && documents === null && quotes === null) {
-    return <div className="text-gray-300">No matching documents found.</div>;
+    return <div className="text-gray-800">No matching documents found.</div>;
   }
 
   const dedupedQuotes: Quote[] = [];
@@ -110,7 +110,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
     <>
       {popup}
       {shouldDisplayQA && (
-        <div className="min-h-[16rem] p-4 border-2 rounded-md border-gray-700 relative">
+        <div className="min-h-[16rem] p-4 border-2 rounded-md border-gray-900 relative">
           <div>
             <div className="flex mb-1">
               <h2 className="text font-bold my-auto mb-1 w-full">AI Answer</h2>
@@ -132,7 +132,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
               />
             </div>
 
-            <div className="mb-2 pt-1 border-t border-gray-700 w-full">
+            <div className="mb-2 pt-1 border-t border-gray-900 w-full">
               <AnswerSection
                 answer={answer}
                 quotes={quotes}
@@ -144,7 +144,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
             </div>
 
             {quotes !== null && answer && (
-              <div className="pt-1 border-t border-gray-700 w-full">
+              <div className="pt-1 border-t border-gray-900 w-full">
                 <QuotesSection
                   quotes={dedupedQuotes}
                   isFetching={isFetching}

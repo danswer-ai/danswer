@@ -82,7 +82,7 @@ export default async function Home() {
         <HealthCheckBanner />
       </div>
       <ApiKeyModal />
-      <div className="px-24 pt-10 flex flex-col items-center min-h-screen bg-gray-900 text-gray-100">
+      <div className="px-24 pt-10 flex flex-col items-center min-h-screen bg-white text-gray-900">
         <div className="w-full">
           <SearchSection
             connectors={connectors}

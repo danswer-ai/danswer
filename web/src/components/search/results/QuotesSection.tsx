@@ -18,7 +18,7 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
     >
       {detailIsOpen && (
         <div className="absolute top-0 mt-9 pt-2 z-50">
-          <div className="flex flex-shrink-0 rounded-lg w-96 shadow bg-gray-800 p-3 text-sm leading-relaxed text-gray-200">
+          <div className="flex flex-shrink-0 rounded-lg w-96 shadow bg-gray-200 p-3 text-sm leading-relaxed text-gray-800">
             <div>
               <b>Quote:</b> <i>{quoteInfo.quote}</i>
             </div>

@@ -31,7 +31,7 @@ export const FileUpload: FC<FileUploadProps> = ({
               {...getRootProps()}
               className={
                 "flex flex-col items-center w-full px-4 py-12 rounded " +
-                "shadow-lg tracking-wide border border-gray-700 cursor-pointer" +
+                "shadow-lg tracking-wide border border-gray-200 cursor-pointer" +
                 (dragActive ? " border-blue-500" : "")
               }
             >

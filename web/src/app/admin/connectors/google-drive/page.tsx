@@ -156,7 +156,7 @@ const GoogleDriveConnectorManagement = ({
           {googleDriveConnectorIndexingStatuses.length > 0 ? (
             <>
               Checkout the{" "}
-              <a href="/admin/indexing/status" className="text-blue-500">
+              <a href="/admin/indexing/status" className="text-gray-900">
                 status page
               </a>{" "}
               for the latest indexing status. We fetch the latest documents from
@@ -364,7 +364,7 @@ const Main = () => {
       />
 
       <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
-        Step 2: Authenticate with Danswer
+        Step 2: Authenticate with the system
       </h2>
       <DriveOAuthSection
         setPopup={setPopup}

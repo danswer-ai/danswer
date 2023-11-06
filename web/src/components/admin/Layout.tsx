@@ -48,7 +48,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div>
       <Header user={user} />
-      <div className="bg-gray-900 pt-8 pb-8 flex">
+      <div className="bg-white pt-10 pb-10 flex">
         <Sidebar
           title="Connector"
           collections={[
@@ -69,6 +69,24 @@ export async function Layout({ children }: { children: React.ReactNode }) {
             {
               name: "Connector Settings",
               items: [
+                {
+                  name: (
+                    <div className="flex">
+                      <GlobeIcon size={16} />
+                      <div className="ml-1">Web</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/web",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <FileIcon size={16} />
+                      <div className="ml-1">File</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/file",
+                },
                 {
                   name: (
                     <div className="flex">
@@ -198,24 +216,6 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                 {
                   name: (
                     <div className="flex">
-                      <GlobeIcon size={16} />
-                      <div className="ml-1">Web</div>
-                    </div>
-                  ),
-                  link: "/admin/connectors/web",
-                },
-                {
-                  name: (
-                    <div className="flex">
-                      <FileIcon size={16} />
-                      <div className="ml-1">File</div>
-                    </div>
-                  ),
-                  link: "/admin/connectors/file",
-                },
-                {
-                  name: (
-                    <div className="flex">
                       <HubSpotIcon size={16} />
                       <div className="ml-1">HubSpot</div>
                     </div>
@@ -309,7 +309,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
             },
           ]}
         />
-        <div className="px-12 min-h-screen bg-gray-900 text-gray-100 w-full">
+        <div className="px-12 min-h-screen bg-white text-gray-900 w-full">
           {children}
         </div>
       </div>

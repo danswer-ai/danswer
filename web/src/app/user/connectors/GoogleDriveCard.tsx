@@ -55,7 +55,7 @@ export const GoogleDriveCard = ({
           credentialIsLinked ? (
             <>
               <p>
-                Danswer has access to your Google Drive documents! Don&apos;t
+                The Machine has access to your Google Drive documents! Don&apos;t
                 worry, only <b>you</b> will be able to see your private
                 documents. You can revoke this access by clicking the button
                 below.
@@ -105,7 +105,7 @@ export const GoogleDriveCard = ({
           <>
             <p>
               If you want to make all your Google Drive documents searchable
-              through Danswer, click the button below! Don&apos;t worry, only{" "}
+              through the machine, click the button below! Don&apos;t worry, only{" "}
               <b>you</b> will be able to see your private documents. Currently,
               you&apos;ll only be able to search through documents shared with
               the whole company.

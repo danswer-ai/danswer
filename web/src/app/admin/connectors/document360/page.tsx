@@ -99,7 +99,7 @@ const MainSection = () => {
             token and portal ID corresponding to your Document360 setup. See
             setup guide{" "}
             <a
-              className="text-blue-500"
+              className="text-gray-900"
               href="https://docs.danswer.dev/connectors/document360"
             >
               here

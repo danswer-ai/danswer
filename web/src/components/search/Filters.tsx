@@ -78,7 +78,7 @@ export function SourceSelector({
 
   return (
     <div>
-      <div className="flex mb-2 pb-1 border-b border-gray-800">
+      <div className="flex mb-2 pb-1 border-b border-gray-900">
         <h2 className="font-bold my-auto">Filters</h2>
         <FiFilter className="my-auto ml-2" size="18" />
       </div>
@@ -103,13 +103,13 @@ export function SourceSelector({
                     "flex cursor-pointer w-full items-center text-white " +
                     "py-1.5 my-1.5 rounded-lg px-2 " +
                     (selectedSources.includes(source)
-                      ? "bg-gray-700"
-                      : "hover:bg-gray-800")
+                      ? "bg-gray-500"
+                      : "hover:bg-gray-200")
                   }
                   onClick={() => handleSelect(source)}
                 >
                   {getSourceIcon(source.internalName, 16)}
-                  <span className="ml-2 text-sm text-gray-200">
+                  <span className="ml-2 text-sm text-gray-800">
                     {source.displayName}
                   </span>
                 </div>
@@ -145,17 +145,17 @@ export function SourceSelector({
                     }
                     popupContent={
                       <div className="text-sm w-64">
-                        <div className="flex font-medium text-gray-200">
+                        <div className="flex font-medium text-gray-800">
                           Description
                         </div>
-                        <div className="mt-1 text-gray-300">
+                        <div className="mt-1 text-gray-900">
                           {documentSet.description}
                         </div>
                       </div>
                     }
                     classNameModifications="-ml-2"
                   />
-                  <span className="text-sm text-gray-200">
+                  <span className="text-sm text-gray-800">
                     {documentSet.name}
                   </span>
                 </div>
