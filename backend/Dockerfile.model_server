@@ -1,0 +1,19 @@
+FROM python:3.11.4-slim-bookworm
+
+# Default DANSWER_VERSION, typically overriden during builds by GitHub Actions.
+ARG DANSWER_VERSION=0.2-dev
+ENV DANSWER_VERSION=${DANSWER_VERSION}
+
+COPY ./requirements/model_server.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
+
+WORKDIR /app
+COPY ./danswer/configs /app/danswer/configs
+COPY ./danswer/utils/logger.py /app/danswer/utils/logger.py
+COPY ./danswer/__init__.py /app/danswer/__init__.py
+COPY ./danswer/search/search_nlp_models.py /app/danswer/search/search_nlp_models.py
+COPY ./model_server /app/model_server
+
+ENV PYTHONPATH /app
+
+CMD ["uvicorn", "model_server.main:app", "--host", "0.0.0.0", "--port", "9000"]

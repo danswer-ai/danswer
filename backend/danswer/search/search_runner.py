@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import cast
 
 import numpy
 from nltk.corpus import stopwords  # type:ignore
@@ -29,8 +30,8 @@ from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
-from danswer.search.search_nlp_models import get_default_embedding_model
-from danswer.search.search_nlp_models import get_default_reranking_model_ensemble
+from danswer.search.search_nlp_models import CrossEncoderEnsembleModel
+from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchDoc
 from danswer.utils.logger import setup_logger
@@ -67,14 +68,11 @@ def embed_query(
     prefix: str = ASYM_QUERY_PREFIX,
     normalize_embeddings: bool = NORMALIZE_EMBEDDINGS,
 ) -> list[float]:
-    model = embedding_model or get_default_embedding_model()
+    model = embedding_model or EmbeddingModel()
     prefixed_query = prefix + query
     query_embedding = model.encode(
-        prefixed_query, normalize_embeddings=normalize_embeddings
-    )
-
-    if not isinstance(query_embedding, list):
-        query_embedding = query_embedding.tolist()
+        [prefixed_query], normalize_embeddings=normalize_embeddings
+    )[0]
 
     return query_embedding
 
@@ -112,13 +110,13 @@ def semantic_reranking(
     model_min: int = CROSS_ENCODER_RANGE_MIN,
     model_max: int = CROSS_ENCODER_RANGE_MAX,
 ) -> list[InferenceChunk]:
-    cross_encoders = get_default_reranking_model_ensemble()
-    sim_scores = [
-        encoder.predict([(query, chunk.content) for chunk in chunks])  # type: ignore
-        for encoder in cross_encoders
-    ]
+    cross_encoders = CrossEncoderEnsembleModel()
+    passages = [chunk.content for chunk in chunks]
+    sim_scores_floats = cross_encoders.predict(query=query, passages=passages)
 
-    raw_sim_scores = sum(sim_scores) / len(sim_scores)
+    sim_scores = [numpy.array(scores) for scores in sim_scores_floats]
+
+    raw_sim_scores = cast(numpy.ndarray, sum(sim_scores) / len(sim_scores))
 
     cross_models_min = numpy.min(sim_scores)
 

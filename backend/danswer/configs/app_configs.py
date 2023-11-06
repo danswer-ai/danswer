@@ -196,12 +196,12 @@ MINI_CHUNK_SIZE = 150
 
 
 #####
-# Encoder Model Endpoint Configs (Currently unused, running the models in memory)
+# Model Server Configs
 #####
-BI_ENCODER_HOST = "localhost"
-BI_ENCODER_PORT = 9000
-CROSS_ENCODER_HOST = "localhost"
-CROSS_ENCODER_PORT = 9000
+# Model Server Host is used to determine if Danswer should use a model server to run its models
+MODEL_SERVER_HOST = os.environ.get("MODEL_SERVER_HOST") or None
+MODEL_SERVER_ALLOWED_HOST = os.environ.get("MODEL_SERVER_HOST") or "0.0.0.0"
+MODEL_SERVER_PORT = int(os.environ.get("MODEL_SERVER_PORT") or "9000")
 
 
 #####
