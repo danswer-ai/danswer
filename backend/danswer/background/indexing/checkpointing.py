@@ -13,7 +13,7 @@ def _2010_dt() -> datetime.datetime:
 
 
 def _2020_dt() -> datetime.datetime:
-    return datetime.datetime(year=2010, month=1, day=1, tzinfo=datetime.timezone.utc)
+    return datetime.datetime(year=2020, month=1, day=1, tzinfo=datetime.timezone.utc)
 
 
 def _default_end_time(
@@ -34,7 +34,7 @@ def _default_end_time(
         return _2010_dt()
 
     if last_successful_run < _2020_dt():
-        return last_successful_run + datetime.timedelta(days=365 * 5)
+        return min(last_successful_run + datetime.timedelta(days=365 * 5), _2020_dt())
 
     return last_successful_run + datetime.timedelta(days=180)
 
