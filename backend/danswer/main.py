@@ -227,5 +227,7 @@ app = get_application()
 
 
 if __name__ == "__main__":
-    logger.info(f"Starting Danswer Backend on http://{APP_HOST}:{str(APP_PORT)}/")
+    logger.info(
+        f"Starting Danswer Backend version {__version__} on http://{APP_HOST}:{str(APP_PORT)}/"
+    )
     uvicorn.run(app, host=APP_HOST, port=APP_PORT)
