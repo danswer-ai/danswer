@@ -1,4 +1,4 @@
-name: Build and Push Web Images on Tagging
+name: Build and Push Web Image on Tag
 
 on:
   push:
