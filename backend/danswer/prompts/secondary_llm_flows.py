@@ -103,24 +103,32 @@ The valid values for "date" is a date in format MM/DD/YYYY, ALWAYS follow this f
 # This is generally not a big issue though as if the company has confluence, hopefully they add
 # a connector for it or the user is aware that confluence has not been added.
 SOURCE_FILTER_PROMPT = f"""
-Given a user query, extract the relevant source filters for use in a downstream search tool.
+Given a user query, extract relevant source filters for use in a downstream search tool.
 Respond with a json containing the source filters or null if no specific sources are referenced.
-
 ONLY extract sources when the user is explicitly limiting the scope of where information is \
 coming from.
-
-ONLY select valid sources that are directly stated in the user query. \
-If in doubt, DO NOT include the source. \
-It is better to respond with fewer sources than a wrong source.
+The user may provide invalid source filters, ignore those.
 
 The valid sources are:
 {{valid_sources}}
+{{web_source_warning}}
+{{file_source_warning}}
+
 
 ALWAYS answer with ONLY a json with the key "{SOURCES_KEY}". \
 The value for "{SOURCES_KEY}" must be null or a list of valid sources.
 
 Sample Response:
 {{sample_response}}
+""".strip()
+
+WEB_SOURCE_WARNING = """
+Note: The "web" source only applies to when the user specifies "website" in the query. \
+It does not apply to tools such as Confluence, GitHub, etc. which have a website.
+""".strip()
+
+FILE_SOURCE_WARNING = """
+Note: The "file" source only applies to when the user refers to uploaded files in the query.
 """.strip()
 
 
