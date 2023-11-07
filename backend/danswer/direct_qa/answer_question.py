@@ -228,11 +228,6 @@ def answer_qa_query_stream(
     question.favor_recent = favor_recent
     question.filters.source_type = source_filters
 
-    # Modifies the question object but nothing upstream uses it
-    question.filters.time_cutoff = time_cutoff
-    question.favor_recent = favor_recent
-    question.filters.source_type = source_filters
-
     ranked_chunks, unranked_chunks, query_event_id = danswer_search(
         question=question,
         user=user,
