@@ -182,8 +182,11 @@ def _run_indexing(
             # Only mark the attempt as a complete failure if this is the first indexing window.
             # Otherwise, some progress was made - the next run will not start from the beginning.
             # In this case, it is not accurate to mark it as a failure. When the next run begins,
-            # if that fails immediately, it will be marked as a failure
-            if ind == 0:
+            # if that fails immediately, it will be marked as a failure.
+            #
+            # NOTE: if the connector is manually disabled, we should mark it as a failure regardless
+            # to give better clarity in the UI, as the next run will never happen.
+            if ind == 0 or db_connector.disabled:
                 mark_attempt_failed(index_attempt, db_session, failure_reason=str(e))
                 update_connector_credential_pair(
                     db_session=db_session,
