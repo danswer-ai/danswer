@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
+from danswer.configs.constants import DocumentSource
 from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import IndexChunk
@@ -31,7 +32,7 @@ class Embedder:
 
 
 class BaseFilters(BaseModel):
-    source_type: list[str] | None = None
+    source_type: list[DocumentSource] | None = None
     document_set: list[str] | None = None
     time_cutoff: datetime | None = None
 
