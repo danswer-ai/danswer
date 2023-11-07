@@ -29,6 +29,7 @@ from danswer.server.models import QuestionRequest
 from danswer.server.models import RerankedRetrievalDocs
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
+from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.timing import log_function_time
 from danswer.utils.timing import log_generator_function_time
 
@@ -53,8 +54,17 @@ def answer_qa_query(
     offset_count = question.offset if question.offset is not None else 0
     logger.info(f"Received QA query: {query}")
 
-    time_cutoff, favor_recent = extract_question_time_filters(question)
-    source_filters = extract_question_source_filters(question, db_session)
+    functions_to_run: dict[Callable, tuple] = {
+        extract_question_time_filters: (question,),
+        extract_question_source_filters: (question, db_session),
+        query_intent: (query,),
+    }
+
+    parallel_results = run_functions_in_parallel(functions_to_run)
+
+    time_cutoff, favor_recent = parallel_results["extract_question_time_filters"]
+    source_filters = parallel_results["extract_question_source_filters"]
+    predicted_search, predicted_flow = parallel_results["query_intent"]
 
     # Modifies the question object but nothing upstream uses it
     question.filters.time_cutoff = time_cutoff
@@ -69,9 +79,6 @@ def answer_qa_query(
         retrieval_metrics_callback=retrieval_metrics_callback,
         rerank_metrics_callback=rerank_metrics_callback,
     )
-
-    # TODO retire this
-    predicted_search, predicted_flow = query_intent(query)
 
     if not ranked_chunks:
         return QAResponse(
@@ -204,8 +211,22 @@ def answer_qa_query_stream(
     query = question.query
     offset_count = question.offset if question.offset is not None else 0
 
-    time_cutoff, favor_recent = extract_question_time_filters(question)
-    source_filters = extract_question_source_filters(question, db_session)
+    functions_to_run: dict[Callable, tuple] = {
+        extract_question_time_filters: (question,),
+        extract_question_source_filters: (question, db_session),
+        query_intent: (query,),
+    }
+
+    parallel_results = run_functions_in_parallel(functions_to_run)
+
+    time_cutoff, favor_recent = parallel_results["extract_question_time_filters"]
+    source_filters = parallel_results["extract_question_source_filters"]
+    predicted_search, predicted_flow = parallel_results["query_intent"]
+
+    # Modifies the question object but nothing upstream uses it
+    question.filters.time_cutoff = time_cutoff
+    question.favor_recent = favor_recent
+    question.filters.source_type = source_filters
 
     # Modifies the question object but nothing upstream uses it
     question.filters.time_cutoff = time_cutoff
@@ -218,9 +239,6 @@ def answer_qa_query_stream(
         db_session=db_session,
         document_index=get_default_document_index(),
     )
-
-    # TODO retire this
-    predicted_search, predicted_flow = query_intent(query)
 
     top_docs = chunks_to_search_docs(ranked_chunks)
     unranked_top_docs = chunks_to_search_docs(unranked_chunks)

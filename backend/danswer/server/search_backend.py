@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -33,6 +35,7 @@ from danswer.server.models import SearchDoc
 from danswer.server.models import SearchFeedbackRequest
 from danswer.server.models import SearchResponse
 from danswer.utils.logger import setup_logger
+from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 
 logger = setup_logger()
 
@@ -126,8 +129,15 @@ def handle_search_request(
     query = question.query
     logger.info(f"Received {question.search_type.value} " f"search query: {query}")
 
-    time_cutoff, favor_recent = extract_question_time_filters(question)
-    source_filters = extract_question_source_filters(question, db_session)
+    functions_to_run: dict[Callable, tuple] = {
+        extract_question_time_filters: (question,),
+        extract_question_source_filters: (question, db_session),
+    }
+
+    parallel_results = run_functions_in_parallel(functions_to_run)
+
+    time_cutoff, favor_recent = parallel_results["extract_question_time_filters"]
+    source_filters = parallel_results["extract_question_source_filters"]
 
     question.filters.time_cutoff = time_cutoff
     question.favor_recent = favor_recent
