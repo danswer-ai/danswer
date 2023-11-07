@@ -24,6 +24,8 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
+_NOTION_CALL_TIMEOUT = 30  # 30 seconds
+
 
 @dataclass
 class NotionPage:
@@ -96,7 +98,12 @@ class NotionConnector(LoadConnector, PollConnector):
         logger.debug(f"Fetching children of block with ID '{block_id}'")
         block_url = f"https://api.notion.com/v1/blocks/{block_id}/children"
         query_params = None if not cursor else {"start_cursor": cursor}
-        res = requests.get(block_url, headers=self.headers, params=query_params)
+        res = requests.get(
+            block_url,
+            headers=self.headers,
+            params=query_params,
+            timeout=_NOTION_CALL_TIMEOUT,
+        )
         try:
             res.raise_for_status()
         except Exception as e:
@@ -109,7 +116,11 @@ class NotionConnector(LoadConnector, PollConnector):
         """Fetch a page from it's ID via the Notion API."""
         logger.debug(f"Fetching page for ID '{page_id}'")
         block_url = f"https://api.notion.com/v1/pages/{page_id}"
-        res = requests.get(block_url, headers=self.headers)
+        res = requests.get(
+            block_url,
+            headers=self.headers,
+            timeout=_NOTION_CALL_TIMEOUT,
+        )
         try:
             res.raise_for_status()
         except Exception as e:
@@ -125,7 +136,12 @@ class NotionConnector(LoadConnector, PollConnector):
         logger.debug(f"Fetching database for ID '{database_id}'")
         block_url = f"https://api.notion.com/v1/databases/{database_id}/query"
         body = None if not cursor else {"start_cursor": cursor}
-        res = requests.post(block_url, headers=self.headers, json=body)
+        res = requests.post(
+            block_url,
+            headers=self.headers,
+            json=body,
+            timeout=_NOTION_CALL_TIMEOUT,
+        )
         try:
             res.raise_for_status()
         except Exception as e:
@@ -286,6 +302,7 @@ class NotionConnector(LoadConnector, PollConnector):
             "https://api.notion.com/v1/search",
             headers=self.headers,
             json=query_dict,
+            timeout=_NOTION_CALL_TIMEOUT,
         )
         res.raise_for_status()
         return NotionSearchResponse(**res.json())
