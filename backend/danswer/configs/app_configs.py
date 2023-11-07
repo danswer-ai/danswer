@@ -169,8 +169,8 @@ DOC_TIME_DECAY = float(
     os.environ.get("DOC_TIME_DECAY") or 0.5  # Hits limit at 2 years by default
 )
 FAVOR_RECENT_DECAY_MULTIPLIER = 2
-DISABLE_TIME_FILTER_EXTRACTION = (
-    os.environ.get("DISABLE_TIME_FILTER_EXTRACTION", "").lower() == "true"
+DISABLE_LLM_FILTER_EXTRACTION = (
+    os.environ.get("DISABLE_LLM_FILTER_EXTRACTION", "").lower() == "true"
 )
 # 1 edit per 2 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05

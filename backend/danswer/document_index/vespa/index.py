@@ -335,7 +335,10 @@ def _build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) ->
     # CAREFUL touching this one, currently there is no second ACL double-check post retrieval
     filter_str += _build_or_filters(ACCESS_CONTROL_LIST, filters.access_control_list)
 
-    filter_str += _build_or_filters(SOURCE_TYPE, filters.source_type)
+    source_strs = (
+        [s.value for s in filters.source_type] if filters.source_type else None
+    )
+    filter_str += _build_or_filters(SOURCE_TYPE, source_strs)
 
     filter_str += _build_or_filters(DOCUMENT_SETS, filters.document_set)
 
