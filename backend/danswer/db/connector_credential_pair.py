@@ -86,7 +86,10 @@ def update_connector_credential_pair(
     cc_pair.last_attempt_status = attempt_status
     # simply don't update last_successful_index_time if run_dt is not specified
     # at worst, this would result in re-indexing documents that were already indexed
-    if attempt_status == IndexingStatus.SUCCESS and run_dt is not None:
+    if (
+        attempt_status == IndexingStatus.SUCCESS
+        or attempt_status == IndexingStatus.IN_PROGRESS
+    ) and run_dt is not None:
         cc_pair.last_successful_index_time = run_dt
     if net_docs is not None:
         cc_pair.total_docs_indexed += net_docs

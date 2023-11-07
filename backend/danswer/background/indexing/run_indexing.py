@@ -112,6 +112,7 @@ def _run_indexing(
     net_doc_change = 0
     document_count = 0
     chunk_count = 0
+    run_end_dt = None
     for ind, (window_start, window_end) in enumerate(
         get_time_windows_for_index_attempt(
             last_successful_run=datetime.fromtimestamp(
@@ -129,6 +130,12 @@ def _run_indexing(
 
         try:
             for doc_batch in doc_batch_generator:
+                # check if connector is disabled mid run and stop if so
+                db_session.refresh(db_connector)
+                if db_connector.disabled:
+                    # let the `except` block handle this
+                    raise RuntimeError("Connector was disabled mid run")
+
                 logger.debug(
                     f"Indexing batch of documents: {[doc.to_short_descriptor() for doc in doc_batch]}"
                 )
@@ -159,40 +166,40 @@ def _run_indexing(
                     new_docs_indexed=net_doc_change,
                 )
 
-                # check if connector is disabled mid run and stop if so
-                db_session.refresh(db_connector)
-                if db_connector.disabled:
-                    # let the `except` block handle this
-                    raise RuntimeError("Connector was disabled mid run")
-
+            run_end_dt = window_end
             update_connector_credential_pair(
                 db_session=db_session,
                 connector_id=db_connector.id,
                 credential_id=db_credential.id,
                 attempt_status=IndexingStatus.IN_PROGRESS,
                 net_docs=net_doc_change,
-                run_dt=window_end,
+                run_dt=run_end_dt,
             )
         except Exception as e:
             logger.info(
-                f"Failed connector elapsed time: {time.time() - start_time} seconds"
+                f"Connector run ran into exception after elapsed time: {time.time() - start_time} seconds"
             )
             # Only mark the attempt as a complete failure if this is the first indexing window.
             # Otherwise, some progress was made - the next run will not start from the beginning.
             # In this case, it is not accurate to mark it as a failure. When the next run begins,
-            # if that fails immediately, it will be marked as a failure
-            if ind == 0:
+            # if that fails immediately, it will be marked as a failure.
+            #
+            # NOTE: if the connector is manually disabled, we should mark it as a failure regardless
+            # to give better clarity in the UI, as the next run will never happen.
+            if ind == 0 or db_connector.disabled:
                 mark_attempt_failed(index_attempt, db_session, failure_reason=str(e))
+                update_connector_credential_pair(
+                    db_session=db_session,
+                    connector_id=index_attempt.connector.id,
+                    credential_id=index_attempt.credential.id,
+                    attempt_status=IndexingStatus.FAILED,
+                    net_docs=net_doc_change,
+                )
+                raise e
 
-            update_connector_credential_pair(
-                db_session=db_session,
-                connector_id=index_attempt.connector.id,
-                credential_id=index_attempt.credential.id,
-                attempt_status=IndexingStatus.FAILED,
-                net_docs=net_doc_change,
-                run_dt=window_end,
-            )
-            raise e
+            # break => similar to success case. As mentioned above, if the next run fails for the same
+            # reason it will then be marked as a failure
+            break
 
     mark_attempt_succeeded(index_attempt, db_session)
     update_connector_credential_pair(
@@ -201,7 +208,7 @@ def _run_indexing(
         credential_id=db_credential.id,
         attempt_status=IndexingStatus.SUCCESS,
         net_docs=net_doc_change,
-        run_dt=window_end,
+        run_dt=run_end_dt,
     )
 
     logger.info(
