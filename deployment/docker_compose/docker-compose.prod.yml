@@ -110,6 +110,25 @@ services:
       - ../data/certbot/conf:/etc/letsencrypt
       - ../data/certbot/www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+  # Run with --profile model-server to bring up the danswer-model-server container
+  model_server:
+    image: danswer/danswer-model-server:latest
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile.model_server
+    profiles:
+      - "model-server"
+    command: uvicorn model_server.main:app --host 0.0.0.0 --port 9000
+    restart: always
+    environment:
+      - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
+      - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
+      - MIN_THREADS_ML_MODELS=${MIN_THREADS_ML_MODELS:-}
+      # Set to debug to get more fine-grained logs
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - model_cache_torch:/root/.cache/torch/
+      - model_cache_huggingface:/root/.cache/huggingface/
 volumes:
   local_dynamic_storage:
   file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them
