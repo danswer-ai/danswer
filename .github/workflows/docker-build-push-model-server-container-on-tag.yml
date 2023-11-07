@@ -1,4 +1,4 @@
-name: Build and Push Backend Images on Tagging
+name: Build and Push Model Server Image on Tag
 
 on:
   push:
