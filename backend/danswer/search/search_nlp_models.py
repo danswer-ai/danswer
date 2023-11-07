@@ -17,12 +17,12 @@ from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import QUERY_MAX_CONTEXT_SIZE
 from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.utils.logger import setup_logger
-from model_server.models import EmbedRequest
-from model_server.models import EmbedResponse
-from model_server.models import IntentRequest
-from model_server.models import IntentResponse
-from model_server.models import RerankRequest
-from model_server.models import RerankResponse
+from shared_models.model_server_models import EmbedRequest
+from shared_models.model_server_models import EmbedResponse
+from shared_models.model_server_models import IntentRequest
+from shared_models.model_server_models import IntentResponse
+from shared_models.model_server_models import RerankRequest
+from shared_models.model_server_models import RerankResponse
 
 logger = setup_logger()
 

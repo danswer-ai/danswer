@@ -8,11 +8,18 @@ COPY ./requirements/model_server.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
 
 WORKDIR /app
+# Needed for model configs and defaults
 COPY ./danswer/configs /app/danswer/configs
+# Utils used by model server
 COPY ./danswer/utils/logger.py /app/danswer/utils/logger.py
 COPY ./danswer/utils/timing.py /app/danswer/utils/timing.py
+# Version information
 COPY ./danswer/__init__.py /app/danswer/__init__.py
+# Shared implementations for running NLP models locally
 COPY ./danswer/search/search_nlp_models.py /app/danswer/search/search_nlp_models.py
+# Request/Response models
+COPY ./shared_models /app/shared_models
+# Model Server main code
 COPY ./model_server /app/model_server
 
 ENV PYTHONPATH /app

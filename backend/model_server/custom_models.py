@@ -5,8 +5,8 @@ from fastapi import APIRouter
 from danswer.search.search_nlp_models import get_intent_model_tokenizer
 from danswer.search.search_nlp_models import get_local_intent_model
 from danswer.utils.timing import log_function_time
-from model_server.models import IntentRequest
-from model_server.models import IntentResponse
+from shared_models.model_server_models import IntentRequest
+from shared_models.model_server_models import IntentResponse
 
 router = APIRouter(prefix="/custom")
 
