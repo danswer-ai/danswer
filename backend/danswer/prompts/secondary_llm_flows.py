@@ -2,6 +2,7 @@ from danswer.prompts.constants import ANSWER_PAT
 from danswer.prompts.constants import ANSWERABLE_PAT
 from danswer.prompts.constants import GENERAL_SEP_PAT
 from danswer.prompts.constants import QUESTION_PAT
+from danswer.prompts.constants import SOURCES_KEY
 from danswer.prompts.constants import THOUGHT_PAT
 
 
@@ -76,6 +77,7 @@ won't find an answer.
 """.strip()
 
 
+# Smaller followup prompts in time_filter.py
 TIME_FILTER_PROMPT = """
 You are a tool to identify time filters to apply to a user query for a downstream search \
 application. The downstream application is able to use a recency bias or apply a hard cutoff to \
@@ -91,19 +93,30 @@ The valid values for "date" is a date in format MM/DD/YYYY.
 """.strip()
 
 
-SOURCE_FILTER_PROMPT = """
-Given a user query, return a list of valid sources for search or null if no specific sources are \
-detected. The returned sources will be applied as a search filter so that only documents from the \
-identified sources can be retrieved by the downstream search.
+# Smaller followup prompts in source_filter.py
+# Known issue: LLMs like GPT try to generalize. If the valid sources contains "web" but not
+# "confluence" and the user asks for confluence related things, the LLM will select "web" since
+# confluence is accessed as a website. This cannot be fixed without also reducing the capability
+# to match things like repository->github, website->web, etc.
+# This is generally not a big issue though as if the company has confluence, hopefully they add
+# a connector for it or the user is aware that confluence has not been added.
+SOURCE_FILTER_PROMPT = f"""
+Given a user query, extract the relevant source filters for use in a downstream search tool.
+Respond with a json containing the source filters or null if no specific sources are referenced.
+
+ONLY identify sources when the user is explicitly limiting the scope of where information is \
+coming from.
+
+ONLY select valid sources that are directly mentioned in the user query.
 
 The valid sources are:
-{valid_sources}
+{{valid_sources}}
 
-Always answer with ONLY a json with the key "sources"
+ALWAYS answer with ONLY a json with the key "{SOURCES_KEY}". \
+The value for "{SOURCES_KEY}" must be null or a list of valid sources.
+
 Sample Response:
-```
-{sample_response}
-```
+{{sample_response}}
 """.strip()
 
 

@@ -1,156 +1,154 @@
 import json
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
+import random
 
-from danswer.configs.app_configs import DISABLE_TIME_FILTER_EXTRACTION
+from sqlalchemy.orm import Session
+
+from danswer.configs.app_configs import DISABLE_LLM_FILTER_EXTRACTION
+from danswer.configs.constants import DocumentSource
+from danswer.db.connector import fetch_unique_document_sources
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
-from danswer.prompts.secondary_llm_flows import TIME_FILTER_PROMPT
+from danswer.prompts.constants import SOURCES_KEY
+from danswer.prompts.secondary_llm_flows import SOURCE_FILTER_PROMPT
 from danswer.server.models import QuestionRequest
 from danswer.utils.logger import setup_logger
+from danswer.utils.text_processing import extract_embedded_json
 from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
 
 
+def strings_to_document_sources(source_strs: list[str]) -> list[DocumentSource]:
+    sources = []
+    for s in source_strs:
+        try:
+            sources.append(DocumentSource(s))
+        except ValueError:
+            logger.warning(f"Failed to translate {s} to a DocumentSource")
+    return sources
+
+
+def _sample_document_sources(
+    valid_sources: list[DocumentSource],
+    num_sample: int,
+    allow_less: bool = True,
+) -> list[DocumentSource]:
+    if len(valid_sources) < num_sample:
+        if not allow_less:
+            raise RuntimeError("Not enough sample Document Sources")
+        return random.sample(valid_sources, len(valid_sources))
+    else:
+        return random.sample(valid_sources, num_sample)
+
+
 @log_function_time()
-def extract_time_filter(query: str) -> tuple[datetime | None, bool]:
+def extract_source_filter(
+    query: str, db_session: Session
+) -> list[DocumentSource] | None:
     """Returns a list of valid sources for search or None if no specific sources were detected"""
 
-    def _get_time_filter_messages(query: str) -> list[dict[str, str]]:
+    def _get_source_filter_messages(
+        query: str,
+        valid_sources: list[DocumentSource],
+    ) -> list[dict[str, str]]:
+        sample_json = {
+            SOURCES_KEY: [
+                s.value
+                for s in _sample_document_sources(
+                    valid_sources=valid_sources, num_sample=2
+                )
+            ]
+        }
+
+        msg_1_sources = _sample_document_sources(
+            valid_sources=valid_sources, num_sample=2
+        )
+        msg_1_source_str = " and ".join([s.capitalize() for s in msg_1_sources])
+
+        msg_2_sources = _sample_document_sources(
+            valid_sources=valid_sources, num_sample=2
+        )
+
+        msg_2_real_source = msg_2_sources[0]
+        msg_2_fake_source_str = (
+            msg_2_sources[1].value.capitalize()
+            if len(msg_2_sources) > 1
+            else "Confluence"
+        )
+
         messages = [
             {
                 "role": "system",
-                "content": TIME_FILTER_PROMPT,
+                "content": SOURCE_FILTER_PROMPT.format(
+                    valid_sources=[s.value for s in valid_sources],
+                    sample_response=json.dumps(sample_json),
+                ),
             },
             {
                 "role": "user",
-                "content": "What documents in Confluence were written in the last two quarters",
+                "content": f"What documents in {msg_1_source_str} cover engineer onboarding",
             },
             {
                 "role": "assistant",
-                "content": json.dumps(
-                    {
-                        "filter_type": "hard cutoff",
-                        "filter_value": "quarter",
-                        "value_multiple": 2,
-                    }
-                ),
+                "content": json.dumps({SOURCES_KEY: msg_1_sources}),
             },
             {"role": "user", "content": "What's the latest on project Corgies?"},
             {
                 "role": "assistant",
-                "content": json.dumps({"filter_type": "favor recent"}),
+                "content": json.dumps({SOURCES_KEY: None}),
             },
             {
                 "role": "user",
-                "content": "Which customer asked about security features in February of 2022?",
+                "content": f"What information from {msg_2_real_source.value.capitalize()} "
+                f"mentions {msg_2_fake_source_str}?",
             },
             {
                 "role": "assistant",
-                "content": json.dumps(
-                    {"filter_type": "hard cutoff", "date": "02/01/2022"}
-                ),
+                "content": json.dumps({SOURCES_KEY: [msg_2_real_source]}),
             },
             {"role": "user", "content": query},
         ]
         return messages
 
-    def _extract_time_filter_from_llm_out(
+    def _extract_source_filters_from_llm_out(
         model_out: str,
-    ) -> tuple[datetime | None, bool]:
-        """Returns a datetime for a hard cutoff and a bool for if the"""
+    ) -> list[DocumentSource] | None:
         try:
-            model_json = json.loads(model_out, strict=False)
-        except json.JSONDecodeError:
-            return None, False
+            sources_dict = extract_embedded_json(model_out)
+            sources_list = sources_dict.get(SOURCES_KEY)
+            if not sources_list:
+                return None
 
-        # If filter type is not present, just assume something has gone wrong
-        # Potentially model has identified a date and just returned that but
-        # better to be conservative and not identify the wrong filter.
-        if "filter_type" not in model_json:
-            return None, False
+            return strings_to_document_sources(sources_list)
+        except ValueError:
+            logger.warning("LLM failed to provide a valid Source Filter output")
+            return None
 
-        if "hard" in model_json["filter_type"] or "recent" in model_json["filter_type"]:
-            favor_recent = "recent" in model_json["filter_type"]
+    valid_sources = fetch_unique_document_sources(db_session)
+    if not valid_sources:
+        return None
 
-            if "date" in model_json:
-                extracted_time = None
-                if extracted_time is not None:
-                    return extracted_time, favor_recent
-
-            time_diff = None
-            multiplier = 1.0
-
-            if "value_multiple" in model_json:
-                try:
-                    multiplier = float(model_json["value_multiple"])
-                except ValueError:
-                    pass
-
-            if "filter_value" in model_json:
-                filter_value = model_json["filter_value"]
-                if "day" in filter_value:
-                    time_diff = timedelta(days=multiplier)
-                elif "week" in filter_value:
-                    time_diff = timedelta(weeks=multiplier)
-                elif "month" in filter_value:
-                    # Have to just use the average here, too complicated to calculate exact day
-                    # based on current day etc.
-                    time_diff = timedelta(days=multiplier * 30.437)
-                elif "quarter" in filter_value:
-                    time_diff = timedelta(days=multiplier * 91.25)
-                elif "year" in filter_value:
-                    time_diff = timedelta(days=multiplier * 365)
-
-            if time_diff is not None:
-                current = datetime.now(timezone.utc)
-                return current - time_diff, favor_recent
-
-            # If we failed to extract a hard filter, just pass back the value of favor recent
-            return None, favor_recent
-
-        return None, False
-
-    messages = _get_time_filter_messages(query)
+    messages = _get_source_filter_messages(query=query, valid_sources=valid_sources)
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
     model_output = get_default_llm().invoke(filled_llm_prompt)
     logger.debug(model_output)
 
-    return _extract_time_filter_from_llm_out(model_output)
+    return _extract_source_filters_from_llm_out(model_output)
 
 
-def extract_question_time_filters(
+def extract_question_source_filters(
     question: QuestionRequest,
-    disable_llm_extraction: bool = DISABLE_TIME_FILTER_EXTRACTION,
-) -> tuple[datetime | None, bool]:
-    time_cutoff = question.filters.time_cutoff
-    favor_recent = question.favor_recent
-    # Frontend needs to be able to set this flag so that if user deletes the time filter,
-    # we don't automatically reapply it. The env variable is a global disable of this feature
-    # for the sake of latency
-    if not question.enable_auto_detect_filters or disable_llm_extraction:
-        if favor_recent is None:
-            favor_recent = False
-        return time_cutoff, favor_recent
-
-    llm_cutoff, llm_favor_recent = extract_time_filter(question.query)
-
-    # For all extractable filters, don't overwrite the provided values if any is provided
-    if time_cutoff is None:
-        time_cutoff = llm_cutoff
-
-    if favor_recent is None:
-        favor_recent = llm_favor_recent
-
-    return time_cutoff, favor_recent
+    disable_llm_extraction: bool = DISABLE_LLM_FILTER_EXTRACTION,
+) -> list[DocumentSource] | None:
+    if disable_llm_extraction:
+        return None
 
 
 if __name__ == "__main__":
-    # Just for testing purposes, too tedious to unit test as it relies on an LLM
-    while True:
-        user_input = input("Query to Extract Time: ")
-        cutoff, recency_bias = extract_time_filter(user_input)
-        print(f"Time Cutoff: {cutoff}")
-        print(f"Favor Recent: {recency_bias}")
+    # Just for testing purposes
+    with Session(get_sqlalchemy_engine()) as db_session:
+        while True:
+            user_input = input("Query to Extract Sources: ")
+            sources = extract_source_filter(user_input, db_session)
+            print(sources)

@@ -5,7 +5,7 @@ from datetime import timezone
 
 from dateutil.parser import parse
 
-from danswer.configs.app_configs import DISABLE_TIME_FILTER_EXTRACTION
+from danswer.configs.app_configs import DISABLE_LLM_FILTER_EXTRACTION
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.prompts.secondary_llm_flows import TIME_FILTER_PROMPT
@@ -152,7 +152,7 @@ def extract_time_filter(query: str) -> tuple[datetime | None, bool]:
 
 def extract_question_time_filters(
     question: QuestionRequest,
-    disable_llm_extraction: bool = DISABLE_TIME_FILTER_EXTRACTION,
+    disable_llm_extraction: bool = DISABLE_LLM_FILTER_EXTRACTION,
 ) -> tuple[datetime | None, bool]:
     time_cutoff = question.filters.time_cutoff
     favor_recent = question.favor_recent
