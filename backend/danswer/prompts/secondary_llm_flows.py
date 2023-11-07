@@ -83,18 +83,20 @@ You are a tool to identify time filters to apply to a user query for a downstrea
 application. The downstream application is able to use a recency bias or apply a hard cutoff to \
 remove all documents before the cutoff. Identify the correct filters to apply for the user query.
 
+The current day and time is {current_day_time_str}.
+
 Always answer with ONLY a json which contains the keys "filter_type", "filter_value", \
 "value_multiple" and "date".
 
 The valid values for "filter_type" are "hard cutoff", "favors recent", or "not time sensitive".
 The valid values for "filter_value" are "day", "week", "month", "quarter", "half", or "year".
 The valid values for "value_multiple" is any number.
-The valid values for "date" is a date in format MM/DD/YYYY.
+The valid values for "date" is a date in format MM/DD/YYYY, ALWAYS follow this format.
 """.strip()
 
 
 # Smaller followup prompts in source_filter.py
-# Known issue: LLMs like GPT try to generalize. If the valid sources contains "web" but not
+# Known issue: LLMs like GPT-3.5 try to generalize. If the valid sources contains "web" but not
 # "confluence" and the user asks for confluence related things, the LLM will select "web" since
 # confluence is accessed as a website. This cannot be fixed without also reducing the capability
 # to match things like repository->github, website->web, etc.
@@ -104,10 +106,12 @@ SOURCE_FILTER_PROMPT = f"""
 Given a user query, extract the relevant source filters for use in a downstream search tool.
 Respond with a json containing the source filters or null if no specific sources are referenced.
 
-ONLY identify sources when the user is explicitly limiting the scope of where information is \
+ONLY extract sources when the user is explicitly limiting the scope of where information is \
 coming from.
 
-ONLY select valid sources that are directly mentioned in the user query.
+ONLY select valid sources that are directly stated in the user query. \
+If in doubt, DO NOT include the source. \
+It is better to respond with fewer sources than a wrong source.
 
 The valid sources are:
 {{valid_sources}}

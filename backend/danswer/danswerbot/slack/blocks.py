@@ -182,15 +182,22 @@ def build_qa_response_blocks(
     query_event_id: int,
     answer: str | None,
     quotes: list[DanswerQuote] | None,
+    source_filters: list[DocumentSource] | None,
     time_cutoff: datetime | None,
     favor_recent: bool,
 ) -> list[Block]:
     quotes_blocks: list[Block] = []
 
     ai_answer_header = HeaderBlock(text="AI Answer")
+
     filter_block: Block | None = None
-    if time_cutoff or favor_recent:
+    if time_cutoff or favor_recent or source_filters:
         filter_text = "Filters: "
+        if source_filters:
+            sources_str = ", ".join([s.value for s in source_filters])
+            filter_text += f"`Sources in [{sources_str}]`"
+            if time_cutoff or favor_recent:
+                filter_text += " and "
         if time_cutoff is not None:
             time_str = time_cutoff.strftime("%b %d, %Y")
             filter_text += f"`Docs Updated >= {time_str}` "

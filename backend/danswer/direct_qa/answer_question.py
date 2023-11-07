@@ -22,6 +22,7 @@ from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import danswer_search
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
+from danswer.secondary_llm_flows.source_filter import extract_question_source_filters
 from danswer.secondary_llm_flows.time_filter import extract_question_time_filters
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
@@ -53,8 +54,12 @@ def answer_qa_query(
     logger.info(f"Received QA query: {query}")
 
     time_cutoff, favor_recent = extract_question_time_filters(question)
+    source_filters = extract_question_source_filters(question, db_session)
+
+    # Modifies the question object but nothing upstream uses it
     question.filters.time_cutoff = time_cutoff
     question.favor_recent = favor_recent
+    question.filters.source_type = source_filters
 
     ranked_chunks, unranked_chunks, query_event_id = danswer_search(
         question=question,
@@ -77,6 +82,7 @@ def answer_qa_query(
             predicted_flow=predicted_flow,
             predicted_search=predicted_search,
             query_event_id=query_event_id,
+            source_type=source_filters,
             time_cutoff=time_cutoff,
             favor_recent=favor_recent,
         )
@@ -96,6 +102,7 @@ def answer_qa_query(
             predicted_flow=QueryFlow.SEARCH,
             predicted_search=predicted_search,
             query_event_id=query_event_id,
+            source_type=source_filters,
             time_cutoff=time_cutoff,
             favor_recent=favor_recent,
         )
@@ -113,6 +120,7 @@ def answer_qa_query(
             predicted_flow=predicted_flow,
             predicted_search=predicted_search,
             query_event_id=query_event_id,
+            source_type=source_filters,
             time_cutoff=time_cutoff,
             favor_recent=favor_recent,
             error_msg=str(e),
@@ -159,6 +167,7 @@ def answer_qa_query(
             predicted_search=predicted_search,
             eval_res_valid=True if valid else False,
             query_event_id=query_event_id,
+            source_type=source_filters,
             time_cutoff=time_cutoff,
             favor_recent=favor_recent,
             error_msg=error_msg,
@@ -172,6 +181,7 @@ def answer_qa_query(
         predicted_flow=predicted_flow,
         predicted_search=predicted_search,
         query_event_id=query_event_id,
+        source_type=source_filters,
         time_cutoff=time_cutoff,
         favor_recent=favor_recent,
         error_msg=error_msg,
@@ -195,8 +205,12 @@ def answer_qa_query_stream(
     offset_count = question.offset if question.offset is not None else 0
 
     time_cutoff, favor_recent = extract_question_time_filters(question)
+    source_filters = extract_question_source_filters(question, db_session)
+
+    # Modifies the question object but nothing upstream uses it
     question.filters.time_cutoff = time_cutoff
     question.favor_recent = favor_recent
+    question.filters.source_type = source_filters
 
     ranked_chunks, unranked_chunks, query_event_id = danswer_search(
         question=question,

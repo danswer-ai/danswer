@@ -8,6 +8,7 @@ from dateutil.parser import parse
 from danswer.configs.app_configs import DISABLE_LLM_FILTER_EXTRACTION
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
+from danswer.prompts.prompt_utils import get_current_llm_day_time
 from danswer.prompts.secondary_llm_flows import TIME_FILTER_PROMPT
 from danswer.server.models import QuestionRequest
 from danswer.utils.logger import setup_logger
@@ -51,7 +52,9 @@ def extract_time_filter(query: str) -> tuple[datetime | None, bool]:
         messages = [
             {
                 "role": "system",
-                "content": TIME_FILTER_PROMPT,
+                "content": TIME_FILTER_PROMPT.format(
+                    current_day_time_str=get_current_llm_day_time()
+                ),
             },
             {
                 "role": "user",

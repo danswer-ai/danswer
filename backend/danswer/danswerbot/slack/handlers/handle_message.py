@@ -260,6 +260,7 @@ def handle_message(
         query_event_id=answer.query_event_id,
         answer=answer.answer,
         quotes=answer.quotes,
+        source_filters=answer.source_type,
         time_cutoff=answer.time_cutoff,
         favor_recent=answer.favor_recent,
     )

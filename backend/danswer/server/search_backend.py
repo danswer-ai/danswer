@@ -22,6 +22,7 @@ from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import danswer_search
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
+from danswer.secondary_llm_flows.source_filter import extract_question_source_filters
 from danswer.secondary_llm_flows.time_filter import extract_question_time_filters
 from danswer.server.models import HelperResponse
 from danswer.server.models import QAFeedbackRequest
@@ -126,8 +127,11 @@ def handle_search_request(
     logger.info(f"Received {question.search_type.value} " f"search query: {query}")
 
     time_cutoff, favor_recent = extract_question_time_filters(question)
+    source_filters = extract_question_source_filters(question, db_session)
+
     question.filters.time_cutoff = time_cutoff
     question.favor_recent = favor_recent
+    question.filters.source_type = source_filters
 
     ranked_chunks, unranked_chunks, query_event_id = danswer_search(
         question=question,
@@ -141,6 +145,7 @@ def handle_search_request(
             top_ranked_docs=None,
             lower_ranked_docs=None,
             query_event_id=query_event_id,
+            source_type=source_filters,
             time_cutoff=time_cutoff,
             favor_recent=favor_recent,
         )
@@ -152,6 +157,7 @@ def handle_search_request(
         top_ranked_docs=top_docs,
         lower_ranked_docs=lower_top_docs or None,
         query_event_id=query_event_id,
+        source_type=source_filters,
         time_cutoff=time_cutoff,
         favor_recent=favor_recent,
     )

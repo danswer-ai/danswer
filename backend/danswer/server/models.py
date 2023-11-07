@@ -290,6 +290,7 @@ class SearchResponse(BaseModel):
     top_ranked_docs: list[SearchDoc] | None
     lower_ranked_docs: list[SearchDoc] | None
     query_event_id: int
+    source_type: list[DocumentSource] | None
     time_cutoff: datetime | None
     favor_recent: bool
 

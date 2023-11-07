@@ -51,6 +51,8 @@ def extract_source_filter(
     def _get_source_filter_messages(
         query: str,
         valid_sources: list[DocumentSource],
+        # Seems the LLM performs similarly without examples
+        show_samples: bool = False,
     ) -> list[dict[str, str]]:
         sample_json = {
             SOURCES_KEY: [
@@ -107,9 +109,22 @@ def extract_source_filter(
                 "role": "assistant",
                 "content": json.dumps({SOURCES_KEY: [msg_2_real_source]}),
             },
+            {
+                "role": "user",
+                "content": "What page from Danswer contains debugging instruction on segfault",
+            },
+            {
+                "role": "assistant",
+                "content": json.dumps({SOURCES_KEY: None}),
+            },
             {"role": "user", "content": query},
         ]
-        return messages
+
+        if show_samples:
+            return messages
+
+        # Only system prompt and latest user query
+        return [messages[0], messages[-1]]
 
     def _extract_source_filters_from_llm_out(
         model_out: str,
@@ -139,10 +154,17 @@ def extract_source_filter(
 
 def extract_question_source_filters(
     question: QuestionRequest,
+    db_session: Session,
     disable_llm_extraction: bool = DISABLE_LLM_FILTER_EXTRACTION,
 ) -> list[DocumentSource] | None:
-    if disable_llm_extraction:
+    # If specified in the question, don't update
+    if question.filters.source_type:
+        return question.filters.source_type
+
+    if not question.enable_auto_detect_filters or disable_llm_extraction:
         return None
+
+    return extract_source_filter(question.query, db_session)
 
 
 if __name__ == "__main__":
