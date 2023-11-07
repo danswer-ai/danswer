@@ -202,3 +202,11 @@ def fetch_latest_index_attempts_by_status(
         ),
     )
     return cast(list[IndexAttempt], query.all())
+
+
+def fetch_unique_document_sources(db_session: Session) -> list[DocumentSource]:
+    distinct_sources = db_session.query(Connector.source).distinct().all()
+
+    sources = [source[0] for source in distinct_sources]
+
+    return sources

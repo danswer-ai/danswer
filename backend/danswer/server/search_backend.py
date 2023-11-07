@@ -20,9 +20,9 @@ from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.models import IndexFilters
 from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import danswer_search
-from danswer.secondary_llm_flows.extract_filters import extract_question_time_filters
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
+from danswer.secondary_llm_flows.time_filter import extract_question_time_filters
 from danswer.server.models import HelperResponse
 from danswer.server.models import QAFeedbackRequest
 from danswer.server.models import QAResponse

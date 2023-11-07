@@ -22,7 +22,7 @@ from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import danswer_search
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
-from danswer.secondary_llm_flows.extract_filters import extract_question_time_filters
+from danswer.secondary_llm_flows.time_filter import extract_question_time_filters
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.server.models import RerankedRetrievalDocs

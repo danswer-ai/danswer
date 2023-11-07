@@ -31,21 +31,6 @@ Hint: Remember, if ANY of the conditions are True, it is Invalid.
 """.strip()
 
 
-TIME_FILTER_PROMPT = """
-You are a tool to identify time filters to apply to a user query for a downstream search \
-application. The downstream application is able to use a recency bias or apply a hard cutoff to \
-remove all documents before the cutoff. Identify the correct filters to apply for the user query.
-
-Always answer with ONLY a json which contains the keys "filter_type", "filter_value", \
-"value_multiple" and "date".
-
-The valid values for "filter_type" are "hard cutoff", "favors recent", or "not time sensitive".
-The valid values for "filter_value" are "day", "week", "month", "quarter", "half", or "year".
-The valid values for "value_multiple" is any number.
-The valid values for "date" is a date in format MM/DD/YYYY.
-""".strip()
-
-
 ANSWERABLE_PROMPT = f"""
 You are a helper tool to determine if a query is answerable using retrieval augmented generation.
 The main system will try to answer the user query based on ONLY the top 5 most relevant \
@@ -88,6 +73,37 @@ won't find an answer.
 ```
 
 {QUESTION_PAT.upper()} {{user_query}}
+""".strip()
+
+
+TIME_FILTER_PROMPT = """
+You are a tool to identify time filters to apply to a user query for a downstream search \
+application. The downstream application is able to use a recency bias or apply a hard cutoff to \
+remove all documents before the cutoff. Identify the correct filters to apply for the user query.
+
+Always answer with ONLY a json which contains the keys "filter_type", "filter_value", \
+"value_multiple" and "date".
+
+The valid values for "filter_type" are "hard cutoff", "favors recent", or "not time sensitive".
+The valid values for "filter_value" are "day", "week", "month", "quarter", "half", or "year".
+The valid values for "value_multiple" is any number.
+The valid values for "date" is a date in format MM/DD/YYYY.
+""".strip()
+
+
+SOURCE_FILTER_PROMPT = """
+Given a user query, return a list of valid sources for search or null if no specific sources are \
+detected. The returned sources will be applied as a search filter so that only documents from the \
+identified sources can be retrieved by the downstream search.
+
+The valid sources are:
+{valid_sources}
+
+Always answer with ONLY a json with the key "sources"
+Sample Response:
+```
+{sample_response}
+```
 """.strip()
 
 
