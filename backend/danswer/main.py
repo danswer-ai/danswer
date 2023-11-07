@@ -1,4 +1,5 @@
 import nltk  # type:ignore
+import torch
 import uvicorn
 from fastapi import FastAPI
 from fastapi import Request
@@ -7,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from httpx_oauth.clients.google import GoogleOAuth2
 
+from danswer import __version__
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
@@ -17,6 +19,8 @@ from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
+from danswer.configs.app_configs import MODEL_SERVER_HOST
+from danswer.configs.app_configs import MODEL_SERVER_PORT
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import SECRET
@@ -72,7 +76,7 @@ def value_error_handler(_: Request, exc: ValueError) -> JSONResponse:
 
 
 def get_application() -> FastAPI:
-    application = FastAPI(title="Internal Search QA Backend", debug=True, version="0.1")
+    application = FastAPI(title="Danswer Backend", version=__version__)
     application.include_router(backend_router)
     application.include_router(chat_router)
     application.include_router(event_processing_router)
@@ -176,11 +180,23 @@ def get_application() -> FastAPI:
             logger.info(f'Query embedding prefix: "{ASYM_QUERY_PREFIX}"')
             logger.info(f'Passage embedding prefix: "{ASYM_PASSAGE_PREFIX}"')
 
-        logger.info("Warming up local NLP models.")
-        warm_up_models()
-        qa_model = get_default_qa_model()
+        if MODEL_SERVER_HOST:
+            logger.info(
+                f"Using Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}"
+            )
+        else:
+            logger.info("Warming up local NLP models.")
+            if torch.cuda.is_available():
+                logger.info("GPU is available")
+            else:
+                logger.info("GPU is not available")
+            logger.info(f"Torch Threads: {torch.get_num_threads()}")
+
+            warm_up_models()
+
         # This is for the LLM, most LLMs will not need warming up
-        qa_model.warm_up_model()
+        # It logs for itself
+        get_default_qa_model().warm_up_model()
 
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")
         nltk.download("stopwords", quiet=True)

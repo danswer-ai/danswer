@@ -13,6 +13,7 @@ from danswer.background.indexing.job_client import SimpleJob
 from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.configs.app_configs import EXPERIMENTAL_SIMPLE_JOB_CLIENT_ENABLED
+from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.configs.model_configs import MIN_THREADS_ML_MODELS
 from danswer.db.connector import fetch_connectors
@@ -290,7 +291,8 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
 
 
 if __name__ == "__main__":
-    logger.info("Warming up Embedding Model(s)")
-    warm_up_models(indexer_only=True)
+    if not MODEL_SERVER_HOST:
+        logger.info("Warming up Embedding Model(s)")
+        warm_up_models(indexer_only=True)
     logger.info("Starting Indexing Loop")
     update_loop()
