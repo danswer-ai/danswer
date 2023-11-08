@@ -21,13 +21,13 @@ from danswer.connectors.linear.connector import LinearConnector
 from danswer.connectors.models import InputType
 from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.productboard.connector import ProductboardConnector
+from danswer.connectors.requesttracker.connector import RequestTrackerConnector
 from danswer.connectors.slab.connector import SlabConnector
 from danswer.connectors.slack.connector import SlackLoadConnector
 from danswer.connectors.slack.connector import SlackPollConnector
 from danswer.connectors.web.connector import WebConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
 from danswer.connectors.zulip.connector import ZulipConnector
-from danswer.connectors.requesttracker.connector import RequestTrackerConnector
 
 
 class ConnectorMissingException(Exception):
@@ -54,7 +54,7 @@ def identify_connector_class(
         DocumentSource.SLAB: SlabConnector,
         DocumentSource.NOTION: NotionConnector,
         DocumentSource.ZULIP: ZulipConnector,
-        DocumentSource.REQUESTTRACK: RequestTrackerConnector,
+        DocumentSource.REQUESTTRACKER: RequestTrackerConnector,
         DocumentSource.GURU: GuruConnector,
         DocumentSource.LINEAR: LinearConnector,
         DocumentSource.HUBSPOT: HubSpotConnector,

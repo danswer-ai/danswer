@@ -99,7 +99,7 @@ class RequestTrackerConnector(PollConnector):
                 id=ticket["id"],
                 sections=[Section(link=ticketLink, text=f"{ticket['Subject']}\n")]
                 + self.build_doc_sections_from_txn(Rt0, tid),
-                source=DocumentSource.REQUESTTRACK,
+                source=DocumentSource.REQUESTTRACKER,
                 semantic_identifier=ticket["Subject"],
                 metadata={
                     key: value
