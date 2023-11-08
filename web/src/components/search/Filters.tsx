@@ -26,6 +26,7 @@ const sources: Source[] = [
   { displayName: "Linear", internalName: "linear" },
   { displayName: "HubSpot", internalName: "hubspot" },
   { displayName: "Document360", internalName: "document360" },
+  { displayName: "Request Tracker", internalName: "requesttracker" },
   { displayName: "Google Sites", internalName: "google_sites" },
 ];
 

@@ -24,6 +24,7 @@ export type ValidSources =
   | "linear"
   | "hubspot"
   | "document360"
+  | "requesttracker"
   | "file"
   | "google_sites"
   | "zendesk";
@@ -118,6 +119,8 @@ export interface ZulipConfig {
 export interface NotionConfig {}
 
 export interface HubSpotConfig {}
+
+export interface RequestTrackerConfig {}
 
 export interface Document360Config {
   workspace: string;
@@ -238,6 +241,12 @@ export interface LinearCredentialJson {
 
 export interface HubSpotCredentialJson {
   hubspot_access_token: string;
+}
+
+export interface RequestTrackerCredentialJson {
+  requesttracker_username: string;
+  requesttracker_password: string;
+  requesttracker_base_url: string;
 }
 
 export interface Document360CredentialJson {
