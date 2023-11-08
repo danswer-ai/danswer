@@ -40,6 +40,7 @@ import jiraSVG from "../../../public/Jira.svg";
 import confluenceSVG from "../../../public/Confluence.svg";
 import guruIcon from "../../../public/Guru.svg";
 import gongIcon from "../../../public/Gong.png";
+import requestTrackerIcon from "../../../public/RequestTracker.png";
 import zulipIcon from "../../../public/Zulip.png";
 import linearIcon from "../../../public/Linear.png";
 import hubSpotIcon from "../../../public/HubSpot.png";
@@ -424,6 +425,18 @@ export const GuruIcon = ({
     className={`w-[${size}px] h-[${size}px] ` + className}
   >
     <Image src={guruIcon} alt="Logo" width="96" height="96" />
+  </div>
+);
+
+export const RequestTrackerIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src={requestTrackerIcon} alt="Logo" width="96" height="96" />
   </div>
 );
 

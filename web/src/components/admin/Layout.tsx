@@ -23,6 +23,7 @@ import {
   BookmarkIcon,
   CPUIcon,
   Document360Icon,
+  RequestTrackerIcon,
   GoogleSitesIcon,
   GongIcon,
   ZoomInIcon,
@@ -222,6 +223,15 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                   ),
                   link: "/admin/connectors/hubspot",
+                },
+                {
+                  name: (
+                    <div className="flex">
+                      <RequestTrackerIcon size={16} />
+                      <div className="ml-1">Request Tracker</div>
+                    </div>
+                  ),
+                  link: "/admin/connectors/requesttracker",
                 },
                 {
                   name: (
