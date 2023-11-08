@@ -66,8 +66,8 @@ const MainSection = () => {
   const requestTrackerCredential:
     | Credential<RequestTrackerCredentialJson>
     | undefined = credentialsData.find(
-      (credential) => credential.credential_json?.requesttracker_username
-    );
+    (credential) => credential.credential_json?.requesttracker_username
+  );
 
   return (
     <>
@@ -95,30 +95,49 @@ const MainSection = () => {
       ) : (
         <>
           <p className="text-sm mb-2">
-            To use the Request Tracker connector, provide a Request Tracker username, password, and base url.
+            To use the Request Tracker connector, provide a Request Tracker
+            username, password, and base url.
           </p>
           <p className="text-sm mb-2">
-            This connector currently supports <a href="https://rt-wiki.bestpractical.com/wiki/REST">Request Tracker REST API 1.0</a>, <b>not the latest REST API 2.0 introduced in Request Tracker 5.0</b>.
+            This connector currently supports{" "}
+            <a href="https://rt-wiki.bestpractical.com/wiki/REST">
+              Request Tracker REST API 1.0
+            </a>
+            ,{" "}
+            <b>not the latest REST API 2.0 introduced in Request Tracker 5.0</b>
+            .
           </p>
           <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
             <CredentialForm<RequestTrackerCredentialJson>
               formBody={
                 <>
-                  <TextFormField name="requesttracker_username" label="Request Tracker username:" />
+                  <TextFormField
+                    name="requesttracker_username"
+                    label="Request Tracker username:"
+                  />
                   <TextFormField
                     name="requesttracker_password"
                     label="Request Tracker password:"
                     type="password"
                   />
-                  <TextFormField name="requesttracker_base_url" label="Request Tracker base url:" />
+                  <TextFormField
+                    name="requesttracker_base_url"
+                    label="Request Tracker base url:"
+                  />
                 </>
               }
               validationSchema={Yup.object().shape({
                 requesttracker_username: Yup.string().required(
                   "Please enter your Request Tracker username"
                 ),
-                requesttracker_password: Yup.string().required("Please enter your Request Tracker password"),
-                requesttracker_base_url: Yup.string().url().required("Please enter the base url of your RT installation")
+                requesttracker_password: Yup.string().required(
+                  "Please enter your Request Tracker password"
+                ),
+                requesttracker_base_url: Yup.string()
+                  .url()
+                  .required(
+                    "Please enter the base url of your RT installation"
+                  ),
               })}
               initialValues={{
                 requesttracker_username: "",
@@ -138,15 +157,19 @@ const MainSection = () => {
       {requestTrackerConnectorIndexingStatuses.length > 0 && (
         <>
           <p className="text-sm mb-2">
-            We index the most recently updated tickets from each Request Tracker instance listed below
-            regularly.
+            We index the most recently updated tickets from each Request Tracker
+            instance listed below regularly.
           </p>
           <p className="text-sm mb-2">
-            The initial poll at this time retrieves tickets updated in the past hour. All subsequent polls execute every ten minutes. This should be configurable in the future.
+            The initial poll at this time retrieves tickets updated in the past
+            hour. All subsequent polls execute every ten minutes. This should be
+            configurable in the future.
           </p>
           <div className="mb-2">
             <ConnectorsTable<RequestTrackerConfig, RequestTrackerCredentialJson>
-              connectorIndexingStatuses={requestTrackerConnectorIndexingStatuses}
+              connectorIndexingStatuses={
+                requestTrackerConnectorIndexingStatuses
+              }
               liveCredential={requestTrackerCredential}
               getCredential={(credential) =>
                 credential.credential_json.requesttracker_base_url
@@ -156,7 +179,10 @@ const MainSection = () => {
               }
               onCredentialLink={async (connectorId) => {
                 if (requestTrackerCredential) {
-                  await linkCredential(connectorId, requestTrackerCredential.id);
+                  await linkCredential(
+                    connectorId,
+                    requestTrackerCredential.id
+                  );
                   mutate("/api/manage/admin/connector/indexing-status");
                 }
               }}
@@ -165,12 +191,19 @@ const MainSection = () => {
         </>
       )}
 
-      {requestTrackerCredential && requestTrackerConnectorIndexingStatuses.length === 0 ? (
+      {requestTrackerCredential &&
+      requestTrackerConnectorIndexingStatuses.length === 0 ? (
         <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
-          <h2 className="font-bold mb-3">Step 2: (Re)initialize connection to Request Tracker installation</h2>
+          <h2 className="font-bold mb-3">
+            Step 2: (Re)initialize connection to Request Tracker installation
+          </h2>
           <ConnectorForm<RequestTrackerConfig>
-            nameBuilder={(values) => `RequestTracker-${requestTrackerCredential.credential_json.requesttracker_base_url}`}
-            ccPairNameBuilder={(values) => `Request Tracker ${requestTrackerCredential.credential_json.requesttracker_base_url}`}
+            nameBuilder={(values) =>
+              `RequestTracker-${requestTrackerCredential.credential_json.requesttracker_base_url}`
+            }
+            ccPairNameBuilder={(values) =>
+              `Request Tracker ${requestTrackerCredential.credential_json.requesttracker_base_url}`
+            }
             source="requesttracker"
             inputType="poll"
             validationSchema={Yup.object().shape({})}
@@ -182,8 +215,7 @@ const MainSection = () => {
         </div>
       ) : (
         <></>
-      )
-      }
+      )}
     </>
   );
 };

@@ -80,7 +80,7 @@ export interface GoogleDriveConfig {
   follow_shortcuts?: boolean;
 }
 
-export interface BookstackConfig { }
+export interface BookstackConfig {}
 
 export interface ConfluenceConfig {
   wiki_page_url: string;
@@ -90,7 +90,7 @@ export interface JiraConfig {
   jira_project_url: string;
 }
 
-export interface ProductboardConfig { }
+export interface ProductboardConfig {}
 
 export interface SlackConfig {
   workspace: string;
@@ -101,7 +101,7 @@ export interface SlabConfig {
   base_url: string;
 }
 
-export interface GuruConfig { }
+export interface GuruConfig {}
 
 export interface GongConfig {
   workspaces?: string[];
@@ -116,11 +116,11 @@ export interface ZulipConfig {
   realm_url: string;
 }
 
-export interface NotionConfig { }
+export interface NotionConfig {}
 
-export interface HubSpotConfig { }
+export interface HubSpotConfig {}
 
-export interface RequestTrackerConfig { }
+export interface RequestTrackerConfig {}
 
 export interface Document360Config {
   workspace: string;
