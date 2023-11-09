@@ -147,7 +147,9 @@ def get_acccess_info_for_documents(
 
 
 def upsert_documents(
-    db_session: Session, document_metadata_batch: list[DocumentMetadata]
+    db_session: Session,
+    document_metadata_batch: list[DocumentMetadata],
+    initial_boost: int = DEFAULT_BOOST,
 ) -> None:
     """NOTE: this function is Postgres specific. Not all DBs support the ON CONFLICT clause.
     Also note, this function should not be used for updating documents, only creating and
@@ -167,7 +169,7 @@ def upsert_documents(
             model_to_dict(
                 DbDocument(
                     id=doc.document_id,
-                    boost=DEFAULT_BOOST,
+                    boost=initial_boost,
                     hidden=False,
                     semantic_id=doc.semantic_identifier,
                     link=doc.first_link,
