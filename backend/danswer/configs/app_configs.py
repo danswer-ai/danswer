@@ -148,6 +148,29 @@ EXPERIMENTAL_CHECKPOINTING_ENABLED = (
     os.environ.get("EXPERIMENTAL_CHECKPOINTING_ENABLED", "").lower() == "true"
 )
 
+#####
+# Indexing Configs
+#####
+# NOTE: Currently only supported in the Confluence and Google Drive connectors +
+# only handles some failures (Confluence = handles API call failures, Google
+# Drive = handles failures pulling files / parsing them)
+CONTINUE_ON_CONNECTOR_FAILURE = os.environ.get(
+    "CONTINUE_ON_CONNECTOR_FAILURE", ""
+).lower() not in ["false", ""]
+# Controls how many worker processes we spin up to index documents in the
+# background. This is useful for speeding up indexing, but does require a
+# fairly large amount of memory in order to increase substantially, since
+# each worker loads the embedding models into memory.
+NUM_INDEXING_WORKERS = int(os.environ.get("NUM_INDEXING_WORKERS") or 1)
+CHUNK_SIZE = 512  # Tokens by embedding model
+CHUNK_OVERLAP = int(CHUNK_SIZE * 0.05)  # 5% overlap
+# More accurate results at the expense of indexing speed and index size (stores additional 4 MINI_CHUNK vectors)
+ENABLE_MINI_CHUNK = os.environ.get("ENABLE_MINI_CHUNK", "").lower() == "true"
+# Finer grained chunking for more detail retention
+# Slightly larger since the sentence aware split is a max cutoff so most minichunks will be under MINI_CHUNK_SIZE
+# tokens. But we need it to be at least as big as 1/4th chunk size to avoid having a tiny mini-chunk at the end
+MINI_CHUNK_SIZE = 150
+
 
 #####
 # Query Configs
@@ -163,6 +186,9 @@ NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL = int(
 NUM_DOCUMENT_TOKENS_FED_TO_CHAT = int(
     os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_CHAT") or (512 * 3)
 )
+# For selecting a different LLM question-answering prompt format
+# Valid values: default, cot, weak
+QA_PROMPT_OVERRIDE = os.environ.get("QA_PROMPT_OVERRIDE") or None
 # 1 / (1 + DOC_TIME_DECAY * doc-age-in-years), set to 0 to have no decay
 # Capped in Vespa at 0.5
 DOC_TIME_DECAY = float(
@@ -188,19 +214,6 @@ else:
 
 
 #####
-# Text Processing Configs
-#####
-CHUNK_SIZE = 512  # Tokens by embedding model
-CHUNK_OVERLAP = int(CHUNK_SIZE * 0.05)  # 5% overlap
-# More accurate results at the expense of indexing speed and index size (stores additional 4 MINI_CHUNK vectors)
-ENABLE_MINI_CHUNK = os.environ.get("ENABLE_MINI_CHUNK", "").lower() == "true"
-# Finer grained chunking for more detail retention
-# Slightly larger since the sentence aware split is a max cutoff so most minichunks will be under MINI_CHUNK_SIZE
-# tokens. But we need it to be at least as big as 1/4th chunk size to avoid having a tiny mini-chunk at the end
-MINI_CHUNK_SIZE = 150
-
-
-#####
 # Model Server Configs
 #####
 # If MODEL_SERVER_HOST is set, the NLP models required for Danswer are offloaded to the server via
@@ -218,24 +231,10 @@ DYNAMIC_CONFIG_STORE = os.environ.get(
     "DYNAMIC_CONFIG_STORE", "FileSystemBackedDynamicConfigStore"
 )
 DYNAMIC_CONFIG_DIR_PATH = os.environ.get("DYNAMIC_CONFIG_DIR_PATH", "/home/storage")
-# For selecting a different LLM question-answering prompt format
-# Valid values: default, cot, weak
-QA_PROMPT_OVERRIDE = os.environ.get("QA_PROMPT_OVERRIDE") or None
-# notset, debug, info, warning, error, or critical
-LOG_LEVEL = os.environ.get("LOG_LEVEL", "info")
-# NOTE: Currently only supported in the Confluence and Google Drive connectors +
-# only handles some failures (Confluence = handles API call failures, Google
-# Drive = handles failures pulling files / parsing them)
-CONTINUE_ON_CONNECTOR_FAILURE = os.environ.get(
-    "CONTINUE_ON_CONNECTOR_FAILURE", ""
-).lower() not in ["false", ""]
-# Controls how many worker processes we spin up to index documents in the
-# background. This is useful for speeding up indexing, but does require a
-# fairly large amount of memory in order to increase substantially, since
-# each worker loads the embedding models into memory.
-NUM_INDEXING_WORKERS = int(os.environ.get("NUM_INDEXING_WORKERS") or 1)
 JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
 # Logs every model prompt and output, mostly used for development or exploration purposes
 LOG_ALL_MODEL_INTERACTIONS = (
     os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
 )
+# notset, debug, info, warning, error, or critical
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "info")

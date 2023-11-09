@@ -7,7 +7,9 @@ from sqlalchemy.orm import Session
 from danswer.access.access import get_access_for_documents
 from danswer.connectors.models import Document
 from danswer.connectors.models import IndexAttemptMetadata
+from danswer.db.document import get_documents_by_ids
 from danswer.db.document import prepare_to_modify_documents
+from danswer.db.document import update_document_doc_updated_at
 from danswer.db.document import upsert_documents_complete
 from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.engine import get_sqlalchemy_engine
@@ -70,21 +72,43 @@ def _indexing_pipeline(
     """Takes different pieces of the indexing pipeline and applies it to a batch of documents
     Note that the documents should already be batched at this point so that it does not inflate the
     memory requirements"""
-    document_ids = [document.id for document in documents]
-
     with Session(get_sqlalchemy_engine()) as db_session:
-        # acquires a lock on the documents so that no other process can modify them
-        prepare_to_modify_documents(db_session=db_session, document_ids=document_ids)
+        document_ids = [document.id for document in documents]
 
-        # create records in the source of truth about these documents
+        # Skip indexing docs that don't have a newer updated at
+        # Shortcuts the time-consuming flow on connector index retries
+        db_docs = get_documents_by_ids(
+            document_ids=document_ids,
+            db_session=db_session,
+        )
+        id_update_time_map = {
+            doc.id: doc.doc_updated_at for doc in db_docs if doc.doc_updated_at
+        }
+
+        updatable_docs = []
+        for doc in documents:
+            if (
+                doc.id in id_update_time_map
+                and doc.doc_updated_at
+                and doc.doc_updated_at < id_update_time_map[doc.id]
+            ):
+                continue
+            updatable_docs.append(doc)
+        updatable_ids = [doc.id for doc in updatable_docs]
+
+        # Acquires a lock on the documents so that no other process can modify them
+        prepare_to_modify_documents(db_session=db_session, document_ids=updatable_ids)
+
+        # Create records in the source of truth about these documents,
+        # does not include doc_updated_at which is also used to indicate a successful update
         _upsert_documents(
-            documents=documents,
+            documents=updatable_docs,
             index_attempt_metadata=index_attempt_metadata,
             db_session=db_session,
         )
 
         chunks: list[DocAwareChunk] = list(
-            chain(*[chunker.chunk(document=document) for document in documents])
+            chain(*[chunker.chunk(document=document) for document in updatable_docs])
         )
         logger.debug(
             f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in chunks]}"
@@ -95,12 +119,12 @@ def _indexing_pipeline(
         # chunk. This access status will be attached to each chunk in the document index
         # TODO: attach document sets to the chunk based on the status of Postgres as well
         document_id_to_access_info = get_access_for_documents(
-            document_ids=document_ids, db_session=db_session
+            document_ids=updatable_ids, db_session=db_session
         )
         document_id_to_document_set = {
             document_id: document_sets
             for document_id, document_sets in fetch_document_sets_for_documents(
-                document_ids=document_ids, db_session=db_session
+                document_ids=updatable_ids, db_session=db_session
             )
         }
         access_aware_chunks = [
@@ -120,6 +144,18 @@ def _indexing_pipeline(
         insertion_records = document_index.index(
             chunks=access_aware_chunks,
         )
+
+        successful_doc_ids = [record.document_id for record in insertion_records]
+        successful_docs = [
+            doc for doc in updatable_docs if doc.id in successful_doc_ids
+        ]
+
+        for doc in successful_docs:
+            update_document_doc_updated_at(
+                document_id=doc.id,
+                new_updated_at=doc.doc_updated_at,
+                db_session=db_session,
+            )
 
     return len([r for r in insertion_records if r.already_existed is False]), len(
         chunks
