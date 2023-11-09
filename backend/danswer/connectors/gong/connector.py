@@ -32,7 +32,6 @@ class GongConnector(LoadConnector, PollConnector):
         self,
         workspaces: list[str] | None = None,
         batch_size: int = INDEX_BATCH_SIZE,
-        use_end_time: bool = False,
         continue_on_fail: bool = CONTINUE_ON_CONNECTOR_FAILURE,
         hide_user_info: bool = False,
     ) -> None:
@@ -40,7 +39,6 @@ class GongConnector(LoadConnector, PollConnector):
         self.batch_size: int = batch_size
         self.continue_on_fail = continue_on_fail
         self.auth_token_basic: str | None = None
-        self.use_end_time = use_end_time
         self.hide_user_info = hide_user_info
 
     def _get_auth_header(self) -> dict[str, str]:
@@ -102,7 +100,12 @@ class GongConnector(LoadConnector, PollConnector):
                 # If no calls in the range, just break out
                 if response.status_code == 404:
                     break
-                response.raise_for_status()
+
+                try:
+                    response.raise_for_status()
+                except Exception:
+                    logger.error(f"Error fetching transcripts: {response.text}")
+                    raise
 
                 data = response.json()
                 call_transcripts = data.get("callTranscripts", [])
@@ -263,6 +266,8 @@ class GongConnector(LoadConnector, PollConnector):
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
+        end_datetime = datetime.fromtimestamp(end, tz=timezone.utc)
+
         # if this env variable is set, don't start from a timestamp before the specified
         # start time
         # TODO: remove this once this is globally available
@@ -272,6 +277,10 @@ class GongConnector(LoadConnector, PollConnector):
         else:
             special_start_datetime = datetime.fromtimestamp(0, tz=timezone.utc)
 
+        # don't let the special start dt be past the end time, this causes issues when
+        # the Gong API (`filter.fromDateTime: must be before toDateTime`)
+        special_start_datetime = min(special_start_datetime, end_datetime)
+
         start_datetime = max(
             datetime.fromtimestamp(start, tz=timezone.utc), special_start_datetime
         )
@@ -280,11 +289,8 @@ class GongConnector(LoadConnector, PollConnector):
         # so adding a 1 day buffer and fetching by default till current time
         start_one_day_offset = start_datetime - timedelta(days=1)
         start_time = start_one_day_offset.isoformat()
-        end_time = (
-            datetime.fromtimestamp(end, tz=timezone.utc).isoformat()
-            if self.use_end_time
-            else None
-        )
+
+        end_time = datetime.fromtimestamp(end, tz=timezone.utc).isoformat()
 
         logger.info(f"Fetching Gong calls between {start_time} and {end_time}")
         return self._fetch_calls(start_time, end_time)
