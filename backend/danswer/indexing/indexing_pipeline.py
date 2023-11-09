@@ -90,7 +90,7 @@ def _indexing_pipeline(
             if (
                 doc.id in id_update_time_map
                 and doc.doc_updated_at
-                and doc.doc_updated_at < id_update_time_map[doc.id]
+                and doc.doc_updated_at <= id_update_time_map[doc.id]
             ):
                 continue
             updatable_docs.append(doc)
@@ -150,6 +150,7 @@ def _indexing_pipeline(
             doc for doc in updatable_docs if doc.id in successful_doc_ids
         ]
 
+        # Update the time of latest version of the doc successfully indexed
         for doc in successful_docs:
             update_document_doc_updated_at(
                 document_id=doc.id,

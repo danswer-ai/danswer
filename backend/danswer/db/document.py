@@ -227,6 +227,7 @@ def update_document_doc_updated_at(
         .values(doc_updated_at=new_updated_at)
     )
     db_session.execute(stmt)
+    db_session.commit()
 
 
 def upsert_documents_complete(
