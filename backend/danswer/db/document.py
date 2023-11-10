@@ -1,5 +1,6 @@
 import time
 from collections.abc import Sequence
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import and_
@@ -37,6 +38,15 @@ def get_documents_for_connector_credential_pair(
     if limit:
         stmt = stmt.limit(limit)
     return db_session.scalars(stmt).all()
+
+
+def get_documents_by_ids(
+    document_ids: list[str],
+    db_session: Session,
+) -> list[DbDocument]:
+    stmt = select(DbDocument).where(DbDocument.id.in_(document_ids))
+    documents = db_session.execute(stmt).scalars().all()
+    return list(documents)
 
 
 def get_document_connector_cnts(
@@ -136,9 +146,13 @@ def get_acccess_info_for_documents(
 
 
 def upsert_documents(
-    db_session: Session, document_metadata_batch: list[DocumentMetadata]
+    db_session: Session,
+    document_metadata_batch: list[DocumentMetadata],
+    initial_boost: int = DEFAULT_BOOST,
 ) -> None:
-    """NOTE: this function is Postgres specific. Not all DBs support the ON CONFLICT clause."""
+    """NOTE: this function is Postgres specific. Not all DBs support the ON CONFLICT clause.
+    Also note, this function should not be used for updating documents, only creating and
+    ensuring that it exists. It IGNORES the doc_updated_at field"""
     seen_documents: dict[str, DocumentMetadata] = {}
     for document_metadata in document_metadata_batch:
         doc_id = document_metadata.document_id
@@ -154,11 +168,11 @@ def upsert_documents(
             model_to_dict(
                 DbDocument(
                     id=doc.document_id,
-                    boost=DEFAULT_BOOST,
+                    boost=initial_boost,
                     hidden=False,
                     semantic_id=doc.semantic_identifier,
                     link=doc.first_link,
-                    doc_updated_at=doc.doc_updated_at,
+                    doc_updated_at=None,  # this is intentional
                     primary_owners=doc.primary_owners,
                     secondary_owners=doc.secondary_owners,
                 )
@@ -197,6 +211,21 @@ def upsert_document_by_connector_credential_pair(
     # needs to change to an `on_conflict_do_update`
     on_conflict_stmt = insert_stmt.on_conflict_do_nothing()
     db_session.execute(on_conflict_stmt)
+    db_session.commit()
+
+
+def update_docs_updated_at(
+    ids_to_new_updated_at: dict[str, datetime],
+    db_session: Session,
+) -> None:
+    doc_ids = list(ids_to_new_updated_at.keys())
+    documents_to_update = (
+        db_session.query(DbDocument).filter(DbDocument.id.in_(doc_ids)).all()
+    )
+
+    for document in documents_to_update:
+        document.doc_updated_at = ids_to_new_updated_at[document.id]
+
     db_session.commit()
 
 

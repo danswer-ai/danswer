@@ -405,6 +405,9 @@ class Document(Base):
     semantic_id: Mapped[str] = mapped_column(String)
     # First Section's link
     link: Mapped[str | None] = mapped_column(String, nullable=True)
+    # The updated time is also used as a measure of the last successful state of the doc
+    # pulled from the source (to help skip reindexing already updated docs in case of
+    # connector retries)
     doc_updated_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
