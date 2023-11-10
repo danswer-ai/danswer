@@ -111,20 +111,26 @@ def doc_index_retrieval(
 ) -> list[InferenceChunk]:
     if query.search_type == SearchType.KEYWORD:
         top_chunks = document_index.keyword_retrieval(
-            query.query, query.filters, query.favor_recent, query.num_hits
+            query=query.query,
+            filters=query.filters,
+            favor_recent=query.favor_recent,
+            num_to_retrieve=query.num_hits,
         )
 
     elif query.search_type == SearchType.SEMANTIC:
         top_chunks = document_index.semantic_retrieval(
-            query.query, query.filters, query.favor_recent, query.num_hits
+            query=query.query,
+            filters=query.filters,
+            favor_recent=query.favor_recent,
+            num_to_retrieve=query.num_hits,
         )
 
     elif query.search_type == SearchType.HYBRID:
         top_chunks = document_index.hybrid_retrieval(
-            query.query,
-            query.filters,
-            query.favor_recent,
-            query.num_hits,
+            query=query.query,
+            filters=query.filters,
+            favor_recent=query.favor_recent,
+            num_to_retrieve=query.num_hits,
             hybrid_alpha=hybrid_alpha,
         )
 
