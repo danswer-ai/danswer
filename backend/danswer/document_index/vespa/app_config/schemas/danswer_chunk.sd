@@ -110,6 +110,7 @@ schema danswer_chunk {
             expression: max(if(isNan(attribute(doc_updated_at)) == 1, 7890000, now() - attribute(doc_updated_at)) / 31536000, 0)
         }
 
+        # Document score decays from 1 to 0.5 as age of last updated time increases
         function inline recency_bias() {
             # Cap the loss at 50% score reduction
             expression: max(1 / (1 + query(decay_factor) * document_age), 0.5)
@@ -150,7 +151,7 @@ schema danswer_chunk {
         }
 
         global-phase {
-            expression: (normalize_linear(closeness(field, embeddings)) + normalize_linear(bm25(content))) / 2 * document_boost * recency_bias
+            expression: ((query(alpha) * normalize_linear(closeness(field, embeddings))) + ((1 - query(alpha)) * normalize_linear(bm25(content)))) * document_boost * recency_bias
             rerank-count: 1000
         }
 

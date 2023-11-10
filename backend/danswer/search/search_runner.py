@@ -8,6 +8,7 @@ from nltk.tokenize import word_tokenize  # type:ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 from sqlalchemy.orm import Session
 
+from danswer.configs.app_configs import HYBRID_ALPHA
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
@@ -104,21 +105,33 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
 
 @log_function_time()
 def doc_index_retrieval(
-    query: SearchQuery, document_index: DocumentIndex
+    query: SearchQuery,
+    document_index: DocumentIndex,
+    hybrid_alpha: float = HYBRID_ALPHA,
 ) -> list[InferenceChunk]:
     if query.search_type == SearchType.KEYWORD:
         top_chunks = document_index.keyword_retrieval(
-            query.query, query.filters, query.favor_recent, query.num_hits
+            query=query.query,
+            filters=query.filters,
+            favor_recent=query.favor_recent,
+            num_to_retrieve=query.num_hits,
         )
 
     elif query.search_type == SearchType.SEMANTIC:
         top_chunks = document_index.semantic_retrieval(
-            query.query, query.filters, query.favor_recent, query.num_hits
+            query=query.query,
+            filters=query.filters,
+            favor_recent=query.favor_recent,
+            num_to_retrieve=query.num_hits,
         )
 
     elif query.search_type == SearchType.HYBRID:
         top_chunks = document_index.hybrid_retrieval(
-            query.query, query.filters, query.favor_recent, query.num_hits
+            query=query.query,
+            filters=query.filters,
+            favor_recent=query.favor_recent,
+            num_to_retrieve=query.num_hits,
+            hybrid_alpha=hybrid_alpha,
         )
 
     else:
@@ -282,6 +295,7 @@ def apply_boost(
 def search_chunks(
     query: SearchQuery,
     document_index: DocumentIndex,
+    hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
@@ -293,7 +307,9 @@ def search_chunks(
         ]
         logger.info(f"Top links from {search_flow} search: {', '.join(top_links)}")
 
-    top_chunks = doc_index_retrieval(query=query, document_index=document_index)
+    top_chunks = doc_index_retrieval(
+        query=query, document_index=document_index, hybrid_alpha=hybrid_alpha
+    )
 
     if not top_chunks:
         logger.info(

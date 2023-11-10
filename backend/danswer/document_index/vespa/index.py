@@ -19,6 +19,7 @@ from danswer.configs.app_configs import DOC_TIME_DECAY
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.app_configs import FAVOR_RECENT_DECAY_MULTIPLIER
+from danswer.configs.app_configs import HYBRID_ALPHA
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import VESPA_DEPLOYMENT_ZIP
 from danswer.configs.app_configs import VESPA_HOST
@@ -432,7 +433,7 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
     )
 
 
-def _query_vespa(query_params: Mapping[str, str | int]) -> list[InferenceChunk]:
+def _query_vespa(query_params: Mapping[str, str | int | float]) -> list[InferenceChunk]:
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError("No/empty query received")
     response = requests.get(SEARCH_ENDPOINT, params=query_params)
@@ -669,6 +670,7 @@ class VespaIndex(DocumentIndex):
         filters: IndexFilters,
         favor_recent: bool,
         num_to_retrieve: int,
+        hybrid_alpha: float | None = HYBRID_ALPHA,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
@@ -690,11 +692,14 @@ class VespaIndex(DocumentIndex):
             " ".join(remove_stop_words(query)) if edit_keyword_query else query
         )
 
-        params: dict[str, str | int] = {
+        params: dict[str, str | int | float] = {
             "yql": yql,
             "query": query_keywords,
             "input.query(query_embedding)": str(query_embedding),
             "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
+            "input.query(alpha)": hybrid_alpha
+            if hybrid_alpha is not None
+            else HYBRID_ALPHA,
             "hits": num_to_retrieve,
             "offset": 0,
             "ranking.profile": "hybrid_search",

@@ -211,6 +211,8 @@ if os.environ.get("EDIT_KEYWORD_QUERY"):
     EDIT_KEYWORD_QUERY = os.environ.get("EDIT_KEYWORD_QUERY", "").lower() == "true"
 else:
     EDIT_KEYWORD_QUERY = not os.environ.get("DOCUMENT_ENCODER_MODEL")
+# Weighting factor between Vector and Keyword Search, 1 for completely vector search
+HYBRID_ALPHA = max(0, min(1, float(os.environ.get("HYBRID_ALPHA") or 0.6)))
 
 
 #####
