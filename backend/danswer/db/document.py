@@ -8,7 +8,6 @@ from sqlalchemy import delete
 from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy import select
-from sqlalchemy import update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -215,20 +214,18 @@ def upsert_document_by_connector_credential_pair(
     db_session.commit()
 
 
-def update_document_doc_updated_at(
-    document_id: str,
-    new_updated_at: datetime | None,
+def update_docs_updated_at(
+    ids_to_new_updated_at: dict[str, datetime],
     db_session: Session,
 ) -> None:
-    if new_updated_at is None:
-        return
-
-    stmt = (
-        update(DbDocument)
-        .where(DbDocument.id == document_id)
-        .values(doc_updated_at=new_updated_at)
+    doc_ids = list(ids_to_new_updated_at.keys())
+    documents_to_update = (
+        db_session.query(DbDocument).filter(DbDocument.id.in_(doc_ids)).all()
     )
-    db_session.execute(stmt)
+
+    for document in documents_to_update:
+        document.doc_updated_at = ids_to_new_updated_at[document.id]
+
     db_session.commit()
 
 

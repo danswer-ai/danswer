@@ -9,7 +9,7 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.db.document import get_documents_by_ids
 from danswer.db.document import prepare_to_modify_documents
-from danswer.db.document import update_document_doc_updated_at
+from danswer.db.document import update_docs_updated_at
 from danswer.db.document import upsert_documents_complete
 from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.engine import get_sqlalchemy_engine
@@ -151,12 +151,15 @@ def _indexing_pipeline(
         ]
 
         # Update the time of latest version of the doc successfully indexed
+        ids_to_new_updated_at = {}
         for doc in successful_docs:
-            update_document_doc_updated_at(
-                document_id=doc.id,
-                new_updated_at=doc.doc_updated_at,
-                db_session=db_session,
-            )
+            if doc.doc_updated_at is None:
+                continue
+            ids_to_new_updated_at[doc.id] = doc.doc_updated_at
+
+        update_docs_updated_at(
+            ids_to_new_updated_at=ids_to_new_updated_at, db_session=db_session
+        )
 
     return len([r for r in insertion_records if r.already_existed is False]), len(
         chunks
