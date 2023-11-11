@@ -8,7 +8,6 @@ data:
   AUTH_TYPE: "google_oauth"
   INTERNAL_URL: "http://api-server-service:80"
   DOMAIN: "localhost"
-  INTERNAL_MODEL_VERSION: "openai-chat-completion"
   QA_TIMEOUT: "60"
   GEN_AI_MODEL_VERSION: "gpt-3.5-turbo"
   GEN_AI_API_KEY: ""
