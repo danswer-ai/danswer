@@ -38,6 +38,7 @@ def chunk_large_section(
     blurb_size: int = BLURB_SIZE,
 ) -> list[DocAwareChunk]:
     section_text = section.text
+    section_link_text = section.link or ""
     blurb = extract_blurb(section_text, blurb_size)
 
     sentence_aware_splitter = SentenceSplitter(
@@ -52,7 +53,7 @@ def chunk_large_section(
             chunk_id=start_chunk_id + chunk_ind,
             blurb=blurb,
             content=chunk_str,
-            source_links={0: section.link},
+            source_links={0: section_link_text},
             section_continuation=(chunk_ind != 0),
         )
         for chunk_ind, chunk_str in enumerate(split_texts)
@@ -72,6 +73,7 @@ def chunk_document(
     link_offsets: dict[int, str] = {}
     chunk_text = ""
     for section in document.sections:
+        section_link_text = section.link or ""
         section_tok_length = len(tokenizer.tokenize(section.text))
         current_tok_length = len(tokenizer.tokenize(chunk_text))
         curr_offset_len = len(shared_precompare_cleanup(chunk_text))
@@ -115,7 +117,7 @@ def chunk_document(
             chunk_text += (
                 SECTION_SEPARATOR + section.text if chunk_text else section.text
             )
-            link_offsets[curr_offset_len] = section.link
+            link_offsets[curr_offset_len] = section_link_text
         else:
             chunks.append(
                 DocAwareChunk(
@@ -127,7 +129,7 @@ def chunk_document(
                     section_continuation=False,
                 )
             )
-            link_offsets = {0: section.link}
+            link_offsets = {0: section_link_text}
             chunk_text = section.text
 
     # Once we hit the end, if we're still in the process of building a chunk, add what we have

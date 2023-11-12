@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from httpx_oauth.clients.google import GoogleOAuth2
+from sqlalchemy.orm import Session
 
 from danswer import __version__
 from danswer.auth.schemas import UserCreate
@@ -37,7 +38,9 @@ from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.llm.factory import get_default_llm
 from danswer.db.connector import create_initial_default_connector
+from danswer.db.connector_credential_pair import associate_default_cc_pair
 from danswer.db.credentials import create_initial_public_credential
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.direct_qa.factory import get_default_qa_model
 from danswer.document_index.factory import get_default_document_index
 from danswer.search.search_nlp_models import warm_up_models
@@ -219,11 +222,11 @@ def get_application() -> FastAPI:
         nltk.download("wordnet", quiet=True)
         nltk.download("punkt", quiet=True)
 
-        logger.info("Verifying public credential exists.")
-        create_initial_public_credential()
-
-        logger.info("Verifying default connector exists.")
-        create_initial_default_connector()
+        logger.info("Verifying default connector/credential exist.")
+        with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
+            create_initial_public_credential(db_session)
+            create_initial_default_connector(db_session)
+            associate_default_cc_pair(db_session)
 
         logger.info("Loading default Chat Personas")
         load_personas_from_yaml()

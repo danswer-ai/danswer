@@ -2,6 +2,9 @@ import os
 import sys
 
 import psycopg2
+from sqlalchemy.orm import Session
+
+from danswer.db.engine import get_sqlalchemy_engine
 
 # makes it so `PYTHONPATH=.` is not required when running this script
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -61,7 +64,8 @@ def wipe_all_rows(database: str) -> None:
 if __name__ == "__main__":
     print("Cleaning up all Danswer tables")
     wipe_all_rows(POSTGRES_DB)
-    create_initial_public_credential()
+    with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
+        create_initial_public_credential(db_session)
     print("To keep data consistent, it's best to wipe the document index as well.")
     print(
         "To be safe, it's best to restart the Danswer services (API Server and Background Tasks"

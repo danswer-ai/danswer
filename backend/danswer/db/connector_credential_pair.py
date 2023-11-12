@@ -122,6 +122,27 @@ def mark_all_in_progress_cc_pairs_failed(
     db_session.commit()
 
 
+def associate_default_cc_pair(db_session: Session) -> None:
+    existing_association = (
+        db_session.query(ConnectorCredentialPair)
+        .filter(
+            ConnectorCredentialPair.connector_id == 0,
+            ConnectorCredentialPair.credential_id == 0,
+        )
+        .one_or_none()
+    )
+    if existing_association is not None:
+        return
+
+    association = ConnectorCredentialPair(
+        connector_id=0,
+        credential_id=0,
+        name="DefaultCCPair",
+    )
+    db_session.add(association)
+    db_session.commit()
+
+
 def add_credential_to_connector(
     connector_id: int,
     credential_id: int,

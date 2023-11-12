@@ -528,7 +528,8 @@ class IngestionDocument(BaseModel):
     connector_id: int | None = None
     connector_name: str | None = None
     credential_id: int | None = None
-    public_doc: bool = True
+    create_connector: bool = False  # Currently not allowed
+    public_doc: bool = True  # To attach to the cc_pair, currently unused
 
 
 class IngestionResult(BaseModel):

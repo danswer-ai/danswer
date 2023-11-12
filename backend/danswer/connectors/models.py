@@ -5,6 +5,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from danswer.configs.constants import DocumentSource
+from danswer.utils.text_processing import make_url_compatible
 
 
 class InputType(str, Enum):
@@ -22,8 +23,8 @@ class ConnectorMissingCredentialError(PermissionError):
 
 
 class Section(BaseModel):
-    link: str
     text: str
+    link: str | None
 
 
 class DocumentBase(BaseModel):
@@ -31,7 +32,7 @@ class DocumentBase(BaseModel):
 
     id: str | None = None
     sections: list[Section]
-    source: DocumentSource
+    source: DocumentSource | None = None
     semantic_identifier: str  # displayed in the UI as the main identifier for the doc
     metadata: dict[str, Any]
     # UTC time
@@ -51,6 +52,7 @@ class DocumentBase(BaseModel):
 
 class Document(DocumentBase):
     id: str  # This must be unique or during indexing/reindexing, chunks will be overwritten
+    source: DocumentSource
 
     def to_short_descriptor(self) -> str:
         """Used when logging the identity of a document"""
@@ -59,15 +61,17 @@ class Document(DocumentBase):
     @classmethod
     def from_base(cls, base: DocumentBase) -> "Document":
         return cls(
-            id=base.id or "ingestion_api_" + base.semantic_identifier,
+            id=base.id
+            or "ingestion_api_" + make_url_compatible(base.semantic_identifier),
             sections=base.sections,
-            source=base.source,
+            source=base.source or DocumentSource.INGESTION_API,
             semantic_identifier=base.semantic_identifier,
             metadata=base.metadata,
             doc_updated_at=base.doc_updated_at,
             primary_owners=base.primary_owners,
             secondary_owners=base.secondary_owners,
             title=base.title,
+            from_ingestion_api=base.from_ingestion_api,
         )
 
 

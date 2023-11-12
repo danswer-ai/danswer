@@ -9,7 +9,6 @@ from danswer.auth.schemas import UserRole
 from danswer.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
-from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import Credential
 from danswer.db.models import User
 from danswer.server.models import CredentialBase
@@ -144,30 +143,26 @@ def delete_credential(
     db_session.commit()
 
 
-def create_initial_public_credential() -> None:
+def create_initial_public_credential(db_session: Session) -> None:
     public_cred_id = 0
     error_msg = (
         "DB is not in a valid initial state."
         "There must exist an empty public credential for data connectors that do not require additional Auth."
     )
-    with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
-        first_credential = fetch_credential_by_id(public_cred_id, None, db_session)
+    first_credential = fetch_credential_by_id(public_cred_id, None, db_session)
 
-        if first_credential is not None:
-            if (
-                first_credential.credential_json != {}
-                or first_credential.user is not None
-            ):
-                raise ValueError(error_msg)
-            return
+    if first_credential is not None:
+        if first_credential.credential_json != {} or first_credential.user is not None:
+            raise ValueError(error_msg)
+        return
 
-        credential = Credential(
-            id=public_cred_id,
-            credential_json={},
-            user_id=None,
-        )
-        db_session.add(credential)
-        db_session.commit()
+    credential = Credential(
+        id=public_cred_id,
+        credential_json={},
+        user_id=None,
+    )
+    db_session.add(credential)
+    db_session.commit()
 
 
 def delete_google_drive_service_account_credentials(

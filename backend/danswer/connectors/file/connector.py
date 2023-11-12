@@ -64,9 +64,7 @@ def _process_file(
     return [
         Document(
             id=file_name,
-            sections=[
-                Section(link=metadata.get("link", ""), text=file_content_raw.strip())
-            ],
+            sections=[Section(link=metadata.get("link", None), text=file_content_raw.strip())],
             source=DocumentSource.FILE,
             semantic_identifier=file_name,
             doc_updated_at=time_updated,
