@@ -65,9 +65,10 @@ def delete_danswer_api_key() -> None:
 
 def api_key_dep(api_key: str = Header(...)) -> str:
     saved_key = get_danswer_api_key(dont_regenerate=True)
-    if api_key != saved_key or not saved_key:
+    token = api_key.removeprefix("Bearer ").strip()
+    if token != saved_key or not saved_key:
         raise HTTPException(status_code=401, detail="Invalid API key")
-    return api_key
+    return token
 
 
 # Provides a way to recover if the api key is deleted for some reason
@@ -75,8 +76,11 @@ def api_key_dep_if_exist(api_key: str | None = Header(None)) -> str | None:
     saved_key = get_danswer_api_key(dont_regenerate=True)
     if not saved_key:
         return None
-    if api_key != saved_key or not saved_key:
+
+    token = api_key.removeprefix("Bearer ").strip() if api_key else None
+    if token != saved_key:
         raise HTTPException(status_code=401, detail="Invalid API key")
+
     return api_key
 
 

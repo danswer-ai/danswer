@@ -46,6 +46,7 @@ from danswer.server.chat_backend import router as chat_router
 from danswer.server.connector import router as connector_router
 from danswer.server.credential import router as credential_router
 from danswer.server.danswer_api import get_danswer_api_key
+from danswer.server.danswer_api import router as danswer_api_router
 from danswer.server.document_set import router as document_set_router
 from danswer.server.manage import router as admin_router
 from danswer.server.search_backend import router as backend_router
@@ -94,6 +95,7 @@ def get_application() -> FastAPI:
     application.include_router(document_set_router)
     application.include_router(slack_bot_management_router)
     application.include_router(state_router)
+    application.include_router(danswer_api_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step
