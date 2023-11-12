@@ -142,9 +142,6 @@ def document_ingestion(
     # Disregard whatever value is passed, this must be True
     doc_info.document.from_ingestion_api = True
 
-    # If no source type passed in, use the ingestion_api type
-    doc_info.document.source = doc_info.document.source or DocumentSource.INGESTION_API
-
     document = Document.from_base(doc_info.document)
 
     # TODO once the frontend is updated with this enum, remove this logic
