@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.server.models import ConnectorBase
@@ -210,3 +211,33 @@ def fetch_unique_document_sources(db_session: Session) -> list[DocumentSource]:
     sources = [source[0] for source in distinct_sources]
 
     return sources
+
+
+def create_initial_default_connector() -> None:
+    default_connector_id = 0
+    with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
+        default_connector = fetch_connector_by_id(default_connector_id, db_session)
+
+        if default_connector is not None:
+            if (
+                default_connector.source != DocumentSource.INGESTION_API
+                or default_connector.input_type != InputType.LOAD_STATE
+                or default_connector.refresh_freq is not None
+                or default_connector.disabled
+            ):
+                raise ValueError(
+                    "DB is not in a valid initial state. "
+                    "Default connector does not have expected values."
+                )
+            return
+
+        connector = Connector(
+            id=default_connector_id,
+            name="Ingestion API",
+            source=DocumentSource.INGESTION_API,
+            input_type=InputType.LOAD_STATE,
+            connector_specific_config={},
+            refresh_freq=None,
+        )
+        db_session.add(connector)
+        db_session.commit()

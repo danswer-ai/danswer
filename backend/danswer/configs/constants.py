@@ -40,6 +40,8 @@ LLM_CHUNKS = "llm_chunks"
 
 
 class DocumentSource(str, Enum):
+    # Special case, document passed in via Danswer APIs without specifying a source type
+    INGESTION_API = "ingestion_api"
     SLACK = "slack"
     WEB = "web"
     GOOGLE_DRIVE = "google_drive"

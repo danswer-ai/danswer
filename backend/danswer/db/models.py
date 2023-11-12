@@ -226,7 +226,7 @@ class Credential(Base):
     credential_json: Mapped[dict[str, Any]] = mapped_column(postgresql.JSONB())
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     # if `true`, then all Admins will have access to the credential
-    is_admin: Mapped[bool] = mapped_column(Boolean, default=True)
+    admin_public: Mapped[bool] = mapped_column(Boolean, default=True)
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -399,6 +399,9 @@ class Document(Base):
     # this should correspond to the ID of the document
     # (as is passed around in Danswer)
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    from_ingestion_api: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=True
+    )
     # 0 for neutral, positive for mostly endorse, negative for mostly reject
     boost: Mapped[int] = mapped_column(Integer, default=DEFAULT_BOOST)
     hidden: Mapped[bool] = mapped_column(Boolean, default=False)

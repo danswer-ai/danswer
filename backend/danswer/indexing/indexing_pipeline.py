@@ -34,7 +34,7 @@ class IndexingPipelineProtocol(Protocol):
         ...
 
 
-def _upsert_documents(
+def upsert_documents_in_db(
     documents: list[Document],
     index_attempt_metadata: IndexAttemptMetadata,
     db_session: Session,
@@ -52,6 +52,7 @@ def _upsert_documents(
             first_link=first_link,
             primary_owners=doc.primary_owners,
             secondary_owners=doc.secondary_owners,
+            from_ingestion_api=doc.from_ingestion_api,
         )
         doc_m_batch.append(db_doc_metadata)
 
@@ -101,7 +102,7 @@ def _indexing_pipeline(
 
         # Create records in the source of truth about these documents,
         # does not include doc_updated_at which is also used to indicate a successful update
-        _upsert_documents(
+        upsert_documents_in_db(
             documents=updatable_docs,
             index_attempt_metadata=index_attempt_metadata,
             db_session=db_session,
