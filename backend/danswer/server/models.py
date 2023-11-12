@@ -525,7 +525,7 @@ class DocumentSet(BaseModel):
 
 class IngestionDocument(BaseModel):
     document: DocumentBase
-    connector_id: int | None = None
+    connector_id: int | None = None  # Takes precedence over the name
     connector_name: str | None = None
     credential_id: int | None = None
     create_connector: bool = False  # Currently not allowed
