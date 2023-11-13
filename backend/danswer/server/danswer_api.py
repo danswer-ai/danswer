@@ -33,7 +33,8 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-router = APIRouter(prefix="/api")
+# not using /api to avoid confusion with nginx api path routing
+router = APIRouter(prefix="/danswer-api")
 
 # Assumes this gives admin privileges, basic users should not be allowed to call any Danswer apis
 _DANSWER_API_KEY = "danswer_api_key"
