@@ -4,7 +4,7 @@ import useSWR, { useSWRConfig } from "swr";
 import * as Yup from "yup";
 
 import { LoadingAnimation } from "@/components/Loading";
-import { GlobeIcon } from "@/components/icons/icons";
+import { GlobeIcon, GearIcon, ArrowSquareOutIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
 import {
   SelectorFormField,
@@ -32,7 +32,7 @@ export default function Web() {
     "/api/manage/admin/connector/indexing-status",
     fetcher
   );
-
+  
   const webIndexingStatuses: ConnectorIndexingStatus<WebConfig, {}>[] =
     connectorIndexingStatuses?.filter(
       (connectorIndexingStatus) =>
@@ -119,13 +119,16 @@ export default function Web() {
             {
               header: "Base URL",
               key: "base_url",
-              getValue: (ccPairConfig) => {
+              getValue: (ccPairStatus: ConnectorIndexingStatus<WebConfig, any>) => {
                 const connectorConfig =
-                  ccPairConfig.connector.connector_specific_config;
+                  ccPairStatus.connector.connector_specific_config;
                 return (
-                  <a className="text-blue-500" href={connectorConfig.base_url}>
+                  <div className="flex w-fit"><a className="text-blue-500 ml-1 my-auto flex" href={connectorConfig.base_url}>
                     {connectorConfig.base_url}
+                    <ArrowSquareOutIcon className="my-auto flex flex-shrink-0 text-blue-500" />
                   </a>
+                  <a className="my-auto" href={`/admin/connector/${ccPairStatus.cc_pair_id}`}><GearIcon className="ml-2 my-auto flex flex-shrink-0 text-gray-400" /></a>
+                  </div>
                 );
               },
             },
