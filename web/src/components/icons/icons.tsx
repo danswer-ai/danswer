@@ -12,6 +12,8 @@ import {
   X,
   Question,
   Users,
+  Gear,
+  ArrowSquareOut,
 } from "@phosphor-icons/react";
 import {
   FiCheck,
@@ -82,6 +84,20 @@ export const UsersIcon = ({
 }: IconProps) => {
   return <Users size={size} className={className} />;
 };
+
+export const GearIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <Gear size={size} className={className} />;
+};
+
+export const ArrowSquareOutIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <ArrowSquareOut size={size} className={className} />;
+}
 
 export const TrashIcon = ({
   size = 16,
