@@ -11,8 +11,6 @@ connector / credential pair from the access list
 (6) delete all relevant entries from postgres
 """
 import time
-from collections.abc import Callable
-from typing import cast
 
 from sqlalchemy.orm import Session
 
@@ -37,7 +35,6 @@ from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
-from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 logger = setup_logger()
 
@@ -173,14 +170,8 @@ def delete_connector_credential_pair(
 
     # Clean up document sets / access information from Postgres
     # and sync these updates to Vespa
-    cleanup_synced_entities__versioned = cast(
-        Callable[[ConnectorCredentialPair, Session], None],
-        fetch_versioned_implementation(
-            "danswer.background.connector_deletion",
-            "cleanup_synced_entities",
-        ),
-    )
-    cleanup_synced_entities__versioned(cc_pair, db_session)
+    # TODO: add user group cleanup with `fetch_versioned_implementation`
+    cleanup_synced_entities(cc_pair, db_session)
 
     # clean up the rest of the related Postgres entities
     delete_index_attempts(
