@@ -3,7 +3,6 @@ import os
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentIndexType
 
-
 #####
 # App Configs
 #####
@@ -189,6 +188,10 @@ NUM_DOCUMENT_TOKENS_FED_TO_CHAT = int(
 # For selecting a different LLM question-answering prompt format
 # Valid values: default, cot, weak
 QA_PROMPT_OVERRIDE = os.environ.get("QA_PROMPT_OVERRIDE") or None
+# Set the default answer language if the generative AI is unable to identify
+# the source (query) language. By default, the Generative AI should answer in
+# the same language as the query.
+QA_PROMPT_DEFAULT_LANGUAGE = os.environ.get("QA_PROMPT_DEFAULT_LANGUAGE") or "English"
 # 1 / (1 + DOC_TIME_DECAY * doc-age-in-years), set to 0 to have no decay
 # Capped in Vespa at 0.5
 DOC_TIME_DECAY = float(

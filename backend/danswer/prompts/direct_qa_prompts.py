@@ -1,12 +1,12 @@
 import json
 
+from danswer.configs.app_configs import QA_PROMPT_DEFAULT_LANGUAGE
 from danswer.prompts.constants import ANSWER_PAT
 from danswer.prompts.constants import GENERAL_SEP_PAT
 from danswer.prompts.constants import QUESTION_PAT
 from danswer.prompts.constants import QUOTE_PAT
 from danswer.prompts.constants import THOUGHT_PAT
 from danswer.prompts.constants import UNCERTAINTY_PAT
-
 
 QA_HEADER = """
 You are a question answering system that is constantly learning and improving.
@@ -15,9 +15,10 @@ accurate and detailed answers to diverse queries.
 """.strip()
 
 
-REQUIRE_JSON = """
+REQUIRE_JSON = f"""
 You ALWAYS responds with only a json containing an answer and quotes that support the answer.
-Your responses are as INFORMATIVE and DETAILED as possible.
+Your responses are as INFORMATIVE and DETAILED as possible. If my query is NOT in English,
+you have to answer in the language used. If not sure, answer in {QA_PROMPT_DEFAULT_LANGUAGE}.
 """.strip()
 
 
