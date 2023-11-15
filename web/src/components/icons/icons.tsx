@@ -97,7 +97,7 @@ export const ArrowSquareOutIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <ArrowSquareOut size={size} className={className} />;
-}
+};
 
 export const TrashIcon = ({
   size = 16,
