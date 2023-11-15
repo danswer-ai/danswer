@@ -1,0 +1,56 @@
+import threading
+import uuid
+from enum import Enum
+from typing import cast
+
+import requests
+
+from danswer.configs.app_configs import DISABLE_TELEMETRY
+from danswer.dynamic_configs import get_dynamic_config_store
+from danswer.dynamic_configs.interface import ConfigNotFoundError
+
+CUSTOMER_UUID_KEY = "customer_uuid"
+DANSWER_TELEMETRY_ENDPOINT = "https://www.danswer.ai/anonymous_telemetry"
+
+
+class RecordType(str, Enum):
+    VERSION = "version"
+    SIGN_UP = "sign_up"
+    LATENCY = "latency"
+    FAILURE = "failure"
+
+
+def get_or_generate_uuid() -> str:
+    kv_store = get_dynamic_config_store()
+    try:
+        return cast(str, kv_store.load(CUSTOMER_UUID_KEY))
+    except ConfigNotFoundError:
+        customer_id = str(uuid.uuid4())
+        kv_store.store(CUSTOMER_UUID_KEY, customer_id)
+        return customer_id
+
+
+def optional_telemetry(record_type: RecordType, data: dict) -> None:
+    if DISABLE_TELEMETRY:
+        return
+
+    try:
+
+        def telemetry_logic() -> None:
+            payload = {
+                "data": data,
+                "record": record_type,
+                "uuid": get_or_generate_uuid(),
+            }
+            requests.post(
+                DANSWER_TELEMETRY_ENDPOINT,
+                headers={"Content-Type": "application/json"},
+                json=payload,
+            )
+
+        # Run in separate thread to have minimal overhead in main flows
+        thread = threading.Thread(target=telemetry_logic, daemon=True)
+        thread.start()
+    except Exception:
+        # Should never interfere with normal functions of Danswer
+        pass

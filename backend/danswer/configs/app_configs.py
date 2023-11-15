@@ -238,5 +238,7 @@ JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
 LOG_ALL_MODEL_INTERACTIONS = (
     os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
 )
+# Anonymous usage telemetry
+DISABLE_TELEMETRY = os.environ.get("DISABLE_TELEMETRY", "").lower() == "true"
 # notset, debug, info, warning, error, or critical
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "info")

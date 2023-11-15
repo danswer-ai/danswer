@@ -48,6 +48,8 @@ from danswer.server.slack_bot_management import router as slack_bot_management_r
 from danswer.server.state import router as state_router
 from danswer.server.users import router as user_router
 from danswer.utils.logger import setup_logger
+from danswer.utils.telemetry import optional_telemetry
+from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 
@@ -211,6 +213,10 @@ def get_application() -> FastAPI:
 
         logger.info("Verifying Document Index(s) is/are available.")
         get_default_document_index().ensure_indices_exist()
+
+        optional_telemetry(
+            record_type=RecordType.VERSION, data={"version": __version__}
+        )
 
     application.add_middleware(
         CORSMiddleware,
