@@ -31,6 +31,8 @@ schema danswer_chunk {
         # https://docs.vespa.ai/en/attributes.html potential enum store for speed, but probably not worth it
         field source_type type string {
             indexing: summary | attribute
+            rank: filter
+            attribute: fast-search
         }
         # Can also index links https://docs.vespa.ai/en/reference/schema-reference.html#attribute
         # URL type matching
@@ -61,6 +63,7 @@ schema danswer_chunk {
         }
         field hidden type bool {
             indexing: summary | attribute
+            rank: filter
         }
         field metadata type string {
             indexing: summary | attribute
@@ -82,10 +85,12 @@ schema danswer_chunk {
         }
         field access_control_list type weightedset<string> {
             indexing: summary | attribute
+            rank: filter
             attribute: fast-search
         }
         field document_sets type weightedset<string> {
             indexing: summary | attribute
+            rank: filter
             attribute: fast-search
         }
     }
