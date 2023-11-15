@@ -116,7 +116,9 @@ export interface ZulipConfig {
   realm_url: string;
 }
 
-export interface NotionConfig {}
+export interface NotionConfig {
+  root_page_id?: string;
+}
 
 export interface HubSpotConfig {}
 

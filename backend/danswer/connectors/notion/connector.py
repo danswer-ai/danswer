@@ -82,6 +82,7 @@ class NotionConnector(LoadConnector, PollConnector):
             "Notion-Version": "2022-06-28",
         }
         self.indexed_pages: set[str] = set()
+        self.root_page_id = root_page_id
         # if enabled, will recursively index child pages as they are found rather
         # relying entirely on the `search` API. We have recieved reports that the
         # `search` API misses many pages - in those cases, this might need to be
@@ -89,8 +90,9 @@ class NotionConnector(LoadConnector, PollConnector):
         # NOTE: this also removes all benefits polling, since we need to traverse
         # all pages regardless of if they are updated. If the notion workspace is
         # very large, this may not be practical.
-        self.recursive_index_enabled = recursive_index_enabled
-        self.root_page_id = root_page_id
+        self.recursive_index_enabled = (
+            recursive_index_enabled or self.root_page_id is not None
+        )
 
     @retry(tries=3, delay=1, backoff=2)
     def _fetch_blocks(self, block_id: str, cursor: str | None = None) -> dict[str, Any]:
