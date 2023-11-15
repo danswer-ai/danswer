@@ -27,17 +27,17 @@ export const HoverPopup = ({
 
   return (
     <div
-      className="relative flex z-20"
+      className="relative flex"
       onMouseEnter={() => {
         setHovered(true);
       }}
       onMouseLeave={() => setHovered(false)}
     >
       {hovered && (
-        <div className={`absolute ${popupDirectionClass}`}>
+        <div className={`absolute ${popupDirectionClass} z-30`}>
           <div
             className={
-              `bg-gray-800 px-3 py-2 rounded shadow-lg z-30 ` +
+              `bg-gray-800 px-3 py-2 rounded shadow-lg ` +
               (classNameModifications || "")
             }
           >
@@ -45,7 +45,7 @@ export const HoverPopup = ({
           </div>
         </div>
       )}
-      {mainContent}
+      <div className="z-20">{mainContent}</div>
     </div>
   );
 };
