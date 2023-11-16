@@ -10,7 +10,7 @@ from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 
 CUSTOMER_UUID_KEY = "customer_uuid"
-DANSWER_TELEMETRY_ENDPOINT = "https://www.danswer.ai/anonymous_telemetry"
+DANSWER_TELEMETRY_ENDPOINT = "https://telemetry.danswer.ai/anonymous_telemetry"
 
 
 class RecordType(str, Enum):
@@ -40,7 +40,7 @@ def optional_telemetry(record_type: RecordType, data: dict) -> None:
             payload = {
                 "data": data,
                 "record": record_type,
-                "uuid": get_or_generate_uuid(),
+                "customer_uuid": get_or_generate_uuid(),
             }
             requests.post(
                 DANSWER_TELEMETRY_ENDPOINT,
