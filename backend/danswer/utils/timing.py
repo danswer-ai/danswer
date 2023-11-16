@@ -8,6 +8,8 @@ from typing import cast
 from typing import TypeVar
 
 from danswer.utils.logger import setup_logger
+from danswer.utils.telemetry import optional_telemetry
+from danswer.utils.telemetry import RecordType
 
 logger = setup_logger()
 
@@ -21,8 +23,13 @@ def log_function_time(func_name: str | None = None) -> Callable[[F], F]:
         def wrapped_func(*args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
             result = func(*args, **kwargs)
-            elapsed_time = time.time() - start_time
-            logger.info(f"{func_name or func.__name__} took {elapsed_time} seconds")
+            elapsed_time_str = str(time.time() - start_time)
+            log_name = func_name or func.__name__
+            logger.info(f"{log_name} took {elapsed_time_str} seconds")
+            optional_telemetry(
+                record_type=RecordType.LATENCY,
+                data={"function": log_name, "latency": str(elapsed_time_str)},
+            )
             return result
 
         return cast(F, wrapped_func)
@@ -44,8 +51,13 @@ def log_generator_function_time(func_name: str | None = None) -> Callable[[FG], 
             except StopIteration:
                 pass
             finally:
-                elapsed_time = time.time() - start_time
-                logger.info(f"{func_name or func.__name__} took {elapsed_time} seconds")
+                elapsed_time_str = str(time.time() - start_time)
+                log_name = func_name or func.__name__
+                logger.info(f"{log_name} took {elapsed_time_str} seconds")
+                optional_telemetry(
+                    record_type=RecordType.LATENCY,
+                    data={"function": log_name, "latency": str(elapsed_time_str)},
+                )
 
         return cast(FG, wrapped_func)
 

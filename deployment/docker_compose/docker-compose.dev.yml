@@ -48,6 +48,9 @@ services:
       - EDIT_KEYWORD_QUERY=${EDIT_KEYWORD_QUERY:-}
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-}
       - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
+      # Leave this on pretty please? Nothing sensitive is collected!
+      # https://docs.danswer.dev/more/telemetry
+      - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
       # Set to debug to get more fine-grained logs
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
