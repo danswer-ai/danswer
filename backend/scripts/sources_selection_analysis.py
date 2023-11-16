@@ -317,7 +317,7 @@ class SelectionAnalysis:
         queries: list = [],
         threshold: float = 0.0,
         web_port: int = 3000,
-        auth_cookie: str = None,
+        auth_cookie: str = "",
         wait: int = 10,
     ) -> None:
         """
