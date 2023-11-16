@@ -27,7 +27,7 @@
     "react-loader-spinner": "^5.4.5",
     "react-markdown": "^8.0.7",
     "semver": "^7.5.4",
-    "sharp": "^0.32.5",
+    "sharp": "^0.32.6",
     "swr": "^2.1.5",
     "tailwindcss": "^3.3.1",
     "typescript": "5.0.3",
