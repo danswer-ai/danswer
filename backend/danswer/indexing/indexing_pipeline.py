@@ -85,7 +85,7 @@ def _indexing_pipeline(
             doc.id: doc.doc_updated_at for doc in db_docs if doc.doc_updated_at
         }
 
-        updatable_docs = []
+        updatable_docs: list[Document] = []
         for doc in documents:
             if (
                 doc.id in id_update_time_map
@@ -107,12 +107,12 @@ def _indexing_pipeline(
             db_session=db_session,
         )
 
+        logger.debug("Starting chunking")
         chunks: list[DocAwareChunk] = list(
             chain(*[chunker.chunk(document=document) for document in updatable_docs])
         )
-        logger.debug(
-            f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in chunks]}"
-        )
+
+        logger.debug("Starting embedding")
         chunks_with_embeddings = embedder.embed(chunks=chunks)
 
         # Attach the latest status from Postgres (source of truth for access) to each
@@ -138,6 +138,9 @@ def _indexing_pipeline(
             for chunk in chunks_with_embeddings
         ]
 
+        logger.debug(
+            f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in chunks]}"
+        )
         # A document will not be spread across different batches, so all the
         # documents with chunks in this set, are fully represented by the chunks
         # in this set
