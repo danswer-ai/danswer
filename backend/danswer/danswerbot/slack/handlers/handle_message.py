@@ -232,7 +232,7 @@ def handle_message(
             logger.debug(answer.answer)
         return True
 
-    if not answer.top_ranked_docs:
+    if not answer.top_documents:
         logger.error(f"Unable to answer question: '{msg}' - no documents found")
         # Optionally, respond in thread with the error message, Used primarily
         # for debugging purposes
@@ -266,7 +266,7 @@ def handle_message(
     )
 
     document_blocks = build_documents_blocks(
-        documents=answer.top_ranked_docs, query_event_id=answer.query_event_id
+        documents=answer.top_documents, query_event_id=answer.query_event_id
     )
 
     try:

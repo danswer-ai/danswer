@@ -145,19 +145,17 @@ def handle_search_request(
     question.favor_recent = favor_recent
     question.filters.source_type = source_filters
 
-    ranked_chunks, unranked_chunks, query_event_id = danswer_search(
+    top_chunks, query_event_id = danswer_search(
         question=question,
         user=user,
         db_session=db_session,
         document_index=get_default_document_index(),
     )
 
-    top_docs = chunks_to_search_docs(ranked_chunks)
-    lower_top_docs = chunks_to_search_docs(unranked_chunks)
+    top_docs = chunks_to_search_docs(top_chunks)
 
     return SearchResponse(
-        top_ranked_docs=top_docs or None,
-        lower_ranked_docs=lower_top_docs or None,
+        top_documents=top_docs,
         query_event_id=query_event_id,
         source_type=source_filters,
         time_cutoff=time_cutoff,

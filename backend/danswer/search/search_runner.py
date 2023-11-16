@@ -9,6 +9,7 @@ from sentence_transformers import SentenceTransformer  # type: ignore
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import HYBRID_ALPHA
+from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
@@ -148,6 +149,10 @@ def semantic_reranking(
     model_min: int = CROSS_ENCODER_RANGE_MIN,
     model_max: int = CROSS_ENCODER_RANGE_MAX,
 ) -> list[InferenceChunk]:
+    """Reranks chunks based on cross-encoder models
+
+    Note: this updates the chunks in place, it updates the chunk scores which came from retrieval
+    """
     cross_encoders = CrossEncoderEnsembleModel()
     passages = [chunk.content for chunk in chunks]
     sim_scores_floats = cross_encoders.predict(query=query, passages=passages)
@@ -177,7 +182,6 @@ def semantic_reranking(
     )
 
     # Assign new chunk scores based on reranking
-    # TODO if pagination is added, the scores won't make sense with respect to the non-reranked hits
     for ind, chunk in enumerate(ranked_chunks):
         chunk.score = ranked_sim_scores[ind]
 
@@ -257,6 +261,9 @@ def apply_boost_legacy(
 
 def apply_boost(
     chunks: list[InferenceChunk],
+    # Need the range of values to not be too spread out for applying boost
+    # therefore norm across only the top few results
+    norm_cutoff: int = NUM_RERANKED_RESULTS,
     norm_min: float = SIM_SCORE_RANGE_LOW,
     norm_max: float = SIM_SCORE_RANGE_HIGH,
 ) -> list[InferenceChunk]:
@@ -266,13 +273,13 @@ def apply_boost(
     boosts = [translate_boost_count_to_multiplier(chunk.boost) for chunk in chunks]
     recency_multiplier = [chunk.recency_bias for chunk in chunks]
 
-    norm_min = min(norm_min, min(scores))
-    norm_max = max(norm_max, max(scores))
+    norm_min = min(norm_min, min(scores[:norm_cutoff]))
+    norm_max = max(norm_max, max(scores[:norm_cutoff]))
     # This should never be 0 unless user has done some weird/wrong settings
     norm_range = norm_max - norm_min
 
     boosted_scores = [
-        (score - norm_min) * boost * recency / norm_range
+        max(0, (score - norm_min) * boost * recency / norm_range)
         for score, boost, recency in zip(scores, boosts, recency_multiplier)
     ]
 
@@ -299,7 +306,10 @@ def search_chunks(
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-) -> tuple[list[InferenceChunk], list[InferenceChunk]]:
+) -> list[InferenceChunk]:
+    """Returns a list of the best chunks as well as an integer for number of documents reranked.
+    For sake of speed, the system cannot rerank all retrieved chunks"""
+
     def _log_top_chunk_links(search_flow: str, chunks: list[InferenceChunk]) -> None:
         top_links = [
             c.source_links[0] if c.source_links is not None else "No Link"
@@ -316,7 +326,7 @@ def search_chunks(
             f"{query.search_type.value.capitalize()} search returned no results "
             f"with filters: {query.filters}"
         )
-        return [], []
+        return []
 
     if retrieval_metrics_callback is not None:
         chunk_metrics = [
@@ -335,24 +345,29 @@ def search_chunks(
     # Keyword Search should never do reranking, no transformers involved in this flow
     if query.search_type == SearchType.KEYWORD:
         _log_top_chunk_links(query.search_type.value, top_chunks)
-        return top_chunks, []
+        return top_chunks
 
     if query.skip_rerank:
-        # Need the range of values to not be too spread out for applying boost
-        # Therefore pass in smaller set of chunks to limit the range for norm-ing
-        boosted_chunks = apply_boost(top_chunks[: query.num_rerank])
-        _log_top_chunk_links(query.search_type.value, boosted_chunks)
-        return boosted_chunks, top_chunks[query.num_rerank :]
+        # Previously applied boost here, currently chunk scores are already boosted
+        # and recency weighted. If removed going forward, reapply boost/recency separately here
+        _log_top_chunk_links(query.search_type.value, top_chunks)
+        return top_chunks
 
     ranked_chunks = semantic_reranking(
         query.query,
         top_chunks[: query.num_rerank],
         rerank_metrics_callback=rerank_metrics_callback,
     )
+    lower_chunks = top_chunks[query.num_rerank :]
+    # Scores from rerank cannot be meaningfully combined with scores without rerank
+    for lower_chunk in lower_chunks:
+        lower_chunk.score = None
+
+    ranked_chunks.extend(lower_chunks)
 
     _log_top_chunk_links(query.search_type.value, ranked_chunks)
 
-    return ranked_chunks, top_chunks[query.num_rerank :]
+    return ranked_chunks
 
 
 def danswer_search(
@@ -363,7 +378,7 @@ def danswer_search(
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-) -> tuple[list[InferenceChunk], list[InferenceChunk], int]:
+) -> tuple[list[InferenceChunk], int]:
     query_event_id = create_query_event(
         query=question.query,
         search_type=question.search_type,
@@ -390,14 +405,14 @@ def danswer_search(
         else False,
     )
 
-    ranked_chunks, unranked_chunks = search_chunks(
+    top_chunks = search_chunks(
         query=search_query,
         document_index=document_index,
         retrieval_metrics_callback=retrieval_metrics_callback,
         rerank_metrics_callback=rerank_metrics_callback,
     )
 
-    retrieved_ids = [doc.document_id for doc in ranked_chunks] if ranked_chunks else []
+    retrieved_ids = [doc.document_id for doc in top_chunks] if top_chunks else []
 
     update_query_event_retrieved_documents(
         db_session=db_session,
@@ -406,4 +421,4 @@ def danswer_search(
         user_id=None if user is None else user.id,
     )
 
-    return ranked_chunks, unranked_chunks, query_event_id
+    return top_chunks, query_event_id

@@ -25,9 +25,9 @@ from danswer.search.search_runner import danswer_search
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.secondary_llm_flows.source_filter import extract_question_source_filters
 from danswer.secondary_llm_flows.time_filter import extract_question_time_filters
+from danswer.server.models import QADocsResponse
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
-from danswer.server.models import RerankedRetrievalDocs
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
@@ -76,7 +76,7 @@ def answer_qa_query(
     question.favor_recent = favor_recent
     question.filters.source_type = source_filters
 
-    ranked_chunks, unranked_chunks, query_event_id = danswer_search(
+    top_chunks, query_event_id = danswer_search(
         question=question,
         user=user,
         db_session=db_session,
@@ -85,13 +85,11 @@ def answer_qa_query(
         rerank_metrics_callback=rerank_metrics_callback,
     )
 
-    top_docs = chunks_to_search_docs(ranked_chunks)
-    unranked_top_docs = chunks_to_search_docs(unranked_chunks)
+    top_docs = chunks_to_search_docs(top_chunks)
 
     partial_response = partial(
         QAResponse,
-        top_ranked_docs=top_docs,
-        lower_ranked_docs=unranked_top_docs,
+        top_documents=chunks_to_search_docs(top_chunks),
         predicted_flow=predicted_flow,
         predicted_search=predicted_search,
         query_event_id=query_event_id,
@@ -121,7 +119,7 @@ def answer_qa_query(
     # types which can't be parsed). These chunks are useful to show in the
     # search results, but not for QA.
     filtered_ranked_chunks = [
-        chunk for chunk in ranked_chunks if not chunk.metadata.get(IGNORE_FOR_QA)
+        chunk for chunk in top_chunks if not chunk.metadata.get(IGNORE_FOR_QA)
     ]
 
     # Get all chunks that fit into the token limit
@@ -200,19 +198,17 @@ def answer_qa_query_stream(
     question.favor_recent = favor_recent
     question.filters.source_type = source_filters
 
-    ranked_chunks, unranked_chunks, query_event_id = danswer_search(
+    top_chunks, query_event_id = danswer_search(
         question=question,
         user=user,
         db_session=db_session,
         document_index=get_default_document_index(),
     )
 
-    top_docs = chunks_to_search_docs(ranked_chunks)
-    unranked_top_docs = chunks_to_search_docs(unranked_chunks)
+    top_docs = chunks_to_search_docs(top_chunks)
 
-    initial_response = RerankedRetrievalDocs(
+    initial_response = QADocsResponse(
         top_documents=top_docs,
-        unranked_top_documents=unranked_top_docs,
         # if generative AI is disabled, set flow as search so frontend
         # doesn't ask the user if they want to run QA over more documents
         predicted_flow=QueryFlow.SEARCH
@@ -226,7 +222,7 @@ def answer_qa_query_stream(
     logger.debug(f"Sending Initial Retrival Results: {initial_response}")
     yield get_json_line(initial_response)
 
-    if not ranked_chunks:
+    if not top_chunks:
         logger.debug("No Documents Found")
         return
 
@@ -246,7 +242,7 @@ def answer_qa_query_stream(
     # types which can't be parsed). These chunks are useful to show in the
     # search results, but not for QA.
     filtered_ranked_chunks = [
-        chunk for chunk in ranked_chunks if not chunk.metadata.get(IGNORE_FOR_QA)
+        chunk for chunk in top_chunks if not chunk.metadata.get(IGNORE_FOR_QA)
     ]
 
     # get all chunks that fit into the token limit
