@@ -46,28 +46,32 @@ We also have built-in support for deployment on Kubernetes. Files for that can b
 
 ## 💃 Features 
 * Direct QA powered by Generative AI models with answers backed by quotes and source links.
-* Intelligent Document Retrieval (Semantic Search/Reranking) using the latest LLMs.
-* An AI Helper backed by a custom Deep Learning model to interpret user intent.
+* Intelligent Document Retrieval (Hybrid Search + Reranking) using the latest NLP models.
+* Automatic time/source filter extraction from natural language + custom model to identify user intent.
 * User authentication and document level access management.
-* Support for an LLM of your choice (GPT-4, Llama2, Orca, etc.)
-* Management Dashboard to manage connectors and set up features such as live update fetching.
+* Support for LLMs of your choice (GPT-4, Llama2, Orca, etc.)
+* Management Dashboards to manage connectors and set up features such as live update fetching.
 * One line Docker Compose (or Kubernetes) deployment to host Danswer anywhere.
 
 ## 🔌 Connectors 
 
-Danswer currently syncs documents (every 10 minutes) from:
+Efficiently pulls the latest changes from:
   * Slack
   * GitHub
   * Google Drive
   * Confluence
   * Jira
   * Notion
+  * Gong
   * Slab
   * Linear
   * Productboard
   * Guru
   * Zulip
   * Bookstack
+  * Document360
+  * Request Tracker
+  * Hubspot
   * Local Files
   * Websites
   * With more to come...
@@ -75,7 +79,9 @@ Danswer currently syncs documents (every 10 minutes) from:
 ## 🚧 Roadmap
 * Chat/Conversation support.
 * Organizational understanding.
-* Ability to locate and suggest experts.
+* Code Search
+* Structured Query Languages (SQL, Excel formulas, etc.)
+* Ability to locate and suggest experts from your team.
 
 ## 💡 Contributing
 Looking to contribute? Please check out the [Contribution Guide](CONTRIBUTING.md) for more details.

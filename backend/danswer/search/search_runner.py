@@ -299,7 +299,7 @@ def search_chunks(
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-) -> tuple[list[InferenceChunk] | None, list[InferenceChunk] | None]:
+) -> tuple[list[InferenceChunk], list[InferenceChunk]]:
     def _log_top_chunk_links(search_flow: str, chunks: list[InferenceChunk]) -> None:
         top_links = [
             c.source_links[0] if c.source_links is not None else "No Link"
@@ -316,7 +316,7 @@ def search_chunks(
             f"{query.search_type.value.capitalize()} search returned no results "
             f"with filters: {query.filters}"
         )
-        return None, None
+        return [], []
 
     if retrieval_metrics_callback is not None:
         chunk_metrics = [
@@ -335,7 +335,7 @@ def search_chunks(
     # Keyword Search should never do reranking, no transformers involved in this flow
     if query.search_type == SearchType.KEYWORD:
         _log_top_chunk_links(query.search_type.value, top_chunks)
-        return top_chunks, None
+        return top_chunks, []
 
     if query.skip_rerank:
         # Need the range of values to not be too spread out for applying boost
@@ -363,7 +363,7 @@ def danswer_search(
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-) -> tuple[list[InferenceChunk] | None, list[InferenceChunk] | None, int]:
+) -> tuple[list[InferenceChunk], list[InferenceChunk], int]:
     query_event_id = create_query_event(
         query=question.query,
         search_type=question.search_type,
@@ -384,7 +384,10 @@ def danswer_search(
         query=question.query,
         search_type=question.search_type,
         filters=final_filters,
-        favor_recent=True if question.favor_recent is None else question.favor_recent,
+        # Still applies time decay but not magnified
+        favor_recent=question.favor_recent
+        if question.favor_recent is not None
+        else False,
     )
 
     ranked_chunks, unranked_chunks = search_chunks(

@@ -152,21 +152,11 @@ def handle_search_request(
         document_index=get_default_document_index(),
     )
 
-    if not ranked_chunks:
-        return SearchResponse(
-            top_ranked_docs=None,
-            lower_ranked_docs=None,
-            query_event_id=query_event_id,
-            source_type=source_filters,
-            time_cutoff=time_cutoff,
-            favor_recent=favor_recent,
-        )
-
     top_docs = chunks_to_search_docs(ranked_chunks)
     lower_top_docs = chunks_to_search_docs(unranked_chunks)
 
     return SearchResponse(
-        top_ranked_docs=top_docs,
+        top_ranked_docs=top_docs or None,
         lower_ranked_docs=lower_top_docs or None,
         query_event_id=query_event_id,
         source_type=source_filters,

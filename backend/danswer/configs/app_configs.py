@@ -198,12 +198,14 @@ FAVOR_RECENT_DECAY_MULTIPLIER = 2
 DISABLE_LLM_FILTER_EXTRACTION = (
     os.environ.get("DISABLE_LLM_FILTER_EXTRACTION", "").lower() == "true"
 )
-# 1 edit per 2 characters, currently unused due to fuzzy match being too slow
+DISABLE_LLM_CHUNK_FILTER = (
+    os.environ.get("DISABLE_LLM_CHUNK_FILTER", "").lower() == "true"
+)
+# 1 edit per 20 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "60")  # 60 seconds
 # Include additional document/chunk metadata in prompt to GenerativeAI
 INCLUDE_METADATA = False
-HARD_DELETE_CHATS = os.environ.get("HARD_DELETE_CHATS", "True").lower() != "false"
 # Keyword Search Drop Stopwords
 # If user has changed the default model, would most likely be to use a multilingual
 # model, the stopwords are NLTK english stopwords so then we would want to not drop the keywords

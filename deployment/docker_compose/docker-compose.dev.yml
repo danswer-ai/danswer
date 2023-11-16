@@ -32,6 +32,7 @@ services:
       - DISABLE_GENERATIVE_AI=${DISABLE_GENERATIVE_AI:-}
       - NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP=${NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP:-}
       - DISABLE_LLM_FILTER_EXTRACTION=${DISABLE_LLM_FILTER_EXTRACTION:-}
+      - DISABLE_LLM_CHUNK_FILTER=${DISABLE_LLM_CHUNK_FILTER:-}
       # Recency Bias for search results, decay at 1 / (1 + DOC_TIME_DECAY * x years)
       - DOC_TIME_DECAY=${DOC_TIME_DECAY:-}
       # Hybrid Search Alpha (0 for entirely keyword, 1 for entirely vector)

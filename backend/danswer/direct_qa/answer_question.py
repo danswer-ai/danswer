@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from collections.abc import Iterator
+from functools import partial
 
 from sqlalchemy.orm import Session
 
@@ -66,6 +67,10 @@ def answer_qa_query(
     source_filters = parallel_results["extract_question_source_filters"]
     predicted_search, predicted_flow = parallel_results["query_intent"]
 
+    # Set flow as search so frontend doesn't ask the user if they want to run QA over more docs
+    if disable_generative_answer:
+        predicted_flow = QueryFlow.SEARCH
+
     # Modifies the question object but nothing upstream uses it
     question.filters.time_cutoff = time_cutoff
     question.favor_recent = favor_recent
@@ -80,38 +85,25 @@ def answer_qa_query(
         rerank_metrics_callback=rerank_metrics_callback,
     )
 
-    if not ranked_chunks:
-        return QAResponse(
-            answer=None,
-            quotes=None,
-            top_ranked_docs=None,
-            lower_ranked_docs=None,
-            predicted_flow=predicted_flow,
-            predicted_search=predicted_search,
-            query_event_id=query_event_id,
-            source_type=source_filters,
-            time_cutoff=time_cutoff,
-            favor_recent=favor_recent,
-        )
-
     top_docs = chunks_to_search_docs(ranked_chunks)
     unranked_top_docs = chunks_to_search_docs(unranked_chunks)
 
-    if disable_generative_answer:
-        logger.debug("Skipping QA because generative AI is disabled")
-        return QAResponse(
+    partial_response = partial(
+        QAResponse,
+        top_ranked_docs=top_docs,
+        lower_ranked_docs=unranked_top_docs,
+        predicted_flow=predicted_flow,
+        predicted_search=predicted_search,
+        query_event_id=query_event_id,
+        source_type=source_filters,
+        time_cutoff=time_cutoff,
+        favor_recent=favor_recent,
+    )
+
+    if disable_generative_answer or not top_docs:
+        return partial_response(
             answer=None,
             quotes=None,
-            top_ranked_docs=top_docs,
-            lower_ranked_docs=unranked_top_docs,
-            # set flow as search so frontend doesn't ask the user if they want
-            # to run QA over more documents
-            predicted_flow=QueryFlow.SEARCH,
-            predicted_search=predicted_search,
-            query_event_id=query_event_id,
-            source_type=source_filters,
-            time_cutoff=time_cutoff,
-            favor_recent=favor_recent,
         )
 
     try:
@@ -119,28 +111,20 @@ def answer_qa_query(
             timeout=answer_generation_timeout, real_time_flow=real_time_flow
         )
     except Exception as e:
-        return QAResponse(
+        return partial_response(
             answer=None,
             quotes=None,
-            top_ranked_docs=top_docs,
-            lower_ranked_docs=unranked_top_docs,
-            predicted_flow=predicted_flow,
-            predicted_search=predicted_search,
-            query_event_id=query_event_id,
-            source_type=source_filters,
-            time_cutoff=time_cutoff,
-            favor_recent=favor_recent,
             error_msg=str(e),
         )
 
-    # remove chunks marked as not applicable for QA (e.g. Google Drive file
+    # Remove chunks marked as not applicable for QA (e.g. Google Drive file
     # types which can't be parsed). These chunks are useful to show in the
     # search results, but not for QA.
     filtered_ranked_chunks = [
         chunk for chunk in ranked_chunks if not chunk.metadata.get(IGNORE_FOR_QA)
     ]
 
-    # get all chunks that fit into the token limit
+    # Get all chunks that fit into the token limit
     usable_chunks = get_usable_chunks(
         chunks=filtered_ranked_chunks,
         token_limit=NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
@@ -169,37 +153,16 @@ def answer_qa_query(
             user_id=None if user is None else user.id,
         )
 
+    validity = None
     if not real_time_flow and enable_reflexion and d_answer is not None:
-        valid = False
+        validity = False
         if d_answer.answer is not None:
-            valid = get_answer_validity(query, d_answer.answer)
+            validity = get_answer_validity(query, d_answer.answer)
 
-        return QAResponse(
-            answer=d_answer.answer if d_answer else None,
-            quotes=quotes.quotes if quotes else None,
-            top_ranked_docs=top_docs,
-            lower_ranked_docs=unranked_top_docs,
-            predicted_flow=predicted_flow,
-            predicted_search=predicted_search,
-            eval_res_valid=True if valid else False,
-            query_event_id=query_event_id,
-            source_type=source_filters,
-            time_cutoff=time_cutoff,
-            favor_recent=favor_recent,
-            error_msg=error_msg,
-        )
-
-    return QAResponse(
+    return partial_response(
         answer=d_answer.answer if d_answer else None,
         quotes=quotes.quotes if quotes else None,
-        top_ranked_docs=top_docs,
-        lower_ranked_docs=unranked_top_docs,
-        predicted_flow=predicted_flow,
-        predicted_search=predicted_search,
-        query_event_id=query_event_id,
-        source_type=source_filters,
-        time_cutoff=time_cutoff,
-        favor_recent=favor_recent,
+        eval_res_valid=validity,
         error_msg=error_msg,
     )
 

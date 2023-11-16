@@ -132,6 +132,26 @@ Note: The "file" source only applies to when the user refers to uploaded files i
 """.strip()
 
 
+CHUNK_FILTER_PROMPT = """
+Given a section of a document and a user query, determine if the reference section is useful for answering \
+the user query. It is not enough that the section is related, it must contain information that is USEFUL.
+
+If it is not clear that the document section and the query refer to the same thing, assume it is not.
+
+Reference Section:
+```
+{chunk_text}
+```
+
+User Query:
+```
+{user_query}
+```
+
+Respond with EXACTLY AND ONLY: "yes useful" or "not useful"
+""".strip()
+
+
 # User the following for easy viewing of prompts
 if __name__ == "__main__":
     print(ANSWERABLE_PROMPT)
