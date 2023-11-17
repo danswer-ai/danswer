@@ -129,7 +129,6 @@ services:
     environment:
       - INTERNAL_URL=http://api_server:8080
       - WEB_DOMAIN=${WEB_DOMAIN:-}
-      - OAUTH_NAME=${OAUTH_NAME:-}
   relational_db:
     image: postgres:15.2-alpine
     restart: always

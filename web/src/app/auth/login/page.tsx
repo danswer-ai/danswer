@@ -1,25 +1,31 @@
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { AuthType, OAUTH_NAME } from "@/lib/constants";
 import { User } from "@/lib/types";
-import { getCurrentUserSS, getAuthUrlSS, getAuthTypeSS } from "@/lib/userSS";
+import {
+  getCurrentUserSS,
+  getAuthUrlSS,
+  getAuthTypeMetadataSS,
+  AuthTypeMetadata,
+} from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { getWebVersion, getBackendVersion } from "@/lib/version";
+import Image from "next/image";
+import { SignInButton } from "./SignInButton";
 
-const BUTTON_STYLE =
-  "group relative w-64 flex justify-center " +
-  "py-2 px-4 border border-transparent text-sm " +
-  "font-medium rounded-md text-white bg-red-600 " +
-  " mx-auto";
+const Page = async ({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) => {
+  const autoRedirectDisabled = searchParams?.disableAutoRedirect === "true";
 
-const Page = async () => {
   // catch cases where the backend is completely unreachable here
   // without try / catch, will just raise an exception and the page
   // will not render
-  let authType: AuthType | null = null;
+  let authTypeMetadata: AuthTypeMetadata | null = null;
   let currentUser: User | null = null;
   try {
-    [authType, currentUser] = await Promise.all([
-      getAuthTypeSS(),
+    [authTypeMetadata, currentUser] = await Promise.all([
+      getAuthTypeMetadataSS(),
       getCurrentUserSS(),
     ]);
   } catch (e) {
@@ -38,7 +44,7 @@ const Page = async () => {
   }
 
   // simply take the user to the home page if Auth is disabled
-  if (authType === "disabled") {
+  if (authTypeMetadata?.authType === "disabled") {
     return redirect("/");
   }
 
@@ -49,16 +55,15 @@ const Page = async () => {
 
   // get where to send the user to authenticate
   let authUrl: string | null = null;
-  let autoRedirect: boolean = false;
-  if (authType) {
+  if (authTypeMetadata) {
     try {
-      [authUrl, autoRedirect] = await getAuthUrlSS(authType);
+      authUrl = await getAuthUrlSS(authTypeMetadata.authType);
     } catch (e) {
       console.log(`Some fetch failed for the login page - ${e}`);
     }
   }
 
-  if (autoRedirect && authUrl) {
+  if (authTypeMetadata?.autoRedirect && authUrl && !autoRedirectDisabled) {
     return redirect(authUrl);
   }
 
@@ -68,33 +73,23 @@ const Page = async () => {
         <HealthCheckBanner />
       </div>
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-200">
-              danswer 💃
-            </h2>
+        <div>
+          <div className="h-16 w-16 mx-auto">
+            <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
           </div>
-          <div className="flex">
-            {authUrl ? (
-              <a
-                href={authUrl || ""}
-                className={
-                  BUTTON_STYLE +
-                  " focus:outline-none focus:ring-2 hover:bg-red-700 focus:ring-offset-2 focus:ring-red-500"
-                }
-              >
-                Sign in with {OAUTH_NAME}
-              </a>
-            ) : (
-              <button className={BUTTON_STYLE + " cursor-default"}>
-                Sign in with {OAUTH_NAME}
-              </button>
-            )}
-          </div>
+          <h2 className="text-center text-xl font-bold mt-4">
+            Log In to Danswer
+          </h2>
+          {authUrl && authTypeMetadata && (
+            <SignInButton
+              authorizeUrl={authUrl}
+              authType={authTypeMetadata?.authType}
+            />
+          )}
         </div>
-        <div className="fixed bottom-4 right-4 z-50 text-slate-400 p-2">
-          VERSION w{web_version} b{backend_version}
-        </div>
+      </div>
+      <div className="fixed bottom-4 right-4 z-50 text-slate-400 p-2">
+        VERSION w{web_version} b{backend_version}
       </div>
     </main>
   );
