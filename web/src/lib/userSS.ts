@@ -4,18 +4,30 @@ import { buildUrl } from "./utilsSS";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import { AuthType } from "./constants";
 
-export const getAuthTypeSS = async (): Promise<AuthType> => {
+export interface AuthTypeMetadata {
+  authType: AuthType;
+  autoRedirect: boolean;
+}
+
+export const getAuthTypeMetadataSS = async (): Promise<AuthTypeMetadata> => {
   const res = await fetch(buildUrl("/auth/type"));
   if (!res.ok) {
     throw new Error("Failed to fetch data");
   }
 
   const data: { auth_type: string } = await res.json();
-  return data.auth_type as AuthType;
+  const authType = data.auth_type as AuthType;
+
+  // for SAML / OIDC, we auto-redirect the user to the IdP when the user visits
+  // Danswer in an un-authenticated state
+  if (authType === "oidc" || authType === "saml") {
+    return { authType, autoRedirect: true };
+  }
+  return { authType, autoRedirect: false };
 };
 
 export const getAuthDisabledSS = async (): Promise<boolean> => {
-  return (await getAuthTypeSS()) === "disabled";
+  return (await getAuthTypeMetadataSS()).authType === "disabled";
 };
 
 const geOIDCAuthUrlSS = async (): Promise<string> => {
@@ -48,21 +60,19 @@ const getSAMLAuthUrlSS = async (): Promise<string> => {
   return data.authorization_url;
 };
 
-export const getAuthUrlSS = async (
-  authType: AuthType
-): Promise<[string, boolean]> => {
-  // Returns the auth url and whether or not we should auto-redirect
+export const getAuthUrlSS = async (authType: AuthType): Promise<string> => {
+  // Returns the auth url for the given auth type
   switch (authType) {
     case "disabled":
-      return ["", true];
+      return "";
     case "google_oauth": {
-      return [await getGoogleOAuthUrlSS(), false];
+      return await getGoogleOAuthUrlSS();
     }
     case "saml": {
-      return [await getSAMLAuthUrlSS(), true];
+      return await getSAMLAuthUrlSS();
     }
     case "oidc": {
-      return [await geOIDCAuthUrlSS(), true];
+      return await geOIDCAuthUrlSS();
     }
   }
 };

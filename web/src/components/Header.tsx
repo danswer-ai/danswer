@@ -17,13 +17,14 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleLogout = () => {
-    logout().then((isSuccess) => {
-      if (!isSuccess) {
-        alert("Failed to logout");
-      }
-      router.push("/auth/login");
-    });
+  const handleLogout = async () => {
+    const response = await logout();
+    if (!response.ok) {
+      alert("Failed to logout");
+    }
+    // disable auto-redirect immediately after logging out so the user
+    // is not immediately re-logged in
+    router.push("/auth/login?disableAutoRedirect=true");
   };
 
   // When dropdownOpen state changes, it attaches/removes the click listener
