@@ -307,7 +307,7 @@ def search_chunks(
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> list[InferenceChunk]:
-    """Returns a list of the best chunks as well as an integer for number of documents reranked.
+    """Returns a list of the best chunks from search + reranking.
     For sake of speed, the system cannot rerank all retrieved chunks"""
 
     def _log_top_chunk_links(search_flow: str, chunks: list[InferenceChunk]) -> None:

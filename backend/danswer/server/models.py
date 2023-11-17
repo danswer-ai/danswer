@@ -216,6 +216,7 @@ class QAResponse(SearchResponse):
     predicted_flow: QueryFlow
     predicted_search: SearchType
     eval_res_valid: bool | None = None
+    llm_chunks_indices: list[int] | None = None
     error_msg: str | None = None
 
 

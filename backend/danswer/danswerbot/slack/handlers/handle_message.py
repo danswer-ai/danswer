@@ -266,7 +266,9 @@ def handle_message(
     )
 
     document_blocks = build_documents_blocks(
-        documents=answer.top_documents, query_event_id=answer.query_event_id
+        documents=answer.top_documents,
+        llm_doc_inds=answer.llm_chunks_indices,
+        query_event_id=answer.query_event_id,
     )
 
     try:

@@ -132,7 +132,9 @@ Note: The "file" source only applies to when the user refers to uploaded files i
 """.strip()
 
 
-CHUNK_FILTER_PROMPT = """
+USEFUL_PAT = "yes useful"
+NONUSEFUL_PAT = "not useful"
+CHUNK_FILTER_PROMPT = f"""
 Given a section of a document and a user query, determine if the reference section is useful for answering \
 the user query. It is not enough that the section is related, it must contain information that is USEFUL.
 
@@ -140,15 +142,15 @@ If it is not clear that the document section and the query refer to the same thi
 
 Reference Section:
 ```
-{chunk_text}
+{{chunk_text}}
 ```
 
 User Query:
 ```
-{user_query}
+{{user_query}}
 ```
 
-Respond with EXACTLY AND ONLY: "yes useful" or "not useful"
+Respond with EXACTLY AND ONLY: "{USEFUL_PAT}" or "{NONUSEFUL_PAT}"
 """.strip()
 
 

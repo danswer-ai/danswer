@@ -5,16 +5,16 @@ from functools import partial
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
-from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QA_TIMEOUT
-from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.db.feedback import update_query_event_llm_answer
+from danswer.configs.constants import LLM_CHUNKS
+from danswer.configs.constants import QUERY_EVENT_ID
 from danswer.db.models import User
 from danswer.direct_qa.factory import get_default_qa_model
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import StreamingError
 from danswer.direct_qa.models import LLMMetricsContainer
-from danswer.direct_qa.qa_utils import get_usable_chunks
+from danswer.direct_qa.qa_utils import get_chunks_for_qa
 from danswer.document_index.factory import get_default_document_index
 from danswer.search.danswer_helper import query_intent
 from danswer.search.models import QueryFlow
@@ -30,7 +30,7 @@ from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
-from danswer.utils.threadpool_concurrency import run_functions_in_parallel
+from danswer.utils.threadpool_concurrency import run_functions_dict_in_parallel
 from danswer.utils.timing import log_function_time
 from danswer.utils.timing import log_generator_function_time
 
@@ -61,7 +61,7 @@ def answer_qa_query(
         query_intent: (query,),
     }
 
-    parallel_results = run_functions_in_parallel(functions_to_run)
+    parallel_results = run_functions_dict_in_parallel(functions_to_run)
 
     time_cutoff, favor_recent = parallel_results["extract_question_time_filters"]
     source_filters = parallel_results["extract_question_source_filters"]
@@ -115,27 +115,22 @@ def answer_qa_query(
             error_msg=str(e),
         )
 
-    # Remove chunks marked as not applicable for QA (e.g. Google Drive file
-    # types which can't be parsed). These chunks are useful to show in the
-    # search results, but not for QA.
-    filtered_ranked_chunks = [
-        chunk for chunk in top_chunks if not chunk.metadata.get(IGNORE_FOR_QA)
-    ]
-
-    # Get all chunks that fit into the token limit
-    usable_chunks = get_usable_chunks(
-        chunks=filtered_ranked_chunks,
-        token_limit=NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
+    llm_chunks_indices = get_chunks_for_qa(
+        query=query,  # for LLM filter flow
+        chunks=top_chunks,
         offset=offset_count,
     )
+
+    llm_chunks = [top_chunks[i] for i in llm_chunks_indices]
+
     logger.debug(
-        f"Chunks fed to LLM: {[chunk.semantic_identifier for chunk in usable_chunks]}"
+        f"Chunks fed to LLM: {[chunk.semantic_identifier for chunk in llm_chunks]}"
     )
 
     error_msg = None
     try:
         d_answer, quotes = qa_model.answer_question(
-            query, usable_chunks, metrics_callback=llm_metrics_callback
+            query, llm_chunks, metrics_callback=llm_metrics_callback
         )
     except Exception as e:
         # exception is logged in the answer_question method, no need to re-log
@@ -161,6 +156,7 @@ def answer_qa_query(
         answer=d_answer.answer if d_answer else None,
         quotes=quotes.quotes if quotes else None,
         eval_res_valid=validity,
+        llm_chunks_indices=llm_chunks_indices,
         error_msg=error_msg,
     )
 
@@ -187,7 +183,7 @@ def answer_qa_query_stream(
         query_intent: (query,),
     }
 
-    parallel_results = run_functions_in_parallel(functions_to_run)
+    parallel_results = run_functions_dict_in_parallel(functions_to_run)
 
     time_cutoff, favor_recent = parallel_results["extract_question_time_filters"]
     source_filters = parallel_results["extract_question_source_filters"]
@@ -238,25 +234,21 @@ def answer_qa_query_stream(
         yield get_json_line(error.dict())
         return
 
-    # remove chunks marked as not applicable for QA (e.g. Google Drive file
-    # types which can't be parsed). These chunks are useful to show in the
-    # search results, but not for QA.
-    filtered_ranked_chunks = [
-        chunk for chunk in top_chunks if not chunk.metadata.get(IGNORE_FOR_QA)
-    ]
-
-    # get all chunks that fit into the token limit
-    usable_chunks = get_usable_chunks(
-        chunks=filtered_ranked_chunks,
-        token_limit=NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
+    llm_chunks_indices = get_chunks_for_qa(
+        query=query,  # for LLM filter flow
+        chunks=top_chunks,
         offset=offset_count,
     )
+
+    yield get_json_line({LLM_CHUNKS: llm_chunks_indices})
+
+    llm_chunks = [top_chunks[i] for i in llm_chunks_indices]
     logger.debug(
-        f"Chunks fed to LLM: {[chunk.semantic_identifier for chunk in usable_chunks]}"
+        f"Chunks fed to LLM: {[chunk.semantic_identifier for chunk in llm_chunks]}"
     )
 
     try:
-        for response_packet in qa_model.answer_question_stream(query, usable_chunks):
+        for response_packet in qa_model.answer_question_stream(query, llm_chunks):
             if response_packet is None:
                 continue
             if (
@@ -280,4 +272,4 @@ def answer_qa_query_stream(
         user_id=None if user is None else user.id,
     )
 
-    yield get_json_line({"query_event_id": query_event_id})
+    yield get_json_line({QUERY_EVENT_ID: query_event_id})

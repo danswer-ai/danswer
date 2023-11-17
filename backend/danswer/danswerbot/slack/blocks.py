@@ -10,7 +10,6 @@ from slack_sdk.models.blocks import SectionBlock
 
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import SearchFeedbackType
-from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
 from danswer.configs.danswerbot_configs import ENABLE_SLACK_DOC_FEEDBACK
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
@@ -89,48 +88,66 @@ def get_restate_blocks(
 
 def build_documents_blocks(
     documents: list[SearchDoc],
+    llm_doc_inds: list[int] | None,
     query_event_id: int,
-    num_docs_to_display: int = DANSWER_BOT_NUM_DOCS_TO_DISPLAY,
+    num_docs_to_display: int = 10,
     include_feedback: bool = ENABLE_SLACK_DOC_FEEDBACK,
 ) -> list[Block]:
     seen_docs_identifiers = set()
     section_blocks: list[Block] = [HeaderBlock(text="Reference Documents")]
     included_docs = 0
-    for rank, d in enumerate(documents):
-        if d.document_id in seen_docs_identifiers:
-            continue
-        seen_docs_identifiers.add(d.document_id)
+    for prioritize_llm_chunk in [True, False]:
+        for rank, d in enumerate(documents):
+            if d.document_id in seen_docs_identifiers:
+                continue
 
-        doc_sem_id = d.semantic_identifier
-        if d.source_type == DocumentSource.SLACK.value:
-            doc_sem_id = "#" + doc_sem_id
+            if (
+                llm_doc_inds is not None
+                and (rank in llm_doc_inds) is not prioritize_llm_chunk
+            ):
+                continue
 
-        used_chars = len(doc_sem_id) + 3
-        match_str = translate_vespa_highlight_to_slack(d.match_highlights, used_chars)
+            seen_docs_identifiers.add(d.document_id)
 
-        included_docs += 1
+            doc_sem_id = d.semantic_identifier
+            if d.source_type == DocumentSource.SLACK.value:
+                doc_sem_id = "#" + doc_sem_id
 
-        if d.link:
-            block_text = f"<{d.link}|{doc_sem_id}>:\n>{remove_slack_text_interactions(match_str)}"
-        else:
-            block_text = f"{doc_sem_id}:\n>{remove_slack_text_interactions(match_str)}"
-
-        section_blocks.append(
-            SectionBlock(text=block_text),
-        )
-
-        if include_feedback:
-            section_blocks.append(
-                build_doc_feedback_block(
-                    query_event_id=query_event_id,
-                    document_id=d.document_id,
-                    document_rank=rank,
-                ),
+            used_chars = len(doc_sem_id) + 3
+            match_str = translate_vespa_highlight_to_slack(
+                d.match_highlights, used_chars
             )
 
-        section_blocks.append(DividerBlock())
+            included_docs += 1
 
-        if included_docs >= num_docs_to_display:
+            if d.link:
+                block_text = f"<{d.link}|{doc_sem_id}>:\n>{remove_slack_text_interactions(match_str)}"
+            else:
+                block_text = (
+                    f"{doc_sem_id}:\n>{remove_slack_text_interactions(match_str)}"
+                )
+
+            section_blocks.append(
+                SectionBlock(text=block_text),
+            )
+
+            if include_feedback:
+                section_blocks.append(
+                    build_doc_feedback_block(
+                        query_event_id=query_event_id,
+                        document_id=d.document_id,
+                        document_rank=rank,
+                    ),
+                )
+
+            section_blocks.append(DividerBlock())
+
+            if included_docs >= num_docs_to_display:
+                break
+
+        if llm_doc_inds is None or included_docs >= num_docs_to_display:
+            # Don't do a second pass for docs not passed to LLM if no selected indices
+            # Or if enough docs are reached
             break
 
     return section_blocks

@@ -116,6 +116,11 @@ export const DocumentDisplay = ({
 }: DocumentDisplayProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
+  // Consider reintroducing null scored docs in the future
+  if (document.score === null) {
+    return null;
+  }
+
   return (
     <div
       key={document.semantic_identifier}
@@ -126,23 +131,25 @@ export const DocumentDisplay = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex relative">
-        <div className="absolute -left-10 top-2/4 -translate-y-2/4 w-10 flex">
-          <div
-            className={`
-          text-xs 
-          text-gray-200 
-          bg-gray-800 
-          rounded 
-          p-0.5 
-          w-fit 
-          my-auto 
-          select-none 
-          ml-auto 
-          mr-2`}
-          >
-            {document.score.toFixed(2)}
+        {document.score !== null && (
+          <div className="absolute -left-10 top-2/4 -translate-y-2/4 w-10 flex">
+            <div
+              className={`
+                text-xs
+                text-gray-200
+                bg-gray-800
+                rounded
+                p-0.5
+                w-fit
+                my-auto
+                select-none
+                ml-auto
+                mr-2`}
+            >
+              {document.score.toFixed(2)}
+            </div>
           </div>
-        </div>
+        )}
         <a
           className={
             "rounded-lg flex font-bold " +
