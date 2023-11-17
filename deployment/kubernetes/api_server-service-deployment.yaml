@@ -112,6 +112,11 @@ spec:
             configMapKeyRef:
               name: env-configmap
               key: VALID_EMAIL_DOMAINS
+        - name: DISABLE_TELEMETRY
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: DISABLE_TELEMETRY
         - name: DISABLE_GENERATIVE_AI
           valueFrom:
             configMapKeyRef:
