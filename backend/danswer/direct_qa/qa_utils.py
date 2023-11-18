@@ -9,7 +9,6 @@ from typing import Tuple
 
 import regex
 
-from danswer.configs.app_configs import DISABLE_LLM_FILTER_EXTRACTION
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
@@ -23,7 +22,6 @@ from danswer.llm.utils import check_number_of_tokens
 from danswer.prompts.constants import ANSWER_PAT
 from danswer.prompts.constants import QUOTE_PAT
 from danswer.prompts.constants import UNCERTAINTY_PAT
-from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_chunks
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_model_quote
 from danswer.utils.text_processing import clean_up_code_blocks
@@ -323,11 +321,10 @@ def get_usable_chunks(
 
 
 def get_chunks_for_qa(
-    query: str,
     chunks: list[InferenceChunk],
+    llm_chunk_selection: list[bool],
     token_limit: int = NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
     max_llm_filter_chunks: int = NUM_RERANKED_RESULTS,
-    disable_llm_selection: bool = DISABLE_LLM_FILTER_EXTRACTION,
     offset: int = 0,
 ) -> list[int]:
     """
@@ -336,32 +333,15 @@ def get_chunks_for_qa(
     Only selects chunks viable for Q&A, within the token limit, and prioritize those selected
     by the LLM in a separate flow (this can be turned off)
     """
-    offset_chunks = chunks[offset:]
 
-    if not offset_chunks:
-        raise ValueError("Chunks offset too large, should not retry this many times")
-
-    if disable_llm_selection:
-        chunk_selection = [True for _ in offset_chunks]
-    else:
-        chunk_selection = llm_batch_eval_chunks(
-            query=query,
-            chunk_contents=[
-                chunk.content for chunk in offset_chunks[:max_llm_filter_chunks]
-            ],
-        )
-        chunk_selection.extend([False for _ in offset_chunks[max_llm_filter_chunks:]])
-
-    selected_indices: list[int] = []
+    batch_index = 0
+    latest_batch_indices = []
     token_count = 0
 
     # First iterate the LLM selected chunks, then iterate the rest if tokens remaining
     for selection_target in [True, False]:
-        if token_count >= token_limit:
-            break
-
-        for ind, chunk in enumerate(offset_chunks):
-            if chunk_selection[ind] is not selection_target or chunk.metadata.get(
+        for ind, chunk in enumerate(chunks):
+            if llm_chunk_selection[ind] is not selection_target or chunk.metadata.get(
                 IGNORE_FOR_QA
             ):
                 continue
@@ -370,10 +350,14 @@ def get_chunks_for_qa(
             token_count += check_number_of_tokens(chunk.content)
 
             # Always use at least 1 chunk
-            if token_count <= token_limit or not selected_indices:
-                selected_indices.append(ind + offset)
+            if token_count <= token_limit or not latest_batch_indices:
+                latest_batch_indices.append(ind)
 
             if token_count >= token_limit:
-                break
+                if batch_index < offset:
+                    pass
 
-    return selected_indices
+        if token_count >= token_limit:
+            break
+
+    return latest_batch_indices

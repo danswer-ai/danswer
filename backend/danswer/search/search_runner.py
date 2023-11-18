@@ -8,6 +8,7 @@ from nltk.tokenize import word_tokenize  # type:ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 from sqlalchemy.orm import Session
 
+from danswer.configs.app_configs import DISABLE_LLM_FILTER_EXTRACTION
 from danswer.configs.app_configs import HYBRID_ALPHA
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
@@ -34,9 +35,12 @@ from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.search.search_nlp_models import CrossEncoderEnsembleModel
 from danswer.search.search_nlp_models import EmbeddingModel
+from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_chunks
 from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchDoc
 from danswer.utils.logger import setup_logger
+from danswer.utils.threadpool_concurrency import FunctionCall
+from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.timing import log_function_time
 
 
@@ -148,8 +152,9 @@ def semantic_reranking(
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
     model_min: int = CROSS_ENCODER_RANGE_MIN,
     model_max: int = CROSS_ENCODER_RANGE_MAX,
-) -> list[InferenceChunk]:
-    """Reranks chunks based on cross-encoder models
+) -> tuple[list[InferenceChunk], list[int]]:
+    """Reranks chunks based on cross-encoder models. Additionally provides the original indices
+    of the chunks in their new sorted order.
 
     Note: this updates the chunks in place, it updates the chunk scores which came from retrieval
     """
@@ -173,9 +178,14 @@ def semantic_reranking(
     normalized_b_s_scores = (boosted_sim_scores + cross_models_min - model_min) / (
         model_max - model_min
     )
-    scored_results = list(zip(normalized_b_s_scores, raw_sim_scores, chunks))
+    orig_indices = [i for i in range(len(normalized_b_s_scores))]
+    scored_results = list(
+        zip(normalized_b_s_scores, raw_sim_scores, chunks, orig_indices)
+    )
     scored_results.sort(key=lambda x: x[0], reverse=True)
-    ranked_sim_scores, ranked_raw_scores, ranked_chunks = zip(*scored_results)
+    ranked_sim_scores, ranked_raw_scores, ranked_chunks, ranked_indices = zip(
+        *scored_results
+    )
 
     logger.debug(
         f"Reranked (Boosted + Time Weighted) similarity scores: {ranked_sim_scores}"
@@ -202,7 +212,7 @@ def semantic_reranking(
             )
         )
 
-    return list(ranked_chunks)
+    return list(ranked_chunks), list(ranked_indices)
 
 
 def apply_boost_legacy(
@@ -303,12 +313,15 @@ def search_chunks(
     query: SearchQuery,
     document_index: DocumentIndex,
     hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
+    max_llm_filter_chunks: int = NUM_RERANKED_RESULTS,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-) -> list[InferenceChunk]:
-    """Returns a list of the best chunks from search + reranking.
-    For sake of speed, the system cannot rerank all retrieved chunks"""
+) -> tuple[list[InferenceChunk], list[bool]]:
+    """Returns a list of the best chunks from search/reranking and if the chunks are relevant via LLM.
+    For sake of speed, the system cannot rerank all retrieved chunks
+    Also pass the chunks through LLM to determine if they are relevant (binary for speed)
+    """
 
     def _log_top_chunk_links(search_flow: str, chunks: list[InferenceChunk]) -> None:
         top_links = [
@@ -326,7 +339,7 @@ def search_chunks(
             f"{query.search_type.value.capitalize()} search returned no results "
             f"with filters: {query.filters}"
         )
-        return []
+        return [], []
 
     if retrieval_metrics_callback is not None:
         chunk_metrics = [
@@ -342,32 +355,58 @@ def search_chunks(
             RetrievalMetricsContainer(keyword_search=True, metrics=chunk_metrics)
         )
 
-    # Keyword Search should never do reranking, no transformers involved in this flow
-    if query.search_type == SearchType.KEYWORD:
+    functions_to_run: list[FunctionCall] = []
+
+    # Keyword Search should not do reranking
+    if query.search_type == SearchType.KEYWORD or query.skip_rerank:
         _log_top_chunk_links(query.search_type.value, top_chunks)
-        return top_chunks
+    else:
+        functions_to_run.append(
+            FunctionCall(
+                semantic_reranking,
+                (query.query, top_chunks[: query.num_rerank]),
+                {"rerank_metrics_callback": rerank_metrics_callback},
+            ),
+        )
 
-    if query.skip_rerank:
-        # Previously applied boost here, currently chunk scores are already boosted
-        # and recency weighted. If removed going forward, reapply boost/recency separately here
-        _log_top_chunk_links(query.search_type.value, top_chunks)
-        return top_chunks
+    if not query.skip_llm_filter:
+        functions_to_run.append(
+            FunctionCall(
+                llm_batch_eval_chunks,
+                (
+                    query.query,
+                    [chunk.content for chunk in top_chunks[:max_llm_filter_chunks]],
+                ),
+                {},
+            ),
+        )
 
-    ranked_chunks = semantic_reranking(
-        query.query,
-        top_chunks[: query.num_rerank],
-        rerank_metrics_callback=rerank_metrics_callback,
-    )
-    lower_chunks = top_chunks[query.num_rerank :]
-    # Scores from rerank cannot be meaningfully combined with scores without rerank
-    for lower_chunk in lower_chunks:
-        lower_chunk.score = None
+    parallel_results = run_functions_in_parallel(functions_to_run)
 
-    ranked_chunks.extend(lower_chunks)
+    ranked_results = parallel_results.get("semantic_reranking")
+    if ranked_results is None:
+        ranked_chunks = top_chunks
+        sorted_indices = [i for i in range(len(top_chunks))]
+    else:
+        ranked_chunks, orig_indices = ranked_results
+        sorted_indices = orig_indices + list(range(len(orig_indices), len(top_chunks)))
+        lower_chunks = top_chunks[query.num_rerank :]
+        # Scores from rerank cannot be meaningfully combined with scores without rerank
+        for lower_chunk in lower_chunks:
+            lower_chunk.score = None
+        ranked_chunks.extend(lower_chunks)
 
+    llm_chunk_selection = parallel_results.get("llm_batch_eval_chunks")
+    if llm_chunk_selection is None:
+        reranked_llm_chunk_selection = [True for _ in top_chunks]
+    else:
+        llm_chunk_selection.extend([False for _ in top_chunks[max_llm_filter_chunks:]])
+        reranked_llm_chunk_selection = [
+            llm_chunk_selection[ind] for ind in sorted_indices
+        ]
     _log_top_chunk_links(query.search_type.value, ranked_chunks)
 
-    return ranked_chunks
+    return ranked_chunks, reranked_llm_chunk_selection
 
 
 def danswer_search(
@@ -375,10 +414,11 @@ def danswer_search(
     user: User | None,
     db_session: Session,
     document_index: DocumentIndex,
+    skip_llm_filter: bool = DISABLE_LLM_FILTER_EXTRACTION,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-) -> tuple[list[InferenceChunk], int]:
+) -> tuple[list[InferenceChunk], list[bool], int]:
     query_event_id = create_query_event(
         query=question.query,
         search_type=question.search_type,
@@ -403,9 +443,10 @@ def danswer_search(
         favor_recent=question.favor_recent
         if question.favor_recent is not None
         else False,
+        skip_llm_filter=skip_llm_filter,
     )
 
-    top_chunks = search_chunks(
+    top_chunks, llm_chunk_selection = search_chunks(
         query=search_query,
         document_index=document_index,
         retrieval_metrics_callback=retrieval_metrics_callback,
@@ -421,4 +462,4 @@ def danswer_search(
         user_id=None if user is None else user.id,
     )
 
-    return top_chunks, query_event_id
+    return top_chunks, llm_chunk_selection, query_event_id

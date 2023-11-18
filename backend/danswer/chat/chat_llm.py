@@ -140,7 +140,7 @@ def danswer_chat_retrieval(
     )
 
     # Good Debug/Breakpoint
-    top_chunks = search_chunks(
+    top_chunks, _ = search_chunks(
         query=search_query, document_index=get_default_document_index()
     )
 

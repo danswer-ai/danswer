@@ -30,7 +30,8 @@ from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
-from danswer.utils.threadpool_concurrency import run_functions_dict_in_parallel
+from danswer.utils.threadpool_concurrency import FunctionCall
+from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.timing import log_function_time
 from danswer.utils.timing import log_generator_function_time
 
@@ -55,13 +56,13 @@ def answer_qa_query(
     offset_count = question.offset if question.offset is not None else 0
     logger.info(f"Received QA query: {query}")
 
-    functions_to_run: dict[Callable, tuple] = {
-        extract_question_time_filters: (question,),
-        extract_question_source_filters: (question, db_session),
-        query_intent: (query,),
-    }
+    functions_to_run = [
+        FunctionCall(extract_question_time_filters, (question,), {}),
+        FunctionCall(extract_question_source_filters, (question, db_session), {}),
+        FunctionCall(query_intent, (query,), {}),
+    ]
 
-    parallel_results = run_functions_dict_in_parallel(functions_to_run)
+    parallel_results = run_functions_in_parallel(functions_to_run)
 
     time_cutoff, favor_recent = parallel_results["extract_question_time_filters"]
     source_filters = parallel_results["extract_question_source_filters"]
@@ -76,7 +77,7 @@ def answer_qa_query(
     question.favor_recent = favor_recent
     question.filters.source_type = source_filters
 
-    top_chunks, query_event_id = danswer_search(
+    top_chunks, llm_chunk_selection, query_event_id = danswer_search(
         question=question,
         user=user,
         db_session=db_session,
@@ -116,8 +117,8 @@ def answer_qa_query(
         )
 
     llm_chunks_indices = get_chunks_for_qa(
-        query=query,  # for LLM filter flow
         chunks=top_chunks,
+        llm_chunk_selection=llm_chunk_selection,
         offset=offset_count,
     )
 
@@ -177,13 +178,13 @@ def answer_qa_query_stream(
     query = question.query
     offset_count = question.offset if question.offset is not None else 0
 
-    functions_to_run: dict[Callable, tuple] = {
-        extract_question_time_filters: (question,),
-        extract_question_source_filters: (question, db_session),
-        query_intent: (query,),
-    }
+    functions_to_run = [
+        FunctionCall(extract_question_time_filters, (question,), {}),
+        FunctionCall(extract_question_source_filters, (question, db_session), {}),
+        FunctionCall(query_intent, (query,), {}),
+    ]
 
-    parallel_results = run_functions_dict_in_parallel(functions_to_run)
+    parallel_results = run_functions_in_parallel(functions_to_run)
 
     time_cutoff, favor_recent = parallel_results["extract_question_time_filters"]
     source_filters = parallel_results["extract_question_source_filters"]
@@ -194,7 +195,7 @@ def answer_qa_query_stream(
     question.favor_recent = favor_recent
     question.filters.source_type = source_filters
 
-    top_chunks, query_event_id = danswer_search(
+    top_chunks, llm_chunk_selection, query_event_id = danswer_search(
         question=question,
         user=user,
         db_session=db_session,
@@ -235,8 +236,8 @@ def answer_qa_query_stream(
         return
 
     llm_chunks_indices = get_chunks_for_qa(
-        query=query,  # for LLM filter flow
         chunks=top_chunks,
+        llm_chunk_selection=llm_chunk_selection,
         offset=offset_count,
     )
 

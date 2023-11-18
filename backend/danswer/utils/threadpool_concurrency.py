@@ -44,27 +44,25 @@ def run_functions_tuples_in_parallel(
     return [result for index, result in results]
 
 
-def run_functions_dict_in_parallel(
-    functions_with_args: dict[Callable, tuple],
+class FunctionCall:
+    def __init__(self, func: Callable, args: tuple = (), kwargs: dict | None = None):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs if kwargs is not None else {}
+
+    def execute(self) -> Any:
+        return self.func(*self.args, **self.kwargs)
+
+
+def run_functions_in_parallel(
+    function_calls: list[FunctionCall],
     allow_failures: bool = False,
 ) -> dict[str, Any]:
-    """
-    Executes multiple functions in parallel and returns a dictionary with the results.
-    More explicit than the tuples approach but cannot be used to parallelize the same function with
-    multiple inputs
-
-    Args:
-        functions_with_args (dict): A dictionary mapping functions to a tuple of arguments.
-        allow_failures: if se to True, then the function result will just be None
-
-    Returns:
-        dict: A dictionary mapping function names to their results or error messages.
-    """
     results = {}
-    with ThreadPoolExecutor(max_workers=len(functions_with_args)) as executor:
+    with ThreadPoolExecutor(max_workers=len(function_calls)) as executor:
         future_to_function = {
-            executor.submit(func, *args): func.__name__
-            for func, args in functions_with_args.items()
+            executor.submit(func_call.execute): func_call.func.__name__
+            for func_call in function_calls
         }
 
         for future in as_completed(future_to_function):

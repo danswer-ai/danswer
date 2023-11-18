@@ -26,14 +26,17 @@ def llm_eval_chunk(query: str, chunk_content: str) -> bool:
     def _extract_usefulness(model_output: str) -> bool:
         """Default useful if the LLM doesn't match pattern exactly
         This is because it's better to trust the (re)ranking if LLM fails"""
-        if model_output.strip().strip('"') == NONUSEFUL_PAT:
+        if model_output.strip().strip('"').lower() == NONUSEFUL_PAT.lower():
             return False
         return True
 
     messages = _get_usefulness_messages()
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
-    model_output = get_default_llm().invoke(filled_llm_prompt)
-    logger.debug(model_output)
+    # When running in a batch, it takes as long as the longest thread
+    # And when running a large batch, one may fail and take the whole timeout
+    # instead cap it to 5 seconds
+    model_output = get_default_llm(timeout=5).invoke(filled_llm_prompt)
+    logger.debug(chunk_content[-200:] + "... is " + model_output)
 
     return _extract_usefulness(model_output)
 
@@ -53,7 +56,7 @@ def llm_batch_eval_chunks(
             functions_with_args, allow_failures=True
         )
 
-        # In case of failure, don't throw out the chunk
+        # In case of failure/timeout, don't throw out the chunk
         return [True if item is None else item for item in parallel_results]
 
     else:

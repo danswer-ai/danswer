@@ -132,13 +132,13 @@ Note: The "file" source only applies to when the user refers to uploaded files i
 """.strip()
 
 
-USEFUL_PAT = "yes useful"
-NONUSEFUL_PAT = "not useful"
+USEFUL_PAT = "Yes useful"
+NONUSEFUL_PAT = "Not useful"
 CHUNK_FILTER_PROMPT = f"""
-Given a section of a document and a user query, determine if the reference section is useful for answering \
-the user query. It is not enough that the section is related, it must contain information that is USEFUL.
-
-If it is not clear that the document section and the query refer to the same thing, assume it is not.
+Determine if the reference section is USEFUL for answering the user query. \
+It is not enough that the section is related to the query, it must contain information that is \
+USEFUL. If the section contains ANY useful information, that is good enough, \
+it does not need to fully answer the user query.
 
 Reference Section:
 ```
