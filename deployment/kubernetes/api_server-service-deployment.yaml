@@ -62,11 +62,6 @@ spec:
             secretKeyRef:
               name: danswer-secrets
               key: google_oauth_client_secret
-        - name: INTERNAL_MODEL_VERSION
-          valueFrom:
-            configMapKeyRef:
-              name: env-configmap
-              key: INTERNAL_MODEL_VERSION
         - name: GEN_AI_MODEL_VERSION
           valueFrom:
             configMapKeyRef:
