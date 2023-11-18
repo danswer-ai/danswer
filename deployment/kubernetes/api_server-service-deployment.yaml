@@ -92,6 +92,11 @@ spec:
             configMapKeyRef:
               name: env-configmap
               key: NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
+        - name: GEN_AI_API_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: GEN_AI_API_ENDPOINT
         - name: VESPA_HOST
           valueFrom:
             configMapKeyRef:
