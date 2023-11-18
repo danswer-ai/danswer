@@ -148,6 +148,23 @@ def update_query_event_retrieved_documents(
     db_session.commit()
 
 
+def update_query_event_llm_answer(
+    db_session: Session,
+    llm_answer: str,
+    query_id: int,
+    user_id: UUID | None,
+) -> None:
+    query_event = fetch_query_event_by_id(query_id, db_session)
+
+    if user_id != query_event.user_id:
+        raise ValueError(
+            "User trying to update llm_answer on a query run by another user."
+        )
+
+    query_event.llm_answer = llm_answer
+    db_session.commit()
+
+
 def create_doc_retrieval_feedback(
     qa_event_id: int,
     document_id: str,
