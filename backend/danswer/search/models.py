@@ -59,6 +59,8 @@ class SearchQuery(BaseModel):
     # Only used if not skip_rerank
     num_rerank: int | None = NUM_RERANKED_RESULTS
     skip_llm_filter: bool = DISABLE_LLM_FILTER_EXTRACTION
+    # Only used if not skip_llm_filter
+    max_llm_filter_chunks: int = NUM_RERANKED_RESULTS
 
 
 class RetrievalMetricsContainer(BaseModel):

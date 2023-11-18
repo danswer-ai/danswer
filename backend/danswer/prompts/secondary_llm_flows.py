@@ -137,8 +137,8 @@ NONUSEFUL_PAT = "Not useful"
 CHUNK_FILTER_PROMPT = f"""
 Determine if the reference section is USEFUL for answering the user query. \
 It is not enough that the section is related to the query, it must contain information that is \
-USEFUL. If the section contains ANY useful information, that is good enough, \
-it does not need to fully answer the user query.
+directly USEFUL. If the section contains ANY useful information, that is good enough, \
+it does not need to fully answer the user query as it will be combined with other sections.
 
 Reference Section:
 ```

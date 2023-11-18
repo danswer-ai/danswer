@@ -313,7 +313,6 @@ def search_chunks(
     query: SearchQuery,
     document_index: DocumentIndex,
     hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
-    max_llm_filter_chunks: int = NUM_RERANKED_RESULTS,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
@@ -321,6 +320,8 @@ def search_chunks(
     """Returns a list of the best chunks from search/reranking and if the chunks are relevant via LLM.
     For sake of speed, the system cannot rerank all retrieved chunks
     Also pass the chunks through LLM to determine if they are relevant (binary for speed)
+
+    Only the first  max_llm_filter_chunks
     """
 
     def _log_top_chunk_links(search_flow: str, chunks: list[InferenceChunk]) -> None:
@@ -360,30 +361,32 @@ def search_chunks(
     # Keyword Search should not do reranking
     if query.search_type == SearchType.KEYWORD or query.skip_rerank:
         _log_top_chunk_links(query.search_type.value, top_chunks)
+        run_rerank_id: str | None = None
     else:
-        functions_to_run.append(
-            FunctionCall(
-                semantic_reranking,
-                (query.query, top_chunks[: query.num_rerank]),
-                {"rerank_metrics_callback": rerank_metrics_callback},
-            ),
+        run_rerank = FunctionCall(
+            semantic_reranking,
+            (query.query, top_chunks[: query.num_rerank]),
+            {"rerank_metrics_callback": rerank_metrics_callback},
         )
+        functions_to_run.append(run_rerank)
+        run_rerank_id = run_rerank.result_id
 
+    run_llm_filter_id = None
     if not query.skip_llm_filter:
-        functions_to_run.append(
-            FunctionCall(
-                llm_batch_eval_chunks,
-                (
-                    query.query,
-                    [chunk.content for chunk in top_chunks[:max_llm_filter_chunks]],
-                ),
-                {},
+        run_llm_filter = FunctionCall(
+            llm_batch_eval_chunks,
+            (
+                query.query,
+                [chunk.content for chunk in top_chunks[: query.max_llm_filter_chunks]],
             ),
+            {},
         )
+        functions_to_run.append(run_llm_filter)
+        run_llm_filter_id = run_llm_filter.result_id
 
     parallel_results = run_functions_in_parallel(functions_to_run)
 
-    ranked_results = parallel_results.get("semantic_reranking")
+    ranked_results = parallel_results.get(str(run_rerank_id))
     if ranked_results is None:
         ranked_chunks = top_chunks
         sorted_indices = [i for i in range(len(top_chunks))]
@@ -396,11 +399,13 @@ def search_chunks(
             lower_chunk.score = None
         ranked_chunks.extend(lower_chunks)
 
-    llm_chunk_selection = parallel_results.get("llm_batch_eval_chunks")
+    llm_chunk_selection = parallel_results.get(str(run_llm_filter_id))
     if llm_chunk_selection is None:
         reranked_llm_chunk_selection = [True for _ in top_chunks]
     else:
-        llm_chunk_selection.extend([False for _ in top_chunks[max_llm_filter_chunks:]])
+        llm_chunk_selection.extend(
+            [False for _ in top_chunks[query.max_llm_filter_chunks :]]
+        )
         reranked_llm_chunk_selection = [
             llm_chunk_selection[ind] for ind in sorted_indices
         ]

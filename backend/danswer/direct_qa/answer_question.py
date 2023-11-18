@@ -56,17 +56,23 @@ def answer_qa_query(
     offset_count = question.offset if question.offset is not None else 0
     logger.info(f"Received QA query: {query}")
 
-    functions_to_run = [
-        FunctionCall(extract_question_time_filters, (question,), {}),
-        FunctionCall(extract_question_source_filters, (question, db_session), {}),
-        FunctionCall(query_intent, (query,), {}),
-    ]
+    run_time_filters = FunctionCall(extract_question_time_filters, (question,), {})
+    run_source_filters = FunctionCall(
+        extract_question_source_filters, (question, db_session), {}
+    )
+    run_query_intent = FunctionCall(query_intent, (query,), {})
 
-    parallel_results = run_functions_in_parallel(functions_to_run)
+    parallel_results = run_functions_in_parallel(
+        [
+            run_time_filters,
+            run_source_filters,
+            run_query_intent,
+        ]
+    )
 
-    time_cutoff, favor_recent = parallel_results["extract_question_time_filters"]
-    source_filters = parallel_results["extract_question_source_filters"]
-    predicted_search, predicted_flow = parallel_results["query_intent"]
+    time_cutoff, favor_recent = parallel_results[run_time_filters.result_id]
+    source_filters = parallel_results[run_source_filters.result_id]
+    predicted_search, predicted_flow = parallel_results[run_query_intent.result_id]
 
     # Set flow as search so frontend doesn't ask the user if they want to run QA over more docs
     if disable_generative_answer:
@@ -178,17 +184,23 @@ def answer_qa_query_stream(
     query = question.query
     offset_count = question.offset if question.offset is not None else 0
 
-    functions_to_run = [
-        FunctionCall(extract_question_time_filters, (question,), {}),
-        FunctionCall(extract_question_source_filters, (question, db_session), {}),
-        FunctionCall(query_intent, (query,), {}),
-    ]
+    run_time_filters = FunctionCall(extract_question_time_filters, (question,), {})
+    run_source_filters = FunctionCall(
+        extract_question_source_filters, (question, db_session), {}
+    )
+    run_query_intent = FunctionCall(query_intent, (query,), {})
 
-    parallel_results = run_functions_in_parallel(functions_to_run)
+    parallel_results = run_functions_in_parallel(
+        [
+            run_time_filters,
+            run_source_filters,
+            run_query_intent,
+        ]
+    )
 
-    time_cutoff, favor_recent = parallel_results["extract_question_time_filters"]
-    source_filters = parallel_results["extract_question_source_filters"]
-    predicted_search, predicted_flow = parallel_results["query_intent"]
+    time_cutoff, favor_recent = parallel_results[run_time_filters.result_id]
+    source_filters = parallel_results[run_source_filters.result_id]
+    predicted_search, predicted_flow = parallel_results[run_query_intent.result_id]
 
     # Modifies the question object but nothing upstream uses it
     question.filters.time_cutoff = time_cutoff
@@ -216,7 +228,6 @@ def answer_qa_query_stream(
         favor_recent=favor_recent,
     ).dict()
 
-    logger.debug(f"Sending Initial Retrival Results: {initial_response}")
     yield get_json_line(initial_response)
 
     if not top_chunks:
