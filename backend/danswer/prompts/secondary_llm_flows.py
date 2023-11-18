@@ -135,10 +135,11 @@ Note: The "file" source only applies to when the user refers to uploaded files i
 USEFUL_PAT = "Yes useful"
 NONUSEFUL_PAT = "Not useful"
 CHUNK_FILTER_PROMPT = f"""
-Determine if the reference section is USEFUL for answering the user query. \
-It is not enough that the section is related to the query, it must contain information that is \
-directly USEFUL. If the section contains ANY useful information, that is good enough, \
-it does not need to fully answer the user query as it will be combined with other sections.
+Determine if the reference section is USEFUL for answering the user query.
+It is NOT enough for the section to be related to the query, \
+it must contain information that is USEFUL for answering the query.
+If the section contains ANY useful information, that is good enough, \
+it does not need to fully answer the every part of the user query.
 
 Reference Section:
 ```

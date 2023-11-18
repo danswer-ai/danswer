@@ -265,9 +265,16 @@ def handle_message(
         favor_recent=answer.favor_recent,
     )
 
+    # Get the chunks fed to the LLM only, then fill with other docs
+    top_docs = answer.top_documents
+    llm_doc_inds = answer.llm_chunks_indices or []
+    llm_docs = [top_docs[i] for i in llm_doc_inds]
+    remaining_docs = [
+        doc for idx, doc in enumerate(top_docs) if idx not in llm_doc_inds
+    ]
+    priority_ordered_docs = llm_docs + remaining_docs
     document_blocks = build_documents_blocks(
-        documents=answer.top_documents,
-        llm_doc_inds=answer.llm_chunks_indices,
+        documents=priority_ordered_docs,
         query_event_id=answer.query_event_id,
     )
 

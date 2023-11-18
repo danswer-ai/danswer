@@ -222,6 +222,7 @@ class QAResponse(SearchResponse):
 
 # First chunk of info for streaming QA
 class QADocsResponse(RetrievalDocs):
+    llm_chunks_indices: list[int]
     predicted_flow: QueryFlow
     predicted_search: SearchType
     time_cutoff: datetime | None

@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.db.feedback import update_query_event_llm_answer
-from danswer.configs.constants import LLM_CHUNKS
 from danswer.configs.constants import QUERY_EVENT_ID
 from danswer.db.models import User
 from danswer.direct_qa.factory import get_default_qa_model
@@ -216,8 +215,15 @@ def answer_qa_query_stream(
 
     top_docs = chunks_to_search_docs(top_chunks)
 
+    llm_chunks_indices = get_chunks_for_qa(
+        chunks=top_chunks,
+        llm_chunk_selection=llm_chunk_selection,
+        batch_offset=offset_count,
+    )
+
     initial_response = QADocsResponse(
         top_documents=top_docs,
+        llm_chunks_indices=llm_chunks_indices,
         # if generative AI is disabled, set flow as search so frontend
         # doesn't ask the user if they want to run QA over more documents
         predicted_flow=QueryFlow.SEARCH
@@ -245,14 +251,6 @@ def answer_qa_query_stream(
         error = StreamingError(error=str(e))
         yield get_json_line(error.dict())
         return
-
-    llm_chunks_indices = get_chunks_for_qa(
-        chunks=top_chunks,
-        llm_chunk_selection=llm_chunk_selection,
-        batch_offset=offset_count,
-    )
-
-    yield get_json_line({LLM_CHUNKS: llm_chunks_indices})
 
     llm_chunks = [top_chunks[i] for i in llm_chunks_indices]
     logger.debug(
