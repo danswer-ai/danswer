@@ -119,7 +119,7 @@ def answer_qa_query(
     llm_chunks_indices = get_chunks_for_qa(
         chunks=top_chunks,
         llm_chunk_selection=llm_chunk_selection,
-        offset=offset_count,
+        batch_offset=offset_count,
     )
 
     llm_chunks = [top_chunks[i] for i in llm_chunks_indices]
@@ -238,7 +238,7 @@ def answer_qa_query_stream(
     llm_chunks_indices = get_chunks_for_qa(
         chunks=top_chunks,
         llm_chunk_selection=llm_chunk_selection,
-        offset=offset_count,
+        batch_offset=offset_count,
     )
 
     yield get_json_line({LLM_CHUNKS: llm_chunks_indices})
