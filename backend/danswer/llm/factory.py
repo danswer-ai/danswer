@@ -20,6 +20,6 @@ def get_default_llm(
         return CustomModelServer(api_key=api_key, timeout=timeout)
 
     if GEN_AI_MODEL_PROVIDER.lower() == "gpt4all":
-        DanswerGPT4All(timeout=timeout)
+        return DanswerGPT4All(timeout=timeout)
 
     return DefaultMultiLLM(api_key=api_key, timeout=timeout)
