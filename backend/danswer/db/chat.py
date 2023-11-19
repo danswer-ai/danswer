@@ -9,7 +9,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import HARD_DELETE_CHATS
+from danswer.configs.chat_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession

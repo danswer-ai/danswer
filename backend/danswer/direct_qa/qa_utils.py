@@ -11,6 +11,7 @@ import regex
 
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
+from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerQuote
@@ -316,3 +317,57 @@ def get_usable_chunks(
         offset_into_chunks += len(usable_chunks)
 
     return usable_chunks
+
+
+def get_chunks_for_qa(
+    chunks: list[InferenceChunk],
+    llm_chunk_selection: list[bool],
+    token_limit: int = NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
+    batch_offset: int = 0,
+) -> list[int]:
+    """
+    Gives back indices of chunks to pass into the LLM for Q&A.
+
+    Only selects chunks viable for Q&A, within the token limit, and prioritize those selected
+    by the LLM in a separate flow (this can be turned off)
+
+    Note, the batch_offset calculation has to count the batches from the beginning each time as
+    there's no way to know which chunks were included in the prior batches without recounting atm,
+    this is somewhat slow as it requires tokenizing all the chunks again
+    """
+    batch_index = 0
+    latest_batch_indices: list[int] = []
+    token_count = 0
+
+    # First iterate the LLM selected chunks, then iterate the rest if tokens remaining
+    for selection_target in [True, False]:
+        for ind, chunk in enumerate(chunks):
+            if llm_chunk_selection[ind] is not selection_target or chunk.metadata.get(
+                IGNORE_FOR_QA
+            ):
+                continue
+
+            # We calculate it live in case the user uses a different LLM + tokenizer
+            chunk_token = check_number_of_tokens(chunk.content)
+            token_count += chunk_token
+
+            # Always use at least 1 chunk
+            if token_count <= token_limit or not latest_batch_indices:
+                latest_batch_indices.append(ind)
+                current_chunk_unused = False
+            else:
+                current_chunk_unused = True
+
+            if token_count >= token_limit:
+                if batch_index < batch_offset:
+                    batch_index += 1
+                    if current_chunk_unused:
+                        latest_batch_indices = [ind]
+                        token_count = chunk_token
+                    else:
+                        latest_batch_indices = []
+                        token_count = 0
+                else:
+                    return latest_batch_indices
+
+    return latest_batch_indices

@@ -33,11 +33,6 @@ class LangChainChatLLM(LLM, abc.ABC):
     def llm(self) -> BaseChatModel:
         raise NotImplementedError
 
-    def _log_model_config(self) -> None:
-        logger.debug(
-            f"Model Class: {self.llm.__class__.__name__}, Model Config: {self.llm.__dict__}"
-        )
-
     @staticmethod
     def _log_prompt(prompt: LanguageModelInput) -> None:
         if isinstance(prompt, list):
@@ -46,8 +41,12 @@ class LangChainChatLLM(LLM, abc.ABC):
         if isinstance(prompt, str):
             logger.debug(f"Prompt:\n{prompt}")
 
+    def log_model_configs(self) -> None:
+        logger.debug(
+            f"Model Class: {self.llm.__class__.__name__}, Model Config: {self.llm.__dict__}"
+        )
+
     def invoke(self, prompt: LanguageModelInput) -> str:
-        self._log_model_config()
         if LOG_ALL_MODEL_INTERACTIONS:
             self._log_prompt(prompt)
 
@@ -58,7 +57,6 @@ class LangChainChatLLM(LLM, abc.ABC):
         return model_raw
 
     def stream(self, prompt: LanguageModelInput) -> Iterator[str]:
-        self._log_model_config()
         if LOG_ALL_MODEL_INTERACTIONS:
             self._log_prompt(prompt)
 

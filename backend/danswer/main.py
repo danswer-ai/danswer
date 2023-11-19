@@ -36,6 +36,7 @@ from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.db.credentials import create_initial_public_credential
 from danswer.direct_qa.factory import get_default_qa_model
 from danswer.document_index.factory import get_default_document_index
+from danswer.llm.factory import get_default_llm
 from danswer.server.cc_pair.api import router as cc_pair_router
 from danswer.server.chat_backend import router as chat_router
 from danswer.server.connector import router as connector_router
@@ -197,7 +198,7 @@ def get_application() -> FastAPI:
             warm_up_models()
 
         # This is for the LLM, most LLMs will not need warming up
-        # It logs for itself
+        get_default_llm().log_model_configs()
         get_default_qa_model().warm_up_model()
 
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")

@@ -140,18 +140,15 @@ def danswer_chat_retrieval(
     )
 
     # Good Debug/Breakpoint
-    ranked_chunks, unranked_chunks = search_chunks(
+    top_chunks, _ = search_chunks(
         query=search_query, document_index=get_default_document_index()
     )
 
-    if not ranked_chunks:
+    if not top_chunks:
         return []
 
-    if unranked_chunks:
-        ranked_chunks.extend(unranked_chunks)
-
     filtered_ranked_chunks = [
-        chunk for chunk in ranked_chunks if not chunk.metadata.get(IGNORE_FOR_QA)
+        chunk for chunk in top_chunks if not chunk.metadata.get(IGNORE_FOR_QA)
     ]
 
     # get all chunks that fit into the token limit

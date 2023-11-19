@@ -37,16 +37,20 @@ def optional_telemetry(record_type: RecordType, data: dict) -> None:
     try:
 
         def telemetry_logic() -> None:
-            payload = {
-                "data": data,
-                "record": record_type,
-                "customer_uuid": get_or_generate_uuid(),
-            }
-            requests.post(
-                DANSWER_TELEMETRY_ENDPOINT,
-                headers={"Content-Type": "application/json"},
-                json=payload,
-            )
+            try:
+                payload = {
+                    "data": data,
+                    "record": record_type,
+                    "customer_uuid": get_or_generate_uuid(),
+                }
+                requests.post(
+                    DANSWER_TELEMETRY_ENDPOINT,
+                    headers={"Content-Type": "application/json"},
+                    json=payload,
+                )
+            except Exception:
+                # This way it silences all thread level logging as well
+                pass
 
         # Run in separate thread to have minimal overhead in main flows
         thread = threading.Thread(target=telemetry_logic, daemon=True)

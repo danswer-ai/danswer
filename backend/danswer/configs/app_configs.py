@@ -178,8 +178,12 @@ MINI_CHUNK_SIZE = 150
 NUM_RETURNED_HITS = 50
 NUM_RERANKED_RESULTS = 15
 # We feed in document chunks until we reach this token limit.
-# Default is ~5 full chunks (max chunk size is 2000 chars), although some chunks
-# may be smaller which could result in passing in more total chunks
+# Default is ~5 full chunks (max chunk size is 2000 chars), although some chunks may be
+# significantly smaller which could result in passing in more total chunks.
+# There is also a slight bit of overhead, not accounted for here such as separator patterns
+# between the docs, metadata for the docs, etc.
+# Finally, this is combined with the rest of the QA prompt, so don't set this too close to the
+# model token limit
 NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL = int(
     os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL") or (512 * 5)
 )
@@ -198,12 +202,14 @@ FAVOR_RECENT_DECAY_MULTIPLIER = 2
 DISABLE_LLM_FILTER_EXTRACTION = (
     os.environ.get("DISABLE_LLM_FILTER_EXTRACTION", "").lower() == "true"
 )
-# 1 edit per 2 characters, currently unused due to fuzzy match being too slow
+DISABLE_LLM_CHUNK_FILTER = (
+    os.environ.get("DISABLE_LLM_CHUNK_FILTER", "").lower() == "true"
+)
+# 1 edit per 20 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "60")  # 60 seconds
 # Include additional document/chunk metadata in prompt to GenerativeAI
 INCLUDE_METADATA = False
-HARD_DELETE_CHATS = os.environ.get("HARD_DELETE_CHATS", "True").lower() != "false"
 # Keyword Search Drop Stopwords
 # If user has changed the default model, would most likely be to use a multilingual
 # model, the stopwords are NLTK english stopwords so then we would want to not drop the keywords
