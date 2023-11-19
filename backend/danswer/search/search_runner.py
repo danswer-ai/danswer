@@ -372,7 +372,7 @@ def search_chunks(
         run_rerank_id = run_rerank.result_id
 
     run_llm_filter_id = None
-    if not query.skip_llm_filter:
+    if not query.skip_llm_chunk_filter:
         run_llm_filter = FunctionCall(
             llm_batch_eval_chunks,
             (

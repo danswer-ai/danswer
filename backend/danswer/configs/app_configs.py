@@ -178,8 +178,12 @@ MINI_CHUNK_SIZE = 150
 NUM_RETURNED_HITS = 50
 NUM_RERANKED_RESULTS = 15
 # We feed in document chunks until we reach this token limit.
-# Default is ~5 full chunks (max chunk size is 2000 chars), although some chunks
-# may be smaller which could result in passing in more total chunks
+# Default is ~5 full chunks (max chunk size is 2000 chars), although some chunks may be
+# significantly smaller which could result in passing in more total chunks.
+# There is also a slight bit of overhead, not accounted for here such as separator patterns
+# between the docs, metadata for the docs, etc.
+# Finally, this is combined with the rest of the QA prompt, so don't set this too close to the
+# model token limit
 NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL = int(
     os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL") or (512 * 5)
 )
