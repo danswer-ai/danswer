@@ -349,7 +349,8 @@ def get_chunks_for_qa(
 
             # We calculate it live in case the user uses a different LLM + tokenizer
             chunk_token = check_number_of_tokens(chunk.content)
-            token_count += chunk_token
+            # 50 for an approximate/slight overestimate for # tokens for metadata for the chunk
+            token_count += chunk_token + 50
 
             # Always use at least 1 chunk
             if token_count <= token_limit or not latest_batch_indices:

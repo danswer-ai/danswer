@@ -66,11 +66,12 @@ class QAHandler(abc.ABC):
 
 
 # Maps connector enum string to a more natural language representation for the LLM
-# If not on the list, uses the original but capitalized
+# If not on the list, uses the original but slightly cleaned up, see below
 CONNECTOR_NAME_MAP = {
     "web": "Website",
     "requesttracker": "Request Tracker",
     "github": "GitHub",
+    "file": "File Upload",
 }
 
 
