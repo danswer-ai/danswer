@@ -55,6 +55,8 @@ services:
       - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
       # Set to debug to get more fine-grained logs
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      # Log all of the prompts to the LLM
+      - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-info}
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
@@ -111,8 +113,13 @@ services:
       - MIN_THREADS_ML_MODELS=${MIN_THREADS_ML_MODELS:-}
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-}
       - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
+      # Leave this on pretty please? Nothing sensitive is collected!
+      # https://docs.danswer.dev/more/telemetry
+      - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
       # Set to debug to get more fine-grained logs
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      # Log all of the prompts to the LLM
+      - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-info}
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage

@@ -21,6 +21,7 @@ from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import MODEL_SERVER_PORT
+from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import SECRET
@@ -174,6 +175,11 @@ def get_application() -> FastAPI:
             logger.info(f"Using LLM Model Version: {GEN_AI_MODEL_VERSION}")
             if GEN_AI_API_ENDPOINT:
                 logger.info(f"Using LLM Endpoint: {GEN_AI_API_ENDPOINT}")
+
+        if MULTILINGUAL_QUERY_EXPANSION:
+            logger.info(
+                f"Using multilingual flow with languages: {MULTILINGUAL_QUERY_EXPANSION}"
+            )
 
         if SKIP_RERANKING:
             logger.info("Reranking step of search flow is disabled")

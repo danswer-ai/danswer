@@ -27,6 +27,11 @@ Quotes MUST be EXACT substrings from provided documents!
 """.strip()
 
 
+LANGUAGE_HINT = """
+IMPORTANT: Respond in the same language as my query!
+""".strip()
+
+
 # This has to be doubly escaped due to json containing { } which are also used for format strings
 EMPTY_SAMPLE_JSON = {
     "answer": "Place your final answer here. It should be as DETAILED and INFORMATIVE as possible.",
@@ -54,6 +59,7 @@ SAMPLE_RESPONSE:
 ```
 {QUESTION_PAT} {{user_query}}
 {JSON_HELPFUL_HINT}
+{{language_hint_or_none}}
 """.strip()
 
 
@@ -75,6 +81,7 @@ You MUST respond in the following format:
 
 {QUESTION_PAT} {{user_query}}
 {JSON_HELPFUL_HINT}
+{{language_hint_or_none}}
 """.strip()
 
 

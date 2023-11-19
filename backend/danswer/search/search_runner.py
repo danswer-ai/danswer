@@ -430,7 +430,9 @@ def search_chunks(
         functions_to_run.append(run_llm_filter)
         run_llm_filter_id = run_llm_filter.result_id
 
-    parallel_results: dict[str, Any] = run_functions_in_parallel(functions_to_run)
+    parallel_results: dict[str, Any] = {}
+    if functions_to_run:
+        parallel_results = run_functions_in_parallel(functions_to_run)
 
     ranked_results = parallel_results.get(str(run_rerank_id))
     if ranked_results is None:
