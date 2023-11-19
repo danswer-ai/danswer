@@ -8,7 +8,7 @@ from nltk.tokenize import word_tokenize  # type:ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import DISABLE_LLM_FILTER_EXTRACTION
+from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.app_configs import HYBRID_ALPHA
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
@@ -419,7 +419,7 @@ def danswer_search(
     user: User | None,
     db_session: Session,
     document_index: DocumentIndex,
-    skip_llm_filter: bool = DISABLE_LLM_FILTER_EXTRACTION,
+    skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
@@ -448,7 +448,7 @@ def danswer_search(
         favor_recent=question.favor_recent
         if question.favor_recent is not None
         else False,
-        skip_llm_filter=skip_llm_filter,
+        skip_llm_chunk_filter=skip_llm_chunk_filter,
     )
 
     top_chunks, llm_chunk_selection = search_chunks(

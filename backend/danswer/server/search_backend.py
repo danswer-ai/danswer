@@ -149,7 +149,7 @@ def handle_search_request(
         user=user,
         db_session=db_session,
         document_index=get_default_document_index(),
-        skip_llm_filter=True,
+        skip_llm_chunk_filter=True,
     )
 
     top_docs = chunks_to_search_docs(top_chunks)
