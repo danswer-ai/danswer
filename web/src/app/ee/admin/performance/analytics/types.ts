@@ -21,6 +21,7 @@ export interface AbridgedSearchDoc {
 export interface QuerySnapshot {
   id: number;
   query: string;
+  user_email: string | null;
   llm_answer: string;
   retrieved_documents: AbridgedSearchDoc[];
   time_created: string;

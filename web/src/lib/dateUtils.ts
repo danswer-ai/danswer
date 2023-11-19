@@ -16,3 +16,26 @@ export const timestampToDateString = (timestamp: string) => {
     .padStart(2, "0")}`;
   return formattedDate;
 };
+
+// Options for formatting the date
+const dateOptions: Intl.DateTimeFormatOptions = {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+};
+
+// Options for formatting the time
+const timeOptions: Intl.DateTimeFormatOptions = {
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true, // Use 12-hour format with AM/PM
+};
+
+export const timestampToReadableDate = (timestamp: string) => {
+  const date = new Date(timestamp);
+  return (
+    date.toLocaleDateString(undefined, dateOptions) +
+    ", " +
+    date.toLocaleTimeString(undefined, timeOptions)
+  );
+};

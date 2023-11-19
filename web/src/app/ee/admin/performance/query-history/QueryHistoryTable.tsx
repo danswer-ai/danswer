@@ -14,7 +14,10 @@ import { Divider } from "@tremor/react";
 import { Select, SelectItem } from "@tremor/react";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { QuerySnapshot } from "../analytics/types";
-import { timestampToDateString } from "@/lib/dateUtils";
+import {
+  timestampToDateString,
+  timestampToReadableDate,
+} from "@/lib/dateUtils";
 import { FiBook, FiFrown, FiMinus, FiSmile } from "react-icons/fi";
 import { useState } from "react";
 import { Feedback } from "@/lib/types";
@@ -22,6 +25,7 @@ import { DateRangeSelector } from "../DateRangeSelector";
 import { PageSelector } from "@/components/PageSelector";
 import Link from "next/link";
 import { FeedbackBadge } from "./FeedbackBadge";
+import { DownloadAsCSV } from "./DownloadAsCSV";
 
 const NUM_IN_PAGE = 20;
 
@@ -54,7 +58,10 @@ function QueryHistoryTableRow({
       <TableCell>
         <FeedbackBadge feedback={querySnapshot.feedback} />
       </TableCell>
-      <TableCell>{timestampToDateString(querySnapshot.time_created)}</TableCell>
+      <TableCell>{querySnapshot.user_email || "-"}</TableCell>
+      <TableCell>
+        {timestampToReadableDate(querySnapshot.time_created)}
+      </TableCell>
       {/* Wrapping in <td> to avoid console warnings */}
       <td className="w-0 p-0">
         <Link
@@ -114,13 +121,20 @@ export function QueryHistoryTable() {
     <Card className="mt-8">
       {queryHistoryData ? (
         <>
-          <div className="gap-y-3 flex flex-col">
-            <SelectFeedbackType
-              value={selectedFeedbackType || "all"}
-              onValueChange={setSelectedFeedbackType}
-            />
+          <div className="flex">
+            <div className="gap-y-3 flex flex-col">
+              <SelectFeedbackType
+                value={selectedFeedbackType || "all"}
+                onValueChange={setSelectedFeedbackType}
+              />
 
-            <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
+              <DateRangeSelector
+                value={timeRange}
+                onValueChange={setTimeRange}
+              />
+            </div>
+
+            <DownloadAsCSV />
           </div>
           <Divider />
           <Table className="mt-5">
@@ -130,6 +144,7 @@ export function QueryHistoryTable() {
                 <TableHeaderCell>LLM Answer</TableHeaderCell>
                 <TableHeaderCell>Retrieved Documents</TableHeaderCell>
                 <TableHeaderCell>Feedback</TableHeaderCell>
+                <TableHeaderCell>User</TableHeaderCell>
                 <TableHeaderCell>Date</TableHeaderCell>
               </TableRow>
             </TableHead>

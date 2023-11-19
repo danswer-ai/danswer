@@ -1,10 +1,11 @@
-import { Bold, Text, Card, Title, Divider } from "@tremor/react";
+import { Bold, Text, Card, Title, Divider, Italic } from "@tremor/react";
 import { QuerySnapshot } from "../../analytics/types";
 import { buildUrl } from "@/lib/utilsSS";
 import { BackButton } from "./BackButton";
 import { FiBook } from "react-icons/fi";
 import { processCookies } from "@/lib/userSS";
 import { cookies } from "next/headers";
+import { timestampToReadableDate } from "@/lib/dateUtils";
 
 export default async function QueryPage({
   params,
@@ -25,6 +26,11 @@ export default async function QueryPage({
 
       <Card className="mt-4">
         <Title>Query Details</Title>
+
+        <Text className="flex flex-wrap whitespace-normal mt-1 text-xs">
+          {queryEvent.user_email || "-"},{" "}
+          {timestampToReadableDate(queryEvent.time_created)}
+        </Text>
 
         <Divider />
 
