@@ -21,14 +21,16 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def process_link(element: BeautifulSoup | Tag) -> str:
+def process_link(element: BeautifulSoup | Tag) -> str | None:
     href = cast(str | None, element.get("href"))
     if not href:
-        raise RuntimeError(f"Invalid link - {element}")
+        return None
 
     # cleanup href
     href = urllib.parse.unquote(href)
-    href = href.rstrip(".html").lower()
+    href = href.lower()
+    if href.endswith(".html"):
+        href = href[:-5]
     href = href.replace("_", "")
     href = re.sub(
         r"([\s-]+)", "-", href
@@ -44,8 +46,9 @@ def find_google_sites_page_path_from_navbar(
     if ul:
         if not is_initial:
             a = cast(Tag, element.find("a"))
-            new_path = f"{path}/{process_link(a)}"
-            if a.get("aria-selected") == "true":
+            href = process_link(a)
+            new_path = f"{path}/{href}"
+            if href and a.get("aria-selected") == "true":
                 return new_path
         else:
             new_path = ""
