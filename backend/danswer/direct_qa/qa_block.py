@@ -65,6 +65,37 @@ class QAHandler(abc.ABC):
         )
 
 
+# Maps connector enum string to a more natural language representation for the LLM
+# If not on the list, uses the original but capitalized
+CONNECTOR_NAME_MAP = {
+    "web": "Website",
+    "requesttracker": "Request Tracker",
+    "github": "GitHub",
+}
+
+
+def clean_up_source(source_str: str) -> str:
+    if source_str in CONNECTOR_NAME_MAP:
+        return CONNECTOR_NAME_MAP[source_str]
+    return source_str.replace("_", " ").title()
+
+
+def build_context_str(
+    context_chunks: list[InferenceChunk],
+    include_metadata: bool = True,
+) -> str:
+    context = ""
+    for chunk in context_chunks:
+        if include_metadata:
+            context += f"NEW DOCUMENT: {chunk.semantic_identifier}\n"
+            context += f"Source: {clean_up_source(chunk.source_type)}\n"
+            if chunk.updated_at:
+                update_str = chunk.updated_at.strftime("%B %d, %Y %H:%M")
+                context += f"Updated: {update_str}\n"
+        context += f"{CODE_BLOCK_PAT.format(chunk.content.strip())}\n\n\n"
+    return context.strip()
+
+
 class WeakLLMQAHandler(QAHandler):
     """Since Danswer supports a variety of LLMs, this less demanding prompt is provided
     as an option to use with weaker LLMs such as small version, low float precision, quantized,
@@ -95,9 +126,7 @@ class SingleMessageQAHandler(QAHandler):
         context_chunks: list[InferenceChunk],
         use_language_hint: bool = bool(MULTILINGUAL_QUERY_EXPANSION),
     ) -> list[BaseMessage]:
-        context_docs_str = "\n".join(
-            f"\n{CODE_BLOCK_PAT.format(c.content)}\n" for c in context_chunks
-        )
+        context_docs_str = build_context_str(context_chunks)
 
         single_message = JSON_PROMPT.format(
             context_docs_str=context_docs_str,
@@ -123,9 +152,7 @@ class SingleMessageScratchpadHandler(QAHandler):
         context_chunks: list[InferenceChunk],
         use_language_hint: bool = bool(MULTILINGUAL_QUERY_EXPANSION),
     ) -> list[BaseMessage]:
-        context_docs_str = "\n".join(
-            f"\n{CODE_BLOCK_PAT.format(c.content)}\n" for c in context_chunks
-        )
+        context_docs_str = build_context_str(context_chunks)
 
         single_message = COT_PROMPT.format(
             context_docs_str=context_docs_str,
