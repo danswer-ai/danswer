@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import QA_TIMEOUT
-from danswer.db.feedback import update_query_event_llm_answer
 from danswer.configs.constants import QUERY_EVENT_ID
+from danswer.db.feedback import update_query_event_llm_answer
 from danswer.db.models import User
 from danswer.direct_qa.factory import get_default_qa_model
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
