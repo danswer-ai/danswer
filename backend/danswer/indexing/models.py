@@ -80,7 +80,7 @@ class DocMetadataAwareIndexChunk(IndexChunk):
 @dataclass
 class InferenceChunk(BaseChunk):
     document_id: str
-    source_type: str
+    source_type: str  # This is the string value of the enum already like "web"
     semantic_identifier: str
     boost: int
     recency_bias: float
