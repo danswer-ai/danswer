@@ -155,6 +155,18 @@ Respond with EXACTLY AND ONLY: "{USEFUL_PAT}" or "{NONUSEFUL_PAT}"
 """.strip()
 
 
+LANGUAGE_REPHRASE_PROMPT = """
+Rephrase the query in {target_language}.
+If the query is already in the correct language, \
+simply repeat the ORIGINAL query back to me, EXACTLY as is with no rephrasing.
+NEVER change proper nouns, technical terms, acronyms, or terms you are not familiar with.
+IMPORTANT, if the query is already in the target language, DO NOT REPHRASE OR EDIT the query!
+
+Query:
+{query}
+""".strip()
+
+
 # User the following for easy viewing of prompts
 if __name__ == "__main__":
     print(ANSWERABLE_PROMPT)
