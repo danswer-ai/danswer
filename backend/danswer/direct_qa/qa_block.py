@@ -6,6 +6,7 @@ from collections.abc import Iterator
 from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 
+from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.direct_qa.interfaces import AnswerQuestionReturn
 from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
 from danswer.direct_qa.interfaces import DanswerAnswer
@@ -22,6 +23,7 @@ from danswer.llm.utils import tokenizer_trim_chunks
 from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.prompts.direct_qa_prompts import COT_PROMPT
 from danswer.prompts.direct_qa_prompts import JSON_PROMPT
+from danswer.prompts.direct_qa_prompts import LANGUAGE_HINT
 from danswer.prompts.direct_qa_prompts import WEAK_LLM_PROMPT
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_up_code_blocks
@@ -88,15 +90,20 @@ class SingleMessageQAHandler(QAHandler):
         return True
 
     def build_prompt(
-        self, query: str, context_chunks: list[InferenceChunk]
+        self,
+        query: str,
+        context_chunks: list[InferenceChunk],
+        use_language_hint: bool = bool(MULTILINGUAL_QUERY_EXPANSION),
     ) -> list[BaseMessage]:
         context_docs_str = "\n".join(
             f"\n{CODE_BLOCK_PAT.format(c.content)}\n" for c in context_chunks
         )
 
         single_message = JSON_PROMPT.format(
-            context_docs_str=context_docs_str, user_query=query
-        )
+            context_docs_str=context_docs_str,
+            user_query=query,
+            language_hint_or_none=LANGUAGE_HINT if use_language_hint else "",
+        ).strip()
 
         prompt: list[BaseMessage] = [HumanMessage(content=single_message)]
         return prompt
@@ -111,15 +118,20 @@ class SingleMessageScratchpadHandler(QAHandler):
         return True
 
     def build_prompt(
-        self, query: str, context_chunks: list[InferenceChunk]
+        self,
+        query: str,
+        context_chunks: list[InferenceChunk],
+        use_language_hint: bool = bool(MULTILINGUAL_QUERY_EXPANSION),
     ) -> list[BaseMessage]:
         context_docs_str = "\n".join(
             f"\n{CODE_BLOCK_PAT.format(c.content)}\n" for c in context_chunks
         )
 
         single_message = COT_PROMPT.format(
-            context_docs_str=context_docs_str, user_query=query
-        )
+            context_docs_str=context_docs_str,
+            user_query=query,
+            language_hint_or_none=LANGUAGE_HINT if use_language_hint else "",
+        ).strip()
 
         prompt: list[BaseMessage] = [HumanMessage(content=single_message)]
         return prompt

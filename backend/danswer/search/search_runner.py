@@ -1,4 +1,6 @@
 from collections.abc import Callable
+from copy import deepcopy
+from typing import Any
 from typing import cast
 
 import numpy
@@ -10,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.app_configs import HYBRID_ALPHA
+from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
@@ -36,11 +39,13 @@ from danswer.search.models import SearchType
 from danswer.search.search_nlp_models import CrossEncoderEnsembleModel
 from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_chunks
+from danswer.secondary_llm_flows.query_expansion import rephrase_query
 from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchDoc
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
+from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 from danswer.utils.timing import log_function_time
 
 
@@ -106,6 +111,30 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
         else []
     )
     return search_docs
+
+
+def combine_retrieval_results(
+    chunk_sets: list[list[InferenceChunk]],
+) -> list[InferenceChunk]:
+    all_chunks = [chunk for chunk_set in chunk_sets for chunk in chunk_set]
+
+    unique_chunks: dict[tuple[str, int], InferenceChunk] = {}
+    for chunk in all_chunks:
+        key = (chunk.document_id, chunk.chunk_id)
+        if key not in unique_chunks:
+            unique_chunks[key] = chunk
+            continue
+
+        stored_chunk_score = unique_chunks[key].score or 0
+        this_chunk_score = chunk.score or 0
+        if stored_chunk_score < this_chunk_score:
+            unique_chunks[key] = chunk
+
+    sorted_chunks = sorted(
+        unique_chunks.values(), key=lambda x: x.score or 0, reverse=True
+    )
+
+    return sorted_chunks
 
 
 @log_function_time()
@@ -313,6 +342,7 @@ def search_chunks(
     query: SearchQuery,
     document_index: DocumentIndex,
     hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
+    multilingual_query_expansion: str | None = MULTILINGUAL_QUERY_EXPANSION,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
@@ -331,9 +361,25 @@ def search_chunks(
         ]
         logger.info(f"Top links from {search_flow} search: {', '.join(top_links)}")
 
-    top_chunks = doc_index_retrieval(
-        query=query, document_index=document_index, hybrid_alpha=hybrid_alpha
-    )
+    # Don't do query expansion on complex queries, rephrasings likely would not work well
+    if not multilingual_query_expansion or "\n" in query.query or "\r" in query.query:
+        top_chunks = doc_index_retrieval(
+            query=query, document_index=document_index, hybrid_alpha=hybrid_alpha
+        )
+    else:
+        run_queries: list[tuple[Callable, tuple]] = []
+        # Currently only uses query expansion on multilingual use cases
+        query_rephrases = rephrase_query(query.query, multilingual_query_expansion)
+        # Just to be extra sure, add the original query.
+        query_rephrases.append(query.query)
+        for rephrase in set(query_rephrases):
+            q_copy = deepcopy(query)
+            q_copy.query = rephrase
+            run_queries.append(
+                (doc_index_retrieval, (q_copy, document_index, hybrid_alpha))
+            )
+        parallel_search_results = run_functions_tuples_in_parallel(run_queries)
+        top_chunks = combine_retrieval_results(parallel_search_results)
 
     if not top_chunks:
         logger.info(
@@ -384,7 +430,9 @@ def search_chunks(
         functions_to_run.append(run_llm_filter)
         run_llm_filter_id = run_llm_filter.result_id
 
-    parallel_results = run_functions_in_parallel(functions_to_run)
+    parallel_results: dict[str, Any] = {}
+    if functions_to_run:
+        parallel_results = run_functions_in_parallel(functions_to_run)
 
     ranked_results = parallel_results.get(str(run_rerank_id))
     if ranked_results is None:

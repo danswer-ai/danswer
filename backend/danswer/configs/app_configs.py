@@ -219,7 +219,9 @@ else:
     EDIT_KEYWORD_QUERY = not os.environ.get("DOCUMENT_ENCODER_MODEL")
 # Weighting factor between Vector and Keyword Search, 1 for completely vector search
 HYBRID_ALPHA = max(0, min(1, float(os.environ.get("HYBRID_ALPHA") or 0.6)))
-
+# A list of languages passed to the LLM to rephase the query
+# For example "English,French,Spanish", be sure to use the "," separator
+MULTILINGUAL_QUERY_EXPANSION = os.environ.get("MULTILINGUAL_QUERY_EXPANSION") or None
 
 #####
 # Model Server Configs
