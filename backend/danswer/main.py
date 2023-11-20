@@ -30,6 +30,7 @@ from danswer.configs.constants import AuthType
 from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
+from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
@@ -173,6 +174,10 @@ def get_application() -> FastAPI:
         else:
             logger.info(f"Using LLM Provider: {GEN_AI_MODEL_PROVIDER}")
             logger.info(f"Using LLM Model Version: {GEN_AI_MODEL_VERSION}")
+            if GEN_AI_MODEL_VERSION != FAST_GEN_AI_MODEL_VERSION:
+                logger.info(
+                    f"Using Fast LLM Model Version: {FAST_GEN_AI_MODEL_VERSION}"
+                )
             if GEN_AI_API_ENDPOINT:
                 logger.info(f"Using LLM Endpoint: {GEN_AI_API_ENDPOINT}")
 

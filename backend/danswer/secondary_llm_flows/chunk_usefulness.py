@@ -35,7 +35,9 @@ def llm_eval_chunk(query: str, chunk_content: str) -> bool:
     # When running in a batch, it takes as long as the longest thread
     # And when running a large batch, one may fail and take the whole timeout
     # instead cap it to 5 seconds
-    model_output = get_default_llm(timeout=5).invoke(filled_llm_prompt)
+    model_output = get_default_llm(use_fast_llm=True, timeout=5).invoke(
+        filled_llm_prompt
+    )
     logger.debug(model_output)
 
     return _extract_usefulness(model_output)
