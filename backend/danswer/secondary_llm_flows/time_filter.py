@@ -110,7 +110,9 @@ def extract_time_filter(query: str) -> tuple[datetime | None, bool]:
             if "date" in model_json:
                 extracted_time = best_match_time(model_json["date"])
                 if extracted_time is not None:
-                    return extracted_time, favor_recent
+                    # LLM struggles to understand the concept of not sensitive within a time range
+                    # So if a time is extracted, just go with that alone
+                    return extracted_time, False
 
             time_diff = None
             multiplier = 1.0
@@ -138,7 +140,9 @@ def extract_time_filter(query: str) -> tuple[datetime | None, bool]:
 
             if time_diff is not None:
                 current = datetime.now(timezone.utc)
-                return current - time_diff, favor_recent
+                # LLM struggles to understand the concept of not sensitive within a time range
+                # So if a time is extracted, just go with that alone
+                return current - time_diff, False
 
             # If we failed to extract a hard filter, just pass back the value of favor recent
             return None, favor_recent
@@ -147,7 +151,7 @@ def extract_time_filter(query: str) -> tuple[datetime | None, bool]:
 
     messages = _get_time_filter_messages(query)
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
-    model_output = get_default_llm(use_fast_llm=True).invoke(filled_llm_prompt)
+    model_output = get_default_llm().invoke(filled_llm_prompt)
     logger.debug(model_output)
 
     return _extract_time_filter_from_llm_out(model_output)
