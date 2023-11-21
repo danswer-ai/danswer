@@ -1,3 +1,5 @@
+<!-- DANSWER_METADATA={"link": "https://github.com/danswer-ai/danswer/blob/main/deployment/README.md"} -->
+
 # Deploying Danswer
 The two options provided here are the easiest ways to get Danswer up and running.
 
