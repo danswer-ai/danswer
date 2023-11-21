@@ -200,13 +200,13 @@ def get_application() -> FastAPI:
             )
         else:
             logger.info("Warming up local NLP models.")
+            warm_up_models()
+
             if torch.cuda.is_available():
                 logger.info("GPU is available")
             else:
                 logger.info("GPU is not available")
             logger.info(f"Torch Threads: {torch.get_num_threads()}")
-
-            warm_up_models()
 
         # This is for the LLM, most LLMs will not need warming up
         get_default_llm().log_model_configs()
