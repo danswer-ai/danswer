@@ -101,12 +101,18 @@ def _run_drive_file_query(
         for file in files:
             if follow_shortcuts and "shortcutDetails" in file:
                 try:
-                    file = service.files().get(
-                        fileId=file["shortcutDetails"]["targetId"],
-                        supportsAllDrives=include_shared,
-                        fields="mimeType, id, name, modifiedTime, webViewLink, shortcutDetails",
-                    )
-                    file = add_retries(lambda: file.execute())()
+                    file_shortcut_points_to = add_retries(
+                        lambda: (
+                            service.files()
+                            .get(
+                                fileId=file["shortcutDetails"]["targetId"],
+                                supportsAllDrives=include_shared,
+                                fields="mimeType, id, name, modifiedTime, webViewLink, shortcutDetails",
+                            )
+                            .execute()
+                        )
+                    )()
+                    yield file_shortcut_points_to
                 except HttpError:
                     logger.error(
                         f"Failed to follow shortcut with details: {file['shortcutDetails']}"
@@ -114,7 +120,8 @@ def _run_drive_file_query(
                     if continue_on_failure:
                         continue
                     raise
-            yield file
+            else:
+                yield file
 
 
 def _get_folder_id(
