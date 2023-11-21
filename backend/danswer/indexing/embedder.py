@@ -13,7 +13,7 @@ from danswer.utils.timing import log_function_time
 
 
 @log_function_time()
-def encode_chunks(
+def embed_chunks(
     chunks: list[DocAwareChunk],
     embedding_model: SentenceTransformer | None = None,
     batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
@@ -67,4 +67,4 @@ def encode_chunks(
 
 class DefaultEmbedder(Embedder):
     def embed(self, chunks: list[DocAwareChunk]) -> list[IndexChunk]:
-        return encode_chunks(chunks)
+        return embed_chunks(chunks)

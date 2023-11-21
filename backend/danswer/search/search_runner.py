@@ -7,7 +7,6 @@ import numpy
 from nltk.corpus import stopwords  # type:ignore
 from nltk.stem import WordNetLemmatizer  # type:ignore
 from nltk.tokenize import word_tokenize  # type:ignore
-from sentence_transformers import SentenceTransformer  # type: ignore
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
@@ -17,7 +16,6 @@ from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
-from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import SIM_SCORE_RANGE_HIGH
 from danswer.configs.model_configs import SIM_SCORE_RANGE_LOW
 from danswer.db.feedback import create_query_event
@@ -75,17 +73,10 @@ def query_processing(
 
 def embed_query(
     query: str,
-    embedding_model: SentenceTransformer | None = None,
     prefix: str = ASYM_QUERY_PREFIX,
-    normalize_embeddings: bool = NORMALIZE_EMBEDDINGS,
 ) -> list[float]:
-    model = embedding_model or EmbeddingModel()
     prefixed_query = prefix + query
-    query_embedding = model.encode(
-        [prefixed_query], normalize_embeddings=normalize_embeddings
-    )[0]
-
-    return query_embedding
+    return EmbeddingModel().encode([prefixed_query])[0]
 
 
 def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc]:
