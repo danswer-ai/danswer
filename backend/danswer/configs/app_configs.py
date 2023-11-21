@@ -246,6 +246,8 @@ JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
 LOG_ALL_MODEL_INTERACTIONS = (
     os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
 )
+# If set to `true` will enable additional logs about Vespa query performance
+# (time spent on finding the right docs + time spent fetching summaries from disk)
 LOG_VESPA_TIMING_INFORMATION = (
     os.environ.get("LOG_VESPA_TIMING_INFORMATION", "").lower() == "true"
 )
