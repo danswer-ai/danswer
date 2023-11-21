@@ -11,9 +11,11 @@ RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
 WORKDIR /app
 # Needed for model configs and defaults
 COPY ./danswer/configs /app/danswer/configs
+COPY ./danswer/dynamic_configs /app/danswer/dynamic_configs
 # Utils used by model server
 COPY ./danswer/utils/logger.py /app/danswer/utils/logger.py
 COPY ./danswer/utils/timing.py /app/danswer/utils/timing.py
+COPY ./danswer/utils/telemetry.py /app/danswer/utils/telemetry.py
 # Version information
 COPY ./danswer/__init__.py /app/danswer/__init__.py
 # Shared implementations for running NLP models locally
