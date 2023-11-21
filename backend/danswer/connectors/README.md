@@ -1,3 +1,5 @@
+<!-- DANSWER_METADATA={"link": "https://github.com/danswer-ai/danswer/blob/main/backend/danswer/connectors/README.md"} -->
+
 # Writing a new Danswer Connector
 This README covers how to contribute a new Connector for Danswer. It includes an overview of the design, interfaces,
 and required changes.
