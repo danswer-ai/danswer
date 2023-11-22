@@ -16,8 +16,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - GEN_AI_MODEL_PROVIDER=gpt4all
-      - GEN_AI_MODEL_VERSION=mistral-7b-openorca.Q4_0.gguf  # Or any other GPT4All model
+      - GEN_AI_MODEL_PROVIDER=${GEN_AI_MODEL_PROVIDER:-openai}
+      - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
       - FAST_GEN_AI_MODEL_VERSION=${FAST_GEN_AI_MODEL_VERSION:-}
       - GEN_AI_API_KEY=${GEN_AI_API_KEY:-}
       - GEN_AI_API_ENDPOINT=${GEN_AI_API_ENDPOINT:-}
@@ -26,7 +26,7 @@ services:
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
       - AUTH_TYPE=${AUTH_TYPE:-disabled}
-      - QA_TIMEOUT=120
+      - QA_TIMEOUT=${QA_TIMEOUT:-}
       - VALID_EMAIL_DOMAINS=${VALID_EMAIL_DOMAINS:-}
       - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
       - GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-}
@@ -78,8 +78,8 @@ services:
       - index
     restart: always
     environment:
-      - GEN_AI_MODEL_PROVIDER=gpt4all
-      - GEN_AI_MODEL_VERSION=mistral-7b-openorca.Q4_0.gguf  # Or any other GPT4All model
+      - GEN_AI_MODEL_PROVIDER=${GEN_AI_MODEL_PROVIDER:-openai}
+      - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
       - FAST_GEN_AI_MODEL_VERSION=${FAST_GEN_AI_MODEL_VERSION:-}
       - GEN_AI_API_KEY=${GEN_AI_API_KEY:-}
       - GEN_AI_API_ENDPOINT=${GEN_AI_API_ENDPOINT:-}
