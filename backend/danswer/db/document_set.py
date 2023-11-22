@@ -416,8 +416,8 @@ def check_document_sets_are_public(
         db_session.query(ConnectorCredentialPair.id)
         .filter(
             ConnectorCredentialPair.id.in_(
-                connector_credential_pair_ids
-            ),  # type:ignore
+                connector_credential_pair_ids  # type:ignore
+            ),
             ConnectorCredentialPair.is_public.is_(False),
         )
         .limit(1)

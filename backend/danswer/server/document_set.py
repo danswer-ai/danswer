@@ -85,6 +85,7 @@ def list_document_sets(
             id=document_set_db_model.id,
             name=document_set_db_model.name,
             description=document_set_db_model.description,
+            contains_non_public=any([not cc_pair.is_public for cc_pair in cc_pairs]),
             cc_pair_descriptors=[
                 ConnectorCredentialPairDescriptor(
                     id=cc_pair.id,
