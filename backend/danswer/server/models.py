@@ -222,7 +222,6 @@ class QAResponse(SearchResponse):
 
 # First chunk of info for streaming QA
 class QADocsResponse(RetrievalDocs):
-    llm_chunks_indices: list[int]
     predicted_flow: QueryFlow
     predicted_search: SearchType
     time_cutoff: datetime | None
@@ -234,6 +233,11 @@ class QADocsResponse(RetrievalDocs):
             self.time_cutoff.isoformat() if self.time_cutoff else None
         )
         return initial_dict
+
+
+# second chunk of info for streaming QA
+class LLMRelevanceFilterResponse(BaseModel):
+    relevant_chunk_indices: list[int]
 
 
 class CreateChatSessionID(BaseModel):

@@ -21,6 +21,10 @@ export const searchRequest = async ({
   selectedSearchType,
   offset,
 }: SearchRequestArgs) => {
+  /*
+  NOTE: does not support the full functionality (AI selected answers). Should not be used if 
+  at all possible - use `searchRequestStreamed` instead.
+  */
   let answer = "";
   let quotes: Quote[] | null = null;
   let relevantDocuments: DanswerDocument[] | null = null;

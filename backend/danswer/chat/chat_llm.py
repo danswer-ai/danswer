@@ -42,7 +42,7 @@ from danswer.search.models import IndexFilters
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.search.search_runner import chunks_to_search_docs
-from danswer.search.search_runner import search_chunks
+from danswer.search.search_runner import full_chunk_search
 from danswer.server.models import RetrievalDocs
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
@@ -140,8 +140,9 @@ def danswer_chat_retrieval(
     )
 
     # Good Debug/Breakpoint
-    top_chunks, _ = search_chunks(
-        query=search_query, document_index=get_default_document_index()
+    top_chunks, _ = full_chunk_search(
+        query=search_query,
+        document_index=get_default_document_index(),
     )
 
     if not top_chunks:

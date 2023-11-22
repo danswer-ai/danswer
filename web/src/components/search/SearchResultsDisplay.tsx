@@ -33,6 +33,17 @@ const removeDuplicateDocs = (documents: DanswerDocument[]) => {
   return output;
 };
 
+const getSelectedDocumentIds = (
+  documents: DanswerDocument[],
+  selectedIndices: number[]
+) => {
+  const selectedDocumentIds = new Set<string>();
+  selectedIndices.forEach((ind) => {
+    selectedDocumentIds.add(documents[ind].document_id);
+  });
+  return selectedDocumentIds;
+};
+
 interface SearchResultsDisplayProps {
   searchResponse: SearchResponse | null;
   validQuestionResponse: ValidQuestionResponse;
@@ -94,6 +105,11 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
       }
     });
   }
+
+  const selectedDocumentIds = getSelectedDocumentIds(
+    documents || [],
+    searchResponse.selectedDocIndices || []
+  );
 
   const shouldDisplayQA =
     searchResponse.suggestedFlowType === FlowType.QUESTION_ANSWER ||
@@ -175,6 +191,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
               key={document.document_id}
               document={document}
               queryEventId={queryEventId}
+              isSelected={selectedDocumentIds.has(document.document_id)}
               setPopup={setPopup}
             />
           ))}
