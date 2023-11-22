@@ -171,29 +171,6 @@ class SearchDoc(BaseModel):
         return initial_dict
 
 
-class RetrievalDocs(BaseModel):
-    top_documents: list[SearchDoc]
-
-
-class RerankedRetrievalDocs(RetrievalDocs):
-    unranked_top_documents: list[SearchDoc]
-    predicted_flow: QueryFlow
-    predicted_search: SearchType
-    time_cutoff: datetime | None
-    favor_recent: bool
-
-    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
-        initial_dict = super().dict(*args, **kwargs)  # type: ignore
-        initial_dict["time_cutoff"] = (
-            self.time_cutoff.isoformat() if self.time_cutoff else None
-        )
-        return initial_dict
-
-
-class CreateChatSessionID(BaseModel):
-    chat_session_id: int
-
-
 class QuestionRequest(BaseModel):
     query: str
     collection: str
@@ -209,20 +186,70 @@ class QAFeedbackRequest(BaseModel):
     feedback: QAFeedbackType
 
 
-class ChatFeedbackRequest(BaseModel):
-    chat_session_id: int
-    message_number: int
-    edit_number: int
-    is_positive: bool | None = None
-    feedback_text: str | None = None
-
-
 class SearchFeedbackRequest(BaseModel):
     query_id: int
     document_id: str
     document_rank: int
     click: bool
     search_feedback: SearchFeedbackType
+
+
+class QueryValidationResponse(BaseModel):
+    reasoning: str
+    answerable: bool
+
+
+class RetrievalDocs(BaseModel):
+    top_documents: list[SearchDoc]
+
+
+class SearchResponse(RetrievalDocs):
+    query_event_id: int
+    source_type: list[DocumentSource] | None
+    time_cutoff: datetime | None
+    favor_recent: bool
+
+
+class QAResponse(SearchResponse):
+    answer: str | None  # DanswerAnswer
+    quotes: list[DanswerQuote] | None
+    predicted_flow: QueryFlow
+    predicted_search: SearchType
+    eval_res_valid: bool | None = None
+    llm_chunks_indices: list[int] | None = None
+    error_msg: str | None = None
+
+
+# First chunk of info for streaming QA
+class QADocsResponse(RetrievalDocs):
+    predicted_flow: QueryFlow
+    predicted_search: SearchType
+    time_cutoff: datetime | None
+    favor_recent: bool
+
+    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+        initial_dict["time_cutoff"] = (
+            self.time_cutoff.isoformat() if self.time_cutoff else None
+        )
+        return initial_dict
+
+
+# second chunk of info for streaming QA
+class LLMRelevanceFilterResponse(BaseModel):
+    relevant_chunk_indices: list[int]
+
+
+class CreateChatSessionID(BaseModel):
+    chat_session_id: int
+
+
+class ChatFeedbackRequest(BaseModel):
+    chat_session_id: int
+    message_number: int
+    edit_number: int
+    is_positive: bool | None = None
+    feedback_text: str | None = None
 
 
 class CreateChatMessageRequest(BaseModel):
@@ -278,30 +305,6 @@ class ChatSessionDetailResponse(BaseModel):
     chat_session_id: int
     description: str
     messages: list[ChatMessageDetail]
-
-
-class QueryValidationResponse(BaseModel):
-    reasoning: str
-    answerable: bool
-
-
-class SearchResponse(BaseModel):
-    # For semantic search, top docs are reranked, the remaining are as ordered from retrieval
-    top_ranked_docs: list[SearchDoc] | None
-    lower_ranked_docs: list[SearchDoc] | None
-    query_event_id: int
-    source_type: list[DocumentSource] | None
-    time_cutoff: datetime | None
-    favor_recent: bool
-
-
-class QAResponse(SearchResponse):
-    answer: str | None  # DanswerAnswer
-    quotes: list[DanswerQuote] | None
-    predicted_flow: QueryFlow
-    predicted_search: SearchType
-    eval_res_valid: bool | None = None
-    error_msg: str | None = None
 
 
 class UserByEmail(BaseModel):

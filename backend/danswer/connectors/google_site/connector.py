@@ -1,6 +1,5 @@
 import os
 import re
-import urllib.parse
 from typing import Any
 from typing import cast
 
@@ -21,44 +20,31 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def process_link(element: BeautifulSoup | Tag) -> str:
-    href = cast(str | None, element.get("href"))
-    if not href:
-        raise RuntimeError(f"Invalid link - {element}")
+def a_tag_text_to_path(atag: Tag) -> str:
+    page_path = atag.text.strip().lower()
+    page_path = re.sub(r"[^a-zA-Z0-9\s]", "", page_path)
+    page_path = "-".join(page_path.split())
 
-    # cleanup href
-    href = urllib.parse.unquote(href)
-    href = href.rstrip(".html").lower()
-    href = href.replace("_", "")
-    href = re.sub(
-        r"([\s-]+)", "-", href
-    )  # replace all whitespace/'-' groups with a single '-'
-
-    return href
+    return page_path
 
 
 def find_google_sites_page_path_from_navbar(
-    element: BeautifulSoup | Tag, path: str, is_initial: bool
+    element: BeautifulSoup | Tag, path: str, depth: int
 ) -> str | None:
-    ul = cast(Tag | None, element.find("ul"))
-    if ul:
-        if not is_initial:
-            a = cast(Tag, element.find("a"))
-            new_path = f"{path}/{process_link(a)}"
-            if a.get("aria-selected") == "true":
-                return new_path
-        else:
-            new_path = ""
-        for li in ul.find_all("li", recursive=False):
-            found_link = find_google_sites_page_path_from_navbar(li, new_path, False)
-            if found_link:
-                return found_link
-    else:
-        a = cast(Tag, element.find("a"))
-        if a:
-            href = process_link(a)
-            if href and a.get("aria-selected") == "true":
-                return path + "/" + href
+    lis = cast(
+        list[Tag],
+        element.find_all("li", attrs={"data-nav-level": f"{depth}"}),
+    )
+    for li in lis:
+        a = cast(Tag, li.find("a"))
+        if a.get("aria-selected") == "true":
+            return f"{path}/{a_tag_text_to_path(a)}"
+        elif a.get("aria-expanded") == "true":
+            sub_path = find_google_sites_page_path_from_navbar(
+                element, f"{path}/{a_tag_text_to_path(a)}", depth + 1
+            )
+            if sub_path:
+                return sub_path
 
     return None
 
@@ -82,6 +68,7 @@ class GoogleSitesConnector(LoadConnector):
 
         # load the HTML files
         files = load_files_from_zip(self.zip_path)
+        count = 0
         for file_info, file_io in files:
             # skip non-published files
             if "/PUBLISHED/" not in file_info.filename:
@@ -97,13 +84,15 @@ class GoogleSitesConnector(LoadConnector):
             # get the link out of the navbar
             header = cast(Tag, soup.find("header"))
             nav = cast(Tag, header.find("nav"))
-            path = find_google_sites_page_path_from_navbar(nav, "", True)
+            path = find_google_sites_page_path_from_navbar(nav, "", 1)
             if not path:
+                count += 1
                 logger.error(
                     f"Could not find path for '{file_info.filename}'. "
-                    + "This page will not have a working link."
+                    + "This page will not have a working link.\n\n"
+                    + f"# of broken links so far - {count}"
                 )
-
+            logger.info(f"Path to page: {path}")
             # cleanup the hidden `Skip to main content` and `Skip to navigation` that
             # appears at the top of every page
             for div in soup.find_all("div", attrs={"data-is-touch-wrapper": "true"}):

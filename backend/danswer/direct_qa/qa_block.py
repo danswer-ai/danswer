@@ -6,6 +6,7 @@ from collections.abc import Iterator
 from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 
+from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.direct_qa.interfaces import AnswerQuestionReturn
 from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
 from danswer.direct_qa.interfaces import DanswerAnswer
@@ -22,6 +23,7 @@ from danswer.llm.utils import tokenizer_trim_chunks
 from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.prompts.direct_qa_prompts import COT_PROMPT
 from danswer.prompts.direct_qa_prompts import JSON_PROMPT
+from danswer.prompts.direct_qa_prompts import LANGUAGE_HINT
 from danswer.prompts.direct_qa_prompts import WEAK_LLM_PROMPT
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_up_code_blocks
@@ -63,6 +65,38 @@ class QAHandler(abc.ABC):
         )
 
 
+# Maps connector enum string to a more natural language representation for the LLM
+# If not on the list, uses the original but slightly cleaned up, see below
+CONNECTOR_NAME_MAP = {
+    "web": "Website",
+    "requesttracker": "Request Tracker",
+    "github": "GitHub",
+    "file": "File Upload",
+}
+
+
+def clean_up_source(source_str: str) -> str:
+    if source_str in CONNECTOR_NAME_MAP:
+        return CONNECTOR_NAME_MAP[source_str]
+    return source_str.replace("_", " ").title()
+
+
+def build_context_str(
+    context_chunks: list[InferenceChunk],
+    include_metadata: bool = True,
+) -> str:
+    context = ""
+    for chunk in context_chunks:
+        if include_metadata:
+            context += f"NEW DOCUMENT: {chunk.semantic_identifier}\n"
+            context += f"Source: {clean_up_source(chunk.source_type)}\n"
+            if chunk.updated_at:
+                update_str = chunk.updated_at.strftime("%B %d, %Y %H:%M")
+                context += f"Updated: {update_str}\n"
+        context += f"{CODE_BLOCK_PAT.format(chunk.content.strip())}\n\n\n"
+    return context.strip()
+
+
 class WeakLLMQAHandler(QAHandler):
     """Since Danswer supports a variety of LLMs, this less demanding prompt is provided
     as an option to use with weaker LLMs such as small version, low float precision, quantized,
@@ -88,15 +122,18 @@ class SingleMessageQAHandler(QAHandler):
         return True
 
     def build_prompt(
-        self, query: str, context_chunks: list[InferenceChunk]
+        self,
+        query: str,
+        context_chunks: list[InferenceChunk],
+        use_language_hint: bool = bool(MULTILINGUAL_QUERY_EXPANSION),
     ) -> list[BaseMessage]:
-        context_docs_str = "\n".join(
-            f"\n{CODE_BLOCK_PAT.format(c.content)}\n" for c in context_chunks
-        )
+        context_docs_str = build_context_str(context_chunks)
 
         single_message = JSON_PROMPT.format(
-            context_docs_str=context_docs_str, user_query=query
-        )
+            context_docs_str=context_docs_str,
+            user_query=query,
+            language_hint_or_none=LANGUAGE_HINT if use_language_hint else "",
+        ).strip()
 
         prompt: list[BaseMessage] = [HumanMessage(content=single_message)]
         return prompt
@@ -111,15 +148,18 @@ class SingleMessageScratchpadHandler(QAHandler):
         return True
 
     def build_prompt(
-        self, query: str, context_chunks: list[InferenceChunk]
+        self,
+        query: str,
+        context_chunks: list[InferenceChunk],
+        use_language_hint: bool = bool(MULTILINGUAL_QUERY_EXPANSION),
     ) -> list[BaseMessage]:
-        context_docs_str = "\n".join(
-            f"\n{CODE_BLOCK_PAT.format(c.content)}\n" for c in context_chunks
-        )
+        context_docs_str = build_context_str(context_chunks)
 
         single_message = COT_PROMPT.format(
-            context_docs_str=context_docs_str, user_query=query
-        )
+            context_docs_str=context_docs_str,
+            user_query=query,
+            language_hint_or_none=LANGUAGE_HINT if use_language_hint else "",
+        ).strip()
 
         prompt: list[BaseMessage] = [HumanMessage(content=single_message)]
         return prompt

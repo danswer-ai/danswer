@@ -20,6 +20,7 @@ from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.app_configs import FAVOR_RECENT_DECAY_MULTIPLIER
 from danswer.configs.app_configs import HYBRID_ALPHA
+from danswer.configs.app_configs import LOG_VESPA_TIMING_INFORMATION
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import VESPA_DEPLOYMENT_ZIP
 from danswer.configs.app_configs import VESPA_HOST
@@ -436,10 +437,24 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
 def _query_vespa(query_params: Mapping[str, str | int | float]) -> list[InferenceChunk]:
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError("No/empty query received")
-    response = requests.get(SEARCH_ENDPOINT, params=query_params)
+
+    response = requests.get(
+        SEARCH_ENDPOINT,
+        params=dict(
+            **query_params,
+            **{
+                "presentation.timing": True,
+            }
+            if LOG_VESPA_TIMING_INFORMATION
+            else {},
+        ),
+    )
     response.raise_for_status()
 
-    hits = response.json()["root"].get("children", [])
+    response_json: dict[str, Any] = response.json()
+    if LOG_VESPA_TIMING_INFORMATION:
+        logger.info("Vespa timing info: %s", response_json.get("timing"))
+    hits = response_json["root"].get("children", [])
 
     for hit in hits:
         if hit["fields"].get(CONTENT) is None:

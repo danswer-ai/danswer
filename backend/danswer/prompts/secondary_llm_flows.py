@@ -132,6 +132,41 @@ Note: The "file" source only applies to when the user refers to uploaded files i
 """.strip()
 
 
+USEFUL_PAT = "Yes useful"
+NONUSEFUL_PAT = "Not useful"
+CHUNK_FILTER_PROMPT = f"""
+Determine if the reference section is USEFUL for answering the user query.
+It is NOT enough for the section to be related to the query, \
+it must contain information that is USEFUL for answering the query.
+If the section contains ANY useful information, that is good enough, \
+it does not need to fully answer the every part of the user query.
+
+Reference Section:
+```
+{{chunk_text}}
+```
+
+User Query:
+```
+{{user_query}}
+```
+
+Respond with EXACTLY AND ONLY: "{USEFUL_PAT}" or "{NONUSEFUL_PAT}"
+""".strip()
+
+
+LANGUAGE_REPHRASE_PROMPT = """
+Rephrase the query in {target_language}.
+If the query is already in the correct language, \
+simply repeat the ORIGINAL query back to me, EXACTLY as is with no rephrasing.
+NEVER change proper nouns, technical terms, acronyms, or terms you are not familiar with.
+IMPORTANT, if the query is already in the target language, DO NOT REPHRASE OR EDIT the query!
+
+Query:
+{query}
+""".strip()
+
+
 # User the following for easy viewing of prompts
 if __name__ == "__main__":
     print(ANSWERABLE_PROMPT)

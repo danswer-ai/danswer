@@ -1,4 +1,4 @@
-import { AnswerPiece, ValidQuestionResponse } from "./interfaces";
+import { AnswerPiecePacket, ValidQuestionResponse } from "./interfaces";
 import { processRawChunkString } from "./streamingUtils";
 
 export interface QuestionValidationArgs {
@@ -45,7 +45,7 @@ export const questionValidationStreamed = async <T>({
     }
 
     const [completedChunks, partialChunk] = processRawChunkString<
-      AnswerPiece | ValidQuestionResponse
+      AnswerPiecePacket | ValidQuestionResponse
     >(decoder.decode(value, { stream: true }), previousPartialChunk);
     if (!completedChunks.length && !partialChunk) {
       break;
@@ -54,7 +54,7 @@ export const questionValidationStreamed = async <T>({
 
     completedChunks.forEach((chunk) => {
       if (Object.hasOwn(chunk, "answer_piece")) {
-        reasoning += (chunk as AnswerPiece).answer_piece;
+        reasoning += (chunk as AnswerPiecePacket).answer_piece;
         update({
           reasoning,
         });

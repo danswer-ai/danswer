@@ -1,18 +1,21 @@
 from collections.abc import Callable
+from collections.abc import Generator
+from copy import deepcopy
 from typing import cast
 
 import numpy
 from nltk.corpus import stopwords  # type:ignore
 from nltk.stem import WordNetLemmatizer  # type:ignore
 from nltk.tokenize import word_tokenize  # type:ignore
-from sentence_transformers import SentenceTransformer  # type: ignore
 from sqlalchemy.orm import Session
 
+from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.app_configs import HYBRID_ALPHA
+from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
+from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
-from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import SIM_SCORE_RANGE_HIGH
 from danswer.configs.model_configs import SIM_SCORE_RANGE_LOW
 from danswer.db.feedback import create_query_event
@@ -33,13 +36,25 @@ from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.search.search_nlp_models import CrossEncoderEnsembleModel
 from danswer.search.search_nlp_models import EmbeddingModel
+from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_chunks
+from danswer.secondary_llm_flows.query_expansion import rephrase_query
 from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchDoc
 from danswer.utils.logger import setup_logger
+from danswer.utils.threadpool_concurrency import FunctionCall
+from danswer.utils.threadpool_concurrency import run_functions_in_parallel
+from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 from danswer.utils.timing import log_function_time
 
 
 logger = setup_logger()
+
+
+def _log_top_chunk_links(search_flow: str, chunks: list[InferenceChunk]) -> None:
+    top_links = [
+        c.source_links[0] if c.source_links is not None else "No Link" for c in chunks
+    ]
+    logger.info(f"Top links from {search_flow} search: {', '.join(top_links)}")
 
 
 def lemmatize_text(text: str) -> list[str]:
@@ -65,17 +80,10 @@ def query_processing(
 
 def embed_query(
     query: str,
-    embedding_model: SentenceTransformer | None = None,
     prefix: str = ASYM_QUERY_PREFIX,
-    normalize_embeddings: bool = NORMALIZE_EMBEDDINGS,
 ) -> list[float]:
-    model = embedding_model or EmbeddingModel()
     prefixed_query = prefix + query
-    query_embedding = model.encode(
-        [prefixed_query], normalize_embeddings=normalize_embeddings
-    )[0]
-
-    return query_embedding
+    return EmbeddingModel().encode([prefixed_query])[0]
 
 
 def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc]:
@@ -101,6 +109,30 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
         else []
     )
     return search_docs
+
+
+def combine_retrieval_results(
+    chunk_sets: list[list[InferenceChunk]],
+) -> list[InferenceChunk]:
+    all_chunks = [chunk for chunk_set in chunk_sets for chunk in chunk_set]
+
+    unique_chunks: dict[tuple[str, int], InferenceChunk] = {}
+    for chunk in all_chunks:
+        key = (chunk.document_id, chunk.chunk_id)
+        if key not in unique_chunks:
+            unique_chunks[key] = chunk
+            continue
+
+        stored_chunk_score = unique_chunks[key].score or 0
+        this_chunk_score = chunk.score or 0
+        if stored_chunk_score < this_chunk_score:
+            unique_chunks[key] = chunk
+
+    sorted_chunks = sorted(
+        unique_chunks.values(), key=lambda x: x.score or 0, reverse=True
+    )
+
+    return sorted_chunks
 
 
 @log_function_time()
@@ -147,7 +179,12 @@ def semantic_reranking(
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
     model_min: int = CROSS_ENCODER_RANGE_MIN,
     model_max: int = CROSS_ENCODER_RANGE_MAX,
-) -> list[InferenceChunk]:
+) -> tuple[list[InferenceChunk], list[int]]:
+    """Reranks chunks based on cross-encoder models. Additionally provides the original indices
+    of the chunks in their new sorted order.
+
+    Note: this updates the chunks in place, it updates the chunk scores which came from retrieval
+    """
     cross_encoders = CrossEncoderEnsembleModel()
     passages = [chunk.content for chunk in chunks]
     sim_scores_floats = cross_encoders.predict(query=query, passages=passages)
@@ -168,16 +205,20 @@ def semantic_reranking(
     normalized_b_s_scores = (boosted_sim_scores + cross_models_min - model_min) / (
         model_max - model_min
     )
-    scored_results = list(zip(normalized_b_s_scores, raw_sim_scores, chunks))
+    orig_indices = [i for i in range(len(normalized_b_s_scores))]
+    scored_results = list(
+        zip(normalized_b_s_scores, raw_sim_scores, chunks, orig_indices)
+    )
     scored_results.sort(key=lambda x: x[0], reverse=True)
-    ranked_sim_scores, ranked_raw_scores, ranked_chunks = zip(*scored_results)
+    ranked_sim_scores, ranked_raw_scores, ranked_chunks, ranked_indices = zip(
+        *scored_results
+    )
 
     logger.debug(
         f"Reranked (Boosted + Time Weighted) similarity scores: {ranked_sim_scores}"
     )
 
     # Assign new chunk scores based on reranking
-    # TODO if pagination is added, the scores won't make sense with respect to the non-reranked hits
     for ind, chunk in enumerate(ranked_chunks):
         chunk.score = ranked_sim_scores[ind]
 
@@ -198,7 +239,7 @@ def semantic_reranking(
             )
         )
 
-    return list(ranked_chunks)
+    return list(ranked_chunks), list(ranked_indices)
 
 
 def apply_boost_legacy(
@@ -257,6 +298,9 @@ def apply_boost_legacy(
 
 def apply_boost(
     chunks: list[InferenceChunk],
+    # Need the range of values to not be too spread out for applying boost
+    # therefore norm across only the top few results
+    norm_cutoff: int = NUM_RERANKED_RESULTS,
     norm_min: float = SIM_SCORE_RANGE_LOW,
     norm_max: float = SIM_SCORE_RANGE_HIGH,
 ) -> list[InferenceChunk]:
@@ -266,13 +310,13 @@ def apply_boost(
     boosts = [translate_boost_count_to_multiplier(chunk.boost) for chunk in chunks]
     recency_multiplier = [chunk.recency_bias for chunk in chunks]
 
-    norm_min = min(norm_min, min(scores))
-    norm_max = max(norm_max, max(scores))
+    norm_min = min(norm_min, min(scores[:norm_cutoff]))
+    norm_max = max(norm_max, max(scores[:norm_cutoff]))
     # This should never be 0 unless user has done some weird/wrong settings
     norm_range = norm_max - norm_min
 
     boosted_scores = [
-        (score - norm_min) * boost * recency / norm_range
+        max(0, (score - norm_min) * boost * recency / norm_range)
         for score, boost, recency in zip(scores, boosts, recency_multiplier)
     ]
 
@@ -292,31 +336,41 @@ def apply_boost(
     return final_chunks
 
 
-def search_chunks(
+def retrieve_chunks(
     query: SearchQuery,
     document_index: DocumentIndex,
     hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
+    multilingual_query_expansion: str | None = MULTILINGUAL_QUERY_EXPANSION,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
-    rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-) -> tuple[list[InferenceChunk] | None, list[InferenceChunk] | None]:
-    def _log_top_chunk_links(search_flow: str, chunks: list[InferenceChunk]) -> None:
-        top_links = [
-            c.source_links[0] if c.source_links is not None else "No Link"
-            for c in chunks
-        ]
-        logger.info(f"Top links from {search_flow} search: {', '.join(top_links)}")
-
-    top_chunks = doc_index_retrieval(
-        query=query, document_index=document_index, hybrid_alpha=hybrid_alpha
-    )
+) -> list[InferenceChunk]:
+    """Returns a list of the best chunks from an initial keyword/semantic/ hybrid search."""
+    # Don't do query expansion on complex queries, rephrasings likely would not work well
+    if not multilingual_query_expansion or "\n" in query.query or "\r" in query.query:
+        top_chunks = doc_index_retrieval(
+            query=query, document_index=document_index, hybrid_alpha=hybrid_alpha
+        )
+    else:
+        run_queries: list[tuple[Callable, tuple]] = []
+        # Currently only uses query expansion on multilingual use cases
+        query_rephrases = rephrase_query(query.query, multilingual_query_expansion)
+        # Just to be extra sure, add the original query.
+        query_rephrases.append(query.query)
+        for rephrase in set(query_rephrases):
+            q_copy = deepcopy(query)
+            q_copy.query = rephrase
+            run_queries.append(
+                (doc_index_retrieval, (q_copy, document_index, hybrid_alpha))
+            )
+        parallel_search_results = run_functions_tuples_in_parallel(run_queries)
+        top_chunks = combine_retrieval_results(parallel_search_results)
 
     if not top_chunks:
         logger.info(
             f"{query.search_type.value.capitalize()} search returned no results "
             f"with filters: {query.filters}"
         )
-        return None, None
+        return []
 
     if retrieval_metrics_callback is not None:
         chunk_metrics = [
@@ -332,38 +386,173 @@ def search_chunks(
             RetrievalMetricsContainer(keyword_search=True, metrics=chunk_metrics)
         )
 
-    # Keyword Search should never do reranking, no transformers involved in this flow
-    if query.search_type == SearchType.KEYWORD:
-        _log_top_chunk_links(query.search_type.value, top_chunks)
-        return top_chunks, None
+    return top_chunks
 
-    if query.skip_rerank:
-        # Need the range of values to not be too spread out for applying boost
-        # Therefore pass in smaller set of chunks to limit the range for norm-ing
-        boosted_chunks = apply_boost(top_chunks[: query.num_rerank])
-        _log_top_chunk_links(query.search_type.value, boosted_chunks)
-        return boosted_chunks, top_chunks[query.num_rerank :]
 
-    ranked_chunks = semantic_reranking(
-        query.query,
-        top_chunks[: query.num_rerank],
+def should_rerank(query: SearchQuery) -> bool:
+    # don't re-rank for keyword search
+    return query.search_type != SearchType.KEYWORD and not query.skip_rerank
+
+
+def should_apply_llm_based_relevance_filter(query: SearchQuery) -> bool:
+    return not query.skip_llm_chunk_filter
+
+
+def rerank_chunks(
+    query: SearchQuery,
+    chunks_to_rerank: list[InferenceChunk],
+    rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
+) -> list[InferenceChunk]:
+    ranked_chunks, _ = semantic_reranking(
+        query=query.query,
+        chunks=chunks_to_rerank[: query.num_rerank],
         rerank_metrics_callback=rerank_metrics_callback,
     )
+    lower_chunks = chunks_to_rerank[query.num_rerank :]
+    # Scores from rerank cannot be meaningfully combined with scores without rerank
+    for lower_chunk in lower_chunks:
+        lower_chunk.score = None
+    ranked_chunks.extend(lower_chunks)
+    return ranked_chunks
 
-    _log_top_chunk_links(query.search_type.value, ranked_chunks)
 
-    return ranked_chunks, top_chunks[query.num_rerank :]
+def filter_chunks(
+    query: SearchQuery,
+    chunks_to_filter: list[InferenceChunk],
+) -> list[str]:
+    """Filters chunks based on whether the LLM thought they were relevant to the query.
+
+    Returns a list of the unique chunk IDs that were marked as relevant"""
+    chunks_to_filter = chunks_to_filter[: query.max_llm_filter_chunks]
+    llm_chunk_selection = llm_batch_eval_chunks(
+        query=query.query,
+        chunk_contents=[chunk.content for chunk in chunks_to_filter],
+    )
+    return [
+        chunk.unique_id
+        for ind, chunk in enumerate(chunks_to_filter)
+        if llm_chunk_selection[ind]
+    ]
 
 
-def danswer_search(
+def full_chunk_search(
+    query: SearchQuery,
+    document_index: DocumentIndex,
+    hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
+    multilingual_query_expansion: str | None = MULTILINGUAL_QUERY_EXPANSION,
+    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
+    | None = None,
+    rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
+) -> tuple[list[InferenceChunk], list[bool]]:
+    """A utility which provides an easier interface than `full_chunk_search_generator`.
+    Rather than returning the chunks and llm relevance filter results in two separate
+    yields, just returns them both at once."""
+    search_generator = full_chunk_search_generator(
+        query=query,
+        document_index=document_index,
+        hybrid_alpha=hybrid_alpha,
+        multilingual_query_expansion=multilingual_query_expansion,
+        retrieval_metrics_callback=retrieval_metrics_callback,
+        rerank_metrics_callback=rerank_metrics_callback,
+    )
+    top_chunks = cast(list[InferenceChunk], next(search_generator))
+    llm_chunk_selection = cast(list[bool], next(search_generator))
+    return top_chunks, llm_chunk_selection
+
+
+def full_chunk_search_generator(
+    query: SearchQuery,
+    document_index: DocumentIndex,
+    hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
+    multilingual_query_expansion: str | None = MULTILINGUAL_QUERY_EXPANSION,
+    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
+    | None = None,
+    rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
+) -> Generator[list[InferenceChunk] | list[bool], None, None]:
+    """Always yields twice. Once with the selected chunks and once with the LLM relevance filter result."""
+    chunks_yielded = False
+
+    retrieved_chunks = retrieve_chunks(
+        query=query,
+        document_index=document_index,
+        hybrid_alpha=hybrid_alpha,
+        multilingual_query_expansion=multilingual_query_expansion,
+        retrieval_metrics_callback=retrieval_metrics_callback,
+    )
+
+    post_processing_tasks: list[FunctionCall] = []
+
+    rerank_task_id = None
+    if should_rerank(query):
+        post_processing_tasks.append(
+            FunctionCall(
+                rerank_chunks,
+                (
+                    query,
+                    retrieved_chunks,
+                    rerank_metrics_callback,
+                ),
+            )
+        )
+        rerank_task_id = post_processing_tasks[-1].result_id
+    else:
+        final_chunks = retrieved_chunks
+        # NOTE: if we don't rerank, we can return the chunks immediately
+        # since we know this is the final order
+        _log_top_chunk_links(query.search_type.value, final_chunks)
+        yield final_chunks
+        chunks_yielded = True
+
+    llm_filter_task_id = None
+    if should_apply_llm_based_relevance_filter(query):
+        post_processing_tasks.append(
+            FunctionCall(
+                filter_chunks,
+                (query, retrieved_chunks[: query.max_llm_filter_chunks]),
+            )
+        )
+        llm_filter_task_id = post_processing_tasks[-1].result_id
+
+    post_processing_results = run_functions_in_parallel(post_processing_tasks)
+    reranked_chunks = cast(
+        list[InferenceChunk] | None,
+        post_processing_results.get(str(rerank_task_id)) if rerank_task_id else None,
+    )
+    if reranked_chunks:
+        if chunks_yielded:
+            logger.error(
+                "Trying to yield re-ranked chunks, but chunks were already yielded. This should never happen."
+            )
+        else:
+            _log_top_chunk_links(query.search_type.value, reranked_chunks)
+            yield reranked_chunks
+
+    llm_chunk_selection = cast(
+        list[str] | None,
+        post_processing_results.get(str(llm_filter_task_id))
+        if llm_filter_task_id
+        else None,
+    )
+    if llm_chunk_selection:
+        yield [chunk.unique_id in llm_chunk_selection for chunk in retrieved_chunks]
+    else:
+        yield [True for _ in reranked_chunks or retrieved_chunks]
+
+
+def danswer_search_generator(
     question: QuestionRequest,
     user: User | None,
     db_session: Session,
     document_index: DocumentIndex,
+    skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-) -> tuple[list[InferenceChunk] | None, list[InferenceChunk] | None, int]:
+) -> Generator[list[InferenceChunk] | list[bool] | int, None, None]:
+    """The main entry point for search. This fetches the relevant documents from Vespa
+    based on the provided query (applying permissions / filters), does any specified
+    post-processing, and returns the results. It also create an entry in the query_event table
+    for this search event."""
     query_event_id = create_query_event(
         query=question.query,
         search_type=question.search_type,
@@ -384,23 +573,61 @@ def danswer_search(
         query=question.query,
         search_type=question.search_type,
         filters=final_filters,
-        favor_recent=True if question.favor_recent is None else question.favor_recent,
+        # Still applies time decay but not magnified
+        favor_recent=question.favor_recent
+        if question.favor_recent is not None
+        else False,
+        skip_llm_chunk_filter=skip_llm_chunk_filter,
     )
 
-    ranked_chunks, unranked_chunks = search_chunks(
+    search_generator = full_chunk_search_generator(
         query=search_query,
         document_index=document_index,
         retrieval_metrics_callback=retrieval_metrics_callback,
         rerank_metrics_callback=rerank_metrics_callback,
     )
+    top_chunks = cast(list[InferenceChunk], next(search_generator))
+    yield top_chunks
 
-    retrieved_ids = [doc.document_id for doc in ranked_chunks] if ranked_chunks else []
+    llm_chunk_selection = cast(list[bool], next(search_generator))
+    yield llm_chunk_selection
 
     update_query_event_retrieved_documents(
         db_session=db_session,
-        retrieved_document_ids=retrieved_ids,
+        retrieved_document_ids=[doc.document_id for doc in top_chunks]
+        if top_chunks
+        else [],
         query_id=query_event_id,
         user_id=None if user is None else user.id,
     )
+    yield query_event_id
 
-    return ranked_chunks, unranked_chunks, query_event_id
+
+def danswer_search(
+    question: QuestionRequest,
+    user: User | None,
+    db_session: Session,
+    document_index: DocumentIndex,
+    skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
+    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
+    | None = None,
+    rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
+) -> tuple[list[InferenceChunk], list[bool], int]:
+    """Returns a tuple of the top chunks, the LLM relevance filter results, and the query event ID.
+
+    Presents a simpler interface than the underlying `danswer_search_generator`, as callers no
+    longer need to worry about the order / have nicer typing. This should be used for flows which
+    do not require streaming."""
+    search_generator = danswer_search_generator(
+        question=question,
+        user=user,
+        db_session=db_session,
+        document_index=document_index,
+        skip_llm_chunk_filter=skip_llm_chunk_filter,
+        retrieval_metrics_callback=retrieval_metrics_callback,
+        rerank_metrics_callback=rerank_metrics_callback,
+    )
+    top_chunks = cast(list[InferenceChunk], next(search_generator))
+    llm_chunk_selection = cast(list[bool], next(search_generator))
+    query_event_id = cast(int, next(search_generator))
+    return top_chunks, llm_chunk_selection, query_event_id

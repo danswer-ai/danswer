@@ -27,6 +27,11 @@ Quotes MUST be EXACT substrings from provided documents!
 """.strip()
 
 
+LANGUAGE_HINT = """
+IMPORTANT: Respond in the same language as my query!
+""".strip()
+
+
 # This has to be doubly escaped due to json containing { } which are also used for format strings
 EMPTY_SAMPLE_JSON = {
     "answer": "Place your final answer here. It should be as DETAILED and INFORMATIVE as possible.",
@@ -44,16 +49,19 @@ ANSWER_NOT_FOUND_RESPONSE = f'{{"answer": "{UNCERTAINTY_PAT}", "quotes": []}}'
 JSON_PROMPT = f"""
 {QA_HEADER}
 {REQUIRE_JSON}
-{GENERAL_SEP_PAT}
+
 CONTEXT:
+{GENERAL_SEP_PAT}
 {{context_docs_str}}
 {GENERAL_SEP_PAT}
+
 SAMPLE_RESPONSE:
 ```
 {{{json.dumps(EMPTY_SAMPLE_JSON)}}}
 ```
-{QUESTION_PAT} {{user_query}}
+{QUESTION_PAT.upper()} {{user_query}}
 {JSON_HELPFUL_HINT}
+{{language_hint_or_none}}
 """.strip()
 
 
@@ -62,10 +70,12 @@ SAMPLE_RESPONSE:
 # COT (chain-of-thought) flow basically
 COT_PROMPT = f"""
 {QA_HEADER}
-{GENERAL_SEP_PAT}
+
 CONTEXT:
+{GENERAL_SEP_PAT}
 {{context_docs_str}}
 {GENERAL_SEP_PAT}
+
 You MUST respond in the following format:
 ```
 {THOUGHT_PAT} Use this section as a scratchpad to reason through the answer.
@@ -73,8 +83,9 @@ You MUST respond in the following format:
 {{{json.dumps(EMPTY_SAMPLE_JSON)}}}
 ```
 
-{QUESTION_PAT} {{user_query}}
+{QUESTION_PAT.upper()} {{user_query}}
 {JSON_HELPFUL_HINT}
+{{language_hint_or_none}}
 """.strip()
 
 
@@ -89,8 +100,8 @@ Answer the user query below based on the reference document above.
 Respond with an "{ANSWER_PAT}" section and as many "{QUOTE_PAT}" sections as needed to support \
 the answer.'
 
-{QUESTION_PAT} {{user_query}}
-{ANSWER_PAT}
+{QUESTION_PAT.upper()} {{user_query}}
+{ANSWER_PAT.upper()}
 """.strip()
 
 

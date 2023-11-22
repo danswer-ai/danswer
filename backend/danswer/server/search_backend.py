@@ -1,5 +1,3 @@
-from collections.abc import Callable
-
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -36,6 +34,7 @@ from danswer.server.models import SearchDoc
 from danswer.server.models import SearchFeedbackRequest
 from danswer.server.models import SearchResponse
 from danswer.utils.logger import setup_logger
+from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 
 logger = setup_logger()
@@ -131,10 +130,10 @@ def handle_search_request(
     query = question.query
     logger.info(f"Received {question.search_type.value} " f"search query: {query}")
 
-    functions_to_run: dict[Callable, tuple] = {
-        extract_question_time_filters: (question,),
-        extract_question_source_filters: (question, db_session),
-    }
+    functions_to_run = [
+        FunctionCall(extract_question_time_filters, (question,), {}),
+        FunctionCall(extract_question_source_filters, (question, db_session), {}),
+    ]
 
     parallel_results = run_functions_in_parallel(functions_to_run)
 
@@ -145,29 +144,18 @@ def handle_search_request(
     question.favor_recent = favor_recent
     question.filters.source_type = source_filters
 
-    ranked_chunks, unranked_chunks, query_event_id = danswer_search(
+    top_chunks, _, query_event_id = danswer_search(
         question=question,
         user=user,
         db_session=db_session,
         document_index=get_default_document_index(),
+        skip_llm_chunk_filter=True,
     )
 
-    if not ranked_chunks:
-        return SearchResponse(
-            top_ranked_docs=None,
-            lower_ranked_docs=None,
-            query_event_id=query_event_id,
-            source_type=source_filters,
-            time_cutoff=time_cutoff,
-            favor_recent=favor_recent,
-        )
-
-    top_docs = chunks_to_search_docs(ranked_chunks)
-    lower_top_docs = chunks_to_search_docs(unranked_chunks)
+    top_docs = chunks_to_search_docs(top_chunks)
 
     return SearchResponse(
-        top_ranked_docs=top_docs,
-        lower_ranked_docs=lower_top_docs or None,
+        top_documents=top_docs,
         query_event_id=query_event_id,
         source_type=source_filters,
         time_cutoff=time_cutoff,

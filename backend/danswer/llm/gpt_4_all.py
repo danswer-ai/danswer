@@ -61,6 +61,11 @@ class DanswerGPT4All(LLM):
         self.temperature = temperature
         self.gpt4all_model = GPT4All(model_version)
 
+    def log_model_configs(self) -> None:
+        logger.debug(
+            f"GPT4All Model: {self.gpt4all_model}, Temperature: {self.temperature}"
+        )
+
     def invoke(self, prompt: LanguageModelInput) -> str:
         prompt_basic = convert_lm_input_to_basic_string(prompt)
         return self.gpt4all_model.generate(prompt_basic)

@@ -5,12 +5,10 @@ import { SearchBar } from "./SearchBar";
 import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SourceSelector } from "./filtering/Filters";
 import { Connector, DocumentSet } from "@/lib/types";
-import { SearchTypeSelector } from "./SearchTypeSelector";
 import {
   DanswerDocument,
   Quote,
   SearchResponse,
-  Source,
   FlowType,
   SearchType,
   SearchDefaultOverrides,
@@ -18,7 +16,6 @@ import {
   ValidQuestionResponse,
 } from "@/lib/search/interfaces";
 import { searchRequestStreamed } from "@/lib/search/streamingQa";
-import Cookies from "js-cookie";
 import { SearchHelper } from "./SearchHelper";
 import { CancellationToken, cancellable } from "@/lib/search/cancellable";
 import { NEXT_PUBLIC_DISABLE_STREAMING } from "@/lib/constants";
@@ -77,6 +74,7 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
     documents: null,
     suggestedSearchType: null,
     suggestedFlowType: null,
+    selectedDocIndices: null,
     error: null,
     queryEventId: null,
   };
@@ -104,6 +102,11 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       suggestedFlowType,
+    }));
+  const updateSelectedDocIndices = (docIndices: number[]) =>
+    setSearchResponse((prevState) => ({
+      ...(prevState || initialSearchResponse),
+      selectedDocIndices: docIndices,
     }));
   const updateError = (error: FlowType) =>
     setSearchResponse((prevState) => ({
@@ -159,6 +162,10 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateSuggestedFlowType,
       }),
+      updateSelectedDocIndices: cancellable({
+        cancellationToken: lastSearchCancellationToken.current,
+        fn: updateSelectedDocIndices,
+      }),
       updateError: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateError,
@@ -185,7 +192,7 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
   };
 
   return (
-    <div className="relative max-w-[2000px] xl:max-w-[1400px] mx-auto">
+    <div className="relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
       <div className="absolute left-0 hidden 2xl:block w-64">
         {(connectors.length > 0 || documentSets.length > 0) && (
           <SourceSelector
@@ -195,7 +202,7 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
           />
         )}
 
-        <div className="mt-10 pr-2">
+        <div className="mt-10 pr-5">
           <SearchHelper
             isFetching={isFetching}
             searchResponse={searchResponse}

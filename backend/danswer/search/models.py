@@ -3,6 +3,7 @@ from enum import Enum
 
 from pydantic import BaseModel
 
+from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
@@ -57,6 +58,9 @@ class SearchQuery(BaseModel):
     skip_rerank: bool = SKIP_RERANKING
     # Only used if not skip_rerank
     num_rerank: int | None = NUM_RERANKED_RESULTS
+    skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER
+    # Only used if not skip_llm_chunk_filter
+    max_llm_filter_chunks: int = NUM_RERANKED_RESULTS
 
 
 class RetrievalMetricsContainer(BaseModel):
