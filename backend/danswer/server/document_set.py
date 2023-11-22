@@ -5,12 +5,15 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
+from danswer.db.document_set import check_document_sets_are_public
 from danswer.db.document_set import fetch_document_sets
 from danswer.db.document_set import insert_document_set
 from danswer.db.document_set import mark_document_set_as_to_be_deleted
 from danswer.db.document_set import update_document_set
 from danswer.db.engine import get_session
 from danswer.db.models import User
+from danswer.server.models import CheckDocSetPublicRequest
+from danswer.server.models import CheckDocSetPublicResponse
 from danswer.server.models import ConnectorCredentialPairDescriptor
 from danswer.server.models import ConnectorSnapshot
 from danswer.server.models import CredentialSnapshot
@@ -99,3 +102,15 @@ def list_document_sets(
         )
         for document_set_db_model, cc_pairs in document_set_info
     ]
+
+
+@router.get("/document-set-public")
+def document_set_public(
+    check_public_request: CheckDocSetPublicRequest,
+    _: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> CheckDocSetPublicResponse:
+    is_public = check_document_sets_are_public(
+        document_set_ids=check_public_request.document_set_ids, db_session=db_session
+    )
+    return CheckDocSetPublicResponse(is_public=is_public)

@@ -39,7 +39,7 @@ class BaseFilters(BaseModel):
 
 
 class IndexFilters(BaseFilters):
-    access_control_list: list[str]
+    access_control_list: list[str] | None
 
 
 class ChunkMetric(BaseModel):

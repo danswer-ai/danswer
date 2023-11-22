@@ -461,6 +461,14 @@ class DocumentSetUpdateRequest(BaseModel):
     cc_pair_ids: list[int]
 
 
+class CheckDocSetPublicRequest(BaseModel):
+    document_set_ids: list[int]
+
+
+class CheckDocSetPublicResponse(BaseModel):
+    is_public: bool
+
+
 class DocumentSet(BaseModel):
     id: int
     name: str

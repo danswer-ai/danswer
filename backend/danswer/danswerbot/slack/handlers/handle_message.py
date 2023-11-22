@@ -105,6 +105,17 @@ def handle_message(
     send_to: list[str] | None = None
     respond_tag_only = False
     respond_team_member_list = None
+
+    bypass_acl = False
+    if (
+        channel_config
+        and channel_config.persona
+        and channel_config.persona.document_sets
+    ):
+        # For Slack channels, use the full document set, admin will be warned when configuring it
+        # with non-public document sets
+        bypass_acl = True
+
     if channel_config and channel_config.channel_config:
         channel_conf = channel_config.channel_config
         if not bipass_filters and "answer_filters" in channel_conf:
@@ -172,6 +183,7 @@ def handle_message(
                 answer_generation_timeout=answer_generation_timeout,
                 real_time_flow=False,
                 enable_reflexion=reflexion,
+                bypass_acl=bypass_acl,
             )
             if not answer.error_msg:
                 return answer

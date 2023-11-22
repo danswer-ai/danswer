@@ -50,6 +50,7 @@ def answer_qa_query(
     answer_generation_timeout: int = QA_TIMEOUT,
     real_time_flow: bool = True,
     enable_reflexion: bool = False,
+    bypass_acl: bool = False,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
@@ -91,6 +92,7 @@ def answer_qa_query(
         user=user,
         db_session=db_session,
         document_index=get_default_document_index(),
+        bypass_acl=bypass_acl,
         retrieval_metrics_callback=retrieval_metrics_callback,
         rerank_metrics_callback=rerank_metrics_callback,
     )
