@@ -58,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
             <div className="h-[32px] w-[30px]">
               <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
             </div>
-            <h1 className="flex text-2xl font-bold my-auto">Danswer</h1>
+            <h1 className="flex text-2xl font-bold my-auto">Workspace Search</h1>
           </div>
         </Link>
 

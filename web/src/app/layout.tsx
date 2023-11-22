@@ -8,8 +8,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Danswer",
-  description: "Question answering for your documents",
+  title: "Yugabyte Workspace Search",
+  description: "Question answering for our documents",
 };
 
 export const dynamic = "force-dynamic";
