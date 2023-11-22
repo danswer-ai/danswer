@@ -51,7 +51,6 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
   const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(
     null
   );
-  console.log(searchResponse);
   const [isFetching, setIsFetching] = useState(false);
 
   const [validQuestionResponse, setValidQuestionResponse] =

@@ -94,6 +94,10 @@ class InferenceChunk(BaseChunk):
     # when the doc was last updated
     updated_at: datetime | None
 
+    @property
+    def unique_id(self) -> str:
+        return f"{self.document_id}__{self.chunk_id}"
+
     def __repr__(self) -> str:
         blurb_words = self.blurb.split()
         short_blurb = ""

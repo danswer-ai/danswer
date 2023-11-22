@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from collections.abc import Iterator
 from functools import partial
+from typing import cast
 
 from sqlalchemy.orm import Session
 
@@ -15,15 +16,18 @@ from danswer.direct_qa.interfaces import StreamingError
 from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.direct_qa.qa_utils import get_chunks_for_qa
 from danswer.document_index.factory import get_default_document_index
+from danswer.indexing.models import InferenceChunk
 from danswer.search.danswer_helper import query_intent
 from danswer.search.models import QueryFlow
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import danswer_search
+from danswer.search.search_runner import danswer_search_generator
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.secondary_llm_flows.source_filter import extract_question_source_filters
 from danswer.secondary_llm_flows.time_filter import extract_question_time_filters
+from danswer.server.models import LLMRelevanceFilterResponse
 from danswer.server.models import QADocsResponse
 from danswer.server.models import QAResponse
 from danswer.server.models import QuestionRequest
@@ -206,24 +210,19 @@ def answer_qa_query_stream(
     question.favor_recent = favor_recent
     question.filters.source_type = source_filters
 
-    top_chunks, llm_chunk_selection, query_event_id = danswer_search(
+    search_generator = danswer_search_generator(
         question=question,
         user=user,
         db_session=db_session,
         document_index=get_default_document_index(),
     )
 
+    # first fetch and return to the UI the top chunks so the user can
+    # immediately see some results
+    top_chunks = cast(list[InferenceChunk], next(search_generator))
     top_docs = chunks_to_search_docs(top_chunks)
-
-    llm_chunks_indices = get_chunks_for_qa(
-        chunks=top_chunks,
-        llm_chunk_selection=llm_chunk_selection,
-        batch_offset=offset_count,
-    )
-
     initial_response = QADocsResponse(
         top_documents=top_docs,
-        llm_chunks_indices=llm_chunks_indices,
         # if generative AI is disabled, set flow as search so frontend
         # doesn't ask the user if they want to run QA over more documents
         predicted_flow=QueryFlow.SEARCH
@@ -233,12 +232,28 @@ def answer_qa_query_stream(
         time_cutoff=time_cutoff,
         favor_recent=favor_recent,
     ).dict()
-
     yield get_json_line(initial_response)
 
     if not top_chunks:
         logger.debug("No Documents Found")
         return
+
+    # next apply the LLM filtering
+    llm_chunk_selection = cast(list[bool], next(search_generator))
+    llm_chunks_indices = get_chunks_for_qa(
+        chunks=top_chunks,
+        llm_chunk_selection=llm_chunk_selection,
+        batch_offset=offset_count,
+    )
+    llm_relevance_filtering_response = LLMRelevanceFilterResponse(
+        relevant_chunk_indices=llm_chunks_indices
+    ).dict()
+    yield get_json_line(llm_relevance_filtering_response)
+
+    # finally get the query ID from the search generator for updating the
+    # row in Postgres. This is the end of the `search_generator` - any future
+    # calls to `next` will raise StopIteration
+    query_event_id = cast(int, next(search_generator))
 
     if disable_generative_answer:
         logger.debug("Skipping QA because generative AI is disabled")

@@ -3,6 +3,7 @@ import {
   DanswerDocument,
   DocumentInfoPacket,
   ErrorMessagePacket,
+  LLMRelevanceFilterPacket,
   QueryEventIdPacket,
   Quote,
   QuotesInfoPacket,
@@ -64,6 +65,7 @@ export const searchRequestStreamed = async ({
         | ErrorMessagePacket
         | QuotesInfoPacket
         | DocumentInfoPacket
+        | LLMRelevanceFilterPacket
         | QueryEventIdPacket
       >(decoder.decode(value, { stream: true }), previousPartialChunk);
       if (!completedChunks.length && !partialChunk) {
@@ -116,10 +118,15 @@ export const searchRequestStreamed = async ({
             updateSuggestedSearchType(chunk.predicted_search);
           }
 
-          if (chunk.llm_chunks_indices) {
-            updateSelectedDocIndices(chunk.llm_chunks_indices);
-          }
+          return;
+        }
 
+        if (Object.hasOwn(chunk, "relevant_chunk_indices")) {
+          const relevantChunkIndices = (chunk as LLMRelevanceFilterPacket)
+            .relevant_chunk_indices;
+          if (relevantChunkIndices) {
+            updateSelectedDocIndices(relevantChunkIndices);
+          }
           return;
         }
 

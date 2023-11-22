@@ -53,7 +53,10 @@ export interface DocumentInfoPacket {
   predicted_search: SearchType | null;
   time_cutoff: string | null;
   favor_recent: boolean;
-  llm_chunks_indices: number[];
+}
+
+export interface LLMRelevanceFilterPacket {
+  relevant_chunk_indices: number[];
 }
 
 export interface QueryEventIdPacket {
