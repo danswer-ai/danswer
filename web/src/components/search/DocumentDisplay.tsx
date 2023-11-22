@@ -3,8 +3,9 @@ import { DocumentFeedbackBlock } from "./DocumentFeedbackBlock";
 import { getSourceIcon } from "../source";
 import { useState } from "react";
 import { PopupSpec } from "../admin/connectors/Popup";
-import { timeAgo } from "@/lib/time";
+import { HoverPopup } from "@/components/HoverPopup";
 import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
+import { FiCrosshair, FiInfo, FiRadio } from "react-icons/fi";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -106,12 +107,14 @@ export const buildDocumentSummaryDisplay = (
 interface DocumentDisplayProps {
   document: DanswerDocument;
   queryEventId: number | null;
+  isSelected: boolean;
   setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 export const DocumentDisplay = ({
   document,
   queryEventId,
+  isSelected,
   setPopup,
 }: DocumentDisplayProps) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -132,7 +135,31 @@ export const DocumentDisplay = ({
     >
       <div className="flex relative">
         {document.score !== null && (
-          <div className="absolute -left-10 top-2/4 -translate-y-2/4 w-10 flex">
+          <div
+            className={
+              "absolute top-2/4 -translate-y-2/4 flex " +
+              (isSelected ? "-left-14 w-14" : "-left-10 w-10")
+            }
+          >
+            {isSelected && (
+              <div className="w-4 h-4 my-auto mr-1 flex flex-col">
+                <HoverPopup
+                  mainContent={<FiRadio className="text-gray-500 my-auto" />}
+                  popupContent={
+                    <div className="text-xs text-gray-300 w-36 flex">
+                      <div className="flex mx-auto">
+                        <div className="w-3 h-3 flex flex-col my-auto mr-1">
+                          <FiInfo className="my-auto" />
+                        </div>
+                        <div className="my-auto">The AI liked this doc!</div>
+                      </div>
+                    </div>
+                  }
+                  direction="bottom"
+                  style="dark"
+                />
+              </div>
+            )}
             <div
               className={`
                 text-xs
