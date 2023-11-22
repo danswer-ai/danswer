@@ -76,6 +76,10 @@ _BATCH_SIZE = 100  # Specific to Vespa
 _NUM_THREADS = (
     16  # since Vespa doesn't allow batching of inserts / updates, we use threads
 )
+# up from 500ms for now, since we've seen quite a few timeouts
+# in the long term, we are looking to improve the performance of Vespa
+# so that we can bring this back to default
+_VESPA_TIMEOUT = "3s"
 # Specific to Vespa, needed for highlighting matching keywords / section
 CONTENT_SUMMARY = "content_summary"
 
@@ -636,6 +640,7 @@ class VespaIndex(DocumentIndex):
             "hits": num_to_retrieve,
             "offset": 0,
             "ranking.profile": "keyword_search",
+            "timeout": _VESPA_TIMEOUT,
         }
 
         return _query_vespa(params)
@@ -675,6 +680,7 @@ class VespaIndex(DocumentIndex):
             "hits": num_to_retrieve,
             "offset": 0,
             "ranking.profile": "semantic_search",
+            "timeout": _VESPA_TIMEOUT,
         }
 
         return _query_vespa(params)
@@ -718,6 +724,7 @@ class VespaIndex(DocumentIndex):
             "hits": num_to_retrieve,
             "offset": 0,
             "ranking.profile": "hybrid_search",
+            "timeout": _VESPA_TIMEOUT,
         }
 
         return _query_vespa(params)
@@ -745,6 +752,7 @@ class VespaIndex(DocumentIndex):
             "hits": num_to_retrieve,
             "offset": 0,
             "ranking.profile": "admin_search",
+            "timeout": _VESPA_TIMEOUT,
         }
 
         return _query_vespa(params)
