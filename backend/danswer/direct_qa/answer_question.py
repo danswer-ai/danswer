@@ -248,7 +248,9 @@ def answer_qa_query_stream(
         batch_offset=offset_count,
     )
     llm_relevance_filtering_response = LLMRelevanceFilterResponse(
-        relevant_chunk_indices=llm_chunks_indices
+        relevant_chunk_indices=[
+            index for index, value in enumerate(llm_chunk_selection) if value
+        ]
     ).dict()
     yield get_json_line(llm_relevance_filtering_response)
 

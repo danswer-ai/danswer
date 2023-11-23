@@ -322,7 +322,7 @@ def get_usable_chunks(
 def get_chunks_for_qa(
     chunks: list[InferenceChunk],
     llm_chunk_selection: list[bool],
-    token_limit: int = NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
+    token_limit: int | None = NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
     batch_offset: int = 0,
 ) -> list[int]:
     """
@@ -353,13 +353,17 @@ def get_chunks_for_qa(
             token_count += chunk_token + 50
 
             # Always use at least 1 chunk
-            if token_count <= token_limit or not latest_batch_indices:
+            if (
+                token_limit is None
+                or token_count <= token_limit
+                or not latest_batch_indices
+            ):
                 latest_batch_indices.append(ind)
                 current_chunk_unused = False
             else:
                 current_chunk_unused = True
 
-            if token_count >= token_limit:
+            if token_limit is not None and token_count >= token_limit:
                 if batch_index < batch_offset:
                     batch_index += 1
                     if current_chunk_unused:
