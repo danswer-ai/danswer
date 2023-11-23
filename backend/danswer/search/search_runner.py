@@ -540,7 +540,7 @@ def full_chunk_search_generator(
         if llm_filter_task_id
         else None,
     )
-    if llm_chunk_selection:
+    if llm_chunk_selection is not None:
         yield [chunk.unique_id in llm_chunk_selection for chunk in retrieved_chunks]
     else:
         yield [True for _ in reranked_chunks or retrieved_chunks]
