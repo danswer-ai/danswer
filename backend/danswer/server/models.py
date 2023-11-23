@@ -10,6 +10,7 @@ from pydantic import validator
 from pydantic.generics import GenericModel
 
 from danswer.auth.schemas import UserRole
+from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentSource
@@ -173,12 +174,12 @@ class SearchDoc(BaseModel):
 
 class QuestionRequest(BaseModel):
     query: str
-    collection: str
     filters: BaseFilters
-    offset: int | None
-    enable_auto_detect_filters: bool
-    favor_recent: bool | None = None
+    collection: str = DOCUMENT_INDEX_NAME
     search_type: SearchType = SearchType.HYBRID
+    enable_auto_detect_filters: bool = True
+    favor_recent: bool | None = None
+    offset: int | None = None
 
 
 class QAFeedbackRequest(BaseModel):
