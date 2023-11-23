@@ -81,7 +81,7 @@ SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
 #####
 # DB Configs
 #####
-DOCUMENT_INDEX_NAME = "danswer_index"  # Shared by vector/keyword indices
+DOCUMENT_INDEX_NAME = "danswer_index"
 # Vespa is now the default document index store for both keyword and vector
 DOCUMENT_INDEX_TYPE = os.environ.get(
     "DOCUMENT_INDEX_TYPE", DocumentIndexType.COMBINED.value

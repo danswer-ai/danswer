@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from collections.abc import Generator
+from collections.abc import Iterator
 from copy import deepcopy
 from typing import cast
 
@@ -383,7 +383,9 @@ def retrieve_chunks(
             for chunk in top_chunks
         ]
         retrieval_metrics_callback(
-            RetrievalMetricsContainer(keyword_search=True, metrics=chunk_metrics)
+            RetrievalMetricsContainer(
+                search_type=query.search_type, metrics=chunk_metrics
+            )
         )
 
     return top_chunks
@@ -468,7 +470,7 @@ def full_chunk_search_generator(
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-) -> Generator[list[InferenceChunk] | list[bool], None, None]:
+) -> Iterator[list[InferenceChunk] | list[bool]]:
     """Always yields twice. Once with the selected chunks and once with the LLM relevance filter result."""
     chunks_yielded = False
 
@@ -479,6 +481,11 @@ def full_chunk_search_generator(
         multilingual_query_expansion=multilingual_query_expansion,
         retrieval_metrics_callback=retrieval_metrics_callback,
     )
+
+    if not retrieved_chunks:
+        yield []  # empty list of chunks
+        yield []  # empty list of llm filters
+        return
 
     post_processing_tasks: list[FunctionCall] = []
 
@@ -549,7 +556,7 @@ def danswer_search_generator(
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-) -> Generator[list[InferenceChunk] | list[bool] | int, None, None]:
+) -> Iterator[list[InferenceChunk] | list[bool] | int]:
     """The main entry point for search. This fetches the relevant documents from Vespa
     based on the provided query (applying permissions / filters), does any specified
     post-processing, and returns the results. It also create an entry in the query_event table

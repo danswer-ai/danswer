@@ -64,7 +64,7 @@ class SearchQuery(BaseModel):
 
 
 class RetrievalMetricsContainer(BaseModel):
-    keyword_search: bool  # False for Vector Search
+    search_type: SearchType
     metrics: list[ChunkMetric]  # This contains the scores for retrieval as well
 
 

@@ -6,7 +6,6 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.danswerbot_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
@@ -204,11 +203,8 @@ def handle_message(
         answer = _get_answer(
             QuestionRequest(
                 query=msg,
-                collection=DOCUMENT_INDEX_NAME,
-                enable_auto_detect_filters=not disable_auto_detect_filters,
                 filters=filters,
-                favor_recent=None,
-                offset=None,
+                enable_auto_detect_filters=not disable_auto_detect_filters,
             )
         )
     except Exception as e:
