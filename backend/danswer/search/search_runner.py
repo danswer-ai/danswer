@@ -545,6 +545,7 @@ def danswer_search_generator(
     db_session: Session,
     document_index: DocumentIndex,
     skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
+    bypass_acl: bool = False,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
@@ -561,7 +562,9 @@ def danswer_search_generator(
         db_session=db_session,
     )
 
-    user_acl_filters = build_access_filters_for_user(user, db_session)
+    user_acl_filters = (
+        None if bypass_acl else build_access_filters_for_user(user, db_session)
+    )
     final_filters = IndexFilters(
         source_type=question.filters.source_type,
         document_set=question.filters.document_set,
@@ -609,6 +612,7 @@ def danswer_search(
     db_session: Session,
     document_index: DocumentIndex,
     skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
+    bypass_acl: bool = False,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
@@ -624,6 +628,7 @@ def danswer_search(
         db_session=db_session,
         document_index=document_index,
         skip_llm_chunk_filter=skip_llm_chunk_filter,
+        bypass_acl=bypass_acl,
         retrieval_metrics_callback=retrieval_metrics_callback,
         rerank_metrics_callback=rerank_metrics_callback,
     )
