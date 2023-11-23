@@ -483,8 +483,8 @@ def full_chunk_search_generator(
     )
 
     if not retrieved_chunks:
-        yield []  # empty list of chunks
-        yield []  # empty list of llm filters
+        yield cast(list[InferenceChunk], [])
+        yield cast(list[bool], [])
         return
 
     post_processing_tasks: list[FunctionCall] = []
