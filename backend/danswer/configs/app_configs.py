@@ -232,6 +232,24 @@ MODEL_SERVER_HOST = os.environ.get("MODEL_SERVER_HOST") or None
 MODEL_SERVER_ALLOWED_HOST = os.environ.get("MODEL_SERVER_HOST") or "0.0.0.0"
 MODEL_SERVER_PORT = int(os.environ.get("MODEL_SERVER_PORT") or "9000")
 
+EMBEDDING_MODEL_SERVER_HOST = (
+    os.environ.get("EMBEDDING_MODEL_SERVER_HOST") or MODEL_SERVER_HOST
+)
+CROSS_ENCODER_MODEL_SERVER_HOST = (
+    os.environ.get("CROSS_ENCODER_MODEL_SERVER_HOST") or MODEL_SERVER_HOST
+)
+INTENT_MODEL_SERVER_HOST = (
+    os.environ.get("INTENT_MODEL_SERVER_HOST") or MODEL_SERVER_HOST
+)
+
+# specify this env variable directly to have a different model server for the background
+# indexing job vs the api server so that background indexing does not effect query-time
+# performance
+BACKGROUND_JOB_EMBEDDING_MODEL_SERVER_HOST = (
+    os.environ.get("BACKGROUND_JOB_EMBEDDING_MODEL_SERVER_HOST")
+    or EMBEDDING_MODEL_SERVER_HOST
+)
+
 
 #####
 # Miscellaneous
@@ -242,6 +260,11 @@ DYNAMIC_CONFIG_STORE = os.environ.get(
 )
 DYNAMIC_CONFIG_DIR_PATH = os.environ.get("DYNAMIC_CONFIG_DIR_PATH", "/home/storage")
 JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
+# used to allow the background indexing jobs to use a different embedding
+# model server than the API server
+CURRENT_PROCESS_IS_AN_INDEXING_JOB = (
+    os.environ.get("CURRENT_PROCESS_IS_AN_INDEXING_JOB", "").lower() == "true"
+)
 # Logs every model prompt and output, mostly used for development or exploration purposes
 LOG_ALL_MODEL_INTERACTIONS = (
     os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
