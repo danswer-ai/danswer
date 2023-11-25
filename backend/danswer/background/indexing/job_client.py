@@ -4,11 +4,12 @@ not follow the expected behavior, etc.
 
 NOTE: cannot use Celery directly due to
 https://github.com/celery/celery/issues/7007#issuecomment-1740139367"""
-import multiprocessing
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 from typing import Literal
+
+from torch import multiprocessing
 
 from danswer.utils.logger import setup_logger
 
@@ -94,7 +95,7 @@ class SimpleJobClient:
         job_id = self.job_id_counter
         self.job_id_counter += 1
 
-        process = multiprocessing.Process(target=func, args=args)
+        process = multiprocessing.Process(target=func, args=args, daemon=True)
         job = SimpleJob(id=job_id, process=process)
         process.start()
 
