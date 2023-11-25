@@ -13,7 +13,7 @@ from danswer.background.indexing.dask_utils import ResourceLogger
 from danswer.background.indexing.job_client import SimpleJob
 from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
-from danswer.configs.app_configs import EXPERIMENTAL_SIMPLE_JOB_CLIENT_ENABLED
+from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import LOG_LEVEL
 from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
@@ -273,9 +273,7 @@ def kickoff_indexing_jobs(
 
 def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> None:
     client: Client | SimpleJobClient
-    if EXPERIMENTAL_SIMPLE_JOB_CLIENT_ENABLED:
-        client = SimpleJobClient(n_workers=num_workers)
-    else:
+    if DASK_JOB_CLIENT_ENABLED:
         cluster = LocalCluster(
             n_workers=num_workers,
             threads_per_worker=1,
@@ -288,6 +286,8 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
         client = Client(cluster)
         if LOG_LEVEL.lower() == "debug":
             client.register_worker_plugin(ResourceLogger())
+    else:
+        client = SimpleJobClient(n_workers=num_workers)
 
     existing_jobs: dict[int, Future | SimpleJob] = {}
     engine = get_sqlalchemy_engine()
@@ -322,6 +322,12 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
 
 
 if __name__ == "__main__":
+    # needed for CUDA to work with multiprocessing
+    # NOTE: needs to be done on application startup
+    # before any other torch code has been run
+    if not DASK_JOB_CLIENT_ENABLED:
+        torch.multiprocessing.set_start_method("spawn")
+
     if not MODEL_SERVER_HOST:
         logger.info("Warming up Embedding Model(s)")
         warm_up_models(indexer_only=True)
