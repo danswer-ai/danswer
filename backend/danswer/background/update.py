@@ -233,10 +233,11 @@ def kickoff_indexing_jobs(
     client: Client | SimpleJobClient,
 ) -> dict[int, Future | SimpleJob]:
     existing_jobs_copy = existing_jobs.copy()
+    engine = get_sqlalchemy_engine()
 
     # Don't include jobs waiting in the Dask queue that just haven't started running
     # Also (rarely) don't include for jobs that started but haven't updated the indexing tables yet
-    with Session(get_sqlalchemy_engine()) as db_session:
+    with Session(engine) as db_session:
         new_indexing_attempts = [
             attempt
             for attempt in get_not_started_index_attempts(db_session)
@@ -253,7 +254,7 @@ def kickoff_indexing_jobs(
             logger.warning(
                 f"Skipping index attempt as Connector has been deleted: {attempt}"
             )
-            with Session(get_sqlalchemy_engine()) as db_session:
+            with Session(engine) as db_session:
                 mark_attempt_failed(
                     attempt, db_session, failure_reason="Connector is null"
                 )
@@ -262,7 +263,7 @@ def kickoff_indexing_jobs(
             logger.warning(
                 f"Skipping index attempt as Credential has been deleted: {attempt}"
             )
-            with Session(get_sqlalchemy_engine()) as db_session:
+            with Session(engine) as db_session:
                 mark_attempt_failed(
                     attempt, db_session, failure_reason="Credential is null"
                 )
