@@ -178,7 +178,7 @@ def _delete_vespa_docs(
             executor.shutdown(wait=True)
 
 
-def _get_chunks_vespa_documents(
+def _get_documents_from_chunks(
     chunks: list[DocMetadataAwareIndexChunk],
     executor: concurrent.futures.ThreadPoolExecutor | None = None,
 ) -> set[str]:
@@ -348,9 +348,7 @@ def _clear_and_index_vespa_chunks(
         # Check for existing documents, existing documents need to have all of their chunks deleted
         # prior to indexing as the document size (num chunks) may have shrunk
         for chunk_batch in batch_generator(chunks, _BATCH_SIZE):
-            found_doc_ids = _get_chunks_vespa_documents(
-                chunks=chunks, executor=executor
-            )
+            found_doc_ids = _get_documents_from_chunks(chunks=chunks, executor=executor)
             needing_deletion_doc_ids = found_doc_ids - wiped_document_ids
 
             wiped_document_ids.update(found_doc_ids)
