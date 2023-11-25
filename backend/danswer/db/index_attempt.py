@@ -7,6 +7,7 @@ from sqlalchemy import desc
 from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
 
 from danswer.db.models import IndexAttempt
@@ -56,8 +57,13 @@ def get_inprogress_index_attempts(
 
 
 def get_not_started_index_attempts(db_session: Session) -> list[IndexAttempt]:
+    """This eagerly loads the connector and credential so that the db_session can be expired
+    before running long-living indexing jobs, which causes increasing memory usage"""
     stmt = select(IndexAttempt)
     stmt = stmt.where(IndexAttempt.status == IndexingStatus.NOT_STARTED)
+    stmt = stmt.options(
+        joinedload(IndexAttempt.connector), joinedload(IndexAttempt.credential)
+    )
     new_attempts = db_session.scalars(stmt)
     return list(new_attempts.all())
 
