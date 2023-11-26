@@ -99,10 +99,14 @@ def verify_parent_exists(
 
 
 def create_chat_session(
-    description: str, user_id: UUID | None, db_session: Session
+    db_session: Session,
+    description: str,
+    user_id: UUID | None,
+    persona_id: int | None = None,
 ) -> ChatSession:
     chat_session = ChatSession(
         user_id=user_id,
+        persona_id=persona_id,
         description=description,
     )
 

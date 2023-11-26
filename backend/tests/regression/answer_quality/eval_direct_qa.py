@@ -83,9 +83,9 @@ def get_answer_for_question(
         access_control_list=None,
     )
     chat_session = create_chat_session(
+        db_session=db_session,
         description="Regression Test Session",
         user_id=None,
-        db_session=db_session,
     )
     new_message_request = NewMessageRequest(
         chat_session_id=chat_session.id,

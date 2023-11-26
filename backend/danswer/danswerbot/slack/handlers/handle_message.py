@@ -194,7 +194,7 @@ def handle_message(
     # for an existing chat session associated with this thread
     with Session(get_sqlalchemy_engine()) as db_session:
         chat_session = create_chat_session(
-            description="", user_id=None, db_session=db_session
+            db_session=db_session, description="", user_id=None
         )
 
     answer_failed = False

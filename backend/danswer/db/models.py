@@ -464,6 +464,9 @@ class ChatSession(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    persona_id: Mapped[int | None] = mapped_column(
+        ForeignKey("persona.id"), default=None
+    )
     description: Mapped[str] = mapped_column(Text)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     # The following texts help build up the model's ability to use the context effectively

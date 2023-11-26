@@ -45,7 +45,7 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llm
 from danswer.search.search_nlp_models import warm_up_models
 from danswer.server.cc_pair.api import router as cc_pair_router
-from danswer.server.chat_backend import router as chat_router
+from danswer.server.chat.api import router as chat_router
 from danswer.server.connector import router as connector_router
 from danswer.server.credential import router as credential_router
 from danswer.server.danswer_api import get_danswer_api_key

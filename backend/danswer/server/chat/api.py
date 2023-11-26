@@ -26,6 +26,7 @@ from danswer.db.models import User
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.llm.utils import get_default_llm_token_encode
 from danswer.secondary_llm_flows.chat_helpers import get_new_chat_name
+from danswer.server.chat.models import ChatSessionCreationRequest
 from danswer.server.models import ChatFeedbackRequest
 from danswer.server.models import ChatMessageDetail
 from danswer.server.models import ChatMessageIdentifier
@@ -124,15 +125,17 @@ def get_chat_session_messages(
 
 @router.post("/create-chat-session")
 def create_new_chat_session(
+    chat_session_creation_request: ChatSessionCreationRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> CreateChatSessionID:
     user_id = user.id if user is not None else None
 
     new_chat_session = create_chat_session(
-        "",
-        user_id,
-        db_session,  # Leave the naming till later to prevent delay
+        db_session=db_session,
+        description="",  # Leave the naming till later to prevent delay
+        user_id=user_id,
+        persona_id=chat_session_creation_request.persona_id,
     )
 
     return CreateChatSessionID(chat_session_id=new_chat_session.id)
