@@ -520,7 +520,11 @@ def full_chunk_search_generator(
         )
         llm_filter_task_id = post_processing_tasks[-1].result_id
 
-    post_processing_results = run_functions_in_parallel(post_processing_tasks)
+    post_processing_results = (
+        run_functions_in_parallel(post_processing_tasks)
+        if post_processing_tasks
+        else {}
+    )
     reranked_chunks = cast(
         list[InferenceChunk] | None,
         post_processing_results.get(str(rerank_task_id)) if rerank_task_id else None,
