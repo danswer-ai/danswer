@@ -46,7 +46,7 @@ def embed_chunks(
         # Normalize embeddings is only configured via model_configs.py, be sure to use right value for the set loss
         embeddings.extend(embedding_model.encode(text_batch))
 
-        # Uncomment the line below for easy debugging of indexing flow, skipping the actual model
+        # Replace line above with the line below for easy debugging of indexing flow, skipping the actual model
         # embeddings.extend([[0.0] * 384 for _ in range(len(text_batch))])
 
     embedding_ind_start = 0
