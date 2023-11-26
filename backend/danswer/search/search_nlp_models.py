@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import requests
 import tensorflow as tf  # type: ignore
@@ -42,6 +44,8 @@ def get_default_tokenizer() -> AutoTokenizer:
     global _TOKENIZER
     if _TOKENIZER is None:
         _TOKENIZER = AutoTokenizer.from_pretrained(DOCUMENT_ENCODER_MODEL)
+        if hasattr(_TOKENIZER, "is_fast") and _TOKENIZER.is_fast:
+            os.environ["TOKENIZERS_PARALLELISM"] = "false"
     return _TOKENIZER
 
 
