@@ -23,6 +23,7 @@ from danswer.danswerbot.slack.utils import get_channel_name_from_id
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.search.search_nlp_models import warm_up_models
 from danswer.utils.logger import setup_logger
 
 
@@ -294,6 +295,8 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
 # without issue.
 if __name__ == "__main__":
     try:
+        warm_up_models()
+
         socket_client = _get_socket_client()
         socket_client.socket_mode_request_listeners.append(process_slack_event)  # type: ignore
 
