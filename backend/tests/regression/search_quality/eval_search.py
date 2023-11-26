@@ -5,8 +5,6 @@ from contextlib import contextmanager
 from typing import Any
 from typing import TextIO
 
-from sqlalchemy.orm import Session
-
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.direct_qa.qa_utils import get_chunks_for_qa
 from danswer.document_index.factory import get_default_document_index
@@ -14,8 +12,9 @@ from danswer.indexing.models import InferenceChunk
 from danswer.search.models import IndexFilters
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
-from danswer.search.search_runner import danswer_search
-from danswer.server.models import QuestionRequest
+from danswer.search.models import SearchQuery
+from danswer.search.models import SearchType
+from danswer.search.search_runner import full_chunk_search
 from danswer.utils.callbacks import MetricsHander
 
 
@@ -74,7 +73,7 @@ def word_wrap(s: str, max_line_size: int = 100, prepend_tab: bool = True) -> str
 
 
 def get_search_results(
-    query: str, enable_llm: bool, db_session: Session
+    query: str,
 ) -> tuple[
     list[InferenceChunk],
     RetrievalMetricsContainer | None,
@@ -86,22 +85,19 @@ def get_search_results(
         time_cutoff=None,
         access_control_list=None,
     )
-    question = QuestionRequest(
+    search_query = SearchQuery(
         query=query,
+        search_type=SearchType.HYBRID,
         filters=filters,
-        enable_auto_detect_filters=False,
+        favor_recent=False,
     )
 
     retrieval_metrics = MetricsHander[RetrievalMetricsContainer]()
     rerank_metrics = MetricsHander[RerankMetricsContainer]()
 
-    top_chunks, llm_chunk_selection, query_id = danswer_search(
-        question=question,
-        user=None,
-        db_session=db_session,
+    top_chunks, llm_chunk_selection = full_chunk_search(
+        query=search_query,
         document_index=get_default_document_index(),
-        bypass_acl=True,
-        skip_llm_chunk_filter=not enable_llm,
         retrieval_metrics_callback=retrieval_metrics.record_metric,
         rerank_metrics_callback=rerank_metrics.record_metric,
     )
@@ -177,58 +173,49 @@ def main(
     with open(output_file, "w") as outfile:
         with redirect_print_to_file(outfile):
             print("Running Document Retrieval Test\n")
+            for ind, (question, targets) in enumerate(questions_info.items()):
+                if ind >= stop_after:
+                    break
 
-            with Session(engine, expire_on_commit=False) as db_session:
-                for ind, (question, targets) in enumerate(questions_info.items()):
-                    if ind >= stop_after:
-                        break
+                print(f"\n\nQuestion: {question}")
 
-                    print(f"\n\nQuestion: {question}")
+                (
+                    top_chunks,
+                    retrieval_metrics,
+                    rerank_metrics,
+                ) = get_search_results(query=question)
 
-                    (
-                        top_chunks,
-                        retrieval_metrics,
-                        rerank_metrics,
-                    ) = get_search_results(
-                        query=question, enable_llm=enable_llm, db_session=db_session
-                    )
+                assert retrieval_metrics is not None and rerank_metrics is not None
 
-                    assert retrieval_metrics is not None and rerank_metrics is not None
+                retrieval_ids = [
+                    metric.document_id for metric in retrieval_metrics.metrics
+                ]
+                retrieval_score = calculate_score("Retrieval", retrieval_ids, targets)
+                running_retrieval_score += retrieval_score
+                print(f"Average: {running_retrieval_score / (ind + 1)}")
 
-                    retrieval_ids = [
-                        metric.document_id for metric in retrieval_metrics.metrics
-                    ]
-                    retrieval_score = calculate_score(
-                        "Retrieval", retrieval_ids, targets
-                    )
-                    running_retrieval_score += retrieval_score
-                    print(f"Average: {running_retrieval_score / (ind + 1)}")
+                rerank_ids = [metric.document_id for metric in rerank_metrics.metrics]
+                rerank_score = calculate_score("Rerank", rerank_ids, targets)
+                running_rerank_score += rerank_score
+                print(f"Average: {running_rerank_score / (ind + 1)}")
 
-                    rerank_ids = [
-                        metric.document_id for metric in rerank_metrics.metrics
-                    ]
-                    rerank_score = calculate_score("Rerank", rerank_ids, targets)
-                    running_rerank_score += rerank_score
-                    print(f"Average: {running_rerank_score / (ind + 1)}")
+                llm_ids = [chunk.document_id for chunk in top_chunks]
+                llm_score = calculate_score("LLM Filter", llm_ids, targets)
+                running_llm_filter_score += llm_score
+                print(f"Average: {running_llm_filter_score / (ind + 1)}")
 
-                    if enable_llm:
-                        llm_ids = [chunk.document_id for chunk in top_chunks]
-                        llm_score = calculate_score("LLM Filter", llm_ids, targets)
-                        running_llm_filter_score += llm_score
-                        print(f"Average: {running_llm_filter_score / (ind + 1)}")
+                if show_details:
+                    print("\nRetrieval Metrics:")
+                    if retrieval_metrics is None:
+                        print("No Retrieval Metrics Available")
+                    else:
+                        _print_retrieval_metrics(retrieval_metrics)
 
-                    if show_details:
-                        print("\nRetrieval Metrics:")
-                        if retrieval_metrics is None:
-                            print("No Retrieval Metrics Available")
-                        else:
-                            _print_retrieval_metrics(retrieval_metrics)
-
-                        print("\nReranking Metrics:")
-                        if rerank_metrics is None:
-                            print("No Reranking Metrics Available")
-                        else:
-                            _print_reranking_metrics(rerank_metrics)
+                    print("\nReranking Metrics:")
+                    if rerank_metrics is None:
+                        print("No Reranking Metrics Available")
+                    else:
+                        _print_reranking_metrics(rerank_metrics)
 
 
 if __name__ == "__main__":

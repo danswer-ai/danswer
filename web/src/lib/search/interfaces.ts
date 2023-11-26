@@ -92,6 +92,7 @@ export interface Filters {
 
 export interface SearchRequestArgs {
   query: string;
+  chatSessionId: number;
   sources: Source[];
   documentSets: string[];
   timeRange: DateRangePickerValue | null;

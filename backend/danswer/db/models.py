@@ -341,6 +341,11 @@ class QueryEvent(Base):
     __tablename__ = "query_event"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # TODO: make this non-nullable after migration to consolidate chat /
+    # QA flows is complete
+    chat_session_id: Mapped[int | None] = mapped_column(
+        ForeignKey("chat_session.id"), nullable=True
+    )
     query: Mapped[str] = mapped_column(Text)
     # search_flow refers to user selection, None if user used auto
     selected_search_flow: Mapped[SearchType | None] = mapped_column(

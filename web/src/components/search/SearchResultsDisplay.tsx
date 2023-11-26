@@ -20,6 +20,7 @@ import {
 } from "@/lib/search/aiThoughtUtils";
 import { ThreeDots } from "react-loader-spinner";
 import { usePopup } from "../admin/connectors/Popup";
+import { AlertIcon } from "../icons/icons";
 
 const removeDuplicateDocs = (documents: DanswerDocument[]) => {
   const seen = new Set<string>();
@@ -92,6 +93,17 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
   }
 
   if (answer === null && documents === null && quotes === null) {
+    if (error) {
+      return (
+        <div className="text-red-500 text-sm">
+          <div className="flex">
+            <AlertIcon size={16} className="text-red-500 my-auto mr-1" />
+            <p className="italic">{error}</p>
+          </div>
+        </div>
+      );
+    }
+
     return <div className="text-gray-300">No matching documents found.</div>;
   }
 

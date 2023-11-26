@@ -22,6 +22,7 @@ import { NEXT_PUBLIC_DISABLE_STREAMING } from "@/lib/constants";
 import { searchRequest } from "@/lib/search/qa";
 import { useFilters, useObjectState, useTimeRange } from "@/lib/hooks";
 import { questionValidationStreamed } from "@/lib/search/streamingQuestionValidation";
+import { createChatSession } from "@/lib/search/chatSessions";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -134,11 +135,23 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
     setSearchResponse(initialSearchResponse);
     setValidQuestionResponse(VALID_QUESTION_RESPONSE_DEFAULT);
 
+    const chatSessionResponse = await createChatSession();
+    if (!chatSessionResponse.ok) {
+      updateError(
+        `Unable to create chat session - ${await chatSessionResponse.text()}`
+      );
+      setIsFetching(false);
+      return;
+    }
+    const chatSessionId = (await chatSessionResponse.json())
+      .chat_session_id as number;
+
     const searchFn = NEXT_PUBLIC_DISABLE_STREAMING
       ? searchRequest
       : searchRequestStreamed;
     const searchFnArgs = {
       query,
+      chatSessionId,
       sources: filterManager.selectedSources,
       documentSets: filterManager.selectedDocumentSets,
       timeRange: filterManager.timeRange,
@@ -180,6 +193,7 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
 
     const questionValidationArgs = {
       query,
+      chatSessionId,
       update: setValidQuestionResponse,
     };
 
