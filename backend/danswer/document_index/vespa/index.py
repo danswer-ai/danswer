@@ -178,7 +178,7 @@ def _delete_vespa_docs(
             executor.shutdown(wait=True)
 
 
-def _get_documents_from_chunks(
+def _get_existing_documents_from_chunks(
     chunks: list[DocMetadataAwareIndexChunk],
     executor: concurrent.futures.ThreadPoolExecutor | None = None,
 ) -> set[str]:
@@ -331,43 +331,34 @@ def _clear_and_index_vespa_chunks(
     with updating the associated permissions. Assumes that a document will not be split into
     multiple chunk batches calling this function multiple times, otherwise only the last set of
     chunks will be kept"""
-    insertion_records: dict[str, DocumentInsertionRecord] = {}
-    # Keep this so a document split across batches according to _BATCH_SIZE
-    # isn't deleted by a later batch
-    wiped_document_ids: set[str] = set()
+    existing_docs: set[str] = set()
 
-    # IMPORTANT: READ THIS BEFORE MODIFYING
-    # Here we further break the document batch into smaller batches for indexing into Vespa
-    # A document CAN be split into multiple batches and needs to be handled accordingly
-    # The batches must be handled in order! This is because we check if the chunks of the batch
-    # already exist and delete all chunks for the doc if it does exist. This must be done in case
-    # documents shrink in size and end up with less chunks than before. So there could be errors if
-    # we handle a chunk that is at the end of a doc and it does not find that the document already
-    # exists in Vespa
     with concurrent.futures.ThreadPoolExecutor(max_workers=_NUM_THREADS) as executor:
         # Check for existing documents, existing documents need to have all of their chunks deleted
         # prior to indexing as the document size (num chunks) may have shrunk
-        for chunk_batch in batch_generator(chunks, _BATCH_SIZE):
-            found_doc_ids = _get_documents_from_chunks(chunks=chunks, executor=executor)
-            needing_deletion_doc_ids = found_doc_ids - wiped_document_ids
-
-            wiped_document_ids.update(found_doc_ids)
-
-            _delete_vespa_docs(
-                document_ids=list(needing_deletion_doc_ids), executor=executor
+        first_chunks = [chunk for chunk in chunks if chunk.chunk_id == 0]
+        for chunk_batch in batch_generator(first_chunks, _BATCH_SIZE):
+            existing_docs.update(
+                _get_existing_documents_from_chunks(
+                    chunks=chunk_batch, executor=executor
+                )
             )
 
+        for doc_id_batch in batch_generator(existing_docs, _BATCH_SIZE):
+            _delete_vespa_docs(document_ids=doc_id_batch, executor=executor)
+
+        for chunk_batch in batch_generator(chunks, _BATCH_SIZE):
             _batch_index_vespa_chunks(chunks=chunk_batch, executor=executor)
 
-            for chunk in chunk_batch:
-                doc_id = chunk.source_document.id
-                if doc_id not in insertion_records:
-                    insertion_records[doc_id] = DocumentInsertionRecord(
-                        document_id=doc_id,
-                        already_existed=doc_id in wiped_document_ids,
-                    )
+    all_doc_ids = {chunk.source_document.id for chunk in chunks}
 
-    return set(insertion_records.values())
+    return {
+        DocumentInsertionRecord(
+            document_id=doc_id,
+            already_existed=doc_id in existing_docs,
+        )
+        for doc_id in all_doc_ids
+    }
 
 
 def _build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) -> str:
