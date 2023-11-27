@@ -305,10 +305,7 @@ class AdminSearchResponse(BaseModel):
     documents: list[SearchDoc]
 
 
-class SearchResponse(BaseModel):
-    # For semantic search, top docs are reranked, the remaining are as ordered from retrieval
-    top_ranked_docs: list[SearchDoc] | None
-    lower_ranked_docs: list[SearchDoc] | None
+class SearchResponse(RetrievalDocs):
     query_event_id: int
     source_type: list[DocumentSource] | None
     time_cutoff: datetime | None
@@ -320,6 +317,7 @@ class QAResponse(SearchResponse, DanswerAnswer):
     predicted_flow: QueryFlow
     predicted_search: SearchType
     eval_res_valid: bool | None = None
+    llm_chunks_indices: list[int] | None = None
     error_msg: str | None = None
 
 

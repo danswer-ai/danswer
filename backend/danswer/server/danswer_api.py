@@ -7,7 +7,6 @@ from fastapi import Header
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from danswer.access.access import get_access_for_documents
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import Document
 from danswer.connectors.models import IndexAttemptMetadata
@@ -15,17 +14,10 @@ from danswer.db.connector import fetch_connector_by_id
 from danswer.db.connector import fetch_ingestion_connector_by_name
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.credentials import fetch_credential_by_id
-from danswer.db.document import prepare_to_modify_documents
-from danswer.db.document import update_docs_updated_at
-from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.engine import get_session
-from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.indexing.chunker import DefaultChunker
-from danswer.indexing.embedder import DefaultEmbedder
-from danswer.indexing.indexing_pipeline import upsert_documents_in_db
-from danswer.indexing.models import DocMetadataAwareIndexChunk
+from danswer.indexing.indexing_pipeline import build_indexing_pipeline
 from danswer.server.models import ApiKey
 from danswer.server.models import IngestionDocument
 from danswer.server.models import IngestionResult
@@ -149,57 +141,14 @@ def document_ingestion(
     if document.source == DocumentSource.INGESTION_API:
         document.source = DocumentSource.FILE
 
-    upsert_documents_in_db(
+    indexing_pipeline = build_indexing_pipeline()
+
+    new_doc, chunks = indexing_pipeline(
         documents=[document],
         index_attempt_metadata=IndexAttemptMetadata(
-            connector_id=connector_id, credential_id=credential_id
+            connector_id=connector_id,
+            credential_id=credential_id,
         ),
-        db_session=db_session,
     )
 
-    chunker = DefaultChunker()
-    embedder = DefaultEmbedder()
-    document_index = get_default_document_index()
-
-    # Acquires a lock on the document so that no other process can modify them
-    prepare_to_modify_documents(db_session=db_session, document_ids=[document.id])
-
-    chunks = chunker.chunk(document)
-    chunks_with_embeddings = embedder.embed(chunks=chunks)
-
-    access_info = list(
-        get_access_for_documents(
-            document_ids=[document.id], db_session=db_session
-        ).values()
-    )[0]
-
-    document_id_to_document_set = {
-        document_id: document_sets
-        for document_id, document_sets in fetch_document_sets_for_documents(
-            document_ids=[document.id], db_session=db_session
-        )
-    }
-    access_aware_chunks = [
-        DocMetadataAwareIndexChunk.from_index_chunk(
-            index_chunk=chunk,
-            access=access_info,
-            document_sets=set(document_id_to_document_set.get(document.id, [])),
-        )
-        for chunk in chunks_with_embeddings
-    ]
-
-    insertion_record = list(
-        document_index.index(
-            chunks=access_aware_chunks,
-        )
-    )[0]
-
-    if document.doc_updated_at is not None:
-        update_docs_updated_at(
-            ids_to_new_updated_at={document.id: document.doc_updated_at},
-            db_session=db_session,
-        )
-
-    return IngestionResult(
-        document_id=document.id, already_existed=insertion_record.already_existed
-    )
+    return IngestionResult(document_id=document.id, already_existed=bool(new_doc))
