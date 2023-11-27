@@ -151,4 +151,4 @@ def document_ingestion(
         ),
     )
 
-    return IngestionResult(document_id=document.id, already_existed=bool(new_doc))
+    return IngestionResult(document_id=document.id, already_existed=not bool(new_doc))
