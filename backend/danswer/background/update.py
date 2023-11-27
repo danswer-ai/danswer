@@ -339,6 +339,6 @@ if __name__ == "__main__":
 
     if not MODEL_SERVER_HOST:
         logger.info("Warming up Embedding Model(s)")
-        warm_up_models(indexer_only=True)
+        warm_up_models(indexer_only=True, skip_cross_encoders=True)
     logger.info("Starting Indexing Loop")
     update_loop()

@@ -7,7 +7,7 @@ from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
-from danswer.configs.model_configs import SKIP_RERANKING
+from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import IndexChunk
 
@@ -55,7 +55,7 @@ class SearchQuery(BaseModel):
     filters: IndexFilters
     favor_recent: bool
     num_hits: int = NUM_RETURNED_HITS
-    skip_rerank: bool = SKIP_RERANKING
+    skip_rerank: bool = not ENABLE_RERANKING_REAL_TIME_FLOW
     # Only used if not skip_rerank
     num_rerank: int | None = NUM_RERANKED_RESULTS
     skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER

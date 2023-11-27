@@ -84,6 +84,7 @@ def get_answer_for_question(
     question = QuestionRequest(
         query=query,
         filters=filters,
+        real_time=False,
         enable_auto_detect_filters=False,
     )
 
@@ -96,7 +97,6 @@ def get_answer_for_question(
         user=None,
         db_session=db_session,
         answer_generation_timeout=100,
-        real_time_flow=False,
         enable_reflexion=False,
         bypass_acl=True,
         retrieval_metrics_callback=retrieval_metrics.record_metric,

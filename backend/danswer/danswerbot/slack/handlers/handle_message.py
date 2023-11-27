@@ -180,7 +180,6 @@ def handle_message(
                 user=None,
                 db_session=db_session,
                 answer_generation_timeout=answer_generation_timeout,
-                real_time_flow=False,
                 enable_reflexion=reflexion,
                 bypass_acl=bypass_acl,
             )
@@ -205,6 +204,7 @@ def handle_message(
                 query=msg,
                 filters=filters,
                 enable_auto_detect_filters=not disable_auto_detect_filters,
+                real_time=False,
             )
         )
     except Exception as e:

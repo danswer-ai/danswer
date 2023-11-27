@@ -21,7 +21,6 @@ from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import INTENT_MODEL_VERSION
 from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import QUERY_MAX_CONTEXT_SIZE
-from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.utils.logger import setup_logger
 from shared_models.model_server_models import EmbedRequest
 from shared_models.model_server_models import EmbedResponse
@@ -294,7 +293,8 @@ class IntentModel:
 
 
 def warm_up_models(
-    indexer_only: bool = False, skip_cross_encoders: bool = SKIP_RERANKING
+    skip_cross_encoders: bool = False,
+    indexer_only: bool = False,
 ) -> None:
     warm_up_str = (
         "Danswer is amazing! Check out our easy deployment guide at "
