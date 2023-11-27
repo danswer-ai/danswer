@@ -260,6 +260,10 @@ def get_connector_indexing_status(
     }
 
     for cc_pair in cc_pairs:
+        # TODO remove this to enable ingestion API
+        if cc_pair.name == "DefaultCCPair":
+            continue
+
         connector = cc_pair.connector
         credential = cc_pair.credential
         latest_index_attempt = cc_pair_to_latest_index_attempt.get(
