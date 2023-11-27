@@ -1,9 +1,22 @@
-from typing import cast
-
-import openai
+from openai import OpenAI
 
 
-VALID_MODEL_LIST = ["text-davinci-003", "gpt-3.5-turbo", "gpt-4"]
+VALID_MODEL_LIST = [
+    "gpt-4-1106-preview",
+    "gpt-4-vision-preview",
+    "gpt-4",
+    "gpt-4-0314",
+    "gpt-4-0613",
+    "gpt-4-32k",
+    "gpt-4-32k-0314",
+    "gpt-4-32k-0613",
+    "gpt-3.5-turbo-1106",
+    "gpt-3.5-turbo",
+    "gpt-3.5-turbo-16k",
+    "gpt-3.5-turbo-0301",
+    "gpt-3.5-turbo-0613",
+    "gpt-3.5-turbo-16k-0613",
+]
 
 
 if __name__ == "__main__":
@@ -12,29 +25,28 @@ if __name__ == "__main__":
         model_version = input("Please provide an OpenAI model version to test: ")
         if model_version not in VALID_MODEL_LIST:
             print(f"Model must be from valid list: {', '.join(VALID_MODEL_LIST)}")
+    assert model_version
 
     api_key = input("Please provide an OpenAI API Key to test: ")
-    openai.api_key = api_key
+    client = OpenAI(
+        api_key=api_key,
+    )
 
     prompt = "The boy went to the "
     print(f"Asking OpenAI to finish the sentence using {model_version}")
     print(prompt)
     try:
-        if model_version == "text-davinci-003":
-            response = openai.Completion.create(
-                model=model_version, prompt=prompt, max_tokens=5, temperature=2
-            )
-            print(cast(str, response["choices"][0]["text"]).strip())
-
-        else:
-            messages = [
-                {"role": "system", "content": "Finish the sentence"},
-                {"role": "user", "content": prompt},
-            ]
-            response = openai.ChatCompletion.create(
-                model=model_version, messages=messages, max_tokens=5, temperature=2
-            )
-            print(cast(str, response["choices"][0]["message"]["content"]).strip())
+        messages = [
+            {"role": "system", "content": "Finish the sentence"},
+            {"role": "user", "content": prompt},
+        ]
+        response = client.chat.completions.create(
+            model=model_version,
+            messages=messages,  # type:ignore
+            max_tokens=5,
+            temperature=2,
+        )
+        print(response.choices[0].message.content)
         print("Success! Feel free to use this API key for Danswer.")
     except Exception:
         print(

@@ -137,6 +137,9 @@ def message_generator_to_string_generator(
     messages: Iterator[BaseMessageChunk],
 ) -> Iterator[str]:
     for message in messages:
+        if not isinstance(message.content, str):
+            raise RuntimeError("LLM message not in expected format.")
+
         yield message.content
 
 

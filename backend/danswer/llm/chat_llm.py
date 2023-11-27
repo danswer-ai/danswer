@@ -43,7 +43,7 @@ class LangChainChatLLM(LLM, abc.ABC):
 
     def log_model_configs(self) -> None:
         logger.debug(
-            f"Model Class: {self.llm.__class__.__name__}, Model Config: {self.llm.__dict__}"
+            f"LLM Model Class: {self.llm.__class__.__name__}, Model Config: {self.llm.__dict__}"
         )
 
     def invoke(self, prompt: LanguageModelInput) -> str:
@@ -53,6 +53,12 @@ class LangChainChatLLM(LLM, abc.ABC):
         model_raw = self.llm.invoke(prompt).content
         if LOG_ALL_MODEL_INTERACTIONS:
             logger.debug(f"Raw Model Output:\n{model_raw}")
+
+        if not isinstance(model_raw, str):
+            raise RuntimeError(
+                "Model output inconsistent with expected type, "
+                "is this related to a library upgrade?"
+            )
 
         return model_raw
 
