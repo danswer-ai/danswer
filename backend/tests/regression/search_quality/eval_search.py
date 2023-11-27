@@ -26,7 +26,7 @@ engine = get_sqlalchemy_engine()
 def redirect_print_to_file(file: TextIO) -> Any:
     original_print = builtins.print
 
-    def new_print(*args, **kwargs):
+    def new_print(*args: Any, **kwargs: Any) -> Any:
         kwargs["file"] = file
         original_print(*args, **kwargs)
 
