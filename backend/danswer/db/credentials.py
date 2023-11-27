@@ -9,18 +9,20 @@ from danswer.auth.schemas import UserRole
 from danswer.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
-from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import Credential
 from danswer.db.models import User
 from danswer.server.models import CredentialBase
-from danswer.server.models import ObjectCreationIdResponse
 from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
 
 
-def _attach_user_filters(stmt: Select[tuple[Credential]], user: User | None) -> Select:
+def _attach_user_filters(
+    stmt: Select[tuple[Credential]],
+    user: User | None,
+    assume_admin: bool = False,  # Used with API key
+) -> Select:
     """Attaches filters to the statement to ensure that the user can only
     access the appropriate credentials"""
     if user:
@@ -29,11 +31,18 @@ def _attach_user_filters(stmt: Select[tuple[Credential]], user: User | None) -> 
                 or_(
                     Credential.user_id == user.id,
                     Credential.user_id.is_(None),
-                    Credential.is_admin == True,  # noqa: E712
+                    Credential.admin_public == True,  # noqa: E712
                 )
             )
         else:
             stmt = stmt.where(Credential.user_id == user.id)
+    elif assume_admin:
+        stmt = stmt.where(
+            or_(
+                Credential.user_id.is_(None),
+                Credential.admin_public == True,  # noqa: E712
+            )
+        )
 
     return stmt
 
@@ -49,10 +58,13 @@ def fetch_credentials(
 
 
 def fetch_credential_by_id(
-    credential_id: int, user: User | None, db_session: Session
+    credential_id: int,
+    user: User | None,
+    db_session: Session,
+    assume_admin: bool = False,
 ) -> Credential | None:
     stmt = select(Credential).where(Credential.id == credential_id)
-    stmt = _attach_user_filters(stmt, user)
+    stmt = _attach_user_filters(stmt, user, assume_admin=assume_admin)
     result = db_session.execute(stmt)
     credential = result.scalar_one_or_none()
     return credential
@@ -62,16 +74,16 @@ def create_credential(
     credential_data: CredentialBase,
     user: User | None,
     db_session: Session,
-) -> ObjectCreationIdResponse:
+) -> Credential:
     credential = Credential(
         credential_json=credential_data.credential_json,
         user_id=user.id if user else None,
-        is_admin=credential_data.is_admin,
+        admin_public=credential_data.admin_public,
     )
     db_session.add(credential)
     db_session.commit()
 
-    return ObjectCreationIdResponse(id=credential.id)
+    return credential
 
 
 def update_credential(
@@ -131,30 +143,26 @@ def delete_credential(
     db_session.commit()
 
 
-def create_initial_public_credential() -> None:
+def create_initial_public_credential(db_session: Session) -> None:
     public_cred_id = 0
     error_msg = (
         "DB is not in a valid initial state."
         "There must exist an empty public credential for data connectors that do not require additional Auth."
     )
-    with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
-        first_credential = fetch_credential_by_id(public_cred_id, None, db_session)
+    first_credential = fetch_credential_by_id(public_cred_id, None, db_session)
 
-        if first_credential is not None:
-            if (
-                first_credential.credential_json != {}
-                or first_credential.user is not None
-            ):
-                raise ValueError(error_msg)
-            return
+    if first_credential is not None:
+        if first_credential.credential_json != {} or first_credential.user is not None:
+            raise ValueError(error_msg)
+        return
 
-        credential = Credential(
-            id=public_cred_id,
-            credential_json={},
-            user_id=None,
-        )
-        db_session.add(credential)
-        db_session.commit()
+    credential = Credential(
+        id=public_cred_id,
+        credential_json={},
+        user_id=None,
+    )
+    db_session.add(credential)
+    db_session.commit()
 
 
 def delete_google_drive_service_account_credentials(

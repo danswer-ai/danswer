@@ -27,6 +27,7 @@ class DocumentMetadata:
     # Users may not be in Danswer
     primary_owners: list[str] | None = None
     secondary_owners: list[str] | None = None
+    from_ingestion_api: bool = False
 
 
 @dataclass

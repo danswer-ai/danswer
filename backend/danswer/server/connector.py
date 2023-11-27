@@ -168,9 +168,10 @@ def upsert_service_account_credential(
     # first delete all existing service account credentials
     delete_google_drive_service_account_credentials(user, db_session)
     # `user=None` since this credential is not a personal credential
-    return create_credential(
+    credential = create_credential(
         credential_data=credential_base, user=user, db_session=db_session
     )
+    return ObjectCreationIdResponse(id=credential.id)
 
 
 @router.get("/admin/connector/google-drive/check-auth/{credential_id}")
@@ -259,6 +260,10 @@ def get_connector_indexing_status(
     }
 
     for cc_pair in cc_pairs:
+        # TODO remove this to enable ingestion API
+        if cc_pair.name == "DefaultCCPair":
+            continue
+
         connector = cc_pair.connector
         credential = cc_pair.credential
         latest_index_attempt = cc_pair_to_latest_index_attempt.get(

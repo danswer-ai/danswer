@@ -17,6 +17,7 @@ from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
+from danswer.connectors.models import DocumentBase
 from danswer.connectors.models import InputType
 from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
 from danswer.db.models import AllowedAnswerFilters
@@ -27,6 +28,7 @@ from danswer.db.models import DocumentSet as DocumentSetDBModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import TaskStatus
+from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.search.models import BaseFilters
 from danswer.search.models import QueryFlow
@@ -198,30 +200,8 @@ class SearchFeedbackRequest(BaseModel):
     search_feedback: SearchFeedbackType
 
 
-class QueryValidationResponse(BaseModel):
-    reasoning: str
-    answerable: bool
-
-
 class RetrievalDocs(BaseModel):
     top_documents: list[SearchDoc]
-
-
-class SearchResponse(RetrievalDocs):
-    query_event_id: int
-    source_type: list[DocumentSource] | None
-    time_cutoff: datetime | None
-    favor_recent: bool
-
-
-class QAResponse(SearchResponse):
-    answer: str | None  # DanswerAnswer
-    quotes: list[DanswerQuote] | None
-    predicted_flow: QueryFlow
-    predicted_search: SearchType
-    eval_res_valid: bool | None = None
-    llm_chunks_indices: list[int] | None = None
-    error_msg: str | None = None
 
 
 # First chunk of info for streaming QA
@@ -311,6 +291,36 @@ class ChatSessionDetailResponse(BaseModel):
     messages: list[ChatMessageDetail]
 
 
+class QueryValidationResponse(BaseModel):
+    reasoning: str
+    answerable: bool
+
+
+class AdminSearchRequest(BaseModel):
+    query: str
+    filters: BaseFilters
+
+
+class AdminSearchResponse(BaseModel):
+    documents: list[SearchDoc]
+
+
+class SearchResponse(RetrievalDocs):
+    query_event_id: int
+    source_type: list[DocumentSource] | None
+    time_cutoff: datetime | None
+    favor_recent: bool
+
+
+class QAResponse(SearchResponse, DanswerAnswer):
+    quotes: list[DanswerQuote] | None
+    predicted_flow: QueryFlow
+    predicted_search: SearchType
+    eval_res_valid: bool | None = None
+    llm_chunks_indices: list[int] | None = None
+    error_msg: str | None = None
+
+
 class UserByEmail(BaseModel):
     user_email: str
 
@@ -392,7 +402,8 @@ class RunConnectorRequest(BaseModel):
 
 class CredentialBase(BaseModel):
     credential_json: dict[str, Any]
-    is_admin: bool
+    # if `true`, then all Admins will have access to the credential
+    admin_public: bool
 
 
 class CredentialSnapshot(CredentialBase):
@@ -409,7 +420,7 @@ class CredentialSnapshot(CredentialBase):
             if MASK_CREDENTIAL_PREFIX
             else credential.credential_json,
             user_id=credential.user_id,
-            is_admin=credential.is_admin,
+            admin_public=credential.admin_public,
             time_created=credential.time_created,
             time_updated=credential.time_updated,
         )
@@ -508,6 +519,20 @@ class DocumentSet(BaseModel):
             ],
             is_up_to_date=document_set_model.is_up_to_date,
         )
+
+
+class IngestionDocument(BaseModel):
+    document: DocumentBase
+    connector_id: int | None = None  # Takes precedence over the name
+    connector_name: str | None = None
+    credential_id: int | None = None
+    create_connector: bool = False  # Currently not allowed
+    public_doc: bool = True  # To attach to the cc_pair, currently unused
+
+
+class IngestionResult(BaseModel):
+    document_id: str
+    already_existed: bool
 
 
 class SlackBotTokens(BaseModel):

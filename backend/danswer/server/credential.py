@@ -72,13 +72,14 @@ def create_credential_from_model(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
-    if user and user.role != UserRole.ADMIN:
+    if user and user.role != UserRole.ADMIN and credential_info.admin_public:
         raise HTTPException(
             status_code=400,
             detail="Non-admin cannot create admin credential",
         )
 
-    return create_credential(credential_info, user, db_session)
+    credential = create_credential(credential_info, user, db_session)
+    return ObjectCreationIdResponse(id=credential.id)
 
 
 @router.get("/credential/{credential_id}")
@@ -117,7 +118,7 @@ def update_credential_from_model(
         id=updated_credential.id,
         credential_json=updated_credential.credential_json,
         user_id=updated_credential.user_id,
-        is_admin=updated_credential.is_admin,
+        admin_public=updated_credential.admin_public,
         time_created=updated_credential.time_created,
         time_updated=updated_credential.time_updated,
     )

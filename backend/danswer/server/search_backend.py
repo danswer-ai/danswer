@@ -2,7 +2,6 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
@@ -17,7 +16,6 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import recommend_search_flow
-from danswer.search.models import BaseFilters
 from danswer.search.models import IndexFilters
 from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import danswer_search
@@ -25,6 +23,8 @@ from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
 from danswer.secondary_llm_flows.source_filter import extract_question_source_filters
 from danswer.secondary_llm_flows.time_filter import extract_question_time_filters
+from danswer.server.models import AdminSearchRequest
+from danswer.server.models import AdminSearchResponse
 from danswer.server.models import HelperResponse
 from danswer.server.models import QAFeedbackRequest
 from danswer.server.models import QAResponse
@@ -43,15 +43,6 @@ router = APIRouter()
 
 
 """Admin-only search endpoints"""
-
-
-class AdminSearchRequest(BaseModel):
-    query: str
-    filters: BaseFilters
-
-
-class AdminSearchResponse(BaseModel):
-    documents: list[SearchDoc]
 
 
 @router.post("/admin/search")

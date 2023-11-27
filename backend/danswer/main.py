@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from httpx_oauth.clients.google import GoogleOAuth2
+from sqlalchemy.orm import Session
 
 from danswer import __version__
 from danswer.auth.schemas import UserCreate
@@ -35,16 +36,21 @@ from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
+from danswer.db.connector import create_initial_default_connector
+from danswer.db.connector_credential_pair import associate_default_cc_pair
 from danswer.db.credentials import create_initial_public_credential
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.direct_qa.factory import get_default_qa_model
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llm
+from danswer.search.search_nlp_models import warm_up_models
 from danswer.server.cc_pair.api import router as cc_pair_router
 from danswer.server.chat_backend import router as chat_router
 from danswer.server.connector import router as connector_router
 from danswer.server.credential import router as credential_router
+from danswer.server.danswer_api import get_danswer_api_key
+from danswer.server.danswer_api import router as danswer_api_router
 from danswer.server.document_set import router as document_set_router
-from danswer.server.event_loading import router as event_processing_router
 from danswer.server.manage import router as admin_router
 from danswer.server.search_backend import router as backend_router
 from danswer.server.slack_bot_management import router as slack_bot_management_router
@@ -84,7 +90,6 @@ def get_application() -> FastAPI:
     application = FastAPI(title="Danswer Backend", version=__version__)
     application.include_router(backend_router)
     application.include_router(chat_router)
-    application.include_router(event_processing_router)
     application.include_router(admin_router)
     application.include_router(user_router)
     application.include_router(connector_router)
@@ -93,6 +98,7 @@ def get_application() -> FastAPI:
     application.include_router(document_set_router)
     application.include_router(slack_bot_management_router)
     application.include_router(state_router)
+    application.include_router(danswer_api_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step
@@ -155,16 +161,15 @@ def get_application() -> FastAPI:
 
     @application.on_event("startup")
     def startup_event() -> None:
-        # To avoid circular imports
-        from danswer.search.search_nlp_models import (
-            warm_up_models,
-        )
-
         verify_auth = fetch_versioned_implementation(
             "danswer.auth.users", "verify_auth_setting"
         )
         # Will throw exception if an issue is found
         verify_auth()
+
+        # Danswer APIs key
+        api_key = get_danswer_api_key()
+        logger.info(f"Danswer API Key: {api_key}")
 
         if OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET:
             logger.info("Both OAuth Client ID and Secret are configured.")
@@ -217,8 +222,11 @@ def get_application() -> FastAPI:
         nltk.download("wordnet", quiet=True)
         nltk.download("punkt", quiet=True)
 
-        logger.info("Verifying public credential exists.")
-        create_initial_public_credential()
+        logger.info("Verifying default connector/credential exist.")
+        with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
+            create_initial_public_credential(db_session)
+            create_initial_default_connector(db_session)
+            associate_default_cc_pair(db_session)
 
         logger.info("Loading default Chat Personas")
         load_personas_from_yaml()
