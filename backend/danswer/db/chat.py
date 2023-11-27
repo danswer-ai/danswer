@@ -327,8 +327,13 @@ def upsert_persona(
         raise ValueError("Trying to update a deleted persona")
 
     # Default personas are defined via yaml files at deployment time
-    if persona is None and default_persona:
-        persona = fetch_default_persona_by_name(name, db_session)
+    if persona is None:
+        if default_persona:
+            persona = fetch_default_persona_by_name(name, db_session)
+        else:
+            # only one persona with the same name should exist
+            if fetch_persona_by_name(name, db_session):
+                raise ValueError("Trying to create a persona with a duplicate name")
 
     if persona:
         persona.name = name

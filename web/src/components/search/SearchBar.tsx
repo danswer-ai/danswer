@@ -26,7 +26,7 @@ export const SearchBar = ({ query, setQuery, onSearch }: SearchBarProps) => {
   };
 
   return (
-    <div className="flex justify-center py-3">
+    <div className="flex justify-center">
       <div className="flex items-center w-full border-2 border-gray-600 rounded px-4 py-2 focus-within:border-blue-500">
         <MagnifyingGlass className="text-gray-400" />
         <textarea

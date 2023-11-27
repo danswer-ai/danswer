@@ -137,8 +137,6 @@ export const SearchResultsDisplay = ({
     questionValidityCheckStatus = "failed";
   }
 
-  const entityName = personaName || "AI";
-
   return (
     <>
       {popup}
@@ -146,9 +144,7 @@ export const SearchResultsDisplay = ({
         <div className="min-h-[16rem] p-4 border-2 rounded-md border-gray-700 relative">
           <div>
             <div className="flex mb-1">
-              <h2 className="text font-bold my-auto mb-1 w-full">
-                {entityName}'s Answer
-              </h2>
+              <h2 className="text font-bold my-auto mb-1 w-full">AI Answer</h2>
             </div>
 
             {!isPersona && (
@@ -174,7 +170,9 @@ export const SearchResultsDisplay = ({
                 answer={answer}
                 quotes={quotes}
                 error={error}
-                isAnswerable={validQuestionResponse.answerable || isPersona}
+                isAnswerable={
+                  validQuestionResponse.answerable || (isPersona ? true : null)
+                }
                 isFetching={isFetching}
                 aiThoughtsIsOpen={isAIThoughtsOpen}
               />

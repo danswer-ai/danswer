@@ -24,7 +24,7 @@ import { useFilters, useObjectState } from "@/lib/hooks";
 import { questionValidationStreamed } from "@/lib/search/streamingQuestionValidation";
 import { createChatSession } from "@/lib/search/chatSessions";
 import { Persona } from "@/app/admin/personas/interfaces";
-import { MoodSelector } from "./MoodSelector";
+import { PersonaSelector } from "./PersonaSelector";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -214,18 +214,6 @@ export const SearchSection = ({
   return (
     <div className="relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
       <div className="absolute left-0 hidden 2xl:block w-64">
-        {personas.length > 0 && (
-          <div className="mb-4">
-            <div className="flex mt-2">
-              <MoodSelector
-                moods={personas}
-                selectedMoodId={selectedPersona}
-                onMoodChange={(mood) => setSelectedPersona(mood.id)}
-              />
-            </div>
-          </div>
-        )}
-
         {(connectors.length > 0 || documentSets.length > 0) && (
           <SourceSelector
             {...filterManager}
@@ -258,6 +246,20 @@ export const SearchSection = ({
         </div>
       </div>
       <div className="w-[800px] mx-auto">
+        {personas.length > 0 ? (
+          <div className="flex mb-2 w-64">
+            <PersonaSelector
+              personas={personas}
+              selectedPersonaId={selectedPersona}
+              onPersonaChange={(persona) =>
+                setSelectedPersona(persona ? persona.id : null)
+              }
+            />
+          </div>
+        ) : (
+          <div className="pt-3" />
+        )}
+
         <SearchBar
           query={query}
           setQuery={setQuery}

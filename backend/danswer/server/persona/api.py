@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
@@ -15,6 +16,9 @@ from danswer.direct_qa.qa_block import PersonaBasedQAHandler
 from danswer.server.persona.models import CreatePersonaRequest
 from danswer.server.persona.models import PersonaSnapshot
 from danswer.server.persona.models import PromptTemplateResponse
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
 
 
 router = APIRouter()
@@ -34,16 +38,20 @@ def create_persona(
         if create_persona_request.document_set_ids
         else []
     )
-    persona = upsert_persona(
-        db_session=db_session,
-        name=create_persona_request.name,
-        description=create_persona_request.description,
-        retrieval_enabled=True,
-        datetime_aware=True,
-        system_text=create_persona_request.system_prompt,
-        hint_text=create_persona_request.task_prompt,
-        document_sets=document_sets,
-    )
+    try:
+        persona = upsert_persona(
+            db_session=db_session,
+            name=create_persona_request.name,
+            description=create_persona_request.description,
+            retrieval_enabled=True,
+            datetime_aware=True,
+            system_text=create_persona_request.system_prompt,
+            hint_text=create_persona_request.task_prompt,
+            document_sets=document_sets,
+        )
+    except ValueError as e:
+        logger.exception("Failed to update persona")
+        raise HTTPException(status_code=400, detail=str(e))
     return PersonaSnapshot.from_model(persona)
 
 
@@ -62,17 +70,21 @@ def update_persona(
         if update_persona_request.document_set_ids
         else []
     )
-    persona = upsert_persona(
-        db_session=db_session,
-        name=update_persona_request.name,
-        description=update_persona_request.description,
-        retrieval_enabled=True,
-        datetime_aware=True,
-        system_text=update_persona_request.system_prompt,
-        hint_text=update_persona_request.task_prompt,
-        document_sets=document_sets,
-        persona_id=persona_id,
-    )
+    try:
+        persona = upsert_persona(
+            db_session=db_session,
+            name=update_persona_request.name,
+            description=update_persona_request.description,
+            retrieval_enabled=True,
+            datetime_aware=True,
+            system_text=update_persona_request.system_prompt,
+            hint_text=update_persona_request.task_prompt,
+            document_sets=document_sets,
+            persona_id=persona_id,
+        )
+    except ValueError as e:
+        logger.exception("Failed to update persona")
+        raise HTTPException(status_code=400, detail=str(e))
     return PersonaSnapshot.from_model(persona)
 
 
