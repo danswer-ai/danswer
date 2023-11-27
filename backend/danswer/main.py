@@ -30,11 +30,11 @@ from danswer.configs.constants import AuthType
 from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
+from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
-from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.db.credentials import create_initial_public_credential
 from danswer.direct_qa.factory import get_default_qa_model
 from danswer.document_index.factory import get_default_document_index
@@ -186,8 +186,8 @@ def get_application() -> FastAPI:
                 f"Using multilingual flow with languages: {MULTILINGUAL_QUERY_EXPANSION}"
             )
 
-        if SKIP_RERANKING:
-            logger.info("Reranking step of search flow is disabled")
+        if ENABLE_RERANKING_REAL_TIME_FLOW:
+            logger.info("Reranking step of search flow is enabled.")
 
         logger.info(f'Using Embedding model: "{DOCUMENT_ENCODER_MODEL}"')
         if ASYM_QUERY_PREFIX or ASYM_PASSAGE_PREFIX:
@@ -200,7 +200,7 @@ def get_application() -> FastAPI:
             )
         else:
             logger.info("Warming up local NLP models.")
-            warm_up_models()
+            warm_up_models(skip_cross_encoders=not ENABLE_RERANKING_REAL_TIME_FLOW)
 
             if torch.cuda.is_available():
                 logger.info("GPU is available")

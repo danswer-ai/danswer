@@ -179,6 +179,9 @@ class QuestionRequest(BaseModel):
     search_type: SearchType = SearchType.HYBRID
     enable_auto_detect_filters: bool = True
     favor_recent: bool | None = None
+    # Is this a real-time/streaming call or a question where Danswer can take more time?
+    real_time: bool = True
+    # Pagination purposes, offset is in batches, not by document count
     offset: int | None = None
 
 

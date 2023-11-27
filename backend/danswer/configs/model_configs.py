@@ -34,7 +34,12 @@ MIN_THREADS_ML_MODELS = int(os.environ.get("MIN_THREADS_ML_MODELS") or 1)
 
 
 # Cross Encoder Settings
+# This following setting is for non-real-time-flows
 SKIP_RERANKING = os.environ.get("SKIP_RERANKING", "").lower() == "true"
+# This one is for real-time (streaming) flows
+ENABLE_RERANKING_REAL_TIME_FLOW = (
+    os.environ.get("ENABLE_RERANKING_REAL_TIME_FLOW", "").lower() == "true"
+)
 # https://www.sbert.net/docs/pretrained-models/ce-msmarco.html
 CROSS_ENCODER_MODEL_ENSEMBLE = [
     "cross-encoder/ms-marco-MiniLM-L-4-v2",

@@ -48,7 +48,6 @@ def answer_qa_query(
     db_session: Session,
     disable_generative_answer: bool = DISABLE_GENERATIVE_AI,
     answer_generation_timeout: int = QA_TIMEOUT,
-    real_time_flow: bool = True,
     enable_reflexion: bool = False,
     bypass_acl: bool = False,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
@@ -118,7 +117,7 @@ def answer_qa_query(
 
     try:
         qa_model = get_default_qa_model(
-            timeout=answer_generation_timeout, real_time_flow=real_time_flow
+            timeout=answer_generation_timeout, real_time_flow=question.real_time
         )
     except Exception as e:
         return partial_response(
@@ -159,7 +158,7 @@ def answer_qa_query(
         )
 
     validity = None
-    if not real_time_flow and enable_reflexion and d_answer is not None:
+    if not question.real_time and enable_reflexion and d_answer is not None:
         validity = False
         if d_answer.answer is not None:
             validity = get_answer_validity(query, d_answer.answer)

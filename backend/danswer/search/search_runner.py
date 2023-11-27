@@ -16,8 +16,10 @@ from danswer.configs.app_configs import NUM_RERANKED_RESULTS
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
+from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.configs.model_configs import SIM_SCORE_RANGE_HIGH
 from danswer.configs.model_configs import SIM_SCORE_RANGE_LOW
+from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.db.feedback import create_query_event
 from danswer.db.feedback import update_query_event_retrieved_documents
 from danswer.db.models import User
@@ -392,7 +394,7 @@ def retrieve_chunks(
 
 
 def should_rerank(query: SearchQuery) -> bool:
-    # don't re-rank for keyword search
+    # Don't re-rank for keyword search
     return query.search_type != SearchType.KEYWORD and not query.skip_rerank
 
 
@@ -556,6 +558,8 @@ def danswer_search_generator(
     db_session: Session,
     document_index: DocumentIndex,
     skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
+    skip_rerank_realtime: bool = not ENABLE_RERANKING_REAL_TIME_FLOW,
+    skip_rerank_non_realtime: bool = SKIP_RERANKING,
     bypass_acl: bool = False,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
@@ -563,7 +567,7 @@ def danswer_search_generator(
 ) -> Iterator[list[InferenceChunk] | list[bool] | int]:
     """The main entry point for search. This fetches the relevant documents from Vespa
     based on the provided query (applying permissions / filters), does any specified
-    post-processing, and returns the results. It also create an entry in the query_event table
+    post-processing, and returns the results. It also creates an entry in the query_event table
     for this search event."""
     query_event_id = create_query_event(
         query=question.query,
@@ -583,6 +587,10 @@ def danswer_search_generator(
         access_control_list=user_acl_filters,
     )
 
+    skip_reranking = (
+        skip_rerank_realtime if question.real_time else skip_rerank_non_realtime
+    )
+
     search_query = SearchQuery(
         query=question.query,
         search_type=question.search_type,
@@ -591,6 +599,7 @@ def danswer_search_generator(
         favor_recent=question.favor_recent
         if question.favor_recent is not None
         else False,
+        skip_rerank=skip_reranking,
         skip_llm_chunk_filter=skip_llm_chunk_filter,
     )
 
