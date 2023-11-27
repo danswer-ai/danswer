@@ -196,6 +196,7 @@ def handle_message(
         chat_session = create_chat_session(
             db_session=db_session, description="", user_id=None
         )
+        chat_session_id = chat_session.id
 
     answer_failed = False
     try:
@@ -210,7 +211,7 @@ def handle_message(
         # This includes throwing out answer via reflexion
         answer = _get_answer(
             NewMessageRequest(
-                chat_session_id=chat_session.id,
+                chat_session_id=chat_session_id,
                 query=msg,
                 filters=filters,
                 enable_auto_detect_filters=not disable_auto_detect_filters,
