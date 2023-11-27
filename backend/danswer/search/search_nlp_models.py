@@ -1,3 +1,4 @@
+import logging
 import os
 
 import numpy as np
@@ -30,6 +31,8 @@ from shared_models.model_server_models import RerankRequest
 from shared_models.model_server_models import RerankResponse
 
 logger = setup_logger()
+# Remove useless info about layer initialization
+logging.getLogger("transformers").setLevel(logging.ERROR)
 
 
 _TOKENIZER: None | AutoTokenizer = None

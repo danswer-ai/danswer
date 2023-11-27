@@ -220,7 +220,7 @@ class QABlock(QAModel):
             prompt_tokens = sum(
                 [
                     check_number_of_tokens(
-                        text=p.content, encode_fn=get_default_llm_token_encode()
+                        text=str(p.content), encode_fn=get_default_llm_token_encode()
                     )
                     for p in prompt
                 ]
