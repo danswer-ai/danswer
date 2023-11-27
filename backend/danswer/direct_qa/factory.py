@@ -1,6 +1,8 @@
 from danswer.configs.app_configs import QA_PROMPT_OVERRIDE
 from danswer.configs.app_configs import QA_TIMEOUT
+from danswer.db.models import Persona
 from danswer.direct_qa.interfaces import QAModel
+from danswer.direct_qa.qa_block import PersonaBasedQAHandler
 from danswer.direct_qa.qa_block import QABlock
 from danswer.direct_qa.qa_block import QAHandler
 from danswer.direct_qa.qa_block import SingleMessageQAHandler
@@ -43,4 +45,17 @@ def get_default_qa_model(
     return QABlock(
         llm=llm,
         qa_handler=qa_handler,
+    )
+
+
+def get_qa_model_for_persona(
+    persona: Persona,
+    api_key: str | None = None,
+    timeout: int = QA_TIMEOUT,
+) -> QAModel:
+    return QABlock(
+        llm=get_default_llm(api_key=api_key, timeout=timeout),
+        qa_handler=PersonaBasedQAHandler(
+            system_prompt=persona.system_text or "", task_prompt=persona.hint_text or ""
+        ),
     )

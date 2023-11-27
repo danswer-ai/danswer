@@ -52,6 +52,7 @@ from danswer.server.danswer_api import get_danswer_api_key
 from danswer.server.danswer_api import router as danswer_api_router
 from danswer.server.document_set import router as document_set_router
 from danswer.server.manage import router as admin_router
+from danswer.server.persona.api import router as persona_router
 from danswer.server.search_backend import router as backend_router
 from danswer.server.slack_bot_management import router as slack_bot_management_router
 from danswer.server.state import router as state_router
@@ -97,6 +98,7 @@ def get_application() -> FastAPI:
     application.include_router(cc_pair_router)
     application.include_router(document_set_router)
     application.include_router(slack_bot_management_router)
+    application.include_router(persona_router)
     application.include_router(state_router)
     application.include_router(danswer_api_router)
 

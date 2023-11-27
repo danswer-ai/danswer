@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Any
 from uuid import UUID
 
@@ -260,7 +261,11 @@ def set_latest_chat_message(
 
 
 def fetch_persona_by_id(persona_id: int, db_session: Session) -> Persona:
-    stmt = select(Persona).where(Persona.id == persona_id)
+    stmt = (
+        select(Persona)
+        .where(Persona.id == persona_id)
+        .where(Persona.deleted == False)  # noqa: E712
+    )
     result = db_session.execute(stmt)
     persona = result.scalar_one_or_none()
 
@@ -273,8 +278,12 @@ def fetch_persona_by_id(persona_id: int, db_session: Session) -> Persona:
 def fetch_default_persona_by_name(
     persona_name: str, db_session: Session
 ) -> Persona | None:
-    stmt = select(Persona).where(
-        Persona.name == persona_name, Persona.default_persona == True  # noqa: E712
+    stmt = (
+        select(Persona)
+        .where(
+            Persona.name == persona_name, Persona.default_persona == True  # noqa: E712
+        )
+        .where(Persona.deleted == False)  # noqa: E712
     )
     result = db_session.execute(stmt).scalar_one_or_none()
     return result
@@ -288,7 +297,11 @@ def fetch_persona_by_name(persona_name: str, db_session: Session) -> Persona | N
     if persona is not None:
         return persona
 
-    stmt = select(Persona).where(Persona.name == persona_name)  # noqa: E712
+    stmt = (
+        select(Persona)
+        .where(Persona.name == persona_name)
+        .where(Persona.deleted == False)  # noqa: E712
+    )
     result = db_session.execute(stmt).first()
     if result:
         return result[0]
@@ -296,19 +309,22 @@ def fetch_persona_by_name(persona_name: str, db_session: Session) -> Persona | N
 
 
 def upsert_persona(
+    db_session: Session,
     name: str,
     retrieval_enabled: bool,
     datetime_aware: bool,
-    system_text: str | None,
-    tools: list[ToolInfo] | None,
-    hint_text: str | None,
-    db_session: Session,
+    description: str | None = None,
+    system_text: str | None = None,
+    tools: list[ToolInfo] | None = None,
+    hint_text: str | None = None,
     persona_id: int | None = None,
     default_persona: bool = False,
     document_sets: list[DocumentSetDBModel] | None = None,
     commit: bool = True,
 ) -> Persona:
     persona = db_session.query(Persona).filter_by(id=persona_id).first()
+    if persona and persona.deleted:
+        raise ValueError("Trying to update a deleted persona")
 
     # Default personas are defined via yaml files at deployment time
     if persona is None and default_persona:
@@ -316,6 +332,7 @@ def upsert_persona(
 
     if persona:
         persona.name = name
+        persona.description = description
         persona.retrieval_enabled = retrieval_enabled
         persona.datetime_aware = datetime_aware
         persona.system_text = system_text
@@ -332,6 +349,7 @@ def upsert_persona(
     else:
         persona = Persona(
             name=name,
+            description=description,
             retrieval_enabled=retrieval_enabled,
             datetime_aware=datetime_aware,
             system_text=system_text,
@@ -349,3 +367,18 @@ def upsert_persona(
         db_session.flush()
 
     return persona
+
+
+def fetch_personas(
+    db_session: Session, include_default: bool = False
+) -> Sequence[Persona]:
+    stmt = select(Persona).where(Persona.deleted == False)  # noqa: E712
+    if not include_default:
+        stmt = stmt.where(Persona.default_persona == False)  # noqa: E712
+    return db_session.scalars(stmt).all()
+
+
+def mark_persona_as_deleted(db_session: Session, persona_id: int) -> None:
+    persona = fetch_persona_by_id(persona_id, db_session)
+    persona.deleted = True
+    db_session.commit()

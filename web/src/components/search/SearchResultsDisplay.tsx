@@ -50,14 +50,16 @@ interface SearchResultsDisplayProps {
   validQuestionResponse: ValidQuestionResponse;
   isFetching: boolean;
   defaultOverrides: SearchDefaultOverrides;
+  personaName?: string | null;
 }
 
-export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
+export const SearchResultsDisplay = ({
   searchResponse,
   validQuestionResponse,
   isFetching,
   defaultOverrides,
-}) => {
+  personaName = null,
+}: SearchResultsDisplayProps) => {
   const { popup, setPopup } = usePopup();
   const [isAIThoughtsOpen, setIsAIThoughtsOpen] = React.useState<boolean>(
     getAIThoughtsIsOpenSavedValue()
@@ -71,6 +73,7 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
     return null;
   }
 
+  const isPersona = personaName !== null;
   const { answer, quotes, documents, error, queryEventId } = searchResponse;
 
   if (isFetching && !answer && !documents) {
@@ -134,6 +137,8 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
     questionValidityCheckStatus = "failed";
   }
 
+  const entityName = personaName || "AI";
+
   return (
     <>
       {popup}
@@ -141,37 +146,41 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({
         <div className="min-h-[16rem] p-4 border-2 rounded-md border-gray-700 relative">
           <div>
             <div className="flex mb-1">
-              <h2 className="text font-bold my-auto mb-1 w-full">AI Answer</h2>
+              <h2 className="text font-bold my-auto mb-1 w-full">
+                {entityName}'s Answer
+              </h2>
             </div>
 
-            <div className="mb-2 w-full">
-              <ResponseSection
-                status={questionValidityCheckStatus}
-                header={
-                  validQuestionResponse.answerable === null ? (
-                    <div className="flex ml-2">Evaluating question...</div>
-                  ) : (
-                    <div className="flex ml-2">AI thoughts</div>
-                  )
-                }
-                body={<div>{validQuestionResponse.reasoning}</div>}
-                desiredOpenStatus={isAIThoughtsOpen}
-                setDesiredOpenStatus={handleAIThoughtToggle}
-              />
-            </div>
+            {!isPersona && (
+              <div className="mb-2 w-full">
+                <ResponseSection
+                  status={questionValidityCheckStatus}
+                  header={
+                    validQuestionResponse.answerable === null ? (
+                      <div className="flex ml-2">Evaluating question...</div>
+                    ) : (
+                      <div className="flex ml-2">AI thoughts</div>
+                    )
+                  }
+                  body={<div>{validQuestionResponse.reasoning}</div>}
+                  desiredOpenStatus={isAIThoughtsOpen}
+                  setDesiredOpenStatus={handleAIThoughtToggle}
+                />
+              </div>
+            )}
 
             <div className="mb-2 pt-1 border-t border-gray-700 w-full">
               <AnswerSection
                 answer={answer}
                 quotes={quotes}
                 error={error}
-                isAnswerable={validQuestionResponse.answerable}
+                isAnswerable={validQuestionResponse.answerable || isPersona}
                 isFetching={isFetching}
                 aiThoughtsIsOpen={isAIThoughtsOpen}
               />
             </div>
 
-            {quotes !== null && answer && (
+            {quotes !== null && answer && !isPersona && (
               <div className="pt-1 border-t border-gray-700 w-full">
                 <QuotesSection
                   quotes={dedupedQuotes}

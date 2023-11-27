@@ -4,6 +4,7 @@ from typing import Any
 from typing import List
 from typing import Literal
 from typing import NotRequired
+from typing import Optional
 from typing import TypedDict
 from uuid import UUID
 
@@ -483,6 +484,7 @@ class ChatSession(Base):
     messages: Mapped[List["ChatMessage"]] = relationship(
         "ChatMessage", back_populates="chat_session", cascade="delete"
     )
+    persona: Mapped[Optional["Persona"]] = relationship("Persona")
 
 
 class ToolInfo(TypedDict):
@@ -496,6 +498,7 @@ class Persona(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
     # Danswer retrieval, treated as a special tool
     retrieval_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     datetime_aware: Mapped[bool] = mapped_column(Boolean, default=True)

@@ -28,6 +28,7 @@ import {
   GongIcon,
   ZoomInIcon,
   ZendeskIcon,
+  RobotIcon,
 } from "@/components/icons/icons";
 import { getAuthDisabledSS, getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
@@ -314,13 +315,22 @@ export async function Layout({ children }: { children: React.ReactNode }) {
               ],
             },
             {
-              name: "Bots",
+              name: "Custom Assistants",
               items: [
                 {
                   name: (
                     <div className="flex">
+                      <RobotIcon size={18} />
+                      <div className="ml-1">Personas</div>
+                    </div>
+                  ),
+                  link: "/admin/personas",
+                },
+                {
+                  name: (
+                    <div className="flex">
                       <CPUIcon size={18} />
-                      <div className="ml-1">Slack Bot</div>
+                      <div className="ml-1">Slack Bots</div>
                     </div>
                   ),
                   link: "/admin/bot",

@@ -28,12 +28,15 @@ def retrieval_preprocessing(
         and new_message_request.enable_auto_detect_filters
     )
 
+    # based on the query figure out if we should apply any hard time filters /
+    # if we should bias more recent docs even more strongly
     run_time_filters = (
         FunctionCall(extract_time_filter, (new_message_request.query,), {})
         if auto_filters_enabled
         else None
     )
 
+    # based on the query, figure out if we should apply any source filters
     should_run_source_filters = (
         auto_filters_enabled and not new_message_request.filters.source_type
     )

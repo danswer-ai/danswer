@@ -8,11 +8,13 @@ from sqlalchemy.orm import Session
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import QUERY_EVENT_ID
+from danswer.db.chat import fetch_chat_session_by_id
 from danswer.db.feedback import create_query_event
 from danswer.db.feedback import update_query_event_llm_answer
 from danswer.db.feedback import update_query_event_retrieved_documents
 from danswer.db.models import User
 from danswer.direct_qa.factory import get_default_qa_model
+from danswer.direct_qa.factory import get_qa_model_for_persona
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import StreamingError
 from danswer.direct_qa.models import LLMMetricsContainer
@@ -199,6 +201,10 @@ def answer_qa_query_stream(
         user_id=user.id if user is not None else None,
         db_session=db_session,
     )
+    chat_session = fetch_chat_session_by_id(
+        chat_session_id=new_message_request.chat_session_id, db_session=db_session
+    )
+    persona = chat_session.persona
 
     retrieval_request, predicted_search_type, predicted_flow = retrieval_preprocessing(
         new_message_request=new_message_request,
@@ -242,7 +248,7 @@ def answer_qa_query_stream(
         user_id=None if user is None else user.id,
     )
 
-    # next apply the LLM filtering
+    # next get the results of the LLM filtering
     llm_chunk_selection = cast(list[bool], next(search_generator))
     llm_chunks_indices = get_chunks_for_qa(
         chunks=top_chunks,
@@ -261,7 +267,10 @@ def answer_qa_query_stream(
         return
 
     try:
-        qa_model = get_default_qa_model()
+        if not persona:
+            qa_model = get_default_qa_model()
+        else:
+            qa_model = get_qa_model_for_persona(persona=persona)
     except Exception as e:
         logger.exception("Unable to get QA model")
         error = StreamingError(error=str(e))

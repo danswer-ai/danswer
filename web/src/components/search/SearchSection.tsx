@@ -20,9 +20,11 @@ import { SearchHelper } from "./SearchHelper";
 import { CancellationToken, cancellable } from "@/lib/search/cancellable";
 import { NEXT_PUBLIC_DISABLE_STREAMING } from "@/lib/constants";
 import { searchRequest } from "@/lib/search/qa";
-import { useFilters, useObjectState, useTimeRange } from "@/lib/hooks";
+import { useFilters, useObjectState } from "@/lib/hooks";
 import { questionValidationStreamed } from "@/lib/search/streamingQuestionValidation";
 import { createChatSession } from "@/lib/search/chatSessions";
+import { Persona } from "@/app/admin/personas/interfaces";
+import { MoodSelector } from "./MoodSelector";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -37,14 +39,16 @@ const VALID_QUESTION_RESPONSE_DEFAULT: ValidQuestionResponse = {
 interface SearchSectionProps {
   connectors: Connector<any>[];
   documentSets: DocumentSet[];
+  personas: Persona[];
   defaultSearchType: SearchType;
 }
 
-export const SearchSection: React.FC<SearchSectionProps> = ({
+export const SearchSection = ({
   connectors,
   documentSets,
+  personas,
   defaultSearchType,
-}) => {
+}: SearchSectionProps) => {
   // Search Bar
   const [query, setQuery] = useState<string>("");
 
@@ -63,6 +67,8 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
   // Search Type
   const [selectedSearchType, setSelectedSearchType] =
     useState<SearchType>(defaultSearchType);
+
+  const [selectedPersona, setSelectedPersona] = useState<number | null>(null);
 
   // Overrides for default behavior that only last a single query
   const [defaultOverrides, setDefaultOverrides] =
@@ -135,7 +141,7 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
     setSearchResponse(initialSearchResponse);
     setValidQuestionResponse(VALID_QUESTION_RESPONSE_DEFAULT);
 
-    const chatSessionResponse = await createChatSession();
+    const chatSessionResponse = await createChatSession(selectedPersona);
     if (!chatSessionResponse.ok) {
       updateError(
         `Unable to create chat session - ${await chatSessionResponse.text()}`
@@ -208,6 +214,18 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
   return (
     <div className="relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
       <div className="absolute left-0 hidden 2xl:block w-64">
+        {personas.length > 0 && (
+          <div className="mb-4">
+            <div className="flex mt-2">
+              <MoodSelector
+                moods={personas}
+                selectedMoodId={selectedPersona}
+                onMoodChange={(mood) => setSelectedPersona(mood.id)}
+              />
+            </div>
+          </div>
+        )}
+
         {(connectors.length > 0 || documentSets.length > 0) && (
           <SourceSelector
             {...filterManager}
@@ -255,6 +273,11 @@ export const SearchSection: React.FC<SearchSectionProps> = ({
             validQuestionResponse={validQuestionResponse}
             isFetching={isFetching}
             defaultOverrides={defaultOverrides}
+            personaName={
+              selectedPersona
+                ? personas.find((p) => p.id === selectedPersona)?.name
+                : null
+            }
           />
         </div>
       </div>

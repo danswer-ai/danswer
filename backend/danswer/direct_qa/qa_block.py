@@ -10,6 +10,7 @@ from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.direct_qa.interfaces import AnswerQuestionReturn
 from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
 from danswer.direct_qa.interfaces import DanswerAnswer
+from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerQuotes
 from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.models import LLMMetricsContainer
@@ -24,6 +25,7 @@ from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.prompts.direct_qa_prompts import COT_PROMPT
 from danswer.prompts.direct_qa_prompts import JSON_PROMPT
 from danswer.prompts.direct_qa_prompts import LANGUAGE_HINT
+from danswer.prompts.direct_qa_prompts import PARAMATERIZED_PROMPT
 from danswer.prompts.direct_qa_prompts import WEAK_LLM_PROMPT
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_up_code_blocks
@@ -188,6 +190,56 @@ class SingleMessageScratchpadHandler(QAHandler):
         raise ValueError(
             "This Scratchpad approach is not suitable for real time uses like streaming"
         )
+
+
+class PersonaBasedQAHandler(QAHandler):
+    def __init__(self, system_prompt: str, task_prompt: str) -> None:
+        self.system_prompt = system_prompt
+        self.task_prompt = task_prompt
+
+    @property
+    def is_json_output(self) -> bool:
+        return False
+
+    def build_prompt(
+        self,
+        query: str,
+        context_chunks: list[InferenceChunk],
+    ) -> list[BaseMessage]:
+        context_docs_str = build_context_str(context_chunks)
+
+        single_message = PARAMATERIZED_PROMPT.format(
+            context_docs_str=context_docs_str,
+            user_query=query,
+            system_prompt=self.system_prompt,
+            task_prompt=self.task_prompt,
+        ).strip()
+
+        prompt: list[BaseMessage] = [HumanMessage(content=single_message)]
+        return prompt
+
+    def build_dummy_prompt(
+        self,
+    ) -> str:
+        return PARAMATERIZED_PROMPT.format(
+            context_docs_str="<CONTEXT_DOCS>",
+            user_query="<USER_QUERY>",
+            system_prompt=self.system_prompt,
+            task_prompt=self.task_prompt,
+        ).strip()
+
+    def process_llm_output(
+        self, model_output: str, context_chunks: list[InferenceChunk]
+    ) -> tuple[DanswerAnswer, DanswerQuotes]:
+        return DanswerAnswer(answer=model_output), DanswerQuotes(quotes=[])
+
+    def process_llm_token_stream(
+        self, tokens: Iterator[str], context_chunks: list[InferenceChunk]
+    ) -> AnswerQuestionStreamReturn:
+        for token in tokens:
+            yield DanswerAnswerPiece(answer_piece=token)
+
+        yield DanswerQuotes(quotes=[])
 
 
 class QABlock(QAModel):

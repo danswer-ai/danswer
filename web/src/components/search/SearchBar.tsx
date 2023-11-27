@@ -7,11 +7,7 @@ interface SearchBarProps {
   onSearch: () => void;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({
-  query,
-  setQuery,
-  onSearch,
-}) => {
+export const SearchBar = ({ query, setQuery, onSearch }: SearchBarProps) => {
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const target = event.target;
     setQuery(target.value);
