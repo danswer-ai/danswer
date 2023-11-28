@@ -1,7 +1,7 @@
 """Add chat session to query_event
 
 Revision ID: 80696cf850ae
-Revises: 77d07dffae64
+Revises: 15326fcec57e
 Create Date: 2023-11-26 02:38:35.008070
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "80696cf850ae"
-down_revision = "77d07dffae64"
+down_revision = "15326fcec57e"
 branch_labels = None
 depends_on = None
 
