@@ -537,6 +537,9 @@ def full_chunk_search_generator(
         else None,
     )
     if llm_chunk_selection is not None:
-        yield [chunk.unique_id in llm_chunk_selection for chunk in retrieved_chunks]
+        yield [
+            chunk.unique_id in llm_chunk_selection
+            for chunk in reranked_chunks or retrieved_chunks
+        ]
     else:
         yield [True for _ in reranked_chunks or retrieved_chunks]
