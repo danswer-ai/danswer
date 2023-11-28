@@ -9,7 +9,6 @@ import {
   TableCell,
 } from "@tremor/react";
 import { Persona } from "./interfaces";
-import Link from "next/link";
 import { EditButton } from "@/components/EditButton";
 import { useRouter } from "next/navigation";
 

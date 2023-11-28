@@ -16,7 +16,7 @@ export function DeletePersonaButton({ personaId }: { personaId: number }) {
       onClick={async () => {
         const response = await deletePersona(personaId);
         if (response.ok) {
-          router.push("/admin/personas");
+          router.push(`/admin/personas?u=${Date.now()}`);
         } else {
           alert(`Failed to delete persona - ${await response.text()}`);
         }
