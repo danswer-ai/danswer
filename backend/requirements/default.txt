@@ -15,7 +15,7 @@ google-auth-httplib2==0.1.0
 google-auth-oauthlib==1.0.0
 # GPT4All library has issues running on Macs and python:3.11.4-slim-bookworm
 # will reintroduce this when library version catches up
-# gpt4all==2.0.2
+gpt4all==2.0.2
 httpcore==0.16.3
 httpx==0.23.3
 httpx-oauth==0.11.2
