@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import and_
 from sqlalchemy import delete
 from sqlalchemy import func
+from sqlalchemy import not_
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import selectinload
@@ -12,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
+from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
 from danswer.db.models import DocumentSet as DocumentSetDBModel
@@ -381,11 +383,16 @@ def upsert_persona(
 
 
 def fetch_personas(
-    db_session: Session, include_default: bool = False
+    db_session: Session,
+    include_default: bool = False,
+    include_slack_bot_personas: bool = False,
 ) -> Sequence[Persona]:
     stmt = select(Persona).where(Persona.deleted == False)  # noqa: E712
     if not include_default:
         stmt = stmt.where(Persona.default_persona == False)  # noqa: E712
+    if not include_slack_bot_personas:
+        stmt = stmt.where(not_(Persona.name.startswith(SLACK_BOT_PERSONA_PREFIX)))
+
     return db_session.scalars(stmt).all()
 
 
