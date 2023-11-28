@@ -174,7 +174,9 @@ class SearchDoc(BaseModel):
         return initial_dict
 
 
-class QuestionRequest(BaseModel):
+# TODO: rename/consolidate once the chat / QA flows are merged
+class NewMessageRequest(BaseModel):
+    chat_session_id: int
     query: str
     filters: BaseFilters
     collection: str = DOCUMENT_INDEX_NAME

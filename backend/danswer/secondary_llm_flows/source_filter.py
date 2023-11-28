@@ -3,7 +3,6 @@ import random
 
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import DISABLE_LLM_FILTER_EXTRACTION
 from danswer.configs.constants import DocumentSource
 from danswer.db.connector import fetch_unique_document_sources
 from danswer.db.engine import get_sqlalchemy_engine
@@ -13,7 +12,6 @@ from danswer.prompts.constants import SOURCES_KEY
 from danswer.prompts.secondary_llm_flows import FILE_SOURCE_WARNING
 from danswer.prompts.secondary_llm_flows import SOURCE_FILTER_PROMPT
 from danswer.prompts.secondary_llm_flows import WEB_SOURCE_WARNING
-from danswer.server.models import QuestionRequest
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
 from danswer.utils.timing import log_function_time
@@ -159,21 +157,6 @@ def extract_source_filter(
     logger.debug(model_output)
 
     return _extract_source_filters_from_llm_out(model_output)
-
-
-def extract_question_source_filters(
-    question: QuestionRequest,
-    db_session: Session,
-    disable_llm_extraction: bool = DISABLE_LLM_FILTER_EXTRACTION,
-) -> list[DocumentSource] | None:
-    # If specified in the question, don't update
-    if question.filters.source_type:
-        return question.filters.source_type
-
-    if not question.enable_auto_detect_filters or disable_llm_extraction:
-        return None
-
-    return extract_source_filter(question.query, db_session)
 
 
 if __name__ == "__main__":

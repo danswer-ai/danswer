@@ -100,6 +100,7 @@ def update_document_hidden(
 def create_query_event(
     db_session: Session,
     query: str,
+    chat_session_id: int,
     search_type: SearchType | None,
     llm_answer: str | None,
     user_id: UUID | None,
@@ -107,6 +108,7 @@ def create_query_event(
 ) -> int:
     query_event = QueryEvent(
         query=query,
+        chat_session_id=chat_session_id,
         selected_search_flow=search_type,
         llm_answer=llm_answer,
         retrieved_document_ids=retrieved_document_ids,

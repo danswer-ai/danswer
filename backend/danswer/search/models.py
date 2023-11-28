@@ -62,6 +62,9 @@ class SearchQuery(BaseModel):
     # Only used if not skip_llm_chunk_filter
     max_llm_filter_chunks: int = NUM_RERANKED_RESULTS
 
+    class Config:
+        frozen = True
+
 
 class RetrievalMetricsContainer(BaseModel):
     search_type: SearchType

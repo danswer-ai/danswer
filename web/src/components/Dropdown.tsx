@@ -14,11 +14,7 @@ interface DropdownProps {
   onSelect: (selected: Option) => void;
 }
 
-export const Dropdown: FC<DropdownProps> = ({
-  options,
-  selected,
-  onSelect,
-}) => {
+export const Dropdown = ({ options, selected, onSelect }: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 

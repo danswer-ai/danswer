@@ -118,6 +118,23 @@ Answer the user query based on the following document:
 """.strip()
 
 
+# Paramaterized prompt which allows the user to specify their
+# own system / task prompt
+PARAMATERIZED_PROMPT = f"""
+{{system_prompt}}
+
+CONTEXT:
+{GENERAL_SEP_PAT}
+{{context_docs_str}}
+{GENERAL_SEP_PAT}
+
+{{task_prompt}}
+
+{QUESTION_PAT.upper()} {{user_query}}
+RESPONSE:
+""".strip()
+
+
 # User the following for easy viewing of prompts
 if __name__ == "__main__":
     print(JSON_PROMPT)  # Default prompt used in the Danswer UI flow
