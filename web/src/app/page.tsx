@@ -3,12 +3,11 @@ import { Header } from "@/components/Header";
 import {
   getAuthDisabledSS,
   getCurrentUserSS,
-  processCookies,
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
-import { buildUrl, fetchSS } from "@/lib/utilsSS";
+import { fetchSS } from "@/lib/utilsSS";
 import { Connector, DocumentSet, User } from "@/lib/types";
 import { cookies } from "next/headers";
 import { SearchType } from "@/lib/search/interfaces";
@@ -18,18 +17,8 @@ export default async function Home() {
   const tasks = [
     getAuthDisabledSS(),
     getCurrentUserSS(),
-    fetch(buildUrl("/manage/connector"), {
-      next: { revalidate: 0 },
-      headers: {
-        cookie: processCookies(cookies()),
-      },
-    }),
-    fetch(buildUrl("/manage/document-set"), {
-      next: { revalidate: 0 },
-      headers: {
-        cookie: processCookies(cookies()),
-      },
-    }),
+    fetchSS("/manage/connector"),
+    fetchSS("/manage/document-set"),
     fetchSS("/persona"),
   ];
 

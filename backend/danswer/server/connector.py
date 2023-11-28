@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_status
+from danswer.configs.constants import DocumentSource
 from danswer.connectors.file.utils import write_temp_files
 from danswer.connectors.google_drive.connector_auth import build_service_account_creds
 from danswer.connectors.google_drive.connector_auth import delete_google_app_cred
@@ -453,7 +454,11 @@ def get_connectors(
 ) -> list[ConnectorSnapshot]:
     connectors = fetch_connectors(db_session)
     return [
-        ConnectorSnapshot.from_connector_db_model(connector) for connector in connectors
+        ConnectorSnapshot.from_connector_db_model(connector)
+        for connector in connectors
+        # don't include INGESTION_API, as it's not a "real"
+        # connector like those created by the user
+        if connector.source != DocumentSource.INGESTION_API
     ]
 
 
