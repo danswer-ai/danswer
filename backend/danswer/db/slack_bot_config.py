@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.db.chat import upsert_persona
+from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.models import ChannelConfig
 from danswer.db.models import Persona
 from danswer.db.models import Persona__DocumentSet
@@ -11,7 +12,7 @@ from danswer.db.models import SlackBotConfig
 
 
 def _build_persona_name(channel_names: list[str]) -> str:
-    return f"__slack_bot_persona__{'-'.join(channel_names)}"
+    return f"{SLACK_BOT_PERSONA_PREFIX}{'-'.join(channel_names)}"
 
 
 def _cleanup_relationships(db_session: Session, persona_id: int) -> None:
