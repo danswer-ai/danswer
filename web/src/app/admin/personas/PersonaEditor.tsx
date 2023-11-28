@@ -1,12 +1,7 @@
 "use client";
 
-import {
-  BooleanFormField,
-  TextArrayField,
-  TextFormField,
-} from "@/components/admin/connectors/Field";
 import { DocumentSet } from "@/lib/types";
-import { Button, Divider, Text, Title } from "@tremor/react";
+import { Button, Divider } from "@tremor/react";
 import {
   ArrayHelpers,
   ErrorMessage,
@@ -215,7 +210,7 @@ export function PersonaEditor({
             });
           }
           if (response.ok) {
-            router.push("/admin/personas");
+            router.push(`/admin/personas?u=${Date.now()}`);
             return;
           }
 
