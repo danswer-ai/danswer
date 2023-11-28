@@ -280,7 +280,7 @@ export function PersonaEditor({
               <Label>Final Prompt</Label>
 
               {finalPrompt ? (
-                <pre className="text-sm mt-2">
+                <pre className="text-sm mt-2 whitespace-pre-wrap">
                   {finalPrompt.replaceAll("\\n", "\n")}
                 </pre>
               ) : (

@@ -124,7 +124,8 @@ def answer_qa_query(
 
     try:
         qa_model = get_default_qa_model(
-            timeout=answer_generation_timeout, real_time_flow=new_message_request.real_time
+            timeout=answer_generation_timeout,
+            real_time_flow=new_message_request.real_time,
         )
     except Exception as e:
         return partial_response(
@@ -228,6 +229,9 @@ def answer_qa_query_stream(
         if persona_skip_llm_chunk_filter is not None
         else DISABLE_LLM_CHUNK_FILTER,
     )
+    # if a persona is specified, always respond with an answer
+    if persona:
+        predicted_flow = QueryFlow.QUESTION_ANSWER
 
     search_generator = full_chunk_search_generator(
         query=retrieval_request,
