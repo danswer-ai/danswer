@@ -317,6 +317,8 @@ def upsert_persona(
     system_text: str | None = None,
     tools: list[ToolInfo] | None = None,
     hint_text: str | None = None,
+    num_chunks: int | None = None,
+    apply_llm_relevance_filter: bool | None = None,
     persona_id: int | None = None,
     default_persona: bool = False,
     document_sets: list[DocumentSetDBModel] | None = None,
@@ -343,6 +345,8 @@ def upsert_persona(
         persona.system_text = system_text
         persona.tools = tools
         persona.hint_text = hint_text
+        persona.num_chunks = num_chunks
+        persona.apply_llm_relevance_filter = apply_llm_relevance_filter
         persona.default_persona = default_persona
 
         # Do not delete any associations manually added unless
@@ -360,6 +364,8 @@ def upsert_persona(
             system_text=system_text,
             tools=tools,
             hint_text=hint_text,
+            num_chunks=num_chunks,
+            apply_llm_relevance_filter=apply_llm_relevance_filter,
             default_persona=default_persona,
             document_sets=document_sets if document_sets else [],
         )

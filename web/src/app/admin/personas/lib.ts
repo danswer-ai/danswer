@@ -4,6 +4,8 @@ interface PersonaCreationRequest {
   system_prompt: string;
   task_prompt: string;
   document_set_ids: number[];
+  num_chunks: number | null;
+  apply_llm_relevance_filter: boolean | null;
 }
 
 export function createPersona(personaCreationRequest: PersonaCreationRequest) {
@@ -22,6 +24,8 @@ interface PersonaUpdateRequest {
   system_prompt: string;
   task_prompt: string;
   document_set_ids: number[];
+  num_chunks: number | null;
+  apply_llm_relevance_filter: boolean | null;
 }
 
 export function updatePersona(personaUpdateRequest: PersonaUpdateRequest) {

@@ -78,6 +78,7 @@ export function PersonaSelector({
             overscroll-contain`}
         >
           <PersonaItem
+            key={-1}
             id={-1}
             name="Default"
             onSelect={() => {
@@ -90,6 +91,7 @@ export function PersonaSelector({
             const isSelected = persona.id === selectedPersonaId;
             return (
               <PersonaItem
+                key={persona.id}
                 id={persona.id}
                 name={persona.name}
                 onSelect={(clickedPersonaId) => {

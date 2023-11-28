@@ -507,6 +507,13 @@ class Persona(Base):
         postgresql.JSONB(), nullable=True
     )
     hint_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # number of chunks to use for retrieval. If unspecified, uses the default set
+    # in the env variables
+    num_chunks: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # if unspecified, then uses the default set in the env variables
+    apply_llm_relevance_filter: Mapped[bool | None] = mapped_column(
+        Boolean, nullable=True
+    )
     # Default personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
     default_persona: Mapped[bool] = mapped_column(Boolean, default=False)

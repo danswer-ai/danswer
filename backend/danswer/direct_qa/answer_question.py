@@ -5,7 +5,10 @@ from typing import cast
 
 from sqlalchemy.orm import Session
 
+from danswer.configs.app_configs import CHUNK_SIZE
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
+from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
+from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import QUERY_EVENT_ID
 from danswer.db.chat import fetch_chat_session_by_id
@@ -205,11 +208,25 @@ def answer_qa_query_stream(
         chat_session_id=new_message_request.chat_session_id, db_session=db_session
     )
     persona = chat_session.persona
+    persona_skip_llm_chunk_filter = (
+        not persona.apply_llm_relevance_filter if persona else None
+    )
+    persona_num_chunks = persona.num_chunks if persona else None
+    if persona:
+        logger.info(f"Using persona: {persona.name}")
+        logger.info(
+            "Persona retrieval settings: skip_llm_chunk_filter: "
+            f"{persona_skip_llm_chunk_filter}, "
+            f"num_chunks: {persona_num_chunks}"
+        )
 
     retrieval_request, predicted_search_type, predicted_flow = retrieval_preprocessing(
         new_message_request=new_message_request,
         user=user,
         db_session=db_session,
+        skip_llm_chunk_filter=persona_skip_llm_chunk_filter
+        if persona_skip_llm_chunk_filter is not None
+        else DISABLE_LLM_CHUNK_FILTER,
     )
 
     search_generator = full_chunk_search_generator(
@@ -248,17 +265,22 @@ def answer_qa_query_stream(
         user_id=None if user is None else user.id,
     )
 
-    # next get the results of the LLM filtering
+    # next get the final chunks to be fed into the LLM
     llm_chunk_selection = cast(list[bool], next(search_generator))
     llm_chunks_indices = get_chunks_for_qa(
         chunks=top_chunks,
         llm_chunk_selection=llm_chunk_selection,
+        token_limit=persona_num_chunks * CHUNK_SIZE
+        if persona_num_chunks
+        else NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
         batch_offset=offset_count,
     )
     llm_relevance_filtering_response = LLMRelevanceFilterResponse(
         relevant_chunk_indices=[
             index for index, value in enumerate(llm_chunk_selection) if value
         ]
+        if not retrieval_request.skip_llm_chunk_filter
+        else []
     ).dict()
     yield get_json_line(llm_relevance_filtering_response)
 

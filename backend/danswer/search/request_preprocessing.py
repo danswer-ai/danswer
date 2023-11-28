@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.app_configs import DISABLE_LLM_FILTER_EXTRACTION
 from danswer.db.models import User
 from danswer.search.access_filters import build_access_filters_for_user
@@ -22,6 +23,7 @@ def retrieval_preprocessing(
     bypass_acl: bool = False,
     include_query_intent: bool = True,
     disable_llm_filter_extraction: bool = DISABLE_LLM_FILTER_EXTRACTION,
+    skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
 ) -> tuple[SearchQuery, SearchType | None, QueryFlow | None]:
     auto_filters_enabled = (
         not disable_llm_filter_extraction
@@ -99,6 +101,7 @@ def retrieval_preprocessing(
                 if new_message_request.favor_recent is not None
                 else (favor_recent or False)
             ),
+            skip_llm_chunk_filter=skip_llm_chunk_filter,
         ),
         predicted_search_type,
         predicted_flow,

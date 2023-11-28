@@ -65,51 +65,6 @@ export const TextFormField = ({
   );
 };
 
-export const TextAreaFormField = ({
-  name,
-  label,
-  subtext,
-  placeholder,
-  type = "text",
-  disabled = false,
-  autoCompleteDisabled = false,
-}: TextFormFieldProps) => {
-  return (
-    <div className="mb-4">
-      <label htmlFor={name} className="block font-medium">
-        {label}
-      </label>
-      {subtext && <p className="text-xs mb-1">{subtext}</p>}
-      <Field
-        as="textarea"
-        type={type}
-        name={name}
-        id={name}
-        className={
-          `
-          border 
-          text-gray-200 
-          border-gray-300 
-          rounded 
-          w-full 
-          py-2 
-          px-3 
-          mt-1
-        ` + (disabled ? " bg-slate-900" : " bg-slate-700")
-        }
-        disabled={disabled}
-        placeholder={placeholder}
-        autoComplete={autoCompleteDisabled ? "off" : undefined}
-      />
-      <ErrorMessage
-        name={name}
-        component="div"
-        className="text-red-500 text-sm mt-1"
-      />
-    </div>
-  );
-};
-
 interface BooleanFormFieldProps {
   name: string;
   label: string;

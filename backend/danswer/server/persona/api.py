@@ -47,6 +47,8 @@ def create_persona(
             datetime_aware=True,
             system_text=create_persona_request.system_prompt,
             hint_text=create_persona_request.task_prompt,
+            num_chunks=create_persona_request.num_chunks,
+            apply_llm_relevance_filter=create_persona_request.apply_llm_relevance_filter,
             document_sets=document_sets,
         )
     except ValueError as e:
@@ -79,6 +81,8 @@ def update_persona(
             datetime_aware=True,
             system_text=update_persona_request.system_prompt,
             hint_text=update_persona_request.task_prompt,
+            num_chunks=update_persona_request.num_chunks,
+            apply_llm_relevance_filter=update_persona_request.apply_llm_relevance_filter,
             document_sets=document_sets,
             persona_id=persona_id,
         )

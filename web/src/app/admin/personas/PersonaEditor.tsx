@@ -2,7 +2,6 @@
 
 import {
   BooleanFormField,
-  TextAreaFormField,
   TextArrayField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
@@ -24,8 +23,6 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { Persona } from "./interfaces";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import { ThreeDotsLoader } from "@/components/Loading";
 
 function SectionHeader({ children }: { children: string | JSX.Element }) {
   return <div className="mb-4 font-bold text-lg">{children}</div>;
@@ -41,6 +38,7 @@ function SubLabel({ children }: { children: string | JSX.Element }) {
   return <div className="text-sm text-gray-300 mb-2">{children}</div>;
 }
 
+// TODO: make this the default text input across all forms
 function PersonaTextInput({
   name,
   label,
@@ -87,7 +85,44 @@ function PersonaTextInput({
         disabled={disabled}
         placeholder={placeholder}
         autoComplete={autoCompleteDisabled ? "off" : undefined}
-        onChange={onChange}
+        {...(onChange ? { onChange } : {})}
+      />
+      <ErrorMessage
+        name={name}
+        component="div"
+        className="text-red-500 text-sm mt-1"
+      />
+    </div>
+  );
+}
+
+function PersonaBooleanInput({
+  name,
+  label,
+  subtext,
+}: {
+  name: string;
+  label: string;
+  subtext?: string | JSX.Element;
+}) {
+  return (
+    <div className="mb-4">
+      <Label>{label}</Label>
+      {subtext && <SubLabel>{subtext}</SubLabel>}
+      <Field
+        type="checkbox"
+        name={name}
+        id={name}
+        className={`
+        ml-2
+        border 
+        text-gray-200 
+        border-gray-600 
+        rounded 
+        py-2 
+        px-3 
+        mt-1
+      `}
       />
       <ErrorMessage
         name={name}
@@ -144,6 +179,9 @@ export function PersonaEditor({
             existingPersona?.document_sets?.map(
               (documentSet) => documentSet.id
             ) ?? ([] as number[]),
+          num_chunks: existingPersona?.num_chunks ?? null,
+          apply_llm_relevance_filter:
+            existingPersona?.apply_llm_relevance_filter ?? false,
         }}
         validationSchema={Yup.object().shape({
           name: Yup.string().required("Must give the Persona a name!"),
@@ -157,6 +195,8 @@ export function PersonaEditor({
             "Must give the Persona a task prompt!"
           ),
           document_set_ids: Yup.array().of(Yup.number()),
+          num_chunks: Yup.number().max(20).nullable(),
+          apply_llm_relevance_filter: Yup.boolean().required(),
         })}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
@@ -166,9 +206,13 @@ export function PersonaEditor({
             response = await updatePersona({
               id: existingPersona.id,
               ...values,
+              num_chunks: values.num_chunks || null,
             });
           } else {
-            response = await createPersona(values);
+            response = await createPersona({
+              ...values,
+              num_chunks: values.num_chunks || null,
+            });
           }
           if (response.ok) {
             router.push("/admin/personas");
@@ -235,12 +279,12 @@ export function PersonaEditor({
 
               <Label>Final Prompt</Label>
 
-              {finalPrompt !== null ? (
+              {finalPrompt ? (
                 <pre className="text-sm mt-2">
                   {finalPrompt.replaceAll("\\n", "\n")}
                 </pre>
               ) : (
-                "N/A"
+                "-"
               )}
 
               <Divider />
@@ -307,6 +351,42 @@ export function PersonaEditor({
                     </div>
                   </div>
                 )}
+              />
+
+              <Divider />
+
+              <SectionHeader>[Advanced] Retrieval Customization</SectionHeader>
+
+              <PersonaTextInput
+                name="num_chunks"
+                label="Number of Chunks"
+                subtext={
+                  <div>
+                    How many chunks should we feed into the LLM when generating
+                    the final response? Each chunk is ~400 words long. If you
+                    are using gpt-3.5-turbo or other similar models, setting
+                    this to a value greater than 5 will result in errors at
+                    query time due to the model's input length limit.
+                    <br />
+                    <br />
+                    If unspecified, will use 5 chunks.
+                  </div>
+                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow only integer values
+                  if (value === "" || /^[0-9]+$/.test(value)) {
+                    setFieldValue("num_chunks", value);
+                  }
+                }}
+              />
+
+              <PersonaBooleanInput
+                name="apply_llm_relevance_filter"
+                label="Apply LLM Relevance Filter"
+                subtext={
+                  "If enabled, the LLM will filter out chunks that are not relevant to the user query."
+                }
               />
 
               <Divider />

@@ -10,6 +10,8 @@ class CreatePersonaRequest(BaseModel):
     document_set_ids: list[int]
     system_prompt: str
     task_prompt: str
+    num_chunks: int | None = None
+    apply_llm_relevance_filter: bool | None = None
 
 
 class PersonaSnapshot(BaseModel):
