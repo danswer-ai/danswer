@@ -42,7 +42,7 @@ class LangChainChatLLM(LLM, abc.ABC):
             logger.debug(f"Prompt:\n{prompt}")
 
     def log_model_configs(self) -> None:
-        logger.debug(
+        logger.info(
             f"LLM Model Class: {self.llm.__class__.__name__}, Model Config: {self.llm.__dict__}"
         )
 
