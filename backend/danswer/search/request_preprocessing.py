@@ -2,6 +2,8 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.app_configs import DISABLE_LLM_FILTER_EXTRACTION
+from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
+from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.db.models import User
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import query_intent
@@ -22,6 +24,8 @@ def retrieval_preprocessing(
     db_session: Session,
     bypass_acl: bool = False,
     include_query_intent: bool = True,
+    skip_rerank_realtime: bool = not ENABLE_RERANKING_REAL_TIME_FLOW,
+    skip_rerank_non_realtime: bool = SKIP_RERANKING,
     disable_llm_filter_extraction: bool = DISABLE_LLM_FILTER_EXTRACTION,
     skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
 ) -> tuple[SearchQuery, SearchType | None, QueryFlow | None]:
@@ -90,6 +94,14 @@ def retrieval_preprocessing(
         access_control_list=user_acl_filters,
     )
 
+    # figure out if we should skip running Tranformer-based re-ranking of the
+    # top chunks
+    skip_reranking = (
+        skip_rerank_realtime
+        if new_message_request.real_time
+        else skip_rerank_non_realtime
+    )
+
     return (
         SearchQuery(
             query=new_message_request.query,
@@ -101,6 +113,7 @@ def retrieval_preprocessing(
                 if new_message_request.favor_recent is not None
                 else (favor_recent or False)
             ),
+            skip_rerank=skip_reranking,
             skip_llm_chunk_filter=skip_llm_chunk_filter,
         ),
         predicted_search_type,
