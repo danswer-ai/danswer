@@ -3,32 +3,23 @@ import { Header } from "@/components/Header";
 import {
   getAuthDisabledSS,
   getCurrentUserSS,
-  processCookies,
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
-import { buildUrl } from "@/lib/utilsSS";
+import { fetchSS } from "@/lib/utilsSS";
 import { Connector, DocumentSet, User } from "@/lib/types";
 import { cookies } from "next/headers";
 import { SearchType } from "@/lib/search/interfaces";
+import { Persona } from "./admin/personas/interfaces";
 
 export default async function Home() {
   const tasks = [
     getAuthDisabledSS(),
     getCurrentUserSS(),
-    fetch(buildUrl("/manage/connector"), {
-      next: { revalidate: 0 },
-      headers: {
-        cookie: processCookies(cookies()),
-      },
-    }),
-    fetch(buildUrl("/manage/document-set"), {
-      next: { revalidate: 0 },
-      headers: {
-        cookie: processCookies(cookies()),
-      },
-    }),
+    fetchSS("/manage/connector"),
+    fetchSS("/manage/document-set"),
+    fetchSS("/persona"),
   ];
 
   // catch cases where the backend is completely unreachable here
@@ -44,6 +35,7 @@ export default async function Home() {
   const user = results[1] as User | null;
   const connectorsResponse = results[2] as Response | null;
   const documentSetsResponse = results[3] as Response | null;
+  const personaResponse = results[4] as Response | null;
 
   if (!authDisabled && !user) {
     return redirect("/auth/login");
@@ -63,6 +55,13 @@ export default async function Home() {
     console.log(
       `Failed to fetch document sets - ${documentSetsResponse?.status}`
     );
+  }
+
+  let personas: Persona[] = [];
+  if (personaResponse?.ok) {
+    personas = await personaResponse.json();
+  } else {
+    console.log(`Failed to fetch personas - ${personaResponse?.status}`);
   }
 
   // needs to be done in a non-client side component due to nextjs
@@ -87,6 +86,7 @@ export default async function Home() {
           <SearchSection
             connectors={connectors}
             documentSets={documentSets}
+            personas={personas}
             defaultSearchType={searchTypeDefault}
           />
         </div>

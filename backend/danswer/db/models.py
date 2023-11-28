@@ -4,6 +4,7 @@ from typing import Any
 from typing import List
 from typing import Literal
 from typing import NotRequired
+from typing import Optional
 from typing import TypedDict
 from uuid import UUID
 
@@ -226,7 +227,7 @@ class Credential(Base):
     credential_json: Mapped[dict[str, Any]] = mapped_column(postgresql.JSONB())
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     # if `true`, then all Admins will have access to the credential
-    is_admin: Mapped[bool] = mapped_column(Boolean, default=True)
+    admin_public: Mapped[bool] = mapped_column(Boolean, default=True)
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -341,6 +342,11 @@ class QueryEvent(Base):
     __tablename__ = "query_event"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # TODO: make this non-nullable after migration to consolidate chat /
+    # QA flows is complete
+    chat_session_id: Mapped[int | None] = mapped_column(
+        ForeignKey("chat_session.id"), nullable=True
+    )
     query: Mapped[str] = mapped_column(Text)
     # search_flow refers to user selection, None if user used auto
     selected_search_flow: Mapped[SearchType | None] = mapped_column(
@@ -399,6 +405,9 @@ class Document(Base):
     # this should correspond to the ID of the document
     # (as is passed around in Danswer)
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    from_ingestion_api: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=True
+    )
     # 0 for neutral, positive for mostly endorse, negative for mostly reject
     boost: Mapped[int] = mapped_column(Integer, default=DEFAULT_BOOST)
     hidden: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -456,6 +465,9 @@ class ChatSession(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    persona_id: Mapped[int | None] = mapped_column(
+        ForeignKey("persona.id"), default=None
+    )
     description: Mapped[str] = mapped_column(Text)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     # The following texts help build up the model's ability to use the context effectively
@@ -472,6 +484,7 @@ class ChatSession(Base):
     messages: Mapped[List["ChatMessage"]] = relationship(
         "ChatMessage", back_populates="chat_session", cascade="delete"
     )
+    persona: Mapped[Optional["Persona"]] = relationship("Persona")
 
 
 class ToolInfo(TypedDict):
@@ -485,6 +498,7 @@ class Persona(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
     # Danswer retrieval, treated as a special tool
     retrieval_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     datetime_aware: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -493,6 +507,13 @@ class Persona(Base):
         postgresql.JSONB(), nullable=True
     )
     hint_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # number of chunks to use for retrieval. If unspecified, uses the default set
+    # in the env variables
+    num_chunks: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # if unspecified, then uses the default set in the env variables
+    apply_llm_relevance_filter: Mapped[bool | None] = mapped_column(
+        Boolean, nullable=True
+    )
     # Default personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
     default_persona: Mapped[bool] = mapped_column(Boolean, default=False)

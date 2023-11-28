@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
+from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.danswerbot.slack.config import get_slack_bot_config_for_channel
 from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
 from danswer.danswerbot.slack.handlers.handle_feedback import handle_slack_feedback
@@ -23,6 +24,7 @@ from danswer.danswerbot.slack.utils import get_channel_name_from_id
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.search.search_nlp_models import warm_up_models
 from danswer.utils.logger import setup_logger
 
 
@@ -294,6 +296,8 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
 # without issue.
 if __name__ == "__main__":
     try:
+        warm_up_models(skip_cross_encoders=SKIP_RERANKING)
+
         socket_client = _get_socket_client()
         socket_client.socket_mode_request_listeners.append(process_slack_event)  # type: ignore
 

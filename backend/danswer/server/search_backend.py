@@ -2,13 +2,13 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.engine import get_session
 from danswer.db.feedback import create_doc_retrieval_feedback
+from danswer.db.feedback import create_query_event
 from danswer.db.feedback import update_query_event_feedback
 from danswer.db.models import User
 from danswer.direct_qa.answer_question import answer_qa_query
@@ -17,25 +17,23 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import recommend_search_flow
-from danswer.search.models import BaseFilters
 from danswer.search.models import IndexFilters
+from danswer.search.request_preprocessing import retrieval_preprocessing
 from danswer.search.search_runner import chunks_to_search_docs
-from danswer.search.search_runner import danswer_search
+from danswer.search.search_runner import full_chunk_search
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
-from danswer.secondary_llm_flows.source_filter import extract_question_source_filters
-from danswer.secondary_llm_flows.time_filter import extract_question_time_filters
+from danswer.server.models import AdminSearchRequest
+from danswer.server.models import AdminSearchResponse
 from danswer.server.models import HelperResponse
+from danswer.server.models import NewMessageRequest
 from danswer.server.models import QAFeedbackRequest
 from danswer.server.models import QAResponse
 from danswer.server.models import QueryValidationResponse
-from danswer.server.models import QuestionRequest
 from danswer.server.models import SearchDoc
 from danswer.server.models import SearchFeedbackRequest
 from danswer.server.models import SearchResponse
 from danswer.utils.logger import setup_logger
-from danswer.utils.threadpool_concurrency import FunctionCall
-from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 
 logger = setup_logger()
 
@@ -43,15 +41,6 @@ router = APIRouter()
 
 
 """Admin-only search endpoints"""
-
-
-class AdminSearchRequest(BaseModel):
-    query: str
-    filters: BaseFilters
-
-
-class AdminSearchResponse(BaseModel):
-    documents: list[SearchDoc]
 
 
 @router.post("/admin/search")
@@ -96,26 +85,26 @@ def admin_search(
 
 @router.post("/search-intent")
 def get_search_type(
-    question: QuestionRequest, _: User = Depends(current_user)
+    new_message_request: NewMessageRequest, _: User = Depends(current_user)
 ) -> HelperResponse:
-    query = question.query
+    query = new_message_request.query
     return recommend_search_flow(query)
 
 
 @router.post("/query-validation")
 def query_validation(
-    question: QuestionRequest, _: User = Depends(current_user)
+    new_message_request: NewMessageRequest, _: User = Depends(current_user)
 ) -> QueryValidationResponse:
-    query = question.query
+    query = new_message_request.query
     reasoning, answerable = get_query_answerability(query)
     return QueryValidationResponse(reasoning=reasoning, answerable=answerable)
 
 
 @router.post("/stream-query-validation")
 def stream_query_validation(
-    question: QuestionRequest, _: User = Depends(current_user)
+    new_message_request: NewMessageRequest, _: User = Depends(current_user)
 ) -> StreamingResponse:
-    query = question.query
+    query = new_message_request.query
     return StreamingResponse(
         stream_query_answerability(query), media_type="application/json"
     )
@@ -123,65 +112,68 @@ def stream_query_validation(
 
 @router.post("/document-search")
 def handle_search_request(
-    question: QuestionRequest,
+    new_message_request: NewMessageRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> SearchResponse:
-    query = question.query
-    logger.info(f"Received {question.search_type.value} " f"search query: {query}")
-
-    functions_to_run = [
-        FunctionCall(extract_question_time_filters, (question,), {}),
-        FunctionCall(extract_question_source_filters, (question, db_session), {}),
-    ]
-
-    parallel_results = run_functions_in_parallel(functions_to_run)
-
-    time_cutoff, favor_recent = parallel_results["extract_question_time_filters"]
-    source_filters = parallel_results["extract_question_source_filters"]
-
-    question.filters.time_cutoff = time_cutoff
-    question.favor_recent = favor_recent
-    question.filters.source_type = source_filters
-
-    top_chunks, _, query_event_id = danswer_search(
-        question=question,
-        user=user,
-        db_session=db_session,
-        document_index=get_default_document_index(),
-        skip_llm_chunk_filter=True,
+    query = new_message_request.query
+    logger.info(
+        f"Received {new_message_request.search_type.value} " f"search query: {query}"
     )
 
+    # create record for this query in Postgres
+    query_event_id = create_query_event(
+        query=new_message_request.query,
+        chat_session_id=new_message_request.chat_session_id,
+        search_type=new_message_request.search_type,
+        llm_answer=None,
+        user_id=user.id if user is not None else None,
+        db_session=db_session,
+    )
+
+    retrieval_request, _, _ = retrieval_preprocessing(
+        new_message_request=new_message_request,
+        user=user,
+        db_session=db_session,
+        include_query_intent=False,
+    )
+
+    top_chunks, _ = full_chunk_search(
+        query=retrieval_request,
+        document_index=get_default_document_index(),
+    )
     top_docs = chunks_to_search_docs(top_chunks)
 
     return SearchResponse(
         top_documents=top_docs,
         query_event_id=query_event_id,
-        source_type=source_filters,
-        time_cutoff=time_cutoff,
-        favor_recent=favor_recent,
+        source_type=retrieval_request.filters.source_type,
+        time_cutoff=retrieval_request.filters.time_cutoff,
+        favor_recent=retrieval_request.favor_recent,
     )
 
 
 @router.post("/direct-qa")
 def direct_qa(
-    question: QuestionRequest,
+    new_message_request: NewMessageRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> QAResponse:
     # Everything handled via answer_qa_query which is also used by default
     # for the DanswerBot flow
-    return answer_qa_query(question=question, user=user, db_session=db_session)
+    return answer_qa_query(
+        new_message_request=new_message_request, user=user, db_session=db_session
+    )
 
 
 @router.post("/stream-direct-qa")
 def stream_direct_qa(
-    question: QuestionRequest,
+    new_message_request: NewMessageRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
     packets = answer_qa_query_stream(
-        question=question, user=user, db_session=db_session
+        new_message_request=new_message_request, user=user, db_session=db_session
     )
     return StreamingResponse(packets, media_type="application/json")
 

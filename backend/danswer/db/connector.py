@@ -50,6 +50,19 @@ def fetch_connector_by_id(connector_id: int, db_session: Session) -> Connector |
     return connector
 
 
+def fetch_ingestion_connector_by_name(
+    connector_name: str, db_session: Session
+) -> Connector | None:
+    stmt = (
+        select(Connector)
+        .where(Connector.name == connector_name)
+        .where(Connector.source == DocumentSource.INGESTION_API)
+    )
+    result = db_session.execute(stmt)
+    connector = result.scalar_one_or_none()
+    return connector
+
+
 def create_connector(
     connector_data: ConnectorBase,
     db_session: Session,
@@ -210,3 +223,32 @@ def fetch_unique_document_sources(db_session: Session) -> list[DocumentSource]:
     sources = [source[0] for source in distinct_sources]
 
     return sources
+
+
+def create_initial_default_connector(db_session: Session) -> None:
+    default_connector_id = 0
+    default_connector = fetch_connector_by_id(default_connector_id, db_session)
+
+    if default_connector is not None:
+        if (
+            default_connector.source != DocumentSource.INGESTION_API
+            or default_connector.input_type != InputType.LOAD_STATE
+            or default_connector.refresh_freq is not None
+            or default_connector.disabled
+        ):
+            raise ValueError(
+                "DB is not in a valid initial state. "
+                "Default connector does not have expected values."
+            )
+        return
+
+    connector = Connector(
+        id=default_connector_id,
+        name="Ingestion API",
+        source=DocumentSource.INGESTION_API,
+        input_type=InputType.LOAD_STATE,
+        connector_specific_config={},
+        refresh_freq=None,
+    )
+    db_session.add(connector)
+    db_session.commit()

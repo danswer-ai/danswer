@@ -1,9 +1,11 @@
+from collections.abc import Sequence
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy import and_
 from sqlalchemy import delete
 from sqlalchemy import func
+from sqlalchemy import not_
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import selectinload
@@ -11,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
+from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
 from danswer.db.models import DocumentSet as DocumentSetDBModel
@@ -99,10 +102,14 @@ def verify_parent_exists(
 
 
 def create_chat_session(
-    description: str, user_id: UUID | None, db_session: Session
+    db_session: Session,
+    description: str,
+    user_id: UUID | None,
+    persona_id: int | None = None,
 ) -> ChatSession:
     chat_session = ChatSession(
         user_id=user_id,
+        persona_id=persona_id,
         description=description,
     )
 
@@ -256,7 +263,11 @@ def set_latest_chat_message(
 
 
 def fetch_persona_by_id(persona_id: int, db_session: Session) -> Persona:
-    stmt = select(Persona).where(Persona.id == persona_id)
+    stmt = (
+        select(Persona)
+        .where(Persona.id == persona_id)
+        .where(Persona.deleted == False)  # noqa: E712
+    )
     result = db_session.execute(stmt)
     persona = result.scalar_one_or_none()
 
@@ -269,8 +280,12 @@ def fetch_persona_by_id(persona_id: int, db_session: Session) -> Persona:
 def fetch_default_persona_by_name(
     persona_name: str, db_session: Session
 ) -> Persona | None:
-    stmt = select(Persona).where(
-        Persona.name == persona_name, Persona.default_persona == True  # noqa: E712
+    stmt = (
+        select(Persona)
+        .where(
+            Persona.name == persona_name, Persona.default_persona == True  # noqa: E712
+        )
+        .where(Persona.deleted == False)  # noqa: E712
     )
     result = db_session.execute(stmt).scalar_one_or_none()
     return result
@@ -284,7 +299,11 @@ def fetch_persona_by_name(persona_name: str, db_session: Session) -> Persona | N
     if persona is not None:
         return persona
 
-    stmt = select(Persona).where(Persona.name == persona_name)  # noqa: E712
+    stmt = (
+        select(Persona)
+        .where(Persona.name == persona_name)
+        .where(Persona.deleted == False)  # noqa: E712
+    )
     result = db_session.execute(stmt).first()
     if result:
         return result[0]
@@ -292,31 +311,44 @@ def fetch_persona_by_name(persona_name: str, db_session: Session) -> Persona | N
 
 
 def upsert_persona(
+    db_session: Session,
     name: str,
     retrieval_enabled: bool,
     datetime_aware: bool,
-    system_text: str | None,
-    tools: list[ToolInfo] | None,
-    hint_text: str | None,
-    db_session: Session,
+    description: str | None = None,
+    system_text: str | None = None,
+    tools: list[ToolInfo] | None = None,
+    hint_text: str | None = None,
+    num_chunks: int | None = None,
+    apply_llm_relevance_filter: bool | None = None,
     persona_id: int | None = None,
     default_persona: bool = False,
     document_sets: list[DocumentSetDBModel] | None = None,
     commit: bool = True,
 ) -> Persona:
     persona = db_session.query(Persona).filter_by(id=persona_id).first()
+    if persona and persona.deleted:
+        raise ValueError("Trying to update a deleted persona")
 
     # Default personas are defined via yaml files at deployment time
-    if persona is None and default_persona:
-        persona = fetch_default_persona_by_name(name, db_session)
+    if persona is None:
+        if default_persona:
+            persona = fetch_default_persona_by_name(name, db_session)
+        else:
+            # only one persona with the same name should exist
+            if fetch_persona_by_name(name, db_session):
+                raise ValueError("Trying to create a persona with a duplicate name")
 
     if persona:
         persona.name = name
+        persona.description = description
         persona.retrieval_enabled = retrieval_enabled
         persona.datetime_aware = datetime_aware
         persona.system_text = system_text
         persona.tools = tools
         persona.hint_text = hint_text
+        persona.num_chunks = num_chunks
+        persona.apply_llm_relevance_filter = apply_llm_relevance_filter
         persona.default_persona = default_persona
 
         # Do not delete any associations manually added unless
@@ -328,11 +360,14 @@ def upsert_persona(
     else:
         persona = Persona(
             name=name,
+            description=description,
             retrieval_enabled=retrieval_enabled,
             datetime_aware=datetime_aware,
             system_text=system_text,
             tools=tools,
             hint_text=hint_text,
+            num_chunks=num_chunks,
+            apply_llm_relevance_filter=apply_llm_relevance_filter,
             default_persona=default_persona,
             document_sets=document_sets if document_sets else [],
         )
@@ -345,3 +380,23 @@ def upsert_persona(
         db_session.flush()
 
     return persona
+
+
+def fetch_personas(
+    db_session: Session,
+    include_default: bool = False,
+    include_slack_bot_personas: bool = False,
+) -> Sequence[Persona]:
+    stmt = select(Persona).where(Persona.deleted == False)  # noqa: E712
+    if not include_default:
+        stmt = stmt.where(Persona.default_persona == False)  # noqa: E712
+    if not include_slack_bot_personas:
+        stmt = stmt.where(not_(Persona.name.startswith(SLACK_BOT_PERSONA_PREFIX)))
+
+    return db_session.scalars(stmt).all()
+
+
+def mark_persona_as_deleted(db_session: Session, persona_id: int) -> None:
+    persona = fetch_persona_by_id(persona_id, db_session)
+    persona.deleted = True
+    db_session.commit()

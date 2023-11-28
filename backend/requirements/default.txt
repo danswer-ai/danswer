@@ -1,7 +1,7 @@
 alembic==1.10.4
 asyncpg==0.27.0
 atlassian-python-api==3.37.0
-beautifulsoup4==4.12.0
+beautifulsoup4==4.12.2
 celery==5.3.4
 dask==2023.8.1
 distributed==2023.8.1
@@ -21,13 +21,13 @@ httpx==0.23.3
 httpx-oauth==0.11.2
 huggingface-hub==0.16.4
 jira==3.5.1
-langchain==0.0.325
-litellm==0.12.5
-llama-index==0.8.27
+langchain==0.0.340
+litellm==1.7.5
+llama-index==0.9.8
 Mako==1.2.4
 nltk==3.8.1
 docx2txt==0.8
-openai==0.27.6
+openai==1.3.5
 oauthlib==3.2.2
 playwright==1.37.0
 psutil==5.9.5

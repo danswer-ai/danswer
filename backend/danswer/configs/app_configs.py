@@ -81,7 +81,7 @@ SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
 #####
 # DB Configs
 #####
-DOCUMENT_INDEX_NAME = "danswer_index"  # Shared by vector/keyword indices
+DOCUMENT_INDEX_NAME = "danswer_index"
 # Vespa is now the default document index store for both keyword and vector
 DOCUMENT_INDEX_TYPE = os.environ.get(
     "DOCUMENT_INDEX_TYPE", DocumentIndexType.COMBINED.value
@@ -141,8 +141,8 @@ CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
 
 GONG_CONNECTOR_START_TIME = os.environ.get("GONG_CONNECTOR_START_TIME")
 
-EXPERIMENTAL_SIMPLE_JOB_CLIENT_ENABLED = (
-    os.environ.get("EXPERIMENTAL_SIMPLE_JOB_CLIENT_ENABLED", "").lower() == "true"
+DASK_JOB_CLIENT_ENABLED = (
+    os.environ.get("DASK_JOB_CLIENT_ENABLED", "").lower() == "true"
 )
 EXPERIMENTAL_CHECKPOINTING_ENABLED = (
     os.environ.get("EXPERIMENTAL_CHECKPOINTING_ENABLED", "").lower() == "true"
@@ -232,6 +232,24 @@ MODEL_SERVER_HOST = os.environ.get("MODEL_SERVER_HOST") or None
 MODEL_SERVER_ALLOWED_HOST = os.environ.get("MODEL_SERVER_HOST") or "0.0.0.0"
 MODEL_SERVER_PORT = int(os.environ.get("MODEL_SERVER_PORT") or "9000")
 
+EMBEDDING_MODEL_SERVER_HOST = (
+    os.environ.get("EMBEDDING_MODEL_SERVER_HOST") or MODEL_SERVER_HOST
+)
+CROSS_ENCODER_MODEL_SERVER_HOST = (
+    os.environ.get("CROSS_ENCODER_MODEL_SERVER_HOST") or MODEL_SERVER_HOST
+)
+INTENT_MODEL_SERVER_HOST = (
+    os.environ.get("INTENT_MODEL_SERVER_HOST") or MODEL_SERVER_HOST
+)
+
+# specify this env variable directly to have a different model server for the background
+# indexing job vs the api server so that background indexing does not effect query-time
+# performance
+BACKGROUND_JOB_EMBEDDING_MODEL_SERVER_HOST = (
+    os.environ.get("BACKGROUND_JOB_EMBEDDING_MODEL_SERVER_HOST")
+    or EMBEDDING_MODEL_SERVER_HOST
+)
+
 
 #####
 # Miscellaneous
@@ -242,6 +260,11 @@ DYNAMIC_CONFIG_STORE = os.environ.get(
 )
 DYNAMIC_CONFIG_DIR_PATH = os.environ.get("DYNAMIC_CONFIG_DIR_PATH", "/home/storage")
 JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
+# used to allow the background indexing jobs to use a different embedding
+# model server than the API server
+CURRENT_PROCESS_IS_AN_INDEXING_JOB = (
+    os.environ.get("CURRENT_PROCESS_IS_AN_INDEXING_JOB", "").lower() == "true"
+)
 # Logs every model prompt and output, mostly used for development or exploration purposes
 LOG_ALL_MODEL_INTERACTIONS = (
     os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"

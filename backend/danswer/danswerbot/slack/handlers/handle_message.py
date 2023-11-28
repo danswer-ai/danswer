@@ -6,7 +6,6 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.danswerbot_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
@@ -23,12 +22,13 @@ from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import ChannelIdAdapter
 from danswer.danswerbot.slack.utils import fetch_userids_from_emails
 from danswer.danswerbot.slack.utils import respond_in_thread
+from danswer.db.chat import create_chat_session
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
 from danswer.direct_qa.answer_question import answer_qa_query
 from danswer.search.models import BaseFilters
+from danswer.server.models import NewMessageRequest
 from danswer.server.models import QAResponse
-from danswer.server.models import QuestionRequest
 from danswer.utils.logger import setup_logger
 
 logger_base = setup_logger()
@@ -105,6 +105,17 @@ def handle_message(
     send_to: list[str] | None = None
     respond_tag_only = False
     respond_team_member_list = None
+
+    bypass_acl = False
+    if (
+        channel_config
+        and channel_config.persona
+        and channel_config.persona.document_sets
+    ):
+        # For Slack channels, use the full document set, admin will be warned when configuring it
+        # with non-public document sets
+        bypass_acl = True
+
     if channel_config and channel_config.channel_config:
         channel_conf = channel_config.channel_config
         if not bipass_filters and "answer_filters" in channel_conf:
@@ -161,22 +172,31 @@ def handle_message(
         backoff=2,
         logger=logger,
     )
-    def _get_answer(question: QuestionRequest) -> QAResponse:
+    def _get_answer(new_message_request: NewMessageRequest) -> QAResponse:
         engine = get_sqlalchemy_engine()
         with Session(engine, expire_on_commit=False) as db_session:
             # This also handles creating the query event in postgres
             answer = answer_qa_query(
-                question=question,
+                new_message_request=new_message_request,
                 user=None,
                 db_session=db_session,
                 answer_generation_timeout=answer_generation_timeout,
-                real_time_flow=False,
                 enable_reflexion=reflexion,
+                bypass_acl=bypass_acl,
             )
             if not answer.error_msg:
                 return answer
             else:
                 raise RuntimeError(answer.error_msg)
+
+    # create a chat session for this interaction
+    # TODO: when chat support is added to Slack, this should check
+    # for an existing chat session associated with this thread
+    with Session(get_sqlalchemy_engine()) as db_session:
+        chat_session = create_chat_session(
+            db_session=db_session, description="", user_id=None
+        )
+        chat_session_id = chat_session.id
 
     answer_failed = False
     try:
@@ -190,13 +210,12 @@ def handle_message(
 
         # This includes throwing out answer via reflexion
         answer = _get_answer(
-            QuestionRequest(
+            NewMessageRequest(
+                chat_session_id=chat_session_id,
                 query=msg,
-                collection=DOCUMENT_INDEX_NAME,
-                enable_auto_detect_filters=not disable_auto_detect_filters,
                 filters=filters,
-                favor_recent=None,
-                offset=None,
+                enable_auto_detect_filters=not disable_auto_detect_filters,
+                real_time=False,
             )
         )
     except Exception as e:

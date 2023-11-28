@@ -13,7 +13,7 @@ from danswer.background.indexing.dask_utils import ResourceLogger
 from danswer.background.indexing.job_client import SimpleJob
 from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
-from danswer.configs.app_configs import EXPERIMENTAL_SIMPLE_JOB_CLIENT_ENABLED
+from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import LOG_LEVEL
 from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
@@ -112,129 +112,137 @@ def _mark_run_failed(
 """Main funcs"""
 
 
-def create_indexing_jobs(
-    db_session: Session, existing_jobs: dict[int, Future | SimpleJob]
-) -> None:
+def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
     """Creates new indexing jobs for each connector / credential pair which is:
     1. Enabled
     2. `refresh_frequency` time has passed since the last indexing run for this pair
     3. There is not already an ongoing indexing attempt for this pair
     """
-    ongoing_pairs: set[tuple[int | None, int | None]] = set()
-    for attempt_id in existing_jobs:
-        attempt = get_index_attempt(db_session=db_session, index_attempt_id=attempt_id)
-        if attempt is None:
-            logger.error(
-                f"Unable to find IndexAttempt for ID '{attempt_id}' when creating "
-                "indexing jobs"
+    with Session(get_sqlalchemy_engine()) as db_session:
+        ongoing_pairs: set[tuple[int | None, int | None]] = set()
+        for attempt_id in existing_jobs:
+            attempt = get_index_attempt(
+                db_session=db_session, index_attempt_id=attempt_id
             )
-            continue
-        ongoing_pairs.add((attempt.connector_id, attempt.credential_id))
-
-    enabled_connectors = fetch_connectors(db_session, disabled_status=False)
-    for connector in enabled_connectors:
-        for association in connector.credentials:
-            credential = association.credential
-
-            # check if there is an ogoing indexing attempt for this connector + credential pair
-            if (connector.id, credential.id) in ongoing_pairs:
+            if attempt is None:
+                logger.error(
+                    f"Unable to find IndexAttempt for ID '{attempt_id}' when creating "
+                    "indexing jobs"
+                )
                 continue
+            ongoing_pairs.add((attempt.connector_id, attempt.credential_id))
 
-            last_attempt = get_last_attempt(connector.id, credential.id, db_session)
-            if not _should_create_new_indexing(connector, last_attempt, db_session):
-                continue
-            create_index_attempt(connector.id, credential.id, db_session)
+        enabled_connectors = fetch_connectors(db_session, disabled_status=False)
+        for connector in enabled_connectors:
+            for association in connector.credentials:
+                credential = association.credential
 
-            update_connector_credential_pair(
-                db_session=db_session,
-                connector_id=connector.id,
-                credential_id=credential.id,
-                attempt_status=IndexingStatus.NOT_STARTED,
-            )
+                # check if there is an ongoing indexing attempt for this connector + credential pair
+                if (connector.id, credential.id) in ongoing_pairs:
+                    continue
+
+                last_attempt = get_last_attempt(connector.id, credential.id, db_session)
+                if not _should_create_new_indexing(connector, last_attempt, db_session):
+                    continue
+                create_index_attempt(connector.id, credential.id, db_session)
+
+                update_connector_credential_pair(
+                    db_session=db_session,
+                    connector_id=connector.id,
+                    credential_id=credential.id,
+                    attempt_status=IndexingStatus.NOT_STARTED,
+                )
 
 
 def cleanup_indexing_jobs(
-    db_session: Session, existing_jobs: dict[int, Future | SimpleJob]
+    existing_jobs: dict[int, Future | SimpleJob]
 ) -> dict[int, Future | SimpleJob]:
     existing_jobs_copy = existing_jobs.copy()
 
     # clean up completed jobs
-    for attempt_id, job in existing_jobs.items():
-        index_attempt = get_index_attempt(
-            db_session=db_session, index_attempt_id=attempt_id
-        )
-
-        # do nothing for ongoing jobs that haven't been stopped
-        if not job.done() and not _is_indexing_job_marked_as_finished(index_attempt):
-            continue
-
-        if job.status == "error":
-            logger.error(job.exception())
-
-        job.release()
-        del existing_jobs_copy[attempt_id]
-
-        if not index_attempt:
-            logger.error(
-                f"Unable to find IndexAttempt for ID '{attempt_id}' when cleaning "
-                "up indexing jobs"
-            )
-            continue
-
-        if index_attempt.status == IndexingStatus.IN_PROGRESS or job.status == "error":
-            _mark_run_failed(
-                db_session=db_session,
-                index_attempt=index_attempt,
-                failure_reason=_UNEXPECTED_STATE_FAILURE_REASON,
+    with Session(get_sqlalchemy_engine()) as db_session:
+        for attempt_id, job in existing_jobs.items():
+            index_attempt = get_index_attempt(
+                db_session=db_session, index_attempt_id=attempt_id
             )
 
-    # clean up in-progress jobs that were never completed
-    connectors = fetch_connectors(db_session)
-    for connector in connectors:
-        in_progress_indexing_attempts = get_inprogress_index_attempts(
-            connector.id, db_session
-        )
-        for index_attempt in in_progress_indexing_attempts:
-            if index_attempt.id in existing_jobs:
-                # check to see if the job has been updated in last hour, if not
-                # assume it to frozen in some bad state and just mark it as failed. Note: this relies
-                # on the fact that the `time_updated` field is constantly updated every
-                # batch of documents indexed
-                current_db_time = get_db_current_time(db_session=db_session)
-                time_since_update = current_db_time - index_attempt.time_updated
-                if time_since_update.total_seconds() > 60 * 60:
-                    existing_jobs[index_attempt.id].cancel()
-                    _mark_run_failed(
-                        db_session=db_session,
-                        index_attempt=index_attempt,
-                        failure_reason="Indexing run frozen - no updates in an hour. "
-                        "The run will be re-attempted at next scheduled indexing time.",
-                    )
-            else:
-                # If job isn't known, simply mark it as failed
+            # do nothing for ongoing jobs that haven't been stopped
+            if not job.done() and not _is_indexing_job_marked_as_finished(
+                index_attempt
+            ):
+                continue
+
+            if job.status == "error":
+                logger.error(job.exception())
+
+            job.release()
+            del existing_jobs_copy[attempt_id]
+
+            if not index_attempt:
+                logger.error(
+                    f"Unable to find IndexAttempt for ID '{attempt_id}' when cleaning "
+                    "up indexing jobs"
+                )
+                continue
+
+            if (
+                index_attempt.status == IndexingStatus.IN_PROGRESS
+                or job.status == "error"
+            ):
                 _mark_run_failed(
                     db_session=db_session,
                     index_attempt=index_attempt,
                     failure_reason=_UNEXPECTED_STATE_FAILURE_REASON,
                 )
 
+        # clean up in-progress jobs that were never completed
+        connectors = fetch_connectors(db_session)
+        for connector in connectors:
+            in_progress_indexing_attempts = get_inprogress_index_attempts(
+                connector.id, db_session
+            )
+            for index_attempt in in_progress_indexing_attempts:
+                if index_attempt.id in existing_jobs:
+                    # check to see if the job has been updated in last hour, if not
+                    # assume it to frozen in some bad state and just mark it as failed. Note: this relies
+                    # on the fact that the `time_updated` field is constantly updated every
+                    # batch of documents indexed
+                    current_db_time = get_db_current_time(db_session=db_session)
+                    time_since_update = current_db_time - index_attempt.time_updated
+                    if time_since_update.total_seconds() > 60 * 60:
+                        existing_jobs[index_attempt.id].cancel()
+                        _mark_run_failed(
+                            db_session=db_session,
+                            index_attempt=index_attempt,
+                            failure_reason="Indexing run frozen - no updates in an hour. "
+                            "The run will be re-attempted at next scheduled indexing time.",
+                        )
+                else:
+                    # If job isn't known, simply mark it as failed
+                    _mark_run_failed(
+                        db_session=db_session,
+                        index_attempt=index_attempt,
+                        failure_reason=_UNEXPECTED_STATE_FAILURE_REASON,
+                    )
+
     return existing_jobs_copy
 
 
 def kickoff_indexing_jobs(
-    db_session: Session,
     existing_jobs: dict[int, Future | SimpleJob],
     client: Client | SimpleJobClient,
 ) -> dict[int, Future | SimpleJob]:
     existing_jobs_copy = existing_jobs.copy()
+    engine = get_sqlalchemy_engine()
 
     # Don't include jobs waiting in the Dask queue that just haven't started running
     # Also (rarely) don't include for jobs that started but haven't updated the indexing tables yet
-    new_indexing_attempts = [
-        attempt
-        for attempt in get_not_started_index_attempts(db_session)
-        if attempt.id not in existing_jobs
-    ]
+    with Session(engine) as db_session:
+        new_indexing_attempts = [
+            attempt
+            for attempt in get_not_started_index_attempts(db_session)
+            if attempt.id not in existing_jobs
+        ]
 
     logger.info(f"Found {len(new_indexing_attempts)} new indexing tasks.")
 
@@ -246,15 +254,19 @@ def kickoff_indexing_jobs(
             logger.warning(
                 f"Skipping index attempt as Connector has been deleted: {attempt}"
             )
-            mark_attempt_failed(attempt, db_session, failure_reason="Connector is null")
+            with Session(engine) as db_session:
+                mark_attempt_failed(
+                    attempt, db_session, failure_reason="Connector is null"
+                )
             continue
         if attempt.credential is None:
             logger.warning(
                 f"Skipping index attempt as Credential has been deleted: {attempt}"
             )
-            mark_attempt_failed(
-                attempt, db_session, failure_reason="Credential is null"
-            )
+            with Session(engine) as db_session:
+                mark_attempt_failed(
+                    attempt, db_session, failure_reason="Credential is null"
+                )
             continue
 
         run = client.submit(
@@ -273,9 +285,7 @@ def kickoff_indexing_jobs(
 
 def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> None:
     client: Client | SimpleJobClient
-    if EXPERIMENTAL_SIMPLE_JOB_CLIENT_ENABLED:
-        client = SimpleJobClient(n_workers=num_workers)
-    else:
+    if DASK_JOB_CLIENT_ENABLED:
         cluster = LocalCluster(
             n_workers=num_workers,
             threads_per_worker=1,
@@ -288,6 +298,8 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
         client = Client(cluster)
         if LOG_LEVEL.lower() == "debug":
             client.register_worker_plugin(ResourceLogger())
+    else:
+        client = SimpleJobClient(n_workers=num_workers)
 
     existing_jobs: dict[int, Future | SimpleJob] = {}
     engine = get_sqlalchemy_engine()
@@ -306,14 +318,11 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
             f"{[(attempt_id, job.status) for attempt_id, job in existing_jobs.items()]}"
         )
         try:
-            with Session(engine, expire_on_commit=False) as db_session:
-                existing_jobs = cleanup_indexing_jobs(
-                    db_session=db_session, existing_jobs=existing_jobs
-                )
-                create_indexing_jobs(db_session=db_session, existing_jobs=existing_jobs)
-                existing_jobs = kickoff_indexing_jobs(
-                    db_session=db_session, existing_jobs=existing_jobs, client=client
-                )
+            existing_jobs = cleanup_indexing_jobs(existing_jobs=existing_jobs)
+            create_indexing_jobs(existing_jobs=existing_jobs)
+            existing_jobs = kickoff_indexing_jobs(
+                existing_jobs=existing_jobs, client=client
+            )
         except Exception as e:
             logger.exception(f"Failed to run update due to {e}")
         sleep_time = delay - (time.time() - start)
@@ -322,8 +331,14 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
 
 
 if __name__ == "__main__":
+    # needed for CUDA to work with multiprocessing
+    # NOTE: needs to be done on application startup
+    # before any other torch code has been run
+    if not DASK_JOB_CLIENT_ENABLED:
+        torch.multiprocessing.set_start_method("spawn")
+
     if not MODEL_SERVER_HOST:
         logger.info("Warming up Embedding Model(s)")
-        warm_up_models(indexer_only=True)
+        warm_up_models(indexer_only=True, skip_cross_encoders=True)
     logger.info("Starting Indexing Loop")
     update_loop()

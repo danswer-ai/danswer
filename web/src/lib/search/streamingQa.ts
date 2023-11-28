@@ -14,6 +14,7 @@ import { buildFilters } from "./utils";
 
 export const searchRequestStreamed = async ({
   query,
+  chatSessionId,
   sources,
   documentSets,
   timeRange,
@@ -35,6 +36,7 @@ export const searchRequestStreamed = async ({
     const response = await fetch("/api/stream-direct-qa", {
       method: "POST",
       body: JSON.stringify({
+        chat_session_id: chatSessionId,
         query,
         collection: "danswer_index",
         filters,

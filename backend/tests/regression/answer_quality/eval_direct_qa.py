@@ -8,14 +8,14 @@ from typing import TextIO
 import yaml
 from sqlalchemy.orm import Session
 
-from danswer.access.access import get_acl_for_user
+from danswer.db.chat import create_chat_session
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.direct_qa.answer_question import answer_qa_query
 from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.search.models import IndexFilters
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
-from danswer.server.models import QuestionRequest
+from danswer.server.models import NewMessageRequest
 from danswer.utils.callbacks import MetricsHander
 
 
@@ -80,14 +80,19 @@ def get_answer_for_question(
         source_type=None,
         document_set=None,
         time_cutoff=None,
-        access_control_list=list(get_acl_for_user(user=None)),
+        access_control_list=None,
     )
-    question = QuestionRequest(
+    chat_session = create_chat_session(
+        db_session=db_session,
+        description="Regression Test Session",
+        user_id=None,
+    )
+    new_message_request = NewMessageRequest(
+        chat_session_id=chat_session.id,
         query=query,
-        collection="danswer_index",
         filters=filters,
+        real_time=False,
         enable_auto_detect_filters=False,
-        offset=None,
     )
 
     retrieval_metrics = MetricsHander[RetrievalMetricsContainer]()
@@ -95,12 +100,12 @@ def get_answer_for_question(
     llm_metrics = MetricsHander[LLMMetricsContainer]()
 
     answer = answer_qa_query(
-        question=question,
+        new_message_request=new_message_request,
         user=None,
         db_session=db_session,
         answer_generation_timeout=100,
-        real_time_flow=False,
         enable_reflexion=False,
+        bypass_acl=True,
         retrieval_metrics_callback=retrieval_metrics.record_metric,
         rerank_metrics_callback=rerank_metrics.record_metric,
         llm_metrics_callback=llm_metrics.record_metric,

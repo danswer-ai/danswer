@@ -11,7 +11,7 @@ export const setupGoogleDriveOAuth = async ({
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      is_admin: isAdmin,
+      admin_public: isAdmin,
       credential_json: {},
     }),
   });

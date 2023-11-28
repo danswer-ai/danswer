@@ -3,10 +3,14 @@ from collections.abc import Callable
 from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
+from typing import Generic
+from typing import TypeVar
 
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
+R = TypeVar("R")
 
 
 def run_functions_tuples_in_parallel(
@@ -45,19 +49,21 @@ def run_functions_tuples_in_parallel(
     return [result for index, result in results]
 
 
-class FunctionCall:
+class FunctionCall(Generic[R]):
     """
     Container for run_functions_in_parallel, fetch the results from the output of
     run_functions_in_parallel via the FunctionCall.result_id.
     """
 
-    def __init__(self, func: Callable, args: tuple = (), kwargs: dict | None = None):
+    def __init__(
+        self, func: Callable[..., R], args: tuple = (), kwargs: dict | None = None
+    ):
         self.func = func
         self.args = args
         self.kwargs = kwargs if kwargs is not None else {}
         self.result_id = str(uuid.uuid4())
 
-    def execute(self) -> Any:
+    def execute(self) -> R:
         return self.func(*self.args, **self.kwargs)
 
 

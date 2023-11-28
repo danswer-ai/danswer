@@ -396,3 +396,33 @@ def get_or_create_document_set_by_name(
     db_session.commit()
 
     return new_doc_set
+
+
+def check_document_sets_are_public(
+    db_session: Session,
+    document_set_ids: list[int],
+) -> bool:
+    connector_credential_pair_ids = (
+        db_session.query(
+            DocumentSet__ConnectorCredentialPair.connector_credential_pair_id
+        )
+        .filter(
+            DocumentSet__ConnectorCredentialPair.document_set_id.in_(document_set_ids)
+        )
+        .subquery()
+    )
+
+    not_public_exists = (
+        db_session.query(ConnectorCredentialPair.id)
+        .filter(
+            ConnectorCredentialPair.id.in_(
+                connector_credential_pair_ids  # type:ignore
+            ),
+            ConnectorCredentialPair.is_public.is_(False),
+        )
+        .limit(1)
+        .first()
+        is not None
+    )
+
+    return not not_public_exists

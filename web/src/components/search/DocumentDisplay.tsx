@@ -173,7 +173,7 @@ export const DocumentDisplay = ({
                 ml-auto
                 mr-2`}
             >
-              {document.score.toFixed(2)}
+              {Math.abs(document.score).toFixed(2)}
             </div>
           </div>
         )}

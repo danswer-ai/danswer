@@ -168,6 +168,7 @@ def upsert_documents(
             model_to_dict(
                 DbDocument(
                     id=doc.document_id,
+                    from_ingestion_api=doc.from_ingestion_api,
                     boost=initial_boost,
                     hidden=False,
                     semantic_id=doc.semantic_identifier,

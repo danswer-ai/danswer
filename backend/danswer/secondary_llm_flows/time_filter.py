@@ -5,12 +5,10 @@ from datetime import timezone
 
 from dateutil.parser import parse
 
-from danswer.configs.app_configs import DISABLE_LLM_FILTER_EXTRACTION
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.prompts.prompt_utils import get_current_llm_day_time
 from danswer.prompts.secondary_llm_flows import TIME_FILTER_PROMPT
-from danswer.server.models import QuestionRequest
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
@@ -155,32 +153,6 @@ def extract_time_filter(query: str) -> tuple[datetime | None, bool]:
     logger.debug(model_output)
 
     return _extract_time_filter_from_llm_out(model_output)
-
-
-def extract_question_time_filters(
-    question: QuestionRequest,
-    disable_llm_extraction: bool = DISABLE_LLM_FILTER_EXTRACTION,
-) -> tuple[datetime | None, bool]:
-    time_cutoff = question.filters.time_cutoff
-    favor_recent = question.favor_recent
-    # Frontend needs to be able to set this flag so that if user deletes the time filter,
-    # we don't automatically reapply it. The env variable is a global disable of this feature
-    # for the sake of latency
-    if not question.enable_auto_detect_filters or disable_llm_extraction:
-        if favor_recent is None:
-            favor_recent = False
-        return time_cutoff, favor_recent
-
-    llm_cutoff, llm_favor_recent = extract_time_filter(question.query)
-
-    # For all extractable filters, don't overwrite the provided values if any is provided
-    if time_cutoff is None:
-        time_cutoff = llm_cutoff
-
-    if favor_recent is None:
-        favor_recent = llm_favor_recent
-
-    return time_cutoff, favor_recent
 
 
 if __name__ == "__main__":

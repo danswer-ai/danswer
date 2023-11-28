@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_status
+from danswer.configs.constants import DocumentSource
 from danswer.connectors.file.utils import write_temp_files
 from danswer.connectors.google_drive.connector_auth import build_service_account_creds
 from danswer.connectors.google_drive.connector_auth import delete_google_app_cred
@@ -168,9 +169,10 @@ def upsert_service_account_credential(
     # first delete all existing service account credentials
     delete_google_drive_service_account_credentials(user, db_session)
     # `user=None` since this credential is not a personal credential
-    return create_credential(
+    credential = create_credential(
         credential_data=credential_base, user=user, db_session=db_session
     )
+    return ObjectCreationIdResponse(id=credential.id)
 
 
 @router.get("/admin/connector/google-drive/check-auth/{credential_id}")
@@ -259,6 +261,10 @@ def get_connector_indexing_status(
     }
 
     for cc_pair in cc_pairs:
+        # TODO remove this to enable ingestion API
+        if cc_pair.name == "DefaultCCPair":
+            continue
+
         connector = cc_pair.connector
         credential = cc_pair.credential
         latest_index_attempt = cc_pair_to_latest_index_attempt.get(
@@ -448,7 +454,11 @@ def get_connectors(
 ) -> list[ConnectorSnapshot]:
     connectors = fetch_connectors(db_session)
     return [
-        ConnectorSnapshot.from_connector_db_model(connector) for connector in connectors
+        ConnectorSnapshot.from_connector_db_model(connector)
+        for connector in connectors
+        # don't include INGESTION_API, as it's not a "real"
+        # connector like those created by the user
+        if connector.source != DocumentSource.INGESTION_API
     ]
 
 
