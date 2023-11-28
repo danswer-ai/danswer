@@ -366,7 +366,7 @@ export function PersonaEditor({
                     the final response? Each chunk is ~400 words long. If you
                     are using gpt-3.5-turbo or other similar models, setting
                     this to a value greater than 5 will result in errors at
-                    query time due to the model's input length limit.
+                    query time due to the model&apos;s input length limit.
                     <br />
                     <br />
                     If unspecified, will use 5 chunks.
