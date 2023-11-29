@@ -75,11 +75,6 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
                 "w-48 overflow-hidden shadow-xl z-10 text-sm text-gray-300"
               }
             >
-              <Link href="/user/connectors">
-                <div className="flex py-2 px-3 cursor-pointer hover:bg-gray-500 border-b border-gray-500">
-                  Personal Connectors
-                </div>
-              </Link>
               {/* Show connector option if (1) auth is disabled or (2) user is an admin */}
               {(!user || user.role === "admin") && (
                 <Link href="/admin/indexing/status">
