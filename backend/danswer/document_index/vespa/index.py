@@ -500,6 +500,8 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
         recency_bias=fields["matchfeatures"][RECENCY_BIAS],
         score=hit["relevance"],
         hidden=fields.get(HIDDEN, False),
+        primary_owners=fields.get(PRIMARY_OWNERS),
+        secondary_owners=fields.get(SECONDARY_OWNERS),
         metadata=metadata,
         match_highlights=match_highlights,
         updated_at=updated_at,
@@ -558,6 +560,8 @@ class VespaIndex(DocumentIndex):
         f"{BOOST}, "
         f"{HIDDEN}, "
         f"{DOC_UPDATED_AT}, "
+        f"{PRIMARY_OWNERS}, "
+        f"{SECONDARY_OWNERS}, "
         f"{METADATA}, "
         f"{CONTENT_SUMMARY} "
         f"from {DOCUMENT_INDEX_NAME} where "

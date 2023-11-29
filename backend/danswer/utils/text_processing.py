@@ -60,3 +60,13 @@ def shared_precompare_cleanup(text: str) -> str:
     text = re.sub(r'\s|\*|\\"|[.,:`"#-]', "", text)
 
     return text
+
+
+def is_valid_email(text: str) -> bool:
+    """Can use a library instead if more detailed checks are needed"""
+    regex = r"^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+
+    if re.match(regex, text):
+        return True
+    else:
+        return False
