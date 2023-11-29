@@ -475,9 +475,8 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
     # User ran into this, not sure why this could happen, error checking here
     blurb = fields.get(BLURB)
     if not blurb:
-        logger.error(
-            f"Chunk with id {fields.get(semantic_identifier, 'Unknown')} has no blurb"
-        )
+        logger.error(f"Chunk with id {fields.get(semantic_identifier)} ")
+        blurb = ""
 
     source_links = fields.get(SOURCE_LINKS, {})
     source_links_dict_unprocessed = (
@@ -489,19 +488,17 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
     }
 
     return InferenceChunk(
-        chunk_id=fields.get(CHUNK_ID, "Unknown"),
-        blurb=fields.get(BLURB, "Document blurb failed to load"),
-        content=fields.get(CONTENT, ""),
+        chunk_id=fields[CHUNK_ID],
+        blurb=blurb,
+        content=fields[CONTENT],
         source_links=source_links_dict,
-        section_continuation=fields.get(SECTION_CONTINUATION, False),
-        document_id=fields.get(DOCUMENT_ID, ""),
-        source_type=fields.get(SOURCE_TYPE, "file"),
-        semantic_identifier=fields.get(
-            SEMANTIC_IDENTIFIER, "Semantic Identifier failed to load"
-        ),
+        section_continuation=fields[SECTION_CONTINUATION],
+        document_id=fields[DOCUMENT_ID],
+        source_type=fields[SOURCE_TYPE],
+        semantic_identifier=fields[SEMANTIC_IDENTIFIER],
         boost=fields.get(BOOST, 1),
-        recency_bias=fields["matchfeatures"].get(RECENCY_BIAS, 0),
-        score=hit.get("relevance", 0),
+        recency_bias=fields["matchfeatures"][RECENCY_BIAS],
+        score=hit["relevance"],
         hidden=fields.get(HIDDEN, False),
         metadata=metadata,
         match_highlights=match_highlights,
