@@ -6,27 +6,26 @@ interface AnswerSectionProps {
   answer: string | null;
   quotes: Quote[] | null;
   error: string | null;
-  isAnswerable: boolean | null;
+  nonAnswerableReason: string | null;
   isFetching: boolean;
-  aiThoughtsIsOpen: boolean;
 }
 
 const AnswerHeader = ({
   answer,
   error,
   quotes,
-  isAnswerable,
+  nonAnswerableReason,
   isFetching,
 }: AnswerSectionProps) => {
   if (error) {
     return <>Error while building answer</>;
   } else if ((answer && quotes !== null) || !isFetching) {
-    if (isAnswerable === false) {
+    if (nonAnswerableReason) {
       return <>Best effort AI answer</>;
     }
     return <>AI answer</>;
   }
-  if (isAnswerable === false) {
+  if (nonAnswerableReason) {
     return <>Building best effort AI answer...</>;
   }
   return <>Building answer...</>;
@@ -56,15 +55,10 @@ export const AnswerSection = (props: AnswerSectionProps) => {
   let status = "in-progress" as StatusOptions;
   if (props.error) {
     status = "failed";
-  }
-  // if AI thoughts is visible, don't mark this as a success until that section
-  // is complete
-  else if (!props.aiThoughtsIsOpen || props.isAnswerable !== null) {
-    if (props.isAnswerable === false) {
-      status = "warning";
-    } else if ((props.quotes !== null && props.answer) || !props.isFetching) {
-      status = "success";
-    }
+  } else if (props.nonAnswerableReason) {
+    status = "warning";
+  } else if ((props.quotes !== null && props.answer) || !props.isFetching) {
+    status = "success";
   }
 
   return (
@@ -78,11 +72,18 @@ export const AnswerSection = (props: AnswerSectionProps) => {
       body={
         <div className="">
           <AnswerBody {...props} />
+          {props.nonAnswerableReason && !props.isFetching && (
+            <div className="text-gray-300 mt-4 text-sm">
+              <b className="font-medium">Warning:</b> the AI did not think this
+              question was answerable.{" "}
+              <div className="italic mt-1 ml-2">
+                {props.nonAnswerableReason}
+              </div>
+            </div>
+          )}
         </div>
       }
-      desiredOpenStatus={
-        props.aiThoughtsIsOpen ? props.isAnswerable !== null : true
-      }
+      desiredOpenStatus={true}
       isNotControllable={true}
     />
   );

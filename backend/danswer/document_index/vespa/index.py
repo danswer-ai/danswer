@@ -57,7 +57,7 @@ from danswer.indexing.models import InferenceChunk
 from danswer.search.models import IndexFilters
 from danswer.search.search_runner import embed_query
 from danswer.search.search_runner import query_processing
-from danswer.search.search_runner import remove_stop_words
+from danswer.search.search_runner import remove_stop_words_and_punctuation
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 
@@ -732,7 +732,9 @@ class VespaIndex(DocumentIndex):
         query_embedding = embed_query(query)
 
         query_keywords = (
-            " ".join(remove_stop_words(query)) if edit_keyword_query else query
+            " ".join(remove_stop_words_and_punctuation(query))
+            if edit_keyword_query
+            else query
         )
 
         params: dict[str, str | int] = {
@@ -773,7 +775,9 @@ class VespaIndex(DocumentIndex):
         query_embedding = embed_query(query)
 
         query_keywords = (
-            " ".join(remove_stop_words(query)) if edit_keyword_query else query
+            " ".join(remove_stop_words_and_punctuation(query))
+            if edit_keyword_query
+            else query
         )
 
         params: dict[str, str | int | float] = {

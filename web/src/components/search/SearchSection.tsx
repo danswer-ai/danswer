@@ -34,6 +34,7 @@ const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
 const VALID_QUESTION_RESPONSE_DEFAULT: ValidQuestionResponse = {
   reasoning: null,
   answerable: null,
+  error: null,
 };
 
 interface SearchSectionProps {
