@@ -14,6 +14,12 @@ import { SSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { ReIndexButton } from "./ReIndexButton";
 import { isCurrentlyDeleting } from "@/lib/documentDeletion";
+import { ValidSources } from "@/lib/types";
+
+// since the uploaded files are cleaned up after some period of time
+// re-indexing will not work for the file connector. Also, it would not
+// make sense to re-index, since the files will not have changed.
+const CONNECTOR_TYPES_THAT_CANT_REINDEX: ValidSources[] = ["file"];
 
 export default async function Page({
   params,
@@ -88,11 +94,15 @@ export default async function Page({
           <div className="flex">
             <Title>Indexing Attempts</Title>
 
-            <ReIndexButton
-              connectorId={ccPair.connector.id}
-              credentialId={ccPair.credential.id}
-              isDisabled={ccPair.connector.disabled}
-            />
+            {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(
+              ccPair.connector.source
+            ) && (
+              <ReIndexButton
+                connectorId={ccPair.connector.id}
+                credentialId={ccPair.credential.id}
+                isDisabled={ccPair.connector.disabled}
+              />
+            )}
           </div>
 
           <IndexingAttemptsTable ccPair={ccPair} />
