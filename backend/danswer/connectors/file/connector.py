@@ -8,6 +8,7 @@ from typing import IO
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.file_utils import detect_encoding
 from danswer.connectors.cross_connector_utils.file_utils import load_files_from_zip
 from danswer.connectors.cross_connector_utils.file_utils import read_file
 from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
@@ -31,11 +32,12 @@ def _open_files_at_location(
     if extension == ".zip":
         for file_info, file in load_files_from_zip(file_path, ignore_dirs=True):
             yield file_info.filename, file
-    elif extension in [".txt", ".pdf", ".md", ".mdx"]:
-        mode = "r"
-        if extension == ".pdf":
-            mode = "rb"
-        with open(file_path, mode) as file:
+    elif extension in [".txt", ".md", ".mdx"]:
+        encoding = detect_encoding(file_path)
+        with open(file_path, "r", encoding=encoding, errors="replace") as file:
+            yield os.path.basename(file_path), file
+    elif extension == ".pdf":
+        with open(file_path, "rb") as file:
             yield os.path.basename(file_path), file
     else:
         logger.warning(f"Skipping file '{file_path}' with extension '{extension}'")
