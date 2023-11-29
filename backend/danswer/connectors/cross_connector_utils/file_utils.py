@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 from typing import IO
 
+import chardet
 from pypdf import PdfReader
 
 from danswer.utils.logger import setup_logger
@@ -85,13 +86,26 @@ def load_files_from_zip(
                 yield file_info, file
 
 
-def read_file(file_reader: IO[Any]) -> tuple[str, dict]:
+def detect_encoding(file_path: str | Path) -> str:
+    with open(file_path, "rb") as file:
+        raw_data = file.read(50000)  # Read a portion of the file to guess encoding
+    return chardet.detect(raw_data)["encoding"] or "utf-8"
+
+
+def read_file(
+    file_reader: IO[Any], encoding: str = "utf-8", errors: str = "replace"
+) -> tuple[str, dict]:
     metadata = {}
     file_content_raw = ""
     for ind, line in enumerate(file_reader):
-        if isinstance(line, bytes):
-            line = line.decode("utf-8")
-        line = str(line)
+        try:
+            line = line.decode(encoding) if isinstance(line, bytes) else line
+        except UnicodeDecodeError:
+            line = (
+                line.decode(encoding, errors=errors)
+                if isinstance(line, bytes)
+                else line
+            )
 
         if ind == 0:
             metadata_or_none = extract_metadata(line)
@@ -99,7 +113,6 @@ def read_file(file_reader: IO[Any]) -> tuple[str, dict]:
                 metadata = metadata_or_none
             else:
                 file_content_raw += line
-
         else:
             file_content_raw += line
 

@@ -3,6 +3,7 @@ asyncpg==0.27.0
 atlassian-python-api==3.37.0
 beautifulsoup4==4.12.2
 celery==5.3.4
+chardet==5.2.0
 dask==2023.8.1
 distributed==2023.8.1
 python-dateutil==2.8.2
