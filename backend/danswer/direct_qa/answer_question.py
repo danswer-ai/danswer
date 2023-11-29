@@ -23,6 +23,7 @@ from danswer.direct_qa.interfaces import StreamingError
 from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.direct_qa.qa_utils import get_chunks_for_qa
 from danswer.document_index.factory import get_default_document_index
+from danswer.expert_recommendation.heuristics_based import extract_experts
 from danswer.indexing.models import InferenceChunk
 from danswer.search.models import QueryFlow
 from danswer.search.models import RerankMetricsContainer
@@ -33,6 +34,7 @@ from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import full_chunk_search
 from danswer.search.search_runner import full_chunk_search_generator
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
+from danswer.server.models import ExpertsResponse
 from danswer.server.models import LLMRelevanceFilterResponse
 from danswer.server.models import NewMessageRequest
 from danswer.server.models import QADocsResponse
@@ -241,6 +243,11 @@ def answer_qa_query_stream(
     # first fetch and return to the UI the top chunks so the user can
     # immediately see some results
     top_chunks = cast(list[InferenceChunk], next(search_generator))
+
+    expert_emails = extract_experts(top_chunks)
+    expert_response = ExpertsResponse(experts=expert_emails).dict()
+    yield get_json_line(expert_response)
+
     top_docs = chunks_to_search_docs(top_chunks)
     initial_response = QADocsResponse(
         top_documents=top_docs,

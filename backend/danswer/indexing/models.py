@@ -93,6 +93,8 @@ class InferenceChunk(BaseChunk):
     match_highlights: list[str]
     # when the doc was last updated
     updated_at: datetime | None
+    primary_owners: list[str] | None = None
+    secondary_owners: list[str] | None = None
 
     @property
     def unique_id(self) -> str:

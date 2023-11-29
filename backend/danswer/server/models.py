@@ -202,6 +202,10 @@ class SearchFeedbackRequest(BaseModel):
     search_feedback: SearchFeedbackType
 
 
+class ExpertsResponse(BaseModel):
+    experts: list[str]
+
+
 class RetrievalDocs(BaseModel):
     top_documents: list[SearchDoc]
 
