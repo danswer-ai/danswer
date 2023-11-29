@@ -1,9 +1,6 @@
 import { SearchSection } from "@/components/search/SearchSection";
 import { Header } from "@/components/Header";
-import {
-  getAuthDisabledSS,
-  getCurrentUserSS,
-} from "@/lib/userSS";
+import { getAuthDisabledSS, getCurrentUserSS } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
