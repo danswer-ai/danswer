@@ -43,8 +43,10 @@ class LangChainChatLLM(LLM, abc.ABC):
             logger.debug(f"Prompt:\n{prompt}")
 
     def log_model_configs(self) -> None:
+        llm_dict = {k: v for k, v in self.llm.__dict__.items() if v}
+        llm_dict.pop("client")
         logger.info(
-            f"LLM Model Class: {self.llm.__class__.__name__}, Model Config: {self.llm.__dict__}"
+            f"LLM Model Class: {self.llm.__class__.__name__}, Model Config: {llm_dict}"
         )
 
     def invoke(self, prompt: LanguageModelInput) -> str:
