@@ -1,4 +1,8 @@
-import { AnswerPiecePacket, ValidQuestionResponse } from "./interfaces";
+import {
+  AnswerPiecePacket,
+  ErrorMessagePacket,
+  ValidQuestionResponse,
+} from "./interfaces";
 import { processRawChunkString } from "./streamingUtils";
 
 export interface QuestionValidationArgs {
@@ -39,6 +43,7 @@ export const questionValidationStreamed = async <T>({
   let previousPartialChunk: string | null = null;
   while (true) {
     const rawChunk = await reader?.read();
+    console.log(rawChunk);
     if (!rawChunk) {
       throw new Error("Unable to process chunk");
     }
@@ -48,7 +53,7 @@ export const questionValidationStreamed = async <T>({
     }
 
     const [completedChunks, partialChunk] = processRawChunkString<
-      AnswerPiecePacket | ValidQuestionResponse
+      AnswerPiecePacket | ValidQuestionResponse | ErrorMessagePacket
     >(decoder.decode(value, { stream: true }), previousPartialChunk);
     if (!completedChunks.length && !partialChunk) {
       break;
@@ -65,6 +70,10 @@ export const questionValidationStreamed = async <T>({
 
       if (Object.hasOwn(chunk, "answerable")) {
         update({ answerable: (chunk as ValidQuestionResponse).answerable });
+      }
+
+      if (Object.hasOwn(chunk, "error")) {
+        update({ error: (chunk as ErrorMessagePacket).error });
       }
     });
   }

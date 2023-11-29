@@ -1,3 +1,4 @@
+import string
 from collections.abc import Callable
 from collections.abc import Iterator
 from copy import deepcopy
@@ -55,17 +56,21 @@ def lemmatize_text(text: str) -> list[str]:
     return [lemmatizer.lemmatize(word) for word in word_tokens]
 
 
-def remove_stop_words(text: str) -> list[str]:
+def remove_stop_words_and_punctuation(text: str) -> list[str]:
     stop_words = set(stopwords.words("english"))
     word_tokens = word_tokenize(text)
-    text_trimmed = [word for word in word_tokens if word.casefold() not in stop_words]
+    text_trimmed = [
+        word
+        for word in word_tokens
+        if (word.casefold() not in stop_words and word not in string.punctuation)
+    ]
     return text_trimmed or word_tokens
 
 
 def query_processing(
     query: str,
 ) -> str:
-    query = " ".join(remove_stop_words(query))
+    query = " ".join(remove_stop_words_and_punctuation(query))
     query = " ".join(lemmatize_text(query))
     return query
 

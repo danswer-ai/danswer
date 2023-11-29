@@ -14,13 +14,10 @@ import { DocumentDisplay } from "./DocumentDisplay";
 import { ResponseSection, StatusOptions } from "./results/ResponseSection";
 import { QuotesSection } from "./results/QuotesSection";
 import { AnswerSection } from "./results/AnswerSection";
-import {
-  getAIThoughtsIsOpenSavedValue,
-  setAIThoughtsIsOpenSavedValue,
-} from "@/lib/search/aiThoughtUtils";
 import { ThreeDots } from "react-loader-spinner";
 import { usePopup } from "../admin/connectors/Popup";
 import { AlertIcon } from "../icons/icons";
+import Link from "next/link";
 
 const removeDuplicateDocs = (documents: DanswerDocument[]) => {
   const seen = new Set<string>();
@@ -45,29 +42,20 @@ const getSelectedDocumentIds = (
   return selectedDocumentIds;
 };
 
-interface SearchResultsDisplayProps {
-  searchResponse: SearchResponse | null;
-  validQuestionResponse: ValidQuestionResponse;
-  isFetching: boolean;
-  defaultOverrides: SearchDefaultOverrides;
-  personaName?: string | null;
-}
-
 export const SearchResultsDisplay = ({
   searchResponse,
   validQuestionResponse,
   isFetching,
   defaultOverrides,
   personaName = null,
-}: SearchResultsDisplayProps) => {
+}: {
+  searchResponse: SearchResponse | null;
+  validQuestionResponse: ValidQuestionResponse;
+  isFetching: boolean;
+  defaultOverrides: SearchDefaultOverrides;
+  personaName?: string | null;
+}) => {
   const { popup, setPopup } = usePopup();
-  const [isAIThoughtsOpen, setIsAIThoughtsOpen] = React.useState<boolean>(
-    getAIThoughtsIsOpenSavedValue()
-  );
-  const handleAIThoughtToggle = (newAIThoughtsOpenValue: boolean) => {
-    setAIThoughtsIsOpenSavedValue(newAIThoughtsOpenValue);
-    setIsAIThoughtsOpen(newAIThoughtsOpenValue);
-  };
 
   if (!searchResponse) {
     return null;
@@ -95,19 +83,25 @@ export const SearchResultsDisplay = ({
     );
   }
 
-  if (answer === null && documents === null && quotes === null) {
-    if (error) {
-      return (
-        <div className="text-red-500 text-sm">
-          <div className="flex">
-            <AlertIcon size={16} className="text-red-500 my-auto mr-1" />
-            <p className="italic">{error}</p>
+  if (
+    answer === null &&
+    (documents === null || documents.length === 0) &&
+    quotes === null
+  ) {
+    return (
+      <div className="mt-4">
+        {error ? (
+          <div className="text-red-500 text-sm">
+            <div className="flex">
+              <AlertIcon size={16} className="text-red-500 my-auto mr-1" />
+              <p className="italic">{error}</p>
+            </div>
           </div>
-        </div>
-      );
-    }
-
-    return <div className="text-gray-300">No matching documents found.</div>;
+        ) : (
+          <div className="text-gray-300">No matching documents found.</div>
+        )}
+      </div>
+    );
   }
 
   const dedupedQuotes: Quote[] = [];
@@ -130,13 +124,6 @@ export const SearchResultsDisplay = ({
     searchResponse.suggestedFlowType === FlowType.QUESTION_ANSWER ||
     defaultOverrides.forceDisplayQA;
 
-  let questionValidityCheckStatus: StatusOptions = "in-progress";
-  if (validQuestionResponse.answerable) {
-    questionValidityCheckStatus = "success";
-  } else if (validQuestionResponse.answerable === false) {
-    questionValidityCheckStatus = "failed";
-  }
-
   return (
     <>
       {popup}
@@ -147,34 +134,17 @@ export const SearchResultsDisplay = ({
               <h2 className="text font-bold my-auto mb-1 w-full">AI Answer</h2>
             </div>
 
-            {!isPersona && (
-              <div className="mb-2 w-full">
-                <ResponseSection
-                  status={questionValidityCheckStatus}
-                  header={
-                    validQuestionResponse.answerable === null ? (
-                      <div className="flex ml-2">Evaluating question...</div>
-                    ) : (
-                      <div className="flex ml-2">AI thoughts</div>
-                    )
-                  }
-                  body={<div>{validQuestionResponse.reasoning}</div>}
-                  desiredOpenStatus={isAIThoughtsOpen}
-                  setDesiredOpenStatus={handleAIThoughtToggle}
-                />
-              </div>
-            )}
-
             <div className="mb-2 pt-1 border-t border-gray-700 w-full">
               <AnswerSection
                 answer={answer}
                 quotes={quotes}
                 error={error}
-                isAnswerable={
-                  validQuestionResponse.answerable || (isPersona ? true : null)
+                nonAnswerableReason={
+                  validQuestionResponse.answerable === false && !isPersona
+                    ? validQuestionResponse.reasoning
+                    : ""
                 }
                 isFetching={isFetching}
-                aiThoughtsIsOpen={isAIThoughtsOpen}
               />
             </div>
 

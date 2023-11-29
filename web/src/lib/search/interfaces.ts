@@ -116,4 +116,5 @@ export interface SearchRequestOverrides {
 export interface ValidQuestionResponse {
   answerable: boolean | null;
   reasoning: string | null;
+  error: string | null;
 }

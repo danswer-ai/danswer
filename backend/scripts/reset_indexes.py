@@ -16,9 +16,20 @@ logger = setup_logger()
 
 
 def wipe_vespa_index() -> None:
-    params = {"selection": "true", "cluster": DOCUMENT_INDEX_NAME}
-    response = requests.delete(DOCUMENT_ID_ENDPOINT, params=params)
-    response.raise_for_status()
+    continuation = None
+    should_continue = True
+    while should_continue:
+        params = {"selection": "true", "cluster": DOCUMENT_INDEX_NAME}
+        if continuation:
+            params = {**params, "continuation": continuation}
+        response = requests.delete(DOCUMENT_ID_ENDPOINT, params=params)
+        response.raise_for_status()
+
+        response_json = response.json()
+        print(response_json)
+
+        continuation = response_json.get("continuation")
+        should_continue = bool(continuation)
 
 
 if __name__ == "__main__":
