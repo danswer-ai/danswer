@@ -471,6 +471,13 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
         logger.error(
             f"Chunk with blurb: {fields.get(BLURB, 'Unknown')[:50]}... has no Semantic Identifier"
         )
+
+    # User ran into this, not sure why this could happen, error checking here
+    blurb = fields.get(BLURB)
+    if not blurb:
+        logger.error(f"Chunk with id {fields.get(semantic_identifier)} ")
+        blurb = ""
+
     source_links = fields.get(SOURCE_LINKS, {})
     source_links_dict_unprocessed = (
         json.loads(source_links) if isinstance(source_links, str) else source_links
@@ -482,7 +489,7 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
 
     return InferenceChunk(
         chunk_id=fields[CHUNK_ID],
-        blurb=fields[BLURB],
+        blurb=blurb,
         content=fields[CONTENT],
         source_links=source_links_dict,
         section_continuation=fields[SECTION_CONTINUATION],
