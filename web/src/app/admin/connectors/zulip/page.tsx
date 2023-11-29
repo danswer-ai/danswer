@@ -59,7 +59,7 @@ const MainSection = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "zulip"
   );
-  const zulipCredential: Credential<ZulipCredentialJson> =
+  const zulipCredential: Credential<ZulipCredentialJson> | undefined =
     credentialsData.filter(
       (credential) => credential.credential_json?.zuliprc_content
     )[0];
@@ -134,72 +134,86 @@ const MainSection = () => {
         Step 2: Which workspaces do you want to make searchable?
       </h2>
 
-      {zulipConnectorIndexingStatuses.length > 0 && (
+      {zulipCredential ? (
         <>
-          <p className="text-sm mb-2">
-            We pull the latest messages from each workspace listed below every{" "}
-            <b>10</b> minutes.
-          </p>
-          <div className="mb-2">
-            <ConnectorsTable
-              connectorIndexingStatuses={zulipConnectorIndexingStatuses}
-              liveCredential={zulipCredential}
-              getCredential={(credential) =>
-                credential.credential_json.zuliprc_content
+          {zulipConnectorIndexingStatuses.length > 0 && (
+            <>
+              <p className="text-sm mb-2">
+                We pull the latest messages from each workspace listed below
+                every <b>10</b> minutes.
+              </p>
+              <div className="mb-2">
+                <ConnectorsTable
+                  connectorIndexingStatuses={zulipConnectorIndexingStatuses}
+                  liveCredential={zulipCredential}
+                  getCredential={(credential) =>
+                    credential.credential_json.zuliprc_content
+                  }
+                  specialColumns={[
+                    {
+                      header: "Realm name",
+                      key: "realm_name",
+                      getValue: (ccPairStatus) =>
+                        ccPairStatus.connector.connector_specific_config
+                          .realm_name,
+                    },
+                    {
+                      header: "Realm url",
+                      key: "realm_url",
+                      getValue: (ccPairStatus) =>
+                        ccPairStatus.connector.connector_specific_config
+                          .realm_url,
+                    },
+                  ]}
+                  onUpdate={() =>
+                    mutate("/api/manage/admin/connector/indexing-status")
+                  }
+                  onCredentialLink={async (connectorId) => {
+                    if (zulipCredential) {
+                      await linkCredential(connectorId, zulipCredential.id);
+                      mutate("/api/manage/admin/connector/indexing-status");
+                    }
+                  }}
+                />
+              </div>
+            </>
+          )}
+
+          <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+            <h2 className="font-bold mb-3">Connect to a New Realm</h2>
+            <ConnectorForm<ZulipConfig>
+              nameBuilder={(values) => `ZulipConnector-${values.realm_name}`}
+              ccPairNameBuilder={(values) => values.realm_name}
+              source="zulip"
+              inputType="poll"
+              credentialId={zulipCredential.id}
+              formBody={
+                <>
+                  <TextFormField name="realm_name" label="Realm name:" />
+                  <TextFormField name="realm_url" label="Realm url:" />
+                </>
               }
-              specialColumns={[
-                {
-                  header: "Realm name",
-                  key: "realm_name",
-                  getValue: (ccPairStatus) =>
-                    ccPairStatus.connector.connector_specific_config.realm_name,
-                },
-                {
-                  header: "Realm url",
-                  key: "realm_url",
-                  getValue: (ccPairStatus) =>
-                    ccPairStatus.connector.connector_specific_config.realm_url,
-                },
-              ]}
-              onUpdate={() =>
-                mutate("/api/manage/admin/connector/indexing-status")
-              }
-              onCredentialLink={async (connectorId) => {
-                if (zulipCredential) {
-                  await linkCredential(connectorId, zulipCredential.id);
-                  mutate("/api/manage/admin/connector/indexing-status");
-                }
+              validationSchema={Yup.object().shape({
+                realm_name: Yup.string().required(
+                  "Please enter the realm name"
+                ),
+                realm_url: Yup.string().required("Please enter the realm url"),
+              })}
+              initialValues={{
+                realm_name: "",
+                realm_url: "",
               }}
+              refreshFreq={10 * 60} // 10 minutes
             />
           </div>
         </>
+      ) : (
+        <p className="text-sm">
+          Please provide your Zulip credentials in Step 1 first! Once done with
+          that, you can then specify which Zulip realms you want to make
+          searchable.
+        </p>
       )}
-
-      <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
-        <h2 className="font-bold mb-3">Connect to a New Realm</h2>
-        <ConnectorForm<ZulipConfig>
-          nameBuilder={(values) => `ZulipConnector-${values.realm_name}`}
-          ccPairNameBuilder={(values) => values.realm_name}
-          source="zulip"
-          inputType="poll"
-          credentialId={zulipCredential.id}
-          formBody={
-            <>
-              <TextFormField name="realm_name" label="Realm name:" />
-              <TextFormField name="realm_url" label="Realm url:" />
-            </>
-          }
-          validationSchema={Yup.object().shape({
-            realm_name: Yup.string().required("Please enter the realm name"),
-            realm_url: Yup.string().required("Please enter the realm url"),
-          })}
-          initialValues={{
-            realm_name: "",
-            realm_url: "",
-          }}
-          refreshFreq={10 * 60} // 10 minutes
-        />
-      </div>
     </>
   );
 };
