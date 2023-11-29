@@ -208,8 +208,10 @@ def clean_old_temp_files_task(
     Currently handled async of the indexing job"""
     os.makedirs(base_path, exist_ok=True)
     for file in os.listdir(base_path):
-        if file_age_in_hours(file) > age_threshold_in_hours:
-            os.remove(Path(base_path) / file)
+        full_file_path = Path(base_path) / file
+        if file_age_in_hours(full_file_path) > age_threshold_in_hours:
+            logger.info(f"Cleaning up uploaded file: {full_file_path}")
+            os.remove(full_file_path)
 
 
 #####
