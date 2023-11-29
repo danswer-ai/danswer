@@ -141,7 +141,7 @@ def document_ingestion(
     if document.source == DocumentSource.INGESTION_API:
         document.source = DocumentSource.FILE
 
-    indexing_pipeline = build_indexing_pipeline()
+    indexing_pipeline = build_indexing_pipeline(ignore_time_skip=True)
 
     new_doc, chunks = indexing_pipeline(
         documents=[document],
