@@ -3,20 +3,14 @@ import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { Popup } from "./Popup";
 import { CredentialBase } from "@/lib/types";
+import { createCredential } from "@/lib/credential";
 
 export async function submitCredential<T>(
-  connector: CredentialBase<T>
+  credential: CredentialBase<T>
 ): Promise<{ message: string; isSuccess: boolean }> {
   let isSuccess = false;
   try {
-    const response = await fetch(`/api/manage/credential`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(connector),
-    });
-
+    const response = await createCredential(credential);
     if (response.ok) {
       isSuccess = true;
       return { message: "Success!", isSuccess: true };

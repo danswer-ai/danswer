@@ -7,7 +7,7 @@ import { FileIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus, FileConfig } from "@/lib/types";
-import { linkCredential } from "@/lib/credential";
+import { createCredential, linkCredential } from "@/lib/credential";
 import { useState } from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { createConnector, runConnector } from "@/lib/connector";
@@ -125,9 +125,28 @@ const Main = () => {
                   return;
                 }
 
+                // Since there is no "real" credential associated with a file connector
+                // we create a dummy one here so that we can associate the CC Pair with a
+                // user. This is needed since the user for a CC Pair is found via the credential
+                // associated with it.
+                const createCredentialResponse = await createCredential({
+                  credential_json: {},
+                  admin_public: true,
+                });
+                if (!createCredentialResponse.ok) {
+                  const errorMsg = await createCredentialResponse.text();
+                  setPopup({
+                    message: `Error creating credential for CC Pair - ${errorMsg}`,
+                    type: "error",
+                  });
+                  formikHelpers.setSubmitting(false);
+                  return;
+                }
+                const credentialId = (await createCredentialResponse.json()).id;
+
                 const credentialResponse = await linkCredential(
                   connector.id,
-                  0,
+                  credentialId,
                   values.name
                 );
                 if (!credentialResponse.ok) {
