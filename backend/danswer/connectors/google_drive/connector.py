@@ -62,7 +62,10 @@ class GDriveMimeType(str, Enum):
 
 GoogleDriveFileType = dict[str, Any]
 
-add_retries = retry_builder()
+# Google Drive APIs are quite flakey and may 500 for an
+# extended period of time. Trying to combat here by adding a very
+# long retry period (~20 minutes of trying every minute)
+add_retries = retry_builder(tries=50, max_delay=30)
 
 
 def _run_drive_file_query(
