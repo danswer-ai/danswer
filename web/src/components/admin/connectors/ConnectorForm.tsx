@@ -11,7 +11,7 @@ import {
 import { deleteConnectorIfExistsAndIsUnlinked } from "@/lib/connector";
 import { FormBodyBuilder, RequireAtLeastOne } from "./types";
 import { TextFormField } from "./Field";
-import { linkCredential } from "@/lib/credential";
+import { createCredential, linkCredential } from "@/lib/credential";
 import { useSWRConfig } from "swr";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
@@ -57,7 +57,8 @@ interface BaseProps<T extends Yup.AnyObject> {
   ccPairNameBuilder?: (values: T) => string | null;
   source: ValidSources;
   inputType: ValidInputTypes;
-  credentialId?: number; // if specified, will automatically try and link the credential
+  // if specified, will automatically try and link the credential
+  credentialId?: number;
   // If both are specified, will render formBody and then formBodyBuilder
   formBody?: JSX.Element | null;
   formBodyBuilder?: FormBodyBuilder<T>;
@@ -68,6 +69,9 @@ interface BaseProps<T extends Yup.AnyObject> {
     responseJson: Connector<T> | undefined
   ) => void;
   refreshFreq?: number;
+  // If specified, then we will create an empty credential and associate
+  // the connector with it. If credentialId is specified, then this will be ignored
+  shouldCreateEmptyCredentialForConnector?: boolean;
 }
 
 type ConnectorFormProps<T extends Yup.AnyObject> = RequireAtLeastOne<
@@ -87,6 +91,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
   initialValues,
   refreshFreq,
   onSubmit,
+  shouldCreateEmptyCredentialForConnector,
 }: ConnectorFormProps<T>): JSX.Element {
   const { mutate } = useSWRConfig();
   const { popup, setPopup } = usePopup();
@@ -147,13 +152,35 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             return;
           }
 
-          if (credentialId !== undefined) {
+          let credentialIdToLinkTo = credentialId;
+          // create empty credential if specified
+          if (
+            shouldCreateEmptyCredentialForConnector &&
+            credentialIdToLinkTo === undefined
+          ) {
+            const createCredentialResponse = await createCredential({
+              credential_json: {},
+              admin_public: true,
+            });
+            if (!createCredentialResponse.ok) {
+              const errorMsg = await createCredentialResponse.text();
+              setPopup({
+                message: `Error creating credential for CC Pair - ${errorMsg}`,
+                type: "error",
+              });
+              formikHelpers.setSubmitting(false);
+              return;
+            }
+            credentialIdToLinkTo = (await createCredentialResponse.json()).id;
+          }
+
+          if (credentialIdToLinkTo !== undefined) {
             const ccPairName = ccPairNameBuilder
               ? ccPairNameBuilder(values)
               : values.cc_pair_name;
             const linkCredentialResponse = await linkCredential(
               response.id,
-              credentialId,
+              credentialIdToLinkTo,
               ccPairName
             );
             if (!linkCredentialResponse.ok) {

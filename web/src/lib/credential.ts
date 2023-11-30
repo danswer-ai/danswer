@@ -1,3 +1,15 @@
+import { CredentialBase } from "./types";
+
+export async function createCredential(credential: CredentialBase<any>) {
+  return await fetch(`/api/manage/credential`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(credential),
+  });
+}
+
 export async function adminDeleteCredential<T>(credentialId: number) {
   return await fetch(`/api/manage/admin/credential/${credentialId}`, {
     method: "DELETE",
