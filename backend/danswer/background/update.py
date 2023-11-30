@@ -38,6 +38,7 @@ from danswer.utils.logger import setup_logger
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import LOG_LEVEL
 from shared_configs.configs import MODEL_SERVER_PORT
+from danswer.utils.variable_functionality import global_version
 
 logger = setup_logger()
 
@@ -307,10 +308,18 @@ def kickoff_indexing_jobs(
 
         if use_secondary_index:
             run = secondary_client.submit(
-                run_indexing_entrypoint, attempt.id, pure=False
+                run_indexing_entrypoint,
+                attempt.id,
+                global_version.get_is_ee_version(),
+                pure=False
             )
         else:
-            run = client.submit(run_indexing_entrypoint, attempt.id, pure=False)
+            run = client.submit(
+                run_indexing_entrypoint,
+                attempt.id,
+                global_version.get_is_ee_version(),
+                pure=False
+            )
 
         if run:
             secondary_str = "(secondary index) " if use_secondary_index else ""
