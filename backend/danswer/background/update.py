@@ -313,10 +313,14 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
         start = time.time()
         start_time_utc = datetime.utcfromtimestamp(start).strftime("%Y-%m-%d %H:%M:%S")
         logger.info(f"Running update, current UTC time: {start_time_utc}")
-        logger.debug(
-            "Found existing indexing jobs: "
-            f"{[(attempt_id, job.status) for attempt_id, job in existing_jobs.items()]}"
-        )
+
+        if existing_jobs:
+            # TODO: make this debug level once the "no jobs are being scheduled" issue is resolved
+            logger.info(
+                "Found existing indexing jobs: "
+                f"{[(attempt_id, job.status) for attempt_id, job in existing_jobs.items()]}"
+            )
+
         try:
             existing_jobs = cleanup_indexing_jobs(existing_jobs=existing_jobs)
             create_indexing_jobs(existing_jobs=existing_jobs)
@@ -330,7 +334,7 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
             time.sleep(sleep_time)
 
 
-if __name__ == "__main__":
+def update__main() -> None:
     # needed for CUDA to work with multiprocessing
     # NOTE: needs to be done on application startup
     # before any other torch code has been run
@@ -342,3 +346,7 @@ if __name__ == "__main__":
         warm_up_models(indexer_only=True, skip_cross_encoders=True)
     logger.info("Starting Indexing Loop")
     update_loop()
+
+
+if __name__ == "__main__":
+    update__main()
