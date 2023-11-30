@@ -49,7 +49,7 @@ export function IndexAttemptStatus({
     );
   } else if (status === "in_progress") {
     badge = (
-      <Badge size={size} color="fuchsia" icon={FiClock}>
+      <Badge size={size} color="amber" icon={FiClock}>
         In Progress
       </Badge>
     );
@@ -57,12 +57,6 @@ export function IndexAttemptStatus({
     badge = (
       <Badge size={size} color="fuchsia" icon={FiClock}>
         Scheduled
-      </Badge>
-    );
-  } else {
-    badge = (
-      <Badge size={size} color="yellow" icon={FiClock}>
-        Initializing
       </Badge>
     );
   }
