@@ -12,7 +12,7 @@ from danswer.connectors.cross_connector_utils.file_utils import detect_encoding
 from danswer.connectors.cross_connector_utils.file_utils import load_files_from_zip
 from danswer.connectors.cross_connector_utils.file_utils import read_file
 from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
-from danswer.connectors.cross_connector_utils.time_utils import time_str_to_utc
+from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.file.utils import check_file_ext_is_valid
 from danswer.connectors.file.utils import get_file_ext
 from danswer.connectors.interfaces import GenerateDocumentsOutput

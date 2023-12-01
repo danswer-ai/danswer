@@ -47,6 +47,9 @@ from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.constants import TITLE
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
+from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
+    get_experts_stores_representations,
+)
 from danswer.document_index.document_index_utils import get_uuid_from_chunk
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentInsertionRecord
@@ -240,8 +243,8 @@ def _index_vespa_chunk(chunk: DocMetadataAwareIndexChunk) -> None:
         EMBEDDINGS: embeddings_name_vector_map,
         BOOST: DEFAULT_BOOST,
         DOC_UPDATED_AT: _vespa_get_updated_at_attribute(document.doc_updated_at),
-        PRIMARY_OWNERS: document.primary_owners,
-        SECONDARY_OWNERS: document.secondary_owners,
+        PRIMARY_OWNERS: get_experts_stores_representations(document.primary_owners),
+        SECONDARY_OWNERS: get_experts_stores_representations(document.secondary_owners),
         # the only `set` vespa has is `weightedset`, so we have to give each
         # element an arbitrary weight
         ACCESS_CONTROL_LIST: {acl_entry: 1 for acl_entry in chunk.access.to_acl()},

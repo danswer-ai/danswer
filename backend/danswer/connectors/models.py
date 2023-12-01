@@ -27,6 +27,22 @@ class Section(BaseModel):
     link: str | None
 
 
+class BasicExpertInfo(BaseModel):
+    """Basic Information for the owner of a document, any of the fields can be left as None
+    Display fallback goes as follows:
+    - first_name + (optional middle_initial) + last_name
+    - display_name
+    - email
+    - first_name
+    """
+
+    display_name: str | None = None
+    first_name: str | None = None
+    middle_initial: str | None = None
+    last_name: str | None = None
+    email: str | None = None
+
+
 class DocumentBase(BaseModel):
     """Used for Danswer ingestion api, the ID is inferred before use if not provided"""
 
@@ -38,9 +54,9 @@ class DocumentBase(BaseModel):
     # UTC time
     doc_updated_at: datetime | None = None
     # Owner, creator, etc.
-    primary_owners: list[str] | None = None
+    primary_owners: list[BasicExpertInfo] | None = None
     # Assignee, space owner, etc.
-    secondary_owners: list[str] | None = None
+    secondary_owners: list[BasicExpertInfo] | None = None
     # `title` is used when computing best matches for a query
     # if `None`, then we will use the `semantic_identifier` as the title in Vespa
     title: str | None = None
