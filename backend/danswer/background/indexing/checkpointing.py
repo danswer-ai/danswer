@@ -1,11 +1,11 @@
 """Experimental functionality related to splitting up indexing
-into a series of checkpoints to better handle intermmittent failures
+into a series of checkpoints to better handle intermittent failures
 / jobs being killed by cloud providers."""
 import datetime
 
 from danswer.configs.app_configs import EXPERIMENTAL_CHECKPOINTING_ENABLED
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.time_utils import datetime_to_utc
+from danswer.connectors.cross_connector_utils.miscellaneous_utils import datetime_to_utc
 
 
 def _2010_dt() -> datetime.datetime:
