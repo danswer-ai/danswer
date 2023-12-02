@@ -35,7 +35,6 @@ from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
-from danswer.search.models import SearchType
 
 
 class IndexingStatus(str, PyEnum):
@@ -84,9 +83,6 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     )
     credentials: Mapped[List["Credential"]] = relationship(
         "Credential", back_populates="user", lazy="joined"
-    )
-    query_events: Mapped[List["QueryEvent"]] = relationship(
-        "QueryEvent", back_populates="user"
     )
     chat_sessions: Mapped[List["ChatSession"]] = relationship(
         "ChatSession", back_populates="user"
@@ -398,42 +394,6 @@ Messages Tables
 """
 
 
-class QueryEvent(Base):
-    __tablename__ = "query_event"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    # TODO: make this non-nullable after migration to consolidate chat /
-    # QA flows is complete
-    chat_session_id: Mapped[int | None] = mapped_column(
-        ForeignKey("chat_session.id"), nullable=True
-    )
-    query: Mapped[str] = mapped_column(Text)
-    # search_flow refers to user selection, None if user used auto
-    selected_search_flow: Mapped[SearchType | None] = mapped_column(
-        Enum(SearchType), nullable=True
-    )
-    llm_answer: Mapped[str | None] = mapped_column(Text, default=None)
-    # Document IDs of the top context documents retrieved for the query (if any)
-    # NOTE: not using a foreign key to enable easy deletion of documents without
-    # needing to adjust `QueryEvent` rows
-    retrieved_document_ids: Mapped[list[str] | None] = mapped_column(
-        postgresql.ARRAY(String), nullable=True
-    )
-    feedback: Mapped[QAFeedbackType | None] = mapped_column(
-        Enum(QAFeedbackType), nullable=True
-    )
-    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
-    time_created: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-    )
-
-    user: Mapped[User | None] = relationship("User", back_populates="query_events")
-    document_feedbacks: Mapped[List["DocumentRetrievalFeedback"]] = relationship(
-        "DocumentRetrievalFeedback", back_populates="qa_event"
-    )
-
-
 class ChatSession(Base):
     __tablename__ = "chat_session"
 
@@ -474,8 +434,17 @@ class ChatMessage(Base):
     message: Mapped[str] = mapped_column(Text)
     token_count: Mapped[int] = mapped_column(Integer)
     message_type: Mapped[MessageType] = mapped_column(Enum(MessageType))
-    reference_docs: Mapped[dict[str, Any] | None] = mapped_column(
-        postgresql.JSONB(), nullable=True
+    # The following retrieval only applies for AI/Assistant messages
+    # Docs/Chunks can be retrieved or selected
+    reference_document_ids: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
+    reference_chunk_ids: Mapped[list[int] | None] = mapped_column(
+        postgresql.ARRAY(Integer), nullable=True
+    )
+    # Gen AI user feedback only applies to assistant messages
+    gen_ai_feedback: Mapped[QAFeedbackType | None] = mapped_column(
+        Enum(QAFeedbackType), nullable=True
     )
     time_sent: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
@@ -483,6 +452,9 @@ class ChatMessage(Base):
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
     prompt: Mapped["Prompt"] = relationship("Prompt")
+    document_feedbacks: Mapped[List["DocumentRetrievalFeedback"]] = relationship(
+        "DocumentRetrievalFeedback", back_populates="chat_message"
+    )
 
 
 """
@@ -494,8 +466,8 @@ class DocumentRetrievalFeedback(Base):
     __tablename__ = "document_retrieval_feedback"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    qa_event_id: Mapped[int] = mapped_column(
-        ForeignKey("query_event.id"),
+    chat_message_id: Mapped[int] = mapped_column(
+        ForeignKey("chat_message.id"),
     )
     document_id: Mapped[str] = mapped_column(
         ForeignKey("document.id"),
@@ -507,8 +479,8 @@ class DocumentRetrievalFeedback(Base):
         Enum(SearchFeedbackType), nullable=True
     )
 
-    qa_event: Mapped[QueryEvent] = relationship(
-        "QueryEvent", back_populates="document_feedbacks"
+    chat_message: Mapped[ChatMessage] = relationship(
+        "ChatMessage", back_populates="document_feedbacks"
     )
     document: Mapped[Document] = relationship(
         "Document", back_populates="retrieval_feedbacks"
