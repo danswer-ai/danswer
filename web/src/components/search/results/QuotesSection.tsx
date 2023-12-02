@@ -1,8 +1,8 @@
 import { Quote } from "@/lib/search/interfaces";
 import { ResponseSection, StatusOptions } from "./ResponseSection";
-import { getSourceIcon } from "@/components/source";
 import { CheckmarkIcon, CopyIcon } from "@/components/icons/icons";
 import { useState } from "react";
+import { SourceIcon } from "@/components/SourceIcon";
 
 const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
   const [detailIsOpen, setDetailIsOpen] = useState(false);
@@ -54,7 +54,7 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          {getSourceIcon(quoteInfo.source_type, 20)}
+          <SourceIcon sourceType={quoteInfo.source_type} iconSize={20} />
           <p className="truncate break-all ml-2 mr-2">
             {quoteInfo.semantic_identifier || quoteInfo.document_id}
           </p>

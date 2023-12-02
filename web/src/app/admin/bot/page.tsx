@@ -13,6 +13,7 @@ import { SlackBotCreationForm } from "./SlackBotConfigCreationForm";
 import { deleteSlackBotConfig } from "./lib";
 import { SlackBotTokensForm } from "./SlackBotTokensForm";
 import { useDocumentSets } from "../documents/sets/hooks";
+import { AdminPageTitle } from "@/components/admin/Title";
 
 const numToDisplay = 50;
 
@@ -315,10 +316,10 @@ const Main = () => {
 const Page = () => {
   return (
     <div>
-      <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <CPUIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Slack Bot Configuration</h1>
-      </div>
+      <AdminPageTitle
+        icon={<CPUIcon size={32} />}
+        title="Slack Bot Configuration"
+      />
 
       <Main />
     </div>

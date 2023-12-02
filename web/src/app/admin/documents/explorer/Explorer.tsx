@@ -4,7 +4,6 @@ import { adminSearch } from "./lib";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { useState, useEffect } from "react";
 import { DanswerDocument } from "@/lib/search/interfaces";
-import { getSourceIcon } from "@/components/source";
 import { buildDocumentSummaryDisplay } from "@/components/search/DocumentDisplay";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
 import { updateHiddenStatus } from "../lib";
@@ -17,6 +16,7 @@ import { useFilters } from "@/lib/hooks";
 import { buildFilters } from "@/lib/search/utils";
 import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBadge";
 import { Connector, DocumentSet } from "@/lib/types";
+import { SourceIcon } from "@/components/SourceIcon";
 
 const DocumentDisplay = ({
   document,
@@ -42,7 +42,7 @@ const DocumentDisplay = ({
           target="_blank"
           rel="noopener noreferrer"
         >
-          {getSourceIcon(document.source_type, 22)}
+          <SourceIcon sourceType={document.source_type} iconSize={22} />
           <p className="truncate break-all ml-2 my-auto text-base">
             {document.semantic_identifier || document.document_id}
           </p>
@@ -111,7 +111,6 @@ export function Explorer({
   connectors: Connector<any>[];
   documentSets: DocumentSet[];
 }) {
-  console.log(connectors);
   const router = useRouter();
   const { popup, setPopup } = usePopup();
 

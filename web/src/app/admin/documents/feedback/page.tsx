@@ -5,6 +5,7 @@ import { ThumbsUpIcon } from "@/components/icons/icons";
 import { useMostReactedToDocuments } from "@/lib/hooks";
 import { DocumentFeedbackTable } from "./DocumentFeedbackTable";
 import { numPages, numToDisplay } from "./constants";
+import { AdminPageTitle } from "@/components/admin/Title";
 
 const Main = () => {
   const {
@@ -61,10 +62,10 @@ const Main = () => {
 const Page = () => {
   return (
     <div>
-      <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <ThumbsUpIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Document Feedback</h1>
-      </div>
+      <AdminPageTitle
+        icon={<ThumbsUpIcon size={32} />}
+        title="Document Feedback"
+      />
 
       <Main />
     </div>

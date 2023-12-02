@@ -1,6 +1,7 @@
 "use client";
 
 import { LoadingAnimation } from "@/components/Loading";
+import { AdminPageTitle } from "@/components/admin/Title";
 import { KeyIcon, TrashIcon } from "@/components/icons/icons";
 import { ApiKeyForm } from "@/components/openai/ApiKeyForm";
 import { GEN_AI_API_KEY_URL } from "@/components/openai/constants";
@@ -49,10 +50,7 @@ const ExistingKeys = () => {
 const Page = () => {
   return (
     <div>
-      <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <KeyIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">OpenAI Keys</h1>
-      </div>
+      <AdminPageTitle title="OpenAI Keys" icon={<KeyIcon size={32} />} />
 
       <ExistingKeys />
 

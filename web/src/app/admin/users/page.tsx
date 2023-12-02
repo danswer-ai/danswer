@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/Button";
 import { LoadingAnimation } from "@/components/Loading";
+import { AdminPageTitle } from "@/components/admin/Title";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { UsersIcon } from "@/components/icons/icons";
@@ -95,10 +96,7 @@ const UsersTable = () => {
 const Page = () => {
   return (
     <div>
-      <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <UsersIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Manage Users</h1>
-      </div>
+      <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
 
       <UsersTable />
     </div>

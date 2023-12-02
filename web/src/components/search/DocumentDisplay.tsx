@@ -1,11 +1,11 @@
 import { DanswerDocument } from "@/lib/search/interfaces";
 import { DocumentFeedbackBlock } from "./DocumentFeedbackBlock";
-import { getSourceIcon } from "../source";
 import { useState } from "react";
 import { PopupSpec } from "../admin/connectors/Popup";
 import { HoverPopup } from "@/components/HoverPopup";
 import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
-import { FiCrosshair, FiInfo, FiRadio } from "react-icons/fi";
+import { FiInfo, FiRadio } from "react-icons/fi";
+import { SourceIcon } from "../SourceIcon";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -186,7 +186,7 @@ export const DocumentDisplay = ({
           target="_blank"
           rel="noopener noreferrer"
         >
-          {getSourceIcon(document.source_type, 22)}
+          <SourceIcon sourceType={document.source_type} iconSize={22} />
           <p className="truncate break-all ml-2 my-auto text-base">
             {document.semantic_identifier || document.document_id}
           </p>

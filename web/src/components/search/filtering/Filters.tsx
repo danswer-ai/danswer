@@ -1,35 +1,14 @@
 import React from "react";
-import { getSourceIcon } from "../../source";
 import { DocumentSet, ValidSources } from "@/lib/types";
-import { Source } from "@/lib/search/interfaces";
+import { SourceMetadata } from "@/lib/search/interfaces";
 import { InfoIcon, defaultTailwindCSS } from "../../icons/icons";
 import { HoverPopup } from "../../HoverPopup";
 import { FiBook, FiBookmark, FiFilter, FiMap, FiX } from "react-icons/fi";
 import { DateRangeSelector } from "../DateRangeSelector";
 import { DateRangePickerValue } from "@tremor/react";
 import { FilterDropdown } from "./FilterDropdown";
-
-const sources: Source[] = [
-  { displayName: "Google Drive", internalName: "google_drive" },
-  { displayName: "Slack", internalName: "slack" },
-  { displayName: "BookStack", internalName: "bookstack" },
-  { displayName: "Confluence", internalName: "confluence" },
-  { displayName: "Jira", internalName: "jira" },
-  { displayName: "Productboard", internalName: "productboard" },
-  { displayName: "Slab", internalName: "slab" },
-  { displayName: "Github PRs", internalName: "github" },
-  { displayName: "Web", internalName: "web" },
-  { displayName: "Guru", internalName: "guru" },
-  { displayName: "Gong", internalName: "gong" },
-  { displayName: "File", internalName: "file" },
-  { displayName: "Notion", internalName: "notion" },
-  { displayName: "Zulip", internalName: "zulip" },
-  { displayName: "Linear", internalName: "linear" },
-  { displayName: "HubSpot", internalName: "hubspot" },
-  { displayName: "Document360", internalName: "document360" },
-  { displayName: "Request Tracker", internalName: "requesttracker" },
-  { displayName: "Google Sites", internalName: "google_sites" },
-];
+import { listSourceMetadata } from "@/lib/sources";
+import { SourceIcon } from "@/components/SourceIcon";
 
 const SectionTitle = ({ children }: { children: string }) => (
   <div className="font-medium text-sm flex">{children}</div>
@@ -40,8 +19,8 @@ interface SourceSelectorProps {
   setTimeRange: React.Dispatch<
     React.SetStateAction<DateRangePickerValue | null>
   >;
-  selectedSources: Source[];
-  setSelectedSources: React.Dispatch<React.SetStateAction<Source[]>>;
+  selectedSources: SourceMetadata[];
+  setSelectedSources: React.Dispatch<React.SetStateAction<SourceMetadata[]>>;
   selectedDocumentSets: string[];
   setSelectedDocumentSets: React.Dispatch<React.SetStateAction<string[]>>;
   availableDocumentSets: DocumentSet[];
@@ -58,8 +37,8 @@ export function SourceSelector({
   availableDocumentSets,
   existingSources,
 }: SourceSelectorProps) {
-  const handleSelect = (source: Source) => {
-    setSelectedSources((prev: Source[]) => {
+  const handleSelect = (source: SourceMetadata) => {
+    setSelectedSources((prev: SourceMetadata[]) => {
       if (prev.includes(source)) {
         return prev.filter((s) => s.internalName !== source.internalName);
       } else {
@@ -96,7 +75,7 @@ export function SourceSelector({
         <div className="mt-4">
           <SectionTitle>Sources</SectionTitle>
           <div className="px-1">
-            {sources
+            {listSourceMetadata()
               .filter((source) => existingSources.includes(source.internalName))
               .map((source) => (
                 <div
@@ -110,7 +89,7 @@ export function SourceSelector({
                   }
                   onClick={() => handleSelect(source)}
                 >
-                  {getSourceIcon(source.internalName, 16)}
+                  <SourceIcon sourceType={source.internalName} iconSize={16} />
                   <span className="ml-2 text-sm text-gray-200">
                     {source.displayName}
                   </span>
@@ -201,8 +180,8 @@ export function HorizontalFilters({
   availableDocumentSets,
   existingSources,
 }: SourceSelectorProps) {
-  const handleSourceSelect = (source: Source) => {
-    setSelectedSources((prev: Source[]) => {
+  const handleSourceSelect = (source: SourceMetadata) => {
+    setSelectedSources((prev: SourceMetadata[]) => {
       const prevSourceNames = prev.map((source) => source.internalName);
       if (prevSourceNames.includes(source.internalName)) {
         return prev.filter((s) => s.internalName !== source.internalName);
@@ -222,7 +201,8 @@ export function HorizontalFilters({
     });
   };
 
-  const availableSources = sources.filter((source) =>
+  const allSources = listSourceMetadata();
+  const availableSources = allSources.filter((source) =>
     existingSources.includes(source.internalName)
   );
 
@@ -239,8 +219,7 @@ export function HorizontalFilters({
               key: source.displayName,
               display: (
                 <>
-                  {" "}
-                  {getSourceIcon(source.internalName, 16)}
+                  <SourceIcon sourceType={source.internalName} iconSize={16} />
                   <span className="ml-2 text-sm text-gray-200">
                     {source.displayName}
                   </span>
@@ -251,7 +230,7 @@ export function HorizontalFilters({
           selected={selectedSources.map((source) => source.displayName)}
           handleSelect={(option) =>
             handleSourceSelect(
-              sources.find((source) => source.displayName === option.key)!
+              allSources.find((source) => source.displayName === option.key)!
             )
           }
           icon={
@@ -305,7 +284,7 @@ export function HorizontalFilters({
                 onClick={() => handleSourceSelect(source)}
               >
                 <>
-                  {getSourceIcon(source.internalName, 16)}
+                  <SourceIcon sourceType={source.internalName} iconSize={16} />
                   <span className="ml-2 text-sm text-gray-400">
                     {source.displayName}
                   </span>
