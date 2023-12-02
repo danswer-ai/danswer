@@ -91,6 +91,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     chat_sessions: Mapped[List["ChatSession"]] = relationship(
         "ChatSession", back_populates="user"
     )
+    prompts: Mapped[List["Prompt"]] = relationship("Prompt", back_populates="user")
 
 
 class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
@@ -110,6 +111,13 @@ class Persona__DocumentSet(Base):
     document_set_id: Mapped[int] = mapped_column(
         ForeignKey("document_set.id"), primary_key=True
     )
+
+
+class Persona__Prompt(Base):
+    __tablename__ = "persona__prompt"
+
+    persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id"), primary_key=True)
+    prompt_id: Mapped[int] = mapped_column(ForeignKey("prompt.id"), primary_key=True)
 
 
 class DocumentSet__ConnectorCredentialPair(Base):
@@ -435,8 +443,8 @@ class ChatSession(Base):
         ForeignKey("persona.id"), default=None
     )
     description: Mapped[str] = mapped_column(Text)
+    # Only ever set to True if system is set to not hard-delete chats
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
-    # The following texts help build up the model's ability to use the context effectively
     time_updated: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -456,15 +464,14 @@ class ChatSession(Base):
 class ChatMessage(Base):
     __tablename__ = "chat_message"
 
+    id: Mapped[int] = mapped_column(primary_key=True)
     chat_session_id: Mapped[int] = mapped_column(
         ForeignKey("chat_session.id"), primary_key=True
     )
-    message_number: Mapped[int] = mapped_column(Integer, primary_key=True)
-    edit_number: Mapped[int] = mapped_column(Integer, default=0, primary_key=True)
-    parent_edit_number: Mapped[int | None] = mapped_column(
-        Integer, nullable=True
-    )  # null if first message
-    latest: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Which level of the tree this message is at, 0 is the empty root message
+    message_number: Mapped[int] = mapped_column(Integer)
+    parent_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    latest_child_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     message: Mapped[str] = mapped_column(Text)
     token_count: Mapped[int] = mapped_column(Integer)
     message_type: Mapped[MessageType] = mapped_column(Enum(MessageType))
@@ -581,22 +588,31 @@ class ToolInfo(TypedDict):
     description: str
 
 
+class Prompt(Base):
+    __tablename__ = "prompt"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    shared: Mapped[bool] = mapped_column(Boolean, default=False)
+    system_prompt: Mapped[str] = mapped_column(Text)
+    task_prompt: Mapped[str] = mapped_column(Text)
+    datetime_aware: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    user: Mapped[User] = relationship("User", back_populates="prompt")
+    personas: Mapped[list["Persona"]] = relationship(
+        "Persona",
+        secondary=Persona__Prompt.__table__,
+        back_populates="prompt",
+    )
+
+
 class Persona(Base):
-    # TODO introduce user and group ownership for personas
     __tablename__ = "persona"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str | None] = mapped_column(String, nullable=True)
-    # Danswer retrieval, treated as a special tool
-    retrieval_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-    datetime_aware: Mapped[bool] = mapped_column(Boolean, default=True)
-    system_text: Mapped[str | None] = mapped_column(Text, nullable=True)
-    tools: Mapped[list[ToolInfo] | None] = mapped_column(
-        postgresql.JSONB(), nullable=True
-    )
-    hint_text: Mapped[str | None] = mapped_column(Text, nullable=True)
-    # number of chunks to use for retrieval. If unspecified, uses the default set
+    # Number of chunks to use for retrieval. If unspecified, uses the default set
     # in the env variables
     num_chunks: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # if unspecified, then uses the default set in the env variables
@@ -613,12 +629,21 @@ class Persona(Base):
     # Default personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
     default_persona: Mapped[bool] = mapped_column(Boolean, default=False)
-    # If it's updated and no longer latest (should no longer be shown), it is also considered deleted
-    deleted: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Currently no tool calling/agents available
+    tools: Mapped[list[ToolInfo] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
+    )
 
+    # These are only defaults, users can select from all if desired
     document_sets: Mapped[list[DocumentSet]] = relationship(
         "DocumentSet",
         secondary=Persona__DocumentSet.__table__,
+        back_populates="personas",
+    )
+    # These are only defaults, users can select from all if desired
+    prompts: Mapped[list[Prompt]] = relationship(
+        "Prompt",
+        secondary=Persona__Prompt.__table__,
         back_populates="personas",
     )
 
