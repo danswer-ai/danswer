@@ -65,6 +65,11 @@ class Base(DeclarativeBase):
     pass
 
 
+"""
+Auth/Authz (users, permissions, access) Tables
+"""
+
+
 class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
     # even an almost empty token from keycloak will not fit the default 1024 bytes
     access_token: Mapped[str] = mapped_column(Text, nullable=False)  # type: ignore
@@ -93,7 +98,7 @@ class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
 
 
 """
-Association tables
+Association Tables
 NOTE: must be at the top since they are referenced by other tables
 """
 
@@ -183,6 +188,49 @@ class ConnectorCredentialPair(Base):
         secondary=DocumentSet__ConnectorCredentialPair.__table__,
         back_populates="connector_credential_pairs",
         overlaps="document_set",
+    )
+
+
+"""
+Documents/Indexing Tables
+"""
+
+
+class Document(Base):
+    __tablename__ = "document"
+
+    # this should correspond to the ID of the document
+    # (as is passed around in Danswer)
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    from_ingestion_api: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=True
+    )
+    # 0 for neutral, positive for mostly endorse, negative for mostly reject
+    boost: Mapped[int] = mapped_column(Integer, default=DEFAULT_BOOST)
+    hidden: Mapped[bool] = mapped_column(Boolean, default=False)
+    semantic_id: Mapped[str] = mapped_column(String)
+    # First Section's link
+    link: Mapped[str | None] = mapped_column(String, nullable=True)
+    # The updated time is also used as a measure of the last successful state of the doc
+    # pulled from the source (to help skip reindexing already updated docs in case of
+    # connector retries)
+    doc_updated_at: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # The following are not attached to User because the account/email may not be known
+    # within Danswer
+    # Something like the document creator
+    primary_owners: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
+    # Something like assignee or space owner
+    secondary_owners: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
+    # TODO if more sensitive data is added here for display, make sure to add user/group permission
+
+    retrieval_feedbacks: Mapped[List["DocumentRetrievalFeedback"]] = relationship(
+        "DocumentRetrievalFeedback", back_populates="document"
     )
 
 
@@ -316,8 +364,7 @@ class IndexAttempt(Base):
 
 
 class DocumentByConnectorCredentialPair(Base):
-    """Represents an indexing of a document by a specific connector / credential
-    pair"""
+    """Represents an indexing of a document by a specific connector / credential pair"""
 
     __tablename__ = "document_by_connector_credential_pair"
 
@@ -336,6 +383,11 @@ class DocumentByConnectorCredentialPair(Base):
     credential: Mapped[Credential] = relationship(
         "Credential", back_populates="documents_by_credential"
     )
+
+
+"""
+Messages Tables
+"""
 
 
 class QueryEvent(Base):
@@ -374,92 +426,6 @@ class QueryEvent(Base):
     )
 
 
-class DocumentRetrievalFeedback(Base):
-    __tablename__ = "document_retrieval_feedback"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    qa_event_id: Mapped[int] = mapped_column(
-        ForeignKey("query_event.id"),
-    )
-    document_id: Mapped[str] = mapped_column(
-        ForeignKey("document.id"),
-    )
-    # How high up this document is in the results, 1 for first
-    document_rank: Mapped[int] = mapped_column(Integer)
-    clicked: Mapped[bool] = mapped_column(Boolean, default=False)
-    feedback: Mapped[SearchFeedbackType | None] = mapped_column(
-        Enum(SearchFeedbackType), nullable=True
-    )
-
-    qa_event: Mapped[QueryEvent] = relationship(
-        "QueryEvent", back_populates="document_feedbacks"
-    )
-    document: Mapped["Document"] = relationship(
-        "Document", back_populates="retrieval_feedbacks"
-    )
-
-
-class Document(Base):
-    __tablename__ = "document"
-
-    # this should correspond to the ID of the document
-    # (as is passed around in Danswer)
-    id: Mapped[str] = mapped_column(String, primary_key=True)
-    from_ingestion_api: Mapped[bool] = mapped_column(
-        Boolean, default=False, nullable=True
-    )
-    # 0 for neutral, positive for mostly endorse, negative for mostly reject
-    boost: Mapped[int] = mapped_column(Integer, default=DEFAULT_BOOST)
-    hidden: Mapped[bool] = mapped_column(Boolean, default=False)
-    semantic_id: Mapped[str] = mapped_column(String)
-    # First Section's link
-    link: Mapped[str | None] = mapped_column(String, nullable=True)
-    # The updated time is also used as a measure of the last successful state of the doc
-    # pulled from the source (to help skip reindexing already updated docs in case of
-    # connector retries)
-    doc_updated_at: Mapped[datetime.datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    # The following are not attached to User because the account/email may not be known
-    # within Danswer
-    # Something like the document creator
-    primary_owners: Mapped[list[str] | None] = mapped_column(
-        postgresql.ARRAY(String), nullable=True
-    )
-    # Something like assignee or space owner
-    secondary_owners: Mapped[list[str] | None] = mapped_column(
-        postgresql.ARRAY(String), nullable=True
-    )
-    # TODO if more sensitive data is added here for display, make sure to add user/group permission
-
-    retrieval_feedbacks: Mapped[List[DocumentRetrievalFeedback]] = relationship(
-        "DocumentRetrievalFeedback", back_populates="document"
-    )
-
-
-class DocumentSet(Base):
-    __tablename__ = "document_set"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True)
-    description: Mapped[str] = mapped_column(String)
-    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
-    # whether or not changes to the document set have been propogated
-    is_up_to_date: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-
-    connector_credential_pairs: Mapped[list[ConnectorCredentialPair]] = relationship(
-        "ConnectorCredentialPair",
-        secondary=DocumentSet__ConnectorCredentialPair.__table__,
-        back_populates="document_sets",
-        overlaps="document_set",
-    )
-    personas: Mapped[list["Persona"]] = relationship(
-        "Persona",
-        secondary=Persona__DocumentSet.__table__,
-        back_populates="document_sets",
-    )
-
-
 class ChatSession(Base):
     __tablename__ = "chat_session"
 
@@ -485,6 +451,129 @@ class ChatSession(Base):
         "ChatMessage", back_populates="chat_session", cascade="delete"
     )
     persona: Mapped[Optional["Persona"]] = relationship("Persona")
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_message"
+
+    chat_session_id: Mapped[int] = mapped_column(
+        ForeignKey("chat_session.id"), primary_key=True
+    )
+    message_number: Mapped[int] = mapped_column(Integer, primary_key=True)
+    edit_number: Mapped[int] = mapped_column(Integer, default=0, primary_key=True)
+    parent_edit_number: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )  # null if first message
+    latest: Mapped[bool] = mapped_column(Boolean, default=True)
+    message: Mapped[str] = mapped_column(Text)
+    token_count: Mapped[int] = mapped_column(Integer)
+    message_type: Mapped[MessageType] = mapped_column(Enum(MessageType))
+    reference_docs: Mapped[dict[str, Any] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
+    )
+    persona_id: Mapped[int | None] = mapped_column(
+        ForeignKey("persona.id"), nullable=True
+    )
+    time_sent: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    chat_session: Mapped[ChatSession] = relationship("ChatSession")
+    persona: Mapped[Optional["Persona"]] = relationship("Persona")
+
+
+"""
+Feedback, Logging, Metrics Tables
+"""
+
+
+class DocumentRetrievalFeedback(Base):
+    __tablename__ = "document_retrieval_feedback"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    qa_event_id: Mapped[int] = mapped_column(
+        ForeignKey("query_event.id"),
+    )
+    document_id: Mapped[str] = mapped_column(
+        ForeignKey("document.id"),
+    )
+    # How high up this document is in the results, 1 for first
+    document_rank: Mapped[int] = mapped_column(Integer)
+    clicked: Mapped[bool] = mapped_column(Boolean, default=False)
+    feedback: Mapped[SearchFeedbackType | None] = mapped_column(
+        Enum(SearchFeedbackType), nullable=True
+    )
+
+    qa_event: Mapped[QueryEvent] = relationship(
+        "QueryEvent", back_populates="document_feedbacks"
+    )
+    document: Mapped[Document] = relationship(
+        "Document", back_populates="retrieval_feedbacks"
+    )
+
+
+class ChatMessageFeedback(Base):
+    __tablename__ = "chat_feedback"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    chat_message_chat_session_id: Mapped[int] = mapped_column(Integer)
+    chat_message_message_number: Mapped[int] = mapped_column(Integer)
+    chat_message_edit_number: Mapped[int] = mapped_column(Integer)
+    is_positive: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    feedback_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            [
+                "chat_message_chat_session_id",
+                "chat_message_message_number",
+                "chat_message_edit_number",
+            ],
+            [
+                "chat_message.chat_session_id",
+                "chat_message.message_number",
+                "chat_message.edit_number",
+            ],
+        ),
+    )
+
+    chat_message: Mapped[ChatMessage] = relationship(
+        "ChatMessage",
+        foreign_keys=[
+            chat_message_chat_session_id,
+            chat_message_message_number,
+            chat_message_edit_number,
+        ],
+        backref="feedbacks",
+    )
+
+
+"""
+Structures, Organizational, Configurations Tables
+"""
+
+
+class DocumentSet(Base):
+    __tablename__ = "document_set"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    description: Mapped[str] = mapped_column(String)
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    # whether or not changes to the document set have been propagated
+    is_up_to_date: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    connector_credential_pairs: Mapped[list[ConnectorCredentialPair]] = relationship(
+        "ConnectorCredentialPair",
+        secondary=DocumentSet__ConnectorCredentialPair.__table__,
+        back_populates="document_sets",
+        overlaps="document_set",
+    )
+    personas: Mapped[list["Persona"]] = relationship(
+        "Persona",
+        secondary=Persona__DocumentSet.__table__,
+        back_populates="document_sets",
+    )
 
 
 class ToolInfo(TypedDict):
@@ -534,71 +623,6 @@ class Persona(Base):
             unique=True,
             postgresql_where=(default_persona == True),  # noqa: E712
         ),
-    )
-
-
-class ChatMessage(Base):
-    __tablename__ = "chat_message"
-
-    chat_session_id: Mapped[int] = mapped_column(
-        ForeignKey("chat_session.id"), primary_key=True
-    )
-    message_number: Mapped[int] = mapped_column(Integer, primary_key=True)
-    edit_number: Mapped[int] = mapped_column(Integer, default=0, primary_key=True)
-    parent_edit_number: Mapped[int | None] = mapped_column(
-        Integer, nullable=True
-    )  # null if first message
-    latest: Mapped[bool] = mapped_column(Boolean, default=True)
-    message: Mapped[str] = mapped_column(Text)
-    token_count: Mapped[int] = mapped_column(Integer)
-    message_type: Mapped[MessageType] = mapped_column(Enum(MessageType))
-    reference_docs: Mapped[dict[str, Any] | None] = mapped_column(
-        postgresql.JSONB(), nullable=True
-    )
-    persona_id: Mapped[int | None] = mapped_column(
-        ForeignKey("persona.id"), nullable=True
-    )
-    time_sent: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
-
-    chat_session: Mapped[ChatSession] = relationship("ChatSession")
-    persona: Mapped[Persona | None] = relationship("Persona")
-
-
-class ChatMessageFeedback(Base):
-    __tablename__ = "chat_feedback"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    chat_message_chat_session_id: Mapped[int] = mapped_column(Integer)
-    chat_message_message_number: Mapped[int] = mapped_column(Integer)
-    chat_message_edit_number: Mapped[int] = mapped_column(Integer)
-    is_positive: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
-    feedback_text: Mapped[str | None] = mapped_column(Text, nullable=True)
-
-    __table_args__ = (
-        ForeignKeyConstraint(
-            [
-                "chat_message_chat_session_id",
-                "chat_message_message_number",
-                "chat_message_edit_number",
-            ],
-            [
-                "chat_message.chat_session_id",
-                "chat_message.message_number",
-                "chat_message.edit_number",
-            ],
-        ),
-    )
-
-    chat_message: Mapped[ChatMessage] = relationship(
-        "ChatMessage",
-        foreign_keys=[
-            chat_message_chat_session_id,
-            chat_message_message_number,
-            chat_message_edit_number,
-        ],
-        backref="feedbacks",
     )
 
 
