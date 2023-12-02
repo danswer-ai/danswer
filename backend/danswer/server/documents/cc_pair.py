@@ -15,8 +15,8 @@ from danswer.db.engine import get_session
 from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.models import User
 from danswer.server.documents.models import CCPairFullInfo
-from danswer.server.models import ConnectorCredentialPairIdentifier
-from danswer.server.models import ConnectorCredentialPairMetadata
+from danswer.server.documents.models import ConnectorCredentialPairIdentifier
+from danswer.server.documents.models import ConnectorCredentialPairMetadata
 from danswer.server.models import StatusResponse
 
 router = APIRouter(prefix="/manage")

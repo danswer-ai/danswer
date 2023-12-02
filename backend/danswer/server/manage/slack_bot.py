@@ -15,10 +15,10 @@ from danswer.db.slack_bot_config import insert_slack_bot_config
 from danswer.db.slack_bot_config import remove_slack_bot_config
 from danswer.db.slack_bot_config import update_slack_bot_config
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.server.models import DocumentSet
-from danswer.server.models import SlackBotConfig
-from danswer.server.models import SlackBotConfigCreationRequest
-from danswer.server.models import SlackBotTokens
+from danswer.server.features.document_set.models import DocumentSet
+from danswer.server.manage.models import SlackBotConfig
+from danswer.server.manage.models import SlackBotConfigCreationRequest
+from danswer.server.manage.models import SlackBotTokens
 
 
 router = APIRouter(prefix="/manage")

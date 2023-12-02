@@ -36,7 +36,7 @@ from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.server.chat.models import LLMRelevanceFilterResponse
 from danswer.server.chat.models import NewMessageRequest
 from danswer.server.chat.models import QADocsResponse
-from danswer.server.models import QAResponse
+from danswer.server.chat.models import QAResponse
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time

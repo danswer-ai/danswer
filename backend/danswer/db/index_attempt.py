@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
-from danswer.server.models import ConnectorCredentialPairIdentifier
+from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType

@@ -14,8 +14,8 @@ from danswer.db.models import Document
 from danswer.db.models import DocumentByConnectorCredentialPair
 from danswer.db.models import DocumentSet as DocumentSetDBModel
 from danswer.db.models import DocumentSet__ConnectorCredentialPair
-from danswer.server.models import DocumentSetCreationRequest
-from danswer.server.models import DocumentSetUpdateRequest
+from danswer.server.features.document_set.models import DocumentSetCreationRequest
+from danswer.server.features.document_set.models import DocumentSetUpdateRequest
 
 
 def _delete_document_set_cc_pairs__no_commit(

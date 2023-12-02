@@ -33,7 +33,7 @@ from danswer.db.index_attempt import delete_index_attempts
 from danswer.db.models import ConnectorCredentialPair
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
-from danswer.server.models import ConnectorCredentialPairIdentifier
+from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()

@@ -14,8 +14,8 @@ from danswer.db.credentials import update_credential
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.server.documents.models import CredentialBase
+from danswer.server.documents.models import CredentialSnapshot
 from danswer.server.documents.models import ObjectCreationIdResponse
-from danswer.server.models import CredentialSnapshot
 from danswer.server.models import StatusResponse
 
 

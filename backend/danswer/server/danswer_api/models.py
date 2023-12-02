@@ -3,10 +3,6 @@ from pydantic import BaseModel
 from danswer.connectors.models import DocumentBase
 
 
-class ApiKey(BaseModel):
-    api_key: str
-
-
 class IngestionDocument(BaseModel):
     document: DocumentBase
     connector_id: int | None = None  # Takes precedence over the name

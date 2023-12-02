@@ -26,11 +26,11 @@ from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import get_gen_ai_api_key
 from danswer.llm.utils import test_llm
+from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.manage.models import BoostDoc
 from danswer.server.manage.models import BoostUpdateRequest
 from danswer.server.manage.models import HiddenUpdateRequest
 from danswer.server.models import ApiKey
-from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
 
 router = APIRouter(prefix="/manage")

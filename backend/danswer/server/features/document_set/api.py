@@ -12,14 +12,14 @@ from danswer.db.document_set import mark_document_set_as_to_be_deleted
 from danswer.db.document_set import update_document_set
 from danswer.db.engine import get_session
 from danswer.db.models import User
-from danswer.server.models import CheckDocSetPublicRequest
-from danswer.server.models import CheckDocSetPublicResponse
-from danswer.server.models import ConnectorCredentialPairDescriptor
-from danswer.server.models import ConnectorSnapshot
-from danswer.server.models import CredentialSnapshot
-from danswer.server.models import DocumentSet
-from danswer.server.models import DocumentSetCreationRequest
-from danswer.server.models import DocumentSetUpdateRequest
+from danswer.server.documents.models import ConnectorCredentialPairDescriptor
+from danswer.server.documents.models import ConnectorSnapshot
+from danswer.server.documents.models import CredentialSnapshot
+from danswer.server.features.document_set.models import CheckDocSetPublicRequest
+from danswer.server.features.document_set.models import CheckDocSetPublicResponse
+from danswer.server.features.document_set.models import DocumentSet
+from danswer.server.features.document_set.models import DocumentSetCreationRequest
+from danswer.server.features.document_set.models import DocumentSetUpdateRequest
 
 
 router = APIRouter(prefix="/manage")
