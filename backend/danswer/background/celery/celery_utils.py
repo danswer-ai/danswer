@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from danswer.background.task_utils import name_cc_cleanup_task
 from danswer.db.tasks import get_latest_task
-from danswer.server.models import DeletionAttemptSnapshot
+from danswer.server.documents.models import DeletionAttemptSnapshot
 
 
 def get_deletion_status(

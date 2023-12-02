@@ -2,9 +2,9 @@ from fastapi import APIRouter
 
 from danswer import __version__
 from danswer.configs.app_configs import AUTH_TYPE
-from danswer.server.models import AuthTypeResponse
+from danswer.server.manage.models import AuthTypeResponse
+from danswer.server.manage.models import VersionResponse
 from danswer.server.models import StatusResponse
-from danswer.server.models import VersionResponse
 
 router = APIRouter()
 

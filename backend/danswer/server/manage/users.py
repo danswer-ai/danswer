@@ -14,8 +14,9 @@ from danswer.db.engine import get_session
 from danswer.db.engine import get_sqlalchemy_async_engine
 from danswer.db.models import User
 from danswer.db.users import list_users
-from danswer.server.models import UserByEmail
-from danswer.server.models import UserInfo
+from danswer.server.manage.models import UserByEmail
+from danswer.server.manage.models import UserInfo
+from danswer.server.manage.models import UserRoleResponse
 
 router = APIRouter(prefix="/manage")
 
@@ -44,6 +45,13 @@ def list_all_users(
 ) -> list[UserRead]:
     users = list_users(db_session)
     return [UserRead.from_orm(user) for user in users]
+
+
+@router.get("/get-user-role", response_model=UserRoleResponse)
+async def get_user_role(user: User = Depends(current_user)) -> UserRoleResponse:
+    if user is None:
+        raise ValueError("Invalid or missing user.")
+    return UserRoleResponse(role=user.role)
 
 
 @router.get("/me")

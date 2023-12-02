@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from danswer.db.models import Persona
-from danswer.server.models import DocumentSet
+from danswer.server.features.document_set.models import DocumentSet
 
 
 class CreatePersonaRequest(BaseModel):

@@ -44,19 +44,19 @@ from danswer.direct_qa.factory import get_default_qa_model
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llm
 from danswer.search.search_nlp_models import warm_up_models
-from danswer.server.cc_pair.api import router as cc_pair_router
-from danswer.server.chat.api import router as chat_router
-from danswer.server.connector import router as connector_router
-from danswer.server.credential import router as credential_router
-from danswer.server.danswer_api import get_danswer_api_key
-from danswer.server.danswer_api import router as danswer_api_router
-from danswer.server.document_set import router as document_set_router
-from danswer.server.manage import router as admin_router
-from danswer.server.persona.api import router as persona_router
-from danswer.server.search_backend import router as backend_router
-from danswer.server.slack_bot_management import router as slack_bot_management_router
-from danswer.server.state import router as state_router
-from danswer.server.users import router as user_router
+from danswer.server.chat.chat_backend import router as chat_router
+from danswer.server.chat.search_backend import router as backend_router
+from danswer.server.danswer_api.ingestion import get_danswer_api_key
+from danswer.server.danswer_api.ingestion import router as danswer_api_router
+from danswer.server.documents.cc_pair import router as cc_pair_router
+from danswer.server.documents.connector import router as connector_router
+from danswer.server.documents.credential import router as credential_router
+from danswer.server.features.document_set.api import router as document_set_router
+from danswer.server.features.persona.api import router as persona_router
+from danswer.server.manage.administrative import router as admin_router
+from danswer.server.manage.get_state import router as state_router
+from danswer.server.manage.slack_bot import router as slack_bot_management_router
+from danswer.server.manage.users import router as user_router
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType

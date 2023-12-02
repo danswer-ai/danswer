@@ -15,7 +15,7 @@ from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.search.models import IndexFilters
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
-from danswer.server.models import NewMessageRequest
+from danswer.server.chat.models import NewMessageRequest
 from danswer.utils.callbacks import MetricsHander
 
 

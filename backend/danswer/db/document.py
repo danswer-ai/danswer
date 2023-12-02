@@ -19,7 +19,7 @@ from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentByConnectorCredentialPair
 from danswer.db.utils import model_to_dict
 from danswer.document_index.interfaces import DocumentMetadata
-from danswer.server.models import ConnectorCredentialPairIdentifier
+from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()

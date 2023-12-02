@@ -18,9 +18,9 @@ from danswer.db.engine import get_session
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.indexing.indexing_pipeline import build_indexing_pipeline
+from danswer.server.danswer_api.models import IngestionDocument
+from danswer.server.danswer_api.models import IngestionResult
 from danswer.server.models import ApiKey
-from danswer.server.models import IngestionDocument
-from danswer.server.models import IngestionResult
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()

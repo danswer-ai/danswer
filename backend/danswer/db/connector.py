@@ -11,8 +11,8 @@ from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
 from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
-from danswer.server.models import ConnectorBase
-from danswer.server.models import ObjectCreationIdResponse
+from danswer.server.documents.models import ConnectorBase
+from danswer.server.documents.models import ObjectCreationIdResponse
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
 

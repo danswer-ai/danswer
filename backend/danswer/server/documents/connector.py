@@ -46,21 +46,21 @@ from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import User
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.server.models import AuthStatus
-from danswer.server.models import AuthUrl
-from danswer.server.models import ConnectorBase
-from danswer.server.models import ConnectorCredentialPairIdentifier
-from danswer.server.models import ConnectorIndexingStatus
-from danswer.server.models import ConnectorSnapshot
-from danswer.server.models import CredentialSnapshot
-from danswer.server.models import FileUploadResponse
-from danswer.server.models import GDriveCallback
-from danswer.server.models import GoogleAppCredentials
-from danswer.server.models import GoogleServiceAccountCredentialRequest
-from danswer.server.models import GoogleServiceAccountKey
-from danswer.server.models import IndexAttemptSnapshot
-from danswer.server.models import ObjectCreationIdResponse
-from danswer.server.models import RunConnectorRequest
+from danswer.server.documents.models import AuthStatus
+from danswer.server.documents.models import AuthUrl
+from danswer.server.documents.models import ConnectorBase
+from danswer.server.documents.models import ConnectorCredentialPairIdentifier
+from danswer.server.documents.models import ConnectorIndexingStatus
+from danswer.server.documents.models import ConnectorSnapshot
+from danswer.server.documents.models import CredentialSnapshot
+from danswer.server.documents.models import FileUploadResponse
+from danswer.server.documents.models import GDriveCallback
+from danswer.server.documents.models import GoogleAppCredentials
+from danswer.server.documents.models import GoogleServiceAccountCredentialRequest
+from danswer.server.documents.models import GoogleServiceAccountKey
+from danswer.server.documents.models import IndexAttemptSnapshot
+from danswer.server.documents.models import ObjectCreationIdResponse
+from danswer.server.documents.models import RunConnectorRequest
 from danswer.server.models import StatusResponse
 
 _GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME = "google_drive_credential_id"

@@ -27,8 +27,8 @@ from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
 from danswer.direct_qa.answer_question import answer_qa_query
 from danswer.search.models import BaseFilters
-from danswer.server.models import NewMessageRequest
-from danswer.server.models import QAResponse
+from danswer.server.chat.models import NewMessageRequest
+from danswer.server.chat.models import QAResponse
 from danswer.utils.logger import setup_logger
 
 logger_base = setup_logger()

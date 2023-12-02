@@ -23,16 +23,16 @@ from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import full_chunk_search
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
-from danswer.server.models import AdminSearchRequest
-from danswer.server.models import AdminSearchResponse
-from danswer.server.models import HelperResponse
-from danswer.server.models import NewMessageRequest
-from danswer.server.models import QAFeedbackRequest
-from danswer.server.models import QAResponse
-from danswer.server.models import QueryValidationResponse
-from danswer.server.models import SearchDoc
-from danswer.server.models import SearchFeedbackRequest
-from danswer.server.models import SearchResponse
+from danswer.server.chat.models import AdminSearchRequest
+from danswer.server.chat.models import AdminSearchResponse
+from danswer.server.chat.models import HelperResponse
+from danswer.server.chat.models import NewMessageRequest
+from danswer.server.chat.models import QAFeedbackRequest
+from danswer.server.chat.models import QAResponse
+from danswer.server.chat.models import QueryValidationResponse
+from danswer.server.chat.models import SearchDoc
+from danswer.server.chat.models import SearchFeedbackRequest
+from danswer.server.chat.models import SearchResponse
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()

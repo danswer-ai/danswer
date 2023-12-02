@@ -13,7 +13,7 @@ from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.secondary_llm_flows.source_filter import extract_source_filter
 from danswer.secondary_llm_flows.time_filter import extract_time_filter
-from danswer.server.models import NewMessageRequest
+from danswer.server.chat.models import NewMessageRequest
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 
