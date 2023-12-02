@@ -465,9 +465,8 @@ class ChatMessage(Base):
     __tablename__ = "chat_message"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    chat_session_id: Mapped[int] = mapped_column(
-        ForeignKey("chat_session.id"), primary_key=True
-    )
+    chat_session_id: Mapped[int] = mapped_column(ForeignKey("chat_session.id"))
+    prompt_id: Mapped[int] = mapped_column(ForeignKey("prompt.id"))
     # Which level of the tree this message is at, 0 is the empty root message
     message_number: Mapped[int] = mapped_column(Integer)
     parent_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -478,15 +477,12 @@ class ChatMessage(Base):
     reference_docs: Mapped[dict[str, Any] | None] = mapped_column(
         postgresql.JSONB(), nullable=True
     )
-    persona_id: Mapped[int | None] = mapped_column(
-        ForeignKey("persona.id"), nullable=True
-    )
     time_sent: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
-    persona: Mapped[Optional["Persona"]] = relationship("Persona")
+    prompt: Mapped["Prompt"] = relationship("Prompt")
 
 
 """
