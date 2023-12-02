@@ -48,6 +48,7 @@ from danswer.server.chat.chat_backend import router as chat_router
 from danswer.server.chat.search_backend import router as backend_router
 from danswer.server.danswer_api.ingestion import get_danswer_api_key
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
+from danswer.server.documents.cc_pair import router as cc_pair_router
 from danswer.server.documents.connector import router as connector_router
 from danswer.server.documents.credential import router as credential_router
 from danswer.server.features.document_set.api import router as document_set_router
@@ -94,7 +95,7 @@ def get_application() -> FastAPI:
     application.include_router(user_router)
     application.include_router(connector_router)
     application.include_router(credential_router)
-    # application.include_router(cc_pair_router)
+    application.include_router(cc_pair_router)
     application.include_router(document_set_router)
     application.include_router(slack_bot_management_router)
     application.include_router(persona_router)

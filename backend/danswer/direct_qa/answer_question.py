@@ -33,9 +33,9 @@ from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import full_chunk_search
 from danswer.search.search_runner import full_chunk_search_generator
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
-from danswer.server.models import LLMRelevanceFilterResponse
-from danswer.server.models import NewMessageRequest
-from danswer.server.models import QADocsResponse
+from danswer.server.chat.models import LLMRelevanceFilterResponse
+from danswer.server.chat.models import NewMessageRequest
+from danswer.server.chat.models import QADocsResponse
 from danswer.server.models import QAResponse
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger

@@ -18,7 +18,7 @@ from danswer.danswerbot.slack.utils import build_feedback_block_id
 from danswer.danswerbot.slack.utils import remove_slack_text_interactions
 from danswer.danswerbot.slack.utils import translate_vespa_highlight_to_slack
 from danswer.direct_qa.interfaces import DanswerQuote
-from danswer.server.models import SearchDoc
+from danswer.server.chat.models import SearchDoc
 from danswer.utils.text_processing import replace_whitespaces_w_space
 
 

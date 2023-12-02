@@ -11,7 +11,7 @@ from danswer.connectors.google_drive.constants import (
 )
 from danswer.db.models import Credential
 from danswer.db.models import User
-from danswer.server.models import CredentialBase
+from danswer.server.documents.models import CredentialBase
 from danswer.utils.logger import setup_logger
 
 

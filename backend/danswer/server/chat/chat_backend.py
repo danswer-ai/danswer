@@ -27,6 +27,7 @@ from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.llm.utils import get_default_llm_token_encode
 from danswer.secondary_llm_flows.chat_helpers import get_new_chat_name
 from danswer.server.chat.models import ChatSessionCreationRequest
+from danswer.server.chat.models import RetrievalDocs
 from danswer.server.models import ChatFeedbackRequest
 from danswer.server.models import ChatMessageDetail
 from danswer.server.models import ChatMessageIdentifier
@@ -38,7 +39,6 @@ from danswer.server.models import CreateChatMessageRequest
 from danswer.server.models import CreateChatSessionID
 from danswer.server.models import RegenerateMessageRequest
 from danswer.server.models import RenameChatSessionResponse
-from danswer.server.models import RetrievalDocs
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time

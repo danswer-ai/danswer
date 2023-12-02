@@ -14,9 +14,9 @@ from danswer.db.engine import get_session
 from danswer.db.engine import get_sqlalchemy_async_engine
 from danswer.db.models import User
 from danswer.db.users import list_users
-from danswer.server.models import UserByEmail
-from danswer.server.models import UserInfo
-from danswer.server.models import UserRoleResponse
+from danswer.server.manage.models import UserByEmail
+from danswer.server.manage.models import UserInfo
+from danswer.server.manage.models import UserRoleResponse
 
 router = APIRouter(prefix="/manage")
 

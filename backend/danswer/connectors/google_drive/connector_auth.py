@@ -25,9 +25,9 @@ from danswer.connectors.google_drive.constants import SCOPES
 from danswer.db.credentials import update_credential_json
 from danswer.db.models import User
 from danswer.dynamic_configs import get_dynamic_config_store
-from danswer.server.models import CredentialBase
-from danswer.server.models import GoogleAppCredentials
-from danswer.server.models import GoogleServiceAccountKey
+from danswer.server.documents.models import CredentialBase
+from danswer.server.documents.models import GoogleAppCredentials
+from danswer.server.documents.models import GoogleServiceAccountKey
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()

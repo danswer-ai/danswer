@@ -1,18 +1,23 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_status
+from danswer.db.connector_credential_pair import add_credential_to_connector
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
+from danswer.db.connector_credential_pair import remove_credential_from_connector
 from danswer.db.document import get_document_cnts_for_cc_pairs
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.models import User
-from danswer.server.cc_pair.models import CCPairFullInfo
+from danswer.server.documents.models import CCPairFullInfo
 from danswer.server.models import ConnectorCredentialPairIdentifier
-
+from danswer.server.models import ConnectorCredentialPairMetadata
+from danswer.server.models import StatusResponse
 
 router = APIRouter(prefix="/manage")
 
@@ -64,4 +69,36 @@ def get_cc_pair_full_info(
         index_attempt_models=list(index_attempts),
         latest_deletion_attempt=latest_deletion_attempt,
         num_docs_indexed=documents_indexed,
+    )
+
+
+@router.put("/connector/{connector_id}/credential/{credential_id}")
+def associate_credential_to_connector(
+    connector_id: int,
+    credential_id: int,
+    metadata: ConnectorCredentialPairMetadata,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse[int]:
+    try:
+        return add_credential_to_connector(
+            connector_id=connector_id,
+            credential_id=credential_id,
+            cc_pair_name=metadata.name,
+            user=user,
+            db_session=db_session,
+        )
+    except IntegrityError:
+        raise HTTPException(status_code=400, detail="Name must be unique")
+
+
+@router.delete("/connector/{connector_id}/credential/{credential_id}")
+def dissociate_credential_from_connector(
+    connector_id: int,
+    credential_id: int,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse[int]:
+    return remove_credential_from_connector(
+        connector_id, credential_id, user, db_session
     )

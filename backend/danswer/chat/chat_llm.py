@@ -43,7 +43,7 @@ from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import full_chunk_search
-from danswer.server.models import RetrievalDocs
+from danswer.server.chat.models import RetrievalDocs
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
 from danswer.utils.text_processing import has_unescaped_quote
