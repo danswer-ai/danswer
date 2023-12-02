@@ -18,6 +18,8 @@ import { DocumentSetCreationForm } from "./DocumentSetCreationForm";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { deleteDocumentSet } from "./lib";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
+import { AdminPageTitle } from "@/components/admin/Title";
+import { Text } from "@tremor/react";
 
 const numToDisplay = 50;
 
@@ -249,15 +251,15 @@ const Main = () => {
   return (
     <div className="mb-8">
       {popup}
-      <div className="text-sm mb-3">
+      <Text className="mb-3 text-gray-300">
         <b>Document Sets</b> allow you to group logically connected documents
         into a single bundle. These can then be used as filter when performing
         searches in the web UI or attached to slack bots to limit the amount of
         information the bot searches over when answering in a specific channel
         or with a certain command.
-      </div>
+      </Text>
 
-      <div className="mb-2"></div>
+      <div className="mb-6"></div>
 
       <div className="flex mb-3">
         <Button className="ml-2 my-auto" onClick={() => setIsOpen(true)}>
@@ -265,12 +267,14 @@ const Main = () => {
         </Button>
       </div>
 
-      <DocumentSetTable
-        documentSets={documentSets}
-        ccPairs={ccPairs}
-        refresh={refreshDocumentSets}
-        setPopup={setPopup}
-      />
+      {documentSets.length > 0 && (
+        <DocumentSetTable
+          documentSets={documentSets}
+          ccPairs={ccPairs}
+          refresh={refreshDocumentSets}
+          setPopup={setPopup}
+        />
+      )}
 
       {isOpen && (
         <DocumentSetCreationForm
@@ -289,10 +293,7 @@ const Main = () => {
 const Page = () => {
   return (
     <div>
-      <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <BookmarkIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Document Sets</h1>
-      </div>
+      <AdminPageTitle icon={<BookmarkIcon size={32} />} title="Document Sets" />
 
       <Main />
     </div>

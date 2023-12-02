@@ -1,13 +1,11 @@
-import { getSourceMetadata } from "@/components/source";
+import { getSourceMetadata } from "@/lib/sources";
 import {
   ConfluenceConfig,
   Connector,
-  ConnectorIndexingStatus,
   GithubConfig,
   GoogleDriveConfig,
   JiraConfig,
   SlackConfig,
-  WebConfig,
   ZulipConfig,
 } from "@/lib/types";
 import Link from "next/link";
@@ -96,7 +94,7 @@ export const ConnectorTitle = ({
     </>
   );
   return (
-    <div>
+    <div className="my-auto">
       {isLink ? (
         <Link
           className={mainSectionClassName}
@@ -107,7 +105,7 @@ export const ConnectorTitle = ({
       ) : (
         <div className={mainSectionClassName}>{mainDisplay}</div>
       )}
-      {showMetadata && (
+      {showMetadata && additionalMetadata.size > 0 && (
         <div className="text-xs text-gray-300 mt-1">
           {Array.from(additionalMetadata.entries()).map(([key, value]) => {
             return (

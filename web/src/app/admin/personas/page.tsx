@@ -6,6 +6,7 @@ import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Persona } from "./interfaces";
 import { RobotIcon } from "@/components/icons/icons";
+import { AdminPageTitle } from "@/components/admin/Title";
 
 export default async function Page() {
   const personaResponse = await fetchSS("/persona");
@@ -23,10 +24,7 @@ export default async function Page() {
 
   return (
     <div>
-      <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <RobotIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Personas</h1>
-      </div>
+      <AdminPageTitle icon={<RobotIcon size={32} />} title="Personas" />
 
       <div className="text-gray-300 text-sm mb-2">
         Personas are a way to build custom search/question-answering experiences

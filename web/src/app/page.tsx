@@ -9,6 +9,7 @@ import { Connector, DocumentSet, User } from "@/lib/types";
 import { cookies } from "next/headers";
 import { SearchType } from "@/lib/search/interfaces";
 import { Persona } from "./admin/personas/interfaces";
+import { WelcomeModal } from "@/components/WelcomeModal";
 
 export default async function Home() {
   const tasks = [
@@ -78,6 +79,7 @@ export default async function Home() {
         <HealthCheckBanner />
       </div>
       <ApiKeyModal />
+      {connectors.length === 0 && connectorsResponse?.ok && <WelcomeModal />}
       <div className="px-24 pt-10 flex flex-col items-center min-h-screen bg-gray-900 text-gray-100">
         <div className="w-full">
           <SearchSection

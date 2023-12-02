@@ -5,10 +5,11 @@ import useSWR from "swr";
 import { LoadingAnimation } from "@/components/Loading";
 import { NotebookIcon } from "@/components/icons/icons";
 import { fetcher } from "@/lib/fetcher";
-import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus } from "@/lib/types";
 import { CCPairIndexingStatusTable } from "./CCPairIndexingStatusTable";
-import { Divider } from "@tremor/react";
+import { AdminPageTitle } from "@/components/admin/Title";
+import Link from "next/link";
+import { Button } from "@tremor/react";
 
 function Main() {
   const {
@@ -27,6 +28,18 @@ function Main() {
 
   if (indexAttemptIsError || !indexAttemptData) {
     return <div className="text-red-600">Error loading indexing history.</div>;
+  }
+
+  if (indexAttemptData.length === 0) {
+    return (
+      <div className="text-gray-300 text-sm">
+        It looks like you don&apos;t have any connectors setup yet. Visit the{" "}
+        <Link className="text-blue-500" href="/admin/add-connector">
+          Add Connector
+        </Link>{" "}
+        page to get started!
+      </div>
+    );
   }
 
   // sort by source name
@@ -48,13 +61,17 @@ function Main() {
 export default function Status() {
   return (
     <div className="mx-auto container dark">
-      <div className="mb-4">
-        <HealthCheckBanner />
-      </div>
-      <h1 className="text-3xl font-bold flex gap-x-2 mb-2">
-        <NotebookIcon size={32} /> Indexing Status
-      </h1>
-      <Divider />
+      <AdminPageTitle
+        icon={<NotebookIcon size={32} />}
+        title="Existing Connectors"
+        farRightElement={
+          <Link href="/admin/add-connector">
+            <Button variant="secondary" size="xs">
+              Add Connector
+            </Button>
+          </Link>
+        }
+      />
       <Main />
     </div>
   );

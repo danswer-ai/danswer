@@ -13,13 +13,12 @@ interface Collection {
 }
 
 interface SidebarProps {
-  title: string;
   collections: Collection[];
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ collections }) => {
+export function Sidebar({ collections }: SidebarProps) {
   return (
-    <aside className="w-64 bg-gray-900 text-gray-100 pl-4">
+    <aside className="bg-gray-900 text-gray-100 pl-4">
       <nav className="space-y-2 pl-4">
         {collections.map((collection, collectionInd) => (
           <div key={collectionInd}>
@@ -40,4 +39,4 @@ export const Sidebar: React.FC<SidebarProps> = ({ collections }) => {
       </nav>
     </aside>
   );
-};
+}

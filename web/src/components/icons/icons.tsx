@@ -35,6 +35,7 @@ import {
   FiBookmark,
   FiCpu,
   FiInfo,
+  FiUploadCloud,
 } from "react-icons/fi";
 import { SiBookstack } from "react-icons/si";
 import Image from "next/image";
@@ -287,6 +288,13 @@ export const RobotIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <FaRobot size={size} className={className} />;
+};
+
+export const ConnectorIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiUploadCloud size={size} className={className} />;
 };
 
 //

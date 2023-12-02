@@ -7,7 +7,7 @@ import useSWR, { mutate, useSWRConfig } from "swr";
 import { fetcher } from "./fetcher";
 import { useState } from "react";
 import { DateRangePickerValue } from "@tremor/react";
-import { Source } from "./search/interfaces";
+import { SourceMetadata } from "./search/interfaces";
 
 const CREDENTIAL_URL = "/api/manage/admin/credential";
 
@@ -77,7 +77,7 @@ export const useTimeRange = (initialValue?: DateRangePickerValue) => {
 
 export function useFilters() {
   const [timeRange, setTimeRange] = useTimeRange();
-  const [selectedSources, setSelectedSources] = useState<Source[]>([]);
+  const [selectedSources, setSelectedSources] = useState<SourceMetadata[]>([]);
   const [selectedDocumentSets, setSelectedDocumentSets] = useState<string[]>(
     []
   );

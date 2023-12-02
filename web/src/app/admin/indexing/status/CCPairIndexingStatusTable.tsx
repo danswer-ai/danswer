@@ -17,6 +17,7 @@ import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
 import Link from "next/link";
 import { isCurrentlyDeleting } from "@/lib/documentDeletion";
+import { FiEdit, FiMaximize, FiMaximize2 } from "react-icons/fi";
 
 const NUM_IN_PAGE = 20;
 
@@ -98,12 +99,17 @@ export function CCPairIndexingStatusTable({
                   "hover:bg-gradient-to-r hover:from-gray-800 hover:to-indigo-950 cursor-pointer relative"
                 }
               >
-                <TableCell className="whitespace-normal break-all">
-                  <ConnectorTitle
-                    connector={ccPairsIndexingStatus.connector}
-                    ccPairId={ccPairsIndexingStatus.cc_pair_id}
-                    ccPairName={ccPairsIndexingStatus.name}
-                  />
+                <TableCell>
+                  <div className="flex my-auto">
+                    <FiEdit className="mr-4 my-auto text-blue-300" />
+                    <div className="whitespace-normal break-all max-w-3xl">
+                      <ConnectorTitle
+                        connector={ccPairsIndexingStatus.connector}
+                        ccPairId={ccPairsIndexingStatus.cc_pair_id}
+                        ccPairName={ccPairsIndexingStatus.name}
+                      />
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell>
                   <CCPairIndexingStatusDisplay

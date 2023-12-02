@@ -74,9 +74,18 @@ export interface SearchResponse {
   queryEventId: number | null;
 }
 
-export interface Source {
+export enum SourceCategory {
+  AppConnection = "Connect to Apps",
+  ImportedKnowledge = "Import Knowledge",
+}
+
+export interface SourceMetadata {
+  icon: React.FC<{ size?: number; className?: string }>;
   displayName: string;
+  category: SourceCategory;
+  shortDescription?: string;
   internalName: ValidSources;
+  adminUrl: string;
 }
 
 export interface SearchDefaultOverrides {
@@ -93,7 +102,7 @@ export interface Filters {
 export interface SearchRequestArgs {
   query: string;
   chatSessionId: number;
-  sources: Source[];
+  sources: SourceMetadata[];
   documentSets: string[];
   timeRange: DateRangePickerValue | null;
   updateCurrentAnswer: (val: string) => void;
