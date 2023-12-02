@@ -37,7 +37,6 @@ from danswer.server.models import ConnectorCredentialPairIdentifier
 from danswer.server.models import ConnectorCredentialPairMetadata
 from danswer.server.models import HiddenUpdateRequest
 from danswer.server.models import StatusResponse
-from danswer.server.models import UserRoleResponse
 from danswer.utils.logger import setup_logger
 
 router = APIRouter(prefix="/manage")
@@ -228,13 +227,6 @@ def create_deletion_attempt_for_connector_id(
 
 
 """Endpoints for basic users"""
-
-
-@router.get("/get-user-role", response_model=UserRoleResponse)
-async def get_user_role(user: User = Depends(current_user)) -> UserRoleResponse:
-    if user is None:
-        raise ValueError("Invalid or missing user.")
-    return UserRoleResponse(role=user.role)
 
 
 @router.put("/connector/{connector_id}/credential/{credential_id}")
