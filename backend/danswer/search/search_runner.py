@@ -1,7 +1,6 @@
 import string
 from collections.abc import Callable
 from collections.abc import Iterator
-from copy import deepcopy
 from typing import cast
 
 import numpy
@@ -354,8 +353,7 @@ def retrieve_chunks(
         # Just to be extra sure, add the original query.
         query_rephrases.append(query.query)
         for rephrase in set(query_rephrases):
-            q_copy = deepcopy(query)
-            q_copy.query = rephrase
+            q_copy = query.copy(update={'query': rephrase}, deep=True)
             run_queries.append(
                 (doc_index_retrieval, (q_copy, document_index, hybrid_alpha))
             )
