@@ -207,7 +207,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                           name: (
                             <div className="flex">
                               <BarChartIcon size={18} />
-                              <div className="ml-1">Anaytics</div>
+                              <div className="ml-1">Analytics</div>
                             </div>
                           ),
                           link: "/admin/performance/analytics",
