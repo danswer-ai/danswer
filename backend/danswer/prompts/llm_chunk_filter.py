@@ -1,3 +1,7 @@
+# The following prompts are used to pass each chunk to the LLM (the cheap/fast one)
+# to determine if the chunk is useful towards the user query. This is used as part
+# of the reranking flow
+
 USEFUL_PAT = "Yes useful"
 NONUSEFUL_PAT = "Not useful"
 CHUNK_FILTER_PROMPT = f"""

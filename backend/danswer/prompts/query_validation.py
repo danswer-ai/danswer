@@ -1,3 +1,7 @@
+# The following prompts are used for verifying if the user's query can be answered by the current
+# system. Many new users do not understand the design/capabilities of the system and will ask
+# questions that are unanswerable such as aggregations or user specific questions that the system
+# cannot handle, this is used to identify those cases
 from danswer.prompts.constants import ANSWERABLE_PAT
 from danswer.prompts.constants import GENERAL_SEP_PAT
 from danswer.prompts.constants import QUESTION_PAT

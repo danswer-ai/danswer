@@ -1,3 +1,5 @@
+# Prompts that aren't part of a particular configurable feature
+
 LANGUAGE_REPHRASE_PROMPT = """
 Rephrase the query in {target_language}.
 If the query is already in the correct language, \

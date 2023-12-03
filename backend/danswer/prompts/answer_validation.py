@@ -1,3 +1,5 @@
+# The following prompts are used for verifying the LLM answer after it is already produced.
+# Reflexion flow essentially. This feature can be toggled on/off
 from danswer.prompts.constants import ANSWER_PAT
 from danswer.prompts.constants import QUESTION_PAT
 

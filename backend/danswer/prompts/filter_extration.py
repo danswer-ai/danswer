@@ -1,3 +1,6 @@
+# The following prompts are used for extracting filters to apply along with the query in the
+# document index. For example, a filter for dates or a filter by source type such as GitHub
+# or Slack
 from danswer.prompts.constants import SOURCES_KEY
 
 

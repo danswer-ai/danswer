@@ -2,7 +2,7 @@ from collections.abc import Callable
 
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
-from danswer.prompts.secondary_llm_flows import LANGUAGE_REPHRASE_PROMPT
+from danswer.prompts.miscellaneous_prompts import LANGUAGE_REPHRASE_PROMPT
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 
