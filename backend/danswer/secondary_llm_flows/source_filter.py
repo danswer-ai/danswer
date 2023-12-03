@@ -9,9 +9,9 @@ from danswer.db.engine import get_sqlalchemy_engine
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.prompts.constants import SOURCES_KEY
-from danswer.prompts.secondary_llm_flows import FILE_SOURCE_WARNING
-from danswer.prompts.secondary_llm_flows import SOURCE_FILTER_PROMPT
-from danswer.prompts.secondary_llm_flows import WEB_SOURCE_WARNING
+from danswer.prompts.filter_extration import FILE_SOURCE_WARNING
+from danswer.prompts.filter_extration import SOURCE_FILTER_PROMPT
+from danswer.prompts.filter_extration import WEB_SOURCE_WARNING
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
 from danswer.utils.timing import log_function_time

@@ -2,8 +2,8 @@ from collections.abc import Callable
 
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
-from danswer.prompts.secondary_llm_flows import CHUNK_FILTER_PROMPT
-from danswer.prompts.secondary_llm_flows import NONUSEFUL_PAT
+from danswer.prompts.llm_chunk_filter import CHUNK_FILTER_PROMPT
+from danswer.prompts.llm_chunk_filter import NONUSEFUL_PAT
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 

@@ -7,8 +7,8 @@ from dateutil.parser import parse
 
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
+from danswer.prompts.filter_extration import TIME_FILTER_PROMPT
 from danswer.prompts.prompt_utils import get_current_llm_day_time
-from danswer.prompts.secondary_llm_flows import TIME_FILTER_PROMPT
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 

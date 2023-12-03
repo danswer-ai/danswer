@@ -1,3 +1,5 @@
+# The following prompts are used for the initial response before a chat history exists
+# It is used also for the one shot direct QA flow
 import json
 
 from danswer.prompts.constants import ANSWER_PAT
