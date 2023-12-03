@@ -332,6 +332,12 @@ def apply_boost(
     return final_chunks
 
 
+def _simplify_text(text: str) -> str:
+    return "".join(
+        char for char in text if char not in string.punctuation and not char.isspace()
+    ).lower()
+
+
 def retrieve_chunks(
     query: SearchQuery,
     document_index: DocumentIndex,
@@ -347,13 +353,22 @@ def retrieve_chunks(
             query=query, document_index=document_index, hybrid_alpha=hybrid_alpha
         )
     else:
+        simplified_queries = set()
         run_queries: list[tuple[Callable, tuple]] = []
+
         # Currently only uses query expansion on multilingual use cases
         query_rephrases = rephrase_query(query.query, multilingual_query_expansion)
         # Just to be extra sure, add the original query.
         query_rephrases.append(query.query)
         for rephrase in set(query_rephrases):
-            q_copy = query.copy(update={'query': rephrase}, deep=True)
+            # Sometimes the model rephrases the query in the same language with minor changes
+            # Avoid doing an extra search with the minor changes as this biases the results
+            simplified_rephrase = _simplify_text(rephrase)
+            if simplified_rephrase in simplified_queries:
+                continue
+            simplified_queries.add(simplified_rephrase)
+
+            q_copy = query.copy(update={"query": rephrase}, deep=True)
             run_queries.append(
                 (doc_index_retrieval, (q_copy, document_index, hybrid_alpha))
             )

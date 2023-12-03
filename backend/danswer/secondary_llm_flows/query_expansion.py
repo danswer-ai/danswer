@@ -42,7 +42,11 @@ def rephrase_query(
             (llm_rephrase_query, (query, language)) for language in languages
         ]
 
-        return run_functions_tuples_in_parallel(functions_with_args)
+        query_rephrases = run_functions_tuples_in_parallel(functions_with_args)
+        return query_rephrases
 
     else:
-        return [llm_rephrase_query(query, language) for language in languages]
+        query_rephrases = [
+            llm_rephrase_query(query, language) for language in languages
+        ]
+        return query_rephrases

@@ -1,11 +1,11 @@
 # Prompts that aren't part of a particular configurable feature
 
 LANGUAGE_REPHRASE_PROMPT = """
-Rephrase the query in {target_language}.
-If the query is already in the correct language, \
-simply repeat the ORIGINAL query back to me, EXACTLY as is with no rephrasing.
-NEVER change proper nouns, technical terms, acronyms, or terms you are not familiar with.
-IMPORTANT, if the query is already in the target language, DO NOT REPHRASE OR EDIT the query!
+Translate query to {target_language}.
+If the query at the end is already in {target_language}, \
+simply repeat the ORIGINAL query back to me, EXACTLY as is with no edits.
+
+If the query below is not in {target_language}, translate it into {target_language}.
 
 Query:
 {query}
