@@ -10,8 +10,14 @@ import { cookies } from "next/headers";
 import { SearchType } from "@/lib/search/interfaces";
 import { Persona } from "./admin/personas/interfaces";
 import { WelcomeModal } from "@/components/WelcomeModal";
+import { unstable_noStore as noStore } from "next/cache";
 
 export default async function Home() {
+  // Disable caching so we always get the up to date connector / document set / persona info
+  // importantly, this prevents users from adding a connector, going back to the main page,
+  // and then getting hit with a "No Connectors" popup
+  noStore();
+
   const tasks = [
     getAuthDisabledSS(),
     getCurrentUserSS(),

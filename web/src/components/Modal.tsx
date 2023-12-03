@@ -2,9 +2,15 @@ interface ModalProps {
   children: JSX.Element | string;
   title?: JSX.Element | string;
   onOutsideClick?: () => void;
+  className?: string;
 }
 
-export function Modal({ children, title, onOutsideClick }: ModalProps) {
+export function Modal({
+  children,
+  title,
+  onOutsideClick,
+  className,
+}: ModalProps) {
   return (
     <div>
       <div
@@ -18,6 +24,7 @@ export function Modal({ children, title, onOutsideClick }: ModalProps) {
           className={`
           bg-gray-800 rounded-sm shadow-lg
           shadow-lg relative w-1/2 text-sm
+          ${className}
         `}
           onClick={(event) => event.stopPropagation()}
         >

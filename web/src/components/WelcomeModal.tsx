@@ -7,13 +7,8 @@ import { useState } from "react";
 import { FiX } from "react-icons/fi";
 
 export function WelcomeModal() {
-  const [isClosed, setIsClosed] = useState(false);
-  if (isClosed) {
-    return null;
-  }
-
   return (
-    <Modal>
+    <Modal className="max-w-4xl">
       <div className="px-6 py-4">
         <h2 className="text-xl font-bold mb-4 pb-2 border-b border-gray-700 flex">
           Welcome to Danswer 🎉
