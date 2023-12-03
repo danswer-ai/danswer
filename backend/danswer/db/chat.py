@@ -2,13 +2,12 @@ from collections.abc import Sequence
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import and_
+from sqlalchemy import and_, nullsfirst
 from sqlalchemy import delete
 from sqlalchemy import func
 from sqlalchemy import not_
 from sqlalchemy import select
-from sqlalchemy.exc import NoResultFound
-from sqlalchemy.orm import selectinload
+from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
@@ -16,9 +15,9 @@ from danswer.configs.constants import MessageType
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
-from danswer.db.models import DocumentSet as DocumentSetDBModel
-from danswer.db.models import Persona
-from danswer.db.models import ToolInfo
+from danswer.db.models import DocumentSet as DBDocumentSet
+from danswer.db.models import SearchDoc as DBSearchDoc
+from danswer.db.models import Persona, Prompt
 
 
 def fetch_chat_sessions_by_user(
@@ -43,26 +42,26 @@ def fetch_chat_messages_by_session(
     stmt = (
         select(ChatMessage)
         .where(ChatMessage.chat_session_id == chat_session_id)
-        .order_by(ChatMessage.message_number.asc(), ChatMessage.edit_number.asc())
+        # Start with the root message which has no parent
+        .order_by(nullsfirst(ChatMessage.parent_message))
     )
     result = db_session.execute(stmt).scalars().all()
     return list(result)
 
 
 def fetch_chat_message(
-    chat_session_id: int, message_number: int, edit_number: int, db_session: Session
+    chat_message_id: int,
+    db_session: Session,
+    chat_session_id: int | None = None
 ) -> ChatMessage:
-    stmt = (
-        select(ChatMessage)
-        .where(
-            (ChatMessage.chat_session_id == chat_session_id)
-            & (ChatMessage.message_number == message_number)
-            & (ChatMessage.edit_number == edit_number)
-        )
-        .options(selectinload(ChatMessage.chat_session))
-    )
+    """If dealing with user inputs, be sure to verify chat_session_id to avoid bad inputs fetching
+    messages from other sessions"""
+    stmt = select(ChatMessage).where(ChatMessage.id == chat_message_id)
+    if chat_session_id is not None:
+        stmt = stmt.where(ChatMessage.chat_session_id == chat_session_id)
 
-    chat_message = db_session.execute(stmt).scalar_one_or_none()
+    result = db_session.execute(stmt)
+    chat_message = result.scalar_one_or_none()
 
     if not chat_message:
         raise ValueError("Invalid Chat Message specified")
@@ -192,54 +191,68 @@ def _set_latest_chat_message_no_commit(
     ).update({ChatMessage.latest: True})
 
 
+def get_or_create_root_message(
+    chat_session_id: int,
+    db_session: Session,
+) -> ChatMessage:
+    try:
+        root_message: ChatMessage | None = db_session.query(ChatMessage).filter(
+            ChatMessage.chat_session_id == chat_session_id,
+            ChatMessage.parent_message.is_(None)
+        ).one_or_none()
+    except MultipleResultsFound:
+        raise Exception("Multiple root messages found for chat session. Data inconsistency detected.")
+
+    if root_message is not None:
+        return root_message
+    else:
+        new_root_message = ChatMessage(
+            chat_session_id=chat_session_id,
+            prompt_id=None,
+            parent_message=None,
+            latest_child_message=None,
+            message='',
+            token_count=0,
+            message_type=MessageType.SYSTEM
+        )
+        db_session.add(new_root_message)
+        db_session.commit()
+        return new_root_message
+
+
 def create_new_chat_message(
     chat_session_id: int,
-    message_number: int,
+    parent_message: ChatMessage,
+    prompt_id: int,
     message: str,
     token_count: int,
-    parent_edit_number: int | None,
     message_type: MessageType,
     db_session: Session,
-    retrieval_docs: dict[str, Any] | None = None,
+    reference_docs: list[DBSearchDoc] | None = None,
+    commit: bool = True
 ) -> ChatMessage:
-    """Creates a new chat message and sets it to the latest message of its parent message"""
-    # Get the count of existing edits at the provided message number
-    latest_edit_number = (
-        db_session.query(func.max(ChatMessage.edit_number))
-        .filter_by(
-            chat_session_id=chat_session_id,
-            message_number=message_number,
-        )
-        .scalar()
-    )
-
-    # The new message is a new edit at the provided message number
-    new_edit_number = latest_edit_number + 1 if latest_edit_number is not None else 0
-
-    # Create a new message and set it to be the latest for its parent message
     new_chat_message = ChatMessage(
         chat_session_id=chat_session_id,
-        message_number=message_number,
-        parent_edit_number=parent_edit_number,
-        edit_number=new_edit_number,
+        prompt_id=prompt_id,
+        parent_message=parent_message.id,
+        latest_child_message=None,
         message=message,
-        reference_docs=retrieval_docs,
         token_count=token_count,
         message_type=message_type,
     )
 
+    # SQL Alchemy will propagate this to update the reference_docs' foreign keys
+    if reference_docs:
+        new_chat_message.search_docs = reference_docs
+
     db_session.add(new_chat_message)
 
-    # Set the previous latest message of the same parent, as no longer the latest
-    _set_latest_chat_message_no_commit(
-        chat_session_id=chat_session_id,
-        message_number=message_number,
-        parent_edit_number=parent_edit_number,
-        edit_number=new_edit_number,
-        db_session=db_session,
-    )
+    # Flush the session to get an ID for the new chat message
+    db_session.flush()
 
-    db_session.commit()
+    parent_message.latest_child_message = new_chat_message.id
+    if commit:
+        db_session.commit()
 
     return new_chat_message
 
@@ -266,7 +279,6 @@ def fetch_persona_by_id(persona_id: int, db_session: Session) -> Persona:
     stmt = (
         select(Persona)
         .where(Persona.id == persona_id)
-        .where(Persona.deleted == False)  # noqa: E712
     )
     result = db_session.execute(stmt)
     persona = result.scalar_one_or_none()
@@ -277,84 +289,108 @@ def fetch_persona_by_id(persona_id: int, db_session: Session) -> Persona:
     return persona
 
 
-def fetch_default_persona_by_name(
-    persona_name: str, db_session: Session
-) -> Persona | None:
-    stmt = (
-        select(Persona)
-        .where(
-            Persona.name == persona_name, Persona.default_persona == True  # noqa: E712
-        )
-        .where(Persona.deleted == False)  # noqa: E712
-    )
+def fetch_prompt_by_name(
+    prompt_name: str,
+    user_id: UUID | None,
+    db_session: Session
+) -> Prompt | None:
+    """Will throw exception if multiple prompt found by the name"""
+    stmt = select(Prompt).where(Prompt.name == prompt_name, Prompt.user_id == user_id)
     result = db_session.execute(stmt).scalar_one_or_none()
     return result
 
 
-def fetch_persona_by_name(persona_name: str, db_session: Session) -> Persona | None:
-    """Try to fetch a default persona by name first,
-    if not exist, try to find any persona with the name
-    Note that name is not guaranteed unique unless default is true"""
-    persona = fetch_default_persona_by_name(persona_name, db_session)
-    if persona is not None:
-        return persona
+def fetch_persona_by_name(
+    persona_name: str,
+    user_id: UUID | None,
+    db_session: Session
+) -> Persona | None:
+    """Will throw exception if multiple personas found by the name"""
+    stmt = select(Persona).where(Persona.name == persona_name, Persona.user_id == user_id)
+    result = db_session.execute(stmt).scalar_one_or_none()
+    return result
 
-    stmt = (
-        select(Persona)
-        .where(Persona.name == persona_name)
-        .where(Persona.deleted == False)  # noqa: E712
-    )
-    result = db_session.execute(stmt).first()
-    if result:
-        return result[0]
-    return None
+
+def upsert_prompt(
+    name: str,
+    system_prompt: str,
+    task_prompt: str,
+    datetime_aware: bool,
+    db_session: Session,
+    prompt_id: int | None = None,
+    user_id: UUID | None = None,
+    default_prompt: bool = True,
+    commit: bool = True,
+) -> Prompt:
+    prompt = db_session.query(Prompt).filter_by(id=prompt_id).first()
+
+    if prompt is None:
+        prompt = fetch_prompt_by_name(
+            prompt_name=name,
+            user_id=user_id,
+            db_session=db_session
+        )
+
+    if prompt:
+        if not default_prompt and prompt.default_prompt:
+            raise ValueError("Cannot update default prompt with non-default.")
+
+        prompt.system_prompt = system_prompt
+        prompt.task_prompt = task_prompt
+        prompt.datetime_aware = datetime_aware
+        prompt.default_prompt = default_prompt
+
+    else:
+        prompt = Prompt(
+            user_id=user_id,
+            name=name,
+            system_prompt=system_prompt,
+            task_prompt=task_prompt,
+            datetime_aware=datetime_aware,
+            default_prompt=default_prompt
+        )
+        db_session.add(prompt)
+
+    if commit:
+        db_session.commit()
+    else:
+        # Flush the session so that the Prompt has an ID
+        db_session.flush()
+
+    return prompt
 
 
 def upsert_persona(
-    db_session: Session,
     name: str,
-    retrieval_enabled: bool,
-    datetime_aware: bool,
-    description: str | None = None,
-    system_text: str | None = None,
-    tools: list[ToolInfo] | None = None,
-    hint_text: str | None = None,
-    num_chunks: int | None = None,
-    apply_llm_relevance_filter: bool | None = None,
+    description: str,
+    num_chunks: int,
+    llm_relevance_filter: bool,
+    prompts: list[Prompt] | None,
+    document_sets: list[DBDocumentSet] | None,
+    db_session: Session,
     persona_id: int | None = None,
-    default_persona: bool = False,
-    document_sets: list[DocumentSetDBModel] | None = None,
+    user_id: UUID | None = None,
+    default_persona: bool = True,
     llm_model_version_override: str | None = None,
     commit: bool = True,
-    overwrite_duplicate_named_persona: bool = False,
 ) -> Persona:
     persona = db_session.query(Persona).filter_by(id=persona_id).first()
-    if persona and persona.deleted:
-        raise ValueError("Trying to update a deleted persona")
 
-    # Default personas are defined via yaml files at deployment time
     if persona is None:
-        if default_persona:
-            persona = fetch_default_persona_by_name(name, db_session)
-        else:
-            # only one persona with the same name should exist
-            persona_with_same_name = fetch_persona_by_name(name, db_session)
-            if persona_with_same_name and not overwrite_duplicate_named_persona:
-                raise ValueError("Trying to create a persona with a duplicate name")
-
-            # set "existing" persona to the one with the same name so we can override it
-            persona = persona_with_same_name
+        persona = fetch_persona_by_name(
+            persona_name=name,
+            user_id=user_id,
+            db_session=db_session
+        )
 
     if persona:
+        if not default_persona and persona.default_persona:
+            raise ValueError("Cannot update default persona with non-default.")
+
         persona.name = name
         persona.description = description
-        persona.retrieval_enabled = retrieval_enabled
-        persona.datetime_aware = datetime_aware
-        persona.system_text = system_text
-        persona.tools = tools
-        persona.hint_text = hint_text
         persona.num_chunks = num_chunks
-        persona.apply_llm_relevance_filter = apply_llm_relevance_filter
+        persona.llm_relevance_filter = llm_relevance_filter
         persona.default_persona = default_persona
         persona.llm_model_version_override = llm_model_version_override
 
@@ -362,21 +398,21 @@ def upsert_persona(
         # a new updated list is provided
         if document_sets is not None:
             persona.document_sets.clear()
-            persona.document_sets = document_sets
+            persona.document_sets = document_sets or []
+
+        if prompts is not None:
+            persona.prompts.clear()
+            persona.prompts = prompts
 
     else:
         persona = Persona(
             name=name,
             description=description,
-            retrieval_enabled=retrieval_enabled,
-            datetime_aware=datetime_aware,
-            system_text=system_text,
-            tools=tools,
-            hint_text=hint_text,
             num_chunks=num_chunks,
-            apply_llm_relevance_filter=apply_llm_relevance_filter,
+            llm_relevance_filter=llm_relevance_filter,
+            prompts=prompts,
             default_persona=default_persona,
-            document_sets=document_sets if document_sets else [],
+            document_sets=document_sets or [],
             llm_model_version_override=llm_model_version_override,
         )
         db_session.add(persona)
@@ -395,16 +431,10 @@ def fetch_personas(
     include_default: bool = False,
     include_slack_bot_personas: bool = False,
 ) -> Sequence[Persona]:
-    stmt = select(Persona).where(Persona.deleted == False)  # noqa: E712
+    stmt = select(Persona)
     if not include_default:
         stmt = stmt.where(Persona.default_persona == False)  # noqa: E712
     if not include_slack_bot_personas:
         stmt = stmt.where(not_(Persona.name.startswith(SLACK_BOT_PERSONA_PREFIX)))
 
     return db_session.scalars(stmt).all()
-
-
-def mark_persona_as_deleted(db_session: Session, persona_id: int) -> None:
-    persona = fetch_persona_by_id(persona_id, db_session)
-    persona.deleted = True
-    db_session.commit()

@@ -92,5 +92,6 @@ class SearchFeedbackType(str, Enum):
 class MessageType(str, Enum):
     # Using OpenAI standards, Langchain equivalent shown in comment
     # System message is always constructed on the fly, not saved
+    SYSTEM = "system"  # SystemMessage
     USER = "user"  # HumanMessage
     ASSISTANT = "assistant"  # AIMessage

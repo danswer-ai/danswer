@@ -38,49 +38,6 @@ REQUIRE_DANSWER_SYSTEM_MSG = (
     f'Respond with EXACTLY and ONLY "{YES_SEARCH}" or "{NO_SEARCH}"'
 )
 
-TOOL_TEMPLATE = """
-TOOLS
-------
-You can use tools to look up information that may be helpful in answering the user's \
-original question. The available tools are:
-
-{tool_overviews}
-
-RESPONSE FORMAT INSTRUCTIONS
-----------------------------
-When responding to me, please output a response in one of two formats:
-
-**Option 1:**
-Use this if you want to use a tool. Markdown code snippet formatted in the following schema:
-
-```json
-{{
-    "action": string, \\ The action to take. {tool_names}
-    "action_input": string \\ The input to the action
-}}
-```
-
-**Option #2:**
-Use this if you want to respond directly to the user. Markdown code snippet formatted in the following schema:
-
-```json
-{{
-    "action": "Final Answer",
-    "action_input": string \\ You should put what you want to return to use here
-}}
-```
-"""
-
-TOOL_LESS_PROMPT = """
-Respond with a markdown code snippet in the following schema:
-
-```json
-{{
-    "action": "Final Answer",
-    "action_input": string \\ You should put what you want to return to use here
-}}
-```
-"""
 
 USER_INPUT = """
 USER'S INPUT
@@ -140,37 +97,6 @@ def form_user_prompt_text(
     return user_prompt.strip()
 
 
-def form_tool_section_text(
-    tools: list[ToolInfo] | None, retrieval_enabled: bool, template: str = TOOL_TEMPLATE
-) -> str | None:
-    if not tools and not retrieval_enabled:
-        return None
-
-    if retrieval_enabled and tools:
-        tools.append(
-            {"name": DANSWER_TOOL_NAME, "description": DANSWER_TOOL_DESCRIPTION}
-        )
-
-    tools_intro = []
-    if tools:
-        num_tools = len(tools)
-        for tool in tools:
-            description_formatted = tool["description"].replace("\n", " ")
-            tools_intro.append(f"> {tool['name']}: {description_formatted}")
-
-        prefix = "Must be one of " if num_tools > 1 else "Must be "
-
-        tools_intro_text = "\n".join(tools_intro)
-        tool_names_text = prefix + ", ".join([tool["name"] for tool in tools])
-
-    else:
-        return None
-
-    return template.format(
-        tool_overviews=tools_intro_text, tool_names=tool_names_text
-    ).strip()
-
-
 def format_danswer_chunks_for_chat(chunks: list[InferenceChunk]) -> str:
     if not chunks:
         return "No Results Found"
@@ -179,31 +105,6 @@ def format_danswer_chunks_for_chat(chunks: list[InferenceChunk]) -> str:
         f"DOCUMENT {ind}:\n{CODE_BLOCK_PAT.format(chunk.content)}\n"
         for ind, chunk in enumerate(chunks, start=1)
     )
-
-
-def form_tool_followup_text(
-    tool_output: str,
-    query: str,
-    hint_text: str | None,
-    tool_followup_prompt: str = TOOL_FOLLOWUP,
-    ignore_hint: bool = False,
-) -> str:
-    # If multi-line query, it likely confuses the model more than helps
-    if "\n" not in query:
-        optional_reminder = f"\nAs a reminder, my query was: {query}\n"
-    else:
-        optional_reminder = ""
-
-    if not ignore_hint and hint_text:
-        hint_text_spaced = f"\nHint: {hint_text}\n"
-    else:
-        hint_text_spaced = ""
-
-    return tool_followup_prompt.format(
-        tool_output=tool_output,
-        optional_reminder=optional_reminder,
-        hint=hint_text_spaced,
-    ).strip()
 
 
 def build_combined_query(

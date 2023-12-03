@@ -26,12 +26,13 @@ class HelperResponse(BaseModel):
 
 class SearchDoc(BaseModel):
     document_id: str
+    chunk_ind: int
     semantic_identifier: str
     link: str | None
     blurb: str
     source_type: str
     boost: int
-    # whether the document is hidden when doing a standard search
+    # Whether the document is hidden when doing a standard search
     # since a standard search will never find a hidden doc, this can only ever
     # be `True` when doing an admin search
     hidden: bool
@@ -104,10 +105,10 @@ class ChatFeedbackRequest(BaseModel):
 
 class CreateChatMessageRequest(BaseModel):
     chat_session_id: int
-    message_number: int
-    parent_edit_number: int | None
+    parent_message_id: int | None
     message: str
-    persona_id: int | None
+    prompt_id: int
+    search_doc_ids: list[int]
 
 
 class ChatMessageIdentifier(BaseModel):
@@ -141,10 +142,10 @@ class ChatSessionsResponse(BaseModel):
 
 
 class ChatMessageDetail(BaseModel):
+    message_id: int
     message_number: int
-    edit_number: int
-    parent_edit_number: int | None
-    latest: bool
+    parent_message: int
+    latest_child_message: int | None
     message: str
     context_docs: RetrievalDocs | None
     message_type: MessageType

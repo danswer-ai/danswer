@@ -11,7 +11,7 @@ from uuid import UUID
 from fastapi_users.db import SQLAlchemyBaseOAuthAccountTableUUID
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyBaseAccessTokenTableUUID
-from sqlalchemy import Boolean
+from sqlalchemy import Boolean, Float
 from sqlalchemy import DateTime
 from sqlalchemy import Enum
 from sqlalchemy import ForeignKey
@@ -88,7 +88,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         "ChatSession", back_populates="user"
     )
     prompts: Mapped[List["Prompt"]] = relationship("Prompt", back_populates="user")
-
+    personas: Mapped[List["Persona"]] = relationship("Persona", back_populates="user")
 
 class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
     pass
@@ -394,6 +394,28 @@ Messages Tables
 """
 
 
+class SearchDoc(Base):
+    """Different from Document table. This one stores the state of a document from a retrieval.
+    This allows chat sessions to be replayed with the searched docs"""
+    __tablename__ = "chat_session"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    chat_message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
+    document_id: Mapped[str] = mapped_column(String)
+    chunk_ind: Mapped[int] = mapped_column(Integer)
+    semantic_id: Mapped[str] = mapped_column(String)
+    link: Mapped[str | None] = mapped_column(String, nullable=True)
+    blurb: Mapped[str] = mapped_column(String)
+    boost: Mapped[int] = mapped_column(Integer)
+    hidden: Mapped[bool] = mapped_column(Boolean)
+    score: Mapped[float] = mapped_column(Float)
+    match_highlights: Mapped[str] = mapped_column(String)
+    # This is for the document, not this row in the table
+    updated_at: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+
 class ChatSession(Base):
     __tablename__ = "chat_session"
 
@@ -422,26 +444,18 @@ class ChatSession(Base):
 
 
 class ChatMessage(Base):
+    """Note, the first message in a chain has no contents, it's a workaround to allow edits
+    on the first message of a session, an empty root node basically"""
     __tablename__ = "chat_message"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_session_id: Mapped[int] = mapped_column(ForeignKey("chat_session.id"))
-    prompt_id: Mapped[int] = mapped_column(ForeignKey("prompt.id"))
-    # Which level of the tree this message is at, 0 is the empty root message
-    message_number: Mapped[int] = mapped_column(Integer)
+    prompt_id: Mapped[int | None] = mapped_column(ForeignKey("prompt.id"), nullable=True)
     parent_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     latest_child_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     message: Mapped[str] = mapped_column(Text)
     token_count: Mapped[int] = mapped_column(Integer)
     message_type: Mapped[MessageType] = mapped_column(Enum(MessageType))
-    # The following retrieval only applies for AI/Assistant messages
-    # Docs/Chunks can be retrieved or selected
-    reference_document_ids: Mapped[list[str] | None] = mapped_column(
-        postgresql.ARRAY(String), nullable=True
-    )
-    reference_chunk_ids: Mapped[list[int] | None] = mapped_column(
-        postgresql.ARRAY(Integer), nullable=True
-    )
     # Gen AI user feedback only applies to assistant messages
     gen_ai_feedback: Mapped[QAFeedbackType | None] = mapped_column(
         Enum(QAFeedbackType), nullable=True
@@ -451,9 +465,14 @@ class ChatMessage(Base):
     )
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
-    prompt: Mapped["Prompt"] = relationship("Prompt")
+    prompt: Mapped[Optional["Prompt"]] = relationship("Prompt")
     document_feedbacks: Mapped[List["DocumentRetrievalFeedback"]] = relationship(
         "DocumentRetrievalFeedback", back_populates="chat_message"
+    )
+    search_docs: Mapped[List[SearchDoc]] = relationship(
+        "SearchDoc",
+        backref="chat_message",
+        cascade="all, delete-orphan"
     )
 
 
@@ -466,12 +485,8 @@ class DocumentRetrievalFeedback(Base):
     __tablename__ = "document_retrieval_feedback"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    chat_message_id: Mapped[int] = mapped_column(
-        ForeignKey("chat_message.id"),
-    )
-    document_id: Mapped[str] = mapped_column(
-        ForeignKey("document.id"),
-    )
+    chat_message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
+    document_id: Mapped[str] = mapped_column(ForeignKey("document.id"))
     # How high up this document is in the results, 1 for first
     document_rank: Mapped[int] = mapped_column(Integer)
     clicked: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -491,35 +506,12 @@ class ChatMessageFeedback(Base):
     __tablename__ = "chat_feedback"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    chat_message_chat_session_id: Mapped[int] = mapped_column(Integer)
-    chat_message_message_number: Mapped[int] = mapped_column(Integer)
-    chat_message_edit_number: Mapped[int] = mapped_column(Integer)
+    chat_message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
     is_positive: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     feedback_text: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    __table_args__ = (
-        ForeignKeyConstraint(
-            [
-                "chat_message_chat_session_id",
-                "chat_message_message_number",
-                "chat_message_edit_number",
-            ],
-            [
-                "chat_message.chat_session_id",
-                "chat_message.message_number",
-                "chat_message.edit_number",
-            ],
-        ),
-    )
-
     chat_message: Mapped[ChatMessage] = relationship(
-        "ChatMessage",
-        foreign_keys=[
-            chat_message_chat_session_id,
-            chat_message_message_number,
-            chat_message_edit_number,
-        ],
-        backref="feedbacks",
+        "ChatMessage", back_populates="chat_message_feedbacks"
     )
 
 
@@ -535,7 +527,7 @@ class DocumentSet(Base):
     name: Mapped[str] = mapped_column(String, unique=True)
     description: Mapped[str] = mapped_column(String)
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
-    # whether or not changes to the document set have been propagated
+    # Whether changes to the document set have been propagated
     is_up_to_date: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     connector_credential_pairs: Mapped[list[ConnectorCredentialPair]] = relationship(
@@ -551,20 +543,19 @@ class DocumentSet(Base):
     )
 
 
-class ToolInfo(TypedDict):
-    name: str
-    description: str
-
-
 class Prompt(Base):
     __tablename__ = "prompt"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # If not belong to a user, then it's shared
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
-    shared: Mapped[bool] = mapped_column(Boolean, default=False)
+    name: Mapped[str] = mapped_column(String)
     system_prompt: Mapped[str] = mapped_column(Text)
     task_prompt: Mapped[str] = mapped_column(Text)
     datetime_aware: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Default prompts are configured via backend during deployment
+    # Treated specially (cannot be user edited etc.)
+    default_prompt: Mapped[bool] = mapped_column(Boolean, default=False)
 
     user: Mapped[User] = relationship("User", back_populates="prompt")
     personas: Mapped[list["Persona"]] = relationship(
@@ -578,42 +569,39 @@ class Persona(Base):
     __tablename__ = "persona"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # If not belong to a user, then it's shared
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str | None] = mapped_column(String, nullable=True)
     # Number of chunks to use for retrieval. If unspecified, uses the default set
     # in the env variables
     num_chunks: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # if unspecified, then uses the default set in the env variables
-    apply_llm_relevance_filter: Mapped[bool | None] = mapped_column(
-        Boolean, nullable=True
-    )
-    # allows the Persona to specify a different LLM version than is controlled
+    llm_relevance_filter: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    # Default personas are configured via backend during deployment
+    # Treated specially (cannot be user edited etc.)
+    default_persona: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Allows the Persona to specify a different LLM version than is controlled
     # globablly via env variables. For flexibility, validity is not currently enforced
     # NOTE: only is applied on the actual response generation - is not used for things like
     # auto-detected time filters, relevance filters, etc.
     llm_model_version_override: Mapped[str | None] = mapped_column(
         String, nullable=True
     )
-    # Default personas are configured via backend during deployment
-    # Treated specially (cannot be user edited etc.)
-    default_persona: Mapped[bool] = mapped_column(Boolean, default=False)
-    # Currently no tool calling/agents available
-    tools: Mapped[list[ToolInfo] | None] = mapped_column(
-        postgresql.JSONB(), nullable=True
-    )
 
-    # These are only defaults, users can select from all if desired
-    document_sets: Mapped[list[DocumentSet]] = relationship(
-        "DocumentSet",
-        secondary=Persona__DocumentSet.__table__,
-        back_populates="personas",
-    )
     # These are only defaults, users can select from all if desired
     prompts: Mapped[list[Prompt]] = relationship(
         "Prompt",
         secondary=Persona__Prompt.__table__,
         back_populates="personas",
     )
+    # These are only defaults, users can select from all if desired
+    document_sets: Mapped[list[DocumentSet]] = relationship(
+        "DocumentSet",
+        secondary=Persona__DocumentSet.__table__,
+        back_populates="personas",
+    )
+    user: Mapped[User] = relationship("User", back_populates="persona")
 
     # Default personas loaded via yaml cannot have the same name
     __table_args__ = (

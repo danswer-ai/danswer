@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_user
 from danswer.chat.chat_llm import llm_chat_answer
 from danswer.configs.constants import MessageType
-from danswer.db.chat import create_chat_session
+from danswer.db.chat import create_chat_session, get_or_create_root_message
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import delete_chat_session
 from danswer.db.chat import fetch_chat_message
@@ -107,11 +107,12 @@ def get_chat_session_messages(
         description=session.description,
         messages=[
             ChatMessageDetail(
+                message_id=msg.message_id,
                 message_number=msg.message_number,
-                edit_number=msg.edit_number,
-                parent_edit_number=msg.parent_edit_number,
-                latest=msg.latest,
+                parent_message=msg.parent_message,
+                latest_child_message=msg.lastest_child_message,
                 message=msg.message,
+                # TODO is the context_docs correct?
                 context_docs=RetrievalDocs(**msg.reference_docs)
                 if msg.reference_docs
                 else None,
@@ -193,30 +194,28 @@ def create_chat_feedback(
 def _create_chat_chain(
     chat_session_id: int,
     db_session: Session,
-    stop_after: int | None = None,
 ) -> list[ChatMessage]:
+    """Build the linear chain of messages without including the root message"""
     mainline_messages: list[ChatMessage] = []
     all_chat_messages = fetch_chat_messages_by_session(chat_session_id, db_session)
-    target_message_num = 0
-    target_parent_edit_num = None
+    id_to_msg = {msg.id: msg for msg in all_chat_messages}
 
-    # Chat messages must be ordered by message_number
-    # (fetch_chat_messages_by_session ensures this so no resorting here necessary)
-    for msg in all_chat_messages:
-        if (
-            msg.message_number != target_message_num
-            or msg.parent_edit_number != target_parent_edit_num
-            or not msg.latest
-        ):
-            continue
+    if not all_chat_messages:
+        return []
 
-        target_parent_edit_num = msg.edit_number
-        target_message_num += 1
+    root_message = all_chat_messages[0]
+    if root_message.parent_message is not None:
+        raise RuntimeError("Invalid root message, unable to fetch valid chat message sequence")
 
-        mainline_messages.append(msg)
+    current_message = root_message
+    while current_message.latest_child_message is not None:
+        current_message = id_to_msg.get(current_message.latest_child_message)
 
-        if stop_after is not None and target_message_num > stop_after:
-            break
+        if current_message is None:
+            raise RuntimeError("Invalid message chain,"
+                               "could not find next message in the same session")
+
+        mainline_messages.append(current_message)
 
     if not mainline_messages:
         raise RuntimeError("Could not trace chat message history")
@@ -244,19 +243,16 @@ def handle_new_chat_message(
     To avoid extra overhead/latency, this assumes (and checks) that previous messages on the path
     have already been set as latest"""
     chat_session_id = chat_message.chat_session_id
-    message_number = chat_message.message_number
+    parent_id = chat_message.parent_message_id
+    prompt_id = chat_message.prompt_id
+    ref_doc_ids = chat_message.search_doc_ids
     message_content = chat_message.message
-    parent_edit_number = chat_message.parent_edit_number
     user_id = user.id if user is not None else None
 
     llm_tokenizer = get_default_llm_token_encode()
 
     chat_session = fetch_chat_session_by_id(chat_session_id, db_session)
-    persona = (
-        fetch_persona_by_id(chat_message.persona_id, db_session)
-        if chat_message.persona_id is not None
-        else None
-    )
+    persona = chat_session.persona
 
     if chat_session.deleted:
         raise ValueError("Cannot send messages to a deleted chat session")
@@ -270,29 +266,31 @@ def handle_new_chat_message(
             f"User {user.email} trying to interact with a different user's chat"
         )
 
-    if message_number != 0:
-        if parent_edit_number is None:
-            raise ValueError("Message must have a valid parent message")
+    root_message = get_or_create_root_message(
+        chat_session_id=chat_session_id,
+        db_session=db_session
+    )
 
-        verify_parent_exists(
+    if parent_id is not None:
+        parent_message = fetch_chat_message(
             chat_session_id=chat_session_id,
-            message_number=message_number,
-            parent_edit_number=parent_edit_number,
+            chat_message_id=parent_id,
             db_session=db_session,
         )
     else:
-        if parent_edit_number is not None:
-            raise ValueError("Initial message in session cannot have parent")
+        parent_message = root_message
 
-    # Create new message at the right place in the tree and label it latest for its parent
+    # Create new message at the right place in the tree and update the parent's child pointer
+    # Don't commit yet until we verify the chat message chain
     new_message = create_new_chat_message(
         chat_session_id=chat_session_id,
-        message_number=message_number,
-        parent_edit_number=parent_edit_number,
+        parent_message=parent_message,
+        prompt_id=prompt_id,
         message=message_content,
         token_count=len(llm_tokenizer(message_content)),
         message_type=MessageType.USER,
         db_session=db_session,
+        commit=False
     )
 
     mainline_messages = _create_chat_chain(
@@ -300,11 +298,15 @@ def handle_new_chat_message(
         db_session,
     )
 
-    if mainline_messages[-1].message != message_content:
+    if mainline_messages[-1].id != new_message.id:
+        db_session.rollback()
         raise RuntimeError(
             "The new message was not on the mainline. "
-            "Be sure to update latests before calling this."
+            "Be sure to update the chat pointers before calling this."
         )
+
+    # Save now to save the latest chat message
+    db_session.commit()
 
     @log_generator_function_time()
     def stream_chat_tokens() -> Iterator[str]:

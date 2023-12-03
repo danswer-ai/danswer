@@ -19,8 +19,8 @@ from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
 from danswer.auth.users import fastapi_users
-from danswer.chat.personas import load_personas_from_yaml
 from danswer.configs.app_configs import APP_API_PREFIX
+from danswer.chat.load_yamls import load_chat_yamls
 from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
@@ -263,8 +263,8 @@ def get_application() -> FastAPI:
             create_initial_default_connector(db_session)
             associate_default_cc_pair(db_session)
 
-        logger.info("Loading default Chat Personas")
-        load_personas_from_yaml()
+        logger.info("Loading default Prompts and Personas")
+        load_chat_yamls()
 
         logger.info("Verifying Document Index(s) is/are available.")
         get_default_document_index().ensure_indices_exist()

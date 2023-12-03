@@ -29,6 +29,11 @@ Quotes MUST be EXACT substrings from provided documents!
 """.strip()
 
 
+REQUIRE_CITATION = """
+Cite relevant statements using the format [1], [2], etc to reference the document number, do not provide any links following the citation.
+""".strip()
+
+
 LANGUAGE_HINT = """
 IMPORTANT: Respond in the same language as my query!
 """.strip()
