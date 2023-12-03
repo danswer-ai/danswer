@@ -141,6 +141,18 @@ class DocumentSet__ConnectorCredentialPair(Base):
     document_set: Mapped["DocumentSet"] = relationship("DocumentSet")
 
 
+class ChatMessage__SearchDoc(Base):
+    __tablename__ = "chat_message__search_doc"
+
+    chat_message_id: Mapped[int] = mapped_column(ForeignKey('chat_message.id'), primary_key=True)
+    search_doc_id: Mapped[int] = mapped_column(ForeignKey('search_doc.id'), primary_key=True)
+
+
+"""
+Documents/Indexing Tables
+"""
+
+
 class ConnectorCredentialPair(Base):
     """Connectors and Credentials can have a many-to-many relationship
     I.e. A Confluence Connector may have multiple admin users who can run it with their own credentials
@@ -194,11 +206,6 @@ class ConnectorCredentialPair(Base):
         back_populates="connector_credential_pairs",
         overlaps="document_set",
     )
-
-
-"""
-Documents/Indexing Tables
-"""
 
 
 class Document(Base):
@@ -402,7 +409,6 @@ class SearchDoc(Base):
     __tablename__ = "chat_session"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    chat_message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
     document_id: Mapped[str] = mapped_column(String)
     chunk_ind: Mapped[int] = mapped_column(Integer)
     semantic_id: Mapped[str] = mapped_column(String)
@@ -415,6 +421,12 @@ class SearchDoc(Base):
     # This is for the document, not this row in the table
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
+    )
+
+    chat_messages = relationship(
+        "ChatMessage",
+        secondary="chat_message__search_doc",
+        back_populates="search_docs"
     )
 
 
@@ -474,8 +486,10 @@ class ChatMessage(Base):
     document_feedbacks: Mapped[List["DocumentRetrievalFeedback"]] = relationship(
         "DocumentRetrievalFeedback", back_populates="chat_message"
     )
-    search_docs: Mapped[List[SearchDoc]] = relationship(
-        "SearchDoc", backref="chat_message", cascade="all, delete-orphan"
+    search_docs = relationship(
+        "SearchDoc",
+        secondary="chat_message__search_doc",
+        back_populates="chat_messages"
     )
 
 

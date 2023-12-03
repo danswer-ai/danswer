@@ -126,7 +126,7 @@ Answer the user query based on the following document:
 """.strip()
 
 
-# Paramaterized prompt which allows the user to specify their
+# Parameterized prompt which allows the user to specify their
 # own system / task prompt
 PARAMATERIZED_PROMPT = f"""
 {{system_prompt}}

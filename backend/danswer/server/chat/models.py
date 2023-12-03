@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
+from danswer.configs.app_configs import DOCUMENT_INDEX_NAME, DISABLE_LLM_FILTER_EXTRACTION
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
@@ -76,21 +76,6 @@ class LLMRelevanceFilterResponse(BaseModel):
     relevant_chunk_indices: list[int]
 
 
-# TODO: rename/consolidate once the chat / QA flows are merged
-class NewMessageRequest(BaseModel):
-    chat_session_id: int
-    query: str
-    filters: BaseFilters
-    collection: str = DOCUMENT_INDEX_NAME
-    search_type: SearchType = SearchType.HYBRID
-    enable_auto_detect_filters: bool = True
-    favor_recent: bool | None = None
-    # Is this a real-time/streaming call or a question where Danswer can take more time?
-    real_time: bool = True
-    # Pagination purposes, offset is in batches, not by document count
-    offset: int | None = None
-
-
 class CreateChatSessionID(BaseModel):
     chat_session_id: int
 
@@ -103,12 +88,30 @@ class ChatFeedbackRequest(BaseModel):
     feedback_text: str | None = None
 
 
+# Formerly NewMessageRequest
+class RetrievalDetails(BaseModel):
+    #chat_session_id: int
+    #query: str
+    filters: BaseFilters
+    collection: str = DOCUMENT_INDEX_NAME
+    search_type: SearchType = SearchType.HYBRID
+    enable_auto_detect_filters: bool = not DISABLE_LLM_FILTER_EXTRACTION
+    favor_recent: bool | None = None
+    # Is this a real-time/streaming call or a question where Danswer can take more time?
+    # real_time: bool = True
+    # Pagination purposes, offset is in batches, not by document count
+    # offset: int | None = None
+
+
 class CreateChatMessageRequest(BaseModel):
     chat_session_id: int
     parent_message_id: int | None
     message: str
     prompt_id: int
-    search_doc_ids: list[int]
+    # If search_doc_ids provided, then retrieval options are unused
+    # Maybe in the future, can combine selected documents + additional retrieved
+    search_doc_ids: list[int] | None
+    retrieval_options: RetrievalDetails | None
 
 
 class ChatMessageIdentifier(BaseModel):

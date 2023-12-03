@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
-from danswer.chat.chat_llm import llm_chat_answer
+from danswer.chat.process_message import generate_message_response
 from danswer.configs.constants import MessageType
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
@@ -249,7 +249,7 @@ def handle_new_chat_message(
     chat_session_id = chat_message.chat_session_id
     parent_id = chat_message.parent_message_id
     prompt_id = chat_message.prompt_id
-    chat_message.search_doc_ids
+    reference_doc_ids = chat_message.search_doc_ids
     message_content = chat_message.message
     user_id = user.id if user is not None else None
 
@@ -312,8 +312,8 @@ def handle_new_chat_message(
     db_session.commit()
 
     @log_generator_function_time()
-    def stream_chat_tokens() -> Iterator[str]:
-        response_packets = llm_chat_answer(
+    def stream_chat_packets() -> Iterator[str]:
+        response_packets = generate_message_response(
             messages=mainline_messages,
             persona=persona,
             tokenizer=llm_tokenizer,
@@ -342,7 +342,7 @@ def handle_new_chat_message(
             db_session=db_session,
         )
 
-    return StreamingResponse(stream_chat_tokens(), media_type="application/json")
+    return StreamingResponse(stream_chat_packets(), media_type="application/json")
 
 
 @router.post("/regenerate-from-parent")

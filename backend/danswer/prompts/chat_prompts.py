@@ -4,15 +4,11 @@ from langchain.schema.messages import SystemMessage
 
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
+from danswer.db.models import ToolInfo
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import translate_danswer_msg_to_langchain
 from danswer.prompts.constants import CODE_BLOCK_PAT
 
-DANSWER_TOOL_NAME = "Current Search"
-DANSWER_TOOL_DESCRIPTION = (
-    "A search tool that can find information on any topic "
-    "including up to date and proprietary knowledge."
-)
 
 DANSWER_SYSTEM_MSG = (
     "Given a conversation (between Human and Assistant) and a final message from Human, "
@@ -36,64 +32,6 @@ REQUIRE_DANSWER_SYSTEM_MSG = (
     "- there is some uncertainty what the user is referring to\n\n"
     f'Respond with EXACTLY and ONLY "{YES_SEARCH}" or "{NO_SEARCH}"'
 )
-
-
-USER_INPUT = """
-USER'S INPUT
---------------------
-Here is the user's input \
-(remember to respond with a markdown code snippet of a json blob with a single action, and NOTHING else):
-
-{user_input}
-"""
-
-TOOL_FOLLOWUP = """
-TOOL RESPONSE:
----------------------
-{tool_output}
-
-USER'S INPUT
---------------------
-Okay, so what is the response to my last comment? If using information obtained from the tools you must \
-mention it explicitly without mentioning the tool names - I have forgotten all TOOL RESPONSES!
-If the tool response is not useful, ignore it completely.
-{optional_reminder}{hint}
-IMPORTANT! You MUST respond with a markdown code snippet of a json blob with a single action, and NOTHING else.
-"""
-
-
-TOOL_LESS_FOLLOWUP = """
-Refer to the following documents when responding to my final query. Ignore any documents that are not relevant.
-
-CONTEXT DOCUMENTS:
----------------------
-{context_str}
-
-FINAL QUERY:
---------------------
-{user_query}
-
-{hint_text}
-"""
-
-
-def form_user_prompt_text(
-    query: str,
-    tool_text: str | None,
-    hint_text: str | None,
-    user_input_prompt: str = USER_INPUT,
-    tool_less_prompt: str = TOOL_LESS_PROMPT,
-) -> str:
-    user_prompt = tool_text or tool_less_prompt
-
-    user_prompt += user_input_prompt.format(user_input=query)
-
-    if hint_text:
-        if user_prompt[-1] != "\n":
-            user_prompt += "\n"
-        user_prompt += "\nHint: " + hint_text
-
-    return user_prompt.strip()
 
 
 def format_danswer_chunks_for_chat(chunks: list[InferenceChunk]) -> str:
@@ -161,14 +99,3 @@ def form_require_search_text(query_message: ChatMessage) -> str:
         + f"\n\nHint: respond with EXACTLY {YES_SEARCH} or {NO_SEARCH}"
     )
 
-
-def form_tool_less_followup_text(
-    tool_output: str,
-    query: str,
-    hint_text: str | None,
-    tool_followup_prompt: str = TOOL_LESS_FOLLOWUP,
-) -> str:
-    hint = f"Hint: {hint_text}" if hint_text else ""
-    return tool_followup_prompt.format(
-        context_str=tool_output, user_query=query, hint_text=hint
-    ).strip()

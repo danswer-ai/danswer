@@ -531,7 +531,7 @@ def llm_tools_enabled_chat_answer(
         yield StreamingError(error=str(e))
 
 
-def llm_chat_answer(
+def generate_message_response(
     messages: list[ChatMessage],
     persona: Persona | None,
     tokenizer: Callable,
