@@ -1,13 +1,13 @@
 from collections.abc import Sequence
-from typing import Any
 from uuid import UUID
 
-from sqlalchemy import and_, nullsfirst
+from sqlalchemy import and_
 from sqlalchemy import delete
-from sqlalchemy import func
 from sqlalchemy import not_
+from sqlalchemy import nullsfirst
 from sqlalchemy import select
-from sqlalchemy.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.exc import MultipleResultsFound
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
@@ -16,8 +16,9 @@ from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
 from danswer.db.models import DocumentSet as DBDocumentSet
+from danswer.db.models import Persona
+from danswer.db.models import Prompt
 from danswer.db.models import SearchDoc as DBSearchDoc
-from danswer.db.models import Persona, Prompt
 
 
 def fetch_chat_sessions_by_user(
@@ -40,8 +41,7 @@ def fetch_chat_messages_by_session(
     chat_session_id: int, db_session: Session
 ) -> list[ChatMessage]:
     stmt = (
-        select(ChatMessage)
-        .where(ChatMessage.chat_session_id == chat_session_id)
+        select(ChatMessage).where(ChatMessage.chat_session_id == chat_session_id)
         # Start with the root message which has no parent
         .order_by(nullsfirst(ChatMessage.parent_message))
     )
@@ -50,9 +50,7 @@ def fetch_chat_messages_by_session(
 
 
 def fetch_chat_message(
-    chat_message_id: int,
-    db_session: Session,
-    chat_session_id: int | None = None
+    chat_message_id: int, db_session: Session, chat_session_id: int | None = None
 ) -> ChatMessage:
     """If dealing with user inputs, be sure to verify chat_session_id to avoid bad inputs fetching
     messages from other sessions"""
@@ -196,12 +194,18 @@ def get_or_create_root_message(
     db_session: Session,
 ) -> ChatMessage:
     try:
-        root_message: ChatMessage | None = db_session.query(ChatMessage).filter(
-            ChatMessage.chat_session_id == chat_session_id,
-            ChatMessage.parent_message.is_(None)
-        ).one_or_none()
+        root_message: ChatMessage | None = (
+            db_session.query(ChatMessage)
+            .filter(
+                ChatMessage.chat_session_id == chat_session_id,
+                ChatMessage.parent_message.is_(None),
+            )
+            .one_or_none()
+        )
     except MultipleResultsFound:
-        raise Exception("Multiple root messages found for chat session. Data inconsistency detected.")
+        raise Exception(
+            "Multiple root messages found for chat session. Data inconsistency detected."
+        )
 
     if root_message is not None:
         return root_message
@@ -211,9 +215,9 @@ def get_or_create_root_message(
             prompt_id=None,
             parent_message=None,
             latest_child_message=None,
-            message='',
+            message="",
             token_count=0,
-            message_type=MessageType.SYSTEM
+            message_type=MessageType.SYSTEM,
         )
         db_session.add(new_root_message)
         db_session.commit()
@@ -229,7 +233,7 @@ def create_new_chat_message(
     message_type: MessageType,
     db_session: Session,
     reference_docs: list[DBSearchDoc] | None = None,
-    commit: bool = True
+    commit: bool = True,
 ) -> ChatMessage:
     new_chat_message = ChatMessage(
         chat_session_id=chat_session_id,
@@ -276,10 +280,7 @@ def set_latest_chat_message(
 
 
 def fetch_persona_by_id(persona_id: int, db_session: Session) -> Persona:
-    stmt = (
-        select(Persona)
-        .where(Persona.id == persona_id)
-    )
+    stmt = select(Persona).where(Persona.id == persona_id)
     result = db_session.execute(stmt)
     persona = result.scalar_one_or_none()
 
@@ -290,9 +291,7 @@ def fetch_persona_by_id(persona_id: int, db_session: Session) -> Persona:
 
 
 def fetch_prompt_by_name(
-    prompt_name: str,
-    user_id: UUID | None,
-    db_session: Session
+    prompt_name: str, user_id: UUID | None, db_session: Session
 ) -> Prompt | None:
     """Will throw exception if multiple prompt found by the name"""
     stmt = select(Prompt).where(Prompt.name == prompt_name, Prompt.user_id == user_id)
@@ -301,12 +300,12 @@ def fetch_prompt_by_name(
 
 
 def fetch_persona_by_name(
-    persona_name: str,
-    user_id: UUID | None,
-    db_session: Session
+    persona_name: str, user_id: UUID | None, db_session: Session
 ) -> Persona | None:
     """Will throw exception if multiple personas found by the name"""
-    stmt = select(Persona).where(Persona.name == persona_name, Persona.user_id == user_id)
+    stmt = select(Persona).where(
+        Persona.name == persona_name, Persona.user_id == user_id
+    )
     result = db_session.execute(stmt).scalar_one_or_none()
     return result
 
@@ -326,9 +325,7 @@ def upsert_prompt(
 
     if prompt is None:
         prompt = fetch_prompt_by_name(
-            prompt_name=name,
-            user_id=user_id,
-            db_session=db_session
+            prompt_name=name, user_id=user_id, db_session=db_session
         )
 
     if prompt:
@@ -347,7 +344,7 @@ def upsert_prompt(
             system_prompt=system_prompt,
             task_prompt=task_prompt,
             datetime_aware=datetime_aware,
-            default_prompt=default_prompt
+            default_prompt=default_prompt,
         )
         db_session.add(prompt)
 
@@ -378,9 +375,7 @@ def upsert_persona(
 
     if persona is None:
         persona = fetch_persona_by_name(
-            persona_name=name,
-            user_id=user_id,
-            db_session=db_session
+            persona_name=name, user_id=user_id, db_session=db_session
         )
 
     if persona:

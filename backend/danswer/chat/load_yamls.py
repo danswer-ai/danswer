@@ -1,11 +1,12 @@
-from typing import Any
 
 import yaml
 from sqlalchemy.orm import Session
 
-from danswer.configs.chat_configs import PROMPTS_YAML, PERSONAS_YAML
-from danswer.db.chat import upsert_prompt, fetch_prompt_by_name
+from danswer.configs.chat_configs import PERSONAS_YAML
+from danswer.configs.chat_configs import PROMPTS_YAML
+from danswer.db.chat import fetch_prompt_by_name
 from danswer.db.chat import upsert_persona
+from danswer.db.chat import upsert_prompt
 from danswer.db.document_set import get_or_create_document_set_by_name
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import DocumentSet as DocumentSetDBModel
@@ -37,7 +38,6 @@ def load_personas_from_yaml(personas_yaml: str = PERSONAS_YAML) -> None:
     all_personas = data.get("personas", [])
     with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
         for persona in all_personas:
-
             doc_set_names = persona["document_sets"]
             doc_sets: list[DocumentSetDBModel] | None = [
                 get_or_create_document_set_by_name(db_session, name)

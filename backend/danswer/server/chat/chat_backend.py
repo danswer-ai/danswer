@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_user
 from danswer.chat.chat_llm import llm_chat_answer
 from danswer.configs.constants import MessageType
-from danswer.db.chat import create_chat_session, get_or_create_root_message
+from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import delete_chat_session
 from danswer.db.chat import fetch_chat_message
@@ -16,9 +16,9 @@ from danswer.db.chat import fetch_chat_messages_by_session
 from danswer.db.chat import fetch_chat_session_by_id
 from danswer.db.chat import fetch_chat_sessions_by_user
 from danswer.db.chat import fetch_persona_by_id
+from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import set_latest_chat_message
 from danswer.db.chat import update_chat_session
-from danswer.db.chat import verify_parent_exists
 from danswer.db.engine import get_session
 from danswer.db.feedback import create_chat_message_feedback
 from danswer.db.models import ChatMessage
@@ -205,15 +205,19 @@ def _create_chat_chain(
 
     root_message = all_chat_messages[0]
     if root_message.parent_message is not None:
-        raise RuntimeError("Invalid root message, unable to fetch valid chat message sequence")
+        raise RuntimeError(
+            "Invalid root message, unable to fetch valid chat message sequence"
+        )
 
     current_message = root_message
     while current_message.latest_child_message is not None:
         current_message = id_to_msg.get(current_message.latest_child_message)
 
         if current_message is None:
-            raise RuntimeError("Invalid message chain,"
-                               "could not find next message in the same session")
+            raise RuntimeError(
+                "Invalid message chain,"
+                "could not find next message in the same session"
+            )
 
         mainline_messages.append(current_message)
 
@@ -245,7 +249,7 @@ def handle_new_chat_message(
     chat_session_id = chat_message.chat_session_id
     parent_id = chat_message.parent_message_id
     prompt_id = chat_message.prompt_id
-    ref_doc_ids = chat_message.search_doc_ids
+    chat_message.search_doc_ids
     message_content = chat_message.message
     user_id = user.id if user is not None else None
 
@@ -267,8 +271,7 @@ def handle_new_chat_message(
         )
 
     root_message = get_or_create_root_message(
-        chat_session_id=chat_session_id,
-        db_session=db_session
+        chat_session_id=chat_session_id, db_session=db_session
     )
 
     if parent_id is not None:
@@ -290,7 +293,7 @@ def handle_new_chat_message(
         token_count=len(llm_tokenizer(message_content)),
         message_type=MessageType.USER,
         db_session=db_session,
-        commit=False
+        commit=False,
     )
 
     mainline_messages = _create_chat_chain(

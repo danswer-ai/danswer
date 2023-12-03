@@ -4,7 +4,6 @@ from langchain.schema.messages import SystemMessage
 
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
-from danswer.db.models import ToolInfo
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import translate_danswer_msg_to_langchain
 from danswer.prompts.constants import CODE_BLOCK_PAT

@@ -11,11 +11,11 @@ from uuid import UUID
 from fastapi_users.db import SQLAlchemyBaseOAuthAccountTableUUID
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyBaseAccessTokenTableUUID
-from sqlalchemy import Boolean, Float
+from sqlalchemy import Boolean
 from sqlalchemy import DateTime
 from sqlalchemy import Enum
+from sqlalchemy import Float
 from sqlalchemy import ForeignKey
-from sqlalchemy import ForeignKeyConstraint
 from sqlalchemy import func
 from sqlalchemy import Index
 from sqlalchemy import Integer
@@ -89,6 +89,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     )
     prompts: Mapped[List["Prompt"]] = relationship("Prompt", back_populates="user")
     personas: Mapped[List["Persona"]] = relationship("Persona", back_populates="user")
+
 
 class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
     pass
@@ -397,6 +398,7 @@ Messages Tables
 class SearchDoc(Base):
     """Different from Document table. This one stores the state of a document from a retrieval.
     This allows chat sessions to be replayed with the searched docs"""
+
     __tablename__ = "chat_session"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -446,11 +448,14 @@ class ChatSession(Base):
 class ChatMessage(Base):
     """Note, the first message in a chain has no contents, it's a workaround to allow edits
     on the first message of a session, an empty root node basically"""
+
     __tablename__ = "chat_message"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_session_id: Mapped[int] = mapped_column(ForeignKey("chat_session.id"))
-    prompt_id: Mapped[int | None] = mapped_column(ForeignKey("prompt.id"), nullable=True)
+    prompt_id: Mapped[int | None] = mapped_column(
+        ForeignKey("prompt.id"), nullable=True
+    )
     parent_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     latest_child_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     message: Mapped[str] = mapped_column(Text)
@@ -470,9 +475,7 @@ class ChatMessage(Base):
         "DocumentRetrievalFeedback", back_populates="chat_message"
     )
     search_docs: Mapped[List[SearchDoc]] = relationship(
-        "SearchDoc",
-        backref="chat_message",
-        cascade="all, delete-orphan"
+        "SearchDoc", backref="chat_message", cascade="all, delete-orphan"
     )
 
 
