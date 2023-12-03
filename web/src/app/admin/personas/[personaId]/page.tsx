@@ -1,13 +1,10 @@
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { fetchSS } from "@/lib/utilsSS";
-import { FaRobot } from "react-icons/fa";
 import { Persona } from "../interfaces";
 import { PersonaEditor } from "../PersonaEditor";
 import { DocumentSet } from "@/lib/types";
-import { RobotIcon } from "@/components/icons/icons";
 import { BackButton } from "@/components/BackButton";
-import { Card, Title, Text, Divider, Button } from "@tremor/react";
-import { FiTrash } from "react-icons/fi";
+import { Card, Title } from "@tremor/react";
 import { DeletePersonaButton } from "./DeletePersonaButton";
 
 export default async function Page({
