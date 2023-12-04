@@ -2,10 +2,12 @@ from collections.abc import Callable
 from collections.abc import Collection
 from datetime import datetime
 from datetime import timezone
+from functools import lru_cache
 from typing import Any
 from typing import cast
 from urllib.parse import urlparse
 
+import bs4
 from atlassian import Confluence  # type:ignore
 from requests import HTTPError
 
@@ -13,7 +15,7 @@ from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.html_utils import parse_html_page_basic
+from danswer.connectors.cross_connector_utils.html_utils import format_document_soup
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -85,6 +87,52 @@ def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str, bool]:
     return wiki_base, space, is_confluence_cloud
 
 
+@lru_cache()
+def _get_user(user_id: str, confluence_client: Confluence) -> str:
+    """Get Confluence Display Name based on the account-id or userkey value
+
+    Args:
+        user_id (str): The user id (i.e: the account-id or userkey)
+        confluence_client (Confluence): The Confluence Client
+
+    Returns:
+        str: The User Display Name. 'Unknown User' if the user is deactivated or not found
+    """
+    user_not_found = "Unknown User"
+
+    try:
+        return confluence_client.get_user_details_by_accountid(user_id).get(
+            "displayName", user_not_found
+        )
+    except Exception as e:
+        logger.warning(
+            f"Unable to get the User Display Name with the id: '{user_id}' - {e}"
+        )
+    return user_not_found
+
+
+def parse_html_page(text: str, confluence_client: Confluence) -> str:
+    """Parse a Confluence html page and replace the 'user Id' by the real
+        User Display Name
+
+    Args:
+        text (str): The page content
+        confluence_client (Confluence): Confluence client
+
+    Returns:
+        str: loaded and formated Confluence page
+    """
+    soup = bs4.BeautifulSoup(text, "html.parser")
+    for user in soup.findAll("ri:user"):
+        user_id = (
+            user.attrs["ri:account-id"]
+            if "ri:account-id" in user.attrs
+            else user.attrs["ri:userkey"]
+        )
+        user.replaceWith(_get_user(user_id, confluence_client))
+    return format_document_soup(soup)
+
+
 def _comment_dfs(
     comments_str: str,
     comment_pages: Collection[dict[str, Any]],
@@ -92,7 +140,9 @@ def _comment_dfs(
 ) -> str:
     for comment_page in comment_pages:
         comment_html = comment_page["body"]["storage"]["value"]
-        comments_str += "\nComment:\n" + parse_html_page_basic(comment_html)
+        comments_str += "\nComment:\n" + parse_html_page(
+            comment_html, confluence_client
+        )
         child_comment_pages = confluence_client.get_page_child_by_type(
             comment_page["id"],
             type="comment",
@@ -283,7 +333,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     logger.debug("Page is empty, skipping: %s", page_url)
                     continue
                 page_text = (
-                    page.get("title", "") + "\n" + parse_html_page_basic(page_html)
+                    page.get("title", "")
+                    + "\n"
+                    + parse_html_page(page_html, self.confluence_client)
                 )
                 comments_text = self._fetch_comments(self.confluence_client, page_id)
                 page_text += comments_text
