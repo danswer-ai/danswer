@@ -1,15 +1,14 @@
-import { PersonaEditor } from "../PersonaEditor";
+import { AdminPageTitle } from "@/components/admin/Title";
+import { CPUIcon } from "@/components/icons/icons";
+import { SlackBotCreationForm } from "../SlackBotConfigCreationForm";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { DocumentSet } from "@/lib/types";
-import { RobotIcon } from "@/components/icons/icons";
 import { BackButton } from "@/components/BackButton";
-import { Card } from "@tremor/react";
-import { AdminPageTitle } from "@/components/admin/Title";
+import { Text } from "@tremor/react";
 
-export default async function Page() {
+async function Page() {
   const documentSetsResponse = await fetchSS("/manage/document-set");
-
   if (!documentSetsResponse.ok) {
     return (
       <ErrorCallout
@@ -18,21 +17,24 @@ export default async function Page() {
       />
     );
   }
-
   const documentSets = (await documentSetsResponse.json()) as DocumentSet[];
 
   return (
-    <div className="dark">
+    <div className="container mx-auto dark">
       <BackButton />
-
       <AdminPageTitle
-        title="Create a New Persona"
-        icon={<RobotIcon size={32} />}
+        icon={<CPUIcon size={32} />}
+        title="New Slack Bot Config"
       />
 
-      <Card>
-        <PersonaEditor documentSets={documentSets} />
-      </Card>
+      <Text className="mb-8">
+        Define a new configuration below! This config will determine how
+        DanswerBot behaves in the specified channels.
+      </Text>
+
+      <SlackBotCreationForm documentSets={documentSets} />
     </div>
   );
 }
+
+export default Page;
