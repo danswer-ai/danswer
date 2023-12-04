@@ -166,7 +166,7 @@ services:
       - db_volume:/var/lib/postgresql/data
   # This container name cannot have an underscore in it due to Vespa expectations of the URL
   index:
-    image: vespaengine/vespa:8.249.12
+    image: vespaengine/vespa:8.267.29
     restart: always
     ports:
       - "19071:19071"
