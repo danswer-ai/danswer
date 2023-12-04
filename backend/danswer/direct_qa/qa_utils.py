@@ -196,9 +196,9 @@ def _stream_json_answer_end(answer_so_far: str, next_token: str) -> bool:
 
 
 def _extract_quotes_from_completed_token_stream(
-    model_output: str, context_chunks: list[InferenceChunk]
+    model_output: str, context_chunks: list[InferenceChunk], is_json_prompt: bool = True
 ) -> DanswerQuotes:
-    answer, quotes = process_answer(model_output, context_chunks)
+    answer, quotes = process_answer(model_output, context_chunks, is_json_prompt)
     if answer:
         logger.info(answer)
     elif model_output:
@@ -262,7 +262,11 @@ def process_model_tokens(
 
     logger.debug(f"Raw Model QnA Output: {model_output}")
 
-    yield _extract_quotes_from_completed_token_stream(model_output, context_docs)
+    yield _extract_quotes_from_completed_token_stream(
+        model_output=model_output,
+        context_chunks=context_docs,
+        is_json_prompt=is_json_prompt,
+    )
 
 
 def simulate_streaming_response(model_out: str) -> Generator[str, None, None]:

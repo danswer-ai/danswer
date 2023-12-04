@@ -113,7 +113,9 @@ class WeakLLMQAHandler(QAHandler):
     def build_prompt(
         self, query: str, context_chunks: list[InferenceChunk]
     ) -> list[BaseMessage]:
-        message = WEAK_LLM_PROMPT.format(single_reference_doc=context_chunks[0].content)
+        message = WEAK_LLM_PROMPT.format(
+            user_query=query, single_reference_doc=context_chunks[0].content
+        )
 
         return [HumanMessage(content=message)]
 
