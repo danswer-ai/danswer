@@ -18,6 +18,10 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { Persona } from "./interfaces";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+  BooleanFormField,
+  TextFormField,
+} from "@/components/admin/connectors/Field";
 
 function SectionHeader({ children }: { children: string | JSX.Element }) {
   return <div className="mb-4 font-bold text-lg">{children}</div>;
@@ -31,101 +35,6 @@ function Label({ children }: { children: string | JSX.Element }) {
 
 function SubLabel({ children }: { children: string | JSX.Element }) {
   return <div className="text-sm text-gray-300 mb-2">{children}</div>;
-}
-
-// TODO: make this the default text input across all forms
-function PersonaTextInput({
-  name,
-  label,
-  subtext,
-  placeholder,
-  onChange,
-  type = "text",
-  isTextArea = false,
-  disabled = false,
-  autoCompleteDisabled = true,
-}: {
-  name: string;
-  label: string;
-  subtext?: string | JSX.Element;
-  placeholder?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  type?: string;
-  isTextArea?: boolean;
-  disabled?: boolean;
-  autoCompleteDisabled?: boolean;
-}) {
-  return (
-    <div className="mb-4">
-      <Label>{label}</Label>
-      {subtext && <SubLabel>{subtext}</SubLabel>}
-      <Field
-        as={isTextArea ? "textarea" : "input"}
-        type={type}
-        name={name}
-        id={name}
-        className={
-          `
-        border 
-        text-gray-200 
-        border-gray-600 
-        rounded 
-        w-full 
-        py-2 
-        px-3 
-        mt-1
-        ${isTextArea ? " h-28" : ""}
-      ` + (disabled ? " bg-gray-900" : " bg-gray-800")
-        }
-        disabled={disabled}
-        placeholder={placeholder}
-        autoComplete={autoCompleteDisabled ? "off" : undefined}
-        {...(onChange ? { onChange } : {})}
-      />
-      <ErrorMessage
-        name={name}
-        component="div"
-        className="text-red-500 text-sm mt-1"
-      />
-    </div>
-  );
-}
-
-function PersonaBooleanInput({
-  name,
-  label,
-  subtext,
-}: {
-  name: string;
-  label: string;
-  subtext?: string | JSX.Element;
-}) {
-  return (
-    <div className="mb-4">
-      <Label>{label}</Label>
-      {subtext && <SubLabel>{subtext}</SubLabel>}
-      <Field
-        type="checkbox"
-        name={name}
-        id={name}
-        className={`
-        ml-2
-        border 
-        text-gray-200 
-        border-gray-600 
-        rounded 
-        py-2 
-        px-3 
-        mt-1
-      `}
-      />
-      <ErrorMessage
-        name={name}
-        component="div"
-        className="text-red-500 text-sm mt-1"
-      />
-    </div>
-  );
 }
 
 export function PersonaEditor({
@@ -226,14 +135,14 @@ export function PersonaEditor({
             <div className="pb-6">
               <SectionHeader>Who am I?</SectionHeader>
 
-              <PersonaTextInput
+              <TextFormField
                 name="name"
                 label="Name"
                 disabled={isUpdate}
                 subtext="Users will be able to select this Persona based on this name."
               />
 
-              <PersonaTextInput
+              <TextFormField
                 name="description"
                 label="Description"
                 subtext="Provide a short descriptions which gives users a hint as to what they should use this Persona for."
@@ -243,7 +152,7 @@ export function PersonaEditor({
 
               <SectionHeader>Customize my response style</SectionHeader>
 
-              <PersonaTextInput
+              <TextFormField
                 name="system_prompt"
                 label="System Prompt"
                 isTextArea={true}
@@ -256,7 +165,7 @@ export function PersonaEditor({
                 }}
               />
 
-              <PersonaTextInput
+              <TextFormField
                 name="task_prompt"
                 label="Task Prompt"
                 isTextArea={true}
@@ -352,7 +261,7 @@ export function PersonaEditor({
 
               <SectionHeader>[Advanced] Retrieval Customization</SectionHeader>
 
-              <PersonaTextInput
+              <TextFormField
                 name="num_chunks"
                 label="Number of Chunks"
                 subtext={
@@ -376,7 +285,7 @@ export function PersonaEditor({
                 }}
               />
 
-              <PersonaBooleanInput
+              <BooleanFormField
                 name="apply_llm_relevance_filter"
                 label="Apply LLM Relevance Filter"
                 subtext={
