@@ -104,6 +104,7 @@ def query_validation(
 def stream_query_validation(
     new_message_request: NewMessageRequest, _: User = Depends(current_user)
 ) -> StreamingResponse:
+    # Note if weak model prompt is chosen, this check does not occur
     query = new_message_request.query
     return StreamingResponse(
         stream_query_answerability(query), media_type="application/json"
