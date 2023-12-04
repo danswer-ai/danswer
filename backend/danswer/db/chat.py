@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
-from danswer.db.models import ChatMessage
+from danswer.db.models import ChatMessage, SearchDoc
 from danswer.db.models import ChatSession
 from danswer.db.models import DocumentSet as DBDocumentSet
 from danswer.db.models import Persona
@@ -433,3 +433,18 @@ def fetch_personas(
         stmt = stmt.where(not_(Persona.name.startswith(SLACK_BOT_PERSONA_PREFIX)))
 
     return db_session.scalars(stmt).all()
+
+
+def get_doc_query_identifiers_from_model(
+    chat_session: int,
+    search_doc_ids: list[str],
+    db_session: Session
+) -> list[tuple[str, int]]:
+    search_docs = db_session.query(SearchDoc).filter(SearchDoc.id.in_(search_doc_ids)).all()
+    if any([doc.chat_messages[0].chat_session_id != chat_session for doc in search_docs]):
+        raise ValueError("Invalid reference doc, not from this chat session.")
+
+    doc_query_identifiers = [(doc.document_id, doc.chunk_ind) for doc in search_docs]
+
+    return doc_query_identifiers
+

@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
-from danswer.chat.process_message import generate_message_response
+from danswer.chat.process_message import generate_message_response, stream_chat_packets
 from danswer.configs.constants import MessageType
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
@@ -24,6 +24,7 @@ from danswer.db.feedback import create_chat_message_feedback
 from danswer.db.models import ChatMessage
 from danswer.db.models import User
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
+from danswer.document_index.factory import get_default_document_index
 from danswer.llm.utils import get_default_llm_token_encode
 from danswer.secondary_llm_flows.chat_helpers import get_new_chat_name
 from danswer.server.chat.models import ChatFeedbackRequest
@@ -191,52 +192,6 @@ def create_chat_feedback(
     )
 
 
-def _create_chat_chain(
-    chat_session_id: int,
-    db_session: Session,
-) -> list[ChatMessage]:
-    """Build the linear chain of messages without including the root message"""
-    mainline_messages: list[ChatMessage] = []
-    all_chat_messages = fetch_chat_messages_by_session(chat_session_id, db_session)
-    id_to_msg = {msg.id: msg for msg in all_chat_messages}
-
-    if not all_chat_messages:
-        return []
-
-    root_message = all_chat_messages[0]
-    if root_message.parent_message is not None:
-        raise RuntimeError(
-            "Invalid root message, unable to fetch valid chat message sequence"
-        )
-
-    current_message = root_message
-    while current_message.latest_child_message is not None:
-        current_message = id_to_msg.get(current_message.latest_child_message)
-
-        if current_message is None:
-            raise RuntimeError(
-                "Invalid message chain,"
-                "could not find next message in the same session"
-            )
-
-        mainline_messages.append(current_message)
-
-    if not mainline_messages:
-        raise RuntimeError("Could not trace chat message history")
-
-    return mainline_messages
-
-
-def _return_one_if_any(str_1: str | None, str_2: str | None) -> str | None:
-    if str_1 is not None and str_2 is not None:
-        raise ValueError("Conflicting values, can only set one")
-    if str_1 is not None:
-        return str_1
-    if str_2 is not None:
-        return str_2
-    return None
-
-
 @router.post("/send-message")
 def handle_new_chat_message(
     chat_message: CreateChatMessageRequest,
@@ -246,17 +201,9 @@ def handle_new_chat_message(
     """This endpoint is both used for sending new messages and for sending edited messages.
     To avoid extra overhead/latency, this assumes (and checks) that previous messages on the path
     have already been set as latest"""
-    chat_session_id = chat_message.chat_session_id
-    parent_id = chat_message.parent_message_id
-    prompt_id = chat_message.prompt_id
-    reference_doc_ids = chat_message.search_doc_ids
-    message_content = chat_message.message
     user_id = user.id if user is not None else None
 
-    llm_tokenizer = get_default_llm_token_encode()
-
-    chat_session = fetch_chat_session_by_id(chat_session_id, db_session)
-    persona = chat_session.persona
+    chat_session = fetch_chat_session_by_id(chat_message.chat_session_id, db_session)
 
     if chat_session.deleted:
         raise ValueError("Cannot send messages to a deleted chat session")
@@ -270,79 +217,13 @@ def handle_new_chat_message(
             f"User {user.email} trying to interact with a different user's chat"
         )
 
-    root_message = get_or_create_root_message(
-        chat_session_id=chat_session_id, db_session=db_session
-    )
-
-    if parent_id is not None:
-        parent_message = fetch_chat_message(
-            chat_session_id=chat_session_id,
-            chat_message_id=parent_id,
-            db_session=db_session,
-        )
-    else:
-        parent_message = root_message
-
-    # Create new message at the right place in the tree and update the parent's child pointer
-    # Don't commit yet until we verify the chat message chain
-    new_message = create_new_chat_message(
-        chat_session_id=chat_session_id,
-        parent_message=parent_message,
-        prompt_id=prompt_id,
-        message=message_content,
-        token_count=len(llm_tokenizer(message_content)),
-        message_type=MessageType.USER,
+    packets = stream_chat_packets(
+        chat_message=chat_message,
+        user=user,
         db_session=db_session,
-        commit=False,
     )
 
-    mainline_messages = _create_chat_chain(
-        chat_session_id,
-        db_session,
-    )
-
-    if mainline_messages[-1].id != new_message.id:
-        db_session.rollback()
-        raise RuntimeError(
-            "The new message was not on the mainline. "
-            "Be sure to update the chat pointers before calling this."
-        )
-
-    # Save now to save the latest chat message
-    db_session.commit()
-
-    @log_generator_function_time()
-    def stream_chat_packets() -> Iterator[str]:
-        response_packets = generate_message_response(
-            messages=mainline_messages,
-            persona=persona,
-            tokenizer=llm_tokenizer,
-            user=user,
-            db_session=db_session,
-        )
-        llm_output = ""
-        fetched_docs: RetrievalDocs | None = None
-        for packet in response_packets:
-            if isinstance(packet, DanswerAnswerPiece):
-                token = packet.answer_piece
-                if token:
-                    llm_output += token
-            elif isinstance(packet, RetrievalDocs):
-                fetched_docs = packet
-            yield get_json_line(packet.dict())
-
-        create_new_chat_message(
-            chat_session_id=chat_session_id,
-            message_number=message_number + 1,
-            parent_edit_number=new_message.edit_number,
-            message=llm_output,
-            token_count=len(llm_tokenizer(llm_output)),
-            message_type=MessageType.ASSISTANT,
-            retrieval_docs=fetched_docs.dict() if fetched_docs else None,
-            db_session=db_session,
-        )
-
-    return StreamingResponse(stream_chat_packets(), media_type="application/json")
+    return StreamingResponse(packets, media_type="application/json")
 
 
 @router.post("/regenerate-from-parent")

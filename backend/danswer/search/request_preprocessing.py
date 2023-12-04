@@ -13,13 +13,14 @@ from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.secondary_llm_flows.source_filter import extract_source_filter
 from danswer.secondary_llm_flows.time_filter import extract_time_filter
-from danswer.server.chat.models import NewMessageRequest
+from danswer.server.chat.models import RetrievalDetails
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 
 
 def retrieval_preprocessing(
-    new_message_request: NewMessageRequest,
+    query: str,
+    retrieval_details: RetrievalDetails,
     user: User | None,
     db_session: Session,
     bypass_acl: bool = False,
@@ -31,30 +32,30 @@ def retrieval_preprocessing(
 ) -> tuple[SearchQuery, SearchType | None, QueryFlow | None]:
     auto_filters_enabled = (
         not disable_llm_filter_extraction
-        and new_message_request.enable_auto_detect_filters
+        and retrieval_details.enable_auto_detect_filters
     )
 
     # based on the query figure out if we should apply any hard time filters /
     # if we should bias more recent docs even more strongly
     run_time_filters = (
-        FunctionCall(extract_time_filter, (new_message_request.query,), {})
+        FunctionCall(extract_time_filter, (query,), {})
         if auto_filters_enabled
         else None
     )
 
     # based on the query, figure out if we should apply any source filters
     should_run_source_filters = (
-        auto_filters_enabled and not new_message_request.filters.source_type
+        auto_filters_enabled and not retrieval_details.filters.source_type
     )
     run_source_filters = (
-        FunctionCall(extract_source_filter, (new_message_request.query, db_session), {})
+        FunctionCall(extract_source_filter, (query, db_session), {})
         if should_run_source_filters
         else None
     )
     # NOTE: this isn't really part of building the retrieval request, but is done here
     # so it can be simply done in parallel with the filters without multi-level multithreading
     run_query_intent = (
-        FunctionCall(query_intent, (new_message_request.query,), {})
+        FunctionCall(query_intent, (query,), {})
         if include_query_intent
         else None
     )
@@ -88,9 +89,9 @@ def retrieval_preprocessing(
         None if bypass_acl else build_access_filters_for_user(user, db_session)
     )
     final_filters = IndexFilters(
-        source_type=new_message_request.filters.source_type or source_filters,
-        document_set=new_message_request.filters.document_set,
-        time_cutoff=new_message_request.filters.time_cutoff or time_cutoff,
+        source_type=retrieval_details.filters.source_type or source_filters,
+        document_set=retrieval_details.filters.document_set,
+        time_cutoff=retrieval_details.filters.time_cutoff or time_cutoff,
         access_control_list=user_acl_filters,
     )
 
@@ -98,19 +99,19 @@ def retrieval_preprocessing(
     # top chunks
     skip_reranking = (
         skip_rerank_realtime
-        if new_message_request.real_time
+        if retrieval_details.real_time
         else skip_rerank_non_realtime
     )
 
     return (
         SearchQuery(
-            query=new_message_request.query,
-            search_type=new_message_request.search_type,
+            query=query,
+            search_type=retrieval_details.search_type,
             filters=final_filters,
             # use user specified favor_recent over generated favor_recent
             favor_recent=(
-                new_message_request.favor_recent
-                if new_message_request.favor_recent is not None
+                retrieval_details.favor_recent
+                if retrieval_details.favor_recent is not None
                 else (favor_recent or False)
             ),
             skip_rerank=skip_reranking,

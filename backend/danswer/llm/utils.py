@@ -72,11 +72,9 @@ def tokenizer_trim_chunks(
 def translate_danswer_msg_to_langchain(msg: ChatMessage) -> BaseMessage:
     if (
         msg.message_type == MessageType.SYSTEM
-        or msg.message_type == MessageType.DANSWER
     ):
-        # TODO save at least the Danswer responses to postgres
         raise ValueError(
-            "System and Danswer messages are not currently part of history"
+            "System messages are not currently part of history"
         )
     if msg.message_type == MessageType.ASSISTANT:
         return AIMessage(content=msg.message)

@@ -681,6 +681,20 @@ class VespaIndex(DocumentIndex):
         logger.info(f"Deleting {len(doc_ids)} documents from Vespa")
         _delete_vespa_docs(doc_ids)
 
+    def id_based_retrieval(
+        self,
+        document_id: str,
+        chunk_ind: int | None
+    ) -> list[InferenceChunk]:
+        if chunk_ind is None:
+            raise NotImplementedError("Can't fetch full documents at this time,"
+                                      "feature will be added soon")
+
+        # TODO do this
+        return []
+
+
+
     def keyword_retrieval(
         self,
         query: str,

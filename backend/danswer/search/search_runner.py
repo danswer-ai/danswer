@@ -460,7 +460,7 @@ def full_chunk_search(
     Rather than returning the chunks and llm relevance filter results in two separate
     yields, just returns them both at once."""
     search_generator = full_chunk_search_generator(
-        query=query,
+        search_query=query,
         document_index=document_index,
         hybrid_alpha=hybrid_alpha,
         multilingual_query_expansion=multilingual_query_expansion,
@@ -473,7 +473,7 @@ def full_chunk_search(
 
 
 def full_chunk_search_generator(
-    query: SearchQuery,
+    search_query: SearchQuery,
     document_index: DocumentIndex,
     hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
     multilingual_query_expansion: str | None = MULTILINGUAL_QUERY_EXPANSION,
@@ -485,7 +485,7 @@ def full_chunk_search_generator(
     chunks_yielded = False
 
     retrieved_chunks = retrieve_chunks(
-        query=query,
+        query=search_query,
         document_index=document_index,
         hybrid_alpha=hybrid_alpha,
         multilingual_query_expansion=multilingual_query_expansion,
@@ -500,12 +500,12 @@ def full_chunk_search_generator(
     post_processing_tasks: list[FunctionCall] = []
 
     rerank_task_id = None
-    if should_rerank(query):
+    if should_rerank(search_query):
         post_processing_tasks.append(
             FunctionCall(
                 rerank_chunks,
                 (
-                    query,
+                    search_query,
                     retrieved_chunks,
                     rerank_metrics_callback,
                 ),
@@ -516,16 +516,16 @@ def full_chunk_search_generator(
         final_chunks = retrieved_chunks
         # NOTE: if we don't rerank, we can return the chunks immediately
         # since we know this is the final order
-        _log_top_chunk_links(query.search_type.value, final_chunks)
+        _log_top_chunk_links(search_query.search_type.value, final_chunks)
         yield final_chunks
         chunks_yielded = True
 
     llm_filter_task_id = None
-    if should_apply_llm_based_relevance_filter(query):
+    if should_apply_llm_based_relevance_filter(search_query):
         post_processing_tasks.append(
             FunctionCall(
                 filter_chunks,
-                (query, retrieved_chunks[: query.max_llm_filter_chunks]),
+                (search_query, retrieved_chunks[: search_query.max_llm_filter_chunks]),
             )
         )
         llm_filter_task_id = post_processing_tasks[-1].result_id
@@ -545,7 +545,7 @@ def full_chunk_search_generator(
                 "Trying to yield re-ranked chunks, but chunks were already yielded. This should never happen."
             )
         else:
-            _log_top_chunk_links(query.search_type.value, reranked_chunks)
+            _log_top_chunk_links(search_query.search_type.value, reranked_chunks)
             yield reranked_chunks
 
     llm_chunk_selection = cast(
@@ -561,3 +561,26 @@ def full_chunk_search_generator(
         ]
     else:
         yield [True for _ in reranked_chunks or retrieved_chunks]
+
+
+def inference_documents_from_ids(
+    doc_identifiers: list[tuple[str, int]],
+    document_index: DocumentIndex,
+) -> Iterator[list[InferenceChunk] | list[bool]]:
+    functions_with_args: list[tuple[Callable, tuple]] = [
+        (document_index.id_based_retrieval, (doc_ind, chunk_ind))
+        for doc_ind, chunk_ind in doc_identifiers
+    ]
+
+    logger.debug(
+        "Running LLM usefulness eval in parallel (following logging may be out of order)"
+    )
+    parallel_results = run_functions_tuples_in_parallel(
+        functions_with_args, allow_failures=True
+    )
+
+    # Any failures to retrieve would give a None
+    inference_chunks = [res for res in parallel_results if res is not None]
+
+    yield inference_chunks
+    yield [True for _ in range(len(inference_chunks))]

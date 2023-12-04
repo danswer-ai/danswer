@@ -8,22 +8,13 @@ from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 from sqlalchemy.orm import Session
 
-from danswer.chat.chat_prompts import build_combined_query
-from danswer.chat.chat_prompts import DANSWER_TOOL_NAME
-from danswer.chat.chat_prompts import form_require_search_text
-from danswer.chat.chat_prompts import form_tool_followup_text
-from danswer.chat.chat_prompts import form_tool_less_followup_text
-from danswer.chat.chat_prompts import form_tool_section_text
-from danswer.chat.chat_prompts import form_user_prompt_text
-from danswer.chat.chat_prompts import format_danswer_chunks_for_chat
-from danswer.chat.chat_prompts import REQUIRE_DANSWER_SYSTEM_MSG
-from danswer.chat.chat_prompts import YES_SEARCH
-from danswer.chat.personas import build_system_text_from_persona
 from danswer.chat.tools import call_tool
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT
 from danswer.configs.chat_configs import FORCE_TOOL_PROMPT
-from danswer.configs.constants import IGNORE_FOR_QA
+from danswer.configs.constants import IGNORE_FOR_QA, MessageType
 from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
+from danswer.db.chat import get_or_create_root_message, fetch_chat_message, create_new_chat_message, \
+    get_doc_query_identifiers_from_model, fetch_chat_messages_by_session
 from danswer.db.models import ChatMessage
 from danswer.db.models import Persona
 from danswer.db.models import User
@@ -41,17 +32,57 @@ from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.models import IndexFilters
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
-from danswer.search.search_runner import chunks_to_search_docs
+from danswer.search.request_preprocessing import retrieval_preprocessing
+from danswer.search.search_runner import chunks_to_search_docs, inference_documents_from_ids, \
+    full_chunk_search_generator
 from danswer.search.search_runner import full_chunk_search
-from danswer.server.chat.models import RetrievalDocs
+from danswer.secondary_llm_flows.chat_helpers import check_if_need_search, history_based_query_rephrase
+from danswer.server.chat.models import RetrievalDocs, CreateChatMessageRequest
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
 from danswer.utils.text_processing import has_unescaped_quote
+from danswer.utils.timing import log_generator_function_time
 
 logger = setup_logger()
 
 
 LLM_CHAT_FAILURE_MSG = "The large-language-model failed to generate a valid response."
+
+
+def _create_chat_chain(
+    chat_session_id: int,
+    db_session: Session,
+) -> tuple[ChatMessage, list[ChatMessage]]:
+    """Build the linear chain of messages without including the root message"""
+    mainline_messages: list[ChatMessage] = []
+    all_chat_messages = fetch_chat_messages_by_session(chat_session_id, db_session)
+    id_to_msg = {msg.id: msg for msg in all_chat_messages}
+
+    if not all_chat_messages:
+        return []
+
+    root_message = all_chat_messages[0]
+    if root_message.parent_message is not None:
+        raise RuntimeError(
+            "Invalid root message, unable to fetch valid chat message sequence"
+        )
+
+    current_message = root_message
+    while current_message.latest_child_message is not None:
+        current_message = id_to_msg.get(current_message.latest_child_message)
+
+        if current_message is None:
+            raise RuntimeError(
+                "Invalid message chain,"
+                "could not find next message in the same session"
+            )
+
+        mainline_messages.append(current_message)
+
+    if not mainline_messages:
+        raise RuntimeError("Could not trace chat message history")
+
+    return mainline_messages[-1], mainline_messages[:-1]
 
 
 def _parse_embedded_json_streamed_response(
@@ -575,5 +606,124 @@ def generate_message_response(
         persona=persona,
         tokenizer=tokenizer,
         user=user,
+        db_session=db_session,
+    )
+
+
+@log_generator_function_time()
+def stream_chat_packets(
+    chat_message: CreateChatMessageRequest,
+    user: User | None,
+    db_session: Session,
+) -> Iterator[str]:
+    chat_session_id = chat_message.chat_session_id
+    parent_id = chat_message.parent_message_id
+    prompt_id = chat_message.prompt_id
+    reference_doc_ids = chat_message.search_doc_ids
+    retrieval_options = chat_message.retrieval_options
+    message_content = chat_message.message
+    user_id = user.id if user is not None else None
+
+    llm_tokenizer = get_default_llm_token_encode()
+    document_index = get_default_document_index()
+
+    root_message = get_or_create_root_message(
+        chat_session_id=chat_session_id, db_session=db_session
+    )
+
+    if parent_id is not None:
+        parent_message = fetch_chat_message(
+            chat_session_id=chat_session_id,
+            chat_message_id=parent_id,
+            db_session=db_session,
+        )
+    else:
+        parent_message = root_message
+
+    # TODO add query event here
+
+    # Create new message at the right place in the tree and update the parent's child pointer
+    # Don't commit yet until we verify the chat message chain
+    new_message = create_new_chat_message(
+        chat_session_id=chat_session_id,
+        parent_message=parent_message,
+        prompt_id=prompt_id,
+        message=message_content,
+        token_count=len(llm_tokenizer(message_content)),
+        message_type=MessageType.USER,
+        db_session=db_session,
+        commit=False,
+    )
+
+    final_msg, history_msgs = _create_chat_chain(
+        chat_session_id,
+        db_session,
+    )
+
+    if final_msg != new_message.id:
+        db_session.rollback()
+        raise RuntimeError(
+            "The new message was not on the mainline. "
+            "Be sure to update the chat pointers before calling this."
+        )
+
+    # Save now to save the latest chat message
+    db_session.commit()
+
+    llm = get_default_llm()
+
+    if reference_doc_ids:
+        identifier_tuples = get_doc_query_identifiers_from_model(reference_doc_ids)
+        documents_generator = inference_documents_from_ids(
+            doc_identifiers=identifier_tuples,
+            document_index=get_default_document_index(),
+        )
+    else:
+        if retrieval_options or check_if_need_search(query_message=final_msg, history=history_msgs, llm=llm):
+            rephrased_query = history_based_query_rephrase(
+                query_message=final_msg,
+                history=history_msgs,
+                llm=llm
+            )
+
+            retrieval_request, predicted_search_type, predicted_flow = retrieval_preprocessing(
+                query=rephrased_query,
+                retrieval_details=retrieval_options,
+                user=user,
+                db_session=db_session
+            )
+            documents_generator = full_chunk_search_generator(
+                search_query=retrieval_request,
+                document_index=document_index,
+            )
+        else:
+            documents_generator = lambda: (yield []) and (yield [])
+
+    response_packets = generate_message_response(
+        messages=mainline_messages,
+        persona=persona,
+        tokenizer=llm_tokenizer,
+        user=user,
+        db_session=db_session,
+    )
+    llm_output = ""
+    fetched_docs: RetrievalDocs | None = None
+    for packet in response_packets:
+        if isinstance(packet, DanswerAnswerPiece):
+            token = packet.answer_piece
+            if token:
+                llm_output += token
+        elif isinstance(packet, RetrievalDocs):
+            fetched_docs = packet
+        yield get_json_line(packet.dict())
+
+    create_new_chat_message(
+        chat_session_id=chat_session_id,
+        message_number=message_number + 1,
+        parent_edit_number=new_message.edit_number,
+        message=llm_output,
+        token_count=len(llm_tokenizer(llm_output)),
+        message_type=MessageType.ASSISTANT,
+        retrieval_docs=fetched_docs.dict() if fetched_docs else None,
         db_session=db_session,
     )

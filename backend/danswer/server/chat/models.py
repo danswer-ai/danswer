@@ -98,7 +98,8 @@ class RetrievalDetails(BaseModel):
     enable_auto_detect_filters: bool = not DISABLE_LLM_FILTER_EXTRACTION
     favor_recent: bool | None = None
     # Is this a real-time/streaming call or a question where Danswer can take more time?
-    # real_time: bool = True
+    # Used to determine reranking flow
+    real_time: bool = True
     # Pagination purposes, offset is in batches, not by document count
     # offset: int | None = None
 
@@ -110,6 +111,7 @@ class CreateChatMessageRequest(BaseModel):
     prompt_id: int
     # If search_doc_ids provided, then retrieval options are unused
     # Maybe in the future, can combine selected documents + additional retrieved
+    # If both are unset, use the LLM to determine search vs not
     search_doc_ids: list[int] | None
     retrieval_options: RetrievalDetails | None
 

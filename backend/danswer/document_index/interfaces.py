@@ -77,6 +77,16 @@ class Updatable(abc.ABC):
         raise NotImplementedError
 
 
+class IdRetrievalCapable(abc.ABC):
+    @abc.abstractmethod
+    def id_based_retrieval(
+        self,
+        document_id: str,
+        chunk_ind: int | None
+    ) -> list[InferenceChunk]:
+        raise NotImplementedError
+
+
 class KeywordCapable(abc.ABC):
     @abc.abstractmethod
     def keyword_retrieval(
@@ -125,7 +135,7 @@ class AdminCapable(abc.ABC):
         raise NotImplementedError
 
 
-class BaseIndex(Verifiable, AdminCapable, Indexable, Updatable, Deletable, abc.ABC):
+class BaseIndex(Verifiable, AdminCapable, IdRetrievalCapable, Indexable, Updatable, Deletable, abc.ABC):
     """All basic functionalities excluding a specific retrieval approach
     Indices need to be able to
     - Check that the index exists with a schema definition

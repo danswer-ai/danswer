@@ -404,7 +404,11 @@ Messages Tables
 
 class SearchDoc(Base):
     """Different from Document table. This one stores the state of a document from a retrieval.
-    This allows chat sessions to be replayed with the searched docs"""
+    This allows chat sessions to be replayed with the searched docs
+
+    Notably, this does not include the contents of the Document/Chunk, during inference if a stored
+    SearchDoc is selected, an inference must be remade to retrieve the contents
+    """
 
     __tablename__ = "chat_session"
 
@@ -421,6 +425,12 @@ class SearchDoc(Base):
     # This is for the document, not this row in the table
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
+    )
+    primary_owners: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
+    secondary_owners: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
     )
 
     chat_messages = relationship(
