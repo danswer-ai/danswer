@@ -219,6 +219,7 @@ def handle_new_chat_message(
 
     packets = stream_chat_packets(
         chat_message=chat_message,
+        chat_session=chat_session,
         user=user,
         db_session=db_session,
     )

@@ -58,8 +58,8 @@ class RetrievalDocs(BaseModel):
 
 # First chunk of info for streaming QA
 class QADocsResponse(RetrievalDocs):
-    predicted_flow: QueryFlow
-    predicted_search: SearchType
+    predicted_flow: QueryFlow | None
+    predicted_search: SearchType | None
     time_cutoff: datetime | None
     favor_recent: bool
 
@@ -92,7 +92,7 @@ class ChatFeedbackRequest(BaseModel):
 class RetrievalDetails(BaseModel):
     #chat_session_id: int
     #query: str
-    filters: BaseFilters
+    filters: BaseFilters | None = None
     collection: str = DOCUMENT_INDEX_NAME
     search_type: SearchType = SearchType.HYBRID
     enable_auto_detect_filters: bool = not DISABLE_LLM_FILTER_EXTRACTION

@@ -472,6 +472,11 @@ def full_chunk_search(
     return top_chunks, llm_chunk_selection
 
 
+def empty_search_generator() -> Iterator[list[InferenceChunk] | list[bool]]:
+    yield cast(list[InferenceChunk], [])
+    yield cast(list[bool], [])
+
+
 def full_chunk_search_generator(
     search_query: SearchQuery,
     document_index: DocumentIndex,

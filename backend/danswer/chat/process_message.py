@@ -1,6 +1,7 @@
 import re
 from collections.abc import Callable
 from collections.abc import Iterator
+from typing import cast
 
 from langchain.schema.messages import AIMessage
 from langchain.schema.messages import BaseMessage
@@ -9,19 +10,20 @@ from langchain.schema.messages import SystemMessage
 from sqlalchemy.orm import Session
 
 from danswer.chat.tools import call_tool
-from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT
+from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT, DISABLE_GENERATIVE_AI
 from danswer.configs.chat_configs import FORCE_TOOL_PROMPT
 from danswer.configs.constants import IGNORE_FOR_QA, MessageType
 from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
 from danswer.db.chat import get_or_create_root_message, fetch_chat_message, create_new_chat_message, \
-    get_doc_query_identifiers_from_model, fetch_chat_messages_by_session
-from danswer.db.models import ChatMessage
+    get_doc_query_identifiers_from_model, fetch_chat_messages_by_session, fetch_chat_session_by_id
+from danswer.db.feedback import create_query_event, update_query_event_retrieved_documents
+from danswer.db.models import ChatMessage, ChatSession
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerChatModelOut
 from danswer.direct_qa.interfaces import StreamingError
-from danswer.direct_qa.qa_utils import get_usable_chunks
+from danswer.direct_qa.qa_utils import get_usable_chunks, get_chunks_for_qa
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.factory import get_default_llm
@@ -29,15 +31,17 @@ from danswer.llm.interfaces import LLM
 from danswer.llm.utils import get_default_llm_token_encode
 from danswer.llm.utils import translate_danswer_msg_to_langchain
 from danswer.search.access_filters import build_access_filters_for_user
-from danswer.search.models import IndexFilters
+from danswer.search.models import IndexFilters, BaseFilters, QueryFlow
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.search.request_preprocessing import retrieval_preprocessing
 from danswer.search.search_runner import chunks_to_search_docs, inference_documents_from_ids, \
-    full_chunk_search_generator
+    full_chunk_search_generator, empty_search_generator
 from danswer.search.search_runner import full_chunk_search
 from danswer.secondary_llm_flows.chat_helpers import check_if_need_search, history_based_query_rephrase
-from danswer.server.chat.models import RetrievalDocs, CreateChatMessageRequest
+from danswer.server.chat.models import RetrievalDocs, CreateChatMessageRequest, RetrievalDetails, QADocsResponse, \
+    LLMRelevanceFilterResponse
+from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
 from danswer.utils.text_processing import has_unescaped_quote
@@ -59,7 +63,7 @@ def _create_chat_chain(
     id_to_msg = {msg.id: msg for msg in all_chat_messages}
 
     if not all_chat_messages:
-        return []
+        raise ValueError("No messages in Chat Session")
 
     root_message = all_chat_messages[0]
     if root_message.parent_message is not None:
@@ -67,9 +71,12 @@ def _create_chat_chain(
             "Invalid root message, unable to fetch valid chat message sequence"
         )
 
-    current_message = root_message
-    while current_message.latest_child_message is not None:
-        current_message = id_to_msg.get(current_message.latest_child_message)
+    current_message: ChatMessage | None = root_message
+    while current_message is not None:
+        child_msg = current_message.latest_child_message
+        if not child_msg:
+            break
+        current_message = id_to_msg.get(child_msg)
 
         if current_message is None:
             raise RuntimeError(
@@ -615,14 +622,20 @@ def stream_chat_packets(
     chat_message: CreateChatMessageRequest,
     user: User | None,
     db_session: Session,
+    chat_session: ChatSession | None = None,  # Just to avoid fetching twice
+    disable_generative_answer: bool = DISABLE_GENERATIVE_AI,
 ) -> Iterator[str]:
+    if chat_session is None:
+        chat_session = fetch_chat_session_by_id(chat_message.chat_session_id, db_session)
+
     chat_session_id = chat_message.chat_session_id
     parent_id = chat_message.parent_message_id
     prompt_id = chat_message.prompt_id
     reference_doc_ids = chat_message.search_doc_ids
     retrieval_options = chat_message.retrieval_options
-    message_content = chat_message.message
+    message_text = chat_message.message
     user_id = user.id if user is not None else None
+    specified_search = chat_message.retrieval_options.search_type if chat_message.retrieval_options is not None else None
 
     llm_tokenizer = get_default_llm_token_encode()
     document_index = get_default_document_index()
@@ -640,7 +653,15 @@ def stream_chat_packets(
     else:
         parent_message = root_message
 
-    # TODO add query event here
+    # create record for this query in Postgres
+    query_event_id = create_query_event(
+        query=message_text,
+        chat_session_id=chat_session_id,
+        search_type=specified_search,
+        llm_answer=None,
+        user_id=user_id,
+        db_session=db_session,
+    )
 
     # Create new message at the right place in the tree and update the parent's child pointer
     # Don't commit yet until we verify the chat message chain
@@ -648,8 +669,8 @@ def stream_chat_packets(
         chat_session_id=chat_session_id,
         parent_message=parent_message,
         prompt_id=prompt_id,
-        message=message_content,
-        token_count=len(llm_tokenizer(message_content)),
+        message=message_text,
+        token_count=len(llm_tokenizer(message_text)),
         message_type=MessageType.USER,
         db_session=db_session,
         commit=False,
@@ -672,9 +693,15 @@ def stream_chat_packets(
 
     llm = get_default_llm()
 
+    # Defaults for no retrieval or preselected docs cases
+    predicted_search_type = None
+    predicted_flow = None
+    time_cutoff = None
+    favor_recent = False
+
     if reference_doc_ids:
         identifier_tuples = get_doc_query_identifiers_from_model(reference_doc_ids)
-        documents_generator = inference_documents_from_ids(
+        documents_generator: Iterator[list[InferenceChunk] | list[bool]] = inference_documents_from_ids(
             doc_identifiers=identifier_tuples,
             document_index=get_default_document_index(),
         )
@@ -686,6 +713,9 @@ def stream_chat_packets(
                 llm=llm
             )
 
+            if not retrieval_options:
+                retrieval_options = RetrievalDetails()
+
             retrieval_request, predicted_search_type, predicted_flow = retrieval_preprocessing(
                 query=rephrased_query,
                 retrieval_details=retrieval_options,
@@ -696,16 +726,74 @@ def stream_chat_packets(
                 search_query=retrieval_request,
                 document_index=document_index,
             )
+            time_cutoff = retrieval_request.filters.time_cutoff
+            favor_recent = retrieval_request.favor_recent
+
         else:
-            documents_generator = lambda: (yield []) and (yield [])
+            documents_generator = empty_search_generator()
+
+    # first fetch and return to the UI the top chunks so the user can
+    # immediately see some results
+    top_chunks = cast(list[InferenceChunk], next(documents_generator))
+
+    top_docs = chunks_to_search_docs(top_chunks)
+    initial_response = QADocsResponse(
+        top_documents=top_docs,
+        # if generative AI is disabled, set flow as search so frontend
+        # doesn't ask the user if they want to run QA over more documents
+        predicted_flow=QueryFlow.SEARCH
+        if disable_generative_answer
+        else cast(QueryFlow, predicted_flow),
+        predicted_search=cast(SearchType, predicted_search_type),
+        time_cutoff=time_cutoff,
+        favor_recent=favor_recent
+    ).dict()
+    yield get_json_line(initial_response)
+
+    if not top_chunks:
+        logger.debug("No Documents Found")
+        return
+
+    # Update record for this query to include top docs
+    update_query_event_retrieved_documents(
+        db_session=db_session,
+        retrieved_document_ids=[doc.document_id for doc in top_chunks]
+        if top_chunks
+        else [],
+        query_id=query_event_id,
+        user_id=user_id,
+    )
+
+    # Get the final ordering of chunks for the LLM call
+    llm_chunk_selection = cast(list[bool], next(documents_generator))
+    llm_chunks_indices = get_chunks_for_qa(
+        chunks=top_chunks,
+        llm_chunk_selection=llm_chunk_selection,
+        token_limit=chat_session.persona.num_chunks,
+    )
+    
+    llm_relevance_filtering_response = LLMRelevanceFilterResponse(
+        relevant_chunk_indices=[
+            index for index, value in enumerate(llm_chunk_selection) if value
+        ]
+        if not retrieval_request.skip_llm_chunk_filter
+        else []
+    ).dict()
+    yield get_json_line(llm_relevance_filtering_response)
+
+    if disable_generative_answer:
+        logger.debug("Skipping QA because generative AI is disabled")
+        return
 
     response_packets = generate_message_response(
-        messages=mainline_messages,
-        persona=persona,
+        query_message=final_msg,
+        history=history_msgs,
+        persona=chat_session.persona,
         tokenizer=llm_tokenizer,
         user=user,
         db_session=db_session,
     )
+
     llm_output = ""
     fetched_docs: RetrievalDocs | None = None
     for packet in response_packets:

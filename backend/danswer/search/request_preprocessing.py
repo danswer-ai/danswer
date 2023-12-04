@@ -7,7 +7,7 @@ from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.db.models import User
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import query_intent
-from danswer.search.models import IndexFilters
+from danswer.search.models import IndexFilters, BaseFilters
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
@@ -30,6 +30,8 @@ def retrieval_preprocessing(
     disable_llm_filter_extraction: bool = DISABLE_LLM_FILTER_EXTRACTION,
     skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
 ) -> tuple[SearchQuery, SearchType | None, QueryFlow | None]:
+    preset_filters = retrieval_details.filters if retrieval_details.filters is not None else BaseFilters()
+
     auto_filters_enabled = (
         not disable_llm_filter_extraction
         and retrieval_details.enable_auto_detect_filters
@@ -45,7 +47,7 @@ def retrieval_preprocessing(
 
     # based on the query, figure out if we should apply any source filters
     should_run_source_filters = (
-        auto_filters_enabled and not retrieval_details.filters.source_type
+        auto_filters_enabled and not preset_filters.source_type
     )
     run_source_filters = (
         FunctionCall(extract_source_filter, (query, db_session), {})
@@ -89,9 +91,9 @@ def retrieval_preprocessing(
         None if bypass_acl else build_access_filters_for_user(user, db_session)
     )
     final_filters = IndexFilters(
-        source_type=retrieval_details.filters.source_type or source_filters,
-        document_set=retrieval_details.filters.document_set,
-        time_cutoff=retrieval_details.filters.time_cutoff or time_cutoff,
+        source_type=preset_filters.source_type or source_filters,
+        document_set=preset_filters.document_set,
+        time_cutoff=preset_filters.time_cutoff or time_cutoff,
         access_control_list=user_acl_filters,
     )
 

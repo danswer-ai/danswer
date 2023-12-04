@@ -410,7 +410,7 @@ class SearchDoc(Base):
     SearchDoc is selected, an inference must be remade to retrieve the contents
     """
 
-    __tablename__ = "chat_session"
+    __tablename__ = "search_doc"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     document_id: Mapped[str] = mapped_column(String)
@@ -445,9 +445,7 @@ class ChatSession(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
-    persona_id: Mapped[int | None] = mapped_column(
-        ForeignKey("persona.id"), default=None
-    )
+    persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id"))
     description: Mapped[str] = mapped_column(Text)
     # Only ever set to True if system is set to not hard-delete chats
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -485,7 +483,7 @@ class ChatMessage(Base):
     message_type: Mapped[MessageType] = mapped_column(Enum(MessageType))
     # Gen AI user feedback only applies to assistant messages
     gen_ai_feedback: Mapped[QAFeedbackType | None] = mapped_column(
-        Enum(QAFeedbackType), nullable=True
+        Enum(QAFeedbackType, native_enum=False), nullable=True,
     )
     time_sent: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
