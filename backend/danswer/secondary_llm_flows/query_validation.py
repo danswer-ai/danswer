@@ -1,6 +1,7 @@
 import re
 from collections.abc import Iterator
 
+from danswer.configs.app_configs import DISABLE_LLM_QUERY_ANSWERABILITY
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import StreamingError
 from danswer.llm.factory import get_default_llm
@@ -52,7 +53,18 @@ def get_query_answerability(user_query: str) -> tuple[str, bool]:
     return reasoning, answerable
 
 
-def stream_query_answerability(user_query: str) -> Iterator[str]:
+def stream_query_answerability(
+    user_query: str, skip_check: bool = DISABLE_LLM_QUERY_ANSWERABILITY
+) -> Iterator[str]:
+    if skip_check:
+        yield get_json_line(
+            QueryValidationResponse(
+                reasoning="Query Answerability Eval feature is turned off",
+                answerable=True,
+            ).dict()
+        )
+        return
+
     messages = get_query_validation_messages(user_query)
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
     try:
