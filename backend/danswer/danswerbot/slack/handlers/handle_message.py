@@ -89,6 +89,7 @@ def handle_message(
     sender_id = message_info.sender
     bipass_filters = message_info.bipass_filters
     is_bot_msg = message_info.is_bot_msg
+    persona = channel_config.persona if channel_config else None
 
     logger = cast(
         logging.Logger,
@@ -96,9 +97,9 @@ def handle_message(
     )
 
     document_set_names: list[str] | None = None
-    if channel_config and channel_config.persona:
+    if persona:
         document_set_names = [
-            document_set.name for document_set in channel_config.persona.document_sets
+            document_set.name for document_set in persona.document_sets
         ]
 
     # List of user id to send message to, if None, send to everyone in channel
@@ -194,7 +195,10 @@ def handle_message(
     # for an existing chat session associated with this thread
     with Session(get_sqlalchemy_engine()) as db_session:
         chat_session = create_chat_session(
-            db_session=db_session, description="", user_id=None
+            db_session=db_session,
+            description="",
+            user_id=None,
+            persona_id=persona.id if persona else None,
         )
         chat_session_id = chat_session.id
 

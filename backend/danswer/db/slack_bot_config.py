@@ -27,7 +27,7 @@ def _cleanup_relationships(db_session: Session, persona_id: int) -> None:
         db_session.delete(rel)
 
 
-def _create_slack_bot_persona(
+def create_slack_bot_persona(
     db_session: Session,
     channel_names: list[str],
     document_sets: list[int],
@@ -47,6 +47,7 @@ def _create_slack_bot_persona(
         default_persona=False,
         db_session=db_session,
         commit=False,
+        overwrite_duplicate_named_persona=True,
     )
 
     if existing_persona_id:
@@ -62,20 +63,12 @@ def _create_slack_bot_persona(
 
 
 def insert_slack_bot_config(
-    document_sets: list[int],
+    persona_id: int | None,
     channel_config: ChannelConfig,
     db_session: Session,
 ) -> SlackBotConfig:
-    persona = None
-    if document_sets:
-        persona = _create_slack_bot_persona(
-            db_session=db_session,
-            channel_names=channel_config["channel_names"],
-            document_sets=document_sets,
-        )
-
     slack_bot_config = SlackBotConfig(
-        persona_id=persona.id if persona else None,
+        persona_id=persona_id,
         channel_config=channel_config,
     )
     db_session.add(slack_bot_config)
@@ -86,7 +79,7 @@ def insert_slack_bot_config(
 
 def update_slack_bot_config(
     slack_bot_config_id: int,
-    document_sets: list[int],
+    persona_id: int | None,
     channel_config: ChannelConfig,
     db_session: Session,
 ) -> SlackBotConfig:
@@ -97,31 +90,29 @@ def update_slack_bot_config(
         raise ValueError(
             f"Unable to find slack bot config with ID {slack_bot_config_id}"
         )
-
+    # get the existing persona id before updating the object
     existing_persona_id = slack_bot_config.persona_id
 
-    persona = None
-    if document_sets:
-        persona = _create_slack_bot_persona(
-            db_session=db_session,
-            channel_names=channel_config["channel_names"],
-            document_sets=document_sets,
-            existing_persona_id=slack_bot_config.persona_id,
+    # update the config
+    # NOTE: need to do this before cleaning up the old persona or else we
+    # will encounter `violates foreign key constraint` errors
+    slack_bot_config.persona_id = persona_id
+    slack_bot_config.channel_config = channel_config
+
+    # if the persona has changed, then clean up the old persona
+    if persona_id != existing_persona_id and existing_persona_id:
+        existing_persona = db_session.scalar(
+            select(Persona).where(Persona.id == existing_persona_id)
         )
-    else:
-        # if no document sets and an existing persona exists, then
-        # remove persona + persona -> document set relationships
-        if existing_persona_id:
+        # if the existing persona was one created just for use with this Slack Bot,
+        # then clean it up
+        if existing_persona and existing_persona.name.startswith(
+            SLACK_BOT_PERSONA_PREFIX
+        ):
             _cleanup_relationships(
                 db_session=db_session, persona_id=existing_persona_id
             )
-            existing_persona = db_session.scalar(
-                select(Persona).where(Persona.id == existing_persona_id)
-            )
-            db_session.delete(existing_persona)
 
-    slack_bot_config.persona_id = persona.id if persona else None
-    slack_bot_config.channel_config = channel_config
     db_session.commit()
 
     return slack_bot_config
@@ -141,10 +132,29 @@ def remove_slack_bot_config(
 
     existing_persona_id = slack_bot_config.persona_id
     if existing_persona_id:
-        _cleanup_relationships(db_session=db_session, persona_id=existing_persona_id)
+        existing_persona = db_session.scalar(
+            select(Persona).where(Persona.id == existing_persona_id)
+        )
+        # if the existing persona was one created just for use with this Slack Bot,
+        # then clean it up
+        if existing_persona and existing_persona.name.startswith(
+            SLACK_BOT_PERSONA_PREFIX
+        ):
+            _cleanup_relationships(
+                db_session=db_session, persona_id=existing_persona_id
+            )
+            db_session.delete(existing_persona)
 
     db_session.delete(slack_bot_config)
     db_session.commit()
+
+
+def fetch_slack_bot_config(
+    db_session: Session, slack_bot_config_id: int
+) -> SlackBotConfig | None:
+    return db_session.scalar(
+        select(SlackBotConfig).where(SlackBotConfig.id == slack_bot_config_id)
+    )
 
 
 def fetch_slack_bot_configs(db_session: Session) -> Sequence[SlackBotConfig]:

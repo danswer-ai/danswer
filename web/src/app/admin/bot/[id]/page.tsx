@@ -6,14 +6,17 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { DocumentSet, SlackBotConfig } from "@/lib/types";
 import { Text } from "@tremor/react";
 import { BackButton } from "@/components/BackButton";
+import { Persona } from "../../personas/interfaces";
 
 async function Page({ params }: { params: { id: string } }) {
   const tasks = [
-    fetchSS("/manage/admin/slack-bot/config"),
-    fetchSS("/manage/document-set"),
+    fetchSS("/manage/admin/slack-bot/config", undefined, true),
+    fetchSS("/manage/document-set", undefined, true),
+    fetchSS("/persona", undefined, true),
   ];
 
-  const [slackBotsResponse, documentSetsResponse] = await Promise.all(tasks);
+  const [slackBotsResponse, documentSetsResponse, personasResponse] =
+    await Promise.all(tasks);
 
   if (!slackBotsResponse.ok) {
     return (
@@ -47,6 +50,16 @@ async function Page({ params }: { params: { id: string } }) {
   }
   const documentSets = (await documentSetsResponse.json()) as DocumentSet[];
 
+  if (!personasResponse.ok) {
+    return (
+      <ErrorCallout
+        errorTitle="Something went wrong :("
+        errorMsg={`Failed to fetch personas - ${await personasResponse.text()}`}
+      />
+    );
+  }
+  const personas = (await personasResponse.json()) as Persona[];
+
   return (
     <div className="container mx-auto dark">
       <BackButton />
@@ -62,6 +75,7 @@ async function Page({ params }: { params: { id: string } }) {
 
       <SlackBotCreationForm
         documentSets={documentSets}
+        personas={personas}
         existingSlackBotConfig={slackBotConfig}
       />
     </div>

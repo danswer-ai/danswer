@@ -1,3 +1,5 @@
+import { Persona } from "@/app/admin/personas/interfaces";
+
 export interface User {
   id: string;
   email: string;
@@ -301,7 +303,7 @@ export interface ChannelConfig {
 
 export interface SlackBotConfig {
   id: number;
-  document_sets: DocumentSet[];
+  persona: Persona | null;
   channel_config: ChannelConfig;
 }
 

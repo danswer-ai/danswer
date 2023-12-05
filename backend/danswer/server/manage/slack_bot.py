@@ -10,12 +10,14 @@ from danswer.danswerbot.slack.tokens import save_tokens
 from danswer.db.engine import get_session
 from danswer.db.models import ChannelConfig
 from danswer.db.models import User
+from danswer.db.slack_bot_config import create_slack_bot_persona
+from danswer.db.slack_bot_config import fetch_slack_bot_config
 from danswer.db.slack_bot_config import fetch_slack_bot_configs
 from danswer.db.slack_bot_config import insert_slack_bot_config
 from danswer.db.slack_bot_config import remove_slack_bot_config
 from danswer.db.slack_bot_config import update_slack_bot_config
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.server.features.document_set.models import DocumentSet
+from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.manage.models import SlackBotConfig
 from danswer.server.manage.models import SlackBotConfigCreationRequest
 from danswer.server.manage.models import SlackBotTokens
@@ -83,19 +85,29 @@ def create_slack_bot_config(
         slack_bot_config_creation_request, None, db_session
     )
 
+    persona_id = None
+    if slack_bot_config_creation_request.persona_id is not None:
+        persona_id = slack_bot_config_creation_request.persona_id
+    elif slack_bot_config_creation_request.document_sets:
+        persona_id = create_slack_bot_persona(
+            db_session=db_session,
+            channel_names=channel_config["channel_names"],
+            document_sets=slack_bot_config_creation_request.document_sets,
+            existing_persona_id=None,
+        ).id
+
     slack_bot_config_model = insert_slack_bot_config(
-        document_sets=slack_bot_config_creation_request.document_sets,
+        persona_id=persona_id,
         channel_config=channel_config,
         db_session=db_session,
     )
     return SlackBotConfig(
         id=slack_bot_config_model.id,
-        document_sets=[
-            DocumentSet.from_model(document_set)
-            for document_set in slack_bot_config_model.persona.document_sets
-        ]
-        if slack_bot_config_model.persona
-        else [],
+        persona=(
+            PersonaSnapshot.from_model(slack_bot_config_model.persona)
+            if slack_bot_config_model.persona
+            else None
+        ),
         channel_config=slack_bot_config_model.channel_config,
     )
 
@@ -111,20 +123,39 @@ def patch_slack_bot_config(
         slack_bot_config_creation_request, slack_bot_config_id, db_session
     )
 
+    persona_id = None
+    if slack_bot_config_creation_request.persona_id is not None:
+        persona_id = slack_bot_config_creation_request.persona_id
+    elif slack_bot_config_creation_request.document_sets:
+        existing_slack_bot_config = fetch_slack_bot_config(
+            db_session=db_session, slack_bot_config_id=slack_bot_config_id
+        )
+        if existing_slack_bot_config is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Slack bot config not found",
+            )
+
+        persona_id = create_slack_bot_persona(
+            db_session=db_session,
+            channel_names=channel_config["channel_names"],
+            document_sets=slack_bot_config_creation_request.document_sets,
+            existing_persona_id=existing_slack_bot_config.persona_id,
+        ).id
+
     slack_bot_config_model = update_slack_bot_config(
         slack_bot_config_id=slack_bot_config_id,
-        document_sets=slack_bot_config_creation_request.document_sets,
+        persona_id=persona_id,
         channel_config=channel_config,
         db_session=db_session,
     )
     return SlackBotConfig(
         id=slack_bot_config_model.id,
-        document_sets=[
-            DocumentSet.from_model(document_set)
-            for document_set in slack_bot_config_model.persona.document_sets
-        ]
-        if slack_bot_config_model.persona
-        else [],
+        persona=(
+            PersonaSnapshot.from_model(slack_bot_config_model.persona)
+            if slack_bot_config_model.persona
+            else None
+        ),
         channel_config=slack_bot_config_model.channel_config,
     )
 
@@ -149,12 +180,11 @@ def list_slack_bot_configs(
     return [
         SlackBotConfig(
             id=slack_bot_config_model.id,
-            document_sets=[
-                DocumentSet.from_model(document_set)
-                for document_set in slack_bot_config_model.persona.document_sets
-            ]
-            if slack_bot_config_model.persona
-            else [],
+            persona=(
+                PersonaSnapshot.from_model(slack_bot_config_model.persona)
+                if slack_bot_config_model.persona
+                else None
+            ),
             channel_config=slack_bot_config_model.channel_config,
         )
         for slack_bot_config_model in slack_bot_config_models

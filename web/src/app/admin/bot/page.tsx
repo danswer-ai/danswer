@@ -2,17 +2,26 @@
 
 import { ThreeDotsLoader } from "@/components/Loading";
 import { PageSelector } from "@/components/PageSelector";
-import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { CPUIcon, EditIcon, TrashIcon } from "@/components/icons/icons";
 import { SlackBotConfig } from "@/lib/types";
 import { useState } from "react";
 import { useSlackBotConfigs, useSlackBotTokens } from "./hooks";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
-import { deleteSlackBotConfig } from "./lib";
+import { deleteSlackBotConfig, isPersonaASlackBotPersona } from "./lib";
 import { SlackBotTokensForm } from "./SlackBotTokensForm";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Button, Text, Title } from "@tremor/react";
-import { FiChevronDown, FiChevronUp } from "react-icons/fi";
+import {
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  Text,
+  Title,
+} from "@tremor/react";
+import { FiArrowUpRight, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import Link from "next/link";
 
 const numToDisplay = 50;
@@ -41,119 +50,93 @@ const SlackBotConfigsTable = ({
 
   return (
     <div>
-      <BasicTable
-        columns={[
-          {
-            header: "Channels",
-            key: "channels",
-          },
-          {
-            header: "Document Sets",
-            key: "document_sets",
-          },
-          {
-            header: "Team Members",
-            key: "team_members",
-          },
-          {
-            header: "Hide Non-Answers",
-            key: "answer_validity_check_enabled",
-          },
-          {
-            header: "Questions Only",
-            key: "question_mark_only",
-          },
-          {
-            header: "Tags Only",
-            key: "respond_tag_only",
-          },
-          {
-            header: "Delete",
-            key: "delete",
-            width: "50px",
-          },
-        ]}
-        data={slackBotConfigs
-          .slice((page - 1) * numToDisplay, page * numToDisplay)
-          .map((slackBotConfig) => {
-            return {
-              channels: (
-                <div className="flex gap-x-2">
-                  <Link
-                    className="cursor-pointer my-auto"
-                    href={`/admin/bot/${slackBotConfig.id}`}
-                  >
-                    <EditIcon />
-                  </Link>
-                  <div className="my-auto">
-                    {slackBotConfig.channel_config.channel_names
-                      .map((channel_name) => `#${channel_name}`)
-                      .join(", ")}
-                  </div>
-                </div>
-              ),
-              document_sets: (
-                <div>
-                  {slackBotConfig.document_sets
-                    .map((documentSet) => documentSet.name)
-                    .join(", ")}
-                </div>
-              ),
-              team_members: (
-                <div>
-                  {(
-                    slackBotConfig.channel_config.respond_team_member_list || []
-                  ).join(", ")}
-                </div>
-              ),
-              answer_validity_check_enabled: (
-                slackBotConfig.channel_config.answer_filters || []
-              ).includes("well_answered_postfilter") ? (
-                <div className="text-gray-300">Yes</div>
-              ) : (
-                <div className="text-gray-300">No</div>
-              ),
-              question_mark_only: (
-                slackBotConfig.channel_config.answer_filters || []
-              ).includes("questionmark_prefilter") ? (
-                <div className="text-gray-300">Yes</div>
-              ) : (
-                <div className="text-gray-300">No</div>
-              ),
-              respond_tag_only:
-                slackBotConfig.channel_config.respond_tag_only || false ? (
-                  <div className="text-gray-300">Yes</div>
-                ) : (
-                  <div className="text-gray-300">No</div>
-                ),
-              delete: (
-                <div
-                  className="cursor-pointer"
-                  onClick={async () => {
-                    const response = await deleteSlackBotConfig(
-                      slackBotConfig.id
-                    );
-                    if (response.ok) {
-                      setPopup({
-                        message: `Slack bot config "${slackBotConfig.id}" deleted`,
-                        type: "success",
-                      });
-                    } else {
-                      const errorMsg = await response.text();
-                      setPopup({
-                        message: `Failed to delete Slack bot config - ${errorMsg}`,
-                        type: "error",
-                      });
-                    }
-                    refresh();
-                  }}
-                >
-                  <TrashIcon />
-                </div>
-              ),
-            };
-          })}
-      />
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>Channels</TableHeaderCell>
+            <TableHeaderCell>Persona</TableHeaderCell>
+            <TableHeaderCell>Document Sets</TableHeaderCell>
+            <TableHeaderCell>Delete</TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {slackBotConfigs
+            .slice(numToDisplay * (page - 1), numToDisplay * page)
+            .map((slackBotConfig) => {
+              return (
+                <TableRow key={slackBotConfig.id}>
+                  <TableCell>
+                    <div className="flex gap-x-2">
+                      <Link
+                        className="cursor-pointer my-auto"
+                        href={`/admin/bot/${slackBotConfig.id}`}
+                      >
+                        <EditIcon />
+                      </Link>
+                      <div className="my-auto">
+                        {slackBotConfig.channel_config.channel_names
+                          .map((channel_name) => `#${channel_name}`)
+                          .join(", ")}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {slackBotConfig.persona &&
+                    !isPersonaASlackBotPersona(slackBotConfig.persona) ? (
+                      <Link
+                        href={`/admin/personas/${slackBotConfig.persona.id}`}
+                        className="text-blue-500 flex"
+                      >
+                        <FiArrowUpRight className="my-auto mr-1" />
+                        {slackBotConfig.persona.name}
+                      </Link>
+                    ) : (
+                      "-"
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {" "}
+                    <div>
+                      {slackBotConfig.persona &&
+                      slackBotConfig.persona.document_sets.length > 0
+                        ? slackBotConfig.persona.document_sets
+                            .map((documentSet) => documentSet.name)
+                            .join(", ")
+                        : "-"}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {" "}
+                    <div
+                      className="cursor-pointer"
+                      onClick={async () => {
+                        const response = await deleteSlackBotConfig(
+                          slackBotConfig.id
+                        );
+                        if (response.ok) {
+                          setPopup({
+                            message: `Slack bot config "${slackBotConfig.id}" deleted`,
+                            type: "success",
+                          });
+                        } else {
+                          const errorMsg = await response.text();
+                          setPopup({
+                            message: `Failed to delete Slack bot config - ${errorMsg}`,
+                            type: "error",
+                          });
+                        }
+                        refresh();
+                      }}
+                    >
+                      <TrashIcon />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+        </TableBody>
+      </Table>
+
       <div className="mt-3 flex">
         <div className="mx-auto">
           <PageSelector

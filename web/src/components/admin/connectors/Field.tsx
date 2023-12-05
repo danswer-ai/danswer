@@ -9,8 +9,16 @@ import {
 } from "formik";
 import * as Yup from "yup";
 import { FormBodyBuilder } from "./types";
-import { Dropdown, Option } from "@/components/Dropdown";
+import { DefaultDropdown, StringOrNumberOption } from "@/components/Dropdown";
 import { FiPlus, FiX } from "react-icons/fi";
+
+export function SectionHeader({
+  children,
+}: {
+  children: string | JSX.Element;
+}) {
+  return <div className="mb-4 font-bold text-lg">{children}</div>;
+}
 
 export function Label({ children }: { children: string | JSX.Element }) {
   return (
@@ -212,9 +220,10 @@ export function TextArrayFieldBuilder<T extends Yup.AnyObject>(
 
 interface SelectorFormFieldProps {
   name: string;
-  label: string;
-  options: Option[];
+  label?: string;
+  options: StringOrNumberOption[];
   subtext?: string;
+  includeDefault?: boolean;
 }
 
 export function SelectorFormField({
@@ -222,24 +231,24 @@ export function SelectorFormField({
   label,
   options,
   subtext,
+  includeDefault = false,
 }: SelectorFormFieldProps) {
   const [field] = useField<string>(name);
   const { setFieldValue } = useFormikContext();
 
   return (
-    <div className="mb-4">
-      <label className="flex mb-2">
-        <div>
-          {label}
-          {subtext && <p className="text-xs">{subtext}</p>}
-        </div>
-      </label>
+    <div className="mb-4 dark">
+      {label && <Label>{label}</Label>}
+      {subtext && <SubLabel>{subtext}</SubLabel>}
 
-      <Dropdown
-        options={options}
-        selected={field.value}
-        onSelect={(selected) => setFieldValue(name, selected.value)}
-      />
+      <div className="mt-2">
+        <DefaultDropdown
+          options={options}
+          selected={field.value}
+          onSelect={(selected) => setFieldValue(name, selected)}
+          includeDefault={includeDefault}
+        />
+      </div>
 
       <ErrorMessage
         name={name}

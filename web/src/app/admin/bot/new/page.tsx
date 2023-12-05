@@ -6,9 +6,12 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { DocumentSet } from "@/lib/types";
 import { BackButton } from "@/components/BackButton";
 import { Text } from "@tremor/react";
+import { Persona } from "../../personas/interfaces";
 
 async function Page() {
-  const documentSetsResponse = await fetchSS("/manage/document-set");
+  const tasks = [fetchSS("/manage/document-set"), fetchSS("/persona")];
+  const [documentSetsResponse, personasResponse] = await Promise.all(tasks);
+
   if (!documentSetsResponse.ok) {
     return (
       <ErrorCallout
@@ -18,6 +21,16 @@ async function Page() {
     );
   }
   const documentSets = (await documentSetsResponse.json()) as DocumentSet[];
+
+  if (!personasResponse.ok) {
+    return (
+      <ErrorCallout
+        errorTitle="Something went wrong :("
+        errorMsg={`Failed to fetch personas - ${await personasResponse.text()}`}
+      />
+    );
+  }
+  const personas = (await personasResponse.json()) as Persona[];
 
   return (
     <div className="container mx-auto dark">
@@ -32,7 +45,7 @@ async function Page() {
         DanswerBot behaves in the specified channels.
       </Text>
 
-      <SlackBotCreationForm documentSets={documentSets} />
+      <SlackBotCreationForm documentSets={documentSets} personas={personas} />
     </div>
   );
 }

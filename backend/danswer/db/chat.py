@@ -325,6 +325,7 @@ def upsert_persona(
     default_persona: bool = False,
     document_sets: list[DocumentSetDBModel] | None = None,
     commit: bool = True,
+    overwrite_duplicate_named_persona: bool = False,
 ) -> Persona:
     persona = db_session.query(Persona).filter_by(id=persona_id).first()
     if persona and persona.deleted:
@@ -336,8 +337,12 @@ def upsert_persona(
             persona = fetch_default_persona_by_name(name, db_session)
         else:
             # only one persona with the same name should exist
-            if fetch_persona_by_name(name, db_session):
+            persona_with_same_name = fetch_persona_by_name(name, db_session)
+            if persona_with_same_name and not overwrite_duplicate_named_persona:
                 raise ValueError("Trying to create a persona with a duplicate name")
+
+            # set "existing" persona to the one with the same name so we can override it
+            persona = persona_with_same_name
 
     if persona:
         persona.name = name

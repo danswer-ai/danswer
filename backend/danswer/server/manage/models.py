@@ -1,4 +1,7 @@
+from typing import Any
+
 from pydantic import BaseModel
+from pydantic import root_validator
 from pydantic import validator
 
 from danswer.auth.schemas import UserRole
@@ -6,7 +9,7 @@ from danswer.configs.constants import AuthType
 from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
 from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
-from danswer.server.features.document_set.models import DocumentSet
+from danswer.server.features.persona.models import PersonaSnapshot
 
 
 class VersionResponse(BaseModel):
@@ -62,7 +65,8 @@ class SlackBotConfigCreationRequest(BaseModel):
     # in the future, `document_sets` will probably be replaced
     # by an optional `PersonaSnapshot` object. Keeping it like this
     # for now for simplicity / speed of development
-    document_sets: list[int]
+    document_sets: list[int] | None
+    persona_id: int | None  # NOTE: only one of `document_sets` / `persona_id` should be set
     channel_names: list[str]
     respond_tag_only: bool = False
     # If no team members, assume respond in the channel to everyone
@@ -77,12 +81,17 @@ class SlackBotConfigCreationRequest(BaseModel):
             )
         return value
 
+    @root_validator
+    def validate_document_sets_and_persona_id(
+        cls, values: dict[str, Any]
+    ) -> dict[str, Any]:
+        if values.get("document_sets") and values.get("persona_id"):
+            raise ValueError("Only one of `document_sets` / `persona_id` should be set")
+
+        return values
+
 
 class SlackBotConfig(BaseModel):
     id: int
-    # currently, a persona is created for each slack bot config
-    # in the future, `document_sets` will probably be replaced
-    # by an optional `PersonaSnapshot` object. Keeping it like this
-    # for now for simplicity / speed of development
-    document_sets: list[DocumentSet]
+    persona: PersonaSnapshot | None
     channel_config: ChannelConfig
