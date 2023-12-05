@@ -7,6 +7,7 @@ from slack_sdk.errors import SlackApiError
 from sqlalchemy.orm import Session
 
 from danswer.configs.danswerbot_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
+from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_COT
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_RETRIES
@@ -75,6 +76,7 @@ def handle_message(
     disable_docs_only_answer: bool = DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER,
     disable_auto_detect_filters: bool = DISABLE_DANSWER_BOT_FILTER_DETECT,
     reflexion: bool = ENABLE_DANSWERBOT_REFLEXION,
+    disable_cot: bool = DANSWER_BOT_DISABLE_COT,
 ) -> bool:
     """Potentially respond to the user message depending on filters and if an answer was generated
 
@@ -219,7 +221,7 @@ def handle_message(
                 query=msg,
                 filters=filters,
                 enable_auto_detect_filters=not disable_auto_detect_filters,
-                real_time=False,
+                real_time=disable_cot,
             )
         )
     except Exception as e:
