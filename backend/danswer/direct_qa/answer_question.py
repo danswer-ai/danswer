@@ -15,10 +15,12 @@ from danswer.db.chat import fetch_chat_session_by_id
 from danswer.db.feedback import create_query_event
 from danswer.db.feedback import update_query_event_llm_answer
 from danswer.db.feedback import update_query_event_retrieved_documents
+from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.direct_qa.factory import get_default_qa_model
 from danswer.direct_qa.factory import get_qa_model_for_persona
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
+from danswer.direct_qa.interfaces import QAModel
 from danswer.direct_qa.interfaces import StreamingError
 from danswer.direct_qa.models import LLMMetricsContainer
 from danswer.direct_qa.qa_utils import get_chunks_for_qa
@@ -43,6 +45,13 @@ from danswer.utils.timing import log_function_time
 from danswer.utils.timing import log_generator_function_time
 
 logger = setup_logger()
+
+
+def _get_qa_model(persona: Persona | None) -> QAModel:
+    if persona and (persona.hint_text or persona.system_text):
+        return get_qa_model_for_persona(persona=persona)
+
+    return get_default_qa_model()
 
 
 @log_function_time()
@@ -74,12 +83,30 @@ def answer_qa_query(
         user_id=user.id if user is not None else None,
         db_session=db_session,
     )
+    chat_session = fetch_chat_session_by_id(
+        chat_session_id=new_message_request.chat_session_id, db_session=db_session
+    )
+    persona = chat_session.persona
+    persona_skip_llm_chunk_filter = (
+        not persona.apply_llm_relevance_filter if persona else None
+    )
+    persona_num_chunks = persona.num_chunks if persona else None
+    if persona:
+        logger.info(f"Using persona: {persona.name}")
+        logger.info(
+            "Persona retrieval settings: skip_llm_chunk_filter: "
+            f"{persona_skip_llm_chunk_filter}, "
+            f"num_chunks: {persona_num_chunks}"
+        )
 
     retrieval_request, predicted_search_type, predicted_flow = retrieval_preprocessing(
         new_message_request=new_message_request,
         user=user,
         db_session=db_session,
         bypass_acl=bypass_acl,
+        skip_llm_chunk_filter=persona_skip_llm_chunk_filter
+        if persona_skip_llm_chunk_filter is not None
+        else DISABLE_LLM_CHUNK_FILTER,
     )
 
     # Set flow as search so frontend doesn't ask the user if they want to run QA over more docs
@@ -123,10 +150,7 @@ def answer_qa_query(
     )
 
     try:
-        qa_model = get_default_qa_model(
-            timeout=answer_generation_timeout,
-            real_time_flow=new_message_request.real_time,
-        )
+        qa_model = _get_qa_model(persona)
     except Exception as e:
         return partial_response(
             answer=None,
@@ -294,10 +318,7 @@ def answer_qa_query_stream(
         return
 
     try:
-        if not persona:
-            qa_model = get_default_qa_model()
-        else:
-            qa_model = get_qa_model_for_persona(persona=persona)
+        qa_model = _get_qa_model(persona)
     except Exception as e:
         logger.exception("Unable to get QA model")
         error = StreamingError(error=str(e))

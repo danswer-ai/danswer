@@ -1,20 +1,28 @@
 import { ChangeEvent, FC, useEffect, useRef, useState } from "react";
 import { ChevronDownIcon } from "./icons/icons";
+import { FiCheck, FiChevronDown } from "react-icons/fi";
+import { FaRobot } from "react-icons/fa";
 
-export interface Option {
+export interface Option<T> {
   name: string;
-  value: string;
+  value: T;
   description?: string;
   metadata?: { [key: string]: any };
 }
 
-interface DropdownProps {
-  options: Option[];
+export type StringOrNumberOption = Option<string | number>;
+
+interface DropdownProps<T> {
+  options: Option<T>[];
   selected: string;
-  onSelect: (selected: Option) => void;
+  onSelect: (selected: Option<T> | null) => void;
 }
 
-export const Dropdown = ({ options, selected, onSelect }: DropdownProps) => {
+export const Dropdown = ({
+  options,
+  selected,
+  onSelect,
+}: DropdownProps<string | number>) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -22,7 +30,7 @@ export const Dropdown = ({ options, selected, onSelect }: DropdownProps) => {
     (option) => option.value === selected
   )?.name;
 
-  const handleSelect = (option: Option) => {
+  const handleSelect = (option: StringOrNumberOption) => {
     onSelect(option);
     setIsOpen(false);
   };
@@ -106,15 +114,15 @@ export const Dropdown = ({ options, selected, onSelect }: DropdownProps) => {
   );
 };
 
-const StandardDropdownOption = ({
+function StandardDropdownOption<T>({
   index,
   option,
   handleSelect,
 }: {
   index: number;
-  option: Option;
-  handleSelect: (option: Option) => void;
-}) => {
+  option: Option<T>;
+  handleSelect: (option: Option<T>) => void;
+}) {
   return (
     <button
       onClick={() => handleSelect(option)}
@@ -131,24 +139,22 @@ const StandardDropdownOption = ({
       )}
     </button>
   );
-};
-
-interface MultiSelectDropdownProps {
-  options: Option[];
-  onSelect: (selected: Option) => void;
-  itemComponent?: FC<{ option: Option }>;
 }
 
-export const SearchMultiSelectDropdown: FC<MultiSelectDropdownProps> = ({
+export function SearchMultiSelectDropdown({
   options,
   onSelect,
   itemComponent,
-}) => {
+}: {
+  options: StringOrNumberOption[];
+  onSelect: (selected: StringOrNumberOption) => void;
+  itemComponent?: FC<{ option: StringOrNumberOption }>;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleSelect = (option: Option) => {
+  const handleSelect = (option: StringOrNumberOption) => {
     onSelect(option);
     setIsOpen(false);
     setSearchTerm(""); // Clear search term after selection
@@ -273,7 +279,7 @@ export const SearchMultiSelectDropdown: FC<MultiSelectDropdownProps> = ({
       )}
     </div>
   );
-};
+}
 
 export const CustomDropdown = ({
   children,
@@ -316,3 +322,134 @@ export const CustomDropdown = ({
     </div>
   );
 };
+
+function DefaultDropdownElement({
+  id,
+  name,
+  description,
+  onSelect,
+  isSelected,
+  isFinal,
+}: {
+  id: string | number | null;
+  name: string;
+  description?: string;
+  onSelect: (value: string | number | null) => void;
+  isSelected: boolean;
+  isFinal: boolean;
+}) {
+  console.log(isFinal);
+  return (
+    <div
+      className={`
+        flex
+        px-3 
+        text-sm 
+        text-gray-200 
+        py-2.5 
+        select-none 
+        cursor-pointer 
+        ${isFinal ? "" : "border-b border-gray-800"} 
+        ${
+          isSelected
+            ? "bg-dark-tremor-background-muted"
+            : "hover:bg-dark-tremor-background-muted "
+        }
+      `}
+      onClick={() => {
+        onSelect(id);
+      }}
+    >
+      <div>
+        {name}
+        {description && (
+          <div className="text-xs text-dark-tremor-content">{description}</div>
+        )}
+      </div>
+      {isSelected && (
+        <div className="ml-auto mr-1 my-auto">
+          <FiCheck />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function DefaultDropdown({
+  options,
+  selected,
+  onSelect,
+  includeDefault = false,
+}: {
+  options: StringOrNumberOption[];
+  selected: string | null;
+  onSelect: (value: string | number | null) => void;
+  includeDefault?: boolean;
+}) {
+  const selectedOption = options.find((option) => option.value === selected);
+
+  return (
+    <CustomDropdown
+      dropdown={
+        <div
+          className={`
+            border 
+            border-gray-800 
+            rounded-lg 
+            flex 
+            flex-col 
+            max-h-96 
+            overflow-y-auto 
+            overscroll-contain`}
+        >
+          {includeDefault && (
+            <DefaultDropdownElement
+              key={-1}
+              id={null}
+              name="Default"
+              onSelect={() => {
+                onSelect(null);
+              }}
+              isSelected={selected === null}
+              isFinal={false}
+            />
+          )}
+          {options.map((option, ind) => {
+            const isSelected = option.value === selected;
+            return (
+              <DefaultDropdownElement
+                key={option.value}
+                id={option.value}
+                name={option.name}
+                description={option.description}
+                onSelect={onSelect}
+                isSelected={isSelected}
+                isFinal={ind === options.length - 1}
+              />
+            );
+          })}
+        </div>
+      }
+    >
+      <div
+        className={`
+            flex 
+            text-sm 
+            text-gray-400 
+            px-3
+            py-1.5 
+            rounded-lg 
+            border 
+            border-gray-800 
+            cursor-pointer 
+            hover:bg-dark-tremor-background-muted`}
+      >
+        <p className="text-gray-200 line-clamp-1">
+          {selectedOption?.name ||
+            (includeDefault ? "Default" : "Select an option...")}
+        </p>
+        <FiChevronDown className="my-auto ml-auto" />
+      </div>
+    </CustomDropdown>
+  );
+}
