@@ -1,6 +1,7 @@
 from datetime import datetime
 
-import timeago
+import pytz
+import timeago  # type: ignore
 from slack_sdk.models.blocks import ActionsBlock
 from slack_sdk.models.blocks import Block
 from slack_sdk.models.blocks import ButtonElement
@@ -109,7 +110,7 @@ def build_documents_blocks(
         match_str = translate_vespa_highlight_to_slack(d.match_highlights, used_chars)
 
         included_docs += 1
-        updated_at = timeago.format(d.updated_at.replace(tzinfo=None), datetime.now())
+        updated_at = timeago.format(d.updated_at, datetime.now(pytz.utc))
         if d.link:
             block_text = f"<{d.link}|{doc_sem_id}>\nUpdated {updated_at}\n>{remove_slack_text_interactions(match_str)}"
         else:
