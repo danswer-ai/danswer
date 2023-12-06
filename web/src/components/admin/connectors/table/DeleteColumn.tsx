@@ -6,6 +6,7 @@ import {
 import { ConnectorIndexingStatus } from "@/lib/types";
 import { PopupSpec } from "../Popup";
 import { useState } from "react";
+import { DeleteButton } from "@/components/DeleteButton";
 
 interface Props<ConnectorConfigType, ConnectorCredentialType> {
   connectorIndexingStatus: ConnectorIndexingStatus<
@@ -33,25 +34,24 @@ export function DeleteColumn<ConnectorConfigType, ConnectorCredentialType>({
       onMouseLeave={() => setDeleteHovered(false)}
     >
       {connectorIndexingStatus.is_deletable ? (
-        <div
-          className="cursor-pointer mx-auto flex"
-          onClick={() =>
-            deleteCCPair(connector.id, credential.id, setPopup, onUpdate)
-          }
-        >
-          <TrashIcon />
+        <div className="cursor-pointer mx-auto flex">
+          <DeleteButton
+            onClick={() =>
+              deleteCCPair(connector.id, credential.id, setPopup, onUpdate)
+            }
+          />
         </div>
       ) : (
         <div>
           {deleteHovered && (
-            <div className="flex flex-nowrap absolute mt-8 top-0 left-0 bg-gray-700 px-3 py-2 rounded shadow-lg text-xs">
-              <InfoIcon className="flex flex-shrink-0 text-blue-300 mr-2" />
+            <div className="w-64 z-30 whitespace-normal flex absolute mt-8 top-0 left-0 bg-background border border-border px-3 py-2 rounded shadow-lg text-xs">
+              <InfoIcon className="flex flex-shrink-0 mr-2" />
               In order to delete a connector it must be disabled and have no
               ongoing / planned index jobs.
             </div>
           )}
           <div className="flex mx-auto text-xs">
-            <TrashIcon className="my-auto flex flex-shrink-0 text-gray-600 mr-2" />
+            <DeleteButton disabled />
           </div>
         </div>
       )}

@@ -173,7 +173,7 @@ const Main = () => {
   }
 
   return (
-    <div className="mb-8 dark">
+    <div className="mb-8">
       {popup}
 
       <Text className="mb-2">
@@ -181,7 +181,7 @@ const Main = () => {
         to ask questions to Danswer directly from Slack. Additionally, you can:
       </Text>
 
-      <div className="text-dark-tremor-content text-sm mb-2">
+      <Text className="mb-2">
         <ul className="list-disc mt-2 ml-4">
           <li>
             Setup DanswerBot to automatically answer questions in certain
@@ -196,7 +196,7 @@ const Main = () => {
             UI.
           </li>
         </ul>
-      </div>
+      </Text>
 
       <Text className="mb-6">
         Follow the{" "}
@@ -226,7 +226,7 @@ const Main = () => {
               setSlackBotTokensModalIsOpen(!slackBotTokensModalIsOpen);
               console.log(slackBotTokensModalIsOpen);
             }}
-            variant="secondary"
+            color="blue"
             size="xs"
             className="mt-2"
             icon={slackBotTokensModalIsOpen ? FiChevronUp : FiChevronDown}
@@ -259,7 +259,7 @@ const Main = () => {
           <div className="mb-2"></div>
 
           <Link className="flex mb-3" href="/admin/bot/new">
-            <Button className="my-auto" variant="secondary" size="xs">
+            <Button className="my-auto" color="green" size="xs">
               New Slack Bot Configuration
             </Button>
           </Link>

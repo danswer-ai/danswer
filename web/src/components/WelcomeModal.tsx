@@ -7,11 +7,11 @@ import Link from "next/link";
 export function WelcomeModal() {
   return (
     <Modal className="max-w-4xl">
-      <div className="px-6 py-4">
-        <h2 className="text-xl font-bold mb-4 pb-2 border-b border-gray-700 flex">
+      <div className="px-8 py-6">
+        <h2 className="text-xl font-bold mb-4 pb-2 border-b border-border flex">
           Welcome to Danswer 🎉
         </h2>
-        <div className="text-gray-100">
+        <div>
           <p className="mb-4">
             Danswer is the AI-powered search engine for your organization&apos;s
             internal knowledge. Whenever you need to find any piece of internal
@@ -26,7 +26,7 @@ export function WelcomeModal() {
           </p>
         </div>
 
-        <div className="flex mt-3 dark">
+        <div className="flex mt-3">
           <Link href="/admin/add-connector" className="mx-auto">
             <Button>Setup your first connector!</Button>
           </Link>

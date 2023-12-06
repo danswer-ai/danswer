@@ -23,7 +23,7 @@ export default async function Page() {
   const personas = (await personaResponse.json()) as Persona[];
 
   return (
-    <div className="dark">
+    <div className="mx-auto container">
       <AdminPageTitle icon={<RobotIcon size={32} />} title="Personas" />
 
       <Text className="mb-2">
@@ -31,7 +31,7 @@ export default async function Page() {
         for different use cases.
       </Text>
       <Text className="mt-2">They allow you to customize:</Text>
-      <div className="text-dark-tremor-content text-sm">
+      <div className="text-sm">
         <ul className="list-disc mt-2 ml-4">
           <li>
             The prompt used by your LLM of choice to respond to the user query
@@ -40,13 +40,13 @@ export default async function Page() {
         </ul>
       </div>
 
-      <div className="dark">
+      <div>
         <Divider />
 
         <Title>Create a Persona</Title>
         <Link
           href="/admin/personas/new"
-          className="text-gray-100 flex py-2 px-4 mt-2 border border-gray-800 h-fit cursor-pointer hover:bg-gray-800 text-sm w-36"
+          className="flex py-2 px-4 mt-2 border border-border h-fit cursor-pointer hover:bg-hover text-sm w-36"
         >
           <div className="mx-auto flex">
             <FiPlusSquare className="my-auto mr-2" />

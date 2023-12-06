@@ -59,6 +59,7 @@ def get_user_chat_sessions(
             ChatSessionDetails(
                 id=chat.id,
                 name=chat.description,
+                persona_id=chat.persona_id,
                 time_created=chat.time_created.isoformat(),
             )
             for chat in chat_sessions

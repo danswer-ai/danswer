@@ -8,7 +8,7 @@ import { fetchSS } from "@/lib/utilsSS";
 import { Connector, DocumentSet, User } from "@/lib/types";
 import { cookies } from "next/headers";
 import { SearchType } from "@/lib/search/interfaces";
-import { Persona } from "./admin/personas/interfaces";
+import { Persona } from "../admin/personas/interfaces";
 import { WelcomeModal } from "@/components/WelcomeModal";
 import { unstable_noStore as noStore } from "next/cache";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
@@ -88,7 +88,7 @@ export default async function Home() {
       <ApiKeyModal />
       <InstantSSRAutoRefresh />
       {connectors.length === 0 && connectorsResponse?.ok && <WelcomeModal />}
-      <div className="px-24 pt-10 flex flex-col items-center min-h-screen bg-gray-900 text-gray-100">
+      <div className="px-24 pt-10 flex flex-col items-center min-h-screen">
         <div className="w-full">
           <SearchSection
             connectors={connectors}

@@ -26,8 +26,9 @@ export function FilterDropdown({
           <div
             className={`
           border 
-          border-gray-800 
+          border-border 
           rounded-lg 
+          bg-background
           flex 
           flex-col 
           w-64 
@@ -44,20 +45,14 @@ export function FilterDropdown({
                     flex
                     px-3 
                     text-sm 
-                    text-gray-200 
                     py-2.5 
                     select-none 
                     cursor-pointer 
+                    text-emphasis
+                    hover:bg-hover-light
                     ${
-                      ind === options.length - 1
-                        ? ""
-                        : "border-b border-gray-800"
+                      ind === options.length - 1 ? "" : "border-b border-border"
                     } 
-                    ${
-                      isSelected
-                        ? "bg-dark-tremor-background-muted"
-                        : "hover:bg-dark-tremor-background-muted "
-                    }
                   `}
                   onClick={(event) => {
                     handleSelect(option);
@@ -82,20 +77,19 @@ export function FilterDropdown({
         flex 
         w-64
         text-sm 
-        text-gray-400 
         px-3
         py-1.5 
         rounded-lg 
         border 
-        border-gray-800 
+        border-border
         cursor-pointer 
-        hover:bg-dark-tremor-background-muted`}
+        hover:bg-hover-light`}
         >
           {icon}
           {selected.length === 0 ? (
             defaultDisplay
           ) : (
-            <p className="text-gray-200 line-clamp-1">{selected.join(", ")}</p>
+            <p className="line-clamp-1">{selected.join(", ")}</p>
           )}
           <FiChevronDown className="my-auto ml-auto" />
         </div>

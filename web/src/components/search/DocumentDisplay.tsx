@@ -69,7 +69,7 @@ export const buildDocumentSummaryDisplay = (
             finalJSX[finalJSX.length - 1] = finalJSX[finalJSX.length - 1] + " ";
           }
           finalJSX.push(
-            <b key={index} className="text-gray-200 bg-pink-950">
+            <b key={index} className="text-default bg-highlight-text">
               {currentText}
             </b>
           );
@@ -93,7 +93,7 @@ export const buildDocumentSummaryDisplay = (
         finalJSX[finalJSX.length - 1] = finalJSX[finalJSX.length - 1] + " ";
       }
       finalJSX.push(
-        <b key={sections.length} className="text-gray-200 bg-pink-950">
+        <b key={sections.length} className="text-default bg-highlight-text">
           {currentText}
         </b>
       );
@@ -127,7 +127,7 @@ export const DocumentDisplay = ({
   return (
     <div
       key={document.semantic_identifier}
-      className="text-sm border-b border-gray-800 mb-3"
+      className="text-sm border-b border-border mb-3"
       onMouseEnter={() => {
         setIsHovered(true);
       }}
@@ -163,8 +163,8 @@ export const DocumentDisplay = ({
             <div
               className={`
                 text-xs
-                text-gray-200
-                bg-gray-800
+                text-emphasis
+                bg-hover
                 rounded
                 p-0.5
                 w-fit
@@ -179,7 +179,7 @@ export const DocumentDisplay = ({
         )}
         <a
           className={
-            "rounded-lg flex font-bold " +
+            "rounded-lg flex font-bold text-link " +
             (document.link ? "" : "pointer-events-none")
           }
           href={document.link}
@@ -204,7 +204,7 @@ export const DocumentDisplay = ({
       {document.updated_at && (
         <DocumentUpdatedAtBadge updatedAt={document.updated_at} />
       )}
-      <p className="pl-1 pt-2 pb-3 text-gray-200 break-words">
+      <p className="pl-1 pt-2 pb-3 break-words">
         {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)}
       </p>
     </div>

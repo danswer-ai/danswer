@@ -17,6 +17,7 @@ import {
   updateSlackBotConfig,
 } from "./lib";
 import {
+  Button,
   Card,
   Divider,
   Tab,
@@ -52,7 +53,7 @@ export const SlackBotCreationForm = ({
   );
 
   return (
-    <div className="dark">
+    <div>
       <Card>
         {popup}
         <Formik
@@ -193,7 +194,7 @@ export const SlackBotCreationForm = ({
                     Use either a Persona <b>or</b> Document Sets to control how
                     DanswerBot answers.
                   </Text>
-                  <div className="text-dark-tremor-content text-sm">
+                  <Text>
                     <ul className="list-disc mt-2 ml-4">
                       <li>
                         You should use a Persona if you also want to customize
@@ -204,7 +205,7 @@ export const SlackBotCreationForm = ({
                         which documents DanswerBot uses as references.
                       </li>
                     </ul>
-                  </div>
+                  </Text>
                   <Text className="mt-2">
                     <b>NOTE:</b> whichever tab you are when you submit the form
                     will be the one that is used. For example, if you are on the
@@ -245,17 +246,17 @@ export const SlackBotCreationForm = ({
                                     key={documentSet.id}
                                     className={
                                       `
-                              px-3 
-                              py-1
-                              rounded-lg 
-                              border
-                              border-gray-700 
-                              w-fit 
-                              flex 
-                              cursor-pointer ` +
+                                      px-3 
+                                      py-1
+                                      rounded-lg 
+                                      border
+                                      border-border 
+                                      w-fit 
+                                      flex 
+                                      cursor-pointer ` +
                                       (isSelected
-                                        ? " bg-gray-600"
-                                        : " bg-gray-900 hover:bg-gray-700")
+                                        ? " bg-hover"
+                                        : " bg-background hover:bg-hover-light")
                                     }
                                     onClick={() => {
                                       if (isSelected) {
@@ -289,7 +290,6 @@ export const SlackBotCreationForm = ({
                             value: persona.id,
                           };
                         })}
-                        includeDefault={true}
                       />
                     </TabPanel>
                   </TabPanels>
@@ -298,17 +298,13 @@ export const SlackBotCreationForm = ({
                 <Divider />
 
                 <div className="flex">
-                  <button
+                  <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className={
-                      "bg-slate-500 hover:bg-slate-700 text-white " +
-                      "font-bold py-2 px-4 rounded focus:outline-none " +
-                      "focus:shadow-outline w-full max-w-sm mx-auto"
-                    }
+                    className="mx-auto w-64"
                   >
                     {isUpdate ? "Update!" : "Create!"}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </Form>

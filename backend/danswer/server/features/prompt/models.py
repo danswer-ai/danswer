@@ -9,9 +9,9 @@ class CreatePromptRequest(BaseModel):
     shared: bool
     system_prompt: str
     task_prompt: str
-    include_citations: bool
-    datetime_aware: bool
-    persona_ids: list[int]
+    include_citations: bool = False
+    datetime_aware: bool = False
+    persona_ids: list[int] | None = None
 
 
 class PromptSnapshot(BaseModel):

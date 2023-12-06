@@ -314,7 +314,7 @@ export const CustomDropdown = ({
       {isOpen && (
         <div
           onClick={() => setIsOpen(!isOpen)}
-          className="pt-2 absolute bottom w-full z-30 bg-gray-900"
+          className="pt-2 absolute bottom w-full z-30 box-shadow"
         >
           {dropdown}
         </div>
@@ -323,48 +323,52 @@ export const CustomDropdown = ({
   );
 };
 
-function DefaultDropdownElement({
-  id,
+export function DefaultDropdownElement({
   name,
+  icon,
   description,
   onSelect,
   isSelected,
-  isFinal,
+  includeCheckbox = false,
 }: {
-  id: string | number | null;
   name: string;
+  icon?: React.FC<{ size?: number; className?: string }>;
   description?: string;
-  onSelect: (value: string | number | null) => void;
-  isSelected: boolean;
-  isFinal: boolean;
+  onSelect?: () => void;
+  isSelected?: boolean;
+  includeCheckbox?: boolean;
 }) {
-  console.log(isFinal);
   return (
     <div
       className={`
         flex
-        px-3 
+        mx-1
+        px-2
         text-sm 
-        text-gray-200 
-        py-2.5 
+        py-1.5 
+        my-1
         select-none 
         cursor-pointer 
-        ${isFinal ? "" : "border-b border-gray-800"} 
-        ${
-          isSelected
-            ? "bg-dark-tremor-background-muted"
-            : "hover:bg-dark-tremor-background-muted "
-        }
+        bg-background
+        rounded
+        hover:bg-hover-light
       `}
-      onClick={() => {
-        onSelect(id);
-      }}
+      onClick={onSelect}
     >
       <div>
-        {name}
-        {description && (
-          <div className="text-xs text-dark-tremor-content">{description}</div>
-        )}
+        <div className="flex">
+          {includeCheckbox && (
+            <input
+              type="checkbox"
+              className="mr-2"
+              checked={isSelected}
+              onChange={() => null}
+            />
+          )}
+          {icon && icon({ size: 16, className: "mr-2 my-auto" })}
+          {name}
+        </div>
+        {description && <div className="text-xs">{description}</div>}
       </div>
       {isSelected && (
         <div className="ml-auto mr-1 my-auto">
@@ -394,10 +398,11 @@ export function DefaultDropdown({
         <div
           className={`
             border 
-            border-gray-800 
+            border 
             rounded-lg 
             flex 
             flex-col 
+            bg-background
             max-h-96 
             overflow-y-auto 
             overscroll-contain`}
@@ -405,13 +410,11 @@ export function DefaultDropdown({
           {includeDefault && (
             <DefaultDropdownElement
               key={-1}
-              id={null}
               name="Default"
               onSelect={() => {
                 onSelect(null);
               }}
               isSelected={selected === null}
-              isFinal={false}
             />
           )}
           {options.map((option, ind) => {
@@ -419,12 +422,10 @@ export function DefaultDropdown({
             return (
               <DefaultDropdownElement
                 key={option.value}
-                id={option.value}
                 name={option.name}
                 description={option.description}
-                onSelect={onSelect}
+                onSelect={() => onSelect(option.value)}
                 isSelected={isSelected}
-                isFinal={ind === options.length - 1}
               />
             );
           })}
@@ -435,21 +436,62 @@ export function DefaultDropdown({
         className={`
             flex 
             text-sm 
-            text-gray-400 
+            bg-background 
             px-3
             py-1.5 
             rounded-lg 
             border 
-            border-gray-800 
-            cursor-pointer 
-            hover:bg-dark-tremor-background-muted`}
+            border-border 
+            cursor-pointer`}
       >
-        <p className="text-gray-200 line-clamp-1">
+        <p className="line-clamp-1">
           {selectedOption?.name ||
             (includeDefault ? "Default" : "Select an option...")}
         </p>
         <FiChevronDown className="my-auto ml-auto" />
       </div>
     </CustomDropdown>
+  );
+}
+
+export function ControlledPopup({
+  children,
+  popupContent,
+  isOpen,
+  setIsOpen,
+}: {
+  children: JSX.Element | string;
+  popupContent: JSX.Element | string;
+  isOpen: boolean;
+  setIsOpen: (value: boolean) => void;
+}) {
+  const filtersRef = useRef<HTMLDivElement>(null);
+  // hides logout popup on any click outside
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      filtersRef.current &&
+      !filtersRef.current.contains(event.target as Node)
+    ) {
+      setIsOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <div ref={filtersRef} className="relative">
+      {children}
+      {isOpen && (
+        <div className="absolute top-0 translate-y-[-105%] bg-background border border-border z-30 rounded text-emphasis">
+          {popupContent}
+        </div>
+      )}
+    </div>
   );
 }

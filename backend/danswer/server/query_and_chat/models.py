@@ -96,6 +96,7 @@ class RenameChatSessionResponse(BaseModel):
 class ChatSessionDetails(BaseModel):
     id: int
     name: str
+    persona_id: int
     time_created: str
 
 

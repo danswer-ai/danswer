@@ -10,7 +10,6 @@ export function DeletePersonaButton({ personaId }: { personaId: number }) {
 
   return (
     <Button
-      variant="secondary"
       size="xs"
       color="red"
       onClick={async () => {

@@ -19,7 +19,40 @@ module.exports = {
       fontFamily: {
         sans: ["var(--font-inter)"],
       },
+      width: {
+        "message-default": "740px",
+        searchbar: "850px",
+        "document-sidebar": "800px",
+        "document-sidebar-large": "1000px",
+      },
+      maxWidth: {
+        "document-sidebar": "1000px",
+      },
       colors: {
+        link: "#3b82f6", // blue-500
+        subtle: "#9ca3af", // gray-400
+        default: "#4b5563", // gray-600
+        emphasis: "#374151", // gray-700
+        strong: "#111827", // gray-900
+        inverted: "#ffffff", // white
+        background: "#f9fafb", // gray-50
+        "background-emphasis": "#f6f7f8",
+        "background-strong": "#eaecef",
+        border: "#e5e7eb", // gray-200
+        "border-light": "#f3f4f6", // gray-100
+        "border-strong": "#9ca3af", // gray-400
+        "hover-light": "#f3f4f6", // gray-100
+        hover: "#e5e7eb", // gray-200
+        popup: "#ffffff", // white
+        accent: "#6671d0",
+        "accent-hover": "#6671d0",
+        highlight: {
+          text: "#fef9c3", // yellow-100
+        },
+        error: "#ef4444", // red-500
+        success: "#059669", // emerald-600
+        user: "#fb7185", // yellow-400
+        ai: "#60a5fa", // blue-400
         // light mode
         tremor: {
           brand: {
@@ -44,7 +77,7 @@ module.exports = {
           },
           content: {
             subtle: "#9ca3af", // gray-400
-            DEFAULT: "#6b7280", // gray-500
+            DEFAULT: "#4b5563", // gray-600
             emphasis: "#374151", // gray-700
             strong: "#111827", // gray-900
             inverted: "#ffffff", // white

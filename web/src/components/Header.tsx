@@ -7,6 +7,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
+import { CustomDropdown, DefaultDropdownElement } from "./Dropdown";
+import { FiMessageSquare, FiSearch } from "react-icons/fi";
 
 interface HeaderProps {
   user: User | null;
@@ -51,50 +53,78 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
   }, [dropdownOpen]);
 
   return (
-    <header className="bg-gray-800 text-gray-200 py-4">
-      <div className="mx-8 flex">
-        <Link href="/">
+    <header className="border-b border-border bg-background-emphasis">
+      <div className="mx-8 flex h-16">
+        <Link className="py-4" href="/search">
           <div className="flex">
             <div className="h-[32px] w-[30px]">
               <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
             </div>
-            <h1 className="flex text-2xl font-bold my-auto">Danswer</h1>
+            <h1 className="flex text-2xl text-strong font-bold my-auto">
+              Danswer
+            </h1>
           </div>
         </Link>
 
-        <div
-          className="ml-auto flex items-center cursor-pointer relative"
-          onClick={() => setDropdownOpen(!dropdownOpen)}
-          ref={dropdownRef}
+        <Link
+          href="/search"
+          className="ml-8 h-full flex flex-col hover:bg-hover"
         >
-          <UserCircle size={24} className="mr-1 hover:text-red-500" />
-          {dropdownOpen && (
-            <div
-              className={
-                "absolute top-10 right-0 mt-2 bg-gray-600 rounded-sm " +
-                "w-48 overflow-hidden shadow-xl z-10 text-sm text-gray-300"
+          <div className="w-28 flex my-auto">
+            <div className="mx-auto flex text-strong px-2">
+              <FiSearch className="my-auto mr-1" />
+              <h1 className="flex text-base font-medium my-auto">Search</h1>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/chat" className="h-full flex flex-col hover:bg-hover">
+          <div className="w-28 flex my-auto">
+            <div className="mx-auto flex text-strong px-2">
+              <FiMessageSquare className="my-auto mr-1" />
+              <h1 className="flex text-base font-medium my-auto">Chat</h1>
+            </div>
+          </div>
+        </Link>
+
+        <div className="ml-auto h-full flex flex-col">
+          <div className="my-auto">
+            <CustomDropdown
+              dropdown={
+                <div
+                  className={
+                    "absolute right-0 mt-2 bg-background rounded border border-border " +
+                    "w-48 overflow-hidden shadow-xl z-10 text-sm"
+                  }
+                >
+                  {/* Show connector option if (1) auth is disabled or (2) user is an admin */}
+                  {(!user || user.role === "admin") && (
+                    <Link href="/admin/indexing/status">
+                      <DefaultDropdownElement name="Admin Panel" />
+                    </Link>
+                  )}
+                  {user && (
+                    <DefaultDropdownElement
+                      name="Logout"
+                      onSelect={handleLogout}
+                    />
+                  )}
+                </div>
               }
             >
-              {/* Show connector option if (1) auth is disabled or (2) user is an admin */}
-              {(!user || user.role === "admin") && (
-                <Link href="/admin/indexing/status">
-                  <div className="flex py-2 px-3 cursor-pointer hover:bg-gray-500 border-b border-gray-500">
-                    Admin Panel
-                  </div>
-                </Link>
-              )}
-              {user && (
-                <div
-                  className="flex py-2 px-3 cursor-pointer hover:bg-gray-500"
-                  onClick={handleLogout}
-                >
-                  Logout
+              <div className="hover:bg-hover rounded p-1 w-fit">
+                <div className="my-auto bg-user text-sm rounded-lg px-1.5 select-none">
+                  {user && user.email ? user.email[0].toUpperCase() : "A"}
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            </CustomDropdown>
+          </div>
         </div>
       </div>
     </header>
   );
 };
+
+/* 
+
+*/

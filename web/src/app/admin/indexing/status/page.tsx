@@ -60,13 +60,13 @@ function Main() {
 
 export default function Status() {
   return (
-    <div className="mx-auto container dark">
+    <div className="mx-auto container">
       <AdminPageTitle
         icon={<NotebookIcon size={32} />}
         title="Existing Connectors"
         farRightElement={
           <Link href="/admin/add-connector">
-            <Button variant="secondary" size="xs">
+            <Button color="green" size="xs">
               Add Connector
             </Button>
           </Link>

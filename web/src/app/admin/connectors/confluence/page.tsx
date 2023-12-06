@@ -19,6 +19,8 @@ import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
+import { Card, Divider, Text, Title } from "@tremor/react";
+import { AdminPageTitle } from "@/components/admin/Title";
 
 const extractSpaceFromCloudUrl = (wikiUrl: string): string => {
   const parsedUrl = new URL(wikiUrl);
@@ -100,9 +102,9 @@ const Main = () => {
   return (
     <>
       {popup}
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your access token
-      </h2>
+      </Title>
 
       {confluenceCredential ? (
         <>
@@ -118,7 +120,7 @@ const Main = () => {
               {confluenceCredential.credential_json?.confluence_access_token}
             </p>
             <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+              className="ml-1 hover:bg-hover rounded p-1"
               onClick={async () => {
                 if (confluenceConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -138,17 +140,18 @@ const Main = () => {
         </>
       ) : (
         <>
-          <p className="text-sm">
+          <Text>
             To use the Confluence connector, first follow the guide{" "}
             <a
-              className="text-blue-500"
+              className="text-link"
               href="https://docs.danswer.dev/connectors/confluence#setting-up"
+              target="_blank"
             >
               here
             </a>{" "}
             to generate an Access Token.
-          </p>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
+          </Text>
+          <Card className="mt-4">
             <CredentialForm<ConfluenceCredentialJson>
               formBody={
                 <>
@@ -178,7 +181,7 @@ const Main = () => {
                 }
               }}
             />
-          </div>
+          </Card>
         </>
       )}
 
@@ -254,10 +257,11 @@ const Main = () => {
                   }
                 />
               </div>
+              <Divider />
             </>
           )}
 
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+          <Card className="mt-4">
             <h2 className="font-bold mb-3">Add a New Space</h2>
             <ConnectorForm<ConfluenceConfig>
               nameBuilder={(values) =>
@@ -284,14 +288,14 @@ const Main = () => {
               refreshFreq={10 * 60} // 10 minutes
               credentialId={confluenceCredential.id}
             />
-          </div>
+          </Card>
         </>
       ) : (
-        <p className="text-sm">
+        <Text>
           Please provide your access token in Step 1 first! Once done with that,
           you can then specify which Confluence spaces you want to make
           searchable.
-        </p>
+        </Text>
       )}
     </>
   );
@@ -303,10 +307,9 @@ export default function Page() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <ConfluenceIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Confluence</h1>
-      </div>
+
+      <AdminPageTitle icon={<ConfluenceIcon size={32} />} title="Confluence" />
+
       <Main />
     </div>
   );

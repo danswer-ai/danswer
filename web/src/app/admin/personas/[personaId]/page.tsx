@@ -67,7 +67,7 @@ export default async function Page({
   const defaultLLM = (await defaultLLMResponse.json()) as string;
 
   return (
-    <div className="dark">
+    <div>
       <InstantSSRAutoRefresh />
 
       <BackButton />

@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/Button";
 import { LoadingAnimation, ThreeDotsLoader } from "@/components/Loading";
 import { PageSelector } from "@/components/PageSelector";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
@@ -10,6 +9,17 @@ import {
   InfoIcon,
   TrashIcon,
 } from "@/components/icons/icons";
+import {
+  Table,
+  TableHead,
+  TableRow,
+  TableHeaderCell,
+  TableBody,
+  TableCell,
+  Title,
+  Divider,
+  Badge,
+} from "@tremor/react";
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 import { ConnectorIndexingStatus, DocumentSet } from "@/lib/types";
 import { useState } from "react";
@@ -19,7 +29,14 @@ import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { deleteDocumentSet } from "./lib";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Text } from "@tremor/react";
+import { Button, Text } from "@tremor/react";
+import {
+  FiAlertTriangle,
+  FiCheckCircle,
+  FiClock,
+  FiEdit,
+} from "react-icons/fi";
+import { DeleteButton } from "@/components/DeleteButton";
 
 const numToDisplay = 50;
 
@@ -50,15 +67,15 @@ const EditRow = ({
         />
       )}
       {isSyncingTooltipOpen && (
-        <div className="flex flex-nowrap absolute w-64 top-0 left-0 mt-8 bg-gray-700 px-3 py-2 rounded shadow-lg">
-          <InfoIcon className="mt-1 flex flex-shrink-0 mr-2 text-gray-300" />{" "}
-          Cannot update while syncing! Wait for the sync to finish, then try
-          again.
+        <div className="flex flex-nowrap absolute w-64 top-0 left-0 mt-8 border border-border bg-background px-3 py-2 rounded shadow-lg">
+          <InfoIcon className="mt-1 flex flex-shrink-0 mr-2" /> Cannot update
+          while syncing! Wait for the sync to finish, then try again.
         </div>
       )}
       <div
         className={
-          "my-auto" + (documentSet.is_up_to_date ? " cursor-pointer" : "")
+          "text-emphasis font-medium my-auto p-1 hover:bg-hover-light flex" +
+          (documentSet.is_up_to_date ? " cursor-pointer" : "")
         }
         onClick={() => {
           if (documentSet.is_up_to_date) {
@@ -76,7 +93,8 @@ const EditRow = ({
           }
         }}
       >
-        <EditIcon />
+        <FiEdit className="text-emphasis mr-1 my-auto" />
+        {documentSet.name}
       </div>
     </div>
   );
@@ -110,103 +128,101 @@ const DocumentSetTable = ({
 
   return (
     <div>
-      <BasicTable
-        columns={[
-          {
-            header: "Name",
-            key: "name",
-          },
-          {
-            header: "Connectors",
-            key: "ccPairs",
-          },
-          {
-            header: "Status",
-            key: "status",
-          },
-          {
-            header: "Delete",
-            key: "delete",
-            width: "50px",
-          },
-        ]}
-        data={documentSets
-          .slice((page - 1) * numToDisplay, page * numToDisplay)
-          .map((documentSet) => {
-            return {
-              name: (
-                <div className="flex gap-x-2">
-                  <EditRow
-                    documentSet={documentSet}
-                    ccPairs={ccPairs}
-                    setPopup={setPopup}
-                    refreshDocumentSets={refresh}
-                  />{" "}
-                  <b className="my-auto">{documentSet.name}</b>
-                </div>
-              ),
-              ccPairs: (
-                <div>
-                  {documentSet.cc_pair_descriptors.map(
-                    (ccPairDescriptor, ind) => {
-                      return (
-                        <div
-                          className={
-                            ind !== documentSet.cc_pair_descriptors.length - 1
-                              ? "mb-3"
-                              : ""
-                          }
-                          key={ccPairDescriptor.id}
-                        >
-                          <ConnectorTitle
-                            connector={ccPairDescriptor.connector}
-                            ccPairName={ccPairDescriptor.name}
-                            ccPairId={ccPairDescriptor.id}
-                            showMetadata={false}
-                          />
-                        </div>
-                      );
-                    }
-                  )}
-                </div>
-              ),
-              status: documentSet.is_up_to_date ? (
-                <div className="text-emerald-600">Up to date!</div>
-              ) : documentSet.cc_pair_descriptors.length > 0 ? (
-                <div className="text-gray-300 w-10">
-                  <LoadingAnimation text="Syncing" />
-                </div>
-              ) : (
-                <div className="text-red-500 w-10">
-                  <LoadingAnimation text="Deleting" />
-                </div>
-              ),
-              delete: (
-                <div
-                  className="cursor-pointer"
-                  onClick={async () => {
-                    const response = await deleteDocumentSet(documentSet.id);
-                    if (response.ok) {
-                      setPopup({
-                        message: `Document set "${documentSet.name}" scheduled for deletion`,
-                        type: "success",
-                      });
-                    } else {
-                      const errorMsg = (await response.json()).detail;
-                      setPopup({
-                        message: `Failed to schedule document set for deletion - ${errorMsg}`,
-                        type: "error",
-                      });
-                    }
-                    refresh();
-                  }}
-                >
-                  <TrashIcon />
-                </div>
-              ),
-            };
-          })}
-      />
+      <Title>Existing Document Sets</Title>
+      <Table className="overflow-visible mt-2">
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>Name</TableHeaderCell>
+            <TableHeaderCell>Connectors</TableHeaderCell>
+            <TableHeaderCell>Status</TableHeaderCell>
+            <TableHeaderCell>Delete</TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {documentSets
+            .slice((page - 1) * numToDisplay, page * numToDisplay)
+            .map((documentSet) => {
+              return (
+                <TableRow key={documentSet.id}>
+                  <TableCell className="whitespace-normal break-all">
+                    <div className="flex gap-x-1 text-emphasis">
+                      <EditRow
+                        documentSet={documentSet}
+                        ccPairs={ccPairs}
+                        setPopup={setPopup}
+                        refreshDocumentSets={refresh}
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      {documentSet.cc_pair_descriptors.map(
+                        (ccPairDescriptor, ind) => {
+                          return (
+                            <div
+                              className={
+                                ind !==
+                                documentSet.cc_pair_descriptors.length - 1
+                                  ? "mb-3"
+                                  : ""
+                              }
+                              key={ccPairDescriptor.id}
+                            >
+                              <ConnectorTitle
+                                connector={ccPairDescriptor.connector}
+                                ccPairName={ccPairDescriptor.name}
+                                ccPairId={ccPairDescriptor.id}
+                                showMetadata={false}
+                              />
+                            </div>
+                          );
+                        }
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {documentSet.is_up_to_date ? (
+                      <Badge size="md" color="green" icon={FiCheckCircle}>
+                        Up to Date
+                      </Badge>
+                    ) : documentSet.cc_pair_descriptors.length > 0 ? (
+                      <Badge size="md" color="amber" icon={FiClock}>
+                        Syncing
+                      </Badge>
+                    ) : (
+                      <Badge size="md" color="red" icon={FiAlertTriangle}>
+                        Deleting
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <DeleteButton
+                      onClick={async () => {
+                        const response = await deleteDocumentSet(
+                          documentSet.id
+                        );
+                        if (response.ok) {
+                          setPopup({
+                            message: `Document set "${documentSet.name}" scheduled for deletion`,
+                            type: "success",
+                          });
+                        } else {
+                          const errorMsg = (await response.json()).detail;
+                          setPopup({
+                            message: `Failed to schedule document set for deletion - ${errorMsg}`,
+                            type: "error",
+                          });
+                        }
+                        refresh();
+                      }}
+                    />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+        </TableBody>
+      </Table>
+
       <div className="mt-3 flex">
         <div className="mx-auto">
           <PageSelector
@@ -251,7 +267,7 @@ const Main = () => {
   return (
     <div className="mb-8">
       {popup}
-      <Text className="mb-3 text-gray-300">
+      <Text className="mb-3">
         <b>Document Sets</b> allow you to group logically connected documents
         into a single bundle. These can then be used as filter when performing
         searches in the web UI or attached to slack bots to limit the amount of
@@ -259,21 +275,29 @@ const Main = () => {
         or with a certain command.
       </Text>
 
-      <div className="mb-6"></div>
+      <div className="mb-3"></div>
 
-      <div className="flex mb-3">
-        <Button className="ml-2 my-auto" onClick={() => setIsOpen(true)}>
+      <div className="flex mb-6">
+        <Button
+          size="xs"
+          color="green"
+          className="ml-2 my-auto"
+          onClick={() => setIsOpen(true)}
+        >
           New Document Set
         </Button>
       </div>
 
       {documentSets.length > 0 && (
-        <DocumentSetTable
-          documentSets={documentSets}
-          ccPairs={ccPairs}
-          refresh={refreshDocumentSets}
-          setPopup={setPopup}
-        />
+        <>
+          <Divider />
+          <DocumentSetTable
+            documentSets={documentSets}
+            ccPairs={ccPairs}
+            refresh={refreshDocumentSets}
+            setPopup={setPopup}
+          />
+        </>
       )}
 
       {isOpen && (
@@ -292,7 +316,7 @@ const Main = () => {
 
 const Page = () => {
   return (
-    <div>
+    <div className="container mx-auto">
       <AdminPageTitle icon={<BookmarkIcon size={32} />} title="Document Sets" />
 
       <Main />

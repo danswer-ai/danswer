@@ -4,6 +4,7 @@ import * as Yup from "yup";
 import { Popup } from "./Popup";
 import { CredentialBase } from "@/lib/types";
 import { createCredential } from "@/lib/credential";
+import { Button } from "@tremor/react";
 
 export async function submitCredential<T>(
   credential: CredentialBase<T>
@@ -66,17 +67,15 @@ export function CredentialForm<T extends Yup.AnyObject>({
           <Form>
             {formBody}
             <div className="flex">
-              <button
+              <Button
                 type="submit"
+                size="xs"
+                color="green"
                 disabled={isSubmitting}
-                className={
-                  "bg-slate-500 hover:bg-slate-700 text-white " +
-                  "font-bold py-2 px-4 rounded focus:outline-none " +
-                  "focus:shadow-outline w-full max-w-sm mx-auto"
-                }
+                className="mx-auto w-64"
               >
                 Update
-              </button>
+              </Button>
             </div>
           </Form>
         )}

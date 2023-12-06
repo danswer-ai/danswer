@@ -57,7 +57,8 @@ interface IconProps {
   className?: string;
 }
 
-export const defaultTailwindCSS = "my-auto flex flex-shrink-0 text-blue-400";
+export const defaultTailwindCSS = "my-auto flex flex-shrink-0 text-default";
+export const defaultTailwindCSSBlue = "my-auto flex flex-shrink-0 text-link";
 
 export const PlugIcon = ({
   size = 16,
@@ -131,14 +132,14 @@ export const XSquareIcon = ({
 
 export const GlobeIcon = ({
   size = 16,
-  className = defaultTailwindCSS,
+  className = defaultTailwindCSSBlue,
 }: IconProps) => {
   return <FiGlobe size={size} className={className} />;
 };
 
 export const FileIcon = ({
   size = 16,
-  className = defaultTailwindCSS,
+  className = defaultTailwindCSSBlue,
 }: IconProps) => {
   return <FiFile size={size} className={className} />;
 };
