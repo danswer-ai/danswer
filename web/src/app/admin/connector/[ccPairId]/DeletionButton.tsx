@@ -30,7 +30,6 @@ export function DeletionButton({ ccPair }: { ccPair: CCPairFullInfo }) {
     <div>
       {popup}
       <Button
-        variant="secondary"
         size="xs"
         color="red"
         onClick={() =>

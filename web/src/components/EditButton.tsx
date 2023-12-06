@@ -1,8 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
-import { FiChevronLeft, FiEdit } from "react-icons/fi";
+import { FiEdit } from "react-icons/fi";
 
 export function EditButton({ onClick }: { onClick: () => void }) {
   return (
@@ -11,12 +9,12 @@ export function EditButton({ onClick }: { onClick: () => void }) {
         my-auto 
         flex 
         mb-1 
-        hover:bg-gray-800 
+        hover:bg-hover 
         w-fit 
         p-2 
         cursor-pointer 
         rounded-lg
-        border-gray-800 
+        border-border
         text-sm`}
       onClick={onClick}
     >

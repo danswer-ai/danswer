@@ -2,6 +2,7 @@ import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { updateBoost } from "./lib";
 import { CheckmarkIcon, EditIcon } from "@/components/icons/icons";
+import { FiEdit } from "react-icons/fi";
 
 export const ScoreSection = ({
   documentId,
@@ -62,7 +63,7 @@ export const ScoreSection = ({
               setScore(initialScore.toString());
             }
           }}
-          className="border bg-slate-700 text-gray-200 border-gray-300 rounded py-1 px-3 w-16 h-5 my-auto"
+          className="border bg-background-strong border-gray-300 rounded py-1 px-1 w-12 h-4 my-auto"
         />
         <div onClick={onSubmit} className="cursor-pointer my-auto ml-2">
           <CheckmarkIcon size={16} className="text-green-700" />
@@ -73,15 +74,15 @@ export const ScoreSection = ({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex my-auto">
-        <div className={"flex" + (consistentWidth && " w-6")}>
+      <div
+        className="flex my-auto cursor-pointer hover:bg-hover rounded"
+        onClick={() => setIsOpen(true)}
+      >
+        <div className={"flex " + (consistentWidth && " w-6")}>
           <div className="ml-auto my-auto">{initialScore}</div>
         </div>
-        <div
-          className="cursor-pointer ml-2 my-auto"
-          onClick={() => setIsOpen(true)}
-        >
-          <EditIcon size={16} />
+        <div className="cursor-pointer ml-2 my-auto h-4">
+          <FiEdit size={16} />
         </div>
       </div>
     </div>

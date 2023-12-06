@@ -1,52 +1,6 @@
 import { Persona } from "@/app/admin/personas/interfaces";
-import { CustomDropdown } from "../Dropdown";
-import { FiCheck, FiChevronDown } from "react-icons/fi";
-import { FaRobot } from "react-icons/fa";
-
-function PersonaItem({
-  id,
-  name,
-  onSelect,
-  isSelected,
-  isFinal,
-}: {
-  id: number;
-  name: string;
-  onSelect: (personaId: number) => void;
-  isSelected: boolean;
-  isFinal: boolean;
-}) {
-  return (
-    <div
-      key={id}
-      className={`
-    flex
-    px-3 
-    text-sm 
-    text-gray-200 
-    py-2.5 
-    select-none 
-    cursor-pointer 
-    ${isFinal ? "" : "border-b border-gray-800"} 
-    ${
-      isSelected
-        ? "bg-dark-tremor-background-muted"
-        : "hover:bg-dark-tremor-background-muted "
-    }
-  `}
-      onClick={() => {
-        onSelect(id);
-      }}
-    >
-      {name}
-      {isSelected && (
-        <div className="ml-auto mr-1">
-          <FiCheck />
-        </div>
-      )}
-    </div>
-  );
-}
+import { CustomDropdown, DefaultDropdownElement } from "../Dropdown";
+import { FiChevronDown } from "react-icons/fi";
 
 export function PersonaSelector({
   personas,
@@ -54,8 +8,8 @@ export function PersonaSelector({
   onPersonaChange,
 }: {
   personas: Persona[];
-  selectedPersonaId: number | null;
-  onPersonaChange: (persona: Persona | null) => void;
+  selectedPersonaId: number;
+  onPersonaChange: (persona: Persona) => void;
 }) {
   const currentlySelectedPersona = personas.find(
     (persona) => persona.id === selectedPersonaId
@@ -67,7 +21,8 @@ export function PersonaSelector({
         <div
           className={`
             border 
-            border-gray-800 
+            border-border 
+            bg-background
             rounded-lg 
             flex 
             flex-col 
@@ -77,42 +32,22 @@ export function PersonaSelector({
             flex
             overscroll-contain`}
         >
-          <PersonaItem
-            key={-1}
-            id={-1}
-            name="Default"
-            onSelect={() => {
-              onPersonaChange(null);
-            }}
-            isSelected={selectedPersonaId === null}
-            isFinal={false}
-          />
           {personas.map((persona, ind) => {
             const isSelected = persona.id === selectedPersonaId;
             return (
-              <PersonaItem
+              <DefaultDropdownElement
                 key={persona.id}
-                id={persona.id}
                 name={persona.name}
-                onSelect={(clickedPersonaId) => {
-                  const clickedPersona = personas.find(
-                    (persona) => persona.id === clickedPersonaId
-                  );
-                  if (clickedPersona) {
-                    onPersonaChange(clickedPersona);
-                  }
-                }}
+                onSelect={() => onPersonaChange(persona)}
                 isSelected={isSelected}
-                isFinal={ind === personas.length - 1}
               />
             );
           })}
         </div>
       }
     >
-      <div className="select-none text-sm flex text-gray-300 px-1 py-1.5 cursor-pointer w-64">
-        <FaRobot className="my-auto mr-2" />
-        {currentlySelectedPersona?.name || "Default"}{" "}
+      <div className="select-none text-sm font-bold flex text-emphasis px-2 py-1.5 cursor-pointer w-fit hover:bg-hover rounded">
+        {currentlySelectedPersona?.name || "Default"}
         <FiChevronDown className="my-auto ml-2" />
       </div>
     </CustomDropdown>

@@ -18,7 +18,7 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
     >
       {detailIsOpen && (
         <div className="absolute top-0 mt-9 pt-2 z-50">
-          <div className="flex flex-shrink-0 rounded-lg w-96 shadow bg-gray-800 p-3 text-sm leading-relaxed text-gray-200">
+          <div className="flex flex-shrink-0 rounded-lg w-96 bg-background border border-border shadow p-3 text-sm leading-relaxed">
             <div>
               <b>Quote:</b> <i>{quoteInfo.quote}</i>
             </div>
@@ -32,29 +32,28 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
                 }, 1000);
               }}
             >
-              {copyClicked ? (
-                <CheckmarkIcon
-                  className="my-auto flex flex-shrink-0 text-gray-500 hover:text-gray-400 cursor-pointer"
-                  size={20}
-                />
-              ) : (
-                <CopyIcon
-                  className="my-auto flex flex-shrink-0 text-gray-500 hover:text-gray-400 cursor-pointer"
-                  size={20}
-                />
-              )}
+              <div className="p-1 rounded hover:bg-hover cursor-pointer">
+                {copyClicked ? (
+                  <CheckmarkIcon
+                    className="my-auto flex flex-shrink-0"
+                    size={16}
+                  />
+                ) : (
+                  <CopyIcon className="my-auto flex flex-shrink-0" size={16} />
+                )}
+              </div>
             </div>
           </div>
         </div>
       )}
       <button className="text-sm flex w-fit">
         <a
-          className="flex max-w-[300px] shrink box-border p-2 border border-gray-800 rounded-lg hover:bg-gray-800"
+          className="flex max-w-[300px] shrink box-border p-2 border border-border rounded-lg hover:bg-hover-light"
           href={quoteInfo.link || undefined}
           target="_blank"
           rel="noopener noreferrer"
         >
-          <SourceIcon sourceType={quoteInfo.source_type} iconSize={20} />
+          <SourceIcon sourceType={quoteInfo.source_type} iconSize={18} />
           <p className="truncate break-all ml-2 mr-2">
             {quoteInfo.semantic_identifier || quoteInfo.document_id}
           </p>
@@ -100,7 +99,7 @@ const QuotesBody = ({ quotes, isFetching }: QuotesSectionProps) => {
   if (!isFetching && (!quotes || !quotes.length)) {
     return (
       <div className="flex">
-        <div className="text-red-500 text-sm my-auto">
+        <div className="text-error text-sm my-auto">
           Did not find any exact quotes to support the above answer.
         </div>
       </div>
@@ -133,7 +132,9 @@ export const QuotesSection = (props: QuotesSectionProps) => {
   return (
     <ResponseSection
       status={status}
-      header={<div className="ml-2">{<QuotesHeader {...props} />}</div>}
+      header={
+        <div className="ml-2 text-emphasis">{<QuotesHeader {...props} />}</div>
+      }
       body={<QuotesBody {...props} />}
       desiredOpenStatus={true}
       isNotControllable={true}

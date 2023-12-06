@@ -6,8 +6,9 @@ export function DocumentUpdatedAtBadge({ updatedAt }: { updatedAt: string }) {
       <div
         className={`
     text-xs 
+    text-strong
     text-gray-200 
-    bg-gray-800 
+    bg-hover 
     rounded-full 
     px-1
     py-0.5 

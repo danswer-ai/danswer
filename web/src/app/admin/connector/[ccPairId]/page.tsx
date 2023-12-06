@@ -56,14 +56,14 @@ export default async function Page({
   return (
     <>
       <SSRAutoRefresh />
-      <div className="mx-auto container dark">
+      <div className="mx-auto container">
         <div className="mb-4">
           <HealthCheckBanner />
         </div>
 
         <BackButton />
         <div className="pb-1 flex mt-1">
-          <h1 className="text-3xl font-bold">{ccPair.name}</h1>
+          <h1 className="text-3xl text-emphasis font-bold">{ccPair.name}</h1>
 
           <div className="ml-auto">
             <ModifyStatusButtonCluster ccPair={ccPair} />
@@ -76,9 +76,9 @@ export default async function Page({
           isDeleting={isDeleting}
         />
 
-        <div className="text-gray-400 text-sm mt-1">
+        <div className="text-sm mt-1">
           Total Documents Indexed:{" "}
-          <b className="text-gray-300">{totalDocsIndexed}</b>
+          <b className="text-emphasis">{totalDocsIndexed}</b>
         </div>
 
         <Divider />

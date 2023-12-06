@@ -1,5 +1,5 @@
 import { Header } from "@/components/Header";
-import { Sidebar } from "@/components/admin/connectors/Sidebar";
+import { AdminSidebar } from "@/components/admin/connectors/AdminSidebar";
 import {
   NotebookIcon,
   KeyIcon,
@@ -30,11 +30,13 @@ export async function Layout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div>
-      <Header user={user} />
-      <div className="bg-gray-900 pt-8 pb-8 flex">
-        <div className="w-72">
-          <Sidebar
+    <div className="h-screen overflow-y-hidden">
+      <div className="absolute top-0 z-50 w-full">
+        <Header user={user} />
+      </div>
+      <div className="flex h-full pt-16">
+        <div className="w-80 pt-12 pb-8 h-full border-r border-border">
+          <AdminSidebar
             collections={[
               {
                 name: "Connectors",
@@ -145,7 +147,9 @@ export async function Layout({ children }: { children: React.ReactNode }) {
             ]}
           />
         </div>
-        <div className="px-12 bg-gray-900 text-gray-100 w-full">{children}</div>
+        <div className="px-12 pt-8 pb-8 h-full overflow-y-auto w-full">
+          {children}
+        </div>
       </div>
     </div>
   );

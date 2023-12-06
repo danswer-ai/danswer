@@ -12,25 +12,19 @@ interface Collection {
   items: Item[];
 }
 
-interface SidebarProps {
-  collections: Collection[];
-}
-
-export function Sidebar({ collections }: SidebarProps) {
+export function AdminSidebar({ collections }: { collections: Collection[] }) {
   return (
-    <aside className="bg-gray-900 text-gray-100 pl-4">
+    <aside className="pl-4">
       <nav className="space-y-2 pl-4">
         {collections.map((collection, collectionInd) => (
           <div key={collectionInd}>
-            <h2 className="text-md font-bold pb-2 ">
+            <h2 className="text-xs text-strong font-bold pb-2 ">
               <div>{collection.name}</div>
             </h2>
             {collection.items.map((item) => (
               <Link key={item.link} href={item.link}>
-                <button className="text-sm block w-full py-2 pl-2 text-left border-l border-gray-800">
-                  <div className="text-gray-400 hover:text-gray-300">
-                    {item.name}
-                  </div>
+                <button className="text-sm block w-48 py-2 px-2 text-left hover:bg-hover-light rounded">
+                  <div className="">{item.name}</div>
                 </button>
               </Link>
             ))}

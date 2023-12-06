@@ -11,7 +11,7 @@ import {
   setSlackBotTokens,
   updateSlackBotConfig,
 } from "./lib";
-import { Card } from "@tremor/react";
+import { Button, Card } from "@tremor/react";
 
 interface SlackBotTokensFormProps {
   onClose: () => void;
@@ -64,17 +64,9 @@ export const SlackBotTokensForm = ({
               type="password"
             />
             <div className="flex">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={
-                  "bg-slate-500 hover:bg-slate-700 text-white " +
-                  "font-bold py-2 px-4 rounded focus:outline-none " +
-                  "focus:shadow-outline w-full max-w-sm mx-auto"
-                }
-              >
+              <Button type="submit" disabled={isSubmitting}>
                 Set Tokens
-              </button>
+              </Button>
             </div>
           </Form>
         )}

@@ -18,6 +18,8 @@ import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePublicCredentials } from "@/lib/hooks";
+import { Card, Divider, Text, Title } from "@tremor/react";
+import { AdminPageTitle } from "@/components/admin/Title";
 
 const Main = () => {
   const { mutate } = useSWRConfig();
@@ -66,9 +68,9 @@ const Main = () => {
 
   return (
     <>
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your access token
-      </h2>
+      </Title>
       {githubCredential ? (
         <>
           {" "}
@@ -78,7 +80,7 @@ const Main = () => {
               {githubCredential.credential_json.github_access_token}
             </p>{" "}
             <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+              className="ml-1 hover:bg-hover rounded p-1"
               onClick={async () => {
                 await adminDeleteCredential(githubCredential.id);
                 refreshCredentials();
@@ -90,17 +92,18 @@ const Main = () => {
         </>
       ) : (
         <>
-          <p className="text-sm">
+          <Text>
             If you don&apos;t have an access token, read the guide{" "}
             <a
               className="text-blue-500"
               href="https://docs.danswer.dev/connectors/github"
+              target="_blank"
             >
               here
             </a>{" "}
             on how to get one from Github.
-          </p>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
+          </Text>
+          <Card className="mt-4">
             <CredentialForm<GithubCredentialJson>
               formBody={
                 <>
@@ -125,20 +128,20 @@ const Main = () => {
                 }
               }}
             />
-          </div>
+          </Card>
         </>
       )}
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 2: Which repositories do you want to make searchable?
-      </h2>
+      </Title>
 
       {githubConnectorIndexingStatuses.length > 0 && (
         <>
-          <p className="text-sm mb-2">
+          <Text className="mb-2">
             We pull the latest Pull Requests from each repository listed below
             every <b>10</b> minutes.
-          </p>
+          </Text>
           <div className="mb-2">
             <ConnectorsTable<GithubConfig, GithubCredentialJson>
               connectorIndexingStatuses={githubConnectorIndexingStatuses}
@@ -168,11 +171,12 @@ const Main = () => {
               }
             />
           </div>
+          <Divider />
         </>
       )}
 
       {githubCredential ? (
-        <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+        <Card className="mt-4">
           <h2 className="font-bold mb-3">Connect to a New Repository</h2>
           <ConnectorForm<GithubConfig>
             nameBuilder={(values) =>
@@ -208,13 +212,13 @@ const Main = () => {
             refreshFreq={10 * 60} // 10 minutes
             credentialId={githubCredential.id}
           />
-        </div>
+        </Card>
       ) : (
-        <p className="text-sm">
+        <Text>
           Please provide your access token in Step 1 first! Once done with that,
           you can then specify which Github repositories you want to make
           searchable.
-        </p>
+        </Text>
       )}
     </>
   );
@@ -226,10 +230,12 @@ export default function Page() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <GithubIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Github PRs</h1>
-      </div>
+
+      <AdminPageTitle
+        icon={<GithubIcon size={32} />}
+        title="Github PRs + Issues"
+      />
+
       <Main />
     </div>
   );

@@ -21,6 +21,8 @@ import {
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { usePublicCredentials } from "@/lib/hooks";
+import { AdminPageTitle } from "@/components/admin/Title";
+import { Card, Text, Title } from "@tremor/react";
 
 const MainSection = () => {
   const { mutate } = useSWRConfig();
@@ -71,18 +73,18 @@ const MainSection = () => {
 
   return (
     <>
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide Request Tracker credentials
-      </h2>
+      </Title>
       {requestTrackerCredential ? (
         <>
           <div className="flex mb-1 text-sm">
-            <p className="my-auto">Existing Request Tracker username: </p>
-            <p className="ml-1 italic my-auto">
+            <Text className="my-auto">Existing Request Tracker username: </Text>
+            <Text className="ml-1 italic my-auto">
               {requestTrackerCredential.credential_json.requesttracker_username}
-            </p>
+            </Text>
             <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+              className="ml-1 hover:bg-hover rounded p-1"
               onClick={async () => {
                 await adminDeleteCredential(requestTrackerCredential.id);
                 refreshCredentials();
@@ -94,20 +96,24 @@ const MainSection = () => {
         </>
       ) : (
         <>
-          <p className="text-sm mb-2">
+          <Text className="mb-2">
             To use the Request Tracker connector, provide a Request Tracker
             username, password, and base url.
-          </p>
-          <p className="text-sm mb-2">
+          </Text>
+          <Text className="mb-2">
             This connector currently supports{" "}
-            <a href="https://rt-wiki.bestpractical.com/wiki/REST">
+            <a
+              className="text-link"
+              href="https://rt-wiki.bestpractical.com/wiki/REST"
+              target="_blank"
+            >
               Request Tracker REST API 1.0
             </a>
             ,{" "}
             <b>not the latest REST API 2.0 introduced in Request Tracker 5.0</b>
             .
-          </p>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
+          </Text>
+          <Card className="mt-2">
             <CredentialForm<RequestTrackerCredentialJson>
               formBody={
                 <>
@@ -150,21 +156,25 @@ const MainSection = () => {
                 }
               }}
             />
-          </div>
+          </Card>
         </>
       )}
 
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
+        Step 2: Manage Request Tracker Connector
+      </Title>
+
       {requestTrackerConnectorIndexingStatuses.length > 0 && (
         <>
-          <p className="text-sm mb-2">
+          <Text className="mb-2">
             We index the most recently updated tickets from each Request Tracker
             instance listed below regularly.
-          </p>
-          <p className="text-sm mb-2">
+          </Text>
+          <Text className="mb-2">
             The initial poll at this time retrieves tickets updated in the past
             hour. All subsequent polls execute every ten minutes. This should be
             configurable in the future.
-          </p>
+          </Text>
           <div className="mb-2">
             <ConnectorsTable<RequestTrackerConfig, RequestTrackerCredentialJson>
               connectorIndexingStatuses={
@@ -193,10 +203,7 @@ const MainSection = () => {
 
       {requestTrackerCredential &&
       requestTrackerConnectorIndexingStatuses.length === 0 ? (
-        <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
-          <h2 className="font-bold mb-3">
-            Step 2: (Re)initialize connection to Request Tracker installation
-          </h2>
+        <Card className="mt-4">
           <ConnectorForm<RequestTrackerConfig>
             nameBuilder={(values) =>
               `RequestTracker-${requestTrackerCredential.credential_json.requesttracker_base_url}`
@@ -212,7 +219,7 @@ const MainSection = () => {
             credentialId={requestTrackerCredential.id}
             refreshFreq={10 * 60} // 10 minutes
           />
-        </div>
+        </Card>
       ) : (
         <></>
       )}
@@ -226,10 +233,12 @@ export default function Page() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <RequestTrackerIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Request Tracker</h1>
-      </div>
+
+      <AdminPageTitle
+        icon={<RequestTrackerIcon size={32} />}
+        title="Request Tracker"
+      />
+
       <MainSection />
     </div>
   );

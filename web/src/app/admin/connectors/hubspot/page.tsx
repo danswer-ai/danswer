@@ -19,6 +19,8 @@ import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
+import { AdminPageTitle } from "@/components/admin/Title";
+import { Card, Text, Title } from "@tremor/react";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -72,23 +74,23 @@ const Main = () => {
   return (
     <>
       {popup}
-      <p className="text-sm">
+      <Text>
         This connector allows you to sync all your HubSpot Tickets into Danswer.
-      </p>
+      </Text>
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your Credentials
-      </h2>
+      </Title>
 
       {hubSpotCredential ? (
         <>
           <div className="flex mb-1 text-sm">
-            <p className="my-auto">Existing Access Token: </p>
-            <p className="ml-1 italic my-auto max-w-md truncate">
+            <Text className="my-auto">Existing Access Token: </Text>
+            <Text className="ml-1 italic my-auto max-w-md truncate">
               {hubSpotCredential.credential_json?.hubspot_access_token}
-            </p>
+            </Text>
             <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+              className="ml-1 hover:bg-hover rounded p-1"
               onClick={async () => {
                 if (hubSpotConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -108,10 +110,10 @@ const Main = () => {
         </>
       ) : (
         <>
-          <p className="text-sm">
+          <Text>
             To use the HubSpot connector, provide the HubSpot Access Token.
-          </p>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
+          </Text>
+          <Card className="mt-4">
             <CredentialForm<HubSpotCredentialJson>
               formBody={
                 <>
@@ -136,20 +138,20 @@ const Main = () => {
                 }
               }}
             />
-          </div>
+          </Card>
         </>
       )}
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 2: Start indexing!
-      </h2>
+      </Title>
       {hubSpotCredential ? (
         !hubSpotConnectorIndexingStatuses.length ? (
           <>
-            <p className="text-sm mb-2">
+            <Text className="mb-2">
               Click the button below to start indexing! We will pull the latest
               tickets from HubSpot every <b>10</b> minutes.
-            </p>
+            </Text>
             <div className="flex">
               <ConnectorForm<HubSpotConfig>
                 nameBuilder={() => "HubSpotConnector"}
@@ -170,10 +172,10 @@ const Main = () => {
           </>
         ) : (
           <>
-            <p className="text-sm mb-2">
+            <Text className="mb-2">
               HubSpot connector is setup! We are pulling the latest tickets from
               HubSpot every <b>10</b> minutes.
-            </p>
+            </Text>
             <ConnectorsTable<HubSpotConfig, HubSpotCredentialJson>
               connectorIndexingStatuses={hubSpotConnectorIndexingStatuses}
               liveCredential={hubSpotCredential}
@@ -198,10 +200,10 @@ const Main = () => {
         )
       ) : (
         <>
-          <p className="text-sm">
+          <Text>
             Please provide your access token in Step 1 first! Once done with
             that, you can then start indexing all your HubSpot tickets.
-          </p>
+          </Text>
         </>
       )}
     </>
@@ -214,10 +216,9 @@ export default function Page() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <HubSpotIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">HubSpot</h1>
-      </div>
+
+      <AdminPageTitle icon={<HubSpotIcon size={32} />} title="HubSpot" />
+
       <Main />
     </div>
   );

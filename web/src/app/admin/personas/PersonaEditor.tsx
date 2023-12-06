@@ -2,7 +2,7 @@
 
 import { DocumentSet } from "@/lib/types";
 import { Button, Divider, Text } from "@tremor/react";
-import { ArrayHelpers, ErrorMessage, FieldArray, Form, Formik } from "formik";
+import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 
 import * as Yup from "yup";
 import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
@@ -13,7 +13,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   BooleanFormField,
-  ManualErrorMessage,
   SelectorFormField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
@@ -24,12 +23,12 @@ function SectionHeader({ children }: { children: string | JSX.Element }) {
 
 function Label({ children }: { children: string | JSX.Element }) {
   return (
-    <div className="block font-medium text-base text-gray-200">{children}</div>
+    <div className="block font-medium text-base text-emphasis">{children}</div>
   );
 }
 
 function SubLabel({ children }: { children: string | JSX.Element }) {
-  return <div className="text-sm text-gray-300 mb-2">{children}</div>;
+  return <div className="text-sm text-subtle mb-2">{children}</div>;
 }
 
 export function PersonaEditor({
@@ -65,35 +64,35 @@ export function PersonaEditor({
   };
 
   const isUpdate = existingPersona !== undefined && existingPersona !== null;
+  const existingPrompt = existingPersona?.prompts[0] ?? null;
 
   useEffect(() => {
     if (isUpdate) {
       triggerFinalPromptUpdate(
-        existingPersona.system_prompt,
-        existingPersona.task_prompt,
+        existingPrompt!.system_prompt,
+        existingPrompt!.task_prompt,
         existingPersona.num_chunks === 0
       );
     }
   }, []);
 
   return (
-    <div className="dark">
+    <div>
       {popup}
       <Formik
         enableReinitialize={true}
         initialValues={{
           name: existingPersona?.name ?? "",
           description: existingPersona?.description ?? "",
-          system_prompt: existingPersona?.system_prompt ?? "",
-          task_prompt: existingPersona?.task_prompt ?? "",
+          system_prompt: existingPrompt?.system_prompt ?? "",
+          task_prompt: existingPrompt?.task_prompt ?? "",
           disable_retrieval: (existingPersona?.num_chunks ?? 5) === 0,
           document_set_ids:
             existingPersona?.document_sets?.map(
               (documentSet) => documentSet.id
             ) ?? ([] as number[]),
           num_chunks: existingPersona?.num_chunks ?? null,
-          apply_llm_relevance_filter:
-            existingPersona?.apply_llm_relevance_filter ?? false,
+          llm_relevance_filter: existingPersona?.llm_relevance_filter ?? false,
           llm_model_version_override:
             existingPersona?.llm_model_version_override ?? null,
         }}
@@ -108,7 +107,7 @@ export function PersonaEditor({
             disable_retrieval: Yup.boolean().required(),
             document_set_ids: Yup.array().of(Yup.number()),
             num_chunks: Yup.number().max(20).nullable(),
-            apply_llm_relevance_filter: Yup.boolean().required(),
+            llm_relevance_filter: Yup.boolean().required(),
             llm_model_version_override: Yup.string().nullable(),
           })
           .test(
@@ -148,29 +147,39 @@ export function PersonaEditor({
             ? 0
             : values.num_chunks || 5;
 
-          let response;
+          let promptResponse;
+          let personaResponse;
           if (isUpdate) {
-            response = await updatePersona({
+            [promptResponse, personaResponse] = await updatePersona({
               id: existingPersona.id,
+              existingPromptId: existingPrompt!.id,
               ...values,
               num_chunks: numChunks,
             });
           } else {
-            response = await createPersona({
+            [promptResponse, personaResponse] = await createPersona({
               ...values,
               num_chunks: numChunks,
             });
           }
-          if (response.ok) {
-            router.push(`/admin/personas?u=${Date.now()}`);
-            return;
+
+          let error = null;
+          if (!promptResponse.ok) {
+            error = await promptResponse.text();
+          }
+          if (personaResponse && !personaResponse.ok) {
+            error = await personaResponse.text();
           }
 
-          setPopup({
-            type: "error",
-            message: `Failed to create Persona - ${await response.text()}`,
-          });
-          formikHelpers.setSubmitting(false);
+          if (error) {
+            setPopup({
+              type: "error",
+              message: `Failed to create Persona - ${error}`,
+            });
+            formikHelpers.setSubmitting(false);
+          } else {
+            router.push(`/admin/personas?u=${Date.now()}`);
+          }
         }}
       >
         {({ isSubmitting, values, setFieldValue }) => (
@@ -303,13 +312,13 @@ export function PersonaEditor({
                               py-1
                               rounded-lg 
                               border
-                              border-gray-700 
+                              border-border
                               w-fit 
                               flex 
                               cursor-pointer ` +
                                   (isSelected
-                                    ? " bg-gray-600"
-                                    : " bg-gray-900 hover:bg-gray-700")
+                                    ? " bg-hover"
+                                    : " bg-background hover:bg-hover-light")
                                 }
                                 onClick={() => {
                                   if (isSelected) {
@@ -354,16 +363,18 @@ export function PersonaEditor({
                     .
                   </Text>
 
-                  <SelectorFormField
-                    name="llm_model_version_override"
-                    options={llmOverrideOptions.map((llmOption) => {
-                      return {
-                        name: llmOption,
-                        value: llmOption,
-                      };
-                    })}
-                    includeDefault={true}
-                  />
+                  <div className="w-96">
+                    <SelectorFormField
+                      name="llm_model_version_override"
+                      options={llmOverrideOptions.map((llmOption) => {
+                        return {
+                          name: llmOption,
+                          value: llmOption,
+                        };
+                      })}
+                      includeDefault={true}
+                    />
+                  </div>
                 </>
               )}
 
@@ -401,7 +412,7 @@ export function PersonaEditor({
                   />
 
                   <BooleanFormField
-                    name="apply_llm_relevance_filter"
+                    name="llm_relevance_filter"
                     label="Apply LLM Relevance Filter"
                     subtext={
                       "If enabled, the LLM will filter out chunks that are not relevant to the user query."
@@ -415,7 +426,7 @@ export function PersonaEditor({
               <div className="flex">
                 <Button
                   className="mx-auto"
-                  variant="secondary"
+                  color="green"
                   size="md"
                   type="submit"
                   disabled={isSubmitting}

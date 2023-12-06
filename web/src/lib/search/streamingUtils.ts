@@ -45,3 +45,33 @@ export const processRawChunkString = <T extends NonEmptyObject>(
 
   return [parsedChunkSections, currPartialChunk];
 };
+
+export async function* handleStream<T extends NonEmptyObject>(
+  streamingResponse: Response
+): AsyncGenerator<T[], void, unknown> {
+  const reader = streamingResponse.body?.getReader();
+  const decoder = new TextDecoder("utf-8");
+
+  let previousPartialChunk: string | null = null;
+  while (true) {
+    const rawChunk = await reader?.read();
+    if (!rawChunk) {
+      throw new Error("Unable to process chunk");
+    }
+    const { done, value } = rawChunk;
+    if (done) {
+      break;
+    }
+
+    const [completedChunks, partialChunk] = processRawChunkString<T>(
+      decoder.decode(value, { stream: true }),
+      previousPartialChunk
+    );
+    if (!completedChunks.length && !partialChunk) {
+      break;
+    }
+    previousPartialChunk = partialChunk as string | null;
+
+    yield await Promise.resolve(completedChunks);
+  }
+}

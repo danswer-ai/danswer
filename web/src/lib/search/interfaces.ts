@@ -1,5 +1,6 @@
 import { DateRangePickerValue } from "@tremor/react";
 import { ValidSources } from "../types";
+import { Persona } from "@/app/admin/personas/interfaces";
 
 export const FlowType = {
   SEARCH: "search",
@@ -45,6 +46,7 @@ export interface DanswerDocument {
   score: number;
   match_highlights: string[];
   updated_at: string | null;
+  db_doc_id?: number;
 }
 
 export interface DocumentInfoPacket {
@@ -101,10 +103,10 @@ export interface Filters {
 
 export interface SearchRequestArgs {
   query: string;
-  chatSessionId: number;
   sources: SourceMetadata[];
   documentSets: string[];
   timeRange: DateRangePickerValue | null;
+  persona: Persona;
   updateCurrentAnswer: (val: string) => void;
   updateQuotes: (quotes: Quote[]) => void;
   updateDocs: (documents: DanswerDocument[]) => void;
@@ -114,7 +116,6 @@ export interface SearchRequestArgs {
   updateError: (error: string) => void;
   updateQueryEventId: (queryEventID: number) => void;
   selectedSearchType: SearchType | null;
-  offset: number | null;
 }
 
 export interface SearchRequestOverrides {

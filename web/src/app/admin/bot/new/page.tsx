@@ -33,7 +33,7 @@ async function Page() {
   const personas = (await personasResponse.json()) as Persona[];
 
   return (
-    <div className="container mx-auto dark">
+    <div className="container mx-auto">
       <BackButton />
       <AdminPageTitle
         icon={<CPUIcon size={32} />}
