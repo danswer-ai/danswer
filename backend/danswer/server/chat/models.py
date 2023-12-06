@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from danswer.configs.app_configs import DOCUMENT_INDEX_NAME, DISABLE_LLM_FILTER_EXTRACTION
+from danswer.configs.app_configs import DOCUMENT_INDEX_NAME, DISABLE_LLM_FILTER_EXTRACTION, DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
@@ -16,7 +16,7 @@ from danswer.search.models import SearchType
 
 
 class ChatSessionCreationRequest(BaseModel):
-    persona_id: int | None = None
+    persona_id: int = 1  # If not specified, use Danswer default persona
 
 
 class HelperResponse(BaseModel):
@@ -96,6 +96,7 @@ class RetrievalDetails(BaseModel):
     collection: str = DOCUMENT_INDEX_NAME
     search_type: SearchType = SearchType.HYBRID
     enable_auto_detect_filters: bool = not DISABLE_LLM_FILTER_EXTRACTION
+    skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER
     favor_recent: bool | None = None
     # Is this a real-time/streaming call or a question where Danswer can take more time?
     # Used to determine reranking flow

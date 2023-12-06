@@ -12,7 +12,6 @@ from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MO
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import QUERY_EVENT_ID
 from danswer.db.chat import fetch_chat_session_by_id
-from danswer.db.feedback import create_query_event
 from danswer.db.feedback import update_query_event_llm_answer
 from danswer.db.feedback import update_query_event_retrieved_documents
 from danswer.db.models import Persona
@@ -36,7 +35,7 @@ from danswer.search.search_runner import full_chunk_search
 from danswer.search.search_runner import full_chunk_search_generator
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.server.chat.models import LLMRelevanceFilterResponse
-from danswer.server.chat.models import NewMessageRequest
+from danswer.server.chat.models import CreateChatMessageRequest
 from danswer.server.chat.models import QADocsResponse
 from danswer.server.chat.models import QAResponse
 from danswer.server.utils import get_json_line
@@ -63,7 +62,7 @@ def _dummy_search_generator() -> Iterator[list[InferenceChunk] | list[bool]]:
 
 @log_function_time()
 def answer_qa_query(
-    new_message_request: NewMessageRequest,
+    new_message_request: CreateChatMessageRequest,
     user: User | None,
     db_session: Session,
     disable_generative_answer: bool = DISABLE_GENERATIVE_AI,
@@ -217,7 +216,7 @@ def answer_qa_query(
 
 @log_generator_function_time()
 def answer_qa_query_stream(
-    new_message_request: NewMessageRequest,
+    new_message_request: CreateChatMessageRequest,
     user: User | None,
     db_session: Session,
     disable_generative_answer: bool = DISABLE_GENERATIVE_AI,

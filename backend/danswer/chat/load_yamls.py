@@ -2,6 +2,7 @@
 import yaml
 from sqlalchemy.orm import Session
 
+from danswer.configs.app_configs import DEFAULT_NUM_CHUNKS
 from danswer.configs.chat_configs import PERSONAS_YAML
 from danswer.configs.chat_configs import PROMPTS_YAML
 from danswer.db.chat import fetch_prompt_by_name
@@ -23,15 +24,18 @@ def load_prompts_from_yaml(prompts_yaml: str = PROMPTS_YAML) -> None:
             upsert_prompt(
                 prompt_id=prompt.get("prompt_id"),  # Generally unspecified
                 name=prompt["name"],
-                system_prompt=prompt["system_prompt"],
-                task_prompt=prompt["task_prompt"],
+                system_prompt=prompt["system"],
+                task_prompt=prompt["task"],
                 datetime_aware=prompt.get("datetime_aware", True),
                 default_prompt=True,
                 db_session=db_session,
             )
 
 
-def load_personas_from_yaml(personas_yaml: str = PERSONAS_YAML) -> None:
+def load_personas_from_yaml(
+    personas_yaml: str = PERSONAS_YAML,
+    default_chunks: int = DEFAULT_NUM_CHUNKS,
+) -> None:
     with open(personas_yaml, "r") as file:
         data = yaml.safe_load(file)
 
@@ -64,8 +68,8 @@ def load_personas_from_yaml(personas_yaml: str = PERSONAS_YAML) -> None:
             upsert_persona(
                 persona_id=persona.get("persona_id"),  # Generally unspecified
                 name=persona["name"],
-                description=persona["description"],
-                num_chunks=persona.get("num_chunks"),
+                description=persona.get("description"),
+                num_chunks=persona.get("num_chunks") if persona.get("num_chunks") is not None else default_chunks,
                 llm_relevance_filter=persona.get("llm_relevance_filter"),
                 prompts=prompts,
                 document_sets=doc_sets,

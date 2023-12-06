@@ -19,6 +19,7 @@ from danswer.db.models import DocumentSet as DBDocumentSet
 from danswer.db.models import Persona
 from danswer.db.models import Prompt
 from danswer.db.models import SearchDoc as DBSearchDoc
+from danswer.search.models import SearchType
 
 
 def fetch_chat_sessions_by_user(
@@ -227,22 +228,26 @@ def get_or_create_root_message(
 def create_new_chat_message(
     chat_session_id: int,
     parent_message: ChatMessage,
-    prompt_id: int,
     message: str,
+    prompt_id: int,
     token_count: int,
     message_type: MessageType,
     db_session: Session,
+    specified_search: SearchType | None = None,
+    error: str | None = None,
     reference_docs: list[DBSearchDoc] | None = None,
     commit: bool = True,
 ) -> ChatMessage:
     new_chat_message = ChatMessage(
         chat_session_id=chat_session_id,
-        prompt_id=prompt_id,
         parent_message=parent_message.id,
         latest_child_message=None,
         message=message,
+        prompt_id=prompt_id,
         token_count=token_count,
         message_type=message_type,
+        selected_search_flow=specified_search,
+        error=error
     )
 
     # SQL Alchemy will propagate this to update the reference_docs' foreign keys
@@ -359,7 +364,7 @@ def upsert_prompt(
 
 def upsert_persona(
     name: str,
-    description: str,
+    description: str | None,
     num_chunks: int,
     llm_relevance_filter: bool,
     prompts: list[Prompt] | None,

@@ -9,6 +9,7 @@ from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 from sqlalchemy.orm import Session
 
+from danswer.chat.chat_helpers import build_chat_system_message, build_chat_user_message
 from danswer.chat.tools import call_tool
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT, DISABLE_GENERATIVE_AI
 from danswer.configs.chat_configs import FORCE_TOOL_PROMPT
@@ -16,8 +17,8 @@ from danswer.configs.constants import IGNORE_FOR_QA, MessageType
 from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
 from danswer.db.chat import get_or_create_root_message, fetch_chat_message, create_new_chat_message, \
     get_doc_query_identifiers_from_model, fetch_chat_messages_by_session, fetch_chat_session_by_id
-from danswer.db.feedback import create_query_event, update_query_event_retrieved_documents
-from danswer.db.models import ChatMessage, ChatSession
+from danswer.db.feedback import update_query_event_retrieved_documents
+from danswer.db.models import ChatMessage, ChatSession, Prompt
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
@@ -328,7 +329,7 @@ def llm_contextual_chat_answer(
     user: User | None,
     tokenizer: Callable,
     db_session: Session,
-    run_search_system_text: str = REQUIRE_DANSWER_SYSTEM_MSG,
+    run_search_system_text: str = "REQUIRE_DANSWER_SYSTEM_MSG",
 ) -> Iterator[DanswerAnswerPiece | RetrievalDocs | StreamingError]:
     last_message = messages[-1]
     final_query_text = last_message.message
@@ -617,6 +618,57 @@ def generate_message_response(
     )
 
 
+def generate_ai_chat_response(
+    query_message: ChatMessage,
+    history: list[ChatMessage],
+    context_docs: list[InferenceChunk],
+    llm: LLM,
+    llm_tokenizer: Callable,
+    all_doc_useful: bool
+) -> Iterator[DanswerAnswerPiece | StreamingError]:
+    try:
+        system_message, system_tokens = build_chat_system_message(
+            prompt=query_message.prompt, llm_tokenizer=llm_tokenizer
+        )
+
+        history_basemessages = [
+            translate_danswer_msg_to_langchain(msg) for msg in history
+        ]
+        history_token_counts = [msg.token_count for msg in history]
+
+        user_message, user_tokens = build_chat_user_message(
+            chat_message=query_message,
+            prompt=query_message.prompt,
+            context_docs=context_docs,
+            llm_tokenizer=llm_tokenizer,
+            all_doc_useful=all_doc_useful
+        )
+
+        prompt = _drop_messages_history_overflow(
+            system_msg=system_message,
+            system_token_count=system_tokens,
+            history_msgs=history_basemessages,
+            history_token_counts=history_token_counts,
+            final_msg=user_message,
+            final_msg_token_count=user_tokens,
+        )
+
+        # Good Debug/Breakpoint
+        tokens = llm.stream(prompt)
+        links = [
+            chunk.source_links[0] if chunk.source_links else None
+            for chunk in retrieved_chunks
+        ]
+
+        for segment in extract_citations_from_stream(tokens, links):
+            yield DanswerAnswerPiece(answer_piece=segment)
+
+    except Exception as e:
+        logger.exception(f"LLM failed to produce valid chat message, error: {e}")
+        yield StreamingError(error=str(e))
+
+
+
 @log_generator_function_time()
 def stream_chat_packets(
     chat_message: CreateChatMessageRequest,
@@ -634,7 +686,6 @@ def stream_chat_packets(
     reference_doc_ids = chat_message.search_doc_ids
     retrieval_options = chat_message.retrieval_options
     message_text = chat_message.message
-    user_id = user.id if user is not None else None
     specified_search = chat_message.retrieval_options.search_type if chat_message.retrieval_options is not None else None
 
     llm_tokenizer = get_default_llm_token_encode()
@@ -653,25 +704,16 @@ def stream_chat_packets(
     else:
         parent_message = root_message
 
-    # create record for this query in Postgres
-    query_event_id = create_query_event(
-        query=message_text,
-        chat_session_id=chat_session_id,
-        search_type=specified_search,
-        llm_answer=None,
-        user_id=user_id,
-        db_session=db_session,
-    )
-
     # Create new message at the right place in the tree and update the parent's child pointer
     # Don't commit yet until we verify the chat message chain
-    new_message = create_new_chat_message(
+    new_user_message = create_new_chat_message(
         chat_session_id=chat_session_id,
         parent_message=parent_message,
         prompt_id=prompt_id,
         message=message_text,
         token_count=len(llm_tokenizer(message_text)),
         message_type=MessageType.USER,
+        specified_search=specified_search,
         db_session=db_session,
         commit=False,
     )
@@ -681,7 +723,7 @@ def stream_chat_packets(
         db_session,
     )
 
-    if final_msg != new_message.id:
+    if final_msg.id != new_user_message.id:
         db_session.rollback()
         raise RuntimeError(
             "The new message was not on the mainline. "
@@ -698,6 +740,7 @@ def stream_chat_packets(
     predicted_flow = None
     time_cutoff = None
     favor_recent = False
+    run_llm_chunk_filter = False
 
     if reference_doc_ids:
         identifier_tuples = get_doc_query_identifiers_from_model(reference_doc_ids)
@@ -728,6 +771,7 @@ def stream_chat_packets(
             )
             time_cutoff = retrieval_request.filters.time_cutoff
             favor_recent = retrieval_request.favor_recent
+            run_llm_chunk_filter = not retrieval_request.skip_llm_chunk_filter
 
         else:
             documents_generator = empty_search_generator()
@@ -750,19 +794,10 @@ def stream_chat_packets(
     ).dict()
     yield get_json_line(initial_response)
 
+    # TODO this is probably not right
     if not top_chunks:
         logger.debug("No Documents Found")
         return
-
-    # Update record for this query to include top docs
-    update_query_event_retrieved_documents(
-        db_session=db_session,
-        retrieved_document_ids=[doc.document_id for doc in top_chunks]
-        if top_chunks
-        else [],
-        query_id=query_event_id,
-        user_id=user_id,
-    )
 
     # Get the final ordering of chunks for the LLM call
     llm_chunk_selection = cast(list[bool], next(documents_generator))
@@ -771,13 +806,13 @@ def stream_chat_packets(
         llm_chunk_selection=llm_chunk_selection,
         token_limit=chat_session.persona.num_chunks,
     )
+    llm_chunks = [top_chunks[i] for i in llm_chunks_indices]
     
     llm_relevance_filtering_response = LLMRelevanceFilterResponse(
         relevant_chunk_indices=[
             index for index, value in enumerate(llm_chunk_selection) if value
         ]
-        if not retrieval_request.skip_llm_chunk_filter
-        else []
+        if run_llm_chunk_filter else []
     ).dict()
     yield get_json_line(llm_relevance_filtering_response)
 
@@ -785,33 +820,38 @@ def stream_chat_packets(
         logger.debug("Skipping QA because generative AI is disabled")
         return
 
-    response_packets = generate_message_response(
+    response_packets = generate_ai_chat_response(
         query_message=final_msg,
         history=history_msgs,
-        persona=chat_session.persona,
-        tokenizer=llm_tokenizer,
-        user=user,
-        db_session=db_session,
+        context_docs=llm_chunks,
+        llm=llm,
+        llm_tokenizer=llm_tokenizer,
+        all_doc_useful=reference_doc_ids is not None
     )
 
     llm_output = ""
     fetched_docs: RetrievalDocs | None = None
+    error: str | None = None
     for packet in response_packets:
         if isinstance(packet, DanswerAnswerPiece):
             token = packet.answer_piece
             if token:
                 llm_output += token
-        elif isinstance(packet, RetrievalDocs):
-            fetched_docs = packet
+        elif isinstance(packet, StreamingError):
+            error = packet.error
+
         yield get_json_line(packet.dict())
 
-    create_new_chat_message(
+    gen_ai_response_message = create_new_chat_message(
         chat_session_id=chat_session_id,
-        message_number=message_number + 1,
-        parent_edit_number=new_message.edit_number,
+        parent_message=new_user_message,
         message=llm_output,
+        prompt_id=prompt_id,
         token_count=len(llm_tokenizer(llm_output)),
         message_type=MessageType.ASSISTANT,
-        retrieval_docs=fetched_docs.dict() if fetched_docs else None,
+        specified_search=specified_search,
+        error=error,
+        reference_docs=1,
         db_session=db_session,
+        commit=False,
     )

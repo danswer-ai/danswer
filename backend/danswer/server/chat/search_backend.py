@@ -8,7 +8,6 @@ from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.engine import get_session
 from danswer.db.feedback import create_doc_retrieval_feedback
-from danswer.db.feedback import create_query_event
 from danswer.db.feedback import update_query_event_feedback
 from danswer.db.models import User
 from danswer.direct_qa.answer_question import answer_qa_query
@@ -26,7 +25,7 @@ from danswer.secondary_llm_flows.query_validation import stream_query_answerabil
 from danswer.server.chat.models import AdminSearchRequest
 from danswer.server.chat.models import AdminSearchResponse
 from danswer.server.chat.models import HelperResponse
-from danswer.server.chat.models import NewMessageRequest
+from danswer.server.chat.models import CreateChatMessageRequest
 from danswer.server.chat.models import QAFeedbackRequest
 from danswer.server.chat.models import QAResponse
 from danswer.server.chat.models import QueryValidationResponse
@@ -85,7 +84,8 @@ def admin_search(
 
 @router.post("/search-intent")
 def get_search_type(
-    new_message_request: NewMessageRequest, _: User = Depends(current_user)
+    new_message_request: CreateChatMessageRequest,
+    _: User = Depends(current_user)
 ) -> HelperResponse:
     query = new_message_request.query
     return recommend_search_flow(query)
@@ -93,7 +93,8 @@ def get_search_type(
 
 @router.post("/query-validation")
 def query_validation(
-    new_message_request: NewMessageRequest, _: User = Depends(current_user)
+    new_message_request: CreateChatMessageRequest,
+    _: User = Depends(current_user)
 ) -> QueryValidationResponse:
     query = new_message_request.query
     reasoning, answerable = get_query_answerability(query)
@@ -102,7 +103,8 @@ def query_validation(
 
 @router.post("/stream-query-validation")
 def stream_query_validation(
-    new_message_request: NewMessageRequest, _: User = Depends(current_user)
+    new_message_request: CreateChatMessageRequest,
+    _: User = Depends(current_user)
 ) -> StreamingResponse:
     # Note if weak model prompt is chosen, this check does not occur
     query = new_message_request.query
@@ -113,7 +115,7 @@ def stream_query_validation(
 
 @router.post("/document-search")
 def handle_search_request(
-    new_message_request: NewMessageRequest,
+    new_message_request: CreateChatMessageRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> SearchResponse:
@@ -156,7 +158,7 @@ def handle_search_request(
 
 @router.post("/direct-qa")
 def direct_qa(
-    new_message_request: NewMessageRequest,
+    new_message_request: CreateChatMessageRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> QAResponse:
@@ -169,7 +171,7 @@ def direct_qa(
 
 @router.post("/stream-direct-qa")
 def stream_direct_qa(
-    new_message_request: NewMessageRequest,
+    new_message_request: CreateChatMessageRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StreamingResponse:

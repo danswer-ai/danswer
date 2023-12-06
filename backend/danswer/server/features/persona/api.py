@@ -9,7 +9,7 @@ from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.chat import fetch_persona_by_id
 from danswer.db.chat import fetch_personas
-from danswer.db.chat import mark_persona_as_deleted
+#from danswer.db.chat import mark_persona_as_deleted
 from danswer.db.chat import upsert_persona
 from danswer.db.document_set import get_document_sets_by_ids
 from danswer.db.engine import get_session

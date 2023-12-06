@@ -35,6 +35,7 @@ from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
+from danswer.search.models import SearchType
 
 
 class IndexingStatus(str, PyEnum):
@@ -447,6 +448,8 @@ class ChatSession(Base):
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id"))
     description: Mapped[str] = mapped_column(Text)
+    # One-shot direct answering, currently the two types of chats are not mixed
+    one_shot: Mapped[bool] = mapped_column(Boolean, default=False)
     # Only ever set to True if system is set to not hard-delete chats
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     time_updated: Mapped[datetime.datetime] = mapped_column(
@@ -462,35 +465,43 @@ class ChatSession(Base):
     messages: Mapped[List["ChatMessage"]] = relationship(
         "ChatMessage", back_populates="chat_session", cascade="delete"
     )
-    persona: Mapped[Optional["Persona"]] = relationship("Persona")
+    persona: Mapped["Persona"] = relationship("Persona")
 
 
 class ChatMessage(Base):
     """Note, the first message in a chain has no contents, it's a workaround to allow edits
-    on the first message of a session, an empty root node basically"""
+    on the first message of a session, an empty root node basically
+
+    Since every user message is followed by a LLM response, chat messages generally come in pairs.
+    Keeping them as separate messages however for future Agentification extensions
+    Fields will be largely duplicated in the pair.
+    """
 
     __tablename__ = "chat_message"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_session_id: Mapped[int] = mapped_column(ForeignKey("chat_session.id"))
-    prompt_id: Mapped[int | None] = mapped_column(
-        ForeignKey("prompt.id"), nullable=True
-    )
     parent_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     latest_child_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     message: Mapped[str] = mapped_column(Text)
+    prompt_id: Mapped[int | None] = mapped_column(ForeignKey("prompt.id"))
     token_count: Mapped[int] = mapped_column(Integer)
     message_type: Mapped[MessageType] = mapped_column(Enum(MessageType))
-    # Gen AI user feedback only applies to assistant messages
-    gen_ai_feedback: Mapped[QAFeedbackType | None] = mapped_column(
-        Enum(QAFeedbackType, native_enum=False), nullable=True,
+    # search_flow refers to user selection, None if user used auto
+    selected_search_flow: Mapped[SearchType | None] = mapped_column(
+        Enum(SearchType), nullable=True
     )
+    # Only applies for LLM
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
     time_sent: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
-    prompt: Mapped[Optional["Prompt"]] = relationship("Prompt")
+    prompt: Mapped["Prompt"] = relationship("Prompt")
+    chat_message_feedbacks: Mapped[List["ChatMessageFeedback"]] = relationship(
+        "ChatMessageFeedback", back_populates="chat_message"
+    )
     document_feedbacks: Mapped[List["DocumentRetrievalFeedback"]] = relationship(
         "DocumentRetrievalFeedback", back_populates="chat_message"
     )
@@ -575,18 +586,20 @@ class Prompt(Base):
     # If not belong to a user, then it's shared
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     name: Mapped[str] = mapped_column(String)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
     system_prompt: Mapped[str] = mapped_column(Text)
     task_prompt: Mapped[str] = mapped_column(Text)
+    include_citations: Mapped[bool] = mapped_column(Boolean, default=True)
     datetime_aware: Mapped[bool] = mapped_column(Boolean, default=True)
     # Default prompts are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
     default_prompt: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    user: Mapped[User] = relationship("User", back_populates="prompt")
+    user: Mapped[User] = relationship("User", back_populates="prompts")
     personas: Mapped[list["Persona"]] = relationship(
         "Persona",
         secondary=Persona__Prompt.__table__,
-        back_populates="prompt",
+        back_populates="prompts",
     )
 
 
@@ -626,7 +639,7 @@ class Persona(Base):
         secondary=Persona__DocumentSet.__table__,
         back_populates="personas",
     )
-    user: Mapped[User] = relationship("User", back_populates="persona")
+    user: Mapped[User] = relationship("User", back_populates="personas")
 
     # Default personas loaded via yaml cannot have the same name
     __table_args__ = (

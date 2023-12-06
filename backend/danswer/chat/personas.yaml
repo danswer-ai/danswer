@@ -1,6 +1,9 @@
 personas:
   - name: "Danswer"
     # Default Prompt objects attached to the persona, see prompts.yaml
+    description: >
+      Default Persona for default Danswer functionality.
+      Ask Questions or get Summaries from your documents
     prompts:
       - "Answer-Question"
       - "Summarize"

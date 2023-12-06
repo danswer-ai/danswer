@@ -11,6 +11,8 @@ prompts:
     # Inject a statement at the end of system prompt to inform the LLM of the current date/time
     # Format looks like: "October 16, 2023 14:30"
     datetime_aware: true
+    # Prompts the LLM to include citations in the for [1], [2] etc. which get parsed to match the passed in sources
+    include_citations: true
 
 
   - name: "Summarize"
@@ -21,3 +23,4 @@ prompts:
     task: |
       Summarize the documents provided. Take into account the conversation so far and focus on the most relevant information.
     datetime_aware: true
+    include_citations: true

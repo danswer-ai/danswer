@@ -1,12 +1,29 @@
-from langchain.schema.messages import BaseMessage
-from langchain.schema.messages import HumanMessage
-from langchain.schema.messages import SystemMessage
-
-from danswer.configs.constants import MessageType
-from danswer.db.models import ChatMessage
 from danswer.indexing.models import InferenceChunk
-from danswer.llm.utils import translate_danswer_msg_to_langchain
-from danswer.prompts.constants import CODE_BLOCK_PAT
+from danswer.prompts.constants import CODE_BLOCK_PAT, GENERAL_SEP_PAT, QUESTION_PAT
+
+REQUIRE_CITATION_STATEMENT = """
+Cite relevant statements using the format [1], [2], [3], etc to reference the document number, \
+DO NOT provide any links following the citation.
+""".strip()
+
+CITATION_REMINDER = """
+Remember to provide citations in the format [1], [2], [3], etc.
+"""
+
+DEFAULT_IGNORE_STATEMENT = " Ignore any context documents that are not relevant."
+
+CHAT_USER_PROMPT = f"""
+Refer to the following context documents when responding to me.{{optional_ignore_statement}}
+CONTEXT:
+{GENERAL_SEP_PAT}
+{{context_docs_str}}
+{GENERAL_SEP_PAT}
+
+{{task_prompt}}
+
+{QUESTION_PAT.upper()}
+{{user_query}}
+""".strip()
 
 
 YES_SEARCH = "Yes Search"

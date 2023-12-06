@@ -16,7 +16,10 @@ LOCAL_CHAT_ENDPOINT = f"http://127.0.0.1:{APP_PORT}/chat/"
 
 
 def create_new_session() -> int:
-    response = requests.post(LOCAL_CHAT_ENDPOINT + "create-chat-session")
+    data = {
+        "persona_id": 1
+    }
+    response = requests.post(LOCAL_CHAT_ENDPOINT + "create-chat-session", json=data)
     response.raise_for_status()
     new_session_id = response.json()["chat_session_id"]
     return new_session_id
@@ -25,16 +28,13 @@ def create_new_session() -> int:
 def send_chat_message(
     message: str,
     chat_session_id: int,
-    message_number: int,
-    parent_edit_number: int | None,
-    persona_id: int | None,
-) -> None:
+    parent_message: int | None,
+) -> int:
     data = {
         "message": message,
         "chat_session_id": chat_session_id,
-        "message_number": message_number,
-        "parent_edit_number": parent_edit_number,
-        "persona_id": persona_id,
+        "parent_message_id": parent_message,
+        "prompt_id": 1
     }
 
     docs: list[dict] | None = None
@@ -66,22 +66,16 @@ def run_chat(contextual: bool) -> None:
         )
         exit()
 
-    persona_id = 1 if contextual else None
-
-    message_num = 0
-    parent_edit = None
+    parent_message = None
     while True:
         new_message = input(
             "\n\n----------------------------------\n"
             "Please provide a new chat message:\n> "
         )
 
-        send_chat_message(
-            new_message, new_session_id, message_num, parent_edit, persona_id
+        parent_message = send_chat_message(
+            new_message, new_session_id, parent_message=parent_message
         )
-
-        message_num += 2  # 1 for User message, 1 for AI response
-        parent_edit = 0  # Since no edits, the parent message is always the first edit of that message number
 
 
 if __name__ == "__main__":

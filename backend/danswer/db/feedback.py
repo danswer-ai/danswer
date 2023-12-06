@@ -14,21 +14,9 @@ from danswer.db.models import ChatMessage as DbChatMessage
 from danswer.db.models import ChatMessageFeedback
 from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentRetrievalFeedback
-from danswer.db.models import QueryEvent
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.search.models import SearchType
-
-
-def fetch_query_event_by_id(query_id: int, db_session: Session) -> QueryEvent:
-    stmt = select(QueryEvent).where(QueryEvent.id == query_id)
-    result = db_session.execute(stmt)
-    query_event = result.scalar_one_or_none()
-
-    if not query_event:
-        raise ValueError("Invalid Query Event ID Provided")
-
-    return query_event
 
 
 def fetch_docs_by_id(doc_id: str, db_session: Session) -> DbDocument:
@@ -95,29 +83,6 @@ def update_document_hidden(
     document_index.update([update])
 
     db_session.commit()
-
-
-def create_query_event(
-    db_session: Session,
-    query: str,
-    chat_session_id: int,
-    search_type: SearchType | None,
-    llm_answer: str | None,
-    user_id: UUID | None,
-    retrieved_document_ids: list[str] | None = None,
-) -> int:
-    query_event = QueryEvent(
-        query=query,
-        chat_session_id=chat_session_id,
-        selected_search_flow=search_type,
-        llm_answer=llm_answer,
-        retrieved_document_ids=retrieved_document_ids,
-        user_id=user_id,
-    )
-    db_session.add(query_event)
-    db_session.commit()
-
-    return query_event.id
 
 
 def update_query_event_feedback(

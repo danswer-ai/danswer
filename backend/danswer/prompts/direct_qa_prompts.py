@@ -34,9 +34,10 @@ Cite relevant statements using the format [1], [2], etc to reference the documen
 """.strip()
 
 
+#TODO removed the strip for chat here, fix for normal use
 LANGUAGE_HINT = """
 IMPORTANT: Respond in the same language as my query!
-""".strip()
+"""
 
 
 # This has to be doubly escaped due to json containing { } which are also used for format strings
