@@ -4,10 +4,12 @@ from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.app_configs import DISABLE_LLM_FILTER_EXTRACTION
 from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.configs.model_configs import SKIP_RERANKING
+from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import query_intent
-from danswer.search.models import IndexFilters, BaseFilters
+from danswer.search.models import BaseFilters
+from danswer.search.models import IndexFilters
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
@@ -21,6 +23,7 @@ from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 def retrieval_preprocessing(
     query: str,
     retrieval_details: RetrievalDetails,
+    persona: Persona,
     user: User | None,
     db_session: Session,
     bypass_acl: bool = False,
@@ -28,9 +31,15 @@ def retrieval_preprocessing(
     skip_rerank_realtime: bool = not ENABLE_RERANKING_REAL_TIME_FLOW,
     skip_rerank_non_realtime: bool = SKIP_RERANKING,
     disable_llm_filter_extraction: bool = DISABLE_LLM_FILTER_EXTRACTION,
-    skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
+    disable_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
 ) -> tuple[SearchQuery, SearchType | None, QueryFlow | None]:
-    preset_filters = retrieval_details.filters if retrieval_details.filters is not None else BaseFilters()
+    # TODO this logic needs to be updated!!!
+
+    preset_filters = (
+        retrieval_details.filters
+        if retrieval_details.filters is not None
+        else BaseFilters()
+    )
 
     auto_filters_enabled = (
         not disable_llm_filter_extraction
@@ -46,9 +55,7 @@ def retrieval_preprocessing(
     )
 
     # based on the query, figure out if we should apply any source filters
-    should_run_source_filters = (
-        auto_filters_enabled and not preset_filters.source_type
-    )
+    should_run_source_filters = auto_filters_enabled and not preset_filters.source_type
     run_source_filters = (
         FunctionCall(extract_source_filter, (query, db_session), {})
         if should_run_source_filters
@@ -57,9 +64,7 @@ def retrieval_preprocessing(
     # NOTE: this isn't really part of building the retrieval request, but is done here
     # so it can be simply done in parallel with the filters without multi-level multithreading
     run_query_intent = (
-        FunctionCall(query_intent, (query,), {})
-        if include_query_intent
-        else None
+        FunctionCall(query_intent, (query,), {}) if include_query_intent else None
     )
 
     functions_to_run = [

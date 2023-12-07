@@ -13,13 +13,14 @@ from sqlalchemy.orm import Session
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
-from danswer.db.models import ChatMessage, SearchDoc
+from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
 from danswer.db.models import DocumentSet as DBDocumentSet
 from danswer.db.models import Persona
 from danswer.db.models import Prompt
+from danswer.db.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
-from danswer.search.models import SearchType
+from danswer.search.models import RecencyBiasSetting
 from danswer.server.chat.models import SearchDoc as ServerSearchDoc
 
 
@@ -230,11 +231,10 @@ def create_new_chat_message(
     chat_session_id: int,
     parent_message: ChatMessage,
     message: str,
-    prompt_id: int,
+    prompt_id: int | None,
     token_count: int,
     message_type: MessageType,
     db_session: Session,
-    specified_search: SearchType | None = None,
     error: str | None = None,
     reference_docs: list[DBSearchDoc] | None = None,
     commit: bool = True,
@@ -247,8 +247,7 @@ def create_new_chat_message(
         prompt_id=prompt_id,
         token_count=token_count,
         message_type=message_type,
-        selected_search_flow=specified_search,
-        error=error
+        error=error,
     )
 
     # SQL Alchemy will propagate this to update the reference_docs' foreign keys
@@ -366,8 +365,9 @@ def upsert_prompt(
 def upsert_persona(
     name: str,
     description: str | None,
-    num_chunks: int,
+    num_chunks: float,
     llm_relevance_filter: bool,
+    recency_bias: RecencyBiasSetting,
     prompts: list[Prompt] | None,
     document_sets: list[DBDocumentSet] | None,
     db_session: Session,
@@ -392,6 +392,7 @@ def upsert_persona(
         persona.description = description
         persona.num_chunks = num_chunks
         persona.llm_relevance_filter = llm_relevance_filter
+        persona.recency_bias = recency_bias
         persona.default_persona = default_persona
         persona.llm_model_version_override = llm_model_version_override
 
@@ -411,6 +412,7 @@ def upsert_persona(
             description=description,
             num_chunks=num_chunks,
             llm_relevance_filter=llm_relevance_filter,
+            recency_bias=recency_bias,
             prompts=prompts,
             default_persona=default_persona,
             document_sets=document_sets or [],
@@ -442,12 +444,14 @@ def fetch_personas(
 
 
 def get_doc_query_identifiers_from_model(
-    chat_session: int,
-    search_doc_ids: list[str],
-    db_session: Session
+    chat_session: int, search_doc_ids: list[str], db_session: Session
 ) -> list[tuple[str, int]]:
-    search_docs = db_session.query(SearchDoc).filter(SearchDoc.id.in_(search_doc_ids)).all()
-    if any([doc.chat_messages[0].chat_session_id != chat_session for doc in search_docs]):
+    search_docs = (
+        db_session.query(SearchDoc).filter(SearchDoc.id.in_(search_doc_ids)).all()
+    )
+    if any(
+        [doc.chat_messages[0].chat_session_id != chat_session for doc in search_docs]
+    ):
         raise ValueError("Invalid reference doc, not from this chat session.")
 
     doc_query_identifiers = [(doc.document_id, doc.chunk_ind) for doc in search_docs]
@@ -455,6 +459,5 @@ def get_doc_query_identifiers_from_model(
     return doc_query_identifiers
 
 
-def create_db_search_doc(
-    search_doc: ServerSearchDoc
-) -> SearchDoc:
+def create_db_search_doc(search_doc: ServerSearchDoc) -> SearchDoc:
+    pass

@@ -16,9 +16,7 @@ LOCAL_CHAT_ENDPOINT = f"http://127.0.0.1:{APP_PORT}/chat/"
 
 
 def create_new_session() -> int:
-    data = {
-        "persona_id": 1
-    }
+    data = {"persona_id": 1}
     response = requests.post(LOCAL_CHAT_ENDPOINT + "create-chat-session", json=data)
     response.raise_for_status()
     new_session_id = response.json()["chat_session_id"]
@@ -34,7 +32,8 @@ def send_chat_message(
         "message": message,
         "chat_session_id": chat_session_id,
         "parent_message_id": parent_message,
-        "prompt_id": 1
+        "prompt_id": 1,
+        "retrieval_options": {"run_search": "always", "real_time": True},
     }
 
     docs: list[dict] | None = None

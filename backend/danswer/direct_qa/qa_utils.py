@@ -323,7 +323,7 @@ def get_usable_chunks(
 def get_chunks_for_qa(
     chunks: list[InferenceChunk],
     llm_chunk_selection: list[bool],
-    token_limit: int | None = NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
+    token_limit: float | None = NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
     batch_offset: int = 0,
 ) -> list[int]:
     """

@@ -32,10 +32,10 @@ from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
-from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
-from danswer.search.models import SearchType, RecencyBiasSetting
+from danswer.search.models import RecencyBiasSetting
+from danswer.search.models import SearchType
 
 
 class IndexingStatus(str, PyEnum):
@@ -145,8 +145,12 @@ class DocumentSet__ConnectorCredentialPair(Base):
 class ChatMessage__SearchDoc(Base):
     __tablename__ = "chat_message__search_doc"
 
-    chat_message_id: Mapped[int] = mapped_column(ForeignKey('chat_message.id'), primary_key=True)
-    search_doc_id: Mapped[int] = mapped_column(ForeignKey('search_doc.id'), primary_key=True)
+    chat_message_id: Mapped[int] = mapped_column(
+        ForeignKey("chat_message.id"), primary_key=True
+    )
+    search_doc_id: Mapped[int] = mapped_column(
+        ForeignKey("search_doc.id"), primary_key=True
+    )
 
 
 """
@@ -437,7 +441,7 @@ class SearchDoc(Base):
     chat_messages = relationship(
         "ChatMessage",
         secondary="chat_message__search_doc",
-        back_populates="search_docs"
+        back_populates="search_docs",
     )
 
 
@@ -484,13 +488,13 @@ class ChatMessage(Base):
     parent_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     latest_child_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     message: Mapped[str] = mapped_column(Text)
+    # If None, then there is no answer generation, it's the special case of only
+    # showing the user the retrieved docs
     prompt_id: Mapped[int | None] = mapped_column(ForeignKey("prompt.id"))
+    # If prompt is None, then token_count is 0 as this message won't be passed into
+    # the LLM's context (not included in the history of messages)
     token_count: Mapped[int] = mapped_column(Integer)
     message_type: Mapped[MessageType] = mapped_column(Enum(MessageType))
-    # search_flow refers to user selection, None if user used auto
-    selected_search_flow: Mapped[SearchType | None] = mapped_column(
-        Enum(SearchType), nullable=True
-    )
     # Only applies for LLM
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     time_sent: Mapped[datetime.datetime] = mapped_column(
@@ -498,7 +502,7 @@ class ChatMessage(Base):
     )
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
-    prompt: Mapped["Prompt"] = relationship("Prompt")
+    prompt: Mapped[Optional["Prompt"]] = relationship("Prompt")
     chat_message_feedbacks: Mapped[List["ChatMessageFeedback"]] = relationship(
         "ChatMessageFeedback", back_populates="chat_message"
     )
@@ -508,7 +512,7 @@ class ChatMessage(Base):
     search_docs = relationship(
         "SearchDoc",
         secondary="chat_message__search_doc",
-        back_populates="chat_messages"
+        back_populates="chat_messages",
     )
 
 
@@ -611,13 +615,17 @@ class Persona(Base):
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str | None] = mapped_column(String, nullable=True)
-    # Number of chunks to use for retrieval. If unspecified, uses the default set
-    # in the env variables
-    num_chunks: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Currently stored but unused, all flows use hybrid
+    search_flow: Mapped[SearchType] = mapped_column(
+        Enum(SearchType), default=SearchType.HYBRID
+    )
+    # Number of chunks to pass to the LLM for generation.
+    # If unspecified, uses the default DEFAULT_NUM_CHUNKS_FED_TO_CHAT set in the env variable
+    num_chunks: Mapped[float | None] = mapped_column(Float, nullable=True)
     # Pass every chunk through LLM for evaluation, fairly expensive, can be turned off
     # globally by admin, in which case, this setting is ignored
     llm_relevance_filter: Mapped[bool] = mapped_column(Boolean)
-    favor_recent: Mapped[RecencyBiasSetting] = mapped_column(Enum(RecencyBiasSetting))
+    recency_bias: Mapped[RecencyBiasSetting] = mapped_column(Enum(RecencyBiasSetting))
     # Default personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
     default_persona: Mapped[bool] = mapped_column(Boolean, default=False)

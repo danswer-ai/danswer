@@ -486,7 +486,9 @@ def full_chunk_search_generator(
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> Iterator[list[InferenceChunk] | list[bool]]:
-    """Always yields twice. Once with the selected chunks and once with the LLM relevance filter result."""
+    """Always yields twice. Once with the selected chunks and once with the LLM relevance filter result.
+    If LLM filter results are turned off, returns a list of False
+    """
     chunks_yielded = False
 
     retrieved_chunks = retrieve_chunks(
@@ -565,7 +567,7 @@ def full_chunk_search_generator(
             for chunk in reranked_chunks or retrieved_chunks
         ]
     else:
-        yield [True for _ in reranked_chunks or retrieved_chunks]
+        yield [False for _ in reranked_chunks or retrieved_chunks]
 
 
 def inference_documents_from_ids(

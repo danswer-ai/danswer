@@ -2,15 +2,16 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel
+from pydantic import root_validator
 
-from danswer.configs.app_configs import DOCUMENT_INDEX_NAME, DISABLE_LLM_FILTER_EXTRACTION, DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerQuote
-from danswer.search.models import BaseFilters, OptionalSearchSetting
+from danswer.search.models import BaseFilters
+from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
 
@@ -112,11 +113,21 @@ class CreateChatMessageRequest(BaseModel):
     # If no prompt provided, provide canned retrieval answer, no actually LLM flow
     prompt_id: int | None
     # If search_doc_ids provided, then retrieval options are unused
-    # If an empty list of search_doc_ids then no reference docs are used
-    # If both are unset, use the LLM to determine search vs not
-    # Maybe in the future, can combine selected documents + additional retrieved
     search_doc_ids: list[int] | None
     retrieval_options: RetrievalDetails | None
+
+    @root_validator
+    def check_search_doc_ids_or_retrieval_options(cls: BaseModel, values: dict) -> dict:
+        search_doc_ids, retrieval_options = values.get("search_doc_ids"), values.get(
+            "retrieval_options"
+        )
+
+        if search_doc_ids is None and retrieval_options is None:
+            raise ValueError(
+                "Either search_doc_ids or retrieval_options must be provided, but not both None."
+            )
+
+        return values
 
 
 class ChatMessageIdentifier(BaseModel):

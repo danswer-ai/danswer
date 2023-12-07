@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
-from danswer.chat.process_message import generate_message_response, stream_chat_packets
+from danswer.chat.process_message import stream_chat_packets
 from danswer.configs.constants import MessageType
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
@@ -16,15 +16,12 @@ from danswer.db.chat import fetch_chat_messages_by_session
 from danswer.db.chat import fetch_chat_session_by_id
 from danswer.db.chat import fetch_chat_sessions_by_user
 from danswer.db.chat import fetch_persona_by_id
-from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import set_latest_chat_message
 from danswer.db.chat import update_chat_session
 from danswer.db.engine import get_session
 from danswer.db.feedback import create_chat_message_feedback
-from danswer.db.models import ChatMessage
 from danswer.db.models import User
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
-from danswer.document_index.factory import get_default_document_index
 from danswer.llm.utils import get_default_llm_token_encode
 from danswer.secondary_llm_flows.chat_helpers import get_new_chat_name
 from danswer.server.chat.models import ChatFeedbackRequest
@@ -218,7 +215,7 @@ def handle_new_chat_message(
         )
 
     packets = stream_chat_packets(
-        chat_message=chat_message,
+        new_msg_req=chat_message,
         chat_session=chat_session,
         user=user,
         db_session=db_session,

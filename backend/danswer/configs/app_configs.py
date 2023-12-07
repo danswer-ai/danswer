@@ -189,11 +189,13 @@ NUM_RERANKED_RESULTS = 15
 # Finally, this is combined with the rest of the QA prompt, so don't set this too close to the
 # model token limit
 NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL = int(
-    os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL") or (512 * 5)
+    os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL") or (CHUNK_SIZE * 5)
 )
-DEFAULT_NUM_CHUNKS = max(1, NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL / 512)
+DEFAULT_NUM_CHUNKS_FED_TO_CHAT: float = (
+    float(NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL) / CHUNK_SIZE
+)
 NUM_DOCUMENT_TOKENS_FED_TO_CHAT = int(
-    os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_CHAT") or (512 * 3)
+    os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_CHAT") or (CHUNK_SIZE * 3)
 )
 # For selecting a different LLM question-answering prompt format
 # Valid values: default, cot, weak

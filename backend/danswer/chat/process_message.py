@@ -9,22 +9,31 @@ from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 from sqlalchemy.orm import Session
 
-from danswer.chat.chat_helpers import build_chat_system_message, build_chat_user_message
+from danswer.chat.chat_helpers import build_chat_system_message
+from danswer.chat.chat_helpers import build_chat_user_message
 from danswer.chat.tools import call_tool
-from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT, DISABLE_GENERATIVE_AI
+from danswer.configs.app_configs import CHUNK_SIZE
+from danswer.configs.app_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
+from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_CHAT
 from danswer.configs.chat_configs import FORCE_TOOL_PROMPT
-from danswer.configs.constants import IGNORE_FOR_QA, MessageType
+from danswer.configs.constants import IGNORE_FOR_QA
+from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
-from danswer.db.chat import get_or_create_root_message, fetch_chat_message, create_new_chat_message, \
-    get_doc_query_identifiers_from_model, fetch_chat_messages_by_session, fetch_chat_session_by_id
-from danswer.db.feedback import update_query_event_retrieved_documents
-from danswer.db.models import ChatMessage, ChatSession, Prompt
+from danswer.db.chat import create_new_chat_message
+from danswer.db.chat import fetch_chat_message
+from danswer.db.chat import fetch_chat_messages_by_session
+from danswer.db.chat import fetch_chat_session_by_id
+from danswer.db.chat import get_doc_query_identifiers_from_model
+from danswer.db.chat import get_or_create_root_message
+from danswer.db.models import ChatMessage
+from danswer.db.models import ChatSession
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.direct_qa.interfaces import DanswerChatModelOut
 from danswer.direct_qa.interfaces import StreamingError
-from danswer.direct_qa.qa_utils import get_usable_chunks, get_chunks_for_qa
+from danswer.direct_qa.qa_utils import get_chunks_for_qa
+from danswer.direct_qa.qa_utils import get_usable_chunks
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.factory import get_default_llm
@@ -32,16 +41,24 @@ from danswer.llm.interfaces import LLM
 from danswer.llm.utils import get_default_llm_token_encode
 from danswer.llm.utils import translate_danswer_msg_to_langchain
 from danswer.search.access_filters import build_access_filters_for_user
-from danswer.search.models import IndexFilters, BaseFilters, QueryFlow
+from danswer.search.models import IndexFilters
+from danswer.search.models import OptionalSearchSetting
+from danswer.search.models import QueryFlow
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.search.request_preprocessing import retrieval_preprocessing
-from danswer.search.search_runner import chunks_to_search_docs, inference_documents_from_ids, \
-    full_chunk_search_generator, empty_search_generator
+from danswer.search.search_runner import chunks_to_search_docs
+from danswer.search.search_runner import empty_search_generator
 from danswer.search.search_runner import full_chunk_search
-from danswer.secondary_llm_flows.chat_helpers import check_if_need_search, history_based_query_rephrase
-from danswer.server.chat.models import RetrievalDocs, CreateChatMessageRequest, RetrievalDetails, QADocsResponse, \
-    LLMRelevanceFilterResponse
+from danswer.search.search_runner import full_chunk_search_generator
+from danswer.search.search_runner import inference_documents_from_ids
+from danswer.secondary_llm_flows.chat_helpers import check_if_need_search
+from danswer.secondary_llm_flows.chat_helpers import history_based_query_rephrase
+from danswer.server.chat.models import CreateChatMessageRequest
+from danswer.server.chat.models import LLMRelevanceFilterResponse
+from danswer.server.chat.models import QADocsResponse
+from danswer.server.chat.models import RetrievalDetails
+from danswer.server.chat.models import RetrievalDocs
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
@@ -624,7 +641,7 @@ def generate_ai_chat_response(
     context_docs: list[InferenceChunk],
     llm: LLM,
     llm_tokenizer: Callable,
-    all_doc_useful: bool
+    all_doc_useful: bool,
 ) -> Iterator[DanswerAnswerPiece | StreamingError]:
     try:
         system_message, system_tokens = build_chat_system_message(
@@ -641,7 +658,7 @@ def generate_ai_chat_response(
             prompt=query_message.prompt,
             context_docs=context_docs,
             llm_tokenizer=llm_tokenizer,
-            all_doc_useful=all_doc_useful
+            all_doc_useful=all_doc_useful,
         )
 
         prompt = _drop_messages_history_overflow(
@@ -670,26 +687,35 @@ def generate_ai_chat_response(
 
 @log_generator_function_time()
 def stream_chat_packets(
-    chat_message: CreateChatMessageRequest,
+    new_msg_req: CreateChatMessageRequest,
     user: User | None,
     db_session: Session,
-    chat_session: ChatSession | None = None,  # Just to avoid fetching twice
-    disable_generative_answer: bool = DISABLE_GENERATIVE_AI,
+    # Just to avoid fetching twice
+    chat_session: ChatSession | None = None,
+    # Needed to translate persona num_chunks to tokens to the LLM
+    default_num_chunks: float = DEFAULT_NUM_CHUNKS_FED_TO_CHAT,
+    default_chunk_size: int = CHUNK_SIZE,
 ) -> Iterator[str]:
     if chat_session is None:
-        chat_session = fetch_chat_session_by_id(chat_message.chat_session_id, db_session)
+        chat_session = fetch_chat_session_by_id(new_msg_req.chat_session_id, db_session)
 
-    chat_session_id = chat_message.chat_session_id
-    parent_id = chat_message.parent_message_id
-    prompt_id = chat_message.prompt_id
-    reference_doc_ids = chat_message.search_doc_ids
-    retrieval_options = chat_message.retrieval_options
-    message_text = chat_message.message
-    specified_search = chat_message.retrieval_options.search_type if chat_message.retrieval_options is not None else None
+    message_text = new_msg_req.message
+    chat_session_id = new_msg_req.chat_session_id
+    parent_id = new_msg_req.parent_message_id
+    prompt_id = new_msg_req.prompt_id
+    reference_doc_ids = new_msg_req.search_doc_ids
+    retrieval_options = new_msg_req.retrieval_options
 
+    if reference_doc_ids is None and retrieval_options is None:
+        raise RuntimeError(
+            "Must specify a set of documents for chat or specify search options"
+        )
+
+    llm = get_default_llm()
     llm_tokenizer = get_default_llm_token_encode()
     document_index = get_default_document_index()
 
+    # Every chat Session begins with an empty root message
     root_message = get_or_create_root_message(
         chat_session_id=chat_session_id, db_session=db_session
     )
@@ -712,7 +738,6 @@ def stream_chat_packets(
         message=message_text,
         token_count=len(llm_tokenizer(message_text)),
         message_type=MessageType.USER,
-        specified_search=specified_search,
         db_session=db_session,
         commit=False,
     )
@@ -732,103 +757,110 @@ def stream_chat_packets(
     # Save now to save the latest chat message
     db_session.commit()
 
-    llm = get_default_llm()
+    run_search = False
+    if retrieval_options is not None:
+        if retrieval_options.run_search == OptionalSearchSetting.ALWAYS:
+            run_search = True
+        elif retrieval_options.run_search == OptionalSearchSetting.NEVER:
+            run_search = False
+        else:
+            run_search = check_if_need_search(
+                query_message=final_msg, history=history_msgs, llm=llm
+            )
 
-    # Defaults for no retrieval or preselected docs cases
-    predicted_search_type = None
-    predicted_flow = None
+    # Defaults for if search is not run
+    predicted_search_type: SearchType | None = None
+    predicted_flow: QueryFlow | None = None
     time_cutoff = None
     favor_recent = False
     run_llm_chunk_filter = False
 
-    reference_db_search_docs = None
+    reference_db_search_docs = None  # TODO what is this
     if reference_doc_ids:
-        identifier_tuples = get_doc_query_identifiers_from_model(
-            reference_doc_ids
-        )
-        documents_generator: Iterator[list[InferenceChunk] | list[bool]] = inference_documents_from_ids(
+        identifier_tuples = get_doc_query_identifiers_from_model(reference_doc_ids)
+        documents_generator: Iterator[
+            list[InferenceChunk] | list[bool]
+        ] = inference_documents_from_ids(
             doc_identifiers=identifier_tuples,
             document_index=get_default_document_index(),
         )
+
+    elif run_search:
+        rephrased_query = history_based_query_rephrase(
+            query_message=final_msg, history=history_msgs, llm=llm
+        )
+
+        (
+            retrieval_request,
+            predicted_search_type,
+            predicted_flow,
+        ) = retrieval_preprocessing(
+            query=rephrased_query,
+            retrieval_details=cast(RetrievalDetails, retrieval_options),
+            persona=chat_session.persona,
+            user=user,
+            db_session=db_session,
+        )
+
+        documents_generator = full_chunk_search_generator(
+            search_query=retrieval_request,
+            document_index=document_index,
+        )
+        time_cutoff = retrieval_request.filters.time_cutoff
+        favor_recent = retrieval_request.favor_recent
+        run_llm_chunk_filter = not retrieval_request.skip_llm_chunk_filter
+
     else:
-        if retrieval_options or check_if_need_search(query_message=final_msg, history=history_msgs, llm=llm):
-            rephrased_query = history_based_query_rephrase(
-                query_message=final_msg,
-                history=history_msgs,
-                llm=llm
-            )
+        documents_generator = empty_search_generator()
 
-            if not retrieval_options:
-                retrieval_options = RetrievalDetails()
-
-            retrieval_request, predicted_search_type, predicted_flow = retrieval_preprocessing(
-                query=rephrased_query,
-                retrieval_details=retrieval_options,
-                user=user,
-                db_session=db_session
-            )
-            documents_generator = full_chunk_search_generator(
-                search_query=retrieval_request,
-                document_index=document_index,
-            )
-            time_cutoff = retrieval_request.filters.time_cutoff
-            favor_recent = retrieval_request.favor_recent
-            run_llm_chunk_filter = not retrieval_request.skip_llm_chunk_filter
-
-        else:
-            documents_generator = empty_search_generator()
-
-    # first fetch and return to the UI the top chunks so the user can
+    # First fetch and return the top chunks to the UI so the user can
     # immediately see some results
     top_chunks = cast(list[InferenceChunk], next(documents_generator))
 
     top_docs = chunks_to_search_docs(top_chunks)
     initial_response = QADocsResponse(
         top_documents=top_docs,
-        # if generative AI is disabled, set flow as search so frontend
-        # doesn't ask the user if they want to run QA over more documents
-        predicted_flow=QueryFlow.SEARCH
-        if disable_generative_answer
-        else cast(QueryFlow, predicted_flow),
-        predicted_search=cast(SearchType, predicted_search_type),
+        predicted_flow=predicted_flow,
+        predicted_search=predicted_search_type,
         time_cutoff=time_cutoff,
-        favor_recent=favor_recent
+        favor_recent=favor_recent,
     ).dict()
     yield get_json_line(initial_response)
 
-    # TODO this is probably not right
-    if not top_chunks:
-        logger.debug("No Documents Found")
-        return
-
     # Get the final ordering of chunks for the LLM call
     llm_chunk_selection = cast(list[bool], next(documents_generator))
-    llm_chunks_indices = get_chunks_for_qa(
-        chunks=top_chunks,
-        llm_chunk_selection=llm_chunk_selection,
-        token_limit=chat_session.persona.num_chunks,
-    )
-    llm_chunks = [top_chunks[i] for i in llm_chunks_indices]
-    
+
+    # Yield the list of LLM selected chunks for showing the LLM selected icons in the UI
     llm_relevance_filtering_response = LLMRelevanceFilterResponse(
         relevant_chunk_indices=[
             index for index, value in enumerate(llm_chunk_selection) if value
         ]
-        if run_llm_chunk_filter else []
+        if run_llm_chunk_filter
+        else []
     ).dict()
     yield get_json_line(llm_relevance_filtering_response)
 
-    if disable_generative_answer:
-        logger.debug("Skipping QA because generative AI is disabled")
-        return
+    # Prep chunks to pass to LLM
+    num_llm_chunks = (
+        chat_session.persona.num_chunks
+        if chat_session.persona.num_chunks is not None
+        else default_num_chunks
+    )
+    llm_chunks_indices = get_chunks_for_qa(
+        chunks=top_chunks,
+        llm_chunk_selection=llm_chunk_selection,
+        token_limit=num_llm_chunks * default_chunk_size,
+    )
+    llm_chunks = [top_chunks[i] for i in llm_chunks_indices]
 
+    # LLM prompt building, response capturing, etc all handled in here
     response_packets = generate_ai_chat_response(
         query_message=final_msg,
         history=history_msgs,
         context_docs=llm_chunks,
         llm=llm,
         llm_tokenizer=llm_tokenizer,
-        all_doc_useful=reference_doc_ids is not None
+        all_doc_useful=reference_doc_ids is not None,
     )
 
     llm_output = ""
@@ -843,7 +875,7 @@ def stream_chat_packets(
 
         yield get_json_line(packet.dict())
 
-    db_search_docs = [translate_search_doc_to_db(top_doc) for top_doc in top_docs]
+    [translate_search_doc_to_db(top_doc) for top_doc in top_docs]
 
     gen_ai_response_message = create_new_chat_message(
         chat_session_id=chat_session_id,

@@ -1,8 +1,9 @@
+from typing import cast
 
 import yaml
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import DEFAULT_NUM_CHUNKS
+from danswer.configs.app_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
 from danswer.configs.chat_configs import PERSONAS_YAML
 from danswer.configs.chat_configs import PROMPTS_YAML
 from danswer.db.chat import fetch_prompt_by_name
@@ -12,6 +13,7 @@ from danswer.db.document_set import get_or_create_document_set_by_name
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import DocumentSet as DocumentSetDBModel
 from danswer.db.models import Prompt as PromptDBModel
+from danswer.search.models import RecencyBiasSetting
 
 
 def load_prompts_from_yaml(prompts_yaml: str = PROMPTS_YAML) -> None:
@@ -34,7 +36,7 @@ def load_prompts_from_yaml(prompts_yaml: str = PROMPTS_YAML) -> None:
 
 def load_personas_from_yaml(
     personas_yaml: str = PERSONAS_YAML,
-    default_chunks: int = DEFAULT_NUM_CHUNKS,
+    default_chunks: float = DEFAULT_NUM_CHUNKS_FED_TO_CHAT,
 ) -> None:
     with open(personas_yaml, "r") as file:
         data = yaml.safe_load(file)
@@ -55,23 +57,33 @@ def load_personas_from_yaml(
                 doc_sets = None
 
             prompt_set_names = persona["prompts"]
-            prompts: list[PromptDBModel] | None = [
-                fetch_prompt_by_name(prompt_name, user_id=None, db_session=db_session)
-                for prompt_name in prompt_set_names
-            ]
-            if any([prompt is None for prompt in prompts]):
-                raise ValueError("Invalid Persona configs, not all prompts exist")
+            if not prompt_set_names:
+                prompts: list[PromptDBModel | None] | None = None
+            else:
+                prompts = [
+                    fetch_prompt_by_name(
+                        prompt_name, user_id=None, db_session=db_session
+                    )
+                    for prompt_name in prompt_set_names
+                ]
+                if any([prompt is None for prompt in prompts]):
+                    raise ValueError("Invalid Persona configs, not all prompts exist")
 
-            if not prompts:
-                prompts = None
+                if not prompts:
+                    prompts = None
 
             upsert_persona(
                 persona_id=persona.get("persona_id"),  # Generally unspecified
                 name=persona["name"],
-                description=persona.get("description"),
-                num_chunks=persona.get("num_chunks") if persona.get("num_chunks") is not None else default_chunks,
-                llm_relevance_filter=persona.get("llm_relevance_filter"),
-                prompts=prompts,
+                description=persona["description"],
+                num_chunks=persona.get("num_chunks")
+                if persona.get("num_chunks") is not None
+                else default_chunks,
+                llm_relevance_filter=persona.get(
+                    "llm_relevance_filter"
+                ),  # is a bool already
+                recency_bias=RecencyBiasSetting(persona["recency_bias"]),
+                prompts=cast(list[PromptDBModel] | None, prompts),
                 document_sets=doc_sets,
                 default_persona=True,
                 db_session=db_session,
