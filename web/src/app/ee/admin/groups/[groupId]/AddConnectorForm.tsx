@@ -91,7 +91,7 @@ export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
             onSelect={(option) => {
               setSelectedCCPairIds([
                 ...Array.from(
-                  new Set([...selectedCCPairIds, parseInt(option.value)])
+                  new Set([...selectedCCPairIds, parseInt(option.value as string)])
                 ),
               ]);
             }}

@@ -67,7 +67,7 @@ export const UserEditor = ({
             })}
           onSelect={(option) => {
             setSelectedUserIds([
-              ...Array.from(new Set([...selectedUserIds, option.value])),
+              ...Array.from(new Set([...selectedUserIds, option.value as string])),
             ]);
           }}
           itemComponent={({ option }) => (
