@@ -21,6 +21,7 @@ class PersonaSnapshot(BaseModel):
     description: str
     system_prompt: str
     task_prompt: str
+    num_chunks: int | None
     document_sets: list[DocumentSet]
     llm_model_version_override: str | None
 
@@ -32,6 +33,7 @@ class PersonaSnapshot(BaseModel):
             description=persona.description or "",
             system_prompt=persona.system_text or "",
             task_prompt=persona.hint_text or "",
+            num_chunks=persona.num_chunks,
             document_sets=[
                 DocumentSet.from_model(document_set_model)
                 for document_set_model in persona.document_sets

@@ -43,7 +43,6 @@ export const questionValidationStreamed = async <T>({
   let previousPartialChunk: string | null = null;
   while (true) {
     const rawChunk = await reader?.read();
-    console.log(rawChunk);
     if (!rawChunk) {
       throw new Error("Unable to process chunk");
     }

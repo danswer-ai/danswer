@@ -104,6 +104,8 @@ def handle_message(
             document_set.name for document_set in persona.document_sets
         ]
 
+    should_respond_even_with_no_docs = persona.num_chunks == 0 if persona else False
+
     # List of user id to send message to, if None, send to everyone in channel
     send_to: list[str] | None = None
     respond_tag_only = False
@@ -257,7 +259,7 @@ def handle_message(
             logger.debug(answer.answer)
         return True
 
-    if not answer.top_documents:
+    if not answer.top_documents and not should_respond_even_with_no_docs:
         logger.error(f"Unable to answer question: '{msg}' - no documents found")
         # Optionally, respond in thread with the error message, Used primarily
         # for debugging purposes
@@ -288,6 +290,7 @@ def handle_message(
         source_filters=answer.source_type,
         time_cutoff=answer.time_cutoff,
         favor_recent=answer.favor_recent,
+        skip_quotes=persona is not None,  # currently Personas don't support quotes
     )
 
     # Get the chunks fed to the LLM only, then fill with other docs
@@ -298,9 +301,13 @@ def handle_message(
         doc for idx, doc in enumerate(top_docs) if idx not in llm_doc_inds
     ]
     priority_ordered_docs = llm_docs + remaining_docs
-    document_blocks = build_documents_blocks(
-        documents=priority_ordered_docs,
-        query_event_id=answer.query_event_id,
+    document_blocks = (
+        build_documents_blocks(
+            documents=priority_ordered_docs,
+            query_event_id=answer.query_event_id,
+        )
+        if priority_ordered_docs
+        else []
     )
 
     try:

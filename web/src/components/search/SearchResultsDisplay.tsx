@@ -86,7 +86,8 @@ export const SearchResultsDisplay = ({
   if (
     answer === null &&
     (documents === null || documents.length === 0) &&
-    quotes === null
+    quotes === null &&
+    !isFetching
   ) {
     return (
       <div className="mt-4">

@@ -26,6 +26,7 @@ from danswer.prompts.direct_qa_prompts import COT_PROMPT
 from danswer.prompts.direct_qa_prompts import JSON_PROMPT
 from danswer.prompts.direct_qa_prompts import LANGUAGE_HINT
 from danswer.prompts.direct_qa_prompts import PARAMATERIZED_PROMPT
+from danswer.prompts.direct_qa_prompts import PARAMATERIZED_PROMPT_WITHOUT_CONTEXT
 from danswer.prompts.direct_qa_prompts import WEAK_LLM_PROMPT
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_up_code_blocks
@@ -210,19 +211,31 @@ class PersonaBasedQAHandler(QAHandler):
     ) -> list[BaseMessage]:
         context_docs_str = build_context_str(context_chunks)
 
-        single_message = PARAMATERIZED_PROMPT.format(
-            context_docs_str=context_docs_str,
-            user_query=query,
-            system_prompt=self.system_prompt,
-            task_prompt=self.task_prompt,
-        ).strip()
+        if not context_chunks:
+            single_message = PARAMATERIZED_PROMPT_WITHOUT_CONTEXT.format(
+                user_query=query,
+                system_prompt=self.system_prompt,
+                task_prompt=self.task_prompt,
+            ).strip()
+        else:
+            single_message = PARAMATERIZED_PROMPT.format(
+                context_docs_str=context_docs_str,
+                user_query=query,
+                system_prompt=self.system_prompt,
+                task_prompt=self.task_prompt,
+            ).strip()
 
         prompt: list[BaseMessage] = [HumanMessage(content=single_message)]
         return prompt
 
-    def build_dummy_prompt(
-        self,
-    ) -> str:
+    def build_dummy_prompt(self, retrieval_disabled: bool) -> str:
+        if retrieval_disabled:
+            return PARAMATERIZED_PROMPT_WITHOUT_CONTEXT.format(
+                user_query="<USER_QUERY>",
+                system_prompt=self.system_prompt,
+                task_prompt=self.task_prompt,
+            ).strip()
+
         return PARAMATERIZED_PROMPT.format(
             context_docs_str="<CONTEXT_DOCS>",
             user_query="<USER_QUERY>",

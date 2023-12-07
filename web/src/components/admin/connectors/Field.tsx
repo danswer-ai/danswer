@@ -30,6 +30,10 @@ export function SubLabel({ children }: { children: string | JSX.Element }) {
   return <div className="text-sm text-gray-300 mb-2">{children}</div>;
 }
 
+export function ManualErrorMessage({ children }: { children: string }) {
+  return <div className="text-red-500 text-sm mt-1">{children}</div>;
+}
+
 export function TextFormField({
   name,
   label,
@@ -40,6 +44,7 @@ export function TextFormField({
   isTextArea = false,
   disabled = false,
   autoCompleteDisabled = true,
+  error,
 }: {
   name: string;
   label: string;
@@ -50,6 +55,7 @@ export function TextFormField({
   isTextArea?: boolean;
   disabled?: boolean;
   autoCompleteDisabled?: boolean;
+  error?: string;
 }) {
   return (
     <div className="mb-4">
@@ -78,11 +84,15 @@ export function TextFormField({
         autoComplete={autoCompleteDisabled ? "off" : undefined}
         {...(onChange ? { onChange } : {})}
       />
-      <ErrorMessage
-        name={name}
-        component="div"
-        className="text-red-500 text-sm mt-1"
-      />
+      {error ? (
+        <ManualErrorMessage>{error}</ManualErrorMessage>
+      ) : (
+        <ErrorMessage
+          name={name}
+          component="div"
+          className="text-red-500 text-sm mt-1"
+        />
+      )}
     </div>
   );
 }
@@ -91,12 +101,14 @@ interface BooleanFormFieldProps {
   name: string;
   label: string;
   subtext?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const BooleanFormField = ({
   name,
   label,
   subtext,
+  onChange,
 }: BooleanFormFieldProps) => {
   return (
     <div className="mb-4">
@@ -105,6 +117,7 @@ export const BooleanFormField = ({
           name={name}
           type="checkbox"
           className="mx-3 px-5 w-3.5 h-3.5 my-auto"
+          {...(onChange ? { onChange } : {})}
         />
         <div>
           <Label>{label}</Label>

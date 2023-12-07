@@ -46,10 +46,15 @@ export function deletePersona(personaId: number) {
   });
 }
 
-export function buildFinalPrompt(systemPrompt: string, taskPrompt: string) {
+export function buildFinalPrompt(
+  systemPrompt: string,
+  taskPrompt: string,
+  retrievalDisabled: boolean
+) {
   let queryString = Object.entries({
     system_prompt: systemPrompt,
     task_prompt: taskPrompt,
+    retrieval_disabled: retrievalDisabled,
   })
     .map(
       ([key, value]) =>

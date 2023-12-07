@@ -54,6 +54,13 @@ def _get_qa_model(persona: Persona | None) -> QAModel:
     return get_default_qa_model()
 
 
+def _dummy_search_generator() -> Iterator[list[InferenceChunk] | list[bool]]:
+    """Mimics the interface of `full_chunk_search_generator` but returns empty lists
+    without actually running retrieval / re-ranking."""
+    yield cast(list[InferenceChunk], [])
+    yield cast(list[bool], [])
+
+
 @log_function_time()
 def answer_qa_query(
     new_message_request: NewMessageRequest,
@@ -91,6 +98,7 @@ def answer_qa_query(
         not persona.apply_llm_relevance_filter if persona else None
     )
     persona_num_chunks = persona.num_chunks if persona else None
+    persona_retrieval_disabled = persona.num_chunks == 0 if persona else False
     if persona:
         logger.info(f"Using persona: {persona.name}")
         logger.info(
@@ -113,14 +121,19 @@ def answer_qa_query(
     if disable_generative_answer:
         predicted_flow = QueryFlow.SEARCH
 
-    top_chunks, llm_chunk_selection = full_chunk_search(
-        query=retrieval_request,
-        document_index=get_default_document_index(),
-        retrieval_metrics_callback=retrieval_metrics_callback,
-        rerank_metrics_callback=rerank_metrics_callback,
-    )
+    if not persona_retrieval_disabled:
+        top_chunks, llm_chunk_selection = full_chunk_search(
+            query=retrieval_request,
+            document_index=get_default_document_index(),
+            retrieval_metrics_callback=retrieval_metrics_callback,
+            rerank_metrics_callback=rerank_metrics_callback,
+        )
 
-    top_docs = chunks_to_search_docs(top_chunks)
+        top_docs = chunks_to_search_docs(top_chunks)
+    else:
+        top_chunks = []
+        llm_chunk_selection = []
+        top_docs = []
 
     partial_response = partial(
         QAResponse,
@@ -133,7 +146,7 @@ def answer_qa_query(
         favor_recent=retrieval_request.favor_recent,
     )
 
-    if disable_generative_answer or not top_docs:
+    if disable_generative_answer or (not top_docs and not persona_retrieval_disabled):
         return partial_response(
             answer=None,
             quotes=None,
@@ -237,6 +250,7 @@ def answer_qa_query_stream(
         not persona.apply_llm_relevance_filter if persona else None
     )
     persona_num_chunks = persona.num_chunks if persona else None
+    persona_retrieval_disabled = persona.num_chunks == 0 if persona else False
     if persona:
         logger.info(f"Using persona: {persona.name}")
         logger.info(
@@ -245,6 +259,10 @@ def answer_qa_query_stream(
             f"num_chunks: {persona_num_chunks}"
         )
 
+    # NOTE: it's not ideal that we're still doing `retrieval_preprocessing` even
+    # if `persona_retrieval_disabled == True`, but it's a bit tricky to separate this
+    # out. Since this flow is being re-worked shortly with the move to chat, leaving it
+    # like this for now.
     retrieval_request, predicted_search_type, predicted_flow = retrieval_preprocessing(
         new_message_request=new_message_request,
         user=user,
@@ -257,10 +275,13 @@ def answer_qa_query_stream(
     if persona:
         predicted_flow = QueryFlow.QUESTION_ANSWER
 
-    search_generator = full_chunk_search_generator(
-        query=retrieval_request,
-        document_index=get_default_document_index(),
-    )
+    if not persona_retrieval_disabled:
+        search_generator = full_chunk_search_generator(
+            query=retrieval_request,
+            document_index=get_default_document_index(),
+        )
+    else:
+        search_generator = _dummy_search_generator()
 
     # first fetch and return to the UI the top chunks so the user can
     # immediately see some results
@@ -280,7 +301,9 @@ def answer_qa_query_stream(
     ).dict()
     yield get_json_line(initial_response)
 
-    if not top_chunks:
+    # some personas intentionally don't retrieve any documents, so we should
+    # not return early here
+    if not top_chunks and not persona_retrieval_disabled:
         logger.debug("No Documents Found")
         return
 
