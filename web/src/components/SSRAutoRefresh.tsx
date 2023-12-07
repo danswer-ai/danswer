@@ -13,7 +13,17 @@ export function SSRAutoRefresh({ refreshFreq = 5 }: { refreshFreq?: number }) {
     }, refreshFreq * 1000);
 
     return () => clearInterval(interval);
-  });
+  }, []);
+
+  return <></>;
+}
+
+export function InstantSSRAutoRefresh() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.refresh();
+  }, []);
 
   return <></>;
 }
