@@ -185,6 +185,7 @@ def build_qa_response_blocks(
     source_filters: list[DocumentSource] | None,
     time_cutoff: datetime | None,
     favor_recent: bool,
+    skip_quotes: bool = False,
 ) -> list[Block]:
     quotes_blocks: list[Block] = []
 
@@ -232,8 +233,9 @@ def build_qa_response_blocks(
     if filter_block is not None:
         response_blocks.append(filter_block)
 
-    response_blocks.extend(
-        [answer_block, feedback_block] + quotes_blocks + [DividerBlock()]
-    )
+    response_blocks.extend([answer_block, feedback_block])
+    if not skip_quotes:
+        response_blocks.extend(quotes_blocks)
+    response_blocks.append(DividerBlock())
 
     return response_blocks

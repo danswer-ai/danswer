@@ -131,12 +131,13 @@ def get_persona(
 def build_final_template_prompt(
     system_prompt: str,
     task_prompt: str,
+    retrieval_disabled: bool = False,
     _: User | None = Depends(current_user),
 ) -> PromptTemplateResponse:
     return PromptTemplateResponse(
         final_prompt_template=PersonaBasedQAHandler(
             system_prompt=system_prompt, task_prompt=task_prompt
-        ).build_dummy_prompt()
+        ).build_dummy_prompt(retrieval_disabled=retrieval_disabled)
     )
 
 

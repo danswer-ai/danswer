@@ -137,6 +137,15 @@ CONTEXT:
 RESPONSE:
 """.strip()
 
+PARAMATERIZED_PROMPT_WITHOUT_CONTEXT = f"""
+{{system_prompt}}
+
+{{task_prompt}}
+
+{QUESTION_PAT.upper()} {{user_query}}
+RESPONSE:
+""".strip()
+
 
 # User the following for easy viewing of prompts
 if __name__ == "__main__":
