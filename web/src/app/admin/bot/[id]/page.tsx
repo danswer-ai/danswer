@@ -7,12 +7,13 @@ import { DocumentSet, SlackBotConfig } from "@/lib/types";
 import { Text } from "@tremor/react";
 import { BackButton } from "@/components/BackButton";
 import { Persona } from "../../personas/interfaces";
+import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 
 async function Page({ params }: { params: { id: string } }) {
   const tasks = [
-    fetchSS("/manage/admin/slack-bot/config", undefined, true),
-    fetchSS("/manage/document-set", undefined, true),
-    fetchSS("/persona", undefined, true),
+    fetchSS("/manage/admin/slack-bot/config"),
+    fetchSS("/manage/document-set"),
+    fetchSS("/persona"),
   ];
 
   const [slackBotsResponse, documentSetsResponse, personasResponse] =
@@ -62,6 +63,8 @@ async function Page({ params }: { params: { id: string } }) {
 
   return (
     <div className="container mx-auto dark">
+      <InstantSSRAutoRefresh />
+
       <BackButton />
       <AdminPageTitle
         icon={<CPUIcon size={32} />}

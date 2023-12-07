@@ -23,6 +23,7 @@ import {
 } from "@tremor/react";
 import { FiArrowUpRight, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import Link from "next/link";
+import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 
 const numToDisplay = 50;
 
@@ -285,6 +286,7 @@ const Page = () => {
         icon={<CPUIcon size={32} />}
         title="Slack Bot Configuration"
       />
+      <InstantSSRAutoRefresh />
 
       <Main />
     </div>

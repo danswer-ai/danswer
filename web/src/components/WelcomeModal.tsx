@@ -3,8 +3,6 @@
 import { Button } from "@tremor/react";
 import { Modal } from "./Modal";
 import Link from "next/link";
-import { useState } from "react";
-import { FiX } from "react-icons/fi";
 
 export function WelcomeModal() {
   return (
@@ -29,9 +27,9 @@ export function WelcomeModal() {
         </div>
 
         <div className="flex mt-3 dark">
-          <Button className="mx-auto">
-            <Link href="/admin/add-connector">Setup your first connector!</Link>
-          </Button>
+          <Link href="/admin/add-connector" className="mx-auto">
+            <Button>Setup your first connector!</Button>
+          </Link>
         </div>
       </div>
     </Modal>

@@ -41,7 +41,6 @@ export const SlackBotCreationForm = ({
   existingSlackBotConfig?: SlackBotConfig;
 }) => {
   const isUpdate = existingSlackBotConfig !== undefined;
-  console.log(existingSlackBotConfig);
   const { popup, setPopup } = usePopup();
   const router = useRouter();
 
@@ -209,8 +208,8 @@ export const SlackBotCreationForm = ({
                   <Text className="mt-2">
                     <b>NOTE:</b> whichever tab you are when you submit the form
                     will be the one that is used. For example, if you are on the
-                    &quot;Personas&quot; tab, then the Persona will be used, even if you
-                    have Document Sets selected.
+                    &quot;Personas&quot; tab, then the Persona will be used,
+                    even if you have Document Sets selected.
                   </Text>
                 </div>
 

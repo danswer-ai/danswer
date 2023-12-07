@@ -8,11 +8,7 @@ export function buildUrl(path: string) {
   return `${INTERNAL_URL}/${path}`;
 }
 
-export function fetchSS(
-  url: string,
-  options?: RequestInit,
-  addRandomTimestamp: boolean = false
-) {
+export function fetchSS(url: string, options?: RequestInit) {
   const init = options || {
     credentials: "include",
     cache: "no-store",
@@ -23,12 +19,5 @@ export function fetchSS(
         .join("; "),
     },
   };
-
-  // add a random timestamp to force NextJS to refetch rather than
-  // used cached data
-  if (addRandomTimestamp) {
-    const timestamp = Date.now();
-    url = `${url}?u=${timestamp}`;
-  }
   return fetch(buildUrl(url), init);
 }
