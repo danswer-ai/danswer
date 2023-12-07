@@ -17,6 +17,7 @@ from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import LOG_LEVEL
 from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
+from danswer.configs.app_configs import CLEANUP_INDEXING_JOBS_TIMEOUT
 from danswer.configs.model_configs import MIN_THREADS_ML_MODELS
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import mark_all_in_progress_cc_pairs_failed
@@ -209,7 +210,7 @@ def cleanup_indexing_jobs(
                     # batch of documents indexed
                     current_db_time = get_db_current_time(db_session=db_session)
                     time_since_update = current_db_time - index_attempt.time_updated
-                    if time_since_update.total_seconds() > 60 * 60:
+                    if time_since_update.total_seconds() > 60 * 60 * CLEANUP_INDEXING_JOBS_TIMEOUT:
                         existing_jobs[index_attempt.id].cancel()
                         _mark_run_failed(
                             db_session=db_session,

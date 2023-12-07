@@ -94,7 +94,7 @@ VESPA_DEPLOYMENT_ZIP = (
     os.environ.get("VESPA_DEPLOYMENT_ZIP") or "/app/danswer/vespa-app.zip"
 )
 # Number of documents in a batch during indexing (further batching done by chunks before passing to bi-encoder)
-INDEX_BATCH_SIZE = 16
+INDEX_BATCH_SIZE = os.environ.get("INDEX_BATCH_SIZE", 16)
 
 # Below are intended to match the env variables names used by the official postgres docker image
 # https://hub.docker.com/_/postgres
@@ -170,6 +170,8 @@ ENABLE_MINI_CHUNK = os.environ.get("ENABLE_MINI_CHUNK", "").lower() == "true"
 # Slightly larger since the sentence aware split is a max cutoff so most minichunks will be under MINI_CHUNK_SIZE
 # tokens. But we need it to be at least as big as 1/4th chunk size to avoid having a tiny mini-chunk at the end
 MINI_CHUNK_SIZE = 150
+# Timeout to wait for job's last update before killing it, in hours
+CLEANUP_INDEXING_JOBS_TIMEOUT = int(os.environ.get("CLEANUP_INDEXING_JOBS_TIMEOUT", 1))
 
 
 #####
