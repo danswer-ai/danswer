@@ -9,4 +9,5 @@ export interface Persona {
   document_sets: DocumentSet[];
   num_chunks?: number;
   apply_llm_relevance_filter?: boolean;
+  llm_model_version_override?: string;
 }

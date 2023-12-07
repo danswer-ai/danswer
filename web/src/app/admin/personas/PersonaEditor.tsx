@@ -1,15 +1,8 @@
 "use client";
 
 import { DocumentSet } from "@/lib/types";
-import { Button, Divider } from "@tremor/react";
-import {
-  ArrayHelpers,
-  ErrorMessage,
-  Field,
-  FieldArray,
-  Form,
-  Formik,
-} from "formik";
+import { Button, Divider, Text } from "@tremor/react";
+import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 
 import * as Yup from "yup";
 import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
@@ -20,6 +13,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   BooleanFormField,
+  SelectorFormField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
 
@@ -40,9 +34,13 @@ function SubLabel({ children }: { children: string | JSX.Element }) {
 export function PersonaEditor({
   existingPersona,
   documentSets,
+  llmOverrideOptions,
+  defaultLLM,
 }: {
   existingPersona?: Persona | null;
   documentSets: DocumentSet[];
+  llmOverrideOptions: string[];
+  defaultLLM: string;
 }) {
   const router = useRouter();
   const { popup, setPopup } = usePopup();
@@ -74,6 +72,7 @@ export function PersonaEditor({
     <div className="dark">
       {popup}
       <Formik
+        enableReinitialize={true}
         initialValues={{
           name: existingPersona?.name ?? "",
           description: existingPersona?.description ?? "",
@@ -86,6 +85,8 @@ export function PersonaEditor({
           num_chunks: existingPersona?.num_chunks ?? null,
           apply_llm_relevance_filter:
             existingPersona?.apply_llm_relevance_filter ?? false,
+          llm_model_version_override:
+            existingPersona?.llm_model_version_override ?? null,
         }}
         validationSchema={Yup.object().shape({
           name: Yup.string().required("Must give the Persona a name!"),
@@ -101,6 +102,7 @@ export function PersonaEditor({
           document_set_ids: Yup.array().of(Yup.number()),
           num_chunks: Yup.number().max(20).nullable(),
           apply_llm_relevance_filter: Yup.boolean().required(),
+          llm_model_version_override: Yup.string().nullable(),
         })}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
@@ -256,6 +258,41 @@ export function PersonaEditor({
                   </div>
                 )}
               />
+
+              <Divider />
+
+              {llmOverrideOptions.length > 0 && defaultLLM && (
+                <>
+                  <SectionHeader>[Advanced] Model Selection</SectionHeader>
+
+                  <Text>
+                    Pick which LLM to use for this Persona. If left as Default,
+                    will use <b className="italic">{defaultLLM}</b>.
+                    <br />
+                    <br />
+                    For more information on the different LLMs, checkout the{" "}
+                    <a
+                      href="https://platform.openai.com/docs/models"
+                      target="_blank"
+                      className="text-blue-500"
+                    >
+                      OpenAI docs
+                    </a>
+                    .
+                  </Text>
+
+                  <SelectorFormField
+                    name="llm_model_version_override"
+                    options={llmOverrideOptions.map((llmOption) => {
+                      return {
+                        name: llmOption,
+                        value: llmOption,
+                      };
+                    })}
+                    includeDefault={true}
+                  />
+                </>
+              )}
 
               <Divider />
 

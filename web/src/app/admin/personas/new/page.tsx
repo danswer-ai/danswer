@@ -8,7 +8,12 @@ import { Card } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 
 export default async function Page() {
-  const documentSetsResponse = await fetchSS("/manage/document-set");
+  const [documentSetsResponse, llmOverridesResponse, defaultLLMResponse] =
+    await Promise.all([
+      fetchSS("/manage/document-set"),
+      fetchSS("/persona-utils/list-available-models"),
+      fetchSS("/persona-utils/default-model"),
+    ]);
 
   if (!documentSetsResponse.ok) {
     return (
@@ -18,8 +23,27 @@ export default async function Page() {
       />
     );
   }
-
   const documentSets = (await documentSetsResponse.json()) as DocumentSet[];
+
+  if (!llmOverridesResponse.ok) {
+    return (
+      <ErrorCallout
+        errorTitle="Something went wrong :("
+        errorMsg={`Failed to fetch LLM override options - ${await documentSetsResponse.text()}`}
+      />
+    );
+  }
+  const llmOverrideOptions = (await llmOverridesResponse.json()) as string[];
+
+  if (!defaultLLMResponse.ok) {
+    return (
+      <ErrorCallout
+        errorTitle="Something went wrong :("
+        errorMsg={`Failed to fetch default LLM - ${await documentSetsResponse.text()}`}
+      />
+    );
+  }
+  const defaultLLM = (await defaultLLMResponse.json()) as string;
 
   return (
     <div className="dark">
@@ -31,7 +55,11 @@ export default async function Page() {
       />
 
       <Card>
-        <PersonaEditor documentSets={documentSets} />
+        <PersonaEditor
+          documentSets={documentSets}
+          llmOverrideOptions={llmOverrideOptions}
+          defaultLLM={defaultLLM}
+        />
       </Card>
     </div>
   );

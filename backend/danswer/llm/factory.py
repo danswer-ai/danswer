@@ -14,10 +14,16 @@ def get_default_llm(
     api_key: str | None = None,
     timeout: int = QA_TIMEOUT,
     use_fast_llm: bool = False,
+    gen_ai_model_version_override: str | None = None,
 ) -> LLM:
     """A single place to fetch the configured LLM for Danswer
     Also allows overriding certain LLM defaults"""
-    model_version = FAST_GEN_AI_MODEL_VERSION if use_fast_llm else GEN_AI_MODEL_VERSION
+    if gen_ai_model_version_override:
+        model_version = gen_ai_model_version_override
+    else:
+        model_version = (
+            FAST_GEN_AI_MODEL_VERSION if use_fast_llm else GEN_AI_MODEL_VERSION
+        )
     if api_key is None:
         api_key = get_gen_ai_api_key()
 
