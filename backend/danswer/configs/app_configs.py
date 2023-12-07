@@ -9,6 +9,10 @@ from danswer.configs.constants import DocumentIndexType
 #####
 APP_HOST = "0.0.0.0"
 APP_PORT = 8080
+# API_PREFIX is used to prepend a base path for all API routes
+# generally used if using a reverse proxy which doesn't support stripping the `/api`
+# prefix from requests directed towards the API server. In these cases, set this to `/api`
+APP_API_PREFIX = os.environ.get("API_PREFIX", "")
 
 
 #####
