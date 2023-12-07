@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
+from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
+from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.chat import fetch_persona_by_id
 from danswer.db.chat import fetch_personas
 from danswer.db.chat import mark_persona_as_deleted
@@ -50,6 +52,7 @@ def create_persona(
             num_chunks=create_persona_request.num_chunks,
             apply_llm_relevance_filter=create_persona_request.apply_llm_relevance_filter,
             document_sets=document_sets,
+            llm_model_version_override=create_persona_request.llm_model_version_override,
         )
     except ValueError as e:
         logger.exception("Failed to update persona")
@@ -84,6 +87,7 @@ def update_persona(
             num_chunks=update_persona_request.num_chunks,
             apply_llm_relevance_filter=update_persona_request.apply_llm_relevance_filter,
             document_sets=document_sets,
+            llm_model_version_override=update_persona_request.llm_model_version_override,
             persona_id=persona_id,
         )
     except ValueError as e:
@@ -134,3 +138,47 @@ def build_final_template_prompt(
             system_prompt=system_prompt, task_prompt=task_prompt
         ).build_dummy_prompt()
     )
+
+
+"""Utility endpoints for selecting which model to use for a persona.
+Putting here for now, since we have no other flows which use this."""
+
+GPT_4_MODEL_VERSIONS = [
+    "gpt-4-1106-preview",
+    "gpt-4",
+    "gpt-4-32k",
+    "gpt-4-0613",
+    "gpt-4-32k-0613",
+    "gpt-4-0314",
+    "gpt-4-32k-0314",
+]
+GPT_3_5_TURBO_MODEL_VERSIONS = [
+    "gpt-3.5-turbo-1106",
+    "gpt-3.5-turbo",
+    "gpt-3.5-turbo-16k",
+    "gpt-3.5-turbo-0613",
+    "gpt-3.5-turbo-16k-0613",
+    "gpt-3.5-turbo-0301",
+]
+
+
+@router.get("/persona-utils/list-available-models")
+def list_available_model_versions(
+    _: User | None = Depends(current_admin_user),
+) -> list[str]:
+    # currently only support selecting different models for OpenAI
+    if GEN_AI_MODEL_PROVIDER != "openai":
+        return []
+
+    return GPT_4_MODEL_VERSIONS + GPT_3_5_TURBO_MODEL_VERSIONS
+
+
+@router.get("/persona-utils/default-model")
+def get_default_model(
+    _: User | None = Depends(current_admin_user),
+) -> str:
+    # currently only support selecting different models for OpenAI
+    if GEN_AI_MODEL_PROVIDER != "openai":
+        return ""
+
+    return GEN_AI_MODEL_VERSION

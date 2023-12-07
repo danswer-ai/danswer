@@ -603,6 +603,13 @@ class Persona(Base):
     apply_llm_relevance_filter: Mapped[bool | None] = mapped_column(
         Boolean, nullable=True
     )
+    # allows the Persona to specify a different LLM version than is controlled
+    # globablly via env variables. For flexibility, validity is not currently enforced
+    # NOTE: only is applied on the actual response generation - is not used for things like
+    # auto-detected time filters, relevance filters, etc.
+    llm_model_version_override: Mapped[str | None] = mapped_column(
+        String, nullable=True
+    )
     # Default personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
     default_persona: Mapped[bool] = mapped_column(Boolean, default=False)

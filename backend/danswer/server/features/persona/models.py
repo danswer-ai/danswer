@@ -12,6 +12,7 @@ class CreatePersonaRequest(BaseModel):
     task_prompt: str
     num_chunks: int | None = None
     apply_llm_relevance_filter: bool | None = None
+    llm_model_version_override: str | None = None
 
 
 class PersonaSnapshot(BaseModel):
@@ -21,6 +22,7 @@ class PersonaSnapshot(BaseModel):
     system_prompt: str
     task_prompt: str
     document_sets: list[DocumentSet]
+    llm_model_version_override: str | None
 
     @classmethod
     def from_model(cls, persona: Persona) -> "PersonaSnapshot":
@@ -34,6 +36,7 @@ class PersonaSnapshot(BaseModel):
                 DocumentSet.from_model(document_set_model)
                 for document_set_model in persona.document_sets
             ],
+            llm_model_version_override=persona.llm_model_version_override,
         )
 
 

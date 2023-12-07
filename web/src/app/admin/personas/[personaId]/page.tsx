@@ -6,13 +6,24 @@ import { DocumentSet } from "@/lib/types";
 import { BackButton } from "@/components/BackButton";
 import { Card, Title } from "@tremor/react";
 import { DeletePersonaButton } from "./DeletePersonaButton";
+import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 
 export default async function Page({
   params,
 }: {
   params: { personaId: string };
 }) {
-  const personaResponse = await fetchSS(`/persona/${params.personaId}`);
+  const [
+    personaResponse,
+    documentSetsResponse,
+    llmOverridesResponse,
+    defaultLLMResponse,
+  ] = await Promise.all([
+    fetchSS(`/persona/${params.personaId}`),
+    fetchSS("/manage/document-set"),
+    fetchSS("/persona-utils/list-available-models"),
+    fetchSS("/persona-utils/default-model"),
+  ]);
 
   if (!personaResponse.ok) {
     return (
@@ -23,8 +34,6 @@ export default async function Page({
     );
   }
 
-  const documentSetsResponse = await fetchSS("/manage/document-set");
-
   if (!documentSetsResponse.ok) {
     return (
       <ErrorCallout
@@ -34,18 +43,45 @@ export default async function Page({
     );
   }
 
+  if (!llmOverridesResponse.ok) {
+    return (
+      <ErrorCallout
+        errorTitle="Something went wrong :("
+        errorMsg={`Failed to fetch LLM override options - ${await documentSetsResponse.text()}`}
+      />
+    );
+  }
+
+  if (!defaultLLMResponse.ok) {
+    return (
+      <ErrorCallout
+        errorTitle="Something went wrong :("
+        errorMsg={`Failed to fetch default LLM - ${await documentSetsResponse.text()}`}
+      />
+    );
+  }
+
   const documentSets = (await documentSetsResponse.json()) as DocumentSet[];
   const persona = (await personaResponse.json()) as Persona;
+  const llmOverrideOptions = (await llmOverridesResponse.json()) as string[];
+  const defaultLLM = (await defaultLLMResponse.json()) as string;
 
   return (
     <div className="dark">
+      <InstantSSRAutoRefresh />
+
       <BackButton />
       <div className="pb-2 mb-4 flex">
         <h1 className="text-3xl font-bold pl-2">Edit Persona</h1>
       </div>
 
       <Card>
-        <PersonaEditor existingPersona={persona} documentSets={documentSets} />
+        <PersonaEditor
+          existingPersona={persona}
+          documentSets={documentSets}
+          llmOverrideOptions={llmOverrideOptions}
+          defaultLLM={defaultLLM}
+        />
       </Card>
 
       <div className="mt-12">

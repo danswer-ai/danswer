@@ -324,6 +324,7 @@ def upsert_persona(
     persona_id: int | None = None,
     default_persona: bool = False,
     document_sets: list[DocumentSetDBModel] | None = None,
+    llm_model_version_override: str | None = None,
     commit: bool = True,
     overwrite_duplicate_named_persona: bool = False,
 ) -> Persona:
@@ -355,6 +356,7 @@ def upsert_persona(
         persona.num_chunks = num_chunks
         persona.apply_llm_relevance_filter = apply_llm_relevance_filter
         persona.default_persona = default_persona
+        persona.llm_model_version_override = llm_model_version_override
 
         # Do not delete any associations manually added unless
         # a new updated list is provided
@@ -375,6 +377,7 @@ def upsert_persona(
             apply_llm_relevance_filter=apply_llm_relevance_filter,
             default_persona=default_persona,
             document_sets=document_sets if document_sets else [],
+            llm_model_version_override=llm_model_version_override,
         )
         db_session.add(persona)
 

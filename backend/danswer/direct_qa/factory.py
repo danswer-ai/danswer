@@ -54,7 +54,11 @@ def get_qa_model_for_persona(
     timeout: int = QA_TIMEOUT,
 ) -> QAModel:
     return QABlock(
-        llm=get_default_llm(api_key=api_key, timeout=timeout),
+        llm=get_default_llm(
+            api_key=api_key,
+            timeout=timeout,
+            gen_ai_model_version_override=persona.llm_model_version_override,
+        ),
         qa_handler=PersonaBasedQAHandler(
             system_prompt=persona.system_text or "", task_prompt=persona.hint_text or ""
         ),
