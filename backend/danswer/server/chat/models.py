@@ -10,7 +10,7 @@ from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerQuote
-from danswer.search.models import BaseFilters
+from danswer.search.models import BaseFilters, OptionalSearchSetting
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
 
@@ -90,18 +90,18 @@ class ChatFeedbackRequest(BaseModel):
 
 # Formerly NewMessageRequest
 class RetrievalDetails(BaseModel):
-    #chat_session_id: int
-    #query: str
-    filters: BaseFilters | None = None
-    collection: str = DOCUMENT_INDEX_NAME
-    search_type: SearchType = SearchType.HYBRID
-    enable_auto_detect_filters: bool = not DISABLE_LLM_FILTER_EXTRACTION
-    skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER
-    favor_recent: bool | None = None
+    # Use LLM to determine whether to do a retrieval or only rely on existing history
+    # If the Persona is configured to not run search (0 chunks), this is bypassed
+    # If no Prompt is configured, the only search results are shown, this is bypassed
+    run_search: OptionalSearchSetting
     # Is this a real-time/streaming call or a question where Danswer can take more time?
     # Used to determine reranking flow
-    real_time: bool = True
-    # Pagination purposes, offset is in batches, not by document count
+    real_time: bool
+    # The following have defaults in the Persona settings which can be overriden via
+    # the query, if None, then use Persona settings
+    filters: BaseFilters | None = None
+    favor_recent: bool | None = None
+    # TODO Pagination/Offset options
     # offset: int | None = None
 
 
@@ -109,10 +109,12 @@ class CreateChatMessageRequest(BaseModel):
     chat_session_id: int
     parent_message_id: int | None
     message: str
-    prompt_id: int
+    # If no prompt provided, provide canned retrieval answer, no actually LLM flow
+    prompt_id: int | None
     # If search_doc_ids provided, then retrieval options are unused
-    # Maybe in the future, can combine selected documents + additional retrieved
+    # If an empty list of search_doc_ids then no reference docs are used
     # If both are unset, use the LLM to determine search vs not
+    # Maybe in the future, can combine selected documents + additional retrieved
     search_doc_ids: list[int] | None
     retrieval_options: RetrievalDetails | None
 

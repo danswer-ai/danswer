@@ -35,7 +35,7 @@ from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
-from danswer.search.models import SearchType
+from danswer.search.models import SearchType, RecencyBiasSetting
 
 
 class IndexingStatus(str, PyEnum):
@@ -614,8 +614,10 @@ class Persona(Base):
     # Number of chunks to use for retrieval. If unspecified, uses the default set
     # in the env variables
     num_chunks: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    # if unspecified, then uses the default set in the env variables
-    llm_relevance_filter: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    # Pass every chunk through LLM for evaluation, fairly expensive, can be turned off
+    # globally by admin, in which case, this setting is ignored
+    llm_relevance_filter: Mapped[bool] = mapped_column(Boolean)
+    favor_recent: Mapped[RecencyBiasSetting] = mapped_column(Enum(RecencyBiasSetting))
     # Default personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
     default_persona: Mapped[bool] = mapped_column(Boolean, default=False)

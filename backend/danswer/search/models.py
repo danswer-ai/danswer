@@ -16,6 +16,21 @@ MAX_METRICS_CONTENT = (
 )
 
 
+class OptionalSearchSetting(str, Enum):
+    ALWAYS = "always"
+    NEVER = "never"
+    # Determine whether to run search based on history and latest query
+    AUTO = "auto"
+
+
+class RecencyBiasSetting(str, Enum):
+    FAVOR_RECENT = "favor_recent"  # 2x decay rate
+    BASE_DECAY = "base_decay"
+    NO_DECAY = "no_decay"
+    # Determine based on query if to use base_decay or favor_recent
+    AUTO = "auto"
+
+
 class SearchType(str, Enum):
     KEYWORD = "keyword"
     SEMANTIC = "semantic"

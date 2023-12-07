@@ -20,6 +20,7 @@ from danswer.db.models import Persona
 from danswer.db.models import Prompt
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.search.models import SearchType
+from danswer.server.chat.models import SearchDoc as ServerSearchDoc
 
 
 def fetch_chat_sessions_by_user(
@@ -453,3 +454,7 @@ def get_doc_query_identifiers_from_model(
 
     return doc_query_identifiers
 
+
+def create_db_search_doc(
+    search_doc: ServerSearchDoc
+) -> SearchDoc:

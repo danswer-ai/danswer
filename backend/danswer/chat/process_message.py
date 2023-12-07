@@ -668,7 +668,6 @@ def generate_ai_chat_response(
         yield StreamingError(error=str(e))
 
 
-
 @log_generator_function_time()
 def stream_chat_packets(
     chat_message: CreateChatMessageRequest,
@@ -742,8 +741,11 @@ def stream_chat_packets(
     favor_recent = False
     run_llm_chunk_filter = False
 
+    reference_db_search_docs = None
     if reference_doc_ids:
-        identifier_tuples = get_doc_query_identifiers_from_model(reference_doc_ids)
+        identifier_tuples = get_doc_query_identifiers_from_model(
+            reference_doc_ids
+        )
         documents_generator: Iterator[list[InferenceChunk] | list[bool]] = inference_documents_from_ids(
             doc_identifiers=identifier_tuples,
             document_index=get_default_document_index(),
@@ -830,7 +832,6 @@ def stream_chat_packets(
     )
 
     llm_output = ""
-    fetched_docs: RetrievalDocs | None = None
     error: str | None = None
     for packet in response_packets:
         if isinstance(packet, DanswerAnswerPiece):
@@ -842,6 +843,8 @@ def stream_chat_packets(
 
         yield get_json_line(packet.dict())
 
+    db_search_docs = [translate_search_doc_to_db(top_doc) for top_doc in top_docs]
+
     gen_ai_response_message = create_new_chat_message(
         chat_session_id=chat_session_id,
         parent_message=new_user_message,
@@ -851,7 +854,7 @@ def stream_chat_packets(
         message_type=MessageType.ASSISTANT,
         specified_search=specified_search,
         error=error,
-        reference_docs=1,
+        reference_docs=top_docs,
         db_session=db_session,
         commit=False,
     )
