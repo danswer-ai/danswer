@@ -6,7 +6,6 @@ from pydantic import root_validator
 
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
-from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerQuote
@@ -84,11 +83,20 @@ class CreateChatSessionID(BaseModel):
 
 
 class ChatFeedbackRequest(BaseModel):
-    chat_session_id: int
-    message_number: int
-    edit_number: int
+    chat_message_id: int
     is_positive: bool | None = None
     feedback_text: str | None = None
+
+    @root_validator
+    def check_is_positive_or_feedback_text(cls: BaseModel, values: dict) -> dict:
+        is_positive, feedback_text = values.get("is_positive"), values.get(
+            "feedback_text"
+        )
+
+        if is_positive is None and feedback_text is None:
+            raise ValueError("Empty feedback received.")
+
+        return values
 
 
 # Formerly NewMessageRequest
@@ -160,6 +168,23 @@ class ChatSessionsResponse(BaseModel):
     sessions: list[ChatSession]
 
 
+class SearchFeedbackRequest(BaseModel):
+    message_id: int
+    document_id: str
+    document_rank: int
+    click: bool
+    search_feedback: SearchFeedbackType | None
+
+    @root_validator
+    def check_click_or_search_feedback(cls: BaseModel, values: dict) -> dict:
+        click, feedback = values.get("click"), values.get("search_feedback")
+
+        if click is False and feedback is None:
+            raise ValueError("Empty feedback received.")
+
+        return values
+
+
 class ChatMessageDetail(BaseModel):
     message_id: int
     parent_message: int | None
@@ -184,19 +209,6 @@ class ChatSessionDetailResponse(BaseModel):
 class QueryValidationResponse(BaseModel):
     reasoning: str
     answerable: bool
-
-
-class QAFeedbackRequest(BaseModel):
-    query_id: int
-    feedback: QAFeedbackType
-
-
-class SearchFeedbackRequest(BaseModel):
-    query_id: int
-    document_id: str
-    document_rank: int
-    click: bool
-    search_feedback: SearchFeedbackType
 
 
 class AdminSearchRequest(BaseModel):

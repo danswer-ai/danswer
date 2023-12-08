@@ -7,11 +7,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.db.engine import get_session
-from danswer.db.feedback import create_doc_retrieval_feedback
-from danswer.db.feedback import update_query_event_feedback
 from danswer.db.models import User
-from danswer.direct_qa.answer_question import answer_qa_query
-from danswer.direct_qa.answer_question import answer_qa_query_stream
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.search.access_filters import build_access_filters_for_user
@@ -24,13 +20,10 @@ from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
 from danswer.server.chat.models import AdminSearchRequest
 from danswer.server.chat.models import AdminSearchResponse
-from danswer.server.chat.models import HelperResponse
 from danswer.server.chat.models import CreateChatMessageRequest
-from danswer.server.chat.models import QAFeedbackRequest
-from danswer.server.chat.models import QAResponse
+from danswer.server.chat.models import HelperResponse
 from danswer.server.chat.models import QueryValidationResponse
 from danswer.server.chat.models import SearchDoc
-from danswer.server.chat.models import SearchFeedbackRequest
 from danswer.server.chat.models import SearchResponse
 from danswer.utils.logger import setup_logger
 
@@ -84,8 +77,7 @@ def admin_search(
 
 @router.post("/search-intent")
 def get_search_type(
-    new_message_request: CreateChatMessageRequest,
-    _: User = Depends(current_user)
+    new_message_request: CreateChatMessageRequest, _: User = Depends(current_user)
 ) -> HelperResponse:
     query = new_message_request.query
     return recommend_search_flow(query)
@@ -93,8 +85,7 @@ def get_search_type(
 
 @router.post("/query-validation")
 def query_validation(
-    new_message_request: CreateChatMessageRequest,
-    _: User = Depends(current_user)
+    new_message_request: CreateChatMessageRequest, _: User = Depends(current_user)
 ) -> QueryValidationResponse:
     query = new_message_request.query
     reasoning, answerable = get_query_answerability(query)
@@ -103,8 +94,7 @@ def query_validation(
 
 @router.post("/stream-query-validation")
 def stream_query_validation(
-    new_message_request: CreateChatMessageRequest,
-    _: User = Depends(current_user)
+    new_message_request: CreateChatMessageRequest, _: User = Depends(current_user)
 ) -> StreamingResponse:
     # Note if weak model prompt is chosen, this check does not occur
     query = new_message_request.query
@@ -153,61 +143,4 @@ def handle_search_request(
         source_type=retrieval_request.filters.source_type,
         time_cutoff=retrieval_request.filters.time_cutoff,
         favor_recent=retrieval_request.favor_recent,
-    )
-
-
-@router.post("/direct-qa")
-def direct_qa(
-    new_message_request: CreateChatMessageRequest,
-    user: User | None = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> QAResponse:
-    # Everything handled via answer_qa_query which is also used by default
-    # for the DanswerBot flow
-    return answer_qa_query(
-        new_message_request=new_message_request, user=user, db_session=db_session
-    )
-
-
-@router.post("/stream-direct-qa")
-def stream_direct_qa(
-    new_message_request: CreateChatMessageRequest,
-    user: User | None = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> StreamingResponse:
-    packets = answer_qa_query_stream(
-        new_message_request=new_message_request, user=user, db_session=db_session
-    )
-    return StreamingResponse(packets, media_type="application/json")
-
-
-@router.post("/query-feedback")
-def process_query_feedback(
-    feedback: QAFeedbackRequest,
-    user: User | None = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> None:
-    update_query_event_feedback(
-        feedback=feedback.feedback,
-        query_id=feedback.query_id,
-        user_id=user.id if user is not None else None,
-        db_session=db_session,
-    )
-
-
-@router.post("/doc-retrieval-feedback")
-def process_doc_retrieval_feedback(
-    feedback: SearchFeedbackRequest,
-    user: User | None = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> None:
-    create_doc_retrieval_feedback(
-        qa_event_id=feedback.query_id,
-        document_id=feedback.document_id,
-        document_rank=feedback.document_rank,
-        clicked=feedback.click,
-        feedback=feedback.search_feedback,
-        user_id=user.id if user is not None else None,
-        document_index=get_default_document_index(),
-        db_session=db_session,
     )

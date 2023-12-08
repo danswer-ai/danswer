@@ -1,13 +1,12 @@
 from collections.abc import Sequence
 from uuid import UUID
 
-from sqlalchemy import and_
 from sqlalchemy import delete
 from sqlalchemy import not_
 from sqlalchemy import nullsfirst
+from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy.exc import MultipleResultsFound
-from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
@@ -21,8 +20,31 @@ from danswer.db.models import Prompt
 from danswer.db.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.search.models import RecencyBiasSetting
-from danswer.server.chat.models import SearchDoc as ServerSearchDoc, RetrievalDocs
 from danswer.server.chat.models import ChatMessageDetail
+from danswer.server.chat.models import RetrievalDocs
+from danswer.server.chat.models import SearchDoc as ServerSearchDoc
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
+
+
+def fetch_chat_session_by_id(
+    chat_session_id: int, user_id: UUID | None, db_session: Session
+) -> ChatSession:
+    stmt = select(ChatSession).where(
+        ChatSession.id == chat_session_id, ChatSession.user_id == user_id
+    )
+
+    result = db_session.execute(stmt)
+    chat_session = result.scalar_one_or_none()
+
+    if not chat_session:
+        raise ValueError("Invalid Chat Session ID provided")
+
+    if chat_session.deleted:
+        raise ValueError("Chat session has been deleted")
+
+    return chat_session
 
 
 def fetch_chat_sessions_by_user(
@@ -39,72 +61,6 @@ def fetch_chat_sessions_by_user(
     chat_sessions = result.scalars().all()
 
     return list(chat_sessions)
-
-
-def fetch_chat_messages_by_session(
-    chat_session_id: int, db_session: Session
-) -> list[ChatMessage]:
-    stmt = (
-        select(ChatMessage).where(ChatMessage.chat_session_id == chat_session_id)
-        # Start with the root message which has no parent
-        .order_by(nullsfirst(ChatMessage.parent_message))
-    )
-    result = db_session.execute(stmt).scalars().all()
-    return list(result)
-
-
-def fetch_chat_message(
-    chat_message_id: int,
-    db_session: Session,
-    chat_session_id: int | None = None
-) -> ChatMessage:
-    """If dealing with user inputs, be sure to verify chat_session_id to avoid bad inputs fetching
-    messages from other sessions"""
-    stmt = select(ChatMessage).where(ChatMessage.id == chat_message_id)
-    if chat_session_id is not None:
-        stmt = stmt.where(ChatMessage.chat_session_id == chat_session_id)
-
-    result = db_session.execute(stmt)
-    chat_message = result.scalar_one_or_none()
-
-    if not chat_message:
-        raise ValueError("Invalid Chat Message specified")
-
-    return chat_message
-
-
-def fetch_chat_session_by_id(
-    chat_session_id: int,
-    db_session: Session
-) -> ChatSession:
-    stmt = select(ChatSession).where(ChatSession.id == chat_session_id)
-    result = db_session.execute(stmt)
-    chat_session = result.scalar_one_or_none()
-
-    if not chat_session:
-        raise ValueError("Invalid Chat Session ID provided")
-
-    return chat_session
-
-
-def verify_parent_exists(
-    chat_session_id: int,
-    message_number: int,
-    parent_edit_number: int | None,
-    db_session: Session,
-) -> ChatMessage:
-    stmt = select(ChatMessage).where(
-        (ChatMessage.chat_session_id == chat_session_id)
-        & (ChatMessage.message_number == message_number - 1)
-        & (ChatMessage.edit_number == parent_edit_number)
-    )
-
-    result = db_session.execute(stmt)
-
-    try:
-        return result.scalar_one()
-    except NoResultFound:
-        raise ValueError("Invalid message, parent message not found")
 
 
 def create_chat_session(
@@ -128,13 +84,12 @@ def create_chat_session(
 def update_chat_session(
     user_id: UUID | None, chat_session_id: int, description: str, db_session: Session
 ) -> ChatSession:
-    chat_session = fetch_chat_session_by_id(chat_session_id, db_session)
+    chat_session = fetch_chat_session_by_id(
+        chat_session_id=chat_session_id, user_id=user_id, db_session=db_session
+    )
 
     if chat_session.deleted:
         raise ValueError("Trying to rename a deleted chat session")
-
-    if user_id != chat_session.user_id:
-        raise ValueError("User trying to update chat of another user.")
 
     chat_session.description = description
 
@@ -149,10 +104,9 @@ def delete_chat_session(
     db_session: Session,
     hard_delete: bool = HARD_DELETE_CHATS,
 ) -> None:
-    chat_session = fetch_chat_session_by_id(chat_session_id, db_session)
-
-    if user_id != chat_session.user_id:
-        raise ValueError("User trying to delete chat of another user.")
+    chat_session = fetch_chat_session_by_id(
+        chat_session_id=chat_session_id, user_id=user_id, db_session=db_session
+    )
 
     if hard_delete:
         stmt_messages = delete(ChatMessage).where(
@@ -167,6 +121,47 @@ def delete_chat_session(
         chat_session.deleted = True
 
     db_session.commit()
+
+
+def fetch_chat_message(
+    chat_message_id: int,
+    user_id: UUID | None,
+    db_session: Session,
+) -> ChatMessage:
+    stmt = select(ChatMessage).where(ChatMessage.id == chat_message_id)
+
+    result = db_session.execute(stmt)
+    chat_message = result.scalar_one_or_none()
+
+    if not chat_message:
+        raise ValueError("Invalid Chat Message specified")
+
+    if chat_message.chat_session.user.id != user_id:
+        logger.error(
+            f"User {user_id} tried to fetch a chat message that does not belong to them"
+        )
+        raise ValueError(f"Chat message does not belong to user")
+
+    return chat_message
+
+
+def fetch_chat_messages_by_session(
+    chat_session_id: int, user_id: UUID | None, db_session: Session
+) -> list[ChatMessage]:
+    # Used to verify permission
+    fetch_chat_session_by_id(
+        chat_session_id=chat_session_id, user_id=user_id, db_session=db_session
+    )
+
+    stmt = (
+        select(ChatMessage).where(ChatMessage.chat_session_id == chat_session_id)
+        # Start with the root message which has no parent
+        .order_by(nullsfirst(ChatMessage.parent_message))
+    )
+
+    result = db_session.execute(stmt).scalars().all()
+
+    return list(result)
 
 
 def get_or_create_root_message(
@@ -245,27 +240,36 @@ def create_new_chat_message(
 
 def set_as_latest_chat_message(
     chat_message: ChatMessage,
+    user_id: UUID | None,
     db_session: Session,
 ) -> None:
     parent_message_id = chat_message.parent_message
 
     if parent_message_id is None:
-        raise RuntimeError(f"Trying to set a latest message without parent, message id: {chat_message.id}")
+        raise RuntimeError(
+            f"Trying to set a latest message without parent, message id: {chat_message.id}"
+        )
 
-    parent_message = fetch_chat_message(chat_message_id=parent_message_id, db_session=db_session)
+    parent_message = fetch_chat_message(
+        chat_message_id=parent_message_id, user_id=user_id, db_session=db_session
+    )
 
     parent_message.latest_child_message = chat_message.id
 
     db_session.commit()
 
 
-def fetch_persona_by_id(persona_id: int, db_session: Session) -> Persona:
-    stmt = select(Persona).where(Persona.id == persona_id)
+def fetch_persona_by_id(
+    persona_id: int, user_id: UUID | None, db_session: Session
+) -> Persona:
+    stmt = select(Persona).where(Persona.id == persona_id, Persona.user_id == user_id)
     result = db_session.execute(stmt)
     persona = result.scalar_one_or_none()
 
     if persona is None:
-        raise ValueError(f"Persona with ID {persona_id} does not exist")
+        raise ValueError(
+            f"Persona with ID {persona_id} does not exist or does not belong to user"
+        )
 
     return persona
 
@@ -408,11 +412,14 @@ def upsert_persona(
 
 
 def fetch_personas(
+    user_id: UUID | None,
     db_session: Session,
     include_default: bool = False,
     include_slack_bot_personas: bool = False,
 ) -> Sequence[Persona]:
-    stmt = select(Persona)
+    stmt = select(Persona).where(
+        or_(Persona.user_id == user_id, Persona.user_id.is_(None))
+    )
     if not include_default:
         stmt = stmt.where(Persona.default_persona == False)  # noqa: E712
     if not include_slack_bot_personas:
@@ -422,13 +429,24 @@ def fetch_personas(
 
 
 def get_doc_query_identifiers_from_model(
-    chat_session: int, search_doc_ids: list[str], db_session: Session
+    search_doc_ids: list[int],
+    chat_session: ChatSession,
+    user_id: UUID | None,
+    db_session: Session,
 ) -> list[tuple[str, int]]:
+    """Given a list of search_doc_ids"""
     search_docs = (
         db_session.query(SearchDoc).filter(SearchDoc.id.in_(search_doc_ids)).all()
     )
+
+    if user_id != chat_session.user_id:
+        logger.error(
+            f"Docs referenced are from a chat session not belonging to user {user_id}"
+        )
+        raise ValueError("Docs references do not belong to user")
+
     if any(
-        [doc.chat_messages[0].chat_session_id != chat_session for doc in search_docs]
+        [doc.chat_messages[0].chat_session_id != chat_session.id for doc in search_docs]
     ):
         raise ValueError("Invalid reference doc, not from this chat session.")
 
@@ -454,7 +472,7 @@ def create_db_search_doc(
         match_highlights=server_search_doc.match_highlights,
         updated_at=server_search_doc.updated_at,
         primary_owners=server_search_doc.primary_owners,
-        secondary_owners=server_search_doc.secondary_owners
+        secondary_owners=server_search_doc.secondary_owners,
     )
 
     db_session.add(db_search_doc)
@@ -463,7 +481,7 @@ def create_db_search_doc(
 
 
 def translate_db_search_doc_to_server_search_doc(
-    db_search_doc: SearchDoc
+    db_search_doc: SearchDoc,
 ) -> ServerSearchDoc:
     return ServerSearchDoc(
         document_id=db_search_doc.document_id,
@@ -478,13 +496,11 @@ def translate_db_search_doc_to_server_search_doc(
         match_highlights=db_search_doc.match_highlights,
         updated_at=db_search_doc.updated_at,
         primary_owners=db_search_doc.primary_owners,
-        secondary_owners=db_search_doc.secondary_owners
+        secondary_owners=db_search_doc.secondary_owners,
     )
 
 
-def get_retrieval_docs_from_chat_message(
-    chat_message: ChatMessage
-) -> RetrievalDocs:
+def get_retrieval_docs_from_chat_message(chat_message: ChatMessage) -> RetrievalDocs:
     return RetrievalDocs(
         top_documents=[
             translate_db_search_doc_to_server_search_doc(db_doc)
@@ -503,7 +519,7 @@ def translate_db_message_to_chat_message_detail(
         message=chat_message.message,
         context_docs=get_retrieval_docs_from_chat_message(chat_message),
         message_type=chat_message.message_type,
-        time_sent=chat_message.time_sent
+        time_sent=chat_message.time_sent,
     )
 
     return chat_msg_detail

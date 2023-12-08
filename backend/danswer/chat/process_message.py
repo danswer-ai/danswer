@@ -19,14 +19,15 @@ from danswer.configs.chat_configs import FORCE_TOOL_PROMPT
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
-from danswer.db.chat import create_new_chat_message, create_db_search_doc, translate_db_message_to_chat_message_detail
+from danswer.db.chat import create_db_search_doc
+from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import fetch_chat_message
 from danswer.db.chat import fetch_chat_messages_by_session
 from danswer.db.chat import fetch_chat_session_by_id
 from danswer.db.chat import get_doc_query_identifiers_from_model
 from danswer.db.chat import get_or_create_root_message
+from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.models import ChatMessage
-from danswer.db.models import ChatSession
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
@@ -693,14 +694,17 @@ def stream_chat_packets(
     new_msg_req: CreateChatMessageRequest,
     user: User | None,
     db_session: Session,
-    # Just to avoid fetching twice
-    chat_session: ChatSession | None = None,
     # Needed to translate persona num_chunks to tokens to the LLM
     default_num_chunks: float = DEFAULT_NUM_CHUNKS_FED_TO_CHAT,
     default_chunk_size: int = CHUNK_SIZE,
 ) -> Iterator[str]:
-    if chat_session is None:
-        chat_session = fetch_chat_session_by_id(new_msg_req.chat_session_id, db_session)
+    user_id = user.id if user is not None else None
+
+    chat_session = fetch_chat_session_by_id(
+        chat_session_id=new_msg_req.chat_session_id,
+        user_id=user_id,
+        db_session=db_session,
+    )
 
     message_text = new_msg_req.message
     chat_session_id = new_msg_req.chat_session_id
@@ -725,8 +729,8 @@ def stream_chat_packets(
 
     if parent_id is not None:
         parent_message = fetch_chat_message(
-            chat_session_id=chat_session_id,
             chat_message_id=parent_id,
+            user_id=user_id,
             db_session=db_session,
         )
     else:
@@ -780,7 +784,12 @@ def stream_chat_packets(
 
     reference_db_search_docs = None
     if reference_doc_ids:
-        identifier_tuples = get_doc_query_identifiers_from_model(reference_doc_ids)
+        identifier_tuples = get_doc_query_identifiers_from_model(
+            search_doc_ids=reference_doc_ids,
+            chat_session=chat_session,
+            user_id=user_id,
+            db_session=db_session,
+        )
         documents_generator: Iterator[
             list[InferenceChunk] | list[bool]
         ] = inference_documents_from_ids(
@@ -896,9 +905,11 @@ def stream_chat_packets(
         error=error,
         reference_docs=reference_db_search_docs,
         db_session=db_session,
-        commit=True
+        commit=True,
     )
 
-    msg_detail_response = translate_db_message_to_chat_message_detail(gen_ai_response_message)
+    msg_detail_response = translate_db_message_to_chat_message_detail(
+        gen_ai_response_message
+    )
 
     yield get_json_line(msg_detail_response.dict())

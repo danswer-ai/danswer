@@ -4,22 +4,19 @@ from sqlalchemy import asc
 from sqlalchemy import delete
 from sqlalchemy import desc
 from sqlalchemy import select
-from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import MessageType
-from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
-from danswer.db.models import ChatMessage as DbChatMessage
+from danswer.db.chat import fetch_chat_message
 from danswer.db.models import ChatMessageFeedback
 from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentRetrievalFeedback
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
-from danswer.search.models import SearchType
 
 
-def fetch_docs_by_id(doc_id: str, db_session: Session) -> DbDocument:
+def fetch_db_doc_by_id(doc_id: str, db_session: Session) -> DbDocument:
     stmt = select(DbDocument).where(DbDocument.id == doc_id)
     result = db_session.execute(stmt)
     doc = result.scalar_one_or_none()
@@ -85,76 +82,20 @@ def update_document_hidden(
     db_session.commit()
 
 
-def update_query_event_feedback(
-    db_session: Session,
-    feedback: QAFeedbackType,
-    query_id: int,
-    user_id: UUID | None,
-) -> None:
-    query_event = fetch_query_event_by_id(query_id, db_session)
-
-    if user_id != query_event.user_id:
-        raise ValueError("User trying to give feedback on a query run by another user.")
-
-    query_event.feedback = feedback
-    db_session.commit()
-
-
-def update_query_event_retrieved_documents(
-    db_session: Session,
-    retrieved_document_ids: list[str],
-    query_id: int,
-    user_id: UUID | None,
-) -> None:
-    query_event = fetch_query_event_by_id(query_id, db_session)
-
-    if user_id != query_event.user_id:
-        raise ValueError("User trying to update docs on a query run by another user.")
-
-    query_event.retrieved_document_ids = retrieved_document_ids
-    db_session.commit()
-
-
-def update_query_event_llm_answer(
-    db_session: Session,
-    llm_answer: str,
-    query_id: int,
-    user_id: UUID | None,
-) -> None:
-    query_event = fetch_query_event_by_id(query_id, db_session)
-
-    if user_id != query_event.user_id:
-        raise ValueError(
-            "User trying to update llm_answer on a query run by another user."
-        )
-
-    query_event.llm_answer = llm_answer
-    db_session.commit()
-
-
 def create_doc_retrieval_feedback(
-    qa_event_id: int,
+    message_id: int,
     document_id: str,
     document_rank: int,
-    user_id: UUID | None,
     document_index: DocumentIndex,
     db_session: Session,
     clicked: bool = False,
     feedback: SearchFeedbackType | None = None,
 ) -> None:
     """Creates a new Document feedback row and updates the boost value in Postgres and Vespa"""
-    if not clicked and feedback is None:
-        raise ValueError("No action taken, not valid feedback")
-
-    query_event = fetch_query_event_by_id(qa_event_id, db_session)
-
-    if user_id != query_event.user_id:
-        raise ValueError("User trying to give feedback on a query run by another user.")
-
-    doc_m = fetch_docs_by_id(document_id, db_session)
+    db_doc = fetch_db_doc_by_id(document_id, db_session)
 
     retrieval_feedback = DocumentRetrievalFeedback(
-        qa_event_id=qa_event_id,
+        chat_message_id=message_id,
         document_id=document_id,
         document_rank=document_rank,
         clicked=clicked,
@@ -163,20 +104,20 @@ def create_doc_retrieval_feedback(
 
     if feedback is not None:
         if feedback == SearchFeedbackType.ENDORSE:
-            doc_m.boost += 1
+            db_doc.boost += 1
         elif feedback == SearchFeedbackType.REJECT:
-            doc_m.boost -= 1
+            db_doc.boost -= 1
         elif feedback == SearchFeedbackType.HIDE:
-            doc_m.hidden = True
+            db_doc.hidden = True
         elif feedback == SearchFeedbackType.UNHIDE:
-            doc_m.hidden = False
+            db_doc.hidden = False
         else:
             raise ValueError("Unhandled document feedback type")
 
     if feedback in [SearchFeedbackType.ENDORSE, SearchFeedbackType.REJECT]:
         update = UpdateRequest(
             document_ids=[document_id],
-            boost=doc_m.boost,
+            boost=db_doc.boost,
         )
         # Updates are generally batched for efficiency, this case only 1 doc/value is updated
         document_index.update([update])
@@ -197,40 +138,24 @@ def delete_document_feedback_for_documents(
 
 
 def create_chat_message_feedback(
-    chat_session_id: int,
-    message_number: int,
-    edit_number: int,
+    is_positive: bool | None,
+    feedback_text: str | None,
+    chat_message_id: int,
     user_id: UUID | None,
     db_session: Session,
-    is_positive: bool | None = None,
-    feedback_text: str | None = None,
 ) -> None:
     if is_positive is None and feedback_text is None:
         raise ValueError("No feedback provided")
 
-    try:
-        chat_message = (
-            db_session.query(DbChatMessage)
-            .filter_by(
-                chat_session_id=chat_session_id,
-                message_number=message_number,
-                edit_number=edit_number,
-            )
-            .one()
-        )
-    except NoResultFound:
-        raise ValueError("ChatMessage not found")
+    chat_message = fetch_chat_message(
+        chat_message_id=chat_message_id, user_id=user_id, db_session=db_session
+    )
 
     if chat_message.message_type != MessageType.ASSISTANT:
         raise ValueError("Can only provide feedback on LLM Outputs")
 
-    if user_id is not None and chat_message.chat_session.user_id != user_id:
-        raise ValueError("User trying to give feedback on a message by another user.")
-
     message_feedback = ChatMessageFeedback(
-        chat_message_chat_session_id=chat_session_id,
-        chat_message_message_number=message_number,
-        chat_message_edit_number=edit_number,
+        chat_message_id=chat_message_id,
         is_positive=is_positive,
         feedback_text=feedback_text,
     )
