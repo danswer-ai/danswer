@@ -59,6 +59,9 @@ class SlackBotTokens(BaseModel):
     bot_token: str
     app_token: str
 
+    class Config:
+        frozen = True
+
 
 class SlackBotConfigCreationRequest(BaseModel):
     # currently, a persona is created for each slack bot config

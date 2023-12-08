@@ -1,5 +1,6 @@
 import re
 import time
+from threading import Event
 from typing import Any
 from typing import cast
 
@@ -25,28 +26,11 @@ from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.search.search_nlp_models import warm_up_models
+from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
-
-
-class MissingTokensException(Exception):
-    pass
-
-
-def _get_socket_client() -> SocketModeClient:
-    # For more info on how to set this up, checkout the docs:
-    # https://docs.danswer.dev/slack_bot_setup
-    try:
-        slack_bot_tokens = fetch_tokens()
-    except ConfigNotFoundError:
-        raise MissingTokensException("Slack tokens not found")
-    return SocketModeClient(
-        # This app-level token will be used only for establishing a connection
-        app_token=slack_bot_tokens.app_token,
-        web_client=WebClient(token=slack_bot_tokens.bot_token),
-    )
 
 
 def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool:
@@ -285,6 +269,24 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
         logger.exception("Failed to process slack event")
 
 
+def _get_socket_client(slack_bot_tokens: SlackBotTokens) -> SocketModeClient:
+    # For more info on how to set this up, checkout the docs:
+    # https://docs.danswer.dev/slack_bot_setup
+    return SocketModeClient(
+        # This app-level token will be used only for establishing a connection
+        app_token=slack_bot_tokens.app_token,
+        web_client=WebClient(token=slack_bot_tokens.bot_token),
+    )
+
+
+def _initialize_socket_client(socket_client: SocketModeClient) -> None:
+    socket_client.socket_mode_request_listeners.append(process_slack_event)  # type: ignore
+
+    # Establish a WebSocket connection to the Socket Mode servers
+    logger.info("Listening for messages from Slack...")
+    socket_client.connect()
+
+
 # Follow the guide (https://docs.danswer.dev/slack_bot_setup) to set up
 # the slack bot in your workspace, and then add the bot to any channels you want to
 # try and answer questions for. Running this file will setup Danswer to listen to all
@@ -295,23 +297,37 @@ def process_slack_event(client: SocketModeClient, req: SocketModeRequest) -> Non
 # NOTE: we are using Web Sockets so that you can run this from within a firewalled VPC
 # without issue.
 if __name__ == "__main__":
-    try:
-        warm_up_models(skip_cross_encoders=SKIP_RERANKING)
+    warm_up_models(skip_cross_encoders=SKIP_RERANKING)
 
-        socket_client = _get_socket_client()
-        socket_client.socket_mode_request_listeners.append(process_slack_event)  # type: ignore
+    slack_bot_tokens: SlackBotTokens | None = None
+    socket_client: SocketModeClient | None = None
+    while True:
+        try:
+            latest_slack_bot_tokens = fetch_tokens()
 
-        # Establish a WebSocket connection to the Socket Mode servers
-        logger.info("Listening for messages from Slack...")
-        socket_client.connect()
+            if latest_slack_bot_tokens != slack_bot_tokens:
+                if slack_bot_tokens is not None:
+                    logger.info("Slack Bot tokens have changed - reconnecting")
+                slack_bot_tokens = latest_slack_bot_tokens
+                # potentially may cause a message to be dropped, but it is complicated
+                # to avoid + (1) if the user is changing tokens, they are likely okay with some
+                # "migration downtime" and (2) if a single message is lost it is okay
+                # as this should be a very rare occurrence
+                if socket_client:
+                    socket_client.close()
 
-        # Just not to stop this process
-        from threading import Event
+                socket_client = _get_socket_client(slack_bot_tokens)
+                _initialize_socket_client(socket_client)
 
-        Event().wait()
-    except MissingTokensException:
-        # try again every 30 seconds. This is needed since the user may add tokens
-        # via the UI at any point in the programs lifecycle - if we just allow it to
-        # fail, then the user will need to restart the containers after adding tokens
-        logger.debug("Missing Slack Bot tokens - waiting 60 seconds and trying again")
-        time.sleep(60)
+            # Let the handlers run in the background + re-check for token updates every 60 seconds
+            Event().wait(timeout=60)
+        except ConfigNotFoundError:
+            # try again every 30 seconds. This is needed since the user may add tokens
+            # via the UI at any point in the programs lifecycle - if we just allow it to
+            # fail, then the user will need to restart the containers after adding tokens
+            logger.debug(
+                "Missing Slack Bot tokens - waiting 60 seconds and trying again"
+            )
+            if socket_client:
+                socket_client.disconnect()
+            time.sleep(60)
