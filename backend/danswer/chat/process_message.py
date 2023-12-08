@@ -772,7 +772,7 @@ def stream_chat_packets(
     predicted_search_type: SearchType | None = None
     predicted_flow: QueryFlow | None = None
     time_cutoff = None
-    favor_recent = False
+    recency_bias_multiplier = 1.0
     run_llm_chunk_filter = False
 
     reference_db_search_docs = None  # TODO what is this
@@ -807,7 +807,7 @@ def stream_chat_packets(
             document_index=document_index,
         )
         time_cutoff = retrieval_request.filters.time_cutoff
-        favor_recent = retrieval_request.favor_recent
+        recency_bias_multiplier = retrieval_request.recency_bias_multiplier
         run_llm_chunk_filter = not retrieval_request.skip_llm_chunk_filter
 
     else:
@@ -823,7 +823,7 @@ def stream_chat_packets(
         predicted_flow=predicted_flow,
         predicted_search=predicted_search_type,
         time_cutoff=time_cutoff,
-        favor_recent=favor_recent,
+        recency_bias_multiplier=recency_bias_multiplier,
     ).dict()
     yield get_json_line(initial_response)
 

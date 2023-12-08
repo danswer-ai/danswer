@@ -367,6 +367,7 @@ def upsert_persona(
     description: str | None,
     num_chunks: float,
     llm_relevance_filter: bool,
+    llm_filter_extraction: bool,
     recency_bias: RecencyBiasSetting,
     prompts: list[Prompt] | None,
     document_sets: list[DBDocumentSet] | None,
@@ -392,6 +393,7 @@ def upsert_persona(
         persona.description = description
         persona.num_chunks = num_chunks
         persona.llm_relevance_filter = llm_relevance_filter
+        persona.llm_filter_extraction = llm_filter_extraction
         persona.recency_bias = recency_bias
         persona.default_persona = default_persona
         persona.llm_model_version_override = llm_model_version_override
@@ -412,6 +414,7 @@ def upsert_persona(
             description=description,
             num_chunks=num_chunks,
             llm_relevance_filter=llm_relevance_filter,
+            llm_filter_extraction=llm_filter_extraction,
             recency_bias=recency_bias,
             prompts=prompts,
             default_persona=default_persona,

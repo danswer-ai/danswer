@@ -19,6 +19,8 @@ personas:
     # if the chunk is useful or not towards the latest user query
     # This feature can be overriden for all personas via DISABLE_LLM_CHUNK_FILTER env variable
     llm_relevance_filter: true
+    # Enable/Disable usage of the LLM to extract query time filters including source type and time range filters
+    llm_filter_extraction: true
     # Decay documents priority as they age, options are:
     # - favor_recent (2x base by default, configurable)
     # - base_decay

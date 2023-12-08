@@ -616,15 +616,18 @@ class Persona(Base):
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str | None] = mapped_column(String, nullable=True)
     # Currently stored but unused, all flows use hybrid
-    search_flow: Mapped[SearchType] = mapped_column(
+    search_type: Mapped[SearchType] = mapped_column(
         Enum(SearchType), default=SearchType.HYBRID
     )
     # Number of chunks to pass to the LLM for generation.
     # If unspecified, uses the default DEFAULT_NUM_CHUNKS_FED_TO_CHAT set in the env variable
     num_chunks: Mapped[float | None] = mapped_column(Float, nullable=True)
-    # Pass every chunk through LLM for evaluation, fairly expensive, can be turned off
-    # globally by admin, in which case, this setting is ignored
+    # Pass every chunk through LLM for evaluation, fairly expensive
+    # Can be turned off globally by admin, in which case, this setting is ignored
     llm_relevance_filter: Mapped[bool] = mapped_column(Boolean)
+    # Enables using LLM to extract time and source type filters
+    # Can also be admin disabled globally
+    llm_filter_extraction: Mapped[bool] = mapped_column(Boolean)
     recency_bias: Mapped[RecencyBiasSetting] = mapped_column(Enum(RecencyBiasSetting))
     # Default personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)

@@ -62,7 +62,7 @@ class QADocsResponse(RetrievalDocs):
     predicted_flow: QueryFlow | None
     predicted_search: SearchType | None
     time_cutoff: datetime | None
-    favor_recent: bool
+    recency_bias_multiplier: float
 
     def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
         initial_dict = super().dict(*args, **kwargs)  # type: ignore
@@ -101,7 +101,7 @@ class RetrievalDetails(BaseModel):
     # The following have defaults in the Persona settings which can be overriden via
     # the query, if None, then use Persona settings
     filters: BaseFilters | None = None
-    favor_recent: bool | None = None
+    enable_auto_detect_filters: bool | None = None
     # TODO Pagination/Offset options
     # offset: int | None = None
 

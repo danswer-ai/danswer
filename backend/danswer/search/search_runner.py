@@ -87,6 +87,7 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
         [
             SearchDoc(
                 document_id=chunk.document_id,
+                chunk_ind=chunk.chunk_id,
                 semantic_identifier=chunk.semantic_identifier,
                 link=chunk.source_links.get(0) if chunk.source_links else None,
                 blurb=chunk.blurb,
@@ -141,7 +142,7 @@ def doc_index_retrieval(
         top_chunks = document_index.keyword_retrieval(
             query=query.query,
             filters=query.filters,
-            favor_recent=query.favor_recent,
+            time_decay_multiplier=query.recency_bias_multiplier,
             num_to_retrieve=query.num_hits,
         )
 
@@ -149,7 +150,7 @@ def doc_index_retrieval(
         top_chunks = document_index.semantic_retrieval(
             query=query.query,
             filters=query.filters,
-            favor_recent=query.favor_recent,
+            time_decay_multiplier=query.recency_bias_multiplier,
             num_to_retrieve=query.num_hits,
         )
 
@@ -157,7 +158,7 @@ def doc_index_retrieval(
         top_chunks = document_index.hybrid_retrieval(
             query=query.query,
             filters=query.filters,
-            favor_recent=query.favor_recent,
+            time_decay_multiplier=query.recency_bias_multiplier,
             num_to_retrieve=query.num_hits,
             hybrid_alpha=hybrid_alpha,
         )

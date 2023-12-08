@@ -694,16 +694,14 @@ class VespaIndex(DocumentIndex):
         return []
 
 
-
     def keyword_retrieval(
         self,
         query: str,
         filters: IndexFilters,
-        favor_recent: bool,
+        time_decay_multiplier: float,
         num_to_retrieve: int = NUM_RETURNED_HITS,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
-        decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
             VespaIndex.yql_base
@@ -720,7 +718,7 @@ class VespaIndex(DocumentIndex):
         params: dict[str, str | int] = {
             "yql": yql,
             "query": final_query,
-            "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
+            "input.query(decay_factor)": str(DOC_TIME_DECAY * time_decay_multiplier),
             "hits": num_to_retrieve,
             "offset": 0,
             "ranking.profile": "keyword_search",
@@ -733,12 +731,11 @@ class VespaIndex(DocumentIndex):
         self,
         query: str,
         filters: IndexFilters,
-        favor_recent: bool,
+        time_decay_multiplier: float,
         num_to_retrieve: int = NUM_RETURNED_HITS,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
-        decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
             VespaIndex.yql_base
@@ -762,7 +759,7 @@ class VespaIndex(DocumentIndex):
             "yql": yql,
             "query": query_keywords,  # Needed for highlighting
             "input.query(query_embedding)": str(query_embedding),
-            "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
+            "input.query(decay_factor)": str(DOC_TIME_DECAY * time_decay_multiplier),
             "hits": num_to_retrieve,
             "offset": 0,
             "ranking.profile": "semantic_search",
@@ -775,13 +772,12 @@ class VespaIndex(DocumentIndex):
         self,
         query: str,
         filters: IndexFilters,
-        favor_recent: bool,
+        time_decay_multiplier: float,
         num_to_retrieve: int,
         hybrid_alpha: float | None = HYBRID_ALPHA,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
-        decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
         # Needs to be at least as much as the value set in Vespa schema config
         target_hits = max(10 * num_to_retrieve, 1000)
@@ -805,7 +801,7 @@ class VespaIndex(DocumentIndex):
             "yql": yql,
             "query": query_keywords,
             "input.query(query_embedding)": str(query_embedding),
-            "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
+            "input.query(decay_factor)": str(DOC_TIME_DECAY * time_decay_multiplier),
             "input.query(alpha)": hybrid_alpha
             if hybrid_alpha is not None
             else HYBRID_ALPHA,

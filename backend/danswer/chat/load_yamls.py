@@ -79,9 +79,8 @@ def load_personas_from_yaml(
                 num_chunks=persona.get("num_chunks")
                 if persona.get("num_chunks") is not None
                 else default_chunks,
-                llm_relevance_filter=persona.get(
-                    "llm_relevance_filter"
-                ),  # is a bool already
+                llm_relevance_filter=persona.get("llm_relevance_filter"),
+                llm_filter_extraction=persona.get("llm_filter_extraction"),
                 recency_bias=RecencyBiasSetting(persona["recency_bias"]),
                 prompts=cast(list[PromptDBModel] | None, prompts),
                 document_sets=doc_sets,

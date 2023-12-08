@@ -67,7 +67,7 @@ class ChunkMetric(BaseModel):
 class SearchQuery(BaseModel):
     query: str
     filters: IndexFilters
-    favor_recent: bool
+    recency_bias_multiplier: float
     num_hits: int = NUM_RETURNED_HITS
     search_type: SearchType = SearchType.HYBRID
     skip_rerank: bool = not ENABLE_RERANKING_REAL_TIME_FLOW

@@ -93,7 +93,7 @@ class KeywordCapable(abc.ABC):
         self,
         query: str,
         filters: IndexFilters,
-        favor_recent: bool,
+        time_decay_multiplier: float,
         num_to_retrieve: int,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
@@ -105,7 +105,7 @@ class VectorCapable(abc.ABC):
         self,
         query: str,
         filters: IndexFilters,
-        favor_recent: bool,
+        time_decay_multiplier: float,
         num_to_retrieve: int,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
@@ -117,7 +117,7 @@ class HybridCapable(abc.ABC):
         self,
         query: str,
         filters: IndexFilters,
-        favor_recent: bool,
+        time_decay_multiplier: float,
         num_to_retrieve: int,
         hybrid_alpha: float | None = None,
     ) -> list[InferenceChunk]:
