@@ -18,7 +18,6 @@ from retry import retry
 from danswer.configs.app_configs import DOC_TIME_DECAY
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
 from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
-from danswer.configs.app_configs import FAVOR_RECENT_DECAY_MULTIPLIER
 from danswer.configs.app_configs import HYBRID_ALPHA
 from danswer.configs.app_configs import LOG_VESPA_TIMING_INFORMATION
 from danswer.configs.app_configs import NUM_RETURNED_HITS

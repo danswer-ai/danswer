@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_user
 from danswer.chat.process_message import stream_chat_packets
 from danswer.configs.constants import MessageType
-from danswer.db.chat import create_chat_session
+from danswer.db.chat import create_chat_session, translate_db_message_to_chat_message_detail
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import delete_chat_session
 from danswer.db.chat import fetch_chat_message
@@ -16,7 +16,7 @@ from danswer.db.chat import fetch_chat_messages_by_session
 from danswer.db.chat import fetch_chat_session_by_id
 from danswer.db.chat import fetch_chat_sessions_by_user
 from danswer.db.chat import fetch_persona_by_id
-from danswer.db.chat import set_latest_chat_message
+from danswer.db.chat import set_as_latest_chat_message
 from danswer.db.chat import update_chat_session
 from danswer.db.engine import get_session
 from danswer.db.feedback import create_chat_message_feedback
@@ -25,7 +25,6 @@ from danswer.direct_qa.interfaces import DanswerAnswerPiece
 from danswer.llm.utils import get_default_llm_token_encode
 from danswer.secondary_llm_flows.chat_helpers import get_new_chat_name
 from danswer.server.chat.models import ChatFeedbackRequest
-from danswer.server.chat.models import ChatMessageDetail
 from danswer.server.chat.models import ChatMessageIdentifier
 from danswer.server.chat.models import ChatRenameRequest
 from danswer.server.chat.models import ChatSession
@@ -104,19 +103,7 @@ def get_chat_session_messages(
         chat_session_id=session_id,
         description=session.description,
         messages=[
-            ChatMessageDetail(
-                message_id=msg.message_id,
-                message_number=msg.message_number,
-                parent_message=msg.parent_message,
-                latest_child_message=msg.lastest_child_message,
-                message=msg.message,
-                # TODO is the context_docs correct?
-                context_docs=RetrievalDocs(**msg.reference_docs)
-                if msg.reference_docs
-                else None,
-                message_type=msg.message_type,
-                time_sent=msg.time_sent,
-            )
+            translate_db_message_to_chat_message_detail(msg)
             for msg in session_messages
         ],
     )
@@ -233,6 +220,8 @@ def regenerate_message_given_parent(
     """Regenerate an LLM response given a particular parent message
     The parent message is set as latest and a new LLM response is set as
     the latest following message"""
+    raise NotImplementedError("dont use this yet")
+
     chat_session_id = parent_message.chat_session_id
     message_number = parent_message.message_number
     edit_number = parent_message.edit_number
@@ -323,10 +312,8 @@ def set_message_as_latest(
     user_id = user.id if user is not None else None
 
     chat_message = fetch_chat_message(
-        chat_session_id=message_identifier.chat_session_id,
-        message_number=message_identifier.message_number,
-        edit_number=message_identifier.edit_number,
-        db_session=db_session,
+        chat_message_id=message_identifier.message_id,
+        db_session=db_session
     )
 
     chat_session = chat_message.chat_session
@@ -343,10 +330,7 @@ def set_message_as_latest(
             f"User {user.email} trying to update chat messages of another user"
         )
 
-    set_latest_chat_message(
-        chat_session_id=chat_message.chat_session_id,
-        message_number=chat_message.message_number,
-        parent_edit_number=chat_message.parent_edit_number,
-        edit_number=chat_message.edit_number,
+    set_as_latest_chat_message(
+        chat_message=chat_message,
         db_session=db_session,
     )

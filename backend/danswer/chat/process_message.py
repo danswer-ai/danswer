@@ -778,7 +778,7 @@ def stream_chat_packets(
     recency_bias_multiplier = 1.0
     run_llm_chunk_filter = False
 
-    reference_db_search_docs = None  # TODO what is this
+    reference_db_search_docs = None
     if reference_doc_ids:
         identifier_tuples = get_doc_query_identifiers_from_model(reference_doc_ids)
         documents_generator: Iterator[

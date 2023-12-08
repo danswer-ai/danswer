@@ -54,7 +54,9 @@ def fetch_chat_messages_by_session(
 
 
 def fetch_chat_message(
-    chat_message_id: int, db_session: Session, chat_session_id: int | None = None
+    chat_message_id: int,
+    db_session: Session,
+    chat_session_id: int | None = None
 ) -> ChatMessage:
     """If dealing with user inputs, be sure to verify chat_session_id to avoid bad inputs fetching
     messages from other sessions"""
@@ -71,7 +73,10 @@ def fetch_chat_message(
     return chat_message
 
 
-def fetch_chat_session_by_id(chat_session_id: int, db_session: Session) -> ChatSession:
+def fetch_chat_session_by_id(
+    chat_session_id: int,
+    db_session: Session
+) -> ChatSession:
     stmt = select(ChatSession).where(ChatSession.id == chat_session_id)
     result = db_session.execute(stmt)
     chat_session = result.scalar_one_or_none()
@@ -164,35 +169,6 @@ def delete_chat_session(
     db_session.commit()
 
 
-def _set_latest_chat_message_no_commit(
-    chat_session_id: int,
-    message_number: int,
-    parent_edit_number: int | None,
-    edit_number: int,
-    db_session: Session,
-) -> None:
-    if message_number != 0 and parent_edit_number is None:
-        raise ValueError(
-            "Only initial message in a chat is allowed to not have a parent"
-        )
-
-    db_session.query(ChatMessage).filter(
-        and_(
-            ChatMessage.chat_session_id == chat_session_id,
-            ChatMessage.message_number == message_number,
-            ChatMessage.parent_edit_number == parent_edit_number,
-        )
-    ).update({ChatMessage.latest: False})
-
-    db_session.query(ChatMessage).filter(
-        and_(
-            ChatMessage.chat_session_id == chat_session_id,
-            ChatMessage.message_number == message_number,
-            ChatMessage.edit_number == edit_number,
-        )
-    ).update({ChatMessage.latest: True})
-
-
 def get_or_create_root_message(
     chat_session_id: int,
     db_session: Session,
@@ -267,20 +243,18 @@ def create_new_chat_message(
     return new_chat_message
 
 
-def set_latest_chat_message(
-    chat_session_id: int,
-    message_number: int,
-    parent_edit_number: int | None,
-    edit_number: int,
+def set_as_latest_chat_message(
+    chat_message: ChatMessage,
     db_session: Session,
 ) -> None:
-    _set_latest_chat_message_no_commit(
-        chat_session_id=chat_session_id,
-        message_number=message_number,
-        parent_edit_number=parent_edit_number,
-        edit_number=edit_number,
-        db_session=db_session,
-    )
+    parent_message_id = chat_message.parent_message
+
+    if parent_message_id is None:
+        raise RuntimeError(f"Trying to set a latest message without parent, message id: {chat_message.id}")
+
+    parent_message = fetch_chat_message(chat_message_id=parent_message_id, db_session=db_session)
+
+    parent_message.latest_child_message = chat_message.id
 
     db_session.commit()
 
@@ -508,22 +482,26 @@ def translate_db_search_doc_to_server_search_doc(
     )
 
 
-def translate_db_message_to_chat_message_detail(
-    chat_message: ChatMessage,
-) -> ChatMessageDetail:
-    context_docs = RetrievalDocs(
+def get_retrieval_docs_from_chat_message(
+    chat_message: ChatMessage
+) -> RetrievalDocs:
+    return RetrievalDocs(
         top_documents=[
             translate_db_search_doc_to_server_search_doc(db_doc)
             for db_doc in chat_message.search_docs
         ]
     )
 
+
+def translate_db_message_to_chat_message_detail(
+    chat_message: ChatMessage,
+) -> ChatMessageDetail:
     chat_msg_detail = ChatMessageDetail(
         message_id=chat_message.id,
         parent_message=chat_message.parent_message,
         latest_child_message=chat_message.latest_child_message,
         message=chat_message.message,
-        context_docs=context_docs,
+        context_docs=get_retrieval_docs_from_chat_message(chat_message),
         message_type=chat_message.message_type,
         time_sent=chat_message.time_sent
     )

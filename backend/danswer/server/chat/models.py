@@ -133,9 +133,7 @@ class CreateChatMessageRequest(BaseModel):
 
 
 class ChatMessageIdentifier(BaseModel):
-    chat_session_id: int
-    message_number: int
-    edit_number: int
+    message_id: int
 
 
 class RegenerateMessageRequest(ChatMessageIdentifier):
