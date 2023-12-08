@@ -1,7 +1,5 @@
 # This file is purely for development use, not included in any builds
-# Use this to test the chat feature with and without context.
-# With context refers to being able to call out to Danswer and other tools (currently no other tools)
-# Without context refers to only knowing the chat's own history with no additional information
+# Use this to test the chat feature
 # This script does not allow for branching logic that is supported by the backend APIs
 # This script also does not allow for editing/regeneration of user/model messages
 # Have Danswer API server running to use this.
@@ -37,6 +35,7 @@ def send_chat_message(
     }
 
     docs: list[dict] | None = None
+    message_id: int | None = None
     with requests.post(
         LOCAL_CHAT_ENDPOINT + "send-message", json=data, stream=True
     ) as r:
@@ -45,17 +44,25 @@ def send_chat_message(
             new_token = response_text.get("answer_piece")
             if docs is None:
                 docs = response_text.get("top_documents")
+            if message_id is None:
+                message_id = response_text.get("message_id")
             if new_token:
                 print(new_token, end="", flush=True)
         print()
 
     if docs:
+        docs.sort(key=lambda x: x["score"], reverse=True)  # type: ignore
         print("\nReference Docs:")
         for ind, doc in enumerate(docs, start=1):
             print(f"\t - Doc {ind}: {doc.get('semantic_identifier')}")
 
+    if message_id is None:
+        raise ValueError("Couldn't get latest message id")
 
-def run_chat(contextual: bool) -> None:
+    return message_id
+
+
+def run_chat() -> None:
     try:
         new_session_id = create_new_session()
         print(f"Chat Session ID: {new_session_id}")
@@ -64,6 +71,7 @@ def run_chat(contextual: bool) -> None:
             "Looks like you haven't started the Danswer Backend server, please run the FastAPI server"
         )
         exit()
+        return
 
     parent_message = None
     while True:
@@ -78,14 +86,4 @@ def run_chat(contextual: bool) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-c",
-        "--contextual",
-        action="store_true",
-        help="If this flag is set, the chat is able to use retrieval",
-    )
-    args = parser.parse_args()
-
-    contextual = args.contextual
-    run_chat(contextual)
+    run_chat()

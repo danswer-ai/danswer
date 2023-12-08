@@ -19,7 +19,7 @@ from danswer.configs.chat_configs import FORCE_TOOL_PROMPT
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
-from danswer.db.chat import create_new_chat_message
+from danswer.db.chat import create_new_chat_message, create_db_search_doc, translate_db_message_to_chat_message_detail
 from danswer.db.chat import fetch_chat_message
 from danswer.db.chat import fetch_chat_messages_by_session
 from danswer.db.chat import fetch_chat_session_by_id
@@ -643,6 +643,9 @@ def generate_ai_chat_response(
     llm_tokenizer: Callable,
     all_doc_useful: bool,
 ) -> Iterator[DanswerAnswerPiece | StreamingError]:
+    if query_message.prompt is None:
+        raise RuntimeError("No prompt received for generating Gen AI answer.")
+
     try:
         system_message, system_tokens = build_chat_system_message(
             prompt=query_message.prompt, llm_tokenizer=llm_tokenizer
@@ -674,7 +677,7 @@ def generate_ai_chat_response(
         tokens = llm.stream(prompt)
         links = [
             chunk.source_links[0] if chunk.source_links else None
-            for chunk in retrieved_chunks
+            for chunk in context_docs
         ]
 
         for segment in extract_citations_from_stream(tokens, links):
@@ -863,6 +866,7 @@ def stream_chat_packets(
         all_doc_useful=reference_doc_ids is not None,
     )
 
+    # Capture outputs and errors
     llm_output = ""
     error: str | None = None
     for packet in response_packets:
@@ -875,18 +879,26 @@ def stream_chat_packets(
 
         yield get_json_line(packet.dict())
 
-    [translate_search_doc_to_db(top_doc) for top_doc in top_docs]
+    if reference_db_search_docs is None:
+        reference_db_search_docs = [
+            create_db_search_doc(server_search_doc=top_doc, db_session=db_session)
+            for top_doc in top_docs
+        ]
 
+    # Saving Gen AI answer and responding with message info
     gen_ai_response_message = create_new_chat_message(
         chat_session_id=chat_session_id,
         parent_message=new_user_message,
-        message=llm_output,
         prompt_id=prompt_id,
+        message=llm_output,
         token_count=len(llm_tokenizer(llm_output)),
         message_type=MessageType.ASSISTANT,
-        specified_search=specified_search,
         error=error,
-        reference_docs=top_docs,
+        reference_docs=reference_db_search_docs,
         db_session=db_session,
-        commit=False,
+        commit=True
     )
+
+    msg_detail_response = translate_db_message_to_chat_message_detail(gen_ai_response_message)
+
+    yield get_json_line(msg_detail_response.dict())

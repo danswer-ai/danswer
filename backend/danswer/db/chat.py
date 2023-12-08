@@ -21,7 +21,8 @@ from danswer.db.models import Prompt
 from danswer.db.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.search.models import RecencyBiasSetting
-from danswer.server.chat.models import SearchDoc as ServerSearchDoc
+from danswer.server.chat.models import SearchDoc as ServerSearchDoc, RetrievalDocs
+from danswer.server.chat.models import ChatMessageDetail
 
 
 def fetch_chat_sessions_by_user(
@@ -462,5 +463,69 @@ def get_doc_query_identifiers_from_model(
     return doc_query_identifiers
 
 
-def create_db_search_doc(search_doc: ServerSearchDoc) -> SearchDoc:
-    pass
+def create_db_search_doc(
+    server_search_doc: ServerSearchDoc,
+    db_session: Session,
+) -> SearchDoc:
+    db_search_doc = SearchDoc(
+        document_id=server_search_doc.document_id,
+        chunk_ind=server_search_doc.chunk_ind,
+        semantic_id=server_search_doc.semantic_identifier,
+        link=server_search_doc.link,
+        blurb=server_search_doc.blurb,
+        source_type=server_search_doc.source_type,
+        boost=server_search_doc.boost,
+        hidden=server_search_doc.hidden,
+        score=server_search_doc.score,
+        match_highlights=server_search_doc.match_highlights,
+        updated_at=server_search_doc.updated_at,
+        primary_owners=server_search_doc.primary_owners,
+        secondary_owners=server_search_doc.secondary_owners
+    )
+
+    db_session.add(db_search_doc)
+
+    return db_search_doc
+
+
+def translate_db_search_doc_to_server_search_doc(
+    db_search_doc: SearchDoc
+) -> ServerSearchDoc:
+    return ServerSearchDoc(
+        document_id=db_search_doc.document_id,
+        chunk_ind=db_search_doc.chunk_ind,
+        semantic_identifier=db_search_doc.semantic_id,
+        link=db_search_doc.link,
+        blurb=db_search_doc.blurb,
+        source_type=db_search_doc.source_type,
+        boost=db_search_doc.boost,
+        hidden=db_search_doc.hidden,
+        score=db_search_doc.score,
+        match_highlights=db_search_doc.match_highlights,
+        updated_at=db_search_doc.updated_at,
+        primary_owners=db_search_doc.primary_owners,
+        secondary_owners=db_search_doc.secondary_owners
+    )
+
+
+def translate_db_message_to_chat_message_detail(
+    chat_message: ChatMessage,
+) -> ChatMessageDetail:
+    context_docs = RetrievalDocs(
+        top_documents=[
+            translate_db_search_doc_to_server_search_doc(db_doc)
+            for db_doc in chat_message.search_docs
+        ]
+    )
+
+    chat_msg_detail = ChatMessageDetail(
+        message_id=chat_message.id,
+        parent_message=chat_message.parent_message,
+        latest_child_message=chat_message.latest_child_message,
+        message=chat_message.message,
+        context_docs=context_docs,
+        message_type=chat_message.message_type,
+        time_sent=chat_message.time_sent
+    )
+
+    return chat_msg_detail

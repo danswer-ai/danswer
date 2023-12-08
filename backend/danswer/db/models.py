@@ -424,9 +424,10 @@ class SearchDoc(Base):
     link: Mapped[str | None] = mapped_column(String, nullable=True)
     blurb: Mapped[str] = mapped_column(String)
     boost: Mapped[int] = mapped_column(Integer)
+    source_type: Mapped[DocumentSource] = mapped_column(Enum(DocumentSource))
     hidden: Mapped[bool] = mapped_column(Boolean)
     score: Mapped[float] = mapped_column(Float)
-    match_highlights: Mapped[str] = mapped_column(String)
+    match_highlights: Mapped[list[str]] = mapped_column(postgresql.ARRAY(String))
     # This is for the document, not this row in the table
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

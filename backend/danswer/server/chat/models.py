@@ -31,7 +31,7 @@ class SearchDoc(BaseModel):
     semantic_identifier: str
     link: str | None
     blurb: str
-    source_type: str
+    source_type: DocumentSource
     boost: int
     # Whether the document is hidden when doing a standard search
     # since a standard search will never find a hidden doc, this can only ever
@@ -44,6 +44,8 @@ class SearchDoc(BaseModel):
     match_highlights: list[str]
     # when the doc was last updated
     updated_at: datetime | None
+    primary_owners: list[str] | None
+    secondary_owners: list[str] | None
 
     def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
         initial_dict = super().dict(*args, **kwargs)  # type: ignore
@@ -162,13 +164,17 @@ class ChatSessionsResponse(BaseModel):
 
 class ChatMessageDetail(BaseModel):
     message_id: int
-    message_number: int
-    parent_message: int
+    parent_message: int | None
     latest_child_message: int | None
     message: str
     context_docs: RetrievalDocs | None
     message_type: MessageType
     time_sent: datetime
+
+    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+        initial_dict["time_sent"] = self.time_sent.isoformat()
+        return initial_dict
 
 
 class ChatSessionDetailResponse(BaseModel):
