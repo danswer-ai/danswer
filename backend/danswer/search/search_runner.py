@@ -88,7 +88,7 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
             SearchDoc(
                 document_id=chunk.document_id,
                 chunk_ind=chunk.chunk_id,
-                semantic_identifier=chunk.semantic_identifier,
+                semantic_identifier=chunk.semantic_identifier or "Unknown",
                 link=chunk.source_links.get(0) if chunk.source_links else None,
                 blurb=chunk.blurb,
                 source_type=chunk.source_type,
@@ -100,9 +100,7 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
                 primary_owners=chunk.primary_owners,
                 secondary_owners=chunk.secondary_owners
             )
-            # semantic identifier should always exist but for really old indices, it was not enforced
             for chunk in chunks
-            if chunk.semantic_identifier
         ]
         if chunks
         else []

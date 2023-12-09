@@ -15,6 +15,10 @@ from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
 
 
+class SimpleQueryRequest(BaseModel):
+    query: str
+
+
 class ChatSessionCreationRequest(BaseModel):
     persona_id: int = 1  # If not specified, use Danswer default persona
 
@@ -56,6 +60,10 @@ class SearchDoc(BaseModel):
 
 class RetrievalDocs(BaseModel):
     top_documents: list[SearchDoc]
+
+
+class SearchResponse(RetrievalDocs):
+    llm_indices: list[int]
 
 
 # First chunk of info for streaming QA
@@ -114,6 +122,14 @@ class RetrievalDetails(BaseModel):
     enable_auto_detect_filters: bool | None = None
     # TODO Pagination/Offset options
     # offset: int | None = None
+
+
+class DocumentSearchRequest(BaseModel):
+    message: str
+    search_type: SearchType
+    retrieval_options: RetrievalDetails
+    recency_bias_multiplier: float = 1.0
+    skip_rerank: bool = False
 
 
 class CreateChatMessageRequest(BaseModel):
@@ -218,13 +234,6 @@ class AdminSearchRequest(BaseModel):
 
 class AdminSearchResponse(BaseModel):
     documents: list[SearchDoc]
-
-
-class SearchResponse(RetrievalDocs):
-    query_event_id: int
-    source_type: list[DocumentSource] | None
-    time_cutoff: datetime | None
-    favor_recent: bool
 
 
 class QAResponse(SearchResponse, DanswerAnswer):

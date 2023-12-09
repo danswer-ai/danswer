@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
@@ -152,6 +151,8 @@ def handle_new_chat_message(
 
     To avoid extra overhead/latency, this assumes (and checks) that previous messages on the path
     have already been set as latest"""
+    logger.info(f"Received new chat message: {chat_message_req.message}")
+
     packets = stream_chat_packets(
         new_msg_req=chat_message_req,
         user=user,

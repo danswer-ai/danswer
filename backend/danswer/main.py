@@ -50,7 +50,8 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llm
 from danswer.search.search_nlp_models import warm_up_models
 from danswer.server.chat.chat_backend import router as chat_router
-from danswer.server.chat.search_backend import router as backend_router
+from danswer.server.chat.query_backend import admin_router as admin_query_router
+from danswer.server.chat.query_backend import basic_router as query_router
 from danswer.server.danswer_api.ingestion import get_danswer_api_key
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
 from danswer.server.documents.cc_pair import router as cc_pair_router
@@ -113,8 +114,10 @@ def include_router_with_global_prefix_prepended(
 
 def get_application() -> FastAPI:
     application = FastAPI(title="Danswer Backend", version=__version__)
-    include_router_with_global_prefix_prepended(application, backend_router)
+
     include_router_with_global_prefix_prepended(application, chat_router)
+    include_router_with_global_prefix_prepended(application, query_router)
+    include_router_with_global_prefix_prepended(application, admin_query_router)
     include_router_with_global_prefix_prepended(application, admin_router)
     include_router_with_global_prefix_prepended(application, user_router)
     include_router_with_global_prefix_prepended(application, connector_router)

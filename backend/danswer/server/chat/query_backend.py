@@ -6,21 +6,22 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
+from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
+from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import recommend_search_flow
-from danswer.search.models import IndexFilters
+from danswer.search.models import IndexFilters, SearchQuery
 from danswer.search.request_preprocessing import retrieval_preprocessing
 from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import full_chunk_search
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
-from danswer.server.chat.models import AdminSearchRequest
+from danswer.server.chat.models import AdminSearchRequest, SimpleQueryRequest, DocumentSearchRequest
 from danswer.server.chat.models import AdminSearchResponse
-from danswer.server.chat.models import CreateChatMessageRequest
 from danswer.server.chat.models import HelperResponse
 from danswer.server.chat.models import QueryValidationResponse
 from danswer.server.chat.models import SearchDoc
@@ -29,13 +30,13 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-router = APIRouter()
-
+admin_router = APIRouter(prefix="/admin")
+basic_router = APIRouter(prefix="/query")
 
 """Admin-only search endpoints"""
 
 
-@router.post("/admin/search")
+@admin_router.post("/search")
 def admin_search(
     question: AdminSearchRequest,
     user: User | None = Depends(current_admin_user),
@@ -62,7 +63,7 @@ def admin_search(
 
     documents = chunks_to_search_docs(matching_chunks)
 
-    # deduplicate documents by id
+    # Deduplicate documents by id
     deduplicated_documents: list[SearchDoc] = []
     seen_documents: set[str] = set()
     for document in documents:
@@ -75,72 +76,79 @@ def admin_search(
 """Search endpoints for all"""
 
 
-@router.post("/search-intent")
+@basic_router.post("/search-intent")
 def get_search_type(
-    new_message_request: CreateChatMessageRequest, _: User = Depends(current_user)
+    simple_query: SimpleQueryRequest,
+    _: User = Depends(current_user)
 ) -> HelperResponse:
-    query = new_message_request.query
-    return recommend_search_flow(query)
+    return recommend_search_flow(simple_query.query)
 
 
-@router.post("/query-validation")
+@basic_router.post("/query-validation")
 def query_validation(
-    new_message_request: CreateChatMessageRequest, _: User = Depends(current_user)
+    simple_query: SimpleQueryRequest,
+    _: User = Depends(current_user)
 ) -> QueryValidationResponse:
-    query = new_message_request.query
-    reasoning, answerable = get_query_answerability(query)
+    reasoning, answerable = get_query_answerability(simple_query.query)
     return QueryValidationResponse(reasoning=reasoning, answerable=answerable)
 
 
-@router.post("/stream-query-validation")
+@basic_router.post("/stream-query-validation")
 def stream_query_validation(
-    new_message_request: CreateChatMessageRequest, _: User = Depends(current_user)
+    simple_query: SimpleQueryRequest,
+    _: User = Depends(current_user)
 ) -> StreamingResponse:
-    # Note if weak model prompt is chosen, this check does not occur
-    query = new_message_request.query
+    # Note if weak model prompt is chosen, this check does not occur and will simply return that
+    # the query is valid, this is because weaker models cannot really handle this task well.
+    # Additionally, some weak model servers cannot handle concurrent inferences.
     return StreamingResponse(
-        stream_query_answerability(query), media_type="application/json"
+        stream_query_answerability(simple_query.query),
+        media_type="application/json"
     )
 
 
-@router.post("/document-search")
+@basic_router.post("/document-search")
 def handle_search_request(
-    new_message_request: CreateChatMessageRequest,
+    search_request: DocumentSearchRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
+    # Default to running LLM filter unless globally disabled
+    disable_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
 ) -> SearchResponse:
-    query = new_message_request.query
+    """Simple search endpoint, does not create a new message or records in the DB"""
+    query = search_request.message
+    filters = search_request.retrieval_options.filters
+
     logger.info(
-        f"Received {new_message_request.search_type.value} " f"search query: {query}"
+        f"Received document search query: {query}"
     )
 
-    # create record for this query in Postgres
-    query_event_id = create_query_event(
-        query=new_message_request.query,
-        chat_session_id=new_message_request.chat_session_id,
-        search_type=new_message_request.search_type,
-        llm_answer=None,
-        user_id=user.id if user is not None else None,
-        db_session=db_session,
+    user_acl_filters = build_access_filters_for_user(user, db_session)
+    final_filters = IndexFilters(
+        source_type=filters.source_type if filters else None,
+        document_set=filters.document_set if filters else None,
+        time_cutoff=filters.time_cutoff if filters else None,
+        access_control_list=user_acl_filters,
     )
 
-    retrieval_request, _, _ = retrieval_preprocessing(
-        new_message_request=new_message_request,
-        user=user,
-        db_session=db_session,
-        include_query_intent=False,
+    search_query = SearchQuery(
+        query=query,
+        search_type=search_request.search_type,
+        filters=final_filters,
+        recency_bias_multiplier=search_request.recency_bias_multiplier,
+        skip_rerank=search_request.skip_rerank,
+        skip_llm_chunk_filter=disable_llm_chunk_filter,
     )
 
-    top_chunks, _ = full_chunk_search(
-        query=retrieval_request,
+    top_chunks, llm_selection = full_chunk_search(
+        query=search_query,
         document_index=get_default_document_index(),
     )
+
     top_docs = chunks_to_search_docs(top_chunks)
+    llm_selection_indices = [index for index, value in enumerate(llm_selection) if value]
 
     return SearchResponse(
         top_documents=top_docs,
-        query_event_id=query_event_id,
-        source_type=retrieval_request.filters.source_type,
-        time_cutoff=retrieval_request.filters.time_cutoff,
-        favor_recent=retrieval_request.favor_recent,
+        llm_indices=llm_selection_indices
     )
