@@ -9,7 +9,7 @@ from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 from sqlalchemy.orm import Session
 
-from danswer.chat.chat_helpers import build_chat_system_message
+from danswer.chat.chat_helpers import build_chat_system_message, llm_doc_from_inference_chunk
 from danswer.chat.chat_helpers import build_chat_user_message
 from danswer.chat.tools import call_tool
 from danswer.configs.app_configs import CHUNK_SIZE
@@ -78,7 +78,12 @@ def _create_chat_chain(
 ) -> tuple[ChatMessage, list[ChatMessage]]:
     """Build the linear chain of messages without including the root message"""
     mainline_messages: list[ChatMessage] = []
-    all_chat_messages = fetch_chat_messages_by_session(chat_session_id, db_session)
+    all_chat_messages = fetch_chat_messages_by_session(
+        chat_session_id=chat_session_id,
+        user_id=None,
+        db_session=db_session,
+        skip_permission_check=True
+    )
     id_to_msg = {msg.id: msg for msg in all_chat_messages}
 
     if not all_chat_messages:
@@ -253,11 +258,12 @@ def _drop_messages_history_overflow(
 def extract_citations_from_stream(
     tokens: Iterator[str], links: list[str | None]
 ) -> Iterator[str]:
-    if not links:
+    valid_links = [link for link in links if link is not None]
+    if not valid_links:
         yield from tokens
         return
 
-    max_citation_num = len(links) + 1  # LLM is prompted to 1 index these
+    max_citation_num = len(valid_links) + 1  # LLM is prompted to 1 index these
     curr_segment = ""
     prepend_bracket = False
     for token in tokens:
@@ -277,7 +283,7 @@ def extract_citations_from_stream(
         if citation_found:
             numerical_value = int(citation_found.group(1))
             if 1 <= numerical_value <= max_citation_num:
-                link = links[numerical_value - 1]
+                link = valid_links[numerical_value - 1]
                 if link:
                     curr_segment = re.sub(r"\[", "[[", curr_segment, count=1)
                     curr_segment = re.sub("]", f"]]({link})", curr_segment, count=1)
@@ -676,10 +682,7 @@ def generate_ai_chat_response(
 
         # Good Debug/Breakpoint
         tokens = llm.stream(prompt)
-        links = [
-            chunk.source_links[0] if chunk.source_links else None
-            for chunk in context_docs
-        ]
+        links = [doc.link for doc in context_docs]
 
         for segment in extract_citations_from_stream(tokens, links):
             yield DanswerAnswerPiece(answer_piece=segment)
@@ -756,9 +759,10 @@ def stream_chat_packets(
         commit=False,
     )
 
+    # Create linear history of messages
     final_msg, history_msgs = _create_chat_chain(
-        chat_session_id,
-        db_session,
+        chat_session_id=chat_session_id,
+        db_session=db_session
     )
 
     if final_msg.id != new_user_message.id:
@@ -873,7 +877,7 @@ def stream_chat_packets(
         )
         llm_chunks = [top_chunks[i] for i in llm_chunks_indices]
         llm_docs = [
-            LlmDoc(text=chunk.content, link=chunk.source_links[0] if chunk.source_links else None)
+            llm_doc_from_inference_chunk(chunk)
             for chunk in llm_chunks
         ]
 

@@ -6,6 +6,10 @@ from danswer.llm.interfaces import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt, translate_danswer_msg_to_langchain
 from danswer.prompts.chat_prompts import REQUIRE_SEARCH_SYSTEM_MSG, REQUIRE_SEARCH_HINT, YES_SEARCH, NO_SEARCH, \
     QUERY_REPHRASE_SYSTEM_MSG, QUERY_REPHRASE_USER_MSG
+from danswer.utils.logger import setup_logger
+
+
+logger = setup_logger()
 
 
 def get_chat_name_messages(user_query: str) -> list[dict[str, str]]:
@@ -77,4 +81,9 @@ def history_based_query_rephrase(
         )
     )
 
-    return llm.invoke(prompt_msgs)
+    rephrased_query = llm.invoke(prompt_msgs)
+
+    logger.debug(f"Rephrased combined query: {rephrased_query}")
+
+    return rephrased_query
+

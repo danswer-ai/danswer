@@ -28,6 +28,7 @@ from danswer.prompts.direct_qa_prompts import LANGUAGE_HINT
 from danswer.prompts.direct_qa_prompts import PARAMATERIZED_PROMPT
 from danswer.prompts.direct_qa_prompts import PARAMATERIZED_PROMPT_WITHOUT_CONTEXT
 from danswer.prompts.direct_qa_prompts import WEAK_LLM_PROMPT
+from danswer.server.chat.models import LlmDoc
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_up_code_blocks
 from danswer.utils.text_processing import escape_newlines
@@ -85,18 +86,18 @@ def clean_up_source(source_str: str) -> str:
 
 
 def build_context_str(
-    context_chunks: list[InferenceChunk],
+    context_docs: list[LlmDoc],
     include_metadata: bool = True,
 ) -> str:
     context = ""
-    for chunk in context_chunks:
+    for doc in context_docs:
         if include_metadata:
-            context += f"NEW DOCUMENT: {chunk.semantic_identifier}\n"
-            context += f"Source: {clean_up_source(chunk.source_type)}\n"
-            if chunk.updated_at:
-                update_str = chunk.updated_at.strftime("%B %d, %Y %H:%M")
+            context += f"NEW DOCUMENT: {doc.semantic_identifier}\n"
+            context += f"Source: {clean_up_source(doc.source_type)}\n"
+            if doc.updated_at:
+                update_str = doc.updated_at.strftime("%B %d, %Y %H:%M")
                 context += f"Updated: {update_str}\n"
-        context += f"{CODE_BLOCK_PAT.format(chunk.content.strip())}\n\n\n"
+        context += f"{CODE_BLOCK_PAT.format(doc.text.strip())}\n\n\n"
     return context.strip()
 
 

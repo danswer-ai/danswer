@@ -1,17 +1,20 @@
 from pydantic import BaseModel
 
 from danswer.db.models import Persona
+from danswer.search.models import RecencyBiasSetting
 from danswer.server.features.document_set.models import DocumentSet
 
 
 class CreatePersonaRequest(BaseModel):
     name: str
     description: str
+    shared: bool
+    num_chunks: float
+    llm_relevance_filter: bool
+    llm_filter_extraction: bool
+    recency_bias: RecencyBiasSetting
+    prompt_ids: list[int]
     document_set_ids: list[int]
-    system_prompt: str
-    task_prompt: str
-    num_chunks: int | None = None
-    apply_llm_relevance_filter: bool | None = None
     llm_model_version_override: str | None = None
 
 

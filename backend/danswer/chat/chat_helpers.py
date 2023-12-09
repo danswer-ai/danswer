@@ -11,6 +11,7 @@ from danswer.prompts.chat_prompts import REQUIRE_CITATION_STATEMENT, CHAT_USER_P
     CITATION_REMINDER
 from danswer.prompts.direct_qa_prompts import LANGUAGE_HINT
 from danswer.prompts.prompt_utils import get_current_llm_day_time
+from danswer.server.chat.models import LlmDoc
 
 
 @lru_cache()
@@ -43,10 +44,22 @@ def build_task_prompt_reminders(
     return base_task + citation_or_nothing + language_hint_or_nothing
 
 
+def llm_doc_from_inference_chunk(
+    inf_chunk: InferenceChunk
+) -> LlmDoc:
+    return LlmDoc(
+        text=inf_chunk.content,
+        semantic_identifier=inf_chunk.semantic_identifier,
+        source_type=inf_chunk.source_type,
+        updated_at=inf_chunk.updated_at,
+        link=inf_chunk.source_links[0] if inf_chunk.source_links else None
+    )
+
+
 def build_chat_user_message(
     chat_message: ChatMessage,
     prompt: Prompt,
-    context_docs: list[InferenceChunk],
+    context_docs: list[LlmDoc],
     llm_tokenizer: Callable,
     all_doc_useful: bool,
     user_prompt_template: str = CHAT_USER_PROMPT,

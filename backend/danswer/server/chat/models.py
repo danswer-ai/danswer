@@ -31,6 +31,9 @@ class HelperResponse(BaseModel):
 class LlmDoc(BaseModel):
     """This contains the minimal set information for the LLM portion including citations"""
     text: str
+    semantic_identifier: str
+    source_type: DocumentSource
+    updated_at: datetime | None
     link: str | None
 
 

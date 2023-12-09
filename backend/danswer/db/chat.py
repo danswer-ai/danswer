@@ -136,7 +136,10 @@ def fetch_chat_message(
     if not chat_message:
         raise ValueError("Invalid Chat Message specified")
 
-    if chat_message.chat_session.user.id != user_id:
+    chat_user = chat_message.chat_session.user
+    expected_user_id = chat_user.id if chat_user is not None else None
+
+    if expected_user_id != user_id:
         logger.error(
             f"User {user_id} tried to fetch a chat message that does not belong to them"
         )
@@ -146,12 +149,15 @@ def fetch_chat_message(
 
 
 def fetch_chat_messages_by_session(
-    chat_session_id: int, user_id: UUID | None, db_session: Session
+    chat_session_id: int,
+    user_id: UUID | None,
+    db_session: Session,
+    skip_permission_check: bool = False
 ) -> list[ChatMessage]:
-    # Used to verify permission
-    fetch_chat_session_by_id(
-        chat_session_id=chat_session_id, user_id=user_id, db_session=db_session
-    )
+    if not skip_permission_check:
+        fetch_chat_session_by_id(
+            chat_session_id=chat_session_id, user_id=user_id, db_session=db_session
+        )
 
     stmt = (
         select(ChatMessage).where(ChatMessage.chat_session_id == chat_session_id)

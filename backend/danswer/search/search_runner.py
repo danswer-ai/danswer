@@ -582,6 +582,9 @@ def combine_inference_chunks(
     chunk_texts = [chunk.content for chunk in inf_chunks]
     return LlmDoc(
         text="\n".join(chunk_texts),
+        semantic_identifier=first_chunk.semantic_identifier,
+        source_type=first_chunk.source_type,
+        updated_at=first_chunk.updated_at,
         link=first_chunk.source_links[0] if first_chunk.source_links else None
     )
 
