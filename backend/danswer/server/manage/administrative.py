@@ -122,20 +122,16 @@ def validate_existing_genai_api_key(
         pass
 
     genai_api_key = get_gen_ai_api_key()
-    if genai_api_key is None:
-        raise HTTPException(status_code=404, detail="Key not found")
 
-    try:
-        llm = get_default_llm(api_key=genai_api_key, timeout=10)
-        is_valid = test_llm(llm)
-    except ValueError:
-        # this is the case where they aren't using an OpenAI-based model
-        is_valid = True
+    llm = get_default_llm(api_key=genai_api_key, timeout=10)
+    is_valid = test_llm(llm)
 
     if not is_valid:
+        if genai_api_key is None:
+            raise HTTPException(status_code=404, detail="Key not found")
         raise HTTPException(status_code=400, detail="Invalid API key provided")
 
-    # mark check as successful
+    # Mark check as successful
     get_dynamic_config_store().store(check_key_time, curr_time.timestamp())
 
 
