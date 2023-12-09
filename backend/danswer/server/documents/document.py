@@ -38,7 +38,7 @@ def get_document_info(
     )
 
     if not inference_chunks:
-        raise HTTPException(status_code=404, detail=f"Document not found")
+        raise HTTPException(status_code=404, detail="Document not found")
 
     contents = [chunk.content for chunk in inference_chunks]
 
@@ -70,7 +70,7 @@ def get_chunk_info(
     )
 
     if not inference_chunks:
-        raise HTTPException(status_code=404, detail=f"Chunk not found")
+        raise HTTPException(status_code=404, detail="Chunk not found")
 
     chunk_content = inference_chunks[0].content
 

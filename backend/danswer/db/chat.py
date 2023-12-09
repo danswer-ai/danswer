@@ -480,6 +480,16 @@ def create_db_search_doc(
     return db_search_doc
 
 
+def fetch_db_search_doc_by_id(
+    doc_id: int,
+    db_session: Session
+) -> DBSearchDoc | None:
+    """There are no safety checks here like user permission etc., use with caution"""
+    search_doc = db_session.query(SearchDoc).filter(SearchDoc.id == doc_id).first()
+    return search_doc
+
+
+
 def translate_db_search_doc_to_server_search_doc(
     db_search_doc: SearchDoc,
 ) -> ServerSearchDoc:

@@ -21,7 +21,7 @@ from danswer.document_index.document_index_utils import (
 )
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.indexing.models import InferenceChunk
-from danswer.search.models import ChunkMetric
+from danswer.search.models import ChunkMetric, IndexFilters
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
@@ -31,7 +31,7 @@ from danswer.search.search_nlp_models import CrossEncoderEnsembleModel
 from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_chunks
 from danswer.secondary_llm_flows.query_expansion import rephrase_query
-from danswer.server.chat.models import SearchDoc
+from danswer.server.chat.models import SearchDoc, LlmDoc
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
@@ -571,24 +571,44 @@ def full_chunk_search_generator(
         yield [False for _ in reranked_chunks or retrieved_chunks]
 
 
+def combine_inference_chunks(
+    inf_chunks: list[InferenceChunk]
+) -> LlmDoc:
+    if not inf_chunks:
+        return LlmDoc(text="", link=None)
+
+    # Use the first link of the document
+    first_chunk = inf_chunks[0]
+    chunk_texts = [chunk.content for chunk in inf_chunks]
+    return LlmDoc(
+        text="\n".join(chunk_texts),
+        link=first_chunk.source_links[0] if first_chunk.source_links else None
+    )
+
+
 def inference_documents_from_ids(
     doc_identifiers: list[tuple[str, int]],
     document_index: DocumentIndex,
-) -> Iterator[list[InferenceChunk] | list[bool]]:
+) -> list[LlmDoc]:
+    # Currently only fetches whole docs
+    doc_ids_set = set(doc_id for doc_id, chunk_id in doc_identifiers)
+
+    # No need for ACL here because the doc ids were validated beforehand
+    filters = IndexFilters(access_control_list=None)
+
     functions_with_args: list[tuple[Callable, tuple]] = [
-        (document_index.id_based_retrieval, (doc_ind, chunk_ind))
-        for doc_ind, chunk_ind in doc_identifiers
+        (document_index.id_based_retrieval, (doc_id, None, filters))
+        for doc_id in doc_ids_set
     ]
 
-    logger.debug(
-        "Running LLM usefulness eval in parallel (following logging may be out of order)"
-    )
     parallel_results = run_functions_tuples_in_parallel(
         functions_with_args, allow_failures=True
     )
 
-    # Any failures to retrieve would give a None
-    inference_chunks = [res for res in parallel_results if res is not None]
+    # Any failures to retrieve would give a None, drop the Nones and empty lists
+    inference_chunks_sets = [res for res in parallel_results if res]
 
-    yield inference_chunks
-    yield [True for _ in range(len(inference_chunks))]
+    return [combine_inference_chunks(chunk_set) for chunk_set in inference_chunks_sets]
+
+
+

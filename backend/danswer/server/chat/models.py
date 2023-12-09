@@ -28,6 +28,12 @@ class HelperResponse(BaseModel):
     details: list[str] | None = None
 
 
+class LlmDoc(BaseModel):
+    """This contains the minimal set information for the LLM portion including citations"""
+    text: str
+    link: str | None
+
+
 class SearchDoc(BaseModel):
     document_id: str
     chunk_ind: int
