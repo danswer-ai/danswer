@@ -29,6 +29,7 @@ export type ValidSources =
   | "requesttracker"
   | "file"
   | "google_sites"
+  | "loopio"
   | "zendesk";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
@@ -107,6 +108,10 @@ export interface GuruConfig {}
 
 export interface GongConfig {
   workspaces?: string[];
+}
+
+export interface LoopioConfig {
+  loopio_stack_name?: string;
 }
 
 export interface FileConfig {
@@ -237,6 +242,12 @@ export interface GuruCredentialJson {
 export interface GongCredentialJson {
   gong_access_key: string;
   gong_access_key_secret: string;
+}
+
+export interface LoopioCredentialJson {
+  loopio_subdomain: string;
+  loopio_client_id: string;
+  loopio_client_token: string;
 }
 
 export interface LinearCredentialJson {

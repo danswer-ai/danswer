@@ -62,6 +62,7 @@ class DocumentSource(str, Enum):
     GONG = "gong"
     GOOGLE_SITES = "google_sites"
     ZENDESK = "zendesk"
+    LOOPIO = "loopio"
 
 
 class DocumentIndexType(str, Enum):
