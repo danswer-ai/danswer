@@ -57,6 +57,7 @@ from danswer.server.danswer_api.ingestion import router as danswer_api_router
 from danswer.server.documents.cc_pair import router as cc_pair_router
 from danswer.server.documents.connector import router as connector_router
 from danswer.server.documents.credential import router as credential_router
+from danswer.server.documents.document import router as document_router
 from danswer.server.features.document_set.api import router as document_set_router
 from danswer.server.features.persona.api import router as persona_router
 from danswer.server.manage.administrative import router as admin_router
@@ -117,6 +118,7 @@ def get_application() -> FastAPI:
 
     include_router_with_global_prefix_prepended(application, chat_router)
     include_router_with_global_prefix_prepended(application, query_router)
+    include_router_with_global_prefix_prepended(application, document_router)
     include_router_with_global_prefix_prepended(application, admin_query_router)
     include_router_with_global_prefix_prepended(application, admin_router)
     include_router_with_global_prefix_prepended(application, user_router)
@@ -177,13 +179,13 @@ def get_application() -> FastAPI:
                 SECRET,
                 associate_by_email=True,
                 is_verified_by_default=True,
-                # points the user back to the login page
+                # Points the user back to the login page
                 redirect_url=f"{WEB_DOMAIN}/auth/oauth/callback",
             ),
             prefix="/auth/oauth",
             tags=["auth"],
         )
-        # need basic auth router for `logout` endpoint
+        # Need basic auth router for `logout` endpoint
         include_router_with_global_prefix_prepended(
             application,
             fastapi_users.get_logout_router(auth_backend),

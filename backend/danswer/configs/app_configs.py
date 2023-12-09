@@ -167,7 +167,7 @@ CONTINUE_ON_CONNECTOR_FAILURE = os.environ.get(
 # each worker loads the embedding models into memory.
 NUM_INDEXING_WORKERS = int(os.environ.get("NUM_INDEXING_WORKERS") or 1)
 CHUNK_SIZE = 512  # Tokens by embedding model
-CHUNK_OVERLAP = int(CHUNK_SIZE * 0.05)  # 5% overlap
+CHUNK_OVERLAP = 0
 # More accurate results at the expense of indexing speed and index size (stores additional 4 MINI_CHUNK vectors)
 ENABLE_MINI_CHUNK = os.environ.get("ENABLE_MINI_CHUNK", "").lower() == "true"
 # Finer grained chunking for more detail retention
