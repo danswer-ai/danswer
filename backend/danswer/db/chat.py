@@ -265,6 +265,31 @@ def set_as_latest_chat_message(
     db_session.commit()
 
 
+def get_prompt_by_id(
+    prompt_id: int,
+    user_id: UUID | None,
+    db_session: Session,
+    include_deleted: bool = False,
+) -> Prompt:
+    stmt = select(Prompt).where(
+        Prompt.id == prompt_id,
+        or_(Prompt.user_id == user_id, Prompt.user_id.is_(None))
+    )
+
+    if not include_deleted:
+        stmt = stmt.where(Persona.deleted.is_(False))
+
+    result = db_session.execute(stmt)
+    prompt = result.scalar_one_or_none()
+
+    if prompt is None:
+        raise ValueError(
+            f"Prompt with ID {prompt_id} does not exist or does not belong to user"
+        )
+
+    return prompt
+
+
 def get_persona_by_id(
     persona_id: int,
     user_id: UUID | None,
@@ -290,23 +315,6 @@ def get_persona_by_id(
     return persona
 
 
-def get_prompt_by_id(
-    prompt_id: int, user_id: UUID | None, db_session: Session
-) -> Prompt:
-    stmt = select(Prompt).where(
-        Prompt.id == prompt_id, or_(Prompt.user_id == user_id, Prompt.user_id.is_(None))
-    )
-    result = db_session.execute(stmt)
-    prompt = result.scalar_one_or_none()
-
-    if prompt is None:
-        raise ValueError(
-            f"Prompt with ID {prompt_id} does not exist or does not belong to user"
-        )
-
-    return prompt
-
-
 def get_prompts_by_ids(prompt_ids: list[int], db_session: Session) -> Sequence[Prompt]:
     """Unsafe, can fetch prompts from all users"""
     if not prompt_ids:
@@ -314,6 +322,15 @@ def get_prompts_by_ids(prompt_ids: list[int], db_session: Session) -> Sequence[P
     prompts = db_session.scalars(select(Prompt).where(Prompt.id.in_(prompt_ids))).all()
 
     return prompts
+
+
+def get_personas_by_ids(persona_ids: list[int], db_session: Session) -> Sequence[Persona]:
+    """Unsafe, can fetch personas from all users"""
+    if not persona_ids:
+        return []
+    personas = db_session.scalars(select(Persona).where(Persona.id.in_(persona_ids))).all()
+
+    return personas
 
 
 def get_prompt_by_name(
@@ -343,18 +360,24 @@ def get_persona_by_name(
 
 
 def upsert_prompt(
+    user_id: UUID | None,
     name: str,
+    description: str,
     system_prompt: str,
     task_prompt: str,
+    include_citations: bool,
     datetime_aware: bool,
+    personas: list[Persona] | None,
     shared: bool,
     db_session: Session,
     prompt_id: int | None = None,
-    user_id: UUID | None = None,
     default_prompt: bool = True,
     commit: bool = True,
 ) -> Prompt:
-    prompt = db_session.query(Prompt).filter_by(id=prompt_id).first()
+    prompt = None
+
+    if prompt_id is not None:
+        prompt = db_session.query(Prompt).filter_by(id=prompt_id).first()
 
     if prompt is None:
         prompt = get_prompt_by_name(
@@ -365,19 +388,29 @@ def upsert_prompt(
         if not default_prompt and prompt.default_prompt:
             raise ValueError("Cannot update default prompt with non-default.")
 
+        prompt.name = name
+        prompt.description = description
         prompt.system_prompt = system_prompt
         prompt.task_prompt = task_prompt
+        prompt.include_citations = include_citations
         prompt.datetime_aware = datetime_aware
         prompt.default_prompt = default_prompt
+
+        if personas is not None:
+            prompt.personas.clear()
+            prompt.personas = personas
 
     else:
         prompt = Prompt(
             user_id=None if shared else user_id,
             name=name,
+            description=description,
             system_prompt=system_prompt,
             task_prompt=task_prompt,
+            include_citations=include_citations,
             datetime_aware=datetime_aware,
             default_prompt=default_prompt,
+            personas=personas
         )
         db_session.add(prompt)
 
@@ -393,7 +426,7 @@ def upsert_prompt(
 def upsert_persona(
     user_id: UUID | None,
     name: str,
-    description: str | None,
+    description: str,
     num_chunks: float,
     llm_relevance_filter: bool,
     llm_filter_extraction: bool,
@@ -464,6 +497,18 @@ def upsert_persona(
     return persona
 
 
+def mark_prompt_as_deleted(
+    prompt_id: int,
+    user_id: UUID | None,
+    db_session: Session,
+) -> None:
+    prompt = get_prompt_by_id(
+        prompt_id=prompt_id, user_id=user_id, db_session=db_session
+    )
+    prompt.deleted = True
+    db_session.commit()
+
+
 def mark_persona_as_deleted(
     persona_id: int,
     user_id: UUID | None,
@@ -474,6 +519,24 @@ def mark_persona_as_deleted(
     )
     persona.deleted = True
     db_session.commit()
+
+
+def get_prompts(
+    user_id: UUID | None,
+    db_session: Session,
+    include_default: bool = True,
+    include_deleted: bool = False,
+) -> Sequence[Prompt]:
+    stmt = select(Prompt).where(
+        or_(Prompt.user_id == user_id, Prompt.user_id.is_(None))
+    )
+
+    if not include_default:
+        stmt = stmt.where(Prompt.default_prompt.is_(False))
+    if not include_deleted:
+        stmt = stmt.where(Prompt.deleted.is_(False))
+
+    return db_session.scalars(stmt).all()
 
 
 def get_personas(
@@ -488,7 +551,7 @@ def get_personas(
     )
 
     if not include_default:
-        stmt = stmt.where(Persona.default_persona == False)  # noqa: E712
+        stmt = stmt.where(Persona.default_persona.is_(False))
     if not include_slack_bot_personas:
         stmt = stmt.where(not_(Persona.name.startswith(SLACK_BOT_PERSONA_PREFIX)))
     if not include_deleted:

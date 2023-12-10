@@ -7,10 +7,10 @@ from danswer.auth.users import current_user
 from danswer.chat.process_message import stream_chat_packets
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import delete_chat_session
-from danswer.db.chat import fetch_chat_message
-from danswer.db.chat import fetch_chat_messages_by_session
-from danswer.db.chat import fetch_chat_session_by_id
-from danswer.db.chat import fetch_chat_sessions_by_user
+from danswer.db.chat import get_chat_message
+from danswer.db.chat import get_chat_messages_by_session
+from danswer.db.chat import get_chat_session_by_id
+from danswer.db.chat import get_chat_sessions_by_user
 from danswer.db.chat import set_as_latest_chat_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import update_chat_session
@@ -46,7 +46,7 @@ def get_user_chat_sessions(
 ) -> ChatSessionsResponse:
     user_id = user.id if user is not None else None
 
-    chat_sessions = fetch_chat_sessions_by_user(
+    chat_sessions = get_chat_sessions_by_user(
         user_id=user_id, deleted=False, db_session=db_session
     )
 
@@ -71,13 +71,13 @@ def get_chat_session_messages(
     user_id = user.id if user is not None else None
 
     try:
-        chat_session = fetch_chat_session_by_id(
+        chat_session = get_chat_session_by_id(
             chat_session_id=session_id, user_id=user_id, db_session=db_session
         )
     except ValueError:
         raise ValueError("Chat session does not exist or has been deleted")
 
-    session_messages = fetch_chat_messages_by_session(
+    session_messages = get_chat_messages_by_session(
         chat_session_id=session_id, user_id=user_id, db_session=db_session
     )
 
@@ -170,7 +170,7 @@ def set_message_as_latest(
 ) -> None:
     user_id = user.id if user is not None else None
 
-    chat_message = fetch_chat_message(
+    chat_message = get_chat_message(
         chat_message_id=message_identifier.message_id,
         user_id=user_id,
         db_session=db_session,

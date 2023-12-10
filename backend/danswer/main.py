@@ -59,7 +59,9 @@ from danswer.server.documents.connector import router as connector_router
 from danswer.server.documents.credential import router as credential_router
 from danswer.server.documents.document import router as document_router
 from danswer.server.features.document_set.api import router as document_set_router
-from danswer.server.features.persona.api import router as persona_router
+from danswer.server.features.persona.api import basic_router as persona_router
+from danswer.server.features.persona.api import admin_router as admin_persona_router
+from danswer.server.features.prompt.api import basic_router as prompt_router
 from danswer.server.manage.administrative import router as admin_router
 from danswer.server.manage.get_state import router as state_router
 from danswer.server.manage.slack_bot import router as slack_bot_management_router
@@ -130,6 +132,8 @@ def get_application() -> FastAPI:
         application, slack_bot_management_router
     )
     include_router_with_global_prefix_prepended(application, persona_router)
+    include_router_with_global_prefix_prepended(application, admin_persona_router)
+    include_router_with_global_prefix_prepended(application, prompt_router)
     include_router_with_global_prefix_prepended(application, state_router)
     include_router_with_global_prefix_prepended(application, danswer_api_router)
 

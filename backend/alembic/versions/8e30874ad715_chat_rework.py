@@ -52,7 +52,7 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column("description", sa.String(), nullable=True),
+        sa.Column("description", sa.String(), nullable=False),
         sa.Column("system_prompt", sa.Text(), nullable=False),
         sa.Column("task_prompt", sa.Text(), nullable=False),
         sa.Column("include_citations", sa.Boolean(), nullable=False),

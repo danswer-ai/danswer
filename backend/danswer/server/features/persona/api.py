@@ -31,8 +31,8 @@ basic_router = APIRouter(prefix="/persona")
 def create_update_persona(
     persona_id: int | None,
     create_persona_request: CreatePersonaRequest,
-    user: User | None = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
+    user: User | None,
+    db_session: Session,
 ) -> PersonaSnapshot:
     user_id = user.id if user is not None else None
 

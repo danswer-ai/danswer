@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from danswer.configs.app_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
 from danswer.configs.chat_configs import PERSONAS_YAML
 from danswer.configs.chat_configs import PROMPTS_YAML
-from danswer.db.chat import fetch_prompt_by_name
+from danswer.db.chat import get_prompt_by_name
 from danswer.db.chat import upsert_persona
 from danswer.db.chat import upsert_prompt
 from danswer.db.document_set import get_or_create_document_set_by_name
@@ -24,12 +24,17 @@ def load_prompts_from_yaml(prompts_yaml: str = PROMPTS_YAML) -> None:
     with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
         for prompt in all_prompts:
             upsert_prompt(
+                user_id=None,
                 prompt_id=prompt.get("prompt_id"),  # Generally unspecified
                 name=prompt["name"],
+                description=prompt["description"],
                 system_prompt=prompt["system"],
                 task_prompt=prompt["task"],
+                include_citations=prompt["include_citations"],
                 datetime_aware=prompt.get("datetime_aware", True),
                 default_prompt=True,
+                personas=None,
+                shared=True,
                 db_session=db_session,
             )
 
@@ -61,8 +66,8 @@ def load_personas_from_yaml(
                 prompts: list[PromptDBModel | None] | None = None
             else:
                 prompts = [
-                    fetch_prompt_by_name(
-                        prompt_name, user_id=None, db_session=db_session
+                    get_prompt_by_name(
+                        prompt_name, user_id=None, shared=True, db_session=db_session
                     )
                     for prompt_name in prompt_set_names
                 ]
@@ -73,6 +78,7 @@ def load_personas_from_yaml(
                     prompts = None
 
             upsert_persona(
+                user_id=None,
                 persona_id=persona.get("persona_id"),  # Generally unspecified
                 name=persona["name"],
                 description=persona["description"],
@@ -81,10 +87,12 @@ def load_personas_from_yaml(
                 else default_chunks,
                 llm_relevance_filter=persona.get("llm_relevance_filter"),
                 llm_filter_extraction=persona.get("llm_filter_extraction"),
+                llm_model_version_override=None,
                 recency_bias=RecencyBiasSetting(persona["recency_bias"]),
                 prompts=cast(list[PromptDBModel] | None, prompts),
                 document_sets=doc_sets,
                 default_persona=True,
+                shared=True,
                 db_session=db_session,
             )
 

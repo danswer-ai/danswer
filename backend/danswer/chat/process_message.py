@@ -15,10 +15,10 @@ from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
 from danswer.db.chat import create_db_search_doc
 from danswer.db.chat import create_new_chat_message
-from danswer.db.chat import fetch_chat_message
-from danswer.db.chat import fetch_chat_messages_by_session
-from danswer.db.chat import fetch_chat_session_by_id
-from danswer.db.chat import fetch_db_search_doc_by_id
+from danswer.db.chat import get_chat_message
+from danswer.db.chat import get_chat_messages_by_session
+from danswer.db.chat import get_chat_session_by_id
+from danswer.db.chat import get_db_search_doc_by_id
 from danswer.db.chat import get_doc_query_identifiers_from_model
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
@@ -59,7 +59,7 @@ def _create_chat_chain(
 ) -> tuple[ChatMessage, list[ChatMessage]]:
     """Build the linear chain of messages without including the root message"""
     mainline_messages: list[ChatMessage] = []
-    all_chat_messages = fetch_chat_messages_by_session(
+    all_chat_messages = get_chat_messages_by_session(
         chat_session_id=chat_session_id,
         user_id=None,
         db_session=db_session,
@@ -271,7 +271,7 @@ def stream_chat_packets(
     """
     user_id = user.id if user is not None else None
 
-    chat_session = fetch_chat_session_by_id(
+    chat_session = get_chat_session_by_id(
         chat_session_id=new_msg_req.chat_session_id,
         user_id=user_id,
         db_session=db_session,
@@ -299,7 +299,7 @@ def stream_chat_packets(
     )
 
     if parent_id is not None:
-        parent_message = fetch_chat_message(
+        parent_message = get_chat_message(
             chat_message_id=parent_id,
             user_id=user_id,
             db_session=db_session,
@@ -366,7 +366,7 @@ def stream_chat_packets(
         # In case the search doc is deleted, just don't include it
         # though this should never happen
         db_search_docs_or_none = [
-            fetch_db_search_doc_by_id(doc_id=doc_id, db_session=db_session)
+            get_db_search_doc_by_id(doc_id=doc_id, db_session=db_session)
             for doc_id in reference_doc_ids
         ]
 

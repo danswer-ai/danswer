@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
-from danswer.db.chat import fetch_chat_message
+from danswer.db.chat import get_chat_message
 from danswer.db.models import ChatMessageFeedback
 from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentRetrievalFeedback
@@ -147,7 +147,7 @@ def create_chat_message_feedback(
     if is_positive is None and feedback_text is None:
         raise ValueError("No feedback provided")
 
-    chat_message = fetch_chat_message(
+    chat_message = get_chat_message(
         chat_message_id=chat_message_id, user_id=user_id, db_session=db_session
     )
 

@@ -591,7 +591,7 @@ class Prompt(Base):
     # If not belong to a user, then it's shared
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     name: Mapped[str] = mapped_column(String)
-    description: Mapped[str | None] = mapped_column(String, nullable=True)
+    description: Mapped[str] = mapped_column(String)
     system_prompt: Mapped[str] = mapped_column(Text)
     task_prompt: Mapped[str] = mapped_column(Text)
     include_citations: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -616,7 +616,7 @@ class Persona(Base):
     # If not belong to a user, then it's shared
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     name: Mapped[str] = mapped_column(String)
-    description: Mapped[str | None] = mapped_column(String, nullable=True)
+    description: Mapped[str] = mapped_column(String)
     # Currently stored but unused, all flows use hybrid
     search_type: Mapped[SearchType] = mapped_column(
         Enum(SearchType), default=SearchType.HYBRID
