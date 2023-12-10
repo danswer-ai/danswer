@@ -24,7 +24,8 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-router = APIRouter()
+admin_router = APIRouter(prefix="/admin/persona")
+basic_router = APIRouter(prefix="/persona")
 
 
 def create_update_persona(
@@ -71,7 +72,7 @@ def create_update_persona(
     return PersonaSnapshot.from_model(persona)
 
 
-@router.post("/admin/persona")
+@admin_router.post("/")
 def create_persona(
     create_persona_request: CreatePersonaRequest,
     user: User | None = Depends(current_admin_user),
@@ -85,7 +86,7 @@ def create_persona(
     )
 
 
-@router.patch("/admin/persona/{persona_id}")
+@admin_router.patch("/{persona_id}")
 def update_persona(
     persona_id: int,
     update_persona_request: CreatePersonaRequest,
@@ -100,7 +101,7 @@ def update_persona(
     )
 
 
-@router.delete("/admin/persona/{persona_id}")
+@admin_router.delete("/{persona_id}")
 def delete_persona(
     persona_id: int,
     user: User | None = Depends(current_admin_user),
@@ -113,7 +114,7 @@ def delete_persona(
     )
 
 
-@router.get("/persona")
+@basic_router.get("/")
 def list_personas(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -125,7 +126,7 @@ def list_personas(
     ]
 
 
-@router.get("/persona/{persona_id}")
+@basic_router.get("/{persona_id}")
 def get_persona(
     persona_id: int,
     user: User | None = Depends(current_user),
@@ -140,7 +141,7 @@ def get_persona(
     )
 
 
-@router.get("/persona-utils/prompt-explorer")
+@basic_router.get("/utils/prompt-explorer")
 def build_final_template_prompt(
     system_prompt: str,
     task_prompt: str,
@@ -176,7 +177,7 @@ GPT_3_5_TURBO_MODEL_VERSIONS = [
 ]
 
 
-@router.get("/persona-utils/list-available-models")
+@admin_router.get("/utils/list-available-models")
 def list_available_model_versions(
     _: User | None = Depends(current_admin_user),
 ) -> list[str]:
@@ -187,7 +188,7 @@ def list_available_model_versions(
     return GPT_4_MODEL_VERSIONS + GPT_3_5_TURBO_MODEL_VERSIONS
 
 
-@router.get("/persona-utils/default-model")
+@admin_router.get("/utils/default-model")
 def get_default_model(
     _: User | None = Depends(current_admin_user),
 ) -> str:
