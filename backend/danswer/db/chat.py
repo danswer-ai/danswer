@@ -51,8 +51,12 @@ def get_chat_sessions_by_user(
     user_id: UUID | None,
     deleted: bool | None,
     db_session: Session,
+    include_one_shot: bool = False
 ) -> list[ChatSession]:
     stmt = select(ChatSession).where(ChatSession.user_id == user_id)
+
+    if not include_one_shot:
+        stmt = stmt.where(ChatSession.one_shot.is_(False))
 
     if deleted is not None:
         stmt = stmt.where(ChatSession.deleted == deleted)
@@ -68,11 +72,13 @@ def create_chat_session(
     description: str,
     user_id: UUID | None,
     persona_id: int | None = None,
+    one_shot: bool = False
 ) -> ChatSession:
     chat_session = ChatSession(
         user_id=user_id,
         persona_id=persona_id,
         description=description,
+        one_shot=one_shot
     )
 
     db_session.add(chat_session)

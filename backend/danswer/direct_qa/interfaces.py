@@ -44,7 +44,7 @@ class DanswerQuotes(BaseModel):
 
 # Final int is for number of output tokens
 AnswerQuestionReturn = tuple[DanswerAnswer, DanswerQuotes]
-AnswerQuestionStreamReturn = Iterator[DanswerAnswerPiece | DanswerQuotes]
+AnswerQuestionStreamReturn = Iterator[DanswerAnswerPiece | DanswerQuotes | StreamingError]
 
 
 class QAModel:

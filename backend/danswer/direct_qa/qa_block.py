@@ -7,7 +7,7 @@ from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 
 from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
-from danswer.direct_qa.interfaces import AnswerQuestionReturn
+from danswer.direct_qa.interfaces import AnswerQuestionReturn, StreamingError
 from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
 from danswer.direct_qa.interfaces import DanswerAnswer
 from danswer.direct_qa.interfaces import DanswerAnswerPiece
@@ -314,6 +314,9 @@ class QABlock(QAModel):
         trimmed_context_docs = tokenizer_trim_chunks(context_docs)
         prompt = self._qa_handler.build_prompt(query, trimmed_context_docs)
         tokens = self._llm.stream(prompt)
-        yield from self._qa_handler.process_llm_token_stream(
-            tokens, trimmed_context_docs
-        )
+        try:
+            yield from self._qa_handler.process_llm_token_stream(
+                tokens, trimmed_context_docs
+            )
+        except Exception as e:
+            yield StreamingError(error=str(e))
