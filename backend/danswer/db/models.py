@@ -599,6 +599,7 @@ class Prompt(Base):
     # Default prompts are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
     default_prompt: Mapped[bool] = mapped_column(Boolean, default=False)
+    deleted: Mapped[bool] = mapped_column(Boolean, default=False)
 
     user: Mapped[User] = relationship("User", back_populates="prompts")
     personas: Mapped[list["Persona"]] = relationship(
@@ -630,9 +631,6 @@ class Persona(Base):
     # Can also be admin disabled globally
     llm_filter_extraction: Mapped[bool] = mapped_column(Boolean)
     recency_bias: Mapped[RecencyBiasSetting] = mapped_column(Enum(RecencyBiasSetting))
-    # Default personas are configured via backend during deployment
-    # Treated specially (cannot be user edited etc.)
-    default_persona: Mapped[bool] = mapped_column(Boolean, default=False)
     # Allows the Persona to specify a different LLM version than is controlled
     # globablly via env variables. For flexibility, validity is not currently enforced
     # NOTE: only is applied on the actual response generation - is not used for things like
@@ -640,6 +638,10 @@ class Persona(Base):
     llm_model_version_override: Mapped[str | None] = mapped_column(
         String, nullable=True
     )
+    # Default personas are configured via backend during deployment
+    # Treated specially (cannot be user edited etc.)
+    default_persona: Mapped[bool] = mapped_column(Boolean, default=False)
+    deleted: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # These are only defaults, users can select from all if desired
     prompts: Mapped[list[Prompt]] = relationship(

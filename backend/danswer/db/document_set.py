@@ -60,6 +60,8 @@ def get_document_set_by_name(
 def get_document_sets_by_ids(
     db_session: Session, document_set_ids: list[int]
 ) -> Sequence[DocumentSetDBModel]:
+    if not document_set_ids:
+        return []
     return db_session.scalars(
         select(DocumentSetDBModel).where(DocumentSetDBModel.id.in_(document_set_ids))
     ).all()

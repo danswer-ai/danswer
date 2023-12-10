@@ -1,11 +1,17 @@
-from langchain.schema import SystemMessage, BaseMessage, HumanMessage
+from langchain.schema import BaseMessage
+from langchain.schema import HumanMessage
+from langchain.schema import SystemMessage
 
 from danswer.db.models import ChatMessage
 from danswer.llm.factory import get_default_llm
 from danswer.llm.interfaces import LLM
-from danswer.llm.utils import dict_based_prompt_to_langchain_prompt, translate_danswer_msg_to_langchain
-from danswer.prompts.chat_prompts import REQUIRE_SEARCH_SYSTEM_MSG, REQUIRE_SEARCH_HINT, YES_SEARCH, NO_SEARCH, \
-    QUERY_REPHRASE_SYSTEM_MSG, QUERY_REPHRASE_USER_MSG
+from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
+from danswer.llm.utils import translate_danswer_msg_to_langchain
+from danswer.prompts.chat_prompts import NO_SEARCH
+from danswer.prompts.chat_prompts import QUERY_REPHRASE_SYSTEM_MSG
+from danswer.prompts.chat_prompts import QUERY_REPHRASE_USER_MSG
+from danswer.prompts.chat_prompts import REQUIRE_SEARCH_HINT
+from danswer.prompts.chat_prompts import REQUIRE_SEARCH_SYSTEM_MSG
 from danswer.utils.logger import setup_logger
 
 
@@ -69,16 +75,12 @@ def history_based_query_rephrase(
 
     prompt_msgs.append(SystemMessage(content=QUERY_REPHRASE_SYSTEM_MSG))
 
-    prompt_msgs.extend(
-        [translate_danswer_msg_to_langchain(msg) for msg in history]
-    )
+    prompt_msgs.extend([translate_danswer_msg_to_langchain(msg) for msg in history])
 
     last_query = query_message.message
 
     prompt_msgs.append(
-        HumanMessage(
-            content=QUERY_REPHRASE_USER_MSG.format(final_query=last_query)
-        )
+        HumanMessage(content=QUERY_REPHRASE_USER_MSG.format(final_query=last_query))
     )
 
     rephrased_query = llm.invoke(prompt_msgs)
@@ -86,4 +88,3 @@ def history_based_query_rephrase(
     logger.debug(f"Rephrased combined query: {rephrased_query}")
 
     return rephrased_query
-

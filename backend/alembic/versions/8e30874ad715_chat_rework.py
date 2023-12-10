@@ -39,12 +39,8 @@ def upgrade() -> None:
         sa.Column("score", sa.Float(), nullable=False),
         sa.Column("match_highlights", postgresql.ARRAY(sa.String()), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column(
-            "primary_owners", postgresql.ARRAY(sa.String()), nullable=True
-        ),
-        sa.Column(
-            "secondary_owners", postgresql.ARRAY(sa.String()), nullable=True
-        ),
+        sa.Column("primary_owners", postgresql.ARRAY(sa.String()), nullable=True),
+        sa.Column("secondary_owners", postgresql.ARRAY(sa.String()), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
@@ -62,6 +58,7 @@ def upgrade() -> None:
         sa.Column("include_citations", sa.Boolean(), nullable=False),
         sa.Column("datetime_aware", sa.Boolean(), nullable=False),
         sa.Column("default_prompt", sa.Boolean(), nullable=False),
+        sa.Column("deleted", sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(
             ["user_id"],
             ["user.id"],
@@ -94,11 +91,19 @@ def upgrade() -> None:
     op.drop_column("chat_feedback", "chat_message_edit_number")
     op.drop_column("chat_feedback", "chat_message_chat_session_id")
     op.drop_column("chat_feedback", "chat_message_message_number")
-    op.drop_constraint('chat_message_pkey', 'chat_message', type_='primary')
-    op.add_column("chat_message", sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True, nullable=False, unique=True))
+    op.drop_constraint("chat_message_pkey", "chat_message", type_="primary")
     op.add_column(
-        "chat_message", sa.Column("prompt_id", sa.Integer(), nullable=True)
+        "chat_message",
+        sa.Column(
+            "id",
+            sa.Integer(),
+            primary_key=True,
+            autoincrement=True,
+            nullable=False,
+            unique=True,
+        ),
     )
+    op.add_column("chat_message", sa.Column("prompt_id", sa.Integer(), nullable=True))
     op.add_column(
         "chat_message",
         sa.Column("parent_message", sa.Integer(), nullable=True),
@@ -115,15 +120,11 @@ def upgrade() -> None:
         "chat_message",
         sa.Column(
             "gen_ai_feedback",
-            sa.Enum(
-                "LIKE", "DISLIKE", name="qafeedbacktype", native_enum=False
-            ),
+            sa.Enum("LIKE", "DISLIKE", name="qafeedbacktype", native_enum=False),
             nullable=True,
         ),
     )
-    op.drop_constraint(
-        "fk_chat_message_persona_id", "chat_message", type_="foreignkey"
-    )
+    op.drop_constraint("fk_chat_message_persona_id", "chat_message", type_="foreignkey")
     op.drop_column("chat_message", "latest")
     op.drop_column("chat_message", "edit_number")
     op.drop_column("chat_message", "reference_docs")
@@ -136,10 +137,7 @@ def upgrade() -> None:
         existing_type=sa.INTEGER(),
         nullable=False,
     )
-    op.add_column(
-        "chat_session",
-        sa.Column("one_shot", sa.Boolean(), nullable=False)
-    )
+    op.add_column("chat_session", sa.Column("one_shot", sa.Boolean(), nullable=False))
     op.add_column(
         "document_retrieval_feedback",
         sa.Column("chat_message_id", sa.Integer(), nullable=False),
@@ -181,8 +179,13 @@ def upgrade() -> None:
         sa.Column(
             "recency_bias",
             sa.Enum(
-                "favor_recent", "base_decay", "no_decay", "auto", name="recency_bias", native_enum=False
-            )
+                "favor_recent",
+                "base_decay",
+                "no_decay",
+                "auto",
+                name="recency_bias",
+                native_enum=False,
+            ),
         ),
     )
     op.alter_column(
@@ -199,11 +202,8 @@ def upgrade() -> None:
     op.drop_column("persona", "system_text")
     op.drop_column("persona", "datetime_aware")
     op.drop_column("persona", "retrieval_enabled")
-    op.drop_column("persona", "deleted")
 
-    op.create_foreign_key(
-        None, "chat_message", "prompt", ["prompt_id"], ["id"]
-    )
+    op.create_foreign_key(None, "chat_message", "prompt", ["prompt_id"], ["id"])
     op.create_foreign_key(
         None, "chat_feedback", "chat_message", ["chat_message_id"], ["id"]
     )

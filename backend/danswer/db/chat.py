@@ -28,7 +28,7 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def fetch_chat_session_by_id(
+def get_chat_session_by_id(
     chat_session_id: int, user_id: UUID | None, db_session: Session
 ) -> ChatSession:
     stmt = select(ChatSession).where(
@@ -47,7 +47,7 @@ def fetch_chat_session_by_id(
     return chat_session
 
 
-def fetch_chat_sessions_by_user(
+def get_chat_sessions_by_user(
     user_id: UUID | None,
     deleted: bool | None,
     db_session: Session,
@@ -84,7 +84,7 @@ def create_chat_session(
 def update_chat_session(
     user_id: UUID | None, chat_session_id: int, description: str, db_session: Session
 ) -> ChatSession:
-    chat_session = fetch_chat_session_by_id(
+    chat_session = get_chat_session_by_id(
         chat_session_id=chat_session_id, user_id=user_id, db_session=db_session
     )
 
@@ -104,7 +104,7 @@ def delete_chat_session(
     db_session: Session,
     hard_delete: bool = HARD_DELETE_CHATS,
 ) -> None:
-    chat_session = fetch_chat_session_by_id(
+    chat_session = get_chat_session_by_id(
         chat_session_id=chat_session_id, user_id=user_id, db_session=db_session
     )
 
@@ -123,7 +123,7 @@ def delete_chat_session(
     db_session.commit()
 
 
-def fetch_chat_message(
+def get_chat_message(
     chat_message_id: int,
     user_id: UUID | None,
     db_session: Session,
@@ -143,19 +143,19 @@ def fetch_chat_message(
         logger.error(
             f"User {user_id} tried to fetch a chat message that does not belong to them"
         )
-        raise ValueError(f"Chat message does not belong to user")
+        raise ValueError("Chat message does not belong to user")
 
     return chat_message
 
 
-def fetch_chat_messages_by_session(
+def get_chat_messages_by_session(
     chat_session_id: int,
     user_id: UUID | None,
     db_session: Session,
-    skip_permission_check: bool = False
+    skip_permission_check: bool = False,
 ) -> list[ChatMessage]:
     if not skip_permission_check:
-        fetch_chat_session_by_id(
+        get_chat_session_by_id(
             chat_session_id=chat_session_id, user_id=user_id, db_session=db_session
         )
 
@@ -256,7 +256,7 @@ def set_as_latest_chat_message(
             f"Trying to set a latest message without parent, message id: {chat_message.id}"
         )
 
-    parent_message = fetch_chat_message(
+    parent_message = get_chat_message(
         chat_message_id=parent_message_id, user_id=user_id, db_session=db_session
     )
 
@@ -265,10 +265,20 @@ def set_as_latest_chat_message(
     db_session.commit()
 
 
-def fetch_persona_by_id(
-    persona_id: int, user_id: UUID | None, db_session: Session
+def get_persona_by_id(
+    persona_id: int,
+    user_id: UUID | None,
+    db_session: Session,
+    include_deleted: bool = False,
 ) -> Persona:
-    stmt = select(Persona).where(Persona.id == persona_id, Persona.user_id == user_id)
+    stmt = select(Persona).where(
+        Persona.id == persona_id,
+        or_(Persona.user_id == user_id, Persona.user_id.is_(None)),
+    )
+
+    if not include_deleted:
+        stmt = stmt.where(Persona.deleted.is_(False))
+
     result = db_session.execute(stmt)
     persona = result.scalar_one_or_none()
 
@@ -280,22 +290,54 @@ def fetch_persona_by_id(
     return persona
 
 
-def fetch_prompt_by_name(
-    prompt_name: str, user_id: UUID | None, db_session: Session
+def get_prompt_by_id(
+    prompt_id: int, user_id: UUID | None, db_session: Session
+) -> Prompt:
+    stmt = select(Prompt).where(
+        Prompt.id == prompt_id, or_(Prompt.user_id == user_id, Prompt.user_id.is_(None))
+    )
+    result = db_session.execute(stmt)
+    prompt = result.scalar_one_or_none()
+
+    if prompt is None:
+        raise ValueError(
+            f"Prompt with ID {prompt_id} does not exist or does not belong to user"
+        )
+
+    return prompt
+
+
+def get_prompts_by_ids(prompt_ids: list[int], db_session: Session) -> Sequence[Prompt]:
+    """Unsafe, can fetch prompts from all users"""
+    if not prompt_ids:
+        return []
+    prompts = db_session.scalars(select(Prompt).where(Prompt.id.in_(prompt_ids))).all()
+
+    return prompts
+
+
+def get_prompt_by_name(
+    prompt_name: str, user_id: UUID | None, shared: bool, db_session: Session
 ) -> Prompt | None:
-    """Will throw exception if multiple prompt found by the name"""
-    stmt = select(Prompt).where(Prompt.name == prompt_name, Prompt.user_id == user_id)
+    """Cannot do shared and user owned simultaneously as there may be two of those"""
+    stmt = select(Prompt).where(Prompt.name == prompt_name)
+    if shared:
+        stmt = stmt.where(Prompt.user_id.is_(None))
+    else:
+        stmt = stmt.where(Prompt.user_id == user_id)
     result = db_session.execute(stmt).scalar_one_or_none()
     return result
 
 
-def fetch_persona_by_name(
-    persona_name: str, user_id: UUID | None, db_session: Session
+def get_persona_by_name(
+    persona_name: str, user_id: UUID | None, shared: bool, db_session: Session
 ) -> Persona | None:
-    """Will throw exception if multiple personas found by the name"""
-    stmt = select(Persona).where(
-        Persona.name == persona_name, Persona.user_id == user_id
-    )
+    """Cannot do shared and user owned simultaneously as there may be two of those"""
+    stmt = select(Persona).where(Persona.name == persona_name)
+    if shared:
+        stmt = stmt.where(Persona.user_id.is_(None))
+    else:
+        stmt = stmt.where(Persona.user_id == user_id)
     result = db_session.execute(stmt).scalar_one_or_none()
     return result
 
@@ -305,6 +347,7 @@ def upsert_prompt(
     system_prompt: str,
     task_prompt: str,
     datetime_aware: bool,
+    shared: bool,
     db_session: Session,
     prompt_id: int | None = None,
     user_id: UUID | None = None,
@@ -314,8 +357,8 @@ def upsert_prompt(
     prompt = db_session.query(Prompt).filter_by(id=prompt_id).first()
 
     if prompt is None:
-        prompt = fetch_prompt_by_name(
-            prompt_name=name, user_id=user_id, db_session=db_session
+        prompt = get_prompt_by_name(
+            prompt_name=name, user_id=user_id, shared=shared, db_session=db_session
         )
 
     if prompt:
@@ -329,7 +372,7 @@ def upsert_prompt(
 
     else:
         prompt = Prompt(
-            user_id=user_id,
+            user_id=None if shared else user_id,
             name=name,
             system_prompt=system_prompt,
             task_prompt=task_prompt,
@@ -348,6 +391,7 @@ def upsert_prompt(
 
 
 def upsert_persona(
+    user_id: UUID | None,
     name: str,
     description: str | None,
     num_chunks: float,
@@ -356,18 +400,20 @@ def upsert_persona(
     recency_bias: RecencyBiasSetting,
     prompts: list[Prompt] | None,
     document_sets: list[DBDocumentSet] | None,
+    llm_model_version_override: str | None,
+    shared: bool,
     db_session: Session,
     persona_id: int | None = None,
-    user_id: UUID | None = None,
-    default_persona: bool = True,
-    llm_model_version_override: str | None = None,
+    default_persona: bool = False,
     commit: bool = True,
 ) -> Persona:
-    persona = db_session.query(Persona).filter_by(id=persona_id).first()
+    persona = None
+    if persona_id is not None:
+        persona = db_session.query(Persona).filter_by(id=persona_id).first()
 
     if persona is None:
-        persona = fetch_persona_by_name(
-            persona_name=name, user_id=user_id, db_session=db_session
+        persona = get_persona_by_name(
+            persona_name=name, user_id=user_id, shared=shared, db_session=db_session
         )
 
     if persona:
@@ -395,6 +441,7 @@ def upsert_persona(
 
     else:
         persona = Persona(
+            user_id=None if shared else user_id,
             name=name,
             description=description,
             num_chunks=num_chunks,
@@ -417,19 +464,35 @@ def upsert_persona(
     return persona
 
 
-def fetch_personas(
+def mark_persona_as_deleted(
+    persona_id: int,
     user_id: UUID | None,
     db_session: Session,
-    include_default: bool = False,
+) -> None:
+    persona = get_persona_by_id(
+        persona_id=persona_id, user_id=user_id, db_session=db_session
+    )
+    persona.deleted = True
+    db_session.commit()
+
+
+def get_personas(
+    user_id: UUID | None,
+    db_session: Session,
+    include_default: bool = True,
     include_slack_bot_personas: bool = False,
+    include_deleted: bool = False,
 ) -> Sequence[Persona]:
     stmt = select(Persona).where(
         or_(Persona.user_id == user_id, Persona.user_id.is_(None))
     )
+
     if not include_default:
         stmt = stmt.where(Persona.default_persona == False)  # noqa: E712
     if not include_slack_bot_personas:
         stmt = stmt.where(not_(Persona.name.startswith(SLACK_BOT_PERSONA_PREFIX)))
+    if not include_deleted:
+        stmt = stmt.where(Persona.deleted.is_(False))
 
     return db_session.scalars(stmt).all()
 
@@ -486,14 +549,10 @@ def create_db_search_doc(
     return db_search_doc
 
 
-def fetch_db_search_doc_by_id(
-    doc_id: int,
-    db_session: Session
-) -> DBSearchDoc | None:
+def get_db_search_doc_by_id(doc_id: int, db_session: Session) -> DBSearchDoc | None:
     """There are no safety checks here like user permission etc., use with caution"""
     search_doc = db_session.query(SearchDoc).filter(SearchDoc.id == doc_id).first()
     return search_doc
-
 
 
 def translate_db_search_doc_to_server_search_doc(
