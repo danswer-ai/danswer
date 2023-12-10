@@ -30,6 +30,7 @@ class HelperResponse(BaseModel):
 
 class LlmDoc(BaseModel):
     """This contains the minimal set information for the LLM portion including citations"""
+
     text: str
     semantic_identifier: str
     source_type: DocumentSource
@@ -79,6 +80,7 @@ class SearchResponse(RetrievalDocs):
 class QADocsResponse(RetrievalDocs):
     predicted_flow: QueryFlow | None
     predicted_search: SearchType | None
+    applied_source_filters: list[DocumentSource] | None
     time_cutoff: datetime | None
     recency_bias_multiplier: float
 

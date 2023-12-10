@@ -406,6 +406,7 @@ def stream_chat_packets(
             top_documents=top_docs,
             predicted_flow=predicted_flow,
             predicted_search=predicted_search_type,
+            applied_source_filters=retrieval_request.filters.source_type,
             time_cutoff=time_cutoff,
             recency_bias_multiplier=recency_bias_multiplier,
         ).dict()
