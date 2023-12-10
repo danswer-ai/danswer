@@ -8,7 +8,7 @@ from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.utils import decompose_block_id
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.feedback import create_doc_retrieval_feedback
-from danswer.db.feedback import update_query_event_feedback
+#from danswer.db.feedback import update_query_event_feedback
 from danswer.document_index.factory import get_default_document_index
 
 

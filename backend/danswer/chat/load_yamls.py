@@ -25,7 +25,7 @@ def load_prompts_from_yaml(prompts_yaml: str = PROMPTS_YAML) -> None:
         for prompt in all_prompts:
             upsert_prompt(
                 user_id=None,
-                prompt_id=prompt.get("prompt_id"),  # Generally unspecified
+                prompt_id=prompt.get("id"),  # Generally unspecified
                 name=prompt["name"],
                 description=prompt["description"],
                 system_prompt=prompt["system"],
@@ -79,7 +79,7 @@ def load_personas_from_yaml(
 
             upsert_persona(
                 user_id=None,
-                persona_id=persona.get("persona_id"),  # Generally unspecified
+                persona_id=persona.get("id"),  # Generally unspecified
                 name=persona["name"],
                 description=persona["description"],
                 num_chunks=persona.get("num_chunks")

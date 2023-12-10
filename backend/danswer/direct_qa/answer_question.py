@@ -11,9 +11,7 @@ from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import QUERY_EVENT_ID
-from danswer.db.chat import fetch_chat_session_by_id
-from danswer.db.feedback import update_query_event_llm_answer
-from danswer.db.feedback import update_query_event_retrieved_documents
+from danswer.db.chat import get_chat_session_by_id
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.direct_qa.factory import get_default_qa_model

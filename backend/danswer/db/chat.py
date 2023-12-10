@@ -380,12 +380,9 @@ def upsert_prompt(
     default_prompt: bool = True,
     commit: bool = True,
 ) -> Prompt:
-    prompt = None
-
     if prompt_id is not None:
         prompt = db_session.query(Prompt).filter_by(id=prompt_id).first()
-
-    if prompt is None:
+    else:
         prompt = get_prompt_by_name(
             prompt_name=name, user_id=user_id, shared=shared, db_session=db_session
         )
@@ -416,7 +413,7 @@ def upsert_prompt(
             include_citations=include_citations,
             datetime_aware=datetime_aware,
             default_prompt=default_prompt,
-            personas=personas
+            personas=personas or []
         )
         db_session.add(prompt)
 
@@ -446,11 +443,9 @@ def upsert_persona(
     default_persona: bool = False,
     commit: bool = True,
 ) -> Persona:
-    persona = None
     if persona_id is not None:
         persona = db_session.query(Persona).filter_by(id=persona_id).first()
-
-    if persona is None:
+    else:
         persona = get_persona_by_name(
             persona_name=name, user_id=user_id, shared=shared, db_session=db_session
         )
@@ -480,6 +475,7 @@ def upsert_persona(
 
     else:
         persona = Persona(
+            id=persona_id,
             user_id=None if shared else user_id,
             name=name,
             description=description,
@@ -487,8 +483,8 @@ def upsert_persona(
             llm_relevance_filter=llm_relevance_filter,
             llm_filter_extraction=llm_filter_extraction,
             recency_bias=recency_bias,
-            prompts=prompts,
             default_persona=default_persona,
+            prompts=prompts or [],
             document_sets=document_sets or [],
             llm_model_version_override=llm_model_version_override,
         )

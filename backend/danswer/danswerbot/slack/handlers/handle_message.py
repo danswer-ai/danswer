@@ -23,12 +23,14 @@ from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import ChannelIdAdapter
 from danswer.danswerbot.slack.utils import fetch_userids_from_emails
 from danswer.danswerbot.slack.utils import respond_in_thread
-from danswer.db.chat import create_chat_session
+from danswer.db.chat import create_chat_session, get_persona_by_id
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
 from danswer.direct_qa.answer_question import answer_qa_query
-from danswer.search.models import BaseFilters
-from danswer.server.chat.models import QAResponse
+from danswer.one_shot_answer.answer_question import get_one_shot_answer
+from danswer.one_shot_answer.models import OneShotQAResponse, DirectQARequest
+from danswer.search.models import BaseFilters, OptionalSearchSetting
+from danswer.server.chat.models import QAResponse, RetrievalDetails
 from danswer.utils.logger import setup_logger
 
 logger_base = setup_logger()
@@ -90,7 +92,8 @@ def handle_message(
     sender_id = message_info.sender
     bipass_filters = message_info.bipass_filters
     is_bot_msg = message_info.is_bot_msg
-    persona = channel_config.persona if channel_config else None
+
+    engine = get_sqlalchemy_engine()
 
     logger = cast(
         logging.Logger,
@@ -98,10 +101,20 @@ def handle_message(
     )
 
     document_set_names: list[str] | None = None
+    persona = channel_config.persona if channel_config else None
     if persona:
         document_set_names = [
             document_set.name for document_set in persona.document_sets
         ]
+        prompt = persona.prompts[0] if persona.prompts else None
+    else:
+        with Session(engine, expire_on_commit=False) as db_session:
+            persona = get_persona_by_id(
+                persona_id=0,
+                user_id=None,
+                db_session=db_session
+            )
+            prompt = persona.prompts[0] if persona.prompts else None
 
     should_respond_even_with_no_docs = persona.num_chunks == 0 if persona else False
 
@@ -176,34 +189,18 @@ def handle_message(
         backoff=2,
         logger=logger,
     )
-    def _get_answer(new_message_request: NewMessageRequest) -> QAResponse:
-        engine = get_sqlalchemy_engine()
+    def _get_answer(new_message_request: DirectQARequest) -> OneShotQAResponse:
         with Session(engine, expire_on_commit=False) as db_session:
             # This also handles creating the query event in postgres
-            answer = answer_qa_query(
-                new_message_request=new_message_request,
+            answer = get_one_shot_answer(
+                query_req=new_message_request,
                 user=None,
-                db_session=db_session,
-                answer_generation_timeout=answer_generation_timeout,
-                enable_reflexion=reflexion,
-                bypass_acl=bypass_acl,
+                db_session=db_session
             )
             if not answer.error_msg:
                 return answer
             else:
                 raise RuntimeError(answer.error_msg)
-
-    # create a chat session for this interaction
-    # TODO: when chat support is added to Slack, this should check
-    # for an existing chat session associated with this thread
-    with Session(get_sqlalchemy_engine()) as db_session:
-        chat_session = create_chat_session(
-            db_session=db_session,
-            description="",
-            user_id=None,
-            persona_id=persona.id if persona else None,
-        )
-        chat_session_id = chat_session.id
 
     answer_failed = False
     try:
@@ -215,14 +212,20 @@ def handle_message(
             time_cutoff=None,
         )
 
+        retrieval_details = RetrievalDetails(
+            run_search=OptionalSearchSetting.ALWAYS,
+            real_time=False,
+            filters=filters,
+            enable_auto_detect_filters=persona.llm_filter_extraction
+        )
+
         # This includes throwing out answer via reflexion
         answer = _get_answer(
-            NewMessageRequest(
-                chat_session_id=chat_session_id,
+            DirectQARequest(
                 query=msg,
-                filters=filters,
-                enable_auto_detect_filters=not disable_auto_detect_filters,
-                real_time=disable_cot,
+                prompt_id=prompt.id if prompt else None,
+                persona_id=persona.id,
+                retrieval_options=retrieval_details,
             )
         )
     except Exception as e:
