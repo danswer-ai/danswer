@@ -68,8 +68,12 @@ class SearchDoc(BaseModel):
         return initial_dict
 
 
+class SavedSearchDoc(SearchDoc):
+    db_doc_id: int
+
+
 class RetrievalDocs(BaseModel):
-    top_documents: list[SearchDoc]
+    top_documents: list[SavedSearchDoc]
 
 
 class SearchResponse(RetrievalDocs):
@@ -78,6 +82,7 @@ class SearchResponse(RetrievalDocs):
 
 # First chunk of info for streaming QA
 class QADocsResponse(RetrievalDocs):
+    rephrased_query: str | None = None
     predicted_flow: QueryFlow | None
     predicted_search: SearchType | None
     applied_source_filters: list[DocumentSource] | None

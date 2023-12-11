@@ -20,7 +20,7 @@ from danswer.db.models import Prompt
 from danswer.db.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.search.models import RecencyBiasSetting
-from danswer.server.chat.models import ChatMessageDetail
+from danswer.server.chat.models import ChatMessageDetail, SavedSearchDoc
 from danswer.server.chat.models import RetrievalDocs
 from danswer.server.chat.models import SearchDoc as ServerSearchDoc
 from danswer.utils.logger import setup_logger
@@ -610,6 +610,7 @@ def create_db_search_doc(
     )
 
     db_session.add(db_search_doc)
+    db_session.commit()
 
     return db_search_doc
 
@@ -622,8 +623,9 @@ def get_db_search_doc_by_id(doc_id: int, db_session: Session) -> DBSearchDoc | N
 
 def translate_db_search_doc_to_server_search_doc(
     db_search_doc: SearchDoc,
-) -> ServerSearchDoc:
-    return ServerSearchDoc(
+) -> SavedSearchDoc:
+    return SavedSearchDoc(
+        db_doc_id=db_search_doc.id,
         document_id=db_search_doc.document_id,
         chunk_ind=db_search_doc.chunk_ind,
         semantic_identifier=db_search_doc.semantic_id,

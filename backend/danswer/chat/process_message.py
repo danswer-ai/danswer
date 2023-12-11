@@ -13,7 +13,7 @@ from danswer.configs.app_configs import CHUNK_SIZE
 from danswer.configs.app_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
-from danswer.db.chat import create_db_search_doc
+from danswer.db.chat import create_db_search_doc, translate_db_search_doc_to_server_search_doc
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_chat_message
 from danswer.db.chat import get_chat_messages_by_session
@@ -346,8 +346,6 @@ def stream_chat_packets(
                 query_message=final_msg, history=history_msgs, llm=llm
             )
 
-    reference_db_search_docs = None
-    top_docs: list[SearchDoc] | None = None
     if reference_doc_ids:
         identifier_tuples = get_doc_query_identifiers_from_model(
             search_doc_ids=reference_doc_ids,
@@ -402,12 +400,24 @@ def stream_chat_packets(
         top_chunks = cast(list[InferenceChunk], next(documents_generator))
 
         top_docs = chunks_to_search_docs(top_chunks)
+
+        reference_db_search_docs = [
+            create_db_search_doc(server_search_doc=top_doc, db_session=db_session)
+            for top_doc in top_docs
+        ]
+
+        response_docs = [
+            translate_db_search_doc_to_server_search_doc(db_search_doc)
+            for db_search_doc in reference_db_search_docs
+        ]
+
         initial_response = QADocsResponse(
-            top_documents=top_docs,
+            rephrased_query=rephrased_query,
+            top_documents=response_docs,
             predicted_flow=predicted_flow,
             predicted_search=predicted_search_type,
             applied_source_filters=retrieval_request.filters.source_type,
-            time_cutoff=time_cutoff,
+            applied_time_cutoff=time_cutoff,
             recency_bias_multiplier=recency_bias_multiplier,
         ).dict()
         yield get_json_line(initial_response)
@@ -441,6 +451,7 @@ def stream_chat_packets(
 
     else:
         llm_docs = []
+        reference_db_search_docs = None
 
     # LLM prompt building, response capturing, etc all handled in here
     response_packets = generate_ai_chat_response(
@@ -464,12 +475,6 @@ def stream_chat_packets(
             error = packet.error
 
         yield get_json_line(packet.dict())
-
-    if reference_db_search_docs is None and top_docs is not None:
-        reference_db_search_docs = [
-            create_db_search_doc(server_search_doc=top_doc, db_session=db_session)
-            for top_doc in top_docs
-        ]
 
     # Saving Gen AI answer and responding with message info
     gen_ai_response_message = create_new_chat_message(
