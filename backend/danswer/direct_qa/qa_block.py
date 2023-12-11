@@ -86,7 +86,7 @@ def clean_up_source(source_str: str) -> str:
 
 
 def build_context_str(
-    context_docs: list[LlmDoc],
+    context_docs: list[LlmDoc | InferenceChunk],
     include_metadata: bool = True,
 ) -> str:
     context = ""
@@ -97,7 +97,7 @@ def build_context_str(
             if doc.updated_at:
                 update_str = doc.updated_at.strftime("%B %d, %Y %H:%M")
                 context += f"Updated: {update_str}\n"
-        context += f"{CODE_BLOCK_PAT.format(doc.text.strip())}\n\n\n"
+        context += f"{CODE_BLOCK_PAT.format(doc.content.strip())}\n\n\n"
     return context.strip()
 
 

@@ -14,7 +14,7 @@ LOCAL_CHAT_ENDPOINT = f"http://127.0.0.1:{APP_PORT}/chat/"
 
 
 def create_new_session() -> int:
-    data = {"persona_id": 1}
+    data = {"persona_id": 0}
     response = requests.post(LOCAL_CHAT_ENDPOINT + "create-chat-session", json=data)
     response.raise_for_status()
     new_session_id = response.json()["chat_session_id"]

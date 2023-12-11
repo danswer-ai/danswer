@@ -195,14 +195,16 @@ def handle_message(
             answer = get_one_shot_answer(
                 query_req=new_message_request,
                 user=None,
-                db_session=db_session
+                db_session=db_session,
+                answer_generation_timeout=answer_generation_timeout,
+                enable_reflexion=reflexion,
+                bypass_acl=bypass_acl,
             )
             if not answer.error_msg:
                 return answer
             else:
                 raise RuntimeError(answer.error_msg)
 
-    answer_failed = False
     try:
         # By leaving time_cutoff and favor_recent as None, and setting enable_auto_detect_filters
         # it allows the slack flow to extract out filters from the user query
@@ -212,11 +214,15 @@ def handle_message(
             time_cutoff=None,
         )
 
+        auto_detect_filters = persona.llm_filter_extraction
+        if disable_auto_detect_filters:
+            auto_detect_filters = False
+
         retrieval_details = RetrievalDetails(
             run_search=OptionalSearchSetting.ALWAYS,
             real_time=False,
             filters=filters,
-            enable_auto_detect_filters=persona.llm_filter_extraction
+            enable_auto_detect_filters=auto_detect_filters
         )
 
         # This includes throwing out answer via reflexion
@@ -226,10 +232,10 @@ def handle_message(
                 prompt_id=prompt.id if prompt else None,
                 persona_id=persona.id,
                 retrieval_options=retrieval_details,
+                chain_of_thought=not disable_cot
             )
         )
     except Exception as e:
-        answer_failed = True
         logger.exception(
             f"Unable to process message - did not successfully answer "
             f"in {num_retries} attempts"
@@ -245,15 +251,21 @@ def handle_message(
                 thread_ts=message_ts_to_respond_to,
             )
 
+        # In case of failures, don't keep the reaction there permanently
+        try:
+            remove_react(message_info, client)
+        except SlackApiError as e:
+            logger.error(f"Failed to remove Reaction due to: {e}")
+
+        return True
+
+    # Got an answer at this point, can remove reaction and give results
     try:
         remove_react(message_info, client)
     except SlackApiError as e:
         logger.error(f"Failed to remove Reaction due to: {e}")
 
-    if answer_failed:
-        return True
-
-    if answer.eval_res_valid is False:
+    if answer.answer_valid is False:
         logger.info(
             "Answer was evaluated to be invalid, throwing it away without responding."
         )
@@ -261,10 +273,16 @@ def handle_message(
             logger.debug(answer.answer)
         return True
 
-    if not answer.top_documents and not should_respond_even_with_no_docs:
+    retrieval_info = answer.docs
+    if not retrieval_info:
+        # This should not happen, even with no docs retrieved, there is still info returned
+        raise RuntimeError("Failed to retrieve docs, cannot answer question.")
+
+    top_docs = retrieval_info.top_documents
+    if not top_docs and not should_respond_even_with_no_docs:
         logger.error(f"Unable to answer question: '{msg}' - no documents found")
-        # Optionally, respond in thread with the error message, Used primarily
-        # for debugging purposes
+        # Optionally, respond in thread with the error message
+        # Used primarily for debugging purposes
         if should_respond_with_error_msgs:
             respond_in_thread(
                 client=client,
@@ -286,17 +304,16 @@ def handle_message(
     restate_question_block = get_restate_blocks(msg, is_bot_msg)
 
     answer_blocks = build_qa_response_blocks(
-        query_event_id=answer.query_event_id,
+        message_id=answer.chat_message_id,
         answer=answer.answer,
-        quotes=answer.quotes,
-        source_filters=answer.source_type,
-        time_cutoff=answer.time_cutoff,
-        favor_recent=answer.favor_recent,
+        quotes=answer.quotes.quotes if answer.quotes else None,
+        source_filters=retrieval_info.applied_source_filters,
+        time_cutoff=retrieval_info.applied_time_cutoff,
+        favor_recent=retrieval_info.recency_bias_multiplier > 1,
         skip_quotes=persona is not None,  # currently Personas don't support quotes
     )
 
     # Get the chunks fed to the LLM only, then fill with other docs
-    top_docs = answer.top_documents
     llm_doc_inds = answer.llm_chunks_indices or []
     llm_docs = [top_docs[i] for i in llm_doc_inds]
     remaining_docs = [
@@ -306,7 +323,7 @@ def handle_message(
     document_blocks = (
         build_documents_blocks(
             documents=priority_ordered_docs,
-            query_event_id=answer.query_event_id,
+            message_id=answer.chat_message_id,
         )
         if priority_ordered_docs
         else []

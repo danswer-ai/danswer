@@ -31,7 +31,7 @@ class HelperResponse(BaseModel):
 class LlmDoc(BaseModel):
     """This contains the minimal set information for the LLM portion including citations"""
 
-    text: str
+    content: str
     semantic_identifier: str
     source_type: DocumentSource
     updated_at: datetime | None
@@ -81,13 +81,13 @@ class QADocsResponse(RetrievalDocs):
     predicted_flow: QueryFlow | None
     predicted_search: SearchType | None
     applied_source_filters: list[DocumentSource] | None
-    time_cutoff: datetime | None
+    applied_time_cutoff: datetime | None
     recency_bias_multiplier: float
 
     def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
         initial_dict = super().dict(*args, **kwargs)  # type: ignore
         initial_dict["time_cutoff"] = (
-            self.time_cutoff.isoformat() if self.time_cutoff else None
+            self.applied_time_cutoff.isoformat() if self.applied_time_cutoff else None
         )
         return initial_dict
 

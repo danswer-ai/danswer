@@ -6,6 +6,7 @@ from functools import lru_cache
 from danswer.db.models import ChatMessage
 from danswer.direct_qa.qa_block import build_context_str
 from danswer.indexing.models import InferenceChunk
+from typing import cast
 
 from danswer.prompts.chat_prompts import REQUIRE_CITATION_STATEMENT, CHAT_USER_PROMPT, DEFAULT_IGNORE_STATEMENT, \
     CITATION_REMINDER
@@ -48,7 +49,7 @@ def llm_doc_from_inference_chunk(
     inf_chunk: InferenceChunk
 ) -> LlmDoc:
     return LlmDoc(
-        text=inf_chunk.content,
+        content=inf_chunk.content,
         semantic_identifier=inf_chunk.semantic_identifier,
         source_type=inf_chunk.source_type,
         updated_at=inf_chunk.updated_at,
@@ -67,7 +68,7 @@ def build_chat_user_message(
 ) -> tuple[HumanMessage, int]:
     # TODO contextless version
     user_query = chat_message.message
-    context_docs_str = build_context_str(context_docs)  # TODO refactor this call somewhere else
+    context_docs_str = build_context_str(cast(list[LlmDoc | InferenceChunk], context_docs))
     optional_ignore = "" if all_doc_useful else ignore_str
 
     task_prompt_with_reminder = build_task_prompt_reminders(prompt)

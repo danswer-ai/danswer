@@ -15,7 +15,7 @@ logger = setup_logger()
 
 
 def get_default_qa_handler(
-    real_time_flow: bool = True,
+    chain_of_thought: bool = False,
     user_selection: str | None = QA_PROMPT_OVERRIDE,
 ) -> QAHandler:
     if user_selection:
@@ -28,7 +28,7 @@ def get_default_qa_handler(
 
         raise ValueError("Invalid Question-Answering prompt selected")
 
-    if not real_time_flow:
+    if chain_of_thought:
         return SingleMessageScratchpadHandler()
 
     return SingleMessageQAHandler()
@@ -37,10 +37,10 @@ def get_default_qa_handler(
 def get_default_qa_model(
     api_key: str | None = None,
     timeout: int = QA_TIMEOUT,
-    real_time_flow: bool = True,
+    chain_of_thought: bool = False,
 ) -> QAModel:
     llm = get_default_llm(api_key=api_key, timeout=timeout)
-    qa_handler = get_default_qa_handler(real_time_flow=real_time_flow)
+    qa_handler = get_default_qa_handler(chain_of_thought=chain_of_thought)
 
     return QABlock(
         llm=llm,

@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 
 from danswer.auth.users import current_user
 from danswer.chat.process_message import stream_chat_packets
@@ -97,13 +98,16 @@ def create_new_chat_session(
     db_session: Session = Depends(get_session),
 ) -> CreateChatSessionID:
     user_id = user.id if user is not None else None
-
-    new_chat_session = create_chat_session(
-        db_session=db_session,
-        description="",  # Leave the naming till later to prevent delay
-        user_id=user_id,
-        persona_id=chat_session_creation_request.persona_id,
-    )
+    try:
+        new_chat_session = create_chat_session(
+            db_session=db_session,
+            description="",  # Leave the naming till later to prevent delay
+            user_id=user_id,
+            persona_id=chat_session_creation_request.persona_id,
+        )
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=400, detail="Invalid Persona provided.")
 
     return CreateChatSessionID(chat_session_id=new_chat_session.id)
 

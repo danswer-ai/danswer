@@ -573,15 +573,15 @@ def full_chunk_search_generator(
 
 def combine_inference_chunks(
     inf_chunks: list[InferenceChunk]
-) -> LlmDoc:
+) -> LlmDoc | None:
     if not inf_chunks:
-        return LlmDoc(text="", link=None)
+        return None
 
     # Use the first link of the document
     first_chunk = inf_chunks[0]
     chunk_texts = [chunk.content for chunk in inf_chunks]
     return LlmDoc(
-        text="\n".join(chunk_texts),
+        content="\n".join(chunk_texts),
         semantic_identifier=first_chunk.semantic_identifier,
         source_type=first_chunk.source_type,
         updated_at=first_chunk.updated_at,

@@ -3,7 +3,7 @@ from typing import cast
 
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import CHUNK_SIZE
+from danswer.configs.app_configs import CHUNK_SIZE, QA_TIMEOUT
 from danswer.configs.app_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
 from danswer.configs.constants import MessageType
 from danswer.db.chat import create_chat_session
@@ -24,6 +24,7 @@ from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.search.request_preprocessing import retrieval_preprocessing
 from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import full_chunk_search_generator
+from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.server.chat.models import ChatMessageDetail
 from danswer.server.chat.models import LLMRelevanceFilterResponse
 from danswer.server.chat.models import QADocsResponse
@@ -42,6 +43,8 @@ def stream_answer_objects(
     # Needed to translate persona num_chunks to tokens to the LLM
     default_num_chunks: float = DEFAULT_NUM_CHUNKS_FED_TO_CHAT,
     default_chunk_size: int = CHUNK_SIZE,
+    timeout: int = QA_TIMEOUT,
+    bypass_acl: bool = False
 ) -> Iterator[
     QADocsResponse
     | LLMRelevanceFilterResponse
@@ -97,13 +100,14 @@ def stream_answer_objects(
         persona=chat_session.persona,
         user=user,
         db_session=db_session,
+        bypass_acl=bypass_acl,
     )
 
     documents_generator = full_chunk_search_generator(
         search_query=retrieval_request,
         document_index=document_index,
     )
-    time_cutoff = retrieval_request.filters.time_cutoff
+    applied_time_cutoff = retrieval_request.filters.time_cutoff
     recency_bias_multiplier = retrieval_request.recency_bias_multiplier
     run_llm_chunk_filter = not retrieval_request.skip_llm_chunk_filter
 
@@ -116,7 +120,7 @@ def stream_answer_objects(
         predicted_flow=predicted_flow,
         predicted_search=predicted_search_type,
         applied_source_filters=retrieval_request.filters.source_type,
-        time_cutoff=time_cutoff,
+        applied_time_cutoff=applied_time_cutoff,
         recency_bias_multiplier=recency_bias_multiplier,
     )
     yield initial_response
@@ -151,7 +155,11 @@ def stream_answer_objects(
         f"Chunks fed to LLM: {[chunk.semantic_identifier for chunk in llm_chunks]}"
     )
 
-    qa_model = get_default_qa_model()
+    # TODO prompt options
+    qa_model = get_default_qa_model(
+        timeout=timeout,
+        chain_of_thought=query_req.chain_of_thought
+    )
 
     response_packets = qa_model.answer_question_stream(query_req.query, llm_chunks)
 
@@ -205,12 +213,19 @@ def get_one_shot_answer(
     query_req: DirectQARequest,
     user: User | None,
     db_session: Session,
+    answer_generation_timeout: int = QA_TIMEOUT,
+    enable_reflexion: bool = False,
+    bypass_acl: bool = False,
 ) -> OneShotQAResponse:
     """Collects the streamed one shot answer responses into a single object"""
     qa_response = OneShotQAResponse()
 
     results = stream_answer_objects(
-        query_req=query_req, user=user, db_session=db_session
+        query_req=query_req,
+        user=user,
+        db_session=db_session,
+        bypass_acl=bypass_acl,
+        timeout=answer_generation_timeout
     )
 
     answer = ""
@@ -219,6 +234,8 @@ def get_one_shot_answer(
             answer += packet.answer_piece
         elif isinstance(packet, QADocsResponse):
             qa_response.docs = packet
+        elif isinstance(packet, LLMRelevanceFilterResponse):
+            qa_response.llm_chunks_indices = packet.relevant_chunk_indices
         elif isinstance(packet, DanswerQuotes):
             qa_response.quotes = packet
         elif isinstance(packet, StreamingError):
@@ -228,5 +245,8 @@ def get_one_shot_answer(
 
     if answer:
         qa_response.answer = answer
+
+    if enable_reflexion:
+        qa_response.answer_valid = get_answer_validity(query_req.query, answer)
 
     return qa_response
