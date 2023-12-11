@@ -57,15 +57,15 @@ def get_document_feedback_blocks() -> Block:
         accessory=RadioButtonsElement(
             options=[
                 Option(
-                    text="Boost :heavy_plus_sign:",
+                    text=":thumbsup: Boost",
                     value=SearchFeedbackType.ENDORSE.value,
                 ),
                 Option(
-                    text="Down-Boost :heavy_minus_sign:",
+                    text=":thumbsdown: Down-Boost",
                     value=SearchFeedbackType.REJECT.value,
                 ),
                 Option(
-                    text="Hide :heavy_multiplication_x:",
+                    text=":palms_up_together: Hide",
                     value=SearchFeedbackType.HIDE.value,
                 ),
             ]
