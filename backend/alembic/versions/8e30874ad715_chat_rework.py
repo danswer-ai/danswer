@@ -118,6 +118,10 @@ def upgrade() -> None:
     )
     op.add_column(
         "chat_message",
+        sa.Column("rephrased_query", sa.Text(), nullable=True),
+    )
+    op.add_column(
+        "chat_message",
         sa.Column(
             "gen_ai_feedback",
             sa.Enum("LIKE", "DISLIKE", name="qafeedbacktype", native_enum=False),

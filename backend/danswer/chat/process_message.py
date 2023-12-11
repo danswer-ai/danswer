@@ -346,6 +346,7 @@ def stream_chat_packets(
                 query_message=final_msg, history=history_msgs, llm=llm
             )
 
+    rephrased_query = None
     if reference_doc_ids:
         identifier_tuples = get_doc_query_identifiers_from_model(
             search_doc_ids=reference_doc_ids,
@@ -482,6 +483,7 @@ def stream_chat_packets(
         parent_message=new_user_message,
         prompt_id=prompt_id,
         message=llm_output,
+        rephrased_query=rephrased_query,
         token_count=len(llm_tokenizer(llm_output)),
         message_type=MessageType.ASSISTANT,
         error=error,

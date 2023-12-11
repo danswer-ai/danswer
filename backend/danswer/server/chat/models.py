@@ -126,6 +126,7 @@ class ChatMessageDetail(BaseModel):
     parent_message: int | None
     latest_child_message: int | None
     message: str
+    rephrased_query: str | None
     context_docs: RetrievalDocs | None
     message_type: MessageType
     time_sent: datetime
