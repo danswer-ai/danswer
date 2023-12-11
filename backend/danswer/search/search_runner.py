@@ -21,7 +21,8 @@ from danswer.document_index.document_index_utils import (
 )
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.indexing.models import InferenceChunk
-from danswer.search.models import ChunkMetric, IndexFilters
+from danswer.search.models import ChunkMetric
+from danswer.search.models import IndexFilters
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
@@ -31,7 +32,8 @@ from danswer.search.search_nlp_models import CrossEncoderEnsembleModel
 from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_chunks
 from danswer.secondary_llm_flows.query_expansion import rephrase_query
-from danswer.server.chat.models import SearchDoc, LlmDoc
+from danswer.server.chat.models import LlmDoc
+from danswer.server.chat.models import SearchDoc
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
@@ -98,7 +100,7 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
                 match_highlights=chunk.match_highlights,
                 updated_at=chunk.updated_at,
                 primary_owners=chunk.primary_owners,
-                secondary_owners=chunk.secondary_owners
+                secondary_owners=chunk.secondary_owners,
             )
             for chunk in chunks
         ]
@@ -571,11 +573,9 @@ def full_chunk_search_generator(
         yield [False for _ in reranked_chunks or retrieved_chunks]
 
 
-def combine_inference_chunks(
-    inf_chunks: list[InferenceChunk]
-) -> LlmDoc | None:
+def combine_inference_chunks(inf_chunks: list[InferenceChunk]) -> LlmDoc:
     if not inf_chunks:
-        return None
+        raise ValueError("Cannot combine empty list of chunks")
 
     # Use the first link of the document
     first_chunk = inf_chunks[0]
@@ -585,7 +585,7 @@ def combine_inference_chunks(
         semantic_identifier=first_chunk.semantic_identifier,
         source_type=first_chunk.source_type,
         updated_at=first_chunk.updated_at,
-        link=first_chunk.source_links[0] if first_chunk.source_links else None
+        link=first_chunk.source_links[0] if first_chunk.source_links else None,
     )
 
 
@@ -612,6 +612,3 @@ def inference_documents_from_ids(
     inference_chunks_sets = [res for res in parallel_results if res]
 
     return [combine_inference_chunks(chunk_set) for chunk_set in inference_chunks_sets]
-
-
-

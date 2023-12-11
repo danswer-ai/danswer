@@ -8,18 +8,15 @@ from typing import Tuple
 
 import regex
 
-from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
-from danswer.configs.constants import IGNORE_FOR_QA
+from danswer.indexing.models import InferenceChunk
+from danswer.prompts.constants import ANSWER_PAT
+from danswer.prompts.constants import QUOTE_PAT
+from danswer.prompts.constants import UNCERTAINTY_PAT
 from danswer.server.chat.models import DanswerAnswer
 from danswer.server.chat.models import DanswerAnswerPiece
 from danswer.server.chat.models import DanswerQuote
 from danswer.server.chat.models import DanswerQuotes
-from danswer.indexing.models import InferenceChunk
-from danswer.llm.utils import check_number_of_tokens
-from danswer.prompts.constants import ANSWER_PAT
-from danswer.prompts.constants import QUOTE_PAT
-from danswer.prompts.constants import UNCERTAINTY_PAT
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_model_quote
 from danswer.utils.text_processing import clean_up_code_blocks
@@ -273,107 +270,3 @@ def simulate_streaming_response(model_out: str) -> Generator[str, None, None]:
     """Mock streaming by generating the passed in model output, character by character"""
     for token in model_out:
         yield token
-
-
-def _get_usable_chunks(
-    chunks: list[InferenceChunk], token_limit: int
-) -> list[InferenceChunk]:
-    total_token_count = 0
-    usable_chunks = []
-    for chunk in chunks:
-        chunk_token_count = check_number_of_tokens(chunk.content)
-        if total_token_count + chunk_token_count > token_limit:
-            break
-
-        total_token_count += chunk_token_count
-        usable_chunks.append(chunk)
-
-    # try and return at least one chunk if possible. This chunk will
-    # get truncated later on in the pipeline. This would only occur if
-    # the first chunk is larger than the token limit (usually due to character
-    # count -> token count mismatches caused by special characters / non-ascii
-    # languages)
-    if not usable_chunks and chunks:
-        usable_chunks = [chunks[0]]
-
-    return usable_chunks
-
-
-def get_usable_chunks(
-    chunks: list[InferenceChunk],
-    token_limit: int = NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
-    offset: int = 0,
-) -> list[InferenceChunk]:
-    offset_into_chunks = 0
-    usable_chunks: list[InferenceChunk] = []
-    for _ in range(min(offset + 1, 1)):  # go through this process at least once
-        if offset_into_chunks >= len(chunks) and offset_into_chunks > 0:
-            raise ValueError(
-                "Chunks offset too large, should not retry this many times"
-            )
-
-        usable_chunks = _get_usable_chunks(
-            chunks=chunks[offset_into_chunks:], token_limit=token_limit
-        )
-        offset_into_chunks += len(usable_chunks)
-
-    return usable_chunks
-
-
-def get_chunks_for_qa(
-    chunks: list[InferenceChunk],
-    llm_chunk_selection: list[bool],
-    token_limit: float | None = NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
-    batch_offset: int = 0,
-) -> list[int]:
-    """
-    Gives back indices of chunks to pass into the LLM for Q&A.
-
-    Only selects chunks viable for Q&A, within the token limit, and prioritize those selected
-    by the LLM in a separate flow (this can be turned off)
-
-    Note, the batch_offset calculation has to count the batches from the beginning each time as
-    there's no way to know which chunks were included in the prior batches without recounting atm,
-    this is somewhat slow as it requires tokenizing all the chunks again
-    """
-    batch_index = 0
-    latest_batch_indices: list[int] = []
-    token_count = 0
-
-    # First iterate the LLM selected chunks, then iterate the rest if tokens remaining
-    for selection_target in [True, False]:
-        for ind, chunk in enumerate(chunks):
-            if llm_chunk_selection[ind] is not selection_target or chunk.metadata.get(
-                IGNORE_FOR_QA
-            ):
-                continue
-
-            # We calculate it live in case the user uses a different LLM + tokenizer
-            chunk_token = check_number_of_tokens(chunk.content)
-            # 50 for an approximate/slight overestimate for # tokens for metadata for the chunk
-            token_count += chunk_token + 50
-
-            # Always use at least 1 chunk
-            if (
-                token_limit is None
-                or token_count <= token_limit
-                or not latest_batch_indices
-            ):
-                latest_batch_indices.append(ind)
-                current_chunk_unused = False
-            else:
-                current_chunk_unused = True
-
-            if token_limit is not None and token_count >= token_limit:
-                if batch_index < batch_offset:
-                    batch_index += 1
-                    if current_chunk_unused:
-                        latest_batch_indices = [ind]
-                        token_count = chunk_token
-                    else:
-                        latest_batch_indices = []
-                        token_count = 0
-                else:
-                    return latest_batch_indices
-
-    return latest_batch_indices

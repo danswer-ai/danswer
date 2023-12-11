@@ -7,29 +7,30 @@ from typing import cast
 from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 
-from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
-from danswer.server.chat.models import AnswerQuestionReturn, StreamingError
-from danswer.server.chat.models import AnswerQuestionStreamReturn
-from danswer.server.chat.models import DanswerAnswer
-from danswer.server.chat.models import DanswerAnswerPiece
-from danswer.server.chat.models import DanswerQuotes
-from danswer.one_shot_answer.interfaces import QAModel
+from danswer.chat.chat_utils import build_context_str
 from danswer.chat.models import LLMMetricsContainer
-from danswer.one_shot_answer.qa_utils import process_answer
-from danswer.one_shot_answer.qa_utils import process_model_tokens
+from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import check_number_of_tokens
 from danswer.llm.utils import get_default_llm_token_encode
 from danswer.llm.utils import tokenizer_trim_chunks
-from danswer.prompts.constants import CODE_BLOCK_PAT
+from danswer.one_shot_answer.interfaces import QAModel
+from danswer.one_shot_answer.qa_utils import process_answer
+from danswer.one_shot_answer.qa_utils import process_model_tokens
 from danswer.prompts.direct_qa_prompts import COT_PROMPT
 from danswer.prompts.direct_qa_prompts import JSON_PROMPT
 from danswer.prompts.direct_qa_prompts import LANGUAGE_HINT
 from danswer.prompts.direct_qa_prompts import PARAMATERIZED_PROMPT
 from danswer.prompts.direct_qa_prompts import PARAMATERIZED_PROMPT_WITHOUT_CONTEXT
 from danswer.prompts.direct_qa_prompts import WEAK_LLM_PROMPT
+from danswer.server.chat.models import AnswerQuestionReturn
+from danswer.server.chat.models import AnswerQuestionStreamReturn
+from danswer.server.chat.models import DanswerAnswer
+from danswer.server.chat.models import DanswerAnswerPiece
+from danswer.server.chat.models import DanswerQuotes
 from danswer.server.chat.models import LlmDoc
+from danswer.server.chat.models import StreamingError
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_up_code_blocks
 from danswer.utils.text_processing import escape_newlines
@@ -70,38 +71,6 @@ class QAHandler(abc.ABC):
         )
 
 
-# Maps connector enum string to a more natural language representation for the LLM
-# If not on the list, uses the original but slightly cleaned up, see below
-CONNECTOR_NAME_MAP = {
-    "web": "Website",
-    "requesttracker": "Request Tracker",
-    "github": "GitHub",
-    "file": "File Upload",
-}
-
-
-def clean_up_source(source_str: str) -> str:
-    if source_str in CONNECTOR_NAME_MAP:
-        return CONNECTOR_NAME_MAP[source_str]
-    return source_str.replace("_", " ").title()
-
-
-def build_context_str(
-    context_docs: list[LlmDoc | InferenceChunk],
-    include_metadata: bool = True,
-) -> str:
-    context = ""
-    for doc in context_docs:
-        if include_metadata:
-            context += f"NEW DOCUMENT: {doc.semantic_identifier}\n"
-            context += f"Source: {clean_up_source(doc.source_type)}\n"
-            if doc.updated_at:
-                update_str = doc.updated_at.strftime("%B %d, %Y %H:%M")
-                context += f"Updated: {update_str}\n"
-        context += f"{CODE_BLOCK_PAT.format(doc.content.strip())}\n\n\n"
-    return context.strip()
-
-
 class WeakLLMQAHandler(QAHandler):
     """Since Danswer supports a variety of LLMs, this less demanding prompt is provided
     as an option to use with weaker LLMs such as small version, low float precision, quantized,
@@ -134,7 +103,9 @@ class SingleMessageQAHandler(QAHandler):
         context_chunks: list[InferenceChunk],
         use_language_hint: bool = bool(MULTILINGUAL_QUERY_EXPANSION),
     ) -> list[BaseMessage]:
-        context_docs_str = build_context_str(cast(list[LlmDoc | InferenceChunk], context_chunks))
+        context_docs_str = build_context_str(
+            cast(list[LlmDoc | InferenceChunk], context_chunks)
+        )
 
         single_message = JSON_PROMPT.format(
             context_docs_str=context_docs_str,
@@ -160,7 +131,9 @@ class SingleMessageScratchpadHandler(QAHandler):
         context_chunks: list[InferenceChunk],
         use_language_hint: bool = bool(MULTILINGUAL_QUERY_EXPANSION),
     ) -> list[BaseMessage]:
-        context_docs_str = build_context_str(cast(list[LlmDoc | InferenceChunk], context_chunks))
+        context_docs_str = build_context_str(
+            cast(list[LlmDoc | InferenceChunk], context_chunks)
+        )
 
         single_message = COT_PROMPT.format(
             context_docs_str=context_docs_str,
@@ -211,7 +184,9 @@ class PersonaBasedQAHandler(QAHandler):
         query: str,
         context_chunks: list[InferenceChunk],
     ) -> list[BaseMessage]:
-        context_docs_str = build_context_str(cast(list[LlmDoc | InferenceChunk], context_chunks))
+        context_docs_str = build_context_str(
+            cast(list[LlmDoc | InferenceChunk], context_chunks)
+        )
 
         if not context_chunks:
             single_message = PARAMATERIZED_PROMPT_WITHOUT_CONTEXT.format(
@@ -311,13 +286,41 @@ class QABlock(QAModel):
         self,
         query: str,
         context_docs: list[InferenceChunk],
+        metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,
     ) -> AnswerQuestionStreamReturn:
         trimmed_context_docs = tokenizer_trim_chunks(context_docs)
         prompt = self._qa_handler.build_prompt(query, trimmed_context_docs)
-        tokens = self._llm.stream(prompt)
+        tokens_stream = self._llm.stream(prompt)
+
+        captured_tokens = []
+
         try:
+            for token in tokens_stream:
+                captured_tokens.append(token)
+
             yield from self._qa_handler.process_llm_token_stream(
-                tokens, trimmed_context_docs
+                iter(captured_tokens), trimmed_context_docs
             )
+
         except Exception as e:
             yield StreamingError(error=str(e))
+
+        if metrics_callback is not None:
+            prompt_tokens = sum(
+                [
+                    check_number_of_tokens(
+                        text=str(p.content), encode_fn=get_default_llm_token_encode()
+                    )
+                    for p in prompt
+                ]
+            )
+
+            response_tokens = check_number_of_tokens(
+                text="".join(captured_tokens), encode_fn=get_default_llm_token_encode()
+            )
+
+            metrics_callback(
+                LLMMetricsContainer(
+                    prompt_tokens=prompt_tokens, response_tokens=response_tokens
+                )
+            )

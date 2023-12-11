@@ -1,33 +1,39 @@
+from collections.abc import Callable
 from collections.abc import Iterator
 from typing import cast
 
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import CHUNK_SIZE, QA_TIMEOUT
+from danswer.chat.chat_utils import get_chunks_for_qa
+from danswer.chat.models import LLMMetricsContainer
+from danswer.configs.app_configs import CHUNK_SIZE
 from danswer.configs.app_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
+from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.configs.constants import MessageType
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.models import User
-from danswer.one_shot_answer.factory import get_default_qa_model
-from danswer.server.chat.models import DanswerAnswerPiece, SavedSearchDoc
-from danswer.server.chat.models import DanswerQuotes
-from danswer.server.chat.models import StreamingError
-from danswer.one_shot_answer.qa_utils import get_chunks_for_qa
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import get_default_llm_token_encode
+from danswer.one_shot_answer.factory import get_default_qa_model
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
+from danswer.search.models import RerankMetricsContainer
+from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.request_preprocessing import retrieval_preprocessing
 from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import full_chunk_search_generator
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.server.chat.models import ChatMessageDetail
+from danswer.server.chat.models import DanswerAnswerPiece
+from danswer.server.chat.models import DanswerQuotes
 from danswer.server.chat.models import LLMRelevanceFilterResponse
 from danswer.server.chat.models import QADocsResponse
+from danswer.server.chat.models import SavedSearchDoc
+from danswer.server.chat.models import StreamingError
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
@@ -44,7 +50,11 @@ def stream_answer_objects(
     default_num_chunks: float = DEFAULT_NUM_CHUNKS_FED_TO_CHAT,
     default_chunk_size: int = CHUNK_SIZE,
     timeout: int = QA_TIMEOUT,
-    bypass_acl: bool = False
+    bypass_acl: bool = False,
+    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
+    | None = None,
+    rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
+    llm_metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,
 ) -> Iterator[
     QADocsResponse
     | LLMRelevanceFilterResponse
@@ -106,6 +116,8 @@ def stream_answer_objects(
     documents_generator = full_chunk_search_generator(
         search_query=retrieval_request,
         document_index=document_index,
+        retrieval_metrics_callback=retrieval_metrics_callback,
+        rerank_metrics_callback=rerank_metrics_callback,
     )
     applied_time_cutoff = retrieval_request.filters.time_cutoff
     recency_bias_multiplier = retrieval_request.recency_bias_multiplier
@@ -160,11 +172,14 @@ def stream_answer_objects(
 
     # TODO prompt options
     qa_model = get_default_qa_model(
-        timeout=timeout,
-        chain_of_thought=query_req.chain_of_thought
+        timeout=timeout, chain_of_thought=query_req.chain_of_thought
     )
 
-    response_packets = qa_model.answer_question_stream(query_req.query, llm_chunks)
+    response_packets = qa_model.answer_question_stream(
+        query=query_req.query,
+        context_docs=llm_chunks,
+        metrics_callback=llm_metrics_callback,
+    )
 
     # Capture outputs and errors
     llm_output = ""
@@ -219,6 +234,10 @@ def get_one_shot_answer(
     answer_generation_timeout: int = QA_TIMEOUT,
     enable_reflexion: bool = False,
     bypass_acl: bool = False,
+    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
+    | None = None,
+    rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
+    llm_metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,
 ) -> OneShotQAResponse:
     """Collects the streamed one shot answer responses into a single object"""
     qa_response = OneShotQAResponse()
@@ -228,7 +247,10 @@ def get_one_shot_answer(
         user=user,
         db_session=db_session,
         bypass_acl=bypass_acl,
-        timeout=answer_generation_timeout
+        timeout=answer_generation_timeout,
+        retrieval_metrics_callback=retrieval_metrics_callback,
+        rerank_metrics_callback=rerank_metrics_callback,
+        llm_metrics_callback=llm_metrics_callback,
     )
 
     answer = ""

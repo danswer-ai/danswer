@@ -23,13 +23,15 @@ from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import ChannelIdAdapter
 from danswer.danswerbot.slack.utils import fetch_userids_from_emails
 from danswer.danswerbot.slack.utils import respond_in_thread
-from danswer.db.chat import create_chat_session, get_persona_by_id
+from danswer.db.chat import get_persona_by_id
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
 from danswer.one_shot_answer.answer_question import get_one_shot_answer
-from danswer.one_shot_answer.models import OneShotQAResponse, DirectQARequest
-from danswer.search.models import BaseFilters, OptionalSearchSetting
-from danswer.server.chat.models import QAResponse, RetrievalDetails
+from danswer.one_shot_answer.models import DirectQARequest
+from danswer.one_shot_answer.models import OneShotQAResponse
+from danswer.search.models import BaseFilters
+from danswer.search.models import OptionalSearchSetting
+from danswer.server.chat.models import RetrievalDetails
 from danswer.utils.logger import setup_logger
 
 logger_base = setup_logger()
@@ -109,9 +111,7 @@ def handle_message(
     else:
         with Session(engine, expire_on_commit=False) as db_session:
             persona = get_persona_by_id(
-                persona_id=0,
-                user_id=None,
-                db_session=db_session
+                persona_id=0, user_id=None, db_session=db_session
             )
             prompt = persona.prompts[0] if persona.prompts else None
 
@@ -221,17 +221,17 @@ def handle_message(
             run_search=OptionalSearchSetting.ALWAYS,
             real_time=False,
             filters=filters,
-            enable_auto_detect_filters=auto_detect_filters
+            enable_auto_detect_filters=auto_detect_filters,
         )
 
         # This includes throwing out answer via reflexion
         answer = _get_answer(
             DirectQARequest(
                 query=msg,
-                prompt_id=prompt.id if prompt else None,
+                prompt_id=prompt.id if prompt else 0,
                 persona_id=persona.id,
                 retrieval_options=retrieval_details,
-                chain_of_thought=not disable_cot
+                chain_of_thought=not disable_cot,
             )
         )
     except Exception as e:

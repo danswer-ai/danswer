@@ -1,6 +1,7 @@
 from danswer.configs.app_configs import QA_PROMPT_OVERRIDE
 from danswer.configs.app_configs import QA_TIMEOUT
 from danswer.db.models import Persona
+from danswer.llm.factory import get_default_llm
 from danswer.one_shot_answer.interfaces import QAModel
 from danswer.one_shot_answer.qa_block import PersonaBasedQAHandler
 from danswer.one_shot_answer.qa_block import QABlock
@@ -8,7 +9,6 @@ from danswer.one_shot_answer.qa_block import QAHandler
 from danswer.one_shot_answer.qa_block import SingleMessageQAHandler
 from danswer.one_shot_answer.qa_block import SingleMessageScratchpadHandler
 from danswer.one_shot_answer.qa_block import WeakLLMQAHandler
-from danswer.llm.factory import get_default_llm
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -53,6 +53,9 @@ def get_qa_model_for_persona(
     api_key: str | None = None,
     timeout: int = QA_TIMEOUT,
 ) -> QAModel:
+    if not Persona.prompts:
+        raise ValueError("Cannot build a prompt with a Prompt object provided.")
+    prompt = Persona.prompts[0]
     return QABlock(
         llm=get_default_llm(
             api_key=api_key,
@@ -60,6 +63,6 @@ def get_qa_model_for_persona(
             gen_ai_model_version_override=persona.llm_model_version_override,
         ),
         qa_handler=PersonaBasedQAHandler(
-            system_prompt=persona.system_text or "", task_prompt=persona.hint_text or ""
+            system_prompt=prompt.system_text or "", task_prompt=prompt.task_prompt or ""
         ),
     )

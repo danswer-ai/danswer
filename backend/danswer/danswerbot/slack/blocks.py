@@ -18,7 +18,7 @@ from danswer.danswerbot.slack.utils import build_feedback_block_id
 from danswer.danswerbot.slack.utils import remove_slack_text_interactions
 from danswer.danswerbot.slack.utils import translate_vespa_highlight_to_slack
 from danswer.server.chat.models import DanswerQuote
-from danswer.server.chat.models import SearchDoc
+from danswer.server.chat.models import SavedSearchDoc
 from danswer.utils.text_processing import replace_whitespaces_w_space
 
 
@@ -88,7 +88,7 @@ def get_restate_blocks(
 
 
 def build_documents_blocks(
-    documents: list[SearchDoc],
+    documents: list[SavedSearchDoc],
     message_id: int | None,
     num_docs_to_display: int = DANSWER_BOT_NUM_DOCS_TO_DISPLAY,
     include_feedback: bool = ENABLE_SLACK_DOC_FEEDBACK,

@@ -1,6 +1,6 @@
 import unittest
 
-from danswer.chat.chat_llm import extract_citations_from_stream
+from danswer.chat.process_message import extract_citations_from_stream
 
 
 class TestChatLlm(unittest.TestCase):

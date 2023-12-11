@@ -8,14 +8,15 @@ from typing import TextIO
 import yaml
 from sqlalchemy.orm import Session
 
-from danswer.db.chat import create_chat_session
-from danswer.db.engine import get_sqlalchemy_engine
-from danswer.one_shot_answer.answer_question import answer_qa_query
 from danswer.chat.models import LLMMetricsContainer
+from danswer.db.engine import get_sqlalchemy_engine
+from danswer.one_shot_answer.answer_question import get_one_shot_answer
+from danswer.one_shot_answer.models import DirectQARequest
 from danswer.search.models import IndexFilters
+from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
-#from danswer.server.chat.models import NewMessageRequest
+from danswer.server.chat.models import RetrievalDetails
 from danswer.utils.callbacks import MetricsHander
 
 
@@ -82,25 +83,26 @@ def get_answer_for_question(
         time_cutoff=None,
         access_control_list=None,
     )
-    chat_session = create_chat_session(
-        db_session=db_session,
-        description="Regression Test Session",
-        user_id=None,
-    )
-    new_message_request = NewMessageRequest(
-        chat_session_id=chat_session.id,
+
+    new_message_request = DirectQARequest(
         query=query,
-        filters=filters,
-        real_time=False,
-        enable_auto_detect_filters=False,
+        prompt_id=0,
+        persona_id=0,
+        retrieval_options=RetrievalDetails(
+            run_search=OptionalSearchSetting.ALWAYS,
+            real_time=True,
+            filters=filters,
+            enable_auto_detect_filters=False,
+        ),
+        chain_of_thought=False,
     )
 
     retrieval_metrics = MetricsHander[RetrievalMetricsContainer]()
     rerank_metrics = MetricsHander[RerankMetricsContainer]()
     llm_metrics = MetricsHander[LLMMetricsContainer]()
 
-    answer = answer_qa_query(
-        new_message_request=new_message_request,
+    answer = get_one_shot_answer(
+        query_req=new_message_request,
         user=None,
         db_session=db_session,
         answer_generation_timeout=100,

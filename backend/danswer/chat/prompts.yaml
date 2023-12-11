@@ -1,5 +1,6 @@
 prompts:
-  - name: "Answer-Question"
+  - id: 0
+    name: "Answer-Question"
     description: "Answers user questions using retrieved context!"
     # System Prompt (as shown in UI)
     system: |
@@ -16,7 +17,8 @@ prompts:
     include_citations: true
 
 
-  - name: "Summarize"
+  - id: 1
+    name: "Summarize"
     description: "Summarize relevant points from retrieved context!"
     system: |
       You are a text summarizing assistant.

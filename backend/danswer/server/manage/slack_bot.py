@@ -92,7 +92,7 @@ def create_slack_bot_config(
         persona_id = create_slack_bot_persona(
             db_session=db_session,
             channel_names=channel_config["channel_names"],
-            document_sets=slack_bot_config_creation_request.document_sets,
+            document_set_ids=slack_bot_config_creation_request.document_sets,
             existing_persona_id=None,
         ).id
 
@@ -139,7 +139,7 @@ def patch_slack_bot_config(
         persona_id = create_slack_bot_persona(
             db_session=db_session,
             channel_names=channel_config["channel_names"],
-            document_sets=slack_bot_config_creation_request.document_sets,
+            document_set_ids=slack_bot_config_creation_request.document_sets,
             existing_persona_id=existing_slack_bot_config.persona_id,
         ).id
 

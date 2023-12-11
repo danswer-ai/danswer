@@ -1,13 +1,25 @@
 from typing import TypedDict
 
-#from danswer.server.chat.models import DanswerChatModelOut
-from danswer.prompts.chat_tools import TOOL_LESS_FOLLOWUP, TOOL_FOLLOWUP, TOOL_TEMPLATE, DANSWER_TOOL_DESCRIPTION, \
-    DANSWER_TOOL_NAME, TOOL_LESS_PROMPT, USER_INPUT
+from pydantic import BaseModel
+
+from danswer.prompts.chat_tools import DANSWER_TOOL_DESCRIPTION
+from danswer.prompts.chat_tools import DANSWER_TOOL_NAME
+from danswer.prompts.chat_tools import TOOL_FOLLOWUP
+from danswer.prompts.chat_tools import TOOL_LESS_FOLLOWUP
+from danswer.prompts.chat_tools import TOOL_LESS_PROMPT
+from danswer.prompts.chat_tools import TOOL_TEMPLATE
+from danswer.prompts.chat_tools import USER_INPUT
 
 
 class ToolInfo(TypedDict):
     name: str
     description: str
+
+
+class DanswerChatModelOut(BaseModel):
+    model_raw: str
+    action: str
+    action_input: str
 
 
 def call_tool(

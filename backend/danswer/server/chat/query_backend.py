@@ -7,25 +7,27 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
-from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import recommend_search_flow
-from danswer.search.models import IndexFilters, SearchQuery
-from danswer.search.request_preprocessing import retrieval_preprocessing
+from danswer.search.models import IndexFilters
+from danswer.search.models import SearchQuery
 from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import full_chunk_search
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
-from danswer.server.chat.models import AdminSearchRequest, SimpleQueryRequest, DocumentSearchRequest
+from danswer.server.chat.models import AdminSearchRequest
 from danswer.server.chat.models import AdminSearchResponse
+from danswer.server.chat.models import DocumentSearchRequest
 from danswer.server.chat.models import HelperResponse
 from danswer.server.chat.models import QueryValidationResponse
+from danswer.server.chat.models import SavedSearchDoc
 from danswer.server.chat.models import SearchDoc
 from danswer.server.chat.models import SearchResponse
+from danswer.server.chat.models import SimpleQueryRequest
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -78,16 +80,14 @@ def admin_search(
 
 @basic_router.post("/search-intent")
 def get_search_type(
-    simple_query: SimpleQueryRequest,
-    _: User = Depends(current_user)
+    simple_query: SimpleQueryRequest, _: User = Depends(current_user)
 ) -> HelperResponse:
     return recommend_search_flow(simple_query.query)
 
 
 @basic_router.post("/query-validation")
 def query_validation(
-    simple_query: SimpleQueryRequest,
-    _: User = Depends(current_user)
+    simple_query: SimpleQueryRequest, _: User = Depends(current_user)
 ) -> QueryValidationResponse:
     reasoning, answerable = get_query_answerability(simple_query.query)
     return QueryValidationResponse(reasoning=reasoning, answerable=answerable)
@@ -95,15 +95,13 @@ def query_validation(
 
 @basic_router.post("/stream-query-validation")
 def stream_query_validation(
-    simple_query: SimpleQueryRequest,
-    _: User = Depends(current_user)
+    simple_query: SimpleQueryRequest, _: User = Depends(current_user)
 ) -> StreamingResponse:
     # Note if weak model prompt is chosen, this check does not occur and will simply return that
     # the query is valid, this is because weaker models cannot really handle this task well.
     # Additionally, some weak model servers cannot handle concurrent inferences.
     return StreamingResponse(
-        stream_query_answerability(simple_query.query),
-        media_type="application/json"
+        stream_query_answerability(simple_query.query), media_type="application/json"
     )
 
 
@@ -119,9 +117,7 @@ def handle_search_request(
     query = search_request.message
     filters = search_request.retrieval_options.filters
 
-    logger.info(
-        f"Received document search query: {query}"
-    )
+    logger.info(f"Received document search query: {query}")
 
     user_acl_filters = build_access_filters_for_user(user, db_session)
     final_filters = IndexFilters(
@@ -146,9 +142,13 @@ def handle_search_request(
     )
 
     top_docs = chunks_to_search_docs(top_chunks)
-    llm_selection_indices = [index for index, value in enumerate(llm_selection) if value]
+    llm_selection_indices = [
+        index for index, value in enumerate(llm_selection) if value
+    ]
+
+    # No need to save the docs for this API
+    fake_saved_docs = [SavedSearchDoc.from_search_doc(doc) for doc in top_docs]
 
     return SearchResponse(
-        top_documents=top_docs,
-        llm_indices=llm_selection_indices
+        top_documents=fake_saved_docs, llm_indices=llm_selection_indices
     )
