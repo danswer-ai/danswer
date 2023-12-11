@@ -31,7 +31,7 @@ from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.search.models import BaseFilters
 from danswer.search.models import OptionalSearchSetting
-from danswer.server.chat.models import RetrievalDetails
+from danswer.search.models import RetrievalDetails
 from danswer.utils.logger import setup_logger
 
 logger_base = setup_logger()

@@ -14,7 +14,10 @@ from danswer.document_index.vespa.index import VespaIndex
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.models import IndexFilters
+from danswer.search.models import SavedSearchDoc
+from danswer.search.models import SearchDoc
 from danswer.search.models import SearchQuery
+from danswer.search.models import SearchResponse
 from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import full_chunk_search
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
@@ -24,9 +27,6 @@ from danswer.server.chat.models import AdminSearchResponse
 from danswer.server.chat.models import DocumentSearchRequest
 from danswer.server.chat.models import HelperResponse
 from danswer.server.chat.models import QueryValidationResponse
-from danswer.server.chat.models import SavedSearchDoc
-from danswer.server.chat.models import SearchDoc
-from danswer.server.chat.models import SearchResponse
 from danswer.server.chat.models import SimpleQueryRequest
 from danswer.utils.logger import setup_logger
 

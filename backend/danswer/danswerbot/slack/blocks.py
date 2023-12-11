@@ -8,6 +8,7 @@ from slack_sdk.models.blocks import DividerBlock
 from slack_sdk.models.blocks import HeaderBlock
 from slack_sdk.models.blocks import SectionBlock
 
+from danswer.chat.models import DanswerQuote
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
@@ -17,8 +18,7 @@ from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.utils import build_feedback_block_id
 from danswer.danswerbot.slack.utils import remove_slack_text_interactions
 from danswer.danswerbot.slack.utils import translate_vespa_highlight_to_slack
-from danswer.server.chat.models import DanswerQuote
-from danswer.server.chat.models import SavedSearchDoc
+from danswer.search.models import SavedSearchDoc
 from danswer.utils.text_processing import replace_whitespaces_w_space
 
 

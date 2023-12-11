@@ -1,21 +1,23 @@
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER, FAVOR_RECENT_DECAY_MULTIPLIER
+from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.app_configs import DISABLE_LLM_FILTER_EXTRACTION
+from danswer.configs.app_configs import FAVOR_RECENT_DECAY_MULTIPLIER
 from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import query_intent
-from danswer.search.models import BaseFilters, RecencyBiasSetting
+from danswer.search.models import BaseFilters
 from danswer.search.models import IndexFilters
 from danswer.search.models import QueryFlow
+from danswer.search.models import RecencyBiasSetting
+from danswer.search.models import RetrievalDetails
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.secondary_llm_flows.source_filter import extract_source_filter
 from danswer.secondary_llm_flows.time_filter import extract_time_filter
-from danswer.server.chat.models import RetrievalDetails
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 
@@ -32,7 +34,7 @@ def retrieval_preprocessing(
     skip_rerank_non_realtime: bool = SKIP_RERANKING,
     disable_llm_filter_extraction: bool = DISABLE_LLM_FILTER_EXTRACTION,
     disable_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
-    favor_recent_decay_multiplier: float = FAVOR_RECENT_DECAY_MULTIPLIER
+    favor_recent_decay_multiplier: float = FAVOR_RECENT_DECAY_MULTIPLIER,
 ) -> tuple[SearchQuery, SearchType | None, QueryFlow | None]:
     """Logic is as follows:
     Any global disables apply first

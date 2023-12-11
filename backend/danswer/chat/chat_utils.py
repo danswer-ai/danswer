@@ -5,6 +5,7 @@ from typing import cast
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 
+from danswer.chat.models import LlmDoc
 from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.constants import IGNORE_FOR_QA
@@ -19,7 +20,6 @@ from danswer.prompts.chat_prompts import REQUIRE_CITATION_STATEMENT
 from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.prompts.direct_qa_prompts import LANGUAGE_HINT
 from danswer.prompts.prompt_utils import get_current_llm_day_time
-from danswer.server.chat.models import LlmDoc
 
 
 # Maps connector enum string to a more natural language representation for the LLM

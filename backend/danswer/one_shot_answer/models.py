@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 
-from danswer.server.chat.models import DanswerQuotes
-from danswer.server.chat.models import QADocsResponse
-from danswer.server.chat.models import RetrievalDetails
+from danswer.chat.models import DanswerQuotes
+from danswer.chat.models import QADocsResponse
+from danswer.search.models import RetrievalDetails
 
 
 class DirectQARequest(BaseModel):

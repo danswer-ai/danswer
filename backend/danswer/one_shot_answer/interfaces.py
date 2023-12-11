@@ -1,10 +1,10 @@
 import abc
 from collections.abc import Callable
 
+from danswer.chat.models import AnswerQuestionReturn
+from danswer.chat.models import AnswerQuestionStreamReturn
 from danswer.chat.models import LLMMetricsContainer
 from danswer.indexing.models import InferenceChunk
-from danswer.server.chat.models import AnswerQuestionReturn
-from danswer.server.chat.models import AnswerQuestionStreamReturn
 
 
 class QAModel:

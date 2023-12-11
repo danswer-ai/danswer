@@ -8,6 +8,7 @@ from nltk.corpus import stopwords  # type:ignore
 from nltk.stem import WordNetLemmatizer  # type:ignore
 from nltk.tokenize import word_tokenize  # type:ignore
 
+from danswer.chat.models import LlmDoc
 from danswer.configs.app_configs import HYBRID_ALPHA
 from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.app_configs import NUM_RERANKED_RESULTS
@@ -26,14 +27,13 @@ from danswer.search.models import IndexFilters
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
+from danswer.search.models import SearchDoc
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.search.search_nlp_models import CrossEncoderEnsembleModel
 from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_chunks
 from danswer.secondary_llm_flows.query_expansion import rephrase_query
-from danswer.server.chat.models import LlmDoc
-from danswer.server.chat.models import SearchDoc
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel

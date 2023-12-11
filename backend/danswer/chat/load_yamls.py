@@ -21,11 +21,11 @@ def load_prompts_from_yaml(prompts_yaml: str = PROMPTS_YAML) -> None:
         data = yaml.safe_load(file)
 
     all_prompts = data.get("prompts", [])
-    with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
+    with Session(get_sqlalchemy_engine()) as db_session:
         for prompt in all_prompts:
             upsert_prompt(
                 user_id=None,
-                prompt_id=prompt.get("id"),  # Generally unspecified
+                prompt_id=prompt.get("id"),
                 name=prompt["name"],
                 description=prompt["description"],
                 system_prompt=prompt["system"],
@@ -36,6 +36,7 @@ def load_prompts_from_yaml(prompts_yaml: str = PROMPTS_YAML) -> None:
                 personas=None,
                 shared=True,
                 db_session=db_session,
+                commit=True,
             )
 
 
@@ -47,7 +48,7 @@ def load_personas_from_yaml(
         data = yaml.safe_load(file)
 
     all_personas = data.get("personas", [])
-    with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
+    with Session(get_sqlalchemy_engine()) as db_session:
         for persona in all_personas:
             doc_set_names = persona["document_sets"]
             doc_sets: list[DocumentSetDBModel] | None = [
@@ -79,7 +80,7 @@ def load_personas_from_yaml(
 
             upsert_persona(
                 user_id=None,
-                persona_id=persona.get("id"),  # Generally unspecified
+                persona_id=persona.get("id"),
                 name=persona["name"],
                 description=persona["description"],
                 num_chunks=persona.get("num_chunks")

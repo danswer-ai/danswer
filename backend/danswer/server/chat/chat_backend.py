@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
 
 from danswer.auth.users import current_user
 from danswer.chat.process_message import stream_chat_packets
@@ -24,9 +24,9 @@ from danswer.secondary_llm_flows.chat_helpers import get_new_chat_name
 from danswer.server.chat.models import ChatFeedbackRequest
 from danswer.server.chat.models import ChatMessageIdentifier
 from danswer.server.chat.models import ChatRenameRequest
-from danswer.server.chat.models import ChatSession
 from danswer.server.chat.models import ChatSessionCreationRequest
 from danswer.server.chat.models import ChatSessionDetailResponse
+from danswer.server.chat.models import ChatSessionDetails
 from danswer.server.chat.models import ChatSessionsResponse
 from danswer.server.chat.models import CreateChatMessageRequest
 from danswer.server.chat.models import CreateChatSessionID
@@ -53,7 +53,7 @@ def get_user_chat_sessions(
 
     return ChatSessionsResponse(
         sessions=[
-            ChatSession(
+            ChatSessionDetails(
                 id=chat.id,
                 name=chat.description,
                 time_created=chat.time_created.isoformat(),

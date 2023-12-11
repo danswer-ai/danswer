@@ -8,15 +8,15 @@ from typing import Tuple
 
 import regex
 
+from danswer.chat.models import DanswerAnswer
+from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import DanswerQuote
+from danswer.chat.models import DanswerQuotes
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.indexing.models import InferenceChunk
 from danswer.prompts.constants import ANSWER_PAT
 from danswer.prompts.constants import QUOTE_PAT
 from danswer.prompts.constants import UNCERTAINTY_PAT
-from danswer.server.chat.models import DanswerAnswer
-from danswer.server.chat.models import DanswerAnswerPiece
-from danswer.server.chat.models import DanswerQuote
-from danswer.server.chat.models import DanswerQuotes
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_model_quote
 from danswer.utils.text_processing import clean_up_code_blocks

@@ -1,16 +1,15 @@
 from datetime import datetime
 from typing import Any
-from collections.abc import Iterator
 
 from pydantic import BaseModel
 from pydantic import root_validator
 
-from danswer.configs.constants import DocumentSource
+from danswer.chat.models import RetrievalDocs
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.search.models import BaseFilters
-from danswer.search.models import OptionalSearchSetting
-from danswer.search.models import QueryFlow
+from danswer.search.models import RetrievalDetails
+from danswer.search.models import SearchDoc
 from danswer.search.models import SearchType
 
 
@@ -19,114 +18,13 @@ class SimpleQueryRequest(BaseModel):
 
 
 class ChatSessionCreationRequest(BaseModel):
-    persona_id: int = 1  # If not specified, use Danswer default persona
+    # If not specified, use Danswer default persona
+    persona_id: int = 0
 
 
 class HelperResponse(BaseModel):
     values: dict[str, str]
     details: list[str] | None = None
-
-
-class LlmDoc(BaseModel):
-    """This contains the minimal set information for the LLM portion including citations"""
-
-    content: str
-    semantic_identifier: str
-    source_type: DocumentSource
-    updated_at: datetime | None
-    link: str | None
-
-
-class SearchDoc(BaseModel):
-    document_id: str
-    chunk_ind: int
-    semantic_identifier: str
-    link: str | None
-    blurb: str
-    source_type: DocumentSource
-    boost: int
-    # Whether the document is hidden when doing a standard search
-    # since a standard search will never find a hidden doc, this can only ever
-    # be `True` when doing an admin search
-    hidden: bool
-    score: float | None
-    # Matched sections in the doc. Uses Vespa syntax e.g. <hi>TEXT</hi>
-    # to specify that a set of words should be highlighted. For example:
-    # ["<hi>the</hi> <hi>answer</hi> is 42", "the answer is <hi>42</hi>""]
-    match_highlights: list[str]
-    # when the doc was last updated
-    updated_at: datetime | None
-    primary_owners: list[str] | None
-    secondary_owners: list[str] | None
-
-    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
-        initial_dict = super().dict(*args, **kwargs)  # type: ignore
-        initial_dict["updated_at"] = (
-            self.updated_at.isoformat() if self.updated_at else None
-        )
-        return initial_dict
-
-
-class SavedSearchDoc(SearchDoc):
-    db_doc_id: int
-
-    @classmethod
-    def from_search_doc(cls, search_doc: SearchDoc, db_doc_id: int = 0) -> 'SavedSearchDoc':
-        """IMPORTANT: careful using this and not providing a db_doc_id"""
-        return cls(**search_doc.dict(), db_doc_id=db_doc_id)
-
-
-class RetrievalDocs(BaseModel):
-    top_documents: list[SavedSearchDoc]
-
-
-class SearchResponse(RetrievalDocs):
-    llm_indices: list[int]
-
-
-# First chunk of info for streaming QA
-class QADocsResponse(RetrievalDocs):
-    rephrased_query: str | None = None
-    predicted_flow: QueryFlow | None
-    predicted_search: SearchType | None
-    applied_source_filters: list[DocumentSource] | None
-    applied_time_cutoff: datetime | None
-    recency_bias_multiplier: float
-
-    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
-        initial_dict = super().dict(*args, **kwargs)  # type: ignore
-        initial_dict["time_cutoff"] = (
-            self.applied_time_cutoff.isoformat() if self.applied_time_cutoff else None
-        )
-        return initial_dict
-
-
-# Second chunk of info for streaming QA
-class LLMRelevanceFilterResponse(BaseModel):
-    relevant_chunk_indices: list[int]
-
-
-class DanswerAnswerPiece(BaseModel):
-    # A small piece of a complete answer. Used for streaming back answers.
-    answer_piece: str | None  # if None, specifies the end of an Answer
-
-
-class StreamingError(BaseModel):
-    error: str
-
-
-class DanswerQuote(BaseModel):
-    # This is during inference so everything is a string by this point
-    quote: str
-    document_id: str
-    link: str | None
-    source_type: str
-    semantic_identifier: str
-    blurb: str
-
-
-class DanswerQuotes(BaseModel):
-    quotes: list[DanswerQuote]
 
 
 class CreateChatSessionID(BaseModel):
@@ -148,23 +46,6 @@ class ChatFeedbackRequest(BaseModel):
             raise ValueError("Empty feedback received.")
 
         return values
-
-
-# Formerly NewMessageRequest
-class RetrievalDetails(BaseModel):
-    # Use LLM to determine whether to do a retrieval or only rely on existing history
-    # If the Persona is configured to not run search (0 chunks), this is bypassed
-    # If no Prompt is configured, the only search results are shown, this is bypassed
-    run_search: OptionalSearchSetting
-    # Is this a real-time/streaming call or a question where Danswer can take more time?
-    # Used to determine reranking flow
-    real_time: bool
-    # The following have defaults in the Persona settings which can be overriden via
-    # the query, if None, then use Persona settings
-    filters: BaseFilters | None = None
-    enable_auto_detect_filters: bool | None = None
-    # TODO Pagination/Offset options
-    # offset: int | None = None
 
 
 class DocumentSearchRequest(BaseModel):
@@ -203,10 +84,6 @@ class ChatMessageIdentifier(BaseModel):
     message_id: int
 
 
-class RegenerateMessageRequest(ChatMessageIdentifier):
-    persona_id: int | None
-
-
 class ChatRenameRequest(BaseModel):
     chat_session_id: int
     name: str | None
@@ -217,14 +94,14 @@ class RenameChatSessionResponse(BaseModel):
     new_name: str  # This is only really useful if the name is generated
 
 
-class ChatSession(BaseModel):
+class ChatSessionDetails(BaseModel):
     id: int
     name: str
     time_created: str
 
 
 class ChatSessionsResponse(BaseModel):
-    sessions: list[ChatSession]
+    sessions: list[ChatSessionDetails]
 
 
 class SearchFeedbackRequest(BaseModel):
@@ -281,17 +158,3 @@ class AdminSearchResponse(BaseModel):
 
 class DanswerAnswer(BaseModel):
     answer: str | None
-
-
-class QAResponse(SearchResponse, DanswerAnswer):
-    quotes: list[DanswerQuote] | None
-    predicted_flow: QueryFlow
-    predicted_search: SearchType
-    eval_res_valid: bool | None = None
-    llm_chunks_indices: list[int] | None = None
-    error_msg: str | None = None
-
-# TODO move this
-# Final int is for number of output tokens
-AnswerQuestionReturn = tuple[DanswerAnswer, DanswerQuotes]
-AnswerQuestionStreamReturn = Iterator[DanswerAnswerPiece | DanswerQuotes | StreamingError]

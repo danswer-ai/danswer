@@ -20,9 +20,10 @@ from danswer.db.models import Prompt
 from danswer.db.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.search.models import RecencyBiasSetting
-from danswer.server.chat.models import ChatMessageDetail, SavedSearchDoc
-from danswer.server.chat.models import RetrievalDocs
-from danswer.server.chat.models import SearchDoc as ServerSearchDoc
+from danswer.search.models import RetrievalDocs
+from danswer.search.models import SavedSearchDoc
+from danswer.search.models import SearchDoc as ServerSearchDoc
+from danswer.server.chat.models import ChatMessageDetail
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -51,7 +52,7 @@ def get_chat_sessions_by_user(
     user_id: UUID | None,
     deleted: bool | None,
     db_session: Session,
-    include_one_shot: bool = False
+    include_one_shot: bool = False,
 ) -> list[ChatSession]:
     stmt = select(ChatSession).where(ChatSession.user_id == user_id)
 
@@ -72,13 +73,13 @@ def create_chat_session(
     description: str,
     user_id: UUID | None,
     persona_id: int | None = None,
-    one_shot: bool = False
+    one_shot: bool = False,
 ) -> ChatSession:
     chat_session = ChatSession(
         user_id=user_id,
         persona_id=persona_id,
         description=description,
-        one_shot=one_shot
+        one_shot=one_shot,
     )
 
     db_session.add(chat_session)
@@ -278,8 +279,7 @@ def get_prompt_by_id(
     include_deleted: bool = False,
 ) -> Prompt:
     stmt = select(Prompt).where(
-        Prompt.id == prompt_id,
-        or_(Prompt.user_id == user_id, Prompt.user_id.is_(None))
+        Prompt.id == prompt_id, or_(Prompt.user_id == user_id, Prompt.user_id.is_(None))
     )
 
     if not include_deleted:
@@ -330,11 +330,15 @@ def get_prompts_by_ids(prompt_ids: list[int], db_session: Session) -> Sequence[P
     return prompts
 
 
-def get_personas_by_ids(persona_ids: list[int], db_session: Session) -> Sequence[Persona]:
+def get_personas_by_ids(
+    persona_ids: list[int], db_session: Session
+) -> Sequence[Persona]:
     """Unsafe, can fetch personas from all users"""
     if not persona_ids:
         return []
-    personas = db_session.scalars(select(Persona).where(Persona.id.in_(persona_ids))).all()
+    personas = db_session.scalars(
+        select(Persona).where(Persona.id.in_(persona_ids))
+    ).all()
 
     return personas
 
@@ -405,6 +409,7 @@ def upsert_prompt(
 
     else:
         prompt = Prompt(
+            id=prompt_id,
             user_id=None if shared else user_id,
             name=name,
             description=description,
@@ -413,7 +418,7 @@ def upsert_prompt(
             include_citations=include_citations,
             datetime_aware=datetime_aware,
             default_prompt=default_prompt,
-            personas=personas or []
+            personas=personas or [],
         )
         db_session.add(prompt)
 

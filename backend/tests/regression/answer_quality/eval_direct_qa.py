@@ -15,8 +15,8 @@ from danswer.one_shot_answer.models import DirectQARequest
 from danswer.search.models import IndexFilters
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RerankMetricsContainer
+from danswer.search.models import RetrievalDetails
 from danswer.search.models import RetrievalMetricsContainer
-from danswer.server.chat.models import RetrievalDetails
 from danswer.utils.callbacks import MetricsHander
 
 
