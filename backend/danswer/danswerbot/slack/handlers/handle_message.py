@@ -26,7 +26,6 @@ from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.db.chat import create_chat_session, get_persona_by_id
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
-from danswer.direct_qa.answer_question import answer_qa_query
 from danswer.one_shot_answer.answer_question import get_one_shot_answer
 from danswer.one_shot_answer.models import OneShotQAResponse, DirectQARequest
 from danswer.search.models import BaseFilters, OptionalSearchSetting

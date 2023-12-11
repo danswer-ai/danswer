@@ -15,7 +15,7 @@ from danswer.db.chat import upsert_persona
 from danswer.db.document_set import get_document_sets_by_ids
 from danswer.db.engine import get_session
 from danswer.db.models import User
-from danswer.direct_qa.qa_block import PersonaBasedQAHandler
+from danswer.one_shot_answer.qa_block import PersonaBasedQAHandler
 from danswer.server.features.prompt.models import CreatePromptRequest
 from danswer.server.features.prompt.models import PromptSnapshot
 from danswer.utils.logger import setup_logger

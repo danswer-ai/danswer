@@ -2,20 +2,21 @@ import abc
 import re
 from collections.abc import Callable
 from collections.abc import Iterator
+from typing import cast
 
 from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 
 from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
-from danswer.direct_qa.interfaces import AnswerQuestionReturn, StreamingError
-from danswer.direct_qa.interfaces import AnswerQuestionStreamReturn
-from danswer.direct_qa.interfaces import DanswerAnswer
-from danswer.direct_qa.interfaces import DanswerAnswerPiece
-from danswer.direct_qa.interfaces import DanswerQuotes
-from danswer.direct_qa.interfaces import QAModel
-from danswer.direct_qa.models import LLMMetricsContainer
-from danswer.direct_qa.qa_utils import process_answer
-from danswer.direct_qa.qa_utils import process_model_tokens
+from danswer.server.chat.models import AnswerQuestionReturn, StreamingError
+from danswer.server.chat.models import AnswerQuestionStreamReturn
+from danswer.server.chat.models import DanswerAnswer
+from danswer.server.chat.models import DanswerAnswerPiece
+from danswer.server.chat.models import DanswerQuotes
+from danswer.one_shot_answer.interfaces import QAModel
+from danswer.chat.models import LLMMetricsContainer
+from danswer.one_shot_answer.qa_utils import process_answer
+from danswer.one_shot_answer.qa_utils import process_model_tokens
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import check_number_of_tokens
@@ -133,7 +134,7 @@ class SingleMessageQAHandler(QAHandler):
         context_chunks: list[InferenceChunk],
         use_language_hint: bool = bool(MULTILINGUAL_QUERY_EXPANSION),
     ) -> list[BaseMessage]:
-        context_docs_str = build_context_str(context_chunks)
+        context_docs_str = build_context_str(cast(list[LlmDoc | InferenceChunk], context_chunks))
 
         single_message = JSON_PROMPT.format(
             context_docs_str=context_docs_str,
@@ -159,7 +160,7 @@ class SingleMessageScratchpadHandler(QAHandler):
         context_chunks: list[InferenceChunk],
         use_language_hint: bool = bool(MULTILINGUAL_QUERY_EXPANSION),
     ) -> list[BaseMessage]:
-        context_docs_str = build_context_str(context_chunks)
+        context_docs_str = build_context_str(cast(list[LlmDoc | InferenceChunk], context_chunks))
 
         single_message = COT_PROMPT.format(
             context_docs_str=context_docs_str,
@@ -210,7 +211,7 @@ class PersonaBasedQAHandler(QAHandler):
         query: str,
         context_chunks: list[InferenceChunk],
     ) -> list[BaseMessage]:
-        context_docs_str = build_context_str(context_chunks)
+        context_docs_str = build_context_str(cast(list[LlmDoc | InferenceChunk], context_chunks))
 
         if not context_chunks:
             single_message = PARAMATERIZED_PROMPT_WITHOUT_CONTEXT.format(

@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session
 
 from danswer.db.chat import create_chat_session
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.direct_qa.answer_question import answer_qa_query
-from danswer.direct_qa.models import LLMMetricsContainer
+from danswer.one_shot_answer.answer_question import answer_qa_query
+from danswer.chat.models import LLMMetricsContainer
 from danswer.search.models import IndexFilters
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer

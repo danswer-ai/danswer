@@ -6,7 +6,7 @@ from typing import Any
 from typing import TextIO
 
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.direct_qa.qa_utils import get_chunks_for_qa
+from danswer.one_shot_answer.qa_utils import get_chunks_for_qa
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import InferenceChunk
 from danswer.search.models import IndexFilters

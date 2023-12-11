@@ -4,7 +4,7 @@ from collections.abc import Callable
 from langchain.schema.messages import SystemMessage, HumanMessage
 from functools import lru_cache
 from danswer.db.models import ChatMessage
-from danswer.direct_qa.qa_block import build_context_str
+from danswer.one_shot_answer.qa_block import build_context_str
 from danswer.indexing.models import InferenceChunk
 from typing import cast
 

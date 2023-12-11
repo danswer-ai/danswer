@@ -11,10 +11,10 @@ import regex
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.direct_qa.interfaces import DanswerAnswer
-from danswer.direct_qa.interfaces import DanswerAnswerPiece
-from danswer.direct_qa.interfaces import DanswerQuote
-from danswer.direct_qa.interfaces import DanswerQuotes
+from danswer.server.chat.models import DanswerAnswer
+from danswer.server.chat.models import DanswerAnswerPiece
+from danswer.server.chat.models import DanswerQuote
+from danswer.server.chat.models import DanswerQuotes
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import check_number_of_tokens
 from danswer.prompts.constants import ANSWER_PAT

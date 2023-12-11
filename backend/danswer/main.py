@@ -45,7 +45,7 @@ from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
 from danswer.db.credentials import create_initial_public_credential
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.direct_qa.factory import get_default_qa_model
+from danswer.one_shot_answer.factory import get_default_qa_model
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llm
 from danswer.search.search_nlp_models import warm_up_models

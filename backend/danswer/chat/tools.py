@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from danswer.direct_qa.interfaces import DanswerChatModelOut
+#from danswer.server.chat.models import DanswerChatModelOut
 from danswer.prompts.chat_tools import TOOL_LESS_FOLLOWUP, TOOL_FOLLOWUP, TOOL_TEMPLATE, DANSWER_TOOL_DESCRIPTION, \
     DANSWER_TOOL_NAME, TOOL_LESS_PROMPT, USER_INPUT
 

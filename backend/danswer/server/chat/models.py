@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Any
+from collections.abc import Iterator
 
 from pydantic import BaseModel
 from pydantic import root_validator
@@ -7,8 +8,6 @@ from pydantic import root_validator
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
-from danswer.direct_qa.interfaces import DanswerAnswer
-from danswer.direct_qa.interfaces import DanswerQuote
 from danswer.search.models import BaseFilters
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import QueryFlow
@@ -71,6 +70,11 @@ class SearchDoc(BaseModel):
 class SavedSearchDoc(SearchDoc):
     db_doc_id: int
 
+    @classmethod
+    def from_search_doc(cls, search_doc: SearchDoc, db_doc_id: int = 0) -> 'SavedSearchDoc':
+        """IMPORTANT: careful using this and not providing a db_doc_id"""
+        return cls(**search_doc.dict(), db_doc_id=db_doc_id)
+
 
 class RetrievalDocs(BaseModel):
     top_documents: list[SavedSearchDoc]
@@ -100,6 +104,29 @@ class QADocsResponse(RetrievalDocs):
 # Second chunk of info for streaming QA
 class LLMRelevanceFilterResponse(BaseModel):
     relevant_chunk_indices: list[int]
+
+
+class DanswerAnswerPiece(BaseModel):
+    # A small piece of a complete answer. Used for streaming back answers.
+    answer_piece: str | None  # if None, specifies the end of an Answer
+
+
+class StreamingError(BaseModel):
+    error: str
+
+
+class DanswerQuote(BaseModel):
+    # This is during inference so everything is a string by this point
+    quote: str
+    document_id: str
+    link: str | None
+    source_type: str
+    semantic_identifier: str
+    blurb: str
+
+
+class DanswerQuotes(BaseModel):
+    quotes: list[DanswerQuote]
 
 
 class CreateChatSessionID(BaseModel):
@@ -252,6 +279,10 @@ class AdminSearchResponse(BaseModel):
     documents: list[SearchDoc]
 
 
+class DanswerAnswer(BaseModel):
+    answer: str | None
+
+
 class QAResponse(SearchResponse, DanswerAnswer):
     quotes: list[DanswerQuote] | None
     predicted_flow: QueryFlow
@@ -259,3 +290,8 @@ class QAResponse(SearchResponse, DanswerAnswer):
     eval_res_valid: bool | None = None
     llm_chunks_indices: list[int] | None = None
     error_msg: str | None = None
+
+# TODO move this
+# Final int is for number of output tokens
+AnswerQuestionReturn = tuple[DanswerAnswer, DanswerQuotes]
+AnswerQuestionStreamReturn = Iterator[DanswerAnswerPiece | DanswerQuotes | StreamingError]

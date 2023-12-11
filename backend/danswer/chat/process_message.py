@@ -24,9 +24,7 @@ from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.models import ChatMessage
 from danswer.db.models import User
-from danswer.direct_qa.interfaces import DanswerAnswerPiece
-from danswer.direct_qa.interfaces import StreamingError
-from danswer.direct_qa.qa_utils import get_chunks_for_qa
+from danswer.one_shot_answer.qa_utils import get_chunks_for_qa
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.factory import get_default_llm
@@ -45,7 +43,7 @@ from danswer.server.chat.models import LlmDoc
 from danswer.server.chat.models import LLMRelevanceFilterResponse
 from danswer.server.chat.models import QADocsResponse
 from danswer.server.chat.models import RetrievalDetails
-from danswer.server.chat.models import SearchDoc
+from danswer.server.chat.models import DanswerAnswerPiece, StreamingError
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time

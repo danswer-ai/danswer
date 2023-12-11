@@ -11,11 +11,11 @@ from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.models import User
-from danswer.direct_qa.factory import get_default_qa_model
-from danswer.direct_qa.interfaces import DanswerAnswerPiece
-from danswer.direct_qa.interfaces import DanswerQuotes
-from danswer.direct_qa.interfaces import StreamingError
-from danswer.direct_qa.qa_utils import get_chunks_for_qa
+from danswer.one_shot_answer.factory import get_default_qa_model
+from danswer.server.chat.models import DanswerAnswerPiece, SavedSearchDoc
+from danswer.server.chat.models import DanswerQuotes
+from danswer.server.chat.models import StreamingError
+from danswer.one_shot_answer.qa_utils import get_chunks_for_qa
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import get_default_llm_token_encode
@@ -115,8 +115,11 @@ def stream_answer_objects(
     top_chunks = cast(list[InferenceChunk], next(documents_generator))
 
     top_docs = chunks_to_search_docs(top_chunks)
+    fake_saved_docs = [SavedSearchDoc.from_search_doc(doc) for doc in top_docs]
+
+    # Since this is in the one shot answer flow, we don't need to actually save the docs to DB
     initial_response = QADocsResponse(
-        top_documents=top_docs,
+        top_documents=fake_saved_docs,
         predicted_flow=predicted_flow,
         predicted_search=predicted_search_type,
         applied_source_filters=retrieval_request.filters.source_type,

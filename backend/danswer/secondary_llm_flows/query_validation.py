@@ -2,8 +2,8 @@ import re
 from collections.abc import Iterator
 
 from danswer.configs.app_configs import DISABLE_LLM_QUERY_ANSWERABILITY
-from danswer.direct_qa.interfaces import DanswerAnswerPiece
-from danswer.direct_qa.interfaces import StreamingError
+from danswer.server.chat.models import DanswerAnswerPiece
+from danswer.server.chat.models import StreamingError
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.prompts.constants import ANSWERABLE_PAT

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from danswer.direct_qa.interfaces import DanswerQuotes
+from danswer.server.chat.models import DanswerQuotes
 from danswer.server.chat.models import QADocsResponse
 from danswer.server.chat.models import RetrievalDetails
 
