@@ -108,9 +108,7 @@ def build_feedback_block_id(
             raise ValueError(
                 "Separator pattern should not already exist in document id"
             )
-        block_id = ID_SEPARATOR.join(
-            [str(message_id), document_id, str(document_rank)]
-        )
+        block_id = ID_SEPARATOR.join([str(message_id), document_id, str(document_rank)])
     else:
         block_id = str(message_id)
 

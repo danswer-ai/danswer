@@ -75,7 +75,13 @@ def history_based_query_rephrase(
 
     prompt_msgs.append(SystemMessage(content=QUERY_REPHRASE_SYSTEM_MSG))
 
-    prompt_msgs.extend([translate_danswer_msg_to_langchain(msg) for msg in history])
+    prompt_msgs.extend(
+        [
+            translate_danswer_msg_to_langchain(msg)
+            for msg in history
+            if msg.token_count != 0
+        ]
+    )
 
     last_query = query_message.message
 

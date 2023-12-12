@@ -40,5 +40,5 @@ class PromptSnapshot(BaseModel):
             task_prompt=prompt.task_prompt,
             include_citations=prompt.include_citations,
             datetime_aware=prompt.datetime_aware,
-            default_prompt=prompt.default_prompt
+            default_prompt=prompt.default_prompt,
         )

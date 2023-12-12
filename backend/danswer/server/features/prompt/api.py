@@ -5,17 +5,13 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
-from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
-from danswer.db.chat import get_prompt_by_id, get_personas_by_ids, upsert_prompt
+from danswer.db.chat import get_personas_by_ids
+from danswer.db.chat import get_prompt_by_id
 from danswer.db.chat import get_prompts
-from danswer.db.chat import get_prompts_by_ids
 from danswer.db.chat import mark_prompt_as_deleted
-from danswer.db.chat import upsert_persona
-from danswer.db.document_set import get_document_sets_by_ids
+from danswer.db.chat import upsert_prompt
 from danswer.db.engine import get_session
 from danswer.db.models import User
-from danswer.one_shot_answer.qa_block import PersonaBasedQAHandler
 from danswer.server.features.prompt.models import CreatePromptRequest
 from danswer.server.features.prompt.models import PromptSnapshot
 from danswer.utils.logger import setup_logger
@@ -56,7 +52,7 @@ def create_update_prompt(
             datetime_aware=create_prompt_request.datetime_aware,
             personas=personas,
             shared=create_prompt_request.shared,
-            db_session=db_session
+            db_session=db_session,
         )
     except ValueError as e:
         logger.exception("Failed to create persona")

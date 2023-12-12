@@ -3,7 +3,6 @@
 # This script does not allow for branching logic that is supported by the backend APIs
 # This script also does not allow for editing/regeneration of user/model messages
 # Have Danswer API server running to use this.
-import argparse
 import json
 
 import requests
@@ -14,7 +13,7 @@ LOCAL_CHAT_ENDPOINT = f"http://127.0.0.1:{APP_PORT}/chat/"
 
 
 def create_new_session() -> int:
-    data = {"persona_id": 0}
+    data = {"persona_id": 0}  # Global default Persona
     response = requests.post(LOCAL_CHAT_ENDPOINT + "create-chat-session", json=data)
     response.raise_for_status()
     new_session_id = response.json()["chat_session_id"]
@@ -30,7 +29,7 @@ def send_chat_message(
         "message": message,
         "chat_session_id": chat_session_id,
         "parent_message_id": parent_message,
-        "prompt_id": 1,
+        "prompt_id": None,  # Global default Prompt
         "retrieval_options": {"run_search": "always", "real_time": True},
     }
 

@@ -19,13 +19,13 @@ from danswer.db.feedback import fetch_docs_ranked_by_boost
 from danswer.db.feedback import update_document_boost
 from danswer.db.feedback import update_document_hidden
 from danswer.db.models import User
-from danswer.one_shot_answer.factory import get_default_qa_model
 from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import get_gen_ai_api_key
 from danswer.llm.utils import test_llm
+from danswer.one_shot_answer.factory import get_default_qa_model
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.manage.models import BoostDoc
 from danswer.server.manage.models import BoostUpdateRequest

@@ -1,6 +1,7 @@
 import re
 from collections.abc import Callable
 from collections.abc import Iterator
+from functools import partial
 from typing import cast
 
 from langchain.schema.messages import BaseMessage
@@ -36,7 +37,7 @@ from danswer.indexing.models import InferenceChunk
 from danswer.llm.factory import get_default_llm
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import get_default_llm_token_encode
-from danswer.llm.utils import translate_danswer_msg_to_langchain
+from danswer.llm.utils import translate_history_to_basemessages
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RetrievalDetails
 from danswer.search.request_preprocessing import retrieval_preprocessing
@@ -219,10 +220,9 @@ def generate_ai_chat_response(
             prompt=query_message.prompt, llm_tokenizer=llm_tokenizer
         )
 
-        history_basemessages = [
-            translate_danswer_msg_to_langchain(msg) for msg in history
-        ]
-        history_token_counts = [msg.token_count for msg in history]
+        history_basemessages, history_token_counts = translate_history_to_basemessages(
+            history
+        )
 
         user_message, user_tokens = build_chat_user_message(
             chat_message=query_message,
@@ -454,6 +454,40 @@ def stream_chat_packets(
         llm_docs = []
         reference_db_search_docs = None
 
+    # Cannot determine these without the LLM step or breaking out early
+    partial_response = partial(
+        create_new_chat_message,
+        chat_session_id=chat_session_id,
+        parent_message=new_user_message,
+        prompt_id=prompt_id,
+        # message=,
+        rephrased_query=rephrased_query,
+        # token_count=,
+        message_type=MessageType.ASSISTANT,
+        # error=,
+        reference_docs=reference_db_search_docs,
+        db_session=db_session,
+        commit=True,
+    )
+
+    # If no prompt is provided, this is interpreted as not wanting an AI Answer
+    # Simply provide/save the retrieval results
+    if final_msg.prompt is None:
+        gen_ai_response_message = partial_response(
+            message="",
+            token_count=0,
+            error=None,
+        )
+        msg_detail_response = translate_db_message_to_chat_message_detail(
+            gen_ai_response_message
+        )
+
+        yield get_json_line(msg_detail_response.dict())
+
+        # Stop here after saving message details, the above still needs to be sent for the
+        # message id to send the next follow-up message
+        return
+
     # LLM prompt building, response capturing, etc all handled in here
     response_packets = generate_ai_chat_response(
         query_message=final_msg,
@@ -478,18 +512,10 @@ def stream_chat_packets(
         yield get_json_line(packet.dict())
 
     # Saving Gen AI answer and responding with message info
-    gen_ai_response_message = create_new_chat_message(
-        chat_session_id=chat_session_id,
-        parent_message=new_user_message,
-        prompt_id=prompt_id,
+    gen_ai_response_message = partial_response(
         message=llm_output,
-        rephrased_query=rephrased_query,
         token_count=len(llm_tokenizer(llm_output)),
-        message_type=MessageType.ASSISTANT,
         error=error,
-        reference_docs=reference_db_search_docs,
-        db_session=db_session,
-        commit=True,
     )
 
     msg_detail_response = translate_db_message_to_chat_message_detail(

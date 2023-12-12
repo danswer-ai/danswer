@@ -47,10 +47,7 @@ class PersonaSnapshot(BaseModel):
             llm_filter_extraction=persona.llm_filter_extraction,
             llm_model_version_override=persona.llm_model_version_override,
             default_persona=persona.default_persona,
-            prompts=[
-                PromptSnapshot.from_model(prompt)
-                for prompt in persona.prompts
-            ],
+            prompts=[PromptSnapshot.from_model(prompt) for prompt in persona.prompts],
             document_sets=[
                 DocumentSet.from_model(document_set_model)
                 for document_set_model in persona.document_sets

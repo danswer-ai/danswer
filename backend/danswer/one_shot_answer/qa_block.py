@@ -110,7 +110,7 @@ class SingleMessageQAHandler(QAHandler):
         single_message = JSON_PROMPT.format(
             context_docs_str=context_docs_str,
             user_query=query,
-            language_hint_or_none=LANGUAGE_HINT if use_language_hint else "",
+            language_hint_or_none=LANGUAGE_HINT.strip() if use_language_hint else "",
         ).strip()
 
         prompt: list[BaseMessage] = [HumanMessage(content=single_message)]
@@ -138,7 +138,7 @@ class SingleMessageScratchpadHandler(QAHandler):
         single_message = COT_PROMPT.format(
             context_docs_str=context_docs_str,
             user_query=query,
-            language_hint_or_none=LANGUAGE_HINT if use_language_hint else "",
+            language_hint_or_none=LANGUAGE_HINT.strip() if use_language_hint else "",
         ).strip()
 
         prompt: list[BaseMessage] = [HumanMessage(content=single_message)]

@@ -1,6 +1,5 @@
 # These prompts are to support tool calling. Currently not used in the main flow or via any configs
 # The current generation of LLM is too unreliable for this task.
-
 # Danswer retrieval call as a tool option
 DANSWER_TOOL_NAME = "Current Search"
 DANSWER_TOOL_DESCRIPTION = (
