@@ -49,9 +49,6 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llm
 from danswer.one_shot_answer.factory import get_default_qa_model
 from danswer.search.search_nlp_models import warm_up_models
-from danswer.server.chat.chat_backend import router as chat_router
-from danswer.server.chat.query_backend import admin_router as admin_query_router
-from danswer.server.chat.query_backend import basic_router as query_router
 from danswer.server.danswer_api.ingestion import get_danswer_api_key
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
 from danswer.server.documents.cc_pair import router as cc_pair_router
@@ -66,6 +63,11 @@ from danswer.server.manage.administrative import router as admin_router
 from danswer.server.manage.get_state import router as state_router
 from danswer.server.manage.slack_bot import router as slack_bot_management_router
 from danswer.server.manage.users import router as user_router
+from danswer.server.query_and_chat.chat_backend import router as chat_router
+from danswer.server.query_and_chat.query_backend import (
+    admin_router as admin_query_router,
+)
+from danswer.server.query_and_chat.query_backend import basic_router as query_router
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType

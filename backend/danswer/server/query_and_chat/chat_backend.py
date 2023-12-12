@@ -21,17 +21,17 @@ from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.secondary_llm_flows.chat_helpers import get_new_chat_name
-from danswer.server.chat.models import ChatFeedbackRequest
-from danswer.server.chat.models import ChatMessageIdentifier
-from danswer.server.chat.models import ChatRenameRequest
-from danswer.server.chat.models import ChatSessionCreationRequest
-from danswer.server.chat.models import ChatSessionDetailResponse
-from danswer.server.chat.models import ChatSessionDetails
-from danswer.server.chat.models import ChatSessionsResponse
-from danswer.server.chat.models import CreateChatMessageRequest
-from danswer.server.chat.models import CreateChatSessionID
-from danswer.server.chat.models import RenameChatSessionResponse
-from danswer.server.chat.models import SearchFeedbackRequest
+from danswer.server.query_and_chat.models import ChatFeedbackRequest
+from danswer.server.query_and_chat.models import ChatMessageIdentifier
+from danswer.server.query_and_chat.models import ChatRenameRequest
+from danswer.server.query_and_chat.models import ChatSessionCreationRequest
+from danswer.server.query_and_chat.models import ChatSessionDetailResponse
+from danswer.server.query_and_chat.models import ChatSessionDetails
+from danswer.server.query_and_chat.models import ChatSessionsResponse
+from danswer.server.query_and_chat.models import CreateChatMessageRequest
+from danswer.server.query_and_chat.models import CreateChatSessionID
+from danswer.server.query_and_chat.models import RenameChatSessionResponse
+from danswer.server.query_and_chat.models import SearchFeedbackRequest
 from danswer.utils.logger import setup_logger
 
 

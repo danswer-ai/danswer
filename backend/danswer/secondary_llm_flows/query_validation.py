@@ -9,7 +9,7 @@ from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.prompts.constants import ANSWERABLE_PAT
 from danswer.prompts.constants import THOUGHT_PAT
 from danswer.prompts.query_validation import ANSWERABLE_PROMPT
-from danswer.server.chat.models import QueryValidationResponse
+from danswer.server.query_and_chat.models import QueryValidationResponse
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
 

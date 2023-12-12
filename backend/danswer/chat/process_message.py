@@ -46,7 +46,7 @@ from danswer.search.search_runner import full_chunk_search_generator
 from danswer.search.search_runner import inference_documents_from_ids
 from danswer.secondary_llm_flows.chat_helpers import check_if_need_search
 from danswer.secondary_llm_flows.chat_helpers import history_based_query_rephrase
-from danswer.server.chat.models import CreateChatMessageRequest
+from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time

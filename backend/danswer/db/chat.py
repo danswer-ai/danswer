@@ -23,7 +23,7 @@ from danswer.search.models import RecencyBiasSetting
 from danswer.search.models import RetrievalDocs
 from danswer.search.models import SavedSearchDoc
 from danswer.search.models import SearchDoc as ServerSearchDoc
-from danswer.server.chat.models import ChatMessageDetail
+from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()

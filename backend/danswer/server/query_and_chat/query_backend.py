@@ -11,6 +11,8 @@ from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
+from danswer.one_shot_answer.answer_question import stream_one_shot_answer
+from danswer.one_shot_answer.models import DirectQARequest
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.models import IndexFilters
@@ -22,20 +24,18 @@ from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import full_chunk_search
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
-from danswer.server.chat.models import AdminSearchRequest
-from danswer.server.chat.models import AdminSearchResponse
-from danswer.server.chat.models import DocumentSearchRequest
-from danswer.server.chat.models import HelperResponse
-from danswer.server.chat.models import QueryValidationResponse
-from danswer.server.chat.models import SimpleQueryRequest
+from danswer.server.query_and_chat.models import AdminSearchRequest
+from danswer.server.query_and_chat.models import AdminSearchResponse
+from danswer.server.query_and_chat.models import DocumentSearchRequest
+from danswer.server.query_and_chat.models import HelperResponse
+from danswer.server.query_and_chat.models import QueryValidationResponse
+from danswer.server.query_and_chat.models import SimpleQueryRequest
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
 admin_router = APIRouter(prefix="/admin")
 basic_router = APIRouter(prefix="/query")
-
-"""Admin-only search endpoints"""
 
 
 @admin_router.post("/search")
@@ -73,9 +73,6 @@ def admin_search(
             deduplicated_documents.append(document)
             seen_documents.add(document.document_id)
     return AdminSearchResponse(documents=deduplicated_documents)
-
-
-"""Search endpoints for all"""
 
 
 @basic_router.post("/search-intent")
@@ -152,3 +149,15 @@ def handle_search_request(
     return SearchResponse(
         top_documents=fake_saved_docs, llm_indices=llm_selection_indices
     )
+
+
+@basic_router.post("/answer-with-quote")
+def get_answer_with_quote(
+    query_request: DirectQARequest,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> StreamingResponse:
+    packets = stream_one_shot_answer(
+        query_req=query_request, user=user, db_session=db_session
+    )
+    return StreamingResponse(packets, media_type="application/json")
