@@ -29,7 +29,7 @@ def send_chat_message(
         "message": message,
         "chat_session_id": chat_session_id,
         "parent_message_id": parent_message,
-        "prompt_id": None,  # Global default Prompt
+        "prompt_id": 0,  # Global default Prompt
         "retrieval_options": {"run_search": "always", "real_time": True},
     }
 

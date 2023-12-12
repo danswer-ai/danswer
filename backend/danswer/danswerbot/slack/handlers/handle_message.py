@@ -23,7 +23,6 @@ from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import ChannelIdAdapter
 from danswer.danswerbot.slack.utils import fetch_userids_from_emails
 from danswer.danswerbot.slack.utils import respond_in_thread
-from danswer.db.chat import get_persona_by_id
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
 from danswer.one_shot_answer.answer_question import get_one_shot_answer
@@ -103,17 +102,12 @@ def handle_message(
 
     document_set_names: list[str] | None = None
     persona = channel_config.persona if channel_config else None
+    prompt = None
     if persona:
         document_set_names = [
             document_set.name for document_set in persona.document_sets
         ]
         prompt = persona.prompts[0] if persona.prompts else None
-    else:
-        with Session(engine, expire_on_commit=False) as db_session:
-            persona = get_persona_by_id(
-                persona_id=0, user_id=None, db_session=db_session
-            )
-            prompt = persona.prompts[0] if persona.prompts else None
 
     should_respond_even_with_no_docs = persona.num_chunks == 0 if persona else False
 
@@ -213,7 +207,9 @@ def handle_message(
             time_cutoff=None,
         )
 
-        auto_detect_filters = persona.llm_filter_extraction
+        auto_detect_filters = (
+            persona.llm_filter_extraction if persona is not None else False
+        )
         if disable_auto_detect_filters:
             auto_detect_filters = False
 
@@ -228,8 +224,8 @@ def handle_message(
         answer = _get_answer(
             DirectQARequest(
                 query=msg,
-                prompt_id=prompt.id if prompt else 0,
-                persona_id=persona.id,
+                prompt_id=prompt.id if prompt else None,
+                persona_id=persona.id if persona is not None else 0,
                 retrieval_options=retrieval_details,
                 chain_of_thought=not disable_cot,
             )

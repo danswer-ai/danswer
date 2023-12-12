@@ -223,6 +223,8 @@ def create_new_chat_message(
     rephrased_query: str | None = None,
     error: str | None = None,
     reference_docs: list[DBSearchDoc] | None = None,
+    # Maps the citation number [n] to the DB SearchDoc
+    citations: dict[int, int] | None = None,
     commit: bool = True,
 ) -> ChatMessage:
     new_chat_message = ChatMessage(
@@ -234,6 +236,7 @@ def create_new_chat_message(
         prompt_id=prompt_id,
         token_count=token_count,
         message_type=message_type,
+        citations=citations,
         error=error,
     )
 

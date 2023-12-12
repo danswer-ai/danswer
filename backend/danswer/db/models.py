@@ -497,6 +497,8 @@ class ChatMessage(Base):
     # the LLM's context (not included in the history of messages)
     token_count: Mapped[int] = mapped_column(Integer)
     message_type: Mapped[MessageType] = mapped_column(Enum(MessageType))
+    # Maps the citation numbers to a SearchDoc id
+    citations: Mapped[dict[int, int]] = mapped_column(postgresql.JSONB(), nullable=True)
     # Only applies for LLM
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     time_sent: Mapped[datetime.datetime] = mapped_column(
@@ -675,7 +677,7 @@ AllowedAnswerFilters = (
 
 
 class ChannelConfig(TypedDict):
-    """NOTE: is a `TypedDict` so it can be used a type hint for a JSONB column
+    """NOTE: is a `TypedDict` so it can be used as a type hint for a JSONB column
     in Postgres"""
 
     channel_names: list[str]

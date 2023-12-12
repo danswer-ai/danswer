@@ -11,6 +11,8 @@ from danswer.chat.chat_utils import build_chat_system_message
 from danswer.chat.chat_utils import build_chat_user_message
 from danswer.chat.chat_utils import get_chunks_for_qa
 from danswer.chat.chat_utils import llm_doc_from_inference_chunk
+from danswer.chat.chat_utils import map_document_id_order
+from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
 from danswer.chat.models import LLMRelevanceFilterResponse
@@ -31,6 +33,7 @@ from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.models import ChatMessage
+from danswer.db.models import SearchDoc as DbSearchDoc
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import InferenceChunk
@@ -149,18 +152,17 @@ def _drop_messages_history_overflow(
 
 
 def extract_citations_from_stream(
-    tokens: Iterator[str], links: list[str | None]
-) -> Iterator[str]:
-    valid_links = [link for link in links if link is not None]
-    if not valid_links:
-        yield from tokens
-        return
-
-    max_citation_num = len(valid_links) + 1  # LLM is prompted to 1 index these
+    tokens: Iterator[str],
+    context_docs: list[LlmDoc],
+    doc_id_to_rank_map: dict[str, int],
+) -> Iterator[DanswerAnswerPiece | CitationInfo]:
+    max_citation_num = len(context_docs) + 1  # LLM is prompted to 1 index these
     curr_segment = ""
     prepend_bracket = False
+    cited_inds = set()
     for token in tokens:
         # Special case of [1][ where ][ is a single token
+        # This is where the model attempts to do consecutive citations like [1][2]
         if prepend_bracket:
             curr_segment += "[" + curr_segment
             prepend_bracket = False
@@ -176,7 +178,26 @@ def extract_citations_from_stream(
         if citation_found:
             numerical_value = int(citation_found.group(1))
             if 1 <= numerical_value <= max_citation_num:
-                link = valid_links[numerical_value - 1]
+                context_llm_doc = context_docs[
+                    numerical_value - 1
+                ]  # remove 1 index offset
+
+                link = context_llm_doc.link
+                target_citation_num = doc_id_to_rank_map[context_llm_doc.document_id]
+
+                # Use the citation number for the document's rank in
+                # the search (or selected docs) results
+                curr_segment = re.sub(
+                    rf"\[{numerical_value}\]", f"[{target_citation_num}]", curr_segment
+                )
+
+                if target_citation_num not in cited_inds:
+                    cited_inds.add(target_citation_num)
+                    yield CitationInfo(
+                        citation_num=target_citation_num,
+                        document_id=context_llm_doc.document_id,
+                    )
+
                 if link:
                     curr_segment = re.sub(r"\[", "[[", curr_segment, count=1)
                     curr_segment = re.sub("]", f"]]({link})", curr_segment, count=1)
@@ -194,24 +215,25 @@ def extract_citations_from_stream(
             curr_segment = curr_segment[:-1]
             prepend_bracket = True
 
-        yield curr_segment
+        yield DanswerAnswerPiece(answer_piece=curr_segment)
         curr_segment = ""
 
     if curr_segment:
         if prepend_bracket:
-            yield "[" + curr_segment
+            yield DanswerAnswerPiece(answer_piece="[" + curr_segment)
         else:
-            yield curr_segment
+            yield DanswerAnswerPiece(answer_piece=curr_segment)
 
 
 def generate_ai_chat_response(
     query_message: ChatMessage,
     history: list[ChatMessage],
     context_docs: list[LlmDoc],
+    doc_id_to_rank_map: dict[str, int],
     llm: LLM,
     llm_tokenizer: Callable,
     all_doc_useful: bool,
-) -> Iterator[DanswerAnswerPiece | StreamingError]:
+) -> Iterator[DanswerAnswerPiece | CitationInfo | StreamingError]:
     if query_message.prompt is None:
         raise RuntimeError("No prompt received for generating Gen AI answer.")
 
@@ -224,6 +246,8 @@ def generate_ai_chat_response(
             history
         )
 
+        # Be sure the context_docs passed to build_chat_user_message
+        # Is the same as passed in later for extracting citations
         user_message, user_tokens = build_chat_user_message(
             chat_message=query_message,
             prompt=query_message.prompt,
@@ -243,14 +267,34 @@ def generate_ai_chat_response(
 
         # Good Debug/Breakpoint
         tokens = llm.stream(prompt)
-        links = [doc.link for doc in context_docs]
 
-        for segment in extract_citations_from_stream(tokens, links):
-            yield DanswerAnswerPiece(answer_piece=segment)
+        yield from extract_citations_from_stream(
+            tokens, context_docs, doc_id_to_rank_map
+        )
 
     except Exception as e:
         logger.exception(f"LLM failed to produce valid chat message, error: {e}")
         yield StreamingError(error=str(e))
+
+
+def translate_citations(
+    citations_list: list[CitationInfo], db_docs: list[DbSearchDoc]
+) -> dict[int, int]:
+    """Always cites the first instance of the document_id, assumes the db_docs
+    are sorted in the order displayed in the UI"""
+    doc_id_to_saved_doc_id_map: dict[str, int] = {}
+    for db_doc in db_docs:
+        if db_doc.document_id not in doc_id_to_saved_doc_id_map:
+            doc_id_to_saved_doc_id_map[db_doc.document_id] = db_doc.id
+
+    citation_to_saved_doc_id_map: dict[int, int] = {}
+    for citation in citations_list:
+        if citation.citation_num not in citation_to_saved_doc_id_map:
+            citation_to_saved_doc_id_map[
+                citation.citation_num
+            ] = doc_id_to_saved_doc_id_map[citation.document_id]
+
+    return citation_to_saved_doc_id_map
 
 
 @log_generator_function_time()
@@ -361,6 +405,9 @@ def stream_chat_packets(
             doc_identifiers=identifier_tuples,
             document_index=get_default_document_index(),
         )
+        doc_id_to_rank_map = map_document_id_order(
+            cast(list[InferenceChunk | LlmDoc], llm_docs)
+        )
 
         # In case the search doc is deleted, just don't include it
         # though this should never happen
@@ -399,6 +446,11 @@ def stream_chat_packets(
         # First fetch and return the top chunks to the UI so the user can
         # immediately see some results
         top_chunks = cast(list[InferenceChunk], next(documents_generator))
+
+        # Get ranking of the documents for citation purposes later
+        doc_id_to_rank_map = map_document_id_order(
+            cast(list[InferenceChunk | LlmDoc], top_chunks)
+        )
 
         top_docs = chunks_to_search_docs(top_chunks)
 
@@ -452,6 +504,7 @@ def stream_chat_packets(
 
     else:
         llm_docs = []
+        doc_id_to_rank_map = {}
         reference_db_search_docs = None
 
     # Cannot determine these without the LLM step or breaking out early
@@ -476,6 +529,7 @@ def stream_chat_packets(
         gen_ai_response_message = partial_response(
             message="",
             token_count=0,
+            citations=None,
             error=None,
         )
         msg_detail_response = translate_db_message_to_chat_message_detail(
@@ -493,6 +547,7 @@ def stream_chat_packets(
         query_message=final_msg,
         history=history_msgs,
         context_docs=llm_docs,
+        doc_id_to_rank_map=doc_id_to_rank_map,
         llm=llm,
         llm_tokenizer=llm_tokenizer,
         all_doc_useful=reference_doc_ids is not None,
@@ -501,6 +556,7 @@ def stream_chat_packets(
     # Capture outputs and errors
     llm_output = ""
     error: str | None = None
+    citations: list[CitationInfo] = []
     for packet in response_packets:
         if isinstance(packet, DanswerAnswerPiece):
             token = packet.answer_piece
@@ -508,13 +564,24 @@ def stream_chat_packets(
                 llm_output += token
         elif isinstance(packet, StreamingError):
             error = packet.error
+        elif isinstance(packet, CitationInfo):
+            citations.append(packet)
+            continue
 
         yield get_json_line(packet.dict())
+
+    db_citations = None
+    if reference_db_search_docs:
+        db_citations = translate_citations(
+            citations_list=citations,
+            db_docs=reference_db_search_docs,
+        )
 
     # Saving Gen AI answer and responding with message info
     gen_ai_response_message = partial_response(
         message=llm_output,
         token_count=len(llm_tokenizer(llm_output)),
+        citations=db_citations,
         error=error,
     )
 

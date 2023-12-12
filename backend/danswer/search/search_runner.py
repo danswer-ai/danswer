@@ -581,6 +581,7 @@ def combine_inference_chunks(inf_chunks: list[InferenceChunk]) -> LlmDoc:
     first_chunk = inf_chunks[0]
     chunk_texts = [chunk.content for chunk in inf_chunks]
     return LlmDoc(
+        document_id=first_chunk.document_id,
         content="\n".join(chunk_texts),
         semantic_identifier=first_chunk.semantic_identifier,
         source_type=first_chunk.source_type,

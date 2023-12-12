@@ -14,6 +14,7 @@ from danswer.search.models import SearchType
 class LlmDoc(BaseModel):
     """This contains the minimal set information for the LLM portion including citations"""
 
+    document_id: str
     content: str
     semantic_identifier: str
     source_type: DocumentSource
@@ -46,6 +47,13 @@ class LLMRelevanceFilterResponse(BaseModel):
 class DanswerAnswerPiece(BaseModel):
     # A small piece of a complete answer. Used for streaming back answers.
     answer_piece: str | None  # if None, specifies the end of an Answer
+
+
+# An intermediate representation of citations, later translated into
+# a mapping of the citation [n] number to SearchDoc
+class CitationInfo(BaseModel):
+    citation_num: int
+    document_id: str
 
 
 class StreamingError(BaseModel):

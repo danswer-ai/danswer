@@ -21,7 +21,6 @@ from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.prompts.direct_qa_prompts import LANGUAGE_HINT
 from danswer.prompts.prompt_utils import get_current_llm_day_time
 
-
 # Maps connector enum string to a more natural language representation for the LLM
 # If not on the list, uses the original but slightly cleaned up, see below
 CONNECTOR_NAME_MAP = {
@@ -42,16 +41,17 @@ def build_context_str(
     context_docs: list[LlmDoc | InferenceChunk],
     include_metadata: bool = True,
 ) -> str:
-    context = ""
-    for doc in context_docs:
+    context_str = ""
+    for ind, doc in enumerate(context_docs, start=1):
         if include_metadata:
-            context += f"NEW DOCUMENT: {doc.semantic_identifier}\n"
-            context += f"Source: {clean_up_source(doc.source_type)}\n"
+            context_str += f"DOCUMENT {ind}: {doc.semantic_identifier}\n"
+            context_str += f"Source: {clean_up_source(doc.source_type)}\n"
             if doc.updated_at:
                 update_str = doc.updated_at.strftime("%B %d, %Y %H:%M")
-                context += f"Updated: {update_str}\n"
-        context += f"{CODE_BLOCK_PAT.format(doc.content.strip())}\n\n\n"
-    return context.strip()
+                context_str += f"Updated: {update_str}\n"
+        context_str += f"{CODE_BLOCK_PAT.format(doc.content.strip())}\n\n\n"
+
+    return context_str.strip()
 
 
 @lru_cache()
@@ -88,12 +88,26 @@ def build_task_prompt_reminders(
 
 def llm_doc_from_inference_chunk(inf_chunk: InferenceChunk) -> LlmDoc:
     return LlmDoc(
+        document_id=inf_chunk.document_id,
         content=inf_chunk.content,
         semantic_identifier=inf_chunk.semantic_identifier,
         source_type=inf_chunk.source_type,
         updated_at=inf_chunk.updated_at,
         link=inf_chunk.source_links[0] if inf_chunk.source_links else None,
     )
+
+
+def map_document_id_order(
+    chunks: list[InferenceChunk | LlmDoc], one_indexed: bool = True
+) -> dict[str, int]:
+    order_mapping = {}
+    current = 1 if one_indexed else 0
+    for chunk in chunks:
+        if chunk.document_id not in order_mapping:
+            order_mapping[chunk.document_id] = current
+            current += 1
+
+    return order_mapping
 
 
 def build_chat_user_message(
