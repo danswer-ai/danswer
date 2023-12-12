@@ -285,7 +285,7 @@ def get_prompt_by_id(
     )
 
     if not include_deleted:
-        stmt = stmt.where(Persona.deleted.is_(False))
+        stmt = stmt.where(Prompt.deleted.is_(False))
 
     result = db_session.execute(stmt)
     prompt = result.scalar_one_or_none()

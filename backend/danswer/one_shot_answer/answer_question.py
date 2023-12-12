@@ -18,12 +18,14 @@ from danswer.configs.constants import MessageType
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_or_create_root_message
+from danswer.db.chat import get_persona_by_id
+from danswer.db.chat import get_prompt_by_id
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import get_default_llm_token_encode
-from danswer.one_shot_answer.factory import get_default_qa_model
+from danswer.one_shot_answer.factory import get_question_answer_model
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.search.models import RerankMetricsContainer
@@ -170,9 +172,22 @@ def stream_answer_objects(
         f"Chunks fed to LLM: {[chunk.semantic_identifier for chunk in llm_chunks]}"
     )
 
-    # TODO prompt options
-    qa_model = get_default_qa_model(
-        timeout=timeout, chain_of_thought=query_req.chain_of_thought
+    prompt = None
+    llm_override = None
+    if query_req.prompt_id is not None:
+        prompt = get_prompt_by_id(
+            prompt_id=query_req.prompt_id, user_id=user_id, db_session=db_session
+        )
+        persona = get_persona_by_id(
+            persona_id=query_req.persona_id, user_id=user_id, db_session=db_session
+        )
+        llm_override = persona.llm_model_version_override
+
+    qa_model = get_question_answer_model(
+        prompt=prompt,
+        timeout=timeout,
+        chain_of_thought=query_req.chain_of_thought,
+        llm_version=llm_override,
     )
 
     response_packets = qa_model.answer_question_stream(

@@ -42,7 +42,12 @@ def extract_answerability_bool(model_raw: str) -> bool:
     return answerable
 
 
-def get_query_answerability(user_query: str) -> tuple[str, bool]:
+def get_query_answerability(
+    user_query: str, skip_check: bool = DISABLE_LLM_QUERY_ANSWERABILITY
+) -> tuple[str, bool]:
+    if skip_check:
+        return "Query Answerability Evaluation feature is turned off", True
+
     messages = get_query_validation_messages(user_query)
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
     model_output = get_default_llm().invoke(filled_llm_prompt)
@@ -59,7 +64,7 @@ def stream_query_answerability(
     if skip_check:
         yield get_json_line(
             QueryValidationResponse(
-                reasoning="Query Answerability Eval feature is turned off",
+                reasoning="Query Answerability Evaluation feature is turned off",
                 answerable=True,
             ).dict()
         )

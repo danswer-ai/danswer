@@ -79,6 +79,7 @@ def admin_search(
 def get_search_type(
     simple_query: SimpleQueryRequest, _: User = Depends(current_user)
 ) -> HelperResponse:
+    logger.info(f"Calculating intent for {simple_query.query}")
     return recommend_search_flow(simple_query.query)
 
 
@@ -86,6 +87,10 @@ def get_search_type(
 def query_validation(
     simple_query: SimpleQueryRequest, _: User = Depends(current_user)
 ) -> QueryValidationResponse:
+    # Note if weak model prompt is chosen, this check does not occur and will simply return that
+    # the query is valid, this is because weaker models cannot really handle this task well.
+    # Additionally, some weak model servers cannot handle concurrent inferences.
+    logger.info(f"Validating query: {simple_query.query}")
     reasoning, answerable = get_query_answerability(simple_query.query)
     return QueryValidationResponse(reasoning=reasoning, answerable=answerable)
 
@@ -97,6 +102,7 @@ def stream_query_validation(
     # Note if weak model prompt is chosen, this check does not occur and will simply return that
     # the query is valid, this is because weaker models cannot really handle this task well.
     # Additionally, some weak model servers cannot handle concurrent inferences.
+    logger.info(f"Validating query: {simple_query.query}")
     return StreamingResponse(
         stream_query_answerability(simple_query.query), media_type="application/json"
     )
@@ -157,6 +163,9 @@ def get_answer_with_quote(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
+    logger.info(
+        f"Received query for one shot answer with quotes: {query_request.query}"
+    )
     packets = stream_one_shot_answer(
         query_req=query_request, user=user, db_session=db_session
     )

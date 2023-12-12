@@ -170,7 +170,7 @@ class SingleMessageScratchpadHandler(QAHandler):
         )
 
 
-class PersonaBasedQAHandler(QAHandler):
+class PromptBasedQAHandler(QAHandler):
     def __init__(self, system_prompt: str, task_prompt: str) -> None:
         self.system_prompt = system_prompt
         self.task_prompt = task_prompt

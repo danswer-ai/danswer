@@ -25,7 +25,6 @@ from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import get_gen_ai_api_key
 from danswer.llm.utils import test_llm
-from danswer.one_shot_answer.factory import get_default_qa_model
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.manage.models import BoostDoc
 from danswer.server.manage.models import BoostUpdateRequest
@@ -101,9 +100,7 @@ def document_hidden_update(
 def validate_existing_genai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
-    # OpenAI key is only used for generative QA, so no need to validate this
-    # if it's turned off or if a non-OpenAI model is being used
-    if DISABLE_GENERATIVE_AI or not get_default_qa_model().requires_api_key:
+    if DISABLE_GENERATIVE_AI:
         return
 
     # Only validate every so often
