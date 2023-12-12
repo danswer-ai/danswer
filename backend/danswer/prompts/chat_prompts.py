@@ -31,6 +31,14 @@ CONTEXT:
 """.strip()
 
 
+CHAT_USER_CONTEXT_FREE_PROMPT = """
+{task_prompt}
+
+
+{user_query}
+""".strip()
+
+
 YES_SEARCH = "Yes Search"
 NO_SEARCH = "No Search"
 REQUIRE_SEARCH_SYSTEM_MSG = f"""

@@ -13,6 +13,7 @@ from danswer.db.models import ChatMessage
 from danswer.db.models import Prompt
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import check_number_of_tokens
+from danswer.prompts.chat_prompts import CHAT_USER_CONTEXT_FREE_PROMPT
 from danswer.prompts.chat_prompts import CHAT_USER_PROMPT
 from danswer.prompts.chat_prompts import CITATION_REMINDER
 from danswer.prompts.chat_prompts import DEFAULT_IGNORE_STATEMENT
@@ -117,10 +118,21 @@ def build_chat_user_message(
     llm_tokenizer: Callable,
     all_doc_useful: bool,
     user_prompt_template: str = CHAT_USER_PROMPT,
+    context_free_template: str = CHAT_USER_CONTEXT_FREE_PROMPT,
     ignore_str: str = DEFAULT_IGNORE_STATEMENT,
 ) -> tuple[HumanMessage, int]:
-    # TODO contextless version
     user_query = chat_message.message
+
+    if not context_docs:
+        # Simpler prompt for cases where there is no context
+        user_prompt = context_free_template.format(
+            task_prompt=prompt.task_prompt,
+            user_query=user_query,
+        )
+        token_count = len(llm_tokenizer(user_prompt))
+        user_msg = HumanMessage(content=user_prompt)
+        return user_msg, token_count
+
     context_docs_str = build_context_str(
         cast(list[LlmDoc | InferenceChunk], context_docs)
     )
