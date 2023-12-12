@@ -151,7 +151,7 @@ def handle_search_request(
     )
 
 
-@basic_router.post("/answer-with-quote")
+@basic_router.post("/stream-answer-with-quote")
 def get_answer_with_quote(
     query_request: DirectQARequest,
     user: User = Depends(current_user),
