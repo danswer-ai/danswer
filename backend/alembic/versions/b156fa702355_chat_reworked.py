@@ -33,8 +33,9 @@ recencybiassetting_enum = ENUM(
 
 
 def upgrade() -> None:
-    searchtype_enum.create(op.get_bind())
-    recencybiassetting_enum.create(op.get_bind())
+    bind = op.get_bind()
+    searchtype_enum.create(bind)
+    recencybiassetting_enum.create(bind)
 
     op.create_table(
         "search_doc",
@@ -94,6 +95,8 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("persona_id", "prompt_id"),
     )
+    # Migration picks it up correctly now and will ensure it exists without running Celery
+    op.execute("DROP TABLE IF EXISTS celery_taskmeta")
     op.create_table(
         "celery_taskmeta",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
@@ -112,6 +115,8 @@ def upgrade() -> None:
         sa.UniqueConstraint("task_id"),
         sqlite_autoincrement=True,
     )
+    # Migration picks it up correctly now and will ensure it exists without running Celery
+    op.execute("DROP TABLE IF EXISTS celery_tasksetmeta")
     op.create_table(
         "celery_tasksetmeta",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
@@ -122,6 +127,86 @@ def upgrade() -> None:
         sa.UniqueConstraint("taskset_id"),
         sqlite_autoincrement=True,
     )
+
+    # Changes to persona first so chat_sessions can have the right persona
+    # The empty persona will be overwritten on server startup
+    op.add_column(
+        "persona",
+        sa.Column(
+            "user_id",
+            fastapi_users_db_sqlalchemy.generics.GUID(),
+            nullable=True,
+        ),
+    )
+    op.add_column(
+        "persona",
+        sa.Column(
+            "search_type",
+            searchtype_enum,
+            nullable=True,
+        ),
+    )
+    op.execute("UPDATE persona SET search_type = 'HYBRID'")
+    op.alter_column("persona", "search_type", nullable=False)
+    op.add_column(
+        "persona",
+        sa.Column("llm_relevance_filter", sa.Boolean(), nullable=True),
+    )
+    op.execute("UPDATE persona SET llm_relevance_filter = TRUE")
+    op.alter_column("persona", "llm_relevance_filter", nullable=False)
+    op.add_column(
+        "persona",
+        sa.Column("llm_filter_extraction", sa.Boolean(), nullable=True),
+    )
+    op.execute("UPDATE persona SET llm_filter_extraction = TRUE")
+    op.alter_column("persona", "llm_filter_extraction", nullable=False)
+    op.add_column(
+        "persona",
+        sa.Column(
+            "recency_bias",
+            recencybiassetting_enum,
+            nullable=True,
+        ),
+    )
+    op.execute("UPDATE persona SET recency_bias = 'BASE_DECAY'")
+    op.alter_column("persona", "recency_bias", nullable=False)
+    op.alter_column("persona", "description", existing_type=sa.VARCHAR(), nullable=True)
+    op.execute("UPDATE persona SET description = ''")
+    op.alter_column("persona", "description", nullable=False)
+    op.create_foreign_key("persona__user_fk", "persona", "user", ["user_id"], ["id"])
+    op.drop_column("persona", "datetime_aware")
+    op.drop_column("persona", "tools")
+    op.drop_column("persona", "hint_text")
+    op.drop_column("persona", "apply_llm_relevance_filter")
+    op.drop_column("persona", "retrieval_enabled")
+    op.drop_column("persona", "system_text")
+
+    # Need to create a persona row so fk can work
+    result = bind.execute(sa.text("SELECT 1 FROM persona WHERE id = 0"))
+    exists = result.fetchone()
+    if not exists:
+        op.execute(
+            sa.text(
+                """
+                INSERT INTO persona (
+                    id, user_id, name, description, search_type, num_chunks,
+                    llm_relevance_filter, llm_filter_extraction, recency_bias,
+                    llm_model_version_override, default_persona, deleted
+                ) VALUES (
+                    0, NULL, '', '', 'HYBRID', NULL,
+                    TRUE, TRUE, 'BASE_DECAY', NULL, TRUE, FALSE
+                )
+                """
+            )
+        )
+    delete_statement = sa.text(
+        """
+        DELETE FROM persona
+        WHERE name = 'Danswer' AND default_persona = TRUE AND id != 0
+        """
+    )
+
+    bind.execute(delete_statement)
 
     op.add_column(
         "chat_feedback",
@@ -173,13 +258,17 @@ def upgrade() -> None:
     op.drop_column("chat_message", "edit_number")
     op.drop_column("chat_message", "latest")
     op.drop_column("chat_message", "message_number")
-    op.add_column("chat_session", sa.Column("one_shot", sa.Boolean(), nullable=False))
+    op.add_column("chat_session", sa.Column("one_shot", sa.Boolean(), nullable=True))
+    op.execute("UPDATE chat_session SET one_shot = TRUE")
+    op.alter_column("chat_session", "one_shot", nullable=False)
     op.alter_column(
         "chat_session",
         "persona_id",
         existing_type=sa.INTEGER(),
-        nullable=False,
+        nullable=True,
     )
+    op.execute("UPDATE chat_session SET persona_id = 0")
+    op.alter_column("chat_session", "persona_id", nullable=False)
     op.add_column(
         "document_retrieval_feedback",
         sa.Column("chat_message_id", sa.Integer(), nullable=False),
@@ -197,50 +286,6 @@ def upgrade() -> None:
         ["id"],
     )
     op.drop_column("document_retrieval_feedback", "qa_event_id")
-    op.add_column(
-        "persona",
-        sa.Column(
-            "user_id",
-            fastapi_users_db_sqlalchemy.generics.GUID(),
-            nullable=True,
-        ),
-    )
-    op.add_column(
-        "persona",
-        sa.Column(
-            "search_type",
-            searchtype_enum,
-            nullable=False,
-        ),
-    )
-    op.add_column(
-        "persona",
-        sa.Column("llm_relevance_filter", sa.Boolean(), nullable=False),
-    )
-    op.add_column(
-        "persona",
-        sa.Column("llm_filter_extraction", sa.Boolean(), nullable=False),
-    )
-    op.add_column(
-        "persona",
-        sa.Column(
-            "recency_bias",
-            recencybiassetting_enum,
-            nullable=True,
-        ),
-    )
-    op.execute("UPDATE persona SET recency_bias = 'BASE_DECAY'")
-    op.alter_column("persona", "recency_bias", nullable=False)
-    op.alter_column(
-        "persona", "description", existing_type=sa.VARCHAR(), nullable=False
-    )
-    op.create_foreign_key("persona__user_fk", "persona", "user", ["user_id"], ["id"])
-    op.drop_column("persona", "datetime_aware")
-    op.drop_column("persona", "tools")
-    op.drop_column("persona", "hint_text")
-    op.drop_column("persona", "apply_llm_relevance_filter")
-    op.drop_column("persona", "retrieval_enabled")
-    op.drop_column("persona", "system_text")
 
     # Relation table must be created after the other tables are correct
     op.create_table(
@@ -296,9 +341,11 @@ def downgrade() -> None:
             "retrieval_enabled",
             sa.BOOLEAN(),
             autoincrement=False,
-            nullable=False,
+            nullable=True,
         ),
     )
+    op.execute("UPDATE persona SET retrieval_enabled = TRUE")
+    op.alter_column("persona", "retrieval_enabled", nullable=False)
     op.add_column(
         "persona",
         sa.Column(
@@ -323,8 +370,10 @@ def downgrade() -> None:
     )
     op.add_column(
         "persona",
-        sa.Column("datetime_aware", sa.BOOLEAN(), autoincrement=False, nullable=False),
+        sa.Column("datetime_aware", sa.BOOLEAN(), autoincrement=False, nullable=True),
     )
+    op.execute("UPDATE persona SET datetime_aware = TRUE")
+    op.alter_column("persona", "datetime_aware", nullable=False)
     op.alter_column("persona", "description", existing_type=sa.VARCHAR(), nullable=True)
     op.drop_column("persona", "recency_bias")
     op.drop_column("persona", "llm_filter_extraction")
