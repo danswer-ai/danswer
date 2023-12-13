@@ -1,5 +1,3 @@
-from danswer.indexing.models import InferenceChunk
-from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.prompts.constants import GENERAL_SEP_PAT
 from danswer.prompts.constants import QUESTION_PAT
 
@@ -82,11 +80,19 @@ Query:
 """.strip()
 
 
-def format_danswer_chunks_for_chat(chunks: list[InferenceChunk]) -> str:
-    if not chunks:
-        return "No Results Found"
+HISTORY_QUERY_REPHRASE = f"""
+Given the following conversation and a follow up question, \
+rephrase the follow up question to be a standalone question \
+and convert it into a SHORT query for a vectorstore.
+IMPORTANT: BE AS TERSE AND CONCISE AS POSSIBLE.
+Strip out any information that is not relevant for the retrieval task.
+Respond with a short phrase instead of a complete sentence. Avoid using any unclear pronouns.
 
-    return "\n".join(
-        f"DOCUMENT {ind}:\n{CODE_BLOCK_PAT.format(chunk.content)}\n"
-        for ind, chunk in enumerate(chunks, start=1)
-    )
+{GENERAL_SEP_PAT}
+Chat History:
+{{chat_history}}
+{GENERAL_SEP_PAT}
+
+Follow Up Input: {{question}}
+Standalone question (Respond with only the SHORT query):
+""".strip()

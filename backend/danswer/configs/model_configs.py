@@ -97,4 +97,7 @@ GEN_AI_LLM_PROVIDER_TYPE = os.environ.get("GEN_AI_LLM_PROVIDER_TYPE") or None
 GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS") or 1024)
 # This next restriction is only used for chat ATM, used to expire old messages as needed
 GEN_AI_MAX_INPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_INPUT_TOKENS") or 3000)
+# Leave 20% other prompt pieces, this only applies to secondary LLM flows as the main chat
+# flow has separate logic to drop messages
+GEN_AI_HISTORY_CUTOFF = 0.8 * GEN_AI_MAX_INPUT_TOKENS
 GEN_AI_TEMPERATURE = float(os.environ.get("GEN_AI_TEMPERATURE") or 0)

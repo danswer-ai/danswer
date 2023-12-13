@@ -157,6 +157,9 @@ def handle_new_chat_message(
     have already been set as latest"""
     logger.info(f"Received new chat message: {chat_message_req.message}")
 
+    if not chat_message_req.message and chat_message_req.prompt_id is not None:
+        raise HTTPException(status_code=400, detail="Empty chat message is invalid")
+
     packets = stream_chat_packets(
         new_msg_req=chat_message_req,
         user=user,

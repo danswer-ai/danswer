@@ -2,14 +2,13 @@ from langchain.schema import BaseMessage
 from langchain.schema import HumanMessage
 from langchain.schema import SystemMessage
 
+from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.db.models import ChatMessage
 from danswer.llm.factory import get_default_llm
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import translate_danswer_msg_to_langchain
 from danswer.prompts.chat_prompts import NO_SEARCH
-from danswer.prompts.chat_prompts import QUERY_REPHRASE_SYSTEM_MSG
-from danswer.prompts.chat_prompts import QUERY_REPHRASE_USER_MSG
 from danswer.prompts.chat_prompts import REQUIRE_SEARCH_HINT
 from danswer.prompts.chat_prompts import REQUIRE_SEARCH_SYSTEM_MSG
 from danswer.utils.logger import setup_logger
@@ -59,38 +58,28 @@ def check_if_need_search(
     return True
 
 
-def history_based_query_rephrase(
-    query_message: ChatMessage,
-    history: list[ChatMessage],
-    llm: LLM,
+def combine_message_chain(
+    messages: list[ChatMessage],
+    msg_limit: int | None = 10,
+    token_limit: int | None = GEN_AI_HISTORY_CUTOFF,
 ) -> str:
-    user_query = query_message.message
-    prompt_msgs: list[BaseMessage] = []
+    message_strs: list[str] = []
+    total_token_count = 0
 
-    if not user_query:
-        raise ValueError("Can't rephrase/search an empty query")
+    if msg_limit is not None:
+        messages = messages[-msg_limit:]
 
-    if not history:
-        return query_message.message
+    for message in reversed(messages):
+        message_token_count = message.token_count
 
-    prompt_msgs.append(SystemMessage(content=QUERY_REPHRASE_SYSTEM_MSG))
+        if (
+            token_limit is not None
+            and total_token_count + message_token_count > token_limit
+        ):
+            break
 
-    prompt_msgs.extend(
-        [
-            translate_danswer_msg_to_langchain(msg)
-            for msg in history
-            if msg.token_count != 0
-        ]
-    )
+        role = message.message_type.value.upper()
+        message_strs.insert(0, f"{role}:\n{message.message}")
+        total_token_count += message_token_count
 
-    last_query = query_message.message
-
-    prompt_msgs.append(
-        HumanMessage(content=QUERY_REPHRASE_USER_MSG.format(final_query=last_query))
-    )
-
-    rephrased_query = llm.invoke(prompt_msgs)
-
-    logger.debug(f"Rephrased combined query: {rephrased_query}")
-
-    return rephrased_query
+    return "\n\n".join(message_strs)
