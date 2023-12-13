@@ -1,15 +1,15 @@
+# Currently in the UI, each Persona only has one prompt, which is why there are 3 very similar personas defined below.
+
 personas:
   # This id field can be left blank for other default personas, however an id 0 persona must exist
   # this is for DanswerBot to use when tagged in a non-configured channel
   - id: 0
-    name: "Danswer"
+    name: "Default"
     description: >
-      Default Persona for default Danswer functionality.
-      Ask Questions or get Summaries from your documents
+      Default Danswer Question Answering functionality.
     # Default Prompt objects attached to the persona, see prompts.yaml
     prompts:
       - "Answer-Question"
-      - "Summarize"
     # Default number of chunks to include as context, set to 0 to disable retrieval
     # Remove the field to set to the system default number of chunks/tokens to pass to Gen AI
     # If selecting documents, user can bypass this up until NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
@@ -39,4 +39,29 @@ personas:
     document_sets: []
     # Inject a statement at the end of system prompt to inform the LLM of the current date/time
     # Format looks like: "October 16, 2023 14:30"
+    datetime_aware: true
+
+  - name: "Summarize"
+    description: >
+      A less creative assistant which summarizes relevant documents but does not try to
+      extrapolate any answers for you.
+    prompts:
+      - "Summarize"
+    num_chunks: 5
+    llm_relevance_filter: true
+    llm_filter_extraction: true
+    recency_bias: "auto"
+    document_sets: []
+    datetime_aware: true
+
+  - name: "Paraphrase"
+    description: >
+      The least creative default assistant that only provides quotes from the documents.
+    prompts:
+      - "Paraphrase"
+    num_chunks: 5
+    llm_relevance_filter: true
+    llm_filter_extraction: true
+    recency_bias: "auto"
+    document_sets: []
     datetime_aware: true
