@@ -673,6 +673,7 @@ def translate_db_message_to_chat_message_detail(
         context_docs=get_retrieval_docs_from_chat_message(chat_message),
         message_type=chat_message.message_type,
         time_sent=chat_message.time_sent,
+        citations=chat_message.citations,
     )
 
     return chat_msg_detail

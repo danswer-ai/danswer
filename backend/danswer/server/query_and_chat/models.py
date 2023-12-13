@@ -130,6 +130,8 @@ class ChatMessageDetail(BaseModel):
     context_docs: RetrievalDocs | None
     message_type: MessageType
     time_sent: datetime
+    # Dict mapping citation number to db_doc_id
+    citations: dict[int, int] | None
 
     def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
         initial_dict = super().dict(*args, **kwargs)  # type: ignore
