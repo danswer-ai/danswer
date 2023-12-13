@@ -98,11 +98,14 @@ Standalone question (Respond with only the SHORT query):
 """.strip()
 
 
-CHAT_NAMING = """
+CHAT_NAMING = f"""
 Given the following conversation, provide a SHORT name for the conversation.
-IMPORTANT: TRY NOT TO USE MORE THAN 5 WORDS, MAKE IT AS CONCISE AND SHORT AS POSSIBLE.
+IMPORTANT: TRY NOT TO USE MORE THAN 5 WORDS, MAKE IT AS CONCISE AS POSSIBLE.
 Focus the name on the important keywords to convey the topic of the conversation.
 
-Conversation History:
-{chat_history}
+Chat History:
+{{chat_history}}
+{GENERAL_SEP_PAT}
+
+Based on the above, what is a short name to convey the topic of the conversation?
 """.strip()
