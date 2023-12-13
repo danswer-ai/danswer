@@ -16,16 +16,16 @@ from requests import HTTPError
 from requests import Response
 from retry import retry
 
-from danswer.configs.app_configs import DOC_TIME_DECAY
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
-from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
-from danswer.configs.app_configs import HYBRID_ALPHA
 from danswer.configs.app_configs import LOG_VESPA_TIMING_INFORMATION
-from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import VESPA_DEPLOYMENT_ZIP
 from danswer.configs.app_configs import VESPA_HOST
 from danswer.configs.app_configs import VESPA_PORT
 from danswer.configs.app_configs import VESPA_TENANT_PORT
+from danswer.configs.chat_configs import DOC_TIME_DECAY
+from danswer.configs.chat_configs import EDIT_KEYWORD_QUERY
+from danswer.configs.chat_configs import HYBRID_ALPHA
+from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import ACCESS_CONTROL_LIST
 from danswer.configs.constants import BLURB
 from danswer.configs.constants import BOOST

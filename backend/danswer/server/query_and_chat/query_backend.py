@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
+from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index

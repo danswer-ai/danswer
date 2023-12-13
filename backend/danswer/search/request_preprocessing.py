@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
-from danswer.configs.app_configs import DISABLE_LLM_FILTER_EXTRACTION
-from danswer.configs.app_configs import FAVOR_RECENT_DECAY_MULTIPLIER
+from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
+from danswer.configs.chat_configs import DISABLE_LLM_FILTER_EXTRACTION
+from danswer.configs.chat_configs import FAVOR_RECENT_DECAY_MULTIPLIER
 from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.db.models import Persona

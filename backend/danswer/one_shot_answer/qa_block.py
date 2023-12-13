@@ -16,7 +16,7 @@ from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import LlmDoc
 from danswer.chat.models import LLMMetricsContainer
 from danswer.chat.models import StreamingError
-from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
+from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import check_number_of_tokens

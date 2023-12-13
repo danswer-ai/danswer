@@ -12,7 +12,7 @@ from danswer.chat.models import DanswerAnswer
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import DanswerQuote
 from danswer.chat.models import DanswerQuotes
-from danswer.configs.app_configs import QUOTE_ALLOWED_ERROR_PERCENT
+from danswer.configs.chat_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.indexing.models import InferenceChunk
 from danswer.prompts.constants import ANSWER_PAT
 from danswer.prompts.constants import QUOTE_PAT

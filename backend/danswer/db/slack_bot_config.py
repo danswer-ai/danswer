@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
+from danswer.configs.chat_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
 from danswer.db.chat import upsert_persona
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.document_set import get_document_sets_by_ids

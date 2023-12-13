@@ -19,8 +19,8 @@ from danswer.chat.models import LlmDoc
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
-from danswer.configs.app_configs import CHUNK_SIZE
-from danswer.configs.app_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
+from danswer.configs.chat_configs import CHUNK_SIZE
+from danswer.configs.chat_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
 from danswer.db.chat import create_db_search_doc

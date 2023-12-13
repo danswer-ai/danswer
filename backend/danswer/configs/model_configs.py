@@ -3,11 +3,11 @@ import os
 #####
 # Embedding/Reranking Model Configs
 #####
+CHUNK_SIZE = 512
 # Important considerations when choosing models
 # Max tokens count needs to be high considering use case (at least 512)
 # Models used must be MIT or Apache license
 # Inference/Indexing speed
-
 # https://huggingface.co/DOCUMENT_ENCODER_MODEL
 # The useable models configured as below must be SentenceTransformer compatible
 DOCUMENT_ENCODER_MODEL = (

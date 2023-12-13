@@ -3,7 +3,7 @@ from langchain.schema import HumanMessage
 from langchain.schema import SystemMessage
 
 from danswer.chat.chat_utils import combine_message_chain
-from danswer.configs.app_configs import DISABLE_LLM_CHOOSE_SEARCH
+from danswer.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
 from danswer.db.models import ChatMessage
 from danswer.llm.factory import get_default_llm
 from danswer.llm.interfaces import LLM

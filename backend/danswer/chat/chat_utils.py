@@ -7,8 +7,8 @@ from langchain.schema.messages import SystemMessage
 from sqlalchemy.orm import Session
 
 from danswer.chat.models import LlmDoc
-from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
-from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
+from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
+from danswer.configs.chat_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.db.chat import get_chat_messages_by_session

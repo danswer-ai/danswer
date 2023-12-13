@@ -3,7 +3,7 @@ from typing import cast
 import yaml
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
+from danswer.configs.chat_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
 from danswer.configs.chat_configs import PERSONAS_YAML
 from danswer.configs.chat_configs import PROMPTS_YAML
 from danswer.db.chat import get_prompt_by_name

@@ -1,5 +1,5 @@
-from danswer.configs.app_configs import QA_PROMPT_OVERRIDE
-from danswer.configs.app_configs import QA_TIMEOUT
+from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
+from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.db.models import Prompt
 from danswer.llm.factory import get_default_llm
 from danswer.one_shot_answer.interfaces import QAModel

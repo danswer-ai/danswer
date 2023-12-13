@@ -9,9 +9,9 @@ from nltk.stem import WordNetLemmatizer  # type:ignore
 from nltk.tokenize import word_tokenize  # type:ignore
 
 from danswer.chat.models import LlmDoc
-from danswer.configs.app_configs import HYBRID_ALPHA
-from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
-from danswer.configs.app_configs import NUM_RERANKED_RESULTS
+from danswer.configs.chat_configs import HYBRID_ALPHA
+from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
+from danswer.configs.chat_configs import NUM_RERANKED_RESULTS
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN

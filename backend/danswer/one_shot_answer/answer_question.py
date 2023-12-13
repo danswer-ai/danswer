@@ -11,10 +11,10 @@ from danswer.chat.models import LLMMetricsContainer
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
-from danswer.configs.app_configs import CHUNK_SIZE
-from danswer.configs.app_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
-from danswer.configs.app_configs import QA_TIMEOUT
+from danswer.configs.chat_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
+from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.constants import MessageType
+from danswer.configs.model_configs import CHUNK_SIZE
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_or_create_root_message

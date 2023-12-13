@@ -4,9 +4,9 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
-from danswer.configs.app_configs import NUM_RERANKED_RESULTS
-from danswer.configs.app_configs import NUM_RETURNED_HITS
+from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
+from danswer.configs.chat_configs import NUM_RERANKED_RESULTS
+from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
 from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.indexing.models import DocAwareChunk
