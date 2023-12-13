@@ -81,9 +81,6 @@ def history_based_query_rephrase(
     if not user_query:
         raise ValueError("Can't rephrase/search an empty query")
 
-    if not history:
-        return query_message.message
-
     history_str = combine_message_chain(history)
 
     prompt_msgs = _get_history_rephrase_messages(

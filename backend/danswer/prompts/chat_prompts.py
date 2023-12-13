@@ -29,16 +29,42 @@ CONTEXT:
 """.strip()
 
 
-CHAT_USER_CONTEXT_FREE_PROMPT = """
-{task_prompt}
+CHAT_USER_CONTEXT_FREE_PROMPT = f"""
+{{task_prompt}}
 
-
-{user_query}
+{QUESTION_PAT.upper()}
+{{user_query}}
 """.strip()
 
 
 YES_SEARCH = "Yes Search"
 NO_SEARCH = "No Search"
+REQUIRE_SEARCH_SINGLE_MSG = f"""
+Given the following conversation and a follow up question, \
+determine if the system should call an external search tool to answer the latest user query.
+
+Respond with "{NO_SEARCH}" if:
+- There is sufficient information in chat history to FULLY answer the user query.
+- You know enough to answer the query and further information would not be helpful.
+
+Respond with "{YES_SEARCH}" if:
+- Additional knowledge about entities, processes, problems, or \
+anything else could lead to a better answer.
+- There is some uncertainty what the user is referring to.
+
+If at all unsure, respond with "{YES_SEARCH}"
+
+{GENERAL_SEP_PAT}
+Chat History:
+{{chat_history}}
+{GENERAL_SEP_PAT}
+
+Follow Up Input: {{final_query}}
+
+Respond with EXACTLY and ONLY "{YES_SEARCH}" or "{NO_SEARCH}"
+""".strip()
+
+
 REQUIRE_SEARCH_SYSTEM_MSG = f"""
 You are a large language model whose only job is to determine if the system should call an \
 external search tool to be able to answer the user's last message.

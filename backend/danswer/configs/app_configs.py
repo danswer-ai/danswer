@@ -211,8 +211,14 @@ DISABLE_LLM_QUERY_ANSWERABILITY = QA_PROMPT_OVERRIDE == "weak"
 DISABLE_LLM_FILTER_EXTRACTION = (
     os.environ.get("DISABLE_LLM_FILTER_EXTRACTION", "").lower() == "true"
 )
+# Whether the LLM should evaluate all of the document chunks passed in for usefulness
+# in relation to the user query
 DISABLE_LLM_CHUNK_FILTER = (
     os.environ.get("DISABLE_LLM_CHUNK_FILTER", "").lower() == "true"
+)
+# Whether the LLM should be used to decide if a search would help given the chat history
+DISABLE_LLM_CHOOSE_SEARCH = (
+    os.environ.get("DISABLE_LLM_CHOOSE_SEARCH", "").lower() == "true"
 )
 # 1 edit per 20 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05

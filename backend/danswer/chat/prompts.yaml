@@ -20,6 +20,8 @@ prompts:
       to the most recent user query.
       I have not read or seen any of the documents and do not want to read them.
       Be INFORMATIVE and DETAILED.
+      
+      If there are no documents, refer to the chat history and existing knowledge.
     # Inject a statement at the end of system prompt to inform the LLM of the current date/time
     # Format looks like: "October 16, 2023 14:30"
     datetime_aware: true
@@ -36,6 +38,7 @@ prompts:
       context provided, prioritizing the information that relates to the user query.
       
       You ARE NOT creative and always stick to the provided documents.
+      If there are no documents, refer to the conversation history.
       
       IMPORTANT: YOU ONLY SUMMARIZE THE IMPORTANT INFORMATION FROM THE PROVIDED DOCUMENTS,
       NEVER USE YOUR OWN KNOWLEDGE.
@@ -54,6 +57,9 @@ prompts:
       Quote and cite relevant information from provided context based on the user query.
       
       You only provide quotes that are EXACT substrings from provided documents!
+      
+      If there are no documents provided,
+      simply tell the user that there are no documents to reference.
       
       You NEVER generate new text or phrases outside of the citation.
       DO NOT explain your responses, only provide the quotes and NOTHING ELSE.

@@ -112,7 +112,7 @@ def extract_citations_from_stream(
     context_docs: list[LlmDoc],
     doc_id_to_rank_map: dict[str, int],
 ) -> Iterator[DanswerAnswerPiece | CitationInfo]:
-    max_citation_num = len(context_docs) + 1  # LLM is prompted to 1 index these
+    max_citation_num = len(context_docs)
     curr_segment = ""
     prepend_bracket = False
     cited_inds = set()

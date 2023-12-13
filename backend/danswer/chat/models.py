@@ -33,7 +33,7 @@ class QADocsResponse(RetrievalDocs):
 
     def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
         initial_dict = super().dict(*args, **kwargs)  # type: ignore
-        initial_dict["time_cutoff"] = (
+        initial_dict["applied_time_cutoff"] = (
             self.applied_time_cutoff.isoformat() if self.applied_time_cutoff else None
         )
         return initial_dict

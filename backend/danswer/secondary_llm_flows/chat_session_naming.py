@@ -30,7 +30,9 @@ def get_renamed_conversation_name(
     prompt_msgs = get_chat_rename_messages(history_str)
 
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(prompt_msgs)
-    new_name = llm.invoke(filled_llm_prompt)
+    new_name_raw = llm.invoke(filled_llm_prompt)
+
+    new_name = new_name_raw.strip().strip(' "')
 
     logger.debug(f"New Session Name: {new_name}")
 
