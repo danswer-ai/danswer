@@ -5,6 +5,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
+from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.process_message import stream_chat_packets
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import delete_chat_session
@@ -20,7 +21,9 @@ from danswer.db.feedback import create_chat_message_feedback
 from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
-from danswer.secondary_llm_flows.chat_helpers import get_new_chat_name
+from danswer.secondary_llm_flows.chat_session_naming import (
+    get_renamed_conversation_name,
+)
 from danswer.server.query_and_chat.models import ChatFeedbackRequest
 from danswer.server.query_and_chat.models import ChatMessageIdentifier
 from danswer.server.query_and_chat.models import ChatRenameRequest
@@ -114,20 +117,28 @@ def create_new_chat_session(
 
 @router.put("/rename-chat-session")
 def rename_chat_session(
-    rename: ChatRenameRequest,
+    rename_req: ChatRenameRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> RenameChatSessionResponse:
-    name = rename.name
-    message = rename.first_message
+    name = rename_req.name
+    chat_session_id = rename_req.chat_session_id
     user_id = user.id if user is not None else None
 
-    if not name and not message:
-        raise ValueError("Can't assign a name for the chat without context")
+    logger.info(f"Received rename request for chat session: {chat_session_id}")
 
-    new_name = name or get_new_chat_name(str(message))
+    if name:
+        update_chat_session(user_id, chat_session_id, name, db_session)
+        return RenameChatSessionResponse(new_name=name)
 
-    update_chat_session(user_id, rename.chat_session_id, new_name, db_session)
+    final_msg, history_msgs = create_chat_chain(
+        chat_session_id=chat_session_id, db_session=db_session
+    )
+    full_history = history_msgs + [final_msg]
+
+    new_name = get_renamed_conversation_name(full_history=full_history)
+
+    update_chat_session(user_id, chat_session_id, new_name, db_session)
 
     return RenameChatSessionResponse(new_name=new_name)
 

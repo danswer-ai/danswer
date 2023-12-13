@@ -86,8 +86,7 @@ class ChatMessageIdentifier(BaseModel):
 
 class ChatRenameRequest(BaseModel):
     chat_session_id: int
-    name: str | None
-    first_message: str | None
+    name: str | None = None
 
 
 class RenameChatSessionResponse(BaseModel):

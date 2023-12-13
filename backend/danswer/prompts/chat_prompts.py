@@ -96,3 +96,13 @@ Chat History:
 Follow Up Input: {{question}}
 Standalone question (Respond with only the SHORT query):
 """.strip()
+
+
+CHAT_NAMING = """
+Given the following conversation, provide a SHORT name for the conversation.
+IMPORTANT: TRY NOT TO USE MORE THAN 5 WORDS, MAKE IT AS CONCISE AND SHORT AS POSSIBLE.
+Focus the name on the important keywords to convey the topic of the conversation.
+
+Conversation History:
+{chat_history}
+""".strip()

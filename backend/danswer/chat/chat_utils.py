@@ -4,11 +4,14 @@ from typing import cast
 
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
+from sqlalchemy.orm import Session
 
 from danswer.chat.models import LlmDoc
 from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.app_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.constants import IGNORE_FOR_QA
+from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
+from danswer.db.chat import get_chat_messages_by_session
 from danswer.db.models import ChatMessage
 from danswer.db.models import Prompt
 from danswer.indexing.models import InferenceChunk
@@ -255,3 +258,75 @@ def get_chunks_for_qa(
                     return latest_batch_indices
 
     return latest_batch_indices
+
+
+def create_chat_chain(
+    chat_session_id: int,
+    db_session: Session,
+) -> tuple[ChatMessage, list[ChatMessage]]:
+    """Build the linear chain of messages without including the root message"""
+    mainline_messages: list[ChatMessage] = []
+    all_chat_messages = get_chat_messages_by_session(
+        chat_session_id=chat_session_id,
+        user_id=None,
+        db_session=db_session,
+        skip_permission_check=True,
+    )
+    id_to_msg = {msg.id: msg for msg in all_chat_messages}
+
+    if not all_chat_messages:
+        raise ValueError("No messages in Chat Session")
+
+    root_message = all_chat_messages[0]
+    if root_message.parent_message is not None:
+        raise RuntimeError(
+            "Invalid root message, unable to fetch valid chat message sequence"
+        )
+
+    current_message: ChatMessage | None = root_message
+    while current_message is not None:
+        child_msg = current_message.latest_child_message
+        if not child_msg:
+            break
+        current_message = id_to_msg.get(child_msg)
+
+        if current_message is None:
+            raise RuntimeError(
+                "Invalid message chain,"
+                "could not find next message in the same session"
+            )
+
+        mainline_messages.append(current_message)
+
+    if not mainline_messages:
+        raise RuntimeError("Could not trace chat message history")
+
+    return mainline_messages[-1], mainline_messages[:-1]
+
+
+def combine_message_chain(
+    messages: list[ChatMessage],
+    msg_limit: int | None = 10,
+    token_limit: int | None = GEN_AI_HISTORY_CUTOFF,
+) -> str:
+    """Used for secondary LLM flows that require the chat history"""
+    message_strs: list[str] = []
+    total_token_count = 0
+
+    if msg_limit is not None:
+        messages = messages[-msg_limit:]
+
+    for message in reversed(messages):
+        message_token_count = message.token_count
+
+        if (
+            token_limit is not None
+            and total_token_count + message_token_count > token_limit
+        ):
+            break
+
+        role = message.message_type.value.upper()
+        message_strs.insert(0, f"{role}:\n{message.message}")
+        total_token_count += message_token_count
+
+    return "\n\n".join(message_strs)

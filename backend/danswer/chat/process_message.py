@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from danswer.chat.chat_utils import build_chat_system_message
 from danswer.chat.chat_utils import build_chat_user_message
+from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.chat_utils import get_chunks_for_qa
 from danswer.chat.chat_utils import llm_doc_from_inference_chunk
 from danswer.chat.chat_utils import map_document_id_order
@@ -25,7 +26,6 @@ from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
 from danswer.db.chat import create_db_search_doc
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_chat_message
-from danswer.db.chat import get_chat_messages_by_session
 from danswer.db.chat import get_chat_session_by_id
 from danswer.db.chat import get_db_search_doc_by_id
 from danswer.db.chat import get_doc_query_identifiers_from_model
@@ -47,7 +47,7 @@ from danswer.search.request_preprocessing import retrieval_preprocessing
 from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import full_chunk_search_generator
 from danswer.search.search_runner import inference_documents_from_ids
-from danswer.secondary_llm_flows.chat_helpers import check_if_need_search
+from danswer.secondary_llm_flows.choose_search import check_if_need_search
 from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.utils import get_json_line
@@ -55,50 +55,6 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
 
 logger = setup_logger()
-
-
-def _create_chat_chain(
-    chat_session_id: int,
-    db_session: Session,
-) -> tuple[ChatMessage, list[ChatMessage]]:
-    """Build the linear chain of messages without including the root message"""
-    mainline_messages: list[ChatMessage] = []
-    all_chat_messages = get_chat_messages_by_session(
-        chat_session_id=chat_session_id,
-        user_id=None,
-        db_session=db_session,
-        skip_permission_check=True,
-    )
-    id_to_msg = {msg.id: msg for msg in all_chat_messages}
-
-    if not all_chat_messages:
-        raise ValueError("No messages in Chat Session")
-
-    root_message = all_chat_messages[0]
-    if root_message.parent_message is not None:
-        raise RuntimeError(
-            "Invalid root message, unable to fetch valid chat message sequence"
-        )
-
-    current_message: ChatMessage | None = root_message
-    while current_message is not None:
-        child_msg = current_message.latest_child_message
-        if not child_msg:
-            break
-        current_message = id_to_msg.get(child_msg)
-
-        if current_message is None:
-            raise RuntimeError(
-                "Invalid message chain,"
-                "could not find next message in the same session"
-            )
-
-        mainline_messages.append(current_message)
-
-    if not mainline_messages:
-        raise RuntimeError("Could not trace chat message history")
-
-    return mainline_messages[-1], mainline_messages[:-1]
 
 
 def _find_last_index(
@@ -365,7 +321,7 @@ def stream_chat_packets(
     )
 
     # Create linear history of messages
-    final_msg, history_msgs = _create_chat_chain(
+    final_msg, history_msgs = create_chat_chain(
         chat_session_id=chat_session_id, db_session=db_session
     )
 

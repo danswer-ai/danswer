@@ -1,12 +1,12 @@
 from collections.abc import Callable
 
+from danswer.chat.chat_utils import combine_message_chain
 from danswer.db.models import ChatMessage
 from danswer.llm.factory import get_default_llm
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.prompts.chat_prompts import HISTORY_QUERY_REPHRASE
 from danswer.prompts.miscellaneous_prompts import LANGUAGE_REPHRASE_PROMPT
-from danswer.secondary_llm_flows.chat_helpers import combine_message_chain
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 
