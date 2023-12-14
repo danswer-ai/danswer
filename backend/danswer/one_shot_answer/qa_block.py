@@ -298,7 +298,10 @@ class QABlock(QAModel):
             for answer_piece in self._qa_handler.process_llm_token_stream(
                 iter(tokens_stream), trimmed_context_docs
             ):
-                if isinstance(answer_piece, DanswerAnswerPiece):
+                if (
+                    isinstance(answer_piece, DanswerAnswerPiece)
+                    and answer_piece.answer_piece
+                ):
                     captured_tokens.append(answer_piece.answer_piece)
                 yield answer_piece
 
