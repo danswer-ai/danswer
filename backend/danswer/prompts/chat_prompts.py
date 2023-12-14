@@ -4,7 +4,7 @@ from danswer.prompts.constants import QUESTION_PAT
 REQUIRE_CITATION_STATEMENT = """
 Cite relevant statements using the format [1], [2], [3], etc to reference the document number, \
 DO NOT provide any links following the citation.
-""".strip()
+""".rstrip()
 
 
 CITATION_REMINDER = """
@@ -110,13 +110,12 @@ HISTORY_QUERY_REPHRASE = f"""
 Given the following conversation and a follow up question, \
 rephrase the follow up question to be a standalone question \
 and convert it into a SHORT query for a vectorstore.
-IMPORTANT: BE AS TERSE AND CONCISE AS POSSIBLE.
-Strip out any information that is not relevant for the retrieval task.
+IMPORTANT: BE AS TERSE AND CONCISE AS POSSIBLE. \
 Respond with a short phrase instead of a complete sentence. Avoid using any unclear pronouns.
-
+If the user changes topics completely, disregard the previous messages.
 If there is a specific message that should not change, such as an error or code snippet, \
 just repeat the same question back exactly.
-If the user changes topics suddenly, just repeat the same question back exactly.
+Strip out any information that is not relevant for the retrieval task.
 
 {GENERAL_SEP_PAT}
 Chat History:

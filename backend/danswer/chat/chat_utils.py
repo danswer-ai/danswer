@@ -66,7 +66,7 @@ def build_chat_system_message(
 ) -> tuple[SystemMessage, int]:
     system_prompt = prompt.system_prompt
     if prompt.include_citations:
-        system_prompt += citation_line
+        system_prompt = system_prompt.rstrip() + citation_line
     if prompt.datetime_aware:
         system_prompt += (
             f"\n\nAdditional Information:\n\t- {get_current_llm_day_time()}."
