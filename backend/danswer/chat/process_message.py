@@ -194,7 +194,7 @@ def generate_ai_chat_response(
         raise RuntimeError("No prompt received for generating Gen AI answer.")
 
     try:
-        system_message, system_tokens = build_chat_system_message(
+        system_message_or_none, system_tokens = build_chat_system_message(
             prompt=query_message.prompt, llm_tokenizer=llm_tokenizer
         )
 
@@ -213,7 +213,7 @@ def generate_ai_chat_response(
         )
 
         prompt = _drop_messages_history_overflow(
-            system_msg=system_message,
+            system_msg=system_message_or_none,
             system_token_count=system_tokens,
             history_msgs=history_basemessages,
             history_token_counts=history_token_counts,
@@ -284,6 +284,7 @@ def stream_chat_packets(
         prompt_id = new_msg_req.prompt_id
         reference_doc_ids = new_msg_req.search_doc_ids
         retrieval_options = new_msg_req.retrieval_options
+        persona = chat_session.persona
 
         if reference_doc_ids is None and retrieval_options is None:
             raise RuntimeError(
@@ -337,7 +338,8 @@ def stream_chat_packets(
         db_session.commit()
 
         run_search = False
-        if retrieval_options is not None:
+        # Retrieval options are only None if reference_doc_ids are provided
+        if retrieval_options is not None and persona.num_chunks != 0:
             if retrieval_options.run_search == OptionalSearchSetting.ALWAYS:
                 run_search = True
             elif retrieval_options.run_search == OptionalSearchSetting.NEVER:
@@ -389,7 +391,7 @@ def stream_chat_packets(
             ) = retrieval_preprocessing(
                 query=rephrased_query,
                 retrieval_details=cast(RetrievalDetails, retrieval_options),
-                persona=chat_session.persona,
+                persona=persona,
                 user=user,
                 db_session=db_session,
             )
@@ -449,8 +451,8 @@ def stream_chat_packets(
 
             # Prep chunks to pass to LLM
             num_llm_chunks = (
-                chat_session.persona.num_chunks
-                if chat_session.persona.num_chunks is not None
+                persona.num_chunks
+                if persona.num_chunks is not None
                 else default_num_chunks
             )
             llm_chunks_indices = get_chunks_for_qa(
@@ -500,6 +502,7 @@ def stream_chat_packets(
             # Stop here after saving message details, the above still needs to be sent for the
             # message id to send the next follow-up message
             return
+
     except Exception as e:
         logger.exception(e)
 
@@ -509,6 +512,7 @@ def stream_chat_packets(
         )
 
         yield get_json_line(error_packet.dict())
+        return
 
     # LLM prompt building, response capturing, etc.
     try:
@@ -545,6 +549,7 @@ def stream_chat_packets(
         error_packet = StreamingError(error="LLM failed to respond")
 
         yield get_json_line(error_packet.dict())
+        return
 
     # Post-LLM answer processing
     try:

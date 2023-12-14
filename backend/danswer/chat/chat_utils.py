@@ -63,14 +63,20 @@ def build_chat_system_message(
     prompt: Prompt,
     llm_tokenizer: Callable,
     citation_line: str = REQUIRE_CITATION_STATEMENT,
-) -> tuple[SystemMessage, int]:
+) -> tuple[SystemMessage | None, int]:
     system_prompt = prompt.system_prompt
     if prompt.include_citations:
         system_prompt = system_prompt.rstrip() + citation_line
     if prompt.datetime_aware:
-        system_prompt += (
-            f"\n\nAdditional Information:\n\t- {get_current_llm_day_time()}."
-        )
+        if system_prompt:
+            system_prompt += (
+                f"\n\nAdditional Information:\n\t- {get_current_llm_day_time()}."
+            )
+        else:
+            system_prompt = get_current_llm_day_time()
+
+    if not system_prompt:
+        return None, 0
 
     token_count = len(llm_tokenizer(system_prompt))
     system_msg = SystemMessage(content=system_prompt)
@@ -128,10 +134,15 @@ def build_chat_user_message(
 
     if not context_docs:
         # Simpler prompt for cases where there is no context
-        user_prompt = context_free_template.format(
-            task_prompt=prompt.task_prompt,
-            user_query=user_query,
+        user_prompt = (
+            context_free_template.format(
+                task_prompt=prompt.task_prompt,
+                user_query=user_query,
+            )
+            if prompt.task_prompt
+            else user_query
         )
+        user_prompt = user_prompt.strip()
         token_count = len(llm_tokenizer(user_prompt))
         user_msg = HumanMessage(content=user_prompt)
         return user_msg, token_count
@@ -150,6 +161,7 @@ def build_chat_user_message(
         user_query=user_query,
     )
 
+    user_prompt = user_prompt.strip()
     token_count = len(llm_tokenizer(user_prompt))
     user_msg = HumanMessage(content=user_prompt)
 
