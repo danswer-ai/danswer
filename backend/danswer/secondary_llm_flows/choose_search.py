@@ -64,7 +64,7 @@ def check_if_need_search(
 
         return messages
 
-    if not history or disable_llm_check:
+    if disable_llm_check:
         return True
 
     history_str = combine_message_chain(history)

@@ -46,6 +46,7 @@ determine if the system should call an external search tool to answer the latest
 Respond with "{NO_SEARCH}" if:
 - There is sufficient information in chat history to FULLY answer the user query.
 - You know enough to answer the query and further information would not be helpful.
+- The query is some sort of request and does not require additional information to handle.
 
 Respond with "{YES_SEARCH}" if:
 - Additional knowledge about entities, processes, problems, or \
