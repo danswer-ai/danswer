@@ -33,7 +33,7 @@ from danswer.search.models import SearchType
 from danswer.search.search_nlp_models import CrossEncoderEnsembleModel
 from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_chunks
-from danswer.secondary_llm_flows.query_expansion import rephrase_query
+from danswer.secondary_llm_flows.query_expansion import multilingual_query_expansion
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
@@ -345,13 +345,13 @@ def retrieve_chunks(
     query: SearchQuery,
     document_index: DocumentIndex,
     hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
-    multilingual_query_expansion: str | None = MULTILINGUAL_QUERY_EXPANSION,
+    multilingual_expansion_str: str | None = MULTILINGUAL_QUERY_EXPANSION,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
 ) -> list[InferenceChunk]:
     """Returns a list of the best chunks from an initial keyword/semantic/ hybrid search."""
     # Don't do query expansion on complex queries, rephrasings likely would not work well
-    if not multilingual_query_expansion or "\n" in query.query or "\r" in query.query:
+    if not multilingual_expansion_str or "\n" in query.query or "\r" in query.query:
         top_chunks = doc_index_retrieval(
             query=query, document_index=document_index, hybrid_alpha=hybrid_alpha
         )
@@ -360,7 +360,9 @@ def retrieve_chunks(
         run_queries: list[tuple[Callable, tuple]] = []
 
         # Currently only uses query expansion on multilingual use cases
-        query_rephrases = rephrase_query(query.query, multilingual_query_expansion)
+        query_rephrases = multilingual_query_expansion(
+            query.query, multilingual_expansion_str
+        )
         # Just to be extra sure, add the original query.
         query_rephrases.append(query.query)
         for rephrase in set(query_rephrases):
@@ -454,7 +456,7 @@ def full_chunk_search(
     query: SearchQuery,
     document_index: DocumentIndex,
     hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
-    multilingual_query_expansion: str | None = MULTILINGUAL_QUERY_EXPANSION,
+    multilingual_expansion_str: str | None = MULTILINGUAL_QUERY_EXPANSION,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
@@ -466,7 +468,7 @@ def full_chunk_search(
         search_query=query,
         document_index=document_index,
         hybrid_alpha=hybrid_alpha,
-        multilingual_query_expansion=multilingual_query_expansion,
+        multilingual_expansion_str=multilingual_expansion_str,
         retrieval_metrics_callback=retrieval_metrics_callback,
         rerank_metrics_callback=rerank_metrics_callback,
     )
@@ -484,7 +486,7 @@ def full_chunk_search_generator(
     search_query: SearchQuery,
     document_index: DocumentIndex,
     hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
-    multilingual_query_expansion: str | None = MULTILINGUAL_QUERY_EXPANSION,
+    multilingual_expansion_str: str | None = MULTILINGUAL_QUERY_EXPANSION,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
@@ -498,7 +500,7 @@ def full_chunk_search_generator(
         query=search_query,
         document_index=document_index,
         hybrid_alpha=hybrid_alpha,
-        multilingual_query_expansion=multilingual_query_expansion,
+        multilingual_expansion_str=multilingual_expansion_str,
         retrieval_metrics_callback=retrieval_metrics_callback,
     )
 

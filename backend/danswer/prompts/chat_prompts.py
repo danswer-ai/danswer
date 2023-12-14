@@ -114,6 +114,10 @@ IMPORTANT: BE AS TERSE AND CONCISE AS POSSIBLE.
 Strip out any information that is not relevant for the retrieval task.
 Respond with a short phrase instead of a complete sentence. Avoid using any unclear pronouns.
 
+If there is a specific message that should not change, such as an error or code snippet, \
+just repeat the same question back exactly.
+If the user changes topics suddenly, just repeat the same question back exactly.
+
 {GENERAL_SEP_PAT}
 Chat History:
 {{chat_history}}

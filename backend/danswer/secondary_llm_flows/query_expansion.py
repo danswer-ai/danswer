@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import cast
 
 from danswer.chat.chat_utils import combine_message_chain
 from danswer.db.models import ChatMessage
@@ -8,12 +9,13 @@ from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.prompts.chat_prompts import HISTORY_QUERY_REPHRASE
 from danswer.prompts.miscellaneous_prompts import LANGUAGE_REPHRASE_PROMPT
 from danswer.utils.logger import setup_logger
+from danswer.utils.text_processing import count_punctuation
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 
 logger = setup_logger()
 
 
-def llm_rephrase_query(query: str, language: str) -> str:
+def llm_multilingual_query_expansion(query: str, language: str) -> str:
     def _get_rephrase_messages() -> list[dict[str, str]]:
         messages = [
             {
@@ -34,16 +36,17 @@ def llm_rephrase_query(query: str, language: str) -> str:
     return model_output
 
 
-def rephrase_query(
+def multilingual_query_expansion(
     query: str,
-    multilingual_query_expansion: str,
+    expansion_languages: str,
     use_threads: bool = True,
 ) -> list[str]:
-    languages = multilingual_query_expansion.split(",")
+    languages = expansion_languages.split(",")
     languages = [language.strip() for language in languages]
     if use_threads:
         functions_with_args: list[tuple[Callable, tuple]] = [
-            (llm_rephrase_query, (query, language)) for language in languages
+            (llm_multilingual_query_expansion, (query, language))
+            for language in languages
         ]
 
         query_rephrases = run_functions_tuples_in_parallel(functions_with_args)
@@ -51,7 +54,7 @@ def rephrase_query(
 
     else:
         query_rephrases = [
-            llm_rephrase_query(query, language) for language in languages
+            llm_multilingual_query_expansion(query, language) for language in languages
         ]
         return query_rephrases
 
@@ -60,6 +63,8 @@ def history_based_query_rephrase(
     query_message: ChatMessage,
     history: list[ChatMessage],
     llm: LLM | None = None,
+    size_heuristic: int = 100,
+    punctuation_heuristic: int = 2,
 ) -> str:
     def _get_history_rephrase_messages(
         question: str,
@@ -76,10 +81,16 @@ def history_based_query_rephrase(
 
         return messages
 
-    user_query = query_message.message
+    user_query = cast(str, query_message.message)
 
     if not user_query:
         raise ValueError("Can't rephrase/search an empty query")
+
+    if len(user_query) >= size_heuristic:
+        return user_query
+
+    if count_punctuation(user_query) >= punctuation_heuristic:
+        return user_query
 
     history_str = combine_message_chain(history)
 
