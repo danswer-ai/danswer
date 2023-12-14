@@ -95,38 +95,6 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("persona_id", "prompt_id"),
     )
-    # Migration picks it up correctly now and will ensure it exists without running Celery
-    op.execute("DROP TABLE IF EXISTS celery_taskmeta")
-    op.create_table(
-        "celery_taskmeta",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("task_id", sa.String(length=155), nullable=True),
-        sa.Column("status", sa.String(length=50), nullable=True),
-        sa.Column("result", sa.PickleType(), nullable=True),
-        sa.Column("date_done", sa.DateTime(), nullable=True),
-        sa.Column("traceback", sa.Text(), nullable=True),
-        sa.Column("name", sa.String(length=155), nullable=True),
-        sa.Column("args", sa.LargeBinary(), nullable=True),
-        sa.Column("kwargs", sa.LargeBinary(), nullable=True),
-        sa.Column("worker", sa.String(length=155), nullable=True),
-        sa.Column("retries", sa.Integer(), nullable=True),
-        sa.Column("queue", sa.String(length=155), nullable=True),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("task_id"),
-        sqlite_autoincrement=True,
-    )
-    # Migration picks it up correctly now and will ensure it exists without running Celery
-    op.execute("DROP TABLE IF EXISTS celery_tasksetmeta")
-    op.create_table(
-        "celery_tasksetmeta",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("taskset_id", sa.String(length=155), nullable=True),
-        sa.Column("result", sa.PickleType(), nullable=True),
-        sa.Column("date_done", sa.DateTime(), nullable=True),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("taskset_id"),
-        sqlite_autoincrement=True,
-    )
 
     # Changes to persona first so chat_sessions can have the right persona
     # The empty persona will be overwritten on server startup
@@ -515,8 +483,6 @@ def downgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id", name="query_event_pkey"),
     )
-    op.drop_table("celery_tasksetmeta")
-    op.drop_table("celery_taskmeta")
     op.drop_table("chat_message__search_doc")
     op.drop_table("persona__prompt")
     op.drop_table("prompt")
