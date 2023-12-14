@@ -35,7 +35,7 @@ def get_cc_pair_full_info(
     if cc_pair is None:
         raise HTTPException(
             status_code=400,
-            detail=f"Connector Credential Pair with id {cc_pair_id} not found.",
+            detail=f"Connector with ID {cc_pair_id} not found. Has it been deleted?",
         )
 
     cc_pair_identifier = ConnectorCredentialPairIdentifier(
