@@ -3,6 +3,7 @@
 personas:
   # This id field can be left blank for other default personas, however an id 0 persona must exist
   # this is for DanswerBot to use when tagged in a non-configured channel
+  # Careful setting specific IDs, this won't autoincrement the next ID value for postgres
   - id: 0
     name: "Default"
     description: >
@@ -41,6 +42,7 @@ personas:
     # Format looks like: "October 16, 2023 14:30"
     datetime_aware: true
 
+
   - name: "Summarize"
     description: >
       A less creative assistant which summarizes relevant documents but does not try to
@@ -53,6 +55,7 @@ personas:
     recency_bias: "auto"
     document_sets: []
     datetime_aware: true
+
 
   - name: "Paraphrase"
     description: >

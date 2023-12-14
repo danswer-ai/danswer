@@ -1,4 +1,7 @@
 prompts:
+  # This id field can be left blank for other default prompts, however an id 0 prompt must exist
+  # This is to act as a default
+  # Careful setting specific IDs, this won't autoincrement the next ID value for postgres
   - id: 0
     name: "Answer-Question"
     description: "Answers user questions using retrieved context!"
@@ -30,8 +33,7 @@ prompts:
     include_citations: true
 
 
-  - id: 1
-    name: "Summarize"
+  - name: "Summarize"
     description: "Summarize relevant information from retrieved context!"
     system: >
       You are a text summarizing assistant that highlights the most important knowledge from the
@@ -50,8 +52,7 @@ prompts:
     include_citations: true
 
 
-  - id: 2
-    name: "Paraphrase"
+  - name: "Paraphrase"
     description: "Recites information from retrieved context! Least creative but most safe!"
     system: >
       Quote and cite relevant information from provided context based on the user query.

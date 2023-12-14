@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from starlette import status
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
@@ -33,30 +34,30 @@ def create_update_prompt(
 ) -> PromptSnapshot:
     user_id = user.id if user is not None else None
 
-    personas = list(
-        get_personas_by_ids(
-            persona_ids=create_prompt_request.persona_ids,
-            db_session=db_session,
+    personas = (
+        list(
+            get_personas_by_ids(
+                persona_ids=create_prompt_request.persona_ids,
+                db_session=db_session,
+            )
         )
+        if create_prompt_request.persona_ids
+        else []
     )
 
-    try:
-        prompt = upsert_prompt(
-            prompt_id=prompt_id,
-            user_id=user_id,
-            name=create_prompt_request.name,
-            description=create_prompt_request.description,
-            system_prompt=create_prompt_request.system_prompt,
-            task_prompt=create_prompt_request.task_prompt,
-            include_citations=create_prompt_request.include_citations,
-            datetime_aware=create_prompt_request.datetime_aware,
-            personas=personas,
-            shared=create_prompt_request.shared,
-            db_session=db_session,
-        )
-    except ValueError as e:
-        logger.exception("Failed to create persona")
-        raise HTTPException(status_code=400, detail=str(e))
+    prompt = upsert_prompt(
+        prompt_id=prompt_id,
+        user_id=user_id,
+        name=create_prompt_request.name,
+        description=create_prompt_request.description,
+        system_prompt=create_prompt_request.system_prompt,
+        task_prompt=create_prompt_request.task_prompt,
+        include_citations=create_prompt_request.include_citations,
+        datetime_aware=create_prompt_request.datetime_aware,
+        personas=personas,
+        shared=create_prompt_request.shared,
+        db_session=db_session,
+    )
     return PromptSnapshot.from_model(prompt)
 
 
@@ -66,12 +67,25 @@ def create_persona(
     user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> PromptSnapshot:
-    return create_update_prompt(
-        prompt_id=None,
-        create_prompt_request=create_prompt_request,
-        user=user,
-        db_session=db_session,
-    )
+    try:
+        return create_update_prompt(
+            prompt_id=None,
+            create_prompt_request=create_prompt_request,
+            user=user,
+            db_session=db_session,
+        )
+    except ValueError as ve:
+        logger.exception(ve)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to create Persona, invalid info.",
+        )
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred. Please try again later.",
+        )
 
 
 @basic_router.patch("/{prompt_id}")
@@ -81,12 +95,25 @@ def update_prompt(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> PromptSnapshot:
-    return create_update_prompt(
-        prompt_id=prompt_id,
-        create_prompt_request=update_prompt_request,
-        user=user,
-        db_session=db_session,
-    )
+    try:
+        return create_update_prompt(
+            prompt_id=prompt_id,
+            create_prompt_request=update_prompt_request,
+            user=user,
+            db_session=db_session,
+        )
+    except ValueError as ve:
+        logger.exception(ve)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to create Persona, invalid info.",
+        )
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred. Please try again later.",
+        )
 
 
 @basic_router.delete("/{prompt_id}")
