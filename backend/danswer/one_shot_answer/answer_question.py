@@ -200,6 +200,8 @@ def stream_answer_objects(
     llm_output = ""
     error: str | None = None
     for packet in response_packets:
+        logger.debug(packet)
+
         if isinstance(packet, DanswerAnswerPiece):
             token = packet.answer_piece
             if token:

@@ -295,12 +295,12 @@ class QABlock(QAModel):
         captured_tokens = []
 
         try:
-            for token in tokens_stream:
-                captured_tokens.append(token)
-
-            yield from self._qa_handler.process_llm_token_stream(
-                iter(captured_tokens), trimmed_context_docs
-            )
+            for answer_piece in self._qa_handler.process_llm_token_stream(
+                iter(tokens_stream), trimmed_context_docs
+            ):
+                if isinstance(answer_piece, DanswerAnswerPiece):
+                    captured_tokens.append(answer_piece.answer_piece)
+                yield answer_piece
 
         except Exception as e:
             yield StreamingError(error=str(e))

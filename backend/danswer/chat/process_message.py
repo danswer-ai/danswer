@@ -269,280 +269,309 @@ def stream_chat_packets(
     4. [always] Details on the final AI response message that is created
 
     """
-    user_id = user.id if user is not None else None
+    try:
+        user_id = user.id if user is not None else None
 
-    chat_session = get_chat_session_by_id(
-        chat_session_id=new_msg_req.chat_session_id,
-        user_id=user_id,
-        db_session=db_session,
-    )
-
-    message_text = new_msg_req.message
-    chat_session_id = new_msg_req.chat_session_id
-    parent_id = new_msg_req.parent_message_id
-    prompt_id = new_msg_req.prompt_id
-    reference_doc_ids = new_msg_req.search_doc_ids
-    retrieval_options = new_msg_req.retrieval_options
-
-    if reference_doc_ids is None and retrieval_options is None:
-        raise RuntimeError(
-            "Must specify a set of documents for chat or specify search options"
-        )
-
-    llm = get_default_llm()
-    llm_tokenizer = get_default_llm_token_encode()
-    document_index = get_default_document_index()
-
-    # Every chat Session begins with an empty root message
-    root_message = get_or_create_root_message(
-        chat_session_id=chat_session_id, db_session=db_session
-    )
-
-    if parent_id is not None:
-        parent_message = get_chat_message(
-            chat_message_id=parent_id,
+        chat_session = get_chat_session_by_id(
+            chat_session_id=new_msg_req.chat_session_id,
             user_id=user_id,
             db_session=db_session,
         )
-    else:
-        parent_message = root_message
 
-    # Create new message at the right place in the tree and update the parent's child pointer
-    # Don't commit yet until we verify the chat message chain
-    new_user_message = create_new_chat_message(
-        chat_session_id=chat_session_id,
-        parent_message=parent_message,
-        prompt_id=prompt_id,
-        message=message_text,
-        token_count=len(llm_tokenizer(message_text)),
-        message_type=MessageType.USER,
-        db_session=db_session,
-        commit=False,
-    )
+        message_text = new_msg_req.message
+        chat_session_id = new_msg_req.chat_session_id
+        parent_id = new_msg_req.parent_message_id
+        prompt_id = new_msg_req.prompt_id
+        reference_doc_ids = new_msg_req.search_doc_ids
+        retrieval_options = new_msg_req.retrieval_options
 
-    # Create linear history of messages
-    final_msg, history_msgs = create_chat_chain(
-        chat_session_id=chat_session_id, db_session=db_session
-    )
+        if reference_doc_ids is None and retrieval_options is None:
+            raise RuntimeError(
+                "Must specify a set of documents for chat or specify search options"
+            )
 
-    if final_msg.id != new_user_message.id:
-        db_session.rollback()
-        raise RuntimeError(
-            "The new message was not on the mainline. "
-            "Be sure to update the chat pointers before calling this."
+        llm = get_default_llm()
+        llm_tokenizer = get_default_llm_token_encode()
+        document_index = get_default_document_index()
+
+        # Every chat Session begins with an empty root message
+        root_message = get_or_create_root_message(
+            chat_session_id=chat_session_id, db_session=db_session
         )
 
-    # Save now to save the latest chat message
-    db_session.commit()
-
-    run_search = False
-    if retrieval_options is not None:
-        if retrieval_options.run_search == OptionalSearchSetting.ALWAYS:
-            run_search = True
-        elif retrieval_options.run_search == OptionalSearchSetting.NEVER:
-            run_search = False
+        if parent_id is not None:
+            parent_message = get_chat_message(
+                chat_message_id=parent_id,
+                user_id=user_id,
+                db_session=db_session,
+            )
         else:
-            run_search = check_if_need_search(
+            parent_message = root_message
+
+        # Create new message at the right place in the tree and update the parent's child pointer
+        # Don't commit yet until we verify the chat message chain
+        new_user_message = create_new_chat_message(
+            chat_session_id=chat_session_id,
+            parent_message=parent_message,
+            prompt_id=prompt_id,
+            message=message_text,
+            token_count=len(llm_tokenizer(message_text)),
+            message_type=MessageType.USER,
+            db_session=db_session,
+            commit=False,
+        )
+
+        # Create linear history of messages
+        final_msg, history_msgs = create_chat_chain(
+            chat_session_id=chat_session_id, db_session=db_session
+        )
+
+        if final_msg.id != new_user_message.id:
+            db_session.rollback()
+            raise RuntimeError(
+                "The new message was not on the mainline. "
+                "Be sure to update the chat pointers before calling this."
+            )
+
+        # Save now to save the latest chat message
+        db_session.commit()
+
+        run_search = False
+        if retrieval_options is not None:
+            if retrieval_options.run_search == OptionalSearchSetting.ALWAYS:
+                run_search = True
+            elif retrieval_options.run_search == OptionalSearchSetting.NEVER:
+                run_search = False
+            else:
+                run_search = check_if_need_search(
+                    query_message=final_msg, history=history_msgs, llm=llm
+                )
+
+        rephrased_query = None
+        if reference_doc_ids:
+            identifier_tuples = get_doc_query_identifiers_from_model(
+                search_doc_ids=reference_doc_ids,
+                chat_session=chat_session,
+                user_id=user_id,
+                db_session=db_session,
+            )
+
+            # Generates full documents currently
+            # May extend to include chunk ranges
+            llm_docs: list[LlmDoc] = inference_documents_from_ids(
+                doc_identifiers=identifier_tuples,
+                document_index=get_default_document_index(),
+            )
+            doc_id_to_rank_map = map_document_id_order(
+                cast(list[InferenceChunk | LlmDoc], llm_docs)
+            )
+
+            # In case the search doc is deleted, just don't include it
+            # though this should never happen
+            db_search_docs_or_none = [
+                get_db_search_doc_by_id(doc_id=doc_id, db_session=db_session)
+                for doc_id in reference_doc_ids
+            ]
+
+            reference_db_search_docs = [
+                db_sd for db_sd in db_search_docs_or_none if db_sd
+            ]
+
+        elif run_search:
+            rephrased_query = history_based_query_rephrase(
                 query_message=final_msg, history=history_msgs, llm=llm
             )
 
-    rephrased_query = None
-    if reference_doc_ids:
-        identifier_tuples = get_doc_query_identifiers_from_model(
-            search_doc_ids=reference_doc_ids,
-            chat_session=chat_session,
-            user_id=user_id,
-            db_session=db_session,
-        )
+            (
+                retrieval_request,
+                predicted_search_type,
+                predicted_flow,
+            ) = retrieval_preprocessing(
+                query=rephrased_query,
+                retrieval_details=cast(RetrievalDetails, retrieval_options),
+                persona=chat_session.persona,
+                user=user,
+                db_session=db_session,
+            )
 
-        # Generates full documents currently
-        # May extend to include chunk ranges
-        llm_docs: list[LlmDoc] = inference_documents_from_ids(
-            doc_identifiers=identifier_tuples,
-            document_index=get_default_document_index(),
-        )
-        doc_id_to_rank_map = map_document_id_order(
-            cast(list[InferenceChunk | LlmDoc], llm_docs)
-        )
+            documents_generator = full_chunk_search_generator(
+                search_query=retrieval_request,
+                document_index=document_index,
+            )
+            time_cutoff = retrieval_request.filters.time_cutoff
+            recency_bias_multiplier = retrieval_request.recency_bias_multiplier
+            run_llm_chunk_filter = not retrieval_request.skip_llm_chunk_filter
 
-        # In case the search doc is deleted, just don't include it
-        # though this should never happen
-        db_search_docs_or_none = [
-            get_db_search_doc_by_id(doc_id=doc_id, db_session=db_session)
-            for doc_id in reference_doc_ids
-        ]
+            # First fetch and return the top chunks to the UI so the user can
+            # immediately see some results
+            top_chunks = cast(list[InferenceChunk], next(documents_generator))
 
-        reference_db_search_docs = [db_sd for db_sd in db_search_docs_or_none if db_sd]
+            # Get ranking of the documents for citation purposes later
+            doc_id_to_rank_map = map_document_id_order(
+                cast(list[InferenceChunk | LlmDoc], top_chunks)
+            )
 
-    elif run_search:
-        rephrased_query = history_based_query_rephrase(
-            query_message=final_msg, history=history_msgs, llm=llm
-        )
+            top_docs = chunks_to_search_docs(top_chunks)
 
-        (
-            retrieval_request,
-            predicted_search_type,
-            predicted_flow,
-        ) = retrieval_preprocessing(
-            query=rephrased_query,
-            retrieval_details=cast(RetrievalDetails, retrieval_options),
-            persona=chat_session.persona,
-            user=user,
-            db_session=db_session,
-        )
-
-        documents_generator = full_chunk_search_generator(
-            search_query=retrieval_request,
-            document_index=document_index,
-        )
-        time_cutoff = retrieval_request.filters.time_cutoff
-        recency_bias_multiplier = retrieval_request.recency_bias_multiplier
-        run_llm_chunk_filter = not retrieval_request.skip_llm_chunk_filter
-
-        # First fetch and return the top chunks to the UI so the user can
-        # immediately see some results
-        top_chunks = cast(list[InferenceChunk], next(documents_generator))
-
-        # Get ranking of the documents for citation purposes later
-        doc_id_to_rank_map = map_document_id_order(
-            cast(list[InferenceChunk | LlmDoc], top_chunks)
-        )
-
-        top_docs = chunks_to_search_docs(top_chunks)
-
-        reference_db_search_docs = [
-            create_db_search_doc(server_search_doc=top_doc, db_session=db_session)
-            for top_doc in top_docs
-        ]
-
-        response_docs = [
-            translate_db_search_doc_to_server_search_doc(db_search_doc)
-            for db_search_doc in reference_db_search_docs
-        ]
-
-        initial_response = QADocsResponse(
-            rephrased_query=rephrased_query,
-            top_documents=response_docs,
-            predicted_flow=predicted_flow,
-            predicted_search=predicted_search_type,
-            applied_source_filters=retrieval_request.filters.source_type,
-            applied_time_cutoff=time_cutoff,
-            recency_bias_multiplier=recency_bias_multiplier,
-        ).dict()
-        yield get_json_line(initial_response)
-
-        # Get the final ordering of chunks for the LLM call
-        llm_chunk_selection = cast(list[bool], next(documents_generator))
-
-        # Yield the list of LLM selected chunks for showing the LLM selected icons in the UI
-        llm_relevance_filtering_response = LLMRelevanceFilterResponse(
-            relevant_chunk_indices=[
-                index for index, value in enumerate(llm_chunk_selection) if value
+            reference_db_search_docs = [
+                create_db_search_doc(server_search_doc=top_doc, db_session=db_session)
+                for top_doc in top_docs
             ]
-            if run_llm_chunk_filter
-            else []
-        ).dict()
-        yield get_json_line(llm_relevance_filtering_response)
 
-        # Prep chunks to pass to LLM
-        num_llm_chunks = (
-            chat_session.persona.num_chunks
-            if chat_session.persona.num_chunks is not None
-            else default_num_chunks
+            response_docs = [
+                translate_db_search_doc_to_server_search_doc(db_search_doc)
+                for db_search_doc in reference_db_search_docs
+            ]
+
+            initial_response = QADocsResponse(
+                rephrased_query=rephrased_query,
+                top_documents=response_docs,
+                predicted_flow=predicted_flow,
+                predicted_search=predicted_search_type,
+                applied_source_filters=retrieval_request.filters.source_type,
+                applied_time_cutoff=time_cutoff,
+                recency_bias_multiplier=recency_bias_multiplier,
+            ).dict()
+            yield get_json_line(initial_response)
+
+            # Get the final ordering of chunks for the LLM call
+            llm_chunk_selection = cast(list[bool], next(documents_generator))
+
+            # Yield the list of LLM selected chunks for showing the LLM selected icons in the UI
+            llm_relevance_filtering_response = LLMRelevanceFilterResponse(
+                relevant_chunk_indices=[
+                    index for index, value in enumerate(llm_chunk_selection) if value
+                ]
+                if run_llm_chunk_filter
+                else []
+            ).dict()
+            yield get_json_line(llm_relevance_filtering_response)
+
+            # Prep chunks to pass to LLM
+            num_llm_chunks = (
+                chat_session.persona.num_chunks
+                if chat_session.persona.num_chunks is not None
+                else default_num_chunks
+            )
+            llm_chunks_indices = get_chunks_for_qa(
+                chunks=top_chunks,
+                llm_chunk_selection=llm_chunk_selection,
+                token_limit=num_llm_chunks * default_chunk_size,
+            )
+            llm_chunks = [top_chunks[i] for i in llm_chunks_indices]
+            llm_docs = [llm_doc_from_inference_chunk(chunk) for chunk in llm_chunks]
+
+        else:
+            llm_docs = []
+            doc_id_to_rank_map = {}
+            reference_db_search_docs = None
+
+        # Cannot determine these without the LLM step or breaking out early
+        partial_response = partial(
+            create_new_chat_message,
+            chat_session_id=chat_session_id,
+            parent_message=new_user_message,
+            prompt_id=prompt_id,
+            # message=,
+            rephrased_query=rephrased_query,
+            # token_count=,
+            message_type=MessageType.ASSISTANT,
+            # error=,
+            reference_docs=reference_db_search_docs,
+            db_session=db_session,
+            commit=True,
         )
-        llm_chunks_indices = get_chunks_for_qa(
-            chunks=top_chunks,
-            llm_chunk_selection=llm_chunk_selection,
-            token_limit=num_llm_chunks * default_chunk_size,
+
+        # If no prompt is provided, this is interpreted as not wanting an AI Answer
+        # Simply provide/save the retrieval results
+        if final_msg.prompt is None:
+            gen_ai_response_message = partial_response(
+                message="",
+                token_count=0,
+                citations=None,
+                error=None,
+            )
+            msg_detail_response = translate_db_message_to_chat_message_detail(
+                gen_ai_response_message
+            )
+
+            yield get_json_line(msg_detail_response.dict())
+
+            # Stop here after saving message details, the above still needs to be sent for the
+            # message id to send the next follow-up message
+            return
+    except Exception as e:
+        logger.exception(e)
+
+        # Frontend will erase whatever answer and show this instead
+        error_packet = StreamingError(
+            error="Internal Server Error, please create a new chat session."
         )
-        llm_chunks = [top_chunks[i] for i in llm_chunks_indices]
-        llm_docs = [llm_doc_from_inference_chunk(chunk) for chunk in llm_chunks]
 
-    else:
-        llm_docs = []
-        doc_id_to_rank_map = {}
-        reference_db_search_docs = None
+        yield get_json_line(error_packet.dict())
 
-    # Cannot determine these without the LLM step or breaking out early
-    partial_response = partial(
-        create_new_chat_message,
-        chat_session_id=chat_session_id,
-        parent_message=new_user_message,
-        prompt_id=prompt_id,
-        # message=,
-        rephrased_query=rephrased_query,
-        # token_count=,
-        message_type=MessageType.ASSISTANT,
-        # error=,
-        reference_docs=reference_db_search_docs,
-        db_session=db_session,
-        commit=True,
-    )
+    # LLM prompt building, response capturing, etc.
+    try:
+        response_packets = generate_ai_chat_response(
+            query_message=final_msg,
+            history=history_msgs,
+            context_docs=llm_docs,
+            doc_id_to_rank_map=doc_id_to_rank_map,
+            llm=llm,
+            llm_tokenizer=llm_tokenizer,
+            all_doc_useful=reference_doc_ids is not None,
+        )
 
-    # If no prompt is provided, this is interpreted as not wanting an AI Answer
-    # Simply provide/save the retrieval results
-    if final_msg.prompt is None:
+        # Capture outputs and errors
+        llm_output = ""
+        error: str | None = None
+        citations: list[CitationInfo] = []
+        for packet in response_packets:
+            if isinstance(packet, DanswerAnswerPiece):
+                token = packet.answer_piece
+                if token:
+                    llm_output += token
+            elif isinstance(packet, StreamingError):
+                error = packet.error
+            elif isinstance(packet, CitationInfo):
+                citations.append(packet)
+                continue
+
+            yield get_json_line(packet.dict())
+    except Exception as e:
+        logger.exception(e)
+
+        # Frontend will erase whatever answer and show this instead
+        error_packet = StreamingError(error="LLM failed to respond")
+
+        yield get_json_line(error_packet.dict())
+
+    # Post-LLM answer processing
+    try:
+        db_citations = None
+        if reference_db_search_docs:
+            db_citations = translate_citations(
+                citations_list=citations,
+                db_docs=reference_db_search_docs,
+            )
+
+        # Saving Gen AI answer and responding with message info
         gen_ai_response_message = partial_response(
-            message="",
-            token_count=0,
-            citations=None,
-            error=None,
+            message=llm_output,
+            token_count=len(llm_tokenizer(llm_output)),
+            citations=db_citations,
+            error=error,
         )
+
         msg_detail_response = translate_db_message_to_chat_message_detail(
             gen_ai_response_message
         )
 
         yield get_json_line(msg_detail_response.dict())
+    except Exception as e:
+        logger.exception(e)
 
-        # Stop here after saving message details, the above still needs to be sent for the
-        # message id to send the next follow-up message
-        return
+        # Frontend will erase whatever answer and show this instead
+        error_packet = StreamingError(error="Failed to parse LLM output")
 
-    # LLM prompt building, response capturing, etc all handled in here
-    response_packets = generate_ai_chat_response(
-        query_message=final_msg,
-        history=history_msgs,
-        context_docs=llm_docs,
-        doc_id_to_rank_map=doc_id_to_rank_map,
-        llm=llm,
-        llm_tokenizer=llm_tokenizer,
-        all_doc_useful=reference_doc_ids is not None,
-    )
-
-    # Capture outputs and errors
-    llm_output = ""
-    error: str | None = None
-    citations: list[CitationInfo] = []
-    for packet in response_packets:
-        if isinstance(packet, DanswerAnswerPiece):
-            token = packet.answer_piece
-            if token:
-                llm_output += token
-        elif isinstance(packet, StreamingError):
-            error = packet.error
-        elif isinstance(packet, CitationInfo):
-            citations.append(packet)
-            continue
-
-        yield get_json_line(packet.dict())
-
-    db_citations = None
-    if reference_db_search_docs:
-        db_citations = translate_citations(
-            citations_list=citations,
-            db_docs=reference_db_search_docs,
-        )
-
-    # Saving Gen AI answer and responding with message info
-    gen_ai_response_message = partial_response(
-        message=llm_output,
-        token_count=len(llm_tokenizer(llm_output)),
-        citations=db_citations,
-        error=error,
-    )
-
-    msg_detail_response = translate_db_message_to_chat_message_detail(
-        gen_ai_response_message
-    )
-
-    yield get_json_line(msg_detail_response.dict())
+        yield get_json_line(error_packet.dict())
