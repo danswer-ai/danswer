@@ -6,6 +6,10 @@ Cite relevant statements using the format [1], [2], [3], etc to reference the do
 DO NOT provide any links following the citation.
 """.rstrip()
 
+NO_CITATION_STATEMENT = """
+Do not provide any citations even if there are examples in the chat history.
+""".rstrip()
+
 
 CITATION_REMINDER = """
 Remember to provide citations in the format [1], [2], [3], etc.
@@ -37,35 +41,46 @@ CHAT_USER_CONTEXT_FREE_PROMPT = f"""
 """.strip()
 
 
+# Design considerations for the below:
+# - In case of uncertainty, favor yes search so place the "yes" sections near the start of the
+#   prompt and after the no section as well to deemphasize the no section
+# - Conversation history can be a lot of tokens, make sure the bulk of the prompt is at the start
+#   or end so the middle history section is relatively less paid attention to than the main task
+# - Works worse with just a simple yes/no, seems asking it to produce "search" helps a bit, can
+#   consider doing COT for this and keep it brief, but likely only small gains.
 YES_SEARCH = "Yes Search"
 NO_SEARCH = "No Search"
 REQUIRE_SEARCH_SINGLE_MSG = f"""
-Given the following conversation and a follow up question, \
-determine if the system should call an external search tool to answer the latest user query.
+Given the conversation history and a follow up query, \
+determine if the system should call an external search tool to answer the latest user input.
 
-Respond with "{NO_SEARCH}" if:
-- There is sufficient information in chat history to FULLY answer the user query.
-- You know enough to answer the query and further information would not be helpful.
-- The query is some sort of request and does not require additional information to handle.
+Respond "{YES_SEARCH}" if:
+- Specific details or additional knowledge could lead to a better answer.
+- There are new or unknown terms, or there is uncertainty what the user is referring to.
+- If being able to read a document cited previously would be useful.
 
-Respond with "{YES_SEARCH}" if:
-- Additional knowledge about entities, processes, problems, or \
-anything else could lead to a better answer.
-- There is some uncertainty what the user is referring to.
-
-If at all unsure, respond with "{YES_SEARCH}"
+Only respond "{NO_SEARCH}" if:
+- There is sufficient information in chat history to FULLY and ACCURATELY answer the query.
+- Additional information or details would provide little or no value.
+- The query is some form of request and does not require additional information to handle.
 
 {GENERAL_SEP_PAT}
-Chat History:
+Conversation History:
 {{chat_history}}
 {GENERAL_SEP_PAT}
 
-Follow Up Input: {{final_query}}
+Even if the topic has been addressed, if more specific details could be useful, \
+respond with "{YES_SEARCH}".
+If you are unsure, respond with "{YES_SEARCH}".
 
 Respond with EXACTLY and ONLY "{YES_SEARCH}" or "{NO_SEARCH}"
+
+Follow Up Input:
+{{final_query}}
 """.strip()
 
 
+# This is no longer used, the above single message approach is now used.
 REQUIRE_SEARCH_SYSTEM_MSG = f"""
 You are a large language model whose only job is to determine if the system should call an \
 external search tool to be able to answer the user's last message.
@@ -88,33 +103,14 @@ Hint: respond with EXACTLY {YES_SEARCH} or {NO_SEARCH}"
 """.strip()
 
 
-QUERY_REPHRASE_SYSTEM_MSG = """
-Given a conversation (between Human and Assistant) and a final message from Human, \
-rewrite the last message to be a standalone question which captures required/relevant context \
-from previous messages. This question must be useful for a semantic search engine. \
-It is used for a natural language search
-""".strip()
-
-
-QUERY_REPHRASE_USER_MSG = """
-Help me rewrite this final message into a standalone query that takes into consideration the \
-past messages of the conversation IF relevant. This query is used with a semantic search engine to \
-retrieve documents. You must ONLY return the rewritten query and NOTHING ELSE. \
-IMPORTANT, the search engine does not have access to the conversation history!
-
-Query:
-{final_query}
-""".strip()
-
-
 HISTORY_QUERY_REPHRASE = f"""
-Given the following conversation and a follow up question, \
+Given the following conversation and a follow up input, \
 rephrase the follow up question to be a standalone question \
 and convert it into a SHORT query for a vectorstore.
 IMPORTANT: BE AS TERSE AND CONCISE AS POSSIBLE. \
 Respond with a short phrase instead of a complete sentence. Avoid using any unclear pronouns.
-If the user changes topics completely, disregard the previous messages.
-If there is a specific message that should not change, such as an error or code snippet, \
+If there is a COMPLETE and TOTAL change in topic, disregard the previous messages.
+If the follow up message is specific and should not change, such as an error or code snippet, \
 just repeat the same question back exactly.
 Strip out any information that is not relevant for the retrieval task.
 
@@ -124,7 +120,26 @@ Chat History:
 {GENERAL_SEP_PAT}
 
 Follow Up Input: {{question}}
-Standalone question (Respond with only the SHORT query):
+Standalone question (Respond with only the short combined query):
+""".strip()
+
+
+# The two below are not used, the latest flow uses the combined single message approach
+QUERY_REPHRASE_SYSTEM_MSG = """
+Given a conversation (between Human and Assistant) and a final message from Human, \
+rewrite the last message to be a concise standalone query which captures required/relevant \
+context from previous messages. This question must be useful for a semantic (natural language) \
+search engine.
+""".strip()
+
+QUERY_REPHRASE_USER_MSG = """
+Help me rewrite this final message into a standalone query that takes into consideration the \
+past messages of the conversation IF relevant. This query is used with a semantic search engine to \
+retrieve documents. You must ONLY return the rewritten query and NOTHING ELSE. \
+IMPORTANT, the search engine does not have access to the conversation history!
+
+Query:
+{final_query}
 """.strip()
 
 

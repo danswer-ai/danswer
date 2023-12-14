@@ -51,7 +51,7 @@ Sample Response:
 
 WEB_SOURCE_WARNING = """
 Note: The "web" source only applies to when the user specifies "website" in the query. \
-It does not apply to tools such as Confluence, GitHub, etc. which have a website.
+It does not apply to tools such as Confluence, GitHub, etc. that have a website.
 """.strip()
 
 FILE_SOURCE_WARNING = """

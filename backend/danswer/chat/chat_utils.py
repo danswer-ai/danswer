@@ -20,6 +20,7 @@ from danswer.prompts.chat_prompts import CHAT_USER_CONTEXT_FREE_PROMPT
 from danswer.prompts.chat_prompts import CHAT_USER_PROMPT
 from danswer.prompts.chat_prompts import CITATION_REMINDER
 from danswer.prompts.chat_prompts import DEFAULT_IGNORE_STATEMENT
+from danswer.prompts.chat_prompts import NO_CITATION_STATEMENT
 from danswer.prompts.chat_prompts import REQUIRE_CITATION_STATEMENT
 from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.prompts.direct_qa_prompts import LANGUAGE_HINT
@@ -61,12 +62,17 @@ def build_context_str(
 @lru_cache()
 def build_chat_system_message(
     prompt: Prompt,
+    context_exists: bool,
     llm_tokenizer: Callable,
     citation_line: str = REQUIRE_CITATION_STATEMENT,
+    no_citation_line: str = NO_CITATION_STATEMENT,
 ) -> tuple[SystemMessage | None, int]:
-    system_prompt = prompt.system_prompt
+    system_prompt = prompt.system_prompt.strip()
     if prompt.include_citations:
-        system_prompt = system_prompt.rstrip() + citation_line
+        if context_exists:
+            system_prompt += citation_line
+        else:
+            system_prompt += no_citation_line
     if prompt.datetime_aware:
         if system_prompt:
             system_prompt += (
@@ -136,8 +142,7 @@ def build_chat_user_message(
         # Simpler prompt for cases where there is no context
         user_prompt = (
             context_free_template.format(
-                task_prompt=prompt.task_prompt,
-                user_query=user_query,
+                task_prompt=prompt.task_prompt, user_query=user_query
             )
             if prompt.task_prompt
             else user_query

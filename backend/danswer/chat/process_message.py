@@ -194,8 +194,12 @@ def generate_ai_chat_response(
         raise RuntimeError("No prompt received for generating Gen AI answer.")
 
     try:
+        context_exists = len(context_docs) > 0
+
         system_message_or_none, system_tokens = build_chat_system_message(
-            prompt=query_message.prompt, llm_tokenizer=llm_tokenizer
+            prompt=query_message.prompt,
+            context_exists=context_exists,
+            llm_tokenizer=llm_tokenizer,
         )
 
         history_basemessages, history_token_counts = translate_history_to_basemessages(
