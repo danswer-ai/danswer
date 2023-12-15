@@ -40,7 +40,6 @@ def upgrade() -> None:
     # This is irrecoverable, whatever
     op.execute("DELETE FROM chat_feedback")
     op.execute("DELETE FROM document_retrieval_feedback")
-    op.execute("DELETE FROM persona")
 
     op.create_table(
         "search_doc",

@@ -67,10 +67,10 @@ export function PersonaEditor({
   const existingPrompt = existingPersona?.prompts[0] ?? null;
 
   useEffect(() => {
-    if (isUpdate) {
+    if (isUpdate && existingPrompt) {
       triggerFinalPromptUpdate(
-        existingPrompt!.system_prompt,
-        existingPrompt!.task_prompt,
+        existingPrompt.system_prompt,
+        existingPrompt.task_prompt,
         existingPersona.num_chunks === 0
       );
     }
