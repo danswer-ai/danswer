@@ -23,13 +23,14 @@ from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import ChannelIdAdapter
 from danswer.danswerbot.slack.utils import fetch_userids_from_emails
 from danswer.danswerbot.slack.utils import respond_in_thread
-from danswer.db.chat import create_chat_session
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
-from danswer.direct_qa.answer_question import answer_qa_query
+from danswer.one_shot_answer.answer_question import get_one_shot_answer
+from danswer.one_shot_answer.models import DirectQARequest
+from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.search.models import BaseFilters
-from danswer.server.chat.models import NewMessageRequest
-from danswer.server.chat.models import QAResponse
+from danswer.search.models import OptionalSearchSetting
+from danswer.search.models import RetrievalDetails
 from danswer.utils.logger import setup_logger
 
 logger_base = setup_logger()
@@ -91,7 +92,8 @@ def handle_message(
     sender_id = message_info.sender
     bipass_filters = message_info.bipass_filters
     is_bot_msg = message_info.is_bot_msg
-    persona = channel_config.persona if channel_config else None
+
+    engine = get_sqlalchemy_engine()
 
     logger = cast(
         logging.Logger,
@@ -99,10 +101,13 @@ def handle_message(
     )
 
     document_set_names: list[str] | None = None
+    persona = channel_config.persona if channel_config else None
+    prompt = None
     if persona:
         document_set_names = [
             document_set.name for document_set in persona.document_sets
         ]
+        prompt = persona.prompts[0] if persona.prompts else None
 
     should_respond_even_with_no_docs = persona.num_chunks == 0 if persona else False
 
@@ -177,12 +182,11 @@ def handle_message(
         backoff=2,
         logger=logger,
     )
-    def _get_answer(new_message_request: NewMessageRequest) -> QAResponse:
-        engine = get_sqlalchemy_engine()
+    def _get_answer(new_message_request: DirectQARequest) -> OneShotQAResponse:
         with Session(engine, expire_on_commit=False) as db_session:
             # This also handles creating the query event in postgres
-            answer = answer_qa_query(
-                new_message_request=new_message_request,
+            answer = get_one_shot_answer(
+                query_req=new_message_request,
                 user=None,
                 db_session=db_session,
                 answer_generation_timeout=answer_generation_timeout,
@@ -194,19 +198,6 @@ def handle_message(
             else:
                 raise RuntimeError(answer.error_msg)
 
-    # create a chat session for this interaction
-    # TODO: when chat support is added to Slack, this should check
-    # for an existing chat session associated with this thread
-    with Session(get_sqlalchemy_engine()) as db_session:
-        chat_session = create_chat_session(
-            db_session=db_session,
-            description="",
-            user_id=None,
-            persona_id=persona.id if persona else None,
-        )
-        chat_session_id = chat_session.id
-
-    answer_failed = False
     try:
         # By leaving time_cutoff and favor_recent as None, and setting enable_auto_detect_filters
         # it allows the slack flow to extract out filters from the user query
@@ -216,18 +207,30 @@ def handle_message(
             time_cutoff=None,
         )
 
+        auto_detect_filters = (
+            persona.llm_filter_extraction if persona is not None else False
+        )
+        if disable_auto_detect_filters:
+            auto_detect_filters = False
+
+        retrieval_details = RetrievalDetails(
+            run_search=OptionalSearchSetting.ALWAYS,
+            real_time=False,
+            filters=filters,
+            enable_auto_detect_filters=auto_detect_filters,
+        )
+
         # This includes throwing out answer via reflexion
         answer = _get_answer(
-            NewMessageRequest(
-                chat_session_id=chat_session_id,
+            DirectQARequest(
                 query=msg,
-                filters=filters,
-                enable_auto_detect_filters=not disable_auto_detect_filters,
-                real_time=disable_cot,
+                prompt_id=prompt.id if prompt else None,
+                persona_id=persona.id if persona is not None else 0,
+                retrieval_options=retrieval_details,
+                chain_of_thought=not disable_cot,
             )
         )
     except Exception as e:
-        answer_failed = True
         logger.exception(
             f"Unable to process message - did not successfully answer "
             f"in {num_retries} attempts"
@@ -243,15 +246,21 @@ def handle_message(
                 thread_ts=message_ts_to_respond_to,
             )
 
+        # In case of failures, don't keep the reaction there permanently
+        try:
+            remove_react(message_info, client)
+        except SlackApiError as e:
+            logger.error(f"Failed to remove Reaction due to: {e}")
+
+        return True
+
+    # Got an answer at this point, can remove reaction and give results
     try:
         remove_react(message_info, client)
     except SlackApiError as e:
         logger.error(f"Failed to remove Reaction due to: {e}")
 
-    if answer_failed:
-        return True
-
-    if answer.eval_res_valid is False:
+    if answer.answer_valid is False:
         logger.info(
             "Answer was evaluated to be invalid, throwing it away without responding."
         )
@@ -259,10 +268,16 @@ def handle_message(
             logger.debug(answer.answer)
         return True
 
-    if not answer.top_documents and not should_respond_even_with_no_docs:
+    retrieval_info = answer.docs
+    if not retrieval_info:
+        # This should not happen, even with no docs retrieved, there is still info returned
+        raise RuntimeError("Failed to retrieve docs, cannot answer question.")
+
+    top_docs = retrieval_info.top_documents
+    if not top_docs and not should_respond_even_with_no_docs:
         logger.error(f"Unable to answer question: '{msg}' - no documents found")
-        # Optionally, respond in thread with the error message, Used primarily
-        # for debugging purposes
+        # Optionally, respond in thread with the error message
+        # Used primarily for debugging purposes
         if should_respond_with_error_msgs:
             respond_in_thread(
                 client=client,
@@ -284,17 +299,16 @@ def handle_message(
     restate_question_block = get_restate_blocks(msg, is_bot_msg)
 
     answer_blocks = build_qa_response_blocks(
-        query_event_id=answer.query_event_id,
+        message_id=answer.chat_message_id,
         answer=answer.answer,
-        quotes=answer.quotes,
-        source_filters=answer.source_type,
-        time_cutoff=answer.time_cutoff,
-        favor_recent=answer.favor_recent,
+        quotes=answer.quotes.quotes if answer.quotes else None,
+        source_filters=retrieval_info.applied_source_filters,
+        time_cutoff=retrieval_info.applied_time_cutoff,
+        favor_recent=retrieval_info.recency_bias_multiplier > 1,
         skip_quotes=persona is not None,  # currently Personas don't support quotes
     )
 
     # Get the chunks fed to the LLM only, then fill with other docs
-    top_docs = answer.top_documents
     llm_doc_inds = answer.llm_chunks_indices or []
     llm_docs = [top_docs[i] for i in llm_doc_inds]
     remaining_docs = [
@@ -304,7 +318,7 @@ def handle_message(
     document_blocks = (
         build_documents_blocks(
             documents=priority_ordered_docs,
-            query_event_id=answer.query_event_id,
+            message_id=answer.chat_message_id,
         )
         if priority_ordered_docs
         else []

@@ -8,9 +8,10 @@ from nltk.corpus import stopwords  # type:ignore
 from nltk.stem import WordNetLemmatizer  # type:ignore
 from nltk.tokenize import word_tokenize  # type:ignore
 
-from danswer.configs.app_configs import HYBRID_ALPHA
-from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
-from danswer.configs.app_configs import NUM_RERANKED_RESULTS
+from danswer.chat.models import LlmDoc
+from danswer.configs.chat_configs import HYBRID_ALPHA
+from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
+from danswer.configs.chat_configs import NUM_RERANKED_RESULTS
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
@@ -22,16 +23,17 @@ from danswer.document_index.document_index_utils import (
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.indexing.models import InferenceChunk
 from danswer.search.models import ChunkMetric
+from danswer.search.models import IndexFilters
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
+from danswer.search.models import SearchDoc
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.search.search_nlp_models import CrossEncoderEnsembleModel
 from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_chunks
-from danswer.secondary_llm_flows.query_expansion import rephrase_query
-from danswer.server.chat.models import SearchDoc
+from danswer.secondary_llm_flows.query_expansion import multilingual_query_expansion
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
@@ -87,7 +89,8 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
         [
             SearchDoc(
                 document_id=chunk.document_id,
-                semantic_identifier=chunk.semantic_identifier,
+                chunk_ind=chunk.chunk_id,
+                semantic_identifier=chunk.semantic_identifier or "Unknown",
                 link=chunk.source_links.get(0) if chunk.source_links else None,
                 blurb=chunk.blurb,
                 source_type=chunk.source_type,
@@ -96,10 +99,10 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
                 score=chunk.score,
                 match_highlights=chunk.match_highlights,
                 updated_at=chunk.updated_at,
+                primary_owners=chunk.primary_owners,
+                secondary_owners=chunk.secondary_owners,
             )
-            # semantic identifier should always exist but for really old indices, it was not enforced
             for chunk in chunks
-            if chunk.semantic_identifier
         ]
         if chunks
         else []
@@ -141,7 +144,7 @@ def doc_index_retrieval(
         top_chunks = document_index.keyword_retrieval(
             query=query.query,
             filters=query.filters,
-            favor_recent=query.favor_recent,
+            time_decay_multiplier=query.recency_bias_multiplier,
             num_to_retrieve=query.num_hits,
         )
 
@@ -149,7 +152,7 @@ def doc_index_retrieval(
         top_chunks = document_index.semantic_retrieval(
             query=query.query,
             filters=query.filters,
-            favor_recent=query.favor_recent,
+            time_decay_multiplier=query.recency_bias_multiplier,
             num_to_retrieve=query.num_hits,
         )
 
@@ -157,7 +160,7 @@ def doc_index_retrieval(
         top_chunks = document_index.hybrid_retrieval(
             query=query.query,
             filters=query.filters,
-            favor_recent=query.favor_recent,
+            time_decay_multiplier=query.recency_bias_multiplier,
             num_to_retrieve=query.num_hits,
             hybrid_alpha=hybrid_alpha,
         )
@@ -342,13 +345,13 @@ def retrieve_chunks(
     query: SearchQuery,
     document_index: DocumentIndex,
     hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
-    multilingual_query_expansion: str | None = MULTILINGUAL_QUERY_EXPANSION,
+    multilingual_expansion_str: str | None = MULTILINGUAL_QUERY_EXPANSION,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
 ) -> list[InferenceChunk]:
     """Returns a list of the best chunks from an initial keyword/semantic/ hybrid search."""
     # Don't do query expansion on complex queries, rephrasings likely would not work well
-    if not multilingual_query_expansion or "\n" in query.query or "\r" in query.query:
+    if not multilingual_expansion_str or "\n" in query.query or "\r" in query.query:
         top_chunks = doc_index_retrieval(
             query=query, document_index=document_index, hybrid_alpha=hybrid_alpha
         )
@@ -357,7 +360,9 @@ def retrieve_chunks(
         run_queries: list[tuple[Callable, tuple]] = []
 
         # Currently only uses query expansion on multilingual use cases
-        query_rephrases = rephrase_query(query.query, multilingual_query_expansion)
+        query_rephrases = multilingual_query_expansion(
+            query.query, multilingual_expansion_str
+        )
         # Just to be extra sure, add the original query.
         query_rephrases.append(query.query)
         for rephrase in set(query_rephrases):
@@ -451,7 +456,7 @@ def full_chunk_search(
     query: SearchQuery,
     document_index: DocumentIndex,
     hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
-    multilingual_query_expansion: str | None = MULTILINGUAL_QUERY_EXPANSION,
+    multilingual_expansion_str: str | None = MULTILINGUAL_QUERY_EXPANSION,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
@@ -460,10 +465,10 @@ def full_chunk_search(
     Rather than returning the chunks and llm relevance filter results in two separate
     yields, just returns them both at once."""
     search_generator = full_chunk_search_generator(
-        query=query,
+        search_query=query,
         document_index=document_index,
         hybrid_alpha=hybrid_alpha,
-        multilingual_query_expansion=multilingual_query_expansion,
+        multilingual_expansion_str=multilingual_expansion_str,
         retrieval_metrics_callback=retrieval_metrics_callback,
         rerank_metrics_callback=rerank_metrics_callback,
     )
@@ -472,23 +477,30 @@ def full_chunk_search(
     return top_chunks, llm_chunk_selection
 
 
+def empty_search_generator() -> Iterator[list[InferenceChunk] | list[bool]]:
+    yield cast(list[InferenceChunk], [])
+    yield cast(list[bool], [])
+
+
 def full_chunk_search_generator(
-    query: SearchQuery,
+    search_query: SearchQuery,
     document_index: DocumentIndex,
     hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
-    multilingual_query_expansion: str | None = MULTILINGUAL_QUERY_EXPANSION,
+    multilingual_expansion_str: str | None = MULTILINGUAL_QUERY_EXPANSION,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> Iterator[list[InferenceChunk] | list[bool]]:
-    """Always yields twice. Once with the selected chunks and once with the LLM relevance filter result."""
+    """Always yields twice. Once with the selected chunks and once with the LLM relevance filter result.
+    If LLM filter results are turned off, returns a list of False
+    """
     chunks_yielded = False
 
     retrieved_chunks = retrieve_chunks(
-        query=query,
+        query=search_query,
         document_index=document_index,
         hybrid_alpha=hybrid_alpha,
-        multilingual_query_expansion=multilingual_query_expansion,
+        multilingual_expansion_str=multilingual_expansion_str,
         retrieval_metrics_callback=retrieval_metrics_callback,
     )
 
@@ -500,12 +512,12 @@ def full_chunk_search_generator(
     post_processing_tasks: list[FunctionCall] = []
 
     rerank_task_id = None
-    if should_rerank(query):
+    if should_rerank(search_query):
         post_processing_tasks.append(
             FunctionCall(
                 rerank_chunks,
                 (
-                    query,
+                    search_query,
                     retrieved_chunks,
                     rerank_metrics_callback,
                 ),
@@ -516,16 +528,16 @@ def full_chunk_search_generator(
         final_chunks = retrieved_chunks
         # NOTE: if we don't rerank, we can return the chunks immediately
         # since we know this is the final order
-        _log_top_chunk_links(query.search_type.value, final_chunks)
+        _log_top_chunk_links(search_query.search_type.value, final_chunks)
         yield final_chunks
         chunks_yielded = True
 
     llm_filter_task_id = None
-    if should_apply_llm_based_relevance_filter(query):
+    if should_apply_llm_based_relevance_filter(search_query):
         post_processing_tasks.append(
             FunctionCall(
                 filter_chunks,
-                (query, retrieved_chunks[: query.max_llm_filter_chunks]),
+                (search_query, retrieved_chunks[: search_query.max_llm_filter_chunks]),
             )
         )
         llm_filter_task_id = post_processing_tasks[-1].result_id
@@ -545,7 +557,7 @@ def full_chunk_search_generator(
                 "Trying to yield re-ranked chunks, but chunks were already yielded. This should never happen."
             )
         else:
-            _log_top_chunk_links(query.search_type.value, reranked_chunks)
+            _log_top_chunk_links(search_query.search_type.value, reranked_chunks)
             yield reranked_chunks
 
     llm_chunk_selection = cast(
@@ -560,4 +572,46 @@ def full_chunk_search_generator(
             for chunk in reranked_chunks or retrieved_chunks
         ]
     else:
-        yield [True for _ in reranked_chunks or retrieved_chunks]
+        yield [False for _ in reranked_chunks or retrieved_chunks]
+
+
+def combine_inference_chunks(inf_chunks: list[InferenceChunk]) -> LlmDoc:
+    if not inf_chunks:
+        raise ValueError("Cannot combine empty list of chunks")
+
+    # Use the first link of the document
+    first_chunk = inf_chunks[0]
+    chunk_texts = [chunk.content for chunk in inf_chunks]
+    return LlmDoc(
+        document_id=first_chunk.document_id,
+        content="\n".join(chunk_texts),
+        semantic_identifier=first_chunk.semantic_identifier,
+        source_type=first_chunk.source_type,
+        updated_at=first_chunk.updated_at,
+        link=first_chunk.source_links[0] if first_chunk.source_links else None,
+    )
+
+
+def inference_documents_from_ids(
+    doc_identifiers: list[tuple[str, int]],
+    document_index: DocumentIndex,
+) -> list[LlmDoc]:
+    # Currently only fetches whole docs
+    doc_ids_set = set(doc_id for doc_id, chunk_id in doc_identifiers)
+
+    # No need for ACL here because the doc ids were validated beforehand
+    filters = IndexFilters(access_control_list=None)
+
+    functions_with_args: list[tuple[Callable, tuple]] = [
+        (document_index.id_based_retrieval, (doc_id, None, filters))
+        for doc_id in doc_ids_set
+    ]
+
+    parallel_results = run_functions_tuples_in_parallel(
+        functions_with_args, allow_failures=True
+    )
+
+    # Any failures to retrieve would give a None, drop the Nones and empty lists
+    inference_chunks_sets = [res for res in parallel_results if res]
+
+    return [combine_inference_chunks(chunk_set) for chunk_set in inference_chunks_sets]

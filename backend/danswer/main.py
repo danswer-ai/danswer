@@ -19,7 +19,7 @@ from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
 from danswer.auth.users import fastapi_users
-from danswer.chat.personas import load_personas_from_yaml
+from danswer.chat.load_yamls import load_chat_yamls
 from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
@@ -27,11 +27,11 @@ from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import MODEL_SERVER_PORT
-from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
+from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.constants import AuthType
 from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
@@ -45,23 +45,29 @@ from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
 from danswer.db.credentials import create_initial_public_credential
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.direct_qa.factory import get_default_qa_model
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llm
+from danswer.one_shot_answer.factory import get_default_qa_model
 from danswer.search.search_nlp_models import warm_up_models
-from danswer.server.chat.chat_backend import router as chat_router
-from danswer.server.chat.search_backend import router as backend_router
 from danswer.server.danswer_api.ingestion import get_danswer_api_key
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
 from danswer.server.documents.cc_pair import router as cc_pair_router
 from danswer.server.documents.connector import router as connector_router
 from danswer.server.documents.credential import router as credential_router
+from danswer.server.documents.document import router as document_router
 from danswer.server.features.document_set.api import router as document_set_router
-from danswer.server.features.persona.api import router as persona_router
+from danswer.server.features.persona.api import admin_router as admin_persona_router
+from danswer.server.features.persona.api import basic_router as persona_router
+from danswer.server.features.prompt.api import basic_router as prompt_router
 from danswer.server.manage.administrative import router as admin_router
 from danswer.server.manage.get_state import router as state_router
 from danswer.server.manage.slack_bot import router as slack_bot_management_router
 from danswer.server.manage.users import router as user_router
+from danswer.server.query_and_chat.chat_backend import router as chat_router
+from danswer.server.query_and_chat.query_backend import (
+    admin_router as admin_query_router,
+)
+from danswer.server.query_and_chat.query_backend import basic_router as query_router
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
@@ -113,8 +119,11 @@ def include_router_with_global_prefix_prepended(
 
 def get_application() -> FastAPI:
     application = FastAPI(title="Danswer Backend", version=__version__)
-    include_router_with_global_prefix_prepended(application, backend_router)
+
     include_router_with_global_prefix_prepended(application, chat_router)
+    include_router_with_global_prefix_prepended(application, query_router)
+    include_router_with_global_prefix_prepended(application, document_router)
+    include_router_with_global_prefix_prepended(application, admin_query_router)
     include_router_with_global_prefix_prepended(application, admin_router)
     include_router_with_global_prefix_prepended(application, user_router)
     include_router_with_global_prefix_prepended(application, connector_router)
@@ -125,6 +134,8 @@ def get_application() -> FastAPI:
         application, slack_bot_management_router
     )
     include_router_with_global_prefix_prepended(application, persona_router)
+    include_router_with_global_prefix_prepended(application, admin_persona_router)
+    include_router_with_global_prefix_prepended(application, prompt_router)
     include_router_with_global_prefix_prepended(application, state_router)
     include_router_with_global_prefix_prepended(application, danswer_api_router)
 
@@ -174,13 +185,13 @@ def get_application() -> FastAPI:
                 SECRET,
                 associate_by_email=True,
                 is_verified_by_default=True,
-                # points the user back to the login page
+                # Points the user back to the login page
                 redirect_url=f"{WEB_DOMAIN}/auth/oauth/callback",
             ),
             prefix="/auth/oauth",
             tags=["auth"],
         )
-        # need basic auth router for `logout` endpoint
+        # Need basic auth router for `logout` endpoint
         include_router_with_global_prefix_prepended(
             application,
             fastapi_users.get_logout_router(auth_backend),
@@ -263,8 +274,8 @@ def get_application() -> FastAPI:
             create_initial_default_connector(db_session)
             associate_default_cc_pair(db_session)
 
-        logger.info("Loading default Chat Personas")
-        load_personas_from_yaml()
+        logger.info("Loading default Prompts and Personas")
+        load_chat_yamls()
 
         logger.info("Verifying Document Index(s) is/are available.")
         get_default_document_index().ensure_indices_exist()

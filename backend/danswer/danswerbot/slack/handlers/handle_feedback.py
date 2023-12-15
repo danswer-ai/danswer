@@ -1,14 +1,13 @@
 from slack_sdk import WebClient
 from sqlalchemy.orm import Session
 
-from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.utils import decompose_block_id
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.feedback import create_chat_message_feedback
 from danswer.db.feedback import create_doc_retrieval_feedback
-from danswer.db.feedback import update_query_event_feedback
 from danswer.document_index.factory import get_default_document_index
 
 
@@ -22,15 +21,14 @@ def handle_slack_feedback(
 ) -> None:
     engine = get_sqlalchemy_engine()
 
-    query_id, doc_id, doc_rank = decompose_block_id(block_id)
+    message_id, doc_id, doc_rank = decompose_block_id(block_id)
 
     with Session(engine) as db_session:
         if feedback_type in [LIKE_BLOCK_ACTION_ID, DISLIKE_BLOCK_ACTION_ID]:
-            update_query_event_feedback(
-                feedback=QAFeedbackType.LIKE
-                if feedback_type == LIKE_BLOCK_ACTION_ID
-                else QAFeedbackType.DISLIKE,
-                query_id=query_id,
+            create_chat_message_feedback(
+                is_positive=feedback_type == LIKE_BLOCK_ACTION_ID,
+                feedback_text="",
+                chat_message_id=message_id,
                 user_id=None,  # no "user" for Slack bot for now
                 db_session=db_session,
             )
@@ -42,10 +40,9 @@ def handle_slack_feedback(
                 raise ValueError("Missing information for Document Feedback")
 
             create_doc_retrieval_feedback(
-                qa_event_id=query_id,
+                message_id=message_id,
                 document_id=doc_id,
                 document_rank=doc_rank,
-                user_id=None,
                 document_index=get_default_document_index(),
                 db_session=db_session,
                 clicked=False,  # Not tracking this for Slack

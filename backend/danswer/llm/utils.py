@@ -70,20 +70,26 @@ def tokenizer_trim_chunks(
 
 
 def translate_danswer_msg_to_langchain(msg: ChatMessage) -> BaseMessage:
-    if (
-        msg.message_type == MessageType.SYSTEM
-        or msg.message_type == MessageType.DANSWER
-    ):
-        # TODO save at least the Danswer responses to postgres
-        raise ValueError(
-            "System and Danswer messages are not currently part of history"
-        )
+    if msg.message_type == MessageType.SYSTEM:
+        raise ValueError("System messages are not currently part of history")
     if msg.message_type == MessageType.ASSISTANT:
         return AIMessage(content=msg.message)
     if msg.message_type == MessageType.USER:
         return HumanMessage(content=msg.message)
 
     raise ValueError(f"New message type {msg.message_type} not handled")
+
+
+def translate_history_to_basemessages(
+    history: list[ChatMessage],
+) -> tuple[list[BaseMessage], list[int]]:
+    history_basemessages = [
+        translate_danswer_msg_to_langchain(msg)
+        for msg in history
+        if msg.token_count != 0
+    ]
+    history_token_counts = [msg.token_count for msg in history if msg.token_count != 0]
+    return history_basemessages, history_token_counts
 
 
 def dict_based_prompt_to_langchain_prompt(

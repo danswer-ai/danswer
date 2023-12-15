@@ -62,5 +62,5 @@ export function buildFinalPrompt(
     )
     .join("&");
 
-  return fetch(`/api/persona-utils/prompt-explorer?${queryString}`);
+  return fetch(`/api/persona/utils/prompt-explorer?${queryString}`);
 }

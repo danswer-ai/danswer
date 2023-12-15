@@ -11,8 +11,8 @@ export default async function Page() {
   const [documentSetsResponse, llmOverridesResponse, defaultLLMResponse] =
     await Promise.all([
       fetchSS("/manage/document-set"),
-      fetchSS("/persona-utils/list-available-models"),
-      fetchSS("/persona-utils/default-model"),
+      fetchSS("/admin/persona/utils/list-available-models"),
+      fetchSS("/admin/persona/utils/default-model"),
     ]);
 
   if (!documentSetsResponse.ok) {

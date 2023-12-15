@@ -2,6 +2,7 @@ import concurrent.futures
 import json
 import string
 import time
+from collections.abc import Callable
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
@@ -15,17 +16,16 @@ from requests import HTTPError
 from requests import Response
 from retry import retry
 
-from danswer.configs.app_configs import DOC_TIME_DECAY
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
-from danswer.configs.app_configs import EDIT_KEYWORD_QUERY
-from danswer.configs.app_configs import FAVOR_RECENT_DECAY_MULTIPLIER
-from danswer.configs.app_configs import HYBRID_ALPHA
 from danswer.configs.app_configs import LOG_VESPA_TIMING_INFORMATION
-from danswer.configs.app_configs import NUM_RETURNED_HITS
 from danswer.configs.app_configs import VESPA_DEPLOYMENT_ZIP
 from danswer.configs.app_configs import VESPA_HOST
 from danswer.configs.app_configs import VESPA_PORT
 from danswer.configs.app_configs import VESPA_TENANT_PORT
+from danswer.configs.chat_configs import DOC_TIME_DECAY
+from danswer.configs.chat_configs import EDIT_KEYWORD_QUERY
+from danswer.configs.chat_configs import HYBRID_ALPHA
+from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import ACCESS_CONTROL_LIST
 from danswer.configs.constants import BLURB
 from danswer.configs.constants import BOOST
@@ -63,6 +63,7 @@ from danswer.search.search_runner import query_processing
 from danswer.search.search_runner import remove_stop_words_and_punctuation
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
+from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 
 logger = setup_logger()
 
@@ -124,12 +125,20 @@ def _vespa_get_updated_at_attribute(t: datetime | None) -> int | None:
 
 
 def _get_vespa_chunk_ids_by_document_id(
-    document_id: str, hits_per_page: int = _BATCH_SIZE
+    document_id: str,
+    hits_per_page: int = _BATCH_SIZE,
+    index_filters: IndexFilters | None = None,
 ) -> list[str]:
+    filters_str = (
+        _build_vespa_filters(filters=index_filters, include_hidden=True)
+        if index_filters is not None
+        else ""
+    )
+
     offset = 0
     doc_chunk_ids = []
     params: dict[str, int | str] = {
-        "yql": f"select documentid from {DOCUMENT_INDEX_NAME} where document_id contains '{document_id}'",
+        "yql": f"select documentid from {DOCUMENT_INDEX_NAME} where {filters_str}document_id contains '{document_id}'",
         "timeout": "10s",
         "offset": offset,
         "hits": hits_per_page,
@@ -500,8 +509,8 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
         source_type=fields[SOURCE_TYPE],
         semantic_identifier=fields[SEMANTIC_IDENTIFIER],
         boost=fields.get(BOOST, 1),
-        recency_bias=fields["matchfeatures"][RECENCY_BIAS],
-        score=hit["relevance"],
+        recency_bias=fields.get("matchfeatures", {}).get(RECENCY_BIAS, 1.0),
+        score=hit.get("relevance", 0),
         hidden=fields.get(HIDDEN, False),
         primary_owners=fields.get(PRIMARY_OWNERS),
         secondary_owners=fields.get(SECONDARY_OWNERS),
@@ -511,6 +520,7 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
     )
 
 
+@retry(tries=3, delay=1, backoff=2)
 def _query_vespa(query_params: Mapping[str, str | int | float]) -> list[InferenceChunk]:
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError("No/empty query received")
@@ -546,6 +556,14 @@ def _query_vespa(query_params: Mapping[str, str | int | float]) -> list[Inferenc
 
     inference_chunks = [_vespa_hit_to_inference_chunk(hit) for hit in filtered_hits]
     return inference_chunks
+
+
+@retry(tries=3, delay=1, backoff=2)
+def _inference_chunk_by_vespa_id(vespa_id: str) -> InferenceChunk:
+    res = requests.get(f"{DOCUMENT_ID_ENDPOINT}/{vespa_id}")
+    res.raise_for_status()
+
+    return _vespa_hit_to_inference_chunk(res.json())
 
 
 class VespaIndex(DocumentIndex):
@@ -681,15 +699,48 @@ class VespaIndex(DocumentIndex):
         logger.info(f"Deleting {len(doc_ids)} documents from Vespa")
         _delete_vespa_docs(doc_ids)
 
+    def id_based_retrieval(
+        self, document_id: str, chunk_ind: int | None, filters: IndexFilters
+    ) -> list[InferenceChunk]:
+        if chunk_ind is None:
+            vespa_chunk_ids = _get_vespa_chunk_ids_by_document_id(
+                document_id=document_id, index_filters=filters
+            )
+
+            if not vespa_chunk_ids:
+                return []
+
+            functions_with_args: list[tuple[Callable, tuple]] = [
+                (_inference_chunk_by_vespa_id, (vespa_chunk_id,))
+                for vespa_chunk_id in vespa_chunk_ids
+            ]
+
+            logger.debug(
+                "Running LLM usefulness eval in parallel (following logging may be out of order)"
+            )
+            inference_chunks = run_functions_tuples_in_parallel(
+                functions_with_args, allow_failures=True
+            )
+            inference_chunks.sort(key=lambda chunk: chunk.chunk_id)
+            return inference_chunks
+
+        else:
+            filters_str = _build_vespa_filters(filters=filters, include_hidden=True)
+            yql = (
+                VespaIndex.yql_base
+                + filters_str
+                + f"({DOCUMENT_ID} contains '{document_id}' and {CHUNK_ID} contains '{chunk_ind}')"
+            )
+        return _query_vespa({"yql": yql})
+
     def keyword_retrieval(
         self,
         query: str,
         filters: IndexFilters,
-        favor_recent: bool,
+        time_decay_multiplier: float,
         num_to_retrieve: int = NUM_RETURNED_HITS,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
-        decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
             VespaIndex.yql_base
@@ -706,7 +757,7 @@ class VespaIndex(DocumentIndex):
         params: dict[str, str | int] = {
             "yql": yql,
             "query": final_query,
-            "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
+            "input.query(decay_factor)": str(DOC_TIME_DECAY * time_decay_multiplier),
             "hits": num_to_retrieve,
             "offset": 0,
             "ranking.profile": "keyword_search",
@@ -719,12 +770,11 @@ class VespaIndex(DocumentIndex):
         self,
         query: str,
         filters: IndexFilters,
-        favor_recent: bool,
+        time_decay_multiplier: float,
         num_to_retrieve: int = NUM_RETURNED_HITS,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
-        decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
             VespaIndex.yql_base
@@ -748,7 +798,7 @@ class VespaIndex(DocumentIndex):
             "yql": yql,
             "query": query_keywords,  # Needed for highlighting
             "input.query(query_embedding)": str(query_embedding),
-            "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
+            "input.query(decay_factor)": str(DOC_TIME_DECAY * time_decay_multiplier),
             "hits": num_to_retrieve,
             "offset": 0,
             "ranking.profile": "semantic_search",
@@ -761,13 +811,12 @@ class VespaIndex(DocumentIndex):
         self,
         query: str,
         filters: IndexFilters,
-        favor_recent: bool,
+        time_decay_multiplier: float,
         num_to_retrieve: int,
         hybrid_alpha: float | None = HYBRID_ALPHA,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
-        decay_multiplier = FAVOR_RECENT_DECAY_MULTIPLIER if favor_recent else 1
         vespa_where_clauses = _build_vespa_filters(filters)
         # Needs to be at least as much as the value set in Vespa schema config
         target_hits = max(10 * num_to_retrieve, 1000)
@@ -791,7 +840,7 @@ class VespaIndex(DocumentIndex):
             "yql": yql,
             "query": query_keywords,
             "input.query(query_embedding)": str(query_embedding),
-            "input.query(decay_factor)": str(DOC_TIME_DECAY * decay_multiplier),
+            "input.query(decay_factor)": str(DOC_TIME_DECAY * time_decay_multiplier),
             "input.query(alpha)": hybrid_alpha
             if hybrid_alpha is not None
             else HYBRID_ALPHA,

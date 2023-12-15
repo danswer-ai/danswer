@@ -96,7 +96,7 @@ def respond_in_thread(
 
 
 def build_feedback_block_id(
-    query_event_id: int,
+    message_id: int,
     document_id: str | None = None,
     document_rank: int | None = None,
 ) -> str:
@@ -108,11 +108,9 @@ def build_feedback_block_id(
             raise ValueError(
                 "Separator pattern should not already exist in document id"
             )
-        block_id = ID_SEPARATOR.join(
-            [str(query_event_id), document_id, str(document_rank)]
-        )
+        block_id = ID_SEPARATOR.join([str(message_id), document_id, str(document_rank)])
     else:
-        block_id = str(query_event_id)
+        block_id = str(message_id)
 
     return unique_prefix + ID_SEPARATOR + block_id
 

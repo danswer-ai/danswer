@@ -21,8 +21,8 @@ export default async function Page({
   ] = await Promise.all([
     fetchSS(`/persona/${params.personaId}`),
     fetchSS("/manage/document-set"),
-    fetchSS("/persona-utils/list-available-models"),
-    fetchSS("/persona-utils/default-model"),
+    fetchSS("/admin/persona/utils/list-available-models"),
+    fetchSS("/admin/persona/utils/default-model"),
   ]);
 
   if (!personaResponse.ok) {
