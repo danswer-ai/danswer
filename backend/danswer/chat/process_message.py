@@ -507,19 +507,7 @@ def stream_chat_packets(
             # message id to send the next follow-up message
             return
 
-    except Exception as e:
-        logger.exception(e)
-
-        # Frontend will erase whatever answer and show this instead
-        error_packet = StreamingError(
-            error="Internal Server Error, please create a new chat session."
-        )
-
-        yield get_json_line(error_packet.dict())
-        return
-
-    # LLM prompt building, response capturing, etc.
-    try:
+        # LLM prompt building, response capturing, etc.
         response_packets = generate_ai_chat_response(
             query_message=final_msg,
             history=history_msgs,
@@ -550,7 +538,10 @@ def stream_chat_packets(
         logger.exception(e)
 
         # Frontend will erase whatever answer and show this instead
-        error_packet = StreamingError(error="LLM failed to respond")
+        # This will be the issue 99% of the time
+        error_packet = StreamingError(
+            error="LLM failed to respond, have you set your API key?"
+        )
 
         yield get_json_line(error_packet.dict())
         return
