@@ -2,22 +2,20 @@ from danswer.prompts.constants import GENERAL_SEP_PAT
 from danswer.prompts.constants import QUESTION_PAT
 
 REQUIRE_CITATION_STATEMENT = """
-Cite relevant statements using the format [1], [2], [3], etc to reference the document number, \
-DO NOT provide any links following the citation.
+Cite relevant statements INLINE using the format [1], [2], [3], etc to reference the document number, \
+DO NOT provide a reference section at the end and DO NOT provide any links following the citations.
 """.rstrip()
 
 NO_CITATION_STATEMENT = """
 Do not provide any citations even if there are examples in the chat history.
 """.rstrip()
 
-
 CITATION_REMINDER = """
-Remember to provide citations in the format [1], [2], [3], etc.
+Remember to provide inline citations in the format [1], [2], [3], etc.
 """
 
 
 DEFAULT_IGNORE_STATEMENT = " Ignore any context documents that are not relevant."
-
 
 CHAT_USER_PROMPT = f"""
 Refer to the following context documents when responding to me.{{optional_ignore_statement}}
@@ -48,21 +46,21 @@ CHAT_USER_CONTEXT_FREE_PROMPT = f"""
 #   or end so the middle history section is relatively less paid attention to than the main task
 # - Works worse with just a simple yes/no, seems asking it to produce "search" helps a bit, can
 #   consider doing COT for this and keep it brief, but likely only small gains.
+SKIP_SEARCH = "Skip Search"
 YES_SEARCH = "Yes Search"
-NO_SEARCH = "No Search"
 REQUIRE_SEARCH_SINGLE_MSG = f"""
-Given the conversation history and a follow up query, \
-determine if the system should call an external search tool to answer the latest user input.
+Given the conversation history and a follow up query, determine if the system should call \
+an external search tool to better answer the latest user input.
 
 Respond "{YES_SEARCH}" if:
 - Specific details or additional knowledge could lead to a better answer.
 - There are new or unknown terms, or there is uncertainty what the user is referring to.
-- If being able to read a document cited previously would be useful.
+- If reading a document cited or mentioned previously may be useful.
 
-Only respond "{NO_SEARCH}" if:
-- There is sufficient information in chat history to FULLY and ACCURATELY answer the query.
-- Additional information or details would provide little or no value.
-- The query is some form of request and does not require additional information to handle.
+Respond "{SKIP_SEARCH}" if:
+- There is sufficient information in chat history to FULLY and ACCURATELY answer the query
+and additional information or details would provide little or no value.
+- The query is some task that does not require additional information to handle.
 
 {GENERAL_SEP_PAT}
 Conversation History:
@@ -73,14 +71,54 @@ Even if the topic has been addressed, if more specific details could be useful, 
 respond with "{YES_SEARCH}".
 If you are unsure, respond with "{YES_SEARCH}".
 
-Respond with EXACTLY and ONLY "{YES_SEARCH}" or "{NO_SEARCH}"
+Respond with EXACTLY and ONLY "{YES_SEARCH}" or "{SKIP_SEARCH}"
 
 Follow Up Input:
 {{final_query}}
 """.strip()
 
 
-# This is no longer used, the above single message approach is now used.
+HISTORY_QUERY_REPHRASE = f"""
+Given the following conversation and a follow up input, rephrase the follow up into a SHORT, \
+standalone query (which captures any relevant context from previous messages) for a vectorstore.
+IMPORTANT: EDIT THE QUERY TO BE AS CONCISE AS POSSIBLE. Respond with a short, compressed phrase \
+with mainly keywords instead of a complete sentence.
+If there is a clear change in topic, disregard the previous messages.
+Strip out any information that is not relevant for the retrieval task.
+If the follow up message is an error or code snippet, repeat the same input back EXACTLY.
+
+{GENERAL_SEP_PAT}
+Chat History:
+{{chat_history}}
+{GENERAL_SEP_PAT}
+
+Follow Up Input: {{question}}
+Standalone question (Respond with only the short combined query):
+""".strip()
+
+
+# NOTE: THE PROMPTS BELOW ARE RETIRED
+AGGRESSIVE_SEARCH_TEMPLATE = f"""
+Given the conversation history and a follow up query, determine if the system should call \
+an external search tool to better answer the latest user input.
+
+Respond "{SKIP_SEARCH}" if:
+- There is sufficient information in chat history to FULLY and ACCURATELY answer the query.
+- Additional information or details would provide little or no value.
+- The query is some form of request that does not require additional information to handle.
+
+{GENERAL_SEP_PAT}
+Conversation History:
+{{chat_history}}
+{GENERAL_SEP_PAT}
+
+Respond with EXACTLY and ONLY "{YES_SEARCH}" or "{SKIP_SEARCH}"
+
+Follow Up Input:
+{{final_query}}
+"""
+
+NO_SEARCH = "No Search"
 REQUIRE_SEARCH_SYSTEM_MSG = f"""
 You are a large language model whose only job is to determine if the system should call an \
 external search tool to be able to answer the user's last message.
@@ -103,28 +141,6 @@ Hint: respond with EXACTLY {YES_SEARCH} or {NO_SEARCH}"
 """.strip()
 
 
-HISTORY_QUERY_REPHRASE = f"""
-Given the following conversation and a follow up input, \
-rephrase the follow up question to be a standalone question \
-and convert it into a SHORT query for a vectorstore.
-IMPORTANT: BE AS TERSE AND CONCISE AS POSSIBLE. \
-Respond with a short phrase instead of a complete sentence. Avoid using any unclear pronouns.
-If there is a COMPLETE and TOTAL change in topic, disregard the previous messages.
-If the follow up message is specific and should not change, such as an error or code snippet, \
-just repeat the same question back exactly.
-Strip out any information that is not relevant for the retrieval task.
-
-{GENERAL_SEP_PAT}
-Chat History:
-{{chat_history}}
-{GENERAL_SEP_PAT}
-
-Follow Up Input: {{question}}
-Standalone question (Respond with only the short combined query):
-""".strip()
-
-
-# The two below are not used, the latest flow uses the combined single message approach
 QUERY_REPHRASE_SYSTEM_MSG = """
 Given a conversation (between Human and Assistant) and a final message from Human, \
 rewrite the last message to be a concise standalone query which captures required/relevant \

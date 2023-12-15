@@ -13,6 +13,7 @@ from danswer.prompts.chat_prompts import NO_SEARCH
 from danswer.prompts.chat_prompts import REQUIRE_SEARCH_HINT
 from danswer.prompts.chat_prompts import REQUIRE_SEARCH_SINGLE_MSG
 from danswer.prompts.chat_prompts import REQUIRE_SEARCH_SYSTEM_MSG
+from danswer.prompts.chat_prompts import SKIP_SEARCH
 from danswer.utils.logger import setup_logger
 
 
@@ -81,7 +82,7 @@ def check_if_need_search(
 
     logger.debug(f"Run search prediction: {require_search_output}")
 
-    if (NO_SEARCH.split()[0] + " ").lower() in require_search_output.lower():
+    if (SKIP_SEARCH.split()[0]).lower() in require_search_output.lower():
         return False
 
     return True

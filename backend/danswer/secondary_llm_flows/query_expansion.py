@@ -63,8 +63,8 @@ def history_based_query_rephrase(
     query_message: ChatMessage,
     history: list[ChatMessage],
     llm: LLM | None = None,
-    size_heuristic: int = 100,
-    punctuation_heuristic: int = 2,
+    size_heuristic: int = 200,
+    punctuation_heuristic: int = 10,
 ) -> str:
     def _get_history_rephrase_messages(
         question: str,
@@ -86,9 +86,13 @@ def history_based_query_rephrase(
     if not user_query:
         raise ValueError("Can't rephrase/search an empty query")
 
+    # If it's a very large query, assume it's a copy paste which we may want to find exactly
+    # or at least very closely, so don't rephrase it
     if len(user_query) >= size_heuristic:
         return user_query
 
+    # If there is an unusually high number of punctuations, it's probably not natural language
+    # so don't rephrase it
     if count_punctuation(user_query) >= punctuation_heuristic:
         return user_query
 
