@@ -37,6 +37,11 @@ def upgrade() -> None:
     searchtype_enum.create(bind)
     recencybiassetting_enum.create(bind)
 
+    # This is irrecoverable, whatever
+    op.execute("DELETE FROM chat_feedback")
+    op.execute("DELETE FROM document_retrieval_feedback")
+    op.execute("DELETE FROM persona")
+
     op.create_table(
         "search_doc",
         sa.Column("id", sa.Integer(), nullable=False),
