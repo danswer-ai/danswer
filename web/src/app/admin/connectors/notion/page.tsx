@@ -19,6 +19,8 @@ import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
+import { AdminPageTitle } from "@/components/admin/Title";
+import { Card, Divider, Text, Title } from "@tremor/react";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -69,9 +71,9 @@ const Main = () => {
   return (
     <>
       {popup}
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your authorization details
-      </h2>
+      </Title>
 
       {notionCredential ? (
         <>
@@ -101,7 +103,7 @@ const Main = () => {
         </>
       ) : (
         <>
-          <p className="text-sm">
+          <Text>
             To get started you&apos;ll need to create an internal integration in
             Notion for Danswer. Follow the instructions in the&nbsp;
             <a
@@ -115,8 +117,8 @@ const Main = () => {
             token and paste it below. Follow the remaining instructions on the
             Notion docs to allow Danswer to read Notion Databases and Pages
             using the new integration.
-          </p>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-2 mb-4">
+          </Text>
+          <Card className="mt-2 mb-4">
             <CredentialForm<NotionCredentialJson>
               formBody={
                 <TextFormField
@@ -140,18 +142,18 @@ const Main = () => {
                 }
               }}
             />
-          </div>
+          </Card>
         </>
       )}
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 2: Manage Connectors
-      </h2>
+      </Title>
       {notionConnectorIndexingStatuses.length > 0 && (
         <>
-          <p className="text-sm mb-2">
+          <Text className="mb-2">
             The latest page updates are fetched from Notion every 10 minutes.
-          </p>
+          </Text>
           <div className="mb-2">
             <ConnectorsTable<NotionConfig, NotionCredentialJson>
               connectorIndexingStatuses={notionConnectorIndexingStatuses}
@@ -183,12 +185,13 @@ const Main = () => {
               }
             />
           </div>
+          <Divider />
         </>
       )}
 
       {notionCredential && (
         <>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+          <Card className="mt-4">
             <h2 className="font-bold mb-1">Create New Connection</h2>
             <p className="text-sm mb-4">
               Press connect below to start the connection to Notion.
@@ -226,17 +229,17 @@ const Main = () => {
               refreshFreq={10 * 60} // 10 minutes
               credentialId={notionCredential.id}
             />
-          </div>
+          </Card>
         </>
       )}
 
       {!notionCredential && (
         <>
-          <p className="text-sm mb-4">
+          <Text className="mb-4">
             Please provide your integration details in Step 1 first! Once done
             with that, you&apos;ll be able to start the connection then see
             indexing status.
-          </p>
+          </Text>
         </>
       )}
     </>
@@ -249,10 +252,9 @@ export default function Page() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <NotionIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Notion</h1>
-      </div>
+
+      <AdminPageTitle icon={<NotionIcon size={32} />} title="Notion" />
+
       <Main />
     </div>
   );

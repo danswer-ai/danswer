@@ -7,6 +7,8 @@ import { XIcon } from "@/components/icons/icons";
 import { Connector, GoogleDriveConfig } from "@/lib/types";
 import * as Yup from "yup";
 import { googleDriveConnectorNameBuilder } from "./utils";
+import { Modal } from "@/components/Modal";
+import { Divider, Text } from "@tremor/react";
 
 interface Props {
   existingConnector: Connector<GoogleDriveConfig>;
@@ -15,25 +17,28 @@ interface Props {
 
 export const ConnectorEditPopup = ({ existingConnector, onSubmit }: Props) => {
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={onSubmit}
-    >
-      <div
-        className="bg-gray-800 p-6 rounded border border-gray-700 shadow-lg relative w-1/2 text-sm"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex border-b border-gray-600 pb-2 mb-2">
-          <h3 className="text-lg font-semibold w-full">
-            Update Google Drive Connector
-          </h3>
-          <div onClick={onSubmit}>
+    <Modal onOutsideClick={onSubmit}>
+      <div className="px-8 py-6 bg-background">
+        <h2 className="text-xl font-bold flex">
+          Update Google Drive Connector
+          <div
+            onClick={onSubmit}
+            className="ml-auto hover:bg-hover p-1.5 rounded"
+          >
             <XIcon
-              size={30}
-              className="my-auto flex flex-shrink-0 cursor-pointer hover:text-blue-400"
+              size={20}
+              className="my-auto flex flex-shrink-0 cursor-pointer"
             />
           </div>
-        </div>
+        </h2>
+
+        <Text>
+          Modify the selected Google Drive connector by adjusting the values
+          below!
+        </Text>
+
+        <Divider />
+
         <UpdateConnectorForm<GoogleDriveConfig>
           nameBuilder={googleDriveConnectorNameBuilder}
           existingConnector={existingConnector}
@@ -67,6 +72,6 @@ export const ConnectorEditPopup = ({ existingConnector, onSubmit }: Props) => {
           onSubmit={onSubmit}
         />
       </div>
-    </div>
+    </Modal>
   );
 };

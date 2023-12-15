@@ -41,6 +41,9 @@ def get_answer_validity(
             return False
         return True  # If something is wrong, let's not toss away the answer
 
+    if not answer:
+        return False
+
     messages = _get_answer_validation_messages(query, answer)
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
     model_output = get_default_llm().invoke(filled_llm_prompt)

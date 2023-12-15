@@ -1,6 +1,6 @@
 import { getNameFromPath } from "@/lib/fileUtils";
 import { ValidSources } from "@/lib/types";
-import { List, ListItem, Card, Title, Divider } from "@tremor/react";
+import { List, ListItem, Card, Title } from "@tremor/react";
 
 function convertObjectToString(obj: any): string | any {
   // Check if obj is an object and not an array or null

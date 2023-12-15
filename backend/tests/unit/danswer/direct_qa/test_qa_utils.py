@@ -1,9 +1,10 @@
 import textwrap
 import unittest
 
-from danswer.direct_qa.qa_utils import match_quotes_to_docs
-from danswer.direct_qa.qa_utils import separate_answer_quotes
+from danswer.configs.constants import DocumentSource
 from danswer.indexing.models import InferenceChunk
+from danswer.one_shot_answer.qa_utils import match_quotes_to_docs
+from danswer.one_shot_answer.qa_utils import separate_answer_quotes
 
 
 class TestQAPostprocessing(unittest.TestCase):
@@ -104,7 +105,7 @@ class TestQAPostprocessing(unittest.TestCase):
         ).strip()
         test_chunk_0 = InferenceChunk(
             document_id="test doc 0",
-            source_type="testing",
+            source_type=DocumentSource.FILE,
             chunk_id=0,
             content=chunk_0_text,
             source_links={
@@ -125,7 +126,7 @@ class TestQAPostprocessing(unittest.TestCase):
         )
         test_chunk_1 = InferenceChunk(
             document_id="test doc 1",
-            source_type="testing",
+            source_type=DocumentSource.FILE,
             chunk_id=0,
             content=chunk_1_text,
             source_links={0: "doc 1 base", 36: "2nd line link", 82: "last link"},

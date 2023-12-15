@@ -106,7 +106,7 @@ export const ConnectorTitle = ({
         <div className={mainSectionClassName}>{mainDisplay}</div>
       )}
       {showMetadata && additionalMetadata.size > 0 && (
-        <div className="text-xs text-gray-300 mt-1">
+        <div className="text-xs mt-1">
           {Array.from(additionalMetadata.entries()).map(([key, value]) => {
             return (
               <div key={key}>

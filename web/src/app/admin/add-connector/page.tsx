@@ -13,20 +13,20 @@ function SourceTile({ sourceMetadata }: { sourceMetadata: SourceMetadata }) {
         flex-col 
         items-center 
         justify-center 
-        bg-dark-tremor-background-muted
         p-4 
         rounded-lg 
         w-40 
         cursor-pointer
+        bg-hover-light
         shadow-md
-        hover:bg-gray-800
+        hover:bg-hover
       `}
       href={sourceMetadata.adminUrl}
     >
       <SourceIcon sourceType={sourceMetadata.internalName} iconSize={24} />
-      <span className="font-medium text-sm text-gray-300 mt-2">
+      <Text className="font-medium text-sm mt-2">
         {sourceMetadata.displayName}
-      </span>
+      </Text>
     </Link>
   );
 }
@@ -42,26 +42,26 @@ export default function Page() {
   );
 
   return (
-    <div className="mx-auto container dark">
+    <div className="mx-auto container">
       <AdminPageTitle
         icon={<ConnectorIcon size={32} />}
         title="Add Connector"
       />
 
-      <div className="text-gray-300 text-sm">
+      <Text>
         Connect Danswer to your organization&apos;s knowledge sources.
         We&apos;ll automatically sync your data into Danswer, so you can find
         exactly what you&apos;re looking for in one place.
-      </div>
+      </Text>
 
       <div className="flex mt-8">
         <Title>Import Knowledge</Title>
       </div>
-      <div className="text-gray-300 text-sm">
+      <Text>
         Connect to pieces of knowledge that live outside your apps. Upload
         files, scrape websites, or connect to your organization&apos;s Google
         Site.
-      </div>
+      </Text>
       <div className="flex flex-wrap gap-4 p-4">
         {importedKnowledgeSources.map((source) => {
           return (
@@ -73,11 +73,11 @@ export default function Page() {
       <div className="flex mt-8">
         <Title>Setup Auto-Syncing from Apps</Title>
       </div>
-      <div className="text-gray-300 text-sm">
+      <Text>
         Setup auto-syncing from your organization&apos;s most used apps and
         services. Unless otherwise specified during the connector setup, we will
         pull in the latest updates from the source every 10 minutes.
-      </div>
+      </Text>
       <div className="flex flex-wrap gap-4 p-4">
         {appConnectionSources.map((source) => {
           return (

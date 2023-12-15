@@ -220,7 +220,11 @@ def fetch_latest_index_attempts_by_status(
 def fetch_unique_document_sources(db_session: Session) -> list[DocumentSource]:
     distinct_sources = db_session.query(Connector.source).distinct().all()
 
-    sources = [source[0] for source in distinct_sources]
+    sources = [
+        source[0]
+        for source in distinct_sources
+        if source[0] != DocumentSource.INGESTION_API
+    ]
 
     return sources
 

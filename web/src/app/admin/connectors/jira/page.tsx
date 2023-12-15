@@ -6,7 +6,6 @@ import { TextFormField } from "@/components/admin/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import {
-  Credential,
   JiraConfig,
   JiraCredentialJson,
   ConnectorIndexingStatus,
@@ -19,6 +18,8 @@ import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
+import { AdminPageTitle } from "@/components/admin/Title";
+import { Card, Divider, Text, Title } from "@tremor/react";
 
 // Copied from the `extract_jira_project` function
 const extractJiraProject = (url: string): string | null => {
@@ -82,9 +83,9 @@ const Main = () => {
   return (
     <>
       {popup}
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your Credentials
-      </h2>
+      </Title>
 
       {jiraCredential ? (
         <>
@@ -132,17 +133,18 @@ const Main = () => {
         </>
       ) : (
         <>
-          <p className="text-sm">
+          <Text>
             To use the Jira connector, first follow the guide{" "}
             <a
-              className="text-blue-500"
+              className="text-link"
               href="https://docs.danswer.dev/connectors/jira#setting-up"
+              target="_blank"
             >
               here
             </a>{" "}
             to generate an Access Token.
-          </p>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
+          </Text>
+          <Card className="mt-4">
             <CredentialForm<JiraCredentialJson>
               formBody={
                 <>
@@ -172,18 +174,18 @@ const Main = () => {
                 }
               }}
             />
-          </div>
+          </Card>
         </>
       )}
 
       {/* TODO: make this periodic */}
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 2: Which spaces do you want to make searchable?
-      </h2>
+      </Title>
       {jiraCredential ? (
         <>
           {" "}
-          <p className="text-sm mb-4">
+          <Text className="mb-4">
             Specify any link to a Jira page below and click &quot;Index&quot; to
             Index. Based on the provided link, we will index the ENTIRE PROJECT,
             not just the specified page. For example, entering{" "}
@@ -192,13 +194,13 @@ const Main = () => {
             </i>{" "}
             and clicking the Index button will index the whole <i>DAN</i> Jira
             project.
-          </p>
+          </Text>
           {jiraConnectorIndexingStatuses.length > 0 && (
             <>
-              <p className="text-sm mb-2">
+              <Text className="mb-2">
                 We pull the latest pages and comments from each space listed
                 below every <b>10</b> minutes.
-              </p>
+              </Text>
               <div className="mb-2">
                 <ConnectorsTable<JiraConfig, JiraCredentialJson>
                   connectorIndexingStatuses={jiraConnectorIndexingStatuses}
@@ -239,9 +241,10 @@ const Main = () => {
                   }
                 />
               </div>
+              <Divider />
             </>
           )}
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+          <Card className="mt-4">
             <h2 className="font-bold mb-3">Add a New Project</h2>
             <ConnectorForm<JiraConfig>
               nameBuilder={(values) =>
@@ -271,15 +274,15 @@ const Main = () => {
               }}
               refreshFreq={10 * 60} // 10 minutes
             />
-          </div>
+          </Card>
         </>
       ) : (
         <>
-          <p className="text-sm">
+          <Text>
             Please provide your access token in Step 1 first! Once done with
             that, you can then specify which Jira projects you want to make
             searchable.
-          </p>
+          </Text>
         </>
       )}
     </>
@@ -292,10 +295,9 @@ export default function Page() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <JiraIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Jira</h1>
-      </div>
+
+      <AdminPageTitle icon={<JiraIcon size={32} />} title="Jira" />
+
       <Main />
     </div>
   );

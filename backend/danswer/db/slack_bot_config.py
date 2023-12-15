@@ -3,12 +3,15 @@ from collections.abc import Sequence
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from danswer.configs.chat_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
 from danswer.db.chat import upsert_persona
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
+from danswer.db.document_set import get_document_sets_by_ids
 from danswer.db.models import ChannelConfig
 from danswer.db.models import Persona
 from danswer.db.models import Persona__DocumentSet
 from danswer.db.models import SlackBotConfig
+from danswer.search.models import RecencyBiasSetting
 
 
 def _build_persona_name(channel_names: list[str]) -> str:
@@ -30,34 +33,37 @@ def _cleanup_relationships(db_session: Session, persona_id: int) -> None:
 def create_slack_bot_persona(
     db_session: Session,
     channel_names: list[str],
-    document_sets: list[int],
+    document_set_ids: list[int],
     existing_persona_id: int | None = None,
+    num_chunks: float = DEFAULT_NUM_CHUNKS_FED_TO_CHAT,
 ) -> Persona:
     """NOTE: does not commit changes"""
+    document_sets = list(
+        get_document_sets_by_ids(
+            document_set_ids=document_set_ids,
+            db_session=db_session,
+        )
+    )
+
     # create/update persona associated with the slack bot
     persona_name = _build_persona_name(channel_names)
     persona = upsert_persona(
+        user_id=None,  # Slack Bot Personas are not attached to users
         persona_id=existing_persona_id,
         name=persona_name,
-        datetime_aware=False,
-        retrieval_enabled=True,
-        system_text=None,
-        tools=None,
-        hint_text=None,
+        description="",
+        num_chunks=num_chunks,
+        llm_relevance_filter=True,
+        llm_filter_extraction=True,
+        recency_bias=RecencyBiasSetting.AUTO,
+        prompts=None,
+        document_sets=document_sets,
+        llm_model_version_override=None,
+        shared=True,
         default_persona=False,
         db_session=db_session,
         commit=False,
-        overwrite_duplicate_named_persona=True,
     )
-
-    if existing_persona_id:
-        _cleanup_relationships(db_session=db_session, persona_id=existing_persona_id)
-
-    # create relationship between the new persona and the desired document_sets
-    for document_set_id in document_sets:
-        db_session.add(
-            Persona__DocumentSet(persona_id=persona.id, document_set_id=document_set_id)
-        )
 
     return persona
 

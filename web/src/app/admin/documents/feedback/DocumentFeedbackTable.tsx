@@ -1,6 +1,14 @@
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
+import {
+  Table,
+  TableHead,
+  TableRow,
+  TableHeaderCell,
+  TableBody,
+  TableCell,
+} from "@tremor/react";
 import { PageSelector } from "@/components/PageSelector";
 import { DocumentBoostStatus } from "@/lib/types";
 import { updateHiddenStatus } from "../lib";
@@ -30,7 +38,7 @@ const IsVisibleSection = ({
               );
               onUpdate(response);
             }}
-            className="flex text-red-700 cursor-pointer hover:bg-gray-700 py-1 px-2 w-fit rounded-full"
+            className="flex text-error cursor-pointer hover:bg-hover py-1 px-2 w-fit rounded-full"
           >
             <div className="select-none">Hidden</div>
             <div className="ml-1 my-auto">
@@ -46,9 +54,9 @@ const IsVisibleSection = ({
               );
               onUpdate(response);
             }}
-            className="flex text-gray-400 cursor-pointer hover:bg-gray-700 py-1 px-2 w-fit rounded-full"
+            className="flex cursor-pointer hover:bg-hover py-1 px-2 w-fit rounded-full"
           >
-            <div className="text-gray-400 my-auto select-none">Visible</div>
+            <div className="my-auto select-none">Visible</div>
             <div className="ml-1 my-auto">
               <CustomCheckbox checked={true} />
             </div>
@@ -56,7 +64,7 @@ const IsVisibleSection = ({
         )
       }
       popupContent={
-        <div className="text-xs text-gray-300">
+        <div className="text-xs">
           {document.hidden ? (
             <div className="flex">
               <FiEye className="my-auto mr-1" /> Unhide
@@ -86,69 +94,68 @@ export const DocumentFeedbackTable = ({
 
   return (
     <div>
-      {popup}
-      <BasicTable
-        columns={[
-          {
-            header: "Document Name",
-            key: "name",
-          },
-          {
-            header: "Is Searchable?",
-            key: "visible",
-          },
-          {
-            header: "Score",
-            key: "score",
-            alignment: "right",
-          },
-        ]}
-        data={documents
-          .slice((page - 1) * numToDisplay, page * numToDisplay)
-          .map((document) => {
-            return {
-              name: (
-                <a
-                  className="text-blue-600"
-                  href={document.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {document.semantic_id}
-                </a>
-              ),
-              visible: (
-                <IsVisibleSection
-                  document={document}
-                  onUpdate={async (response) => {
-                    if (response.ok) {
-                      refresh();
-                    } else {
-                      setPopup({
-                        message: `Error updating hidden status - ${getErrorMsg(
-                          response
-                        )}`,
-                        type: "error",
-                      });
-                    }
-                  }}
-                />
-              ),
-              score: (
-                <div className="ml-auto flex w-16">
-                  <div key={document.document_id} className="h-10 ml-auto mr-8">
-                    <ScoreSection
-                      documentId={document.document_id}
-                      initialScore={document.boost}
-                      refresh={refresh}
-                      setPopup={setPopup}
+      <Table className="overflow-visible">
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>Document Name</TableHeaderCell>
+            <TableHeaderCell>Is Searchable?</TableHeaderCell>
+            <TableHeaderCell>Score</TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {documents
+            .slice((page - 1) * numToDisplay, page * numToDisplay)
+            .map((document) => {
+              return (
+                <TableRow key={document.document_id}>
+                  <TableCell className="whitespace-normal break-all">
+                    <a
+                      className="text-blue-600"
+                      href={document.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {document.semantic_id}
+                    </a>
+                  </TableCell>
+                  <TableCell>
+                    <IsVisibleSection
+                      document={document}
+                      onUpdate={async (response) => {
+                        if (response.ok) {
+                          refresh();
+                        } else {
+                          setPopup({
+                            message: `Error updating hidden status - ${getErrorMsg(
+                              response
+                            )}`,
+                            type: "error",
+                          });
+                        }
+                      }}
                     />
-                  </div>
-                </div>
-              ),
-            };
-          })}
-      />
+                  </TableCell>
+                  <TableCell>
+                    <div className="ml-auto flex w-16">
+                      <div
+                        key={document.document_id}
+                        className="h-10 ml-auto mr-8"
+                      >
+                        <ScoreSection
+                          documentId={document.document_id}
+                          initialScore={document.boost}
+                          refresh={refresh}
+                          setPopup={setPopup}
+                        />
+                      </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+        </TableBody>
+      </Table>
+
       <div className="mt-3 flex">
         <div className="mx-auto">
           <PageSelector

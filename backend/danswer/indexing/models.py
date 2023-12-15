@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any
 
 from danswer.access.models import DocumentAccess
+from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import Document
 from danswer.utils.logger import setup_logger
 
@@ -80,7 +81,7 @@ class DocMetadataAwareIndexChunk(IndexChunk):
 @dataclass
 class InferenceChunk(BaseChunk):
     document_id: str
-    source_type: str  # This is the string value of the enum already like "web"
+    source_type: DocumentSource
     semantic_identifier: str
     boost: int
     recency_bias: float

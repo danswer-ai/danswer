@@ -80,7 +80,7 @@ export function CCPairIndexingStatusTable({
   );
 
   return (
-    <div className="dark">
+    <div>
       <Table className="overflow-visible">
         <TableHead>
           <TableRow>
@@ -96,12 +96,12 @@ export function CCPairIndexingStatusTable({
               <TableRow
                 key={ccPairsIndexingStatus.cc_pair_id}
                 className={
-                  "hover:bg-gradient-to-r hover:from-gray-800 hover:to-indigo-950 cursor-pointer relative"
+                  "hover:bg-hover-light bg-background cursor-pointer relative"
                 }
               >
                 <TableCell>
                   <div className="flex my-auto">
-                    <FiEdit className="mr-4 my-auto text-blue-300" />
+                    <FiEdit className="mr-4 my-auto" />
                     <div className="whitespace-normal break-all max-w-3xl">
                       <ConnectorTitle
                         connector={ccPairsIndexingStatus.connector}

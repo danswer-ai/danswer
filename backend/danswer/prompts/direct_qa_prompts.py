@@ -31,7 +31,7 @@ Quotes MUST be EXACT substrings from provided documents!
 
 LANGUAGE_HINT = """
 IMPORTANT: Respond in the same language as my query!
-""".strip()
+"""
 
 
 # This has to be doubly escaped due to json containing { } which are also used for format strings
@@ -121,7 +121,7 @@ Answer the user query based on the following document:
 """.strip()
 
 
-# Paramaterized prompt which allows the user to specify their
+# Parameterized prompt which allows the user to specify their
 # own system / task prompt
 PARAMATERIZED_PROMPT = f"""
 {{system_prompt}}

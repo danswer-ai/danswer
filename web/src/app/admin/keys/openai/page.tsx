@@ -6,6 +6,7 @@ import { KeyIcon, TrashIcon } from "@/components/icons/icons";
 import { ApiKeyForm } from "@/components/openai/ApiKeyForm";
 import { GEN_AI_API_KEY_URL } from "@/components/openai/constants";
 import { fetcher } from "@/lib/fetcher";
+import { Text, Title } from "@tremor/react";
 import useSWR, { mutate } from "swr";
 
 const ExistingKeys = () => {
@@ -19,7 +20,7 @@ const ExistingKeys = () => {
   }
 
   if (error) {
-    return <div className="text-red-600">Error loading existing keys</div>;
+    return <div className="text-error">Error loading existing keys</div>;
   }
 
   if (!data?.api_key) {
@@ -28,11 +29,11 @@ const ExistingKeys = () => {
 
   return (
     <div>
-      <h2 className="text-lg font-bold mb-2">Existing Key</h2>
+      <Title className="mb-2">Existing Key</Title>
       <div className="flex mb-1">
         <p className="text-sm italic my-auto">sk- ****...**{data?.api_key}</p>
         <button
-          className="ml-1 my-auto hover:bg-gray-700 rounded-full p-1"
+          className="ml-1 my-auto hover:bg-hover rounded p-1"
           onClick={async () => {
             await fetch(GEN_AI_API_KEY_URL, {
               method: "DELETE",
@@ -49,16 +50,16 @@ const ExistingKeys = () => {
 
 const Page = () => {
   return (
-    <div>
+    <div className="mx-auto container">
       <AdminPageTitle title="OpenAI Keys" icon={<KeyIcon size={32} />} />
 
       <ExistingKeys />
 
-      <h2 className="text-lg font-bold mb-2">Update Key</h2>
-      <p className="text-sm mb-2">
+      <Title className="mb-2 mt-6">Update Key</Title>
+      <Text className="mb-2">
         Specify an OpenAI API key and click the &quot;Submit&quot; button.
-      </p>
-      <div className="border rounded-md border-gray-700 p-3">
+      </Text>
+      <div className="border rounded-md border-border p-3">
         <ApiKeyForm
           handleResponse={(response) => {
             if (response.ok) {

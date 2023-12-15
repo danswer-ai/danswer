@@ -1,0 +1,268 @@
+import {
+  AnswerPiecePacket,
+  DanswerDocument,
+  Filters,
+} from "@/lib/search/interfaces";
+import { handleStream } from "@/lib/search/streamingUtils";
+import { FeedbackType } from "./types";
+import { RefObject } from "react";
+import {
+  BackendMessage,
+  ChatSession,
+  DocumentsResponse,
+  Message,
+  StreamingError,
+} from "./interfaces";
+
+export async function createChatSession(personaId: number): Promise<number> {
+  const createChatSessionResponse = await fetch(
+    "/api/chat/create-chat-session",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        persona_id: personaId,
+      }),
+    }
+  );
+  if (!createChatSessionResponse.ok) {
+    console.log(
+      `Failed to create chat session - ${createChatSessionResponse.status}`
+    );
+    throw Error("Failed to create chat session");
+  }
+  const chatSessionResponseJson = await createChatSessionResponse.json();
+  return chatSessionResponseJson.chat_session_id;
+}
+
+export interface SendMessageRequest {
+  message: string;
+  parentMessageId: number | null;
+  chatSessionId: number;
+  promptId: number | null | undefined;
+  filters: Filters | null;
+  selectedDocumentIds: number[] | null;
+}
+
+export async function* sendMessage({
+  message,
+  parentMessageId,
+  chatSessionId,
+  promptId,
+  filters,
+  selectedDocumentIds,
+}: SendMessageRequest) {
+  const documentsAreSelected =
+    selectedDocumentIds && selectedDocumentIds.length > 0;
+  const sendMessageResponse = await fetch("/api/chat/send-message", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      chat_session_id: chatSessionId,
+      parent_message_id: parentMessageId,
+      message: message,
+      prompt_id: promptId,
+      search_doc_ids: documentsAreSelected ? selectedDocumentIds : null,
+      retrieval_options: !documentsAreSelected
+        ? {
+            run_search:
+              promptId === null || promptId === undefined ? "always" : "auto",
+            real_time: true,
+            filters: filters,
+          }
+        : null,
+    }),
+  });
+  if (!sendMessageResponse.ok) {
+    const errorJson = await sendMessageResponse.json();
+    const errorMsg = errorJson.message || errorJson.detail || "";
+    throw Error(`Failed to send message - ${errorMsg}`);
+  }
+
+  yield* handleStream<
+    AnswerPiecePacket | DocumentsResponse | BackendMessage | StreamingError
+  >(sendMessageResponse);
+}
+
+export async function nameChatSession(chatSessionId: number, message: string) {
+  const response = await fetch("/api/chat/rename-chat-session", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      chat_session_id: chatSessionId,
+      name: null,
+      first_message: message,
+    }),
+  });
+  return response;
+}
+
+export async function handleChatFeedback(
+  messageId: number,
+  feedback: FeedbackType,
+  feedbackDetails: string
+) {
+  const response = await fetch("/api/chat/create-chat-message-feedback", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      chat_message_id: messageId,
+      is_positive: feedback === "like",
+      feedback_text: feedbackDetails,
+    }),
+  });
+  return response;
+}
+
+export async function renameChatSession(
+  chatSessionId: number,
+  newName: string
+) {
+  const response = await fetch(`/api/chat/rename-chat-session`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      chat_session_id: chatSessionId,
+      name: newName,
+      first_message: null,
+    }),
+  });
+  return response;
+}
+
+export async function deleteChatSession(chatSessionId: number) {
+  const response = await fetch(
+    `/api/chat/delete-chat-session/${chatSessionId}`,
+    {
+      method: "DELETE",
+    }
+  );
+  return response;
+}
+
+export async function* simulateLLMResponse(input: string, delay: number = 30) {
+  // Split the input string into tokens. This is a simple example, and in real use case, tokenization can be more complex.
+  // Iterate over tokens and yield them one by one
+  const tokens = input.match(/.{1,3}|\n/g) || [];
+
+  for (const token of tokens) {
+    // In a real-world scenario, there might be a slight delay as tokens are being generated
+    await new Promise((resolve) => setTimeout(resolve, delay)); // 40ms delay to simulate response time
+
+    // Yielding each token
+    yield token;
+  }
+}
+
+export function handleAutoScroll(
+  endRef: RefObject<any>,
+  scrollableRef: RefObject<any>,
+  buffer: number = 300
+) {
+  // Auto-scrolls if the user is within `buffer` of the bottom of the scrollableRef
+  if (endRef && endRef.current && scrollableRef && scrollableRef.current) {
+    if (
+      scrollableRef.current.scrollHeight -
+        scrollableRef.current.scrollTop -
+        buffer <=
+      scrollableRef.current.clientHeight
+    ) {
+      endRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }
+}
+
+export function getHumanAndAIMessageFromMessageNumber(
+  messageHistory: Message[],
+  messageId: number
+) {
+  let messageInd;
+  // -1 is special -> means use the last message
+  if (messageId === -1) {
+    messageInd = messageHistory.length - 1;
+  } else {
+    messageInd = messageHistory.findIndex(
+      (message) => message.messageId === messageId
+    );
+  }
+  if (messageInd !== -1) {
+    const matchingMessage = messageHistory[messageInd];
+    const pairedMessage =
+      matchingMessage.type === "user"
+        ? messageHistory[messageInd + 1]
+        : messageHistory[messageInd - 1];
+
+    const humanMessage =
+      matchingMessage.type === "user" ? matchingMessage : pairedMessage;
+    const aiMessage =
+      matchingMessage.type === "user" ? pairedMessage : matchingMessage;
+
+    return {
+      humanMessage,
+      aiMessage,
+    };
+  } else {
+    return {
+      humanMessage: null,
+      aiMessage: null,
+    };
+  }
+}
+
+export function getCitedDocumentsFromMessage(message: Message) {
+  if (!message.citations || !message.documents) {
+    return [];
+  }
+
+  const documentsWithCitationKey: [string, DanswerDocument][] = [];
+  Object.entries(message.citations).forEach(([citationKey, documentDbId]) => {
+    const matchingDocument = message.documents!.find(
+      (document) => document.db_doc_id === documentDbId
+    );
+    if (matchingDocument) {
+      documentsWithCitationKey.push([citationKey, matchingDocument]);
+    }
+  });
+  return documentsWithCitationKey;
+}
+
+export function groupSessionsByDateRange(chatSessions: ChatSession[]) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to start of today for accurate comparison
+
+  const groups: Record<string, ChatSession[]> = {
+    Today: [],
+    "Previous 7 Days": [],
+    "Previous 30 Days": [],
+    "Over 30 days ago": [],
+  };
+
+  chatSessions.forEach((chatSession) => {
+    const chatSessionDate = new Date(chatSession.time_created);
+
+    const diffTime = today.getTime() - chatSessionDate.getTime();
+    const diffDays = diffTime / (1000 * 3600 * 24); // Convert time difference to days
+
+    if (diffDays < 1) {
+      groups["Today"].push(chatSession);
+    } else if (diffDays <= 7) {
+      groups["Previous 7 Days"].push(chatSession);
+    } else if (diffDays <= 30) {
+      groups["Previous 30 Days"].push(chatSession);
+    } else {
+      groups["Over 30 days ago"].push(chatSession);
+    }
+  });
+
+  return groups;
+}

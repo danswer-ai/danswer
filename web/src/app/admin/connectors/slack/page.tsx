@@ -21,6 +21,8 @@ import {
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { usePublicCredentials } from "@/lib/hooks";
+import { Button, Card, Divider, Text, Title } from "@tremor/react";
+import { AdminPageTitle } from "@/components/admin/Title";
 
 const MainSection = () => {
   const { mutate } = useSWRConfig();
@@ -69,25 +71,27 @@ const MainSection = () => {
 
   return (
     <>
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide Credentials
-      </h2>
+      </Title>
       {slackCredential ? (
         <>
           <div className="flex mb-1 text-sm">
-            <p className="my-auto">Existing Slack Bot Token: </p>
-            <p className="ml-1 italic my-auto">
+            <Text className="my-auto">Existing Slack Bot Token: </Text>
+            <Text className="ml-1 italic my-auto">
               {slackCredential.credential_json.slack_bot_token}
-            </p>{" "}
-            <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+            </Text>
+            <Button
+              size="xs"
+              color="red"
+              className="ml-3 text-inverted"
               onClick={async () => {
                 await adminDeleteCredential(slackCredential.id);
                 refreshCredentials();
               }}
             >
               <TrashIcon />
-            </button>
+            </Button>
           </div>
         </>
       ) : (
@@ -104,7 +108,7 @@ const MainSection = () => {
             </a>
             .
           </p>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
+          <Card>
             <CredentialForm<SlackCredentialJson>
               formBody={
                 <>
@@ -129,20 +133,20 @@ const MainSection = () => {
                 }
               }}
             />
-          </div>
+          </Card>
         </>
       )}
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 2: Which channels do you want to make searchable?
-      </h2>
+      </Title>
 
       {slackConnectorIndexingStatuses.length > 0 && (
         <>
-          <p className="text-sm mb-2">
+          <Text className="mb-2">
             We pull the latest messages from each workspace listed below every{" "}
             <b>10</b> minutes.
-          </p>
+          </Text>
           <div className="mb-2">
             <ConnectorsTable<SlackConfig, SlackCredentialJson>
               connectorIndexingStatuses={slackConnectorIndexingStatuses}
@@ -181,11 +185,12 @@ const MainSection = () => {
               }}
             />
           </div>
+          <Divider />
         </>
       )}
 
       {slackCredential ? (
-        <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+        <Card>
           <h2 className="font-bold mb-3">Connect to a New Workspace</h2>
           <ConnectorForm<SlackConfig>
             nameBuilder={(values) =>
@@ -226,13 +231,13 @@ const MainSection = () => {
             refreshFreq={10 * 60} // 10 minutes
             credentialId={slackCredential.id}
           />
-        </div>
+        </Card>
       ) : (
-        <p className="text-sm">
+        <Text>
           Please provide your slack bot token in Step 1 first! Once done with
           that, you can then specify which Slack channels you want to make
           searchable.
-        </p>
+        </Text>
       )}
     </>
   );
@@ -244,10 +249,9 @@ export default function Page() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <SlackIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Slack</h1>
-      </div>
+
+      <AdminPageTitle icon={<SlackIcon size={32} />} title="Slack" />
+
       <MainSection />
     </div>
   );

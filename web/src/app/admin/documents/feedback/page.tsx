@@ -6,6 +6,7 @@ import { useMostReactedToDocuments } from "@/lib/hooks";
 import { DocumentFeedbackTable } from "./DocumentFeedbackTable";
 import { numPages, numToDisplay } from "./constants";
 import { AdminPageTitle } from "@/components/admin/Title";
+import { Title } from "@tremor/react";
 
 const Main = () => {
   const {
@@ -47,10 +48,10 @@ const Main = () => {
 
   return (
     <div className="mb-8">
-      <h2 className="font-bold text-xl mb-2">Most Liked Documents</h2>
+      <Title className="mb-2">Most Liked Documents</Title>
       <DocumentFeedbackTable documents={mostLikedDocuments} refresh={refresh} />
 
-      <h2 className="font-bold text-xl mb-2 mt-4">Most Disliked Documents</h2>
+      <Title className="mb-2 mt-6">Most Disliked Documents</Title>
       <DocumentFeedbackTable
         documents={mostDislikedDocuments}
         refresh={refresh}
@@ -61,7 +62,7 @@ const Main = () => {
 
 const Page = () => {
   return (
-    <div>
+    <div className="container mx-auto">
       <AdminPageTitle
         icon={<ThumbsUpIcon size={32} />}
         title="Document Feedback"

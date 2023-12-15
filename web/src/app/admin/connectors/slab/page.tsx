@@ -19,6 +19,8 @@ import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
+import { Card, Text, Title } from "@tremor/react";
+import { AdminPageTitle } from "@/components/admin/Title";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -71,19 +73,19 @@ const Main = () => {
   return (
     <>
       {popup}
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your Credentials
-      </h2>
+      </Title>
 
       {slabCredential ? (
         <>
           <div className="flex mb-1 text-sm">
-            <p className="my-auto">Existing Slab Bot Token: </p>
-            <p className="ml-1 italic my-auto max-w-md truncate">
+            <Text className="my-auto">Existing Slab Bot Token: </Text>
+            <Text className="ml-1 italic my-auto max-w-md truncate">
               {slabCredential.credential_json?.slab_bot_token}
-            </p>
+            </Text>
             <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+              className="ml-1 hover:bg-hover rounded p-1"
               onClick={async () => {
                 if (slabConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -103,17 +105,18 @@ const Main = () => {
         </>
       ) : (
         <>
-          <p className="text-sm">
+          <Text>
             To use the Slab connector, first follow the guide{" "}
             <a
-              className="text-blue-500"
+              className="text-link"
               href="https://docs.danswer.dev/connectors/slab"
+              target="_blank"
             >
               here
             </a>{" "}
             to generate a Slab Bot Token.
-          </p>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
+          </Text>
+          <Card className="p-6 mt-2">
             <CredentialForm<SlabCredentialJson>
               formBody={
                 <>
@@ -138,18 +141,18 @@ const Main = () => {
                 }
               }}
             />
-          </div>
+          </Card>
         </>
       )}
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 2: What&apos;s the base URL for your Slab team?
-      </h2>
+      </Title>
       {slabCredential ? (
         <>
           {slabConnectorIndexingStatuses.length > 0 ? (
             <>
-              <p className="text-sm mb-2">
+              <Text className="mb-2">
                 We are pulling the latest documents from{" "}
                 <a
                   href={
@@ -164,7 +167,7 @@ const Main = () => {
                   }
                 </a>{" "}
                 every <b>10</b> minutes.
-              </p>
+              </Text>
               <ConnectorsTable<SlabConfig, SlabCredentialJson>
                 connectorIndexingStatuses={slabConnectorIndexingStatuses}
                 liveCredential={slabCredential}
@@ -206,14 +209,14 @@ const Main = () => {
             </>
           ) : (
             <>
-              <p className="text-sm mb-4">
+              <Text className="mb-4">
                 Specify the base URL for your Slab team below. This will look
                 something like:{" "}
                 <b>
                   <i>https://danswer.slab.com/</i>
                 </b>
-              </p>
-              <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+              </Text>
+              <Card className="mt-4">
                 <h2 className="font-bold mb-3">Add a New Space</h2>
                 <ConnectorForm<SlabConfig>
                   nameBuilder={(values) => `SlabConnector-${values.base_url}`}
@@ -236,17 +239,17 @@ const Main = () => {
                   refreshFreq={10 * 60} // 10 minutes
                   credentialId={slabCredential.id}
                 />
-              </div>
+              </Card>
             </>
           )}
         </>
       ) : (
         <>
-          <p className="text-sm">
+          <Text>
             Please provide your access token in Step 1 first! Once done with
             that, you can then specify the URL for your Slab team and get
             started with indexing.
-          </p>
+          </Text>
         </>
       )}
     </>
@@ -259,10 +262,9 @@ export default function Page() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <SlabIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Slab</h1>
-      </div>
+
+      <AdminPageTitle icon={<SlabIcon size={32} />} title="Slab" />
+
       <Main />
     </div>
   );

@@ -27,11 +27,11 @@ export const SearchBar = ({ query, setQuery, onSearch }: SearchBarProps) => {
 
   return (
     <div className="flex justify-center">
-      <div className="flex items-center w-full border-2 border-gray-600 rounded px-4 py-2 focus-within:border-blue-500">
-        <MagnifyingGlass className="text-gray-400" />
+      <div className="flex items-center w-full opacity-100 border-2 border-border rounded-lg px-4 py-2 focus-within:border-accent">
+        <MagnifyingGlass className="text-emphasis" />
         <textarea
           autoFocus
-          className="flex-grow ml-2 h-6 bg-transparent outline-none placeholder-gray-400 overflow-hidden whitespace-normal resize-none"
+          className="flex-grow ml-2 h-6 bg-transparent outline-none placeholder-default overflow-hidden whitespace-normal resize-none"
           role="textarea"
           aria-multiline
           placeholder="Search..."

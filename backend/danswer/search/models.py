@@ -1,11 +1,12 @@
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel
 
-from danswer.configs.app_configs import DISABLE_LLM_CHUNK_FILTER
-from danswer.configs.app_configs import NUM_RERANKED_RESULTS
-from danswer.configs.app_configs import NUM_RETURNED_HITS
+from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
+from danswer.configs.chat_configs import NUM_RERANKED_RESULTS
+from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
 from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.indexing.models import DocAwareChunk
@@ -14,6 +15,21 @@ from danswer.indexing.models import IndexChunk
 MAX_METRICS_CONTENT = (
     200  # Just need enough characters to identify where in the doc the chunk is
 )
+
+
+class OptionalSearchSetting(str, Enum):
+    ALWAYS = "always"
+    NEVER = "never"
+    # Determine whether to run search based on history and latest query
+    AUTO = "auto"
+
+
+class RecencyBiasSetting(str, Enum):
+    FAVOR_RECENT = "favor_recent"  # 2x decay rate
+    BASE_DECAY = "base_decay"
+    NO_DECAY = "no_decay"
+    # Determine based on query if to use base_decay or favor_recent
+    AUTO = "auto"
 
 
 class SearchType(str, Enum):
@@ -51,10 +67,10 @@ class ChunkMetric(BaseModel):
 
 class SearchQuery(BaseModel):
     query: str
-    search_type: SearchType
     filters: IndexFilters
-    favor_recent: bool
+    recency_bias_multiplier: float
     num_hits: int = NUM_RETURNED_HITS
+    search_type: SearchType = SearchType.HYBRID
     skip_rerank: bool = not ENABLE_RERANKING_REAL_TIME_FLOW
     # Only used if not skip_rerank
     num_rerank: int | None = NUM_RERANKED_RESULTS
@@ -64,6 +80,71 @@ class SearchQuery(BaseModel):
 
     class Config:
         frozen = True
+
+
+class RetrievalDetails(BaseModel):
+    # Use LLM to determine whether to do a retrieval or only rely on existing history
+    # If the Persona is configured to not run search (0 chunks), this is bypassed
+    # If no Prompt is configured, the only search results are shown, this is bypassed
+    run_search: OptionalSearchSetting
+    # Is this a real-time/streaming call or a question where Danswer can take more time?
+    # Used to determine reranking flow
+    real_time: bool
+    # The following have defaults in the Persona settings which can be overriden via
+    # the query, if None, then use Persona settings
+    filters: BaseFilters | None = None
+    enable_auto_detect_filters: bool | None = None
+    # TODO Pagination/Offset options
+    # offset: int | None = None
+
+
+class SearchDoc(BaseModel):
+    document_id: str
+    chunk_ind: int
+    semantic_identifier: str
+    link: str | None
+    blurb: str
+    source_type: DocumentSource
+    boost: int
+    # Whether the document is hidden when doing a standard search
+    # since a standard search will never find a hidden doc, this can only ever
+    # be `True` when doing an admin search
+    hidden: bool
+    score: float | None
+    # Matched sections in the doc. Uses Vespa syntax e.g. <hi>TEXT</hi>
+    # to specify that a set of words should be highlighted. For example:
+    # ["<hi>the</hi> <hi>answer</hi> is 42", "the answer is <hi>42</hi>""]
+    match_highlights: list[str]
+    # when the doc was last updated
+    updated_at: datetime | None
+    primary_owners: list[str] | None
+    secondary_owners: list[str] | None
+
+    def dict(self, *args: list, **kwargs: dict[str, Any]) -> dict[str, Any]:  # type: ignore
+        initial_dict = super().dict(*args, **kwargs)  # type: ignore
+        initial_dict["updated_at"] = (
+            self.updated_at.isoformat() if self.updated_at else None
+        )
+        return initial_dict
+
+
+class SavedSearchDoc(SearchDoc):
+    db_doc_id: int
+
+    @classmethod
+    def from_search_doc(
+        cls, search_doc: SearchDoc, db_doc_id: int = 0
+    ) -> "SavedSearchDoc":
+        """IMPORTANT: careful using this and not providing a db_doc_id"""
+        return cls(**search_doc.dict(), db_doc_id=db_doc_id)
+
+
+class RetrievalDocs(BaseModel):
+    top_documents: list[SavedSearchDoc]
+
+
+class SearchResponse(RetrievalDocs):
+    llm_indices: list[int]
 
 
 class RetrievalMetricsContainer(BaseModel):
