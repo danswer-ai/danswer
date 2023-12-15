@@ -2,13 +2,13 @@
 
 import { User } from "@/lib/types";
 import { logout } from "@/lib/user";
-import { UserCircle } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { CustomDropdown, DefaultDropdownElement } from "./Dropdown";
 import { FiMessageSquare, FiSearch } from "react-icons/fi";
+import { usePathname } from "next/navigation";
 
 interface HeaderProps {
   user: User | null;
@@ -16,6 +16,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ user }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -68,21 +69,21 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
 
         <Link
           href="/search"
-          className="ml-8 h-full flex flex-col hover:bg-hover"
+          className={"ml-6 h-full flex flex-col hover:bg-hover"}
         >
-          <div className="w-28 flex my-auto">
-            <div className="mx-auto flex text-strong px-2">
+          <div className="w-24 flex my-auto">
+            <div className={"mx-auto flex text-strong px-2"}>
               <FiSearch className="my-auto mr-1" />
-              <h1 className="flex text-base font-medium my-auto">Search</h1>
+              <h1 className="flex text-sm font-bold my-auto">Search</h1>
             </div>
           </div>
         </Link>
 
         <Link href="/chat" className="h-full flex flex-col hover:bg-hover">
-          <div className="w-28 flex my-auto">
+          <div className="w-24 flex my-auto">
             <div className="mx-auto flex text-strong px-2">
               <FiMessageSquare className="my-auto mr-1" />
-              <h1 className="flex text-base font-medium my-auto">Chat</h1>
+              <h1 className="flex text-sm font-bold my-auto">Chat</h1>
             </div>
           </div>
         </Link>
