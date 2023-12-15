@@ -7,6 +7,8 @@ from danswer.auth.users import current_admin_user
 from danswer.danswerbot.slack.config import validate_channel_names
 from danswer.danswerbot.slack.tokens import fetch_tokens
 from danswer.danswerbot.slack.tokens import save_tokens
+from danswer.db.chat import get_persona_by_id
+from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.engine import get_session
 from danswer.db.models import ChannelConfig
 from danswer.db.models import User
@@ -136,11 +138,25 @@ def patch_slack_bot_config(
                 detail="Slack bot config not found",
             )
 
+        existing_persona_id = existing_slack_bot_config.persona_id
+        if existing_persona_id is not None:
+            persona = get_persona_by_id(
+                persona_id=existing_persona_id, user_id=None, db_session=db_session
+            )
+
+            if not persona.name.startswith(SLACK_BOT_PERSONA_PREFIX):
+                # Don't update actual non-slackbot specific personas
+                # Since this one specified document sets, we have to create a new persona
+                # for this DanswerBot config
+                existing_persona_id = None
+            else:
+                existing_persona_id = existing_slack_bot_config.persona_id
+
         persona_id = create_slack_bot_persona(
             db_session=db_session,
             channel_names=channel_config["channel_names"],
             document_set_ids=slack_bot_config_creation_request.document_sets,
-            existing_persona_id=existing_slack_bot_config.persona_id,
+            existing_persona_id=existing_persona_id,
         ).id
 
     slack_bot_config_model = update_slack_bot_config(

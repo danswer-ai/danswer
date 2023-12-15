@@ -52,7 +52,6 @@ def create_slack_bot_persona(
         persona_id=existing_persona_id,
         name=persona_name,
         description="",
-        # TODO these should be configurable
         num_chunks=num_chunks,
         llm_relevance_filter=True,
         llm_filter_extraction=True,
