@@ -35,6 +35,7 @@ import { buildFilters } from "@/lib/search/utils";
 import { QA, SearchTypeSelector } from "./modifiers/SearchTypeSelector";
 import { SelectedDocuments } from "./modifiers/SelectedDocuments";
 import { usePopup } from "@/components/admin/connectors/Popup";
+import ResizableSection from "@/components/ResizableSection";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -572,12 +573,14 @@ export const Chat = ({
           </div>
         </div>
       </div>
-
+                      
+      <ResizableSection>
       <DocumentSidebar
         selectedMessage={aiMessage}
         selectedDocuments={selectedDocuments}
         setSelectedDocuments={setSelectedDocuments}
       />
+      </ResizableSection>
     </div>
   );
 };

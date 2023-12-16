@@ -20,6 +20,7 @@ module.exports = {
         sans: ["var(--font-inter)"],
       },
       width: {
+        "message-small": "550px",
         "message-default": "740px",
         searchbar: "850px",
         "document-sidebar": "800px",
