@@ -29,11 +29,11 @@ export const ConnectorEditor = ({
           py-1
           rounded-lg 
           border
-          border-gray-700 
+          border-border 
           w-fit 
           flex 
           cursor-pointer ` +
-                (isSelected ? " bg-gray-600" : " hover:bg-gray-700")
+                (isSelected ? " bg-hover" : " hover:bg-hover-light")
               }
               onClick={() => {
                 if (isSelected) {

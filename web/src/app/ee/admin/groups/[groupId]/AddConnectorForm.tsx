@@ -50,8 +50,8 @@ export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
                   py-1
                   my-1 
                   border 
-                  border-gray-700 
-                  hover:bg-gray-900 
+                  border-border 
+                  hover:bg-hover 
                   cursor-pointer`}
               >
                 <ConnectorTitle
@@ -99,7 +99,7 @@ export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
               ]);
             }}
             itemComponent={({ option }) => (
-              <div className="flex px-4 py-2.5 hover:bg-gray-800 cursor-pointer">
+              <div className="flex px-4 py-2.5 hover:bg-hover cursor-pointer">
                 <div className="my-auto">
                   <ConnectorTitle
                     ccPairId={option?.metadata?.ccPairId as number}

@@ -42,8 +42,8 @@ export const UserEditor = ({
                   px-2 
                   py-1 
                   border 
-                  border-gray-700 
-                  hover:bg-gray-900 
+                  border-border 
+                  hover:bg-hover-light 
                   cursor-pointer`}
             >
               {selectedUser.email} <FiX className="ml-1 my-auto" />
@@ -73,7 +73,7 @@ export const UserEditor = ({
             ]);
           }}
           itemComponent={({ option }) => (
-            <div className="flex px-4 py-2.5 hover:bg-gray-800 cursor-pointer">
+            <div className="flex px-4 py-2.5 cursor-pointer hover:bg-hover">
               <UsersIcon className="mr-2 my-auto" />
               {option.name}
               <div className="ml-auto my-auto">

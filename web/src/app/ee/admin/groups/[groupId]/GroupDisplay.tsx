@@ -3,15 +3,24 @@
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { UserGroup } from "../types";
-import { BasicTable } from "@/components/admin/connectors/BasicTable";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
-import { Button } from "@/components/Button";
 import { AddMemberForm } from "./AddMemberForm";
-import { TrashIcon } from "@/components/icons/icons";
 import { updateUserGroup } from "./lib";
 import { LoadingAnimation } from "@/components/Loading";
 import { ConnectorIndexingStatus, User } from "@/lib/types";
 import { AddConnectorForm } from "./AddConnectorForm";
+import {
+  Table,
+  TableHead,
+  TableRow,
+  TableHeaderCell,
+  TableBody,
+  TableCell,
+  Divider,
+  Button,
+  Text,
+} from "@tremor/react";
+import { DeleteButton } from "@/components/DeleteButton";
 
 interface GroupDisplayProps {
   users: User[];
@@ -35,15 +44,17 @@ export const GroupDisplay = ({
       {popup}
 
       <div className="text-sm mb-3 flex">
-        <b className="mr-1">Status:</b>{" "}
+        <Text className="mr-1">Status:</Text>{" "}
         {userGroup.is_up_to_date ? (
-          <div className="text-emerald-600">Up to date</div>
+          <div className="text-success font-bold">Up to date</div>
         ) : (
-          <div className="text-gray-300">
+          <div className="text-accent font-bold">
             <LoadingAnimation text="Syncing" />
           </div>
         )}
       </div>
+
+      <Divider />
 
       <div className="flex w-full">
         <h2 className="text-xl font-bold">Users</h2>
@@ -51,60 +62,69 @@ export const GroupDisplay = ({
 
       <div className="mt-2">
         {userGroup.users.length > 0 ? (
-          <BasicTable
-            columns={[
-              {
-                header: "Email",
-                key: "email",
-              },
-              {
-                header: "Remove User",
-                key: "remove",
-                alignment: "right",
-              },
-            ]}
-            data={userGroup.users.map((user) => {
-              return {
-                email: <div>{user.email}</div>,
-                remove: (
-                  <div className="flex">
-                    <div
-                      className="cursor-pointer ml-auto mr-1"
-                      onClick={async () => {
-                        const response = await updateUserGroup(userGroup.id, {
-                          user_ids: userGroup.users
-                            .filter(
-                              (userGroupUser) => userGroupUser.id !== user.id
-                            )
-                            .map((userGroupUser) => userGroupUser.id),
-                          cc_pair_ids: userGroup.cc_pairs.map(
-                            (ccPair) => ccPair.id
-                          ),
-                        });
-                        if (response.ok) {
-                          setPopup({
-                            message: "Successfully removed user from group",
-                            type: "success",
-                          });
-                        } else {
-                          const responseJson = await response.json();
-                          const errorMsg =
-                            responseJson.detail || responseJson.message;
-                          setPopup({
-                            message: `Error removing user from group - ${errorMsg}`,
-                            type: "error",
-                          });
-                        }
-                        refreshUserGroup();
-                      }}
-                    >
-                      <TrashIcon />
-                    </div>
-                  </div>
-                ),
-              };
-            })}
-          />
+          <>
+            <Table className="overflow-visible">
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell>Email</TableHeaderCell>
+                  <TableHeaderCell className="flex w-full">
+                    <div className="ml-auto">Remove User</div>
+                  </TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {userGroup.users.map((user) => {
+                  return (
+                    <TableRow key={user.id}>
+                      <TableCell className="whitespace-normal break-all">
+                        {user.email}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex w-full">
+                          <div className="ml-auto m-2">
+                            <DeleteButton
+                              onClick={async () => {
+                                const response = await updateUserGroup(
+                                  userGroup.id,
+                                  {
+                                    user_ids: userGroup.users
+                                      .filter(
+                                        (userGroupUser) =>
+                                          userGroupUser.id !== user.id
+                                      )
+                                      .map((userGroupUser) => userGroupUser.id),
+                                    cc_pair_ids: userGroup.cc_pairs.map(
+                                      (ccPair) => ccPair.id
+                                    ),
+                                  }
+                                );
+                                if (response.ok) {
+                                  setPopup({
+                                    message:
+                                      "Successfully removed user from group",
+                                    type: "success",
+                                  });
+                                } else {
+                                  const responseJson = await response.json();
+                                  const errorMsg =
+                                    responseJson.detail || responseJson.message;
+                                  setPopup({
+                                    message: `Error removing user from group - ${errorMsg}`,
+                                    type: "error",
+                                  });
+                                }
+                                refreshUserGroup();
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </>
         ) : (
           <div className="text-sm">No users in this group...</div>
         )}
@@ -112,6 +132,8 @@ export const GroupDisplay = ({
 
       <Button
         className="mt-3"
+        size="xs"
+        color="green"
         onClick={() => setAddMemberFormVisible(true)}
         disabled={!userGroup.is_up_to_date}
       >
@@ -130,72 +152,78 @@ export const GroupDisplay = ({
         />
       )}
 
-      <h2 className="text-xl font-bold mt-4">Connectors</h2>
+      <Divider />
+
+      <h2 className="text-xl font-bold mt-8">Connectors</h2>
       <div className="mt-2">
         {userGroup.cc_pairs.length > 0 ? (
-          <BasicTable
-            columns={[
-              {
-                header: "Connector",
-                key: "connector_name",
-              },
-              {
-                header: "Remove Connector",
-                key: "delete",
-                alignment: "right",
-              },
-            ]}
-            data={userGroup.cc_pairs.map((ccPair) => {
-              return {
-                connector_name:
-                  (
-                    <ConnectorTitle
-                      connector={ccPair.connector}
-                      ccPairId={ccPair.id}
-                      ccPairName={ccPair.name}
-                    />
-                  ) || "",
-                delete: (
-                  <div className="flex">
-                    <div
-                      className="cursor-pointer ml-auto mr-1"
-                      onClick={async () => {
-                        const response = await updateUserGroup(userGroup.id, {
-                          user_ids: userGroup.users.map(
-                            (userGroupUser) => userGroupUser.id
-                          ),
-                          cc_pair_ids: userGroup.cc_pairs
-                            .filter(
-                              (userGroupCCPair) =>
-                                userGroupCCPair.id != ccPair.id
-                            )
-                            .map((ccPair) => ccPair.id),
-                        });
-                        if (response.ok) {
-                          setPopup({
-                            message:
-                              "Successfully removed connector from group",
-                            type: "success",
-                          });
-                        } else {
-                          const responseJson = await response.json();
-                          const errorMsg =
-                            responseJson.detail || responseJson.message;
-                          setPopup({
-                            message: `Error removing connector from group - ${errorMsg}`,
-                            type: "error",
-                          });
-                        }
-                        refreshUserGroup();
-                      }}
-                    >
-                      <TrashIcon />
-                    </div>
-                  </div>
-                ),
-              };
-            })}
-          />
+          <>
+            <Table className="overflow-visible">
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell>Connector</TableHeaderCell>
+                  <TableHeaderCell className="flex w-full">
+                    <div className="ml-auto">Remove Connector</div>
+                  </TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {userGroup.cc_pairs.map((ccPair) => {
+                  return (
+                    <TableRow key={ccPair.id}>
+                      <TableCell className="whitespace-normal break-all">
+                        <ConnectorTitle
+                          connector={ccPair.connector}
+                          ccPairId={ccPair.id}
+                          ccPairName={ccPair.name}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex w-full">
+                          <div className="ml-auto m-2">
+                            <DeleteButton
+                              onClick={async () => {
+                                const response = await updateUserGroup(
+                                  userGroup.id,
+                                  {
+                                    user_ids: userGroup.users.map(
+                                      (userGroupUser) => userGroupUser.id
+                                    ),
+                                    cc_pair_ids: userGroup.cc_pairs
+                                      .filter(
+                                        (userGroupCCPair) =>
+                                          userGroupCCPair.id != ccPair.id
+                                      )
+                                      .map((ccPair) => ccPair.id),
+                                  }
+                                );
+                                if (response.ok) {
+                                  setPopup({
+                                    message:
+                                      "Successfully removed connector from group",
+                                    type: "success",
+                                  });
+                                } else {
+                                  const responseJson = await response.json();
+                                  const errorMsg =
+                                    responseJson.detail || responseJson.message;
+                                  setPopup({
+                                    message: `Error removing connector from group - ${errorMsg}`,
+                                    type: "error",
+                                  });
+                                }
+                                refreshUserGroup();
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </>
         ) : (
           <div className="text-sm">No connectors in this group...</div>
         )}
@@ -204,6 +232,8 @@ export const GroupDisplay = ({
       <Button
         className="mt-3"
         onClick={() => setAddConnectorFormVisible(true)}
+        size="xs"
+        color="green"
         disabled={!userGroup.is_up_to_date}
       >
         Add Connectors
