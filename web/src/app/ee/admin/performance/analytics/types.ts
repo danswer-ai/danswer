@@ -18,12 +18,18 @@ export interface AbridgedSearchDoc {
   link: string | null;
 }
 
-export interface QuerySnapshot {
-  id: number;
-  query: string;
-  user_email: string | null;
-  llm_answer: string;
-  retrieved_documents: AbridgedSearchDoc[];
-  time_created: string;
+export interface MessageSnapshot {
+  message: string;
+  message_type: "user" | "assistant";
+  documents: AbridgedSearchDoc[];
   feedback: Feedback | null;
+  time_created: string;
+}
+
+export interface ChatSessionSnapshot {
+  id: number;
+  user_email: string | null;
+  name: string | null;
+  messages: MessageSnapshot[];
+  time_created: string;
 }

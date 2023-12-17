@@ -1,82 +1,81 @@
-import { Bold, Text, Card, Title, Divider, Italic } from "@tremor/react";
-import { QuerySnapshot } from "../../analytics/types";
-import { buildUrl } from "@/lib/utilsSS";
-import { BackButton } from "./BackButton";
+import { Bold, Text, Card, Title, Divider } from "@tremor/react";
+import { ChatSessionSnapshot, MessageSnapshot } from "../../analytics/types";
 import { FiBook } from "react-icons/fi";
-import { processCookies } from "@/lib/userSS";
-import { cookies } from "next/headers";
 import { timestampToReadableDate } from "@/lib/dateUtils";
+import { BackButton } from "@/components/BackButton";
+import { SSRAutoRefresh } from "@/components/SSRAutoRefresh";
+import { FeedbackBadge } from "../FeedbackBadge";
+import { fetchSS } from "@/lib/utilsSS";
+
+function MessageDisplay({ message }: { message: MessageSnapshot }) {
+  return (
+    <div>
+      <Bold className="text-xs mb-1">
+        {message.message_type === "user" ? "User" : "AI"}
+      </Bold>
+      <Text>{message.message}</Text>
+      {message.documents.length > 0 && (
+        <div className="flex flex-col gap-y-2 mt-2">
+          <Bold className="font-bold text-xs">Reference Documents</Bold>
+          {message.documents.slice(0, 5).map((document) => {
+            return (
+              <Text className="flex" key={document.document_id}>
+                <FiBook
+                  className={
+                    "my-auto mr-1" + (document.link ? " text-link" : " ")
+                  }
+                />
+                {document.link ? (
+                  <a href={document.link} target="_blank" className="text-link">
+                    {document.semantic_identifier}
+                  </a>
+                ) : (
+                  document.semantic_identifier
+                )}
+              </Text>
+            );
+          })}
+        </div>
+      )}
+      {message.feedback && (
+        <div className="mt-2">
+          <FeedbackBadge feedback={message.feedback} />
+        </div>
+      )}
+      <Divider />
+    </div>
+  );
+}
 
 export default async function QueryPage({
   params,
 }: {
   params: { id: string };
 }) {
-  const response = await fetch(buildUrl(`/admin/query-history/${params.id}`), {
-    next: { revalidate: 0 },
-    headers: {
-      cookie: processCookies(cookies()),
-    },
-  });
-  const queryEvent = (await response.json()) as QuerySnapshot;
+  const response = await fetchSS(`/admin/chat-session-history/${params.id}`);
+  const chatSessionSnapshot = (await response.json()) as ChatSessionSnapshot;
 
   return (
-    <main className="pt-4 mx-auto container dark">
+    <main className="pt-4 mx-auto container">
       <BackButton />
+      <SSRAutoRefresh />
 
       <Card className="mt-4">
-        <Title>Query Details</Title>
+        <Title>Chat Session Details</Title>
 
         <Text className="flex flex-wrap whitespace-normal mt-1 text-xs">
-          {queryEvent.user_email || "-"},{" "}
-          {timestampToReadableDate(queryEvent.time_created)}
+          {chatSessionSnapshot.user_email || "-"},{" "}
+          {timestampToReadableDate(chatSessionSnapshot.time_created)}
         </Text>
 
         <Divider />
 
-        <div className="flex flex-col gap-y-3">
-          <div>
-            <Bold>Query</Bold>
-            <Text className="flex flex-wrap whitespace-normal mt-1">
-              {queryEvent.query}
-            </Text>
-          </div>
-
-          <div>
-            <Bold>Answer</Bold>
-            <Text className="flex flex-wrap whitespace-normal mt-1">
-              {queryEvent.llm_answer}
-            </Text>
-          </div>
-
-          <div>
-            <Bold>Retrieved Documents</Bold>
-            <div className="flex flex-col gap-y-2 mt-1">
-              {queryEvent.retrieved_documents?.map((document) => {
-                return (
-                  <Text className="flex" key={document.document_id}>
-                    <FiBook
-                      className={
-                        "my-auto mr-1" +
-                        (document.link ? " text-blue-500" : " ")
-                      }
-                    />
-                    {document.link ? (
-                      <a
-                        href={document.link}
-                        target="_blank"
-                        className="text-blue-500"
-                      >
-                        {document.semantic_identifier}
-                      </a>
-                    ) : (
-                      document.semantic_identifier
-                    )}
-                  </Text>
-                );
-              })}
-            </div>
-          </div>
+        <div className="flex flex-col">
+          {chatSessionSnapshot.messages.map((message) => {
+            return (
+              <MessageDisplay key={message.time_created} message={message} />
+            );
+          })}
         </div>
       </Card>
     </main>
