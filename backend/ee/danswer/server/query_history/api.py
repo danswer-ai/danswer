@@ -208,12 +208,14 @@ def get_chat_session_history(
 @router.get("/admin/chat-session-history/{chat_session_id}")
 def get_chat_session(
     chat_session_id: int,
-    _: db_models.User | None = Depends(current_admin_user),
+    user: db_models.User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ChatSessionSnapshot:
     try:
         chat_session = get_chat_session_by_id(
-            chat_session_id=chat_session_id, user_id=None, db_session=db_session
+            chat_session_id=chat_session_id,
+            user_id=user.id if user else None,
+            db_session=db_session,
         )
     except ValueError:
         raise HTTPException(
