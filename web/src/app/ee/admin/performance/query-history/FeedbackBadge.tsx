@@ -1,7 +1,11 @@
 import { Feedback } from "@/lib/types";
 import { Badge } from "@tremor/react";
 
-export function FeedbackBadge({ feedback }: { feedback?: Feedback | null }) {
+export function FeedbackBadge({
+  feedback,
+}: {
+  feedback?: Feedback | "mixed" | null;
+}) {
   let feedbackBadge;
   switch (feedback) {
     case "like":
@@ -15,6 +19,13 @@ export function FeedbackBadge({ feedback }: { feedback?: Feedback | null }) {
       feedbackBadge = (
         <Badge color="red" className="text-sm">
           Dislike
+        </Badge>
+      );
+      break;
+    case "mixed":
+      feedbackBadge = (
+        <Badge color="purple" className="text-sm">
+          Mixed
         </Badge>
       );
       break;

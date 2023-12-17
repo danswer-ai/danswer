@@ -1,8 +1,8 @@
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import {
+  ChatSessionSnapshot,
   QueryAnalytics,
-  QuerySnapshot,
   UserAnalytics,
 } from "./analytics/types";
 import { useState } from "react";
@@ -55,12 +55,12 @@ export const useQueryHistory = () => {
     useState<Feedback | null>(null);
   const [timeRange, setTimeRange] = useTimeRange();
 
-  const url = buildApiPath("/api/admin/query-history", {
+  const url = buildApiPath("/api/admin/chat-session-history", {
     feedback_type: selectedFeedbackType,
     start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
     end: convertDateToEndOfDay(timeRange.to)?.toISOString(),
   });
-  const swrResponse = useSWR<QuerySnapshot[]>(url, errorHandlingFetcher);
+  const swrResponse = useSWR<ChatSessionSnapshot[]>(url, errorHandlingFetcher);
 
   return {
     ...swrResponse,

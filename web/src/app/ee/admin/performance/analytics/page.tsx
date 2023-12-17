@@ -5,17 +5,15 @@ import { FeedbackChart } from "./FeedbackChart";
 import { QueryPerformanceChart } from "./QueryPerformanceChart";
 import { BarChartIcon } from "@/components/icons/icons";
 import { useTimeRange } from "../lib";
+import { AdminPageTitle } from "@/components/admin/Title";
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useTimeRange();
 
   return (
-    <main className="pt-4 mx-auto container dark">
+    <main className="pt-4 mx-auto container">
       {/* TODO: remove this `dark` once we have a mode selector */}
-      <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <BarChartIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Analytics</h1>
-      </div>
+      <AdminPageTitle title="Analytics" icon={<BarChartIcon size={32} />} />
 
       <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
 

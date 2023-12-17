@@ -10,34 +10,39 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 
-from danswer.configs.constants import QAFeedbackType
-from danswer.db.models import QueryEvent
+from danswer.configs.constants import MessageType
+from danswer.db.models import ChatMessage
+from danswer.db.models import ChatSession
 from danswer.db.models import User
 
-SortByOptions = Literal["time_created", "feedback"]
+SortByOptions = Literal["time_sent"]
 
 
 def build_query_history_query(
     start: datetime.datetime,
     end: datetime.datetime,
-    query: str | None,
-    feedback_type: QAFeedbackType | None,
     sort_by_field: SortByOptions,
     sort_by_direction: Literal["asc", "desc"],
     offset: int,
     limit: int | None,
-) -> Select[tuple[QueryEvent]]:
+) -> Select[tuple[ChatMessage]]:
     stmt = (
-        select(QueryEvent)
+        select(ChatMessage)
         .where(
-            QueryEvent.time_created >= start,
+            ChatMessage.time_sent >= start,
         )
         .where(
-            QueryEvent.time_created <= end,
+            ChatMessage.time_sent <= end,
+        )
+        .where(
+            or_(
+                ChatMessage.message_type == MessageType.ASSISTANT,
+                ChatMessage.message_type == MessageType.USER,
+            ),
         )
     )
 
-    order_by_field = cast(InstrumentedAttribute, getattr(QueryEvent, sort_by_field))
+    order_by_field = cast(InstrumentedAttribute, getattr(ChatMessage, sort_by_field))
     if sort_by_direction == "asc":
         stmt = stmt.order_by(order_by_field.asc())
     else:
@@ -48,17 +53,6 @@ def build_query_history_query(
     if limit:
         stmt = stmt.limit(limit)
 
-    if query:
-        stmt = stmt.where(
-            or_(
-                QueryEvent.llm_answer.ilike(f"%{query}%"),
-                QueryEvent.query.ilike(f"%{query}%"),
-            )
-        )
-
-    if feedback_type:
-        stmt = stmt.where(QueryEvent.feedback == feedback_type)
-
     return stmt
 
 
@@ -66,18 +60,14 @@ def fetch_query_history(
     db_session: Session,
     start: datetime.datetime,
     end: datetime.datetime,
-    query: str | None = None,
-    feedback_type: QAFeedbackType | None = None,
-    sort_by_field: SortByOptions = "time_created",
+    sort_by_field: SortByOptions = "time_sent",
     sort_by_direction: Literal["asc", "desc"] = "desc",
     offset: int = 0,
     limit: int | None = 500,
-) -> Sequence[QueryEvent]:
+) -> Sequence[ChatMessage]:
     stmt = build_query_history_query(
         start=start,
         end=end,
-        query=query,
-        feedback_type=feedback_type,
         sort_by_field=sort_by_field,
         sort_by_direction=sort_by_direction,
         offset=offset,
@@ -91,27 +81,25 @@ def fetch_query_history_with_user_email(
     db_session: Session,
     start: datetime.datetime,
     end: datetime.datetime,
-    query: str | None = None,
-    feedback_type: QAFeedbackType | None = None,
-    sort_by_field: SortByOptions = "time_created",
+    sort_by_field: SortByOptions = "time_sent",
     sort_by_direction: Literal["asc", "desc"] = "desc",
     offset: int = 0,
     limit: int | None = 500,
-) -> Sequence[tuple[QueryEvent, str | None]]:
+) -> Sequence[tuple[ChatMessage, str | None]]:
     subquery = build_query_history_query(
         start=start,
         end=end,
-        query=query,
-        feedback_type=feedback_type,
         sort_by_field=sort_by_field,
         sort_by_direction=sort_by_direction,
         offset=offset,
         limit=limit,
     ).subquery()
-    subquery_alias = aliased(QueryEvent, subquery)
+    subquery_alias = aliased(ChatMessage, subquery)
 
-    stmt_with_user_email = select(subquery_alias, User.email).join(  # type: ignore
-        User, subquery_alias.user_id == User.id, isouter=True
+    stmt_with_user_email = (
+        select(subquery_alias, User.email)  # type: ignore
+        .join(ChatSession, subquery_alias.chat_session_id == ChatSession.id)
+        .join(User, ChatSession.user_id == User.id, isouter=True)
     )
 
     return db_session.execute(stmt_with_user_email).all()  # type: ignore

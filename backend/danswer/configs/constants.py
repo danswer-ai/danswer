@@ -119,6 +119,11 @@ class AuthType(str, Enum):
     SAML = "saml"
 
 
+class QAFeedbackType(str, Enum):
+    LIKE = "like"  # User likes the answer, used for metrics
+    DISLIKE = "dislike"  # User dislikes the answer, used for metrics
+
+
 class SearchFeedbackType(str, Enum):
     ENDORSE = "endorse"  # boost this document for all future queries
     REJECT = "reject"  # down-boost this document for all future queries
