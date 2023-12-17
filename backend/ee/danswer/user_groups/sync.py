@@ -1,8 +1,5 @@
 from sqlalchemy.orm import Session
 
-from danswer.document_index.factory import get_default_document_index
-from danswer.document_index.interfaces import DocumentIndex
-from danswer.document_index.interfaces import UpdateRequest
 from danswer.access.access import get_access_for_documents
 from danswer.db.document import prepare_to_modify_documents
 from danswer.db.engine import get_sqlalchemy_engine

@@ -5,10 +5,11 @@ import { UserGroupsTable } from "./UserGroupsTable";
 import { UserGroupCreationForm } from "./UserGroupCreationForm";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
-import { Button } from "@/components/Button";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { useConnectorCredentialIndexingStatus, useUsers } from "@/lib/hooks";
 import { useUserGroups } from "./hooks";
+import { AdminPageTitle } from "@/components/admin/Title";
+import { Button, Divider } from "@tremor/react";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -48,13 +49,20 @@ const Main = () => {
     <>
       {popup}
       <div className="my-3">
-        <Button onClick={() => setShowForm(true)}>Create New User Group</Button>
+        <Button size="xs" color="green" onClick={() => setShowForm(true)}>
+          Create New User Group
+        </Button>
       </div>
-      <UserGroupsTable
-        userGroups={data}
-        setPopup={setPopup}
-        refresh={refreshUserGroups}
-      />
+      {data.length > 0 && (
+        <div>
+          <Divider />
+          <UserGroupsTable
+            userGroups={data}
+            setPopup={setPopup}
+            refresh={refreshUserGroups}
+          />
+        </div>
+      )}
       {showForm && (
         <UserGroupCreationForm
           onClose={() => {
@@ -73,10 +81,10 @@ const Main = () => {
 const Page = () => {
   return (
     <div className="mx-auto container">
-      <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <GroupsIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Manage Users Groups</h1>
-      </div>
+      <AdminPageTitle
+        title="Manage Users Groups"
+        icon={<GroupsIcon size={32} />}
+      />
 
       <Main />
     </div>

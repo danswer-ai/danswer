@@ -7,6 +7,8 @@ import { useSpecificUserGroup } from "./hook";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { useConnectorCredentialIndexingStatus, useUsers } from "@/lib/hooks";
 import { useRouter } from "next/navigation";
+import { BackButton } from "@/components/BackButton";
+import { AdminPageTitle } from "@/components/admin/Title";
 
 const Page = ({ params }: { params: { groupId: string } }) => {
   const router = useRouter();
@@ -50,19 +52,12 @@ const Page = ({ params }: { params: { groupId: string } }) => {
 
   return (
     <div className="mx-auto container">
-      <div
-        className="my-auto flex mb-1 hover:bg-gray-700 w-fit pr-2 cursor-pointer rounded-lg"
-        onClick={() => router.back()}
-      >
-        <FiChevronLeft className="mr-1 my-auto" />
-        Back
-      </div>
-      <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <GroupsIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">
-          {userGroup ? userGroup.name : <FiAlertCircle />}
-        </h1>
-      </div>
+      <BackButton />
+
+      <AdminPageTitle
+        title={userGroup.name || "Unknown"}
+        icon={<GroupsIcon size={32} />}
+      />
 
       {userGroup ? (
         <GroupDisplay
