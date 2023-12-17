@@ -6,7 +6,7 @@ import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SourceSelector } from "./filtering/Filters";
 import { Connector, DocumentSet } from "@/lib/types";
 import {
-  DanswerDocument,
+  HagenDocument,
   Quote,
   SearchResponse,
   FlowType,
@@ -67,7 +67,7 @@ export const SearchSection = ({
     useState<SearchType>(defaultSearchType);
 
   const defaultPersona = personas.find(
-    (persona) => persona.name === "Danswer" && persona.default_persona
+    (persona) => persona.name === "Hagen" && persona.default_persona
   );
   const [selectedPersona, setSelectedPersona] = useState<number>(
     defaultPersona?.id || 0
@@ -98,7 +98,7 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       quotes,
     }));
-  const updateDocs = (documents: DanswerDocument[]) =>
+  const updateDocs = (documents: HagenDocument[]) =>
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       documents,

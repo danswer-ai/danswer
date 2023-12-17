@@ -61,7 +61,7 @@ export default function GoogleSites() {
         <Text className="mb-2">
           For an in-depth guide on how to setup this connector, check out{" "}
           <a
-            href="https://docs.danswer.dev/connectors/google_sites"
+            href="https://docs.Hagen.dev/connectors/google_sites"
             target="_blank"
             className="text-blue-500"
           >

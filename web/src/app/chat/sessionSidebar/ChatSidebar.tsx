@@ -81,7 +81,7 @@ export const ChatSidebar = ({
             <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
           </div>
           <h1 className="flex text-2xl font-bold my-auto text-emphasis ml-2">
-            Danswer
+            Hagen
           </h1>
         </div>
       </Link>
@@ -146,14 +146,14 @@ export const ChatSidebar = ({
                 className="flex py-3 px-4 cursor-pointer hover:bg-hover"
               >
                 <FiSearch className="my-auto mr-2" />
-                Danswer Search
+                Hagen Search
               </Link>
               <Link
                 href="/chat"
                 className="flex py-3 px-4 cursor-pointer hover:bg-hover"
               >
                 <FiMessageSquare className="my-auto mr-2" />
-                Danswer Chat
+                Hagen Chat
               </Link>
               {(!user || user.role === "admin") && (
                 <Link

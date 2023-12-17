@@ -3,7 +3,7 @@ import {
   EmphasizedClickable,
 } from "@/components/BasicClickable";
 import { HoverPopup } from "@/components/HoverPopup";
-import { DanswerDocument } from "@/lib/search/interfaces";
+import { HagenDocument } from "@/lib/search/interfaces";
 import { FiBookOpen, FiSearch } from "react-icons/fi";
 
 export function ShowHideDocsButton({

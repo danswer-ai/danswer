@@ -1,4 +1,4 @@
-import { DanswerDocument } from "@/lib/search/interfaces";
+import { HagenDocument } from "@/lib/search/interfaces";
 import { DocumentFeedbackBlock } from "./DocumentFeedbackBlock";
 import { useState } from "react";
 import { PopupSpec } from "../admin/connectors/Popup";
@@ -105,7 +105,7 @@ export const buildDocumentSummaryDisplay = (
 };
 
 interface DocumentDisplayProps {
-  document: DanswerDocument;
+  document: HagenDocument;
   queryEventId: number | null;
   isSelected: boolean;
   setPopup: (popupSpec: PopupSpec | null) => void;

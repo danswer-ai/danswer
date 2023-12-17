@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { FiRefreshCcw, FiSend, FiStopCircle } from "react-icons/fi";
 import { AIMessage, HumanMessage } from "./message/Messages";
-import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
+import { AnswerPiecePacket, HagenDocument } from "@/lib/search/interfaces";
 import {
   BackendMessage,
   DocumentsResponse,
@@ -76,7 +76,7 @@ export const Chat = ({
         selectedMessageForDocDisplay
       )
     : { aiMessage: null };
-  const [selectedDocuments, setSelectedDocuments] = useState<DanswerDocument[]>(
+  const [selectedDocuments, setSelectedDocuments] = useState<HagenDocument[]>(
     []
   );
 
@@ -169,7 +169,7 @@ export const Chat = ({
       selectedDocuments.length > 0
         ? RetrievalType.SelectedDocs
         : RetrievalType.None;
-    let documents: DanswerDocument[] = selectedDocuments;
+    let documents: HagenDocument[] = selectedDocuments;
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
     try {

@@ -9,7 +9,7 @@ import {
 import { FeedbackType } from "../types";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { DanswerDocument } from "@/lib/search/interfaces";
+import { HagenDocument } from "@/lib/search/interfaces";
 import { SearchSummary, ShowHideDocsButton } from "./SearchSummary";
 import { SourceIcon } from "@/components/SourceIcon";
 import { ThreeDots } from "react-loader-spinner";
@@ -42,7 +42,7 @@ export const AIMessage = ({
   messageId: number | null;
   content: string | JSX.Element;
   query?: string;
-  citedDocuments?: [string, DanswerDocument][] | null;
+  citedDocuments?: [string, HagenDocument][] | null;
   isComplete?: boolean;
   hasDocs?: boolean;
   handleFeedback?: (feedbackType: FeedbackType) => void;

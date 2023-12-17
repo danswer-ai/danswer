@@ -137,7 +137,7 @@ const Main = () => {
             To use the Jira connector, first follow the guide{" "}
             <a
               className="text-link"
-              href="https://docs.danswer.dev/connectors/jira#setting-up"
+              href="https://docs.Hagen.dev/connectors/jira#setting-up"
               target="_blank"
             >
               here
@@ -190,7 +190,7 @@ const Main = () => {
             Index. Based on the provided link, we will index the ENTIRE PROJECT,
             not just the specified page. For example, entering{" "}
             <i>
-              https://danswer.atlassian.net/jira/software/projects/DAN/boards/1
+              https://Hagen.atlassian.net/jira/software/projects/DAN/boards/1
             </i>{" "}
             and clicking the Index button will index the whole <i>DAN</i> Jira
             project.
@@ -266,7 +266,7 @@ const Main = () => {
               }
               validationSchema={Yup.object().shape({
                 jira_project_url: Yup.string().required(
-                  "Please enter any link to your jira project e.g. https://danswer.atlassian.net/jira/software/projects/DAN/boards/1"
+                  "Please enter any link to your jira project e.g. https://Hagen.atlassian.net/jira/software/projects/DAN/boards/1"
                 ),
               })}
               initialValues={{

@@ -1,4 +1,4 @@
-import { DanswerDocument } from "@/lib/search/interfaces";
+import { HagenDocument } from "@/lib/search/interfaces";
 import { Text } from "@tremor/react";
 import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
@@ -29,8 +29,8 @@ export function DocumentSidebar({
   setSelectedDocuments,
 }: {
   selectedMessage: Message | null;
-  selectedDocuments: DanswerDocument[] | null;
-  setSelectedDocuments: (documents: DanswerDocument[]) => void;
+  selectedDocuments: HagenDocument[] | null;
+  setSelectedDocuments: (documents: HagenDocument[]) => void;
 }) {
   const { popup, setPopup } = usePopup();
 

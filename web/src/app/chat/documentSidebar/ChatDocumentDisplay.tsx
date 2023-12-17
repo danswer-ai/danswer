@@ -3,7 +3,7 @@ import { SourceIcon } from "@/components/SourceIcon";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { DocumentFeedbackBlock } from "@/components/search/DocumentFeedbackBlock";
 import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBadge";
-import { DanswerDocument } from "@/lib/search/interfaces";
+import { HagenDocument } from "@/lib/search/interfaces";
 import { useState } from "react";
 import { FiInfo, FiRadio } from "react-icons/fi";
 import { DocumentSelector } from "./DocumentSelector";
@@ -106,7 +106,7 @@ export const buildDocumentSummaryDisplay = (
 };
 
 interface DocumentDisplayProps {
-  document: DanswerDocument;
+  document: HagenDocument;
   queryEventId: number | null;
   isAIPick: boolean;
   isSelected: boolean;

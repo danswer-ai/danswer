@@ -108,7 +108,7 @@ const Main = () => {
             To use the Linear connector, first follow the guide{" "}
             <a
               className="text-blue-500"
-              href="https://docs.danswer.dev/connectors/linear"
+              href="https://docs.Hagen.dev/connectors/linear"
               target="_blank"
             >
               here

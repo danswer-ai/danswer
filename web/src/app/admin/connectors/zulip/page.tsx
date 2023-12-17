@@ -93,11 +93,11 @@ const MainSection = () => {
         <>
           <Text className="mb-4">
             To use the Zulip connector, you must first provide content of the
-            zuliprc config file. For more details on setting up the Danswer
+            zuliprc config file. For more details on setting up the Hagen
             Zulip connector, see the{" "}
             <a
               className="text-link"
-              href="https://docs.danswer.dev/connectors/zulip"
+              href="https://docs.Hagen.dev/connectors/zulip"
               target="_blank"
             >
               docs

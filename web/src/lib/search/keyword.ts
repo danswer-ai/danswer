@@ -1,8 +1,8 @@
-import { DanswerDocument, SearchRequestArgs } from "./interfaces";
+import { HagenDocument, SearchRequestArgs } from "./interfaces";
 
 interface KeywordResponse {
-  top_ranked_docs: DanswerDocument[];
-  lower_ranked_docs: DanswerDocument[];
+  top_ranked_docs: HagenDocument[];
+  lower_ranked_docs: HagenDocument[];
 }
 
 export const keywordSearch = async ({
@@ -14,7 +14,7 @@ export const keywordSearch = async ({
     method: "POST",
     body: JSON.stringify({
       query,
-      collection: "danswer_index",
+      collection: "Hagen_index",
       ...(sources.length > 0
         ? {
             filters: [
