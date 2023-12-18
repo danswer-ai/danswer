@@ -48,6 +48,27 @@ CHAT_USER_CONTEXT_FREE_PROMPT = f"""
 #   consider doing COT for this and keep it brief, but likely only small gains.
 SKIP_SEARCH = "Skip Search"
 YES_SEARCH = "Yes Search"
+AGGRESSIVE_SEARCH_TEMPLATE = f"""
+Given the conversation history and a follow up query, determine if the system should call \
+an external search tool to better answer the latest user input.
+
+Respond "{SKIP_SEARCH}" if either:
+- There is sufficient information in chat history to FULLY and ACCURATELY answer the query AND \
+additional information or details would provide little or no value.
+- The query is some form of request that does not require additional information to handle.
+
+Conversation History:
+{GENERAL_SEP_PAT}
+{{chat_history}}
+{GENERAL_SEP_PAT}
+
+If you are unsure, respond with {YES_SEARCH}.
+Respond with EXACTLY and ONLY "{YES_SEARCH}" or "{SKIP_SEARCH}"
+
+Follow Up Input:
+{{final_query}}
+""".strip()
+
 REQUIRE_SEARCH_SINGLE_MSG = f"""
 Given the conversation history and a follow up query, determine if the system should call \
 an external search tool to better answer the latest user input.
@@ -97,27 +118,7 @@ Standalone question (Respond with only the short combined query):
 """.strip()
 
 
-# NOTE: THE PROMPTS BELOW ARE RETIRED
-AGGRESSIVE_SEARCH_TEMPLATE = f"""
-Given the conversation history and a follow up query, determine if the system should call \
-an external search tool to better answer the latest user input.
-
-Respond "{SKIP_SEARCH}" if:
-- There is sufficient information in chat history to FULLY and ACCURATELY answer the query.
-- Additional information or details would provide little or no value.
-- The query is some form of request that does not require additional information to handle.
-
-{GENERAL_SEP_PAT}
-Conversation History:
-{{chat_history}}
-{GENERAL_SEP_PAT}
-
-Respond with EXACTLY and ONLY "{YES_SEARCH}" or "{SKIP_SEARCH}"
-
-Follow Up Input:
-{{final_query}}
-"""
-
+# The below prompts are retired
 NO_SEARCH = "No Search"
 REQUIRE_SEARCH_SYSTEM_MSG = f"""
 You are a large language model whose only job is to determine if the system should call an \

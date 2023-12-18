@@ -28,6 +28,8 @@ from danswer.llm.utils import get_default_llm_token_encode
 from danswer.one_shot_answer.factory import get_question_answer_model
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
+from danswer.one_shot_answer.models import QueryRephrase
+from danswer.one_shot_answer.qa_utils import combine_message_thread
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SavedSearchDoc
@@ -35,6 +37,7 @@ from danswer.search.request_preprocessing import retrieval_preprocessing
 from danswer.search.search_runner import chunks_to_search_docs
 from danswer.search.search_runner import full_chunk_search_generator
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
+from danswer.secondary_llm_flows.query_expansion import thread_based_query_rephrase
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
@@ -58,7 +61,8 @@ def stream_answer_objects(
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
     llm_metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,
 ) -> Iterator[
-    QADocsResponse
+    QueryRephrase
+    | QADocsResponse
     | LLMRelevanceFilterResponse
     | DanswerAnswerPiece
     | DanswerQuotes
@@ -73,6 +77,8 @@ def stream_answer_objects(
     4. [always] Details on the final AI response message that is created
     """
     user_id = user.id if user is not None else None
+    query_msg = query_req.messages[-1]
+    history = query_req.messages[:-1]
 
     chat_session = create_chat_session(
         db_session=db_session,
@@ -90,24 +96,20 @@ def stream_answer_objects(
         chat_session_id=chat_session.id, db_session=db_session
     )
 
-    # Create the first User query message
-    new_user_message = create_new_chat_message(
-        chat_session_id=chat_session.id,
-        parent_message=root_message,
-        prompt_id=query_req.prompt_id,
-        message=query_req.query,
-        token_count=len(llm_tokenizer(query_req.query)),
-        message_type=MessageType.USER,
-        db_session=db_session,
-        commit=True,
+    history_str = combine_message_thread(history)
+
+    rephrased_query = thread_based_query_rephrase(
+        user_query=query_msg.message,
+        history_str=history_str,
     )
+    yield QueryRephrase(rephrased_query=rephrased_query)
 
     (
         retrieval_request,
         predicted_search_type,
         predicted_flow,
     ) = retrieval_preprocessing(
-        query=query_req.query,
+        query=rephrased_query,
         retrieval_details=query_req.retrieval_options,
         persona=chat_session.persona,
         user=user,
@@ -190,9 +192,25 @@ def stream_answer_objects(
         llm_version=llm_override,
     )
 
+    full_prompt_str = qa_model.build_prompt(
+        query=query_msg.message, history_str=history_str, context_chunks=llm_chunks
+    )
+
+    # Create the first User query message
+    new_user_message = create_new_chat_message(
+        chat_session_id=chat_session.id,
+        parent_message=root_message,
+        prompt_id=query_req.prompt_id,
+        message=full_prompt_str,
+        token_count=len(llm_tokenizer(full_prompt_str)),
+        message_type=MessageType.USER,
+        db_session=db_session,
+        commit=True,
+    )
+
     response_packets = qa_model.answer_question_stream(
-        query=query_req.query,
-        context_docs=llm_chunks,
+        prompt=full_prompt_str,
+        llm_context_docs=llm_chunks,
         metrics_callback=llm_metrics_callback,
     )
 
@@ -272,6 +290,8 @@ def get_one_shot_answer(
 
     answer = ""
     for packet in results:
+        if isinstance(packet, QueryRephrase):
+            qa_response.rephrase = packet.rephrased_query
         if isinstance(packet, DanswerAnswerPiece) and packet.answer_piece:
             answer += packet.answer_piece
         elif isinstance(packet, QADocsResponse):
@@ -289,6 +309,11 @@ def get_one_shot_answer(
         qa_response.answer = answer
 
     if enable_reflexion:
-        qa_response.answer_valid = get_answer_validity(query_req.query, answer)
+        # Because follow up messages are explicitly tagged, we don't need to verify the answer
+        if len(query_req.messages) == 1:
+            first_query = query_req.messages[0].message
+            qa_response.answer_valid = get_answer_validity(first_query, answer)
+        else:
+            qa_response.answer_valid = True
 
     return qa_response

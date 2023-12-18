@@ -32,10 +32,17 @@ export const searchRequestStreamed = async ({
   let relevantDocuments: HagenDocument[] | null = null;
   try {
     const filters = buildFilters(sources, documentSets, timeRange);
+
+    const threadMessage = {
+      message: query,
+      sender: null,
+      role: "user",
+    };
+
     const response = await fetch("/api/query/stream-answer-with-quote", {
       method: "POST",
       body: JSON.stringify({
-        query,
+        messages: [threadMessage],
         persona_id: persona.id,
         prompt_id: persona.id === 0 ? null : persona.prompts[0]?.id,
         retrieval_options: {
