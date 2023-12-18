@@ -1,3 +1,4 @@
+import re
 import time
 from threading import Event
 from typing import Any
@@ -9,10 +10,9 @@ from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 from sqlalchemy.orm import Session
 
-from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
-from danswer.configs.model_configs import ENABLE_RERANKING_ASYNC_FLOW
+from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.danswerbot.slack.config import get_slack_bot_config_for_channel
 from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
 from danswer.danswerbot.slack.handlers.handle_feedback import handle_slack_feedback
@@ -22,13 +22,9 @@ from danswer.danswerbot.slack.tokens import fetch_tokens
 from danswer.danswerbot.slack.utils import ChannelIdAdapter
 from danswer.danswerbot.slack.utils import decompose_block_id
 from danswer.danswerbot.slack.utils import get_channel_name_from_id
-from danswer.danswerbot.slack.utils import get_danswer_bot_app_id
-from danswer.danswerbot.slack.utils import read_slack_thread
-from danswer.danswerbot.slack.utils import remove_danswer_bot_tag
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.search_nlp_models import warm_up_models
 from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
@@ -67,7 +63,7 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
             return False
 
         if event_type == "message":
-            bot_tag_id = get_danswer_bot_app_id(client.web_client)
+            bot_tag_id = client.web_client.auth_test().get("user_id")
             # DMs with the bot don't pick up the @DanswerBot so we have to keep the
             # caught events_api
             if bot_tag_id and bot_tag_id in msg and event.get("channel_type") != "im":
@@ -91,14 +87,8 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
         message_ts = event.get("ts")
         thread_ts = event.get("thread_ts")
         # Pick the root of the thread (if a thread exists)
-        # Can respond in thread if it's an "im" directly to Danswer or @DanswerBot is tagged
-        if (
-            thread_ts
-            and message_ts != thread_ts
-            and event_type != "app_mention"
-            and event.get("channel_type") != "im"
-        ):
-            channel_specific_logger.debug(
+        if thread_ts and message_ts != thread_ts:
+            channel_specific_logger.info(
                 "Skipping message since it is not the root of a thread"
             )
             return False
@@ -166,25 +156,18 @@ def build_request_details(
         tagged = event.get("type") == "app_mention"
         message_ts = event.get("ts")
         thread_ts = event.get("thread_ts")
-
-        msg = remove_danswer_bot_tag(msg, client=client.web_client)
+        bot_tag_id = client.web_client.auth_test().get("user_id")
+        # Might exist even if not tagged, specifically in the case of @DanswerBot
+        # in DanswerBot DM channel
+        msg = re.sub(rf"<@{bot_tag_id}>\s", "", msg)
 
         if tagged:
             logger.info("User tagged DanswerBot")
 
-        if thread_ts != message_ts and thread_ts is not None:
-            thread_messages = read_slack_thread(
-                channel=channel, thread=thread_ts, client=client.web_client
-            )
-        else:
-            thread_messages = [
-                ThreadMessage(message=msg, sender=None, role=MessageType.USER)
-            ]
-
         return SlackMessageInfo(
-            thread_messages=thread_messages,
+            msg_content=msg,
             channel_to_respond=channel,
-            msg_to_respond=cast(str, message_ts or thread_ts),
+            msg_to_respond=cast(str, thread_ts or message_ts),
             sender=event.get("user") or None,
             bipass_filters=tagged,
             is_bot_msg=False,
@@ -195,10 +178,8 @@ def build_request_details(
         msg = req.payload["text"]
         sender = req.payload["user_id"]
 
-        single_msg = ThreadMessage(message=msg, sender=None, role=MessageType.USER)
-
         return SlackMessageInfo(
-            thread_messages=[single_msg],
+            msg_content=msg,
             channel_to_respond=channel,
             msg_to_respond=None,
             sender=sender,
@@ -316,7 +297,7 @@ def _initialize_socket_client(socket_client: SocketModeClient) -> None:
 # NOTE: we are using Web Sockets so that you can run this from within a firewalled VPC
 # without issue.
 if __name__ == "__main__":
-    warm_up_models(skip_cross_encoders=not ENABLE_RERANKING_ASYNC_FLOW)
+    warm_up_models(skip_cross_encoders=SKIP_RERANKING)
 
     slack_bot_tokens: SlackBotTokens | None = None
     socket_client: SocketModeClient | None = None

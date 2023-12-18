@@ -266,16 +266,3 @@ export function groupSessionsByDateRange(chatSessions: ChatSession[]) {
 
   return groups;
 }
-
-export function getLastSuccessfulMessageId(messageHistory: Message[]) {
-  const lastSuccessfulMessage = messageHistory
-    .slice()
-    .reverse()
-    .find(
-      (message) =>
-        message.type === "assistant" &&
-        message.messageId !== -1 &&
-        message.messageId !== null
-    );
-  return lastSuccessfulMessage ? lastSuccessfulMessage?.messageId : null;
-}

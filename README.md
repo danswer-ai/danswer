@@ -11,7 +11,7 @@
 <a href="https://docs.danswer.dev/" target="_blank">
     <img src="https://img.shields.io/badge/docs-view-blue" alt="Documentation">
 </a>
-<a href="https://join.slack.com/t/danswer/shared_invite/zt-1u3h3ke3b-VGh1idW19R8oiNRiKBYv2w" target="_blank">
+<a href="https://join.slack.com/t/danswer/shared_invite/zt-1u5ycen3o-6SJbWfivLWP5LPyp_jftuw" target="_blank">
     <img src="https://img.shields.io/badge/slack-join-blue.svg?logo=slack" alt="Slack">
 </a>
 <a href="https://discord.gg/TDJ59cGV2X" target="_blank">
@@ -47,11 +47,11 @@ Danswer can easily be tested locally or deployed on a virtual machine with a sin
 We also have built-in support for deployment on Kubernetes. Files for that can be found [here](https://github.com/danswer-ai/danswer/tree/main/deployment/kubernetes).
 
 ## 💃 Features 
-* Direct QA + Chat powered by Generative AI models with answers backed by quotes and source links.
+* Direct QA powered by Generative AI models with answers backed by quotes and source links.
 * Intelligent Document Retrieval (Hybrid Search + Reranking) using the latest NLP models.
 * Automatic time/source filter extraction from natural language + custom model to identify user intent.
 * User authentication and document level access management.
-* Support for LLMs of your choice (GPT-4, Mixstral, Llama2, etc.)
+* Support for LLMs of your choice (GPT-4, Llama2, Orca, etc.)
 * Management Dashboards to manage connectors and set up features such as live update fetching.
 * One line Docker Compose (or Kubernetes) deployment to host Danswer anywhere.
 
@@ -63,7 +63,6 @@ Efficiently pulls the latest changes from:
   * Google Drive
   * Confluence
   * Jira
-  * Zendesk
   * Notion
   * Gong
   * Slab
@@ -80,10 +79,11 @@ Efficiently pulls the latest changes from:
   * With more to come...
 
 ## 🚧 Roadmap
+* Chat/Conversation support.
 * Organizational understanding.
-* Ability to locate and suggest experts from your team.
 * Code Search
 * Structured Query Languages (SQL, Excel formulas, etc.)
+* Ability to locate and suggest experts from your team.
 
 ## 💡 Contributing
 Looking to contribute? Please check out the [Contribution Guide](CONTRIBUTING.md) for more details.

@@ -1,10 +1,8 @@
 from pydantic import BaseModel
 
-from danswer.one_shot_answer.models import ThreadMessage
-
 
 class SlackMessageInfo(BaseModel):
-    thread_messages: list[ThreadMessage]
+    msg_content: str
     channel_to_respond: str
     msg_to_respond: str | None
     sender: str | None
