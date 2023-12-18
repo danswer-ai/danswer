@@ -15,7 +15,7 @@ from danswer.db.chat import upsert_persona
 from danswer.db.document_set import get_document_sets_by_ids
 from danswer.db.engine import get_session
 from danswer.db.models import User
-from danswer.one_shot_answer.qa_block import PromptBasedQAHandler
+from danswer.one_shot_answer.qa_block import build_dummy_prompt
 from danswer.server.features.persona.models import CreatePersonaRequest
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.features.persona.models import PromptTemplateResponse
@@ -149,9 +149,11 @@ def build_final_template_prompt(
     _: User | None = Depends(current_user),
 ) -> PromptTemplateResponse:
     return PromptTemplateResponse(
-        final_prompt_template=PromptBasedQAHandler(
-            system_prompt=system_prompt, task_prompt=task_prompt
-        ).build_dummy_prompt(retrieval_disabled=retrieval_disabled)
+        final_prompt_template=build_dummy_prompt(
+            system_prompt=system_prompt,
+            task_prompt=task_prompt,
+            retrieval_disabled=retrieval_disabled,
+        )
     )
 
 

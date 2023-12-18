@@ -59,6 +59,22 @@ def multilingual_query_expansion(
         return query_rephrases
 
 
+def get_contextual_rephrase_messages(
+    question: str,
+    history_str: str,
+) -> list[dict[str, str]]:
+    messages = [
+        {
+            "role": "user",
+            "content": HISTORY_QUERY_REPHRASE.format(
+                question=question, chat_history=history_str
+            ),
+        },
+    ]
+
+    return messages
+
+
 def history_based_query_rephrase(
     query_message: ChatMessage,
     history: list[ChatMessage],
@@ -66,21 +82,6 @@ def history_based_query_rephrase(
     size_heuristic: int = 200,
     punctuation_heuristic: int = 10,
 ) -> str:
-    def _get_history_rephrase_messages(
-        question: str,
-        history_str: str,
-    ) -> list[dict[str, str]]:
-        messages = [
-            {
-                "role": "user",
-                "content": HISTORY_QUERY_REPHRASE.format(
-                    question=question, chat_history=history_str
-                ),
-            },
-        ]
-
-        return messages
-
     user_query = cast(str, query_message.message)
 
     if not user_query:
@@ -98,7 +99,38 @@ def history_based_query_rephrase(
 
     history_str = combine_message_chain(history)
 
-    prompt_msgs = _get_history_rephrase_messages(
+    prompt_msgs = get_contextual_rephrase_messages(
+        question=user_query, history_str=history_str
+    )
+
+    if llm is None:
+        llm = get_default_llm()
+
+    filled_llm_prompt = dict_based_prompt_to_langchain_prompt(prompt_msgs)
+    rephrased_query = llm.invoke(filled_llm_prompt)
+
+    logger.debug(f"Rephrased combined query: {rephrased_query}")
+
+    return rephrased_query
+
+
+def thread_based_query_rephrase(
+    user_query: str,
+    history_str: str,
+    llm: LLM | None = None,
+    size_heuristic: int = 200,
+    punctuation_heuristic: int = 10,
+) -> str:
+    if not history_str:
+        return user_query
+
+    if len(user_query) >= size_heuristic:
+        return user_query
+
+    if count_punctuation(user_query) >= punctuation_heuristic:
+        return user_query
+
+    prompt_msgs = get_contextual_rephrase_messages(
         question=user_query, history_str=history_str
     )
 
