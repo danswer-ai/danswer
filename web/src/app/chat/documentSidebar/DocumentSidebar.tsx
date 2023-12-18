@@ -45,13 +45,11 @@ export function DocumentSidebar({
     <div
       className={`
       flex-initial 
-      w-document-sidebar
-      border-l 
-      border-border 
       overflow-y-hidden
       flex
       flex-col
       pt-4
+      w-full
       `}
       id="document-sidebar"
     >
@@ -117,7 +115,7 @@ export function DocumentSidebar({
             </div>
           </div>
         ) : (
-          <div className="ml-4">
+          <div className="ml-4 mr-3">
             <Text>
               When you run ask a question, the retrieved documents will show up
               here!
