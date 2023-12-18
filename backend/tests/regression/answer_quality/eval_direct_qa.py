@@ -9,11 +9,9 @@ import yaml
 from sqlalchemy.orm import Session
 
 from danswer.chat.models import LLMMetricsContainer
-from danswer.configs.constants import MessageType
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.one_shot_answer.answer_question import get_one_shot_answer
 from danswer.one_shot_answer.models import DirectQARequest
-from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.models import IndexFilters
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RerankMetricsContainer
@@ -86,10 +84,8 @@ def get_answer_for_question(
         access_control_list=None,
     )
 
-    messages = [ThreadMessage(message=query, sender=None, role=MessageType.USER)]
-
     new_message_request = DirectQARequest(
-        messages=messages,
+        query=query,
         prompt_id=0,
         persona_id=0,
         retrieval_options=RetrievalDetails(

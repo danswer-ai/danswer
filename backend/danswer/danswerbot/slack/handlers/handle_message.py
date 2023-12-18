@@ -86,20 +86,19 @@ def handle_message(
     Query thrown out by filters due to config does not count as a failure that should be notified
     Danswer failing to answer/retrieve docs does count and should be notified
     """
+    msg = message_info.msg_content
     channel = message_info.channel_to_respond
-
-    logger = cast(
-        logging.Logger,
-        ChannelIdAdapter(logger_base, extra={SLACK_CHANNEL_ID: channel}),
-    )
-
-    messages = message_info.thread_messages
     message_ts_to_respond_to = message_info.msg_to_respond
     sender_id = message_info.sender
     bipass_filters = message_info.bipass_filters
     is_bot_msg = message_info.is_bot_msg
 
     engine = get_sqlalchemy_engine()
+
+    logger = cast(
+        logging.Logger,
+        ChannelIdAdapter(logger_base, extra={SLACK_CHANNEL_ID: channel}),
+    )
 
     document_set_names: list[str] | None = None
     persona = channel_config.persona if channel_config else None
@@ -134,7 +133,7 @@ def handle_message(
 
             if (
                 "questionmark_prefilter" in channel_conf["answer_filters"]
-                and "?" not in messages[-1].message
+                and "?" not in msg
             ):
                 logger.info(
                     "Skipping message since it does not contain a question mark"
@@ -224,7 +223,7 @@ def handle_message(
         # This includes throwing out answer via reflexion
         answer = _get_answer(
             DirectQARequest(
-                messages=messages,
+                query=msg,
                 prompt_id=prompt.id if prompt else None,
                 persona_id=persona.id if persona is not None else 0,
                 retrieval_options=retrieval_details,
@@ -276,9 +275,7 @@ def handle_message(
 
     top_docs = retrieval_info.top_documents
     if not top_docs and not should_respond_even_with_no_docs:
-        logger.error(
-            f"Unable to answer question: '{answer.rephrase}' - no documents found"
-        )
+        logger.error(f"Unable to answer question: '{msg}' - no documents found")
         # Optionally, respond in thread with the error message
         # Used primarily for debugging purposes
         if should_respond_with_error_msgs:
@@ -299,7 +296,7 @@ def handle_message(
         return True
 
     # If called with the DanswerBot slash command, the question is lost so we have to reshow it
-    restate_question_block = get_restate_blocks(messages[-1].message, is_bot_msg)
+    restate_question_block = get_restate_blocks(msg, is_bot_msg)
 
     answer_blocks = build_qa_response_blocks(
         message_id=answer.chat_message_id,

@@ -163,8 +163,9 @@ def get_answer_with_quote(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
-    query = query_request.messages[0].message
-    logger.info(f"Received query for one shot answer with quotes: {query}")
+    logger.info(
+        f"Received query for one shot answer with quotes: {query_request.query}"
+    )
     packets = stream_one_shot_answer(
         query_req=query_request, user=user, db_session=db_session
     )
