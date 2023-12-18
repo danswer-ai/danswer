@@ -8,7 +8,6 @@ export function ErrorCallout({
   errorTitle?: string;
   errorMsg?: string;
 }) {
-  console.log(errorMsg);
   return (
     <div>
       <Callout
