@@ -16,12 +16,16 @@ module.exports = {
     transparent: "transparent",
     current: "currentColor",
     extend: {
+      screens: {
+        "3xl": "1700px",
+      },
       fontFamily: {
         sans: ["var(--font-inter)"],
       },
       width: {
-        "message-small": "550px",
+        "message-small": "600px",
         "message-default": "740px",
+        "searchbar-small": "710px",
         searchbar: "850px",
         "document-sidebar": "800px",
         "document-sidebar-large": "1000px",
