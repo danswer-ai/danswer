@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
-from danswer.configs.model_configs import SKIP_RERANKING
+from danswer.configs.model_configs import ENABLE_RERANKING_ASYNC_FLOW
 from danswer.danswerbot.slack.config import get_slack_bot_config_for_channel
 from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
 from danswer.danswerbot.slack.handlers.handle_feedback import handle_slack_feedback
@@ -184,7 +184,7 @@ def build_request_details(
         return SlackMessageInfo(
             thread_messages=thread_messages,
             channel_to_respond=channel,
-            msg_to_respond=cast(str, thread_ts or message_ts),
+            msg_to_respond=cast(str, message_ts or thread_ts),
             sender=event.get("user") or None,
             bipass_filters=tagged,
             is_bot_msg=False,
@@ -316,7 +316,7 @@ def _initialize_socket_client(socket_client: SocketModeClient) -> None:
 # NOTE: we are using Web Sockets so that you can run this from within a firewalled VPC
 # without issue.
 if __name__ == "__main__":
-    warm_up_models(skip_cross_encoders=SKIP_RERANKING)
+    warm_up_models(skip_cross_encoders=not ENABLE_RERANKING_ASYNC_FLOW)
 
     slack_bot_tokens: SlackBotTokens | None = None
     socket_client: SocketModeClient | None = None
