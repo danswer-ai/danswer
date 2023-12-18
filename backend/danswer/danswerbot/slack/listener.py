@@ -91,7 +91,13 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
         message_ts = event.get("ts")
         thread_ts = event.get("thread_ts")
         # Pick the root of the thread (if a thread exists)
-        if thread_ts and message_ts != thread_ts and event_type != "app_mention":
+        # Can respond in thread if it's an "im" directly to Danswer or @DanswerBot is tagged
+        if (
+            thread_ts
+            and message_ts != thread_ts
+            and event_type != "app_mention"
+            and event.get("channel_type") != "im"
+        ):
             channel_specific_logger.debug(
                 "Skipping message since it is not the root of a thread"
             )
