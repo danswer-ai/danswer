@@ -214,7 +214,9 @@ def build_qa_response_blocks(
             text="Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓"
         )
     else:
-        answer_block = SectionBlock(text=remove_slack_text_interactions(answer))
+        answer_processed = remove_slack_text_interactions(answer)
+        answer_processed = answer_processed.encode("utf-8").decode("unicode_escape")
+        answer_block = SectionBlock(text=answer_processed)
         if quotes:
             quotes_blocks = build_quotes_block(quotes)
 

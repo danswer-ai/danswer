@@ -13,15 +13,32 @@ from slack_sdk.models.blocks import Block
 from slack_sdk.models.metadata import Metadata
 
 from danswer.configs.constants import ID_SEPARATOR
+from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.connectors.slack.utils import SlackTextCleaner
 from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
 from danswer.danswerbot.slack.tokens import fetch_tokens
+from danswer.one_shot_answer.models import ThreadMessage
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import replace_whitespaces_w_space
 
 logger = setup_logger()
+
+
+DANSWER_BOT_APP_ID: str | None = None
+
+
+def get_danswer_bot_app_id(web_client: WebClient) -> Any:
+    global DANSWER_BOT_APP_ID
+    if DANSWER_BOT_APP_ID is None:
+        DANSWER_BOT_APP_ID = web_client.auth_test().get("user_id")
+    return DANSWER_BOT_APP_ID
+
+
+def remove_danswer_bot_tag(message_str: str, client: WebClient) -> str:
+    bot_tag_id = get_danswer_bot_app_id(web_client=client)
+    return re.sub(rf"<@{bot_tag_id}>\s", "", message_str)
 
 
 class ChannelIdAdapter(logging.LoggerAdapter):
@@ -199,3 +216,57 @@ def fetch_userids_from_emails(user_emails: list[str], client: WebClient) -> list
         )
 
     return user_ids
+
+
+def fetch_user_semantic_id_from_id(user_id: str, client: WebClient) -> str | None:
+    response = client.users_info(user=user_id)
+    if not response["ok"]:
+        return None
+
+    user: dict = cast(dict[Any, dict], response.data).get("user", {})
+
+    return (
+        user.get("real_name")
+        or user.get("name")
+        or user.get("profile", {}).get("email")
+    )
+
+
+def read_slack_thread(
+    channel: str, thread: str, client: WebClient
+) -> list[ThreadMessage]:
+    thread_messages: list[ThreadMessage] = []
+    response = client.conversations_replies(channel=channel, ts=thread)
+    replies = cast(dict, response.data).get("messages", [])
+    for reply in replies:
+        if "user" in reply and "bot_id" not in reply:
+            message = remove_danswer_bot_tag(reply["text"], client=client)
+            user_sem_id = fetch_user_semantic_id_from_id(reply["user"], client)
+            message_type = MessageType.USER
+        else:
+            self_app_id = get_danswer_bot_app_id(client)
+
+            # Only include bot messages from Danswer, other bots are not taken in as context
+            if self_app_id != reply.get("user"):
+                continue
+
+            blocks = reply["blocks"]
+            if len(blocks) <= 1:
+                continue
+
+            # The useful block is the second one after the header block that says AI Answer
+            message = reply["blocks"][1]["text"]["text"]
+
+            if message.startswith("_Filters"):
+                if len(blocks) <= 2:
+                    continue
+                message = reply["blocks"][2]["text"]["text"]
+
+            user_sem_id = "Assistant"
+            message_type = MessageType.ASSISTANT
+
+        thread_messages.append(
+            ThreadMessage(message=message, sender=user_sem_id, role=message_type)
+        )
+
+    return thread_messages
