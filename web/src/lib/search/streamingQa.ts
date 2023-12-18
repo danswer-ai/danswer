@@ -34,9 +34,9 @@ export const searchRequestStreamed = async ({
     const filters = buildFilters(sources, documentSets, timeRange);
 
     const threadMessage = {
-        message: query,
-        sender: null,
-        role: "user"
+      message: query,
+      sender: null,
+      role: "user",
     };
 
     const response = await fetch("/api/query/stream-answer-with-quote", {

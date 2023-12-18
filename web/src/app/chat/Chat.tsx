@@ -18,6 +18,7 @@ import {
   createChatSession,
   getCitedDocumentsFromMessage,
   getHumanAndAIMessageFromMessageNumber,
+  getLastSuccessfulMessageId,
   handleAutoScroll,
   handleChatFeedback,
   nameChatSession,
@@ -205,12 +206,11 @@ export const Chat = ({
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
     try {
+      const lastSuccessfulMessageId =
+        getLastSuccessfulMessageId(currMessageHistory);
       for await (const packetBunch of sendMessage({
         message: currMessage,
-        parentMessageId:
-          currMessageHistory.length > 0
-            ? currMessageHistory[currMessageHistory.length - 1].messageId
-            : null,
+        parentMessageId: lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
         // if search-only set prompt to null to tell backend to not give an answer
         promptId:
