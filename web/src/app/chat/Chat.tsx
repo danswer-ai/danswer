@@ -18,7 +18,6 @@ import {
   createChatSession,
   getCitedDocumentsFromMessage,
   getHumanAndAIMessageFromMessageNumber,
-  getLastSuccessfulMessageId,
   handleAutoScroll,
   handleChatFeedback,
   nameChatSession,
@@ -36,8 +35,6 @@ import { buildFilters } from "@/lib/search/utils";
 import { QA, SearchTypeSelector } from "./modifiers/SearchTypeSelector";
 import { SelectedDocuments } from "./modifiers/SelectedDocuments";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { ResizableSection } from "@/components/resizable/ResizableSection";
-import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -48,7 +45,6 @@ export const Chat = ({
   availableSources,
   availableDocumentSets,
   availablePersonas,
-  documentSidebarInitialWidth,
   shouldhideBeforeScroll,
 }: {
   existingChatSessionId: number | null;
@@ -57,7 +53,6 @@ export const Chat = ({
   availableSources: ValidSources[];
   availableDocumentSets: DocumentSet[];
   availablePersonas: Persona[];
-  documentSidebarInitialWidth?: number;
   shouldhideBeforeScroll?: boolean;
 }) => {
   const router = useRouter();
@@ -118,6 +113,7 @@ export const Chat = ({
   });
 
   // scroll to bottom initially
+  console.log(shouldhideBeforeScroll);
   const [hasPerformedInitialScroll, setHasPerformedInitialScroll] = useState(
     shouldhideBeforeScroll !== true
   );
@@ -143,35 +139,6 @@ export const Chat = ({
       )}px`;
     }
   }, [message]);
-
-  // used for resizing of the document sidebar
-  const masterFlexboxRef = useRef<HTMLDivElement>(null);
-  const [maxDocumentSidebarWidth, setMaxDocumentSidebarWidth] = useState<
-    number | null
-  >(null);
-  const adjustDocumentSidebarWidth = () => {
-    if (masterFlexboxRef.current && document.documentElement.clientWidth) {
-      // numbers below are based on the actual width the center section for different
-      // screen sizes. `1700` corresponds to the custom "3xl" tailwind breakpoint
-      // NOTE: some buffer is needed to account for scroll bars
-      setMaxDocumentSidebarWidth(
-        masterFlexboxRef.current.clientWidth -
-          (document.documentElement.clientWidth > 1700 ? 950 : 810)
-      );
-    }
-  };
-  useEffect(() => {
-    adjustDocumentSidebarWidth(); // Adjust the width on initial render
-    window.addEventListener("resize", adjustDocumentSidebarWidth); // Add resize event listener
-
-    return () => {
-      window.removeEventListener("resize", adjustDocumentSidebarWidth); // Cleanup the event listener
-    };
-  }, []);
-
-  if (!documentSidebarInitialWidth && maxDocumentSidebarWidth) {
-    documentSidebarInitialWidth = Math.min(700, maxDocumentSidebarWidth);
-  }
 
   const onSubmit = async (messageOverride?: string) => {
     let currChatSessionId: number;
@@ -206,11 +173,12 @@ export const Chat = ({
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
     try {
-      const lastSuccessfulMessageId =
-        getLastSuccessfulMessageId(currMessageHistory);
       for await (const packetBunch of sendMessage({
         message: currMessage,
-        parentMessageId: lastSuccessfulMessageId,
+        parentMessageId:
+          currMessageHistory.length > 0
+            ? currMessageHistory[currMessageHistory.length - 1].messageId
+            : null,
         chatSessionId: currChatSessionId,
         // if search-only set prompt to null to tell backend to not give an answer
         promptId:
@@ -333,7 +301,7 @@ export const Chat = ({
   };
 
   return (
-    <div className="flex w-full overflow-x-hidden" ref={masterFlexboxRef}>
+    <div className="flex w-full overflow-x-hidden">
       {popup}
       {currentFeedback && (
         <FeedbackModal
@@ -346,156 +314,154 @@ export const Chat = ({
         />
       )}
 
-      {documentSidebarInitialWidth !== undefined ? (
-        <>
-          <div className="w-full sm:relative">
-            <div
-              className="w-full h-screen flex flex-col overflow-y-auto relative"
-              ref={scrollableDivRef}
-            >
-              {selectedPersona && (
-                <div className="sticky top-0 left-80 z-10 w-full bg-background/90">
-                  <div className="ml-2 p-1 rounded mt-2 w-fit">
-                    <ChatPersonaSelector
-                      personas={availablePersonas}
-                      selectedPersonaId={selectedPersona?.id}
-                      onPersonaChange={(persona) => {
-                        if (persona) {
-                          setSelectedPersona(persona);
+      <div className="w-full sm:relative">
+        <div
+          className="w-full h-screen flex flex-col overflow-y-auto relative"
+          ref={scrollableDivRef}
+        >
+          {selectedPersona && (
+            <div className="sticky top-0 left-80 z-10 w-full bg-background/90">
+              <div className="ml-2 p-1 rounded mt-2 w-fit">
+                <ChatPersonaSelector
+                  personas={availablePersonas}
+                  selectedPersonaId={selectedPersona?.id}
+                  onPersonaChange={(persona) => {
+                    if (persona) {
+                      setSelectedPersona(persona);
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {messageHistory.length === 0 && !isStreaming && (
+            <div className="flex justify-center items-center h-full">
+              <div>
+                <div className="flex">
+                  <div className="mx-auto h-[80px] w-[80px]">
+                    <Image
+                      src="/logo.png"
+                      alt="Logo"
+                      width="1419"
+                      height="1520"
+                    />
+                  </div>
+                </div>
+                <div className="text-2xl font-bold text-strong p-4">
+                  What are you looking for today?
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div
+            className={
+              "mt-4 pt-12 sm:pt-0 mx-8" +
+              (hasPerformedInitialScroll ? "" : " invisible")
+            }
+          >
+            {messageHistory.map((message, i) => {
+              if (message.type === "user") {
+                return (
+                  <div key={i}>
+                    <HumanMessage content={message.message} />
+                  </div>
+                );
+              } else if (message.type === "assistant") {
+                const isShowingRetrieved =
+                  (selectedMessageForDocDisplay !== null &&
+                    selectedMessageForDocDisplay === message.messageId) ||
+                  (selectedMessageForDocDisplay === -1 &&
+                    i === messageHistory.length - 1);
+                return (
+                  <div key={i}>
+                    <AIMessage
+                      messageId={message.messageId}
+                      content={message.message}
+                      query={messageHistory[i]?.query || undefined}
+                      citedDocuments={getCitedDocumentsFromMessage(message)}
+                      isComplete={
+                        i !== messageHistory.length - 1 || !isStreaming
+                      }
+                      hasDocs={
+                        (message.documents && message.documents.length > 0) ===
+                        true
+                      }
+                      handleFeedback={
+                        i === messageHistory.length - 1 && isStreaming
+                          ? undefined
+                          : (feedbackType) =>
+                              setCurrentFeedback([
+                                feedbackType,
+                                message.messageId as number,
+                              ])
+                      }
+                      isCurrentlyShowingRetrieved={isShowingRetrieved}
+                      handleShowRetrieved={(messageNumber) => {
+                        if (isShowingRetrieved) {
+                          setSelectedMessageForDocDisplay(null);
+                        } else {
+                          if (messageNumber !== null) {
+                            setSelectedMessageForDocDisplay(messageNumber);
+                          } else {
+                            setSelectedMessageForDocDisplay(-1);
+                          }
                         }
                       }}
                     />
                   </div>
-                </div>
-              )}
-
-              {messageHistory.length === 0 && !isStreaming && (
-                <div className="flex justify-center items-center h-full">
-                  <div className="px-8 w-searchbar-small 3xl:w-searchbar">
-                    <div className="flex">
-                      <div className="mx-auto h-[80px] w-[80px]">
-                        <Image
-                          src="/logo.png"
-                          alt="Logo"
-                          width="1419"
-                          height="1520"
-                        />
-                      </div>
-                    </div>
-                    <div className="mx-auto text-2xl font-bold text-strong p-4 w-fit">
-                      What are you looking for today?
-                    </div>
+                );
+              } else {
+                return (
+                  <div key={i}>
+                    <AIMessage
+                      messageId={message.messageId}
+                      content={
+                        <p className="text-red-700 text-sm my-auto">
+                          {message.message}
+                        </p>
+                      }
+                    />
                   </div>
+                );
+              }
+            })}
+
+            {isStreaming &&
+              messageHistory.length &&
+              messageHistory[messageHistory.length - 1].type === "user" && (
+                <div key={messageHistory.length}>
+                  <AIMessage
+                    messageId={null}
+                    content={
+                      <div className="text-sm my-auto">
+                        <ThreeDots
+                          height="30"
+                          width="50"
+                          color="#3b82f6"
+                          ariaLabel="grid-loading"
+                          radius="12.5"
+                          wrapperStyle={{}}
+                          wrapperClass=""
+                          visible={true}
+                        />
+                      </div>
+                    }
+                  />
                 </div>
               )}
 
-              <div
-                className={
-                  "mt-4 pt-12 sm:pt-0 mx-8" +
-                  (hasPerformedInitialScroll ? "" : " invisible")
-                }
-              >
-                {messageHistory.map((message, i) => {
-                  if (message.type === "user") {
-                    return (
-                      <div key={i}>
-                        <HumanMessage content={message.message} />
-                      </div>
-                    );
-                  } else if (message.type === "assistant") {
-                    const isShowingRetrieved =
-                      (selectedMessageForDocDisplay !== null &&
-                        selectedMessageForDocDisplay === message.messageId) ||
-                      (selectedMessageForDocDisplay === -1 &&
-                        i === messageHistory.length - 1);
-                    return (
-                      <div key={i}>
-                        <AIMessage
-                          messageId={message.messageId}
-                          content={message.message}
-                          query={messageHistory[i]?.query || undefined}
-                          citedDocuments={getCitedDocumentsFromMessage(message)}
-                          isComplete={
-                            i !== messageHistory.length - 1 || !isStreaming
-                          }
-                          hasDocs={
-                            (message.documents &&
-                              message.documents.length > 0) === true
-                          }
-                          handleFeedback={
-                            i === messageHistory.length - 1 && isStreaming
-                              ? undefined
-                              : (feedbackType) =>
-                                  setCurrentFeedback([
-                                    feedbackType,
-                                    message.messageId as number,
-                                  ])
-                          }
-                          isCurrentlyShowingRetrieved={isShowingRetrieved}
-                          handleShowRetrieved={(messageNumber) => {
-                            if (isShowingRetrieved) {
-                              setSelectedMessageForDocDisplay(null);
-                            } else {
-                              if (messageNumber !== null) {
-                                setSelectedMessageForDocDisplay(messageNumber);
-                              } else {
-                                setSelectedMessageForDocDisplay(-1);
-                              }
-                            }
-                          }}
-                        />
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <div key={i}>
-                        <AIMessage
-                          messageId={message.messageId}
-                          content={
-                            <p className="text-red-700 text-sm my-auto">
-                              {message.message}
-                            </p>
-                          }
-                        />
-                      </div>
-                    );
-                  }
-                })}
+            {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
+            <div className={`min-h-[200px] w-full`}></div>
 
-                {isStreaming &&
-                  messageHistory.length &&
-                  messageHistory[messageHistory.length - 1].type === "user" && (
-                    <div key={messageHistory.length}>
-                      <AIMessage
-                        messageId={null}
-                        content={
-                          <div className="text-sm my-auto">
-                            <ThreeDots
-                              height="30"
-                              width="50"
-                              color="#3b82f6"
-                              ariaLabel="grid-loading"
-                              radius="12.5"
-                              wrapperStyle={{}}
-                              wrapperClass=""
-                              visible={true}
-                            />
-                          </div>
-                        }
-                      />
-                    </div>
-                  )}
+            <div ref={endDivRef} />
+          </div>
+        </div>
 
-                {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
-                <div className={`min-h-[200px] w-full`}></div>
-
-                <div ref={endDivRef} />
-              </div>
-            </div>
-
-            <div className="absolute bottom-0 z-10 w-full bg-background border-t border-border">
-              <div className="w-full pb-4 pt-2">
-                {/* {(isStreaming || messageHistory.length > 0) && (
+        <div className="absolute bottom-0 z-10 w-full bg-background border-t border-border">
+          <div className="w-full pb-4 pt-2">
+            {/* {(isStreaming || messageHistory.length > 0) && (
               <div className="flex justify-center w-full">
                 <div className="w-[800px] flex">
                   <div className="cursor-pointer flex w-fit p-2 rounded border border-neutral-400 text-sm hover:bg-neutral-200 ml-auto mr-4">
@@ -525,35 +491,33 @@ export const Chat = ({
               </div>
             )} */}
 
-                <div className="flex">
-                  <div className="w-searchbar-small 3xl:w-searchbar mx-auto px-4 pt-1 flex">
-                    <div className="mr-3">
-                      <SearchTypeSelector
-                        selectedSearchType={selectedSearchType}
-                        setSelectedSearchType={setSelectedSearchType}
-                      />
-                    </div>
-
-                    {selectedDocuments.length > 0 ? (
-                      <SelectedDocuments
-                        selectedDocuments={selectedDocuments}
-                      />
-                    ) : (
-                      <ChatFilters
-                        {...filterManager}
-                        existingSources={availableSources}
-                        availableDocumentSets={availableDocumentSets}
-                      />
-                    )}
-                  </div>
+            <div className="flex">
+              <div className="w-searchbar mx-auto px-4 pt-1 flex">
+                <div className="mr-3">
+                  <SearchTypeSelector
+                    selectedSearchType={selectedSearchType}
+                    setSelectedSearchType={setSelectedSearchType}
+                  />
                 </div>
 
-                <div className="flex justify-center py-2 max-w-screen-lg mx-auto mb-2">
-                  <div className="w-full shrink relative px-4 w-searchbar-small 3xl:w-searchbar mx-auto">
-                    <textarea
-                      ref={textareaRef}
-                      autoFocus
-                      className={`
+                {selectedDocuments.length > 0 ? (
+                  <SelectedDocuments selectedDocuments={selectedDocuments} />
+                ) : (
+                  <ChatFilters
+                    {...filterManager}
+                    existingSources={availableSources}
+                    availableDocumentSets={availableDocumentSets}
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-center py-2 max-w-screen-lg mx-auto mb-2">
+              <div className="w-full shrink relative px-4 w-searchbar mx-auto">
+                <textarea
+                  ref={textareaRef}
+                  autoFocus
+                  className={`
                     opacity-100
                     w-full
                     shrink
@@ -578,59 +542,42 @@ export const Chat = ({
                     overscroll-contain
                     resize-none
                     `}
-                      style={{ scrollbarWidth: "thin" }}
-                      role="textarea"
-                      aria-multiline
-                      placeholder="Ask me anything..."
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" && !event.shiftKey) {
-                          onSubmit();
-                          event.preventDefault();
-                        }
-                      }}
-                      suppressContentEditableWarning={true}
+                  style={{ scrollbarWidth: "thin" }}
+                  role="textarea"
+                  aria-multiline
+                  placeholder="Ask me anything..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      onSubmit();
+                      event.preventDefault();
+                    }
+                  }}
+                  suppressContentEditableWarning={true}
+                />
+                <div className="absolute bottom-4 right-10">
+                  <div className={"cursor-pointer"} onClick={() => onSubmit()}>
+                    <FiSend
+                      size={18}
+                      className={
+                        "text-emphasis w-9 h-9 p-2 rounded-lg " +
+                        (message ? "bg-blue-200" : "")
+                      }
                     />
-                    <div className="absolute bottom-4 right-10">
-                      <div
-                        className={"cursor-pointer"}
-                        onClick={() => onSubmit()}
-                      >
-                        <FiSend
-                          size={18}
-                          className={
-                            "text-emphasis w-9 h-9 p-2 rounded-lg " +
-                            (message ? "bg-blue-200" : "")
-                          }
-                        />
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
-          <ResizableSection
-            intialWidth={documentSidebarInitialWidth}
-            minWidth={400}
-            maxWidth={maxDocumentSidebarWidth || undefined}
-          >
-            <DocumentSidebar
-              selectedMessage={aiMessage}
-              selectedDocuments={selectedDocuments}
-              setSelectedDocuments={setSelectedDocuments}
-            />
-          </ResizableSection>
-        </>
-      ) : (
-        <div className="mx-auto h-full flex flex-col">
-          <div className="my-auto">
-            <DanswerInitializingLoader />
-          </div>
         </div>
-      )}
+      </div>
+
+      <DocumentSidebar
+        selectedMessage={aiMessage}
+        selectedDocuments={selectedDocuments}
+        setSelectedDocuments={setSelectedDocuments}
+      />
     </div>
   );
 };

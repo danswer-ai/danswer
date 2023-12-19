@@ -15,8 +15,6 @@ import { Persona } from "../admin/personas/interfaces";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { WelcomeModal } from "@/components/WelcomeModal";
 import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
-import { cookies } from "next/headers";
-import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/contants";
 
 export default async function ChatPage({
   chatId,
@@ -177,13 +175,6 @@ export default async function ChatPage({
     );
   }
 
-  const documentSidebarCookieInitialWidth = cookies().get(
-    DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME
-  );
-  const finalDocumentSidebarInitialWidth = documentSidebarCookieInitialWidth
-    ? parseInt(documentSidebarCookieInitialWidth.value)
-    : undefined;
-
   return (
     <>
       <InstantSSRAutoRefresh />
@@ -205,7 +196,6 @@ export default async function ChatPage({
           availableSources={availableSources}
           availableDocumentSets={documentSets}
           availablePersonas={personas}
-          documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
           shouldhideBeforeScroll={shouldhideBeforeScroll}
         />
       </div>

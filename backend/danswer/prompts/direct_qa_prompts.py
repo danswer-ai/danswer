@@ -2,36 +2,24 @@
 # It is used also for the one shot direct QA flow
 import json
 
-from danswer.prompts.constants import FINAL_QUERY_PAT
+from danswer.prompts.constants import ANSWER_PAT
 from danswer.prompts.constants import GENERAL_SEP_PAT
 from danswer.prompts.constants import QUESTION_PAT
+from danswer.prompts.constants import QUOTE_PAT
 from danswer.prompts.constants import THOUGHT_PAT
 from danswer.prompts.constants import UNCERTAINTY_PAT
 
 
-ONE_SHOT_SYSTEM_PROMPT = """
+QA_HEADER = """
 You are a question answering system that is constantly learning and improving.
 You can process and comprehend vast amounts of text and utilize this knowledge to provide \
 accurate and detailed answers to diverse queries.
 """.strip()
 
-ONE_SHOT_TASK_PROMPT = """
-Answer the final query below taking into account the context above where relevant. \
-Ignore any provided context that is not relevant to the query.
-""".strip()
-
-
-WEAK_MODEL_SYSTEM_PROMPT = """
-Respond to the user query using the following reference document.
-""".lstrip()
-
-WEAK_MODEL_TASK_PROMPT = """
-Answer the user query below based on the reference document above.
-"""
-
 
 REQUIRE_JSON = """
-You ALWAYS responds with ONLY a JSON containing an answer and quotes that support the answer.
+You ALWAYS responds with only a json containing an answer and quotes that support the answer.
+Your responses are as INFORMATIVE and DETAILED as possible.
 """.strip()
 
 
@@ -43,21 +31,6 @@ Quotes MUST be EXACT substrings from provided documents!
 
 LANGUAGE_HINT = """
 IMPORTANT: Respond in the same language as my query!
-"""
-
-
-CONTEXT_BLOCK = f"""
-REFERENCE DOCUMENTS:
-{GENERAL_SEP_PAT}
-{{context_docs_str}}
-{GENERAL_SEP_PAT}
-"""
-
-HISTORY_BLOCK = f"""
-CONVERSATION HISTORY:
-{GENERAL_SEP_PAT}
-{{history_str}}
-{GENERAL_SEP_PAT}
 """
 
 
@@ -75,22 +48,44 @@ ANSWER_NOT_FOUND_RESPONSE = f'{{"answer": "{UNCERTAINTY_PAT}", "quotes": []}}'
 
 
 # Default json prompt which can reference multiple docs and provide answer + quotes
-# system_like_header is similar to system message, can be user provided or defaults to QA_HEADER
-# context/history blocks are for context documents and conversation history, they can be blank
-# task prompt is the task message of the prompt, can be blank, there is no default
 JSON_PROMPT = f"""
-{{system_prompt}}
+{QA_HEADER}
 {REQUIRE_JSON}
-{{context_block}}{{history_block}}{{task_prompt}}
 
-SAMPLE RESPONSE:
+CONTEXT:
+{GENERAL_SEP_PAT}
+{{context_docs_str}}
+{GENERAL_SEP_PAT}
+
+SAMPLE_RESPONSE:
 ```
 {{{json.dumps(EMPTY_SAMPLE_JSON)}}}
 ```
+{QUESTION_PAT.upper()} {{user_query}}
+{JSON_HELPFUL_HINT}
+{{language_hint_or_none}}
+""".strip()
 
-{FINAL_QUERY_PAT.upper()}
-{{user_query}}
 
+# Default chain-of-thought style json prompt which uses multiple docs
+# This one has a section for the LLM to output some non-answer "thoughts"
+# COT (chain-of-thought) flow basically
+COT_PROMPT = f"""
+{QA_HEADER}
+
+CONTEXT:
+{GENERAL_SEP_PAT}
+{{context_docs_str}}
+{GENERAL_SEP_PAT}
+
+You MUST respond in the following format:
+```
+{THOUGHT_PAT} Use this section as a scratchpad to reason through the answer.
+
+{{{json.dumps(EMPTY_SAMPLE_JSON)}}}
+```
+
+{QUESTION_PAT.upper()} {{user_query}}
 {JSON_HELPFUL_HINT}
 {{language_hint_or_none}}
 """.strip()
@@ -99,17 +94,35 @@ SAMPLE RESPONSE:
 # For weak LLM which only takes one chunk and cannot output json
 # Also not requiring quotes as it tends to not work
 WEAK_LLM_PROMPT = f"""
-{{system_prompt}}
-{{context_block}}
-{{task_prompt}}
+Respond to the user query using the following reference document.
+
+Reference Document:
+{GENERAL_SEP_PAT}
+{{single_reference_doc}}
+{GENERAL_SEP_PAT}
+
+Answer the user query below based on the reference document above.
 
 {QUESTION_PAT.upper()}
 {{user_query}}
 """.strip()
 
 
-# This is only for visualization for the users to specify their own prompts
-# The actual flow does not work like this
+# For weak CHAT LLM which takes one chunk and cannot output json
+# The next message should have the user query
+# Note, no flow/config currently uses this one
+WEAK_CHAT_LLM_PROMPT = f"""
+You are a question answering assistant
+Respond to the user query with an "{ANSWER_PAT}" section and \
+as many "{QUOTE_PAT}" sections as needed to support the answer.
+Answer the user query based on the following document:
+
+{{first_chunk_content}}
+""".strip()
+
+
+# Parameterized prompt which allows the user to specify their
+# own system / task prompt
 PARAMATERIZED_PROMPT = f"""
 {{system_prompt}}
 
@@ -131,31 +144,6 @@ PARAMATERIZED_PROMPT_WITHOUT_CONTEXT = f"""
 
 {QUESTION_PAT.upper()} {{user_query}}
 RESPONSE:
-""".strip()
-
-
-# CURRENTLY DISABLED, CANNOT USE THIS ONE
-# Default chain-of-thought style json prompt which uses multiple docs
-# This one has a section for the LLM to output some non-answer "thoughts"
-# COT (chain-of-thought) flow basically
-COT_PROMPT = f"""
-{ONE_SHOT_SYSTEM_PROMPT}
-
-CONTEXT:
-{GENERAL_SEP_PAT}
-{{context_docs_str}}
-{GENERAL_SEP_PAT}
-
-You MUST respond in the following format:
-```
-{THOUGHT_PAT} Use this section as a scratchpad to reason through the answer.
-
-{{{json.dumps(EMPTY_SAMPLE_JSON)}}}
-```
-
-{QUESTION_PAT.upper()} {{user_query}}
-{JSON_HELPFUL_HINT}
-{{language_hint_or_none}}
 """.strip()
 
 
