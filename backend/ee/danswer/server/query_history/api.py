@@ -216,6 +216,7 @@ def get_chat_session(
             chat_session_id=chat_session_id,
             user_id=user.id if user else None,
             db_session=db_session,
+            include_deleted=True,
         )
     except ValueError:
         raise HTTPException(
