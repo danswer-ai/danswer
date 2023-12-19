@@ -1,11 +1,15 @@
+"use client";
+
 import { Bold, Text, Card, Title, Divider } from "@tremor/react";
 import { ChatSessionSnapshot, MessageSnapshot } from "../../analytics/types";
 import { FiBook } from "react-icons/fi";
 import { timestampToReadableDate } from "@/lib/dateUtils";
 import { BackButton } from "@/components/BackButton";
-import { SSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { FeedbackBadge } from "../FeedbackBadge";
-import { fetchSS } from "@/lib/utilsSS";
+import { errorHandlingFetcher } from "@/lib/fetcher";
+import useSWR from "swr";
+import { ErrorCallout } from "@/components/ErrorCallout";
+import { ThreeDotsLoader } from "@/components/Loading";
 
 function MessageDisplay({ message }: { message: MessageSnapshot }) {
   return (
@@ -47,18 +51,32 @@ function MessageDisplay({ message }: { message: MessageSnapshot }) {
   );
 }
 
-export default async function QueryPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const response = await fetchSS(`/admin/chat-session-history/${params.id}`);
-  const chatSessionSnapshot = (await response.json()) as ChatSessionSnapshot;
+export default function QueryPage({ params }: { params: { id: string } }) {
+  const {
+    data: chatSessionSnapshot,
+    isLoading,
+    error,
+  } = useSWR<ChatSessionSnapshot>(
+    `/api/admin/chat-session-history/${params.id}`,
+    errorHandlingFetcher
+  );
+
+  if (isLoading) {
+    return <ThreeDotsLoader />;
+  }
+
+  if (!chatSessionSnapshot || error) {
+    return (
+      <ErrorCallout
+        errorTitle="Something went wrong :("
+        errorMsg={`Failed to fetch chat session - ${error}`}
+      />
+    );
+  }
 
   return (
     <main className="pt-4 mx-auto container">
       <BackButton />
-      <SSRAutoRefresh />
 
       <Card className="mt-4">
         <Title>Chat Session Details</Title>
