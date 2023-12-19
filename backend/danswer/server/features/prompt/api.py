@@ -61,7 +61,7 @@ def create_update_prompt(
     return PromptSnapshot.from_model(prompt)
 
 
-@basic_router.post("/")
+@basic_router.post("")
 def create_persona(
     create_prompt_request: CreatePromptRequest,
     user: User | None = Depends(current_admin_user),
@@ -129,7 +129,7 @@ def delete_prompt(
     )
 
 
-@basic_router.get("/")
+@basic_router.get("")
 def list_prompts(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),

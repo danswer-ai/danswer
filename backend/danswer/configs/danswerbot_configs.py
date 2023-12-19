@@ -46,9 +46,8 @@ DISABLE_DANSWER_BOT_FILTER_DETECT = (
 ENABLE_DANSWERBOT_REFLEXION = (
     os.environ.get("ENABLE_DANSWERBOT_REFLEXION", "").lower() == "true"
 )
-DANSWER_BOT_DISABLE_COT = (
-    os.environ.get("DANSWER_BOT_DISABLE_COT", "").lower() == "true"
-)
+# Currently not support chain of thought, probably will add back later
+DANSWER_BOT_DISABLE_COT = True
 # Add the per document feedback blocks that affect the document rankings via boosting
 ENABLE_SLACK_DOC_FEEDBACK = (
     os.environ.get("ENABLE_SLACK_DOC_FEEDBACK", "").lower() == "true"
