@@ -472,6 +472,7 @@ def upsert_persona(
         persona.recency_bias = recency_bias
         persona.default_persona = default_persona
         persona.llm_model_version_override = llm_model_version_override
+        persona.deleted = False  # Un-delete if previously deleted
 
         # Do not delete any associations manually added unless
         # a new updated list is provided
