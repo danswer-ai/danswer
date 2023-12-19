@@ -72,7 +72,7 @@ def create_update_persona(
     return PersonaSnapshot.from_model(persona)
 
 
-@admin_router.post("/")
+@admin_router.post("")
 def create_persona(
     create_persona_request: CreatePersonaRequest,
     user: User | None = Depends(current_admin_user),
@@ -114,7 +114,7 @@ def delete_persona(
     )
 
 
-@basic_router.get("/")
+@basic_router.get("")
 def list_personas(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
