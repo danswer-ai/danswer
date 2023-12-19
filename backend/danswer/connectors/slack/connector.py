@@ -206,12 +206,12 @@ def _filter_channels(
     # fail loudly in the case of an invalid channel so that the user
     # knows that one of the channels they've specified is typo'd or private
     all_channel_names = {channel["name"] for channel in all_channels}
-    for channel in channels_to_connect:
-        if channel not in all_channel_names:
-            raise ValueError(
-                f"Channel '{channel}' not found in workspace. "
-                f"Available channels: {all_channel_names}"
-            )
+    #for channel in channels_to_connect:
+    #    if channel not in all_channel_names:
+    #        raise ValueError(
+    #            f"Channel '{channel}' not found in workspace. "
+    #            f"Available channels: {all_channel_names}"
+    #        )
 
     return [
         channel for channel in all_channels if channel["name"] in channels_to_connect
