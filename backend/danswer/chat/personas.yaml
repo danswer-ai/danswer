@@ -42,7 +42,6 @@ personas:
     # Format looks like: "October 16, 2023 14:30"
     datetime_aware: true
 
-
   - name: "Summarize"
     description: >
       A less creative assistant which summarizes relevant documents but does not try to
@@ -56,7 +55,6 @@ personas:
     document_sets: []
     datetime_aware: true
 
-
   - name: "Paraphrase"
     description: >
       The least creative default assistant that only provides quotes from the documents.
@@ -67,4 +65,28 @@ personas:
     llm_filter_extraction: true
     recency_bias: "auto"
     document_sets: []
+    datetime_aware: true
+
+  - name: "Snarky"
+    description: >
+      A Snarky IT support assistant.
+    prompts:
+      - "Snarky"
+    num_chunks: 5
+    llm_relevance_filter: true
+    llm_filter_extraction: true
+    recency_bias: "auto"
+    document_sets: ["ITSupport"]
+    datetime_aware: true
+
+  - name: "ScottLogicIT"
+    description: >
+      A Scott Logic IT support assistant.
+    prompts:
+      - "ScottLogicIT"
+    num_chunks: 5
+    llm_relevance_filter: true
+    llm_filter_extraction: true
+    recency_bias: "auto"
+    document_sets: ["ITSupport"]
     datetime_aware: true
