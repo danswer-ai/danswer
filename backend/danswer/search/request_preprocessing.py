@@ -43,6 +43,10 @@ def retrieval_preprocessing(
     """
 
     preset_filters = retrieval_details.filters or BaseFilters()
+    if persona and persona.document_sets and preset_filters.document_set is None:
+        preset_filters.document_set = [
+            document_set.name for document_set in persona.document_sets
+        ]
 
     time_filter = preset_filters.time_cutoff
     source_filter = preset_filters.source_type
