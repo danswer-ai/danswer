@@ -19,8 +19,6 @@ prompts:
       Answer my query based on the documents provided.
       The documents may not all be relevant, ignore any documents that are not directly relevant
       to the most recent user query.
-
-      You should give priority to relevant Zendesk Articles (https://support.yugabyte.com/hc/en-us/articles/)
       
       I have not read or seen any of the documents and do not want to read them.
       
