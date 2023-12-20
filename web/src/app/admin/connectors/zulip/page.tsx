@@ -18,6 +18,8 @@ import { TextFormField } from "@/components/admin/connectors/Field";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { usePublicCredentials } from "@/lib/hooks";
+import { Card, Divider, Text, Title } from "@tremor/react";
+import { AdminPageTitle } from "@/components/admin/Title";
 
 const MainSection = () => {
   const { mutate } = useSWRConfig();
@@ -66,18 +68,18 @@ const MainSection = () => {
 
   return (
     <>
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide Credentials
-      </h2>
+      </Title>
       {zulipCredential ? (
         <>
           <div className="flex mb-1 text-sm">
-            <p className="my-auto">Existing zuliprc file content: </p>
-            <p className="ml-1 italic my-auto">
+            <Text className="my-auto">Existing zuliprc file content: </Text>
+            <Text className="ml-1 italic my-auto">
               {zulipCredential.credential_json.zuliprc_content}
-            </p>{" "}
+            </Text>{" "}
             <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+              className="ml-1 hover:bg-hover rounded p-1"
               onClick={async () => {
                 await adminDeleteCredential(zulipCredential.id);
                 refreshCredentials();
@@ -89,19 +91,20 @@ const MainSection = () => {
         </>
       ) : (
         <>
-          <p className="text-sm mb-4">
+          <Text className="mb-4">
             To use the Zulip connector, you must first provide content of the
             zuliprc config file. For more details on setting up the Danswer
             Zulip connector, see the{" "}
             <a
-              className="text-blue-500"
+              className="text-link"
               href="https://docs.danswer.dev/connectors/zulip"
+              target="_blank"
             >
               docs
             </a>
             .
-          </p>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
+          </Text>
+          <Card className="mt-4">
             <CredentialForm<ZulipCredentialJson>
               formBody={
                 <>
@@ -126,22 +129,22 @@ const MainSection = () => {
                 }
               }}
             />
-          </div>
+          </Card>
         </>
       )}
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 2: Which workspaces do you want to make searchable?
-      </h2>
+      </Title>
 
       {zulipCredential ? (
         <>
           {zulipConnectorIndexingStatuses.length > 0 && (
             <>
-              <p className="text-sm mb-2">
+              <Text className="mb-2">
                 We pull the latest messages from each workspace listed below
                 every <b>10</b> minutes.
-              </p>
+              </Text>
               <div className="mb-2">
                 <ConnectorsTable
                   connectorIndexingStatuses={zulipConnectorIndexingStatuses}
@@ -176,10 +179,11 @@ const MainSection = () => {
                   }}
                 />
               </div>
+              <Divider />
             </>
           )}
 
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+          <Card className="mt-4">
             <h2 className="font-bold mb-3">Connect to a New Realm</h2>
             <ConnectorForm<ZulipConfig>
               nameBuilder={(values) => `ZulipConnector-${values.realm_name}`}
@@ -205,14 +209,14 @@ const MainSection = () => {
               }}
               refreshFreq={10 * 60} // 10 minutes
             />
-          </div>
+          </Card>
         </>
       ) : (
-        <p className="text-sm">
+        <Text>
           Please provide your Zulip credentials in Step 1 first! Once done with
           that, you can then specify which Zulip realms you want to make
           searchable.
-        </p>
+        </Text>
       )}
     </>
   );
@@ -224,10 +228,9 @@ export default function Page() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <ZulipIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Zulip</h1>
-      </div>
+
+      <AdminPageTitle icon={<ZulipIcon size={32} />} title="Zulip" />
+
       <MainSection />
     </div>
   );

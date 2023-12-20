@@ -6,8 +6,8 @@ from transformers import AutoTokenizer  # type:ignore
 
 from danswer.configs.app_configs import BLURB_SIZE
 from danswer.configs.app_configs import CHUNK_OVERLAP
-from danswer.configs.app_configs import CHUNK_SIZE
 from danswer.configs.app_configs import MINI_CHUNK_SIZE
+from danswer.configs.model_configs import CHUNK_SIZE
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.indexing.models import DocAwareChunk

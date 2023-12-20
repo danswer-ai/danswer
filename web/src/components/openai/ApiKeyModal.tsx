@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { ApiKeyForm } from "./ApiKeyForm";
+import { Modal } from "../Modal";
+import { Text } from "@tremor/react";
 
 export const ApiKeyModal = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,39 +19,35 @@ export const ApiKeyModal = () => {
     });
   }, []);
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
-    <div>
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          onClick={() => setIsOpen(false)}
-        >
-          <div
-            className="bg-gray-800 p-6 rounded border border-gray-700 shadow-lg relative w-1/2 text-sm"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <p className="mb-2.5 font-bold">
-              Can&apos;t find a valid registered OpenAI API key. Please provide
-              one to be able to ask questions! Or if you&apos;d rather just look
-              around for now,{" "}
-              <strong
-                onClick={() => setIsOpen(false)}
-                className="text-blue-300 cursor-pointer"
-              >
-                skip this step
-              </strong>
-              .
-            </p>
-            <ApiKeyForm
-              handleResponse={(response) => {
-                if (response.ok) {
-                  setIsOpen(false);
-                }
-              }}
-            />
-          </div>
+    <Modal className="max-w-4xl" onOutsideClick={() => setIsOpen(false)}>
+      <div className="px-8 py-6">
+        <div>
+          <Text className="mb-2.5">
+            Can&apos;t find a valid registered OpenAI API key. Please provide
+            one to be able to ask questions! Or if you&apos;d rather just look
+            around for now,{" "}
+            <strong
+              onClick={() => setIsOpen(false)}
+              className="text-link cursor-pointer"
+            >
+              skip this step
+            </strong>
+            .
+          </Text>
+          <ApiKeyForm
+            handleResponse={(response) => {
+              if (response.ok) {
+                setIsOpen(false);
+              }
+            }}
+          />
         </div>
-      )}
-    </div>
+      </div>
+    </Modal>
   );
 };

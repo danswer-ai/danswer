@@ -1,5 +1,6 @@
 import json
 import re
+import string
 from urllib.parse import quote
 
 
@@ -70,3 +71,7 @@ def is_valid_email(text: str) -> bool:
         return True
     else:
         return False
+
+
+def count_punctuation(text: str) -> int:
+    return sum(1 for char in text if char in string.punctuation)

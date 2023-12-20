@@ -21,6 +21,8 @@ import {
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { usePublicCredentials } from "@/lib/hooks";
+import { Title, Text, Card, Divider } from "@tremor/react";
+import { AdminPageTitle } from "@/components/admin/Title";
 
 const MainSection = () => {
   const { mutate } = useSWRConfig();
@@ -71,18 +73,18 @@ const MainSection = () => {
 
   return (
     <>
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide Credentials
-      </h2>
+      </Title>
       {document360Credential ? (
         <>
           <div className="flex mb-1 text-sm">
-            <p className="my-auto">Existing Document360 API Token: </p>
-            <p className="ml-1 italic my-auto">
+            <Text className="my-auto">Existing Document360 API Token: </Text>
+            <Text className="ml-1 italic my-auto">
               {document360Credential.credential_json.document360_api_token}
-            </p>
+            </Text>
             <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+              className="ml-1 hover:bg-hover rounded p-1"
               onClick={async () => {
                 await adminDeleteCredential(document360Credential.id);
                 refreshCredentials();
@@ -94,19 +96,20 @@ const MainSection = () => {
         </>
       ) : (
         <>
-          <p className="text-sm mb-4">
+          <Text className="mb-4">
             To use the Document360 connector, you must first provide the API
             token and portal ID corresponding to your Document360 setup. See
             setup guide{" "}
             <a
-              className="text-blue-500"
+              className="text-link"
               href="https://docs.danswer.dev/connectors/document360"
+              target="_blank"
             >
               here
             </a>{" "}
             for more detail.
-          </p>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
+          </Text>
+          <Card className="mt-2">
             <CredentialForm<Document360CredentialJson>
               formBody={
                 <>
@@ -134,20 +137,20 @@ const MainSection = () => {
                 }
               }}
             />
-          </div>
+          </Card>
         </>
       )}
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 2: Which categories do you want to make searchable?
-      </h2>
+      </Title>
 
       {document360ConnectorIndexingStatuses.length > 0 && (
         <>
-          <p className="text-sm mb-2">
+          <Text className="mb-2">
             We index the latest articles from each workspace listed below
             regularly.
-          </p>
+          </Text>
           <div className="mb-2">
             <ConnectorsTable<Document360Config, Document360CredentialJson>
               connectorIndexingStatuses={document360ConnectorIndexingStatuses}
@@ -187,11 +190,12 @@ const MainSection = () => {
               }}
             />
           </div>
+          <Divider />
         </>
       )}
 
       {document360Credential ? (
-        <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+        <Card className="mt-4">
           <h2 className="font-bold mb-3">Connect to a New Workspace</h2>
           <ConnectorForm<Document360Config>
             nameBuilder={(values) =>
@@ -232,13 +236,13 @@ const MainSection = () => {
             refreshFreq={10 * 60} // 10 minutes
             credentialId={document360Credential.id}
           />
-        </div>
+        </Card>
       ) : (
-        <p className="text-sm">
+        <Text>
           Please provide your Document360 API token and portal ID in Step 1
           first! Once done with that, you can then specify which Document360
           categories you want to make searchable.
-        </p>
+        </Text>
       )}
     </>
   );
@@ -250,10 +254,12 @@ export default function Page() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <Document360Icon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Document360</h1>
-      </div>
+
+      <AdminPageTitle
+        icon={<Document360Icon size={32} />}
+        title="Document360"
+      />
+
       <MainSection />
     </div>
   );

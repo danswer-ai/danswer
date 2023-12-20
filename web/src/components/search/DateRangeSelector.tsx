@@ -1,7 +1,7 @@
 import { getXDaysAgo } from "@/lib/dateUtils";
 import { DateRangePickerValue } from "@tremor/react";
 import { FiCalendar, FiChevronDown, FiXCircle } from "react-icons/fi";
-import { CustomDropdown } from "../Dropdown";
+import { CustomDropdown, DefaultDropdownElement } from "../Dropdown";
 
 function DateSelectorItem({
   children,
@@ -17,12 +17,12 @@ function DateSelectorItem({
       className={`
       px-3 
       text-sm 
-      text-gray-200 
-      hover:bg-dark-tremor-background-muted 
+      bg-background
+      hover:bg-hover 
       py-2.5 
       select-none 
       cursor-pointer 
-      ${skipBottomBorder ? "" : "border-b border-gray-800"} 
+      ${skipBottomBorder ? "" : "border-b border-border"} 
       `}
       onClick={onClick}
     >
@@ -30,6 +30,10 @@ function DateSelectorItem({
     </div>
   );
 }
+
+export const LAST_30_DAYS = "Last 30 days";
+export const LAST_7_DAYS = "Last 7 days";
+export const TODAY = "Today";
 
 export function DateRangeSelector({
   value,
@@ -42,66 +46,82 @@ export function DateRangeSelector({
     <div>
       <CustomDropdown
         dropdown={
-          <div className="border border-gray-800 rounded-lg flex flex-col">
-            <DateSelectorItem
-              onClick={() =>
+          <div
+            className={`
+              border 
+              border-border 
+              bg-background
+              rounded-lg 
+              flex 
+              flex-col 
+              w-64 
+              max-h-96 
+              overflow-y-auto 
+              flex
+              overscroll-contain`}
+          >
+            <DefaultDropdownElement
+              key={LAST_30_DAYS}
+              name={LAST_30_DAYS}
+              onSelect={() =>
                 onValueChange({
                   to: new Date(),
                   from: getXDaysAgo(30),
-                  selectValue: "Last 30 days",
+                  selectValue: LAST_30_DAYS,
                 })
               }
-            >
-              Last 30 days
-            </DateSelectorItem>
-            <DateSelectorItem
-              onClick={() =>
+              isSelected={value?.selectValue === LAST_30_DAYS}
+            />
+
+            <DefaultDropdownElement
+              key={LAST_7_DAYS}
+              name={LAST_7_DAYS}
+              onSelect={() =>
                 onValueChange({
                   to: new Date(),
                   from: getXDaysAgo(7),
-                  selectValue: "Last 7 days",
+                  selectValue: LAST_7_DAYS,
                 })
               }
-            >
-              Last 7 days
-            </DateSelectorItem>
-            <DateSelectorItem
-              onClick={() =>
+              isSelected={value?.selectValue === LAST_7_DAYS}
+            />
+
+            <DefaultDropdownElement
+              key={TODAY}
+              name={TODAY}
+              onSelect={() =>
                 onValueChange({
                   to: new Date(),
                   from: getXDaysAgo(1),
-                  selectValue: "Today",
+                  selectValue: TODAY,
                 })
               }
-              skipBottomBorder={true}
-            >
-              Today
-            </DateSelectorItem>
+              isSelected={value?.selectValue === TODAY}
+            />
           </div>
         }
       >
         <div
           className={`
               flex 
-              text-sm 
-              text-gray-400 
+              text-sm  
               px-3
               py-1.5 
               rounded-lg 
               border 
-              border-gray-800 
+              border-border 
               cursor-pointer 
-              hover:bg-dark-tremor-background-muted`}
+              hover:bg-hover`}
         >
-          <FiCalendar className="my-auto mr-2 text-gray-500" />{" "}
+          <FiCalendar className="my-auto mr-2" />{" "}
           {value?.selectValue ? (
-            <div className="text-gray-200">{value.selectValue}</div>
+            <div className="text-emphasis">{value.selectValue}</div>
           ) : (
             "Any time..."
           )}
           {value?.selectValue ? (
             <div
-              className="my-auto ml-auto hover:text-gray-300 hover:bg-gray-700 p-0.5 rounded-full w-fit"
+              className="my-auto ml-auto p-0.5 rounded-full w-fit"
               onClick={(e) => {
                 onValueChange(null);
                 e.stopPropagation();

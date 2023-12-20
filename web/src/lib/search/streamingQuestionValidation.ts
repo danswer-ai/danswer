@@ -7,30 +7,17 @@ import { processRawChunkString } from "./streamingUtils";
 
 export interface QuestionValidationArgs {
   query: string;
-  chatSessionId: number;
   update: (update: Partial<ValidQuestionResponse>) => void;
 }
 
 export const questionValidationStreamed = async <T>({
   query,
-  chatSessionId,
   update,
 }: QuestionValidationArgs) => {
-  const emptyFilters = {
-    source_type: null,
-    document_set: null,
-    time_cutoff: null,
-  };
-
-  const response = await fetch("/api/stream-query-validation", {
+  const response = await fetch("/api/query/stream-query-validation", {
     method: "POST",
     body: JSON.stringify({
       query,
-      chat_session_id: chatSessionId,
-      collection: "danswer_index",
-      filters: emptyFilters,
-      enable_auto_detect_filters: false,
-      offset: null,
     }),
     headers: {
       "Content-Type": "application/json",
@@ -43,7 +30,6 @@ export const questionValidationStreamed = async <T>({
   let previousPartialChunk: string | null = null;
   while (true) {
     const rawChunk = await reader?.read();
-    console.log(rawChunk);
     if (!rawChunk) {
       throw new Error("Unable to process chunk");
     }

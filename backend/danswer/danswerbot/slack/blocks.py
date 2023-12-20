@@ -8,6 +8,7 @@ from slack_sdk.models.blocks import DividerBlock
 from slack_sdk.models.blocks import HeaderBlock
 from slack_sdk.models.blocks import SectionBlock
 
+from danswer.chat.models import DanswerQuote
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
@@ -17,17 +18,16 @@ from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.utils import build_feedback_block_id
 from danswer.danswerbot.slack.utils import remove_slack_text_interactions
 from danswer.danswerbot.slack.utils import translate_vespa_highlight_to_slack
-from danswer.direct_qa.interfaces import DanswerQuote
-from danswer.server.chat.models import SearchDoc
+from danswer.search.models import SavedSearchDoc
 from danswer.utils.text_processing import replace_whitespaces_w_space
 
 
 _MAX_BLURB_LEN = 75
 
 
-def build_qa_feedback_block(query_event_id: int) -> Block:
+def build_qa_feedback_block(message_id: int) -> Block:
     return ActionsBlock(
-        block_id=build_feedback_block_id(query_event_id),
+        block_id=build_feedback_block_id(message_id),
         elements=[
             ButtonElement(
                 action_id=LIKE_BLOCK_ACTION_ID,
@@ -44,12 +44,12 @@ def build_qa_feedback_block(query_event_id: int) -> Block:
 
 
 def build_doc_feedback_block(
-    query_event_id: int,
+    message_id: int,
     document_id: str,
     document_rank: int,
 ) -> Block:
     return ActionsBlock(
-        block_id=build_feedback_block_id(query_event_id, document_id, document_rank),
+        block_id=build_feedback_block_id(message_id, document_id, document_rank),
         elements=[
             ButtonElement(
                 action_id=SearchFeedbackType.ENDORSE.value,
@@ -77,7 +77,7 @@ def get_restate_blocks(
     msg: str,
     is_bot_msg: bool,
 ) -> list[Block]:
-    # Only the slash command needs this context because the user doesnt see their own input
+    # Only the slash command needs this context because the user doesn't see their own input
     if not is_bot_msg:
         return []
 
@@ -88,8 +88,8 @@ def get_restate_blocks(
 
 
 def build_documents_blocks(
-    documents: list[SearchDoc],
-    query_event_id: int,
+    documents: list[SavedSearchDoc],
+    message_id: int | None,
     num_docs_to_display: int = DANSWER_BOT_NUM_DOCS_TO_DISPLAY,
     include_feedback: bool = ENABLE_SLACK_DOC_FEEDBACK,
 ) -> list[Block]:
@@ -119,10 +119,10 @@ def build_documents_blocks(
             SectionBlock(text=block_text),
         )
 
-        if include_feedback:
+        if include_feedback and message_id is not None:
             section_blocks.append(
                 build_doc_feedback_block(
-                    query_event_id=query_event_id,
+                    message_id=message_id,
                     document_id=d.document_id,
                     document_rank=rank,
                 ),
@@ -179,12 +179,13 @@ def build_quotes_block(
 
 
 def build_qa_response_blocks(
-    query_event_id: int,
+    message_id: int | None,
     answer: str | None,
     quotes: list[DanswerQuote] | None,
     source_filters: list[DocumentSource] | None,
     time_cutoff: datetime | None,
     favor_recent: bool,
+    skip_quotes: bool = False,
 ) -> list[Block]:
     quotes_blocks: list[Block] = []
 
@@ -213,7 +214,9 @@ def build_qa_response_blocks(
             text="Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓"
         )
     else:
-        answer_block = SectionBlock(text=remove_slack_text_interactions(answer))
+        answer_processed = remove_slack_text_interactions(answer)
+        answer_processed = answer_processed.encode("utf-8").decode("unicode_escape")
+        answer_block = SectionBlock(text=answer_processed)
         if quotes:
             quotes_blocks = build_quotes_block(quotes)
 
@@ -225,15 +228,22 @@ def build_qa_response_blocks(
                 )
             ]
 
-    feedback_block = build_qa_feedback_block(query_event_id=query_event_id)
+    feedback_block = None
+    if message_id is not None:
+        feedback_block = build_qa_feedback_block(message_id=message_id)
 
     response_blocks: list[Block] = [ai_answer_header]
 
     if filter_block is not None:
         response_blocks.append(filter_block)
 
-    response_blocks.extend(
-        [answer_block, feedback_block] + quotes_blocks + [DividerBlock()]
-    )
+    response_blocks.append(answer_block)
+
+    if feedback_block is not None:
+        response_blocks.append(feedback_block)
+
+    if not skip_quotes:
+        response_blocks.extend(quotes_blocks)
+    response_blocks.append(DividerBlock())
 
     return response_blocks

@@ -19,7 +19,6 @@ from danswer.db.feedback import fetch_docs_ranked_by_boost
 from danswer.db.feedback import update_document_boost
 from danswer.db.feedback import update_document_hidden
 from danswer.db.models import User
-from danswer.direct_qa.factory import get_default_qa_model
 from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
@@ -101,9 +100,7 @@ def document_hidden_update(
 def validate_existing_genai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
-    # OpenAI key is only used for generative QA, so no need to validate this
-    # if it's turned off or if a non-OpenAI model is being used
-    if DISABLE_GENERATIVE_AI or not get_default_qa_model().requires_api_key:
+    if DISABLE_GENERATIVE_AI:
         return
 
     # Only validate every so often
@@ -122,20 +119,16 @@ def validate_existing_genai_api_key(
         pass
 
     genai_api_key = get_gen_ai_api_key()
-    if genai_api_key is None:
-        raise HTTPException(status_code=404, detail="Key not found")
 
-    try:
-        llm = get_default_llm(api_key=genai_api_key, timeout=10)
-        is_valid = test_llm(llm)
-    except ValueError:
-        # this is the case where they aren't using an OpenAI-based model
-        is_valid = True
+    llm = get_default_llm(api_key=genai_api_key, timeout=10)
+    is_valid = test_llm(llm)
 
     if not is_valid:
+        if genai_api_key is None:
+            raise HTTPException(status_code=404, detail="Key not found")
         raise HTTPException(status_code=400, detail="Invalid API key provided")
 
-    # mark check as successful
+    # Mark check as successful
     get_dynamic_config_store().store(check_key_time, curr_time.timestamp())
 
 

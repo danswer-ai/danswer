@@ -22,6 +22,8 @@ import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
+import { Card, Divider, Text, Title } from "@tremor/react";
+import { AdminPageTitle } from "@/components/admin/Title";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -75,21 +77,21 @@ const Main = () => {
   return (
     <>
       {popup}
-      <p className="text-sm">
+      <Text>
         This connector allows you to sync all your Gong Transcripts into
         Danswer. More details on how to setup the Gong connector can be found in{" "}
         <a
-          className="text-blue-500"
+          className="text-link"
           href="https://docs.danswer.dev/connectors/gong"
           target="_blank"
         >
           this guide.
         </a>
-      </p>
+      </Text>
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your API Access info
-      </h2>
+      </Title>
 
       {gongCredential ? (
         <>
@@ -99,7 +101,7 @@ const Main = () => {
               {gongCredential.credential_json?.gong_access_key_secret}
             </p>
             <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+              className="ml-1 hover:bg-hover rounded p-1"
               onClick={async () => {
                 if (gongConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -119,7 +121,7 @@ const Main = () => {
         </>
       ) : (
         <>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
+          <Card className="mt-4">
             <CredentialForm<GongCredentialJson>
               formBody={
                 <>
@@ -149,19 +151,19 @@ const Main = () => {
                 }
               }}
             />
-          </div>
+          </Card>
         </>
       )}
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 2: Which Workspaces do you want to make searchable?
-      </h2>
+      </Title>
 
       {gongConnectorIndexingStatuses.length > 0 && (
         <>
-          <p className="text-sm mb-2">
+          <Text className="mb-2">
             We pull the latest transcript every <b>10</b> minutes.
-          </p>
+          </Text>
           <div className="mb-2">
             <ConnectorsTable<GongConfig, GongCredentialJson>
               connectorIndexingStatuses={gongConnectorIndexingStatuses}
@@ -196,12 +198,13 @@ const Main = () => {
               }}
             />
           </div>
+          <Divider />
         </>
       )}
 
       {gongCredential ? (
         <>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+          <Card className="mt-4">
             <h2 className="font-bold mb-3">Create a new Gong Connector</h2>
             <ConnectorForm<GongConfig>
               nameBuilder={(values) =>
@@ -230,13 +233,13 @@ const Main = () => {
               refreshFreq={10 * 60} // 10 minutes
               credentialId={gongCredential.id}
             />
-          </div>
+          </Card>
         </>
       ) : (
-        <p className="text-sm">
+        <Text>
           Please provide your API Access Info in Step 1 first! Once done with
           that, you can then start indexing all your Gong transcripts.
-        </p>
+        </Text>
       )}
     </>
   );
@@ -248,10 +251,9 @@ export default function Page() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <GongIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Gong</h1>
-      </div>
+
+      <AdminPageTitle icon={<GongIcon size={32} />} title="Gong" />
+
       <Main />
     </div>
   );

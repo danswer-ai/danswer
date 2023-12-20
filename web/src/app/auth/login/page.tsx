@@ -77,7 +77,7 @@ const Page = async ({
           <div className="h-16 w-16 mx-auto">
             <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
           </div>
-          <h2 className="text-center text-xl font-bold mt-4">
+          <h2 className="text-center text-xl text-strong font-bold mt-6">
             Log In to Danswer
           </h2>
           {authUrl && authTypeMetadata && (

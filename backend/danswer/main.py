@@ -1,6 +1,10 @@
+from typing import Any
+from typing import cast
+
 import nltk  # type:ignore
 import torch
 import uvicorn
+from fastapi import APIRouter
 from fastapi import FastAPI
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
@@ -15,18 +19,19 @@ from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
 from danswer.auth.users import fastapi_users
-from danswer.chat.personas import load_personas_from_yaml
+from danswer.chat.load_yamls import load_chat_yamls
+from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import MODEL_SERVER_PORT
-from danswer.configs.app_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
+from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.constants import AuthType
 from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
@@ -40,23 +45,28 @@ from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
 from danswer.db.credentials import create_initial_public_credential
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.direct_qa.factory import get_default_qa_model
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llm
 from danswer.search.search_nlp_models import warm_up_models
-from danswer.server.chat.chat_backend import router as chat_router
-from danswer.server.chat.search_backend import router as backend_router
 from danswer.server.danswer_api.ingestion import get_danswer_api_key
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
 from danswer.server.documents.cc_pair import router as cc_pair_router
 from danswer.server.documents.connector import router as connector_router
 from danswer.server.documents.credential import router as credential_router
+from danswer.server.documents.document import router as document_router
 from danswer.server.features.document_set.api import router as document_set_router
-from danswer.server.features.persona.api import router as persona_router
+from danswer.server.features.persona.api import admin_router as admin_persona_router
+from danswer.server.features.persona.api import basic_router as persona_router
+from danswer.server.features.prompt.api import basic_router as prompt_router
 from danswer.server.manage.administrative import router as admin_router
 from danswer.server.manage.get_state import router as state_router
 from danswer.server.manage.slack_bot import router as slack_bot_management_router
 from danswer.server.manage.users import router as user_router
+from danswer.server.query_and_chat.chat_backend import router as chat_router
+from danswer.server.query_and_chat.query_backend import (
+    admin_router as admin_query_router,
+)
+from danswer.server.query_and_chat.query_backend import basic_router as query_router
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
@@ -87,47 +97,78 @@ def value_error_handler(_: Request, exc: ValueError) -> JSONResponse:
     )
 
 
+def include_router_with_global_prefix_prepended(
+    application: FastAPI, router: APIRouter, **kwargs: Any
+) -> None:
+    """Adds the global prefix to all routes in the router."""
+    processed_global_prefix = f"/{APP_API_PREFIX.strip('/')}" if APP_API_PREFIX else ""
+
+    passed_in_prefix = cast(str | None, kwargs.get("prefix"))
+    if passed_in_prefix:
+        final_prefix = f"{processed_global_prefix}/{passed_in_prefix.strip('/')}"
+    else:
+        final_prefix = f"{processed_global_prefix}"
+    final_kwargs: dict[str, Any] = {
+        **kwargs,
+        "prefix": final_prefix,
+    }
+
+    application.include_router(router, **final_kwargs)
+
+
 def get_application() -> FastAPI:
     application = FastAPI(title="Danswer Backend", version=__version__)
-    application.include_router(backend_router)
-    application.include_router(chat_router)
-    application.include_router(admin_router)
-    application.include_router(user_router)
-    application.include_router(connector_router)
-    application.include_router(credential_router)
-    application.include_router(cc_pair_router)
-    application.include_router(document_set_router)
-    application.include_router(slack_bot_management_router)
-    application.include_router(persona_router)
-    application.include_router(state_router)
-    application.include_router(danswer_api_router)
+
+    include_router_with_global_prefix_prepended(application, chat_router)
+    include_router_with_global_prefix_prepended(application, query_router)
+    include_router_with_global_prefix_prepended(application, document_router)
+    include_router_with_global_prefix_prepended(application, admin_query_router)
+    include_router_with_global_prefix_prepended(application, admin_router)
+    include_router_with_global_prefix_prepended(application, user_router)
+    include_router_with_global_prefix_prepended(application, connector_router)
+    include_router_with_global_prefix_prepended(application, credential_router)
+    include_router_with_global_prefix_prepended(application, cc_pair_router)
+    include_router_with_global_prefix_prepended(application, document_set_router)
+    include_router_with_global_prefix_prepended(
+        application, slack_bot_management_router
+    )
+    include_router_with_global_prefix_prepended(application, persona_router)
+    include_router_with_global_prefix_prepended(application, admin_persona_router)
+    include_router_with_global_prefix_prepended(application, prompt_router)
+    include_router_with_global_prefix_prepended(application, state_router)
+    include_router_with_global_prefix_prepended(application, danswer_api_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step
         pass
 
     elif AUTH_TYPE == AuthType.BASIC:
-        application.include_router(
+        include_router_with_global_prefix_prepended(
+            application,
             fastapi_users.get_auth_router(auth_backend),
             prefix="/auth",
             tags=["auth"],
         )
-        application.include_router(
+        include_router_with_global_prefix_prepended(
+            application,
             fastapi_users.get_register_router(UserRead, UserCreate),
             prefix="/auth",
             tags=["auth"],
         )
-        application.include_router(
+        include_router_with_global_prefix_prepended(
+            application,
             fastapi_users.get_reset_password_router(),
             prefix="/auth",
             tags=["auth"],
         )
-        application.include_router(
+        include_router_with_global_prefix_prepended(
+            application,
             fastapi_users.get_verify_router(UserRead),
             prefix="/auth",
             tags=["auth"],
         )
-        application.include_router(
+        include_router_with_global_prefix_prepended(
+            application,
             fastapi_users.get_users_router(UserRead, UserUpdate),
             prefix="/users",
             tags=["users"],
@@ -135,21 +176,23 @@ def get_application() -> FastAPI:
 
     elif AUTH_TYPE == AuthType.GOOGLE_OAUTH:
         oauth_client = GoogleOAuth2(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET)
-        application.include_router(
+        include_router_with_global_prefix_prepended(
+            application,
             fastapi_users.get_oauth_router(
                 oauth_client,
                 auth_backend,
                 SECRET,
                 associate_by_email=True,
                 is_verified_by_default=True,
-                # points the user back to the login page
+                # Points the user back to the login page
                 redirect_url=f"{WEB_DOMAIN}/auth/oauth/callback",
             ),
             prefix="/auth/oauth",
             tags=["auth"],
         )
-        # need basic auth router for `logout` endpoint
-        application.include_router(
+        # Need basic auth router for `logout` endpoint
+        include_router_with_global_prefix_prepended(
+            application,
             fastapi_users.get_logout_router(auth_backend),
             prefix="/auth",
             tags=["auth"],
@@ -217,7 +260,6 @@ def get_application() -> FastAPI:
 
         # This is for the LLM, most LLMs will not need warming up
         get_default_llm().log_model_configs()
-        get_default_qa_model().warm_up_model()
 
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")
         nltk.download("stopwords", quiet=True)
@@ -230,8 +272,8 @@ def get_application() -> FastAPI:
             create_initial_default_connector(db_session)
             associate_default_cc_pair(db_session)
 
-        logger.info("Loading default Chat Personas")
-        load_personas_from_yaml()
+        logger.info("Loading default Prompts and Personas")
+        load_chat_yamls()
 
         logger.info("Verifying Document Index(s) is/are available.")
         get_default_document_index().ensure_indices_exist()

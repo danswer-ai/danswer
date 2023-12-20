@@ -5,6 +5,7 @@ import { createDocumentSet, updateDocumentSet } from "./lib";
 import { ConnectorIndexingStatus, DocumentSet } from "@/lib/types";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
+import { Button } from "@tremor/react";
 
 interface SetCreationPopupProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
@@ -28,7 +29,7 @@ export const DocumentSetCreationForm = ({
         onClick={onClose}
       >
         <div
-          className="bg-gray-800 p-6 rounded border border-gray-700 shadow-lg relative w-1/2 text-sm"
+          className="bg-background p-6 rounded border border-border shadow-lg relative w-1/2 text-sm"
           onClick={(event) => event.stopPropagation()}
         >
           <Formik
@@ -87,7 +88,7 @@ export const DocumentSetCreationForm = ({
           >
             {({ isSubmitting, values }) => (
               <Form>
-                <h2 className="text-lg font-bold mb-3">
+                <h2 className="text-lg text-emphasis font-bold mb-3">
                   {isUpdate
                     ? "Update a Document Set"
                     : "Create a new Document Set"}
@@ -105,7 +106,9 @@ export const DocumentSetCreationForm = ({
                   placeholder="Describe what the document set represents"
                   autoCompleteDisabled={true}
                 />
-                <h2 className="mb-1">Pick your connectors:</h2>
+                <h2 className="mb-1 font-medium text-base">
+                  Pick your connectors:
+                </h2>
                 <p className="mb-3 text-xs">
                   All documents indexed by the selected connectors will be a
                   part of this document set.
@@ -126,13 +129,13 @@ export const DocumentSetCreationForm = ({
                               py-1
                               rounded-lg 
                               border
-                              border-gray-700 
+                              border-border 
                               w-fit 
                               flex 
                               cursor-pointer ` +
                               (isSelected
-                                ? " bg-gray-600"
-                                : " hover:bg-gray-700")
+                                ? " bg-background-strong"
+                                : " hover:bg-hover")
                             }
                             onClick={() => {
                               if (isSelected) {
@@ -158,17 +161,13 @@ export const DocumentSetCreationForm = ({
                   )}
                 />
                 <div className="flex">
-                  <button
+                  <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className={
-                      "bg-slate-500 hover:bg-slate-700 text-white " +
-                      "font-bold py-2 px-4 rounded focus:outline-none " +
-                      "focus:shadow-outline w-full max-w-sm mx-auto"
-                    }
+                    className="w-64 mx-auto"
                   >
                     {isUpdate ? "Update!" : "Create!"}
-                  </button>
+                  </Button>
                 </div>
               </Form>
             )}

@@ -13,6 +13,7 @@ import { FormBodyBuilder, RequireAtLeastOne } from "./types";
 import { TextFormField } from "./Field";
 import { createCredential, linkCredential } from "@/lib/credential";
 import { useSWRConfig } from "swr";
+import { Button } from "@tremor/react";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 
@@ -219,17 +220,15 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             {formBody && formBody}
             {formBodyBuilder && formBodyBuilder(values)}
             <div className="flex">
-              <button
+              <Button
                 type="submit"
+                size="xs"
+                color="green"
                 disabled={isSubmitting}
-                className={
-                  "bg-slate-500 hover:bg-slate-700 text-white " +
-                  "font-bold py-2 px-4 rounded focus:outline-none " +
-                  "focus:shadow-outline w-full max-w-sm mx-auto"
-                }
+                className="mx-auto w-64"
               >
                 Connect
-              </button>
+              </Button>
             </div>
           </Form>
         )}
@@ -304,17 +303,15 @@ export function UpdateConnectorForm<T extends Yup.AnyObject>({
           <Form>
             {formBody ? formBody : formBodyBuilder && formBodyBuilder(values)}
             <div className="flex">
-              <button
+              <Button
                 type="submit"
+                color="green"
+                size="xs"
                 disabled={isSubmitting}
-                className={
-                  "bg-slate-500 hover:bg-slate-700 text-white " +
-                  "font-bold py-2 px-4 rounded focus:outline-none " +
-                  "focus:shadow-outline w-full max-w-sm mx-auto"
-                }
+                className="mx-auto w-64"
               >
                 Update
-              </button>
+              </Button>
             </div>
           </Form>
         )}

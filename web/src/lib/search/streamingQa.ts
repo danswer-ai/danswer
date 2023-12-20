@@ -14,10 +14,10 @@ import { buildFilters } from "./utils";
 
 export const searchRequestStreamed = async ({
   query,
-  chatSessionId,
   sources,
   documentSets,
   timeRange,
+  persona,
   updateCurrentAnswer,
   updateQuotes,
   updateDocs,
@@ -26,22 +26,31 @@ export const searchRequestStreamed = async ({
   updateSelectedDocIndices,
   updateError,
   updateQueryEventId,
-  offset,
 }: SearchRequestArgs) => {
   let answer = "";
   let quotes: Quote[] | null = null;
   let relevantDocuments: DanswerDocument[] | null = null;
   try {
     const filters = buildFilters(sources, documentSets, timeRange);
-    const response = await fetch("/api/stream-direct-qa", {
+
+    const threadMessage = {
+      message: query,
+      sender: null,
+      role: "user",
+    };
+
+    const response = await fetch("/api/query/stream-answer-with-quote", {
       method: "POST",
       body: JSON.stringify({
-        chat_session_id: chatSessionId,
-        query,
-        collection: "danswer_index",
-        filters,
-        enable_auto_detect_filters: false,
-        offset: offset,
+        messages: [threadMessage],
+        persona_id: persona.id,
+        prompt_id: persona.id === 0 ? null : persona.prompts[0]?.id,
+        retrieval_options: {
+          run_search: "always",
+          real_time: true,
+          filters: filters,
+          enable_auto_detect_filters: false,
+        },
       }),
       headers: {
         "Content-Type": "application/json",

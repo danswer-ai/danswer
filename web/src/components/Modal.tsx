@@ -22,14 +22,14 @@ export function Modal({
       >
         <div
           className={`
-          bg-gray-800 rounded-sm shadow-lg
+          bg-background rounded-sm shadow-lg
           shadow-lg relative w-1/2 text-sm
           ${className}
         `}
           onClick={(event) => event.stopPropagation()}
         >
           {title && (
-            <h2 className="text-xl font-bold mb-3 border-b border-gray-700 pt-4 pb-3 bg-gray-700 px-6">
+            <h2 className="text-xl font-bold mb-3 border-b border-border pt-4 pb-3 bg-background-strong px-6">
               {title}
             </h2>
           )}

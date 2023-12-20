@@ -1,15 +1,15 @@
 import re
 from collections.abc import Iterator
 
-from danswer.configs.app_configs import DISABLE_LLM_QUERY_ANSWERABILITY
-from danswer.direct_qa.interfaces import DanswerAnswerPiece
-from danswer.direct_qa.interfaces import StreamingError
+from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import StreamingError
+from danswer.configs.chat_configs import DISABLE_LLM_QUERY_ANSWERABILITY
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.prompts.constants import ANSWERABLE_PAT
 from danswer.prompts.constants import THOUGHT_PAT
 from danswer.prompts.query_validation import ANSWERABLE_PROMPT
-from danswer.server.chat.models import QueryValidationResponse
+from danswer.server.query_and_chat.models import QueryValidationResponse
 from danswer.server.utils import get_json_line
 from danswer.utils.logger import setup_logger
 
@@ -42,7 +42,12 @@ def extract_answerability_bool(model_raw: str) -> bool:
     return answerable
 
 
-def get_query_answerability(user_query: str) -> tuple[str, bool]:
+def get_query_answerability(
+    user_query: str, skip_check: bool = DISABLE_LLM_QUERY_ANSWERABILITY
+) -> tuple[str, bool]:
+    if skip_check:
+        return "Query Answerability Evaluation feature is turned off", True
+
     messages = get_query_validation_messages(user_query)
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
     model_output = get_default_llm().invoke(filled_llm_prompt)
@@ -59,7 +64,7 @@ def stream_query_answerability(
     if skip_check:
         yield get_json_line(
             QueryValidationResponse(
-                reasoning="Query Answerability Eval feature is turned off",
+                reasoning="Query Answerability Evaluation feature is turned off",
                 answerable=True,
             ).dict()
         )

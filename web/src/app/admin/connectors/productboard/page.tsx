@@ -19,6 +19,8 @@ import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
+import { Card, Text, Title } from "@tremor/react";
+import { AdminPageTitle } from "@/components/admin/Title";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -72,29 +74,29 @@ const Main = () => {
   return (
     <>
       {popup}
-      <p className="text-sm">
+      <Text>
         This connector allows you to sync all your <i>Features</i>,{" "}
         <i>Components</i>, <i>Products</i>, and <i>Objectives</i> from
         Productboard into Danswer. At this time, the Productboard APIs does not
         support pulling in <i>Releases</i> or <i>Notes</i>.
-      </p>
+      </Text>
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your Credentials
-      </h2>
+      </Title>
 
       {productboardCredential ? (
         <>
           <div className="flex mb-1 text-sm">
-            <p className="my-auto">Existing Access Token: </p>
-            <p className="ml-1 italic my-auto max-w-md truncate">
+            <Text className="my-auto">Existing Access Token: </Text>
+            <Text className="ml-1 italic my-auto max-w-md truncate">
               {
                 productboardCredential.credential_json
                   ?.productboard_access_token
               }
-            </p>
+            </Text>
             <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+              className="ml-1 hover:bg-hover rounded p-1"
               onClick={async () => {
                 if (productboardConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -114,17 +116,18 @@ const Main = () => {
         </>
       ) : (
         <>
-          <p className="text-sm">
+          <Text>
             To use the Productboard connector, first follow the guide{" "}
             <a
-              className="text-blue-500"
+              className="text-link"
               href="https://developer.productboard.com/#section/Authentication/Public-API-Access-Token"
+              target="_blank"
             >
               here
             </a>{" "}
             to generate an Access Token.
-          </p>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
+          </Text>
+          <Card className="mt-4">
             <CredentialForm<ProductboardCredentialJson>
               formBody={
                 <>
@@ -149,21 +152,21 @@ const Main = () => {
                 }
               }}
             />
-          </div>
+          </Card>
         </>
       )}
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 2: Start indexing!
-      </h2>
+      </Title>
       {productboardCredential ? (
         !productboardConnectorIndexingStatuses.length ? (
           <>
-            <p className="text-sm mb-2">
+            <Text className="mb-2">
               Click the button below to start indexing! We will pull the latest
               features, components, and products from Productboard every{" "}
               <b>10</b> minutes.
-            </p>
+            </Text>
             <div className="flex">
               <ConnectorForm<ProductboardConfig>
                 nameBuilder={() => "ProductboardConnector"}
@@ -180,11 +183,11 @@ const Main = () => {
           </>
         ) : (
           <>
-            <p className="text-sm mb-2">
+            <Text className="mb-2">
               Productboard connector is setup! We are pulling the latest
               features, components, and products from Productboard every{" "}
               <b>10</b> minutes.
-            </p>
+            </Text>
             <ConnectorsTable<ProductboardConfig, ProductboardCredentialJson>
               connectorIndexingStatuses={productboardConnectorIndexingStatuses}
               liveCredential={productboardCredential}
@@ -211,11 +214,11 @@ const Main = () => {
         )
       ) : (
         <>
-          <p className="text-sm">
+          <Text>
             Please provide your access token in Step 1 first! Once done with
             that, you can then start indexing all your Productboard features,
             components, and products.
-          </p>
+          </Text>
         </>
       )}
     </>
@@ -228,10 +231,12 @@ export default function Page() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <ProductboardIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Productboard</h1>
-      </div>
+
+      <AdminPageTitle
+        icon={<ProductboardIcon size={32} />}
+        title="Productboard"
+      />
+
       <Main />
     </div>
   );

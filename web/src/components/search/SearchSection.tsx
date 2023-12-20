@@ -18,11 +18,8 @@ import {
 import { searchRequestStreamed } from "@/lib/search/streamingQa";
 import { SearchHelper } from "./SearchHelper";
 import { CancellationToken, cancellable } from "@/lib/search/cancellable";
-import { NEXT_PUBLIC_DISABLE_STREAMING } from "@/lib/constants";
-import { searchRequest } from "@/lib/search/qa";
 import { useFilters, useObjectState } from "@/lib/hooks";
 import { questionValidationStreamed } from "@/lib/search/streamingQuestionValidation";
-import { createChatSession } from "@/lib/search/chatSessions";
 import { Persona } from "@/app/admin/personas/interfaces";
 import { PersonaSelector } from "./PersonaSelector";
 
@@ -69,7 +66,12 @@ export const SearchSection = ({
   const [selectedSearchType, setSelectedSearchType] =
     useState<SearchType>(defaultSearchType);
 
-  const [selectedPersona, setSelectedPersona] = useState<number | null>(null);
+  const defaultPersona = personas.find(
+    (persona) => persona.name === "Danswer" && persona.default_persona
+  );
+  const [selectedPersona, setSelectedPersona] = useState<number>(
+    defaultPersona?.id || 0
+  );
 
   // Overrides for default behavior that only last a single query
   const [defaultOverrides, setDefaultOverrides] =
@@ -142,26 +144,14 @@ export const SearchSection = ({
     setSearchResponse(initialSearchResponse);
     setValidQuestionResponse(VALID_QUESTION_RESPONSE_DEFAULT);
 
-    const chatSessionResponse = await createChatSession(selectedPersona);
-    if (!chatSessionResponse.ok) {
-      updateError(
-        `Unable to create chat session - ${await chatSessionResponse.text()}`
-      );
-      setIsFetching(false);
-      return;
-    }
-    const chatSessionId = (await chatSessionResponse.json())
-      .chat_session_id as number;
-
-    const searchFn = NEXT_PUBLIC_DISABLE_STREAMING
-      ? searchRequest
-      : searchRequestStreamed;
     const searchFnArgs = {
       query,
-      chatSessionId,
       sources: filterManager.selectedSources,
       documentSets: filterManager.selectedDocumentSets,
       timeRange: filterManager.timeRange,
+      persona: personas.find(
+        (persona) => persona.id === selectedPersona
+      ) as Persona,
       updateCurrentAnswer: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateCurrentAnswer,
@@ -200,12 +190,11 @@ export const SearchSection = ({
 
     const questionValidationArgs = {
       query,
-      chatSessionId,
       update: setValidQuestionResponse,
     };
 
     await Promise.all([
-      searchFn(searchFnArgs),
+      searchRequestStreamed(searchFnArgs),
       questionValidationStreamed(questionValidationArgs),
     ]);
 
@@ -248,13 +237,11 @@ export const SearchSection = ({
       </div>
       <div className="w-[800px] mx-auto">
         {personas.length > 0 ? (
-          <div className="flex mb-2 w-64">
+          <div className="flex mb-2 w-fit">
             <PersonaSelector
               personas={personas}
               selectedPersonaId={selectedPersona}
-              onPersonaChange={(persona) =>
-                setSelectedPersona(persona ? persona.id : null)
-              }
+              onPersonaChange={(persona) => setSelectedPersona(persona.id)}
             />
           </div>
         ) : (

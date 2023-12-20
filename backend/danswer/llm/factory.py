@@ -1,4 +1,4 @@
-from danswer.configs.app_configs import QA_TIMEOUT
+from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION

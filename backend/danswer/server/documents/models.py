@@ -16,6 +16,16 @@ from danswer.db.models import TaskStatus
 from danswer.server.utils import mask_credential_dict
 
 
+class DocumentInfo(BaseModel):
+    num_chunks: int
+    num_tokens: int
+
+
+class ChunkInfo(BaseModel):
+    content: str
+    num_tokens: int
+
+
 class IndexAttemptSnapshot(BaseModel):
     id: int
     status: IndexingStatus | None

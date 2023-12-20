@@ -22,7 +22,7 @@ export function ReIndexButton({
       {popup}
       <Button
         className="ml-auto"
-        variant="secondary"
+        color="green"
         size="xs"
         onClick={async () => {
           const errorMsg = await runConnector(connectorId, [credentialId]);

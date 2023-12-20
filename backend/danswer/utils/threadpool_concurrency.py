@@ -16,6 +16,7 @@ R = TypeVar("R")
 def run_functions_tuples_in_parallel(
     functions_with_args: list[tuple[Callable, tuple]],
     allow_failures: bool = False,
+    max_workers: int | None = None,
 ) -> list[Any]:
     """
     Executes multiple functions in parallel and returns a list of the results for each function.
@@ -23,12 +24,22 @@ def run_functions_tuples_in_parallel(
     Args:
         functions_with_args: List of tuples each containing the function callable and a tuple of arguments.
         allow_failures: if set to True, then the function result will just be None
+        max_workers: Max number of worker threads
 
     Returns:
         dict: A dictionary mapping function names to their results or error messages.
     """
+    workers = (
+        min(max_workers, len(functions_with_args))
+        if max_workers is not None
+        else len(functions_with_args)
+    )
+
+    if workers <= 0:
+        return []
+
     results = []
-    with ThreadPoolExecutor(max_workers=len(functions_with_args)) as executor:
+    with ThreadPoolExecutor(max_workers=workers) as executor:
         future_to_index = {
             executor.submit(func, *args): i
             for i, (func, args) in enumerate(functions_with_args)

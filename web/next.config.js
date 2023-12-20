@@ -24,20 +24,35 @@ const nextConfig = {
     // In production, something else (nginx in the one box setup) should take
     // care of this redirect. TODO (chris): better support setups where
     // web_server and api_server are on different machines.
-    if (process.env.NODE_ENV === "production") return [];
-
-    return [
+    const defaultRedirects = [
       {
-        source: "/api/stream-direct-qa:params*",
-        destination: "http://127.0.0.1:8080/stream-direct-qa:params*", // Proxy to Backend
-        permanent: true,
-      },
-      {
-        source: "/api/stream-query-validation:params*",
-        destination: "http://127.0.0.1:8080/stream-query-validation:params*", // Proxy to Backend
+        source: "/",
+        destination: "/search",
         permanent: true,
       },
     ];
+
+    if (process.env.NODE_ENV === "production") return defaultRedirects;
+
+    return defaultRedirects.concat([
+      {
+        source: "/api/chat/send-message:params*",
+        destination: "http://127.0.0.1:8080/chat/send-message:params*", // Proxy to Backend
+        permanent: true,
+      },
+      {
+        source: "/api/query/stream-answer-with-quote:params*",
+        destination:
+          "http://127.0.0.1:8080/query/stream-answer-with-quote:params*", // Proxy to Backend
+        permanent: true,
+      },
+      {
+        source: "/api/query/stream-query-validation:params*",
+        destination:
+          "http://127.0.0.1:8080/query/stream-query-validation:params*", // Proxy to Backend
+        permanent: true,
+      },
+    ]);
   },
   publicRuntimeConfig: {
     version,

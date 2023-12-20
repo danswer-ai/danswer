@@ -19,6 +19,8 @@ import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { usePublicCredentials } from "@/lib/hooks";
+import { AdminPageTitle } from "@/components/admin/Title";
+import { Card, Divider, Text, Title } from "@tremor/react";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -69,9 +71,9 @@ const Main = () => {
   return (
     <>
       {popup}
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
-        Step 1: Provide your API details
-      </h2>
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
+        Provide your API details
+      </Title>
 
       {zendeskCredential ? (
         <>
@@ -81,7 +83,7 @@ const Main = () => {
               {zendeskCredential.credential_json?.zendesk_email}
             </p>
             <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+              className="ml-1 hover:bg-hover rounded p-1"
               onClick={async () => {
                 if (zendeskConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -101,7 +103,7 @@ const Main = () => {
         </>
       ) : (
         <>
-          <p className="text-sm">
+          <Text>
             To get started you&apos;ll need API token details for your Zendesk
             instance. You can generate this by access the Admin Center of your
             instance (e.g. https://&lt;subdomain&gt;.zendesk.com/admin/).
@@ -110,8 +112,8 @@ const Main = () => {
             with a name. You will also need to provide the e-mail address of a
             user that the system will impersonate. This is of little consequence
             as we are only performing read actions.
-          </p>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-2 mb-4">
+          </Text>
+          <Card className="mt-4 mb-4">
             <CredentialForm<ZendeskCredentialJson>
               formBody={
                 <>
@@ -153,18 +155,18 @@ const Main = () => {
                 }
               }}
             />
-          </div>
+          </Card>
         </>
       )}
 
       {zendeskConnectorIndexingStatuses.length > 0 && (
         <>
-          <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+          <Title className="mb-2 mt-6 ml-auto mr-auto">
             Zendesk indexing status
-          </h2>
-          <p className="text-sm mb-2">
+          </Title>
+          <Text className="mb-2">
             The latest article changes are fetched every 10 minutes.
-          </p>
+          </Text>
           <div className="mb-2">
             <ConnectorsTable<ZendeskConfig, ZendeskCredentialJson>
               connectorIndexingStatuses={zendeskConnectorIndexingStatuses}
@@ -192,7 +194,7 @@ const Main = () => {
 
       {zendeskCredential && zendeskConnectorIndexingStatuses.length === 0 && (
         <>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+          <Card className="mt-4">
             <h2 className="font-bold mb-3">Create Connection</h2>
             <p className="text-sm mb-4">
               Press connect below to start the connection to your Zendesk
@@ -209,17 +211,17 @@ const Main = () => {
               refreshFreq={10 * 60} // 10 minutes
               credentialId={zendeskCredential.id}
             />
-          </div>
+          </Card>
         </>
       )}
 
       {!zendeskCredential && (
         <>
-          <p className="text-sm mb-4">
+          <Text className="mb-4">
             Please provide your API details in Step 1 first! Once done with
             that, you&apos;ll be able to start the connection then see indexing
             status.
-          </p>
+          </Text>
         </>
       )}
     </>
@@ -232,10 +234,9 @@ export default function Page() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <ZendeskIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Zendesk</h1>
-      </div>
+
+      <AdminPageTitle icon={<ZendeskIcon size={32} />} title="Zendesk" />
+
       <Main />
     </div>
   );

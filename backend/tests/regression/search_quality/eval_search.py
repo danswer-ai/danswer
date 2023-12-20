@@ -5,15 +5,14 @@ from contextlib import contextmanager
 from typing import Any
 from typing import TextIO
 
+from danswer.chat.chat_utils import get_chunks_for_qa
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.direct_qa.qa_utils import get_chunks_for_qa
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import InferenceChunk
 from danswer.search.models import IndexFilters
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SearchQuery
-from danswer.search.models import SearchType
 from danswer.search.search_runner import full_chunk_search
 from danswer.utils.callbacks import MetricsHander
 
@@ -87,9 +86,8 @@ def get_search_results(
     )
     search_query = SearchQuery(
         query=query,
-        search_type=SearchType.HYBRID,
         filters=filters,
-        favor_recent=False,
+        recency_bias_multiplier=1.0,
     )
 
     retrieval_metrics = MetricsHander[RetrievalMetricsContainer]()

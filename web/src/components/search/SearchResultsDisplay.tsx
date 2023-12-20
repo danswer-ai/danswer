@@ -17,19 +17,7 @@ import { AnswerSection } from "./results/AnswerSection";
 import { ThreeDots } from "react-loader-spinner";
 import { usePopup } from "../admin/connectors/Popup";
 import { AlertIcon } from "../icons/icons";
-import Link from "next/link";
-
-const removeDuplicateDocs = (documents: DanswerDocument[]) => {
-  const seen = new Set<string>();
-  const output: DanswerDocument[] = [];
-  documents.forEach((document) => {
-    if (document.document_id && !seen.has(document.document_id)) {
-      output.push(document);
-      seen.add(document.document_id);
-    }
-  });
-  return output;
-};
+import { removeDuplicateDocs } from "@/lib/documentUtils";
 
 const getSelectedDocumentIds = (
   documents: DanswerDocument[],
@@ -86,19 +74,20 @@ export const SearchResultsDisplay = ({
   if (
     answer === null &&
     (documents === null || documents.length === 0) &&
-    quotes === null
+    quotes === null &&
+    !isFetching
   ) {
     return (
       <div className="mt-4">
         {error ? (
-          <div className="text-red-500 text-sm">
+          <div className="text-error text-sm">
             <div className="flex">
-              <AlertIcon size={16} className="text-red-500 my-auto mr-1" />
+              <AlertIcon size={16} className="text-error my-auto mr-1" />
               <p className="italic">{error}</p>
             </div>
           </div>
         ) : (
-          <div className="text-gray-300">No matching documents found.</div>
+          <div className="text-subtle">No matching documents found.</div>
         )}
       </div>
     );
@@ -128,13 +117,15 @@ export const SearchResultsDisplay = ({
     <>
       {popup}
       {shouldDisplayQA && (
-        <div className="min-h-[16rem] p-4 border-2 rounded-md border-gray-700 relative">
+        <div className="min-h-[16rem] p-4 border-2 border-border rounded-lg relative">
           <div>
             <div className="flex mb-1">
-              <h2 className="text font-bold my-auto mb-1 w-full">AI Answer</h2>
+              <h2 className="text-emphasis font-bold my-auto mb-1 w-full">
+                AI Answer
+              </h2>
             </div>
 
-            <div className="mb-2 pt-1 border-t border-gray-700 w-full">
+            <div className="mb-2 pt-1 border-t border-border w-full">
               <AnswerSection
                 answer={answer}
                 quotes={quotes}
@@ -149,7 +140,7 @@ export const SearchResultsDisplay = ({
             </div>
 
             {quotes !== null && answer && !isPersona && (
-              <div className="pt-1 border-t border-gray-700 w-full">
+              <div className="pt-1 border-t border-border w-full">
                 <QuotesSection
                   quotes={dedupedQuotes}
                   isFetching={isFetching}
@@ -172,7 +163,7 @@ export const SearchResultsDisplay = ({
 
       {documents && documents.length > 0 && (
         <div className="mt-4">
-          <div className="font-bold border-b mb-3 pb-1 border-gray-800 text-lg">
+          <div className="font-bold text-emphasis border-b mb-3 pb-1 border-border text-lg">
             Results
           </div>
           {removeDuplicateDocs(documents).map((document) => (

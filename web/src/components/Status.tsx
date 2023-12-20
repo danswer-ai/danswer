@@ -61,8 +61,7 @@ export function IndexAttemptStatus({
     );
   }
 
-  // TODO: remove wrapping `dark` once we have light/dark mode
-  return <div className="dark">{badge}</div>;
+  return <div>{badge}</div>;
 }
 
 export function CCPairStatus({
@@ -104,6 +103,5 @@ export function CCPairStatus({
     );
   }
 
-  // TODO: remove wrapping `dark` once we have light/dark mode
-  return <div className="dark">{badge}</div>;
+  return <div>{badge}</div>;
 }

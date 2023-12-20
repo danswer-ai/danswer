@@ -62,7 +62,7 @@ async function Page({ params }: { params: { id: string } }) {
   const personas = (await personasResponse.json()) as Persona[];
 
   return (
-    <div className="container mx-auto dark">
+    <div className="container mx-auto">
       <InstantSSRAutoRefresh />
 
       <BackButton />

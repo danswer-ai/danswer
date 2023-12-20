@@ -24,6 +24,8 @@ import { GoogleDriveConnectorsTable } from "./GoogleDriveConnectorsTable";
 import { googleDriveConnectorNameBuilder } from "./utils";
 import { DriveOAuthSection, DriveJsonUploadSection } from "./Credential";
 import { usePublicCredentials } from "@/lib/hooks";
+import { AdminPageTitle } from "@/components/admin/Title";
+import { Card, Divider, Text, Title } from "@tremor/react";
 
 interface GoogleDriveConnectorManagementProps {
   googleDrivePublicCredential?: Credential<GoogleDriveCredentialJson>;
@@ -54,10 +56,10 @@ const GoogleDriveConnectorManagement = ({
     googleDrivePublicCredential || googleDriveServiceAccountCredential;
   if (!liveCredential) {
     return (
-      <p className="text-sm">
+      <Text>
         Please authenticate with Google Drive as described in Step 2! Once done
         with that, you can then move on to enable this connector.
-      </p>
+      </Text>
     );
   }
 
@@ -151,7 +153,7 @@ const GoogleDriveConnectorManagement = ({
 
   return (
     <div>
-      <div className="text-sm">
+      <Text>
         <div className="my-3">
           {googleDriveConnectorIndexingStatuses.length > 0 ? (
             <>
@@ -169,7 +171,7 @@ const GoogleDriveConnectorManagement = ({
             </p>
           )}
         </div>
-      </div>
+      </Text>
       {googleDriveConnectorIndexingStatuses.length > 0 && (
         <>
           <div className="text-sm mb-2 font-bold">Existing Connectors:</div>
@@ -179,13 +181,14 @@ const GoogleDriveConnectorManagement = ({
             }
             setPopup={setPopup}
           />
+          <Divider />
         </>
       )}
 
       {googleDriveConnectorIndexingStatuses.length > 0 && (
         <h2 className="font-bold mt-3 text-sm">Add New Connector:</h2>
       )}
-      <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
+      <Card className="mt-4">
         <ConnectorForm<GoogleDriveConfig>
           nameBuilder={googleDriveConnectorNameBuilder}
           source="google_drive"
@@ -239,7 +242,7 @@ const GoogleDriveConnectorManagement = ({
           refreshFreq={10 * 60} // 10 minutes
           credentialId={liveCredential.id}
         />
-      </div>
+      </Card>
     </div>
   );
 };
@@ -353,18 +356,18 @@ const Main = () => {
   return (
     <>
       {popup}
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your Credentials
-      </h2>
+      </Title>
       <DriveJsonUploadSection
         setPopup={setPopup}
         appCredentialData={appCredentialData}
         serviceAccountCredentialData={serviceAccountKeyData}
       />
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 2: Authenticate with Danswer
-      </h2>
+      </Title>
       <DriveOAuthSection
         setPopup={setPopup}
         refreshCredentials={refreshCredentials}
@@ -376,9 +379,9 @@ const Main = () => {
         serviceAccountKeyData={serviceAccountKeyData}
       />
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 3: Start Indexing!
-      </h2>
+      </Title>
       <GoogleDriveConnectorManagement
         googleDrivePublicCredential={googleDrivePublicCredential}
         googleDriveServiceAccountCredential={
@@ -401,10 +404,11 @@ export default function Page() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
-        <GoogleDriveIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Google Drive</h1>
-      </div>
+
+      <AdminPageTitle
+        icon={<GoogleDriveIcon size={32} />}
+        title="Google Drive"
+      />
 
       <Main />
     </div>

@@ -18,7 +18,8 @@ import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ConnectorIndexingStatus, WebConfig } from "@/lib/types";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
-import { createCredential, linkCredential } from "@/lib/credential";
+import { AdminPageTitle } from "@/components/admin/Title";
+import { Card, Title } from "@tremor/react";
 
 const SCRAPE_TYPE_TO_PRETTY_NAME = {
   recursive: "Recursive",
@@ -49,17 +50,16 @@ export default function Web() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
-        <GlobeIcon size={32} />
-        <h1 className="text-3xl font-bold pl-2">Web</h1>
-      </div>
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+
+      <AdminPageTitle icon={<GlobeIcon size={32} />} title="Web" />
+
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Specify which websites to index
-      </h2>
+      </Title>
       <p className="text-sm mb-2">
         We re-fetch the latest state of the website once a day.
       </p>
-      <div className="border-solid border-gray-600 border rounded-md p-6">
+      <Card>
         <ConnectorForm<WebConfig>
           nameBuilder={(values) => `WebConnector-${values.base_url}`}
           ccPairNameBuilder={(values) => values.base_url}
@@ -118,11 +118,11 @@ export default function Web() {
           }}
           refreshFreq={60 * 60 * 24} // 1 day
         />
-      </div>
+      </Card>
 
-      <h2 className="font-bold mb-2 mt-6 ml-auto mr-auto">
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Already Indexed Websites
-      </h2>
+      </Title>
       {isConnectorIndexingStatusesLoading ? (
         <LoadingAnimation text="Loading" />
       ) : isConnectorIndexingStatusesError || !connectorIndexingStatuses ? (
