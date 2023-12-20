@@ -26,8 +26,8 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 def _check_rate_limit(github_client: Github):
-    rate_limit = github_client.get_rate_limit().core
-    if rate_limit.remaining == 0:
+    rate_limit = github_client.get_rate_limit().core.remaining
+    if rate_limit.remaining < 10:
         reset_time = rate_limit.reset.timestamp()
         sleep_duration = reset_time - time.time()
         if sleep_duration > 0:
