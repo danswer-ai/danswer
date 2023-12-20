@@ -8,11 +8,12 @@ interface PersonaCreationRequest {
   document_set_ids: number[];
   num_chunks: number | null;
   llm_relevance_filter: boolean | null;
+  llm_model_version_override: string | null;
 }
 
 interface PersonaUpdateRequest {
   id: number;
-  existingPromptId: number;
+  existingPromptId: number | undefined;
   name: string;
   description: string;
   system_prompt: string;
@@ -20,6 +21,7 @@ interface PersonaUpdateRequest {
   document_set_ids: number[];
   num_chunks: number | null;
   llm_relevance_filter: boolean | null;
+  llm_model_version_override: string | null;
 }
 
 function promptNameFromPersonaName(personaName: string) {
@@ -98,6 +100,7 @@ function buildPersonaAPIBody(
     recency_bias: "base_decay",
     prompt_ids: [promptId],
     document_set_ids,
+    llm_model_version_override: creationRequest.llm_model_version_override,
   };
 }
 
@@ -133,29 +136,42 @@ export async function createPersona(
 export async function updatePersona(
   personaUpdateRequest: PersonaUpdateRequest
 ): Promise<[Response, Response | null]> {
-  const { id, existingPromptId, ...requestBody } = personaUpdateRequest;
+  const { id, existingPromptId } = personaUpdateRequest;
 
   // first update prompt
-  const updatePromptResponse = await updatePrompt({
-    promptId: existingPromptId,
-    personaName: personaUpdateRequest.name,
-    systemPrompt: personaUpdateRequest.system_prompt,
-    taskPrompt: personaUpdateRequest.task_prompt,
-  });
+  let promptResponse;
+  let promptId;
+  if (existingPromptId !== undefined) {
+    promptResponse = await updatePrompt({
+      promptId: existingPromptId,
+      personaName: personaUpdateRequest.name,
+      systemPrompt: personaUpdateRequest.system_prompt,
+      taskPrompt: personaUpdateRequest.task_prompt,
+    });
+    promptId = existingPromptId;
+  } else {
+    promptResponse = await createPrompt({
+      personaName: personaUpdateRequest.name,
+      systemPrompt: personaUpdateRequest.system_prompt,
+      taskPrompt: personaUpdateRequest.task_prompt,
+    });
+    promptId = promptResponse.ok ? (await promptResponse.json()).id : null;
+  }
 
-  const updatePersonaResponse = updatePromptResponse.ok
-    ? await fetch(`/api/admin/persona/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(
-          buildPersonaAPIBody(personaUpdateRequest, existingPromptId)
-        ),
-      })
-    : null;
+  const updatePersonaResponse =
+    promptResponse.ok && promptId
+      ? await fetch(`/api/admin/persona/${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(
+            buildPersonaAPIBody(personaUpdateRequest, promptId)
+          ),
+        })
+      : null;
 
-  return [updatePromptResponse, updatePersonaResponse];
+  return [promptResponse, updatePersonaResponse];
 }
 
 export function deletePersona(personaId: number) {

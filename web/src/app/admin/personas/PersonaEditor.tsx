@@ -152,7 +152,7 @@ export function PersonaEditor({
           if (isUpdate) {
             [promptResponse, personaResponse] = await updatePersona({
               id: existingPersona.id,
-              existingPromptId: existingPrompt!.id,
+              existingPromptId: existingPrompt?.id,
               ...values,
               num_chunks: numChunks,
             });
