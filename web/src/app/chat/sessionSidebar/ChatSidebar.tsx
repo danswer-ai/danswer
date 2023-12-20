@@ -75,7 +75,7 @@ export const ChatSidebar = ({
         transition-transform`}
       id="chat-sidebar"
     >
-      <Link href="/chat" className="ml-3">
+      <Link href="/" className="ml-3">
         <div className="flex mb-4 mt-4">
           <div className="h-[32px] w-[30px]">
             <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
