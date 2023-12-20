@@ -115,7 +115,7 @@ npm run dev
 
 Package the Vespa schema. This will only need to be done when the Vespa schema is updated locally.
 
-Nagivate to `danswer/backend/danswer/document_index/vespa/app_config` and run:
+Navigate to `danswer/backend/danswer/document_index/vespa/app_config` and run:
 ```bash
 zip -r ../vespa-app.zip .
 ```
