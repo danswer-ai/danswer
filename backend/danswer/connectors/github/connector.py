@@ -34,6 +34,7 @@ def _check_rate_limit(github_client: Github):
             logger.warning(f"Rate limit exceeded. Sleeping for {sleep_duration} seconds.")
             time.sleep(sleep_duration)
 
+
 def _batch_github_objects(
     git_objs: PaginatedList, batch_size: int
 ) -> Iterator[list[PullRequest | Issue]]:
