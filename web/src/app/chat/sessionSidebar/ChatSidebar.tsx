@@ -180,7 +180,7 @@ export const ChatSidebar = ({
               onClick={() => setUserInfoVisible(!userInfoVisible)}
               className="flex h-8"
             >
-              <div style="display: none;" className="my-auto mr-2 bg-user rounded-lg px-1.5">
+              <div style={{ display: 'none' }} className="my-auto mr-2 bg-user rounded-lg px-1.5">
                 {user && user.email ? user.email[0].toUpperCase() : "A"}
               </div>
               <p className="my-auto">
