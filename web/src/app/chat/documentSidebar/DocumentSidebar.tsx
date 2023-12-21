@@ -68,7 +68,7 @@ export function DocumentSidebar({
         </div>
 
         {currentDocuments ? (
-          <div className="overflow-y-auto overflow-x-hidden flex flex-col">
+          <div className="overflow-y-auto dark-scrollbar overflow-x-hidden flex flex-col">
             <div>
               {dedupedDocuments.length > 0 ? (
                 dedupedDocuments.map((document, ind) => (
@@ -141,7 +141,7 @@ export function DocumentSidebar({
         </div>
 
         {selectedDocuments && selectedDocuments.length > 0 ? (
-          <div className="flex flex-col gap-y-2 py-3 px-3 overflow-y-auto max-h-full">
+          <div className="flex flex-col gap-y-2 py-3 px-3 overflow-y-auto dark-scrollbar max-h-full">
             {selectedDocuments.map((document) => (
               <SelectedDocumentDisplay
                 key={document.document_id}
