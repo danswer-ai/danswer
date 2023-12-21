@@ -26,6 +26,17 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 def _check_rate_limit(github_client: Github):
+
+    # HACK to get the repo to load 
+    # Getting a rate_limit error and time is runnign out 
+    # for the Holidays! 
+    #
+    # Ho ho ho, bring a bottle of rum
+    # Ho ho ho, cream and whiskey bourbon
+    # Ho ho ho, bring a bottle of booze
+    # We got nothing to lose, ho ho ho
+    time.sleep(0.5)
+
     rate_limit = github_client.get_rate_limit().core
     logger.debug(f"Rate Limit: {rate_limit}")
     if rate_limit.remaining < 10:
