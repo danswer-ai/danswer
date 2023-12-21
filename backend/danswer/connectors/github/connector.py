@@ -35,7 +35,7 @@ def _check_rate_limit(github_client: Github):
     # Ho ho ho, cream and whiskey bourbon
     # Ho ho ho, bring a bottle of booze
     # We got nothing to lose, ho ho ho
-    time.sleep(0.5)
+    #time.sleep(0.5)
 
     rate_limit = github_client.get_rate_limit().core
     logger.debug(f"Rate Limit: {rate_limit}")
