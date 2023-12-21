@@ -139,24 +139,31 @@ export const AIMessage = ({
                   {citedDocuments
                     .filter(([_, document]) => document.semantic_identifier)
                     .map(([citationKey, document], ind) => {
-                      return (
-                        <a
-                          key={document.document_id}
-                          href={document.link}
-                          target="_blank"
-                          className="text-sm border border-border py-1 px-2 rounded flex cursor-pointer hover:bg-hover"
-                        >
-                          <div className="max-w-350 text-ellipsis flex">
-                            <div className="mr-1 my-auto">
-                              <SourceIcon
-                                sourceType={document.source_type}
-                                iconSize={16}
-                              />
-                            </div>
-                            [{citationKey}] {document!.semantic_identifier}
+                      const display = (
+                        <div className="max-w-350 text-ellipsis flex text-sm border border-border py-1 px-2 rounded flex">
+                          <div className="mr-1 my-auto">
+                            <SourceIcon
+                              sourceType={document.source_type}
+                              iconSize={16}
+                            />
                           </div>
-                        </a>
+                          [{citationKey}] {document!.semantic_identifier}
+                        </div>
                       );
+                      if (document.link) {
+                        return (
+                          <a
+                            key={document.document_id}
+                            href={document.link}
+                            target="_blank"
+                            className="cursor-pointer hover:bg-hover"
+                          >
+                            {display}
+                          </a>
+                        );
+                      } else {
+                        return <div className="cursor-default">{display}</div>;
+                      }
                     })}
                 </div>
               </div>
