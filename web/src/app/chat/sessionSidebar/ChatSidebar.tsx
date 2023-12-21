@@ -66,7 +66,8 @@ export const ChatSidebar = ({
   return (
     <div
       className={`
-        w-80
+        w-72
+        2xl:w-80
         border-r 
         border-border 
         flex 

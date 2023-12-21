@@ -43,7 +43,7 @@ function SearchingForDisplay({
   return (
     <div className={`flex p-1 rounded ${isHoverable && "cursor-default"}`}>
       <FiSearch className="mr-2 my-auto" size={14} />
-      <p className="line-clamp-1 break-all w-96">
+      <p className="line-clamp-1 break-all xl:w-64 2xl:w-80 3xl:w-96">
         Searching for: <i>{query}</i>
       </p>
     </div>
@@ -70,7 +70,7 @@ export function SearchSummary({
           <HoverPopup
             mainContent={<SearchingForDisplay query={query} isHoverable />}
             popupContent={
-              <div className="w-96">
+              <div className="xl:w-64 2xl:w-80 3xl:w-96">
                 <b>Full query:</b> <div className="mt-1 italic">{query}</div>
               </div>
             }
