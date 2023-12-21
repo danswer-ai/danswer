@@ -78,7 +78,7 @@ const Page = async ({
             <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
           </div>
           <h2 className="text-center text-xl text-strong font-bold mt-6">
-            Log In to Yugabyte Knowledge Search
+            Log In to Hagen Knowledge Hub
           </h2>
           {authUrl && authTypeMetadata && (
             <SignInButton
