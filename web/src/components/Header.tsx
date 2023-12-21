@@ -113,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
               }
             >
               <div className="hover:bg-hover rounded p-1 w-fit">
-                <div className="my-auto bg-user text-sm rounded-lg px-1.5 select-none">
+                <div style="display: none;" className="my-auto bg-user text-sm rounded-lg px-1.5 select-none">
                   {user && user.email ? user.email[0].toUpperCase() : "A"}
                 </div>
               </div>
