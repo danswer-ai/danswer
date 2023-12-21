@@ -175,8 +175,8 @@ export const ChatSidebar = ({
               )}
             </div>
           )}
-          <BasicSelectable style={{ display: 'none' }} fullWidth selected={false}>
-            <div
+          <BasicSelectable fullWidth selected={false}>
+            <div style={{ display: 'none' }}
               onClick={() => setUserInfoVisible(!userInfoVisible)}
               className="flex h-8"
             >
