@@ -17,15 +17,18 @@ module.exports = {
     current: "currentColor",
     extend: {
       screens: {
+        "2xl": "1420px",
         "3xl": "1700px",
       },
       fontFamily: {
         sans: ["var(--font-inter)"],
       },
       width: {
-        "message-small": "600px",
+        "message-xs": "450px",
+        "message-sm": "550px",
         "message-default": "740px",
-        "searchbar-small": "710px",
+        "searchbar-xs": "560px",
+        "searchbar-sm": "660px",
         searchbar: "850px",
         "document-sidebar": "800px",
         "document-sidebar-large": "1000px",

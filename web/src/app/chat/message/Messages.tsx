@@ -52,7 +52,7 @@ export const AIMessage = ({
   const [copyClicked, setCopyClicked] = useState(false);
   return (
     <div className={"py-5 px-5 flex -mr-6 w-full"}>
-      <div className="mx-auto w-searchbar-small 3xl:w-searchbar relative">
+      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
         <div className="ml-8">
           <div className="flex">
             <div className="p-1 bg-ai rounded-lg h-fit my-auto">
@@ -67,7 +67,7 @@ export const AIMessage = ({
               hasDocs &&
               handleShowRetrieved !== undefined &&
               isCurrentlyShowingRetrieved !== undefined && (
-                <div className="flex w-message-small 3xl:w-message-default absolute ml-8">
+                <div className="flex w-message-xs 2xl:w-message-sm 3xl:w-message-default absolute ml-8">
                   <div className="ml-auto">
                     <ShowHideDocsButton
                       messageId={messageId}
@@ -79,7 +79,7 @@ export const AIMessage = ({
               )}
           </div>
 
-          <div className="w-message-small 3xl:w-message-default break-words mt-1 ml-8">
+          <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
             {query !== undefined &&
               handleShowRetrieved !== undefined &&
               isCurrentlyShowingRetrieved !== undefined && (
@@ -162,7 +162,14 @@ export const AIMessage = ({
                           </a>
                         );
                       } else {
-                        return <div className="cursor-default">{display}</div>;
+                        return (
+                          <div
+                            key={document.document_id}
+                            className="cursor-default"
+                          >
+                            {display}
+                          </div>
+                        );
                       }
                     })}
                 </div>
@@ -201,7 +208,7 @@ export const HumanMessage = ({
 }) => {
   return (
     <div className="py-5 px-5 flex -mr-6 w-full">
-      <div className="mx-auto w-searchbar-small 3xl:w-searchbar">
+      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <div className="ml-8">
           <div className="flex">
             <div className="p-1 bg-user rounded-lg h-fit">
@@ -212,8 +219,8 @@ export const HumanMessage = ({
 
             <div className="font-bold text-emphasis ml-2 my-auto">You</div>
           </div>
-          <div className="mx-auto mt-1 ml-8 w-message-small 3xl:w-message-default flex flex-wrap">
-            <div className="w-full sm:w-full w-message-small 3xl:w-message-default break-words">
+          <div className="mx-auto mt-1 ml-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default flex flex-wrap">
+            <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words">
               {typeof content === "string" ? (
                 <ReactMarkdown
                   className="prose max-w-full"

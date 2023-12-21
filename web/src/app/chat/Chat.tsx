@@ -154,10 +154,13 @@ export const Chat = ({
       // numbers below are based on the actual width the center section for different
       // screen sizes. `1700` corresponds to the custom "3xl" tailwind breakpoint
       // NOTE: some buffer is needed to account for scroll bars
-      setMaxDocumentSidebarWidth(
-        masterFlexboxRef.current.clientWidth -
-          (document.documentElement.clientWidth > 1700 ? 950 : 810)
-      );
+      if (document.documentElement.clientWidth > 1700) {
+        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 950);
+      } else if (document.documentElement.clientWidth > 1420) {
+        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 760);
+      } else {
+        setMaxDocumentSidebarWidth(masterFlexboxRef.current.clientWidth - 660);
+      }
     }
   };
   useEffect(() => {
@@ -371,7 +374,7 @@ export const Chat = ({
 
               {messageHistory.length === 0 && !isStreaming && (
                 <div className="flex justify-center items-center h-full">
-                  <div className="px-8 w-searchbar-small 3xl:w-searchbar">
+                  <div className="px-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
                     <div className="flex">
                       <div className="mx-auto h-[80px] w-[80px]">
                         <Image
@@ -526,7 +529,7 @@ export const Chat = ({
             )} */}
 
                 <div className="flex">
-                  <div className="w-searchbar-small 3xl:w-searchbar mx-auto px-4 pt-1 flex">
+                  <div className="w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar mx-auto px-4 pt-1 flex">
                     <div className="mr-3">
                       <SearchTypeSelector
                         selectedSearchType={selectedSearchType}
@@ -549,7 +552,7 @@ export const Chat = ({
                 </div>
 
                 <div className="flex justify-center py-2 max-w-screen-lg mx-auto mb-2">
-                  <div className="w-full shrink relative px-4 w-searchbar-small 3xl:w-searchbar mx-auto">
+                  <div className="w-full shrink relative px-4 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar mx-auto">
                     <textarea
                       ref={textareaRef}
                       autoFocus
