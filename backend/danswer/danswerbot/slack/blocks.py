@@ -15,7 +15,6 @@ from danswer.chat.models import DanswerQuote
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
-from danswer.configs.danswerbot_configs import ENABLE_SLACK_DOC_FEEDBACK
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
@@ -82,7 +81,7 @@ def build_doc_feedback_block(
     return ButtonElement(
         action_id=FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID,
         value=feedback_id,
-        text="Source feedback"
+        text="Source feedback",
     )
 
 
@@ -104,7 +103,6 @@ def build_documents_blocks(
     documents: list[SavedSearchDoc],
     message_id: int | None,
     num_docs_to_display: int = DANSWER_BOT_NUM_DOCS_TO_DISPLAY,
-    include_feedback: bool = ENABLE_SLACK_DOC_FEEDBACK,
 ) -> list[Block]:
     seen_docs_identifiers = set()
     section_blocks: list[Block] = [HeaderBlock(text="Reference Documents")]
@@ -137,10 +135,8 @@ def build_documents_blocks(
 
         block_text = header_line + updated_at_line + body_text
 
-        section_blocks.append(SectionBlock(text=block_text))
-
         feedback: ButtonElement | dict = {}
-        if include_feedback and message_id is not None:
+        if message_id is not None:
             feedback = build_doc_feedback_block(
                 message_id=message_id,
                 document_id=d.document_id,
