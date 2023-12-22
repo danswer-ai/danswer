@@ -8,7 +8,7 @@ from danswer.connectors.cross_connector_utils.html_utils import (
     parse_html_page_basic,
     strip_excessive_newlines_and_spaces,
 )
-from danswer.connectors.cross_connector_utils.time_utils import time_str_to_utc
+from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.interfaces import (
     GenerateDocumentsOutput,
     LoadConnector,
@@ -154,12 +154,12 @@ class LoopioConnector(LoadConnector, PollConnector):
                 last_reviewed_by = entry.get("lastReviewedBy")
 
                 primary_owners: list[BasicExpertInfo] = [
-                    { "display_name": owner.get("name") }
+                    {"display_name": owner.get("name")}
                     for owner in [creator, last_updated_by]
                     if owner is not None
                 ]
                 secondary_owners: list[BasicExpertInfo] = [
-                    {"display_name": owner.get("name") }
+                    {"display_name": owner.get("name")}
                     for owner in [last_reviewed_by]
                     if owner is not None
                 ]
