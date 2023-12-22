@@ -42,7 +42,7 @@ def handle_doc_feedback_button(
         external_id=external_id,
         # We use the private metadata to keep track of the channel id and thread ts
         private_metadata=f"{channel_id}_{thread_ts}",
-        title="Source Feedback",
+        title="Give Feedback",
         blocks=[get_document_feedback_blocks()],
         submit="send",
         close="cancel",
