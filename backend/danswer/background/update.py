@@ -13,11 +13,11 @@ from danswer.background.indexing.dask_utils import ResourceLogger
 from danswer.background.indexing.job_client import SimpleJob
 from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
+from danswer.configs.app_configs import CLEANUP_INDEXING_JOBS_TIMEOUT
 from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import LOG_LEVEL
 from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
-from danswer.configs.app_configs import CLEANUP_INDEXING_JOBS_TIMEOUT
 from danswer.configs.model_configs import MIN_THREADS_ML_MODELS
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import mark_all_in_progress_cc_pairs_failed
@@ -156,7 +156,8 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
 
 
 def cleanup_indexing_jobs(
-    existing_jobs: dict[int, Future | SimpleJob]
+    existing_jobs: dict[int, Future | SimpleJob],
+    timeout_hours: int = CLEANUP_INDEXING_JOBS_TIMEOUT,
 ) -> dict[int, Future | SimpleJob]:
     existing_jobs_copy = existing_jobs.copy()
 
@@ -204,13 +205,13 @@ def cleanup_indexing_jobs(
             )
             for index_attempt in in_progress_indexing_attempts:
                 if index_attempt.id in existing_jobs:
-                    # check to see if the job has been updated in last hour, if not
+                    # check to see if the job has been updated in last n hour, if not
                     # assume it to frozen in some bad state and just mark it as failed. Note: this relies
                     # on the fact that the `time_updated` field is constantly updated every
                     # batch of documents indexed
                     current_db_time = get_db_current_time(db_session=db_session)
                     time_since_update = current_db_time - index_attempt.time_updated
-                    if time_since_update.total_seconds() > 60 * 60 * CLEANUP_INDEXING_JOBS_TIMEOUT:
+                    if time_since_update.total_seconds() > 60 * 60 * timeout_hours:
                         existing_jobs[index_attempt.id].cancel()
                         _mark_run_failed(
                             db_session=db_session,

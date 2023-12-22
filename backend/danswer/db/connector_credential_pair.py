@@ -177,22 +177,6 @@ def add_credential_to_connector(
             data=connector_id,
         )
 
-    existing_name = (
-        db_session.query(ConnectorCredentialPair)
-        .filter(
-            ConnectorCredentialPair.name == cc_pair_name
-        )
-        .one_or_none()
-    )
-
-    if existing_name:
-        try:
-            name_split=cc_pair_name.split("_")
-            name_id=int(name_split[-1])
-            cc_pair_name="_".join(name_split[:-1])+f"{name_id+1}"
-        except ValueError:
-            cc_pair_name=cc_pair_name+"_1"
-
     association = ConnectorCredentialPair(
         connector_id=connector_id,
         credential_id=credential_id,
