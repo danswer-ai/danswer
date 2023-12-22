@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import pytz
+import timeago  # type: ignore
 from slack_sdk.models.blocks import ActionsBlock
 from slack_sdk.models.blocks import Block
 from slack_sdk.models.blocks import ButtonElement
@@ -20,7 +22,6 @@ from danswer.danswerbot.slack.utils import remove_slack_text_interactions
 from danswer.danswerbot.slack.utils import translate_vespa_highlight_to_slack
 from danswer.search.models import SavedSearchDoc
 from danswer.utils.text_processing import replace_whitespaces_w_space
-
 
 _MAX_BLURB_LEN = 75
 
@@ -109,11 +110,11 @@ def build_documents_blocks(
         match_str = translate_vespa_highlight_to_slack(d.match_highlights, used_chars)
 
         included_docs += 1
-
+        updated_at = timeago.format(d.updated_at, datetime.now(pytz.utc))
         if d.link:
-            block_text = f"<{d.link}|{doc_sem_id}>:\n>{remove_slack_text_interactions(match_str)}"
+            block_text = f"<{d.link}|{doc_sem_id}>\nUpdated {updated_at}\n>{remove_slack_text_interactions(match_str)}"
         else:
-            block_text = f"{doc_sem_id}:\n>{remove_slack_text_interactions(match_str)}"
+            block_text = f"{doc_sem_id}\nUpdated {updated_at}\n>{remove_slack_text_interactions(match_str)}"
 
         section_blocks.append(
             SectionBlock(text=block_text),
