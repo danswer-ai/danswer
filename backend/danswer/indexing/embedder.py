@@ -9,7 +9,10 @@ from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import IndexChunk
 from danswer.search.models import Embedder
 from danswer.search.search_nlp_models import EmbeddingModel
+from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
+
+logger = setup_logger()
 
 
 @log_function_time()
@@ -42,7 +45,9 @@ def embed_chunks(
     ]
 
     embeddings: list[list[float]] = []
-    for text_batch in text_batches:
+    len_text_batches = len(text_batches)
+    for idx, text_batch in enumerate(text_batches, start=1):
+        logger.debug(f"Embedding text batch {idx} of {len_text_batches}")
         # Normalize embeddings is only configured via model_configs.py, be sure to use right value for the set loss
         embeddings.extend(embedding_model.encode(text_batch))
 
