@@ -1,29 +1,27 @@
 import json
-from datetime import datetime, timezone
+from datetime import datetime
+from datetime import timezone
 from typing import Any
+
+from oauthlib.oauth2 import BackendApplicationClient
+from requests_oauthlib import OAuth2Session
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.html_utils import parse_html_page_basic
 from danswer.connectors.cross_connector_utils.html_utils import (
-    parse_html_page_basic,
     strip_excessive_newlines_and_spaces,
 )
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
-from danswer.connectors.interfaces import (
-    GenerateDocumentsOutput,
-    LoadConnector,
-    PollConnector,
-    SecondsSinceUnixEpoch,
-)
-from danswer.connectors.models import (
-    BasicExpertInfo,
-    ConnectorMissingCredentialError,
-    Document,
-    Section,
-)
+from danswer.connectors.interfaces import GenerateDocumentsOutput
+from danswer.connectors.interfaces import LoadConnector
+from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import BasicExpertInfo
+from danswer.connectors.models import ConnectorMissingCredentialError
+from danswer.connectors.models import Document
+from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
-from oauthlib.oauth2 import BackendApplicationClient
-from requests_oauthlib import OAuth2Session
 
 LOOPIO_API_BASE = "https://api.loopio.com/"
 LOOPIO_AUTH_URL = LOOPIO_API_BASE + "oauth2/access_token"

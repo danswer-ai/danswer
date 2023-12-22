@@ -16,9 +16,9 @@ from danswer.connectors.hubspot.connector import HubSpotConnector
 from danswer.connectors.interfaces import BaseConnector
 from danswer.connectors.interfaces import EventConnector
 from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.loopio.connector import LoopioConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.linear.connector import LinearConnector
+from danswer.connectors.loopio.connector import LoopioConnector
 from danswer.connectors.models import InputType
 from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.productboard.connector import ProductboardConnector
