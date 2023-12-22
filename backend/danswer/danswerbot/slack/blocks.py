@@ -110,15 +110,22 @@ def build_documents_blocks(
         match_str = translate_vespa_highlight_to_slack(d.match_highlights, used_chars)
 
         included_docs += 1
-        updated_at = timeago.format(d.updated_at, datetime.now(pytz.utc))
-        if d.link:
-            block_text = f"<{d.link}|{doc_sem_id}>\nUpdated {updated_at}\n>{remove_slack_text_interactions(match_str)}"
-        else:
-            block_text = f"{doc_sem_id}\nUpdated {updated_at}\n>{remove_slack_text_interactions(match_str)}"
 
-        section_blocks.append(
-            SectionBlock(text=block_text),
-        )
+        header_line = f"{doc_sem_id}\n"
+        if d.link:
+            header_line = f"<{d.link}|{doc_sem_id}>\n"
+
+        updated_at_line = ""
+        if d.updated_at is not None:
+            updated_at_line = (
+                f"Updated {timeago.format(d.updated_at, datetime.now(pytz.utc))}\n"
+            )
+
+        body_text = f">{remove_slack_text_interactions(match_str)}"
+
+        block_text = header_line + updated_at_line + body_text
+
+        section_blocks.append(SectionBlock(text=block_text))
 
         if include_feedback and message_id is not None:
             section_blocks.append(
