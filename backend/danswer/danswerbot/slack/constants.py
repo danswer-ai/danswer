@@ -1,3 +1,5 @@
 LIKE_BLOCK_ACTION_ID = "feedback-like"
 DISLIKE_BLOCK_ACTION_ID = "feedback-dislike"
+FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID = "feedback-doc-button"
 SLACK_CHANNEL_ID = "channel_id"
+VIEW_DOC_FEEDBACK_ID = "view-doc-feedback"

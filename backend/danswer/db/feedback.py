@@ -114,10 +114,15 @@ def create_doc_retrieval_feedback(
         else:
             raise ValueError("Unhandled document feedback type")
 
-    if feedback in [SearchFeedbackType.ENDORSE, SearchFeedbackType.REJECT]:
+    if feedback in [
+        SearchFeedbackType.ENDORSE,
+        SearchFeedbackType.REJECT,
+        SearchFeedbackType.HIDE,
+    ]:
         update = UpdateRequest(
             document_ids=[document_id],
             boost=db_doc.boost,
+            hidden=db_doc.hidden
         )
         # Updates are generally batched for efficiency, this case only 1 doc/value is updated
         document_index.update([update])
