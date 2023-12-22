@@ -48,15 +48,16 @@ def build_qa_feedback_block(message_id: int) -> Block:
 def get_document_feedback_blocks() -> Block:
     return SectionBlock(
         text=(
-            "If this document is a good source of information and should be shown more often, "
-            "please select 'Boost'. Conversely, if it seems to be a bad source of information, "
-            "select 'Down-boost'. You can also select 'Hide' if the source is deprecated and "
-            "should not be taken into account anymore."
+            "- 'Up-Boost' if this document is a good source of information and should be "
+            "shown more often.\n"
+            "- Select 'Down-boost' if the document is a poor source of information and should be "
+            "shown less often.\n"
+            "- Select 'Hide' if the document is deprecated and should never be shown anymore."
         ),
         accessory=RadioButtonsElement(
             options=[
                 Option(
-                    text=":thumbsup: Boost",
+                    text=":thumbsup: Up-Boost",
                     value=SearchFeedbackType.ENDORSE.value,
                 ),
                 Option(
@@ -64,7 +65,7 @@ def get_document_feedback_blocks() -> Block:
                     value=SearchFeedbackType.REJECT.value,
                 ),
                 Option(
-                    text=":palms_up_together: Hide",
+                    text=":x: Hide",
                     value=SearchFeedbackType.HIDE.value,
                 ),
             ]
@@ -81,7 +82,7 @@ def build_doc_feedback_block(
     return ButtonElement(
         action_id=FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID,
         value=feedback_id,
-        text="Source feedback",
+        text="Give Feedback",
     )
 
 
