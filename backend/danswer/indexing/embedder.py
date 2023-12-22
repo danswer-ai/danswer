@@ -47,7 +47,7 @@ def embed_chunks(
     embeddings: list[list[float]] = []
     len_text_batches = len(text_batches)
     for idx, text_batch in enumerate(text_batches, start=1):
-        logger.debug(f"Text batch {idx} of {len_text_batches}")
+        logger.debug(f"Embedding text batch {idx} of {len_text_batches}")
         # Normalize embeddings is only configured via model_configs.py, be sure to use right value for the set loss
         embeddings.extend(embedding_model.encode(text_batch))
 

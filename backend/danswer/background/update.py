@@ -205,7 +205,7 @@ def cleanup_indexing_jobs(
             )
             for index_attempt in in_progress_indexing_attempts:
                 if index_attempt.id in existing_jobs:
-                    # check to see if the job has been updated in last n hour, if not
+                    # check to see if the job has been updated in last n hours, if not
                     # assume it to frozen in some bad state and just mark it as failed. Note: this relies
                     # on the fact that the `time_updated` field is constantly updated every
                     # batch of documents indexed
