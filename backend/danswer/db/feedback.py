@@ -120,9 +120,7 @@ def create_doc_retrieval_feedback(
         SearchFeedbackType.HIDE,
     ]:
         update = UpdateRequest(
-            document_ids=[document_id],
-            boost=db_doc.boost,
-            hidden=db_doc.hidden
+            document_ids=[document_id], boost=db_doc.boost, hidden=db_doc.hidden
         )
         # Updates are generally batched for efficiency, this case only 1 doc/value is updated
         document_index.update([update])
