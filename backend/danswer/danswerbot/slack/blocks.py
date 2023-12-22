@@ -118,7 +118,7 @@ def build_documents_blocks(
         updated_at_line = ""
         if d.updated_at is not None:
             updated_at_line = (
-                f"Updated {timeago.format(d.updated_at, datetime.now(pytz.utc))}\n"
+                f"_Updated {timeago.format(d.updated_at, datetime.now(pytz.utc))}_\n"
             )
 
         body_text = f">{remove_slack_text_interactions(match_str)}"
