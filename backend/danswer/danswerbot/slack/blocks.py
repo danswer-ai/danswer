@@ -50,9 +50,9 @@ def get_document_feedback_blocks() -> Block:
         text=(
             "- 'Up-Boost' if this document is a good source of information and should be "
             "shown more often.\n"
-            "- Select 'Down-boost' if the document is a poor source of information and should be "
+            "- 'Down-boost' if this document is a poor source of information and should be "
             "shown less often.\n"
-            "- Select 'Hide' if the document is deprecated and should never be shown anymore."
+            "- 'Hide' if this document is deprecated and should never be shown anymore."
         ),
         accessory=RadioButtonsElement(
             options=[
