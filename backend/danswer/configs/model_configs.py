@@ -21,6 +21,7 @@ NORMALIZE_EMBEDDINGS = (
     os.environ.get("NORMALIZE_EMBEDDINGS") or "False"
 ).lower() == "true"
 # These are only used if reranking is turned off, to normalize the direct retrieval scores for display
+# Currently unused
 SIM_SCORE_RANGE_LOW = float(os.environ.get("SIM_SCORE_RANGE_LOW") or 0.0)
 SIM_SCORE_RANGE_HIGH = float(os.environ.get("SIM_SCORE_RANGE_HIGH") or 1.0)
 # Certain models like e5, BGE, etc use a prefix for asymmetric retrievals (query generally shorter than docs)
