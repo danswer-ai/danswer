@@ -20,7 +20,7 @@ google-auth-oauthlib==1.0.0
 httpcore==0.16.3
 httpx==0.23.3
 httpx-oauth==0.11.2
-huggingface-hub==0.20.1
+huggingface-hub==0.16.4
 jira==3.5.1
 langchain==0.0.340
 litellm==1.7.5
