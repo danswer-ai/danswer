@@ -54,10 +54,10 @@ slack-sdk==3.20.2
 SQLAlchemy[mypy]==2.0.15
 tensorflow==2.13.0
 tiktoken==0.4.0
-#timeago==1.0.16
+timeago==1.0.16
 torch==2.0.1
 torchvision==0.15.2
-transformers==4.36.2
+transformers==4.30.1
 uvicorn==0.21.1
 zulip==0.8.2
 hubspot-api-client==8.1.0
