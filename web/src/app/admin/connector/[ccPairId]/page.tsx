@@ -17,6 +17,7 @@ import { ValidSources } from "@/lib/types";
 import useSWR from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ThreeDotsLoader } from "@/components/Loading";
+import { buildCCPairInfoUrl } from "./lib";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -29,7 +30,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
     isLoading,
     error,
   } = useSWR<CCPairFullInfo>(
-    `/api/manage/admin/cc-pair/${ccPairId}`,
+    buildCCPairInfoUrl(ccPairId),
     errorHandlingFetcher
   );
 
@@ -98,6 +99,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
             ccPair.connector.source
           ) && (
             <ReIndexButton
+              ccPairId={ccPair.id}
               connectorId={ccPair.connector.id}
               credentialId={ccPair.credential.id}
               isDisabled={ccPair.connector.disabled}

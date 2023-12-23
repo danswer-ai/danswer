@@ -59,14 +59,21 @@ class DocMetadataAwareIndexChunk(IndexChunk):
             source document for this chunk.
     document_sets: all document sets the source document for this chunk is a part
                    of. This is used for filtering / personas.
+    boost: influences the ranking of this chunk at query time. Positive -> ranked higher,
+           negative -> ranked lower.
     """
 
     access: "DocumentAccess"
     document_sets: set[str]
+    boost: int
 
     @classmethod
     def from_index_chunk(
-        cls, index_chunk: IndexChunk, access: "DocumentAccess", document_sets: set[str]
+        cls,
+        index_chunk: IndexChunk,
+        access: "DocumentAccess",
+        document_sets: set[str],
+        boost: int,
     ) -> "DocMetadataAwareIndexChunk":
         return cls(
             **{
@@ -75,6 +82,7 @@ class DocMetadataAwareIndexChunk(IndexChunk):
             },
             access=access,
             document_sets=document_sets,
+            boost=boost,
         )
 
 

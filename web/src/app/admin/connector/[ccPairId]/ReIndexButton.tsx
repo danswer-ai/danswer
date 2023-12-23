@@ -4,17 +4,20 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { runConnector } from "@/lib/connector";
 import { Button } from "@tremor/react";
 import { useRouter } from "next/navigation";
+import { mutate } from "swr";
+import { buildCCPairInfoUrl } from "./lib";
 
 export function ReIndexButton({
+  ccPairId,
   connectorId,
   credentialId,
   isDisabled,
 }: {
+  ccPairId: number;
   connectorId: number;
   credentialId: number;
   isDisabled: boolean;
 }) {
-  const router = useRouter();
   const { popup, setPopup } = usePopup();
 
   return (
@@ -37,7 +40,7 @@ export function ReIndexButton({
               type: "success",
             });
           }
-          router.refresh();
+          mutate(buildCCPairInfoUrl(ccPairId));
         }}
         disabled={isDisabled}
         tooltip={
