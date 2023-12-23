@@ -4,14 +4,14 @@ import { Button } from "@tremor/react";
 import { CCPairFullInfo } from "./types";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { disableConnector } from "@/lib/connector";
-import { useRouter } from "next/navigation";
+import { mutate } from "swr";
+import { buildCCPairInfoUrl } from "./lib";
 
 export function ModifyStatusButtonCluster({
   ccPair,
 }: {
   ccPair: CCPairFullInfo;
 }) {
-  const router = useRouter();
   const { popup, setPopup } = usePopup();
 
   return (
@@ -22,7 +22,9 @@ export function ModifyStatusButtonCluster({
           color="green"
           size="xs"
           onClick={() =>
-            disableConnector(ccPair.connector, setPopup, () => router.refresh())
+            disableConnector(ccPair.connector, setPopup, () =>
+              mutate(buildCCPairInfoUrl(ccPair.id))
+            )
           }
           tooltip="Click to start indexing again!"
         >
@@ -33,7 +35,9 @@ export function ModifyStatusButtonCluster({
           color="red"
           size="xs"
           onClick={() =>
-            disableConnector(ccPair.connector, setPopup, () => router.refresh())
+            disableConnector(ccPair.connector, setPopup, () =>
+              mutate(buildCCPairInfoUrl(ccPair.id))
+            )
           }
           tooltip={
             "When disabled, the connectors documents will still" +

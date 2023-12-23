@@ -5,6 +5,7 @@ from typing import Protocol
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
+from danswer.configs.constants import DEFAULT_BOOST
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
 )
@@ -86,6 +87,7 @@ def _indexing_pipeline(
             document_ids=document_ids,
             db_session=db_session,
         )
+        id_to_db_doc_map = {doc.id: doc for doc in db_docs}
         id_update_time_map = {
             doc.id: doc.doc_updated_at for doc in db_docs if doc.doc_updated_at
         }
@@ -142,6 +144,11 @@ def _indexing_pipeline(
                 access=document_id_to_access_info[chunk.source_document.id],
                 document_sets=set(
                     document_id_to_document_set.get(chunk.source_document.id, [])
+                ),
+                boost=(
+                    id_to_db_doc_map[chunk.source_document.id].boost
+                    if chunk.source_document.id in id_to_db_doc_map
+                    else DEFAULT_BOOST
                 ),
             )
             for chunk in chunks_with_embeddings

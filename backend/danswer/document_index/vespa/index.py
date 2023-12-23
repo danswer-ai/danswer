@@ -31,7 +31,6 @@ from danswer.configs.constants import BLURB
 from danswer.configs.constants import BOOST
 from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
-from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DOC_UPDATED_AT
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import DOCUMENT_SETS
@@ -250,7 +249,7 @@ def _index_vespa_chunk(chunk: DocMetadataAwareIndexChunk) -> None:
         SECTION_CONTINUATION: chunk.section_continuation,
         METADATA: json.dumps(document.metadata),
         EMBEDDINGS: embeddings_name_vector_map,
-        BOOST: DEFAULT_BOOST,
+        BOOST: chunk.boost,
         DOC_UPDATED_AT: _vespa_get_updated_at_attribute(document.doc_updated_at),
         PRIMARY_OWNERS: get_experts_stores_representations(document.primary_owners),
         SECONDARY_OWNERS: get_experts_stores_representations(document.secondary_owners),
