@@ -17,11 +17,11 @@ spec:
         image: danswer/danswer-backend:latest
         imagePullPolicy: IfNotPresent
         command: ["/usr/bin/supervisord"]
-        env:
-        - name: POSTGRES_HOST
-          value: relational-db-service
-        - name: VESPA_HOST
-          value: document-index-service
+        # There are some extra values since this is shared between services
+        # There are no conflicts though, extra env variables are simply ignored
+        envFrom:
+        - configMapRef:
+            name: env-configmap
         volumeMounts:
         - name: dynamic-storage
           mountPath: /home/storage

@@ -39,23 +39,11 @@ spec:
             uvicorn danswer.main:app --host 0.0.0.0 --port 8080
         ports:
         - containerPort: 8080
-        env:
-        - name: AUTH_TYPE
-          value: google_oauth
-        - name: POSTGRES_HOST
-          value: relational-db-service
-        - name: VESPA_HOST
-          value: document-index-service
-        - name: GOOGLE_OAUTH_CLIENT_ID
-          valueFrom:
-            secretKeyRef:
-              name: danswer-secrets
-              key: google_oauth_client_id
-        - name: GOOGLE_OAUTH_CLIENT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: danswer-secrets
-              key: google_oauth_client_secret
+        # There are some extra values since this is shared between services
+        # There are no conflicts though, extra env variables are simply ignored
+        envFrom:
+        - configMapRef:
+            name: env-configmap
         volumeMounts:
         - name: dynamic-storage
           mountPath: /home/storage

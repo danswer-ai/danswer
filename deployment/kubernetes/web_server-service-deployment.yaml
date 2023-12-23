@@ -31,6 +31,8 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
-        env:
-        - name: INTERNAL_URL
-          value: "http://api-server-service:80"
+        # There are some extra values since this is shared between services
+        # There are no conflicts though, extra env variables are simply ignored
+        envFrom:
+        - configMapRef:
+            name: env-configmap

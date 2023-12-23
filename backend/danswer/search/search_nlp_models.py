@@ -9,11 +9,9 @@ from sentence_transformers import SentenceTransformer  # type: ignore
 from transformers import AutoTokenizer  # type: ignore
 from transformers import TFDistilBertForSequenceClassification  # type: ignore
 
-from danswer.configs.app_configs import BACKGROUND_JOB_EMBEDDING_MODEL_SERVER_HOST
-from danswer.configs.app_configs import CROSS_ENCODER_MODEL_SERVER_HOST
 from danswer.configs.app_configs import CURRENT_PROCESS_IS_AN_INDEXING_JOB
-from danswer.configs.app_configs import EMBEDDING_MODEL_SERVER_HOST
-from danswer.configs.app_configs import INTENT_MODEL_SERVER_HOST
+from danswer.configs.app_configs import INDEXING_MODEL_SERVER_HOST
+from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import MODEL_SERVER_PORT
 from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
 from danswer.configs.model_configs import CROSS_ENCODER_MODEL_ENSEMBLE
@@ -99,12 +97,13 @@ def get_local_intent_model(
 
 
 def build_model_server_url(
-    model_server_host: str,
+    model_server_host: str | None,
     model_server_port: int | None,
-) -> str:
-    model_server_url = model_server_host + (
-        f":{model_server_port}" if model_server_port else ""
-    )
+) -> str | None:
+    if not model_server_host or model_server_port is None:
+        return None
+
+    model_server_url = f"{model_server_host}:{model_server_port}"
 
     # use protocol if provided
     if "http" in model_server_url:
@@ -119,27 +118,23 @@ class EmbeddingModel:
         self,
         model_name: str = DOCUMENT_ENCODER_MODEL,
         max_seq_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
-        # `model_server_host` one has to default to `None` since it's
-        # default value is conditional
-        model_server_host: str | None = None,
+        model_server_host: str | None = MODEL_SERVER_HOST,
+        indexing_model_server_host: str | None = INDEXING_MODEL_SERVER_HOST,
         model_server_port: int = MODEL_SERVER_PORT,
+        is_indexing: bool = CURRENT_PROCESS_IS_AN_INDEXING_JOB,
     ) -> None:
-        if model_server_host is None:
-            model_server_host = (
-                BACKGROUND_JOB_EMBEDDING_MODEL_SERVER_HOST
-                if CURRENT_PROCESS_IS_AN_INDEXING_JOB
-                else EMBEDDING_MODEL_SERVER_HOST
-            )
-
         self.model_name = model_name
         self.max_seq_length = max_seq_length
+
+        used_model_server_host = (
+            indexing_model_server_host if is_indexing else model_server_host
+        )
+
+        model_server_url = build_model_server_url(
+            used_model_server_host, model_server_port
+        )
         self.embed_server_endpoint = (
-            (
-                build_model_server_url(model_server_host, model_server_port)
-                + "/encoder/bi-encoder-embed"
-            )
-            if model_server_host
-            else None
+            model_server_url + "/encoder/bi-encoder-embed" if model_server_url else None
         )
 
     def load_model(self) -> SentenceTransformer | None:
@@ -182,17 +177,16 @@ class CrossEncoderEnsembleModel:
         self,
         model_names: list[str] = CROSS_ENCODER_MODEL_ENSEMBLE,
         max_seq_length: int = CROSS_EMBED_CONTEXT_SIZE,
-        model_server_host: str | None = CROSS_ENCODER_MODEL_SERVER_HOST,
+        model_server_host: str | None = MODEL_SERVER_HOST,
         model_server_port: int = MODEL_SERVER_PORT,
     ) -> None:
         self.model_names = model_names
         self.max_seq_length = max_seq_length
+
+        model_server_url = build_model_server_url(model_server_host, model_server_port)
         self.rerank_server_endpoint = (
-            (
-                build_model_server_url(model_server_host, model_server_port)
-                + "/encoder/cross-encoder-scores"
-            )
-            if model_server_host
+            model_server_url + "/encoder/cross-encoder-scores"
+            if model_server_url
             else None
         )
 
@@ -237,18 +231,15 @@ class IntentModel:
         self,
         model_name: str = INTENT_MODEL_VERSION,
         max_seq_length: int = QUERY_MAX_CONTEXT_SIZE,
-        model_server_host: str | None = INTENT_MODEL_SERVER_HOST,
+        model_server_host: str | None = MODEL_SERVER_HOST,
         model_server_port: int = MODEL_SERVER_PORT,
     ) -> None:
         self.model_name = model_name
         self.max_seq_length = max_seq_length
+
+        model_server_url = build_model_server_url(model_server_host, model_server_port)
         self.intent_server_endpoint = (
-            (
-                build_model_server_url(model_server_host, model_server_port)
-                + "/custom/intent-model"
-            )
-            if model_server_host
-            else None
+            model_server_url + "/custom/intent-model" if model_server_url else None
         )
 
     def load_model(self) -> SentenceTransformer | None:
