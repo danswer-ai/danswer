@@ -31,16 +31,8 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
-        args:
-          - "NEXT_PUBLIC_AUTH_TYPE=google_oauth"
-        env:
-        - name: AUTH_TYPE
-          valueFrom:
-            configMapKeyRef:
-              name: env-configmap
-              key: AUTH_TYPE
-        - name: INTERNAL_URL
-          valueFrom:
-              configMapKeyRef:
-                name: env-configmap
-                key: INTERNAL_URL
+        # There are some extra values since this is shared between services
+        # There are no conflicts though, extra env variables are simply ignored
+        envFrom:
+        - configMapRef:
+            name: env-configmap

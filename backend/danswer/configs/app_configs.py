@@ -44,7 +44,7 @@ MASK_CREDENTIAL_PREFIX = (
 
 SECRET = os.environ.get("SECRET", "")
 SESSION_EXPIRE_TIME_SECONDS = int(
-    os.environ.get("SESSION_EXPIRE_TIME_SECONDS", 86400)
+    os.environ.get("SESSION_EXPIRE_TIME_SECONDS") or 86400
 )  # 1 day
 
 # set `VALID_EMAIL_DOMAINS` to a comma seperated list of domains in order to
@@ -189,22 +189,11 @@ MODEL_SERVER_HOST = os.environ.get("MODEL_SERVER_HOST") or None
 MODEL_SERVER_ALLOWED_HOST = os.environ.get("MODEL_SERVER_HOST") or "0.0.0.0"
 MODEL_SERVER_PORT = int(os.environ.get("MODEL_SERVER_PORT") or "9000")
 
-EMBEDDING_MODEL_SERVER_HOST = (
-    os.environ.get("EMBEDDING_MODEL_SERVER_HOST") or MODEL_SERVER_HOST
-)
-CROSS_ENCODER_MODEL_SERVER_HOST = (
-    os.environ.get("CROSS_ENCODER_MODEL_SERVER_HOST") or MODEL_SERVER_HOST
-)
-INTENT_MODEL_SERVER_HOST = (
-    os.environ.get("INTENT_MODEL_SERVER_HOST") or MODEL_SERVER_HOST
-)
-
 # specify this env variable directly to have a different model server for the background
 # indexing job vs the api server so that background indexing does not effect query-time
 # performance
-BACKGROUND_JOB_EMBEDDING_MODEL_SERVER_HOST = (
-    os.environ.get("BACKGROUND_JOB_EMBEDDING_MODEL_SERVER_HOST")
-    or EMBEDDING_MODEL_SERVER_HOST
+INDEXING_MODEL_SERVER_HOST = (
+    os.environ.get("INDEXING_MODEL_SERVER_HOST") or MODEL_SERVER_HOST
 )
 
 

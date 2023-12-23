@@ -33,26 +33,6 @@ spec:
             configMapKeyRef:
               name: env-configmap
               key: GEN_AI_MODEL_PROVIDER
-        - name: API_BASE_OPENAI
-          valueFrom:
-            configMapKeyRef:
-              name: env-configmap
-              key: API_BASE_OPENAI
-        - name: API_TYPE_OPENAI
-          valueFrom:
-            configMapKeyRef:
-              name: env-configmap
-              key: API_TYPE_OPENAI
-        - name: API_VERSION_OPENAI
-          valueFrom:
-            configMapKeyRef:
-              name: env-configmap
-              key: API_VERSION_OPENAI
-        - name: AZURE_DEPLOYMENT_ID
-          valueFrom:
-            configMapKeyRef:
-              name: env-configmap
-              key: AZURE_DEPLOYMENT_ID
         - name: DANSWER_BOT_SLACK_APP_TOKEN
           valueFrom:
             configMapKeyRef:
