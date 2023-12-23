@@ -66,11 +66,8 @@ export const SearchSection = ({
   const [selectedSearchType, setSelectedSearchType] =
     useState<SearchType>(defaultSearchType);
 
-  const defaultPersona = personas.find(
-    (persona) => persona.name === "Danswer" && persona.default_persona
-  );
   const [selectedPersona, setSelectedPersona] = useState<number>(
-    defaultPersona?.id || 0
+    personas[0]?.id || 0
   );
 
   // Overrides for default behavior that only last a single query

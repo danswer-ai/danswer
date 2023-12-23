@@ -303,14 +303,14 @@ def get_prompt_by_id(
 
 def get_persona_by_id(
     persona_id: int,
+    # if user_id is `None` assume the user is an admin or auth is disabled
     user_id: UUID | None,
     db_session: Session,
     include_deleted: bool = False,
 ) -> Persona:
-    stmt = select(Persona).where(
-        Persona.id == persona_id,
-        or_(Persona.user_id == user_id, Persona.user_id.is_(None)),
-    )
+    stmt = select(Persona).where(Persona.id == persona_id)
+    if user_id is not None:
+        stmt = stmt.where(or_(Persona.user_id == user_id, Persona.user_id.is_(None)))
 
     if not include_deleted:
         stmt = stmt.where(Persona.deleted.is_(False))
@@ -534,6 +534,34 @@ def mark_persona_as_deleted(
     db_session.commit()
 
 
+def update_persona_visibility(
+    persona_id: int,
+    is_visible: bool,
+    db_session: Session,
+) -> None:
+    persona = get_persona_by_id(
+        persona_id=persona_id, user_id=None, db_session=db_session
+    )
+    persona.is_visible = is_visible
+    db_session.commit()
+
+
+def update_all_personas_display_priority(
+    display_priority_map: dict[int, int],
+    db_session: Session,
+) -> None:
+    """Updates the display priority of all lives Personas"""
+    personas = get_personas(user_id=None, db_session=db_session)
+    available_persona_ids = {persona.id for persona in personas}
+    if available_persona_ids != set(display_priority_map.keys()):
+        raise ValueError("Invalid persona IDs provided")
+
+    for persona in personas:
+        persona.display_priority = display_priority_map[persona.id]
+
+    db_session.commit()
+
+
 def get_prompts(
     user_id: UUID | None,
     db_session: Session,
@@ -553,15 +581,16 @@ def get_prompts(
 
 
 def get_personas(
+    # if user_id is `None` assume the user is an admin or auth is disabled
     user_id: UUID | None,
     db_session: Session,
     include_default: bool = True,
     include_slack_bot_personas: bool = False,
     include_deleted: bool = False,
 ) -> Sequence[Persona]:
-    stmt = select(Persona).where(
-        or_(Persona.user_id == user_id, Persona.user_id.is_(None))
-    )
+    stmt = select(Persona)
+    if user_id is not None:
+        stmt = stmt.where(or_(Persona.user_id == user_id, Persona.user_id.is_(None)))
 
     if not include_default:
         stmt = stmt.where(Persona.default_persona.is_(False))

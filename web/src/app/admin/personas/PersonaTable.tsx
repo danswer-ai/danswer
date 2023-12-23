@@ -1,44 +1,248 @@
 "use client";
 
-import {
-  Table,
-  TableHead,
-  TableRow,
-  TableHeaderCell,
-  TableBody,
-  TableCell,
-} from "@tremor/react";
+import { Divider, Text } from "@tremor/react";
 import { Persona } from "./interfaces";
 import { EditButton } from "@/components/EditButton";
 import { useRouter } from "next/navigation";
-import { FiInfo } from "react-icons/fi";
+import { CustomCheckbox } from "@/components/CustomCheckbox";
+import { usePopup } from "@/components/admin/connectors/Popup";
+import { useState } from "react";
+import { UniqueIdentifier } from "@dnd-kit/core";
+import { DraggableTable } from "@/components/table/DraggableTable";
+import { personaComparator } from "./lib";
 
 export function PersonasTable({ personas }: { personas: Persona[] }) {
   const router = useRouter();
+  const { popup, setPopup } = usePopup();
 
   const sortedPersonas = [...personas];
-  sortedPersonas.sort((a, b) => (a.id > b.id ? 1 : -1));
+  sortedPersonas.sort(personaComparator);
+
+  const [finalPersonas, setFinalPersonas] = useState<UniqueIdentifier[]>(
+    sortedPersonas.map((persona) => persona.id.toString())
+  );
+  const finalPersonaValues = finalPersonas.map((id) => {
+    return sortedPersonas.find(
+      (persona) => persona.id.toString() === id
+    ) as Persona;
+  });
+
+  const updatePersonaOrder = async (orderedPersonaIds: UniqueIdentifier[]) => {
+    setFinalPersonas(orderedPersonaIds);
+
+    const displayPriorityMap = new Map<UniqueIdentifier, number>();
+    orderedPersonaIds.forEach((personaId, ind) => {
+      displayPriorityMap.set(personaId, ind);
+    });
+
+    const response = await fetch("/api/admin/persona/display-priority", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        display_priority_map: Object.fromEntries(displayPriorityMap),
+      }),
+    });
+    if (!response.ok) {
+      setPopup({
+        type: "error",
+        message: `Failed to update persona order - ${await response.text()}`,
+      });
+      router.refresh();
+    }
+  };
 
   return (
     <div>
-      <Table className="overflow-visible">
-        <TableHead>
-          <TableRow>
-            <TableHeaderCell>Name</TableHeaderCell>
-            <TableHeaderCell>Description</TableHeaderCell>
-            <TableHeaderCell>Built-In</TableHeaderCell>
-            <TableHeaderCell></TableHeaderCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
+      {popup}
+
+      <Text className="my-2">
+        Personas will be displayed as options on the Chat / Search interfaces in
+        the order they are displayed below. Personas marked as hidden will not
+        be displayed.
+      </Text>
+
+      <DraggableTable
+        headers={["Name", "Description", "Built-In", "Is Visible", ""]}
+        rows={finalPersonaValues.map((persona) => {
+          return {
+            id: persona.id.toString(),
+            cells: [
+              <p
+                key="name"
+                className="text font-medium whitespace-normal break-none"
+              >
+                {persona.name}
+              </p>,
+              <p
+                key="description"
+                className="whitespace-normal break-all max-w-2xl"
+              >
+                {persona.description}
+              </p>,
+              persona.default_persona ? "Yes" : "No",
+              <div
+                key="is_visible"
+                onClick={async () => {
+                  const response = await fetch(
+                    `/api/admin/persona/${persona.id}/visible`,
+                    {
+                      method: "PATCH",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        is_visible: !persona.is_visible,
+                      }),
+                    }
+                  );
+                  if (response.ok) {
+                    router.refresh();
+                  } else {
+                    setPopup({
+                      type: "error",
+                      message: `Failed to update persona - ${await response.text()}`,
+                    });
+                  }
+                }}
+                className="px-1 py-0.5 hover:bg-hover-light rounded flex cursor-pointer select-none w-fit"
+              >
+                <div className="my-auto w-12">
+                  {!persona.is_visible ? (
+                    <div className="text-error">Hidden</div>
+                  ) : (
+                    "Visible"
+                  )}
+                </div>
+                <div className="ml-1 my-auto">
+                  <CustomCheckbox checked={persona.is_visible} />
+                </div>
+              </div>,
+              <div key="edit" className="flex">
+                <div className="mx-auto">
+                  {!persona.default_persona ? (
+                    <EditButton
+                      onClick={() =>
+                        router.push(`/admin/personas/${persona.id}`)
+                      }
+                    />
+                  ) : (
+                    "-"
+                  )}
+                </div>
+              </div>,
+            ],
+            staticModifiers: [[1, "lg:w-[300px] xl:w-[400px] 2xl:w-[550px]"]],
+          };
+        })}
+        setRows={updatePersonaOrder}
+      />
+
+      <Divider />
+
+      {/* <TableBody>
           {sortedPersonas.map((persona) => {
             return (
-              <TableRow key={persona.id}>
-                <TableCell className="whitespace-normal break-all">
+              <DraggableRow key={persona.id}>
+                <TableCell className="whitespace-normal break-none">
                   <p className="text font-medium">{persona.name}</p>
                 </TableCell>
-                <TableCell>{persona.description}</TableCell>
+                <TableCell className="whitespace-normal break-all max-w-2xl">
+                  {persona.description}
+                </TableCell>
                 <TableCell>{persona.default_persona ? "Yes" : "No"}</TableCell>
+                <TableCell>
+                  {" "}
+                  <div
+                    onClick={async () => {
+                      const response = await fetch(
+                        `/api/admin/persona/${persona.id}/visible`,
+                        {
+                          method: "PATCH",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({
+                            is_visible: !persona.is_visible,
+                          }),
+                        }
+                      );
+                      if (response.ok) {
+                        router.refresh();
+                      } else {
+                        setPopup({
+                          type: "error",
+                          message: `Failed to update persona - ${await response.text()}`,
+                        });
+                      }
+                    }}
+                    className="px-1 py-0.5 hover:bg-hover-light rounded flex cursor-pointer select-none w-fit"
+                  >
+                    <div className="my-auto w-12">
+                      {!persona.is_visible ? (
+                        <div className="text-error">Hidden</div>
+                      ) : (
+                        "Visible"
+                      )}
+                    </div>
+                    <div className="ml-1 my-auto">
+                      <CustomCheckbox checked={persona.is_visible} />
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {persona.is_visible ? (
+                    <EditableValue
+                      emptyDisplay="-"
+                      initialValue={
+                        persona.display_priority !== null
+                          ? persona.display_priority.toString()
+                          : ""
+                      }
+                      onSubmit={async (value) => {
+                        if (
+                          value === (persona.display_priority || "").toString()
+                        ) {
+                          return true;
+                        }
+
+                        const numericDisplayPriority = Number(value);
+                        if (isNaN(numericDisplayPriority)) {
+                          setPopup({
+                            message: "Display priority must be a number",
+                            type: "error",
+                          });
+                          return false;
+                        }
+
+                        const response = await fetch(
+                          `/api/admin/persona/${persona.id}/display-priority`,
+                          {
+                            method: "PATCH",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                              display_priority: numericDisplayPriority,
+                            }),
+                          }
+                        );
+                        if (!response.ok) {
+                          setPopup({
+                            message: `Failed to update display priority - ${await response.text()}`,
+                            type: "error",
+                          });
+                        }
+                        
+                        router.refresh();
+                        return true;
+                      }}
+                    />
+                  ) : (
+                    "-"
+                  )}
+                </TableCell>
                 <TableCell>
                   <div className="flex">
                     <div className="mx-auto">
@@ -54,11 +258,10 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
                     </div>
                   </div>
                 </TableCell>
-              </TableRow>
+              </DraggableRow>
             );
           })}
-        </TableBody>
-      </Table>
+        </TableBody> */}
     </div>
   );
 }
