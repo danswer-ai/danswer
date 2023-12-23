@@ -9,6 +9,8 @@ from sentence_transformers import SentenceTransformer  # type: ignore
 from transformers import AutoTokenizer  # type: ignore
 from transformers import TFDistilBertForSequenceClassification  # type: ignore
 
+from danswer.configs.app_configs import CURRENT_PROCESS_IS_AN_INDEXING_JOB
+from danswer.configs.app_configs import INDEXING_MODEL_SERVER_HOST
 from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import MODEL_SERVER_PORT
 from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
@@ -117,12 +119,20 @@ class EmbeddingModel:
         model_name: str = DOCUMENT_ENCODER_MODEL,
         max_seq_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
         model_server_host: str | None = MODEL_SERVER_HOST,
+        indexing_model_server_host: str | None = INDEXING_MODEL_SERVER_HOST,
         model_server_port: int = MODEL_SERVER_PORT,
+        is_indexing: bool = CURRENT_PROCESS_IS_AN_INDEXING_JOB,
     ) -> None:
         self.model_name = model_name
         self.max_seq_length = max_seq_length
 
-        model_server_url = build_model_server_url(model_server_host, model_server_port)
+        used_model_server_host = (
+            indexing_model_server_host if is_indexing else model_server_host
+        )
+
+        model_server_url = build_model_server_url(
+            used_model_server_host, model_server_port
+        )
         self.embed_server_endpoint = (
             model_server_url + "/encoder/bi-encoder-embed" if model_server_url else None
         )
