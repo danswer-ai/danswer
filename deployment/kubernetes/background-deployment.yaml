@@ -17,39 +17,11 @@ spec:
         image: danswer/danswer-backend:latest
         imagePullPolicy: IfNotPresent
         command: ["/usr/bin/supervisord"]
-        env:
-        - name: WEB_DOMAIN
-          valueFrom:
-            configMapKeyRef:
-              name: env-configmap
-              key: WEB_DOMAIN
-        - name: GEN_AI_MODEL_VERSION
-          valueFrom:
-            configMapKeyRef:
-              name: env-configmap
-              key: GEN_AI_MODEL_VERSION
-        - name: GEN_AI_MODEL_PROVIDER
-          valueFrom:
-            configMapKeyRef:
-              name: env-configmap
-              key: GEN_AI_MODEL_PROVIDER
-        - name: DANSWER_BOT_SLACK_APP_TOKEN
-          valueFrom:
-            configMapKeyRef:
-              name: env-configmap
-              key: DANSWER_BOT_SLACK_APP_TOKEN
-        - name: DANSWER_BOT_SLACK_BOT_TOKEN
-          valueFrom:
-            configMapKeyRef:
-              name: env-configmap
-              key: DANSWER_BOT_SLACK_BOT_TOKEN
-        - name: POSTGRES_HOST
-          value: relational-db-service
-        - name: VESPA_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: env-configmap
-              key: VESPA_HOST
+        # There are some extra values since this is shared between services
+        # There are no conflicts though, extra env variables are simply ignored
+        envFrom:
+        - configMapRef:
+            name: env-configmap
         volumeMounts:
         - name: dynamic-storage
           mountPath: /home/storage
