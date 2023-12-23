@@ -206,15 +206,15 @@ def get_chat_session_history(
 
 
 @router.get("/admin/chat-session-history/{chat_session_id}")
-def get_chat_session(
+def get_chat_session_admin(
     chat_session_id: int,
-    user: db_models.User | None = Depends(current_admin_user),
+    _: db_models.User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ChatSessionSnapshot:
     try:
         chat_session = get_chat_session_by_id(
             chat_session_id=chat_session_id,
-            user_id=user.id if user else None,
+            user_id=None,  # view chat regardless of user
             db_session=db_session,
             include_deleted=True,
         )
