@@ -1,4 +1,4 @@
-import { Prompt } from "./interfaces";
+import { Persona, Prompt } from "./interfaces";
 
 interface PersonaCreationRequest {
   name: string;
@@ -197,4 +197,27 @@ export function buildFinalPrompt(
     .join("&");
 
   return fetch(`/api/persona/utils/prompt-explorer?${queryString}`);
+}
+
+function smallerNumberFirstComparator(a: number, b: number) {
+  return a > b ? 1 : -1;
+}
+
+export function personaComparator(a: Persona, b: Persona) {
+  if (a.display_priority === null && b.display_priority === null) {
+    return smallerNumberFirstComparator(a.id, b.id);
+  }
+
+  if (a.display_priority !== b.display_priority) {
+    if (a.display_priority === null) {
+      return 1;
+    }
+    if (b.display_priority === null) {
+      return -1;
+    }
+
+    return smallerNumberFirstComparator(a.display_priority, b.display_priority);
+  }
+
+  return smallerNumberFirstComparator(a.id, b.id);
 }

@@ -90,7 +90,7 @@ export const Chat = ({
       ? availablePersonas.find(
           (persona) => persona.id === existingChatSessionPersonaId
         )
-      : availablePersonas.find((persona) => persona.name === "Default")
+      : availablePersonas[0]
   );
 
   const filterManager = useFilters();

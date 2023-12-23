@@ -17,6 +17,7 @@ import { WelcomeModal } from "@/components/WelcomeModal";
 import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
 import { cookies } from "next/headers";
 import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/contants";
+import { personaComparator } from "../admin/personas/lib";
 
 export default async function ChatPage({
   chatId,
@@ -112,6 +113,10 @@ export default async function ChatPage({
   } else {
     console.log(`Failed to fetch personas - ${personasResponse?.status}`);
   }
+  // remove those marked as hidden by an admin
+  personas = personas.filter((persona) => persona.is_visible);
+  // sort them in priority order
+  personas.sort(personaComparator);
 
   let messages: Message[] = [];
   if (chatSessionMessagesResponse?.ok) {

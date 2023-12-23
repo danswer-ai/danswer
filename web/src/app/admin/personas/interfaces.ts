@@ -16,6 +16,8 @@ export interface Persona {
   id: number;
   name: string;
   shared: boolean;
+  is_visible: boolean;
+  display_priority: number | null;
   description: string;
   document_sets: DocumentSet[];
   prompts: Prompt[];
