@@ -1,7 +1,7 @@
 """Add is_visible to Persona
 
 Revision ID: 891cd83c87a8
-Revises: b156fa702355
+Revises: 76b60d407dfb
 Create Date: 2023-12-21 11:55:54.132279
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "891cd83c87a8"
-down_revision = "b156fa702355"
+down_revision = "76b60d407dfb"
 branch_labels = None
 depends_on = None
 
