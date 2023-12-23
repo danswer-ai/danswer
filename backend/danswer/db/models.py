@@ -173,9 +173,7 @@ class ConnectorCredentialPair(Base):
         unique=True,
         nullable=False,
     )
-    name: Mapped[str] = mapped_column(
-        String, unique=True, nullable=True
-    )  # nullable for backwards compatability
+    name: Mapped[str] = mapped_column(String, nullable=False)
     connector_id: Mapped[int] = mapped_column(
         ForeignKey("connector.id"), primary_key=True
     )
