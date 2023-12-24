@@ -1,27 +1,27 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx-service
+  name: {{ include "danswer.fullname" . }}-nginx
 spec:
   selector:
     app: nginx
   ports:
     - name: http
       protocol: TCP
-      port: 80
-      targetPort: 80
+      port: {{ .Values.nginx.service.port }}
+      targetPort: {{ .Values.nginx.service.port }}
     - name: danswer
       protocol: TCP
       port: 3000
       targetPort: 80
-  type: LoadBalancer
+  type: {{ .Values.nginx.service.type }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-deployment
+  name: {{ include "danswer.fullname" . }}-nginx
 spec:
-  replicas: 1
+  replicas: {{ .Values.nginx.replicaCount }}
   selector:
     matchLabels:
       app: nginx
@@ -32,14 +32,14 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.23.4-alpine
+        image: "{{ .Values.nginx.image.repository }}:{{ .Values.nginx.image.tag }}"
         ports:
         - containerPort: 80
         env:
         - name: DOMAIN
           valueFrom:
             configMapKeyRef:
-              name: env-configmap
+              name: {{ include "danswer.configmapName" . }}
               key: DOMAIN
         volumeMounts:
         - name: nginx-conf
@@ -52,4 +52,4 @@ spec:
       volumes:
       - name: nginx-conf
         configMap:
-          name: nginx-configmap
+          name: {{ include "danswer.configmapName" . }}
