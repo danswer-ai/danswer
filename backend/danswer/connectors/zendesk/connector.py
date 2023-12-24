@@ -1,5 +1,3 @@
-from datetime import datetime
-from datetime import timezone
 from typing import Any
 
 from zenpy import Zenpy  # type: ignore
@@ -8,6 +6,7 @@ from zenpy.lib.api_objects.help_centre_objects import Article  # type: ignore
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.html_utils import parse_html_page_basic
+from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -21,7 +20,7 @@ def _article_to_document(article: Article) -> Document:
     author = BasicExpertInfo(
         display_name=article.author.name, email=article.author.email
     )
-    update_time = datetime.fromisoformat(article.updated_at).astimezone(timezone.utc)
+    update_time = time_str_to_utc(article.updated_at)
     return Document(
         id=f"article:{article.id}",
         sections=[
