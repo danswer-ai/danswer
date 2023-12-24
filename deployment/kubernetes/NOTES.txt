@@ -1,0 +1,21 @@
+
+You should see `danswer` in the list of installed charts.
+
+To access the deployed services, you can use the following commands:
+
+```bash
+kubectl get services
+```
+
+This will list all the services that have been deployed, including the Danswer services.
+
+If you encounter any issues, you can check the logs of the pods using the following command:
+
+```bash
+kubectl logs <pod-name>
+```
+
+To uninstall the chart, you can use the following command:
+
+```bash
+helm uninstall danswer
