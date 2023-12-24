@@ -1,0 +1,1 @@
+The contents of the new files will be the Kubernetes yaml files, each representing a different service/deployment, but modified to use the values from the `values.yaml` file. This will make the Helm chart configurable. The files will be moved to the `deployment/kubernetes/templates` directory.
