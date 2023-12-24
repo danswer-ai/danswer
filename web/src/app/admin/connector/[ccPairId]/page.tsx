@@ -42,7 +42,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
     return (
       <ErrorCallout
         errorTitle={`Failed to fetch info on Connector with ID ${ccPairId}`}
-        errorMsg={error.toString()}
+        errorMsg={error?.info?.detail || error.toString()}
       />
     );
   }
