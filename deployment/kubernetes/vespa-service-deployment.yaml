@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: document-index-service
+  name: {{ include "danswer.fullname" . }}-vespa
 spec:
   selector:
     app: vespa
   ports:
     - name: vespa-tenant-port
       protocol: TCP
-      port: 19071
-      targetPort: 19071
+      port: {{ .Values.vespa.service.port }}
+      targetPort: {{ .Values.vespa.service.targetPort }}
     - name: vespa-port
       protocol: TCP
       port: 8081
@@ -23,7 +23,7 @@ metadata:
   labels:
     app: vespa
 spec:
-  replicas: 1
+  replicas: {{ .Values.vespa.replicaCount }}
   serviceName: vespa
   selector:
     matchLabels:
@@ -35,14 +35,14 @@ spec:
     spec:
       containers:
       - name: vespa
-        image: vespaengine/vespa:8.277.17
+        image: "{{ .Values.vespa.image.repository }}:{{ .Values.vespa.image.tag }}"
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
           runAsUser: 0
         ports:
-        - containerPort: 19071
-        - containerPort: 8081
+        - containerPort: {{ .Values.vespa.containerPort }}
+        - containerPort: {{ .Values.vespa.secondContainerPort }}
         readinessProbe:
           httpGet:
             path: /state/v1/health
@@ -60,4 +60,4 @@ spec:
       resources:
         requests:
           # Adjust the storage request size as needed.
-          storage: 1Gi
+          storage: {{ .Values.vespa.persistence.size }}
