@@ -1,22 +1,22 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: web-server-service
+  name: {{ include "danswer.fullname" . }}-web-server
 spec:
   selector:
     app: web-server
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 3000
-  type: ClusterIP
+      port: {{ .Values.webServer.service.port }}
+      targetPort: {{ .Values.webServer.containerPort }}
+  type: {{ .Values.webServer.service.type }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web-server-deployment
+  name: {{ include "danswer.fullname" . }}-web-server
 spec:
-  replicas: 1
+  replicas: {{ .Values.webServer.replicaCount }}
   selector:
     matchLabels:
       app: web-server
@@ -27,12 +27,12 @@ spec:
     spec:
       containers:
       - name: web-server
-        image: danswer/danswer-web-server:latest
-        imagePullPolicy: IfNotPresent
+        image: "{{ .Values.webServer.image.repository }}:{{ .Values.webServer.image.tag }}"
+        imagePullPolicy: {{ .Values.webServer.image.pullPolicy }}
         ports:
-        - containerPort: 3000
+        - containerPort: {{ .Values.webServer.containerPort }}
         # There are some extra values since this is shared between services
         # There are no conflicts though, extra env variables are simply ignored
         envFrom:
         - configMapRef:
-            name: env-configmap
+            name: {{ include "danswer.configmapName" . }}
