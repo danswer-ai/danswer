@@ -32,6 +32,8 @@ from danswer.search.models import BaseFilters
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RetrievalDetails
 from danswer.utils.logger import setup_logger
+from danswer.utils.telemetry import optional_telemetry
+from danswer.utils.telemetry import RecordType
 
 logger_base = setup_logger()
 
@@ -96,8 +98,9 @@ def handle_message(
     messages = message_info.thread_messages
     message_ts_to_respond_to = message_info.msg_to_respond
     sender_id = message_info.sender
-    bipass_filters = message_info.bipass_filters
+    bypass_filters = message_info.bypass_filters
     is_bot_msg = message_info.is_bot_msg
+    is_bot_dm = message_info.is_bot_dm
 
     engine = get_sqlalchemy_engine()
 
@@ -129,7 +132,7 @@ def handle_message(
 
     if channel_config and channel_config.channel_config:
         channel_conf = channel_config.channel_config
-        if not bipass_filters and "answer_filters" in channel_conf:
+        if not bypass_filters and "answer_filters" in channel_conf:
             reflexion = "well_answered_postfilter" in channel_conf["answer_filters"]
 
             if (
@@ -150,7 +153,7 @@ def handle_message(
         respond_tag_only = channel_conf.get("respond_tag_only") or False
         respond_team_member_list = channel_conf.get("respond_team_member_list") or None
 
-    if respond_tag_only and not bipass_filters:
+    if respond_tag_only and not bypass_filters:
         logger.info(
             "Skipping message since the channel is configured such that "
             "DanswerBot only responds to tags"
@@ -184,6 +187,18 @@ def handle_message(
         logger=logger,
     )
     def _get_answer(new_message_request: DirectQARequest) -> OneShotQAResponse:
+        action = "slack_message"
+        if is_bot_msg:
+            action = "slack_slash_message"
+        elif bypass_filters:
+            action = "slack_tag_message"
+        elif is_bot_dm:
+            action = "slack_dm_message"
+        optional_telemetry(
+            record_type=RecordType.USAGE,
+            data={"action": action},
+        )
+
         with Session(engine, expire_on_commit=False) as db_session:
             # This also handles creating the query event in postgres
             answer = get_one_shot_answer(

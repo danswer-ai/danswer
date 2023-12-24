@@ -36,7 +36,8 @@ from danswer.server.query_and_chat.models import CreateChatSessionID
 from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
 from danswer.utils.logger import setup_logger
-
+from danswer.utils.telemetry import optional_telemetry
+from danswer.utils.telemetry import RecordType
 
 logger = setup_logger()
 
@@ -101,6 +102,11 @@ def create_new_chat_session(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> CreateChatSessionID:
+    optional_telemetry(
+        record_type=RecordType.USAGE,
+        data={"action": "chat_session_create"},
+    )
+
     user_id = user.id if user is not None else None
     try:
         new_chat_session = create_chat_session(
@@ -168,6 +174,10 @@ def handle_new_chat_message(
     To avoid extra overhead/latency, this assumes (and checks) that previous messages on the path
     have already been set as latest"""
     logger.info(f"Received new chat message: {chat_message_req.message}")
+    optional_telemetry(
+        record_type=RecordType.USAGE,
+        data={"action": "chat_message"},
+    )
 
     if not chat_message_req.message and chat_message_req.prompt_id is not None:
         raise HTTPException(status_code=400, detail="Empty chat message is invalid")
@@ -208,6 +218,10 @@ def create_chat_feedback(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
+    optional_telemetry(
+        record_type=RecordType.USAGE,
+        data={"action": "chat_feedback"},
+    )
     user_id = user.id if user else None
 
     create_chat_message_feedback(
@@ -228,6 +242,10 @@ def create_search_feedback(
     """This endpoint isn't protected - it does not check if the user has access to the document
     Users could try changing boosts of arbitrary docs but this does not leak any data.
     """
+    optional_telemetry(
+        record_type=RecordType.USAGE,
+        data={"action": "document_feedback"},
+    )
     create_doc_retrieval_feedback(
         message_id=feedback.message_id,
         document_id=feedback.document_id,

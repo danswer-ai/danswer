@@ -31,6 +31,8 @@ from danswer.server.query_and_chat.models import HelperResponse
 from danswer.server.query_and_chat.models import QueryValidationResponse
 from danswer.server.query_and_chat.models import SimpleQueryRequest
 from danswer.utils.logger import setup_logger
+from danswer.utils.telemetry import optional_telemetry
+from danswer.utils.telemetry import RecordType
 
 logger = setup_logger()
 
@@ -44,6 +46,10 @@ def admin_search(
     user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> AdminSearchResponse:
+    optional_telemetry(
+        record_type=RecordType.USAGE,
+        data={"action": "admin_search"},
+    )
     query = question.query
     logger.info(f"Received admin search query: {query}")
 
@@ -163,6 +169,10 @@ def get_answer_with_quote(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
+    optional_telemetry(
+        record_type=RecordType.USAGE,
+        data={"action": "search_message"},
+    )
     query = query_request.messages[0].message
     logger.info(f"Received query for one shot answer with quotes: {query}")
     packets = stream_one_shot_answer(
