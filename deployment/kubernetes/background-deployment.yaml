@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: background-deployment
+  name: {{ include "danswer.fullname" . }}-background
 spec:
-  replicas: 1
+  replicas: {{ .Values.background.replicaCount }}
   selector:
     matchLabels:
       app: background
@@ -14,14 +14,14 @@ spec:
     spec:
       containers:
       - name: background
-        image: danswer/danswer-backend:latest
-        imagePullPolicy: IfNotPresent
+        image: "{{ .Values.background.image.repository }}:{{ .Values.background.image.tag }}"
+        imagePullPolicy: {{ .Values.background.image.pullPolicy }}
         command: ["/usr/bin/supervisord"]
         # There are some extra values since this is shared between services
         # There are no conflicts though, extra env variables are simply ignored
         envFrom:
         - configMapRef:
-            name: env-configmap
+            name: {{ include "danswer.configmapName" . }}
         volumeMounts:
         - name: dynamic-storage
           mountPath: /home/storage
@@ -30,7 +30,7 @@ spec:
       volumes:
       - name: dynamic-storage
         persistentVolumeClaim:
-          claimName: dynamic-pvc
+          claimName: {{ .Values.dynamicStorage.claimName }}
       - name: file-connector-storage
         persistentVolumeClaim:
-          claimName: file-connector-pvc
+          claimName: {{ .Values.fileConnectorStorage.claimName }}
