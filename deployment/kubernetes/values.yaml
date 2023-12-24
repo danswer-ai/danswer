@@ -1,0 +1,51 @@
+apiServer:
+  replicaCount: 1
+  image:
+    repository: danswer/danswer-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+background:
+  replicaCount: 1
+  image:
+    repository: danswer/danswer-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+nginx:
+  replicaCount: 1
+  image:
+    repository: nginx
+    tag: 1.23.4-alpine
+    pullPolicy: IfNotPresent
+  service:
+    type: LoadBalancer
+    port: 80
+postgres:
+  replicaCount: 1
+  image:
+    repository: postgres
+    tag: 15.2-alpine
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 5432
+vespa:
+  replicaCount: 1
+  image:
+    repository: vespaengine/vespa
+    tag: 8.277.17
+    pullPolicy: IfNotPresent
+  service:
+    type: LoadBalancer
+    port: 19071
+webServer:
+  replicaCount: 1
+  image:
+    repository: danswer/danswer-web-server
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
