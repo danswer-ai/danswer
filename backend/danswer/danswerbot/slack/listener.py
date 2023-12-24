@@ -223,7 +223,7 @@ def build_request_details(
             sender=sender,
             bypass_filters=True,
             is_bot_msg=True,
-            is_bot_db=False,
+            is_bot_dm=False,
         )
 
     raise RuntimeError("Programming fault, this should never happen.")
