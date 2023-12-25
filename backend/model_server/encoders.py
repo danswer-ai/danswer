@@ -20,7 +20,7 @@ WARM_UP_STRING = "Danswer is amazing"
 router = APIRouter(prefix="/encoder")
 
 
-@log_function_time()
+@log_function_time(print_only=True)
 def embed_text(
     texts: list[str],
     normalize_embeddings: bool = NORMALIZE_EMBEDDINGS,
@@ -34,7 +34,7 @@ def embed_text(
     return embeddings
 
 
-@log_function_time()
+@log_function_time(print_only=True)
 def calc_sim_scores(query: str, docs: list[str]) -> list[list[float]]:
     cross_encoders = get_local_reranking_model_ensemble()
     sim_scores = [

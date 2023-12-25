@@ -14,7 +14,6 @@ from danswer.prompts.filter_extration import SOURCE_FILTER_PROMPT
 from danswer.prompts.filter_extration import WEB_SOURCE_WARNING
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import extract_embedded_json
-from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
 
@@ -42,7 +41,6 @@ def _sample_document_sources(
         return random.sample(valid_sources, num_sample)
 
 
-@log_function_time()
 def extract_source_filter(
     query: str, db_session: Session
 ) -> list[DocumentSource] | None:

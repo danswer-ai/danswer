@@ -7,7 +7,6 @@ from danswer.search.search_nlp_models import IntentModel
 from danswer.search.search_runner import remove_stop_words_and_punctuation
 from danswer.server.query_and_chat.models import HelperResponse
 from danswer.utils.logger import setup_logger
-from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
 
@@ -23,7 +22,6 @@ def count_unk_tokens(text: str, tokenizer: AutoTokenizer) -> int:
     return num_unk_tokens
 
 
-@log_function_time()
 def query_intent(query: str) -> tuple[SearchType, QueryFlow]:
     intent_model = IntentModel()
     class_probs = intent_model.predict(query)

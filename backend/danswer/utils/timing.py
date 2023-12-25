@@ -17,7 +17,9 @@ F = TypeVar("F", bound=Callable)
 FG = TypeVar("FG", bound=Callable[..., Generator | Iterator])
 
 
-def log_function_time(func_name: str | None = None) -> Callable[[F], F]:
+def log_function_time(
+    func_name: str | None = None, print_only: bool = False
+) -> Callable[[F], F]:
     def decorator(func: F) -> F:
         @wraps(func)
         def wrapped_func(*args: Any, **kwargs: Any) -> Any:
@@ -26,10 +28,13 @@ def log_function_time(func_name: str | None = None) -> Callable[[F], F]:
             elapsed_time_str = str(time.time() - start_time)
             log_name = func_name or func.__name__
             logger.info(f"{log_name} took {elapsed_time_str} seconds")
-            optional_telemetry(
-                record_type=RecordType.LATENCY,
-                data={"function": log_name, "latency": str(elapsed_time_str)},
-            )
+
+            if not print_only:
+                optional_telemetry(
+                    record_type=RecordType.LATENCY,
+                    data={"function": log_name, "latency": str(elapsed_time_str)},
+                )
+
             return result
 
         return cast(F, wrapped_func)
@@ -37,7 +42,9 @@ def log_function_time(func_name: str | None = None) -> Callable[[F], F]:
     return decorator
 
 
-def log_generator_function_time(func_name: str | None = None) -> Callable[[FG], FG]:
+def log_generator_function_time(
+    func_name: str | None = None, print_only: bool = False
+) -> Callable[[FG], FG]:
     def decorator(func: FG) -> FG:
         @wraps(func)
         def wrapped_func(*args: Any, **kwargs: Any) -> Any:
@@ -54,10 +61,11 @@ def log_generator_function_time(func_name: str | None = None) -> Callable[[FG], 
                 elapsed_time_str = str(time.time() - start_time)
                 log_name = func_name or func.__name__
                 logger.info(f"{log_name} took {elapsed_time_str} seconds")
-                optional_telemetry(
-                    record_type=RecordType.LATENCY,
-                    data={"function": log_name, "latency": str(elapsed_time_str)},
-                )
+                if not print_only:
+                    optional_telemetry(
+                        record_type=RecordType.LATENCY,
+                        data={"function": log_name, "latency": str(elapsed_time_str)},
+                    )
 
         return cast(FG, wrapped_func)
 

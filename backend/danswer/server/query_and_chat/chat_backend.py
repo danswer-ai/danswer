@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
 from danswer.chat.chat_utils import create_chat_chain
-from danswer.chat.process_message import stream_chat_packets
+from danswer.chat.process_message import stream_chat_message
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import delete_chat_session
 from danswer.db.chat import get_chat_message
@@ -36,7 +36,6 @@ from danswer.server.query_and_chat.models import CreateChatSessionID
 from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
 from danswer.utils.logger import setup_logger
-
 
 logger = setup_logger()
 
@@ -172,7 +171,7 @@ def handle_new_chat_message(
     if not chat_message_req.message and chat_message_req.prompt_id is not None:
         raise HTTPException(status_code=400, detail="Empty chat message is invalid")
 
-    packets = stream_chat_packets(
+    packets = stream_chat_message(
         new_msg_req=chat_message_req,
         user=user,
         db_session=db_session,
