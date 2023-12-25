@@ -42,7 +42,9 @@ def log_function_time(
     return decorator
 
 
-def log_generator_function_time(func_name: str | None = None) -> Callable[[FG], FG]:
+def log_generator_function_time(
+    func_name: str | None = None, print_only: bool = False
+) -> Callable[[FG], FG]:
     def decorator(func: FG) -> FG:
         @wraps(func)
         def wrapped_func(*args: Any, **kwargs: Any) -> Any:
@@ -59,10 +61,11 @@ def log_generator_function_time(func_name: str | None = None) -> Callable[[FG], 
                 elapsed_time_str = str(time.time() - start_time)
                 log_name = func_name or func.__name__
                 logger.info(f"{log_name} took {elapsed_time_str} seconds")
-                optional_telemetry(
-                    record_type=RecordType.LATENCY,
-                    data={"function": log_name, "latency": str(elapsed_time_str)},
-                )
+                if not print_only:
+                    optional_telemetry(
+                        record_type=RecordType.LATENCY,
+                        data={"function": log_name, "latency": str(elapsed_time_str)},
+                    )
 
         return cast(FG, wrapped_func)
 

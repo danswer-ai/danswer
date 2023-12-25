@@ -46,7 +46,6 @@ from danswer.utils.timing import log_generator_function_time
 logger = setup_logger()
 
 
-@log_generator_function_time()
 def stream_answer_objects(
     query_req: DirectQARequest,
     user: User | None,
