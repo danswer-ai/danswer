@@ -301,39 +301,46 @@ def get_all_files_batched(
 
 
 def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
-    mime_type = file["mimeType"]
-    if mime_type not in set(item.value for item in GDriveMimeType):
-        # Unsupported file types can still have a title, finding this way is still useful
-        return UNSUPPORTED_FILE_TYPE_CONTENT
+    try:
+        mime_type = file["mimeType"]
+        if mime_type not in set(item.value for item in GDriveMimeType):
+            # Unsupported file types can still have a title, finding this way is still useful
+            return UNSUPPORTED_FILE_TYPE_CONTENT
 
-    if mime_type == GDriveMimeType.DOC.value:
-        return (
-            service.files()
-            .export(fileId=file["id"], mimeType="text/plain")
-            .execute()
-            .decode("utf-8")
-        )
-    elif mime_type == GDriveMimeType.SPREADSHEET.value:
-        return (
-            service.files()
-            .export(fileId=file["id"], mimeType="text/csv")
-            .execute()
-            .decode("utf-8")
-        )
-    elif mime_type == GDriveMimeType.WORD_DOC.value:
-        response = service.files().get_media(fileId=file["id"]).execute()
-        word_stream = io.BytesIO(response)
-        with tempfile.NamedTemporaryFile(delete=False) as temp:
-            temp.write(word_stream.getvalue())
-            temp_path = temp.name
-        return docx2txt.process(temp_path)
-    elif mime_type == GDriveMimeType.PDF.value:
-        response = service.files().get_media(fileId=file["id"]).execute()
-        file_contents = read_pdf_file(file=io.BytesIO(response), file_name=file["name"])
-        return file_contents
+        if mime_type == GDriveMimeType.DOC.value:
+            return (
+                service.files()
+                .export(fileId=file["id"], mimeType="text/plain")
+                .execute()
+                .decode("utf-8")
+            )
+        elif mime_type == GDriveMimeType.SPREADSHEET.value:
+            return (
+                service.files()
+                .export(fileId=file["id"], mimeType="text/csv")
+                .execute()
+                .decode("utf-8")
+            )
+        elif mime_type == GDriveMimeType.WORD_DOC.value:
+            response = service.files().get_media(fileId=file["id"]).execute()
+            word_stream = io.BytesIO(response)
+            with tempfile.NamedTemporaryFile(delete=False) as temp:
+                temp.write(word_stream.getvalue())
+                temp_path = temp.name
+            return docx2txt.process(temp_path)
+        elif mime_type == GDriveMimeType.PDF.value:
+            response = service.files().get_media(fileId=file["id"]).execute()
+            file_contents = read_pdf_file(file=io.BytesIO(response), file_name=file["name"])
+            return file_contents
+
+    except HttpError as e:
+        if e.resp.status == 403:
+            logger.error(f"Cannot export file '{file['name']}' with ID '{file['id']}': {e}")
+            return UNSUPPORTED_FILE_TYPE_CONTENT
+        else:
+            raise
 
     return UNSUPPORTED_FILE_TYPE_CONTENT
-
 
 class GoogleDriveConnector(LoadConnector, PollConnector):
     def __init__(

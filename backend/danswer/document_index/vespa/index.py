@@ -2,6 +2,7 @@ import concurrent.futures
 import json
 import string
 import time
+import unicodedata
 from collections.abc import Callable
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -223,6 +224,8 @@ def _get_existing_documents_from_chunks(
 
     return document_ids
 
+def _replace_format_chars(value: str) -> str:
+    return ''.join(' ' if unicodedata.category(c) in ('Cc', 'Cf') else c for c in value)
 
 @retry(tries=3, delay=1, backoff=2)
 def _index_vespa_chunk(
@@ -244,14 +247,14 @@ def _index_vespa_chunk(
     vespa_document_fields = {
         DOCUMENT_ID: document.id,
         CHUNK_ID: chunk.chunk_id,
-        BLURB: chunk.blurb,
+        BLURB: _replace_format_chars(chunk.blurb),
         # this duplication of `content` is needed for keyword highlighting :(
-        CONTENT: chunk.content,
-        CONTENT_SUMMARY: chunk.content,
+        CONTENT: _replace_format_chars(chunk.content),
+        CONTENT_SUMMARY: _replace_format_chars(chunk.content),
         SOURCE_TYPE: str(document.source.value),
         SOURCE_LINKS: json.dumps(chunk.source_links),
-        SEMANTIC_IDENTIFIER: document.semantic_identifier,
-        TITLE: document.get_title_for_document_index(),
+        SEMANTIC_IDENTIFIER: _replace_format_chars(document.semantic_identifier),
+        TITLE: _replace_format_chars(document.get_title_for_document_index()),
         SECTION_CONTINUATION: chunk.section_continuation,
         METADATA: json.dumps(document.metadata),
         EMBEDDINGS: embeddings_name_vector_map,
