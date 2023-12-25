@@ -258,7 +258,7 @@ def translate_citations(
 
 
 @log_generator_function_time()
-def stream_chat_packets(
+def stream_chat_message(
     new_msg_req: CreateChatMessageRequest,
     user: User | None,
     db_session: Session,

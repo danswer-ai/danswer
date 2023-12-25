@@ -10,12 +10,10 @@ from danswer.indexing.models import IndexChunk
 from danswer.search.models import Embedder
 from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.utils.logger import setup_logger
-from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
 
 
-@log_function_time()
 def embed_chunks(
     chunks: list[DocAwareChunk],
     embedding_model: SentenceTransformer | None = None,

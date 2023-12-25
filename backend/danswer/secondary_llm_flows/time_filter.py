@@ -10,7 +10,6 @@ from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.prompts.filter_extration import TIME_FILTER_PROMPT
 from danswer.prompts.prompt_utils import get_current_llm_day_time
 from danswer.utils.logger import setup_logger
-from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
 
@@ -40,7 +39,6 @@ def best_match_time(time_str: str) -> datetime | None:
         return None
 
 
-@log_function_time()
 def extract_time_filter(query: str) -> tuple[datetime | None, bool]:
     """Returns a datetime if a hard time filter should be applied for the given query
     Additionally returns a bool, True if more recently updated Documents should be

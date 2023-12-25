@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from danswer.chat.models import LLMMetricsContainer
 from danswer.configs.constants import MessageType
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.one_shot_answer.answer_question import get_one_shot_answer
+from danswer.one_shot_answer.answer_question import get_search_answer
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.models import IndexFilters
@@ -105,7 +105,7 @@ def get_answer_for_question(
     rerank_metrics = MetricsHander[RerankMetricsContainer]()
     llm_metrics = MetricsHander[LLMMetricsContainer]()
 
-    answer = get_one_shot_answer(
+    answer = get_search_answer(
         query_req=new_message_request,
         user=None,
         db_session=db_session,

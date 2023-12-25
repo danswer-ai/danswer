@@ -204,8 +204,9 @@ def build_request_details(
             channel_to_respond=channel,
             msg_to_respond=cast(str, message_ts or thread_ts),
             sender=event.get("user") or None,
-            bipass_filters=tagged,
+            bypass_filters=tagged,
             is_bot_msg=False,
+            is_bot_dm=event.get("channel_type") == "im",
         )
 
     elif req.type == "slash_commands":
@@ -220,8 +221,9 @@ def build_request_details(
             channel_to_respond=channel,
             msg_to_respond=None,
             sender=sender,
-            bipass_filters=True,
+            bypass_filters=True,
             is_bot_msg=True,
+            is_bot_dm=False,
         )
 
     raise RuntimeError("Programming fault, this should never happen.")
@@ -270,8 +272,9 @@ def process_message(
             and not respond_every_channel
             # Can't have configs for DMs so don't toss them out
             and not is_dm
-            # If @DanswerBot or /DanswerBot, always respond with the default configs
-            and not (details.is_bot_msg or details.bipass_filters)
+            # If /DanswerBot (is_bot_msg) or @DanswerBot (bypass_filters)
+            # always respond with the default configs
+            and not (details.is_bot_msg or details.bypass_filters)
         ):
             return
 
