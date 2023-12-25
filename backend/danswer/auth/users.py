@@ -68,6 +68,12 @@ def verify_auth_setting() -> None:
     logger.info(f"Using Auth Type: {AUTH_TYPE.value}")
 
 
+def user_needs_to_be_verified() -> bool:
+    # all other auth types besides basic should require users to be
+    # verified
+    return AUTH_TYPE != AuthType.BASIC or REQUIRE_EMAIL_VERIFICATION
+
+
 def get_user_whitelist() -> list[str]:
     global _user_whitelist
     if _user_whitelist is None:
@@ -104,10 +110,9 @@ def verify_email_domain(email: str) -> None:
 def send_user_verification_email(user_email: str, token: str) -> None:
     msg = MIMEMultipart()
     msg["Subject"] = "Danswer Email Verification"
-    msg["From"] = "no-reply@danswer.dev"
     msg["To"] = user_email
 
-    link = f"{WEB_DOMAIN}/verify-email?token={token}"
+    link = f"{WEB_DOMAIN}/auth/verify-email?token={token}"
 
     body = MIMEText(f"Click the following link to verify your email address: {link}")
     msg.attach(body)
@@ -256,9 +261,11 @@ fastapi_users = FastAPIUserWithLogoutRouter[User, uuid.UUID](
 )
 
 
-optional_valid_user = fastapi_users.current_user(
-    active=True, verified=REQUIRE_EMAIL_VERIFICATION, optional=True
-)
+# NOTE: verified=REQUIRE_EMAIL_VERIFICATION is not used here since we
+# take care of that in `double_check_user` ourself. This is needed, since
+# we want the /me endpoint to still return a user even if they are not
+# yet verified, so that the frontend knows they exist
+optional_valid_user = fastapi_users.current_user(active=True, optional=True)
 
 
 async def double_check_user(
@@ -274,6 +281,12 @@ async def double_check_user(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. User is not authenticated.",
+        )
+
+    if user_needs_to_be_verified() and not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. User is not verified.",
         )
 
     return user

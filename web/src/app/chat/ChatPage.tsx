@@ -1,4 +1,8 @@
-import { getAuthDisabledSS, getCurrentUserSS } from "@/lib/userSS";
+import {
+  AuthTypeMetadata,
+  getAuthTypeMetadataSS,
+  getCurrentUserSS,
+} from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { fetchSS } from "@/lib/utilsSS";
 import { Connector, DocumentSet, User, ValidSources } from "@/lib/types";
@@ -31,7 +35,7 @@ export default async function ChatPage({
   const currentChatId = chatId ? parseInt(chatId) : null;
 
   const tasks = [
-    getAuthDisabledSS(),
+    getAuthTypeMetadataSS(),
     getCurrentUserSS(),
     fetchSS("/manage/connector"),
     fetchSS("/manage/document-set"),
@@ -45,7 +49,7 @@ export default async function ChatPage({
   // catch cases where the backend is completely unreachable here
   // without try / catch, will just raise an exception and the page
   // will not render
-  let results: (User | Response | boolean | null)[] = [
+  let results: (User | Response | AuthTypeMetadata | null)[] = [
     null,
     null,
     null,
@@ -59,7 +63,7 @@ export default async function ChatPage({
   } catch (e) {
     console.log(`Some fetch failed for the main search page - ${e}`);
   }
-  const authDisabled = results[0] as boolean;
+  const authTypeMetadata = results[0] as AuthTypeMetadata;
   const user = results[1] as User | null;
   const connectorsResponse = results[2] as Response | null;
   const documentSetsResponse = results[3] as Response | null;
@@ -67,8 +71,13 @@ export default async function ChatPage({
   const chatSessionsResponse = results[5] as Response | null;
   const chatSessionMessagesResponse = results[6] as Response | null;
 
+  const authDisabled = authTypeMetadata.authType === "disabled";
   if (!authDisabled && !user) {
     return redirect("/auth/login");
+  }
+
+  if (!user?.is_verified && authTypeMetadata.requiresVerification) {
+    return redirect("/auth/waiting-on-verification");
   }
 
   let connectors: Connector<any>[] = [];
