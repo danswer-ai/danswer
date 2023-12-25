@@ -96,6 +96,13 @@ def value_error_handler(_: Request, exc: ValueError) -> JSONResponse:
         content={"message": str(exc)},
     )
 
+def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.exception(f'General error, request:{request}, exception:{exc}')
+    return JSONResponse(
+        status_code=500,
+        content={'message': str(exc)},
+    )
+
 
 def include_router_with_global_prefix_prepended(
     application: FastAPI, router: APIRouter, **kwargs: Any
@@ -203,6 +210,7 @@ def get_application() -> FastAPI:
     )
 
     application.add_exception_handler(ValueError, value_error_handler)
+    application.add_exception_handler(Exception, general_exception_handler)
 
     @application.on_event("startup")
     def startup_event() -> None:
