@@ -38,9 +38,6 @@ personas:
     #   - "Engineer Onboarding"
     #   - "Benefits"
     document_sets: []
-    # Inject a statement at the end of system prompt to inform the LLM of the current date/time
-    # Format looks like: "October 16, 2023 14:30"
-    datetime_aware: true
 
 
   - name: "Summarize"
@@ -54,7 +51,6 @@ personas:
     llm_filter_extraction: true
     recency_bias: "auto"
     document_sets: []
-    datetime_aware: true
 
 
   - name: "Paraphrase"
@@ -67,4 +63,3 @@ personas:
     llm_filter_extraction: true
     recency_bias: "auto"
     document_sets: []
-    datetime_aware: true
