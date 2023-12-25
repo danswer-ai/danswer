@@ -1,7 +1,28 @@
+import codecs
 import json
 import re
 import string
 from urllib.parse import quote
+
+
+ESCAPE_SEQUENCE_RE = re.compile(
+    r"""
+    ( \\U........      # 8-digit hex escapes
+    | \\u....          # 4-digit hex escapes
+    | \\x..            # 2-digit hex escapes
+    | \\[0-7]{1,3}     # Octal escapes
+    | \\N\{[^}]+\}     # Unicode characters by name
+    | \\[\\'"abfnrtv]  # Single-character escapes
+    )""",
+    re.UNICODE | re.VERBOSE,
+)
+
+
+def decode_escapes(s: str) -> str:
+    def decode_match(match: re.Match) -> str:
+        return codecs.decode(match.group(0), "unicode-escape")
+
+    return ESCAPE_SEQUENCE_RE.sub(decode_match, s)
 
 
 def make_url_compatible(s: str) -> str:

@@ -22,6 +22,7 @@ from danswer.danswerbot.slack.utils import build_feedback_id
 from danswer.danswerbot.slack.utils import remove_slack_text_interactions
 from danswer.danswerbot.slack.utils import translate_vespa_highlight_to_slack
 from danswer.search.models import SavedSearchDoc
+from danswer.utils.text_processing import decode_escapes
 from danswer.utils.text_processing import replace_whitespaces_w_space
 
 _MAX_BLURB_LEN = 75
@@ -234,8 +235,7 @@ def build_qa_response_blocks(
             text="Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓"
         )
     else:
-        answer_processed = remove_slack_text_interactions(answer)
-        answer_processed = answer_processed.encode("utf-8").decode("unicode_escape")
+        answer_processed = decode_escapes(remove_slack_text_interactions(answer))
         answer_block = SectionBlock(text=answer_processed)
         if quotes:
             quotes_blocks = build_quotes_block(quotes)
