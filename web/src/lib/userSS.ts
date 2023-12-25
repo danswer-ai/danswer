@@ -7,6 +7,7 @@ import { AuthType } from "./constants";
 export interface AuthTypeMetadata {
   authType: AuthType;
   autoRedirect: boolean;
+  requiresVerification: boolean;
 }
 
 export const getAuthTypeMetadataSS = async (): Promise<AuthTypeMetadata> => {
@@ -15,15 +16,24 @@ export const getAuthTypeMetadataSS = async (): Promise<AuthTypeMetadata> => {
     throw new Error("Failed to fetch data");
   }
 
-  const data: { auth_type: string } = await res.json();
+  const data: { auth_type: string; requires_verification: boolean } =
+    await res.json();
   const authType = data.auth_type as AuthType;
 
   // for SAML / OIDC, we auto-redirect the user to the IdP when the user visits
   // Danswer in an un-authenticated state
   if (authType === "oidc" || authType === "saml") {
-    return { authType, autoRedirect: true };
+    return {
+      authType,
+      autoRedirect: true,
+      requiresVerification: data.requires_verification,
+    };
   }
-  return { authType, autoRedirect: false };
+  return {
+    authType,
+    autoRedirect: false,
+    requiresVerification: data.requires_verification,
+  };
 };
 
 export const getAuthDisabledSS = async (): Promise<boolean> => {
@@ -64,6 +74,8 @@ export const getAuthUrlSS = async (authType: AuthType): Promise<string> => {
   // Returns the auth url for the given auth type
   switch (authType) {
     case "disabled":
+      return "";
+    case "basic":
       return "";
     case "google_oauth": {
       return await getGoogleOAuthUrlSS();

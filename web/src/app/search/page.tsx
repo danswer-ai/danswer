@@ -1,6 +1,10 @@
 import { SearchSection } from "@/components/search/SearchSection";
 import { Header } from "@/components/Header";
-import { getAuthDisabledSS, getCurrentUserSS } from "@/lib/userSS";
+import {
+  AuthTypeMetadata,
+  getAuthTypeMetadataSS,
+  getCurrentUserSS,
+} from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
@@ -21,7 +25,7 @@ export default async function Home() {
   noStore();
 
   const tasks = [
-    getAuthDisabledSS(),
+    getAuthTypeMetadataSS(),
     getCurrentUserSS(),
     fetchSS("/manage/connector"),
     fetchSS("/manage/document-set"),
@@ -31,20 +35,30 @@ export default async function Home() {
   // catch cases where the backend is completely unreachable here
   // without try / catch, will just raise an exception and the page
   // will not render
-  let results: (User | Response | boolean | null)[] = [null, null, null, null];
+  let results: (User | Response | AuthTypeMetadata | null)[] = [
+    null,
+    null,
+    null,
+    null,
+  ];
   try {
     results = await Promise.all(tasks);
   } catch (e) {
     console.log(`Some fetch failed for the main search page - ${e}`);
   }
-  const authDisabled = results[0] as boolean;
+  const authTypeMetadata = results[0] as AuthTypeMetadata;
   const user = results[1] as User | null;
   const connectorsResponse = results[2] as Response | null;
   const documentSetsResponse = results[3] as Response | null;
   const personaResponse = results[4] as Response | null;
 
+  const authDisabled = authTypeMetadata.authType === "disabled";
   if (!authDisabled && !user) {
     return redirect("/auth/login");
+  }
+
+  if (!user?.is_verified && authTypeMetadata.requiresVerification) {
+    return redirect("/auth/waiting-on-verification");
   }
 
   let connectors: Connector<any>[] = [];
