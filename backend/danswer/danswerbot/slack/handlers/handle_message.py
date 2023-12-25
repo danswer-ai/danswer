@@ -25,7 +25,7 @@ from danswer.danswerbot.slack.utils import fetch_userids_from_emails
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
-from danswer.one_shot_answer.answer_question import get_one_shot_answer
+from danswer.one_shot_answer.answer_question import get_search_answer
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.search.models import BaseFilters
@@ -201,7 +201,7 @@ def handle_message(
 
         with Session(engine, expire_on_commit=False) as db_session:
             # This also handles creating the query event in postgres
-            answer = get_one_shot_answer(
+            answer = get_search_answer(
                 query_req=new_message_request,
                 user=None,
                 db_session=db_session,

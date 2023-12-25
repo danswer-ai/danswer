@@ -250,7 +250,8 @@ def stream_answer_objects(
     yield msg_detail_response
 
 
-def stream_one_shot_answer(
+@log_generator_function_time()
+def stream_search_answer(
     query_req: DirectQARequest,
     user: User | None,
     db_session: Session,
@@ -262,7 +263,7 @@ def stream_one_shot_answer(
         yield get_json_line(obj.dict())
 
 
-def get_one_shot_answer(
+def get_search_answer(
     query_req: DirectQARequest,
     user: User | None,
     db_session: Session,

@@ -134,7 +134,7 @@ def combine_retrieval_results(
     return sorted_chunks
 
 
-@log_function_time()
+@log_function_time(print_only=True)
 def doc_index_retrieval(
     query: SearchQuery,
     document_index: DocumentIndex,
@@ -171,7 +171,7 @@ def doc_index_retrieval(
     return top_chunks
 
 
-@log_function_time()
+@log_function_time(print_only=True)
 def semantic_reranking(
     query: str,
     chunks: list[InferenceChunk],

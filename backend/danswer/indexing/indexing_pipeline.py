@@ -27,6 +27,7 @@ from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.search.models import Embedder
 from danswer.utils.logger import setup_logger
+from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
 
@@ -66,7 +67,8 @@ def upsert_documents_in_db(
     )
 
 
-def _indexing_pipeline(
+@log_function_time()
+def index_doc_batch(
     *,
     chunker: Chunker,
     embedder: Embedder,
@@ -200,7 +202,7 @@ def build_indexing_pipeline(
     document_index = document_index or get_default_document_index()
 
     return partial(
-        _indexing_pipeline,
+        index_doc_batch,
         chunker=chunker,
         embedder=embedder,
         document_index=document_index,
