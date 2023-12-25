@@ -1,12 +1,6 @@
 # Sweep AI turns bugs & feature requests into code changes (https://sweep.dev)
 # For details on our config file, check out our docs at https://docs.sweep.dev/usage/config
 
-# This setting contains a list of rules that Sweep will check for. If any of these rules are broken in a new commit, Sweep will create an pull request to fix the broken rule.
-rules:
-  - "All new business logic should have corresponding unit tests."
-  - "Refactor large functions to be more modular."
-  - "Add docstrings to all functions and file headers."
-
 # This is the branch that Sweep will develop from and make pull requests to. Most people use 'main' or 'master' but some users also use 'dev' or 'staging'.
 branch: 'main'
 
