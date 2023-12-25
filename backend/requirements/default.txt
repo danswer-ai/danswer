@@ -1,19 +1,4 @@
-alembic==1.10.4
-asyncpg==0.27.0
-atlassian-python-api==3.37.0
-beautifulsoup4==4.12.2
-celery==5.3.4
-chardet==5.2.0
-dask==2023.8.1
-distributed==2023.8.1
-python-dateutil==2.8.2
-fastapi==0.103.0
-fastapi-users==11.0.0
-fastapi-users-db-sqlalchemy==5.0.0
-filelock==3.12.0
-google-api-python-client==2.86.0
-google-auth-httplib2==0.1.0
-google-auth-oauthlib==1.0.0
+new line(s) to replace
 # GPT4All library has issues running on Macs and python:3.11.4-slim-bookworm
 # will reintroduce this when library version catches up
 # gpt4all==2.0.2
