@@ -34,3 +34,9 @@ jobs:
           danswer/danswer-backend:latest
         build-args: |
           DANSWER_VERSION=${{ github.ref_name }}
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: docker.io/danswer/danswer-backend:${{ github.ref_name }}
+        severity: 'CRITICAL,HIGH'
