@@ -38,7 +38,7 @@ RUN mkdir -p /etc/apt/keyrings && \
 # Remove tornado test key to placate vulnerability scanners
 # More details can be found here:
 # https://github.com/tornadoweb/tornado/issues/3107
-RUN apt-get remove -y linux-libc-dev && \
+RUN apt-get remove -y linux-libc-dev git && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
     rm /usr/local/lib/python3.11/site-packages/tornado/test/test.key
