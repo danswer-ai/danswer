@@ -57,7 +57,7 @@ export default async function Home() {
     return redirect("/auth/login");
   }
 
-  if (!user?.is_verified && authTypeMetadata.requiresVerification) {
+  if (user && !user.is_verified && authTypeMetadata.requiresVerification) {
     return redirect("/auth/waiting-on-verification");
   }
 
