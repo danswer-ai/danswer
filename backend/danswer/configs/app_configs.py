@@ -71,7 +71,7 @@ OAUTH_CLIENT_SECRET = (
     or ""
 )
 
-# The following Basic Auth configs are not supported by the frontend UI
+# for basic auth
 REQUIRE_EMAIL_VERIFICATION = (
     os.environ.get("REQUIRE_EMAIL_VERIFICATION", "").lower() == "true"
 )
