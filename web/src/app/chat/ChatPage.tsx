@@ -63,7 +63,7 @@ export default async function ChatPage({
   } catch (e) {
     console.log(`Some fetch failed for the main search page - ${e}`);
   }
-  const authTypeMetadata = results[0] as AuthTypeMetadata;
+  const authTypeMetadata = results[0] as AuthTypeMetadata | null;
   const user = results[1] as User | null;
   const connectorsResponse = results[2] as Response | null;
   const documentSetsResponse = results[3] as Response | null;
@@ -71,12 +71,12 @@ export default async function ChatPage({
   const chatSessionsResponse = results[5] as Response | null;
   const chatSessionMessagesResponse = results[6] as Response | null;
 
-  const authDisabled = authTypeMetadata.authType === "disabled";
+  const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
     return redirect("/auth/login");
   }
 
-  if (user && !user.is_verified && authTypeMetadata.requiresVerification) {
+  if (user && !user.is_verified && authTypeMetadata?.requiresVerification) {
     return redirect("/auth/waiting-on-verification");
   }
 
