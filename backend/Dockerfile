@@ -6,10 +6,14 @@ ENV DANSWER_VERSION=${DANSWER_VERSION}
 RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 
 # Install system dependencies
+# cmake needed for psycopg (postgres)
+# libpq-dev needed for psycopg (postgres)
+# curl included just for users to be able to debug
+# supervisor for supervisord
+# zip for Vespa step futher down
+# ca-certificates for HTTPS
 RUN apt-get update && \
-    apt-get install -y git cmake pkg-config libprotobuf-c-dev protobuf-compiler \
-       libprotobuf-dev libgoogle-perftools-dev libpq-dev build-essential cron curl \
-       supervisor zip ca-certificates gnupg && \
+    apt-get install -y cmake libpq-dev curl supervisor zip ca-certificates && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
@@ -21,24 +25,10 @@ RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt && \
     playwright install chromium && \
     playwright install-deps chromium
 
-# install nodejs and replace nodejs packaged with playwright (18.17.0) with the one installed below
-# based on the instructions found here:
-# https://nodejs.org/en/download/package-manager#debian-and-ubuntu-based-linux-distributions
-# this is temporarily needed until playwright updates their packaged node version to
-# 20.5.1+
-RUN mkdir -p /etc/apt/keyrings && \
-    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
-    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
-    apt-get update && \
-    apt-get install -y nodejs && \
-    cp /usr/bin/node /usr/local/lib/python3.11/site-packages/playwright/driver/node && \
-    apt-get remove -y nodejs
-
 # Cleanup for CVEs and size reduction
-# Remove tornado test key to placate vulnerability scanners
-# More details can be found here:
 # https://github.com/tornadoweb/tornado/issues/3107
-RUN apt-get remove -y linux-libc-dev git && \
+# xserver-common and xvfb included by playwright installation but not needed after
+RUN apt-get remove -y --allow-remove-essential cmake perl-base xserver-common xvfb && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
     rm /usr/local/lib/python3.11/site-packages/tornado/test/test.key
@@ -55,9 +45,6 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 WORKDIR /app/danswer/document_index/vespa/app_config
 RUN zip -r /app/danswer/vespa-app.zip .
 WORKDIR /app
-
-# TODO: remove this once all users have migrated
-COPY ./scripts/migrate_vespa_to_acl.py /app/migrate_vespa_to_acl.py
 
 ENV PYTHONPATH /app
 
