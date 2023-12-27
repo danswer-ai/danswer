@@ -40,24 +40,25 @@ export default async function Home() {
     null,
     null,
     null,
+    null,
   ];
   try {
     results = await Promise.all(tasks);
   } catch (e) {
     console.log(`Some fetch failed for the main search page - ${e}`);
   }
-  const authTypeMetadata = results[0] as AuthTypeMetadata;
+  const authTypeMetadata = results[0] as AuthTypeMetadata | null;
   const user = results[1] as User | null;
   const connectorsResponse = results[2] as Response | null;
   const documentSetsResponse = results[3] as Response | null;
   const personaResponse = results[4] as Response | null;
 
-  const authDisabled = authTypeMetadata.authType === "disabled";
+  const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
     return redirect("/auth/login");
   }
 
-  if (user && !user.is_verified && authTypeMetadata.requiresVerification) {
+  if (user && !user.is_verified && authTypeMetadata?.requiresVerification) {
     return redirect("/auth/waiting-on-verification");
   }
 
