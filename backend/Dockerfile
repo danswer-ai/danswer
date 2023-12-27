@@ -13,7 +13,7 @@ RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 # zip for Vespa step futher down
 # ca-certificates for HTTPS
 RUN apt-get update && \
-    apt-get install -y cmake libpq-dev curl supervisor zip ca-certificates && \
+    apt-get install -y cmake libpq-dev curl zip ca-certificates && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
@@ -22,8 +22,8 @@ RUN apt-get update && \
 COPY ./requirements/default.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt && \
     pip uninstall -y py && \
-    playwright install chromium && \
-    playwright install-deps chromium
+    playwright install chromium && playwright install-deps chromium && \
+    ln -s /usr/local/bin/supervisord /usr/bin/supervisord
 
 # Cleanup for CVEs and size reduction
 # https://github.com/tornadoweb/tornado/issues/3107
@@ -39,7 +39,7 @@ COPY ./danswer /app/danswer
 COPY ./shared_models /app/shared_models
 COPY ./alembic /app/alembic
 COPY ./alembic.ini /app/alembic.ini
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY supervisord.conf /usr/etc/supervisord.conf
 
 # Create Vespa app zip
 WORKDIR /app/danswer/document_index/vespa/app_config

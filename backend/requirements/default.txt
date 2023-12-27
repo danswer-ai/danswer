@@ -32,8 +32,8 @@ openai==1.3.5
 oauthlib==3.2.2
 playwright==1.40.0
 psutil==5.9.5
-psycopg2==2.9.6
-psycopg2-binary==2.9.6
+psycopg2==2.9.9
+psycopg2-binary==2.9.9
 pycryptodome==3.19.0
 pydantic==1.10.7
 PyGithub==1.58.2
@@ -52,6 +52,7 @@ safetensors==0.3.1
 sentence-transformers==2.2.2
 slack-sdk==3.20.2
 SQLAlchemy[mypy]==2.0.15
+supervisor==4.2.5
 tensorflow==2.14.0
 tiktoken==0.4.0
 timeago==1.0.16
