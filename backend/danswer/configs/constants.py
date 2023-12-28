@@ -61,6 +61,7 @@ class DocumentSource(str, Enum):
     SLACK = "slack"
     WEB = "web"
     GOOGLE_DRIVE = "google_drive"
+    GMAIL = "gmail"
     REQUESTTRACKER = "requesttracker"
     GITHUB = "github"
     GURU = "guru"

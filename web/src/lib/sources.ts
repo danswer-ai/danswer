@@ -5,6 +5,7 @@ import {
   FileIcon,
   GithubIcon,
   GlobeIcon,
+  GmailIcon,
   GongIcon,
   GoogleDriveIcon,
   GoogleSitesIcon,
@@ -48,6 +49,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   slack: {
     icon: SlackIcon,
     displayName: "Slack",
+    category: SourceCategory.AppConnection,
+  },
+  gmail: {
+    icon: GmailIcon,
+    displayName: "Gmail",
     category: SourceCategory.AppConnection,
   },
   google_drive: {

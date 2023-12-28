@@ -344,6 +344,20 @@ export const GithubIcon = ({
   );
 };
 
+export const GmailIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src="/Gmail.png" alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
 export const GoogleDriveIcon = ({
   size = 16,
   className = defaultTailwindCSS,
