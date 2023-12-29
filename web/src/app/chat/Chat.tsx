@@ -6,6 +6,7 @@ import { FiRefreshCcw, FiSend, FiStopCircle } from "react-icons/fi";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
 import {
+  BackendChatSession,
   BackendMessage,
   DocumentsResponse,
   Message,
@@ -22,6 +23,7 @@ import {
   handleAutoScroll,
   handleChatFeedback,
   nameChatSession,
+  processRawChatHistory,
   sendMessage,
 } from "./lib";
 import { ThreeDots } from "react-loader-spinner";
@@ -33,7 +35,6 @@ import { useFilters } from "@/lib/hooks";
 import { DocumentSet, ValidSources } from "@/lib/types";
 import { ChatFilters } from "./modifiers/ChatFilters";
 import { buildFilters } from "@/lib/search/utils";
-import { QA, SearchTypeSelector } from "./modifiers/SearchTypeSelector";
 import { SelectedDocuments } from "./modifiers/SelectedDocuments";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { ResizableSection } from "@/components/resizable/ResizableSection";
@@ -44,7 +45,6 @@ const MAX_INPUT_HEIGHT = 200;
 export const Chat = ({
   existingChatSessionId,
   existingChatSessionPersonaId,
-  existingMessages,
   availableSources,
   availableDocumentSets,
   availablePersonas,
@@ -53,7 +53,6 @@ export const Chat = ({
 }: {
   existingChatSessionId: number | null;
   existingChatSessionPersonaId: number | undefined;
-  existingMessages: Message[];
   availableSources: ValidSources[];
   availableDocumentSets: DocumentSet[];
   availablePersonas: Persona[];
@@ -63,18 +62,55 @@ export const Chat = ({
   const router = useRouter();
   const { popup, setPopup } = usePopup();
 
-  const [chatSessionId, setChatSessionId] = useState(existingChatSessionId);
+  // fetch messages for the chat session
+  const [isFetchingChatMessages, setIsFetchingChatMessages] = useState(
+    existingChatSessionId !== null
+  );
+
+  // this is triggered every time the user switches which chat
+  // session they are using
+  useEffect(() => {
+    textareaRef.current?.focus();
+    setChatSessionId(existingChatSessionId);
+
+    async function initialSessionFetch() {
+      if (existingChatSessionId === null) {
+        setIsFetchingChatMessages(false);
+        setMessageHistory([]);
+        return;
+      }
+
+      setIsFetchingChatMessages(true);
+      const response = await fetch(
+        `/api/chat/get-chat-session/${existingChatSessionId}`
+      );
+      const chatSession = (await response.json()) as BackendChatSession;
+      const newMessageHistory = processRawChatHistory(chatSession.messages);
+      setMessageHistory(newMessageHistory);
+
+      const latestMessageId =
+        newMessageHistory[newMessageHistory.length - 1]?.messageId;
+      setSelectedMessageForDocDisplay(
+        latestMessageId !== undefined ? latestMessageId : null
+      );
+
+      setIsFetchingChatMessages(false);
+    }
+
+    initialSessionFetch();
+  }, [existingChatSessionId]);
+
+  const [chatSessionId, setChatSessionId] = useState<number | null>(
+    existingChatSessionId
+  );
   const [message, setMessage] = useState("");
-  const [messageHistory, setMessageHistory] =
-    useState<Message[]>(existingMessages);
+  const [messageHistory, setMessageHistory] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
 
   // for document display
   // NOTE: -1 is a special designation that means the latest AI message
   const [selectedMessageForDocDisplay, setSelectedMessageForDocDisplay] =
-    useState<number | null>(
-      messageHistory[messageHistory.length - 1]?.messageId || null
-    );
+    useState<number | null>(null);
   const { aiMessage } = selectedMessageForDocDisplay
     ? getHumanAndAIMessageFromMessageNumber(
         messageHistory,
@@ -94,8 +130,6 @@ export const Chat = ({
   );
 
   const filterManager = useFilters();
-
-  const [selectedSearchType, setSelectedSearchType] = useState(QA);
 
   // state for cancelling streaming
   const [isCancelled, setIsCancelled] = useState(false);
@@ -124,12 +158,7 @@ export const Chat = ({
   useEffect(() => {
     endDivRef.current?.scrollIntoView();
     setHasPerformedInitialScroll(true);
-  }, []);
-
-  // handle refreshes of the server-side props
-  useEffect(() => {
-    setMessageHistory(existingMessages);
-  }, [existingMessages]);
+  }, [isFetchingChatMessages]);
 
   // handle re-sizing of the text area
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -215,9 +244,7 @@ export const Chat = ({
         message: currMessage,
         parentMessageId: lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
-        // if search-only set prompt to null to tell backend to not give an answer
-        promptId:
-          selectedSearchType === QA ? selectedPersona?.prompts[0]?.id : null,
+        promptId: 0,
         filters: buildFilters(
           filterManager.selectedSources,
           filterManager.selectedDocumentSets,
@@ -292,7 +319,7 @@ export const Chat = ({
         setSelectedMessageForDocDisplay(finalMessage.message_id);
       }
       await nameChatSession(currChatSessionId, currMessage);
-      router.push(`/chat/${currChatSessionId}?shouldhideBeforeScroll=true`, {
+      router.push(`/chat?chatId=${currChatSessionId}`, {
         scroll: false,
       });
     }
@@ -372,25 +399,27 @@ export const Chat = ({
                 </div>
               )}
 
-              {messageHistory.length === 0 && !isStreaming && (
-                <div className="flex justify-center items-center h-full">
-                  <div className="px-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
-                    <div className="flex">
-                      <div className="mx-auto h-[80px] w-[80px]">
-                        <Image
-                          src="/logo.png"
-                          alt="Logo"
-                          width="1419"
-                          height="1520"
-                        />
+              {messageHistory.length === 0 &&
+                !isFetchingChatMessages &&
+                !isStreaming && (
+                  <div className="flex justify-center items-center h-full">
+                    <div className="px-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
+                      <div className="flex">
+                        <div className="mx-auto h-[80px] w-[80px]">
+                          <Image
+                            src="/logo.png"
+                            alt="Logo"
+                            width="1419"
+                            height="1520"
+                          />
+                        </div>
+                      </div>
+                      <div className="mx-auto text-2xl font-bold text-strong p-4 w-fit">
+                        What are you looking for today?
                       </div>
                     </div>
-                    <div className="mx-auto text-2xl font-bold text-strong p-4 w-fit">
-                      What are you looking for today?
-                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               <div
                 className={
@@ -530,13 +559,6 @@ export const Chat = ({
 
                 <div className="flex">
                   <div className="w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar mx-auto px-4 pt-1 flex">
-                    <div className="mr-3">
-                      <SearchTypeSelector
-                        selectedSearchType={selectedSearchType}
-                        setSelectedSearchType={setSelectedSearchType}
-                      />
-                    </div>
-
                     {selectedDocuments.length > 0 ? (
                       <SelectedDocuments
                         selectedDocuments={selectedDocuments}
@@ -588,7 +610,11 @@ export const Chat = ({
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       onKeyDown={(event) => {
-                        if (event.key === "Enter" && !event.shiftKey) {
+                        if (
+                          event.key === "Enter" &&
+                          !event.shiftKey &&
+                          message
+                        ) {
                           onSubmit();
                           event.preventDefault();
                         }
@@ -598,15 +624,32 @@ export const Chat = ({
                     <div className="absolute bottom-4 right-10">
                       <div
                         className={"cursor-pointer"}
-                        onClick={() => onSubmit()}
-                      >
-                        <FiSend
-                          size={18}
-                          className={
-                            "text-emphasis w-9 h-9 p-2 rounded-lg " +
-                            (message ? "bg-blue-200" : "")
+                        onClick={() => {
+                          if (!isStreaming) {
+                            if (message) {
+                              onSubmit();
+                            }
+                          } else {
+                            setIsCancelled(true);
                           }
-                        />
+                        }}
+                      >
+                        {isStreaming ? (
+                          <FiStopCircle
+                            size={18}
+                            className={
+                              "text-emphasis w-9 h-9 p-2 rounded-lg hover:bg-hover"
+                            }
+                          />
+                        ) : (
+                          <FiSend
+                            size={18}
+                            className={
+                              "text-emphasis w-9 h-9 p-2 rounded-lg " +
+                              (message ? "bg-blue-200" : "")
+                            }
+                          />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -624,6 +667,7 @@ export const Chat = ({
               selectedMessage={aiMessage}
               selectedDocuments={selectedDocuments}
               setSelectedDocuments={setSelectedDocuments}
+              isLoading={isFetchingChatMessages}
             />
           </ResizableSection>
         </>

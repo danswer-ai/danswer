@@ -18,6 +18,7 @@ import Image from "next/image";
 import { ChatSessionDisplay } from "./SessionDisplay";
 import { ChatSession } from "../interfaces";
 import { groupSessionsByDateRange } from "../lib";
+
 interface ChatSidebarProps {
   existingChats: ChatSession[];
   currentChatId: number | null;

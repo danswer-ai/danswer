@@ -32,6 +32,10 @@ export interface Message {
   citations?: CitationMap;
 }
 
+export interface BackendChatSession {
+  messages: BackendMessage[];
+}
+
 export interface BackendMessage {
   message_id: number;
   parent_message: number | null;

@@ -2,7 +2,7 @@ import { DanswerDocument } from "@/lib/search/interfaces";
 import { Text } from "@tremor/react";
 import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { FiFileText, FiSearch } from "react-icons/fi";
+import { FiFileText } from "react-icons/fi";
 import { SelectedDocumentDisplay } from "./SelectedDocumentDisplay";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { BasicSelectable } from "@/components/BasicClickable";
@@ -27,10 +27,12 @@ export function DocumentSidebar({
   selectedMessage,
   selectedDocuments,
   setSelectedDocuments,
+  isLoading,
 }: {
   selectedMessage: Message | null;
   selectedDocuments: DanswerDocument[] | null;
   setSelectedDocuments: (documents: DanswerDocument[]) => void;
+  isLoading: boolean;
 }) {
   const { popup, setPopup } = usePopup();
 
@@ -115,12 +117,14 @@ export function DocumentSidebar({
             </div>
           </div>
         ) : (
-          <div className="ml-4 mr-3">
-            <Text>
-              When you run ask a question, the retrieved documents will show up
-              here!
-            </Text>
-          </div>
+          !isLoading && (
+            <div className="ml-4 mr-3">
+              <Text>
+                When you run ask a question, the retrieved documents will show
+                up here!
+              </Text>
+            </div>
+          )
         )}
       </div>
 
@@ -157,10 +161,12 @@ export function DocumentSidebar({
             ))}
           </div>
         ) : (
-          <Text className="mx-3 py-3">
-            Select documents from the retrieved documents section to chat
-            specifically with them!
-          </Text>
+          !isLoading && (
+            <Text className="mx-3 py-3">
+              Select documents from the retrieved documents section to chat
+              specifically with them!
+            </Text>
+          )
         )}
       </div>
     </div>

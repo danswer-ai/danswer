@@ -116,9 +116,7 @@ export const AIMessage = ({
                   content
                 )}
               </>
-            ) : isComplete ? (
-              <div>I just performed the requested search!</div>
-            ) : (
+            ) : isComplete ? null : (
               <div className="text-sm my-auto">
                 <ThreeDots
                   height="30"
