@@ -52,7 +52,7 @@ export function ChatSessionDisplay({
       <Link
         className="flex my-1"
         key={chatSession.id}
-        href={`/chat/${chatSession.id}`}
+        href={`/chat?chatId=${chatSession.id}`}
         scroll={false}
       >
         <BasicSelectable fullWidth selected={isSelected}>
