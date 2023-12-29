@@ -304,6 +304,9 @@ def _index_vespa_chunk(
         vespa_document_fields[SEMANTIC_IDENTIFIER] = remove_invalid_unicode_chars(
             cast(str, vespa_document_fields[SEMANTIC_IDENTIFIER])
         )
+        vespa_document_fields[TITLE] = remove_invalid_unicode_chars(
+            cast(str, vespa_document_fields[TITLE])
+        )
         vespa_document_fields[CONTENT] = remove_invalid_unicode_chars(
             cast(str, vespa_document_fields[CONTENT])
         )
