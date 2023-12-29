@@ -14,7 +14,7 @@ import { SearchSummary, ShowHideDocsButton } from "./SearchSummary";
 import { SourceIcon } from "@/components/SourceIcon";
 import { ThreeDots } from "react-loader-spinner";
 
-const Hoverable: React.FC<{ children: JSX.Element; onClick?: () => void }> = ({
+export const Hoverable: React.FC<{ children: JSX.Element; onClick?: () => void }> = ({
   children,
   onClick,
 }) => {
