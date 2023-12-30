@@ -13,8 +13,6 @@ from typing import cast
 
 import httpx
 import requests
-from requests import HTTPError
-from requests import Response
 from retry import retry
 
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
@@ -244,14 +242,14 @@ def _index_vespa_chunk(
     vespa_document_fields = {
         DOCUMENT_ID: document.id,
         CHUNK_ID: chunk.chunk_id,
-        BLURB: chunk.blurb,
+        BLURB: remove_invalid_unicode_chars(chunk.blurb),
         # this duplication of `content` is needed for keyword highlighting :(
-        CONTENT: chunk.content,
-        CONTENT_SUMMARY: chunk.content,
+        CONTENT: remove_invalid_unicode_chars(chunk.content),
+        CONTENT_SUMMARY: remove_invalid_unicode_chars(chunk.content),
         SOURCE_TYPE: str(document.source.value),
         SOURCE_LINKS: json.dumps(chunk.source_links),
-        SEMANTIC_IDENTIFIER: document.semantic_identifier,
-        TITLE: document.get_title_for_document_index(),
+        SEMANTIC_IDENTIFIER: remove_invalid_unicode_chars(document.semantic_identifier),
+        TITLE: remove_invalid_unicode_chars(document.get_title_for_document_index()),
         SECTION_CONTINUATION: chunk.section_continuation,
         METADATA: json.dumps(document.metadata),
         EMBEDDINGS: embeddings_name_vector_map,
@@ -265,60 +263,18 @@ def _index_vespa_chunk(
         DOCUMENT_SETS: {document_set: 1 for document_set in chunk.document_sets},
     }
 
-    def _index_chunk(
-        url: str,
-        headers: dict[str, str],
-        fields: dict[str, Any],
-        log_error: bool = True,
-    ) -> httpx.Response:
-        logger.debug(f'Indexing to URL "{url}"')
-        res = http_client.post(url, headers=headers, json={"fields": fields})
-        try:
-            res.raise_for_status()
-            return res
-        except Exception as e:
-            if log_error:
-                logger.error(
-                    f"Failed to index document: '{document.id}'. Got response: '{res.text}'"
-                )
-            raise e
-
     vespa_url = f"{DOCUMENT_ID_ENDPOINT}/{vespa_chunk_id}"
+    logger.debug(f'Indexing to URL "{vespa_url}"')
+    res = http_client.post(
+        vespa_url, headers=json_header, json={"fields": vespa_document_fields}
+    )
     try:
-        _index_chunk(
-            url=vespa_url,
-            headers=json_header,
-            fields=vespa_document_fields,
-            log_error=False,
+        res.raise_for_status()
+    except Exception as e:
+        logger.exception(
+            f"Failed to index document: '{document.id}'. Got response: '{res.text}'"
         )
-    except HTTPError as e:
-        if cast(Response, e.response).status_code != 400:
-            raise e
-
-        # if it's a 400 response, try again with invalid unicode chars removed
-        # only doing this on error to avoid having to go through the content
-        # char by char every time
-        vespa_document_fields[BLURB] = remove_invalid_unicode_chars(
-            cast(str, vespa_document_fields[BLURB])
-        )
-        vespa_document_fields[SEMANTIC_IDENTIFIER] = remove_invalid_unicode_chars(
-            cast(str, vespa_document_fields[SEMANTIC_IDENTIFIER])
-        )
-        vespa_document_fields[TITLE] = remove_invalid_unicode_chars(
-            cast(str, vespa_document_fields[TITLE])
-        )
-        vespa_document_fields[CONTENT] = remove_invalid_unicode_chars(
-            cast(str, vespa_document_fields[CONTENT])
-        )
-        vespa_document_fields[CONTENT_SUMMARY] = remove_invalid_unicode_chars(
-            cast(str, vespa_document_fields[CONTENT_SUMMARY])
-        )
-        _index_chunk(
-            url=vespa_url,
-            headers=json_header,
-            fields=vespa_document_fields,
-            log_error=True,
-        )
+        raise e
 
 
 def _batch_index_vespa_chunks(
