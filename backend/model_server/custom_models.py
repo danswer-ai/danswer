@@ -4,12 +4,14 @@ from fastapi import APIRouter
 
 from danswer.search.search_nlp_models import get_intent_model_tokenizer
 from danswer.search.search_nlp_models import get_local_intent_model
+from danswer.utils.timing import log_function_time
 from shared_models.model_server_models import IntentRequest
 from shared_models.model_server_models import IntentResponse
 
 router = APIRouter(prefix="/custom")
 
 
+@log_function_time(print_only=True)
 def classify_intent(query: str) -> list[float]:
     tokenizer = get_intent_model_tokenizer()
     intent_model = get_local_intent_model()
