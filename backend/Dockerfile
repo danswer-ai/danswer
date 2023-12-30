@@ -8,8 +8,7 @@ RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 # Install system dependencies
 # cmake needed for psycopg (postgres)
 # libpq-dev needed for psycopg (postgres)
-# curl included just for users to be able to debug
-# supervisor for supervisord
+# curl included just for users' convenience
 # zip for Vespa step futher down
 # ca-certificates for HTTPS
 RUN apt-get update && \
@@ -28,6 +27,8 @@ RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt && \
 # Cleanup for CVEs and size reduction
 # https://github.com/tornadoweb/tornado/issues/3107
 # xserver-common and xvfb included by playwright installation but not needed after
+# perl-base is part of the base Python Debian image but not needed for Danswer functionality
+# perl-base could only be removed with --allow-remove-essential
 RUN apt-get remove -y --allow-remove-essential cmake perl-base xserver-common xvfb && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
