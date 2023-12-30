@@ -12,7 +12,7 @@ RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 # zip for Vespa step futher down
 # ca-certificates for HTTPS
 RUN apt-get update && \
-    apt-get install -y cmake libpq-dev curl zip ca-certificates && \
+    apt-get install -y cmake curl zip ca-certificates && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
@@ -29,7 +29,7 @@ RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt && \
 # xserver-common and xvfb included by playwright installation but not needed after
 # perl-base is part of the base Python Debian image but not needed for Danswer functionality
 # perl-base could only be removed with --allow-remove-essential
-RUN apt-get remove -y --allow-remove-essential cmake perl-base xserver-common xvfb && \
+RUN apt-get remove -y --allow-remove-essential perl-base xserver-common xvfb cmake libldap-2.5-0 libldap-2.5-0 && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
     rm /usr/local/lib/python3.11/site-packages/tornado/test/test.key
