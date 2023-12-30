@@ -1,7 +1,7 @@
 FROM node:20-alpine AS base
 
 # Default DANSWER_VERSION, typically overriden during builds by GitHub Actions.
-ARG DANSWER_VERSION=0.2-dev
+ARG DANSWER_VERSION=0.3-dev
 ENV DANSWER_VERSION=${DANSWER_VERSION}
 RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 
