@@ -3,9 +3,8 @@ import {
   EmphasizedClickable,
 } from "@/components/BasicClickable";
 import { HoverPopup } from "@/components/HoverPopup";
-import { DanswerDocument } from "@/lib/search/interfaces";
 import { useEffect, useRef, useState } from "react";
-import { FiBookOpen, FiCheck, FiEdit, FiEdit2, FiSearch, FiX } from "react-icons/fi";
+import { FiCheck, FiEdit2, FiSearch, FiX } from "react-icons/fi";
 import { Hoverable } from "./Messages";
 
 export function ShowHideDocsButton({
@@ -35,44 +34,30 @@ export function ShowHideDocsButton({
   );
 }
 
-function SearchingForDisplay({
-  query,
-  isHoverable,
-}: {
-  query: string;
-  isHoverable?: boolean;
-}) {
-  return (
-    <div className={`flex p-1 rounded ${isHoverable && "cursor-default"}`}>
-      <FiSearch className="mr-2 my-auto" size={14} />
-      <p className="line-clamp-1 break-all xl:w-64 2xl:w-80 3xl:w-96">
-        Searching for: <i>{query}</i>
-      </p>
-    </div>
-  );
-}
-
 export function SearchSummary({
   query,
   hasDocs,
   messageId,
   isCurrentlyShowingRetrieved,
   handleShowRetrieved,
+  handleSearchQueryEdit,
 }: {
   query: string;
   hasDocs: boolean;
   messageId: number | null;
   isCurrentlyShowingRetrieved: boolean;
   handleShowRetrieved: (messageId: number | null) => void;
+  handleSearchQueryEdit?: (query: string) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [finalQuery, setFinalQuery] = useState(query);
   const [isOverflowed, setIsOverflowed] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const searchingForRef = useRef<HTMLDivElement>(null);
+  const editQueryRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const checkOverflow = () => {
-      const current = contentRef.current;
+      const current = searchingForRef.current;
       if (current) {
         setIsOverflowed(
           current.scrollWidth > current.clientWidth ||
@@ -87,35 +72,59 @@ export function SearchSummary({
     return () => window.removeEventListener("resize", checkOverflow);
   }, []);
 
+  useEffect(() => {
+    if (isEditing && editQueryRef.current) {
+      editQueryRef.current.focus();
+    }
+  }, [isEditing]);
+
   const searchingForDisplay = (
     <div className={`flex p-1 rounded ${isOverflowed && "cursor-default"}`}>
       <FiSearch className="mr-2 my-auto" size={14} />
-      <div className="line-clamp-1 break-all px-0.5" ref={contentRef}>
+      <div className="line-clamp-1 break-all px-0.5" ref={searchingForRef}>
         Searching for: <i>{finalQuery}</i>
       </div>
     </div>
   );
 
-  const editInput = (
-    <div className="my-2 flex w-full mr-3">
-      <input
-        value={finalQuery}
-        onChange={(e) => setFinalQuery(e.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            setIsEditing(false);
-            event.preventDefault();
-          }
-        }}
-        className="px-1 mr-2 w-full rounded border border-border-strong"
-      />
-
-      <div className="ml-auto my-auto flex">
+  const editInput = handleSearchQueryEdit ? (
+    <div className="flex w-full mr-3">
+      <div className="my-2 w-full">
+        <input
+          ref={editQueryRef}
+          value={finalQuery}
+          onChange={(e) => setFinalQuery(e.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              setIsEditing(false);
+              if (!finalQuery) {
+                setFinalQuery(query);
+              } else if (finalQuery !== query) {
+                handleSearchQueryEdit(finalQuery);
+              }
+              event.preventDefault();
+            } else if (event.key === "Escape") {
+              setFinalQuery(query);
+              setIsEditing(false);
+              event.preventDefault();
+            }
+          }}
+          className="px-1 py-0.5 h-[28px] text-sm mr-2 w-full rounded-sm border border-border-strong"
+        />
+      </div>
+      <div className="ml-2 my-auto flex">
         <div
-          onClick={() => console.log("hi")}
+          onClick={() => {
+            if (!finalQuery) {
+              setFinalQuery(query);
+            } else if (finalQuery !== query) {
+              handleSearchQueryEdit(finalQuery);
+            }
+            setIsEditing(false);
+          }}
           className={`hover:bg-black/10 p-1 -m-1 rounded`}
         >
-          <FiCheck size={16} />
+          <FiCheck size={14} />
         </div>
         <div
           onClick={() => {
@@ -124,11 +133,11 @@ export function SearchSummary({
           }}
           className={`hover:bg-black/10 p-1 -m-1 rounded ml-2`}
         >
-          <FiX size={16} />
+          <FiX size={14} />
         </div>
       </div>
     </div>
-  );
+  ) : null;
 
   return (
     <div className="flex">
@@ -152,11 +161,13 @@ export function SearchSummary({
               searchingForDisplay
             )}
           </div>
-          <div className="my-auto">
-            <Hoverable onClick={() => setIsEditing(true)}>
-              <FiEdit2 className="my-auto" size="14" />
-            </Hoverable>
-          </div>
+          {handleSearchQueryEdit && (
+            <div className="my-auto">
+              <Hoverable onClick={() => setIsEditing(true)}>
+                <FiEdit2 className="my-auto" size="14" />
+              </Hoverable>
+            </div>
+          )}
         </>
       )}
       {hasDocs && (

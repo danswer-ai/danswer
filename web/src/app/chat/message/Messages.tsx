@@ -14,10 +14,10 @@ import { SearchSummary, ShowHideDocsButton } from "./SearchSummary";
 import { SourceIcon } from "@/components/SourceIcon";
 import { ThreeDots } from "react-loader-spinner";
 
-export const Hoverable: React.FC<{ children: JSX.Element; onClick?: () => void }> = ({
-  children,
-  onClick,
-}) => {
+export const Hoverable: React.FC<{
+  children: JSX.Element;
+  onClick?: () => void;
+}> = ({ children, onClick }) => {
   return (
     <div
       className="hover:bg-neutral-300 p-2 rounded h-fit cursor-pointer"
@@ -38,6 +38,7 @@ export const AIMessage = ({
   handleFeedback,
   isCurrentlyShowingRetrieved,
   handleShowRetrieved,
+  handleSearchQueryEdit,
 }: {
   messageId: number | null;
   content: string | JSX.Element;
@@ -48,6 +49,7 @@ export const AIMessage = ({
   handleFeedback?: (feedbackType: FeedbackType) => void;
   isCurrentlyShowingRetrieved?: boolean;
   handleShowRetrieved?: (messageNumber: number | null) => void;
+  handleSearchQueryEdit?: (query: string) => void;
 }) => {
   const [copyClicked, setCopyClicked] = useState(false);
   return (
@@ -90,6 +92,7 @@ export const AIMessage = ({
                     messageId={messageId}
                     isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
                     handleShowRetrieved={handleShowRetrieved}
+                    handleSearchQueryEdit={handleSearchQueryEdit}
                   />
                 </div>
               )}

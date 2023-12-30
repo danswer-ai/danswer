@@ -65,6 +65,9 @@ class CreateChatMessageRequest(BaseModel):
     # If search_doc_ids provided, then retrieval options are unused
     search_doc_ids: list[int] | None
     retrieval_options: RetrievalDetails | None
+    # allows the caller to specify the exact search query they want to use
+    # will disable query re-wording if specified
+    query_override: str | None = None
 
     @root_validator
     def check_search_doc_ids_or_retrieval_options(cls: BaseModel, values: dict) -> dict:
