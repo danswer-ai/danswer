@@ -43,9 +43,14 @@ RUN apt-get remove -y --allow-remove-essential perl-base xserver-common xvfb cma
     rm /usr/local/lib/python3.11/site-packages/tornado/test/test.key
 
 # Enterprise Install
-RUN apt-get update && apt-get install -y libxmlsec1-dev
+RUN apt-get update && apt-get install -y libxmlsec1-dev pkg-config gcc
 COPY ./requirements/ee.txt /tmp/ee-requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /tmp/ee-requirements.txt
+
+# Enterprise lib removal for security reasons
+RUN apt-get remove -y libxmlsec1-dev pkg-config gcc && \
+    apt-get update && apt-get install -y libxmlsec1-openssl && \
+    apt-get autoremove -y
 
 # Pre-downloading models for setups with limited egress
 RUN python -c "from transformers import AutoTokenizer; AutoTokenizer.from_pretrained('intfloat/e5-base-v2')"
