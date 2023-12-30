@@ -164,6 +164,7 @@ def stream_chat_message(
         reference_doc_ids = new_msg_req.search_doc_ids
         retrieval_options = new_msg_req.retrieval_options
         persona = chat_session.persona
+        query_override = new_msg_req.query_override
 
         if reference_doc_ids is None and retrieval_options is None:
             raise RuntimeError(
@@ -259,8 +260,12 @@ def stream_chat_message(
             ]
 
         elif run_search:
-            rephrased_query = history_based_query_rephrase(
-                query_message=final_msg, history=history_msgs, llm=llm
+            rephrased_query = (
+                history_based_query_rephrase(
+                    query_message=final_msg, history=history_msgs, llm=llm
+                )
+                if query_override is None
+                else query_override
             )
 
             (

@@ -205,7 +205,10 @@ export const Chat = ({
     documentSidebarInitialWidth = Math.min(700, maxDocumentSidebarWidth);
   }
 
-  const onSubmit = async (messageOverride?: string) => {
+  const onSubmit = async ({
+    messageIdToResend,
+    queryOverride,
+  }: { messageIdToResend?: number; queryOverride?: string } = {}) => {
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
     if (isNewSession) {
@@ -215,8 +218,26 @@ export const Chat = ({
     }
     setChatSessionId(currChatSessionId);
 
-    const currMessage = messageOverride || message;
-    const currMessageHistory = messageHistory;
+    const messageToResend = messageHistory.find(
+      (message) => message.messageId === messageIdToResend
+    );
+    const messageToResendIndex = messageToResend
+      ? messageHistory.indexOf(messageToResend)
+      : null;
+    if (!messageToResend && messageIdToResend !== undefined) {
+      setPopup({
+        message:
+          "Failed to re-send message - please refresh the page and try again.",
+        type: "error",
+      });
+      return;
+    }
+
+    const currMessage = messageToResend ? messageToResend.message : message;
+    const currMessageHistory =
+      messageToResendIndex !== null
+        ? messageHistory.slice(0, messageToResendIndex)
+        : messageHistory;
     setMessageHistory([
       ...currMessageHistory,
       {
@@ -256,6 +277,7 @@ export const Chat = ({
               document.db_doc_id !== undefined && document.db_doc_id !== null
           )
           .map((document) => document.db_doc_id as number),
+        queryOverride,
       })) {
         for (const packet of packetBunch) {
           if (Object.hasOwn(packet, "answer_piece")) {
@@ -440,6 +462,8 @@ export const Chat = ({
                         selectedMessageForDocDisplay === message.messageId) ||
                       (selectedMessageForDocDisplay === -1 &&
                         i === messageHistory.length - 1);
+                    const previousMessage =
+                      i !== 0 ? messageHistory[i - 1] : null;
                     return (
                       <div key={i}>
                         <AIMessage
@@ -462,6 +486,34 @@ export const Chat = ({
                                     feedbackType,
                                     message.messageId as number,
                                   ])
+                          }
+                          handleSearchQueryEdit={
+                            i === messageHistory.length - 1 && !isStreaming
+                              ? (newQuery) => {
+                                  if (!previousMessage) {
+                                    setPopup({
+                                      type: "error",
+                                      message:
+                                        "Cannot edit query of first message - please refresh the page and try again.",
+                                    });
+                                    return;
+                                  }
+
+                                  if (previousMessage.messageId === null) {
+                                    setPopup({
+                                      type: "error",
+                                      message:
+                                        "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                    });
+                                    return;
+                                  }
+                                  onSubmit({
+                                    messageIdToResend:
+                                      previousMessage.messageId,
+                                    queryOverride: newQuery,
+                                  });
+                                }
+                              : undefined
                           }
                           isCurrentlyShowingRetrieved={isShowingRetrieved}
                           handleShowRetrieved={(messageNumber) => {
@@ -527,36 +579,6 @@ export const Chat = ({
 
             <div className="absolute bottom-0 z-10 w-full bg-background border-t border-border">
               <div className="w-full pb-4 pt-2">
-                {/* {(isStreaming || messageHistory.length > 0) && (
-              <div className="flex justify-center w-full">
-                <div className="w-[800px] flex">
-                  <div className="cursor-pointer flex w-fit p-2 rounded border border-neutral-400 text-sm hover:bg-neutral-200 ml-auto mr-4">
-                    {isStreaming ? (
-                      <div
-                        onClick={() => setIsCancelled(true)}
-                        className="flex"
-                      >
-                        <FiStopCircle className="my-auto mr-1" />
-                        <div>Stop Generating</div>
-                      </div>
-                    ) : (
-                      <div
-                        className="flex"
-                        onClick={() => {
-                          if (chatSessionId) {
-                            handleRegenerate(chatSessionId);
-                          }
-                        }}
-                      >
-                        <FiRefreshCcw className="my-auto mr-1" />
-                        <div>Regenerate</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )} */}
-
                 <div className="flex">
                   <div className="w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar mx-auto px-4 pt-1 flex">
                     {selectedDocuments.length > 0 ? (

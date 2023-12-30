@@ -45,6 +45,7 @@ export interface SendMessageRequest {
   promptId: number | null | undefined;
   filters: Filters | null;
   selectedDocumentIds: number[] | null;
+  queryOverride?: string;
 }
 
 export async function* sendMessage({
@@ -54,6 +55,7 @@ export async function* sendMessage({
   promptId,
   filters,
   selectedDocumentIds,
+  queryOverride,
 }: SendMessageRequest) {
   const documentsAreSelected =
     selectedDocumentIds && selectedDocumentIds.length > 0;
@@ -71,11 +73,14 @@ export async function* sendMessage({
       retrieval_options: !documentsAreSelected
         ? {
             run_search:
-              promptId === null || promptId === undefined ? "always" : "auto",
+              promptId === null || promptId === undefined || queryOverride
+                ? "always"
+                : "auto",
             real_time: true,
             filters: filters,
           }
         : null,
+      query_override: queryOverride,
     }),
   });
   if (!sendMessageResponse.ok) {
