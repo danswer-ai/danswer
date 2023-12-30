@@ -1,0 +1,17 @@
+**/__pycache__
+venv/
+env/
+*.egg-info
+.cache
+.git/
+.svn/
+.vscode/
+.idea/
+*.log
+log/
+.env
+secrets.yaml
+build/
+dist/
+.coverage
+htmlcov/
