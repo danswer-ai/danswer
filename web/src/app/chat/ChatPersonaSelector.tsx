@@ -1,6 +1,5 @@
 import { Persona } from "@/app/admin/personas/interfaces";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
-import { FaRobot } from "react-icons/fa";
 import { CustomDropdown } from "@/components/Dropdown";
 
 function PersonaItem({

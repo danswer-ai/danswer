@@ -22,8 +22,8 @@ export function Modal({
       >
         <div
           className={`
-          bg-background rounded-sm shadow-lg
-          shadow-lg relative w-1/2 text-sm
+          bg-background rounded shadow-lg
+          relative w-1/2 text-sm
           ${className}
         `}
           onClick={(event) => event.stopPropagation()}

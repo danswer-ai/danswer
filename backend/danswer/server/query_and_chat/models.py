@@ -145,6 +145,7 @@ class ChatMessageDetail(BaseModel):
 class ChatSessionDetailResponse(BaseModel):
     chat_session_id: int
     description: str
+    persona_id: int
     messages: list[ChatMessageDetail]
 
 

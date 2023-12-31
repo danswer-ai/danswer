@@ -67,7 +67,7 @@ def get_user_chat_sessions(
 
 
 @router.get("/get-chat-session/{session_id}")
-def get_chat_session_messages(
+def get_chat_session(
     session_id: int,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -88,6 +88,7 @@ def get_chat_session_messages(
     return ChatSessionDetailResponse(
         chat_session_id=session_id,
         description=chat_session.description,
+        persona_id=chat_session.persona_id,
         messages=[
             translate_db_message_to_chat_message_detail(msg) for msg in session_messages
         ],

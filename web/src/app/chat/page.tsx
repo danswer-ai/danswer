@@ -22,7 +22,11 @@ import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/conta
 import { personaComparator } from "../admin/personas/lib";
 import { ChatLayout } from "./ChatPage";
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string };
+}) {
   noStore();
 
   const tasks = [
@@ -110,6 +114,11 @@ export default async function Page() {
   // sort them in priority order
   personas.sort(personaComparator);
 
+  const defaultPersonaIdRaw = searchParams["personaId"];
+  const defaultPersonaId = defaultPersonaIdRaw
+    ? parseInt(defaultPersonaIdRaw)
+    : undefined;
+
   const documentSidebarCookieInitialWidth = cookies().get(
     DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME
   );
@@ -130,6 +139,7 @@ export default async function Page() {
         availableSources={availableSources}
         availableDocumentSets={documentSets}
         availablePersonas={personas}
+        defaultSelectedPersonaId={defaultPersonaId}
         documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
       />
     </>
