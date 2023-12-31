@@ -13,6 +13,7 @@ export function ChatLayout({
   availableSources,
   availableDocumentSets,
   availablePersonas,
+  defaultSelectedPersonaId,
   documentSidebarInitialWidth,
 }: {
   user: User | null;
@@ -20,11 +21,16 @@ export function ChatLayout({
   availableSources: ValidSources[];
   availableDocumentSets: DocumentSet[];
   availablePersonas: Persona[];
+  defaultSelectedPersonaId?: number; // what persona to default to
   documentSidebarInitialWidth?: number;
 }) {
   const searchParams = useSearchParams();
   const chatIdRaw = searchParams.get("chatId");
   const chatId = chatIdRaw ? parseInt(chatIdRaw) : null;
+
+  const selectedChatSession = chatSessions.find(
+    (chatSession) => chatSession.id === chatId
+  );
 
   return (
     <>
@@ -37,10 +43,11 @@ export function ChatLayout({
 
         <Chat
           existingChatSessionId={chatId}
-          existingChatSessionPersonaId={0}
+          existingChatSessionPersonaId={selectedChatSession?.persona_id}
           availableSources={availableSources}
           availableDocumentSets={availableDocumentSets}
           availablePersonas={availablePersonas}
+          defaultSelectedPersonaId={defaultSelectedPersonaId}
           documentSidebarInitialWidth={documentSidebarInitialWidth}
         />
       </div>

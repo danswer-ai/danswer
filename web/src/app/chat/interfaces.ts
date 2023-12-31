@@ -33,6 +33,9 @@ export interface Message {
 }
 
 export interface BackendChatSession {
+  chat_session_id: number;
+  description: string;
+  persona_id: number;
   messages: BackendMessage[];
 }
 

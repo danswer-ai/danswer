@@ -39,6 +39,7 @@ import { SelectedDocuments } from "./modifiers/SelectedDocuments";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { ResizableSection } from "@/components/resizable/ResizableSection";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
+import { ChatIntro } from "./ChatIntro";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -48,6 +49,7 @@ export const Chat = ({
   availableSources,
   availableDocumentSets,
   availablePersonas,
+  defaultSelectedPersonaId,
   documentSidebarInitialWidth,
   shouldhideBeforeScroll,
 }: {
@@ -56,6 +58,7 @@ export const Chat = ({
   availableSources: ValidSources[];
   availableDocumentSets: DocumentSet[];
   availablePersonas: Persona[];
+  defaultSelectedPersonaId?: number; // what persona to default to
   documentSidebarInitialWidth?: number;
   shouldhideBeforeScroll?: boolean;
 }) => {
@@ -76,6 +79,15 @@ export const Chat = ({
     async function initialSessionFetch() {
       if (existingChatSessionId === null) {
         setIsFetchingChatMessages(false);
+        if (defaultSelectedPersonaId !== undefined) {
+          setSelectedPersona(
+            availablePersonas.find(
+              (persona) => persona.id === defaultSelectedPersonaId
+            )
+          );
+        } else {
+          setSelectedPersona(undefined);
+        }
         setMessageHistory([]);
         return;
       }
@@ -85,6 +97,11 @@ export const Chat = ({
         `/api/chat/get-chat-session/${existingChatSessionId}`
       );
       const chatSession = (await response.json()) as BackendChatSession;
+      setSelectedPersona(
+        availablePersonas.find(
+          (persona) => persona.id === chatSession.persona_id
+        )
+      );
       const newMessageHistory = processRawChatHistory(chatSession.messages);
       setMessageHistory(newMessageHistory);
 
@@ -126,8 +143,23 @@ export const Chat = ({
       ? availablePersonas.find(
           (persona) => persona.id === existingChatSessionPersonaId
         )
-      : availablePersonas[0]
+      : defaultSelectedPersonaId !== undefined
+      ? availablePersonas.find(
+          (persona) => persona.id === defaultSelectedPersonaId
+        )
+      : undefined
   );
+  const livePersona = selectedPersona || availablePersonas[0];
+
+  useEffect(() => {
+    if (messageHistory.length === 0) {
+      setSelectedPersona(
+        availablePersonas.find(
+          (persona) => persona.id === defaultSelectedPersonaId
+        )
+      );
+    }
+  }, [defaultSelectedPersonaId]);
 
   const filterManager = useFilters();
 
@@ -212,7 +244,7 @@ export const Chat = ({
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
     if (isNewSession) {
-      currChatSessionId = await createChatSession(selectedPersona?.id || 0);
+      currChatSessionId = await createChatSession(livePersona?.id || 0);
     } else {
       currChatSessionId = chatSessionId as number;
     }
@@ -405,15 +437,16 @@ export const Chat = ({
               className="w-full h-screen flex flex-col overflow-y-auto relative"
               ref={scrollableDivRef}
             >
-              {selectedPersona && (
+              {livePersona && (
                 <div className="sticky top-0 left-80 z-10 w-full bg-background/90">
                   <div className="ml-2 p-1 rounded mt-2 w-fit">
                     <ChatPersonaSelector
                       personas={availablePersonas}
-                      selectedPersonaId={selectedPersona?.id}
+                      selectedPersonaId={livePersona.id}
                       onPersonaChange={(persona) => {
                         if (persona) {
                           setSelectedPersona(persona);
+                          router.push(`/chat?personaId=${persona.id}`);
                         }
                       }}
                     />
@@ -424,23 +457,15 @@ export const Chat = ({
               {messageHistory.length === 0 &&
                 !isFetchingChatMessages &&
                 !isStreaming && (
-                  <div className="flex justify-center items-center h-full">
-                    <div className="px-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
-                      <div className="flex">
-                        <div className="mx-auto h-[80px] w-[80px]">
-                          <Image
-                            src="/logo.png"
-                            alt="Logo"
-                            width="1419"
-                            height="1520"
-                          />
-                        </div>
-                      </div>
-                      <div className="mx-auto text-2xl font-bold text-strong p-4 w-fit">
-                        What are you looking for today?
-                      </div>
-                    </div>
-                  </div>
+                  <ChatIntro
+                    availableSources={availableSources}
+                    availablePersonas={availablePersonas}
+                    selectedPersona={selectedPersona}
+                    handlePersonaSelect={(persona) => {
+                      setSelectedPersona(persona);
+                      router.push(`/chat?personaId=${persona.id}`);
+                    }}
+                  />
                 )}
 
               <div
