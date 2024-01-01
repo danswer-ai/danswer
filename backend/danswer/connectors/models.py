@@ -69,15 +69,6 @@ class DocumentBase(BaseModel):
             return None
         return self.semantic_identifier if self.title is None else self.title
 
-
-class Document(DocumentBase):
-    id: str  # This must be unique or during indexing/reindexing, chunks will be overwritten
-    source: DocumentSource
-
-    def to_short_descriptor(self) -> str:
-        """Used when logging the identity of a document"""
-        return f"ID: '{self.id}'; Semantic ID: '{self.semantic_identifier}'"
-
     def get_metadata_values(self) -> list[str] | None:
         if not self.metadata:
             return None
@@ -88,6 +79,15 @@ class Document(DocumentBase):
             else:
                 vals.append(v)
         return vals
+
+
+class Document(DocumentBase):
+    id: str  # This must be unique or during indexing/reindexing, chunks will be overwritten
+    source: DocumentSource
+
+    def to_short_descriptor(self) -> str:
+        """Used when logging the identity of a document"""
+        return f"ID: '{self.id}'; Semantic ID: '{self.semantic_identifier}'"
 
     @classmethod
     def from_base(cls, base: DocumentBase) -> "Document":

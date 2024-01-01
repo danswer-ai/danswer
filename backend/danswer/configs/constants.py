@@ -40,6 +40,10 @@ SESSION_KEY = "session"
 QUERY_EVENT_ID = "query_event_id"
 LLM_CHUNKS = "llm_chunks"
 
+# For chunking/processing chunks
+TITLE_SEPARATOR = "\n\r\n"
+SECTION_SEPARATOR = "\n\n"
+
 
 class DocumentSource(str, Enum):
     # Special case, document passed in via Danswer APIs without specifying a source type

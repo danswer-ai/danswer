@@ -47,7 +47,7 @@ def _convert_pr_to_document(pull_request: PullRequest) -> Document:
         # due to local time discrepancies with UTC
         doc_updated_at=pull_request.updated_at.replace(tzinfo=timezone.utc),
         metadata={
-            "merged": pull_request.merged,
+            "merged": str(pull_request.merged),
             "state": pull_request.state,
         },
     )

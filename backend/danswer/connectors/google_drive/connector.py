@@ -479,7 +479,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                             doc_updated_at=datetime.fromisoformat(
                                 file["modifiedTime"]
                             ).astimezone(timezone.utc),
-                            metadata={} if text_contents else {IGNORE_FOR_QA: True},
+                            metadata={} if text_contents else {IGNORE_FOR_QA: "True"},
                         )
                     )
                 except Exception as e:

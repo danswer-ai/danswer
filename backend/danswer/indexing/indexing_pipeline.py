@@ -144,6 +144,8 @@ def index_doc_batch(
         )
 
         logger.debug("Starting chunking")
+
+        # The first chunk additionally contains the Title of the Document
         chunks: list[DocAwareChunk] = list(
             chain(*[chunker.chunk(document=document) for document in updatable_docs])
         )

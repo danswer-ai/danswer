@@ -47,6 +47,7 @@ from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.constants import TITLE
 from danswer.configs.constants import TITLE_EMBEDDING
+from danswer.configs.constants import TITLE_SEPARATOR
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
@@ -458,6 +459,8 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
         if DOC_UPDATED_AT in fields
         else None
     )
+
+    # The highlights might include the title but this is the best way we have so far to show the highlighting
     match_highlights = _process_dynamic_summary(
         # fallback to regular `content` if the `content_summary` field
         # isn't present
@@ -468,6 +471,13 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
         logger.error(
             f"Chunk with blurb: {fields.get(BLURB, 'Unknown')[:50]}... has no Semantic Identifier"
         )
+
+    # Remove the title from the first chunk as every chunk already included
+    # its semantic identifier for LLM
+    content = fields[CONTENT]
+    if fields[CHUNK_ID] == 0:
+        parts = content.split(TITLE_SEPARATOR, maxsplit=1)
+        content = parts[1] if len(parts) > 1 and "\n" not in parts[0] else content
 
     # User ran into this, not sure why this could happen, error checking here
     blurb = fields.get(BLURB)
@@ -487,7 +497,7 @@ def _vespa_hit_to_inference_chunk(hit: dict[str, Any]) -> InferenceChunk:
     return InferenceChunk(
         chunk_id=fields[CHUNK_ID],
         blurb=blurb,
-        content=fields[CONTENT],
+        content=content,
         source_links=source_links_dict,
         section_continuation=fields[SECTION_CONTINUATION],
         document_id=fields[DOCUMENT_ID],
