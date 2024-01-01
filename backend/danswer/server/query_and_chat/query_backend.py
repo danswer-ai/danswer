@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
+from danswer.configs.constants import DocumentSource
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.tag import get_tags_by_value_prefix_for_source_types
@@ -32,7 +33,6 @@ from danswer.server.query_and_chat.models import HelperResponse
 from danswer.server.query_and_chat.models import QueryValidationResponse
 from danswer.server.query_and_chat.models import SimpleQueryRequest
 from danswer.server.query_and_chat.models import SourceTag
-from danswer.server.query_and_chat.models import TagRequest
 from danswer.server.query_and_chat.models import TagResponse
 from danswer.utils.logger import setup_logger
 
@@ -79,18 +79,21 @@ def admin_search(
     return AdminSearchResponse(documents=deduplicated_documents)
 
 
-@basic_router.post("/valid-tags")
+@basic_router.get("/valid-tags")
 def get_tags(
-    tag_request: TagRequest,
+    match_pattern: str | None = None,
+    # If this is empty or None, then tags for all sources are considered
+    sources: list[DocumentSource] | None = None,
+    allow_prefix: bool = True,  # This is currently the only option
     _: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> TagResponse:
-    if not tag_request.allow_prefix:
+    if not allow_prefix:
         raise NotImplementedError("Cannot disable prefix match for now")
 
     db_tags = get_tags_by_value_prefix_for_source_types(
-        tag_value_prefix=tag_request.match_pattern,
-        sources=tag_request.sources,
+        tag_value_prefix=match_pattern,
+        sources=sources,
         db_session=db_session,
     )
     server_tags = [

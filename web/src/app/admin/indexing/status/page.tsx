@@ -9,7 +9,7 @@ import { ConnectorIndexingStatus } from "@/lib/types";
 import { CCPairIndexingStatusTable } from "./CCPairIndexingStatusTable";
 import { AdminPageTitle } from "@/components/admin/Title";
 import Link from "next/link";
-import { Button } from "@tremor/react";
+import { Button, Text } from "@tremor/react";
 
 function Main() {
   const {
@@ -32,13 +32,13 @@ function Main() {
 
   if (indexAttemptData.length === 0) {
     return (
-      <div className="text-gray-300 text-sm">
+      <Text>
         It looks like you don&apos;t have any connectors setup yet. Visit the{" "}
         <Link className="text-blue-500" href="/admin/add-connector">
           Add Connector
         </Link>{" "}
         page to get started!
-      </div>
+      </Text>
     );
   }
 

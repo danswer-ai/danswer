@@ -15,13 +15,6 @@ from danswer.search.models import SearchType
 from danswer.search.models import Tag
 
 
-class TagRequest(BaseModel):
-    match_pattern: str | None
-    # If this is empty or None, then tags for all sources are considered
-    sources: list[DocumentSource] | None
-    allow_prefix: bool = True  # This is currently the only option
-
-
 class SourceTag(Tag):
     source: DocumentSource
 

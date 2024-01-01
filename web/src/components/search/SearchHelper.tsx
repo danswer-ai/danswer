@@ -95,7 +95,7 @@ export const SearchHelper: React.FC<Props> = (props) => {
         <b className="ml-2 text-strong">AI Assistant</b>
       </div>
 
-      <p className="mt-1">{message}</p>
+      <div className="mt-1">{message}</div>
     </div>
   );
 };
