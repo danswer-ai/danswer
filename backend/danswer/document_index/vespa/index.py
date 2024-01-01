@@ -25,6 +25,7 @@ from danswer.configs.chat_configs import DOC_TIME_DECAY
 from danswer.configs.chat_configs import EDIT_KEYWORD_QUERY
 from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
+from danswer.configs.chat_configs import TITLE_CONTENT_RATIO
 from danswer.configs.constants import ACCESS_CONTROL_LIST
 from danswer.configs.constants import BLURB
 from danswer.configs.constants import BOOST
@@ -44,6 +45,7 @@ from danswer.configs.constants import SEMANTIC_IDENTIFIER
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.constants import TITLE
+from danswer.configs.constants import TITLE_EMBEDDING
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
@@ -239,20 +241,23 @@ def _index_vespa_chunk(
         for ind, m_c_embed in enumerate(embeddings.mini_chunk_embeddings):
             embeddings_name_vector_map[f"mini_chunk_{ind}"] = m_c_embed
 
+    title = document.get_title_for_document_index()
+
     vespa_document_fields = {
         DOCUMENT_ID: document.id,
         CHUNK_ID: chunk.chunk_id,
         BLURB: remove_invalid_unicode_chars(chunk.blurb),
-        # this duplication of `content` is needed for keyword highlighting :(
+        TITLE: remove_invalid_unicode_chars(title) if title else None,
         CONTENT: remove_invalid_unicode_chars(chunk.content),
+        # This duplication of `content` is needed for keyword highlighting :(
         CONTENT_SUMMARY: remove_invalid_unicode_chars(chunk.content),
         SOURCE_TYPE: str(document.source.value),
         SOURCE_LINKS: json.dumps(chunk.source_links),
         SEMANTIC_IDENTIFIER: remove_invalid_unicode_chars(document.semantic_identifier),
-        TITLE: remove_invalid_unicode_chars(document.get_title_for_document_index()),
         SECTION_CONTINUATION: chunk.section_continuation,
         METADATA: json.dumps(document.metadata),
         EMBEDDINGS: embeddings_name_vector_map,
+        TITLE_EMBEDDING: chunk.title_embedding,
         BOOST: chunk.boost,
         DOC_UPDATED_AT: _vespa_get_updated_at_attribute(document.doc_updated_at),
         PRIMARY_OWNERS: get_experts_stores_representations(document.primary_owners),
@@ -725,6 +730,7 @@ class VespaIndex(DocumentIndex):
         num_to_retrieve: int = NUM_RETURNED_HITS,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
+        # IMPORTANT: THIS FUNCTION IS NOT UP TO DATE, MIGHT NOT WORK CORRECTLY
         vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
             VespaIndex.yql_base
@@ -759,6 +765,7 @@ class VespaIndex(DocumentIndex):
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
+        # IMPORTANT: THIS FUNCTION IS NOT UP TO DATE, MIGHT NOT WORK CORRECTLY
         vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
             VespaIndex.yql_base
@@ -798,6 +805,7 @@ class VespaIndex(DocumentIndex):
         time_decay_multiplier: float,
         num_to_retrieve: int,
         hybrid_alpha: float | None = HYBRID_ALPHA,
+        title_content_ratio: float | None = TITLE_CONTENT_RATIO,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
@@ -808,6 +816,7 @@ class VespaIndex(DocumentIndex):
             VespaIndex.yql_base
             + vespa_where_clauses
             + f"(({{targetHits: {target_hits}}}nearestNeighbor(embeddings, query_embedding)) "
+            + f"or ({{targetHits: {target_hits}}}nearestNeighbor(title_embedding, query_embedding)) "
             + 'or ({grammar: "weakAnd"}userInput(@query)) '
             + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
         )
@@ -828,6 +837,9 @@ class VespaIndex(DocumentIndex):
             "input.query(alpha)": hybrid_alpha
             if hybrid_alpha is not None
             else HYBRID_ALPHA,
+            "input.query(title_content_ratio)": title_content_ratio
+            if title_content_ratio is not None
+            else TITLE_CONTENT_RATIO,
             "hits": num_to_retrieve,
             "offset": 0,
             "ranking.profile": "hybrid_search",

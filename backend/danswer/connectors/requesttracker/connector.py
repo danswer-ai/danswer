@@ -97,7 +97,8 @@ class RequestTrackerConnector(PollConnector):
             logger.info(f"Processing ticket {tid}")
             doc = Document(
                 id=ticket["id"],
-                sections=[Section(link=ticketLink, text=f"{ticket['Subject']}\n")]
+                # Will add title to the first section later in processing
+                sections=[Section(link=ticketLink, text="")]
                 + self.build_doc_sections_from_txn(Rt0, tid),
                 source=DocumentSource.REQUESTTRACKER,
                 semantic_identifier=ticket["Subject"],

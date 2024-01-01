@@ -8,6 +8,7 @@ import requests
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -30,7 +31,6 @@ def _make_query(request_body: dict[str, Any], api_key: str) -> requests.Response
         "Content-Type": "application/json",
     }
 
-    response: requests.Response | None = None
     for i in range(_NUM_RETRIES):
         try:
             response = requests.post(
@@ -187,8 +187,8 @@ class LinearConnector(LoadConnector, PollConnector):
                         ],
                         source=DocumentSource.LINEAR,
                         semantic_identifier=node["identifier"],
+                        doc_updated_at=time_str_to_utc(node["updatedAt"]),
                         metadata={
-                            "updated_at": node["updatedAt"],
                             "team": node["team"]["name"],
                         },
                     )

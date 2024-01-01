@@ -3,16 +3,17 @@ from datetime import timezone
 from typing import Any
 from urllib.parse import urlparse
 
-from dateutil.parser import parse
 from jira import JIRA
 from jira.resources import Issue
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -60,17 +61,21 @@ def fetch_jira_issues_batch(
             logger.warning(f"Found Jira object not of type Issue {jira}")
             continue
 
-        ticket_updated_time = parse(jira.fields.updated)
-
-        semantic_rep = (
-            f"Jira Ticket Summary: {jira.fields.summary}\n"
-            f"Description: {jira.fields.description}\n"
-            + "\n".join(
-                [f"Comment: {comment.body}" for comment in jira.fields.comment.comments]
-            )
+        semantic_rep = f"{jira.fields.description}\n" + "\n".join(
+            [f"Comment: {comment.body}" for comment in jira.fields.comment.comments]
         )
 
         page_url = f"{jira_client.client_info()}/browse/{jira.key}"
+
+        author = None
+        try:
+            author = BasicExpertInfo(
+                display_name=jira.fields.creator.displayName,
+                email=jira.fields.creator.emailAddress,
+            )
+        except Exception:
+            # Author should exist but if not, doesn't matter
+            pass
 
         doc_batch.append(
             Document(
@@ -78,8 +83,10 @@ def fetch_jira_issues_batch(
                 sections=[Section(link=page_url, text=semantic_rep)],
                 source=DocumentSource.JIRA,
                 semantic_identifier=jira.fields.summary,
-                doc_updated_at=ticket_updated_time.astimezone(timezone.utc),
-                metadata={},
+                doc_updated_at=time_str_to_utc(jira.fields.updated),
+                primary_owners=[author] if author is not None else None,
+                # TODO add secondary_owners if needed
+                metadata={"label": jira.fields.labels} if jira.fields.labels else {},
             )
         )
     return doc_batch, len(batch)

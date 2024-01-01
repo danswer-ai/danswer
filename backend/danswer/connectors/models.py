@@ -57,12 +57,17 @@ class DocumentBase(BaseModel):
     primary_owners: list[BasicExpertInfo] | None = None
     # Assignee, space owner, etc.
     secondary_owners: list[BasicExpertInfo] | None = None
-    # `title` is used when computing best matches for a query
-    # if `None`, then we will use the `semantic_identifier` as the title in Vespa
+    # title is used for search whereas semantic_identifier is used for displaying in the UI
+    # different because Slack message may display as #general but general should not be part
+    # of the search, at least not in the same way as a document title should be for like Confluence
+    # The default title is semantic_identifier though unless otherwise specified
     title: str | None = None
     from_ingestion_api: bool = False
 
-    def get_title_for_document_index(self) -> str:
+    def get_title_for_document_index(self) -> str | None:
+        # If title is explicitly empty, return a None here for embedding purposes
+        if self.title == "":
+            return None
         return self.semantic_identifier if self.title is None else self.title
 
 

@@ -48,6 +48,7 @@ class DocAwareChunk(BaseChunk):
 @dataclass
 class IndexChunk(DocAwareChunk):
     embeddings: ChunkEmbedding
+    title_embedding: Embedding | None
 
 
 @dataclass

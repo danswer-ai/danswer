@@ -22,6 +22,7 @@ from sqlalchemy import Integer
 from sqlalchemy import Sequence
 from sqlalchemy import String
 from sqlalchemy import Text
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
@@ -153,6 +154,15 @@ class ChatMessage__SearchDoc(Base):
     )
 
 
+class Document__Tag(Base):
+    __tablename__ = "document__tag"
+
+    document_id: Mapped[str] = mapped_column(
+        ForeignKey("document.id"), primary_key=True
+    )
+    tag_id: Mapped[int] = mapped_column(ForeignKey("tag.id"), primary_key=True)
+
+
 """
 Documents/Indexing Tables
 """
@@ -246,6 +256,34 @@ class Document(Base):
 
     retrieval_feedbacks: Mapped[List["DocumentRetrievalFeedback"]] = relationship(
         "DocumentRetrievalFeedback", back_populates="document"
+    )
+    tags = relationship(
+        "Tag",
+        secondary="document__tag",
+        back_populates="documents",
+    )
+
+
+class Tag(Base):
+    __tablename__ = "tag"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    tag_key: Mapped[str] = mapped_column(String)
+    tag_value: Mapped[str] = mapped_column(String)
+    source: Mapped[DocumentSource] = mapped_column(
+        Enum(DocumentSource, native_enum=False)
+    )
+
+    documents = relationship(
+        "Document",
+        secondary="document__tag",
+        back_populates="tags",
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "tag_key", "tag_value", "source", name="_tag_key_value_source_uc"
+        ),
     )
 
 

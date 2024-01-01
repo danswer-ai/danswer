@@ -77,7 +77,7 @@ class GuruConnector(LoadConnector, PollConnector):
             for card in cards:
                 title = card["preferredPhrase"]
                 link = GURU_CARDS_URL + card["slug"]
-                content_text = title + "\n" + parse_html_page_basic(card["content"])
+                content_text = parse_html_page_basic(card["content"])
                 last_updated = time_str_to_utc(card["lastModified"])
                 last_verified = (
                     time_str_to_utc(card.get("lastVerified"))
