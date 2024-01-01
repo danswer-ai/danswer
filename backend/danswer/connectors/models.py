@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any
 
 from pydantic import BaseModel
 
@@ -50,7 +49,7 @@ class DocumentBase(BaseModel):
     sections: list[Section]
     source: DocumentSource | None = None
     semantic_identifier: str  # displayed in the UI as the main identifier for the doc
-    metadata: dict[str, Any]
+    metadata: dict[str, str | list[str]]
     # UTC time
     doc_updated_at: datetime | None = None
     # Owner, creator, etc.
@@ -78,6 +77,17 @@ class Document(DocumentBase):
     def to_short_descriptor(self) -> str:
         """Used when logging the identity of a document"""
         return f"ID: '{self.id}'; Semantic ID: '{self.semantic_identifier}'"
+
+    def get_metadata_values(self) -> list[str] | None:
+        if not self.metadata:
+            return None
+        vals: list[str] = []
+        for v in self.metadata.values():
+            if isinstance(v, list):
+                vals.extend(v)
+            else:
+                vals.append(v)
+        return vals
 
     @classmethod
     def from_base(cls, base: DocumentBase) -> "Document":

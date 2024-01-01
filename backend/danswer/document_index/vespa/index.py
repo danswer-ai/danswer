@@ -37,6 +37,7 @@ from danswer.configs.constants import DOCUMENT_SETS
 from danswer.configs.constants import EMBEDDINGS
 from danswer.configs.constants import HIDDEN
 from danswer.configs.constants import METADATA
+from danswer.configs.constants import METADATA_LIST
 from danswer.configs.constants import PRIMARY_OWNERS
 from danswer.configs.constants import RECENCY_BIAS
 from danswer.configs.constants import SECONDARY_OWNERS
@@ -256,6 +257,8 @@ def _index_vespa_chunk(
         SEMANTIC_IDENTIFIER: remove_invalid_unicode_chars(document.semantic_identifier),
         SECTION_CONTINUATION: chunk.section_continuation,
         METADATA: json.dumps(document.metadata),
+        # Save as a list for efficient extraction as an Attribute
+        METADATA_LIST: chunk.source_document.get_metadata_values(),
         EMBEDDINGS: embeddings_name_vector_map,
         TITLE_EMBEDDING: chunk.title_embedding,
         BOOST: chunk.boost,
@@ -398,6 +401,8 @@ def _build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) ->
         [s.value for s in filters.source_type] if filters.source_type else None
     )
     filter_str += _build_or_filters(SOURCE_TYPE, source_strs)
+
+    filter_str += _build_or_filters(METADATA_LIST, filters.tags)
 
     filter_str += _build_or_filters(DOCUMENT_SETS, filters.document_set)
 
@@ -730,7 +735,7 @@ class VespaIndex(DocumentIndex):
         num_to_retrieve: int = NUM_RETURNED_HITS,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
-        # IMPORTANT: THIS FUNCTION IS NOT UP TO DATE, MIGHT NOT WORK CORRECTLY
+        # IMPORTANT: THIS FUNCTION IS NOT UP TO DATE, DOES NOT WORK CORRECTLY
         vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
             VespaIndex.yql_base
@@ -765,7 +770,7 @@ class VespaIndex(DocumentIndex):
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
-        # IMPORTANT: THIS FUNCTION IS NOT UP TO DATE, MIGHT NOT WORK CORRECTLY
+        # IMPORTANT: THIS FUNCTION IS NOT UP TO DATE, DOES NOT WORK CORRECTLY
         vespa_where_clauses = _build_vespa_filters(filters)
         yql = (
             VespaIndex.yql_base

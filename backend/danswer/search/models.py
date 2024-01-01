@@ -52,6 +52,7 @@ class BaseFilters(BaseModel):
     source_type: list[DocumentSource] | None = None
     document_set: list[str] | None = None
     time_cutoff: datetime | None = None
+    tags: list[str] | None = None
 
 
 class IndexFilters(BaseFilters):

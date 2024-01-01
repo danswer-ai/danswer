@@ -270,9 +270,7 @@ class Tag(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     tag_key: Mapped[str] = mapped_column(String)
     tag_value: Mapped[str] = mapped_column(String)
-    source: Mapped[DocumentSource] = mapped_column(
-        Enum(DocumentSource, native_enum=False)
-    )
+    source: Mapped[DocumentSource] = mapped_column(Enum(DocumentSource))
 
     documents = relationship(
         "Document",

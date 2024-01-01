@@ -16,6 +16,10 @@ def create_or_add_document_tag(
     document_id: str,
     db_session: Session,
 ) -> Tag:
+    document = db_session.get(Document, document_id)
+    if not document:
+        raise ValueError("Invalid Document, cannot attach Tags")
+
     tag_stmt = select(Tag).where(
         Tag.tag_key == tag_key,
         Tag.tag_value == tag_value,
@@ -26,10 +30,6 @@ def create_or_add_document_tag(
     if not tag:
         tag = Tag(tag_key=tag_key, tag_value=tag_value, source=source)
         db_session.add(tag)
-
-    document = db_session.get(Document, document_id)
-    if not document:
-        raise ValueError("Invalid Document, cannot attach Tags")
 
     if tag not in document.tags:
         document.tags.append(tag)
@@ -45,6 +45,10 @@ def create_or_add_document_tag_list(
     document_id: str,
     db_session: Session,
 ) -> list[Tag]:
+    document = db_session.get(Document, document_id)
+    if not document:
+        raise ValueError("Invalid Document, cannot attach Tags")
+
     existing_tags_stmt = select(Tag).where(
         Tag.tag_key == tag_key, Tag.tag_value.in_(tag_values), Tag.source == source
     )
@@ -59,10 +63,6 @@ def create_or_add_document_tag_list(
             new_tags.append(new_tag)
 
     all_tags = existing_tags + new_tags
-
-    document = db_session.get(Document, document_id)
-    if not document:
-        raise ValueError("Invalid Document, cannot attach Tags")
 
     for tag in all_tags:
         if tag not in document.tags:

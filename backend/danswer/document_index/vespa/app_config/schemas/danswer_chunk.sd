@@ -77,6 +77,12 @@ schema danswer_chunk {
             indexing: summary | attribute
             rank: filter
         }
+        # Needs to have a separate Attribute list for efficient filtering
+        field metadata_list type array<string> {
+            indexing: summary | attribute
+            rank:filter
+            attribute: fast-search
+        }
         field metadata type string {
             indexing: summary | attribute
         }

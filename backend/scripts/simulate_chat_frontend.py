@@ -30,7 +30,11 @@ def send_chat_message(
         "chat_session_id": chat_session_id,
         "parent_message_id": parent_message,
         "prompt_id": 0,  # Global default Prompt
-        "retrieval_options": {"run_search": "always", "real_time": True},
+        "retrieval_options": {
+            "run_search": "always",
+            "real_time": True,
+            "filters": {"tags": []},
+        },
     }
 
     docs: list[dict] | None = None

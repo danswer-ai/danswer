@@ -17,6 +17,7 @@ ACCESS_CONTROL_LIST = "access_control_list"
 DOCUMENT_SETS = "document_sets"
 TIME_FILTER = "time_filter"
 METADATA = "metadata"
+METADATA_LIST = "metadata_list"
 MATCH_HIGHLIGHTS = "match_highlights"
 # stored in the `metadata` of a chunk. Used to signify that this chunk should
 # not be used for QA. For example, Google Drive file types which can't be parsed
