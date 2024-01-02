@@ -88,7 +88,11 @@ Once the above is done, navigate to `danswer/web` run:
 npm i
 ```
 
-Install Playwright (required by the Web Connector), with the python venv active, run:
+Install Playwright (required by the Web Connector)
+Note: If you have just done the pip install, open a new terminal and source the python venv again
+this will update the path to include playwright
+
+Then install playwright by running:
 ```bash
 playwright install
 ```
