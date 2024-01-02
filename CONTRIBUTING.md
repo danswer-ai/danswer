@@ -90,10 +90,10 @@ npm i
 
 Install Playwright (required by the Web Connector)
 
-> Note: If you have just done the pip install, open a new terminal and source the python venv again
-this will update the path to include playwright
+> Note: If you have just done the pip install, open a new terminal and source the python virtual-env again.
+This will update the path to include playwright
 
-Then install playwright by running:
+Then install Playwright by running:
 ```bash
 playwright install
 ```
