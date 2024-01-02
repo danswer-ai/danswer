@@ -4,6 +4,7 @@ from enum import Enum
 from pydantic import BaseModel
 
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import INDEX_SEPARATOR
 from danswer.utils.text_processing import make_url_compatible
 
 
@@ -69,16 +70,17 @@ class DocumentBase(BaseModel):
             return None
         return self.semantic_identifier if self.title is None else self.title
 
-    def get_metadata_values(self) -> list[str] | None:
+    def get_metadata_str_attributes(self) -> list[str] | None:
         if not self.metadata:
             return None
-        vals: list[str] = []
-        for v in self.metadata.values():
+        # Combined string for the key/value for easy filtering
+        attributes: list[str] = []
+        for k, v in self.metadata.items():
             if isinstance(v, list):
-                vals.extend(v)
+                attributes.extend([k + INDEX_SEPARATOR + vi for vi in v])
             else:
-                vals.append(v)
-        return vals
+                attributes.append(k + INDEX_SEPARATOR + v)
+        return attributes
 
 
 class Document(DocumentBase):

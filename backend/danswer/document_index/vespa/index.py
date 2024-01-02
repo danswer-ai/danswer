@@ -36,6 +36,7 @@ from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import DOCUMENT_SETS
 from danswer.configs.constants import EMBEDDINGS
 from danswer.configs.constants import HIDDEN
+from danswer.configs.constants import INDEX_SEPARATOR
 from danswer.configs.constants import METADATA
 from danswer.configs.constants import METADATA_LIST
 from danswer.configs.constants import PRIMARY_OWNERS
@@ -259,7 +260,7 @@ def _index_vespa_chunk(
         SECTION_CONTINUATION: chunk.section_continuation,
         METADATA: json.dumps(document.metadata),
         # Save as a list for efficient extraction as an Attribute
-        METADATA_LIST: chunk.source_document.get_metadata_values(),
+        METADATA_LIST: chunk.source_document.get_metadata_str_attributes(),
         EMBEDDINGS: embeddings_name_vector_map,
         TITLE_EMBEDDING: chunk.title_embedding,
         BOOST: chunk.boost,
@@ -403,7 +404,11 @@ def _build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) ->
     )
     filter_str += _build_or_filters(SOURCE_TYPE, source_strs)
 
-    filter_str += _build_or_filters(METADATA_LIST, filters.tags)
+    tag_attributes = None
+    tags = filters.tags
+    if tags:
+        tag_attributes = [tag.tag_key + INDEX_SEPARATOR + tag.tag_value for tag in tags]
+    filter_str += _build_or_filters(METADATA_LIST, tag_attributes)
 
     filter_str += _build_or_filters(DOCUMENT_SETS, filters.document_set)
 

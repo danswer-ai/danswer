@@ -43,6 +43,8 @@ LLM_CHUNKS = "llm_chunks"
 # For chunking/processing chunks
 TITLE_SEPARATOR = "\n\r\n"
 SECTION_SEPARATOR = "\n\n"
+# For combining attributes, doesn't have to be unique/perfect to work
+INDEX_SEPARATOR = "==="
 
 
 class DocumentSource(str, Enum):

@@ -48,11 +48,16 @@ class Embedder:
         raise NotImplementedError
 
 
+class Tag:
+    tag_key: str
+    tag_value: str
+
+
 class BaseFilters(BaseModel):
     source_type: list[DocumentSource] | None = None
     document_set: list[str] | None = None
     time_cutoff: datetime | None = None
-    tags: list[str] | None = None
+    tags: list[Tag] | None = None
 
 
 class IndexFilters(BaseFilters):

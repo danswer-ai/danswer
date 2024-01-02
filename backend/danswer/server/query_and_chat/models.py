@@ -12,6 +12,7 @@ from danswer.search.models import BaseFilters
 from danswer.search.models import RetrievalDetails
 from danswer.search.models import SearchDoc
 from danswer.search.models import SearchType
+from danswer.search.models import Tag
 
 
 class TagRequest(BaseModel):
@@ -21,14 +22,12 @@ class TagRequest(BaseModel):
     allow_prefix: bool = True  # This is currently the only option
 
 
-class Tag(BaseModel):
-    tag_key: str
-    tag_value: str
+class SourceTag(Tag):
     source: DocumentSource
 
 
 class TagResponse(BaseModel):
-    tags: list[Tag]
+    tags: list[SourceTag]
 
 
 class SimpleQueryRequest(BaseModel):

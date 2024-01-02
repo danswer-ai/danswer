@@ -31,7 +31,7 @@ from danswer.server.query_and_chat.models import DocumentSearchRequest
 from danswer.server.query_and_chat.models import HelperResponse
 from danswer.server.query_and_chat.models import QueryValidationResponse
 from danswer.server.query_and_chat.models import SimpleQueryRequest
-from danswer.server.query_and_chat.models import Tag
+from danswer.server.query_and_chat.models import SourceTag
 from danswer.server.query_and_chat.models import TagRequest
 from danswer.server.query_and_chat.models import TagResponse
 from danswer.utils.logger import setup_logger
@@ -94,7 +94,9 @@ def get_tags(
         db_session=db_session,
     )
     server_tags = [
-        Tag(tag_key=db_tag.tag_key, tag_value=db_tag.tag_value, source=db_tag.source)
+        SourceTag(
+            tag_key=db_tag.tag_key, tag_value=db_tag.tag_value, source=db_tag.source
+        )
         for db_tag in db_tags
     ]
     return TagResponse(tags=server_tags)
