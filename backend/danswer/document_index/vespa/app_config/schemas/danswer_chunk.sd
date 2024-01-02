@@ -44,7 +44,7 @@ schema danswer_chunk {
             }
         }
         # Content embeddings (chunk + optional mini chunks embeddings)
-        # "vectors" and "dim" are arbitrary names, not special keywords
+        # "t" and "x" are arbitrary names, not special keywords
         field embeddings type tensor<float>(t{},x[384]) {
             indexing: attribute
             attribute {

@@ -8,7 +8,6 @@ Create Date: 2024-01-01 10:44:43.733974
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
-from danswer.configs.constants import DocumentSource
 
 # revision identifiers, used by Alembic.
 revision = "904e5138fffb"
@@ -23,11 +22,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("tag_key", sa.String(), nullable=False),
         sa.Column("tag_value", sa.String(), nullable=False),
-        sa.Column(
-            "source",
-            sa.Enum(DocumentSource, name="documentsource", create_type=False),
-            nullable=False,
-        ),
+        sa.Column("source", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint(
             "tag_key", "tag_value", "source", name="_tag_key_value_source_uc"
