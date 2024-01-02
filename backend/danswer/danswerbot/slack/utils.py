@@ -95,7 +95,7 @@ def respond_in_thread(
                 raise RuntimeError(f"Failed to post message: {response}")
 
 
-def build_feedback_block_id(
+def build_feedback_id(
     message_id: int,
     document_id: str | None = None,
     document_rank: int | None = None,
@@ -108,19 +108,21 @@ def build_feedback_block_id(
             raise ValueError(
                 "Separator pattern should not already exist in document id"
             )
-        block_id = ID_SEPARATOR.join([str(message_id), document_id, str(document_rank)])
+        feedback_id = ID_SEPARATOR.join(
+            [str(message_id), document_id, str(document_rank)]
+        )
     else:
-        block_id = str(message_id)
+        feedback_id = str(message_id)
 
-    return unique_prefix + ID_SEPARATOR + block_id
+    return unique_prefix + ID_SEPARATOR + feedback_id
 
 
-def decompose_block_id(block_id: str) -> tuple[int, str | None, int | None]:
+def decompose_feedback_id(feedback_id: str) -> tuple[int, str | None, int | None]:
     """Decompose into query_id, document_id, document_rank, see above function"""
     try:
-        components = block_id.split(ID_SEPARATOR)
+        components = feedback_id.split(ID_SEPARATOR)
         if len(components) != 2 and len(components) != 4:
-            raise ValueError("Block ID does not contain right number of elements")
+            raise ValueError("Feedback ID does not contain right number of elements")
 
         if len(components) == 2:
             return int(components[-1]), None, None
@@ -129,7 +131,36 @@ def decompose_block_id(block_id: str) -> tuple[int, str | None, int | None]:
 
     except Exception as e:
         logger.error(e)
-        raise ValueError("Received invalid Feedback Block Identifier")
+        raise ValueError("Received invalid Feedback Identifier")
+
+
+def get_view_values(state_values: dict[str, Any]) -> dict[str, str]:
+    """Extract view values
+
+    Args:
+        state_values (dict): The Slack view-submission values
+
+    Returns:
+        dict: keys/values of the view state content
+    """
+    view_values = {}
+    for _, view_data in state_values.items():
+        for k, v in view_data.items():
+            if (
+                "selected_option" in v
+                and isinstance(v["selected_option"], dict)
+                and "value" in v["selected_option"]
+            ):
+                view_values[k] = v["selected_option"]["value"]
+            elif "selected_options" in v and isinstance(v["selected_options"], list):
+                view_values[k] = [
+                    x["value"] for x in v["selected_options"] if "value" in x
+                ]
+            elif "selected_date" in v:
+                view_values[k] = v["selected_date"]
+            elif "value" in v:
+                view_values[k] = v["value"]
+    return view_values
 
 
 def translate_vespa_highlight_to_slack(match_strs: list[str], used_chars: int) -> str:

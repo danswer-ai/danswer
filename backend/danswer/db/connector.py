@@ -36,8 +36,12 @@ def fetch_connectors(
     return list(results.all())
 
 
-def connector_by_name_exists(connector_name: str, db_session: Session) -> bool:
-    stmt = select(Connector).where(Connector.name == connector_name)
+def connector_by_name_source_exists(
+    connector_name: str, source: DocumentSource, db_session: Session
+) -> bool:
+    stmt = select(Connector).where(
+        Connector.name == connector_name, Connector.source == source
+    )
     result = db_session.execute(stmt)
     connector = result.scalar_one_or_none()
     return connector is not None
@@ -67,7 +71,9 @@ def create_connector(
     connector_data: ConnectorBase,
     db_session: Session,
 ) -> ObjectCreationIdResponse:
-    if connector_by_name_exists(connector_data.name, db_session):
+    if connector_by_name_source_exists(
+        connector_data.name, connector_data.source, db_session
+    ):
         raise ValueError(
             "Connector by this name already exists, duplicate naming not allowed."
         )
@@ -95,8 +101,8 @@ def update_connector(
     if connector is None:
         return None
 
-    if connector_data.name != connector.name and connector_by_name_exists(
-        connector_data.name, db_session
+    if connector_data.name != connector.name and connector_by_name_source_exists(
+        connector_data.name, connector_data.source, db_session
     ):
         raise ValueError(
             "Connector by this name already exists, duplicate naming not allowed."

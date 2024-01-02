@@ -11,6 +11,7 @@ import {
   ChatSession,
   DocumentsResponse,
   Message,
+  RetrievalType,
   StreamingError,
 } from "./interfaces";
 
@@ -44,6 +45,7 @@ export interface SendMessageRequest {
   promptId: number | null | undefined;
   filters: Filters | null;
   selectedDocumentIds: number[] | null;
+  queryOverride?: string;
 }
 
 export async function* sendMessage({
@@ -53,6 +55,7 @@ export async function* sendMessage({
   promptId,
   filters,
   selectedDocumentIds,
+  queryOverride,
 }: SendMessageRequest) {
   const documentsAreSelected =
     selectedDocumentIds && selectedDocumentIds.length > 0;
@@ -70,11 +73,14 @@ export async function* sendMessage({
       retrieval_options: !documentsAreSelected
         ? {
             run_search:
-              promptId === null || promptId === undefined ? "always" : "auto",
+              promptId === null || promptId === undefined || queryOverride
+                ? "always"
+                : "auto",
             real_time: true,
             filters: filters,
           }
         : null,
+      query_override: queryOverride,
     }),
   });
   if (!sendMessageResponse.ok) {
@@ -265,4 +271,76 @@ export function groupSessionsByDateRange(chatSessions: ChatSession[]) {
   });
 
   return groups;
+}
+
+export function getLastSuccessfulMessageId(messageHistory: Message[]) {
+  const lastSuccessfulMessage = messageHistory
+    .slice()
+    .reverse()
+    .find(
+      (message) =>
+        message.type === "assistant" &&
+        message.messageId !== -1 &&
+        message.messageId !== null
+    );
+  return lastSuccessfulMessage ? lastSuccessfulMessage?.messageId : null;
+}
+
+export function processRawChatHistory(rawMessages: BackendMessage[]) {
+  const messageMap: Map<number, BackendMessage> = new Map(
+    rawMessages.map((message) => [message.message_id, message])
+  );
+
+  const rootMessage = rawMessages.find(
+    (message) => message.parent_message === null
+  );
+
+  const finalMessageList: BackendMessage[] = [];
+  if (rootMessage) {
+    let currMessage: BackendMessage | null = rootMessage;
+    while (currMessage) {
+      finalMessageList.push(currMessage);
+      const childMessageNumber = currMessage.latest_child_message;
+      if (childMessageNumber && messageMap.has(childMessageNumber)) {
+        currMessage = messageMap.get(childMessageNumber) as BackendMessage;
+      } else {
+        currMessage = null;
+      }
+    }
+  }
+
+  const messages: Message[] = finalMessageList
+    .filter((messageInfo) => messageInfo.message_type !== "system")
+    .map((messageInfo) => {
+      const hasContextDocs =
+        (messageInfo?.context_docs?.top_documents || []).length > 0;
+      let retrievalType;
+      if (hasContextDocs) {
+        if (messageInfo.rephrased_query) {
+          retrievalType = RetrievalType.Search;
+        } else {
+          retrievalType = RetrievalType.SelectedDocs;
+        }
+      } else {
+        retrievalType = RetrievalType.None;
+      }
+
+      return {
+        messageId: messageInfo.message_id,
+        message: messageInfo.message,
+        type: messageInfo.message_type as "user" | "assistant",
+        // only include these fields if this is an assistant message so that
+        // this is identical to what is computed at streaming time
+        ...(messageInfo.message_type === "assistant"
+          ? {
+              retrievalType: retrievalType,
+              query: messageInfo.rephrased_query,
+              documents: messageInfo?.context_docs?.top_documents || [],
+              citations: messageInfo?.citations || {},
+            }
+          : {}),
+      };
+    });
+
+  return messages;
 }

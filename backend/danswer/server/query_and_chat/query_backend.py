@@ -11,7 +11,7 @@ from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
-from danswer.one_shot_answer.answer_question import stream_one_shot_answer
+from danswer.one_shot_answer.answer_question import stream_search_answer
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import recommend_search_flow
@@ -163,10 +163,9 @@ def get_answer_with_quote(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
-    logger.info(
-        f"Received query for one shot answer with quotes: {query_request.query}"
-    )
-    packets = stream_one_shot_answer(
+    query = query_request.messages[0].message
+    logger.info(f"Received query for one shot answer with quotes: {query}")
+    packets = stream_search_answer(
         query_req=query_request, user=user, db_session=db_session
     )
     return StreamingResponse(packets, media_type="application/json")

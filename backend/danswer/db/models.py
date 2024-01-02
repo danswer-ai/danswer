@@ -173,9 +173,7 @@ class ConnectorCredentialPair(Base):
         unique=True,
         nullable=False,
     )
-    name: Mapped[str] = mapped_column(
-        String, unique=True, nullable=True
-    )  # nullable for backwards compatability
+    name: Mapped[str] = mapped_column(String, nullable=False)
     connector_id: Mapped[int] = mapped_column(
         ForeignKey("connector.id"), primary_key=True
     )
@@ -644,6 +642,12 @@ class Persona(Base):
     # Default personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
     default_persona: Mapped[bool] = mapped_column(Boolean, default=False)
+    # controls whether the persona is available to be selected by users
+    is_visible: Mapped[bool] = mapped_column(Boolean, default=True)
+    # controls the ordering of personas in the UI
+    # higher priority personas are displayed first, ties are resolved by the ID,
+    # where lower value IDs (e.g. created earlier) are displayed first
+    display_priority: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # These are only defaults, users can select from all if desired

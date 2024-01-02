@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
@@ -11,6 +12,8 @@ from danswer.db.chat import get_persona_by_id
 from danswer.db.chat import get_personas
 from danswer.db.chat import get_prompts_by_ids
 from danswer.db.chat import mark_persona_as_deleted
+from danswer.db.chat import update_all_personas_display_priority
+from danswer.db.chat import update_persona_visibility
 from danswer.db.chat import upsert_persona
 from danswer.db.document_set import get_document_sets_by_ids
 from danswer.db.engine import get_session
@@ -97,6 +100,41 @@ def update_persona(
         persona_id=persona_id,
         create_persona_request=update_persona_request,
         user=user,
+        db_session=db_session,
+    )
+
+
+class IsVisibleRequest(BaseModel):
+    is_visible: bool
+
+
+@admin_router.patch("/{persona_id}/visible")
+def patch_persona_visibility(
+    persona_id: int,
+    is_visible_request: IsVisibleRequest,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    update_persona_visibility(
+        persona_id=persona_id,
+        is_visible=is_visible_request.is_visible,
+        db_session=db_session,
+    )
+
+
+class DisplayPriorityRequest(BaseModel):
+    # maps persona id to display priority
+    display_priority_map: dict[int, int]
+
+
+@admin_router.put("/display-priority")
+def patch_persona_display_priority(
+    display_priority_request: DisplayPriorityRequest,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    update_all_personas_display_priority(
+        display_priority_map=display_priority_request.display_priority_map,
         db_session=db_session,
     )
 

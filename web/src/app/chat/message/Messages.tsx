@@ -14,10 +14,10 @@ import { SearchSummary, ShowHideDocsButton } from "./SearchSummary";
 import { SourceIcon } from "@/components/SourceIcon";
 import { ThreeDots } from "react-loader-spinner";
 
-const Hoverable: React.FC<{ children: JSX.Element; onClick?: () => void }> = ({
-  children,
-  onClick,
-}) => {
+export const Hoverable: React.FC<{
+  children: JSX.Element;
+  onClick?: () => void;
+}> = ({ children, onClick }) => {
   return (
     <div
       className="hover:bg-neutral-300 p-2 rounded h-fit cursor-pointer"
@@ -38,6 +38,7 @@ export const AIMessage = ({
   handleFeedback,
   isCurrentlyShowingRetrieved,
   handleShowRetrieved,
+  handleSearchQueryEdit,
 }: {
   messageId: number | null;
   content: string | JSX.Element;
@@ -48,11 +49,12 @@ export const AIMessage = ({
   handleFeedback?: (feedbackType: FeedbackType) => void;
   isCurrentlyShowingRetrieved?: boolean;
   handleShowRetrieved?: (messageNumber: number | null) => void;
+  handleSearchQueryEdit?: (query: string) => void;
 }) => {
   const [copyClicked, setCopyClicked] = useState(false);
   return (
     <div className={"py-5 px-5 flex -mr-6 w-full"}>
-      <div className="mx-auto w-searchbar relative">
+      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
         <div className="ml-8">
           <div className="flex">
             <div className="p-1 bg-ai rounded-lg h-fit my-auto">
@@ -67,7 +69,7 @@ export const AIMessage = ({
               hasDocs &&
               handleShowRetrieved !== undefined &&
               isCurrentlyShowingRetrieved !== undefined && (
-                <div className="flex w-message-default absolute ml-8">
+                <div className="flex w-message-xs 2xl:w-message-sm 3xl:w-message-default absolute ml-8">
                   <div className="ml-auto">
                     <ShowHideDocsButton
                       messageId={messageId}
@@ -79,7 +81,7 @@ export const AIMessage = ({
               )}
           </div>
 
-          <div className="w-message-default break-words mt-1 ml-8">
+          <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
             {query !== undefined &&
               handleShowRetrieved !== undefined &&
               isCurrentlyShowingRetrieved !== undefined && (
@@ -90,6 +92,7 @@ export const AIMessage = ({
                     messageId={messageId}
                     isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
                     handleShowRetrieved={handleShowRetrieved}
+                    handleSearchQueryEdit={handleSearchQueryEdit}
                   />
                 </div>
               )}
@@ -116,9 +119,7 @@ export const AIMessage = ({
                   content
                 )}
               </>
-            ) : isComplete ? (
-              <div>I just performed the requested search!</div>
-            ) : (
+            ) : isComplete ? null : (
               <div className="text-sm my-auto">
                 <ThreeDots
                   height="30"
@@ -139,24 +140,38 @@ export const AIMessage = ({
                   {citedDocuments
                     .filter(([_, document]) => document.semantic_identifier)
                     .map(([citationKey, document], ind) => {
-                      return (
-                        <a
-                          key={document.document_id}
-                          href={document.link}
-                          target="_blank"
-                          className="text-sm border border-border py-1 px-2 rounded flex cursor-pointer hover:bg-hover"
-                        >
-                          <div className="max-w-350 text-ellipsis flex">
-                            <div className="mr-1 my-auto">
-                              <SourceIcon
-                                sourceType={document.source_type}
-                                iconSize={16}
-                              />
-                            </div>
-                            [{citationKey}] {document!.semantic_identifier}
+                      const display = (
+                        <div className="max-w-350 text-ellipsis flex text-sm border border-border py-1 px-2 rounded flex">
+                          <div className="mr-1 my-auto">
+                            <SourceIcon
+                              sourceType={document.source_type}
+                              iconSize={16}
+                            />
                           </div>
-                        </a>
+                          [{citationKey}] {document!.semantic_identifier}
+                        </div>
                       );
+                      if (document.link) {
+                        return (
+                          <a
+                            key={document.document_id}
+                            href={document.link}
+                            target="_blank"
+                            className="cursor-pointer hover:bg-hover"
+                          >
+                            {display}
+                          </a>
+                        );
+                      } else {
+                        return (
+                          <div
+                            key={document.document_id}
+                            className="cursor-default"
+                          >
+                            {display}
+                          </div>
+                        );
+                      }
                     })}
                 </div>
               </div>
@@ -194,7 +209,7 @@ export const HumanMessage = ({
 }) => {
   return (
     <div className="py-5 px-5 flex -mr-6 w-full">
-      <div className="mx-auto w-searchbar">
+      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <div className="ml-8">
           <div className="flex">
             <div className="p-1 bg-user rounded-lg h-fit">
@@ -205,8 +220,8 @@ export const HumanMessage = ({
 
             <div className="font-bold text-emphasis ml-2 my-auto">You</div>
           </div>
-          <div className="mx-auto mt-1 ml-8 w-full w-message-default flex flex-wrap">
-            <div className="w-full sm:w-full w-message-default break-words">
+          <div className="mx-auto mt-1 ml-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default flex flex-wrap">
+            <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words">
               {typeof content === "string" ? (
                 <ReactMarkdown
                   className="prose max-w-full"

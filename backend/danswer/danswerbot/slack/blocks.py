@@ -5,22 +5,24 @@ import timeago  # type: ignore
 from slack_sdk.models.blocks import ActionsBlock
 from slack_sdk.models.blocks import Block
 from slack_sdk.models.blocks import ButtonElement
-from slack_sdk.models.blocks import ConfirmObject
 from slack_sdk.models.blocks import DividerBlock
 from slack_sdk.models.blocks import HeaderBlock
+from slack_sdk.models.blocks import Option
+from slack_sdk.models.blocks import RadioButtonsElement
 from slack_sdk.models.blocks import SectionBlock
 
 from danswer.chat.models import DanswerQuote
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
-from danswer.configs.danswerbot_configs import ENABLE_SLACK_DOC_FEEDBACK
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
+from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
-from danswer.danswerbot.slack.utils import build_feedback_block_id
+from danswer.danswerbot.slack.utils import build_feedback_id
 from danswer.danswerbot.slack.utils import remove_slack_text_interactions
 from danswer.danswerbot.slack.utils import translate_vespa_highlight_to_slack
 from danswer.search.models import SavedSearchDoc
+from danswer.utils.text_processing import decode_escapes
 from danswer.utils.text_processing import replace_whitespaces_w_space
 
 _MAX_BLURB_LEN = 75
@@ -28,7 +30,7 @@ _MAX_BLURB_LEN = 75
 
 def build_qa_feedback_block(message_id: int) -> Block:
     return ActionsBlock(
-        block_id=build_feedback_block_id(message_id),
+        block_id=build_feedback_id(message_id),
         elements=[
             ButtonElement(
                 action_id=LIKE_BLOCK_ACTION_ID,
@@ -44,33 +46,44 @@ def build_qa_feedback_block(message_id: int) -> Block:
     )
 
 
+def get_document_feedback_blocks() -> Block:
+    return SectionBlock(
+        text=(
+            "- 'Up-Boost' if this document is a good source of information and should be "
+            "shown more often.\n"
+            "- 'Down-boost' if this document is a poor source of information and should be "
+            "shown less often.\n"
+            "- 'Hide' if this document is deprecated and should never be shown anymore."
+        ),
+        accessory=RadioButtonsElement(
+            options=[
+                Option(
+                    text=":thumbsup: Up-Boost",
+                    value=SearchFeedbackType.ENDORSE.value,
+                ),
+                Option(
+                    text=":thumbsdown: Down-Boost",
+                    value=SearchFeedbackType.REJECT.value,
+                ),
+                Option(
+                    text=":x: Hide",
+                    value=SearchFeedbackType.HIDE.value,
+                ),
+            ]
+        ),
+    )
+
+
 def build_doc_feedback_block(
     message_id: int,
     document_id: str,
     document_rank: int,
-) -> Block:
-    return ActionsBlock(
-        block_id=build_feedback_block_id(message_id, document_id, document_rank),
-        elements=[
-            ButtonElement(
-                action_id=SearchFeedbackType.ENDORSE.value,
-                text="⬆",
-                style="primary",
-                confirm=ConfirmObject(
-                    title="Endorse this Document",
-                    text="This is a good source of information and should be shown more often!",
-                ),
-            ),
-            ButtonElement(
-                action_id=SearchFeedbackType.REJECT.value,
-                text="⬇",
-                style="danger",
-                confirm=ConfirmObject(
-                    title="Reject this Document",
-                    text="This is a bad source of information and should be shown less often.",
-                ),
-            ),
-        ],
+) -> ButtonElement:
+    feedback_id = build_feedback_id(message_id, document_id, document_rank)
+    return ButtonElement(
+        action_id=FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID,
+        value=feedback_id,
+        text="Give Feedback",
     )
 
 
@@ -92,7 +105,6 @@ def build_documents_blocks(
     documents: list[SavedSearchDoc],
     message_id: int | None,
     num_docs_to_display: int = DANSWER_BOT_NUM_DOCS_TO_DISPLAY,
-    include_feedback: bool = ENABLE_SLACK_DOC_FEEDBACK,
 ) -> list[Block]:
     seen_docs_identifiers = set()
     section_blocks: list[Block] = [HeaderBlock(text="Reference Documents")]
@@ -110,24 +122,32 @@ def build_documents_blocks(
         match_str = translate_vespa_highlight_to_slack(d.match_highlights, used_chars)
 
         included_docs += 1
-        updated_at = timeago.format(d.updated_at, datetime.now(pytz.utc))
+
+        header_line = f"{doc_sem_id}\n"
         if d.link:
-            block_text = f"<{d.link}|{doc_sem_id}>\nUpdated {updated_at}\n>{remove_slack_text_interactions(match_str)}"
-        else:
-            block_text = f"{doc_sem_id}\nUpdated {updated_at}\n>{remove_slack_text_interactions(match_str)}"
+            header_line = f"<{d.link}|{doc_sem_id}>\n"
+
+        updated_at_line = ""
+        if d.updated_at is not None:
+            updated_at_line = (
+                f"_Updated {timeago.format(d.updated_at, datetime.now(pytz.utc))}_\n"
+            )
+
+        body_text = f">{remove_slack_text_interactions(match_str)}"
+
+        block_text = header_line + updated_at_line + body_text
+
+        feedback: ButtonElement | dict = {}
+        if message_id is not None:
+            feedback = build_doc_feedback_block(
+                message_id=message_id,
+                document_id=d.document_id,
+                document_rank=rank,
+            )
 
         section_blocks.append(
-            SectionBlock(text=block_text),
+            SectionBlock(text=block_text, accessory=feedback),
         )
-
-        if include_feedback and message_id is not None:
-            section_blocks.append(
-                build_doc_feedback_block(
-                    message_id=message_id,
-                    document_id=d.document_id,
-                    document_rank=rank,
-                ),
-            )
 
         section_blocks.append(DividerBlock())
 
@@ -215,7 +235,8 @@ def build_qa_response_blocks(
             text="Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓"
         )
     else:
-        answer_block = SectionBlock(text=remove_slack_text_interactions(answer))
+        answer_processed = decode_escapes(remove_slack_text_interactions(answer))
+        answer_block = SectionBlock(text=answer_processed)
         if quotes:
             quotes_blocks = build_quotes_block(quotes)
 

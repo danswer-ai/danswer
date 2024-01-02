@@ -11,9 +11,8 @@ from datetime import timezone
 from typing import Any
 from typing import cast
 
+import httpx
 import requests
-from requests import HTTPError
-from requests import Response
 from retry import retry
 
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
@@ -31,7 +30,6 @@ from danswer.configs.constants import BLURB
 from danswer.configs.constants import BOOST
 from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
-from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DOC_UPDATED_AT
 from danswer.configs.constants import DOCUMENT_ID
 from danswer.configs.constants import DOCUMENT_SETS
@@ -98,11 +96,12 @@ class _VespaUpdateRequest:
 @retry(tries=3, delay=1, backoff=2)
 def _does_document_exist(
     doc_chunk_id: str,
+    http_client: httpx.Client,
 ) -> bool:
     """Returns whether the document already exists and the users/group whitelists
     Specifically in this case, document refers to a vespa document which is equivalent to a Danswer
     chunk. This checks for whether the chunk exists already in the index"""
-    doc_fetch_response = requests.get(f"{DOCUMENT_ID_ENDPOINT}/{doc_chunk_id}")
+    doc_fetch_response = http_client.get(f"{DOCUMENT_ID_ENDPOINT}/{doc_chunk_id}")
     if doc_fetch_response.status_code == 404:
         return False
 
@@ -158,16 +157,17 @@ def _get_vespa_chunk_ids_by_document_id(
 
 
 @retry(tries=3, delay=1, backoff=2)
-def _delete_vespa_doc_chunks(document_id: str) -> None:
+def _delete_vespa_doc_chunks(document_id: str, http_client: httpx.Client) -> None:
     doc_chunk_ids = _get_vespa_chunk_ids_by_document_id(document_id)
 
     for chunk_id in doc_chunk_ids:
-        res = requests.delete(f"{DOCUMENT_ID_ENDPOINT}/{chunk_id}")
+        res = http_client.delete(f"{DOCUMENT_ID_ENDPOINT}/{chunk_id}")
         res.raise_for_status()
 
 
 def _delete_vespa_docs(
     document_ids: list[str],
+    http_client: httpx.Client,
     executor: concurrent.futures.ThreadPoolExecutor | None = None,
 ) -> None:
     external_executor = True
@@ -178,7 +178,7 @@ def _delete_vespa_docs(
 
     try:
         doc_deletion_future = {
-            executor.submit(_delete_vespa_doc_chunks, doc_id): doc_id
+            executor.submit(_delete_vespa_doc_chunks, doc_id, http_client): doc_id
             for doc_id in document_ids
         }
         for future in concurrent.futures.as_completed(doc_deletion_future):
@@ -192,6 +192,7 @@ def _delete_vespa_docs(
 
 def _get_existing_documents_from_chunks(
     chunks: list[DocMetadataAwareIndexChunk],
+    http_client: httpx.Client,
     executor: concurrent.futures.ThreadPoolExecutor | None = None,
 ) -> set[str]:
     external_executor = True
@@ -204,7 +205,7 @@ def _get_existing_documents_from_chunks(
     try:
         chunk_existence_future = {
             executor.submit(
-                _does_document_exist, str(get_uuid_from_chunk(chunk))
+                _does_document_exist, str(get_uuid_from_chunk(chunk)), http_client
             ): chunk
             for chunk in chunks
         }
@@ -222,7 +223,9 @@ def _get_existing_documents_from_chunks(
 
 
 @retry(tries=3, delay=1, backoff=2)
-def _index_vespa_chunk(chunk: DocMetadataAwareIndexChunk) -> None:
+def _index_vespa_chunk(
+    chunk: DocMetadataAwareIndexChunk, http_client: httpx.Client
+) -> None:
     json_header = {
         "Content-Type": "application/json",
     }
@@ -239,18 +242,18 @@ def _index_vespa_chunk(chunk: DocMetadataAwareIndexChunk) -> None:
     vespa_document_fields = {
         DOCUMENT_ID: document.id,
         CHUNK_ID: chunk.chunk_id,
-        BLURB: chunk.blurb,
+        BLURB: remove_invalid_unicode_chars(chunk.blurb),
         # this duplication of `content` is needed for keyword highlighting :(
-        CONTENT: chunk.content,
-        CONTENT_SUMMARY: chunk.content,
+        CONTENT: remove_invalid_unicode_chars(chunk.content),
+        CONTENT_SUMMARY: remove_invalid_unicode_chars(chunk.content),
         SOURCE_TYPE: str(document.source.value),
         SOURCE_LINKS: json.dumps(chunk.source_links),
-        SEMANTIC_IDENTIFIER: document.semantic_identifier,
-        TITLE: document.get_title_for_document_index(),
+        SEMANTIC_IDENTIFIER: remove_invalid_unicode_chars(document.semantic_identifier),
+        TITLE: remove_invalid_unicode_chars(document.get_title_for_document_index()),
         SECTION_CONTINUATION: chunk.section_continuation,
         METADATA: json.dumps(document.metadata),
         EMBEDDINGS: embeddings_name_vector_map,
-        BOOST: DEFAULT_BOOST,
+        BOOST: chunk.boost,
         DOC_UPDATED_AT: _vespa_get_updated_at_attribute(document.doc_updated_at),
         PRIMARY_OWNERS: get_experts_stores_representations(document.primary_owners),
         SECONDARY_OWNERS: get_experts_stores_representations(document.secondary_owners),
@@ -260,61 +263,23 @@ def _index_vespa_chunk(chunk: DocMetadataAwareIndexChunk) -> None:
         DOCUMENT_SETS: {document_set: 1 for document_set in chunk.document_sets},
     }
 
-    def _index_chunk(
-        url: str,
-        headers: dict[str, str],
-        fields: dict[str, Any],
-        log_error: bool = True,
-    ) -> Response:
-        logger.debug(f'Indexing to URL "{url}"')
-        res = requests.post(url, headers=headers, json={"fields": fields})
-        try:
-            res.raise_for_status()
-            return res
-        except Exception as e:
-            if log_error:
-                logger.error(
-                    f"Failed to index document: '{document.id}'. Got response: '{res.text}'"
-                )
-            raise e
-
     vespa_url = f"{DOCUMENT_ID_ENDPOINT}/{vespa_chunk_id}"
+    logger.debug(f'Indexing to URL "{vespa_url}"')
+    res = http_client.post(
+        vespa_url, headers=json_header, json={"fields": vespa_document_fields}
+    )
     try:
-        _index_chunk(
-            url=vespa_url,
-            headers=json_header,
-            fields=vespa_document_fields,
-            log_error=False,
+        res.raise_for_status()
+    except Exception as e:
+        logger.exception(
+            f"Failed to index document: '{document.id}'. Got response: '{res.text}'"
         )
-    except HTTPError as e:
-        if cast(Response, e.response).status_code != 400:
-            raise e
-
-        # if it's a 400 response, try again with invalid unicode chars removed
-        # only doing this on error to avoid having to go through the content
-        # char by char every time
-        vespa_document_fields[BLURB] = remove_invalid_unicode_chars(
-            cast(str, vespa_document_fields[BLURB])
-        )
-        vespa_document_fields[SEMANTIC_IDENTIFIER] = remove_invalid_unicode_chars(
-            cast(str, vespa_document_fields[SEMANTIC_IDENTIFIER])
-        )
-        vespa_document_fields[CONTENT] = remove_invalid_unicode_chars(
-            cast(str, vespa_document_fields[CONTENT])
-        )
-        vespa_document_fields[CONTENT_SUMMARY] = remove_invalid_unicode_chars(
-            cast(str, vespa_document_fields[CONTENT_SUMMARY])
-        )
-        _index_chunk(
-            url=vespa_url,
-            headers=json_header,
-            fields=vespa_document_fields,
-            log_error=True,
-        )
+        raise e
 
 
 def _batch_index_vespa_chunks(
     chunks: list[DocMetadataAwareIndexChunk],
+    http_client: httpx.Client,
     executor: concurrent.futures.ThreadPoolExecutor | None = None,
 ) -> None:
     external_executor = True
@@ -325,7 +290,8 @@ def _batch_index_vespa_chunks(
 
     try:
         chunk_index_future = {
-            executor.submit(_index_vespa_chunk, chunk): chunk for chunk in chunks
+            executor.submit(_index_vespa_chunk, chunk, http_client): chunk
+            for chunk in chunks
         }
         for future in concurrent.futures.as_completed(chunk_index_future):
             # Will raise exception if any indexing raised an exception
@@ -345,22 +311,31 @@ def _clear_and_index_vespa_chunks(
     chunks will be kept"""
     existing_docs: set[str] = set()
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=_NUM_THREADS) as executor:
+    # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficient for
+    # indexing / updates / deletes since we have to make a large volume of requests.
+    with (
+        concurrent.futures.ThreadPoolExecutor(max_workers=_NUM_THREADS) as executor,
+        httpx.Client(http2=True) as http_client,
+    ):
         # Check for existing documents, existing documents need to have all of their chunks deleted
         # prior to indexing as the document size (num chunks) may have shrunk
         first_chunks = [chunk for chunk in chunks if chunk.chunk_id == 0]
         for chunk_batch in batch_generator(first_chunks, _BATCH_SIZE):
             existing_docs.update(
                 _get_existing_documents_from_chunks(
-                    chunks=chunk_batch, executor=executor
+                    chunks=chunk_batch, http_client=http_client, executor=executor
                 )
             )
 
         for doc_id_batch in batch_generator(existing_docs, _BATCH_SIZE):
-            _delete_vespa_docs(document_ids=doc_id_batch, executor=executor)
+            _delete_vespa_docs(
+                document_ids=doc_id_batch, http_client=http_client, executor=executor
+            )
 
         for chunk_batch in batch_generator(chunks, _BATCH_SIZE):
-            _batch_index_vespa_chunks(chunks=chunk_batch, executor=executor)
+            _batch_index_vespa_chunks(
+                chunks=chunk_batch, http_client=http_client, executor=executor
+            )
 
     all_doc_ids = {chunk.source_document.id for chunk in chunks}
 
@@ -622,25 +597,30 @@ class VespaIndex(DocumentIndex):
     ) -> None:
         """Runs a batch of updates in parallel via the ThreadPoolExecutor."""
 
-        def _update_chunk(update: _VespaUpdateRequest) -> Response:
-            update_body = json.dumps(update.update_request)
+        def _update_chunk(
+            update: _VespaUpdateRequest, http_client: httpx.Client
+        ) -> httpx.Response:
             logger.debug(
-                f"Updating with request to {update.url} with body {update_body}"
+                f"Updating with request to {update.url} with body {update.update_request}"
             )
-            return requests.put(
+            return http_client.put(
                 update.url,
                 headers={"Content-Type": "application/json"},
-                data=update_body,
+                json=update.update_request,
             )
 
-        with concurrent.futures.ThreadPoolExecutor(
-            max_workers=_NUM_THREADS
-        ) as executor:
+        # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficient for
+        # indexing / updates / deletes since we have to make a large volume of requests.
+        with (
+            concurrent.futures.ThreadPoolExecutor(max_workers=_NUM_THREADS) as executor,
+            httpx.Client(http2=True) as http_client,
+        ):
             for update_batch in batch_generator(updates, batch_size):
                 future_to_document_id = {
                     executor.submit(
                         _update_chunk,
                         update,
+                        http_client,
                     ): update.document_id
                     for update in update_batch
                 }
@@ -697,7 +677,11 @@ class VespaIndex(DocumentIndex):
 
     def delete(self, doc_ids: list[str]) -> None:
         logger.info(f"Deleting {len(doc_ids)} documents from Vespa")
-        _delete_vespa_docs(doc_ids)
+
+        # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficient for
+        # indexing / updates / deletes since we have to make a large volume of requests.
+        with httpx.Client(http2=True) as http_client:
+            _delete_vespa_docs(document_ids=doc_ids, http_client=http_client)
 
     def id_based_retrieval(
         self, document_id: str, chunk_ind: int | None, filters: IndexFilters

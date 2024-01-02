@@ -18,6 +18,9 @@ class VersionResponse(BaseModel):
 
 class AuthTypeResponse(BaseModel):
     auth_type: AuthType
+    # specifies whether the current auth setup requires
+    # users to have verified emails
+    requires_verification: bool
 
 
 class UserInfo(BaseModel):

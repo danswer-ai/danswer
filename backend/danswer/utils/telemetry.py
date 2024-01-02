@@ -16,6 +16,7 @@ DANSWER_TELEMETRY_ENDPOINT = "https://telemetry.danswer.ai/anonymous_telemetry"
 class RecordType(str, Enum):
     VERSION = "version"
     SIGN_UP = "sign_up"
+    USAGE = "usage"
     LATENCY = "latency"
     FAILURE = "failure"
 

@@ -1,9 +1,9 @@
 FROM node:20-alpine AS base
 
-# Default Hagen_VERSION, typically overriden during builds by GitHub Actions.
-ARG Hagen_VERSION=0.2-dev
-ENV Hagen_VERSION=${Hagen_VERSION}
-RUN echo "Hagen_VERSION: ${Hagen_VERSION}"
+# Default DANSWER_VERSION, typically overriden during builds by GitHub Actions.
+ARG DANSWER_VERSION=0.3-dev
+ENV DANSWER_VERSION=${DANSWER_VERSION}
+RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 
 # Step 1. Install dependencies only when needed
 FROM base AS deps

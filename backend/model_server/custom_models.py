@@ -11,7 +11,7 @@ from shared_models.model_server_models import IntentResponse
 router = APIRouter(prefix="/custom")
 
 
-@log_function_time()
+@log_function_time(print_only=True)
 def classify_intent(query: str) -> list[float]:
     tokenizer = get_intent_model_tokenizer()
     intent_model = get_local_intent_model()

@@ -5,12 +5,33 @@ from zenpy.lib.api_objects.help_centre_objects import Article  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.html_utils import parse_html_page_basic
+from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+
+
+def _article_to_document(article: Article) -> Document:
+    author = BasicExpertInfo(
+        display_name=article.author.name, email=article.author.email
+    )
+    update_time = time_str_to_utc(article.updated_at)
+    return Document(
+        id=f"article:{article.id}",
+        sections=[
+            Section(link=article.html_url, text=parse_html_page_basic(article.body))
+        ],
+        source=DocumentSource.ZENDESK,
+        semantic_identifier=article.title,
+        doc_updated_at=update_time,
+        primary_owners=[author],
+        metadata={"type": "article"},
+    )
 
 
 class ZendeskClientNotSetUpError(PermissionError):
@@ -34,18 +55,6 @@ class ZendeskConnector(LoadConnector, PollConnector):
     def load_from_state(self) -> GenerateDocumentsOutput:
         return self.poll_source(None, None)
 
-    def _article_to_document(self, article: Article) -> Document:
-        return Document(
-            id=f"article:{article.id}",
-            sections=[Section(link=article.html_url, text=article.body)],
-            source=DocumentSource.ZENDESK,
-            semantic_identifier="Article: " + article.title,
-            metadata={
-                "type": "article",
-                "updated_at": article.updated_at,
-            },
-        )
-
     def poll_source(
         self, start: SecondsSinceUnixEpoch | None, end: SecondsSinceUnixEpoch | None
     ) -> GenerateDocumentsOutput:
@@ -64,7 +73,10 @@ class ZendeskConnector(LoadConnector, PollConnector):
             if article.body is None:
                 continue
 
-            doc_batch.append(self._article_to_document(article))
+            doc_batch.append(_article_to_document(article))
             if len(doc_batch) >= self.batch_size:
                 yield doc_batch
                 doc_batch.clear()
+
+        if doc_batch:
+            yield doc_batch

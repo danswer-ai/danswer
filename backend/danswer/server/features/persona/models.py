@@ -23,6 +23,8 @@ class PersonaSnapshot(BaseModel):
     id: int
     name: str
     shared: bool
+    is_visible: bool
+    display_priority: int | None
     description: str
     num_chunks: float | None
     llm_relevance_filter: bool
@@ -41,6 +43,8 @@ class PersonaSnapshot(BaseModel):
             id=persona.id,
             name=persona.name,
             shared=persona.user_id is None,
+            is_visible=persona.is_visible,
+            display_priority=persona.display_priority,
             description=persona.description,
             num_chunks=persona.num_chunks,
             llm_relevance_filter=persona.llm_relevance_filter,

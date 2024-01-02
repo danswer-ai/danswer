@@ -88,7 +88,12 @@ Once the above is done, navigate to `danswer/web` run:
 npm i
 ```
 
-Install Playwright (required by the Web Connector), with the python venv active, run:
+Install Playwright (required by the Web Connector)
+
+> Note: If you have just done the pip install, open a new terminal and source the python virtual-env again.
+This will update the path to include playwright
+
+Then install Playwright by running:
 ```bash
 playwright install
 ```
@@ -115,7 +120,7 @@ npm run dev
 
 Package the Vespa schema. This will only need to be done when the Vespa schema is updated locally.
 
-Nagivate to `danswer/backend/danswer/document_index/vespa/app_config` and run:
+Navigate to `danswer/backend/danswer/document_index/vespa/app_config` and run:
 ```bash
 zip -r ../vespa-app.zip .
 ```

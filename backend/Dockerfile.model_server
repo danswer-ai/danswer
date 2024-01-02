@@ -1,27 +1,36 @@
-FROM python:3.11.4-slim-bookworm
+FROM python:3.11.7-slim-bookworm
 
 # Default DANSWER_VERSION, typically overriden during builds by GitHub Actions.
-ARG DANSWER_VERSION=0.2-dev
+ARG DANSWER_VERSION=0.3-dev
 ENV DANSWER_VERSION=${DANSWER_VERSION}
 RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 
 COPY ./requirements/model_server.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
 
+RUN apt-get remove -y --allow-remove-essential perl-base && \
+    apt-get autoremove -y
+
 WORKDIR /app
+
 # Needed for model configs and defaults
 COPY ./danswer/configs /app/danswer/configs
 COPY ./danswer/dynamic_configs /app/danswer/dynamic_configs
+
 # Utils used by model server
 COPY ./danswer/utils/logger.py /app/danswer/utils/logger.py
 COPY ./danswer/utils/timing.py /app/danswer/utils/timing.py
 COPY ./danswer/utils/telemetry.py /app/danswer/utils/telemetry.py
-# Version information
+
+# Place to fetch version information
 COPY ./danswer/__init__.py /app/danswer/__init__.py
+
 # Shared implementations for running NLP models locally
 COPY ./danswer/search/search_nlp_models.py /app/danswer/search/search_nlp_models.py
+
 # Request/Response models
 COPY ./shared_models /app/shared_models
+
 # Model Server main code
 COPY ./model_server /app/model_server
 

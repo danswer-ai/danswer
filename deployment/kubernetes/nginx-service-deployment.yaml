@@ -37,7 +37,10 @@ spec:
         - containerPort: 80
         env:
         - name: DOMAIN
-          value: localhost
+          valueFrom:
+            configMapKeyRef:
+              name: env-configmap
+              key: DOMAIN
         volumeMounts:
         - name: nginx-conf
           mountPath: /etc/nginx/conf.d

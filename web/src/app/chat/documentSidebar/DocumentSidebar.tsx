@@ -2,7 +2,7 @@ import { HagenDocument } from "@/lib/search/interfaces";
 import { Text } from "@tremor/react";
 import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { FiFileText, FiSearch } from "react-icons/fi";
+import { FiFileText } from "react-icons/fi";
 import { SelectedDocumentDisplay } from "./SelectedDocumentDisplay";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { BasicSelectable } from "@/components/BasicClickable";
@@ -27,10 +27,12 @@ export function DocumentSidebar({
   selectedMessage,
   selectedDocuments,
   setSelectedDocuments,
+  isLoading,
 }: {
   selectedMessage: Message | null;
-  selectedDocuments: HagenDocument[] | null;
-  setSelectedDocuments: (documents: HagenDocument[]) => void;
+  selectedDocuments: DanswerDocument[] | null;
+  setSelectedDocuments: (documents: DanswerDocument[]) => void;
+  isLoading: boolean;
 }) {
   const { popup, setPopup } = usePopup();
 
@@ -70,7 +72,7 @@ export function DocumentSidebar({
         </div>
 
         {currentDocuments ? (
-          <div className="overflow-y-auto overflow-x-hidden flex flex-col">
+          <div className="overflow-y-auto dark-scrollbar overflow-x-hidden flex flex-col">
             <div>
               {dedupedDocuments.length > 0 ? (
                 dedupedDocuments.map((document, ind) => (
@@ -117,12 +119,14 @@ export function DocumentSidebar({
             </div>
           </div>
         ) : (
-          <div className="ml-4">
-            <Text>
-              When you run ask a question, the retrieved documents will show up
-              here!
-            </Text>
-          </div>
+          !isLoading && (
+            <div className="ml-4 mr-3">
+              <Text>
+                When you run ask a question, the retrieved documents will show
+                up here!
+              </Text>
+            </div>
+          )
         )}
       </div>
 
@@ -143,7 +147,7 @@ export function DocumentSidebar({
         </div>
 
         {selectedDocuments && selectedDocuments.length > 0 ? (
-          <div className="flex flex-col gap-y-2 py-3 px-3 overflow-y-auto max-h-full">
+          <div className="flex flex-col gap-y-2 py-3 px-3 overflow-y-auto dark-scrollbar max-h-full">
             {selectedDocuments.map((document) => (
               <SelectedDocumentDisplay
                 key={document.document_id}
@@ -159,10 +163,12 @@ export function DocumentSidebar({
             ))}
           </div>
         ) : (
-          <Text className="mx-3 py-3">
-            Select documents from the retrieved documents section to chat
-            specifically with them!
-          </Text>
+          !isLoading && (
+            <Text className="mx-3 py-3">
+              Select documents from the retrieved documents section to chat
+              specifically with them!
+            </Text>
+          )
         )}
       </div>
     </div>

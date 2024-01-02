@@ -16,6 +16,18 @@ services:
     ports:
       - "8080:8080"
     environment:
+      # Auth Settings
+      - AUTH_TYPE=${AUTH_TYPE:-disabled}
+      - SESSION_EXPIRE_TIME_SECONDS=${SESSION_EXPIRE_TIME_SECONDS:-}
+      - VALID_EMAIL_DOMAINS=${VALID_EMAIL_DOMAINS:-}
+      - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
+      - GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      - REQUIRE_EMAIL_VERIFICATION=${REQUIRE_EMAIL_VERIFICATION:-}
+      - SMTP_SERVER=${SMTP_SERVER:-}  # For sending verification emails, if unspecified then defaults to 'smtp.gmail.com'
+      - SMTP_PORT=${SMTP_PORT:-}  # For sending verification emails, if unspecified then defaults to '587'
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      # Gen AI Settings
       - GEN_AI_MODEL_PROVIDER=${GEN_AI_MODEL_PROVIDER:-openai}
       - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
       - FAST_GEN_AI_MODEL_VERSION=${FAST_GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
@@ -23,45 +35,34 @@ services:
       - GEN_AI_API_ENDPOINT=${GEN_AI_API_ENDPOINT:-}
       - GEN_AI_API_VERSION=${GEN_AI_API_VERSION:-}
       - GEN_AI_LLM_PROVIDER_TYPE=${GEN_AI_LLM_PROVIDER_TYPE:-}
-      - NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL=${NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL:-}
-      - POSTGRES_HOST=relational_db
-      - VESPA_HOST=index
-      - AUTH_TYPE=${AUTH_TYPE:-disabled}
       - QA_TIMEOUT=${QA_TIMEOUT:-}
-      - VALID_EMAIL_DOMAINS=${VALID_EMAIL_DOMAINS:-}
-      - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
-      - GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-}
-      - NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP=${NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP:-}
+      - NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL=${NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL:-}
       - DISABLE_LLM_FILTER_EXTRACTION=${DISABLE_LLM_FILTER_EXTRACTION:-}
       - DISABLE_LLM_CHUNK_FILTER=${DISABLE_LLM_CHUNK_FILTER:-}
       - DISABLE_LLM_CHOOSE_SEARCH=${DISABLE_LLM_CHOOSE_SEARCH:-}
-      # Recency Bias for search results, decay at 1 / (1 + DOC_TIME_DECAY * x years)
-      - DOC_TIME_DECAY=${DOC_TIME_DECAY:-}
-      # Hybrid Search Alpha (0 for entirely keyword, 1 for entirely vector)
-      - HYBRID_ALPHA=${HYBRID_ALPHA:-}
+      # Query Options
+      - DOC_TIME_DECAY=${DOC_TIME_DECAY:-}  # Recency Bias for search results, decay at 1 / (1 + DOC_TIME_DECAY * x years)
+      - HYBRID_ALPHA=${HYBRID_ALPHA:-}  # Hybrid Search Alpha (0 for entirely keyword, 1 for entirely vector)
+      - EDIT_KEYWORD_QUERY=${EDIT_KEYWORD_QUERY:-}
+      - MULTILINGUAL_QUERY_EXPANSION=${MULTILINGUAL_QUERY_EXPANSION:-}
+      - QA_PROMPT_OVERRIDE=${QA_PROMPT_OVERRIDE:-}
+      # Other services
+      - POSTGRES_HOST=relational_db
+      - VESPA_HOST=index
+      - WEB_DOMAIN=${WEB_DOMAIN:-}  # For frontend redirect auth purpose
       # Don't change the NLP model configs unless you know what you're doing
       - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
       - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
-      - SIM_SCORE_RANGE_LOW=${SIM_SCORE_RANGE_LOW:-}
-      - SIM_SCORE_RANGE_HIGH=${SIM_SCORE_RANGE_HIGH:-}
       - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}
-      - ASYM_PASSAGE_PREFIX=${ASYM_PASSAGE_PREFIX:-}
       - ENABLE_RERANKING_REAL_TIME_FLOW=${ENABLE_RERANKING_REAL_TIME_FLOW:-}
-      - QA_PROMPT_OVERRIDE=${QA_PROMPT_OVERRIDE:-}
-      - EDIT_KEYWORD_QUERY=${EDIT_KEYWORD_QUERY:-}
-      - MULTILINGUAL_QUERY_EXPANSION=${MULTILINGUAL_QUERY_EXPANSION:-}
+      - ENABLE_RERANKING_ASYNC_FLOW=${ENABLE_RERANKING_ASYNC_FLOW:-}
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-}
-      - EMBEDDING_MODEL_SERVER_HOST=${EMBEDDING_MODEL_SERVER_HOST:-}
-      - CROSS_ENCODER_MODEL_SERVER_HOST=${CROSS_ENCODER_MODEL_SERVER_HOST:-}
-      - INTENT_MODEL_SERVER_HOST=${INTENT_MODEL_SERVER_HOST:-}
       - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
       # Leave this on pretty please? Nothing sensitive is collected!
       # https://docs.danswer.dev/more/telemetry
       - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
-      # Set to debug to get more fine-grained logs
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-      # Log all of the prompts to the LLM
-      - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}
+      - LOG_LEVEL=${LOG_LEVEL:-info}  # Set to debug to get more fine-grained logs
+      - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}  # Log all of the prompts to the LLM
       # If set to `true` will enable additional logs about Vespa query performance
       # (time spent on finding the right docs + time spent fetching summaries from disk)
       - LOG_VESPA_TIMING_INFORMATION=${LOG_VESPA_TIMING_INFORMATION:-}
@@ -82,6 +83,7 @@ services:
       - index
     restart: always
     environment:
+      # Gen AI Settings (Needed by DanswerBot)
       - GEN_AI_MODEL_PROVIDER=${GEN_AI_MODEL_PROVIDER:-openai}
       - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
       - FAST_GEN_AI_MODEL_VERSION=${FAST_GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
@@ -89,19 +91,38 @@ services:
       - GEN_AI_API_ENDPOINT=${GEN_AI_API_ENDPOINT:-}
       - GEN_AI_API_VERSION=${GEN_AI_API_VERSION:-}
       - GEN_AI_LLM_PROVIDER_TYPE=${GEN_AI_LLM_PROVIDER_TYPE:-}
+      - QA_TIMEOUT=${QA_TIMEOUT:-}
+      - NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL=${NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL:-}
       - DISABLE_LLM_FILTER_EXTRACTION=${DISABLE_LLM_FILTER_EXTRACTION:-}
       - DISABLE_LLM_CHUNK_FILTER=${DISABLE_LLM_CHUNK_FILTER:-}
       - DISABLE_LLM_CHOOSE_SEARCH=${DISABLE_LLM_CHOOSE_SEARCH:-}
+      # Query Options
+      - DOC_TIME_DECAY=${DOC_TIME_DECAY:-}  # Recency Bias for search results, decay at 1 / (1 + DOC_TIME_DECAY * x years)
+      - HYBRID_ALPHA=${HYBRID_ALPHA:-}  # Hybrid Search Alpha (0 for entirely keyword, 1 for entirely vector)
+      - EDIT_KEYWORD_QUERY=${EDIT_KEYWORD_QUERY:-}
+      - MULTILINGUAL_QUERY_EXPANSION=${MULTILINGUAL_QUERY_EXPANSION:-}
+      - QA_PROMPT_OVERRIDE=${QA_PROMPT_OVERRIDE:-}
+      # Other Services
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
+      - WEB_DOMAIN=${WEB_DOMAIN:-}  # For frontend redirect auth purpose for OAuth2 connectors
+      # Don't change the NLP model configs unless you know what you're doing
+      - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
+      - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
+      - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}  # Needed by DanswerBot
+      - ASYM_PASSAGE_PREFIX=${ASYM_PASSAGE_PREFIX:-}
+      - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-}
+      - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
+      - INDEXING_MODEL_SERVER_HOST=${INDEXING_MODEL_SERVER_HOST:-}
+      - MIN_THREADS_ML_MODELS=${MIN_THREADS_ML_MODELS:-}
+      # Indexing Configs
       - NUM_INDEXING_WORKERS=${NUM_INDEXING_WORKERS:-}
       - DASK_JOB_CLIENT_ENABLED=${DASK_JOB_CLIENT_ENABLED:-}
-      # Connector Configs
       - CONTINUE_ON_CONNECTOR_FAILURE=${CONTINUE_ON_CONNECTOR_FAILURE:-}
+      - EXPERIMENTAL_CHECKPOINTING_ENABLED=${EXPERIMENTAL_CHECKPOINTING_ENABLED:-}
       - CONFLUENCE_CONNECTOR_LABELS_TO_SKIP=${CONFLUENCE_CONNECTOR_LABELS_TO_SKIP:-}
       - GONG_CONNECTOR_START_TIME=${GONG_CONNECTOR_START_TIME:-}
-      - EXPERIMENTAL_SIMPLE_JOB_CLIENT_ENABLED=${EXPERIMENTAL_SIMPLE_JOB_CLIENT_ENABLED:-}
-      - EXPERIMENTAL_CHECKPOINTING_ENABLED=${EXPERIMENTAL_CHECKPOINTING_ENABLED:-}
+      - NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP=${NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP:-}
       # Danswer SlackBot Configs
       - DANSWER_BOT_SLACK_APP_TOKEN=${DANSWER_BOT_SLACK_APP_TOKEN:-}
       - DANSWER_BOT_SLACK_BOT_TOKEN=${DANSWER_BOT_SLACK_BOT_TOKEN:-}
@@ -110,33 +131,13 @@ services:
       - DANSWER_BOT_RESPOND_EVERY_CHANNEL=${DANSWER_BOT_RESPOND_EVERY_CHANNEL:-}
       - DANSWER_BOT_DISABLE_COT=${DANSWER_BOT_DISABLE_COT:-}  # Currently unused
       - NOTIFY_SLACKBOT_NO_ANSWER=${NOTIFY_SLACKBOT_NO_ANSWER:-}
-      # Recency Bias for search results, decay at 1 / (1 + DOC_TIME_DECAY * x years)
-      - DOC_TIME_DECAY=${DOC_TIME_DECAY:-}
-      # Hybrid Search Alpha (0 for entirely keyword, 1 for entirely vector)
-      - HYBRID_ALPHA=${HYBRID_ALPHA:-}
-      # Don't change the NLP model configs unless you know what you're doing
-      - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
-      - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
-      - SIM_SCORE_RANGE_LOW=${SIM_SCORE_RANGE_LOW:-}
-      - SIM_SCORE_RANGE_HIGH=${SIM_SCORE_RANGE_HIGH:-}
-      - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}
-      - ASYM_PASSAGE_PREFIX=${ASYM_PASSAGE_PREFIX:-}
-      - SKIP_RERANKING=${SKIP_RERANKING:-}
-      - QA_PROMPT_OVERRIDE=${QA_PROMPT_OVERRIDE:-}
-      - EDIT_KEYWORD_QUERY=${EDIT_KEYWORD_QUERY:-}
-      - MULTILINGUAL_QUERY_EXPANSION=${MULTILINGUAL_QUERY_EXPANSION:-}
-      - MIN_THREADS_ML_MODELS=${MIN_THREADS_ML_MODELS:-}
-      - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-}
-      - EMBEDDING_MODEL_SERVER_HOST=${EMBEDDING_MODEL_SERVER_HOST:-}
-      - BACKGROUND_JOB_EMBEDDING_MODEL_SERVER_HOST=${BACKGROUND_JOB_EMBEDDING_MODEL_SERVER_HOST:-}
-      - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
+      # Logging
       # Leave this on pretty please? Nothing sensitive is collected!
       # https://docs.danswer.dev/more/telemetry
       - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
-      # Set to debug to get more fine-grained logs
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-      # Log all of the prompts to the LLM
-      - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}
+      - LOG_LEVEL=${LOG_LEVEL:-info}  # Set to debug to get more fine-grained logs
+      - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}  # Log all of the prompts to the LLM
+      - LOG_VESPA_TIMING_INFORMATION=${LOG_VESPA_TIMING_INFORMATION:-}
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
@@ -198,6 +199,8 @@ services:
         envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template.dev > /etc/nginx/conf.d/app.conf &&
         while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
   # Run with --profile model-server to bring up the danswer-model-server container
+  # Be sure to change MODEL_SERVER_HOST (see above) as well
+  # ie. MODEL_SERVER_HOST="model_server" docker-compose -f docker-compose.dev.yml -p danswer-stack --profile model-server up -d --build
   model_server:
     image: danswer/danswer-model-server:latest
     build:

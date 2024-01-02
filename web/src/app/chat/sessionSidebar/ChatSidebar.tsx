@@ -18,6 +18,7 @@ import Image from "next/image";
 import { ChatSessionDisplay } from "./SessionDisplay";
 import { ChatSession } from "../interfaces";
 import { groupSessionsByDateRange } from "../lib";
+
 interface ChatSidebarProps {
   existingChats: ChatSession[];
   currentChatId: number | null;
@@ -66,7 +67,8 @@ export const ChatSidebar = ({
   return (
     <div
       className={`
-        w-80
+        w-72
+        2xl:w-80
         border-r 
         border-border 
         flex 
