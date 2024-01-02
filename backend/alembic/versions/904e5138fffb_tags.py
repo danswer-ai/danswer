@@ -7,6 +7,7 @@ Create Date: 2024-01-01 10:44:43.733974
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 from danswer.configs.constants import DocumentSource
 
 # revision identifiers, used by Alembic.
@@ -45,6 +46,15 @@ def upgrade() -> None:
             ["tag.id"],
         ),
         sa.PrimaryKeyConstraint("document_id", "tag_id"),
+    )
+
+    op.add_column(
+        "search_doc",
+        sa.Column(
+            "doc_metadata",
+            postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+        ),
     )
 
 

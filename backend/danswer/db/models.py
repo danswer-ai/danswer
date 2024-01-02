@@ -460,6 +460,7 @@ class SearchDoc(Base):
     boost: Mapped[int] = mapped_column(Integer)
     source_type: Mapped[DocumentSource] = mapped_column(Enum(DocumentSource))
     hidden: Mapped[bool] = mapped_column(Boolean)
+    doc_metadata: Mapped[dict[str, str | list[str]]] = mapped_column(postgresql.JSONB())
     score: Mapped[float] = mapped_column(Float)
     match_highlights: Mapped[list[str]] = mapped_column(postgresql.ARRAY(String))
     # This is for the document, not this row in the table
