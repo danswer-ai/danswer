@@ -1,4 +1,5 @@
 from sqlalchemy import delete
+from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -96,7 +97,20 @@ def get_tags_by_value_prefix_for_source_types(
 def delete_document_tags_for_documents(
     document_ids: list[str], db_session: Session
 ) -> None:
-    """NOTE: does not commit transaction so that this can be used as part of a
-    larger transaction block."""
     stmt = delete(Document__Tag).where(Document__Tag.document_id.in_(document_ids))
     db_session.execute(stmt)
+    db_session.commit()
+
+    orphan_tags_query = (
+        select(Tag.id)
+        .outerjoin(Document__Tag, Tag.id == Document__Tag.tag_id)
+        .group_by(Tag.id)
+        .having(func.count(Document__Tag.document_id) == 0)
+    )
+
+    orphan_tags = db_session.execute(orphan_tags_query).scalars().all()
+
+    if orphan_tags:
+        delete_orphan_tags_stmt = delete(Tag).where(Tag.id.in_(orphan_tags))
+        db_session.execute(delete_orphan_tags_stmt)
+        db_session.commit()
