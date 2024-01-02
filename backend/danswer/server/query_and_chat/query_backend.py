@@ -9,6 +9,7 @@ from danswer.auth.users import current_user
 from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.db.engine import get_session
 from danswer.db.models import User
+from danswer.db.tag import get_tags_by_value_prefix_for_source_types
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.one_shot_answer.answer_question import stream_search_answer
@@ -30,6 +31,9 @@ from danswer.server.query_and_chat.models import DocumentSearchRequest
 from danswer.server.query_and_chat.models import HelperResponse
 from danswer.server.query_and_chat.models import QueryValidationResponse
 from danswer.server.query_and_chat.models import SimpleQueryRequest
+from danswer.server.query_and_chat.models import Tag
+from danswer.server.query_and_chat.models import TagRequest
+from danswer.server.query_and_chat.models import TagResponse
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -73,6 +77,27 @@ def admin_search(
             deduplicated_documents.append(document)
             seen_documents.add(document.document_id)
     return AdminSearchResponse(documents=deduplicated_documents)
+
+
+@basic_router.post("/valid-tags")
+def get_tags(
+    tag_request: TagRequest,
+    _: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> TagResponse:
+    if not tag_request.allow_prefix:
+        raise NotImplementedError("Cannot disable prefix match for now")
+
+    db_tags = get_tags_by_value_prefix_for_source_types(
+        tag_value_prefix=tag_request.match_pattern,
+        sources=tag_request.sources,
+        db_session=db_session,
+    )
+    server_tags = [
+        Tag(tag_key=db_tag.tag_key, tag_value=db_tag.tag_value, source=db_tag.source)
+        for db_tag in db_tags
+    ]
+    return TagResponse(tags=server_tags)
 
 
 @basic_router.post("/search-intent")

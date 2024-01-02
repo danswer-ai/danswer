@@ -5,12 +5,30 @@ from pydantic import BaseModel
 from pydantic import root_validator
 
 from danswer.chat.models import RetrievalDocs
+from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.search.models import BaseFilters
 from danswer.search.models import RetrievalDetails
 from danswer.search.models import SearchDoc
 from danswer.search.models import SearchType
+
+
+class TagRequest(BaseModel):
+    match_pattern: str | None
+    # If this is empty or None, then tags for all sources are considered
+    sources: list[DocumentSource] | None
+    allow_prefix: bool = True  # This is currently the only option
+
+
+class Tag(BaseModel):
+    tag_key: str
+    tag_value: str
+    source: DocumentSource
+
+
+class TagResponse(BaseModel):
+    tags: list[Tag]
 
 
 class SimpleQueryRequest(BaseModel):

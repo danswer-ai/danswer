@@ -72,21 +72,17 @@ def create_or_add_document_tag_list(
     return all_tags
 
 
-def get_tags_for_source_types(source: DocumentSource, db_session: Session) -> list[Tag]:
-    query = select(Tag).where(Tag.source == source)
-
-    result = db_session.execute(query)
-
-    tags = result.scalars().all()
-    return list(tags)
-
-
 def get_tags_by_value_prefix_for_source_types(
-    tag_value_prefix: str, sources: list[DocumentSource] | None, db_session: Session
+    tag_value_prefix: str | None,
+    sources: list[DocumentSource] | None,
+    db_session: Session,
 ) -> list[Tag]:
-    query = select(Tag).where(Tag.tag_value.startswith(tag_value_prefix))
+    query = select(Tag)
 
-    if sources is not None:
+    if tag_value_prefix:
+        query = query.where(Tag.tag_value.startswith(tag_value_prefix))
+
+    if sources:
         query = query.where(Tag.source.in_(sources))
 
     result = db_session.execute(query)
