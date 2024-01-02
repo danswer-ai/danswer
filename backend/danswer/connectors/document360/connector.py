@@ -140,11 +140,7 @@ class Document360Connector(LoadConnector, PollConnector):
             html_content = article_details["html_content"]
             article_content = parse_html_page_basic(html_content)
             doc_text = (
-                f"workspace: {self.workspace}\n"
-                f"category: {article['category_name']}\n"
-                f"article: {article_details['title']} - "
-                f"{article_details.get('description', '')}\n"
-                f"{article_content}"
+                f"{article_details.get('description', '')}\n{article_content}".strip()
             )
 
             document = Document(
@@ -154,7 +150,10 @@ class Document360Connector(LoadConnector, PollConnector):
                 semantic_identifier=article_details["title"],
                 doc_updated_at=updated_at,
                 primary_owners=authors,
-                metadata={},
+                metadata={
+                    "workspace": self.workspace,
+                    "category": article["category_name"],
+                },
             )
 
             doc_batch.append(document)

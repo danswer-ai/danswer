@@ -48,10 +48,16 @@ class Embedder:
         raise NotImplementedError
 
 
+class Tag(BaseModel):
+    tag_key: str
+    tag_value: str
+
+
 class BaseFilters(BaseModel):
     source_type: list[DocumentSource] | None = None
     document_set: list[str] | None = None
     time_cutoff: datetime | None = None
+    tags: list[Tag] | None = None
 
 
 class IndexFilters(BaseFilters):
@@ -110,6 +116,7 @@ class SearchDoc(BaseModel):
     # since a standard search will never find a hidden doc, this can only ever
     # be `True` when doing an admin search
     hidden: bool
+    metadata: dict[str, str | list[str]]
     score: float | None
     # Matched sections in the doc. Uses Vespa syntax e.g. <hi>TEXT</hi>
     # to specify that a set of words should be highlighted. For example:

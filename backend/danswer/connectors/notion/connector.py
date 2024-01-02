@@ -267,7 +267,8 @@ class NotionConnector(LoadConnector, PollConnector):
             yield (
                 Document(
                     id=page.id,
-                    sections=[Section(link=page.url, text=f"{page_title}\n")]
+                    # Will add title to the first section later in processing
+                    sections=[Section(link=page.url, text="")]
                     + [
                         Section(
                             link=f"{page.url}#{block_id.replace('-', '')}",

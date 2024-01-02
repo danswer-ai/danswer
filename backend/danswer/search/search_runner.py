@@ -96,6 +96,7 @@ def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc
                 source_type=chunk.source_type,
                 boost=chunk.boost,
                 hidden=chunk.hidden,
+                metadata=chunk.metadata,
                 score=chunk.score,
                 match_highlights=chunk.match_highlights,
                 updated_at=chunk.updated_at,

@@ -121,6 +121,7 @@ def retrieval_preprocessing(
         source_type=preset_filters.source_type or predicted_source_filters,
         document_set=preset_filters.document_set,
         time_cutoff=preset_filters.time_cutoff or predicted_time_cutoff,
+        tags=preset_filters.tags,  # Tags are never auto-extracted
         access_control_list=user_acl_filters,
     )
 

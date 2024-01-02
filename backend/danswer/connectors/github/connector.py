@@ -37,10 +37,9 @@ def _batch_github_objects(
 
 
 def _convert_pr_to_document(pull_request: PullRequest) -> Document:
-    full_context = f"Pull-Request {pull_request.title}\n{pull_request.body}"
     return Document(
         id=pull_request.html_url,
-        sections=[Section(link=pull_request.html_url, text=full_context)],
+        sections=[Section(link=pull_request.html_url, text=pull_request.body or "")],
         source=DocumentSource.GITHUB,
         semantic_identifier=pull_request.title,
         # updated_at is UTC time but is timezone unaware, explicitly add UTC
@@ -48,7 +47,7 @@ def _convert_pr_to_document(pull_request: PullRequest) -> Document:
         # due to local time discrepancies with UTC
         doc_updated_at=pull_request.updated_at.replace(tzinfo=timezone.utc),
         metadata={
-            "merged": pull_request.merged,
+            "merged": str(pull_request.merged),
             "state": pull_request.state,
         },
     )
@@ -60,10 +59,9 @@ def _fetch_issue_comments(issue: Issue) -> str:
 
 
 def _convert_issue_to_document(issue: Issue) -> Document:
-    full_context = f"Issue {issue.title}\n{issue.body}"
     return Document(
         id=issue.html_url,
-        sections=[Section(link=issue.html_url, text=full_context)],
+        sections=[Section(link=issue.html_url, text=issue.body or "")],
         source=DocumentSource.GITHUB,
         semantic_identifier=issue.title,
         # updated_at is UTC time but is timezone unaware
