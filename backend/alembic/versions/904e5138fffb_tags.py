@@ -25,7 +25,7 @@ def upgrade() -> None:
         sa.Column("tag_value", sa.String(), nullable=False),
         sa.Column(
             "source",
-            sa.Enum(DocumentSource, create_type=False, native=False),
+            sa.Enum(DocumentSource, name="documentsource", create_type=False),
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id"),
