@@ -61,3 +61,4 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_table("document__tag")
     op.drop_table("tag")
+    op.drop_column("search_doc", "doc_metadata")
