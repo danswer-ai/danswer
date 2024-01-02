@@ -48,7 +48,7 @@ class Embedder:
         raise NotImplementedError
 
 
-class Tag:
+class Tag(BaseModel):
     tag_key: str
     tag_value: str
 
