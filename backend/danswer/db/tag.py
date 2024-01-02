@@ -1,8 +1,10 @@
+from sqlalchemy import delete
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import DocumentSource
 from danswer.db.models import Document
+from danswer.db.models import Document__Tag
 from danswer.db.models import Tag
 from danswer.utils.logger import setup_logger
 
@@ -89,3 +91,12 @@ def get_tags_by_value_prefix_for_source_types(
 
     tags = result.scalars().all()
     return list(tags)
+
+
+def delete_document_tags_for_documents(
+    document_ids: list[str], db_session: Session
+) -> None:
+    """NOTE: does not commit transaction so that this can be used as part of a
+    larger transaction block."""
+    stmt = delete(Document__Tag).where(Document__Tag.document_id.in_(document_ids))
+    db_session.execute(stmt)
