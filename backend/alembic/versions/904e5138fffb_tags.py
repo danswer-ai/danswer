@@ -48,9 +48,11 @@ def upgrade() -> None:
         sa.Column(
             "doc_metadata",
             postgresql.JSONB(astext_type=sa.Text()),
-            nullable=False,
+            nullable=True,
         ),
     )
+    op.execute("UPDATE search_doc SET doc_metadata = '{}' WHERE doc_metadata IS NULL")
+    op.alter_column("search_doc", "doc_metadata", nullable=False)
 
 
 def downgrade() -> None:
