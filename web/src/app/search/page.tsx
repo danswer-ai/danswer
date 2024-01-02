@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
 import { fetchSS } from "@/lib/utilsSS";
-import { Connector, DocumentSet, User } from "@/lib/types";
+import { Connector, DocumentSet, Tag, User, ValidSources } from "@/lib/types";
 import { cookies } from "next/headers";
 import { SearchType } from "@/lib/search/interfaces";
 import { Persona } from "../admin/personas/interfaces";
@@ -30,12 +30,14 @@ export default async function Home() {
     fetchSS("/manage/connector"),
     fetchSS("/manage/document-set"),
     fetchSS("/persona"),
+    fetchSS("/query/valid-tags"),
   ];
 
   // catch cases where the backend is completely unreachable here
   // without try / catch, will just raise an exception and the page
   // will not render
   let results: (User | Response | AuthTypeMetadata | null)[] = [
+    null,
     null,
     null,
     null,
@@ -52,6 +54,7 @@ export default async function Home() {
   const connectorsResponse = results[2] as Response | null;
   const documentSetsResponse = results[3] as Response | null;
   const personaResponse = results[4] as Response | null;
+  const tagsResponse = results[5] as Response | null;
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -89,6 +92,13 @@ export default async function Home() {
   // sort them in priority order
   personas.sort(personaComparator);
 
+  let tags: Tag[] = [];
+  if (tagsResponse?.ok) {
+    tags = (await tagsResponse.json()).tags;
+  } else {
+    console.log(`Failed to fetch tags - ${tagsResponse?.status}`);
+  }
+
   // needs to be done in a non-client side component due to nextjs
   const storedSearchType = cookies().get("searchType")?.value as
     | string
@@ -114,6 +124,7 @@ export default async function Home() {
             connectors={connectors}
             documentSets={documentSets}
             personas={personas}
+            tags={tags}
             defaultSearchType={searchTypeDefault}
           />
         </div>

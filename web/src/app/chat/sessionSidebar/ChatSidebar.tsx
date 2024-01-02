@@ -18,6 +18,7 @@ import Image from "next/image";
 import { ChatSessionDisplay } from "./SessionDisplay";
 import { ChatSession } from "../interfaces";
 import { groupSessionsByDateRange } from "../lib";
+import { HEADER_PADDING } from "@/lib/constants";
 
 interface ChatSidebarProps {
   existingChats: ChatSession[];
@@ -69,26 +70,16 @@ export const ChatSidebar = ({
       className={`
         w-72
         2xl:w-80
+        ${HEADER_PADDING}
         border-r 
         border-border 
         flex 
         flex-col 
-        h-screen 
+        h-screen
         transition-transform`}
       id="chat-sidebar"
     >
-      <Link href="/" className="ml-3">
-        <div className="flex mb-4 mt-4">
-          <div className="h-[32px] w-[30px]">
-            <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
-          </div>
-          <h1 className="flex text-2xl font-bold my-auto text-emphasis ml-2">
-            Danswer
-          </h1>
-        </div>
-      </Link>
-
-      <Link href="/chat" className="mx-3">
+      <Link href="/chat" className="mx-3 mt-5">
         <BasicClickable fullWidth>
           <div className="flex text-sm">
             <FiPlusSquare className="my-auto mr-2" /> New Chat

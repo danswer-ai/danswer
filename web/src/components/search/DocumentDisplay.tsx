@@ -4,8 +4,9 @@ import { useState } from "react";
 import { PopupSpec } from "../admin/connectors/Popup";
 import { HoverPopup } from "@/components/HoverPopup";
 import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
-import { FiInfo, FiRadio } from "react-icons/fi";
+import { FiInfo, FiRadio, FiTag } from "react-icons/fi";
 import { SourceIcon } from "../SourceIcon";
+import { MetadataBadge } from "../MetadataBadge";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -104,6 +105,32 @@ export const buildDocumentSummaryDisplay = (
   return finalJSX;
 };
 
+export function DocumentMetadataBlock({
+  document,
+}: {
+  document: DanswerDocument;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1">
+      {document.updated_at && (
+        <div className="pr-1">
+          <DocumentUpdatedAtBadge updatedAt={document.updated_at} />
+        </div>
+      )}
+      {Object.entries(document.metadata).length > 0 && (
+        <>
+          <div className="pl-1 border-l border-border" />
+          {Object.entries(document.metadata).map(([key, value]) => {
+            return (
+              <MetadataBadge key={key} icon={FiTag} value={`${key}=${value}`} />
+            );
+          })}
+        </>
+      )}
+    </div>
+  );
+}
+
 interface DocumentDisplayProps {
   document: DanswerDocument;
   queryEventId: number | null;
@@ -179,7 +206,7 @@ export const DocumentDisplay = ({
         )}
         <a
           className={
-            "rounded-lg flex font-bold text-link " +
+            "rounded-lg flex font-bold text-link max-w-full " +
             (document.link ? "" : "pointer-events-none")
           }
           href={document.link}
@@ -187,7 +214,7 @@ export const DocumentDisplay = ({
           rel="noopener noreferrer"
         >
           <SourceIcon sourceType={document.source_type} iconSize={22} />
-          <p className="truncate break-all ml-2 my-auto text-base">
+          <p className="truncate text-wrap break-all ml-2 my-auto text-base max-w-full">
             {document.semantic_identifier || document.document_id}
           </p>
         </a>
@@ -201,9 +228,9 @@ export const DocumentDisplay = ({
           )}
         </div>
       </div>
-      {document.updated_at && (
-        <DocumentUpdatedAtBadge updatedAt={document.updated_at} />
-      )}
+      <div className="mt-1">
+        <DocumentMetadataBlock document={document} />
+      </div>
       <p className="pl-1 pt-2 pb-3 break-words">
         {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)}
       </p>
