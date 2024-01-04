@@ -47,6 +47,14 @@ SECTION_SEPARATOR = "\n\n"
 INDEX_SEPARATOR = "==="
 
 
+# Messages
+DISABLED_GEN_AI_MSG = (
+    "Your System Admin has disabled the Generative AI functionalities of Danswer.\n"
+    "Please contact them if you wish to have this enabled.\n"
+    "You can still use Danswer as a search engine."
+)
+
+
 class DocumentSource(str, Enum):
     # Special case, document passed in via Danswer APIs without specifying a source type
     INGESTION_API = "ingestion_api"

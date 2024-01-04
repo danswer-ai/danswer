@@ -1,5 +1,6 @@
 from danswer.chat.chat_utils import combine_message_chain
 from danswer.db.models import ChatMessage
+from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llm
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
@@ -23,7 +24,12 @@ def get_renamed_conversation_name(
         return messages
 
     if llm is None:
-        llm = get_default_llm()
+        try:
+            llm = get_default_llm()
+        except GenAIDisabledException:
+            # This may be longer than what the LLM tends to produce but is the most
+            # clear thing we can do
+            return full_history[0].message
 
     history_str = combine_message_chain(full_history)
 
