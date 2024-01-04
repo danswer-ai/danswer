@@ -21,6 +21,7 @@ from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
 from danswer.configs.chat_configs import CHUNK_SIZE
 from danswer.configs.chat_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
+from danswer.configs.constants import DISABLED_GEN_AI_MSG
 from danswer.configs.constants import MessageType
 from danswer.db.chat import create_db_search_doc
 from danswer.db.chat import create_new_chat_message
@@ -36,6 +37,7 @@ from danswer.db.models import SearchDoc as DbSearchDoc
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import InferenceChunk
+from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llm
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import get_default_llm_token_encode
@@ -61,10 +63,18 @@ def generate_ai_chat_response(
     history: list[ChatMessage],
     context_docs: list[LlmDoc],
     doc_id_to_rank_map: dict[str, int],
-    llm: LLM,
+    llm: LLM | None,
     llm_tokenizer: Callable,
     all_doc_useful: bool,
 ) -> Iterator[DanswerAnswerPiece | CitationInfo | StreamingError]:
+    if llm is None:
+        try:
+            llm = get_default_llm()
+        except GenAIDisabledException:
+            # Not an error if it's a user configuration
+            yield DanswerAnswerPiece(answer_piece=DISABLED_GEN_AI_MSG)
+            return
+
     if query_message.prompt is None:
         raise RuntimeError("No prompt received for generating Gen AI answer.")
 
@@ -171,7 +181,11 @@ def stream_chat_message(
                 "Must specify a set of documents for chat or specify search options"
             )
 
-        llm = get_default_llm()
+        try:
+            llm = get_default_llm()
+        except GenAIDisabledException:
+            llm = None
+
         llm_tokenizer = get_default_llm_token_encode()
         document_index = get_default_document_index()
 

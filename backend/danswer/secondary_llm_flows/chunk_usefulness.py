@@ -1,5 +1,6 @@
 from collections.abc import Callable
 
+from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.prompts.llm_chunk_filter import CHUNK_FILTER_PROMPT
@@ -30,14 +31,20 @@ def llm_eval_chunk(query: str, chunk_content: str) -> bool:
             return False
         return True
 
+    # If Gen AI is disabled, none of the messages are more "useful" than any other
+    # All are marked not useful (False) so that the icon for Gen AI likes this answer
+    # is not shown for any result
+    try:
+        llm = get_default_llm(use_fast_llm=True, timeout=5)
+    except GenAIDisabledException:
+        return False
+
     messages = _get_usefulness_messages()
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
     # When running in a batch, it takes as long as the longest thread
     # And when running a large batch, one may fail and take the whole timeout
     # instead cap it to 5 seconds
-    model_output = get_default_llm(use_fast_llm=True, timeout=5).invoke(
-        filled_llm_prompt
-    )
+    model_output = llm.invoke(filled_llm_prompt)
     logger.debug(model_output)
 
     return _extract_usefulness(model_output)

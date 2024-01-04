@@ -4,6 +4,7 @@ from collections.abc import Iterator
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import StreamingError
 from danswer.configs.chat_configs import DISABLE_LLM_QUERY_ANSWERABILITY
+from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.prompts.constants import ANSWERABLE_PAT
@@ -48,9 +49,14 @@ def get_query_answerability(
     if skip_check:
         return "Query Answerability Evaluation feature is turned off", True
 
+    try:
+        llm = get_default_llm()
+    except GenAIDisabledException:
+        return "Generative AI is turned off - skipping check", True
+
     messages = get_query_validation_messages(user_query)
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
-    model_output = get_default_llm().invoke(filled_llm_prompt)
+    model_output = llm.invoke(filled_llm_prompt)
 
     reasoning = extract_answerability_reasoning(model_output)
     answerable = extract_answerability_bool(model_output)
@@ -70,10 +76,21 @@ def stream_query_answerability(
         )
         return
 
+    try:
+        llm = get_default_llm()
+    except GenAIDisabledException:
+        yield get_json_line(
+            QueryValidationResponse(
+                reasoning="Generative AI is turned off - skipping check",
+                answerable=True,
+            ).dict()
+        )
+        return
+
     messages = get_query_validation_messages(user_query)
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(messages)
     try:
-        tokens = get_default_llm().stream(filled_llm_prompt)
+        tokens = llm.stream(filled_llm_prompt)
         reasoning_pat_found = False
         model_output = ""
         hold_answerable = ""
