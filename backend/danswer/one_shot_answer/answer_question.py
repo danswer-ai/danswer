@@ -28,6 +28,9 @@ from danswer.llm.utils import get_default_llm_token_encode
 from danswer.one_shot_answer.factory import get_question_answer_model
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
+from danswer.one_shot_answer.models import QueryRephrase
+from danswer.one_shot_answer.qa_block import no_gen_ai_response
+from danswer.one_shot_answer.qa_utils import combine_message_thread
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SavedSearchDoc
@@ -189,10 +192,34 @@ def stream_answer_objects(
         llm_version=llm_override,
     )
 
-    response_packets = qa_model.answer_question_stream(
-        query=query_req.query,
-        context_docs=llm_chunks,
-        metrics_callback=llm_metrics_callback,
+    full_prompt_str = (
+        qa_model.build_prompt(
+            query=query_msg.message, history_str=history_str, context_chunks=llm_chunks
+        )
+        if qa_model is not None
+        else "Gen AI Disabled"
+    )
+
+    # Create the first User query message
+    new_user_message = create_new_chat_message(
+        chat_session_id=chat_session.id,
+        parent_message=root_message,
+        prompt_id=query_req.prompt_id,
+        message=full_prompt_str,
+        token_count=len(llm_tokenizer(full_prompt_str)),
+        message_type=MessageType.USER,
+        db_session=db_session,
+        commit=True,
+    )
+
+    response_packets = (
+        qa_model.answer_question_stream(
+            prompt=full_prompt_str,
+            llm_context_docs=llm_chunks,
+            metrics_callback=llm_metrics_callback,
+        )
+        if qa_model is not None
+        else no_gen_ai_response()
     )
 
     # Capture outputs and errors

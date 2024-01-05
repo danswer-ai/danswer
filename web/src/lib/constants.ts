@@ -8,3 +8,5 @@ export const GOOGLE_DRIVE_AUTH_IS_ADMIN_COOKIE_NAME =
   "google_drive_auth_is_admin";
 
 export const SEARCH_TYPE_COOKIE_NAME = "search_type";
+
+export const HEADER_PADDING = "pt-[64px]";

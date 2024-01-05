@@ -331,7 +331,7 @@ export function DefaultDropdownElement({
   isSelected,
   includeCheckbox = false,
 }: {
-  name: string;
+  name: string | JSX.Element;
   icon?: React.FC<{ size?: number; className?: string }>;
   description?: string;
   onSelect?: () => void;
@@ -488,7 +488,19 @@ export function ControlledPopup({
     <div ref={filtersRef} className="relative">
       {children}
       {isOpen && (
-        <div className="absolute top-0 translate-y-[-105%] bg-background border border-border z-30 rounded text-emphasis">
+        <div
+          className={`
+            absolute 
+            top-0 
+            bg-background 
+            border 
+            border-border 
+            z-30 
+            rounded 
+            text-emphasis 
+            shadow-lg`}
+          style={{ transform: "translateY(calc(-100% - 5px))" }}
+        >
           {popupContent}
         </div>
       )}

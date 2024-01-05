@@ -17,6 +17,7 @@ export const searchRequestStreamed = async ({
   sources,
   documentSets,
   timeRange,
+  tags,
   persona,
   updateCurrentAnswer,
   updateQuotes,
@@ -31,7 +32,14 @@ export const searchRequestStreamed = async ({
   let quotes: Quote[] | null = null;
   let relevantDocuments: HagenDocument[] | null = null;
   try {
-    const filters = buildFilters(sources, documentSets, timeRange);
+    const filters = buildFilters(sources, documentSets, timeRange, tags);
+
+    const threadMessage = {
+      message: query,
+      sender: null,
+      role: "user",
+    };
+
     const response = await fetch("/api/query/stream-answer-with-quote", {
       method: "POST",
       body: JSON.stringify({

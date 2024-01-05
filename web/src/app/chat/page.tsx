@@ -5,7 +5,7 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { fetchSS } from "@/lib/utilsSS";
-import { Connector, DocumentSet, User, ValidSources } from "@/lib/types";
+import { Connector, DocumentSet, Tag, User, ValidSources } from "@/lib/types";
 import {
   BackendMessage,
   ChatSession,
@@ -36,12 +36,14 @@ export default async function Page({
     fetchSS("/manage/document-set"),
     fetchSS("/persona?include_default=true"),
     fetchSS("/chat/get-user-chat-sessions"),
+    fetchSS("/query/valid-tags"),
   ];
 
   // catch cases where the backend is completely unreachable here
   // without try / catch, will just raise an exception and the page
   // will not render
   let results: (User | Response | AuthTypeMetadata | null)[] = [
+    null,
     null,
     null,
     null,
@@ -60,6 +62,7 @@ export default async function Page({
   const documentSetsResponse = results[3] as Response | null;
   const personasResponse = results[4] as Response | null;
   const chatSessionsResponse = results[5] as Response | null;
+  const tagsResponse = results[6] as Response | null;
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -114,6 +117,13 @@ export default async function Page({
   // sort them in priority order
   personas.sort(personaComparator);
 
+  let tags: Tag[] = [];
+  if (tagsResponse?.ok) {
+    tags = (await tagsResponse.json()).tags;
+  } else {
+    console.log(`Failed to fetch tags - ${tagsResponse?.status}`);
+  }
+
   const defaultPersonaIdRaw = searchParams["personaId"];
   const defaultPersonaId = defaultPersonaIdRaw
     ? parseInt(defaultPersonaIdRaw)
@@ -139,6 +149,7 @@ export default async function Page({
         availableSources={availableSources}
         availableDocumentSets={documentSets}
         availablePersonas={personas}
+        availableTags={tags}
         defaultSelectedPersonaId={defaultPersonaId}
         documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
       />

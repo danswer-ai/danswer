@@ -124,7 +124,8 @@ export function Explorer({
     const filters = buildFilters(
       filterManager.selectedSources,
       filterManager.selectedDocumentSets,
-      filterManager.timeRange
+      filterManager.timeRange,
+      filterManager.selectedTags
     );
     const results = await adminSearch(query, filters);
     if (results.ok) {
@@ -185,6 +186,7 @@ export function Explorer({
             {...filterManager}
             availableDocumentSets={documentSets}
             existingSources={connectors.map((connector) => connector.source)}
+            availableTags={[]}
           />
         </div>
       </div>

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { FiRefreshCcw, FiSend, FiStopCircle } from "react-icons/fi";
 import { AIMessage, HumanMessage } from "./message/Messages";
@@ -31,7 +30,7 @@ import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
 import { Persona } from "../admin/personas/interfaces";
 import { ChatPersonaSelector } from "./ChatPersonaSelector";
 import { useFilters } from "@/lib/hooks";
-import { DocumentSet, ValidSources } from "@/lib/types";
+import { DocumentSet, Tag, ValidSources } from "@/lib/types";
 import { ChatFilters } from "./modifiers/ChatFilters";
 import { buildFilters } from "@/lib/search/utils";
 import { SelectedDocuments } from "./modifiers/SelectedDocuments";
@@ -39,6 +38,7 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { ResizableSection } from "@/components/resizable/ResizableSection";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { ChatIntro } from "./ChatIntro";
+import { HEADER_PADDING } from "@/lib/constants";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -48,6 +48,7 @@ export const Chat = ({
   availableSources,
   availableDocumentSets,
   availablePersonas,
+  availableTags,
   defaultSelectedPersonaId,
   documentSidebarInitialWidth,
   shouldhideBeforeScroll,
@@ -57,6 +58,7 @@ export const Chat = ({
   availableSources: ValidSources[];
   availableDocumentSets: DocumentSet[];
   availablePersonas: Persona[];
+  availableTags: Tag[];
   defaultSelectedPersonaId?: number; // what persona to default to
   documentSidebarInitialWidth?: number;
   shouldhideBeforeScroll?: boolean;
@@ -298,11 +300,12 @@ export const Chat = ({
             ? currMessageHistory[currMessageHistory.length - 1].messageId
             : null,
         chatSessionId: currChatSessionId,
-        promptId: 0,
+        promptId: selectedPersona?.prompts[0]?.id || 0,
         filters: buildFilters(
           filterManager.selectedSources,
           filterManager.selectedDocumentSets,
-          filterManager.timeRange
+          filterManager.timeRange,
+          filterManager.selectedTags
         ),
         selectedDocumentIds: selectedDocuments
           .filter(
@@ -435,7 +438,7 @@ export const Chat = ({
         <>
           <div className="w-full sm:relative">
             <div
-              className="w-full h-screen flex flex-col overflow-y-auto relative"
+              className={`w-full h-screen ${HEADER_PADDING} flex flex-col overflow-y-auto relative`}
               ref={scrollableDivRef}
             >
               {livePersona && (
@@ -596,6 +599,7 @@ export const Chat = ({
                         {...filterManager}
                         existingSources={availableSources}
                         availableDocumentSets={availableDocumentSets}
+                        availableTags={availableTags}
                       />
                     )}
                   </div>

@@ -1,5 +1,5 @@
 import React from "react";
-import { DocumentSet, ValidSources } from "@/lib/types";
+import { DocumentSet, Tag, ValidSources } from "@/lib/types";
 import { SourceMetadata } from "@/lib/search/interfaces";
 import { InfoIcon, defaultTailwindCSS } from "../../icons/icons";
 import { HoverPopup } from "../../HoverPopup";
@@ -9,12 +9,13 @@ import { DateRangePickerValue } from "@tremor/react";
 import { FilterDropdown } from "./FilterDropdown";
 import { listSourceMetadata } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
+import { TagFilter } from "./TagFilter";
 
 const SectionTitle = ({ children }: { children: string }) => (
   <div className="font-bold text-xs mt-2 flex">{children}</div>
 );
 
-interface SourceSelectorProps {
+export interface SourceSelectorProps {
   timeRange: DateRangePickerValue | null;
   setTimeRange: React.Dispatch<
     React.SetStateAction<DateRangePickerValue | null>
@@ -23,8 +24,11 @@ interface SourceSelectorProps {
   setSelectedSources: React.Dispatch<React.SetStateAction<SourceMetadata[]>>;
   selectedDocumentSets: string[];
   setSelectedDocumentSets: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedTags: Tag[];
+  setSelectedTags: React.Dispatch<React.SetStateAction<Tag[]>>;
   availableDocumentSets: DocumentSet[];
   existingSources: ValidSources[];
+  availableTags: Tag[];
 }
 
 export function SourceSelector({
@@ -34,8 +38,11 @@ export function SourceSelector({
   setSelectedSources,
   selectedDocumentSets,
   setSelectedDocumentSets,
+  selectedTags,
+  setSelectedTags,
   availableDocumentSets,
   existingSources,
+  availableTags,
 }: SourceSelectorProps) {
   const handleSelect = (source: SourceMetadata) => {
     setSelectedSources((prev: SourceMetadata[]) => {
@@ -141,6 +148,19 @@ export function SourceSelector({
               </div>
             ))}
           </div>
+        </>
+      )}
+
+      {availableTags.length > 0 && (
+        <>
+          <div className="mt-4 mb-2">
+            <SectionTitle>Tags</SectionTitle>
+          </div>
+          <TagFilter
+            tags={availableTags}
+            selectedTags={selectedTags}
+            setSelectedTags={setSelectedTags}
+          />
         </>
       )}
     </div>

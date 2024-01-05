@@ -5,12 +5,22 @@ from pydantic import BaseModel
 from pydantic import root_validator
 
 from danswer.chat.models import RetrievalDocs
+from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.search.models import BaseFilters
 from danswer.search.models import RetrievalDetails
 from danswer.search.models import SearchDoc
 from danswer.search.models import SearchType
+from danswer.search.models import Tag
+
+
+class SourceTag(Tag):
+    source: DocumentSource
+
+
+class TagResponse(BaseModel):
+    tags: list[SourceTag]
 
 
 class SimpleQueryRequest(BaseModel):

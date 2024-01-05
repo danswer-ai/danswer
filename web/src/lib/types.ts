@@ -288,6 +288,12 @@ export interface DocumentSet {
   is_up_to_date: boolean;
 }
 
+export interface Tag {
+  tag_key: string;
+  tag_value: string;
+  source: ValidSources;
+}
+
 // SLACK BOT CONFIGS
 
 export type AnswerFilterOption =

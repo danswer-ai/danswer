@@ -7,12 +7,20 @@ schema danswer_chunk {
         field chunk_id type int {
             indexing: summary | attribute
         }
-        field blurb type string {
+        # Displayed in the UI as the main identifier for the doc
+        field semantic_identifier type string {
             indexing: summary | attribute
         }
-        # Can separate out title in the future and give heavier bm-25 weighting
-        # Need to consider that not every doc has a separable title (ie. slack message)
-        # Set summary options to enable bolding
+        # May not always match the `semantic_identifier` e.g. for Slack docs the
+        # `semantic_identifier` will be the channel name, but the `title` will be empty
+        field title type string {
+            indexing: summary | index
+            match {
+                gram
+                gram-size: 3
+            }
+            index: enable-bm25
+        }
         field content type string {
             indexing: summary | index
             match {
@@ -28,6 +36,25 @@ schema danswer_chunk {
             indexing: summary | index
             summary: dynamic
         }
+        # Title embedding (x1)
+        field title_embedding type tensor<float>(x[384]) {
+            indexing: attribute
+            attribute {
+                distance-metric: angular
+            }
+        }
+        # Content embeddings (chunk + optional mini chunks embeddings)
+        # "t" and "x" are arbitrary names, not special keywords
+        field embeddings type tensor<float>(t{},x[384]) {
+            indexing: attribute
+            attribute {
+                distance-metric: angular
+            }
+        }
+        # Starting section of the doc, currently unused as it has been replaced by match highlighting
+        field blurb type string {
+            indexing: summary | attribute
+        }
         # https://docs.vespa.ai/en/attributes.html potential enum store for speed, but probably not worth it
         field source_type type string {
             indexing: summary | attribute
@@ -38,21 +65,6 @@ schema danswer_chunk {
         # URL type matching
         field source_links type string {
             indexing: summary | attribute
-        }
-        # displayed in the UI as the main identifier for the doc
-        field semantic_identifier type string {
-            indexing: summary | attribute
-        }
-        # this is used when computing best matches based on the title of the document
-        # may not always match the `semantic_identifier` e.g. for Slack docs the 
-        # `semantic_identifier` will be the channel name, but the `title` will be empty
-        field title type string {
-            indexing: summary | index
-            match {
-                gram
-                gram-size: 3
-            }
-            index: enable-bm25
         }
         field section_continuation type bool {
             indexing: summary | attribute
@@ -65,14 +77,14 @@ schema danswer_chunk {
             indexing: summary | attribute
             rank: filter
         }
+        # Needs to have a separate Attribute list for efficient filtering
+        field metadata_list type array<string> {
+            indexing: summary | attribute
+            rank:filter
+            attribute: fast-search
+        }
         field metadata type string {
             indexing: summary | attribute
-        }
-        field embeddings type tensor<float>(t{},x[384]) {
-            indexing: attribute
-            attribute {
-                distance-metric: angular
-            }
         }
         field doc_updated_at type int {
             indexing: summary | attribute
@@ -95,6 +107,11 @@ schema danswer_chunk {
         }
     }
 
+    # If using different tokenization settings, the fieldset has to be removed, and the field must
+    # be specified in the yql like:
+    # + 'or ({grammar: "weakAnd", defaultIndex:"title"}userInput(@query)) '
+    # + 'or ({grammar: "weakAnd", defaultIndex:"content"}userInput(@query)) '
+    # Note: for BM-25, the ngram size (and whether ngrams are used) changes the range of the scores
     fieldset default {
         fields: content, title
     }
@@ -124,6 +141,79 @@ schema danswer_chunk {
         match-features: recency_bias
     }
 
+    rank-profile hybrid_search inherits default, default_rank {
+        inputs {
+            query(query_embedding) tensor<float>(x[384])
+        }
+
+        # This must be separate function for normalize_linear to work
+        function vector_score() {
+            expression {
+                (query(title_content_ratio) * closeness(field, title_embedding)) +
+                ((1 - query(title_content_ratio)) * closeness(field, embeddings))
+            }
+        }
+
+        # This must be separate function for normalize_linear to work
+        function keyword_score() {
+            expression {
+                (query(title_content_ratio) * bm25(title)) +
+                ((1 - query(title_content_ratio)) * bm25(content))
+            }
+        }
+
+        first-phase {
+            expression: vector_score
+        }
+
+        # Weighted average between Vector Search and BM-25
+        # Each is a weighted average between the Title and Content fields
+        # Finally each doc is boosted by it's user feedback based boost and recency
+        # If any embedding or index field is missing, it just receives a score of 0
+        # Assumptions:
+        # - For a given query + corpus, the BM-25 scores will be relatively similar in distribution
+        #   therefore not normalizing before combining.
+        # - For documents without title, it gets a score of 0 for that and this is ok as documents
+        #   without any title match should be penalized.
+        global-phase {
+            expression {
+                (
+                    # Weighted Vector Similarity Score
+                    (query(alpha) * normalize_linear(vector_score)) +
+                    # Weighted Keyword Similarity Score
+                    ((1 - query(alpha)) * normalize_linear(keyword_score))
+                )
+                # Boost based on user feedback
+                * document_boost
+                # Decay factor based on time document was last updated
+                * recency_bias
+            }
+            rerank-count: 1000
+        }
+
+        match-features {
+            bm25(title)
+            bm25(content)
+            closeness(field, title_embedding)
+            closeness(field, embeddings)
+            keyword_score
+            vector_score
+            document_boost
+            recency_bias
+            closest(embeddings)
+        }
+    }
+
+    # Used when searching from the admin UI for a specific doc to hide / boost
+    # Very heavily prioritize title
+    rank-profile admin_search inherits default, default_rank {
+        first-phase {
+            expression: bm25(content) + (5 * bm25(title))
+        }
+    }
+
+    # THE ONES BELOW ARE OUT OF DATE, DO NOT USE
+    # THEY MIGHT NOT EVEN WORK AT ALL
     rank-profile keyword_search inherits default, default_rank {
         first-phase {
             expression: bm25(content) * document_boost * recency_bias
@@ -144,30 +234,5 @@ schema danswer_chunk {
         }
 
         match-features: recency_bias document_boost closest(embeddings)
-    }
-
-    rank-profile hybrid_search inherits default, default_rank {
-        inputs {
-            query(query_embedding) tensor<float>(x[384])
-        }
-
-        first-phase {
-            expression: closeness(field, embeddings)
-        }
-
-        global-phase {
-            expression: ((query(alpha) * normalize_linear(closeness(field, embeddings))) + ((1 - query(alpha)) * normalize_linear(bm25(content)))) * document_boost * recency_bias
-            rerank-count: 1000
-        }
-
-        # Cannot pass normalize_linear features in match-features
-        match-features: recency_bias document_boost closest(embeddings)
-    }
-
-    # used when searching from the admin UI for a specific doc to hide / boost
-    rank-profile admin_search inherits default, default_rank {
-        first-phase {
-            expression: bm25(content) + (5 * bm25(title))
-        }
     }
 }

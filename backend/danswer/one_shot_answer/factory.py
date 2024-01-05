@@ -1,6 +1,7 @@
 from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.db.models import Prompt
+from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llm
 from danswer.one_shot_answer.interfaces import QAModel
 from danswer.one_shot_answer.qa_block import PromptBasedQAHandler
@@ -72,12 +73,10 @@ def get_question_answer_model(
     timeout: int = QA_TIMEOUT,
     chain_of_thought: bool = False,
     llm_version: str | None = None,
-) -> QAModel:
-    if prompt is None and llm_version is not None:
-        raise RuntimeError(
-            "Cannot specify llm version for QA model without providing prompt. "
-            "This flow is only intended for flows with a specified Persona/Prompt."
-        )
+    qa_model_version: str | None = QA_PROMPT_OVERRIDE,
+) -> QAModel | None:
+    if chain_of_thought:
+        raise NotImplementedError("COT has been disabled")
 
     if prompt is not None and chain_of_thought:
         raise RuntimeError(
@@ -85,16 +84,22 @@ def get_question_answer_model(
             "User can prompt the model to output COT themselves if they want."
         )
 
-    if prompt is not None:
-        return get_prompt_qa_model(
-            prompt=prompt,
+    try:
+        llm = get_default_llm(
             api_key=api_key,
             timeout=timeout,
-            llm_version=llm_version,
+            gen_ai_model_version_override=llm_version,
+        )
+    except GenAIDisabledException:
+        return None
+
+    if qa_model_version == "weak":
+        qa_handler: QAHandler = WeakLLMQAHandler(
+            system_prompt=system_prompt, task_prompt=task_prompt
+        )
+    else:
+        qa_handler = SingleMessageQAHandler(
+            system_prompt=system_prompt, task_prompt=task_prompt
         )
 
-    return get_default_qa_model(
-        api_key=api_key,
-        timeout=timeout,
-        chain_of_thought=chain_of_thought,
-    )
+    return QABlock(llm=llm, qa_handler=qa_handler)

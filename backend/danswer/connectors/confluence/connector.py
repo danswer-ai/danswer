@@ -333,11 +333,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 if not page_html:
                     logger.debug("Page is empty, skipping: %s", page_url)
                     continue
-                page_text = (
-                    page.get("title", "")
-                    + "\n"
-                    + parse_html_page(page_html, self.confluence_client)
-                )
+                page_text = parse_html_page(page_html, self.confluence_client)
                 comments_text = self._fetch_comments(self.confluence_client, page_id)
                 page_text += comments_text
 

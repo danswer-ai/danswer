@@ -232,6 +232,9 @@ def get_application() -> FastAPI:
             if GEN_AI_API_ENDPOINT:
                 logger.info(f"Using LLM Endpoint: {GEN_AI_API_ENDPOINT}")
 
+            # Any additional model configs logged here
+            get_default_llm().log_model_configs()
+
         if MULTILINGUAL_QUERY_EXPANSION:
             logger.info(
                 f"Using multilingual flow with languages: {MULTILINGUAL_QUERY_EXPANSION}"
@@ -259,10 +262,13 @@ def get_application() -> FastAPI:
                 logger.info("GPU is not available")
             logger.info(f"Torch Threads: {torch.get_num_threads()}")
 
+<<<<<<< HEAD
         # This is for the LLM, most LLMs will not need warming up
         get_default_llm().log_model_configs()
         get_default_qa_model().warm_up_model()
 
+=======
+>>>>>>> 6b6b3daab7537a1e1e36c2f3d67a7ac149954842
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")
         nltk.download("stopwords", quiet=True)
         nltk.download("wordnet", quiet=True)

@@ -8,6 +8,7 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.bookstack.client import BookStackApiClient
 from danswer.connectors.cross_connector_utils.html_utils import parse_html_page_basic
+from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -72,13 +73,21 @@ class BookstackConnector(LoadConnector, PollConnector):
         bookstack_client: BookStackApiClient, book: dict[str, Any]
     ) -> Document:
         url = bookstack_client.build_app_url("/books/" + str(book.get("slug")))
+        title = str(book.get("name", ""))
         text = book.get("name", "") + "\n" + book.get("description", "")
+        updated_at_str = (
+            str(book.get("updated_at")) if book.get("updated_at") is not None else None
+        )
         return Document(
-            id="book:" + str(book.get("id")),
+            id="book__" + str(book.get("id")),
             sections=[Section(link=url, text=text)],
             source=DocumentSource.BOOKSTACK,
-            semantic_identifier="Book: " + str(book.get("name")),
-            metadata={"type": "book", "updated_at": str(book.get("updated_at"))},
+            semantic_identifier="Book: " + title,
+            title=title,
+            doc_updated_at=time_str_to_utc(updated_at_str)
+            if updated_at_str is not None
+            else None,
+            metadata={"type": "book"},
         )
 
     @staticmethod
@@ -91,13 +100,23 @@ class BookstackConnector(LoadConnector, PollConnector):
             + "/chapter/"
             + str(chapter.get("slug"))
         )
+        title = str(chapter.get("name", ""))
         text = chapter.get("name", "") + "\n" + chapter.get("description", "")
+        updated_at_str = (
+            str(chapter.get("updated_at"))
+            if chapter.get("updated_at") is not None
+            else None
+        )
         return Document(
-            id="chapter:" + str(chapter.get("id")),
+            id="chapter__" + str(chapter.get("id")),
             sections=[Section(link=url, text=text)],
             source=DocumentSource.BOOKSTACK,
-            semantic_identifier="Chapter: " + str(chapter.get("name")),
-            metadata={"type": "chapter", "updated_at": str(chapter.get("updated_at"))},
+            semantic_identifier="Chapter: " + title,
+            title=title,
+            doc_updated_at=time_str_to_utc(updated_at_str)
+            if updated_at_str is not None
+            else None,
+            metadata={"type": "chapter"},
         )
 
     @staticmethod
@@ -105,13 +124,23 @@ class BookstackConnector(LoadConnector, PollConnector):
         bookstack_client: BookStackApiClient, shelf: dict[str, Any]
     ) -> Document:
         url = bookstack_client.build_app_url("/shelves/" + str(shelf.get("slug")))
+        title = str(shelf.get("name", ""))
         text = shelf.get("name", "") + "\n" + shelf.get("description", "")
+        updated_at_str = (
+            str(shelf.get("updated_at"))
+            if shelf.get("updated_at") is not None
+            else None
+        )
         return Document(
             id="shelf:" + str(shelf.get("id")),
             sections=[Section(link=url, text=text)],
             source=DocumentSource.BOOKSTACK,
-            semantic_identifier="Shelf: " + str(shelf.get("name")),
-            metadata={"type": "shelf", "updated_at": shelf.get("updated_at")},
+            semantic_identifier="Shelf: " + title,
+            title=title,
+            doc_updated_at=time_str_to_utc(updated_at_str)
+            if updated_at_str is not None
+            else None,
+            metadata={"type": "shelf"},
         )
 
     @staticmethod
@@ -119,7 +148,7 @@ class BookstackConnector(LoadConnector, PollConnector):
         bookstack_client: BookStackApiClient, page: dict[str, Any]
     ) -> Document:
         page_id = str(page.get("id"))
-        page_name = str(page.get("name"))
+        title = str(page.get("name", ""))
         page_data = bookstack_client.get("/pages/" + page_id, {})
         url = bookstack_client.build_app_url(
             "/books/"
@@ -127,17 +156,24 @@ class BookstackConnector(LoadConnector, PollConnector):
             + "/page/"
             + str(page_data.get("slug"))
         )
-        page_html = (
-            "<h1>" + html.escape(page_name) + "</h1>" + str(page_data.get("html"))
-        )
+        page_html = "<h1>" + html.escape(title) + "</h1>" + str(page_data.get("html"))
         text = parse_html_page_basic(page_html)
+        updated_at_str = (
+            str(page_data.get("updated_at"))
+            if page_data.get("updated_at") is not None
+            else None
+        )
         time.sleep(0.1)
         return Document(
             id="page:" + page_id,
             sections=[Section(link=url, text=text)],
             source=DocumentSource.BOOKSTACK,
-            semantic_identifier="Page: " + str(page_name),
-            metadata={"type": "page", "updated_at": page_data.get("updated_at")},
+            semantic_identifier="Page: " + str(title),
+            title=str(title),
+            doc_updated_at=time_str_to_utc(updated_at_str)
+            if updated_at_str is not None
+            else None,
+            metadata={"type": "page"},
         )
 
     def load_from_state(self) -> GenerateDocumentsOutput:

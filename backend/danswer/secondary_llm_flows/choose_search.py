@@ -5,6 +5,7 @@ from langchain.schema import SystemMessage
 from danswer.chat.chat_utils import combine_message_chain
 from danswer.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
 from danswer.db.models import ChatMessage
+from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llm
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
@@ -68,14 +69,19 @@ def check_if_need_search(
     if disable_llm_check:
         return True
 
+    if llm is None:
+        try:
+            llm = get_default_llm()
+        except GenAIDisabledException:
+            # If Generative AI is turned off the always run Search as Danswer is being used
+            # as just a search engine
+            return True
+
     history_str = combine_message_chain(history)
 
     prompt_msgs = _get_search_messages(
         question=query_message.message, history_str=history_str
     )
-
-    if llm is None:
-        llm = get_default_llm()
 
     filled_llm_prompt = dict_based_prompt_to_langchain_prompt(prompt_msgs)
     require_search_output = llm.invoke(filled_llm_prompt)
