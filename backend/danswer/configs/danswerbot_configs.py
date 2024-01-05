@@ -48,3 +48,8 @@ ENABLE_DANSWERBOT_REFLEXION = (
 )
 # Currently not support chain of thought, probably will add back later
 DANSWER_BOT_DISABLE_COT = True
+
+# Maximum Questions Per Minute
+DANSWER_BOT_MAX_QPM = int(os.environ.get("DANSWER_BOT_MAX_QPM", "100"))
+# Maximum time to wait when a question is queued
+DANSWER_BOT_MAX_WAIT_TIME = int(os.environ.get("DANSWER_BOT_MAX_WAIT_TIME", "180"))

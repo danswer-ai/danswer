@@ -2,9 +2,11 @@ import logging
 import random
 import re
 import string
+import time
 from collections.abc import MutableMapping
 from typing import Any
 from typing import cast
+from typing import Optional
 
 from retry import retry
 from slack_sdk import WebClient
@@ -14,6 +16,8 @@ from slack_sdk.models.metadata import Metadata
 
 from danswer.configs.constants import ID_SEPARATOR
 from danswer.configs.constants import MessageType
+from danswer.configs.danswerbot_configs import DANSWER_BOT_MAX_QPM
+from danswer.configs.danswerbot_configs import DANSWER_BOT_MAX_WAIT_TIME
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.connectors.slack.utils import SlackTextCleaner
@@ -301,3 +305,57 @@ def read_slack_thread(
         )
 
     return thread_messages
+
+
+class SlackRateLimiter:
+    def __init__(self) -> None:
+        self.max_qpm = DANSWER_BOT_MAX_QPM
+        self.max_wait_time = DANSWER_BOT_MAX_WAIT_TIME
+        self.active_question = 0
+        self.last_reset_time = time.time()
+        self.waiting_questions: list[int] = []
+
+    def refill(self) -> None:
+        # If elapsed time is greater than the period, reset the active question count
+        if (time.time() - self.last_reset_time) > 60:
+            self.active_question = 0
+            self.last_reset_time = time.time()
+
+    def notify(
+        self, client: WebClient, channel: str, position: int, thread_ts: Optional[str]
+    ) -> None:
+        respond_in_thread(
+            client=client,
+            channel=channel,
+            receiver_ids=None,
+            text=f"Your question has been queued. You are in position {position}... please wait a moment :loading:",
+            thread_ts=thread_ts,
+        )
+
+    def is_available(self) -> bool:
+        self.refill()
+        return self.active_question < self.max_qpm
+
+    def acquire_slot(self) -> None:
+        self.active_question += 1
+
+    def init_waiter(self) -> tuple[int, int]:
+        func_randid = random.getrandbits(128)
+        self.waiting_questions.append(func_randid)
+        position = self.waiting_questions.index(func_randid) + 1
+
+        return func_randid, position
+
+    def waiter(self, func_randid: int) -> None:
+        wait_time = 0
+        while (
+            self.active_question >= self.max_qpm
+            or self.waiting_questions[0] != func_randid
+        ):
+            if wait_time > self.max_wait_time:
+                raise TimeoutError
+            time.sleep(2)
+            wait_time += 2
+            self.refill()
+
+        del self.waiting_questions[0]
