@@ -27,7 +27,7 @@ DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "
 # Web Configs
 #####
 # WEB_DOMAIN is used to set the redirect_uri after login flows
-WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
+WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://127.0.0.1:3000"
 
 
 #####
