@@ -1,5 +1,6 @@
 GENERAL_SEP_PAT = "--------------"  # Same length as Langchain's separator
 CODE_BLOCK_PAT = "```\n{}\n```"
+TRIPLE_BACKTICK = "```"
 QUESTION_PAT = "Query:"
 FINAL_QUERY_PAT = "Final Query:"
 THOUGHT_PAT = "Thought:"
