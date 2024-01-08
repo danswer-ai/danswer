@@ -377,6 +377,7 @@ const Main = () => {
         }
         appCredentialData={appCredentialData}
         serviceAccountKeyData={serviceAccountKeyData}
+        connectorExists={googleDriveConnectorIndexingStatuses.length > 0}
       />
 
       <Title className="mb-2 mt-6 ml-auto mr-auto">
