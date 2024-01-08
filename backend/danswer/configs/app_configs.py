@@ -27,7 +27,10 @@ DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "
 # Web Configs
 #####
 # WEB_DOMAIN is used to set the redirect_uri after login flows
-WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://127.0.0.1:3000"
+# NOTE: if you are having problems accessing the Danswer web UI locally (especially
+# on Windows, try  setting this to `http://127.0.0.1:3000` instead and see if that
+# fixes it)
+WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
 
 
 #####
