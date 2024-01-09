@@ -58,7 +58,7 @@ development purposes but also feel free to just use the containers and update wi
 
 
 ### Local Set Up
-It is recommended to use Python versions 3.11.
+It is recommended to use Python version 3.11
 
 If using a lower version, modifications will have to be made to the code.
 If using a higher version, the version of Tensorflow we use may not be available for your platform.
