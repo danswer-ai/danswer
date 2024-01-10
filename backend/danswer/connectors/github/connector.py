@@ -92,12 +92,13 @@ class GithubConnector(LoadConnector, PollConnector):
         self.github_client: Github | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        if GITHUB_CONNECTOR_BASE_URL:
-            self.github_client = Github(
+        self.github_client = (
+            Github(
                 credentials["github_access_token"], base_url=GITHUB_CONNECTOR_BASE_URL
             )
-        else:
-            self.github_client = Github(credentials["github_access_token"])
+            if GITHUB_CONNECTOR_BASE_URL
+            else Github(credentials["github_access_token"])
+        )
         return None
 
     def _fetch_from_github(
