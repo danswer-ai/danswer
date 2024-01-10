@@ -10,6 +10,7 @@ from github.Issue import Issue
 from github.PaginatedList import PaginatedList
 from github.PullRequest import PullRequest
 
+from danswer.configs.app_configs import GITHUB_CONNECTOR_BASE_URL
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -91,7 +92,13 @@ class GithubConnector(LoadConnector, PollConnector):
         self.github_client: Github | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        self.github_client = Github(credentials["github_access_token"])
+        self.github_client = (
+            Github(
+                credentials["github_access_token"], base_url=GITHUB_CONNECTOR_BASE_URL
+            )
+            if GITHUB_CONNECTOR_BASE_URL
+            else Github(credentials["github_access_token"])
+        )
         return None
 
     def _fetch_from_github(
