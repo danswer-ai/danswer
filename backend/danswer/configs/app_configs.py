@@ -116,6 +116,8 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 #####
 # Connector Configs
 #####
+POLL_CONNECTOR_OFFSET = 30  # Minutes overlap between poll windows
+
 GOOGLE_DRIVE_INCLUDE_SHARED = False
 GOOGLE_DRIVE_FOLLOW_SHORTCUTS = False
 
