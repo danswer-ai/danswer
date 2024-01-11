@@ -22,7 +22,7 @@ Your input is vital to making sure that Danswer moves in the right direction.
 Before starting on implementation, please raise a GitHub issue.
 
 And always feel free to message us (Chris Weaver / Yuhong Sun) on 
-[Slack](https://join.slack.com/t/danswer/shared_invite/zt-1u3h3ke3b-VGh1idW19R8oiNRiKBYv2w) / 
+[Slack](https://join.slack.com/t/danswer/shared_invite/zt-2afut44lv-Rw3kSWu6_OmdAXRpCv80DQ) / 
 [Discord](https://discord.gg/TDJ59cGV2X) directly about anything at all. 
 
 
@@ -40,7 +40,7 @@ Our goal is to make contributing as easy as possible. If you run into any issues
 That way we can help future contributors and users can avoid the same issue.
 
 We also have support channels and generally interesting discussions on our
-[Slack](https://join.slack.com/t/danswer/shared_invite/zt-1u3h3ke3b-VGh1idW19R8oiNRiKBYv2w)
+[Slack](https://join.slack.com/t/danswer/shared_invite/zt-2afut44lv-Rw3kSWu6_OmdAXRpCv80DQ)
 and 
 [Discord](https://discord.gg/TDJ59cGV2X).
 
