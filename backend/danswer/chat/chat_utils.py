@@ -14,6 +14,7 @@ from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.chat_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
+from danswer.configs.chat_configs import STOP_STREAM_PAT
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
@@ -415,13 +416,30 @@ def extract_citations_from_stream(
     tokens: Iterator[str],
     context_docs: list[LlmDoc],
     doc_id_to_rank_map: dict[str, int],
+    stop_stream: str | None = STOP_STREAM_PAT,
 ) -> Iterator[DanswerAnswerPiece | CitationInfo]:
     llm_out = ""
     max_citation_num = len(context_docs)
     curr_segment = ""
     prepend_bracket = False
     cited_inds = set()
-    for token in tokens:
+    hold = ""
+    for raw_token in tokens:
+        if stop_stream:
+            next_hold = hold + raw_token
+
+            if stop_stream in next_hold:
+                break
+
+            if next_hold == stop_stream[: len(next_hold)]:
+                hold = next_hold
+                continue
+
+            token = next_hold
+            hold = ""
+        else:
+            token = raw_token
+
         # Special case of [1][ where ][ is a single token
         # This is where the model attempts to do consecutive citations like [1][2]
         if prepend_bracket:
