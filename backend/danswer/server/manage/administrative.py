@@ -9,7 +9,6 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
-from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
 from danswer.db.connector_credential_pair import get_connector_credential_pair
@@ -22,6 +21,7 @@ from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import get_gen_ai_api_key
 from danswer.llm.utils import test_llm
@@ -100,9 +100,6 @@ def document_hidden_update(
 def validate_existing_genai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
-    if DISABLE_GENERATIVE_AI:
-        return
-
     # Only validate every so often
     check_key_time = "genai_api_key_last_check_time"
     kv_store = get_dynamic_config_store()
@@ -120,7 +117,11 @@ def validate_existing_genai_api_key(
 
     genai_api_key = get_gen_ai_api_key()
 
-    llm = get_default_llm(api_key=genai_api_key, timeout=10)
+    try:
+        llm = get_default_llm(api_key=genai_api_key, timeout=10)
+    except GenAIDisabledException:
+        return
+
     is_valid = test_llm(llm)
 
     if not is_valid:
@@ -165,6 +166,9 @@ def store_genai_api_key(
         if not is_valid:
             raise HTTPException(400, "Invalid API key provided")
 
+        get_dynamic_config_store().store(GEN_AI_API_KEY_STORAGE_KEY, request.api_key)
+    except GenAIDisabledException:
+        # If Disable Generative AI is set, no need to verify, just store the key for later use
         get_dynamic_config_store().store(GEN_AI_API_KEY_STORAGE_KEY, request.api_key)
     except RuntimeError as e:
         raise HTTPException(400, str(e))

@@ -3,7 +3,7 @@
 import { adminSearch } from "./lib";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { useState, useEffect } from "react";
-import { HagenDocument } from "@/lib/search/interfaces";
+import { DanswerDocument } from "@/lib/search/interfaces";
 import { buildDocumentSummaryDisplay } from "@/components/search/DocumentDisplay";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
 import { updateHiddenStatus } from "../lib";
@@ -23,7 +23,7 @@ const DocumentDisplay = ({
   refresh,
   setPopup,
 }: {
-  document: HagenDocument;
+  document: DanswerDocument;
   refresh: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
 }) => {
@@ -116,7 +116,7 @@ export function Explorer({
 
   const [query, setQuery] = useState(initialSearchValue || "");
   const [timeoutId, setTimeoutId] = useState<number | null>(null);
-  const [results, setResults] = useState<HagenDocument[]>([]);
+  const [results, setResults] = useState<DanswerDocument[]>([]);
 
   const filterManager = useFilters();
 
@@ -124,7 +124,8 @@ export function Explorer({
     const filters = buildFilters(
       filterManager.selectedSources,
       filterManager.selectedDocumentSets,
-      filterManager.timeRange
+      filterManager.timeRange,
+      filterManager.selectedTags
     );
     const results = await adminSearch(query, filters);
     if (results.ok) {
@@ -185,6 +186,7 @@ export function Explorer({
             {...filterManager}
             availableDocumentSets={documentSets}
             existingSources={connectors.map((connector) => connector.source)}
+            availableTags={[]}
           />
         </div>
       </div>

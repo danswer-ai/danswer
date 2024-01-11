@@ -86,7 +86,7 @@ def make_slack_api_rate_limited(
             except SlackApiError as e:
                 if e.response["error"] == "ratelimited":
                     # Handle rate limiting: get the 'Retry-After' header value and sleep for that duration
-                    retry_after = int(e.response.headers.get("Retry-After", 1))
+                    retry_after = int(e.response.headers.get("Retry-After", 1)) * 2
                     logger.info(
                         f"Slack call rate limited, retrying after {retry_after} seconds. Exception: {e}"
                     )
@@ -125,7 +125,10 @@ class SlackTextCleaner:
                 logger.exception(
                     f"Error fetching data for user {user_id}: {e.response['error']}"
                 )
-                raise
+                #raise
+
+                # prefer display name if set, since that is what is shown in Slack
+                self._id_to_name_map[user_id] = (user_id)
 
         return self._id_to_name_map[user_id]
 

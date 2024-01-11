@@ -11,11 +11,13 @@ SEMANTIC_IDENTIFIER = "semantic_identifier"
 TITLE = "title"
 SECTION_CONTINUATION = "section_continuation"
 EMBEDDINGS = "embeddings"
+TITLE_EMBEDDING = "title_embedding"
 ALLOWED_USERS = "allowed_users"
 ACCESS_CONTROL_LIST = "access_control_list"
 DOCUMENT_SETS = "document_sets"
 TIME_FILTER = "time_filter"
 METADATA = "metadata"
+METADATA_LIST = "metadata_list"
 MATCH_HIGHLIGHTS = "match_highlights"
 # stored in the `metadata` of a chunk. Used to signify that this chunk should
 # not be used for QA. For example, Google Drive file types which can't be parsed
@@ -37,6 +39,20 @@ DEFAULT_BOOST = 0
 SESSION_KEY = "session"
 QUERY_EVENT_ID = "query_event_id"
 LLM_CHUNKS = "llm_chunks"
+
+# For chunking/processing chunks
+TITLE_SEPARATOR = "\n\r\n"
+SECTION_SEPARATOR = "\n\n"
+# For combining attributes, doesn't have to be unique/perfect to work
+INDEX_SEPARATOR = "==="
+
+
+# Messages
+DISABLED_GEN_AI_MSG = (
+    "Your System Admin has disabled the Generative AI functionalities of Danswer.\n"
+    "Please contact them if you wish to have this enabled.\n"
+    "You can still use Danswer as a search engine."
+)
 
 
 class DocumentSource(str, Enum):
@@ -62,6 +78,7 @@ class DocumentSource(str, Enum):
     GONG = "gong"
     GOOGLE_SITES = "google_sites"
     ZENDESK = "zendesk"
+    LOOPIO = "loopio"
 
 
 class DocumentIndexType(str, Enum):

@@ -1,8 +1,8 @@
-import { HagenDocument } from "./search/interfaces";
+import { DanswerDocument } from "./search/interfaces";
 
-export function removeDuplicateDocs(documents: HagenDocument[]) {
+export function removeDuplicateDocs(documents: DanswerDocument[]) {
   const seen = new Set<string>();
-  const output: HagenDocument[] = [];
+  const output: DanswerDocument[] = [];
   documents.forEach((document) => {
     if (document.document_id && !seen.has(document.document_id)) {
       output.push(document);

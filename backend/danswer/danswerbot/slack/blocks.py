@@ -12,6 +12,7 @@ from slack_sdk.models.blocks import RadioButtonsElement
 from slack_sdk.models.blocks import SectionBlock
 
 from danswer.chat.models import DanswerQuote
+from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
@@ -106,8 +107,11 @@ def build_documents_blocks(
     message_id: int | None,
     num_docs_to_display: int = DANSWER_BOT_NUM_DOCS_TO_DISPLAY,
 ) -> list[Block]:
+    header_text = (
+        "Retrieved Documents" if DISABLE_GENERATIVE_AI else "Reference Documents"
+    )
     seen_docs_identifiers = set()
-    section_blocks: list[Block] = [HeaderBlock(text="Reference Documents")]
+    section_blocks: list[Block] = [HeaderBlock(text=header_text)]
     included_docs = 0
     for rank, d in enumerate(documents):
         if d.document_id in seen_docs_identifiers:
@@ -208,6 +212,9 @@ def build_qa_response_blocks(
     favor_recent: bool,
     skip_quotes: bool = False,
 ) -> list[Block]:
+    if DISABLE_GENERATIVE_AI:
+        return []
+
     quotes_blocks: list[Block] = []
 
     ai_answer_header = HeaderBlock(text="AI Answer")

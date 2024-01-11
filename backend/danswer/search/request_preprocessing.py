@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.chat_configs import DISABLE_LLM_FILTER_EXTRACTION
 from danswer.configs.chat_configs import FAVOR_RECENT_DECAY_MULTIPLIER
+from danswer.configs.model_configs import ENABLE_RERANKING_ASYNC_FLOW
 from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
-from danswer.configs.model_configs import SKIP_RERANKING
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.search.access_filters import build_access_filters_for_user
@@ -31,7 +31,7 @@ def retrieval_preprocessing(
     bypass_acl: bool = False,
     include_query_intent: bool = True,
     skip_rerank_realtime: bool = not ENABLE_RERANKING_REAL_TIME_FLOW,
-    skip_rerank_non_realtime: bool = SKIP_RERANKING,
+    skip_rerank_non_realtime: bool = not ENABLE_RERANKING_ASYNC_FLOW,
     disable_llm_filter_extraction: bool = DISABLE_LLM_FILTER_EXTRACTION,
     disable_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
     favor_recent_decay_multiplier: float = FAVOR_RECENT_DECAY_MULTIPLIER,
@@ -121,6 +121,7 @@ def retrieval_preprocessing(
         source_type=preset_filters.source_type or predicted_source_filters,
         document_set=preset_filters.document_set,
         time_cutoff=preset_filters.time_cutoff or predicted_time_cutoff,
+        tags=preset_filters.tags,  # Tags are never auto-extracted
         access_control_list=user_acl_filters,
     )
 

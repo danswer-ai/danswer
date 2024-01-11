@@ -1,4 +1,4 @@
-import { HagenDocument } from "@/lib/search/interfaces";
+import { DanswerDocument } from "@/lib/search/interfaces";
 import { Text } from "@tremor/react";
 import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
@@ -7,6 +7,7 @@ import { SelectedDocumentDisplay } from "./SelectedDocumentDisplay";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { BasicSelectable } from "@/components/BasicClickable";
 import { Message, RetrievalType } from "../interfaces";
+import { HEADER_PADDING } from "@/lib/constants";
 
 function SectionHeader({
   name,
@@ -47,19 +48,18 @@ export function DocumentSidebar({
     <div
       className={`
       flex-initial 
-      w-document-sidebar
-      border-l 
-      border-border 
       overflow-y-hidden
       flex
       flex-col
-      pt-4
+      w-full
+      h-screen
+      ${HEADER_PADDING}
       `}
       id="document-sidebar"
     >
       {popup}
 
-      <div className="h-4/6 flex flex-col">
+      <div className="h-4/6 flex flex-col mt-4">
         <div className="px-3 mb-3 flex border-b border-border">
           <SectionHeader
             name={

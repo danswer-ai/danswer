@@ -96,7 +96,7 @@ const Main = () => {
             If you don&apos;t have an access token, read the guide{" "}
             <a
               className="text-blue-500"
-              href="https://docs.Hagen.dev/connectors/github"
+              href="https://docs.danswer.dev/connectors/github"
               target="_blank"
             >
               here
@@ -195,10 +195,10 @@ const Main = () => {
             }
             validationSchema={Yup.object().shape({
               repo_owner: Yup.string().required(
-                "Please enter the owner of the repository to index e.g. Hagen-ai"
+                "Please enter the owner of the repository to index e.g. danswer-ai"
               ),
               repo_name: Yup.string().required(
-                "Please enter the name of the repository to index e.g. Hagen "
+                "Please enter the name of the repository to index e.g. danswer "
               ),
               include_prs: Yup.boolean().required(),
               include_issues: Yup.boolean().required(),

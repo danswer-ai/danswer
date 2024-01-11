@@ -1,5 +1,5 @@
 import { DateRangePickerValue } from "@tremor/react";
-import { ValidSources } from "../types";
+import { Tag, ValidSources } from "../types";
 import { Persona } from "@/app/admin/personas/interfaces";
 
 export const FlowType = {
@@ -35,7 +35,7 @@ export interface QuotesInfoPacket {
   quotes: Quote[];
 }
 
-export interface HagenDocument {
+export interface DanswerDocument {
   document_id: string;
   link: string;
   source_type: ValidSources;
@@ -45,12 +45,13 @@ export interface HagenDocument {
   hidden: boolean;
   score: number;
   match_highlights: string[];
+  metadata: { [key: string]: string };
   updated_at: string | null;
   db_doc_id?: number;
 }
 
 export interface DocumentInfoPacket {
-  top_documents: HagenDocument[];
+  top_documents: DanswerDocument[];
   predicted_flow: FlowType | null;
   predicted_search: SearchType | null;
   time_cutoff: string | null;
@@ -70,7 +71,7 @@ export interface SearchResponse {
   suggestedFlowType: FlowType | null;
   answer: string | null;
   quotes: Quote[] | null;
-  documents: HagenDocument[] | null;
+  documents: DanswerDocument[] | null;
   selectedDocIndices: number[] | null;
   error: string | null;
   queryEventId: number | null;
@@ -106,10 +107,11 @@ export interface SearchRequestArgs {
   sources: SourceMetadata[];
   documentSets: string[];
   timeRange: DateRangePickerValue | null;
+  tags: Tag[];
   persona: Persona;
   updateCurrentAnswer: (val: string) => void;
   updateQuotes: (quotes: Quote[]) => void;
-  updateDocs: (documents: HagenDocument[]) => void;
+  updateDocs: (documents: DanswerDocument[]) => void;
   updateSelectedDocIndices: (docIndices: number[]) => void;
   updateSuggestedSearchType: (searchType: SearchType) => void;
   updateSuggestedFlowType: (flowType: FlowType) => void;

@@ -13,6 +13,7 @@ from slack_sdk.web import SlackResponse
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -35,19 +36,25 @@ MessageType = dict[str, Any]
 # list of messages in a thread
 ThreadType = list[MessageType]
 
+basic_retry_wrapper = retry_builder()
+
 
 def _make_paginated_slack_api_call(
     call: Callable[..., SlackResponse], **kwargs: Any
 ) -> Generator[dict[str, Any], None, None]:
     return make_slack_api_call_paginated(
-        make_slack_api_rate_limited(make_slack_api_call_logged(call))
+        basic_retry_wrapper(
+            make_slack_api_rate_limited(make_slack_api_call_logged(call))
+        )
     )(**kwargs)
 
 
 def _make_slack_api_call(
     call: Callable[..., SlackResponse], **kwargs: Any
 ) -> SlackResponse:
-    return make_slack_api_rate_limited(make_slack_api_call_logged(call))(**kwargs)
+    return basic_retry_wrapper(
+        make_slack_api_rate_limited(make_slack_api_call_logged(call))
+    )(**kwargs)
 
 
 def get_channel_info(client: WebClient, channel_id: str) -> ChannelType:
@@ -206,12 +213,12 @@ def _filter_channels(
     # fail loudly in the case of an invalid channel so that the user
     # knows that one of the channels they've specified is typo'd or private
     all_channel_names = {channel["name"] for channel in all_channels}
-    #for channel in channels_to_connect:
-    #    if channel not in all_channel_names:
-    #        raise ValueError(
-    #            f"Channel '{channel}' not found in workspace. "
-    #            f"Available channels: {all_channel_names}"
-    #        )
+    for channel in channels_to_connect:
+        if channel not in all_channel_names:
+            raise ValueError(
+                f"Channel '{channel}' not found in workspace. "
+                f"Available channels: {all_channel_names}"
+            )
 
     return [
         channel for channel in all_channels if channel["name"] in channels_to_connect
@@ -435,3 +442,4 @@ if __name__ == "__main__":
     document_batches = connector.poll_source(one_day_ago, current)
 
     print(next(document_batches))
+

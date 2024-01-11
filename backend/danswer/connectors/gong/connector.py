@@ -206,9 +206,6 @@ class GongConnector(LoadConnector, PollConnector):
                 speaker_to_name: dict[str, str] = {}
 
                 transcript_text = ""
-                if call_title:
-                    transcript_text += f"Call Title: {call_title}\n\n"
-
                 call_purpose = call_metadata["purpose"]
                 if call_purpose:
                     transcript_text += f"Call Description: {call_purpose}\n\n"
@@ -234,6 +231,11 @@ class GongConnector(LoadConnector, PollConnector):
                     )
                     transcript_text += f"{speaker_name}: {monolog}\n\n"
 
+                metadata = {}
+                if call_metadata.get("system"):
+                    metadata["client"] = call_metadata.get("system")
+                # TODO calls have a clientUniqueId field, can pull that in later
+
                 doc_batch.append(
                     Document(
                         id=call_id,
@@ -246,7 +248,7 @@ class GongConnector(LoadConnector, PollConnector):
                         doc_updated_at=datetime.fromisoformat(call_time_str).astimezone(
                             timezone.utc
                         ),
-                        metadata={},
+                        metadata={"client": call_metadata.get("system")},
                     )
                 )
             yield doc_batch

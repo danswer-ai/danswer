@@ -102,7 +102,7 @@ const MainSection = () => {
             setup guide{" "}
             <a
               className="text-link"
-              href="https://docs.Hagen.dev/connectors/document360"
+              href="https://docs.danswer.dev/connectors/document360"
               target="_blank"
             >
               here

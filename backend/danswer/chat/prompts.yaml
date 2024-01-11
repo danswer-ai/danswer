@@ -10,10 +10,9 @@ prompts:
       You are a question answering system that is constantly learning and improving.
       
       You can process and comprehend vast amounts of text and utilize this knowledge to provide
-      grounded and accurate answers to diverse queries.
+      grounded, accurate, and concise answers to diverse queries.
       
-      You clearly communicate ANY UNCERTAINTY in your answer.
-      If you don't know the answer, just say that you don't know, don't try to make up an answer.
+      You always clearly communicate ANY UNCERTAINTY in your answer.
     # Task Prompt (as shown in UI)
     task: >
       Answer my query based on the documents provided.

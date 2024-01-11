@@ -12,6 +12,7 @@ import {
   HubSpotIcon,
   JiraIcon,
   LinearIcon,
+  LoopioIcon,
   NotionIcon,
   ProductboardIcon,
   RequestTrackerIcon,
@@ -132,6 +133,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   requesttracker: {
     icon: RequestTrackerIcon,
     displayName: "Request Tracker",
+    category: SourceCategory.AppConnection,
+  },
+  loopio: {
+    icon: LoopioIcon,
+    displayName: "Loopio",
     category: SourceCategory.AppConnection,
   },
 };

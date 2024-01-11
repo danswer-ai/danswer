@@ -29,6 +29,7 @@ export type ValidSources =
   | "requesttracker"
   | "file"
   | "google_sites"
+  | "loopio"
   | "zendesk";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
@@ -107,6 +108,10 @@ export interface GuruConfig {}
 
 export interface GongConfig {
   workspaces?: string[];
+}
+
+export interface LoopioConfig {
+  loopio_stack_name?: string;
 }
 
 export interface FileConfig {
@@ -239,6 +244,12 @@ export interface GongCredentialJson {
   gong_access_key_secret: string;
 }
 
+export interface LoopioCredentialJson {
+  loopio_subdomain: string;
+  loopio_client_id: string;
+  loopio_client_token: string;
+}
+
 export interface LinearCredentialJson {
   linear_api_key: string;
 }
@@ -286,6 +297,12 @@ export interface DocumentSet {
   description: string;
   cc_pair_descriptors: CCPairDescriptor<any, any>[];
   is_up_to_date: boolean;
+}
+
+export interface Tag {
+  tag_key: string;
+  tag_value: string;
+  source: ValidSources;
 }
 
 // SLACK BOT CONFIGS

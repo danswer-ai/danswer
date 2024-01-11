@@ -14,6 +14,7 @@ from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_st
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
@@ -94,26 +95,24 @@ class ProductboardConnector(PollConnector):
         for feature in self._fetch_documents(
             initial_link=f"{_PRODUCT_BOARD_BASE_URL}/features"
         ):
+            owner = self._get_owner_email(feature)
+            experts = [BasicExpertInfo(email=owner)] if owner else None
+
             yield Document(
                 id=feature["id"],
                 sections=[
                     Section(
                         link=feature["links"]["html"],
-                        text=" - ".join(
-                            (
-                                feature["name"],
-                                self._parse_description_html(feature["description"]),
-                            )
-                        ),
+                        text=self._parse_description_html(feature["description"]),
                     )
                 ],
                 semantic_identifier=feature["name"],
                 source=DocumentSource.PRODUCTBOARD,
                 doc_updated_at=time_str_to_utc(feature["updatedAt"]),
+                primary_owners=experts,
                 metadata={
-                    "productboard_entity_type": feature["type"],
+                    "entity_type": feature["type"],
                     "status": feature["status"]["name"],
-                    "owner": self._get_owner_email(feature),
                 },
             )
 
@@ -122,25 +121,23 @@ class ProductboardConnector(PollConnector):
         for component in self._fetch_documents(
             initial_link=f"{_PRODUCT_BOARD_BASE_URL}/components"
         ):
+            owner = self._get_owner_email(component)
+            experts = [BasicExpertInfo(email=owner)] if owner else None
+
             yield Document(
                 id=component["id"],
                 sections=[
                     Section(
                         link=component["links"]["html"],
-                        text=" - ".join(
-                            (
-                                component["name"],
-                                self._parse_description_html(component["description"]),
-                            )
-                        ),
+                        text=self._parse_description_html(component["description"]),
                     )
                 ],
                 semantic_identifier=component["name"],
                 source=DocumentSource.PRODUCTBOARD,
                 doc_updated_at=time_str_to_utc(component["updatedAt"]),
+                primary_owners=experts,
                 metadata={
-                    "productboard_entity_type": "component",
-                    "owner": self._get_owner_email(component),
+                    "entity_type": "component",
                 },
             )
 
@@ -150,25 +147,23 @@ class ProductboardConnector(PollConnector):
         for product in self._fetch_documents(
             initial_link=f"{_PRODUCT_BOARD_BASE_URL}/products"
         ):
+            owner = self._get_owner_email(product)
+            experts = [BasicExpertInfo(email=owner)] if owner else None
+
             yield Document(
                 id=product["id"],
                 sections=[
                     Section(
                         link=product["links"]["html"],
-                        text=" - ".join(
-                            (
-                                product["name"],
-                                self._parse_description_html(product["description"]),
-                            )
-                        ),
+                        text=self._parse_description_html(product["description"]),
                     )
                 ],
                 semantic_identifier=product["name"],
                 source=DocumentSource.PRODUCTBOARD,
                 doc_updated_at=time_str_to_utc(product["updatedAt"]),
+                primary_owners=experts,
                 metadata={
-                    "productboard_entity_type": "product",
-                    "owner": self._get_owner_email(product),
+                    "entity_type": "product",
                 },
             )
 
@@ -176,26 +171,24 @@ class ProductboardConnector(PollConnector):
         for objective in self._fetch_documents(
             initial_link=f"{_PRODUCT_BOARD_BASE_URL}/objectives"
         ):
+            owner = self._get_owner_email(objective)
+            experts = [BasicExpertInfo(email=owner)] if owner else None
+
             yield Document(
                 id=objective["id"],
                 sections=[
                     Section(
                         link=objective["links"]["html"],
-                        text=" - ".join(
-                            (
-                                objective["name"],
-                                self._parse_description_html(objective["description"]),
-                            )
-                        ),
+                        text=self._parse_description_html(objective["description"]),
                     )
                 ],
                 semantic_identifier=objective["name"],
                 source=DocumentSource.PRODUCTBOARD,
                 doc_updated_at=time_str_to_utc(objective["updatedAt"]),
+                primary_owners=experts,
                 metadata={
-                    "productboard_entity_type": "release",
+                    "entity_type": "release",
                     "state": objective["state"],
-                    "owner": self._get_owner_email(objective),
                 },
             )
 

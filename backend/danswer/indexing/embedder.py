@@ -21,6 +21,9 @@ def embed_chunks(
     enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
     passage_prefix: str = ASYM_PASSAGE_PREFIX,
 ) -> list[IndexChunk]:
+    # Cache the Title embeddings to only have to do it once
+    title_embed_dict: dict[str, list[float]] = {}
+
     embedded_chunks: list[IndexChunk] = []
     if embedding_model is None:
         embedding_model = EmbeddingModel()
@@ -58,12 +61,24 @@ def embed_chunks(
         chunk_embeddings = embeddings[
             embedding_ind_start : embedding_ind_start + num_embeddings
         ]
+
+        title = chunk.source_document.get_title_for_document_index()
+
+        title_embedding = None
+        if title:
+            if title in title_embed_dict:
+                title_embedding = title_embed_dict[title]
+            else:
+                title_embedding = embedding_model.encode([title])[0]
+                title_embed_dict[title] = title_embedding
+
         new_embedded_chunk = IndexChunk(
             **{k: getattr(chunk, k) for k in chunk.__dataclass_fields__},
             embeddings=ChunkEmbedding(
                 full_embedding=chunk_embeddings[0],
                 mini_chunk_embeddings=chunk_embeddings[1:],
             ),
+            title_embedding=title_embedding,
         )
         embedded_chunks.append(new_embedded_chunk)
         embedding_ind_start += num_embeddings

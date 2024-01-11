@@ -47,7 +47,6 @@ from danswer.db.credentials import create_initial_public_credential
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llm
-from danswer.one_shot_answer.factory import get_default_qa_model
 from danswer.search.search_nlp_models import warm_up_models
 from danswer.server.danswer_api.ingestion import get_danswer_api_key
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
@@ -232,6 +231,9 @@ def get_application() -> FastAPI:
             if GEN_AI_API_ENDPOINT:
                 logger.info(f"Using LLM Endpoint: {GEN_AI_API_ENDPOINT}")
 
+            # Any additional model configs logged here
+            get_default_llm().log_model_configs()
+
         if MULTILINGUAL_QUERY_EXPANSION:
             logger.info(
                 f"Using multilingual flow with languages: {MULTILINGUAL_QUERY_EXPANSION}"
@@ -258,10 +260,6 @@ def get_application() -> FastAPI:
             else:
                 logger.info("GPU is not available")
             logger.info(f"Torch Threads: {torch.get_num_threads()}")
-
-        # This is for the LLM, most LLMs will not need warming up
-        get_default_llm().log_model_configs()
-        get_default_qa_model().warm_up_model()
 
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")
         nltk.download("stopwords", quiet=True)

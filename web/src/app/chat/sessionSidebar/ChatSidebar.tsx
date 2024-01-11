@@ -18,6 +18,7 @@ import Image from "next/image";
 import { ChatSessionDisplay } from "./SessionDisplay";
 import { ChatSession } from "../interfaces";
 import { groupSessionsByDateRange } from "../lib";
+import { HEADER_PADDING } from "@/lib/constants";
 
 interface ChatSidebarProps {
   existingChats: ChatSession[];
@@ -69,26 +70,16 @@ export const ChatSidebar = ({
       className={`
         w-72
         2xl:w-80
+        ${HEADER_PADDING}
         border-r 
         border-border 
         flex 
         flex-col 
-        h-screen 
+        h-screen
         transition-transform`}
       id="chat-sidebar"
     >
-      <Link href="/" className="ml-3">
-        <div className="flex mb-4 mt-4">
-          <div className="h-[32px] w-[30px]">
-            <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
-          </div>
-          <h1 className="flex text-2xl font-bold my-auto text-emphasis ml-2">
-            Hagen
-          </h1>
-        </div>
-      </Link>
-
-      <Link href="/chat" className="mx-3">
+      <Link href="/chat" className="mx-3 mt-5">
         <BasicClickable fullWidth>
           <div className="flex text-sm">
             <FiPlusSquare className="my-auto mr-2" /> New Chat
@@ -178,14 +169,14 @@ export const ChatSidebar = ({
             </div>
           )}
           <BasicSelectable fullWidth selected={false}>
-            <
+            <div
               onClick={() => setUserInfoVisible(!userInfoVisible)}
               className="flex h-8"
             >
-              <div div style={{ display: 'none' }} className="my-auto mr-2 bg-user rounded-lg px-1.5">
+              <div className="my-auto mr-2 bg-user rounded-lg px-1.5">
                 {user && user.email ? user.email[0].toUpperCase() : "A"}
               </div>
-              <p div style={{ display: 'none' }} className="my-auto">
+              <p className="my-auto">
                 {user ? user.email : "Anonymous Possum"}
               </p>
               <FiMoreHorizontal className="my-auto ml-auto mr-2" size={20} />

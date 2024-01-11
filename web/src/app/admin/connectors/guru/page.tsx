@@ -73,7 +73,7 @@ const Main = () => {
     <>
       {popup}
       <Text>
-        This connector allows you to sync all your Guru Cards into Hagen.
+        This connector allows you to sync all your Guru Cards into Danswer.
       </Text>
 
       <Title className="mb-2 mt-6 ml-auto mr-auto">

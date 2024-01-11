@@ -20,7 +20,6 @@ APP_API_PREFIX = os.environ.get("API_PREFIX", "")
 #####
 BLURB_SIZE = 128  # Number Encoder Tokens included in the chunk blurb
 GENERATIVE_MODEL_ACCESS_CHECK_FREQ = 86400  # 1 day
-# CURRENTLY DOES NOT FULLY WORK, DON'T USE THIS
 DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "true"
 
 
@@ -28,6 +27,9 @@ DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "
 # Web Configs
 #####
 # WEB_DOMAIN is used to set the redirect_uri after login flows
+# NOTE: if you are having problems accessing the Danswer web UI locally (especially
+# on Windows, try  setting this to `http://127.0.0.1:3000` instead and see if that
+# fixes it)
 WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
 
 

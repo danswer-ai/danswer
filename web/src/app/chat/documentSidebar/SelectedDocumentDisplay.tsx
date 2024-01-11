@@ -1,12 +1,12 @@
 import { SourceIcon } from "@/components/SourceIcon";
-import { HagenDocument } from "@/lib/search/interfaces";
+import { DanswerDocument } from "@/lib/search/interfaces";
 import { DocumentSelector } from "./DocumentSelector";
 
 export function SelectedDocumentDisplay({
   document,
   handleDeselect,
 }: {
-  document: HagenDocument;
+  document: DanswerDocument;
   handleDeselect: (documentId: string) => void;
 }) {
   return (

@@ -1,4 +1,3 @@
-import time
 import itertools
 from collections.abc import Iterator
 from datetime import datetime
@@ -25,27 +24,6 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-def _check_rate_limit(github_client: Github):
-
-    # HACK to get the repo to load 
-    # Getting a rate_limit error and time is runnign out 
-    # for the Holidays! 
-    #
-    # Ho ho ho, bring a bottle of rum
-    # Ho ho ho, cream and whiskey bourbon
-    # Ho ho ho, bring a bottle of booze
-    # We got nothing to lose, ho ho ho
-    #time.sleep(0.5)
-
-    rate_limit = github_client.get_rate_limit().core
-    logger.debug(f"Rate Limit: {rate_limit}")
-    if rate_limit.remaining < 10:
-        reset_time = rate_limit.reset.timestamp()
-        sleep_duration = reset_time - time.time()
-        if sleep_duration > 0:
-            logger.warning(f"Rate limit exceeded. Sleeping for {sleep_duration} seconds.")
-            time.sleep(sleep_duration)
-
 
 def _batch_github_objects(
     git_objs: PaginatedList, batch_size: int
@@ -59,10 +37,9 @@ def _batch_github_objects(
 
 
 def _convert_pr_to_document(pull_request: PullRequest) -> Document:
-    full_context = f"Pull-Request {pull_request.title}\n{pull_request.body}"
     return Document(
         id=pull_request.html_url,
-        sections=[Section(link=pull_request.html_url, text=full_context)],
+        sections=[Section(link=pull_request.html_url, text=pull_request.body or "")],
         source=DocumentSource.GITHUB,
         semantic_identifier=pull_request.title,
         # updated_at is UTC time but is timezone unaware, explicitly add UTC
@@ -70,7 +47,7 @@ def _convert_pr_to_document(pull_request: PullRequest) -> Document:
         # due to local time discrepancies with UTC
         doc_updated_at=pull_request.updated_at.replace(tzinfo=timezone.utc),
         metadata={
-            "merged": pull_request.merged,
+            "merged": str(pull_request.merged),
             "state": pull_request.state,
         },
     )
@@ -82,10 +59,9 @@ def _fetch_issue_comments(issue: Issue) -> str:
 
 
 def _convert_issue_to_document(issue: Issue) -> Document:
-    full_context = f"Issue {issue.title}\n{issue.body}"
     return Document(
         id=issue.html_url,
-        sections=[Section(link=issue.html_url, text=full_context)],
+        sections=[Section(link=issue.html_url, text=issue.body or "")],
         source=DocumentSource.GITHUB,
         semantic_identifier=issue.title,
         # updated_at is UTC time but is timezone unaware
@@ -123,8 +99,6 @@ class GithubConnector(LoadConnector, PollConnector):
     ) -> GenerateDocumentsOutput:
         if self.github_client is None:
             raise ConnectorMissingCredentialError("GitHub")
-        
-        _check_rate_limit(self.github_client)
 
         repo = self.github_client.get_repo(f"{self.repo_owner}/{self.repo_name}")
 

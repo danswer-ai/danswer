@@ -249,7 +249,7 @@ export const DriveJsonUploadSection = ({
         <a
           className="text-link"
           target="_blank"
-          href="https://docs.Hagen.dev/connectors/google_drive#authorization"
+          href="https://docs.danswer.dev/connectors/google_drive#authorization"
         >
           here
         </a>{" "}
@@ -272,6 +272,7 @@ interface DriveCredentialSectionProps {
   appCredentialData?: { client_id: string };
   setPopup: (popupSpec: PopupSpec | null) => void;
   refreshCredentials: () => void;
+  connectorExists: boolean;
 }
 
 export const DriveOAuthSection = ({
@@ -281,6 +282,7 @@ export const DriveOAuthSection = ({
   appCredentialData,
   setPopup,
   refreshCredentials,
+  connectorExists,
 }: DriveCredentialSectionProps) => {
   const router = useRouter();
 
@@ -294,6 +296,14 @@ export const DriveOAuthSection = ({
         </p>
         <Button
           onClick={async () => {
+            if (connectorExists) {
+              setPopup({
+                message:
+                  "Cannot revoke access to Google Drive while any connector is still setup. Please delete all connectors, then try again.",
+                type: "error",
+              });
+              return;
+            }
             await adminDeleteCredential(existingCredential.id);
             setPopup({
               message: "Successfully revoked access to Google Drive!",
@@ -312,7 +322,7 @@ export const DriveOAuthSection = ({
     return (
       <div>
         <p className="text-sm mb-2">
-          When using a Google Drive Service Account, you can either have Hagen
+          When using a Google Drive Service Account, you can either have Danswer
           act as the service account itself OR you can specify an account for
           the service account to impersonate.
           <br />
@@ -368,7 +378,7 @@ export const DriveOAuthSection = ({
                 <TextFormField
                   name="google_drive_delegated_user"
                   label="[Optional] User email to impersonate:"
-                  subtext="If left blank, Hagen will use the service account itself."
+                  subtext="If left blank, Danswer will use the service account itself."
                 />
                 <div className="flex">
                   <button
