@@ -144,7 +144,7 @@ const Main = () => {
             To use the Confluence connector, first follow the guide{" "}
             <a
               className="text-link"
-              href="https://docs.Hagen.dev/connectors/confluence#setting-up"
+              href="https://docs.danswer.dev/connectors/confluence#setting-up"
               target="_blank"
             >
               here
@@ -196,7 +196,7 @@ const Main = () => {
             index the ENTIRE SPACE, not just the specified page. For example,
             entering{" "}
             <i>
-              https://Hagen.atlassian.net/wiki/spaces/Engineering/overview
+              https://danswer.atlassian.net/wiki/spaces/Engineering/overview
             </i>{" "}
             and clicking the Index button will index the whole{" "}
             <i>Engineering</i> Confluence space.
@@ -279,7 +279,7 @@ const Main = () => {
               }
               validationSchema={Yup.object().shape({
                 wiki_page_url: Yup.string().required(
-                  "Please enter any link to your confluence e.g. https://Hagen.atlassian.net/wiki/spaces/Engineering/overview"
+                  "Please enter any link to your confluence e.g. https://danswer.atlassian.net/wiki/spaces/Engineering/overview"
                 ),
               })}
               initialValues={{

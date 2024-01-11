@@ -21,7 +21,7 @@ export const getAuthTypeMetadataSS = async (): Promise<AuthTypeMetadata> => {
   const authType = data.auth_type as AuthType;
 
   // for SAML / OIDC, we auto-redirect the user to the IdP when the user visits
-  // Hagen in an un-authenticated state
+  // Danswer in an un-authenticated state
   if (authType === "oidc" || authType === "saml") {
     return {
       authType,

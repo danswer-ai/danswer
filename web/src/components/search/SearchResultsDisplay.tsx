@@ -2,7 +2,7 @@
 
 import React from "react";
 import {
-  HagenDocument,
+  DanswerDocument,
   SearchResponse,
   Quote,
   FlowType,
@@ -20,7 +20,7 @@ import { AlertIcon } from "../icons/icons";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 
 const getSelectedDocumentIds = (
-  documents: HagenDocument[],
+  documents: DanswerDocument[],
   selectedIndices: number[]
 ) => {
   const selectedDocumentIds = new Set<string>();

@@ -1,4 +1,4 @@
-import { HagenDocument } from "@/lib/search/interfaces";
+import { DanswerDocument } from "@/lib/search/interfaces";
 import { Text } from "@tremor/react";
 import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
@@ -48,19 +48,12 @@ export function DocumentSidebar({
     <div
       className={`
       flex-initial 
-      w-document-sidebar
-      border-l 
-      border-border 
       overflow-y-hidden
       flex
       flex-col
-<<<<<<< HEAD
-      pt-4
-=======
       w-full
       h-screen
       ${HEADER_PADDING}
->>>>>>> 6b6b3daab7537a1e1e36c2f3d67a7ac149954842
       `}
       id="document-sidebar"
     >

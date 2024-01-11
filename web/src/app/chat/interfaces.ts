@@ -1,4 +1,4 @@
-import { HagenDocument, Filters } from "@/lib/search/interfaces";
+import { DanswerDocument, Filters } from "@/lib/search/interfaces";
 
 export enum RetrievalType {
   None = "none",
@@ -28,7 +28,7 @@ export interface Message {
   type: "user" | "assistant" | "error";
   retrievalType?: RetrievalType;
   query?: string | null;
-  documents?: HagenDocument[] | null;
+  documents?: DanswerDocument[] | null;
   citations?: CitationMap;
 }
 
@@ -45,14 +45,14 @@ export interface BackendMessage {
   latest_child_message: number | null;
   message: string;
   rephrased_query: string | null;
-  context_docs: { top_documents: HagenDocument[] } | null;
+  context_docs: { top_documents: DanswerDocument[] } | null;
   message_type: "user" | "assistant" | "system";
   time_sent: string;
   citations: CitationMap;
 }
 
 export interface DocumentsResponse {
-  top_documents: HagenDocument[];
+  top_documents: DanswerDocument[];
   rephrased_query: string | null;
 }
 

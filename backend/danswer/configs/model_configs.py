@@ -35,9 +35,9 @@ MIN_THREADS_ML_MODELS = int(os.environ.get("MIN_THREADS_ML_MODELS") or 1)
 
 
 # Cross Encoder Settings
-# This following setting is for non-real-time-flows
-SKIP_RERANKING = os.environ.get("SKIP_RERANKING", "").lower() == "true"
-# This one is for real-time (streaming) flows
+ENABLE_RERANKING_ASYNC_FLOW = (
+    os.environ.get("ENABLE_RERANKING_ASYNC_FLOW", "").lower() == "true"
+)
 ENABLE_RERANKING_REAL_TIME_FLOW = (
     os.environ.get("ENABLE_RERANKING_REAL_TIME_FLOW", "").lower() == "true"
 )

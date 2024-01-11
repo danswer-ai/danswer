@@ -1,12 +1,12 @@
 import { BasicClickable } from "@/components/BasicClickable";
-import { HagenDocument } from "@/lib/search/interfaces";
+import { DanswerDocument } from "@/lib/search/interfaces";
 import { useState } from "react";
 import { FiBook, FiFilter } from "react-icons/fi";
 
 export function SelectedDocuments({
   selectedDocuments,
 }: {
-  selectedDocuments: HagenDocument[];
+  selectedDocuments: DanswerDocument[];
 }) {
   if (selectedDocuments.length === 0) {
     return null;

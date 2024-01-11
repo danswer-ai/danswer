@@ -9,7 +9,7 @@ import {
 import { FeedbackType } from "../types";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { HagenDocument } from "@/lib/search/interfaces";
+import { DanswerDocument } from "@/lib/search/interfaces";
 import { SearchSummary, ShowHideDocsButton } from "./SearchSummary";
 import { SourceIcon } from "@/components/SourceIcon";
 import { ThreeDots } from "react-loader-spinner";
@@ -43,7 +43,7 @@ export const AIMessage = ({
   messageId: number | null;
   content: string | JSX.Element;
   query?: string;
-  citedDocuments?: [string, HagenDocument][] | null;
+  citedDocuments?: [string, DanswerDocument][] | null;
   isComplete?: boolean;
   hasDocs?: boolean;
   handleFeedback?: (feedbackType: FeedbackType) => void;
@@ -63,7 +63,7 @@ export const AIMessage = ({
               </div>
             </div>
 
-            <div className="font-bold text-emphasis ml-2 my-auto">Yugabyte Knowledge Search by Hagen</div>
+            <div className="font-bold text-emphasis ml-2 my-auto">Hagen</div>
 
             {query === undefined &&
               hasDocs &&

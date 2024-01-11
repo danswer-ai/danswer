@@ -68,6 +68,22 @@ def multilingual_query_expansion(
         return query_rephrases
 
 
+def get_contextual_rephrase_messages(
+    question: str,
+    history_str: str,
+) -> list[dict[str, str]]:
+    messages = [
+        {
+            "role": "user",
+            "content": HISTORY_QUERY_REPHRASE.format(
+                question=question, chat_history=history_str
+            ),
+        },
+    ]
+
+    return messages
+
+
 def history_based_query_rephrase(
     query_message: ChatMessage,
     history: list[ChatMessage],
@@ -76,21 +92,6 @@ def history_based_query_rephrase(
     punctuation_heuristic: int = 10,
     skip_first_rephrase: bool = False,
 ) -> str:
-    def _get_history_rephrase_messages(
-        question: str,
-        history_str: str,
-    ) -> list[dict[str, str]]:
-        messages = [
-            {
-                "role": "user",
-                "content": HISTORY_QUERY_REPHRASE.format(
-                    question=question, chat_history=history_str
-                ),
-            },
-        ]
-
-        return messages
-
     user_query = cast(str, query_message.message)
 
     if not user_query:

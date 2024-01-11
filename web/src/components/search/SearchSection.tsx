@@ -6,7 +6,7 @@ import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SourceSelector } from "./filtering/Filters";
 import { Connector, DocumentSet, Tag } from "@/lib/types";
 import {
-  HagenDocument,
+  DanswerDocument,
   Quote,
   SearchResponse,
   FlowType,
@@ -97,7 +97,7 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       quotes,
     }));
-  const updateDocs = (documents: HagenDocument[]) =>
+  const updateDocs = (documents: DanswerDocument[]) =>
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
       documents,

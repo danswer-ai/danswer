@@ -1,6 +1,6 @@
 import {
   AnswerPiecePacket,
-  HagenDocument,
+  DanswerDocument,
   DocumentInfoPacket,
   ErrorMessagePacket,
   LLMRelevanceFilterPacket,
@@ -30,7 +30,7 @@ export const searchRequestStreamed = async ({
 }: SearchRequestArgs) => {
   let answer = "";
   let quotes: Quote[] | null = null;
-  let relevantDocuments: HagenDocument[] | null = null;
+  let relevantDocuments: DanswerDocument[] | null = null;
   try {
     const filters = buildFilters(sources, documentSets, timeRange, tags);
 
@@ -43,7 +43,7 @@ export const searchRequestStreamed = async ({
     const response = await fetch("/api/query/stream-answer-with-quote", {
       method: "POST",
       body: JSON.stringify({
-        query,
+        messages: [threadMessage],
         persona_id: persona.id,
         prompt_id: persona.id === 0 ? null : persona.prompts[0]?.id,
         retrieval_options: {
@@ -116,7 +116,7 @@ export const searchRequestStreamed = async ({
         // These all come together
         if (Object.hasOwn(chunk, "top_documents")) {
           chunk = chunk as DocumentInfoPacket;
-          const topDocuments = chunk.top_documents as HagenDocument[] | null;
+          const topDocuments = chunk.top_documents as DanswerDocument[] | null;
           if (topDocuments) {
             relevantDocuments = topDocuments;
             updateDocs(relevantDocuments);

@@ -1,4 +1,4 @@
-import { HagenDocument } from "@/lib/search/interfaces";
+import { DanswerDocument } from "@/lib/search/interfaces";
 import { DocumentFeedbackBlock } from "./DocumentFeedbackBlock";
 import { useState } from "react";
 import { PopupSpec } from "../admin/connectors/Popup";
@@ -132,7 +132,7 @@ export function DocumentMetadataBlock({
 }
 
 interface DocumentDisplayProps {
-  document: HagenDocument;
+  document: DanswerDocument;
   queryEventId: number | null;
   isSelected: boolean;
   setPopup: (popupSpec: PopupSpec | null) => void;

@@ -10,9 +10,9 @@ from danswer.llm.factory import get_default_llm
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import dict_based_prompt_to_langchain_prompt
 from danswer.llm.utils import translate_danswer_msg_to_langchain
+from danswer.prompts.chat_prompts import AGGRESSIVE_SEARCH_TEMPLATE
 from danswer.prompts.chat_prompts import NO_SEARCH
 from danswer.prompts.chat_prompts import REQUIRE_SEARCH_HINT
-from danswer.prompts.chat_prompts import REQUIRE_SEARCH_SINGLE_MSG
 from danswer.prompts.chat_prompts import REQUIRE_SEARCH_SYSTEM_MSG
 from danswer.prompts.chat_prompts import SKIP_SEARCH
 from danswer.utils.logger import setup_logger
@@ -58,9 +58,9 @@ def check_if_need_search(
         messages = [
             {
                 "role": "user",
-                "content": REQUIRE_SEARCH_SINGLE_MSG.format(
+                "content": AGGRESSIVE_SEARCH_TEMPLATE.format(
                     final_query=question, chat_history=history_str
-                ),
+                ).strip(),
             },
         ]
 

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FiRefreshCcw, FiSend, FiStopCircle } from "react-icons/fi";
 import { AIMessage, HumanMessage } from "./message/Messages";
-import { AnswerPiecePacket, HagenDocument } from "@/lib/search/interfaces";
+import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
 import {
   BackendChatSession,
   BackendMessage,
@@ -18,6 +18,7 @@ import {
   createChatSession,
   getCitedDocumentsFromMessage,
   getHumanAndAIMessageFromMessageNumber,
+  getLastSuccessfulMessageId,
   handleAutoScroll,
   handleChatFeedback,
   nameChatSession,
@@ -135,7 +136,7 @@ export const Chat = ({
         selectedMessageForDocDisplay
       )
     : { aiMessage: null };
-  const [selectedDocuments, setSelectedDocuments] = useState<HagenDocument[]>(
+  const [selectedDocuments, setSelectedDocuments] = useState<DanswerDocument[]>(
     []
   );
 
@@ -185,7 +186,6 @@ export const Chat = ({
   });
 
   // scroll to bottom initially
-  console.log(shouldhideBeforeScroll);
   const [hasPerformedInitialScroll, setHasPerformedInitialScroll] = useState(
     shouldhideBeforeScroll !== true
   );
@@ -289,16 +289,15 @@ export const Chat = ({
       selectedDocuments.length > 0
         ? RetrievalType.SelectedDocs
         : RetrievalType.None;
-    let documents: HagenDocument[] = selectedDocuments;
+    let documents: DanswerDocument[] = selectedDocuments;
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
     try {
+      const lastSuccessfulMessageId =
+        getLastSuccessfulMessageId(currMessageHistory);
       for await (const packetBunch of sendMessage({
         message: currMessage,
-        parentMessageId:
-          currMessageHistory.length > 0
-            ? currMessageHistory[currMessageHistory.length - 1].messageId
-            : null,
+        parentMessageId: lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
         promptId: selectedPersona?.prompts[0]?.id || 0,
         filters: buildFilters(
@@ -421,7 +420,7 @@ export const Chat = ({
   };
 
   return (
-    <div className="flex w-full overflow-x-hidden">
+    <div className="flex w-full overflow-x-hidden" ref={masterFlexboxRef}>
       {popup}
       {currentFeedback && (
         <FeedbackModal
@@ -575,9 +574,29 @@ export const Chat = ({
                   }
                 })}
 
-            <div ref={endDivRef} />
-          </div>
-        </div>
+                {isStreaming &&
+                  messageHistory.length &&
+                  messageHistory[messageHistory.length - 1].type === "user" && (
+                    <div key={messageHistory.length}>
+                      <AIMessage
+                        messageId={null}
+                        content={
+                          <div className="text-sm my-auto">
+                            <ThreeDots
+                              height="30"
+                              width="50"
+                              color="#3b82f6"
+                              ariaLabel="grid-loading"
+                              radius="12.5"
+                              wrapperStyle={{}}
+                              wrapperClass=""
+                              visible={true}
+                            />
+                          </div>
+                        }
+                      />
+                    </div>
+                  )}
 
                 {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                 <div className={`min-h-[200px] w-full`}></div>
@@ -709,13 +728,7 @@ export const Chat = ({
             <DanswerInitializingLoader />
           </div>
         </div>
-      </div>
-
-      <DocumentSidebar
-        selectedMessage={aiMessage}
-        selectedDocuments={selectedDocuments}
-        setSelectedDocuments={setSelectedDocuments}
-      />
+      )}
     </div>
   );
 };

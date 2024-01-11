@@ -1,5 +1,6 @@
 import math
 import re
+from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterator
 from json.decoder import JSONDecodeError
@@ -13,7 +14,11 @@ from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import DanswerQuote
 from danswer.chat.models import DanswerQuotes
 from danswer.configs.chat_configs import QUOTE_ALLOWED_ERROR_PERCENT
+from danswer.configs.constants import MessageType
+from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.indexing.models import InferenceChunk
+from danswer.llm.utils import get_default_llm_token_encode
+from danswer.one_shot_answer.models import ThreadMessage
 from danswer.prompts.constants import ANSWER_PAT
 from danswer.prompts.constants import QUOTE_PAT
 from danswer.prompts.constants import UNCERTAINTY_PAT
@@ -270,3 +275,41 @@ def simulate_streaming_response(model_out: str) -> Generator[str, None, None]:
     """Mock streaming by generating the passed in model output, character by character"""
     for token in model_out:
         yield token
+
+
+def combine_message_thread(
+    messages: list[ThreadMessage],
+    token_limit: int | None = GEN_AI_HISTORY_CUTOFF,
+    llm_tokenizer: Callable | None = None,
+) -> str:
+    """Used to create a single combined message context from threads"""
+    message_strs: list[str] = []
+    total_token_count = 0
+    if llm_tokenizer is None:
+        llm_tokenizer = get_default_llm_token_encode()
+
+    for message in reversed(messages):
+        if message.role == MessageType.USER:
+            role_str = message.role.value.upper()
+            if message.sender:
+                role_str += " " + message.sender
+            else:
+                # Since other messages might have the user identifying information
+                # better to use Unknown for symmetry
+                role_str += " Unknown"
+        else:
+            role_str = message.role.value.upper()
+
+        msg_str = f"{role_str}:\n{message.message}"
+        message_token_count = len(llm_tokenizer(msg_str))
+
+        if (
+            token_limit is not None
+            and total_token_count + message_token_count > token_limit
+        ):
+            break
+
+        message_strs.insert(0, msg_str)
+        total_token_count += message_token_count
+
+    return "\n\n".join(message_strs)

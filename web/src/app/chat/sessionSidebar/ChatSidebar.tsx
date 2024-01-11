@@ -169,14 +169,14 @@ export const ChatSidebar = ({
             </div>
           )}
           <BasicSelectable fullWidth selected={false}>
-            <
+            <div
               onClick={() => setUserInfoVisible(!userInfoVisible)}
               className="flex h-8"
             >
-              <div div style={{ display: 'none' }} className="my-auto mr-2 bg-user rounded-lg px-1.5">
+              <div className="my-auto mr-2 bg-user rounded-lg px-1.5">
                 {user && user.email ? user.email[0].toUpperCase() : "A"}
               </div>
-              <p div style={{ display: 'none' }} className="my-auto">
+              <p className="my-auto">
                 {user ? user.email : "Anonymous Possum"}
               </p>
               <FiMoreHorizontal className="my-auto ml-auto mr-2" size={20} />

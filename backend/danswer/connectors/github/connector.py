@@ -1,4 +1,3 @@
-import time
 import itertools
 from collections.abc import Iterator
 from datetime import datetime
@@ -24,27 +23,6 @@ from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
-
-def _check_rate_limit(github_client: Github):
-
-    # HACK to get the repo to load 
-    # Getting a rate_limit error and time is runnign out 
-    # for the Holidays! 
-    #
-    # Ho ho ho, bring a bottle of rum
-    # Ho ho ho, cream and whiskey bourbon
-    # Ho ho ho, bring a bottle of booze
-    # We got nothing to lose, ho ho ho
-    #time.sleep(0.5)
-
-    rate_limit = github_client.get_rate_limit().core
-    logger.debug(f"Rate Limit: {rate_limit}")
-    if rate_limit.remaining < 10:
-        reset_time = rate_limit.reset.timestamp()
-        sleep_duration = reset_time - time.time()
-        if sleep_duration > 0:
-            logger.warning(f"Rate limit exceeded. Sleeping for {sleep_duration} seconds.")
-            time.sleep(sleep_duration)
 
 
 def _batch_github_objects(
@@ -121,8 +99,6 @@ class GithubConnector(LoadConnector, PollConnector):
     ) -> GenerateDocumentsOutput:
         if self.github_client is None:
             raise ConnectorMissingCredentialError("GitHub")
-        
-        _check_rate_limit(self.github_client)
 
         repo = self.github_client.get_repo(f"{self.repo_owner}/{self.repo_name}")
 

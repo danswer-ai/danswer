@@ -1,6 +1,6 @@
-import { getCCPairSS } from "@/lib/ss/ccPair";
+"use client";
+
 import { CCPairFullInfo } from "./types";
-import { getErrorMsg } from "@/lib/fetchUtils";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CCPairStatus } from "@/components/Status";
 import { BackButton } from "@/components/BackButton";
@@ -10,7 +10,6 @@ import { Text } from "@tremor/react";
 import { ConfigDisplay } from "./ConfigDisplay";
 import { ModifyStatusButtonCluster } from "./ModifyStatusButtonCluster";
 import { DeletionButton } from "./DeletionButton";
-import { SSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { ReIndexButton } from "./ReIndexButton";
 import { isCurrentlyDeleting } from "@/lib/documentDeletion";
@@ -35,9 +34,11 @@ function Main({ ccPairId }: { ccPairId: number }) {
     errorHandlingFetcher
   );
 
-  const ccPairResponse = await getCCPairSS(ccPairId);
-  if (!ccPairResponse.ok) {
-    const errorMsg = await getErrorMsg(ccPairResponse);
+  if (isLoading) {
+    return <ThreeDotsLoader />;
+  }
+
+  if (error || !ccPair) {
     return (
       <ErrorCallout
         errorTitle={`Failed to fetch info on Connector with ID ${ccPairId}`}
@@ -46,7 +47,6 @@ function Main({ ccPairId }: { ccPairId: number }) {
     );
   }
 
-  const ccPair = (await ccPairResponse.json()) as CCPairFullInfo;
   const lastIndexAttempt = ccPair.index_attempts[0];
   const isDeleting = isCurrentlyDeleting(ccPair.latest_deletion_attempt);
 
@@ -107,70 +107,39 @@ function Main({ ccPairId }: { ccPairId: number }) {
           )}
         </div>
 
-        <BackButton />
-        <div className="pb-1 flex mt-1">
-          <h1 className="text-3xl text-emphasis font-bold">{ccPair.name}</h1>
-
-          <div className="ml-auto">
-            <ModifyStatusButtonCluster ccPair={ccPair} />
-          </div>
-        </div>
-
-        <CCPairStatus
-          status={lastIndexAttempt?.status || "not_started"}
-          disabled={ccPair.connector.disabled}
-          isDeleting={isDeleting}
-        />
-
-        <div className="text-sm mt-1">
-          Total Documents Indexed:{" "}
-          <b className="text-emphasis">{totalDocsIndexed}</b>
-        </div>
-
-        <Divider />
-
-        <ConfigDisplay
-          connectorSpecificConfig={ccPair.connector.connector_specific_config}
-          sourceType={ccPair.connector.source}
-        />
-        {/* NOTE: no divider / title here for `ConfigDisplay` since it is optional and we need
-        to render these conditionally.*/}
-
-        <div className="mt-6">
-          <div className="flex">
-            <Title>Indexing Attempts</Title>
-
-            {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(
-              ccPair.connector.source
-            ) && (
-              <ReIndexButton
-                connectorId={ccPair.connector.id}
-                credentialId={ccPair.credential.id}
-                isDisabled={ccPair.connector.disabled}
-              />
-            )}
-          </div>
-
-          <IndexingAttemptsTable ccPair={ccPair} />
-        </div>
-
-        <Divider />
-
-        <div className="mt-4">
-          <Title>Delete Connector</Title>
-          <Text>
-            Deleting the connector will also delete all associated documents.
-          </Text>
-
-          <div className="flex mt-16">
-            <div className="mx-auto">
-              <DeletionButton ccPair={ccPair} />
-            </div>
-          </div>
-        </div>
-
-        {/* TODO: add document search*/}
+        <IndexingAttemptsTable ccPair={ccPair} />
       </div>
+
+      <Divider />
+
+      <div className="mt-4">
+        <Title>Delete Connector</Title>
+        <Text>
+          Deleting the connector will also delete all associated documents.
+        </Text>
+
+        <div className="flex mt-16">
+          <div className="mx-auto">
+            <DeletionButton ccPair={ccPair} />
+          </div>
+        </div>
+      </div>
+
+      {/* TODO: add document search*/}
     </>
+  );
+}
+
+export default function Page({ params }: { params: { ccPairId: string } }) {
+  const ccPairId = parseInt(params.ccPairId);
+
+  return (
+    <div className="mx-auto container">
+      <div className="mb-4">
+        <HealthCheckBanner />
+      </div>
+
+      <Main ccPairId={ccPairId} />
+    </div>
   );
 }
