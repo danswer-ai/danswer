@@ -97,6 +97,21 @@ class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
     pass
 
 
+class ApiKey(Base):
+    __tablename__ = "api_key"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    hashed_api_key: Mapped[str] = mapped_column(String, unique=True)
+    api_key_display: Mapped[str] = mapped_column(String, unique=True)
+    # the ID of the "user" who represents the access credentials for the API key
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
+    # the ID of the user who owns the key
+    owner_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
 """
 Association Tables
 NOTE: must be at the top since they are referenced by other tables
