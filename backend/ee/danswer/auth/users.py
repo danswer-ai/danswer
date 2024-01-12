@@ -1,3 +1,4 @@
+from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
 from fastapi import status
@@ -6,8 +7,11 @@ from sqlalchemy.orm import Session
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.constants import AuthType
+from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.utils.logger import setup_logger
+from ee.danswer.auth.api_key import get_hashed_api_key_from_request
+from ee.danswer.db.api_key import fetch_user_for_api_key
 from ee.danswer.db.saml import get_saml_account
 from ee.danswer.utils.secrets import extract_hashed_cookie
 
@@ -36,10 +40,30 @@ async def double_check_user(
             saml_account = get_saml_account(cookie=saved_cookie, db_session=db_session)
             user = saml_account.user if saml_account else None
 
+    # check if an API key is present
+    if user is None:
+        hashed_api_key = get_hashed_api_key_from_request(request)
+        if hashed_api_key:
+            user = fetch_user_for_api_key(hashed_api_key, db_session)
+
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. User is not authenticated.",
         )
+
+    return user
+
+
+def api_key_dep(request: Request, db_session: Session = Depends(get_session)) -> User:
+    hashed_api_key = get_hashed_api_key_from_request(request)
+    if not hashed_api_key:
+        raise HTTPException(status_code=401, detail="Missing API key")
+
+    if hashed_api_key:
+        user = fetch_user_for_api_key(hashed_api_key, db_session)
+
+    if user is None:
+        raise HTTPException(status_code=401, detail="Invalid API key")
 
     return user

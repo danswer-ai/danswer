@@ -52,7 +52,6 @@ from danswer.llm.llm_initialization import load_llm_providers
 from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.search.search_nlp_models import warm_up_encoders
 from danswer.server.auth_check import check_router_auth
-from danswer.server.danswer_api.ingestion import get_danswer_api_key
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
 from danswer.server.documents.cc_pair import router as cc_pair_router
 from danswer.server.documents.connector import router as connector_router
@@ -153,10 +152,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     )
     # Will throw exception if an issue is found
     verify_auth()
-
-    # Danswer APIs key
-    api_key = get_danswer_api_key()
-    logger.info(f"Danswer API Key: {api_key}")
 
     if OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET:
         logger.info("Both OAuth Client ID and Secret are configured.")
