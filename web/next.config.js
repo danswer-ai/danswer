@@ -21,6 +21,10 @@ const nextConfig = {
               source: "/admin/groups/:path*",
               destination: "/ee/admin/groups/:path*",
             },
+            {
+              source: "/admin/api-key",
+              destination: "/ee/admin/api-key",
+            },
             // analytics / audit log pages
             {
               source: "/admin/performance/analytics",

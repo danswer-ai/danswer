@@ -194,6 +194,15 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                           ),
                           link: "/admin/groups",
                         },
+                        {
+                          name: (
+                            <div className="flex">
+                              <KeyIcon size={18} />
+                              <div className="ml-1">API Keys</div>
+                            </div>
+                          ),
+                          link: "/admin/api-key",
+                        },
                       ]
                     : []),
                 ],
