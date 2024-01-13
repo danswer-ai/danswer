@@ -36,6 +36,7 @@ psycopg2-binary==2.9.9
 pycryptodome==3.19.0
 pydantic==1.10.7
 PyGithub==1.58.2
+python-gitlab>=3.9.0
 pypdf==3.17.0
 pytest-playwright==0.3.2
 python-dotenv==1.0.0
