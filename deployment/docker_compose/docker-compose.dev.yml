@@ -73,6 +73,11 @@ services:
       - model_cache_torch:/root/.cache/torch/
       - model_cache_nltk:/root/nltk_data/
       - model_cache_huggingface:/root/.cache/huggingface/
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
   background:
     image: danswer/danswer-backend:latest
     build:
@@ -147,6 +152,11 @@ services:
       - model_cache_torch:/root/.cache/torch/
       - model_cache_nltk:/root/nltk_data/
       - model_cache_huggingface:/root/.cache/huggingface/
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
   web_server:
     image: danswer/danswer-web-server:latest
     build:
@@ -179,6 +189,11 @@ services:
       - "8081:8081"
     volumes:
       - vespa_volume:/opt/vespa/var
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
   nginx:
     image: nginx:1.23.4-alpine
     restart: always
@@ -194,6 +209,11 @@ services:
       - "3000:80"  # allow for localhost:3000 usage, since that is the norm
     volumes:
       - ../data/nginx:/etc/nginx/conf.d
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     # sleep a little bit to allow the web_server / api_server to start up. 
     # Without this we've seen issues where nginx shows no error logs but 
     # does not recieve any traffic
@@ -222,6 +242,11 @@ services:
     volumes:
       - model_cache_torch:/root/.cache/torch/
       - model_cache_huggingface:/root/.cache/huggingface/
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
 volumes:
   local_dynamic_storage:
   file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them
