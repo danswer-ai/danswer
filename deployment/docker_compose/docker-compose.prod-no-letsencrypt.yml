@@ -25,6 +25,11 @@ services:
       - model_cache_torch:/root/.cache/torch/
       - model_cache_nltk:/root/nltk_data/
       - model_cache_huggingface:/root/.cache/huggingface/
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
   background:
     image: danswer/danswer-backend:latest
     build:
@@ -47,6 +52,11 @@ services:
       - model_cache_torch:/root/.cache/torch/
       - model_cache_nltk:/root/nltk_data/
       - model_cache_huggingface:/root/.cache/huggingface/
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
   web_server:
     image: danswer/danswer-web-server:latest
     build:
@@ -61,6 +71,11 @@ services:
       - .env
     environment:
       - INTERNAL_URL=http://api_server:8080
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
   relational_db:
     image: postgres:15.2-alpine
     restart: always
@@ -69,6 +84,11 @@ services:
       - .env
     volumes:
       - db_volume:/var/lib/postgresql/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
   # This container name cannot have an underscore in it due to Vespa expectations of the URL
   index:
     image: vespaengine/vespa:8.277.17
@@ -78,6 +98,11 @@ services:
       - "8081:8081"
     volumes:
       - vespa_volume:/opt/vespa/var
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
   nginx:
     image: nginx:1.23.4-alpine
     restart: always
@@ -95,6 +120,11 @@ services:
     # sleep a little bit to allow the web_server / api_server to start up. 
     # Without this we've seen issues where nginx shows no error logs but 
     # does not recieve any traffic
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
     command: > 
       /bin/sh -c "sleep 10 && 
         envsubst '$$\{DOMAIN\} $$\{SSL_CERT_FILE_NAME\} $$\{SSL_CERT_KEY_FILE_NAME\}' < /etc/nginx/conf.d/app.conf.template.no-letsencrypt > /etc/nginx/conf.d/app.conf &&
@@ -120,6 +150,11 @@ services:
     volumes:
       - model_cache_torch:/root/.cache/torch/
       - model_cache_huggingface:/root/.cache/huggingface/
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
 volumes:
   local_dynamic_storage:
   file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them
