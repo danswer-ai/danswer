@@ -29,7 +29,7 @@ services:
       driver: json-file
       options:
         max-size: "50m"
-        max-file: "3"
+        max-file: "6"
   background:
     image: danswer/danswer-backend:latest
     build:
@@ -56,7 +56,7 @@ services:
       driver: json-file
       options:
         max-size: "50m"
-        max-file: "3"
+        max-file: "6"
   web_server:
     image: danswer/danswer-web-server:latest
     build:
@@ -75,7 +75,7 @@ services:
       driver: json-file
       options:
         max-size: "50m"
-        max-file: "3"
+        max-file: "6"
   relational_db:
     image: postgres:15.2-alpine
     restart: always
@@ -88,7 +88,7 @@ services:
       driver: json-file
       options:
         max-size: "50m"
-        max-file: "3"
+        max-file: "6"
   # This container name cannot have an underscore in it due to Vespa expectations of the URL
   index:
     image: vespaengine/vespa:8.277.17
@@ -102,7 +102,7 @@ services:
       driver: json-file
       options:
         max-size: "50m"
-        max-file: "3"
+        max-file: "6"
   nginx:
     image: nginx:1.23.4-alpine
     restart: always
@@ -125,7 +125,7 @@ services:
       driver: json-file
       options:
         max-size: "50m"
-        max-file: "3"
+        max-file: "6"
     command: > 
       /bin/sh -c "sleep 10 &&
         envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template > /etc/nginx/conf.d/app.conf &&
@@ -143,7 +143,7 @@ services:
       driver: json-file
       options:
         max-size: "50m"
-        max-file: "3"
+        max-file: "6"
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
   # Run with --profile model-server to bring up the danswer-model-server container
   model_server:
@@ -168,7 +168,7 @@ services:
       driver: json-file
       options:
         max-size: "50m"
-        max-file: "3"
+        max-file: "6"
 volumes:
   local_dynamic_storage:
   file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them

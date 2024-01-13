@@ -77,7 +77,7 @@ services:
       driver: json-file
       options:
         max-size: "50m"
-        max-file: "3"
+        max-file: "6"
   background:
     image: danswer/danswer-backend:latest
     build:
@@ -156,7 +156,7 @@ services:
       driver: json-file
       options:
         max-size: "50m"
-        max-file: "3"
+        max-file: "6"
   web_server:
     image: danswer/danswer-web-server:latest
     build:
@@ -193,7 +193,7 @@ services:
       driver: json-file
       options:
         max-size: "50m"
-        max-file: "3"
+        max-file: "6"
   nginx:
     image: nginx:1.23.4-alpine
     restart: always
@@ -213,7 +213,7 @@ services:
       driver: json-file
       options:
         max-size: "50m"
-        max-file: "3"
+        max-file: "6"
     # sleep a little bit to allow the web_server / api_server to start up. 
     # Without this we've seen issues where nginx shows no error logs but 
     # does not recieve any traffic
@@ -246,7 +246,7 @@ services:
       driver: json-file
       options:
         max-size: "50m"
-        max-file: "3"
+        max-file: "6"
 volumes:
   local_dynamic_storage:
   file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them
