@@ -223,8 +223,9 @@ def handle_message(
             time_cutoff=None,
         )
 
+        # Default True because no other ways to apply filters in Slack (no nice UI)
         auto_detect_filters = (
-            persona.llm_filter_extraction if persona is not None else False
+            persona.llm_filter_extraction if persona is not None else True
         )
         if disable_auto_detect_filters:
             auto_detect_filters = False
