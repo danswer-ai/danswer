@@ -18,6 +18,9 @@ from danswer.utils.variable_functionality import global_version
 from ee.danswer.configs.app_configs import OPENID_CONFIG_URL
 from ee.danswer.server.analytics.api import router as analytics_router
 from ee.danswer.server.api_key.api import router as api_key_router
+from ee.danswer.server.query_and_chat.query_backend import (
+    basic_router as chat_query_router,
+)
 from ee.danswer.server.query_history.api import router as query_history_router
 from ee.danswer.server.saml import router as saml_router
 from ee.danswer.server.user_group.api import router as user_group_router
@@ -57,11 +60,13 @@ def get_ee_application() -> FastAPI:
 
     # RBAC / group access control
     application.include_router(user_group_router)
-    # analytics endpoints
+    # Analytics endpoints
     application.include_router(analytics_router)
     application.include_router(query_history_router)
-    # api key management
+    # Api key management
     application.include_router(api_key_router)
+    # EE only backend APIs
+    application.include_router(chat_query_router)
 
     return application
 
