@@ -27,6 +27,7 @@ services:
       - SMTP_PORT=${SMTP_PORT:-587}  # For sending verification emails, if unspecified then defaults to '587'
       - SMTP_USER=${SMTP_USER:-}
       - SMTP_PASS=${SMTP_PASS:-}
+      - MAIL_FROM=${MAIL_FROM:-}
       # Gen AI Settings
       - GEN_AI_MODEL_PROVIDER=${GEN_AI_MODEL_PROVIDER:-openai}
       - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}

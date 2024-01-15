@@ -81,6 +81,7 @@ SMTP_SERVER = os.environ.get("SMTP_SERVER") or "smtp.gmail.com"
 SMTP_PORT = int(os.environ.get("SMTP_PORT") or "587")
 SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
 SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
+MAIL_FROM = os.environ.get("EMAIL_FROM", SMTP_USER)
 
 
 #####
