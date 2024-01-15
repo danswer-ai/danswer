@@ -29,6 +29,26 @@ logger = setup_logger()
 DANSWER_BOT_APP_ID: str | None = None
 
 
+def update_emote_react(
+    emoji: str,
+    channel: str,
+    message_ts: str | None,
+    remove: bool,
+    client: WebClient,
+) -> None:
+    if not message_ts:
+        logger.error(f"Tried to remove a react in {channel} but no message specified")
+        return
+
+    func = client.reactions_remove if remove else client.reactions_add
+    slack_call = make_slack_api_rate_limited(func)  # type: ignore
+    slack_call(
+        name=emoji,
+        channel=channel,
+        timestamp=message_ts,
+    )
+
+
 def get_danswer_bot_app_id(web_client: WebClient) -> Any:
     global DANSWER_BOT_APP_ID
     if DANSWER_BOT_APP_ID is None:
@@ -134,7 +154,7 @@ def build_feedback_id(
     return unique_prefix + ID_SEPARATOR + feedback_id
 
 
-def decompose_feedback_id(feedback_id: str) -> tuple[int, str | None, int | None]:
+def decompose_action_id(feedback_id: str) -> tuple[int, str | None, int | None]:
     """Decompose into query_id, document_id, document_rank, see above function"""
     try:
         components = feedback_id.split(ID_SEPARATOR)

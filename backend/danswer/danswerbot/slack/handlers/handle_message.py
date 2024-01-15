@@ -14,8 +14,8 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.configs.danswerbot_configs import DISABLE_DANSWER_BOT_FILTER_DETECT
 from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
-from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.danswerbot.slack.blocks import build_documents_blocks
+from danswer.danswerbot.slack.blocks import build_follow_up_block
 from danswer.danswerbot.slack.blocks import build_qa_response_blocks
 from danswer.danswerbot.slack.blocks import get_restate_blocks
 from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
@@ -23,6 +23,7 @@ from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import ChannelIdAdapter
 from danswer.danswerbot.slack.utils import fetch_userids_from_emails
 from danswer.danswerbot.slack.utils import respond_in_thread
+from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
 from danswer.one_shot_answer.answer_question import get_search_answer
@@ -49,23 +50,12 @@ def send_msg_ack_to_user(details: SlackMessageInfo, client: WebClient) -> None:
         )
         return
 
-    slack_call = make_slack_api_rate_limited(client.reactions_add)
-    slack_call(
-        name=DANSWER_REACT_EMOJI,
+    update_emote_react(
+        emoji=DANSWER_REACT_EMOJI,
         channel=details.channel_to_respond,
-        timestamp=details.msg_to_respond,
-    )
-
-
-def remove_react(details: SlackMessageInfo, client: WebClient) -> None:
-    if details.is_bot_msg:
-        return
-
-    slack_call = make_slack_api_rate_limited(client.reactions_remove)
-    slack_call(
-        name=DANSWER_REACT_EMOJI,
-        channel=details.channel_to_respond,
-        timestamp=details.msg_to_respond,
+        message_ts=details.msg_to_respond,
+        remove=False,
+        client=client,
     )
 
 
@@ -130,6 +120,7 @@ def handle_message(
         # with non-public document sets
         bypass_acl = True
 
+    channel_conf = None
     if channel_config and channel_config.channel_config:
         channel_conf = channel_config.channel_config
         if not bypass_filters and "answer_filters" in channel_conf:
@@ -265,7 +256,13 @@ def handle_message(
 
         # In case of failures, don't keep the reaction there permanently
         try:
-            remove_react(message_info, client)
+            update_emote_react(
+                emoji=DANSWER_REACT_EMOJI,
+                channel=message_info.channel_to_respond,
+                message_ts=message_info.msg_to_respond,
+                remove=True,
+                client=client,
+            )
         except SlackApiError as e:
             logger.error(f"Failed to remove Reaction due to: {e}")
 
@@ -273,7 +270,13 @@ def handle_message(
 
     # Got an answer at this point, can remove reaction and give results
     try:
-        remove_react(message_info, client)
+        update_emote_react(
+            emoji=DANSWER_REACT_EMOJI,
+            channel=message_info.channel_to_respond,
+            message_ts=message_info.msg_to_respond,
+            remove=True,
+            client=client,
+        )
     except SlackApiError as e:
         logger.error(f"Failed to remove Reaction due to: {e}")
 
@@ -343,13 +346,18 @@ def handle_message(
         else []
     )
 
+    all_blocks = restate_question_block + answer_blocks + document_blocks
+
+    if channel_conf and channel_conf.get("follow_up_tags") is not None:
+        all_blocks.append(build_follow_up_block(message_id=answer.chat_message_id))
+
     try:
         respond_in_thread(
             client=client,
             channel=channel,
             receiver_ids=send_to,
             text="Hello! Danswer has some results for you!",
-            blocks=restate_question_block + answer_blocks + document_blocks,
+            blocks=all_blocks,
             thread_ts=message_ts_to_respond_to,
             # don't unfurl, since otherwise we will have 5+ previews which makes the message very long
             unfurl=False,

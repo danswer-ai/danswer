@@ -16,19 +16,24 @@ from danswer.configs.model_configs import ENABLE_RERANKING_ASYNC_FLOW
 from danswer.danswerbot.slack.config import get_slack_bot_config_for_channel
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
+from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
+from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_RESOLVED_ACTION_ID
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
 from danswer.danswerbot.slack.constants import VIEW_DOC_FEEDBACK_ID
-from danswer.danswerbot.slack.handlers.handle_feedback import handle_doc_feedback_button
-from danswer.danswerbot.slack.handlers.handle_feedback import handle_slack_feedback
+from danswer.danswerbot.slack.handlers.handle_buttons import handle_doc_feedback_button
+from danswer.danswerbot.slack.handlers.handle_buttons import handle_followup_button
+from danswer.danswerbot.slack.handlers.handle_buttons import (
+    handle_followup_resolved_button,
+)
+from danswer.danswerbot.slack.handlers.handle_buttons import handle_slack_feedback
 from danswer.danswerbot.slack.handlers.handle_message import handle_message
 from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.tokens import fetch_tokens
 from danswer.danswerbot.slack.utils import ChannelIdAdapter
-from danswer.danswerbot.slack.utils import decompose_feedback_id
+from danswer.danswerbot.slack.utils import decompose_action_id
 from danswer.danswerbot.slack.utils import get_channel_name_from_id
 from danswer.danswerbot.slack.utils import get_danswer_bot_app_id
-from danswer.danswerbot.slack.utils import get_view_values
 from danswer.danswerbot.slack.utils import read_slack_thread
 from danswer.danswerbot.slack.utils import remove_danswer_bot_tag
 from danswer.danswerbot.slack.utils import respond_in_thread
@@ -136,27 +141,14 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
 
 
 def process_feedback(req: SocketModeRequest, client: SocketModeClient) -> None:
-    # Answer feedback
     if actions := req.payload.get("actions"):
         action = cast(dict[str, Any], actions[0])
         feedback_type = cast(str, action.get("action_id"))
         feedback_id = cast(str, action.get("block_id"))
         channel_id = cast(str, req.payload["container"]["channel_id"])
         thread_ts = cast(str, req.payload["container"]["thread_ts"])
-    # Doc feedback
-    elif view := req.payload.get("view"):
-        view_values = get_view_values(view["state"]["values"])
-        private_metadata = view.get("private_metadata").split("_")
-        if not view_values:
-            logger.error("Unable to process feedback. Missing view values")
-            return
-
-        feedback_type = [x for x in view_values.values()][0]
-        feedback_id = cast(str, view.get("external_id"))
-        channel_id = private_metadata[0]
-        thread_ts = private_metadata[1]
     else:
-        logger.error("Unable to process feedback. Actions or View not found")
+        logger.error("Unable to process feedback. Action not found")
         return
 
     user_id = cast(str, req.payload["user"]["id"])
@@ -170,7 +162,7 @@ def process_feedback(req: SocketModeRequest, client: SocketModeClient) -> None:
         thread_ts_to_post_confirmation=thread_ts,
     )
 
-    query_event_id, _, _ = decompose_feedback_id(feedback_id)
+    query_event_id, _, _ = decompose_action_id(feedback_id)
     logger.info(f"Successfully handled QA feedback for event: {query_event_id}")
 
 
@@ -304,6 +296,10 @@ def action_routing(req: SocketModeRequest, client: SocketModeClient) -> None:
         elif action["action_id"] == FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID:
             # Activation of the "source feedback" button
             return handle_doc_feedback_button(req, client)
+        elif action["action_id"] == FOLLOWUP_BUTTON_ACTION_ID:
+            return handle_followup_button(req, client)
+        elif action["action_id"] == FOLLOWUP_BUTTON_RESOLVED_ACTION_ID:
+            return handle_followup_resolved_button(req, client)
 
 
 def view_routing(req: SocketModeRequest, client: SocketModeClient) -> None:
