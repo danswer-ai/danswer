@@ -39,6 +39,7 @@ def _form_channel_config(
         slack_bot_config_creation_request.respond_team_member_list
     )
     answer_filters = slack_bot_config_creation_request.answer_filters
+    follow_up_tags = slack_bot_config_creation_request.follow_up_tags
 
     if not raw_channel_names:
         raise HTTPException(
@@ -73,6 +74,8 @@ def _form_channel_config(
         channel_config["respond_team_member_list"] = respond_team_member_list
     if answer_filters:
         channel_config["answer_filters"] = answer_filters
+    if follow_up_tags is not None:
+        channel_config["follow_up_tags"] = follow_up_tags
 
     return channel_config
 

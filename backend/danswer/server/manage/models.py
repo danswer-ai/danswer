@@ -78,6 +78,8 @@ class SlackBotConfigCreationRequest(BaseModel):
     # If no team members, assume respond in the channel to everyone
     respond_team_member_list: list[str] = []
     answer_filters: list[AllowedAnswerFilters] = []
+    # list of user emails
+    follow_up_tags: list[str] | None = None
 
     @validator("answer_filters", pre=True)
     def validate_filters(cls, value: list[str]) -> list[str]:
