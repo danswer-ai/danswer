@@ -294,7 +294,7 @@ def build_follow_up_resolved_blocks(tag_ids: list[str]) -> list[Block]:
         tag_str += " "
     text = (
         tag_str
-        + "Someone has requested more help.\n:point_down:Please mark this resolved after answering!"
+        + "Someone has requested more help.\n\n:point_down:Please mark this resolved after answering!"
     )
     text_block = SectionBlock(text=text)
     button_block = ActionsBlock(

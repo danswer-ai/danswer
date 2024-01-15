@@ -9,6 +9,7 @@ interface SlackBotConfigCreationRequest {
   questionmark_prefilter_enabled: boolean;
   respond_tag_only: boolean;
   respond_team_member_list: string[];
+  follow_up_tags?: string[];
   usePersona: boolean;
 }
 
@@ -33,6 +34,7 @@ const buildRequestBodyFromCreationRequest = (
     respond_tag_only: creationRequest.respond_tag_only,
     respond_team_member_list: creationRequest.respond_team_member_list,
     answer_filters: buildFiltersFromCreationRequest(creationRequest),
+    follow_up_tags: creationRequest.follow_up_tags?.filter((tag) => tag !== ""),
     ...(creationRequest.usePersona
       ? { persona_id: creationRequest.persona_id }
       : { document_sets: creationRequest.document_sets }),

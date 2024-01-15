@@ -97,7 +97,7 @@ export function TextFormField({
 interface BooleanFormFieldProps {
   name: string;
   label: string;
-  subtext?: string;
+  subtext?: string | JSX.Element;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
