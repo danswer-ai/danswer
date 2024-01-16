@@ -152,7 +152,7 @@ def handle_message(
         return False
 
     if respond_team_member_list:
-        send_to = fetch_userids_from_emails(respond_team_member_list, client)
+        send_to, _ = fetch_userids_from_emails(respond_team_member_list, client)
 
     # If configured to respond to team members only, then cannot be used with a /DanswerBot command
     # which would just respond to the sender
