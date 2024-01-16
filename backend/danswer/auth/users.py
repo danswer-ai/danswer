@@ -111,7 +111,7 @@ def verify_email_domain(email: str) -> None:
 def send_user_verification_email(
     user_email: str,
     token: str,
-    mail_from: EMAIL_FROM,
+    mail_from: str = EMAIL_FROM,
 ) -> None:
     msg = MIMEMultipart()
     msg["Subject"] = "Danswer Email Verification"
