@@ -38,6 +38,7 @@ from danswer.configs.app_configs import SMTP_PASS
 from danswer.configs.app_configs import SMTP_PORT
 from danswer.configs.app_configs import SMTP_SERVER
 from danswer.configs.app_configs import SMTP_USER
+from danswer.configs.app_configs import MAIL_FROM
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
@@ -111,6 +112,7 @@ def send_user_verification_email(user_email: str, token: str) -> None:
     msg = MIMEMultipart()
     msg["Subject"] = "Danswer Email Verification"
     msg["To"] = user_email
+    msg["From"] = MAIL_FROM
 
     link = f"{WEB_DOMAIN}/auth/verify-email?token={token}"
 
