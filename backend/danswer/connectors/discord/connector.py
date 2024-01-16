@@ -144,7 +144,7 @@ class DiscordConnector(LoadConnector, PollConnector):
 
 if __name__ == "__main__":
     connector = DiscordConnector(batch_size=12)
-    connector.load_credentials({"discord_token": "MTE5MDg4MDA3NjM2NDAwOTUyMw.GTRvYH.mBXVHjGG2uHFBCpfGGXMAKiTIpukb_jFuMskr0"})
+    connector.load_credentials({"discord_token": ""})
     document_batches = connector.load_from_state(1196598592018858035)
     print(next(document_batches))
     
