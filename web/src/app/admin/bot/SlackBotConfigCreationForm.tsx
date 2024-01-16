@@ -216,8 +216,12 @@ export const SlackBotCreationForm = ({
                     subtext={
                       <div>
                         The full email addresses of the Slack users we should
-                        tag if the user clicks the &quot;Still need help?&quot; button.
-                        For example, &apos;mark@acme.com&apos;.
+                        tag if the user clicks the &quot;Still need help?&quot;
+                        button. For example, &apos;mark@acme.com&apos;.
+                        <br />
+                        Or provide a user group by either the name or the
+                        handle. For example, &apos;Danswer Team&apos; or
+                        &apos;danswer-team&apos;.
                         <br />
                         <br />
                         If no emails are provided, we will not tag anyone and

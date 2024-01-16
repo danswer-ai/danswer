@@ -288,12 +288,20 @@ def build_follow_up_block(message_id: int | None) -> ActionsBlock:
     )
 
 
-def build_follow_up_resolved_blocks(tag_ids: list[str]) -> list[Block]:
+def build_follow_up_resolved_blocks(
+    tag_ids: list[str], group_ids: list[str]
+) -> list[Block]:
     tag_str = " ".join([f"<@{tag}>" for tag in tag_ids])
     if tag_str:
         tag_str += " "
+
+    group_str = " ".join([f"<!subteam^{group}>" for group in group_ids])
+    if group_str:
+        group_str += " "
+
     text = (
         tag_str
+        + group_str
         + "Someone has requested more help.\n\n:point_down:Please mark this resolved after answering!"
     )
     text_block = SectionBlock(text=text)

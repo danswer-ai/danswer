@@ -17,6 +17,7 @@ from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import VIEW_DOC_FEEDBACK_ID
 from danswer.danswerbot.slack.utils import build_feedback_id
 from danswer.danswerbot.slack.utils import decompose_action_id
+from danswer.danswerbot.slack.utils import fetch_groupids_from_names
 from danswer.danswerbot.slack.utils import fetch_userids_from_emails
 from danswer.danswerbot.slack.utils import get_channel_name_from_id
 from danswer.danswerbot.slack.utils import respond_in_thread
@@ -140,7 +141,8 @@ def handle_followup_button(
         client=client.web_client,
     )
 
-    tag_ids = []
+    tag_ids: list[str] = []
+    group_ids: list[str] = []
     with Session(get_sqlalchemy_engine()) as db_session:
         channel_name, is_dm = get_channel_name_from_id(
             client=client.web_client, channel_id=channel_id
@@ -149,11 +151,16 @@ def handle_followup_button(
             channel_name=channel_name, db_session=db_session
         )
         if slack_bot_config:
-            emails = slack_bot_config.channel_config.get("follow_up_tags")
-            if emails:
-                tag_ids = fetch_userids_from_emails(emails, client.web_client)
+            tag_names = slack_bot_config.channel_config.get("follow_up_tags")
+            remaining = None
+            if tag_names:
+                tag_ids, remaining = fetch_userids_from_emails(
+                    tag_names, client.web_client
+                )
+            if remaining:
+                group_ids, _ = fetch_groupids_from_names(remaining, client.web_client)
 
-    blocks = build_follow_up_resolved_blocks(tag_ids=tag_ids)
+    blocks = build_follow_up_resolved_blocks(tag_ids=tag_ids, group_ids=group_ids)
 
     respond_in_thread(
         client=client.web_client,
