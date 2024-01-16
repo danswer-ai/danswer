@@ -1,5 +1,10 @@
+import functools
 import logging
+from collections.abc import Callable
+from typing import Any
 from typing import cast
+from typing import Optional
+from typing import TypeVar
 
 from retry import retry
 from slack_sdk import WebClient
@@ -23,6 +28,7 @@ from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import ChannelIdAdapter
 from danswer.danswerbot.slack.utils import fetch_userids_from_emails
 from danswer.danswerbot.slack.utils import respond_in_thread
+from danswer.danswerbot.slack.utils import SlackRateLimiter
 from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
@@ -37,6 +43,29 @@ from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 
 logger_base = setup_logger()
+
+srl = SlackRateLimiter()
+
+RT = TypeVar("RT")  # return type
+
+
+def rate_limits(
+    client: WebClient, channel: str, thread_ts: Optional[str]
+) -> Callable[[Callable[..., RT]], Callable[..., RT]]:
+    def decorator(func: Callable[..., RT]) -> Callable[..., RT]:
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> RT:
+            if not srl.is_available():
+                func_randid, position = srl.init_waiter()
+                srl.notify(client, channel, position, thread_ts)
+                while not srl.is_available():
+                    srl.waiter(func_randid)
+            srl.acquire_slot()
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def send_msg_ack_to_user(details: SlackMessageInfo, client: WebClient) -> None:
@@ -177,6 +206,7 @@ def handle_message(
         backoff=2,
         logger=logger,
     )
+    @rate_limits(client=client, channel=channel, thread_ts=message_ts_to_respond_to)
     def _get_answer(new_message_request: DirectQARequest) -> OneShotQAResponse:
         action = "slack_message"
         if is_bot_msg:
