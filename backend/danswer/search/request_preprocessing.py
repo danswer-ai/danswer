@@ -18,8 +18,12 @@ from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.secondary_llm_flows.source_filter import extract_source_filter
 from danswer.secondary_llm_flows.time_filter import extract_time_filter
+from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
+
+
+logger = setup_logger()
 
 
 def retrieval_preprocessing(
@@ -57,15 +61,19 @@ def retrieval_preprocessing(
         auto_detect_time_filter = False
         auto_detect_source_filter = False
     elif retrieval_details.enable_auto_detect_filters is False:
+        logger.debug("Retrieval details disables auto detect filters")
         auto_detect_time_filter = False
         auto_detect_source_filter = False
     elif persona.llm_filter_extraction is False:
+        logger.debug("Persona disables auto detect filters")
         auto_detect_time_filter = False
         auto_detect_source_filter = False
 
     if time_filter is not None and persona.recency_bias != RecencyBiasSetting.AUTO:
         auto_detect_time_filter = False
+        logger.debug("Not extract time filter - already provided")
     if source_filter is not None:
+        logger.debug("Not extract source filter - already provided")
         auto_detect_source_filter = False
 
     # Based on the query figure out if we should apply any hard time filters /

@@ -137,7 +137,8 @@ def chunk_document(
             chunk_text = section_text
 
     # Once we hit the end, if we're still in the process of building a chunk, add what we have
-    if chunk_text:
+    # NOTE: if it's just whitespace, ignore it.
+    if chunk_text.strip():
         chunks.append(
             DocAwareChunk(
                 source_document=document,

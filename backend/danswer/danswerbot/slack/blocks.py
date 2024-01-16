@@ -18,6 +18,8 @@ from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
+from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
+from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_RESOLVED_ACTION_ID
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.utils import build_feedback_id
 from danswer.danswerbot.slack.utils import remove_slack_text_interactions
@@ -211,6 +213,7 @@ def build_qa_response_blocks(
     time_cutoff: datetime | None,
     favor_recent: bool,
     skip_quotes: bool = False,
+    skip_ai_feedback: bool = False,
 ) -> list[Block]:
     if DISABLE_GENERATIVE_AI:
         return []
@@ -255,10 +258,6 @@ def build_qa_response_blocks(
                 )
             ]
 
-    feedback_block = None
-    if message_id is not None:
-        feedback_block = build_qa_feedback_block(message_id=message_id)
-
     response_blocks: list[Block] = [ai_answer_header]
 
     if filter_block is not None:
@@ -266,11 +265,53 @@ def build_qa_response_blocks(
 
     response_blocks.append(answer_block)
 
-    if feedback_block is not None:
-        response_blocks.append(feedback_block)
+    if message_id is not None and not skip_ai_feedback:
+        response_blocks.append(build_qa_feedback_block(message_id=message_id))
 
     if not skip_quotes:
         response_blocks.extend(quotes_blocks)
     response_blocks.append(DividerBlock())
 
     return response_blocks
+
+
+def build_follow_up_block(message_id: int | None) -> ActionsBlock:
+    return ActionsBlock(
+        block_id=build_feedback_id(message_id) if message_id is not None else None,
+        elements=[
+            ButtonElement(
+                action_id=FOLLOWUP_BUTTON_ACTION_ID,
+                style="danger",
+                text="I need more help from a human!",
+            )
+        ],
+    )
+
+
+def build_follow_up_resolved_blocks(
+    tag_ids: list[str], group_ids: list[str]
+) -> list[Block]:
+    tag_str = " ".join([f"<@{tag}>" for tag in tag_ids])
+    if tag_str:
+        tag_str += " "
+
+    group_str = " ".join([f"<!subteam^{group}>" for group in group_ids])
+    if group_str:
+        group_str += " "
+
+    text = (
+        tag_str
+        + group_str
+        + "Someone has requested more help.\n\n:point_down:Please mark this resolved after answering!"
+    )
+    text_block = SectionBlock(text=text)
+    button_block = ActionsBlock(
+        elements=[
+            ButtonElement(
+                action_id=FOLLOWUP_BUTTON_RESOLVED_ACTION_ID,
+                style="primary",
+                text="Mark Resolved",
+            )
+        ]
+    )
+    return [text_block, button_block]

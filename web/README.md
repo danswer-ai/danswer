@@ -18,3 +18,6 @@ pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+_Note:_ if you are having problems accessing the ^, try setting the `WEB_DOMAIN` env variable to
+`http://127.0.0.1:3000` and accessing it there.

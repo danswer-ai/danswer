@@ -16,7 +16,6 @@ from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.configs.app_configs import CLEANUP_INDEXING_JOBS_TIMEOUT
 from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import LOG_LEVEL
-from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.configs.model_configs import MIN_THREADS_ML_MODELS
 from danswer.db.connector import fetch_connectors
@@ -33,7 +32,6 @@ from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.models import Connector
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
-from danswer.search.search_nlp_models import warm_up_models
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -343,9 +341,6 @@ def update__main() -> None:
     if not DASK_JOB_CLIENT_ENABLED:
         torch.multiprocessing.set_start_method("spawn")
 
-    if not MODEL_SERVER_HOST:
-        logger.info("Warming up Embedding Model(s)")
-        warm_up_models(indexer_only=True, skip_cross_encoders=True)
     logger.info("Starting Indexing Loop")
     update_loop()
 

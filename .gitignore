@@ -2,3 +2,5 @@
 .DS_store
 .venv
 .mypy_cache
+.idea
+/deployment/data/nginx/app.conf

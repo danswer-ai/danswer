@@ -13,7 +13,7 @@ export const ModalWrapper = ({
     <div
       onClick={() => onClose && onClose()}
       className={
-        "fixed z-30 inset-0 overflow-y-auto bg-black bg-opacity-30 flex justify-center items-center " +
+        "fixed z-50 inset-0 overflow-y-auto bg-black bg-opacity-30 flex justify-center items-center " +
         (bgClassName || "")
       }
     >

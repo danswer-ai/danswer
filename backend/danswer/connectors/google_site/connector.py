@@ -69,7 +69,7 @@ class GoogleSitesConnector(LoadConnector):
         # load the HTML files
         files = load_files_from_zip(self.zip_path)
         count = 0
-        for file_info, file_io in files:
+        for file_info, file_io, _metadata in files:
             # skip non-published files
             if "/PUBLISHED/" not in file_info.filename:
                 continue

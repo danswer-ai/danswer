@@ -27,6 +27,9 @@ DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "
 # Web Configs
 #####
 # WEB_DOMAIN is used to set the redirect_uri after login flows
+# NOTE: if you are having problems accessing the Danswer web UI locally (especially
+# on Windows, try  setting this to `http://127.0.0.1:3000` instead and see if that
+# fixes it)
 WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
 
 
@@ -113,6 +116,8 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 #####
 # Connector Configs
 #####
+POLL_CONNECTOR_OFFSET = 30  # Minutes overlap between poll windows
+
 GOOGLE_DRIVE_INCLUDE_SHARED = False
 GOOGLE_DRIVE_FOLLOW_SHORTCUTS = False
 
@@ -145,6 +150,8 @@ CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
 ]
 
 GONG_CONNECTOR_START_TIME = os.environ.get("GONG_CONNECTOR_START_TIME")
+
+GITHUB_CONNECTOR_BASE_URL = os.environ.get("GITHUB_CONNECTOR_BASE_URL") or None
 
 DASK_JOB_CLIENT_ENABLED = (
     os.environ.get("DASK_JOB_CLIENT_ENABLED", "").lower() == "true"

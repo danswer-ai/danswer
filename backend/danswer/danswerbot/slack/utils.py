@@ -33,6 +33,26 @@ logger = setup_logger()
 DANSWER_BOT_APP_ID: str | None = None
 
 
+def update_emote_react(
+    emoji: str,
+    channel: str,
+    message_ts: str | None,
+    remove: bool,
+    client: WebClient,
+) -> None:
+    if not message_ts:
+        logger.error(f"Tried to remove a react in {channel} but no message specified")
+        return
+
+    func = client.reactions_remove if remove else client.reactions_add
+    slack_call = make_slack_api_rate_limited(func)  # type: ignore
+    slack_call(
+        name=emoji,
+        channel=channel,
+        timestamp=message_ts,
+    )
+
+
 def get_danswer_bot_app_id(web_client: WebClient) -> Any:
     global DANSWER_BOT_APP_ID
     if DANSWER_BOT_APP_ID is None:
@@ -138,7 +158,7 @@ def build_feedback_id(
     return unique_prefix + ID_SEPARATOR + feedback_id
 
 
-def decompose_feedback_id(feedback_id: str) -> tuple[int, str | None, int | None]:
+def decompose_action_id(feedback_id: str) -> tuple[int, str | None, int | None]:
     """Decompose into query_id, document_id, document_rank, see above function"""
     try:
         components = feedback_id.split(ID_SEPARATOR)
@@ -235,22 +255,48 @@ def get_channel_name_from_id(
         raise e
 
 
-def fetch_userids_from_emails(user_emails: list[str], client: WebClient) -> list[str]:
+def fetch_userids_from_emails(
+    user_emails: list[str], client: WebClient
+) -> tuple[list[str], list[str]]:
     user_ids: list[str] = []
+    failed_to_find: list[str] = []
     for email in user_emails:
         try:
             user = client.users_lookupByEmail(email=email)
             user_ids.append(user.data["user"]["id"])  # type: ignore
         except Exception:
             logger.error(f"Was not able to find slack user by email: {email}")
+            failed_to_find.append(email)
 
-    if not user_ids:
-        raise RuntimeError(
-            "Was not able to find any Slack users to respond to. "
-            "No email was parsed into a valid slack account."
-        )
+    return user_ids, failed_to_find
 
-    return user_ids
+
+def fetch_groupids_from_names(
+    names: list[str], client: WebClient
+) -> tuple[list[str], list[str]]:
+    group_ids: set[str] = set()
+    failed_to_find: list[str] = []
+
+    try:
+        response = client.usergroups_list()
+        if response.get("ok") and "usergroups" in response.data:
+            all_groups_dicts = response.data["usergroups"]  # type: ignore
+            name_id_map = {d["name"]: d["id"] for d in all_groups_dicts}
+            handle_id_map = {d["handle"]: d["id"] for d in all_groups_dicts}
+            for group in names:
+                if group in name_id_map:
+                    group_ids.add(name_id_map[group])
+                elif group in handle_id_map:
+                    group_ids.add(handle_id_map[group])
+                else:
+                    failed_to_find.append(group)
+        else:
+            # Most likely a Slack App scope issue
+            logger.error("Error fetching user groups")
+    except Exception as e:
+        logger.error(f"Error fetching user groups: {str(e)}")
+
+    return list(group_ids), failed_to_find
 
 
 def fetch_user_semantic_id_from_id(user_id: str, client: WebClient) -> str | None:

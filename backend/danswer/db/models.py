@@ -97,6 +97,21 @@ class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
     pass
 
 
+class ApiKey(Base):
+    __tablename__ = "api_key"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    hashed_api_key: Mapped[str] = mapped_column(String, unique=True)
+    api_key_display: Mapped[str] = mapped_column(String, unique=True)
+    # the ID of the "user" who represents the access credentials for the API key
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
+    # the ID of the user who owns the key
+    owner_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
 """
 Association Tables
 NOTE: must be at the top since they are referenced by other tables
@@ -587,6 +602,7 @@ class ChatMessageFeedback(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     chat_message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
     is_positive: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    required_followup: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     feedback_text: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     chat_message: Mapped[ChatMessage] = relationship(
@@ -725,6 +741,9 @@ class ChannelConfig(TypedDict):
     respond_tag_only: NotRequired[bool]  # defaults to False
     respond_team_member_list: NotRequired[list[str]]
     answer_filters: NotRequired[list[AllowedAnswerFilters]]
+    # If None then no follow up
+    # If empty list, follow up with no tags
+    follow_up_tags: NotRequired[list[str]]
 
 
 class SlackBotConfig(Base):

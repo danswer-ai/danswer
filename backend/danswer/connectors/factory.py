@@ -18,6 +18,7 @@ from danswer.connectors.interfaces import EventConnector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.linear.connector import LinearConnector
+from danswer.connectors.loopio.connector import LoopioConnector
 from danswer.connectors.models import InputType
 from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.productboard.connector import ProductboardConnector
@@ -62,6 +63,7 @@ def identify_connector_class(
         DocumentSource.GONG: GongConnector,
         DocumentSource.GOOGLE_SITES: GoogleSitesConnector,
         DocumentSource.ZENDESK: ZendeskConnector,
+        DocumentSource.LOOPIO: LoopioConnector,
     }
     connector_by_source = connector_map.get(source, {})
 

@@ -14,6 +14,7 @@ from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.chat_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
+from danswer.configs.chat_configs import STOP_STREAM_PAT
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.configs.model_configs import GEN_AI_MAX_INPUT_TOKENS
@@ -29,6 +30,7 @@ from danswer.prompts.chat_prompts import DEFAULT_IGNORE_STATEMENT
 from danswer.prompts.chat_prompts import NO_CITATION_STATEMENT
 from danswer.prompts.chat_prompts import REQUIRE_CITATION_STATEMENT
 from danswer.prompts.constants import CODE_BLOCK_PAT
+from danswer.prompts.constants import TRIPLE_BACKTICK
 from danswer.prompts.direct_qa_prompts import LANGUAGE_HINT
 from danswer.prompts.prompt_utils import get_current_llm_day_time
 
@@ -405,16 +407,39 @@ def drop_messages_history_overflow(
     return prompt
 
 
+def in_code_block(llm_text: str) -> bool:
+    count = llm_text.count(TRIPLE_BACKTICK)
+    return count % 2 != 0
+
+
 def extract_citations_from_stream(
     tokens: Iterator[str],
     context_docs: list[LlmDoc],
     doc_id_to_rank_map: dict[str, int],
+    stop_stream: str | None = STOP_STREAM_PAT,
 ) -> Iterator[DanswerAnswerPiece | CitationInfo]:
+    llm_out = ""
     max_citation_num = len(context_docs)
     curr_segment = ""
     prepend_bracket = False
     cited_inds = set()
-    for token in tokens:
+    hold = ""
+    for raw_token in tokens:
+        if stop_stream:
+            next_hold = hold + raw_token
+
+            if stop_stream in next_hold:
+                break
+
+            if next_hold == stop_stream[: len(next_hold)]:
+                hold = next_hold
+                continue
+
+            token = next_hold
+            hold = ""
+        else:
+            token = raw_token
+
         # Special case of [1][ where ][ is a single token
         # This is where the model attempts to do consecutive citations like [1][2]
         if prepend_bracket:
@@ -422,6 +447,7 @@ def extract_citations_from_stream(
             prepend_bracket = False
 
         curr_segment += token
+        llm_out += token
 
         possible_citation_pattern = r"(\[\d*$)"  # [1, [, etc
         possible_citation_found = re.search(possible_citation_pattern, curr_segment)
@@ -429,7 +455,7 @@ def extract_citations_from_stream(
         citation_pattern = r"\[(\d+)\]"  # [1], [2] etc
         citation_found = re.search(citation_pattern, curr_segment)
 
-        if citation_found:
+        if citation_found and not in_code_block(llm_out):
             numerical_value = int(citation_found.group(1))
             if 1 <= numerical_value <= max_citation_num:
                 context_llm_doc = context_docs[
