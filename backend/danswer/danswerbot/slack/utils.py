@@ -355,7 +355,7 @@ def read_slack_thread(
 
 class SlackRateLimiter:
     def __init__(self) -> None:
-        self.max_qpm = DANSWER_BOT_MAX_QPM
+        self.max_qpm: int | None = DANSWER_BOT_MAX_QPM
         self.max_wait_time = DANSWER_BOT_MAX_WAIT_TIME
         self.active_question = 0
         self.last_reset_time = time.time()
@@ -374,11 +374,15 @@ class SlackRateLimiter:
             client=client,
             channel=channel,
             receiver_ids=None,
-            text=f"Your question has been queued. You are in position {position}... please wait a moment :loading:",
+            text=f"Your question has been queued. You are in position {position}.\n"
+            f"Please wait a moment :hourglass_flowing_sand:",
             thread_ts=thread_ts,
         )
 
     def is_available(self) -> bool:
+        if self.max_qpm is None:
+            return True
+
         self.refill()
         return self.active_question < self.max_qpm
 
@@ -393,6 +397,9 @@ class SlackRateLimiter:
         return func_randid, position
 
     def waiter(self, func_randid: int) -> None:
+        if self.max_qpm is None:
+            return
+
         wait_time = 0
         while (
             self.active_question >= self.max_qpm

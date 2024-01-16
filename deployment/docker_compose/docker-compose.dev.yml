@@ -139,6 +139,8 @@ services:
       - DANSWER_BOT_RESPOND_EVERY_CHANNEL=${DANSWER_BOT_RESPOND_EVERY_CHANNEL:-}
       - DANSWER_BOT_DISABLE_COT=${DANSWER_BOT_DISABLE_COT:-}  # Currently unused
       - NOTIFY_SLACKBOT_NO_ANSWER=${NOTIFY_SLACKBOT_NO_ANSWER:-}
+      - DANSWER_BOT_MAX_QPM=${DANSWER_BOT_MAX_QPM:-}
+      - DANSWER_BOT_MAX_WAIT_TIME=${DANSWER_BOT_MAX_WAIT_TIME:-}
       # Logging
       # Leave this on pretty please? Nothing sensitive is collected!
       # https://docs.danswer.dev/more/telemetry
