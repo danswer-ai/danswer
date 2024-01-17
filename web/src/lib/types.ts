@@ -30,7 +30,8 @@ export type ValidSources =
   | "file"
   | "google_sites"
   | "loopio"
-  | "zendesk";
+  | "zendesk"
+  | "dropbox";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
@@ -142,6 +143,8 @@ export interface GoogleSitesConfig {
 }
 
 export interface ZendeskConfig {}
+
+export interface DropboxConfig {}
 
 export interface IndexAttemptSnapshot {
   id: number;
@@ -273,6 +276,10 @@ export interface ZendeskCredentialJson {
   zendesk_subdomain: string;
   zendesk_email: string;
   zendesk_token: string;
+}
+
+export interface DropboxCredentialJson {
+  dropbox_access_token: string;
 }
 
 // DELETION

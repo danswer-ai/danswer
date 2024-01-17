@@ -2,6 +2,7 @@ import {
   BookstackIcon,
   ConfluenceIcon,
   Document360Icon,
+  DropboxIcon,
   FileIcon,
   GithubIcon,
   GlobeIcon,
@@ -138,6 +139,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   loopio: {
     icon: LoopioIcon,
     displayName: "Loopio",
+    category: SourceCategory.AppConnection,
+  },
+  dropbox: {
+    icon: DropboxIcon,
+    displayName: "Dropbox",
     category: SourceCategory.AppConnection,
   },
 };

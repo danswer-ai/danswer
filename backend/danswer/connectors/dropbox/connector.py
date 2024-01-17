@@ -1,3 +1,4 @@
+from datetime import timezone
 from typing import Any
 
 from dropbox import Dropbox  # type: ignore
@@ -25,8 +26,8 @@ class DropboxConnector(LoadConnector, PollConnector):
         self.batch_size = batch_size
         self.dropbox_client: Dropbox | None = None
 
-    def load_credentials(self, dropbox_token: str) -> dict[str, Any] | None:
-        self.dropbox_client = Dropbox(dropbox_token)
+    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
+        self.dropbox_client = Dropbox(credentials["dropbox_access_token"])
         return None
 
     def _download_file(self, path: str):
@@ -62,7 +63,15 @@ class DropboxConnector(LoadConnector, PollConnector):
             batch: list[Document] = []
             for entry in result.entries:
                 if isinstance(entry, FileMetadata):
-                    time_as_seconds = int(entry.client_modified.timestamp())
+                    modified_time = entry.client_modified
+                    if modified_time.tzinfo is None:
+                        # If no timezone info, assume it is UTC
+                        modified_time = modified_time.replace(tzinfo=timezone.utc)
+                    else:
+                        # If not in UTC, translate it
+                        modified_time = modified_time.astimezone(timezone.utc)
+
+                    time_as_seconds = int(modified_time.timestamp())
                     if start and time_as_seconds < start:
                         continue
                     if end and time_as_seconds > end:
@@ -78,7 +87,7 @@ class DropboxConnector(LoadConnector, PollConnector):
                                 sections=[Section(link=link, text=text)],
                                 source=DocumentSource.DROPBOX,
                                 semantic_identifier=entry.name,
-                                doc_updated_at=entry.client_modified,
+                                doc_updated_at=modified_time,
                                 metadata={"type": "article"},
                             )
                         )
@@ -88,7 +97,7 @@ class DropboxConnector(LoadConnector, PollConnector):
                         )
 
                 elif isinstance(entry, FolderMetadata):
-                    yield from self._yield_files_recursive(entry.path_lower)
+                    yield from self._yield_files_recursive(entry.path_lower, start, end)
 
             if batch:
                 yield batch
@@ -117,8 +126,11 @@ if __name__ == "__main__":
     import os
 
     connector = DropboxConnector(batch_size=5)
-    connector.load_credentials(os.environ["DROPBOX_ACCESS_TOKEN"])
-
+    connector.load_credentials(
+        {
+            "dropbox_access_token": os.environ["DROPBOX_ACCESS_TOKEN"],
+        }
+    )
     document_batches = connector.load_from_state()
     for doc_batch in connector.load_from_state():
         for doc in doc_batch:
