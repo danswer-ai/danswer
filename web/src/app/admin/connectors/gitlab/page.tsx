@@ -107,6 +107,15 @@ const Main = () => {
             <CredentialForm<GitlabCredentialJson>
               formBody={
                 <>
+                  <Text>
+                    If you are using GitLab Cloud, keep the default value below</Text>
+                  <TextFormField
+                    name="gitlab_url"
+                    label="GitLab URL:"
+                    type="text"
+                    placeholder="https://gitlab.com"
+                  />
+
                   <TextFormField
                     name="gitlab_access_token"
                     label="Access Token:"
@@ -115,12 +124,14 @@ const Main = () => {
                 </>
               }
               validationSchema={Yup.object().shape({
+                gitlab_url: Yup.string().default("https://gitlab.com"),
                 gitlab_access_token: Yup.string().required(
                   "Please enter the access token for Gitlab"
                 ),
               })}
               initialValues={{
                 gitlab_access_token: "",
+                gitlab_url: "https://gitlab.com"
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
@@ -139,7 +150,7 @@ const Main = () => {
       {gitlabConnectorIndexingStatuses.length > 0 && (
         <>
           <Text className="mb-2">
-            We pull the latest Pull Requests from each repository listed below
+            We pull the latest Pull Requests from each project listed below
             every <b>10</b> minutes.
           </Text>
           <div className="mb-2">
@@ -157,12 +168,12 @@ const Main = () => {
               }}
               specialColumns={[
                 {
-                  header: "Repository",
-                  key: "repository",
+                  header: "Project",
+                  key: "project",
                   getValue: (ccPairStatus) => {
                     const connectorConfig =
                       ccPairStatus.connector.connector_specific_config;
-                    return `${connectorConfig.repo_owner}/${connectorConfig.repo_name}`;
+                    return `${connectorConfig.project_owner}/${connectorConfig.project_name}`;
                   },
                 },
               ]}
@@ -177,36 +188,36 @@ const Main = () => {
 
       {gitlabCredential ? (
         <Card className="mt-4">
-          <h2 className="font-bold mb-3">Connect to a New Repository</h2>
+          <h2 className="font-bold mb-3">Connect to a New Project</h2>
           <ConnectorForm<GitlabConfig>
             nameBuilder={(values) =>
-              `GitlabConnector-${values.repo_owner}/${values.repo_name}`
+              `GitlabConnector-${values.project_owner}/${values.project_name}`
             }
             ccPairNameBuilder={(values) =>
-              `${values.repo_owner}/${values.repo_name}`
+              `${values.project_owner}/${values.project_name}`
             }
             source="gitlab"
             inputType="poll"
             formBody={
               <>
-                <TextFormField name="repo_owner" label="Repository Owner:" />
-                <TextFormField name="repo_name" label="Repository Name:" />
+                <TextFormField name="project_owner" label="Project Owner:" />
+                <TextFormField name="project_name" label="Project Name:" />
               </>
             }
             validationSchema={Yup.object().shape({
-              repo_owner: Yup.string().required(
-                "Please enter the owner of the repository to index e.g. danswer-ai"
+              project_owner: Yup.string().required(
+                "Please enter the owner of the project to index e.g. danswer-ai"
               ),
-              repo_name: Yup.string().required(
-                "Please enter the name of the repository to index e.g. danswer "
+              project_name: Yup.string().required(
+                "Please enter the name of the project to index e.g. danswer "
               ),
-              include_prs: Yup.boolean().required(),
+              include_mrs: Yup.boolean().required(),
               include_issues: Yup.boolean().required(),
             })}
             initialValues={{
-              repo_owner: "",
-              repo_name: "",
-              include_prs: true,
+              project_owner: "",
+              project_name: "",
+              include_mrs: true,
               include_issues: true,
             }}
             refreshFreq={10 * 60} // 10 minutes
@@ -233,7 +244,7 @@ export default function Page() {
 
       <AdminPageTitle
         icon={<GitlabIcon size={32} />}
-        title="Gitlab PRs + Issues"
+        title="Gitlab MRs + Issues"
       />
 
       <Main />

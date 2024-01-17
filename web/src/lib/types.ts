@@ -77,10 +77,11 @@ export interface GithubConfig {
   include_prs: boolean;
   include_issues: boolean;
 }
+
 export interface GitlabConfig {
-  repo_owner: string;
-  repo_name: string;
-  include_prs: boolean;
+  project_owner: string;
+  project_name: string;
+  include_mrs: boolean;
   include_issues: boolean;
 }
 
@@ -198,6 +199,7 @@ export interface GithubCredentialJson {
 }
 
 export interface GitlabCredentialJson {
+  gitlab_url:string,
   gitlab_access_token: string;
 }
 

@@ -12,7 +12,7 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
-from danswer.connectors.models import ConnectorMissingCredentialError
+from danswer.connectors.models import BasicExpertInfo, ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
@@ -27,10 +27,17 @@ def _batch_gitlab_objects(
 ) -> Iterator[list[Any]]:
     it = iter(git_objs)
     while True:
-        batch = list(itertools.islice(it, batch_size))
+        batch = list(itertools.islice(it, batch_size[0]))
         if not batch:
             break
         yield batch
+
+def get_author(author:Any)-> BasicExpertInfo:
+    return BasicExpertInfo(
+        display_name=author.name,
+
+    )
+
 
 def _convert_merge_request_to_document(mr: Any) -> Document:
     return Document(
@@ -42,8 +49,10 @@ def _convert_merge_request_to_document(mr: Any) -> Document:
         # as there is logic in indexing to prevent wrong timestamped docs
         # due to local time discrepancies with UTC
         doc_updated_at=mr.updated_at.replace(tzinfo=timezone.utc),
+        primary_owners=[BasicExpertInfo(display_name=mr.author.name, first_name=mr.author.name.split(" ")[0],last_name=mr.author.name.split(" ")[1])],
         metadata={
             "state": mr.state,
+             "type": "MergeRequest"
         },
     )
 
@@ -58,8 +67,10 @@ def _convert_issue_to_document(issue: Any) -> Document:
         # as there is logic in indexing to prevent wrong timestamped docs
         # due to local time discrepancies with UTC
         doc_updated_at=issue.updated_at.replace(tzinfo=timezone.utc),
+        primary_owners=[BasicExpertInfo(display_name=issue.author.name, first_name=issue.author.name.split(" ")[0],last_name=issue.author.name.split(" ")[1])],
         metadata={
             "state": issue.state,
+             "type": issue.type | "Issue"
         },
     )
 
@@ -83,7 +94,7 @@ class GitlabConnector(LoadConnector, PollConnector):
 
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        self.gitlab_client = gitlab.Gitlab(credentials["gitlab_url"], private_token=credentials['gitlab_token'])
+        self.gitlab_client = gitlab.Gitlab(credentials["gitlab_url"], private_token=credentials['gitlab_access_token'])
         return None
 
 
@@ -91,17 +102,17 @@ class GitlabConnector(LoadConnector, PollConnector):
     def _fetch_from_gitlab(self, start: datetime | None = None, end: datetime | None = None) -> GenerateDocumentsOutput:
         if self.gitlab_client is None:
             raise ConnectorMissingCredentialError("Gitlab")
-
-        project = self.gitlab_client.projects.get(f"{self.project_owner}/{self.project_name}")
+        project = self.gitlab_client.projects.get(f"{self.project_owner[0]}/{self.project_name[0]}")
 
         if self.include_mrs:
             merge_requests = project.mergerequests.list(
-                state=self.state_filter, sort="updated_at", direction="desc"
+                state=self.state_filter, order_by="updated_at", sort="desc"
             )
 
             for mr_batch in _batch_gitlab_objects(merge_requests, self.batch_size):
                 doc_batch =[]
                 for mr in mr_batch:
+                    mr.updated_at = datetime.strptime(mr.updated_at, "%Y-%m-%dT%H:%M:%S.%fZ")
                     if start is not None and mr.updated_at < start:
                         yield doc_batch
                         return
@@ -112,12 +123,13 @@ class GitlabConnector(LoadConnector, PollConnector):
 
         if self.include_issues:
             issues = project.issues.list(
-                scope=self.state_filter
+                state=self.state_filter
             )
 
             for issue_batch in _batch_gitlab_objects(issues, self.batch_size):
                 doc_batch =[]
                 for issue in issue_batch:
+                    issue.updated_at = datetime.strptime(issue.updated_at, "%Y-%m-%dT%H:%M:%S.%fZ")
                     if start is not None and issue.updated_at < start:
                         yield doc_batch
                         return
@@ -132,15 +144,19 @@ class GitlabConnector(LoadConnector, PollConnector):
     def load_from_state(self) -> GenerateDocumentsOutput:
         return self._fetch_from_gitlab()
 
-    def poll_source(self, last_polled_at: SecondsSinceUnixEpoch) -> GenerateDocumentsOutput:
-        return self._fetch_from_gitlab(start=datetime.fromtimestamp(last_polled_at, tz=timezone.utc))
+    def poll_source(self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch) -> GenerateDocumentsOutput:
+        start_datetime = datetime.utcfromtimestamp(start)
+        end_datetime = datetime.utcfromtimestamp(end)
+        return self._fetch_from_gitlab(start_datetime, end_datetime)
+
+
 
 
 
 
 
 if __name__ == "__main__":
-    import os;
+    import os
     connector = GitlabConnector(
         # gitlab_url="https://gitlab.com/api/v4",
         project_owner=os.environ["PROJECT_OWNER"],
@@ -159,16 +175,6 @@ if __name__ == "__main__":
     )
     document_batches = connector.load_from_state()
     print(next(document_batches))
-
-
-    # for batch in connector.load_from_state():
-    #     print(batch)
-    #     break
-    # for batch in connector.poll(0):
-    #     print(batch)
-    #     break
-
-
 
 
 
