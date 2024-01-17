@@ -152,6 +152,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Loopio",
     category: SourceCategory.AppConnection,
   },
+  sharepoint: {
+    icon: RequestTrackerIcon,
+    displayName: "Sharepoint",
+    category: SourceCategory.AppConnection,
+  },
 };
 
 function fillSourceMetadata(
