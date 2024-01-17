@@ -18,3 +18,7 @@ export const buildFilters = (
 
   return filters;
 };
+
+export function endsWithLetterOrNumber(str: string) {
+  return /[a-zA-Z0-9]$/.test(str);
+}
