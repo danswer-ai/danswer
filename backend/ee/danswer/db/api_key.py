@@ -11,8 +11,15 @@ from ee.danswer.auth.api_key import ApiKeyDescriptor
 from ee.danswer.auth.api_key import build_displayable_api_key
 from ee.danswer.auth.api_key import generate_api_key
 from ee.danswer.auth.api_key import hash_api_key
+from ee.danswer.db.constants import DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN
 
 _DANSWER_API_KEY = "danswer_api_key"
+
+
+def is_api_key_email_address(email: str) -> bool:
+    return email.endswith(
+        f"@{DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN}"
+    ) and email.startswith(_DANSWER_API_KEY)
 
 
 def fetch_api_keys(db_session: Session) -> list[ApiKeyDescriptor]:
@@ -44,7 +51,7 @@ def insert_api_key(db_session: Session, user_id: uuid.UUID | None) -> ApiKeyDesc
 
     api_key_user_row = User(
         id=api_key_user_id,
-        email=f"{_DANSWER_API_KEY}__{api_key_user_id}",
+        email=f"{_DANSWER_API_KEY}__{api_key_user_id}@{DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN}",
         # a random password for the "user"
         hashed_password=std_password_helper.hash(std_password_helper.generate()),
         is_active=True,
