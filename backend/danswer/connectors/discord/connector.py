@@ -24,7 +24,8 @@ async def read_channel(
         channel_id: int,
         limit: INDEX_BATCH_SIZE,
         oldest: True,
-        after
+        before : Optional[int or datetime],
+        after : Optional[int or datetime],
     ) -> List:
 
     messages = []
@@ -86,10 +87,10 @@ class DiscordConnector(LoadConnector, PollConnector):
         self.discord_token = cast(str, credentials['discord_token'])
         return None
     
-    def _execute_read_channel(self, channel_id: int, limit: Optional[int], oldest: bool, after = Optional[int]) -> List:
+    def _execute_read_channel(self, channel_id: int, limit: Optional[int], oldest: bool, before = Optional[int or datetime], after = Optional[int or datetime]) -> List:
         return asyncio.get_event_loop().run_until_complete(
             read_channel(
-                self.discord_token, channel_id, limit=limit, oldest=True, after=after
+                self.discord_token, channel_id, limit=limit, oldest=True, before=before, after=after
             )
         )
     
@@ -99,7 +100,7 @@ class DiscordConnector(LoadConnector, PollConnector):
         cursor = None
         while has_more:
             print(cursor)
-            messages = self._execute_read_channel(channel_id=channel_id, limit=self.batch_size, oldest=True, after=cursor)
+            messages = self._execute_read_channel(channel_id=channel_id, limit=self.batch_size, oldest=True, before= None, after=cursor)
             if messages == []:
                 has_more = False
                 messages.append(messages)
@@ -119,14 +120,12 @@ class DiscordConnector(LoadConnector, PollConnector):
     def poll_source(
         self, channel_id, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        start_time = datetime.fromtimestamp(start, tz=timezone.utc)
         end_time = datetime.fromtimestamp(end, tz=timezone.utc)
-
         has_more = True
-        cursor = start_time
+        cursor = datetime.fromtimestamp(start, tz=timezone.utc)
         messages = []
         while has_more:
-            messages = self._execute_read_channel(channel_id=channel_id, limit=self.batch_size, oldest=True, before=end_time, after=start_time)
+            messages = self._execute_read_channel(channel_id=channel_id, limit=self.batch_size, oldest=True, before=end_time, after=cursor)
             if messages == []:
                 has_more = False
                 messages.append(messages)
@@ -144,8 +143,7 @@ class DiscordConnector(LoadConnector, PollConnector):
 
 if __name__ == "__main__":
     connector = DiscordConnector(batch_size=4)
-    connector.load_credentials({"discord_token": "I ain't gon forget about you this time :)"})
-    document_batches = connector.load_from_state(1196598592018858035)
+    connector.load_credentials({"discord_token": "MTE5MDg4MDA3NjM2NDAwOTUyMw.G_ACK6.XoCT6TCzIt6N_GznIjJB8Gn-Ix68Daj1hKd3Bw"})
+    document_batches = connector.load_from_state(1197318454747873402)
     print("Batch 1: ", next(document_batches))
     print("Batch 2: ", next(document_batches))
-    print("Batch 3: ", next(document_batches))
