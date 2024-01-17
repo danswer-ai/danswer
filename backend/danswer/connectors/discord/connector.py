@@ -23,8 +23,8 @@ async def read_channel(
         token: str,
         channel_id: int,
         limit: INDEX_BATCH_SIZE,
-        oldest: False,
-        before: int
+        oldest: True,
+        after
     ) -> List:
 
     messages = []
@@ -39,14 +39,13 @@ async def read_channel(
                 threads = {}
                 for thread in channel.threads:
                     threads[thread.id] = thread
-                if before:
-                    if type(before) == int:
-                        before_msg = await channel.fetch_message(before)
-                    if type(before) == datetime.date:
-                        before_msg = before
+                if type(after) == str:
+                    after_msg = await channel.fetch_message(after)
+                elif type(after) == datetime.date:
+                    after_msg = after
                 else:
-                    before_msg = None
-                async for message in channel.history(limit=limit, oldest_first=oldest, before=before_msg):
+                    after_msg = None
+                async for message in channel.history(limit=limit, oldest_first=oldest, after=after_msg):
                     if message.id in threads:
                         thread = threads[message.id]
                         curr_thread_messages = []
@@ -87,31 +86,32 @@ class DiscordConnector(LoadConnector, PollConnector):
         self.discord_token = cast(str, credentials['discord_token'])
         return None
     
-    def _execute_read_channel(self, channel_id: int, limit: Optional[int], oldest: bool, before = Optional[int]) -> List:
+    def _execute_read_channel(self, channel_id: int, limit: Optional[int], oldest: bool, after = Optional[int]) -> List:
         return asyncio.get_event_loop().run_until_complete(
             read_channel(
-                self.discord_token, channel_id, limit=limit, oldest=oldest, before=before
+                self.discord_token, channel_id, limit=limit, oldest=True, after=after
             )
         )
     
     def load_from_state(self, channel_id) -> GenerateDocumentsOutput:
         has_more = True
-        cursor = None
         messages = []
+        cursor = None
         while has_more:
-            messages = self._execute_read_channel(channel_id=channel_id, limit=self.batch_size, oldest=True, before=cursor)
+            print(cursor)
+            messages = self._execute_read_channel(channel_id=channel_id, limit=self.batch_size, oldest=True, after=cursor)
             if messages == []:
                 has_more = False
                 messages.append(messages)
                 print(f"Reached End of Channel")
                 yield messages
             else:
-                if list(messages[0].keys()) == ['Regular']:
-                    cursor = messages[0]['Regular'].id
+                if list(messages[-1].keys()) == ['Regular']:
+                    cursor = messages[-1]['Regular'].id
                     messages.append(messages)
                     yield messages
-                elif list(messages[0].keys()) == ['Thread']:
-                    cursor = messages[0]['Thread'].id
+                elif list(messages[-1].keys()) == ['Thread']:
+                    cursor = messages[-1]['Thread'].id
                     messages.append(messages)
                     yield messages                    
 
@@ -126,25 +126,26 @@ class DiscordConnector(LoadConnector, PollConnector):
         cursor = start_time
         messages = []
         while has_more:
-            messages = self._execute_read_channel(channel_id=channel_id, limit=self.batch_size, oldest=True, before=end_time, after=end_time)
+            messages = self._execute_read_channel(channel_id=channel_id, limit=self.batch_size, oldest=True, before=end_time, after=start_time)
             if messages == []:
                 has_more = False
                 messages.append(messages)
                 print(f"Reached End of Channel")
                 yield messages
             else:
-                if list(messages[0].keys()) == ['Regular']:
-                    cursor = messages[0]['Regular'].id
+                if list(messages[-1].keys()) == ['Regular']:
+                    cursor = messages[-1]['Regular'].id
                     messages.append(messages)
                     yield messages
-                elif list(messages[0].keys()) == ['Thread']:
-                    cursor = messages[0]['Thread'].id
+                elif list(messages[-1].keys()) == ['Thread']:
+                    cursor = messages[-1]['Thread'].id
                     messages.append(messages)
                     yield messages   
 
 if __name__ == "__main__":
-    connector = DiscordConnector(batch_size=12)
-    connector.load_credentials({"discord_token": ""})
+    connector = DiscordConnector(batch_size=4)
+    connector.load_credentials({"discord_token": "I ain't gon forget about you this time :)"})
     document_batches = connector.load_from_state(1196598592018858035)
-    print(next(document_batches))
-    
+    print("Batch 1: ", next(document_batches))
+    print("Batch 2: ", next(document_batches))
+    print("Batch 3: ", next(document_batches))
