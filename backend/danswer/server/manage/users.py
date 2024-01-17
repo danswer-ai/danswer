@@ -34,9 +34,9 @@ from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
 from danswer.utils.logger import setup_logger
+from ee.danswer.db.api_key import is_api_key_email_address
 
 logger = setup_logger()
-
 
 router = APIRouter()
 
@@ -91,7 +91,11 @@ def list_all_users(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> AllUsersResponse:
-    users = list_users(db_session, q=q)
+    users = [
+        user
+        for user in list_users(db_session, q=q)
+        if not is_api_key_email_address(user.email)
+    ]
     accepted_emails = {user.email for user in users}
     invited_emails = get_invited_users()
     if q:

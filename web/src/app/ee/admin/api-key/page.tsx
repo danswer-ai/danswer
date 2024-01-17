@@ -23,6 +23,7 @@ import { Table } from "@tremor/react";
 import { DeleteButton } from "@/components/DeleteButton";
 import { FiCopy, FiRefreshCw, FiX } from "react-icons/fi";
 import { Modal } from "@/components/Modal";
+import { Spinner } from "@/components/Spinner";
 
 interface APIKey {
   api_key_id: number;
@@ -95,6 +96,7 @@ function Main() {
   } = useSWR<APIKey[]>("/api/admin/api-key", errorHandlingFetcher);
 
   const [fullApiKey, setFullApiKey] = useState<string | null>(null);
+  const [keyIsGenerating, setKeyIsGenerating] = useState(false);
 
   if (isLoading) {
     return <ThreeDotsLoader />;
@@ -115,9 +117,11 @@ function Main() {
       size="xs"
       className="mt-3"
       onClick={async () => {
+        setKeyIsGenerating(true);
         const response = await fetch("/api/admin/api-key", {
           method: "POST",
         });
+        setKeyIsGenerating(false);
         if (!response.ok) {
           const errorMsg = await response.text();
           setPopup({
@@ -154,6 +158,8 @@ function Main() {
         />
       )}
 
+      {keyIsGenerating && <Spinner />}
+
       <Text>{API_KEY_TEXT}</Text>
       {newApiKeyButton}
 
@@ -187,12 +193,14 @@ function Main() {
                   border-border
                   text-sm`}
                   onClick={async () => {
+                    setKeyIsGenerating(true);
                     const response = await fetch(
                       `/api/admin/api-key/${apiKey.api_key_id}`,
                       {
                         method: "PATCH",
                       }
                     );
+                    setKeyIsGenerating(false);
                     if (!response.ok) {
                       const errorMsg = await response.text();
                       setPopup({
@@ -237,8 +245,6 @@ function Main() {
       </Table>
     </div>
   );
-
-  return <div>{fullApiKey}</div>;
 }
 
 export default function Page() {
