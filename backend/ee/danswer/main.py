@@ -13,6 +13,7 @@ from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
 from danswer.main import get_application
+from danswer.main import include_router_with_global_prefix_prepended
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 from ee.danswer.configs.app_configs import OPENID_CONFIG_URL
@@ -36,7 +37,8 @@ def get_ee_application() -> FastAPI:
     application = get_application()
 
     if AUTH_TYPE == AuthType.OIDC:
-        application.include_router(
+        include_router_with_global_prefix_prepended(
+            application,
             fastapi_users.get_oauth_router(
                 OpenID(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OPENID_CONFIG_URL),
                 auth_backend,
@@ -49,24 +51,25 @@ def get_ee_application() -> FastAPI:
             tags=["auth"],
         )
         # need basic auth router for `logout` endpoint
-        application.include_router(
+        include_router_with_global_prefix_prepended(
+            application,
             fastapi_users.get_auth_router(auth_backend),
             prefix="/auth",
             tags=["auth"],
         )
 
     elif AUTH_TYPE == AuthType.SAML:
-        application.include_router(saml_router)
+        include_router_with_global_prefix_prepended(application, saml_router)
 
     # RBAC / group access control
-    application.include_router(user_group_router)
+    include_router_with_global_prefix_prepended(application, user_group_router)
     # Analytics endpoints
-    application.include_router(analytics_router)
-    application.include_router(query_history_router)
+    include_router_with_global_prefix_prepended(application, analytics_router)
+    include_router_with_global_prefix_prepended(application, query_history_router)
     # Api key management
-    application.include_router(api_key_router)
+    include_router_with_global_prefix_prepended(application, api_key_router)
     # EE only backend APIs
-    application.include_router(chat_query_router)
+    include_router_with_global_prefix_prepended(application, chat_query_router)
 
     return application
 
