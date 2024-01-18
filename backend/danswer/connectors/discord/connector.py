@@ -40,13 +40,17 @@ async def read_channel(
                 threads = {}
                 for thread in channel.threads:
                     threads[thread.id] = thread
+                if type(before) == datetime:
+                    before_msg = before
+                else:
+                    before_msg = None
                 if type(after) == str:
                     after_msg = await channel.fetch_message(after)
-                elif type(after) == datetime.date:
+                elif type(after) == datetime:
                     after_msg = after
                 else:
                     after_msg = None
-                async for message in channel.history(limit=limit, oldest_first=oldest, after=after_msg):
+                async for message in channel.history(limit=limit, oldest_first=oldest, before=before_msg, after=after_msg):
                     if message.id in threads:
                         thread = threads[message.id]
                         curr_thread_messages = []
@@ -142,8 +146,8 @@ class DiscordConnector(LoadConnector, PollConnector):
                     yield messages   
 
 if __name__ == "__main__":
-    connector = DiscordConnector(batch_size=4)
-    connector.load_credentials({"discord_token": "MTE5MDg4MDA3NjM2NDAwOTUyMw.G_ACK6.XoCT6TCzIt6N_GznIjJB8Gn-Ix68Daj1hKd3Bw"})
-    document_batches = connector.load_from_state(1197318454747873402)
+    connector = DiscordConnector(batch_size=2)
+    connector.load_credentials({"discord_token": "I will not fall for your tricks again."})
+    document_batches = connector.poll_source(1197318454747873402, start=1705533366.652, end=1705533412.843)
     print("Batch 1: ", next(document_batches))
     print("Batch 2: ", next(document_batches))
