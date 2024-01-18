@@ -80,9 +80,9 @@ const Main = () => {
         <>
           <div className="flex mb-1 text-sm">
             <p className="my-auto">Existing API Token: </p>
-            {/* <p className="ml-1 italic my-auto max-w-md">
-              {dropboxCredential.credential_json?.zendesk_email}
-            </p> */}
+            <p className="ml-1 italic my-auto max-w-md">
+              {dropboxCredential.credential_json?.dropbox_access_token}
+            </p>
             <button
               className="ml-1 hover:bg-hover rounded p-1"
               onClick={async () => {
@@ -105,14 +105,7 @@ const Main = () => {
       ) : (
         <>
           <Text>
-            To get started you&apos;ll need API token details for your Zendesk
-            instance. You can generate this by access the Admin Center of your
-            instance (e.g. https://&lt;subdomain&gt;.zendesk.com/admin/).
-            Proceed to the &quot;Apps and Integrations&quot; section and
-            &quot;Zendesk API&quot; page. Add a new API token and provide it
-            with a name. You will also need to provide the e-mail address of a
-            user that the system will impersonate. This is of little consequence
-            as we are only performing read actions.
+            See the Dropbox connector <a className="text-blue-500" href="https://docs.danswer.dev/connectors/dropbox/overview">setup guide</a> on the Danswer docs to obtain a Dropbox token.
           </Text>
           <Card className="mt-4 mb-4">
             <CredentialForm<DropboxCredentialJson>
@@ -132,8 +125,6 @@ const Main = () => {
               })}
               initialValues={{
                 dropbox_access_token: "",
-                // zendesk_email: "",
-                // zendesk_token: "",
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
@@ -158,13 +149,6 @@ const Main = () => {
             <ConnectorsTable<DropboxConfig, DropboxCredentialJson>
               connectorIndexingStatuses={dropboxConnectorIndexingStatuses}
               liveCredential={dropboxCredential}
-              getCredential={(credential) => {
-                return (
-                  <div>
-                    {/* <p>{credential.credential_json.zendesk_email}</p> */}
-                  </div>
-                );
-              }}
               onCredentialLink={async (connectorId) => {
                 if (dropboxCredential) {
                   await linkCredential(connectorId, dropboxCredential.id);
@@ -201,16 +185,6 @@ const Main = () => {
           </Card>
         </>
       )}
-
-      {!dropboxCredential && (
-        <>
-          <Text className="mb-4">
-            Please provide your API details in Step 1 first! Once done with
-            that, you&apos;ll be able to start the connection then see indexing
-            status.
-          </Text>
-        </>
-      )}
     </>
   );
 };
@@ -221,9 +195,7 @@ export default function Page() {
         <div className="mb-4">
           <HealthCheckBanner />
         </div>
-  
         <AdminPageTitle icon={<DropboxIcon size={32} />} title="Dropbox" />
-  
         <Main />
       </div>
     );
