@@ -30,13 +30,17 @@ class DropboxConnector(LoadConnector, PollConnector):
         self.dropbox_client = Dropbox(credentials["dropbox_access_token"])
         return None
 
-    def _download_file(self, path: str):
+    def _download_file(self, path: str) -> bytes:
         """Download a single file from Dropbox."""
+        if self.dropbox_client is None:
+            raise DropboxClientNotSetUpError()
         _, resp = self.dropbox_client.files_download(path)
         return resp.content
 
-    def _get_shared_link(self, path: str):
+    def _get_shared_link(self, path: str) -> str:
         """Create a shared link for a file in Dropbox."""
+        if self.dropbox_client is None:
+            raise DropboxClientNotSetUpError()
         try:
             link_metadata = (
                 self.dropbox_client.sharing_create_shared_link_with_settings(path)
@@ -44,14 +48,18 @@ class DropboxConnector(LoadConnector, PollConnector):
             return link_metadata.url
         except ApiError as err:
             print(f"Failed to create a shared link for {path}: {err}")
+            return ""
 
     def _yield_files_recursive(
         self,
         path: str,
         start: SecondsSinceUnixEpoch | None,
         end: SecondsSinceUnixEpoch | None,
-    ):
+    ) -> GenerateDocumentsOutput:
         """Yield files in batches from a specified Dropbox folder, including subfolders."""
+        if self.dropbox_client is None:
+            raise DropboxClientNotSetUpError()
+
         result = self.dropbox_client.files_list_folder(
             path,
             limit=self.batch_size,
