@@ -34,7 +34,9 @@ def _batch_gitlab_objects(
 
 def get_author(author:Any)-> BasicExpertInfo:
     return BasicExpertInfo(
-        display_name=author.name,
+        display_name=author.get("name"),
+        first_name=author.get("name").split(" ")[0],
+        last_name=author.get("name").split(" ")[1]
 
     )
 
@@ -49,7 +51,7 @@ def _convert_merge_request_to_document(mr: Any) -> Document:
         # as there is logic in indexing to prevent wrong timestamped docs
         # due to local time discrepancies with UTC
         doc_updated_at=mr.updated_at.replace(tzinfo=timezone.utc),
-        primary_owners=[BasicExpertInfo(display_name=mr.author.name, first_name=mr.author.name.split(" ")[0],last_name=mr.author.name.split(" ")[1])],
+        primary_owners=[get_author(mr.author)],
         metadata={
             "state": mr.state,
              "type": "MergeRequest"
@@ -67,7 +69,7 @@ def _convert_issue_to_document(issue: Any) -> Document:
         # as there is logic in indexing to prevent wrong timestamped docs
         # due to local time discrepancies with UTC
         doc_updated_at=issue.updated_at.replace(tzinfo=timezone.utc),
-        primary_owners=[BasicExpertInfo(display_name=issue.author.name, first_name=issue.author.name.split(" ")[0],last_name=issue.author.name.split(" ")[1])],
+        primary_owners=[get_author(issue.author)],
         metadata={
             "state": issue.state,
              "type": issue.type | "Issue"
@@ -135,7 +137,7 @@ class GitlabConnector(LoadConnector, PollConnector):
                         return
                     if end is not None and issue.updated_at > end:
                         continue
-                    if end is not None :
+                    if issue.updated_at is not None :
                          # MRs are handled separately
                         continue
                     doc_batch.append(_convert_issue_to_document(issue))
