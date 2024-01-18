@@ -2,9 +2,9 @@ from datetime import timezone
 from typing import Any
 
 from dropbox import Dropbox  # type: ignore
-from dropbox.exceptions import ApiError
-from dropbox.files import FileMetadata
-from dropbox.files import FolderMetadata
+from dropbox.exceptions import ApiError  # type:ignore
+from dropbox.files import FileMetadata  # type:ignore
+from dropbox.files import FolderMetadata  # type:ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
