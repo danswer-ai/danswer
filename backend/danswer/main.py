@@ -140,7 +140,6 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, danswer_api_router)
     include_router_with_global_prefix_prepended(application, gpts_router)
 
-
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step
         pass
