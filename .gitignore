@@ -4,3 +4,4 @@
 .mypy_cache
 .idea
 /deployment/data/nginx/app.conf
+.vscode/launch.json
