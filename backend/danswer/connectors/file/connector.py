@@ -75,6 +75,21 @@ def _process_file(
     dt_str = metadata.get("doc_updated_at")
     final_time_updated = time_str_to_utc(dt_str) if dt_str else time_updated
 
+    # add tags
+    metadata_tags = {
+        k: v
+        for k, v in file_metadata.items()
+        if k
+        not in [
+            "time_updated",
+            "doc_updated_at",
+            "link",
+            "primary_owners",
+            "secondary_owners",
+            "filename",
+        ]
+    }
+
     return [
         Document(
             id=file_name,
@@ -86,7 +101,8 @@ def _process_file(
             doc_updated_at=final_time_updated,
             primary_owners=metadata.get("primary_owners"),
             secondary_owners=metadata.get("secondary_owners"),
-            metadata={},
+            # currently metadata just houses tags, other stuff like owners / updated at have dedicated fields
+            metadata=metadata_tags,
         )
     ]
 
