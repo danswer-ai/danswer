@@ -18,6 +18,7 @@ import {
   NotionIcon,
   ProductboardIcon,
   RequestTrackerIcon,
+  SharepointIcon,
   SlabIcon,
   SlackIcon,
   ZendeskIcon,
@@ -153,10 +154,10 @@ const SOURCE_METADATA_MAP: SourceMap = {
     category: SourceCategory.AppConnection,
   },
   sharepoint: {
-    icon: RequestTrackerIcon,
+    icon: SharepointIcon,
     displayName: "Sharepoint",
     category: SourceCategory.AppConnection,
-  },
+  }
 };
 
 function fillSourceMetadata(

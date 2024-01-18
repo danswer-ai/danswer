@@ -1,7 +1,7 @@
 "use client";
 
 import * as Yup from "yup";
-import { TrashIcon, RequestTrackerIcon } from "@/components/icons/icons"; // Make sure you have a Document360 icon
+import { TrashIcon, SharepointIcon } from "@/components/icons/icons"; // Make sure you have a Document360 icon
 import { fetcher } from "@/lib/fetcher";
 import useSWR, { useSWRConfig } from "swr";
 import { LoadingAnimation } from "@/components/Loading";
@@ -100,19 +100,6 @@ const MainSection = () => {
             To index Sharepoint, please provide
             Azure AD client ID, Client Secret, and Directory ID.
           </Text>
-          {/* <Text className="mb-2">
-            This connector currently supports{" "}
-            <a
-              className="text-link"
-              href="https://rt-wiki.bestpractical.com/wiki/REST"
-              target="_blank"
-            >
-              Sharepoint REST API 1.0
-            </a>
-            ,{" "}
-            <b>not the latest REST API 2.0 introduced in Sharepoint 5.0</b>
-            .
-          </Text> */}
           <Card className="mt-2">
             <CredentialForm<SharepointCredentialJson>
               formBody={
@@ -212,15 +199,34 @@ const MainSection = () => {
             }
             source="sharepoint"
             inputType="poll"
-            validationSchema={Yup.object().shape({})}
+            formBodyBuilder={TextArrayFieldBuilder({
+              name: "sites",
+              label: "Sites:",
+              subtext:
+                "Specify 0 or more sites to index. For example, specifying the site " +
+                "'support' for the 'danswerai' sharepoint will cause us to only index all content " +
+                "within the 'https://danswerai.sharepoint.com/sites/support' site. " +
+                "If no sites are specified, all sites in your organization will be indexed.",
+            })}
+            validationSchema={Yup.object().shape({
+              sites: Yup.array()
+                .of(Yup.string().required("Site names must be strings"))
+                .required(),
+            })}
             formBody={<></>}
-            initialValues={{}}
+            initialValues={{
+              sites: []
+            }}
             credentialId={sharepointCredential.id}
             refreshFreq={10 * 60} // 10 minutes
           />
         </Card>
       ) : (
-        <></>
+        <Text>
+          Please provide all Azure info in Step 1 first! Once you're done with
+          that, you can then specify which Sharepoint sites you want to make
+          searchable.
+        </Text>
       )}
     </>
   );
@@ -234,7 +240,7 @@ export default function Page() {
       </div>
 
       <AdminPageTitle
-        icon={<RequestTrackerIcon size={32} />}
+        icon={<SharepointIcon size={32} />}
         title="Sharepoint"
       />
 

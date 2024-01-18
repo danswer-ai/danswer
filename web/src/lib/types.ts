@@ -105,7 +105,9 @@ export interface JiraConfig {
   jira_project_url: string;
 }
 
-export interface SharepointConfig {}
+export interface SharepointConfig {
+  sites?: string[];
+}
 
 export interface ProductboardConfig {}
 

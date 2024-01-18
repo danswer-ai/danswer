@@ -76,10 +76,11 @@ class SharepointConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         batch_size: int = INDEX_BATCH_SIZE,
+        site_list: list[str] = [],
     ) -> None:
         self.batch_size = batch_size
         self.graph_client: GraphClient | None = None
-        self.requested_site_list: list[str] = []
+        self.requested_site_list: list[str] = site_list
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         aad_client_id = credentials["aad_client_id"]
@@ -128,8 +129,8 @@ class SharepointConnector(LoadConnector, PollConnector):
 
     def get_all_site_objects(self) -> list[Site]:
         site_object_list: list[Site] = []
+        
         sites_object = self.graph_client.sites.get().execute_query()
-
 
         if len(self.requested_site_list)>0:
             for requested_site in self.requested_site_list:
@@ -214,7 +215,9 @@ class SharepointConnector(LoadConnector, PollConnector):
 if __name__ == "__main__":
     import os
 
-    connector = SharepointConnector()
+    connector = SharepointConnector(
+        sites=os.environ["SITES"]
+    )
 
     connector.load_credentials(
         {
