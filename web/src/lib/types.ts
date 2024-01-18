@@ -12,6 +12,7 @@ export interface User {
 export type ValidSources =
   | "web"
   | "github"
+  | "gitlab"
   | "slack"
   | "google_drive"
   | "bookstack"
@@ -76,6 +77,14 @@ export interface GithubConfig {
   include_prs: boolean;
   include_issues: boolean;
 }
+
+export interface GitlabConfig {
+  project_owner: string;
+  project_name: string;
+  include_mrs: boolean;
+  include_issues: boolean;
+}
+
 
 export interface GoogleDriveConfig {
   folder_paths?: string[];
@@ -187,6 +196,11 @@ export interface Credential<T> extends CredentialBase<T> {
 
 export interface GithubCredentialJson {
   github_access_token: string;
+}
+
+export interface GitlabCredentialJson {
+  gitlab_url:string,
+  gitlab_access_token: string;
 }
 
 export interface BookstackCredentialJson {
