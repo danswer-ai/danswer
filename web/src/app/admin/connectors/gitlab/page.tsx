@@ -108,7 +108,8 @@ const Main = () => {
               formBody={
                 <>
                   <Text>
-                    If you are using GitLab Cloud, keep the default value below</Text>
+                    If you are using GitLab Cloud, keep the default value below
+                  </Text>
                   <TextFormField
                     name="gitlab_url"
                     label="GitLab URL:"
@@ -131,7 +132,7 @@ const Main = () => {
               })}
               initialValues={{
                 gitlab_access_token: "",
-                gitlab_url: "https://gitlab.com"
+                gitlab_url: "https://gitlab.com",
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {

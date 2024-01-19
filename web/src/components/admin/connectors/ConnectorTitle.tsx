@@ -45,7 +45,7 @@ export const ConnectorTitle = ({
       "Repo",
       `${typedConnector.connector_specific_config.project_owner}/${typedConnector.connector_specific_config.project_name}`
     );
-  }  else if (connector.source === "confluence") {
+  } else if (connector.source === "confluence") {
     const typedConnector = connector as Connector<ConfluenceConfig>;
     additionalMetadata.set(
       "Wiki URL",
