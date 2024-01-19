@@ -90,6 +90,17 @@ class GuruConnector(LoadConnector, PollConnector):
                 latest_time = (
                     max(last_verified, last_updated) if last_verified else last_updated
                 )
+
+                metadata_dict: dict[str, str | list[str]] = {}
+                tags = [tag.get("value") for tag in card.get("tags", [])]
+                if tags:
+                    metadata_dict["tags"] = tags
+
+                boards = [board.get("title") for board in card.get("boards", [])]
+                if boards:
+                    # In UI it's called Folders
+                    metadata_dict["folders"] = boards
+
                 doc_batch.append(
                     Document(
                         id=card["id"],
@@ -97,7 +108,7 @@ class GuruConnector(LoadConnector, PollConnector):
                         source=DocumentSource.GURU,
                         semantic_identifier=title,
                         doc_updated_at=latest_time,
-                        metadata={},
+                        metadata=metadata_dict,
                     )
                 )
 
