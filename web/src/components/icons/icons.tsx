@@ -50,7 +50,7 @@ import hubSpotIcon from "../../../public/HubSpot.png";
 import document360Icon from "../../../public/Document360.png";
 import googleSitesIcon from "../../../public/GoogleSites.png";
 import zendeskIcon from "../../../public/Zendesk.svg";
-import sharepointIcon from "../../../public/RequestTracker.png";
+import sharepointIcon from "../../../public/Sharepoint.png";
 import { FaRobot } from "react-icons/fa";
 
 interface IconProps {
