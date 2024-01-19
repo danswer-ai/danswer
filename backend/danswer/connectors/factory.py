@@ -8,6 +8,7 @@ from danswer.connectors.danswer_jira.connector import JiraConnector
 from danswer.connectors.document360.connector import Document360Connector
 from danswer.connectors.file.connector import LocalFileConnector
 from danswer.connectors.github.connector import GithubConnector
+from danswer.connectors.gitlab.connector import GitlabConnector
 from danswer.connectors.gong.connector import GongConnector
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.google_site.connector import GoogleSitesConnector
@@ -48,6 +49,7 @@ def identify_connector_class(
             InputType.POLL: SlackPollConnector,
         },
         DocumentSource.GITHUB: GithubConnector,
+        DocumentSource.GITLAB: GitlabConnector,
         DocumentSource.GOOGLE_DRIVE: GoogleDriveConnector,
         DocumentSource.BOOKSTACK: BookstackConnector,
         DocumentSource.CONFLUENCE: ConfluenceConnector,
