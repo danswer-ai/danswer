@@ -61,10 +61,10 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Github",
     category: SourceCategory.AppConnection,
   },
-  gitlab :{
-    icon:GitlabIcon,
-    displayName:"Gitlab",
-    category:SourceCategory.AppConnection,
+  gitlab: {
+    icon: GitlabIcon,
+    displayName: "Gitlab",
+    category: SourceCategory.AppConnection,
   },
   confluence: {
     icon: ConfluenceIcon,

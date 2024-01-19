@@ -85,7 +85,6 @@ export interface GitlabConfig {
   include_issues: boolean;
 }
 
-
 export interface GoogleDriveConfig {
   folder_paths?: string[];
   include_shared?: boolean;
@@ -199,7 +198,7 @@ export interface GithubCredentialJson {
 }
 
 export interface GitlabCredentialJson {
-  gitlab_url:string,
+  gitlab_url: string;
   gitlab_access_token: string;
 }
 
