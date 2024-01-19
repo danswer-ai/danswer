@@ -37,13 +37,11 @@ def _batch_gitlab_objects(
 def get_author(author: Any) -> BasicExpertInfo:
     return BasicExpertInfo(
         display_name=author.get("name"),
-        first_name=author.get("name").split(" ")[0],
-        last_name=author.get("name").split(" ")[1],
     )
 
 
 def _convert_merge_request_to_document(mr: Any) -> Document:
-    return Document(
+    doc = Document(
         id=mr.web_url,
         sections=[Section(link=mr.web_url, text=mr.description or "")],
         source=DocumentSource.GITLAB,
@@ -55,10 +53,11 @@ def _convert_merge_request_to_document(mr: Any) -> Document:
         primary_owners=[get_author(mr.author)],
         metadata={"state": mr.state, "type": "MergeRequest"},
     )
+    return doc
 
 
 def _convert_issue_to_document(issue: Any) -> Document:
-    return Document(
+    doc = Document(
         id=issue.web_url,
         sections=[Section(link=issue.web_url, text=issue.description or "")],
         source=DocumentSource.GITLAB,
@@ -68,8 +67,9 @@ def _convert_issue_to_document(issue: Any) -> Document:
         # due to local time discrepancies with UTC
         doc_updated_at=issue.updated_at.replace(tzinfo=timezone.utc),
         primary_owners=[get_author(issue.author)],
-        metadata={"state": issue.state, "type": issue.type | "Issue"},
+        metadata={"state": issue.state, "type": issue.type if issue.type else "Issue"},
     )
+    return doc
 
 
 class GitlabConnector(LoadConnector, PollConnector):
@@ -102,7 +102,7 @@ class GitlabConnector(LoadConnector, PollConnector):
         if self.gitlab_client is None:
             raise ConnectorMissingCredentialError("Gitlab")
         project = self.gitlab_client.projects.get(
-            f"{self.project_owner[0]}/{self.project_name[0]}"
+            f"{self.project_owner}/{self.project_name}"
         )
 
         if self.include_mrs:
@@ -137,9 +137,6 @@ class GitlabConnector(LoadConnector, PollConnector):
                         yield doc_batch
                         return
                     if end is not None and issue.updated_at > end:
-                        continue
-                    if issue.updated_at is not None:
-                        # MRs are handled separately
                         continue
                     doc_batch.append(_convert_issue_to_document(issue))
                 yield doc_batch
