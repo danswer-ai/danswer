@@ -109,13 +109,13 @@ const MainSection = () => {
                     label="Azure AD Client ID:"
                   />
                   <TextFormField
+                    name="aad_directory_id"
+                    label="Azure AD Directory ID:"
+                  />
+                  <TextFormField
                     name="aad_client_secret"
                     label="Azure AD Client Secret:"
                     type="password"
-                  />
-                  <TextFormField
-                    name="aad_directory_id"
-                    label="Azure AD Directory ID:"
                   />
                 </>
               }
@@ -123,18 +123,18 @@ const MainSection = () => {
                 aad_client_id: Yup.string().required(
                   "Please enter your Azure AD Client ID"
                 ),
-                aad_client_secret: Yup.string().required(
-                  "Please enter your Azure AD Client Secret"
-                ),
                 aad_directory_id: Yup.string()
                   .required(
                     "Please enter your Azure AD Directory ID"
                   ),
+                  aad_client_secret: Yup.string().required(
+                    "Please enter your Azure AD Client Secret"
+                  ),
               })}
               initialValues={{
                 aad_client_id: "",
-                aad_client_secret: "",
                 aad_directory_id: "",
+                aad_client_secret: "",
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
