@@ -13,6 +13,7 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -101,6 +102,15 @@ class GuruConnector(LoadConnector, PollConnector):
                     # In UI it's called Folders
                     metadata_dict["folders"] = boards
 
+                owner = card.get("owner", {})
+                author = None
+                if owner:
+                    author = BasicExpertInfo(
+                        email=owner.get("email"),
+                        first_name=owner.get("firstName"),
+                        last_name=owner.get("lastName"),
+                    )
+
                 doc_batch.append(
                     Document(
                         id=card["id"],
@@ -108,6 +118,8 @@ class GuruConnector(LoadConnector, PollConnector):
                         source=DocumentSource.GURU,
                         semantic_identifier=title,
                         doc_updated_at=latest_time,
+                        primary_owners=[author] if author is not None else None,
+                        # Can add verifies and commenters later
                         metadata=metadata_dict,
                     )
                 )
