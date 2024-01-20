@@ -25,51 +25,50 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { Card, Text, Title } from "@tremor/react";
 
 const MainSection = () => {
-    const { mutate } = useSWRConfig();
-    const {
-      data: connectorIndexingStatuses,
-      isLoading: isConnectorIndexingStatusesLoading,
-      error: isConnectorIndexingStatusesError,
-    } = useSWR<ConnectorIndexingStatus<any, any>[]>(
-      "/api/manage/admin/connector/indexing-status",
-      fetcher
-    );
-
-    const {
-        data: credentialsData,
-        isLoading: isCredentialsLoading,
-        error: isCredentialsError,
-        refreshCredentials,
-      } = usePublicCredentials();
-    
-      if (
-        (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
-        (!credentialsData && isCredentialsLoading)
-      ) {
-        return <LoadingAnimation text="Loading" />;
-      }
-    
-      if (isConnectorIndexingStatusesError || !connectorIndexingStatuses) {
-        return <div>Failed to load connectors</div>;
-      }
-    
-      if (isCredentialsError || !credentialsData) {
-        return <div>Failed to load credentials</div>;
-      }
-    
-      const exchangeConnectorIndexingStatuses: ConnectorIndexingStatus<
-        ExchangeConfig,
-        ExchangeCredentialJson
-      >[] = connectorIndexingStatuses.filter(
-        (connectorIndexingStatus) =>
-          connectorIndexingStatus.connector.source === "exchange"
-      );
-
-      const exchangeCredential:
-    | Credential<ExchangeCredentialJson>
-    | undefined = credentialsData.find(
-    (credential) => credential.credential_json?.aad_app_id
+  const { mutate } = useSWRConfig();
+  const {
+    data: connectorIndexingStatuses,
+    isLoading: isConnectorIndexingStatusesLoading,
+    error: isConnectorIndexingStatusesError,
+  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
+    "/api/manage/admin/connector/indexing-status",
+    fetcher
   );
+
+  const {
+    data: credentialsData,
+    isLoading: isCredentialsLoading,
+    error: isCredentialsError,
+    refreshCredentials,
+  } = usePublicCredentials();
+
+  if (
+    (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
+    (!credentialsData && isCredentialsLoading)
+  ) {
+    return <LoadingAnimation text="Loading" />;
+  }
+
+  if (isConnectorIndexingStatusesError || !connectorIndexingStatuses) {
+    return <div>Failed to load connectors</div>;
+  }
+
+  if (isCredentialsError || !credentialsData) {
+    return <div>Failed to load credentials</div>;
+  }
+
+  const exchangeConnectorIndexingStatuses: ConnectorIndexingStatus<
+    ExchangeConfig,
+    ExchangeCredentialJson
+  >[] = connectorIndexingStatuses.filter(
+    (connectorIndexingStatus) =>
+      connectorIndexingStatus.connector.source === "exchange"
+  );
+
+  const exchangeCredential: Credential<ExchangeCredentialJson> | undefined =
+    credentialsData.find(
+      (credential) => credential.credential_json?.aad_app_id
+    );
 
   return (
     <>
@@ -94,21 +93,18 @@ const MainSection = () => {
             </button>
           </div>
         </>
-    ) : (
+      ) : (
         <>
           <Text className="mb-2">
             To index an Exchange email mailbox, please provide the following
-            Tenant ID, Azure AD App ID, App Secret, and Account Email.
-            Currently this connector only supports one email account.
+            Tenant ID, Azure AD App ID, App Secret, and Account Email. Currently
+            this connector only supports one email account.
           </Text>
           <Card className="mt-2">
             <CredentialForm<ExchangeCredentialJson>
               formBody={
                 <>
-                  <TextFormField
-                    name="aad_app_id"
-                    label="Azure AD App ID:"
-                  />
+                  <TextFormField name="aad_app_id" label="Azure AD App ID:" />
                   <TextFormField
                     name="aad_tenant_id"
                     label="Azure AD Tenant ID:"
@@ -121,62 +117,61 @@ const MainSection = () => {
                     name="aad_app_secret"
                     label="Azure AD App Secret:"
                     type="password"
-                    />
-                  </>
-                }
-                validationSchema={Yup.object().shape({
-                  aad_app_id: Yup.string().required(
-                    "Please enter your Azure AD App ID"
-                  ),
-                  
-                  aad_tenant_id: Yup.string()
-                    .required(
-                      "Please enter your Azure AD Tenant ID"
-                    ),
-                    aad_user_id: Yup.string()
-                    .required(
-                      "Please enter your Azure AD User Email"
-                    ),
-                    aad_app_secret: Yup.string().required(
-                      "Please enter your Azure AD App Secret"
-                    ),
-                })}
-                initialValues={{
-                  aad_app_id: "",
-                  aad_user_id: "",
-                  aad_tenant_id: "",
-                  aad_app_secret: "",
-                }}
-                onSubmit={(isSuccess) => {
-                  if (isSuccess) {
-                    refreshCredentials();
-                  }
-                }}
-              />
-            </Card>
-          </>
-        )}
+                  />
+                </>
+              }
+              validationSchema={Yup.object().shape({
+                aad_app_id: Yup.string().required(
+                  "Please enter your Azure AD App ID"
+                ),
 
-    <Title className="mb-2 mt-6 ml-auto mr-auto">
+                aad_tenant_id: Yup.string().required(
+                  "Please enter your Azure AD Tenant ID"
+                ),
+                aad_user_id: Yup.string().required(
+                  "Please enter your Azure AD User Email"
+                ),
+                aad_app_secret: Yup.string().required(
+                  "Please enter your Azure AD App Secret"
+                ),
+              })}
+              initialValues={{
+                aad_app_id: "",
+                aad_user_id: "",
+                aad_tenant_id: "",
+                aad_app_secret: "",
+              }}
+              onSubmit={(isSuccess) => {
+                if (isSuccess) {
+                  refreshCredentials();
+                }
+              }}
+            />
+          </Card>
+        </>
+      )}
+
+      <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 2: Manage Exchange Connector
       </Title>
 
       {exchangeConnectorIndexingStatuses.length > 0 && (
         <>
           <Text className="mb-2">
-            We index the most recently modified emails from the exchange online email account specified below. 
-            You can filter the emails pulled from exchange by setting 'optional' matching categories.
-            Currently, attachments are not indexed.
+            We index the most recently modified emails from the exchange online
+            email account specified below. You can filter the emails pulled from
+            exchange by setting 'optional' matching categories. Currently,
+            attachments are not indexed.
           </Text>
           <Text className="mb-2">
-            The initial poll at this time retrieves the latest 100 emails from exchange and re-indexes those updated in the past hour. 
-            All subsequent polls execute every ten minutes. This should be configurable in the future.
+            The initial poll at this time retrieves the latest 100 emails from
+            exchange and re-indexes those updated in the past hour. All
+            subsequent polls execute every ten minutes. This should be
+            configurable in the future.
           </Text>
           <div className="mb-2">
             <ConnectorsTable<ExchangeConfig, ExchangeCredentialJson>
-              connectorIndexingStatuses={
-                exchangeConnectorIndexingStatuses
-              }
+              connectorIndexingStatuses={exchangeConnectorIndexingStatuses}
               liveCredential={exchangeCredential}
               getCredential={(credential) =>
                 credential.credential_json.aad_tenant_id
@@ -186,10 +181,7 @@ const MainSection = () => {
               }
               onCredentialLink={async (connectorId) => {
                 if (exchangeCredential) {
-                  await linkCredential(
-                    connectorId,
-                    exchangeCredential.id
-                  );
+                  await linkCredential(connectorId, exchangeCredential.id);
                   mutate("/api/manage/admin/connector/indexing-status");
                 }
               }}
@@ -198,8 +190,7 @@ const MainSection = () => {
         </>
       )}
 
-      {exchangeCredential &&
-      exchangeConnectorIndexingStatuses.length === 0 ? (
+      {exchangeCredential && exchangeConnectorIndexingStatuses.length === 0 ? (
         <Card className="mt-4">
           <ConnectorForm<ExchangeConfig>
             nameBuilder={(values) =>
@@ -226,7 +217,7 @@ const MainSection = () => {
             })}
             formBody={<></>}
             initialValues={{
-              categories: []
+              categories: [],
             }}
             credentialId={exchangeCredential.id}
             refreshFreq={10 * 60} // 10 minutes
@@ -243,20 +234,16 @@ const MainSection = () => {
   );
 };
 
-
 export default function Page() {
-    return (
-      <div className="mx-auto container">
-        <div className="mb-4">
-          <HealthCheckBanner />
-        </div>
-  
-        <AdminPageTitle
-          icon={<ExchangeIcon size={32} />}
-          title="Exchange"
-        />
-  
-        <MainSection />
+  return (
+    <div className="mx-auto container">
+      <div className="mb-4">
+        <HealthCheckBanner />
       </div>
-    );
-  }
+
+      <AdminPageTitle icon={<ExchangeIcon size={32} />} title="Exchange" />
+
+      <MainSection />
+    </div>
+  );
+}

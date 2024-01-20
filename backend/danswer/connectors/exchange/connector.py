@@ -1,9 +1,9 @@
-import io
-import tempfile
 import os
 from datetime import datetime
 from datetime import timezone
 from typing import Any
+from typing import List
+from typing import Optional
 
 from O365 import Account
 
@@ -13,24 +13,26 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
-from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
-from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
+
+# Could not find a stubs file for this library
 
 logger = setup_logger()
+
 
 class ExchangeConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         batch_size: int = INDEX_BATCH_SIZE,
-        categories: list[str] = [],
+        categories: list[str] | None = [],
     ) -> None:
         self.batch_size = batch_size
         self.account: Account | None = None
-        self.index_categories: list[str] = categories
+        self.index_categories = categories
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         aad_app_id = credentials["aad_app_id"]
@@ -38,58 +40,73 @@ class ExchangeConnector(LoadConnector, PollConnector):
         aad_tenant_id = credentials["aad_tenant_id"]
         aad_user_id = credentials["aad_user_id"]
 
-        credentials = (aad_app_id, aad_app_secret)
-        account = Account(credentials,auth_flow_type='credentials', tenant_id=aad_tenant_id, main_resource=aad_user_id)
+        add_credentials = (aad_app_id, aad_app_secret)
+        account = Account(
+            add_credentials,
+            auth_flow_type="credentials",
+            tenant_id=aad_tenant_id,
+            main_resource=aad_user_id,
+        )
         if not account.is_authenticated:
             account.authenticate()
-        
+
         self.account = account
         return None
-    
-    def _prune_email_list_by_time(self, email_list: list, start: datetime, end: datetime) -> list:
-        return [email for email in email_list if email.created_date_time >= start and email.created_date_time <= end]
 
-    def get_all_email_objects(self, index_categories: list = None) -> list:
+    def _prune_email_list_by_time(
+        self, email_list: list, start: datetime, end: datetime
+    ) -> list:
+        return [
+            email
+            for email in email_list
+            if email.created_date_time >= start and email.created_date_time <= end
+        ]
+
+    def get_all_email_objects(
+        self, index_categories: Optional[List[str]] = None
+    ) -> list:
         limit = 100
         mailbox = self.account.mailbox()
-        inbox = mailbox.inbox_folder()
         emails = []
         # Only download at max 100 most recently modified emails
-        # We use Modified because setting catagory updates the modified date to now. 
+        # We use Modified because setting catagory updates the modified date to now.
         # This ensures it will be indexed during next poll
-
         if index_categories is None:
-            emails = inbox.get_messages(limit=limit, order_by='receivedDateTime DESC')
+            index_categories = []
+
+        if len(index_categories) == 0:
+            # Should this start from the oldest emails and work its way up?
+            # If mailbox receives more than limit between indexing, some will be missed.
+            emails = mailbox.get_messages(limit=limit, order_by="receivedDateTime DESC")
             return emails
         else:
-            if len(index_categories) == 0:
-                # Should this start from the oldest emails and work its way up?
-                # If mailbox receives more than limit between indexing, some will be missed.
-                emails = mailbox.get_messages(limit=limit, order_by='receivedDateTime DESC')
-                return emails
-            else:
-                # Process for each category
-                for category in index_categories:
-                    logger.info(f"Fetching Catagory: {category}")
-                    query = mailbox.new_query().any(collection='categories',operation='eq',word=category)
-                    emails_in_category = mailbox.get_messages(query=query, limit=limit, order_by='lastmodifiedDateTime DESC')
-                    emails.extend(emails_in_category)
+            # Process for each category
+            for category in index_categories:
+                logger.info(f"Fetching Catagory: {category}")
+                query = mailbox.new_query().any(
+                    collection="categories", operation="eq", word=category
+                )
+                emails_in_category = mailbox.get_messages(
+                    query=query, limit=limit, order_by="lastmodifiedDateTime DESC"
+                )
+                emails.extend(emails_in_category)
         return emails
 
     def _fetch_from_exchange(
-            self, start: datetime | None = None, end: datetime | None = None
+        self, start: datetime | None = None, end: datetime | None = None
     ) -> GenerateDocumentsOutput:
         if self.account is None:
             raise ConnectorMissingCredentialError("Exchange")
-        
-        email_object_list = self.get_all_email_objects( self.index_categories)
-        
+
+        email_object_list = self.get_all_email_objects(self.index_categories)
+
         if start is not None and end is not None:
             filtered_email_object_list = []
             for email in email_object_list:
-                
                 logger.info(f"Email received: {email.modified}")
-                email_received_date = datetime.utcfromtimestamp(email.modified.timestamp())
+                email_received_date = datetime.utcfromtimestamp(
+                    email.modified.timestamp()
+                )
 
                 # Check if email_received_date is within the start and end range
                 if start <= email_received_date <= end:
@@ -100,7 +117,6 @@ class ExchangeConnector(LoadConnector, PollConnector):
 
             email_object_list = filtered_email_object_list
 
-            
         doc_batch: list[Document] = []
         batch_count = 0
         for email in email_object_list:
@@ -112,14 +128,15 @@ class ExchangeConnector(LoadConnector, PollConnector):
                 batch_count = 0
                 doc_batch: list[Document] = []
         yield doc_batch
-        
+
     def convert_email_to_document(self, email) -> Document:
-        # Get the email 
+        # Get the email
         subject = email.subject
 
         str_to_address = ""
         str_cc_address = ""
         str_bcc_address = ""
+
         if email.to:
             for to_address in email.to:
                 str_to_address = str_to_address + to_address.address + ", "
@@ -132,7 +149,7 @@ class ExchangeConnector(LoadConnector, PollConnector):
 
         body = email.body
         sender = email.sender.address
-        date = email.received.strftime('%Y-%m-%d %H:%M:%S')
+        date = email.received.strftime("%Y-%m-%d %H:%M:%S")
 
         attachments = ""
         for attachment in email.attachments:
@@ -143,7 +160,7 @@ class ExchangeConnector(LoadConnector, PollConnector):
 
         # Create a unique name for this email
         symantic_identifier = f"{sender} {subject} {date}"
-        #create text from the email details
+        # create text from the email details
         email_text = f"Subject: {subject}"
         email_text += f"\n\nSender: {sender}"
         email_text += f"\n\nTo: {str_to_address}"
@@ -162,31 +179,29 @@ class ExchangeConnector(LoadConnector, PollConnector):
             sections=[Section(link=link, text=email_text)],
             source=DocumentSource.EXCHANGE,
             semantic_identifier=symantic_identifier,
-            doc_update_at=email.modified.replace(tzinfo=timezone.utc),
+            doc_updated_at=email.modified.replace(tzinfo=timezone.utc),
             primary_owners=[BasicExpertInfo(email=sender)],
-            metadata={}
+            metadata={},
         )
 
         # Todo: handle attachments
         # Todo: handle calanders
 
         return document
-    
+
     def load_from_state(self) -> GenerateDocumentsOutput:
         return self._fetch_from_exchange()
-    
-    def poll_source(self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch) -> GenerateDocumentsOutput:
+
+    def poll_source(
+        self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
+    ) -> GenerateDocumentsOutput:
         start_datetime = datetime.utcfromtimestamp(start)
         end_datetime = datetime.utcfromtimestamp(end)
         return self._fetch_from_exchange(start_datetime, end_datetime)
 
 
 if __name__ == "__main__":
-    import os
-
-    connector = ExchangeConnector(
-        index_categories=os.environ["categories"]
-    )
+    connector = ExchangeConnector(categories=[os.environ["CATEGORIES"]])
 
     connector.load_credentials(
         {
