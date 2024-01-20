@@ -4,3 +4,8 @@
 .mypy_cache
 .idea
 /deployment/data/nginx/app.conf
+.vscode/launch.json
+backend/o365_token.txt
+backend/celerybeat-schedule.dir
+backend/celerybeat-schedule.dat
+backend/celerybeat-schedule.bak

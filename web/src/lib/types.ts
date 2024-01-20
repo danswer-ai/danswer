@@ -30,6 +30,7 @@ export type ValidSources =
   | "file"
   | "google_sites"
   | "loopio"
+  | "exchange"
   | "zendesk";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
@@ -75,6 +76,10 @@ export interface GithubConfig {
   repo_name: string;
   include_prs: boolean;
   include_issues: boolean;
+}
+
+export interface ExchangeConfig {
+  categories?: string[];
 }
 
 export interface GoogleDriveConfig {
@@ -187,6 +192,13 @@ export interface Credential<T> extends CredentialBase<T> {
 
 export interface GithubCredentialJson {
   github_access_token: string;
+}
+
+export interface ExchangeCredentialJson {
+  aad_client_id: string;
+  aad_client_secret: string;
+  aad_tenant_id: string;
+  aad_user_id: string;
 }
 
 export interface BookstackCredentialJson {
