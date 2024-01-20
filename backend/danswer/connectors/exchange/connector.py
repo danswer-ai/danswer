@@ -49,22 +49,30 @@ class ExchangeConnector(LoadConnector, PollConnector):
     def _prune_email_list_by_time(self, email_list: list, start: datetime, end: datetime) -> list:
         return [email for email in email_list if email.created_date_time >= start and email.created_date_time <= end]
 
-    def get_all_email_objects(self, index_categories: list) -> list:
+    def get_all_email_objects(self, index_categories: list = None) -> list:
         mailbox = self.account.mailbox()
         inbox = mailbox.inbox_folder()
+        emails = []
+        # Only download at max 100 most recently modified emails
+        # We use Modified because setting catagory updates the modified date to now. 
+        # This ensures it will be indexed during next poll
 
-        if len(index_categories) == 0:
-            emails = mailbox.get_messages(limit=100)
+        if index_categories is None:
+            emails = inbox.get_messages(limit=10, order_by='receivedDateTime DESC')
             return emails
         else:
-            emails = []
-            # Process for each category
-            for category in index_categories:
-                logger.info(f"CATEGORY: {category}")
-                query = mailbox.new_query().search(f"category:{category}")
-                emails_cat = mailbox.get_messages(query=query, limit=100)
-                emails.extend(emails_cat)
-
+            if len(index_categories) == 0:
+                # Should this start from the oldest emails and work its way up?
+                # If mailbox receives more than 100 between indexing, some will be missed.
+                emails = mailbox.get_messages(limit=10, order_by='receivedDateTime DESC')
+                return emails
+            else:
+                # Process for each category
+                for category in index_categories:
+                    logger.info(f"Fetching Catagory: {category}")
+                    query = mailbox.new_query().any(collection='categories',operation='eq',word=category)
+                    emails_in_category = mailbox.get_messages(query=query, limit=100, order_by='lastmodifiedDateTime DESC')
+                    emails.extend(emails_in_category)
         return emails
 
     def _fetch_from_exchange(
@@ -124,7 +132,11 @@ class ExchangeConnector(LoadConnector, PollConnector):
         body = email.body
         sender = email.sender.address
         date = email.received.strftime('%Y-%m-%d %H:%M:%S')
-        attachments = email.attachments
+
+        attachments = ""
+        for attachment in email.attachments:
+            attachments += attachment.name + ", "
+
         categories = email.categories
         importance = email.importance
 
@@ -139,6 +151,7 @@ class ExchangeConnector(LoadConnector, PollConnector):
         email_text += f"\n\nDate: {date}"
         email_text += f"\n\nCategories: {categories}"
         email_text += f"\n\nImportance: {importance}"
+        email_text += f"\n\nAttachments: {attachments}"
         email_text += f"\n\nBody: {body}"
         link = f"https://outlook.office.com/owa/?ItemID={email.object_id}&viewmodel=ReadMessageItem&path=&exvsurl=1"
 
@@ -148,38 +161,13 @@ class ExchangeConnector(LoadConnector, PollConnector):
             sections=[Section(link=link, text=email_text)],
             source=DocumentSource.EXCHANGE,
             semantic_identifier=symantic_identifier,
-            doc_update_at=email.received.replace(tzinfo=timezone.utc),
+            doc_update_at=email.received.modified(tzinfo=timezone.utc),
             primary_owners=[BasicExpertInfo(email=sender)],
             metadata={}
         )
 
-        # ZT Will handle attachments later
-        # # Add the attachments to the document
-        # for attachment in attachments:
-        #     # Get the attachment name
-        #     attachment_name = attachment.name
-        #     # Get the attachment content
-        #     attachment_content = attachment.read()
-        #     # Get the attachment file extension
-        #     attachment_extension = attachment.content_type.split('/')[-1]
-
-        #     # Create a section object
-        #     section = Section(
-        #         title=attachment_name,
-        #         content=attachment_content,
-        #         source_type=DocumentSource.EXCHANGE,
-        #         source_links=[],
-        #         semantic_identifier=email.id,
-        #         metadata={
-        #             "sender": sender,
-        #             "recipients": recipients,
-        #             "date": date,
-        #             "categories": categories
-        #         }
-        #     )
-
-        #     # Add the section to the document
-        #     document.sections.append(section)
+        # Todo: handle attachments
+        # Todo: handle calanders
 
         return document
     

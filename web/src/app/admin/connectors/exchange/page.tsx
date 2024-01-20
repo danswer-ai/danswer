@@ -163,11 +163,11 @@ const MainSection = () => {
       {exchangeConnectorIndexingStatuses.length > 0 && (
         <>
           <Text className="mb-2">
-            We index the most recently updated emails from each Exchange with matching categories
-            instance listed below regularly.
+            We index the most recently modified emails from each Exchange with optional matching categories
+            listed below regularly.
           </Text>
           <Text className="mb-2">
-            The initial poll at this time retrieves emails updated in the past
+            The initial poll at this time retrieves the first 100 emails updated in the past
             hour. All subsequent polls execute every ten minutes. This should be
             configurable in the future.
           </Text>
