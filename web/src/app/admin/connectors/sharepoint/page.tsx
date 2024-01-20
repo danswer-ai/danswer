@@ -65,11 +65,10 @@ const MainSection = () => {
       connectorIndexingStatus.connector.source === "sharepoint"
   );
 
-  const sharepointCredential:
-    | Credential<SharepointCredentialJson>
-    | undefined = credentialsData.find(
-    (credential) => credential.credential_json?.aad_client_id
-  );
+  const sharepointCredential: Credential<SharepointCredentialJson> | undefined =
+    credentialsData.find(
+      (credential) => credential.credential_json?.aad_client_id
+    );
 
   return (
     <>
@@ -97,8 +96,8 @@ const MainSection = () => {
       ) : (
         <>
           <Text className="mb-2">
-            To index Sharepoint, please provide
-            Azure AD client ID, Client Secret, and Directory ID.
+            To index Sharepoint, please provide Azure AD client ID, Client
+            Secret, and Directory ID.
           </Text>
           <Card className="mt-2">
             <CredentialForm<SharepointCredentialJson>
@@ -123,13 +122,12 @@ const MainSection = () => {
                 aad_client_id: Yup.string().required(
                   "Please enter your Azure AD Client ID"
                 ),
-                aad_directory_id: Yup.string()
-                  .required(
-                    "Please enter your Azure AD Directory ID"
-                  ),
-                  aad_client_secret: Yup.string().required(
-                    "Please enter your Azure AD Client Secret"
-                  ),
+                aad_directory_id: Yup.string().required(
+                  "Please enter your Azure AD Directory ID"
+                ),
+                aad_client_secret: Yup.string().required(
+                  "Please enter your Azure AD Client Secret"
+                ),
               })}
               initialValues={{
                 aad_client_id: "",
@@ -163,9 +161,7 @@ const MainSection = () => {
           </Text>
           <div className="mb-2">
             <ConnectorsTable<SharepointConfig, SharepointCredentialJson>
-              connectorIndexingStatuses={
-                sharepointConnectorIndexingStatuses
-              }
+              connectorIndexingStatuses={sharepointConnectorIndexingStatuses}
               liveCredential={sharepointCredential}
               getCredential={(credential) =>
                 credential.credential_json.aad_directory_id
@@ -175,10 +171,7 @@ const MainSection = () => {
               }
               onCredentialLink={async (connectorId) => {
                 if (sharepointCredential) {
-                  await linkCredential(
-                    connectorId,
-                    sharepointCredential.id
-                  );
+                  await linkCredential(connectorId, sharepointCredential.id);
                   mutate("/api/manage/admin/connector/indexing-status");
                 }
               }}
@@ -215,7 +208,7 @@ const MainSection = () => {
             })}
             formBody={<></>}
             initialValues={{
-              sites: []
+              sites: [],
             }}
             credentialId={sharepointCredential.id}
             refreshFreq={10 * 60} // 10 minutes
@@ -239,10 +232,7 @@ export default function Page() {
         <HealthCheckBanner />
       </div>
 
-      <AdminPageTitle
-        icon={<SharepointIcon size={32} />}
-        title="Sharepoint"
-      />
+      <AdminPageTitle icon={<SharepointIcon size={32} />} title="Sharepoint" />
 
       <MainSection />
     </div>

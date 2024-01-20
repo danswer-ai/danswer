@@ -157,7 +157,7 @@ const SOURCE_METADATA_MAP: SourceMap = {
     icon: SharepointIcon,
     displayName: "Sharepoint",
     category: SourceCategory.AppConnection,
-  }
+  },
 };
 
 function fillSourceMetadata(
