@@ -1,4 +1,5 @@
 import io
+import os
 import tempfile
 from datetime import datetime
 from datetime import timezone
@@ -106,30 +107,25 @@ class SharepointConnector(LoadConnector, PollConnector):
         self.graph_client = GraphClient(_acquire_token_func)
         return None
 
-    def _prune_driveitem_list_by_time(
-        self, start: datetime, end: datetime, all_driveitem_objects: list[DriveItem]
-    ) -> list[DriveItem]:
-        pruned_driveitem_object_list: list[DriveItem] = []
-        for driveitem_object in all_driveitem_objects:
-            if (
-                driveitem_object.last_modified_datetime > start
-                and driveitem_object.last_modified_datetime < end
-            ):
-                pruned_driveitem_object_list.append(driveitem_object)
-
-        return pruned_driveitem_object_list
-
     def get_all_driveitem_objects(
-        self, site_object_list: list[Site]
+        self,
+        site_object_list: list[Site],
+        start: datetime | None = None,
+        end: datetime | None = None,
     ) -> list[DriveItem]:
+        filter_str = ""
+        if start is not None and end is not None:
+            filter_str = f"last_modified_datetime ge {start.isoformat()} and last_modified_datetime le {end.isoformat()}"
+
         driveitem_list = []
         for site_object in site_object_list:
             site_list_objects = site_object.lists.get().execute_query()
             for site_list_object in site_list_objects:
                 try:
-                    driveitems = site_list_object.drive.root.get_files(
-                        True
-                    ).execute_query()
+                    query = site_list_object.drive.root.get_files(True)
+                    if filter_str:
+                        query = query.filter(filter_str)
+                    driveitems = query.execute_query()
                     driveitem_list.extend(driveitems)
                 except Exception:
                     pass
@@ -163,14 +159,13 @@ class SharepointConnector(LoadConnector, PollConnector):
 
         site_object_list = self.get_all_site_objects()
 
-        driveitem_list = self.get_all_driveitem_objects(site_object_list)
+        driveitem_list = self.get_all_driveitem_objects(
+            site_object_list=site_object_list,
+            start=start,
+            end=end,
+        )
 
-        if start is not None and end is not None:
-            driveitem_list = self._prune_driveitem_list_by_time(
-                start, end, driveitem_list
-            )
-
-        # goes over all urls, converts them into Document objects and then yeilds them in batches
+        # goes over all urls, converts them into Document objects and then yjelds them in batches
         doc_batch: list[Document] = []
         batch_count = 0
         for driveitem_object in driveitem_list:
@@ -235,8 +230,6 @@ class SharepointConnector(LoadConnector, PollConnector):
 
 
 if __name__ == "__main__":
-    import os
-
     connector = SharepointConnector(sites=os.environ["SITES"].split(","))
 
     connector.load_credentials(
