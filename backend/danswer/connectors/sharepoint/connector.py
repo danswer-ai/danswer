@@ -4,12 +4,12 @@ from datetime import datetime
 from datetime import timezone
 from typing import Any
 
-import docx
-import msal
-import openpyxl
-from office365.graph_client import GraphClient
-from office365.onedrive.driveitems.driveItem import DriveItem
-from office365.onedrive.sites.site import Site
+import docx  # type: ignore
+import msal  # type: ignore
+import openpyxl  # type: ignore
+from office365.graph_client import GraphClient  # type: ignore
+from office365.onedrive.driveitems.driveItem import DriveItem  # type: ignore
+from office365.onedrive.sites.site import Site  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -30,7 +30,7 @@ UNSUPPORTED_FILE_TYPE_CONTENT = ""  # idea copied from the google drive side of 
 logger = setup_logger()
 
 
-def get_text_from_xlsx_driveitem(driveitem_object: DriveItem):
+def get_text_from_xlsx_driveitem(driveitem_object: DriveItem) -> str:
     file_content = driveitem_object.get_content().execute_query().value
     excel_file = io.BytesIO(file_content)
     workbook = openpyxl.load_workbook(excel_file, read_only=True)
@@ -46,7 +46,7 @@ def get_text_from_xlsx_driveitem(driveitem_object: DriveItem):
     return "\n".join(full_text)
 
 
-def get_text_from_docx_driveitem(driveitem_object: DriveItem):
+def get_text_from_docx_driveitem(driveitem_object: DriveItem) -> str:
     file_content = driveitem_object.get_content().execute_query().value
     full_text = []
 
@@ -59,7 +59,7 @@ def get_text_from_docx_driveitem(driveitem_object: DriveItem):
     return "\n".join(full_text)
 
 
-def get_text_from_pdf_driveitem(driveitem_object: DriveItem):
+def get_text_from_pdf_driveitem(driveitem_object: DriveItem) -> str:
     file_content = driveitem_object.get_content().execute_query().value
     file_text = read_pdf_file(
         file=io.BytesIO(file_content), file_name=driveitem_object.name
@@ -67,7 +67,7 @@ def get_text_from_pdf_driveitem(driveitem_object: DriveItem):
     return file_text
 
 
-def get_text_from_txt_driveitem(driveitem_object: DriveItem):
+def get_text_from_txt_driveitem(driveitem_object: DriveItem) -> str:
     file_content: bytes = driveitem_object.get_content().execute_query().value
     text_string = file_content.decode("utf-8")
     return text_string
@@ -88,7 +88,7 @@ class SharepointConnector(LoadConnector, PollConnector):
         aad_client_secret = credentials["aad_client_secret"]
         aad_directory_id = credentials["aad_directory_id"]
 
-        def _acquire_token_func():
+        def _acquire_token_func() -> dict[str, Any]:
             """
             Acquire token via MSAL
             """
@@ -137,6 +137,9 @@ class SharepointConnector(LoadConnector, PollConnector):
         return driveitem_list
 
     def get_all_site_objects(self) -> list[Site]:
+        if self.graph_client is None:
+            raise ConnectorMissingCredentialError("Sharepoint")
+
         site_object_list: list[Site] = []
 
         sites_object = self.graph_client.sites.get().execute_query()
@@ -234,7 +237,7 @@ class SharepointConnector(LoadConnector, PollConnector):
 if __name__ == "__main__":
     import os
 
-    connector = SharepointConnector(sites=os.environ["SITES"])
+    connector = SharepointConnector(sites=os.environ["SITES"].split(","))
 
     connector.load_credentials(
         {
