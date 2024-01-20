@@ -10,13 +10,14 @@ import {
   SearchRequestArgs,
 } from "./interfaces";
 import { processRawChunkString } from "./streamingUtils";
-import { buildFilters } from "./utils";
+import { buildFilters, endsWithLetterOrNumber } from "./utils";
 
 export const searchRequestStreamed = async ({
   query,
   sources,
   documentSets,
   timeRange,
+  tags,
   persona,
   updateCurrentAnswer,
   updateQuotes,
@@ -31,7 +32,7 @@ export const searchRequestStreamed = async ({
   let quotes: Quote[] | null = null;
   let relevantDocuments: DanswerDocument[] | null = null;
   try {
-    const filters = buildFilters(sources, documentSets, timeRange);
+    const filters = buildFilters(sources, documentSets, timeRange, tags);
 
     const threadMessage = {
       message: query,
@@ -98,7 +99,8 @@ export const searchRequestStreamed = async ({
               answer &&
               !answer.endsWith(".") &&
               !answer.endsWith("?") &&
-              !answer.endsWith("!")
+              !answer.endsWith("!") &&
+              endsWithLetterOrNumber(answer)
             ) {
               answer += ".";
               updateCurrentAnswer(answer);

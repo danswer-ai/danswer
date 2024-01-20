@@ -72,6 +72,11 @@ export const SlackBotCreationForm = ({
             respond_team_member_list:
               existingSlackBotConfig?.channel_config
                 ?.respond_team_member_list || ([] as string[]),
+            still_need_help_enabled:
+              existingSlackBotConfig?.channel_config?.follow_up_tags !==
+              undefined,
+            follow_up_tags:
+              existingSlackBotConfig?.channel_config?.follow_up_tags,
             document_sets:
               existingSlackBotConfig && existingSlackBotConfig.persona
                 ? existingSlackBotConfig.persona.document_sets.map(
@@ -90,6 +95,8 @@ export const SlackBotCreationForm = ({
             questionmark_prefilter_enabled: Yup.boolean().required(),
             respond_tag_only: Yup.boolean().required(),
             respond_team_member_list: Yup.array().of(Yup.string()).required(),
+            still_need_help_enabled: Yup.boolean().required(),
+            follow_up_tags: Yup.array().of(Yup.string()),
             document_sets: Yup.array().of(Yup.number()),
             persona_id: Yup.number().nullable(),
           })}
@@ -107,6 +114,13 @@ export const SlackBotCreationForm = ({
               ),
               usePersona: usingPersonas,
             };
+            if (!cleanedValues.still_need_help_enabled) {
+              cleanedValues.follow_up_tags = undefined;
+            } else {
+              if (!cleanedValues.follow_up_tags) {
+                cleanedValues.follow_up_tags = [];
+              }
+            }
 
             let response;
             if (isUpdate) {
@@ -184,6 +198,39 @@ export const SlackBotCreationForm = ({
                   out the occasional incorrect answer.`}
                   values={values}
                 />
+                <Divider />
+
+                <SectionHeader>Post Response Behavior</SectionHeader>
+
+                <BooleanFormField
+                  name="still_need_help_enabled"
+                  label="Should Danswer give a “Still need help?” button?"
+                  subtext={`If specified, DanswerBot's response will include a button at the bottom 
+                  of the response that asks the user if they still need help.`}
+                />
+                {values.still_need_help_enabled && (
+                  <TextArrayField
+                    name="follow_up_tags"
+                    label="Users to Tag"
+                    values={values}
+                    subtext={
+                      <div>
+                        The full email addresses of the Slack users we should
+                        tag if the user clicks the &quot;Still need help?&quot;
+                        button. For example, &apos;mark@acme.com&apos;.
+                        <br />
+                        Or provide a user group by either the name or the
+                        handle. For example, &apos;Danswer Team&apos; or
+                        &apos;danswer-team&apos;.
+                        <br />
+                        <br />
+                        If no emails are provided, we will not tag anyone and
+                        will just react with a 🆘 emoji to the original message.
+                      </div>
+                    }
+                  />
+                )}
+
                 <Divider />
 
                 <div>

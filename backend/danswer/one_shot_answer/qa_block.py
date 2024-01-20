@@ -13,6 +13,7 @@ from danswer.chat.models import LlmDoc
 from danswer.chat.models import LLMMetricsContainer
 from danswer.chat.models import StreamingError
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
+from danswer.configs.constants import DISABLED_GEN_AI_MSG
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import check_number_of_tokens
@@ -250,6 +251,10 @@ def build_dummy_prompt(
         system_prompt=system_prompt,
         task_prompt=task_prompt,
     ).strip()
+
+
+def no_gen_ai_response() -> Iterator[DanswerAnswerPiece]:
+    yield DanswerAnswerPiece(answer_piece=DISABLED_GEN_AI_MSG)
 
 
 class QABlock(QAModel):

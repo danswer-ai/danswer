@@ -194,7 +194,7 @@ export function ChatIntro({
               </p>
               <p className="text-sm text-center">
                 Or ask a question immediately to use the{" "}
-                <b>{availablePersonas[0].name}</b> assistant.
+                <b>{availablePersonas[0]?.name}</b> assistant.
               </p>
               <div className="flex flex-col gap-y-4 mt-8">
                 {availablePersonas

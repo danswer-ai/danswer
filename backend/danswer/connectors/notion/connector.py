@@ -90,9 +90,7 @@ class NotionConnector(LoadConnector, PollConnector):
         # NOTE: this also removes all benefits polling, since we need to traverse
         # all pages regardless of if they are updated. If the notion workspace is
         # very large, this may not be practical.
-        self.recursive_index_enabled = (
-            recursive_index_enabled or self.root_page_id is not None
-        )
+        self.recursive_index_enabled = recursive_index_enabled or self.root_page_id
 
     @retry(tries=3, delay=1, backoff=2)
     def _fetch_blocks(self, block_id: str, cursor: str | None = None) -> dict[str, Any]:
@@ -267,7 +265,8 @@ class NotionConnector(LoadConnector, PollConnector):
             yield (
                 Document(
                     id=page.id,
-                    sections=[Section(link=page.url, text=f"{page_title}\n")]
+                    # Will add title to the first section later in processing
+                    sections=[Section(link=page.url, text="")]
                     + [
                         Section(
                             link=f"{page.url}#{block_id.replace('-', '')}",
@@ -288,12 +287,15 @@ class NotionConnector(LoadConnector, PollConnector):
         if self.recursive_index_enabled and all_child_page_ids:
             # NOTE: checking if page_id is in self.indexed_pages to prevent extra
             # calls to `_fetch_page` for pages we've already indexed
-            all_child_pages = [
-                self._fetch_page(page_id)
-                for page_id in all_child_page_ids
-                if page_id not in self.indexed_pages
-            ]
-            yield from self._read_pages(all_child_pages)
+            for child_page_batch_ids in batch_generator(
+                all_child_page_ids, batch_size=INDEX_BATCH_SIZE
+            ):
+                child_page_batch = [
+                    self._fetch_page(page_id)
+                    for page_id in child_page_batch_ids
+                    if page_id not in self.indexed_pages
+                ]
+                yield from self._read_pages(child_page_batch)
 
     @retry(tries=3, delay=1, backoff=2)
     def _search_notion(self, query_dict: dict[str, Any]) -> NotionSearchResponse:

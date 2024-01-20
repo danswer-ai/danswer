@@ -302,6 +302,20 @@ export const ConnectorIcon = ({
 //  COMPANY LOGOS
 //
 
+export const LoopioIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] dark:invert ` + className}
+    >
+      <Image src="/Loopio.png" alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
 export const SlackIcon = ({
   size = 16,
   className = defaultTailwindCSS,
@@ -315,7 +329,19 @@ export const SlackIcon = ({
     </div>
   );
 };
-
+export const GitlabIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src="/Gitlab.png" alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
 export const GithubIcon = ({
   size = 16,
   className = defaultTailwindCSS,

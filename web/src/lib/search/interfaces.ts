@@ -1,5 +1,5 @@
 import { DateRangePickerValue } from "@tremor/react";
-import { ValidSources } from "../types";
+import { Tag, ValidSources } from "../types";
 import { Persona } from "@/app/admin/personas/interfaces";
 
 export const FlowType = {
@@ -45,6 +45,7 @@ export interface DanswerDocument {
   hidden: boolean;
   score: number;
   match_highlights: string[];
+  metadata: { [key: string]: string };
   updated_at: string | null;
   db_doc_id?: number;
 }
@@ -106,6 +107,7 @@ export interface SearchRequestArgs {
   sources: SourceMetadata[];
   documentSets: string[];
   timeRange: DateRangePickerValue | null;
+  tags: Tag[];
   persona: Persona;
   updateCurrentAnswer: (val: string) => void;
   updateQuotes: (quotes: Quote[]) => void;

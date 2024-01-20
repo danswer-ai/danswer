@@ -73,7 +73,7 @@ class HubSpotConnector(LoadConnector, PollConnector):
 
             title = ticket.properties["subject"]
             link = self.ticket_base_url + ticket.id
-            content_text = title + "\n" + ticket.properties["content"]
+            content_text = ticket.properties["content"]
 
             associated_emails: list[str] = []
             associated_notes: list[str] = []

@@ -74,12 +74,29 @@ def is_macos_resource_fork_file(file_name: str) -> bool:
     )
 
 
+# To include additional metadata in the search index, add a .danswer_metadata.json file
+# to the zip file. This file should contain a list of objects with the following format:
+# [{ "filename": "file1.txt", "link": "https://example.com/file1.txt" }]
 def load_files_from_zip(
     zip_location: str | Path,
     ignore_macos_resource_fork_files: bool = True,
     ignore_dirs: bool = True,
-) -> Generator[tuple[zipfile.ZipInfo, IO[Any]], None, None]:
+) -> Generator[tuple[zipfile.ZipInfo, IO[Any], dict[str, Any]], None, None]:
     with zipfile.ZipFile(zip_location, "r") as zip_file:
+        zip_metadata = {}
+        try:
+            metadata_file_info = zip_file.getinfo(".danswer_metadata.json")
+            with zip_file.open(metadata_file_info, "r") as metadata_file:
+                try:
+                    zip_metadata = json.load(metadata_file)
+                    if isinstance(zip_metadata, list):
+                        # convert list of dicts to dict of dicts
+                        zip_metadata = {d["filename"]: d for d in zip_metadata}
+                except json.JSONDecodeError:
+                    logger.warn("Unable to load .danswer_metadata.json")
+        except KeyError:
+            logger.info("No .danswer_metadata.json file")
+
         for file_info in zip_file.infolist():
             with zip_file.open(file_info.filename, "r") as file:
                 if ignore_dirs and file_info.is_dir():
@@ -89,7 +106,7 @@ def load_files_from_zip(
                     file_info.filename
                 ):
                     continue
-                yield file_info, file
+                yield file_info, file, zip_metadata.get(file_info.filename, {})
 
 
 def detect_encoding(file_path: str | Path) -> str:

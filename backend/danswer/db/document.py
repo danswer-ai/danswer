@@ -17,6 +17,7 @@ from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
 from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentByConnectorCredentialPair
+from danswer.db.tag import delete_document_tags_for_documents
 from danswer.db.utils import model_to_dict
 from danswer.document_index.interfaces import DocumentMetadata
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
@@ -272,6 +273,7 @@ def delete_documents_complete(db_session: Session, document_ids: list[str]) -> N
     delete_document_feedback_for_documents(
         document_ids=document_ids, db_session=db_session
     )
+    delete_document_tags_for_documents(document_ids=document_ids, db_session=db_session)
     delete_documents(db_session, document_ids)
     db_session.commit()
 

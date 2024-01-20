@@ -7,15 +7,15 @@ from transformers import AutoTokenizer  # type:ignore
 from danswer.configs.app_configs import BLURB_SIZE
 from danswer.configs.app_configs import CHUNK_OVERLAP
 from danswer.configs.app_configs import MINI_CHUNK_SIZE
+from danswer.configs.constants import SECTION_SEPARATOR
+from danswer.configs.constants import TITLE_SEPARATOR
 from danswer.configs.model_configs import CHUNK_SIZE
 from danswer.connectors.models import Document
-from danswer.connectors.models import Section
 from danswer.indexing.models import DocAwareChunk
 from danswer.search.search_nlp_models import get_default_tokenizer
 from danswer.utils.text_processing import shared_precompare_cleanup
 
 
-SECTION_SEPARATOR = "\n\n"
 ChunkFunc = Callable[[Document], list[DocAwareChunk]]
 
 
@@ -29,7 +29,8 @@ def extract_blurb(text: str, blurb_size: int) -> str:
 
 
 def chunk_large_section(
-    section: Section,
+    section_text: str,
+    section_link_text: str,
     document: Document,
     start_chunk_id: int,
     tokenizer: AutoTokenizer,
@@ -37,8 +38,6 @@ def chunk_large_section(
     chunk_overlap: int = CHUNK_OVERLAP,
     blurb_size: int = BLURB_SIZE,
 ) -> list[DocAwareChunk]:
-    section_text = section.text
-    section_link_text = section.link or ""
     blurb = extract_blurb(section_text, blurb_size)
 
     sentence_aware_splitter = SentenceSplitter(
@@ -67,14 +66,18 @@ def chunk_document(
     subsection_overlap: int = CHUNK_OVERLAP,
     blurb_size: int = BLURB_SIZE,
 ) -> list[DocAwareChunk]:
+    title = document.get_title_for_document_index()
+    title_prefix = title.replace("\n", " ") + TITLE_SEPARATOR if title else ""
     tokenizer = get_default_tokenizer()
 
     chunks: list[DocAwareChunk] = []
     link_offsets: dict[int, str] = {}
     chunk_text = ""
-    for section in document.sections:
+    for ind, section in enumerate(document.sections):
+        section_text = title_prefix + section.text if ind == 0 else section.text
         section_link_text = section.link or ""
-        section_tok_length = len(tokenizer.tokenize(section.text))
+
+        section_tok_length = len(tokenizer.tokenize(section_text))
         current_tok_length = len(tokenizer.tokenize(chunk_text))
         curr_offset_len = len(shared_precompare_cleanup(chunk_text))
 
@@ -96,7 +99,8 @@ def chunk_document(
                 chunk_text = ""
 
             large_section_chunks = chunk_large_section(
-                section=section,
+                section_text=section_text,
+                section_link_text=section_link_text,
                 document=document,
                 start_chunk_id=len(chunks),
                 tokenizer=tokenizer,
@@ -115,7 +119,7 @@ def chunk_document(
             <= chunk_tok_size
         ):
             chunk_text += (
-                SECTION_SEPARATOR + section.text if chunk_text else section.text
+                SECTION_SEPARATOR + section_text if chunk_text else section_text
             )
             link_offsets[curr_offset_len] = section_link_text
         else:
@@ -130,10 +134,11 @@ def chunk_document(
                 )
             )
             link_offsets = {0: section_link_text}
-            chunk_text = section.text
+            chunk_text = section_text
 
     # Once we hit the end, if we're still in the process of building a chunk, add what we have
-    if chunk_text:
+    # NOTE: if it's just whitespace, ignore it.
+    if chunk_text.strip():
         chunks.append(
             DocAwareChunk(
                 source_document=document,

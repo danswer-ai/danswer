@@ -1,11 +1,13 @@
 import time
 from datetime import datetime
+from datetime import timedelta
 from datetime import timezone
 
 import torch
 from sqlalchemy.orm import Session
 
 from danswer.background.indexing.checkpointing import get_time_windows_for_index_attempt
+from danswer.configs.app_configs import POLL_CONNECTOR_OFFSET
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
@@ -121,6 +123,11 @@ def _run_indexing(
             source_type=db_connector.source,
         )
     ):
+        window_start = max(
+            window_start - timedelta(minutes=POLL_CONNECTOR_OFFSET),
+            datetime(1970, 1, 1, tzinfo=timezone.utc),
+        )
+
         doc_batch_generator = _get_document_generator(
             db_session=db_session,
             attempt=index_attempt,

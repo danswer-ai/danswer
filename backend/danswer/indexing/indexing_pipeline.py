@@ -17,6 +17,8 @@ from danswer.db.document import update_docs_updated_at
 from danswer.db.document import upsert_documents_complete
 from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.tag import create_or_add_document_tag
+from danswer.db.tag import create_or_add_document_tag_list
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentMetadata
@@ -44,6 +46,7 @@ def upsert_documents_in_db(
     index_attempt_metadata: IndexAttemptMetadata,
     db_session: Session,
 ) -> None:
+    # Metadata here refers to basic document info, not metadata about the actual content
     doc_m_batch: list[DocumentMetadata] = []
     for doc in documents:
         first_link = next(
@@ -65,6 +68,26 @@ def upsert_documents_in_db(
         db_session=db_session,
         document_metadata_batch=doc_m_batch,
     )
+
+    # Insert document content metadata
+    for doc in documents:
+        for k, v in doc.metadata.items():
+            if isinstance(v, list):
+                create_or_add_document_tag_list(
+                    tag_key=k,
+                    tag_values=v,
+                    source=doc.source,
+                    document_id=doc.id,
+                    db_session=db_session,
+                )
+            else:
+                create_or_add_document_tag(
+                    tag_key=k,
+                    tag_value=v,
+                    source=doc.source,
+                    document_id=doc.id,
+                    db_session=db_session,
+                )
 
 
 @log_function_time()
@@ -121,6 +144,8 @@ def index_doc_batch(
         )
 
         logger.debug("Starting chunking")
+
+        # The first chunk additionally contains the Title of the Document
         chunks: list[DocAwareChunk] = list(
             chain(*[chunker.chunk(document=document) for document in updatable_docs])
         )

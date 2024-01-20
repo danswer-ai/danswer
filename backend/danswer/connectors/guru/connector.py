@@ -13,6 +13,7 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -77,7 +78,7 @@ class GuruConnector(LoadConnector, PollConnector):
             for card in cards:
                 title = card["preferredPhrase"]
                 link = GURU_CARDS_URL + card["slug"]
-                content_text = title + "\n" + parse_html_page_basic(card["content"])
+                content_text = parse_html_page_basic(card["content"])
                 last_updated = time_str_to_utc(card["lastModified"])
                 last_verified = (
                     time_str_to_utc(card.get("lastVerified"))
@@ -90,6 +91,26 @@ class GuruConnector(LoadConnector, PollConnector):
                 latest_time = (
                     max(last_verified, last_updated) if last_verified else last_updated
                 )
+
+                metadata_dict: dict[str, str | list[str]] = {}
+                tags = [tag.get("value") for tag in card.get("tags", [])]
+                if tags:
+                    metadata_dict["tags"] = tags
+
+                boards = [board.get("title") for board in card.get("boards", [])]
+                if boards:
+                    # In UI it's called Folders
+                    metadata_dict["folders"] = boards
+
+                owner = card.get("owner", {})
+                author = None
+                if owner:
+                    author = BasicExpertInfo(
+                        email=owner.get("email"),
+                        first_name=owner.get("firstName"),
+                        last_name=owner.get("lastName"),
+                    )
+
                 doc_batch.append(
                     Document(
                         id=card["id"],
@@ -97,7 +118,9 @@ class GuruConnector(LoadConnector, PollConnector):
                         source=DocumentSource.GURU,
                         semantic_identifier=title,
                         doc_updated_at=latest_time,
-                        metadata={},
+                        primary_owners=[author] if author is not None else None,
+                        # Can add verifies and commenters later
+                        metadata=metadata_dict,
                     )
                 )
 

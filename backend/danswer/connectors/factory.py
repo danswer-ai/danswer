@@ -8,6 +8,7 @@ from danswer.connectors.danswer_jira.connector import JiraConnector
 from danswer.connectors.document360.connector import Document360Connector
 from danswer.connectors.file.connector import LocalFileConnector
 from danswer.connectors.github.connector import GithubConnector
+from danswer.connectors.gitlab.connector import GitlabConnector
 from danswer.connectors.gong.connector import GongConnector
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.google_site.connector import GoogleSitesConnector
@@ -18,6 +19,7 @@ from danswer.connectors.interfaces import EventConnector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.linear.connector import LinearConnector
+from danswer.connectors.loopio.connector import LoopioConnector
 from danswer.connectors.models import InputType
 from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.productboard.connector import ProductboardConnector
@@ -46,6 +48,7 @@ def identify_connector_class(
             InputType.POLL: SlackPollConnector,
         },
         DocumentSource.GITHUB: GithubConnector,
+        DocumentSource.GITLAB: GitlabConnector,
         DocumentSource.GOOGLE_DRIVE: GoogleDriveConnector,
         DocumentSource.BOOKSTACK: BookstackConnector,
         DocumentSource.CONFLUENCE: ConfluenceConnector,
@@ -62,6 +65,7 @@ def identify_connector_class(
         DocumentSource.GONG: GongConnector,
         DocumentSource.GOOGLE_SITES: GoogleSitesConnector,
         DocumentSource.ZENDESK: ZendeskConnector,
+        DocumentSource.LOOPIO: LoopioConnector,
     }
     connector_by_source = connector_map.get(source, {})
 

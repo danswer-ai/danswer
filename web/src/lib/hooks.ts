@@ -2,6 +2,7 @@ import {
   ConnectorIndexingStatus,
   Credential,
   DocumentBoostStatus,
+  Tag,
 } from "@/lib/types";
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { fetcher } from "./fetcher";
@@ -81,6 +82,7 @@ export function useFilters() {
   const [selectedDocumentSets, setSelectedDocumentSets] = useState<string[]>(
     []
   );
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
   return {
     timeRange,
@@ -89,5 +91,7 @@ export function useFilters() {
     setSelectedSources,
     selectedDocumentSets,
     setSelectedDocumentSets,
+    selectedTags,
+    setSelectedTags,
   };
 }

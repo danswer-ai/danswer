@@ -10,6 +10,7 @@ from github.Issue import Issue
 from github.PaginatedList import PaginatedList
 from github.PullRequest import PullRequest
 
+from danswer.configs.app_configs import GITHUB_CONNECTOR_BASE_URL
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -37,10 +38,9 @@ def _batch_github_objects(
 
 
 def _convert_pr_to_document(pull_request: PullRequest) -> Document:
-    full_context = f"Pull-Request {pull_request.title}\n{pull_request.body}"
     return Document(
         id=pull_request.html_url,
-        sections=[Section(link=pull_request.html_url, text=full_context)],
+        sections=[Section(link=pull_request.html_url, text=pull_request.body or "")],
         source=DocumentSource.GITHUB,
         semantic_identifier=pull_request.title,
         # updated_at is UTC time but is timezone unaware, explicitly add UTC
@@ -48,7 +48,7 @@ def _convert_pr_to_document(pull_request: PullRequest) -> Document:
         # due to local time discrepancies with UTC
         doc_updated_at=pull_request.updated_at.replace(tzinfo=timezone.utc),
         metadata={
-            "merged": pull_request.merged,
+            "merged": str(pull_request.merged),
             "state": pull_request.state,
         },
     )
@@ -60,10 +60,9 @@ def _fetch_issue_comments(issue: Issue) -> str:
 
 
 def _convert_issue_to_document(issue: Issue) -> Document:
-    full_context = f"Issue {issue.title}\n{issue.body}"
     return Document(
         id=issue.html_url,
-        sections=[Section(link=issue.html_url, text=full_context)],
+        sections=[Section(link=issue.html_url, text=issue.body or "")],
         source=DocumentSource.GITHUB,
         semantic_identifier=issue.title,
         # updated_at is UTC time but is timezone unaware
@@ -93,7 +92,13 @@ class GithubConnector(LoadConnector, PollConnector):
         self.github_client: Github | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        self.github_client = Github(credentials["github_access_token"])
+        self.github_client = (
+            Github(
+                credentials["github_access_token"], base_url=GITHUB_CONNECTOR_BASE_URL
+            )
+            if GITHUB_CONNECTOR_BASE_URL
+            else Github(credentials["github_access_token"])
+        )
         return None
 
     def _fetch_from_github(

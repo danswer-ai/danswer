@@ -4,6 +4,7 @@ import {
   Document360Icon,
   FileIcon,
   GithubIcon,
+  GitlabIcon,
   GlobeIcon,
   GongIcon,
   GoogleDriveIcon,
@@ -12,6 +13,7 @@ import {
   HubSpotIcon,
   JiraIcon,
   LinearIcon,
+  LoopioIcon,
   NotionIcon,
   ProductboardIcon,
   RequestTrackerIcon,
@@ -57,6 +59,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   github: {
     icon: GithubIcon,
     displayName: "Github",
+    category: SourceCategory.AppConnection,
+  },
+  gitlab: {
+    icon: GitlabIcon,
+    displayName: "Gitlab",
     category: SourceCategory.AppConnection,
   },
   confluence: {
@@ -132,6 +139,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   requesttracker: {
     icon: RequestTrackerIcon,
     displayName: "Request Tracker",
+    category: SourceCategory.AppConnection,
+  },
+  loopio: {
+    icon: LoopioIcon,
+    displayName: "Loopio",
     category: SourceCategory.AppConnection,
   },
 };

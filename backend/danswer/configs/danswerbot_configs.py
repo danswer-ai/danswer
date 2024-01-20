@@ -17,6 +17,8 @@ DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER = os.environ.get(
 ).lower() not in ["false", ""]
 # When Danswer is considering a message, what emoji does it react with
 DANSWER_REACT_EMOJI = os.environ.get("DANSWER_REACT_EMOJI") or "eyes"
+# When User needs more help, what should the emoji be
+DANSWER_FOLLOWUP_EMOJI = os.environ.get("DANSWER_FOLLOWUP_EMOJI") or "sos"
 # Should DanswerBot send an apology message if it's not able to find an answer
 # That way the user isn't confused as to why DanswerBot reacted but then said nothing
 # Off by default to be less intrusive (don't want to give a notif that just says we couldnt help)
@@ -48,3 +50,8 @@ ENABLE_DANSWERBOT_REFLEXION = (
 )
 # Currently not support chain of thought, probably will add back later
 DANSWER_BOT_DISABLE_COT = True
+
+# Maximum Questions Per Minute, Default Uncapped
+DANSWER_BOT_MAX_QPM = int(os.environ.get("DANSWER_BOT_MAX_QPM") or 0) or None
+# Maximum time to wait when a question is queued
+DANSWER_BOT_MAX_WAIT_TIME = int(os.environ.get("DANSWER_BOT_MAX_WAIT_TIME") or 180)

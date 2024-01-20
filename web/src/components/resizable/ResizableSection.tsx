@@ -82,7 +82,7 @@ export function ResizableSection({
         className={`
           -mr-1 
           pr-1 
-          z-40
+          z-30
           h-full 
       `}
       >

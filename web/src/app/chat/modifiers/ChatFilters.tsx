@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { DocumentSet, ValidSources } from "@/lib/types";
+import { DocumentSet, Tag, ValidSources } from "@/lib/types";
 import { SourceMetadata } from "@/lib/search/interfaces";
 import {
   FiBook,
@@ -7,6 +7,7 @@ import {
   FiCalendar,
   FiFilter,
   FiMap,
+  FiTag,
   FiX,
 } from "react-icons/fi";
 import { DateRangePickerValue } from "@tremor/react";
@@ -15,24 +16,14 @@ import { SourceIcon } from "@/components/SourceIcon";
 import { BasicClickable } from "@/components/BasicClickable";
 import { ControlledPopup, DefaultDropdownElement } from "@/components/Dropdown";
 import { getXDaysAgo } from "@/lib/dateUtils";
+import { SourceSelectorProps } from "@/components/search/filtering/Filters";
+import { containsObject, objectsAreEquivalent } from "@/lib/contains";
 
 enum FilterType {
   Source = "Source",
   KnowledgeSet = "Knowledge Set",
   TimeRange = "Time Range",
-}
-
-interface SourceSelectorProps {
-  timeRange: DateRangePickerValue | null;
-  setTimeRange: React.Dispatch<
-    React.SetStateAction<DateRangePickerValue | null>
-  >;
-  selectedSources: SourceMetadata[];
-  setSelectedSources: React.Dispatch<React.SetStateAction<SourceMetadata[]>>;
-  selectedDocumentSets: string[];
-  setSelectedDocumentSets: React.Dispatch<React.SetStateAction<string[]>>;
-  availableDocumentSets: DocumentSet[];
-  existingSources: ValidSources[];
+  Tag = "Tag",
 }
 
 function SelectedBubble({
@@ -60,10 +51,12 @@ function SelectFilterType({
   onSelect,
   hasSources,
   hasKnowledgeSets,
+  hasTags,
 }: {
   onSelect: (filterType: FilterType) => void;
   hasSources: boolean;
   hasKnowledgeSets: boolean;
+  hasTags: boolean;
 }) {
   return (
     <div className="w-64">
@@ -83,6 +76,16 @@ function SelectFilterType({
           name={FilterType.KnowledgeSet}
           icon={FiBook}
           onSelect={() => onSelect(FilterType.KnowledgeSet)}
+          isSelected={false}
+        />
+      )}
+
+      {hasTags && (
+        <DefaultDropdownElement
+          key={FilterType.Tag}
+          name={FilterType.Tag}
+          icon={FiTag}
+          onSelect={() => onSelect(FilterType.Tag)}
           isSelected={false}
         />
       )}
@@ -203,6 +206,70 @@ function TimeRangeSection({
   );
 }
 
+function TagsSection({
+  availableTags,
+  selectedTags,
+  onSelect,
+}: {
+  availableTags: Tag[];
+  selectedTags: Tag[];
+  onSelect: (tag: Tag) => void;
+}) {
+  const [filterValue, setFilterValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
+  const filterValueLower = filterValue.toLowerCase();
+  const filteredTags = filterValueLower
+    ? availableTags.filter(
+        (tags) =>
+          tags.tag_value.toLowerCase().startsWith(filterValueLower) ||
+          tags.tag_key.toLowerCase().startsWith(filterValueLower)
+      )
+    : availableTags;
+
+  return (
+    <div className="w-96">
+      <div className="max-h-48 overflow-y-auto">
+        {filteredTags.length > 0 ? (
+          filteredTags.map((tag) => (
+            <DefaultDropdownElement
+              key={tag.tag_key + tag.tag_value}
+              name={
+                <div className="max-w-full break-all line-clamp-1 text-ellipsis">
+                  {tag.tag_key}
+                  <b>=</b>
+                  {tag.tag_value}
+                </div>
+              }
+              onSelect={() => onSelect(tag)}
+              isSelected={selectedTags.includes(tag)}
+              includeCheckbox
+            />
+          ))
+        ) : (
+          <div className="text-sm px-2 py-2">No matching tags found</div>
+        )}
+      </div>
+
+      <div className="mx-2 mb-2 pt-2 border-t border-border">
+        <input
+          ref={inputRef}
+          className="w-full border border-border py-0.5 px-2 rounded text-sm h-8 "
+          placeholder="Find a tag"
+          value={filterValue}
+          onChange={(event) => setFilterValue(event.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function ChatFilters({
   timeRange,
   setTimeRange,
@@ -210,8 +277,11 @@ export function ChatFilters({
   setSelectedSources,
   selectedDocumentSets,
   setSelectedDocumentSets,
+  selectedTags,
+  setSelectedTags,
   availableDocumentSets,
   existingSources,
+  availableTags,
 }: SourceSelectorProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const handleFiltersToggle = (value: boolean) => {
@@ -238,6 +308,16 @@ export function ChatFilters({
         return prev.filter((s) => s !== documentSetName);
       } else {
         return [...prev, documentSetName];
+      }
+    });
+  };
+
+  const handleTagToggle = (tag: Tag) => {
+    setSelectedTags((prev) => {
+      if (containsObject(prev, tag)) {
+        return prev.filter((t) => !objectsAreEquivalent(t, tag));
+      } else {
+        return [...prev, tag];
       }
     });
   };
@@ -274,12 +354,21 @@ export function ChatFilters({
         }}
       />
     );
+  } else if (selectedFilterType === FilterType.Tag) {
+    popupDisplay = (
+      <TagsSection
+        availableTags={availableTags}
+        selectedTags={selectedTags}
+        onSelect={handleTagToggle}
+      />
+    );
   } else {
     popupDisplay = (
       <SelectFilterType
         onSelect={(filterType) => setSelectedFilterType(filterType)}
         hasSources={availableSources.length > 0}
         hasKnowledgeSets={availableDocumentSets.length > 0}
+        hasTags={availableTags.length > 0}
       />
     );
   }
@@ -335,6 +424,25 @@ export function ChatFilters({
                     <FiBookmark />
                   </div>
                   <span className="ml-2">{documentSetName}</span>
+                </>
+              </SelectedBubble>
+            ))}
+
+          {selectedTags.length > 0 &&
+            selectedTags.map((tag) => (
+              <SelectedBubble
+                key={tag.tag_key + tag.tag_value}
+                onClick={() => handleTagToggle(tag)}
+              >
+                <>
+                  <div>
+                    <FiTag />
+                  </div>
+                  <span className="ml-1 max-w-[100px] text-ellipsis line-clamp-1 break-all">
+                    {tag.tag_key}
+                    <b>=</b>
+                    {tag.tag_value}
+                  </span>
                 </>
               </SelectedBubble>
             ))}

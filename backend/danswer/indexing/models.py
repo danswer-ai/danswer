@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from dataclasses import fields
 from datetime import datetime
-from typing import Any
 
 from danswer.access.models import DocumentAccess
 from danswer.configs.constants import DocumentSource
@@ -48,6 +47,7 @@ class DocAwareChunk(BaseChunk):
 @dataclass
 class IndexChunk(DocAwareChunk):
     embeddings: ChunkEmbedding
+    title_embedding: Embedding | None
 
 
 @dataclass
@@ -95,7 +95,7 @@ class InferenceChunk(BaseChunk):
     recency_bias: float
     score: float | None
     hidden: bool
-    metadata: dict[str, Any]
+    metadata: dict[str, str | list[str]]
     # Matched sections in the chunk. Uses Vespa syntax e.g. <hi>TEXT</hi>
     # to specify that a set of words should be highlighted. For example:
     # ["<hi>the</hi> <hi>answer</hi> is 42", "he couldn't find an <hi>answer</hi>"]
