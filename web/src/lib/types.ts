@@ -195,8 +195,8 @@ export interface GithubCredentialJson {
 }
 
 export interface ExchangeCredentialJson {
-  aad_client_id: string;
-  aad_client_secret: string;
+  aad_app_id: string;
+  aad_app_secret: string;
   aad_tenant_id: string;
   aad_user_id: string;
 }

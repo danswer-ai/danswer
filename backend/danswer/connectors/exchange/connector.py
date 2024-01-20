@@ -33,12 +33,12 @@ class ExchangeConnector(LoadConnector, PollConnector):
         self.index_categories: list[str] = categories
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        aad_client_id = credentials["aad_client_id"]
-        aad_client_secret = credentials["aad_client_secret"]
+        aad_app_id = credentials["aad_app_id"]
+        aad_app_secret = credentials["aad_app_secret"]
         aad_tenant_id = credentials["aad_tenant_id"]
         aad_user_id = credentials["aad_user_id"]
 
-        credentials = (aad_client_id, aad_client_secret)
+        credentials = (aad_app_id, aad_app_secret)
         account = Account(credentials,auth_flow_type='credentials', tenant_id=aad_tenant_id, main_resource=aad_user_id)
         if not account.is_authenticated:
             account.authenticate()
@@ -50,6 +50,7 @@ class ExchangeConnector(LoadConnector, PollConnector):
         return [email for email in email_list if email.created_date_time >= start and email.created_date_time <= end]
 
     def get_all_email_objects(self, index_categories: list = None) -> list:
+        limit = 100
         mailbox = self.account.mailbox()
         inbox = mailbox.inbox_folder()
         emails = []
@@ -58,20 +59,20 @@ class ExchangeConnector(LoadConnector, PollConnector):
         # This ensures it will be indexed during next poll
 
         if index_categories is None:
-            emails = inbox.get_messages(limit=10, order_by='receivedDateTime DESC')
+            emails = inbox.get_messages(limit=limit, order_by='receivedDateTime DESC')
             return emails
         else:
             if len(index_categories) == 0:
                 # Should this start from the oldest emails and work its way up?
-                # If mailbox receives more than 100 between indexing, some will be missed.
-                emails = mailbox.get_messages(limit=10, order_by='receivedDateTime DESC')
+                # If mailbox receives more than limit between indexing, some will be missed.
+                emails = mailbox.get_messages(limit=limit, order_by='receivedDateTime DESC')
                 return emails
             else:
                 # Process for each category
                 for category in index_categories:
                     logger.info(f"Fetching Catagory: {category}")
                     query = mailbox.new_query().any(collection='categories',operation='eq',word=category)
-                    emails_in_category = mailbox.get_messages(query=query, limit=100, order_by='lastmodifiedDateTime DESC')
+                    emails_in_category = mailbox.get_messages(query=query, limit=limit, order_by='lastmodifiedDateTime DESC')
                     emails.extend(emails_in_category)
         return emails
 
@@ -109,7 +110,7 @@ class ExchangeConnector(LoadConnector, PollConnector):
             if batch_count >= self.batch_size:
                 yield doc_batch
                 batch_count = 0
-                doc_batch = list[Document] = []
+                doc_batch: list[Document] = []
         yield doc_batch
         
     def convert_email_to_document(self, email) -> Document:
@@ -161,7 +162,7 @@ class ExchangeConnector(LoadConnector, PollConnector):
             sections=[Section(link=link, text=email_text)],
             source=DocumentSource.EXCHANGE,
             semantic_identifier=symantic_identifier,
-            doc_update_at=email.received.modified(tzinfo=timezone.utc),
+            doc_update_at=email.modified.replace(tzinfo=timezone.utc),
             primary_owners=[BasicExpertInfo(email=sender)],
             metadata={}
         )
@@ -189,8 +190,8 @@ if __name__ == "__main__":
 
     connector.load_credentials(
         {
-            "aad_client_id": os.environ["AAD_CLIENT_ID"],
-            "aad_client_secret": os.environ["AAD_CLIENT_SECRET"],
+            "aad_app_id": os.environ["AAD_APP_ID"],
+            "aad_app_secret": os.environ["AAD_APP_SECRET"],
             "aad_tenant_id": os.environ["AAD_TENANT_ID"],
             "aad_user_id": os.environ["AAD_USER_ID"],
         }

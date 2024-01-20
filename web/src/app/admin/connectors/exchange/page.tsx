@@ -68,7 +68,7 @@ const MainSection = () => {
       const exchangeCredential:
     | Credential<ExchangeCredentialJson>
     | undefined = credentialsData.find(
-    (credential) => credential.credential_json?.aad_client_id
+    (credential) => credential.credential_json?.aad_app_id
   );
 
   return (
@@ -79,9 +79,9 @@ const MainSection = () => {
       {exchangeCredential ? (
         <>
           <div className="flex mb-1 text-sm">
-            <Text className="my-auto">Existing Azure AD Client ID: </Text>
+            <Text className="my-auto">Existing Azure AD App ID: </Text>
             <Text className="ml-1 italic my-auto">
-              {exchangeCredential.credential_json.aad_client_id}
+              {exchangeCredential.credential_json.aad_app_id}
             </Text>
             <button
               className="ml-1 hover:bg-hover rounded p-1"
@@ -97,16 +97,17 @@ const MainSection = () => {
     ) : (
         <>
           <Text className="mb-2">
-            To index Exchange Emails, please provide
-            Azure AD client ID, Client Secret, and Tenant ID.
+            To index an Exchange email mailbox, please provide the following
+            Tenant ID, Azure AD App ID, App Secret, and Account Email.
+            Currently this connector only supports one email account.
           </Text>
           <Card className="mt-2">
             <CredentialForm<ExchangeCredentialJson>
               formBody={
                 <>
                   <TextFormField
-                    name="aad_client_id"
-                    label="Azure AD Client ID:"
+                    name="aad_app_id"
+                    label="Azure AD App ID:"
                   />
                   <TextFormField
                     name="aad_tenant_id"
@@ -114,18 +115,18 @@ const MainSection = () => {
                   />
                   <TextFormField
                     name="aad_user_id"
-                    label="Azure AD User ID:"
+                    label="Azure AD User Email:"
                   />
                   <TextFormField
-                    name="aad_client_secret"
-                    label="Azure AD Client Secret:"
+                    name="aad_app_secret"
+                    label="Azure AD App Secret:"
                     type="password"
                     />
                   </>
                 }
                 validationSchema={Yup.object().shape({
-                  aad_client_id: Yup.string().required(
-                    "Please enter your Azure AD Client ID"
+                  aad_app_id: Yup.string().required(
+                    "Please enter your Azure AD App ID"
                   ),
                   
                   aad_tenant_id: Yup.string()
@@ -134,17 +135,17 @@ const MainSection = () => {
                     ),
                     aad_user_id: Yup.string()
                     .required(
-                      "Please enter your Azure AD User ID"
+                      "Please enter your Azure AD User Email"
                     ),
-                    aad_client_secret: Yup.string().required(
-                      "Please enter your Azure AD Client Secret"
+                    aad_app_secret: Yup.string().required(
+                      "Please enter your Azure AD App Secret"
                     ),
                 })}
                 initialValues={{
-                  aad_client_id: "",
+                  aad_app_id: "",
                   aad_user_id: "",
                   aad_tenant_id: "",
-                  aad_client_secret: "",
+                  aad_app_secret: "",
                 }}
                 onSubmit={(isSuccess) => {
                   if (isSuccess) {
@@ -163,13 +164,13 @@ const MainSection = () => {
       {exchangeConnectorIndexingStatuses.length > 0 && (
         <>
           <Text className="mb-2">
-            We index the most recently modified emails from each Exchange with optional matching categories
-            listed below regularly.
+            We index the most recently modified emails from the exchange online email account specified below. 
+            You can filter the emails pulled from exchange by setting 'optional' matching categories.
+            Currently, attachments are not indexed.
           </Text>
           <Text className="mb-2">
-            The initial poll at this time retrieves the first 100 emails updated in the past
-            hour. All subsequent polls execute every ten minutes. This should be
-            configurable in the future.
+            The initial poll at this time retrieves the latest 100 emails from exchange and re-indexes those updated in the past hour. 
+            All subsequent polls execute every ten minutes. This should be configurable in the future.
           </Text>
           <div className="mb-2">
             <ConnectorsTable<ExchangeConfig, ExchangeCredentialJson>
@@ -214,9 +215,9 @@ const MainSection = () => {
               label: "Categories:",
               subtext:
                 "Specify 0 or more categories to index. For example, specifying the category " +
-                "'Index' for the 'danswerai' exchange will cause us to only index all emails " +
-                "categorised with the Index category " +
-                "If no categories are specified, all emails in your mailbox will be indexed.",
+                "'Red category' will cause us to only index all emails marked with the Red category." +
+                "If no categories are specified, the latest 100 emails in your mailbox will be indexed." +
+                "Emails modified after indexing such as 'Read' status or folder change will be re-indexed.",
             })}
             validationSchema={Yup.object().shape({
               categories: Yup.array()
