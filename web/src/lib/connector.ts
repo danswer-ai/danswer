@@ -47,9 +47,7 @@ export async function disableConnector(
     disabled: !connector.disabled,
   }).then(() => {
     setPopup({
-      message: connector.disabled
-        ? "Enabled connector!"
-        : "Disabled connector!",
+      message: connector.disabled ? "Enabled connector!" : "Paused connector!",
       type: "success",
     });
     setTimeout(() => {

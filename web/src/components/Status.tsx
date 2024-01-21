@@ -86,7 +86,7 @@ export function CCPairStatus({
   } else if (disabled) {
     badge = (
       <Badge size={size} color="yellow" icon={FiPauseCircle}>
-        Disabled
+        Paused
       </Badge>
     );
   } else if (status === "failed") {
