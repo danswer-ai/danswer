@@ -160,7 +160,7 @@ const MainSection = () => {
           <Text className="mb-2">
             We index the most recently modified emails from the exchange online
             email account specified below. You can filter the emails pulled from
-            exchange by setting 'optional' matching categories. Currently,
+            exchange by setting optional matching categories. Currently,
             attachments are not indexed.
           </Text>
           <Text className="mb-2">
@@ -192,78 +192,83 @@ const MainSection = () => {
 
       {exchangeCredential && exchangeConnectorIndexingStatuses.length === 0 ? (
         <>
-        <Text className="mb-2">
-        By default, all emails will be fetched from all folders in the specified account.
-        This could take considerable time to index.
-        Its highly recommended to use the filters below to filter the emails fetched from Exchange.
-        Each filter is applied together. For example, if you specify the
-        category 'Red category' and 'ERP' folder, we will fetch the latest 100
-        emails marked with the 'Red category' located in the 'ERP' folder.
-      </Text>
-        <Card className="mt-4">
-          <ConnectorForm<ExchangeConfig>
-            nameBuilder={(values) =>
-              `Exchange-${exchangeCredential.credential_json.aad_tenant_id}`
-            }
-            ccPairNameBuilder={(values) =>
-              `Exchange ${exchangeCredential.credential_json.aad_tenant_id}`
-            }
-            source="exchange"
-            inputType="poll"
-            formBodyBuilder={(values) => (
+          <Text className="mb-2">
+            By default, all emails will be fetched from all folders in the
+            specified account. This could take considerable time to index. Its
+            highly recommended to use the filters below to filter the emails
+            fetched from Exchange. Each filter is applied together. For example,
+            if you specify the category &apos;Red category&apos; and
+            &apos;ERP&apos; folder, we will fetch the latest 100 emails marked
+            with the &apos;Red category&apos; located in the &apos;ERP&apos;
+            folder.
+          </Text>
+          <Card className="mt-4">
+            <ConnectorForm<ExchangeConfig>
+              nameBuilder={(values) =>
+                `Exchange-${exchangeCredential.credential_json.aad_tenant_id}`
+              }
+              ccPairNameBuilder={(values) =>
+                `Exchange ${exchangeCredential.credential_json.aad_tenant_id}`
+              }
+              source="exchange"
+              inputType="poll"
+              formBodyBuilder={(values) => (
                 <>
-                    {TextArrayFieldBuilder({
-                        name: "exchange_categories",
-                        label: "Categories:",
-                        subtext:
-                            "Specify 0 or more categories to index. For example, specifying the category " +
-                            "'Red category' will cause us to only index emails marked with the Red category. " +
-                            "If no categories are specified, the latest emails in your mailbox will be indexed. ",
-                        })(values)}
-                    {TextArrayFieldBuilder({
-                        name: "exchange_folders",
-                        label: "Folders:",
-                        subtext:
-                            "Specify 0 or more folders to index. For example, specifying the folder " +
-                            "'Inbox/ERP' will cause us to only index emails in the ERP inbox folder. " +
-                            "If no folders are specified, We will fetch emails from all folders. ",
-                        })(values)}
-                    <TextFormField
-                        name="exchange_max_poll_size"
-                        label="Exchange Fetch Maximum:"
-                        subtext={
-                            "Specify the maximum number of emails to fetch from Exchange per poll. The default is 100. " +
-                            "If you have specified categories, we will fetch the maximum for each catagory." +
-                            "Set this to be slightly higher then the number of emails you expect to be modified in an hour. " +
-                            "This is not how many emails will be indexed, but rather how many emails will be fetched from Exchange."
+                  {TextArrayFieldBuilder({
+                    name: "exchange_categories",
+                    label: "Categories:",
+                    subtext:
+                      "Specify 0 or more categories to index. For example, specifying the category " +
+                      "'Red category' will cause us to only index emails marked with the Red category. " +
+                      "If no categories are specified, the latest emails in your mailbox will be indexed. ",
+                  })(values)}
+                  {TextArrayFieldBuilder({
+                    name: "exchange_folders",
+                    label: "Folders:",
+                    subtext:
+                      "Specify 0 or more folders to index. For example, specifying the folder " +
+                      "'Inbox/ERP' will cause us to only index emails in the ERP inbox folder. " +
+                      "If no folders are specified, We will fetch emails from all folders. ",
+                  })(values)}
+                  <TextFormField
+                    name="exchange_max_poll_size"
+                    label="Exchange Fetch Maximum:"
+                    subtext={
+                      "Specify the maximum number of emails to fetch from Exchange per poll. The default is 100. " +
+                      "If you have specified categories, we will fetch the maximum for each catagory." +
+                      "Set this to be slightly higher then the number of emails you expect to be modified in an hour. " +
+                      "This is not how many emails will be indexed, but rather how many emails will be fetched from Exchange."
                     }
-                />
-            </>
-            )}
-            validationSchema={Yup.object().shape({
-              exchange_categories: Yup.array()
-                .of(Yup.string().required("Categories must be strings"))
-                .required(),
-                exchange_folders: Yup.array()
-                .of(Yup.string().required("Folders must be strings")),
-                exchange_max_poll_size: Yup.number().required("Please enter a number"),
-            })}
-            formBody={<></>}
-            initialValues={{
-              exchange_categories: [],
-              exchange_folders: [],
-              exchange_max_poll_size: 100,
-            }}
-            credentialId={exchangeCredential.id}
-            refreshFreq={10 * 60} // 10 minutes
-          />
-        </Card>
+                  />
+                </>
+              )}
+              validationSchema={Yup.object().shape({
+                exchange_categories: Yup.array()
+                  .of(Yup.string().required("Categories must be strings"))
+                  .required(),
+                exchange_folders: Yup.array().of(
+                  Yup.string().required("Folders must be strings")
+                ),
+                exchange_max_poll_size: Yup.number().required(
+                  "Please enter a number"
+                ),
+              })}
+              formBody={<></>}
+              initialValues={{
+                exchange_categories: [],
+                exchange_folders: [],
+                exchange_max_poll_size: 100,
+              }}
+              credentialId={exchangeCredential.id}
+              refreshFreq={10 * 60} // 10 minutes
+            />
+          </Card>
         </>
       ) : (
         <Text>
-          Please provide all Azure info in Step 1 first! Once you're done with
-          that, you can then specify which Exchange categories you want to make
-          searchable.
+          Please provide all Azure info in Step 1 first! Once you&apos;re done
+          with that, you can then specify which Exchange categories you want to
+          make searchable.
         </Text>
       )}
     </>
