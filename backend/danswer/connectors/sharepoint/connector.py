@@ -14,6 +14,7 @@ from office365.onedrive.sites.site import Site  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.file_utils import is_text_file_extension
 from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
@@ -128,6 +129,8 @@ class SharepointConnector(LoadConnector, PollConnector):
                     driveitems = query.execute_query()
                     driveitem_list.extend(driveitems)
                 except Exception:
+                    # Sites include things that do not contain .drive.root so this fails
+                    # but this is fine, as there are no actually documents in those
                     pass
 
         return driveitem_list
@@ -142,7 +145,7 @@ class SharepointConnector(LoadConnector, PollConnector):
 
         if len(self.requested_site_list) > 0:
             for requested_site in self.requested_site_list:
-                adjusted_string = "/" + requested_site
+                adjusted_string = "/" + requested_site.replace(" ", "")
                 for site_object in sites_object:
                     if site_object.web_url.endswith(adjusted_string):
                         site_object_list.append(site_object)
@@ -213,7 +216,7 @@ class SharepointConnector(LoadConnector, PollConnector):
             driveitem_text = get_text_from_pdf_driveitem(driveitem_object)
         elif driveitem_name.endswith(".xlsx"):
             driveitem_text = get_text_from_xlsx_driveitem(driveitem_object)
-        elif driveitem_name.endswith(".txt"):
+        elif is_text_file_extension(driveitem_name):
             driveitem_text = get_text_from_txt_driveitem(driveitem_object)
 
         return driveitem_text
