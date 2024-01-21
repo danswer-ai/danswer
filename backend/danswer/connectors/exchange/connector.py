@@ -28,11 +28,15 @@ class ExchangeConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         batch_size: int = INDEX_BATCH_SIZE,
-        categories: list[str] | None = [],
+        exchange_max_poll_size: int = 100,
+        exchange_categories: list[str] | None = [],
+        exchange_folders: list[str] | None = [],
     ) -> None:
         self.batch_size = batch_size
         self.account: Account | None = None
-        self.index_categories = categories
+        self.exchange_categories = exchange_categories
+        self.exchange_max_poll_size = int(exchange_max_poll_size)
+        self.exchange_folders = exchange_folders
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         aad_app_id = credentials["aad_app_id"]
@@ -63,34 +67,103 @@ class ExchangeConnector(LoadConnector, PollConnector):
         ]
 
     def get_all_email_objects(
-        self, index_categories: Optional[List[str]] = None
+        self,
+        limit: int,
+        categories: Optional[List[str]] = None,
+        folders: Optional[List[str]] = None,
     ) -> list:
-        limit = 100
-        mailbox = self.account.mailbox()
         emails = []
-        # Only download at max 100 most recently modified emails
+        mailbox = self.account.mailbox()
+        # Todo: Add support for pagination
+
+        # Only download at max N x Folder x Category most recently modified emails
         # We use Modified because setting catagory updates the modified date to now.
         # This ensures it will be indexed during next poll
-        if index_categories is None:
-            index_categories = []
+        if limit > 100:
+            limit = 100
 
-        if len(index_categories) == 0:
-            # Should this start from the oldest emails and work its way up?
-            # If mailbox receives more than limit between indexing, some will be missed.
-            emails = mailbox.get_messages(limit=limit, order_by="receivedDateTime DESC")
-            return emails
+        if categories is None:
+            categories = []
+
+        if folders is None:
+            folders = []
+
+        # There is probably a better way to do this
+        if len(folders) == 0:
+            # No folders and No Categories - Tested
+            if len(categories) == 0:
+                logger.info("Fetching all emails")
+                emails = mailbox.get_messages(
+                    limit=limit, order_by="receivedDateTime DESC"
+                )
+            # No folders but has categories - Tested
+            else:
+                for category in categories:
+                    logger.info(f"Fetching Catagory: {category}")
+                    emails_in_category = self.get_email_category(limit, category)
+                    emails.extend(emails_in_category)
         else:
-            # Process for each category
-            for category in index_categories:
-                logger.info(f"Fetching Catagory: {category}")
-                query = mailbox.new_query().any(
-                    collection="categories", operation="eq", word=category
-                )
-                emails_in_category = mailbox.get_messages(
-                    query=query, limit=limit, order_by="lastmodifiedDateTime DESC"
-                )
-                emails.extend(emails_in_category)
+            # No categories but has folders - Tested
+            if len(categories) == 0:
+                for folder_path in folders:
+                    folder_id = self.get_folder_id(mailbox, folder_path)
+                    if folder_id:
+                        logger.info(f"Fetching Folder: {folder_path}")
+                        folder = mailbox.get_folder(folder_id=folder_id)
+                        emails_in_folder = folder.get_messages(
+                            limit=limit, order_by="receivedDateTime DESC"
+                        )
+                        emails.extend(emails_in_folder)
+            # Has both folders and categories - Tested
+            else:
+                for folder_path in folders:
+                    for category in categories:
+                        logger.info(
+                            f"Fetching Folder: {folder_path} and Catagory: {category}"
+                        )
+                        emails_in_category = self.get_email_category(
+                            limit, category, folder_path
+                        )
+                        emails.extend(emails_in_category)
         return emails
+
+    def get_email_category(
+        self, limit: int, category: str, folder_path: str = None
+    ) -> list:
+        logger.info(f"Fetching Catagory: {category}")
+        mailbox = self.account.mailbox()
+        if folder_path is None:
+            folder = mailbox
+        else:
+            folder_id = self.get_folder_id(mailbox, folder_path)
+            folder = mailbox.get_folder(folder_id=folder_id)
+
+        if folder:
+            query = mailbox.new_query().any(
+                collection="categories", operation="eq", word=category
+            )
+            emails = folder.get_messages(
+                query=query, limit=limit, order_by="lastmodifiedDateTime DESC"
+            )
+
+        return emails
+
+    def get_folder_id(self, mailbox, folder_path: str) -> str:
+        logger.info(f"Fetching Folder ID for: {folder_path}")
+        # Split the path into a list of folders
+        folders = folder_path.split("/")
+        # Get the inbox folder
+        folder = mailbox
+        # Iterate through the folders
+        for folder_name in folders:
+            logger.info(f"Folder: {folder_name}")
+            # Get the subfolder
+            folder = folder.get_folder(folder_name=folder_name)
+        # Return the folder_id
+        if folder:
+            return folder.folder_id
+        else:
+            return None
 
     def _fetch_from_exchange(
         self, start: datetime | None = None, end: datetime | None = None
@@ -98,12 +171,14 @@ class ExchangeConnector(LoadConnector, PollConnector):
         if self.account is None:
             raise ConnectorMissingCredentialError("Exchange")
 
-        email_object_list = self.get_all_email_objects(self.index_categories)
+        email_object_list = self.get_all_email_objects(
+            self.exchange_max_poll_size, self.exchange_categories, self.exchange_folders
+        )
 
         if start is not None and end is not None:
             filtered_email_object_list = []
             for email in email_object_list:
-                logger.info(f"Email received: {email.modified}")
+                logger.info(f"Email modified: {email.modified}")
                 email_received_date = datetime.utcfromtimestamp(
                     email.modified.timestamp()
                 )
@@ -119,44 +194,44 @@ class ExchangeConnector(LoadConnector, PollConnector):
 
         doc_batch: list[Document] = []
         batch_count = 0
+        total_count = 0
         for email in email_object_list:
             doc_batch.append(self.convert_email_to_document(email))
-
             batch_count += 1
-            if batch_count >= self.batch_size:
+            total_count += 1
+            # Reached batch size or end of email list
+            if batch_count >= self.batch_size or total_count >= len(email_object_list):
                 yield doc_batch
                 batch_count = 0
                 doc_batch: list[Document] = []
-        yield doc_batch
+        # yield doc_batch
 
     def convert_email_to_document(self, email) -> Document:
         # Get the email
         subject = email.subject
 
         str_to_address = ""
-        str_cc_address = ""
-        str_bcc_address = ""
-
         if email.to:
             for to_address in email.to:
                 str_to_address = str_to_address + to_address.address + ", "
+        str_cc_address = ""
         if email.cc:
             for cc_address in email.cc:
                 str_cc_address = str_cc_address + cc_address.address + ", "
+        str_bcc_address = ""
         if email.bcc:
             for bcc_address in email.bcc:
                 str_bcc_address = str_bcc_address + bcc_address.address + ", "
-
         body = email.body
         sender = email.sender.address
         date = email.received.strftime("%Y-%m-%d %H:%M:%S")
-
+        categories = ""
+        for category in email.categories:
+            categories += category + ", "
+        importance = email.importance
         attachments = ""
         for attachment in email.attachments:
             attachments += attachment.name + ", "
-
-        categories = email.categories
-        importance = email.importance
 
         # Create a unique name for this email
         symantic_identifier = f"{sender} {subject} {date}"
@@ -164,12 +239,16 @@ class ExchangeConnector(LoadConnector, PollConnector):
         email_text = f"Subject: {subject}"
         email_text += f"\n\nSender: {sender}"
         email_text += f"\n\nTo: {str_to_address}"
-        email_text += f"\n\nCC: {str_cc_address}"
-        email_text += f"\n\nBCC: {str_bcc_address}"
+        if str_cc_address:
+            email_text += f"\n\nCC: {str_cc_address}"
+        if str_bcc_address:
+            email_text += f"\n\nBCC: {str_bcc_address}"
         email_text += f"\n\nDate: {date}"
-        email_text += f"\n\nCategories: {categories}"
+        if categories:
+            email_text += f"\n\nCategories: {categories}"
         email_text += f"\n\nImportance: {importance}"
-        email_text += f"\n\nAttachments: {attachments}"
+        if attachments:
+            email_text += f"\n\nAttachments: {attachments}"
         email_text += f"\n\nBody: {body}"
         link = f"https://outlook.office.com/owa/?ItemID={email.object_id}&viewmodel=ReadMessageItem&path=&exvsurl=1"
 
@@ -201,7 +280,11 @@ class ExchangeConnector(LoadConnector, PollConnector):
 
 
 if __name__ == "__main__":
-    connector = ExchangeConnector(categories=[os.environ["CATEGORIES"]])
+    connector = ExchangeConnector(
+        exchange_max_poll_size=os.environ["EXCHANGE_MAX_POLL_SIZE"],
+        exchange_categories=[os.environ["EXCHANGE_CATEGORIES"]],
+        exchange_folders=[os.environ["EXCHANGE_FOLDERS"]],
+    )
 
     connector.load_credentials(
         {

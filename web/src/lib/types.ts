@@ -79,7 +79,9 @@ export interface GithubConfig {
 }
 
 export interface ExchangeConfig {
-  categories?: string[];
+  exchange_categories?: string[];
+  exchange_folders?: string[];
+  exchange_max_poll_size?: number;
 }
 
 export interface GoogleDriveConfig {

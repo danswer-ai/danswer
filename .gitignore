@@ -9,4 +9,3 @@ backend/o365_token.txt
 backend/celerybeat-schedule.dir
 backend/celerybeat-schedule.dat
 backend/celerybeat-schedule.bak
-backend/scripts/test_exchange_email_filters.py
