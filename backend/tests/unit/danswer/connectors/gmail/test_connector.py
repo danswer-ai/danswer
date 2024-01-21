@@ -1,10 +1,10 @@
-from datetime import datetime
-from datetime import timezone
+import datetime
 from unittest.mock import MagicMock
 
 import pytest
 
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.gmail.connector import GmailConnector
 from danswer.connectors.models import Document
 
@@ -15,10 +15,11 @@ def test_email_to_document():
     email_subject = "Danswer Test Subject"
     email_sender = "Google <no-reply@accounts.google.com>"
     email_recipient = "test.mail@gmail.com"
+    email_labels = ["UNREAD", "IMPORTANT", "CATEGORY_UPDATES", "STARRED", "INBOX"]
     full_email = {
         "id": email_id,
         "threadId": email_id,
-        "labelIds": ["UNREAD", "CATEGORY_UPDATES", "INBOX"],
+        "labelIds": email_labels,
         "snippet": "A new sign-in. We noticed a new sign-in to your Google Account. If this was you, you don&#39;t need to do",
         "payload": {
             "partId": "",
@@ -79,7 +80,10 @@ def test_email_to_document():
     assert type(doc) == Document
     assert doc.source == DocumentSource.GMAIL
     assert doc.title == "Danswer Test Subject"
-    assert doc.doc_updated_at == datetime(2023, 12, 27, 13, 38, 49, tzinfo=timezone.utc)
+    assert doc.doc_updated_at == datetime.datetime(
+        2023, 12, 27, 15, 38, 49, tzinfo=datetime.timezone.utc
+    )
+    assert doc.metadata == {"labels": email_labels}
 
 
 def test_fetch_mails_from_gmail_empty(mocker):
@@ -107,7 +111,7 @@ def test_fetch_mails_from_gmail(mocker):
     mock_discovery.build.return_value.users.return_value.messages.return_value.get.return_value.execute.return_value = {
         "id": email_id,
         "threadId": email_id,
-        "labelIds": ["UNREAD", "CATEGORY_UPDATES", "INBOX"],
+        "labelIds": ["UNREAD", "IMPORTANT", "CATEGORY_UPDATES", "STARRED", "INBOX"],
         "snippet": "A new sign-in. We noticed a new sign-in to your Google Account. If this was you, you don&#39;t need to do",
         "payload": {
             "partId": "",
@@ -192,26 +196,23 @@ def test_build_time_range_query():
     assert query is None
 
 
-def test_strptime_to_datetime():
+def test_time_str_to_utc():
     str_to_dt = {
-        "Tue, 5 Oct 2021 09:38:25 GMT": datetime(
-            2021, 10, 5, 6, 38, 25, tzinfo=timezone.utc
+        "Tue, 5 Oct 2021 09:38:25 GMT": datetime.datetime(
+            2021, 10, 5, 9, 38, 25, tzinfo=datetime.timezone.utc
         ),
-        "Sat, 24 Jul 2021 09:21:20 +0000 (UTC)": datetime(
-            2021, 7, 24, 9, 21, 20, tzinfo=timezone.utc
+        "Sat, 24 Jul 2021 09:21:20 +0000 (UTC)": datetime.datetime(
+            2021, 7, 24, 9, 21, 20, tzinfo=datetime.timezone.utc
         ),
-        "Thu, 29 Jul 2021 04:20:37 -0400 (EDT)": datetime(
-            2021, 7, 29, 8, 20, 37, tzinfo=timezone.utc
+        "Thu, 29 Jul 2021 04:20:37 -0400 (EDT)": datetime.datetime(
+            2021, 7, 29, 8, 20, 37, tzinfo=datetime.timezone.utc
         ),
-        "30 Jun 2023 18:45:01 +0300": datetime(
-            2023, 6, 30, 15, 45, 1, tzinfo=timezone.utc
+        "30 Jun 2023 18:45:01 +0300": datetime.datetime(
+            2023, 6, 30, 15, 45, 1, tzinfo=datetime.timezone.utc
         ),
-        "22 Mar 2020 20:12:18 +0000 (GMT)": datetime(
-            2020, 3, 22, 20, 12, 18, tzinfo=timezone.utc
+        "22 Mar 2020 20:12:18 +0000 (GMT)": datetime.datetime(
+            2020, 3, 22, 20, 12, 18, tzinfo=datetime.timezone.utc
         ),
     }
     for strptime, expected_datetime in str_to_dt.items():
-        assert (
-            GmailConnector._strptime_to_datetime(strptime).astimezone(timezone.utc)
-            == expected_datetime
-        )
+        assert time_str_to_utc(strptime) == expected_datetime

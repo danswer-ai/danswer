@@ -71,7 +71,7 @@ const DriveJsonUpload = ({
               credentialFileType = "service_account";
             } else {
               throw new Error(
-                "Unknown credential type, expected one of 'OAuth Web application' or 'Service Account'"
+                "Unknown credential type, expected 'OAuth Web application'"
               );
             }
           } catch (e) {
@@ -253,12 +253,10 @@ export const GmailJsonUploadSection = ({
         >
           here
         </a>{" "}
-        to either (1) setup a google OAuth App in your company workspace or (2)
-        create a Service Account.
+        to setup a google OAuth App in your company workspace.
         <br />
         <br />
-        Download the credentials JSON if choosing option (1) or the Service
-        Account key JSON if chooosing option (2), and upload it here.
+        Download the credentials JSON and upload it here.
       </p>
       <DriveJsonUpload setPopup={setPopup} />
     </div>
@@ -437,8 +435,7 @@ export const GmailOAuthSection = ({
   // case where no keys have been uploaded in step 1
   return (
     <p className="text-sm">
-      Please upload either a OAuth Client Credential JSON or a Gmail
-      Service Account Key JSON in Step 1 before moving onto Step 2.
+      Please upload a OAuth Client Credential JSON in Step 1 before moving onto Step 2.
     </p>
   );
 };

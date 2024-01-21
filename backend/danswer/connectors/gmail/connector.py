@@ -1,6 +1,4 @@
 from base64 import urlsafe_b64decode
-from datetime import datetime
-from datetime import timezone
 from typing import Any
 from typing import cast
 from typing import Dict
@@ -10,7 +8,7 @@ from google.auth.credentials import Credentials  # type: ignore
 from googleapiclient import discovery  # type: ignore
 
 from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import IGNORE_FOR_QA
+from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.gmail.connector_auth import (
     get_gmail_creds_for_authorized_user,
 )
@@ -88,14 +86,6 @@ class GmailConnector(LoadConnector, PollConnector):
         self.creds = creds
         return new_creds_dict
 
-    @staticmethod
-    def _strptime_to_datetime(_input: str) -> datetime:
-        _input = _input.split(", ")[-1]  # remove weekday if exist
-        _input = _input.rsplit(" ", 1)[0]  # remove timezone: GMT, (GMT), (UTC), etc.
-        if "+" not in _input and "-" not in _input:
-            return datetime.strptime(_input, "%d %b %Y %H:%M:%S")
-        return datetime.strptime(_input, "%d %b %Y %H:%M:%S %z")
-
     def _get_email_body(self, payload) -> str:
         parts = payload.get("parts", [])
         email_body = ""
@@ -109,9 +99,10 @@ class GmailConnector(LoadConnector, PollConnector):
         return email_body
 
     def _email_to_document(self, full_email: Dict[str, Any]) -> Document:
-        email_id = full_email["id"]
-        payload = full_email["payload"]
+        email_id = full_email.get("id")
+        payload = full_email.get("payload")
         headers = payload.get("headers")
+        labels = full_email.get("labelIds", [])
         if headers:
             for header in headers:
                 name = header.get("name")
@@ -124,10 +115,10 @@ class GmailConnector(LoadConnector, PollConnector):
                     _subject = value
                 if name.lower() == "date":
                     _date = value
-        email_data = f"{_from} {_to} {_subject} {_date}"
+        email_data = f"From:{_from}, To:{_to}, Subject:{_subject}, Date:{_date}"
         logger.debug(f"{email_data}")
         email_body_text: str = self._get_email_body(payload)
-        email_updated_at = self._strptime_to_datetime(_date).astimezone(timezone.utc)
+        email_updated_at = time_str_to_utc(_date)
         link = f"https://mail.google.com/mail/u/0/#inbox/{email_id}"
         return Document(
             id=email_id,
@@ -136,7 +127,7 @@ class GmailConnector(LoadConnector, PollConnector):
             title=_subject,
             semantic_identifier=_subject,
             doc_updated_at=email_updated_at,
-            metadata={} if email_data else {IGNORE_FOR_QA: True},
+            metadata={"labels": labels},
         )
 
     @staticmethod
