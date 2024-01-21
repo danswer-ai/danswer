@@ -28,7 +28,7 @@ class ExchangeConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         batch_size: int = INDEX_BATCH_SIZE,
-        exchange_max_poll_size: int = 100,
+        exchange_max_poll_size: str = "100",
         exchange_categories: list[str] | None = [],
         exchange_folders: list[str] | None = [],
     ) -> None:
@@ -128,7 +128,7 @@ class ExchangeConnector(LoadConnector, PollConnector):
         return emails
 
     def get_email_category(
-        self, limit: int, category: str, folder_path: str = None
+        self, limit: int, category: str, folder_path: Optional[str] = None
     ) -> list:
         logger.info(f"Fetching Catagory: {category}")
         mailbox = self.account.mailbox()
