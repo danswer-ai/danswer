@@ -223,7 +223,7 @@ def handle_followup_resolved_button(
 
     resolved_block = SectionBlock(
         text=f"{clicker_real_name or clicker_backup_name} has marked this question as resolved! "
-        f':tada:\n You can always click the "I need more help button" to let the team '
+        f'\n\n You can always click the "I need more help button" to let the team '
         f"know that your problem still needs attention."
     )
 
