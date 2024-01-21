@@ -46,7 +46,7 @@ export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
   if (connector.disabled) {
     const deletionAttempt = connectorIndexingStatus.deletion_attempt;
     if (!deletionAttempt || deletionAttempt.status === "FAILURE") {
-      statusDisplay = <div className="text-error">Disabled</div>;
+      statusDisplay = <div className="text-error">Paused</div>;
     } else {
       statusDisplay = <div className="text-error">Deleting...</div>;
       shouldDisplayDisabledToggle = false;
@@ -65,7 +65,7 @@ export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
         >
           {statusHovered && (
             <div className="flex flex-nowrap absolute top-0 left-0 ml-8 bg-background border border-border px-3 py-2 rounded shadow-lg">
-              {connector.disabled ? "Enable!" : "Disable!"}
+              {connector.disabled ? "Enable!" : "Pause!"}
             </div>
           )}
           {connector.disabled ? (

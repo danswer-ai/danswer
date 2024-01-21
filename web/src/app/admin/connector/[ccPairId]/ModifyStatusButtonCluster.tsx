@@ -40,11 +40,11 @@ export function ModifyStatusButtonCluster({
             )
           }
           tooltip={
-            "When disabled, the connectors documents will still" +
+            "When paused, the connectors documents will still" +
             " be visible. However, no new documents will be indexed."
           }
         >
-          Disable
+          Pause
         </Button>
       )}
     </>
