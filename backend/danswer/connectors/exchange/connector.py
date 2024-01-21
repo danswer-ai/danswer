@@ -5,6 +5,7 @@ from typing import Any
 from typing import List
 from typing import Optional
 
+from bs4 import BeautifulSoup
 from O365 import Account
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -165,6 +166,15 @@ class ExchangeConnector(LoadConnector, PollConnector):
         else:
             return None
 
+    def clean_html(self, html):
+        # Remove HTML tags
+        soup = BeautifulSoup(html, "html.parser")
+        # Remove unnecessary tags
+        for tag in soup(["style", "script", "img"]):
+            tag.decompose()
+        clean_text = soup.get_text()
+        return clean_text
+
     def _fetch_from_exchange(
         self, start: datetime | None = None, end: datetime | None = None
     ) -> GenerateDocumentsOutput:
@@ -222,7 +232,8 @@ class ExchangeConnector(LoadConnector, PollConnector):
         if email.bcc:
             for bcc_address in email.bcc:
                 str_bcc_address = str_bcc_address + bcc_address.address + ", "
-        body = email.body
+        body = self.clean_html(email.body)
+        # body_preview = email.body_preview
         sender = email.sender.address
         date = email.received.strftime("%Y-%m-%d %H:%M:%S")
         categories = ""
