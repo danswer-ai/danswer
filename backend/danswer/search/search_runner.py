@@ -76,6 +76,7 @@ def query_processing(
     return query
 
 
+@log_function_time(print_only=True)
 def embed_query(
     query: str,
     prefix: str = ASYM_QUERY_PREFIX,
@@ -163,6 +164,7 @@ def doc_index_retrieval(
             filters=query.filters,
             time_decay_multiplier=query.recency_bias_multiplier,
             num_to_retrieve=query.num_hits,
+            offset=query.offset,
             hybrid_alpha=hybrid_alpha,
         )
 
@@ -434,6 +436,7 @@ def rerank_chunks(
     return ranked_chunks
 
 
+@log_function_time(print_only=True)
 def filter_chunks(
     query: SearchQuery,
     chunks_to_filter: list[InferenceChunk],

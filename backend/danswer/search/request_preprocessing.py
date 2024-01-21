@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.chat_configs import DISABLE_LLM_FILTER_EXTRACTION
 from danswer.configs.chat_configs import FAVOR_RECENT_DECAY_MULTIPLIER
+from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.model_configs import ENABLE_RERANKING_ASYNC_FLOW
 from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.db.models import Persona
@@ -21,11 +22,13 @@ from danswer.secondary_llm_flows.time_filter import extract_time_filter
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
+from danswer.utils.timing import log_function_time
 
 
 logger = setup_logger()
 
 
+@log_function_time(print_only=True)
 def retrieval_preprocessing(
     query: str,
     retrieval_details: RetrievalDetails,
@@ -163,6 +166,10 @@ def retrieval_preprocessing(
             search_type=persona.search_type,
             filters=final_filters,
             recency_bias_multiplier=recency_bias_multiplier,
+            num_hits=retrieval_details.limit
+            if retrieval_details.limit is not None
+            else NUM_RETURNED_HITS,
+            offset=retrieval_details.offset or 0,
             skip_rerank=skip_reranking,
             skip_llm_chunk_filter=not llm_chunk_filter,
         ),

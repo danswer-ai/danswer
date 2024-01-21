@@ -76,6 +76,7 @@ class SearchQuery(BaseModel):
     filters: IndexFilters
     recency_bias_multiplier: float
     num_hits: int = NUM_RETURNED_HITS
+    offset: int = 0
     search_type: SearchType = SearchType.HYBRID
     skip_rerank: bool = not ENABLE_RERANKING_REAL_TIME_FLOW
     # Only used if not skip_rerank
@@ -100,8 +101,9 @@ class RetrievalDetails(BaseModel):
     # the query, if None, then use Persona settings
     filters: BaseFilters | None = None
     enable_auto_detect_filters: bool | None = None
-    # TODO Pagination/Offset options
-    # offset: int | None = None
+    # if None, no offset / limit
+    offset: int | None = None
+    limit: int | None = None
 
 
 class SearchDoc(BaseModel):

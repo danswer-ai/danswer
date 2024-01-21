@@ -748,6 +748,7 @@ class VespaIndex(DocumentIndex):
         filters: IndexFilters,
         time_decay_multiplier: float,
         num_to_retrieve: int = NUM_RETURNED_HITS,
+        offset: int = 0,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
         # IMPORTANT: THIS FUNCTION IS NOT UP TO DATE, DOES NOT WORK CORRECTLY
@@ -769,7 +770,7 @@ class VespaIndex(DocumentIndex):
             "query": final_query,
             "input.query(decay_factor)": str(DOC_TIME_DECAY * time_decay_multiplier),
             "hits": num_to_retrieve,
-            "offset": 0,
+            "offset": offset,
             "ranking.profile": "keyword_search",
             "timeout": _VESPA_TIMEOUT,
         }
@@ -782,6 +783,7 @@ class VespaIndex(DocumentIndex):
         filters: IndexFilters,
         time_decay_multiplier: float,
         num_to_retrieve: int = NUM_RETURNED_HITS,
+        offset: int = 0,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
         edit_keyword_query: bool = EDIT_KEYWORD_QUERY,
     ) -> list[InferenceChunk]:
@@ -811,7 +813,7 @@ class VespaIndex(DocumentIndex):
             "input.query(query_embedding)": str(query_embedding),
             "input.query(decay_factor)": str(DOC_TIME_DECAY * time_decay_multiplier),
             "hits": num_to_retrieve,
-            "offset": 0,
+            "offset": offset,
             "ranking.profile": "semantic_search",
             "timeout": _VESPA_TIMEOUT,
         }
@@ -824,6 +826,7 @@ class VespaIndex(DocumentIndex):
         filters: IndexFilters,
         time_decay_multiplier: float,
         num_to_retrieve: int,
+        offset: int = 0,
         hybrid_alpha: float | None = HYBRID_ALPHA,
         title_content_ratio: float | None = TITLE_CONTENT_RATIO,
         distance_cutoff: float | None = SEARCH_DISTANCE_CUTOFF,
@@ -861,7 +864,7 @@ class VespaIndex(DocumentIndex):
             if title_content_ratio is not None
             else TITLE_CONTENT_RATIO,
             "hits": num_to_retrieve,
-            "offset": 0,
+            "offset": offset,
             "ranking.profile": "hybrid_search",
             "timeout": _VESPA_TIMEOUT,
         }
@@ -873,6 +876,7 @@ class VespaIndex(DocumentIndex):
         query: str,
         filters: IndexFilters,
         num_to_retrieve: int = NUM_RETURNED_HITS,
+        offset: int = 0,
     ) -> list[InferenceChunk]:
         vespa_where_clauses = _build_vespa_filters(filters, include_hidden=True)
         yql = (
