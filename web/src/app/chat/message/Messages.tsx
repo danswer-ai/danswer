@@ -113,7 +113,7 @@ export const AIMessage = ({
                       ),
                     }}
                   >
-                    {content.replaceAll("\\n", "\n")}
+                    {content}
                   </ReactMarkdown>
                 ) : (
                   content
@@ -236,7 +236,7 @@ export const HumanMessage = ({
                     ),
                   }}
                 >
-                  {content.replaceAll("\\n", "\n")}
+                  {content}
                 </ReactMarkdown>
               ) : (
                 content

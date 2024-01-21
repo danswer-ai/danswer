@@ -4,6 +4,7 @@ import {
   Document360Icon,
   FileIcon,
   GithubIcon,
+  GitlabIcon,
   GlobeIcon,
   GmailIcon,
   GongIcon,
@@ -64,6 +65,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   github: {
     icon: GithubIcon,
     displayName: "Github",
+    category: SourceCategory.AppConnection,
+  },
+  gitlab: {
+    icon: GitlabIcon,
+    displayName: "Gitlab",
     category: SourceCategory.AppConnection,
   },
   confluence: {

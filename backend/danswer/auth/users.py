@@ -31,6 +31,7 @@ from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_AUTH
+from danswer.configs.app_configs import EMAIL_FROM
 from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
@@ -107,10 +108,16 @@ def verify_email_domain(email: str) -> None:
             )
 
 
-def send_user_verification_email(user_email: str, token: str) -> None:
+def send_user_verification_email(
+    user_email: str,
+    token: str,
+    mail_from: str = EMAIL_FROM,
+) -> None:
     msg = MIMEMultipart()
     msg["Subject"] = "Danswer Email Verification"
     msg["To"] = user_email
+    if mail_from:
+        msg["From"] = mail_from
 
     link = f"{WEB_DOMAIN}/auth/verify-email?token={token}"
 

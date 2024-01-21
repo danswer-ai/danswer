@@ -10,7 +10,7 @@ import {
   SearchRequestArgs,
 } from "./interfaces";
 import { processRawChunkString } from "./streamingUtils";
-import { buildFilters } from "./utils";
+import { buildFilters, endsWithLetterOrNumber } from "./utils";
 
 export const searchRequestStreamed = async ({
   query,
@@ -99,7 +99,8 @@ export const searchRequestStreamed = async ({
               answer &&
               !answer.endsWith(".") &&
               !answer.endsWith("?") &&
-              !answer.endsWith("!")
+              !answer.endsWith("!") &&
+              endsWithLetterOrNumber(answer)
             ) {
               answer += ".";
               updateCurrentAnswer(answer);

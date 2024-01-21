@@ -12,6 +12,7 @@ export interface User {
 export type ValidSources =
   | "web"
   | "github"
+  | "gitlab"
   | "slack"
   | "google_drive"
   | "gmail"
@@ -75,6 +76,13 @@ export interface GithubConfig {
   repo_owner: string;
   repo_name: string;
   include_prs: boolean;
+  include_issues: boolean;
+}
+
+export interface GitlabConfig {
+  project_owner: string;
+  project_name: string;
+  include_mrs: boolean;
   include_issues: boolean;
 }
 
@@ -190,6 +198,11 @@ export interface Credential<T> extends CredentialBase<T> {
 
 export interface GithubCredentialJson {
   github_access_token: string;
+}
+
+export interface GitlabCredentialJson {
+  gitlab_url: string;
+  gitlab_access_token: string;
 }
 
 export interface BookstackCredentialJson {
@@ -328,6 +341,7 @@ export interface ChannelConfig {
   respond_tag_only?: boolean;
   respond_team_member_list?: string[];
   answer_filters?: AnswerFilterOption[];
+  follow_up_tags?: string[];
 }
 
 export interface SlackBotConfig {

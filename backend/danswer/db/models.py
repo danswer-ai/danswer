@@ -602,6 +602,7 @@ class ChatMessageFeedback(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     chat_message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
     is_positive: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    required_followup: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     feedback_text: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     chat_message: Mapped[ChatMessage] = relationship(
@@ -740,6 +741,9 @@ class ChannelConfig(TypedDict):
     respond_tag_only: NotRequired[bool]  # defaults to False
     respond_team_member_list: NotRequired[list[str]]
     answer_filters: NotRequired[list[AllowedAnswerFilters]]
+    # If None then no follow up
+    # If empty list, follow up with no tags
+    follow_up_tags: NotRequired[list[str]]
 
 
 class SlackBotConfig(Base):

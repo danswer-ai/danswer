@@ -64,6 +64,7 @@ class DocumentSource(str, Enum):
     GMAIL = "gmail"
     REQUESTTRACKER = "requesttracker"
     GITHUB = "github"
+    GITLAB = "gitlab"
     GURU = "guru"
     BOOKSTACK = "bookstack"
     CONFLUENCE = "confluence"

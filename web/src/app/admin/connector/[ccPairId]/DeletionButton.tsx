@@ -23,7 +23,7 @@ export function DeletionButton({ ccPair }: { ccPair: CCPairFullInfo }) {
       tooltip = "Click to delete";
     }
   } else {
-    tooltip = "You must disable the connector before deleting it";
+    tooltip = "You must pause the connector before deleting it";
   }
 
   return (

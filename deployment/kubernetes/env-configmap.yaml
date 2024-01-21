@@ -11,6 +11,7 @@ data:
   SMTP_PORT: "" # For sending verification emails, if unspecified then defaults to '587'
   SMTP_USER: ""  # 'your-email@company.com'
   SMTP_PASS: ""  # 'your-gmail-password'
+  EMAIL_FROM: ""  # 'your-email@company.com' SMTP_USER missing used instead
   # Gen AI Settings
   GEN_AI_MODEL_PROVIDER: "openai"
   GEN_AI_MODEL_VERSION: "gpt-3.5-turbo"  # Use GPT-4 if you have it

@@ -2,9 +2,11 @@ import logging
 import random
 import re
 import string
+import time
 from collections.abc import MutableMapping
 from typing import Any
 from typing import cast
+from typing import Optional
 
 from retry import retry
 from slack_sdk import WebClient
@@ -14,6 +16,8 @@ from slack_sdk.models.metadata import Metadata
 
 from danswer.configs.constants import ID_SEPARATOR
 from danswer.configs.constants import MessageType
+from danswer.configs.danswerbot_configs import DANSWER_BOT_MAX_QPM
+from danswer.configs.danswerbot_configs import DANSWER_BOT_MAX_WAIT_TIME
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.connectors.slack.utils import SlackTextCleaner
@@ -27,6 +31,26 @@ logger = setup_logger()
 
 
 DANSWER_BOT_APP_ID: str | None = None
+
+
+def update_emote_react(
+    emoji: str,
+    channel: str,
+    message_ts: str | None,
+    remove: bool,
+    client: WebClient,
+) -> None:
+    if not message_ts:
+        logger.error(f"Tried to remove a react in {channel} but no message specified")
+        return
+
+    func = client.reactions_remove if remove else client.reactions_add
+    slack_call = make_slack_api_rate_limited(func)  # type: ignore
+    slack_call(
+        name=emoji,
+        channel=channel,
+        timestamp=message_ts,
+    )
 
 
 def get_danswer_bot_app_id(web_client: WebClient) -> Any:
@@ -134,7 +158,7 @@ def build_feedback_id(
     return unique_prefix + ID_SEPARATOR + feedback_id
 
 
-def decompose_feedback_id(feedback_id: str) -> tuple[int, str | None, int | None]:
+def decompose_action_id(feedback_id: str) -> tuple[int, str | None, int | None]:
     """Decompose into query_id, document_id, document_rank, see above function"""
     try:
         components = feedback_id.split(ID_SEPARATOR)
@@ -231,22 +255,48 @@ def get_channel_name_from_id(
         raise e
 
 
-def fetch_userids_from_emails(user_emails: list[str], client: WebClient) -> list[str]:
+def fetch_userids_from_emails(
+    user_emails: list[str], client: WebClient
+) -> tuple[list[str], list[str]]:
     user_ids: list[str] = []
+    failed_to_find: list[str] = []
     for email in user_emails:
         try:
             user = client.users_lookupByEmail(email=email)
             user_ids.append(user.data["user"]["id"])  # type: ignore
         except Exception:
             logger.error(f"Was not able to find slack user by email: {email}")
+            failed_to_find.append(email)
 
-    if not user_ids:
-        raise RuntimeError(
-            "Was not able to find any Slack users to respond to. "
-            "No email was parsed into a valid slack account."
-        )
+    return user_ids, failed_to_find
 
-    return user_ids
+
+def fetch_groupids_from_names(
+    names: list[str], client: WebClient
+) -> tuple[list[str], list[str]]:
+    group_ids: set[str] = set()
+    failed_to_find: list[str] = []
+
+    try:
+        response = client.usergroups_list()
+        if response.get("ok") and "usergroups" in response.data:
+            all_groups_dicts = response.data["usergroups"]  # type: ignore
+            name_id_map = {d["name"]: d["id"] for d in all_groups_dicts}
+            handle_id_map = {d["handle"]: d["id"] for d in all_groups_dicts}
+            for group in names:
+                if group in name_id_map:
+                    group_ids.add(name_id_map[group])
+                elif group in handle_id_map:
+                    group_ids.add(handle_id_map[group])
+                else:
+                    failed_to_find.append(group)
+        else:
+            # Most likely a Slack App scope issue
+            logger.error("Error fetching user groups")
+    except Exception as e:
+        logger.error(f"Error fetching user groups: {str(e)}")
+
+    return list(group_ids), failed_to_find
 
 
 def fetch_user_semantic_id_from_id(user_id: str, client: WebClient) -> str | None:
@@ -301,3 +351,64 @@ def read_slack_thread(
         )
 
     return thread_messages
+
+
+class SlackRateLimiter:
+    def __init__(self) -> None:
+        self.max_qpm: int | None = DANSWER_BOT_MAX_QPM
+        self.max_wait_time = DANSWER_BOT_MAX_WAIT_TIME
+        self.active_question = 0
+        self.last_reset_time = time.time()
+        self.waiting_questions: list[int] = []
+
+    def refill(self) -> None:
+        # If elapsed time is greater than the period, reset the active question count
+        if (time.time() - self.last_reset_time) > 60:
+            self.active_question = 0
+            self.last_reset_time = time.time()
+
+    def notify(
+        self, client: WebClient, channel: str, position: int, thread_ts: Optional[str]
+    ) -> None:
+        respond_in_thread(
+            client=client,
+            channel=channel,
+            receiver_ids=None,
+            text=f"Your question has been queued. You are in position {position}.\n"
+            f"Please wait a moment :hourglass_flowing_sand:",
+            thread_ts=thread_ts,
+        )
+
+    def is_available(self) -> bool:
+        if self.max_qpm is None:
+            return True
+
+        self.refill()
+        return self.active_question < self.max_qpm
+
+    def acquire_slot(self) -> None:
+        self.active_question += 1
+
+    def init_waiter(self) -> tuple[int, int]:
+        func_randid = random.getrandbits(128)
+        self.waiting_questions.append(func_randid)
+        position = self.waiting_questions.index(func_randid) + 1
+
+        return func_randid, position
+
+    def waiter(self, func_randid: int) -> None:
+        if self.max_qpm is None:
+            return
+
+        wait_time = 0
+        while (
+            self.active_question >= self.max_qpm
+            or self.waiting_questions[0] != func_randid
+        ):
+            if wait_time > self.max_wait_time:
+                raise TimeoutError
+            time.sleep(2)
+            wait_time += 2
+            self.refill()
+
+        del self.waiting_questions[0]
