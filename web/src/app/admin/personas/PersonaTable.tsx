@@ -1,34 +1,40 @@
 "use client";
 
-import { Divider, Text } from "@tremor/react";
+import { Text } from "@tremor/react";
 import { Persona } from "./interfaces";
-import { EditButton } from "@/components/EditButton";
 import { useRouter } from "next/navigation";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { DraggableTable } from "@/components/table/DraggableTable";
-import { personaComparator } from "./lib";
+import { deletePersona, personaComparator } from "./lib";
+import { FiEdit } from "react-icons/fi";
+import { TrashIcon } from "@/components/icons/icons";
 
 export function PersonasTable({ personas }: { personas: Persona[] }) {
   const router = useRouter();
   const { popup, setPopup } = usePopup();
 
+  const availablePersonaIds = new Set(
+    personas.map((persona) => persona.id.toString())
+  );
   const sortedPersonas = [...personas];
   sortedPersonas.sort(personaComparator);
 
-  const [finalPersonas, setFinalPersonas] = useState<UniqueIdentifier[]>(
+  const [finalPersonas, setFinalPersonas] = useState<string[]>(
     sortedPersonas.map((persona) => persona.id.toString())
   );
-  const finalPersonaValues = finalPersonas.map((id) => {
-    return sortedPersonas.find(
-      (persona) => persona.id.toString() === id
-    ) as Persona;
-  });
+  const finalPersonaValues = finalPersonas
+    .filter((id) => availablePersonaIds.has(id))
+    .map((id) => {
+      return sortedPersonas.find(
+        (persona) => persona.id.toString() === id
+      ) as Persona;
+    });
 
   const updatePersonaOrder = async (orderedPersonaIds: UniqueIdentifier[]) => {
-    setFinalPersonas(orderedPersonaIds);
+    setFinalPersonas(orderedPersonaIds.map((id) => id.toString()));
 
     const displayPriorityMap = new Map<UniqueIdentifier, number>();
     orderedPersonaIds.forEach((personaId, ind) => {
@@ -64,17 +70,20 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
       </Text>
 
       <DraggableTable
-        headers={["Name", "Description", "Built-In", "Is Visible", ""]}
+        headers={["Name", "Description", "Built-In", "Is Visible", "Delete"]}
         rows={finalPersonaValues.map((persona) => {
           return {
             id: persona.id.toString(),
             cells: [
-              <p
-                key="name"
-                className="text font-medium whitespace-normal break-none"
-              >
-                {persona.name}
-              </p>,
+              <div key="name" className="flex">
+                <FiEdit
+                  className="mr-1 my-auto cursor-pointer"
+                  onClick={() => router.push(`/admin/personas/${persona.id}`)}
+                />
+                <p className="text font-medium whitespace-normal break-none">
+                  {persona.name}
+                </p>
+              </div>,
               <p
                 key="description"
                 className="whitespace-normal break-all max-w-2xl"
@@ -120,13 +129,22 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
                 </div>
               </div>,
               <div key="edit" className="flex">
-                <div className="mx-auto">
+                <div className="mx-auto my-auto hover:bg-hover rounded p-1 cursor-pointer">
                   {!persona.default_persona ? (
-                    <EditButton
-                      onClick={() =>
-                        router.push(`/admin/personas/${persona.id}`)
-                      }
-                    />
+                    <div
+                      onClick={async () => {
+                        const response = await deletePersona(persona.id);
+                        if (response.ok) {
+                          router.push(`/admin/personas?u=${Date.now()}`);
+                        } else {
+                          alert(
+                            `Failed to delete persona - ${await response.text()}`
+                          );
+                        }
+                      }}
+                    >
+                      <TrashIcon />
+                    </div>
                   ) : (
                     "-"
                   )}
