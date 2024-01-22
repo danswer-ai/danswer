@@ -103,7 +103,6 @@ class DiscordConnector(LoadConnector, PollConnector):
         messages = []
         cursor = None
         while has_more:
-            print(cursor)
             messages = self._execute_read_channel(channel_id=channel_id, limit=self.batch_size, oldest=True, before= None, after=cursor)
             if messages == []:
                 has_more = False
