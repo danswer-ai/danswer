@@ -103,31 +103,29 @@ class GmailConnector(LoadConnector, PollConnector):
         payload = full_email.get("payload")
         headers = payload.get("headers")
         labels = full_email.get("labelIds", [])
+        metadata = {}
         if headers:
             for header in headers:
-                name = header.get("name")
+                name = header.get("name").lower()
                 value = header.get("value")
-                if name.lower() == "from":
-                    _from = value
-                if name.lower() == "to":
-                    _to = value
-                if name.lower() == "subject":
-                    _subject = value
-                if name.lower() == "date":
-                    _date = value
-        email_data = f"From:{_from}, To:{_to}, Subject:{_subject}, Date:{_date}"
+                if name in ["from", "to", "subject", "date", "cc", "bcc"]:
+                    metadata[name] = value
+        email_data = ""
+        for name, value in metadata.items():
+            email_data += f"{name}: {value}\n"
+        metadata["labels"] = labels
         logger.debug(f"{email_data}")
         email_body_text: str = self._get_email_body(payload)
-        email_updated_at = time_str_to_utc(_date)
+        email_updated_at = time_str_to_utc(metadata.get("date"))
         link = f"https://mail.google.com/mail/u/0/#inbox/{email_id}"
         return Document(
             id=email_id,
             sections=[Section(link=link, text=email_data + email_body_text)],
             source=DocumentSource.GMAIL,
-            title=_subject,
-            semantic_identifier=_subject,
+            title=metadata.get("subject"),
+            semantic_identifier=metadata.get("subject"),
             doc_updated_at=email_updated_at,
-            metadata={"labels": labels},
+            metadata=metadata,
         )
 
     @staticmethod

@@ -15,6 +15,7 @@ def test_email_to_document():
     email_subject = "Danswer Test Subject"
     email_sender = "Google <no-reply@accounts.google.com>"
     email_recipient = "test.mail@gmail.com"
+    email_date = "Wed, 27 Dec 2023 15:38:49 GMT"
     email_labels = ["UNREAD", "IMPORTANT", "CATEGORY_UPDATES", "STARRED", "INBOX"]
     full_email = {
         "id": email_id,
@@ -27,7 +28,7 @@ def test_email_to_document():
             "filename": "",
             "headers": [
                 {"name": "Delivered-To", "value": email_recipient},
-                {"name": "Date", "value": "Wed, 27 Dec 2023 15:38:49 GMT"},
+                {"name": "Date", "value": email_date},
                 {
                     "name": "Message-ID",
                     "value": "<OhMtIhHwNS1NoOQRSQEWqw@notifications.google.com>",
@@ -83,7 +84,13 @@ def test_email_to_document():
     assert doc.doc_updated_at == datetime.datetime(
         2023, 12, 27, 15, 38, 49, tzinfo=datetime.timezone.utc
     )
-    assert doc.metadata == {"labels": email_labels}
+    assert doc.metadata == {
+        "labels": email_labels,
+        "from": email_sender,
+        "to": email_recipient,
+        "date": email_date,
+        "subject": email_subject,
+    }
 
 
 def test_fetch_mails_from_gmail_empty(mocker):
