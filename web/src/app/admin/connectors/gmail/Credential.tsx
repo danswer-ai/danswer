@@ -131,9 +131,7 @@ const DriveJsonUpload = ({
                 type: "error",
               });
             }
-            mutate(
-              "/api/manage/admin/connector/gmail/service-account-key"
-            );
+            mutate("/api/manage/admin/connector/gmail/service-account-key");
           }
         }}
       >
@@ -179,9 +177,7 @@ export const GmailJsonUploadSection = ({
               }
             );
             if (response.ok) {
-              mutate(
-                "/api/manage/admin/connector/gmail/service-account-key"
-              );
+              mutate("/api/manage/admin/connector/gmail/service-account-key");
               setPopup({
                 message: "Successfully deleted service account key",
                 type: "success",
@@ -320,9 +316,9 @@ export const GmailOAuthSection = ({
     return (
       <div>
         <p className="text-sm mb-2">
-          When using a Gmail Service Account, you can either have Danswer
-          act as the service account itself OR you can specify an account for
-          the service account to impersonate.
+          When using a Gmail Service Account, you can either have Danswer act as
+          the service account itself OR you can specify an account for the
+          service account to impersonate.
           <br />
           <br />
           If you want to use the service account itself, leave the{" "}
@@ -350,8 +346,7 @@ export const GmailOAuthSection = ({
                     "Content-Type": "application/json",
                   },
                   body: JSON.stringify({
-                    gmail_delegated_user:
-                      values.gmail_delegated_user,
+                    gmail_delegated_user: values.gmail_delegated_user,
                   }),
                 }
               );
@@ -435,7 +430,8 @@ export const GmailOAuthSection = ({
   // case where no keys have been uploaded in step 1
   return (
     <p className="text-sm">
-      Please upload a OAuth Client Credential JSON in Step 1 before moving onto Step 2.
+      Please upload a OAuth Client Credential JSON in Step 1 before moving onto
+      Step 2.
     </p>
   );
 };

@@ -45,13 +45,12 @@ const GmailConnectorManagement = ({
 }: GmailConnectorManagementProps) => {
   const { mutate } = useSWRConfig();
 
-  const liveCredential =
-    gmailPublicCredential || gmailServiceAccountCredential;
+  const liveCredential = gmailPublicCredential || gmailServiceAccountCredential;
   if (!liveCredential) {
     return (
       <Text>
-        Please authenticate with Gmail as described in Step 2! Once done
-        with that, you can then move on to enable this connector.
+        Please authenticate with Gmail as described in Step 2! Once done with
+        that, you can then move on to enable this connector.
       </Text>
     );
   }
@@ -81,9 +80,7 @@ const GmailConnectorManagement = ({
         <>
           <div className="text-sm mb-2 font-bold">Existing Connectors:</div>
           <GmailConnectorsTable
-            gmailConnectorIndexingStatuses={
-              gmailConnectorIndexingStatuses
-            }
+            gmailConnectorIndexingStatuses={gmailConnectorIndexingStatuses}
             setPopup={setPopup}
           />
           <Divider />
@@ -182,12 +179,11 @@ const Main = () => {
     );
   }
 
-  const gmailPublicCredential:
-    | Credential<GmailCredentialJson>
-    | undefined = credentialsData.find(
-    (credential) =>
-      credential.credential_json?.gmail_tokens && credential.admin_public
-  );
+  const gmailPublicCredential: Credential<GmailCredentialJson> | undefined =
+    credentialsData.find(
+      (credential) =>
+        credential.credential_json?.gmail_tokens && credential.admin_public
+    );
   const gmailServiceAccountCredential:
     | Credential<GmailServiceAccountCredentialJson>
     | undefined = credentialsData.find(
@@ -200,8 +196,7 @@ const Main = () => {
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "gmail"
   );
-  const gmailConnectorIndexingStatus =
-    gmailConnectorIndexingStatuses[0];
+  const gmailConnectorIndexingStatus = gmailConnectorIndexingStatuses[0];
 
   const credentialIsLinked =
     (gmailConnectorIndexingStatus !== undefined &&
@@ -234,9 +229,7 @@ const Main = () => {
         setPopup={setPopup}
         refreshCredentials={refreshCredentials}
         gmailPublicCredential={gmailPublicCredential}
-        gmailServiceAccountCredential={
-          gmailServiceAccountCredential
-        }
+        gmailServiceAccountCredential={gmailServiceAccountCredential}
         appCredentialData={appCredentialData}
         serviceAccountKeyData={serviceAccountKeyData}
         connectorExists={gmailConnectorIndexingStatuses.length > 0}
@@ -247,13 +240,9 @@ const Main = () => {
       </Title>
       <GmailConnectorManagement
         gmailPublicCredential={gmailPublicCredential}
-        gmailServiceAccountCredential={
-          gmailServiceAccountCredential
-        }
+        gmailServiceAccountCredential={gmailServiceAccountCredential}
         gmailConnectorIndexingStatus={gmailConnectorIndexingStatus}
-        gmailConnectorIndexingStatuses={
-          gmailConnectorIndexingStatuses
-        }
+        gmailConnectorIndexingStatuses={gmailConnectorIndexingStatuses}
         credentialIsLinked={credentialIsLinked}
         setPopup={setPopup}
       />
@@ -268,10 +257,7 @@ export default function Page() {
         <HealthCheckBanner />
       </div>
 
-      <AdminPageTitle
-        icon={<GmailIcon size={32} />}
-        title="Gmail"
-      />
+      <AdminPageTitle icon={<GmailIcon size={32} />} title="Gmail" />
 
       <Main />
     </div>

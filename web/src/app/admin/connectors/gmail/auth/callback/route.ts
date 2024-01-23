@@ -18,17 +18,13 @@ export const GET = async (request: NextRequest) => {
   });
 
   if (!response.ok) {
-    console.log(
-      "Error in Gmail callback:",
-      (await response.json()).detail
-    );
+    console.log("Error in Gmail callback:", (await response.json()).detail);
     return NextResponse.redirect(new URL("/auth/error", getDomain(request)));
   }
 
   if (
-    cookies()
-      .get(GMAIL_AUTH_IS_ADMIN_COOKIE_NAME)
-      ?.value?.toLowerCase() === "true"
+    cookies().get(GMAIL_AUTH_IS_ADMIN_COOKIE_NAME)?.value?.toLowerCase() ===
+    "true"
   ) {
     return NextResponse.redirect(
       new URL("/admin/connectors/gmail", getDomain(request))
