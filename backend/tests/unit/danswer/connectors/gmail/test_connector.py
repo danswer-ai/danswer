@@ -113,7 +113,7 @@ def test_fetch_mails_from_gmail(mocker: MockFixture) -> None:
     email_recipient = "test.mail@gmail.com"
     mock_discovery.build.return_value.users.return_value.messages.return_value.list.return_value.execute.return_value = {
         "messages": [{"id": email_id, "threadId": email_id}],
-        "nextP`ageToken": "14473313008248105741",
+        "nextPageToken": "14473313008248105741",
         "resultSizeEstimate": 201,
     }
     mock_discovery.build.return_value.users.return_value.messages.return_value.get.return_value.execute.return_value = {
