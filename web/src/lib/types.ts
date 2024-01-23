@@ -107,6 +107,7 @@ export interface JiraConfig {
 
 export interface SharepointConfig {
   sites?: string[];
+  sites_group_name: string;
 }
 
 export interface ProductboardConfig {}

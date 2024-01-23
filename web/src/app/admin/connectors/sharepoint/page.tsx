@@ -175,23 +175,48 @@ const MainSection = () => {
                   mutate("/api/manage/admin/connector/indexing-status");
                 }
               }}
+              specialColumns={[
+                {
+                  header: "Sites Group Name",
+                  key: "sites_group_name",
+                  getValue: (ccPairStatus) => {
+                    const connectorConfig =
+                      ccPairStatus.connector.connector_specific_config;
+                    return `${connectorConfig.sites_group_name}`;
+                  },
+                },
+                {
+                  header: "Connectors",
+                  key: "connectors",
+                  getValue: (ccPairStatus) => {
+                    const connectorConfig =
+                      ccPairStatus.connector.connector_specific_config;
+                    return `${connectorConfig.sites}`;
+                  },
+                },
+              ]}
             />
           </div>
         </>
       )}
 
-      {sharepointCredential &&
-      sharepointConnectorIndexingStatuses.length === 0 ? (
+      {sharepointCredential ? (
         <Card className="mt-4">
           <ConnectorForm<SharepointConfig>
             nameBuilder={(values) =>
-              `Sharepoint-${sharepointCredential.credential_json.aad_directory_id}`
+              `Sharepoint-${values.sites_group_name}`
             }
             ccPairNameBuilder={(values) =>
-              `Sharepoint ${sharepointCredential.credential_json.aad_directory_id}`
+              `Sharepoint ${values.sites_group_name}`
             }
             source="sharepoint"
             inputType="poll"
+            formBody={
+              <>
+                <TextFormField name="sites_group_name" label="Sites Group Name:" />
+              </>
+            }
+            // formBody={<></>}
             formBodyBuilder={TextArrayFieldBuilder({
               name: "sites",
               label: "Sites:",
@@ -205,10 +230,13 @@ const MainSection = () => {
               sites: Yup.array()
                 .of(Yup.string().required("Site names must be strings"))
                 .required(),
+                sites_group_name: Yup.string().required(
+                  "Please enter the name you would like to give this group of sites e.g. engineering "
+                ),
             })}
-            formBody={<></>}
             initialValues={{
               sites: [],
+              sites_group_name: "",
             }}
             credentialId={sharepointCredential.id}
             refreshFreq={10 * 60} // 10 minutes

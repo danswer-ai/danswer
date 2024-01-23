@@ -8,6 +8,7 @@ from typing import Any
 import docx  # type: ignore
 import msal  # type: ignore
 import openpyxl  # type: ignore
+import pptx  # type: ignore
 from office365.graph_client import GraphClient  # type: ignore
 from office365.onedrive.driveitems.driveItem import DriveItem  # type: ignore
 from office365.onedrive.sites.site import Site  # type: ignore
@@ -73,6 +74,23 @@ def get_text_from_txt_driveitem(driveitem_object: DriveItem) -> str:
     file_content: bytes = driveitem_object.get_content().execute_query().value
     text_string = file_content.decode("utf-8")
     return text_string
+
+
+def get_text_from_pptx_driveitem(driveitem_object: DriveItem):
+    file_content = driveitem_object.get_content().execute_query().value
+    pptx_stream = io.BytesIO(file_content)
+    with tempfile.NamedTemporaryFile() as temp:
+        temp.write(pptx_stream.getvalue())
+        presentation = pptx.Presentation(temp.name)
+        extracted_text = ""
+        for slide_number, slide in enumerate(presentation.slides, start=1):
+            extracted_text += f"\nSlide {slide_number}:\n"
+
+            for shape in slide.shapes:
+                if hasattr(shape, "text"):
+                    extracted_text += shape.text + "\n"
+
+        return extracted_text
 
 
 class SharepointConnector(LoadConnector, PollConnector):
@@ -215,6 +233,8 @@ class SharepointConnector(LoadConnector, PollConnector):
         elif driveitem_name.endswith(".pdf"):
             driveitem_text = get_text_from_pdf_driveitem(driveitem_object)
         elif driveitem_name.endswith(".xlsx"):
+            driveitem_text = get_text_from_xlsx_driveitem(driveitem_object)
+        elif driveitem_name.endswith(".pptx"):
             driveitem_text = get_text_from_xlsx_driveitem(driveitem_object)
         elif is_text_file_extension(driveitem_name):
             driveitem_text = get_text_from_txt_driveitem(driveitem_object)
