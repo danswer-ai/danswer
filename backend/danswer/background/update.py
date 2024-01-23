@@ -203,7 +203,7 @@ def cleanup_indexing_jobs(
             )
             for index_attempt in in_progress_indexing_attempts:
                 if index_attempt.id in existing_jobs:
-                    # check to see if the job has been updated in last n hours, if not
+                    # check to see if the job has been updated in last `timeout_hours` hours, if not
                     # assume it to frozen in some bad state and just mark it as failed. Note: this relies
                     # on the fact that the `time_updated` field is constantly updated every
                     # batch of documents indexed
@@ -214,7 +214,7 @@ def cleanup_indexing_jobs(
                         _mark_run_failed(
                             db_session=db_session,
                             index_attempt=index_attempt,
-                            failure_reason="Indexing run frozen - no updates in an hour. "
+                            failure_reason="Indexing run frozen - no updates in the last three hours. "
                             "The run will be re-attempted at next scheduled indexing time.",
                         )
                 else:
