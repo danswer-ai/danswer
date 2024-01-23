@@ -432,8 +432,10 @@ if __name__ == "__main__":
     import os
     import time
 
+    slack_channel = os.environ.get("SLACK_CHANNEL")
     connector = SlackPollConnector(
-        workspace=os.environ["SLACK_WORKSPACE"], channels=[os.environ["SLACK_CHANNEL"]]
+        workspace=os.environ["SLACK_WORKSPACE"],
+        channels=[slack_channel] if slack_channel else None,
     )
     connector.load_credentials({"slack_bot_token": os.environ["SLACK_BOT_TOKEN"]})
 
