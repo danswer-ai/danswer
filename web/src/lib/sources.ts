@@ -5,7 +5,9 @@ import {
   ExchangeIcon,
   FileIcon,
   GithubIcon,
+  GitlabIcon,
   GlobeIcon,
+  GmailIcon,
   GongIcon,
   GoogleDriveIcon,
   GoogleSitesIcon,
@@ -51,6 +53,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Slack",
     category: SourceCategory.AppConnection,
   },
+  gmail: {
+    icon: GmailIcon,
+    displayName: "Gmail",
+    category: SourceCategory.AppConnection,
+  },
   google_drive: {
     icon: GoogleDriveIcon,
     displayName: "Google Drive",
@@ -59,6 +66,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   github: {
     icon: GithubIcon,
     displayName: "Github",
+    category: SourceCategory.AppConnection,
+  },
+  gitlab: {
+    icon: GitlabIcon,
+    displayName: "Gitlab",
     category: SourceCategory.AppConnection,
   },
   confluence: {

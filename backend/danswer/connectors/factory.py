@@ -6,8 +6,11 @@ from danswer.connectors.bookstack.connector import BookstackConnector
 from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.danswer_jira.connector import JiraConnector
 from danswer.connectors.document360.connector import Document360Connector
+from danswer.connectors.exchange.connector import ExchangeConnector
 from danswer.connectors.file.connector import LocalFileConnector
 from danswer.connectors.github.connector import GithubConnector
+from danswer.connectors.gitlab.connector import GitlabConnector
+from danswer.connectors.gmail.connector import GmailConnector
 from danswer.connectors.gong.connector import GongConnector
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.google_site.connector import GoogleSitesConnector
@@ -29,7 +32,6 @@ from danswer.connectors.slack.connector import SlackPollConnector
 from danswer.connectors.web.connector import WebConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
 from danswer.connectors.zulip.connector import ZulipConnector
-from danswer.connectors.exchange.connector import ExchangeConnector
 
 
 class ConnectorMissingException(Exception):
@@ -48,6 +50,8 @@ def identify_connector_class(
             InputType.POLL: SlackPollConnector,
         },
         DocumentSource.GITHUB: GithubConnector,
+        DocumentSource.GMAIL: GmailConnector,
+        DocumentSource.GITLAB: GitlabConnector,
         DocumentSource.GOOGLE_DRIVE: GoogleDriveConnector,
         DocumentSource.BOOKSTACK: BookstackConnector,
         DocumentSource.CONFLUENCE: ConfluenceConnector,

@@ -261,7 +261,7 @@ export function PersonaEditor({
 
               {finalPrompt ? (
                 <pre className="text-sm mt-2 whitespace-pre-wrap">
-                  {finalPrompt.replaceAll("\\n", "\n")}
+                  {finalPrompt}
                 </pre>
               ) : (
                 "-"

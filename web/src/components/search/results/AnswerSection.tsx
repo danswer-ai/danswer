@@ -2,6 +2,25 @@ import { Quote } from "@/lib/search/interfaces";
 import { ResponseSection, StatusOptions } from "./ResponseSection";
 import ReactMarkdown from "react-markdown";
 
+const TEMP_STRING = "__$%^TEMP$%^__";
+
+function replaceNewlines(answer: string) {
+  // Since the one-shot answer is a JSON, GPT adds extra backslashes to the
+  // newlines. This function replaces the extra backslashes with the correct
+  // number of backslashes so that ReactMarkdown can render the newlines
+
+  // Step 1: Replace '\\\\n' with a temporary placeholder
+  answer = answer.replace(/\\\\n/g, TEMP_STRING);
+
+  // Step 2: Replace '\\n' with '\n'
+  answer = answer.replace(/\\n/g, "\n");
+
+  // Step 3: Replace the temporary placeholder with '\\n'
+  answer = answer.replace(TEMP_STRING, "\\n");
+
+  return answer;
+}
+
 interface AnswerSectionProps {
   answer: string | null;
   quotes: Quote[] | null;
@@ -41,7 +60,7 @@ const AnswerBody = ({ answer, error, isFetching }: AnswerSectionProps) => {
   } else if (answer) {
     return (
       <ReactMarkdown className="prose text-sm max-w-full">
-        {answer.replaceAll("\\n", "\n")}
+        {replaceNewlines(answer)}
       </ReactMarkdown>
     );
   } else if (!isFetching) {

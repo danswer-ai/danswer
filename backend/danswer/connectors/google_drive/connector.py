@@ -46,8 +46,6 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-# allow 10 minutes for modifiedTime to get propagated
-DRIVE_START_TIME_OFFSET = 60 * 10
 DRIVE_FOLDER_TYPE = "application/vnd.google-apps.folder"
 DRIVE_SHORTCUT_TYPE = "application/vnd.google-apps.shortcut"
 UNSUPPORTED_FILE_TYPE_CONTENT = ""  # keep empty for now
@@ -502,9 +500,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         # propogation if a document is modified, it takes some time for the API to
         # reflect these changes if we do not have an offset, then we may "miss" the
         # update when polling
-        yield from self._fetch_docs_from_drive(
-            max(start - DRIVE_START_TIME_OFFSET, 0, 0), end
-        )
+        yield from self._fetch_docs_from_drive(start, end)
 
 
 if __name__ == "__main__":

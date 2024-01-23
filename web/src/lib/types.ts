@@ -12,8 +12,10 @@ export interface User {
 export type ValidSources =
   | "web"
   | "github"
+  | "gitlab"
   | "slack"
   | "google_drive"
+  | "gmail"
   | "bookstack"
   | "confluence"
   | "jira"
@@ -78,6 +80,13 @@ export interface GithubConfig {
   include_issues: boolean;
 }
 
+export interface GitlabConfig {
+  project_owner: string;
+  project_name: string;
+  include_mrs: boolean;
+  include_issues: boolean;
+}
+
 export interface ExchangeConfig {
   exchange_categories?: string[];
   exchange_folders?: string[];
@@ -89,6 +98,8 @@ export interface GoogleDriveConfig {
   include_shared?: boolean;
   follow_shortcuts?: boolean;
 }
+
+export interface GmailConfig {}
 
 export interface BookstackConfig {}
 
@@ -196,6 +207,11 @@ export interface GithubCredentialJson {
   github_access_token: string;
 }
 
+export interface GitlabCredentialJson {
+  gitlab_url: string;
+  gitlab_access_token: string;
+}
+
 export interface ExchangeCredentialJson {
   aad_app_id: string;
   aad_app_secret: string;
@@ -227,8 +243,17 @@ export interface SlackCredentialJson {
   slack_bot_token: string;
 }
 
+export interface GmailCredentialJson {
+  gmail_tokens: string;
+}
+
 export interface GoogleDriveCredentialJson {
   google_drive_tokens: string;
+}
+
+export interface GmailServiceAccountCredentialJson {
+  gmail_service_account_key: string;
+  gmail_delegated_user: string;
 }
 
 export interface GoogleDriveServiceAccountCredentialJson {
