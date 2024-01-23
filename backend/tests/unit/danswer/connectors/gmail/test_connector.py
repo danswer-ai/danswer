@@ -2,6 +2,7 @@ import datetime
 from unittest.mock import MagicMock
 
 import pytest
+from pytest_mock import MockFixture
 
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
@@ -9,7 +10,7 @@ from danswer.connectors.gmail.connector import GmailConnector
 from danswer.connectors.models import Document
 
 
-def test_email_to_document():
+def test_email_to_document() -> None:
     connector = GmailConnector()
     email_id = "18cabedb1ea46b03"
     email_subject = "Danswer Test Subject"
@@ -93,7 +94,7 @@ def test_email_to_document():
     }
 
 
-def test_fetch_mails_from_gmail_empty(mocker):
+def test_fetch_mails_from_gmail_empty(mocker: MockFixture) -> None:
     mock_discovery = mocker.patch("danswer.connectors.gmail.connector.discovery")
     mock_discovery.build.return_value.users.return_value.messages.return_value.list.return_value.execute.return_value = {
         "messages": []
@@ -104,7 +105,7 @@ def test_fetch_mails_from_gmail_empty(mocker):
         next(connector.load_from_state())
 
 
-def test_fetch_mails_from_gmail(mocker):
+def test_fetch_mails_from_gmail(mocker: MockFixture) -> None:
     mock_discovery = mocker.patch("danswer.connectors.gmail.connector.discovery")
     email_id = "18cabedb1ea46b03"
     email_subject = "Danswer Test Subject"
@@ -112,7 +113,7 @@ def test_fetch_mails_from_gmail(mocker):
     email_recipient = "test.mail@gmail.com"
     mock_discovery.build.return_value.users.return_value.messages.return_value.list.return_value.execute.return_value = {
         "messages": [{"id": email_id, "threadId": email_id}],
-        "nextPageToken": "14473313008248105741",
+        "nextP`ageToken": "14473313008248105741",
         "resultSizeEstimate": 201,
     }
     mock_discovery.build.return_value.users.return_value.messages.return_value.get.return_value.execute.return_value = {
@@ -188,7 +189,7 @@ def test_fetch_mails_from_gmail(mocker):
     assert email_sender in doc.sections[0].text
 
 
-def test_build_time_range_query():
+def test_build_time_range_query() -> None:
     time_range_start = 1703066296.159339
     time_range_end = 1704984791.657404
     query = GmailConnector._build_time_range_query(time_range_start, time_range_end)
@@ -203,7 +204,7 @@ def test_build_time_range_query():
     assert query is None
 
 
-def test_time_str_to_utc():
+def test_time_str_to_utc() -> None:
     str_to_dt = {
         "Tue, 5 Oct 2021 09:38:25 GMT": datetime.datetime(
             2021, 10, 5, 9, 38, 25, tzinfo=datetime.timezone.utc

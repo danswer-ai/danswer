@@ -2,11 +2,11 @@ from base64 import urlsafe_b64decode
 from typing import Any
 from typing import cast
 from typing import Dict
-from typing import Optional
 
 from google.auth.credentials import Credentials  # type: ignore
 from googleapiclient import discovery  # type: ignore
 
+from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.gmail.connector_auth import (
@@ -32,12 +32,10 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-# allow 10 minutes for modifiedTime to get propagated
-GMAIL_START_TIME_OFFSET = 60 * 10
-
 
 class GmailConnector(LoadConnector, PollConnector):
-    def __init__(self) -> None:
+    def __init__(self, batch_size: int = INDEX_BATCH_SIZE) -> None:
+        self.batch_size = batch_size
         self.creds: Credentials | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, str] | None:
@@ -86,7 +84,7 @@ class GmailConnector(LoadConnector, PollConnector):
         self.creds = creds
         return new_creds_dict
 
-    def _get_email_body(self, payload) -> str:
+    def _get_email_body(self, payload: dict[str, Any]) -> str:
         parts = payload.get("parts", [])
         email_body = ""
         for part in parts:
@@ -99,8 +97,8 @@ class GmailConnector(LoadConnector, PollConnector):
         return email_body
 
     def _email_to_document(self, full_email: Dict[str, Any]) -> Document:
-        email_id = full_email.get("id")
-        payload = full_email.get("payload")
+        email_id = full_email["id"]
+        payload = full_email["payload"]
         headers = payload.get("headers")
         labels = full_email.get("labelIds", [])
         metadata = {}
@@ -116,14 +114,15 @@ class GmailConnector(LoadConnector, PollConnector):
         metadata["labels"] = labels
         logger.debug(f"{email_data}")
         email_body_text: str = self._get_email_body(payload)
-        email_updated_at = time_str_to_utc(metadata.get("date"))
+        date_str = metadata.get("date")
+        email_updated_at = time_str_to_utc(date_str) if date_str else None
         link = f"https://mail.google.com/mail/u/0/#inbox/{email_id}"
         return Document(
             id=email_id,
             sections=[Section(link=link, text=email_data + email_body_text)],
             source=DocumentSource.GMAIL,
             title=metadata.get("subject"),
-            semantic_identifier=metadata.get("subject"),
+            semantic_identifier=metadata.get("subject", "Untitled Email"),
             doc_updated_at=email_updated_at,
             metadata=metadata,
         )
@@ -132,15 +131,17 @@ class GmailConnector(LoadConnector, PollConnector):
     def _build_time_range_query(
         time_range_start: SecondsSinceUnixEpoch | None = None,
         time_range_end: SecondsSinceUnixEpoch | None = None,
-    ) -> Optional[str]:
+    ) -> str | None:
         query = ""
         if time_range_start is not None and time_range_start != 0:
             query += f"after:{int(time_range_start)}"
         if time_range_end is not None and time_range_end != 0:
             query += f" before:{int(time_range_end)}"
         query = query.strip()
+
         if len(query) == 0:
-            query = None
+            return None
+
         return query
 
     def _fetch_mails_from_gmail(
@@ -157,7 +158,12 @@ class GmailConnector(LoadConnector, PollConnector):
             result = (
                 service.users()
                 .messages()
-                .list(userId="me", pageToken=page_token, q=query)
+                .list(
+                    userId="me",
+                    pageToken=page_token,
+                    q=query,
+                    maxResults=self.batch_size,
+                )
                 .execute()
             )
             page_token = result.get("nextPageToken")
@@ -182,20 +188,12 @@ class GmailConnector(LoadConnector, PollConnector):
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        # need to subtract 10 minutes from start time to account for modifiedTime
-        # propogation if a document is modified, it takes some time for the API to
-        # reflect these changes if we do not have an offset, then we may "miss" the
-        # update when polling
-        yield from self._fetch_mails_from_gmail(
-            max(start - GMAIL_START_TIME_OFFSET, 0, 0), end
-        )
+        yield from self._fetch_mails_from_gmail(start, end)
 
 
 if __name__ == "__main__":
     import json
     import os
-
-    # TODO: pull the json from Postgres (creds table)
 
     service_account_json_path = os.environ.get("GOOGLE_SERVICE_ACCOUNT_KEY_JSON_PATH")
     if not service_account_json_path:
@@ -213,7 +211,6 @@ if __name__ == "__main__":
         credentials_dict[DB_CREDENTIALS_DICT_DELEGATED_USER_KEY] = delegated_user
 
     connector = GmailConnector()
-    # connector.load_credentials(credentials_dict)
     connector.load_credentials(
         json.loads(credentials_dict[DB_CREDENTIALS_DICT_TOKEN_KEY])
     )
