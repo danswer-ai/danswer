@@ -64,6 +64,7 @@ We also have built-in support for deployment on Kubernetes. Files for that can b
 Efficiently pulls the latest changes from:
   * Slack
   * GitHub
+  * Gmail
   * Google Drive
   * Confluence
   * Jira

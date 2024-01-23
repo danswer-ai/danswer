@@ -15,6 +15,7 @@ export type ValidSources =
   | "gitlab"
   | "slack"
   | "google_drive"
+  | "gmail"
   | "bookstack"
   | "confluence"
   | "jira"
@@ -90,6 +91,8 @@ export interface GoogleDriveConfig {
   include_shared?: boolean;
   follow_shortcuts?: boolean;
 }
+
+export interface GmailConfig {}
 
 export interface BookstackConfig {}
 
@@ -226,8 +229,17 @@ export interface SlackCredentialJson {
   slack_bot_token: string;
 }
 
+export interface GmailCredentialJson {
+  gmail_tokens: string;
+}
+
 export interface GoogleDriveCredentialJson {
   google_drive_tokens: string;
+}
+
+export interface GmailServiceAccountCredentialJson {
+  gmail_service_account_key: string;
+  gmail_delegated_user: string;
 }
 
 export interface GoogleDriveServiceAccountCredentialJson {

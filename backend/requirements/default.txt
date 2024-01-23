@@ -38,6 +38,7 @@ pydantic==1.10.7
 PyGithub==1.58.2
 python-gitlab==3.9.0
 pypdf==3.17.0
+pytest-mock==3.12.0
 pytest-playwright==0.3.2
 python-dotenv==1.0.0
 python-multipart==0.0.6

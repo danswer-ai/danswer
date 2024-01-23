@@ -225,6 +225,7 @@ class GoogleServiceAccountKey(BaseModel):
 
 class GoogleServiceAccountCredentialRequest(BaseModel):
     google_drive_delegated_user: str | None  # email of user to impersonate
+    gmail_delegated_user: str | None  # email of user to impersonate
 
 
 class FileUploadResponse(BaseModel):
@@ -241,6 +242,11 @@ class AuthStatus(BaseModel):
 
 class AuthUrl(BaseModel):
     auth_url: str
+
+
+class GmailCallback(BaseModel):
+    state: str
+    code: str
 
 
 class GDriveCallback(BaseModel):
