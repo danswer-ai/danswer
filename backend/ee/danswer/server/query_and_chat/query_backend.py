@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
 from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
+from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
@@ -44,11 +45,23 @@ def handle_search_request(
         access_control_list=user_acl_filters,
     )
 
+    limit = (
+        search_request.retrieval_options.limit
+        if search_request.retrieval_options.limit is not None
+        else NUM_RETURNED_HITS
+    )
+    offset = (
+        search_request.retrieval_options.offset
+        if search_request.retrieval_options.offset is not None
+        else 0
+    )
     search_query = SearchQuery(
         query=query,
         search_type=search_request.search_type,
         filters=final_filters,
         recency_bias_multiplier=search_request.recency_bias_multiplier,
+        num_hits=limit,
+        offset=offset,
         skip_rerank=search_request.skip_rerank,
         skip_llm_chunk_filter=disable_llm_chunk_filter,
     )
