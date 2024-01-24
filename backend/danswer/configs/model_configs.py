@@ -14,7 +14,7 @@ DOCUMENT_ENCODER_MODEL = (
     os.environ.get("DOCUMENT_ENCODER_MODEL") or "thenlper/gte-small"
 )
 # If the below is changed, Vespa deployment must also be changed
-DOC_EMBEDDING_DIM = 384
+DOC_EMBEDDING_DIM = int(os.environ.get("DOC_EMBEDDING_DIM") or 0)
 # Model should be chosen with 512 context size, ideally don't change this
 DOC_EMBEDDING_CONTEXT_SIZE = 512
 NORMALIZE_EMBEDDINGS = (
