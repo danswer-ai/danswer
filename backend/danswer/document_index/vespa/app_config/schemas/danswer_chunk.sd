@@ -14,7 +14,7 @@ schema danswer_chunk {
         # May not always match the `semantic_identifier` e.g. for Slack docs the
         # `semantic_identifier` will be the channel name, but the `title` will be empty
         field title type string {
-            indexing: summary | index
+            indexing: summary | index | attribute
             match {
                 gram
                 gram-size: 3
@@ -132,10 +132,9 @@ schema danswer_chunk {
             expression: max(if(isNan(attribute(doc_updated_at)) == 1, 7890000, now() - attribute(doc_updated_at)) / 31536000, 0)
         }
 
-        # Document score decays from 1 to 0.5 as age of last updated time increases
+        # Document score decays from 1 to 0.75 as age of last updated time increases
         function inline recency_bias() {
-            # Cap the loss at 50% score reduction
-            expression: max(1 / (1 + query(decay_factor) * document_age), 0.5)
+            expression: max(1 / (1 + query(decay_factor) * document_age), 0.75)
         }
 
         match-features: recency_bias
@@ -149,7 +148,8 @@ schema danswer_chunk {
         # This must be separate function for normalize_linear to work
         function vector_score() {
             expression {
-                (query(title_content_ratio) * closeness(field, title_embedding)) +
+                # If no title, the full vector score comes from the content embedding
+                (query(title_content_ratio) * if(isNan(attribute(title)) == 1, closeness(field, embeddings), closeness(field, title_embedding))) +
                 ((1 - query(title_content_ratio)) * closeness(field, embeddings))
             }
         }

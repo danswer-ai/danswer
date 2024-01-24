@@ -31,6 +31,7 @@ QA_PROMPT_OVERRIDE = os.environ.get("QA_PROMPT_OVERRIDE") or None
 DOC_TIME_DECAY = float(
     os.environ.get("DOC_TIME_DECAY") or 0.5  # Hits limit at 2 years by default
 )
+BASE_RECENCY_DECAY = 0.5
 FAVOR_RECENT_DECAY_MULTIPLIER = 2.0
 # Currently this next one is not configurable via env
 DISABLE_LLM_QUERY_ANSWERABILITY = QA_PROMPT_OVERRIDE == "weak"
