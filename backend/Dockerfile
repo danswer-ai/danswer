@@ -42,11 +42,6 @@ COPY ./alembic /app/alembic
 COPY ./alembic.ini /app/alembic.ini
 COPY supervisord.conf /usr/etc/supervisord.conf
 
-# Create Vespa app zip
-WORKDIR /app/danswer/document_index/vespa/app_config
-RUN zip -r /app/danswer/vespa-app.zip .
-WORKDIR /app
-
 ENV PYTHONPATH /app
 
 # Default command which does nothing

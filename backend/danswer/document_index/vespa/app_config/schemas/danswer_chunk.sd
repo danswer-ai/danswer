@@ -37,7 +37,7 @@ schema danswer_chunk {
             summary: dynamic
         }
         # Title embedding (x1)
-        field title_embedding type tensor<float>(x[384]) {
+        field title_embedding type tensor<float>(x[VARIABLE_DIM]) {
             indexing: attribute
             attribute {
                 distance-metric: angular
@@ -45,7 +45,7 @@ schema danswer_chunk {
         }
         # Content embeddings (chunk + optional mini chunks embeddings)
         # "t" and "x" are arbitrary names, not special keywords
-        field embeddings type tensor<float>(t{},x[384]) {
+        field embeddings type tensor<float>(t{},x[VARIABLE_DIM]) {
             indexing: attribute
             attribute {
                 distance-metric: angular
@@ -143,7 +143,7 @@ schema danswer_chunk {
 
     rank-profile hybrid_search inherits default, default_rank {
         inputs {
-            query(query_embedding) tensor<float>(x[384])
+            query(query_embedding) tensor<float>(x[VARIABLE_DIM])
         }
 
         # This must be separate function for normalize_linear to work
@@ -224,7 +224,7 @@ schema danswer_chunk {
 
     rank-profile semantic_search inherits default, default_rank {
         inputs {
-            query(query_embedding) tensor<float>(x[384])
+            query(query_embedding) tensor<float>(x[VARIABLE_DIM])
         }
 
         first-phase {
