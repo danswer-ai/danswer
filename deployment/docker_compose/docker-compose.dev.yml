@@ -117,6 +117,7 @@ services:
       - WEB_DOMAIN=${WEB_DOMAIN:-}  # For frontend redirect auth purpose for OAuth2 connectors
       # Don't change the NLP model configs unless you know what you're doing
       - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
+      - DOC_EMBEDDING_DIM=${DOC_EMBEDDING_DIM:-}
       - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
       - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}  # Needed by DanswerBot
       - ASYM_PASSAGE_PREFIX=${ASYM_PASSAGE_PREFIX:-}
