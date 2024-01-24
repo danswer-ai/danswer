@@ -48,6 +48,7 @@ from danswer.configs.constants import RECENCY_BIAS
 from danswer.configs.constants import SECONDARY_OWNERS
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
+from danswer.configs.constants import SKIP_TITLE_EMBEDDING
 from danswer.configs.constants import SOURCE_LINKS
 from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.constants import TITLE
@@ -256,6 +257,7 @@ def _index_vespa_chunk(
         CHUNK_ID: chunk.chunk_id,
         BLURB: remove_invalid_unicode_chars(chunk.blurb),
         TITLE: remove_invalid_unicode_chars(title) if title else None,
+        SKIP_TITLE_EMBEDDING: not title,
         CONTENT: remove_invalid_unicode_chars(chunk.content),
         # This duplication of `content` is needed for keyword highlighting :(
         CONTENT_SUMMARY: remove_invalid_unicode_chars(chunk.content),
@@ -560,6 +562,7 @@ def _query_vespa(query_params: Mapping[str, str | int | float]) -> list[Inferenc
     filtered_hits = [hit for hit in hits if hit["fields"].get(CONTENT) is not None]
 
     inference_chunks = [_vespa_hit_to_inference_chunk(hit) for hit in filtered_hits]
+    # Good Debugging Spot
     return inference_chunks
 
 
