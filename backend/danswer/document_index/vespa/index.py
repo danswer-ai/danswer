@@ -1,7 +1,10 @@
 import concurrent.futures
+import io
 import json
+import os
 import string
 import time
+import zipfile
 from collections.abc import Callable
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -9,6 +12,7 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 from typing import Any
+from typing import BinaryIO
 from typing import cast
 
 import httpx
@@ -49,6 +53,7 @@ from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.constants import TITLE
 from danswer.configs.constants import TITLE_EMBEDDING
 from danswer.configs.constants import TITLE_SEPARATOR
+from danswer.configs.model_configs import DOC_EMBEDDING_DIM
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_experts_stores_representations,
@@ -70,7 +75,7 @@ from danswer.utils.threadpool_concurrency import run_functions_tuples_in_paralle
 
 logger = setup_logger()
 
-
+VESPA_DIM_REPLACEMENT_PAT = "VARIABLE_DIM"
 VESPA_CONFIG_SERVER_URL = f"http://{VESPA_HOST}:{VESPA_TENANT_PORT}"
 VESPA_APP_CONTAINER_URL = f"http://{VESPA_HOST}:{VESPA_PORT}"
 VESPA_APPLICATION_ENDPOINT = f"{VESPA_CONFIG_SERVER_URL}/application/v2"
@@ -566,6 +571,15 @@ def _inference_chunk_by_vespa_id(vespa_id: str) -> InferenceChunk:
     return _vespa_hit_to_inference_chunk(res.json())
 
 
+def in_memory_zip_from_file_bytes(file_contents: dict[str, bytes]) -> BinaryIO:
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for filename, content in file_contents.items():
+            zipf.writestr(filename, content)
+    zip_buffer.seek(0)
+    return zip_buffer
+
+
 class VespaIndex(DocumentIndex):
     yql_base = (
         f"select "
@@ -593,7 +607,7 @@ class VespaIndex(DocumentIndex):
         # to be updated + zipped + deployed, not supporting the option for simplicity
         self.deployment_zip = deployment_zip
 
-    def ensure_indices_exist(self) -> None:
+    def ensure_indices_exist(self, embedding_dim: int = DOC_EMBEDDING_DIM) -> None:
         """Verifying indices is more involved as there is no good way to
         verify the deployed app against the zip locally. But deploying the latest app.zip will ensure that
         the index is up-to-date with the expected schema and this does not erase the existing index.
@@ -601,13 +615,34 @@ class VespaIndex(DocumentIndex):
         """
         deploy_url = f"{VESPA_APPLICATION_ENDPOINT}/tenant/default/prepareandactivate"
         logger.debug(f"Sending Vespa zip to {deploy_url}")
+
+        vespa_schema_path = os.path.join(
+            os.getcwd(), "danswer", "document_index", "vespa", "app_config"
+        )
+        schema_file = os.path.join(vespa_schema_path, "schemas", "danswer_chunk.sd")
+        services_file = os.path.join(vespa_schema_path, "services.xml")
+
+        with open(schema_file, "r") as schema_f:
+            schema = schema_f.read()
+        schema = schema.replace(VESPA_DIM_REPLACEMENT_PAT, str(embedding_dim))
+        schema_bytes = schema.encode("utf-8")
+
+        with open(services_file, "rb") as services_f:
+            services_bytes = services_f.read()
+
+        zip_dict = {
+            "schemas/danswer_chunk.sd": schema_bytes,
+            "services.xml": services_bytes,
+        }
+
+        zip_file = in_memory_zip_from_file_bytes(zip_dict)
+
         headers = {"Content-Type": "application/zip"}
-        with open(self.deployment_zip, "rb") as f:
-            response = requests.post(deploy_url, headers=headers, data=f)
-            if response.status_code != 200:
-                raise RuntimeError(
-                    f"Failed to prepare Vespa Danswer Index. Response: {response.text}"
-                )
+        response = requests.post(deploy_url, headers=headers, data=zip_file)
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Failed to prepare Vespa Danswer Index. Response: {response.text}"
+            )
 
     def index(
         self,
