@@ -14,7 +14,7 @@ schema danswer_chunk {
         # May not always match the `semantic_identifier` e.g. for Slack docs the
         # `semantic_identifier` will be the channel name, but the `title` will be empty
         field title type string {
-            indexing: summary | index
+            indexing: summary | index | attribute
             match {
                 gram
                 gram-size: 3
@@ -148,7 +148,8 @@ schema danswer_chunk {
         # This must be separate function for normalize_linear to work
         function vector_score() {
             expression {
-                (query(title_content_ratio) * if(isNan(index(title_embedding)) == 1, closeness(field, embeddings), closeness(field, title_embedding))) +
+                # If no title, the full vector score comes from the content embedding
+                (query(title_content_ratio) * if(isNan(attribute(title)) == 1, closeness(field, embeddings), closeness(field, title_embedding))) +
                 ((1 - query(title_content_ratio)) * closeness(field, embeddings))
             }
         }
