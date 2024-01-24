@@ -74,6 +74,17 @@ class DanswerQuotes(BaseModel):
     quotes: list[DanswerQuote]
 
 
+class DanswerContext(BaseModel):
+    content: str
+    document_id: str
+    semantic_identifier: str
+    blurb: str
+
+
+class DanswerContexts(BaseModel):
+    contexts: list[DanswerContext]
+
+
 class DanswerAnswer(BaseModel):
     answer: str | None
 
@@ -87,11 +98,11 @@ class QAResponse(SearchResponse, DanswerAnswer):
     error_msg: str | None = None
 
 
-AnswerQuestionReturn = tuple[DanswerAnswer, DanswerQuotes]
+AnswerQuestionReturn = tuple[DanswerAnswer, DanswerQuotes, DanswerContexts]
 
 
 AnswerQuestionStreamReturn = Iterator[
-    DanswerAnswerPiece | DanswerQuotes | StreamingError
+    DanswerAnswerPiece | DanswerQuotes | DanswerContexts | StreamingError
 ]
 
 
