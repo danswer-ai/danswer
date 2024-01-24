@@ -54,6 +54,7 @@ services:
       - WEB_DOMAIN=${WEB_DOMAIN:-}  # For frontend redirect auth purpose
       # Don't change the NLP model configs unless you know what you're doing
       - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
+      - DOC_EMBEDDING_DIM=${DOC_EMBEDDING_DIM:-}
       - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
       - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}
       - ENABLE_RERANKING_REAL_TIME_FLOW=${ENABLE_RERANKING_REAL_TIME_FLOW:-}
