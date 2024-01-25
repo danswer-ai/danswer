@@ -26,6 +26,7 @@ from danswer.db.index_attempt import mark_attempt_succeeded
 from danswer.db.index_attempt import update_docs_indexed
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
+from danswer.document_index.document_index_utils import get_index_name
 from danswer.indexing.indexing_pipeline import build_indexing_pipeline
 from danswer.utils.logger import IndexAttemptSingleton
 from danswer.utils.logger import setup_logger
@@ -102,7 +103,9 @@ def _run_indexing(
         attempt_status=IndexingStatus.IN_PROGRESS,
     )
 
-    indexing_pipeline = build_indexing_pipeline()
+    # TODO UPDATE THIS FOR SECONDARY INDEXING
+    indexing_pipeline = build_indexing_pipeline(index_name=get_index_name())
+
     db_connector = index_attempt.connector
     db_credential = index_attempt.credential
     last_successful_index_time = get_last_successful_attempt_time(

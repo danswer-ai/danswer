@@ -96,6 +96,7 @@ def index_doc_batch(
     chunker: Chunker,
     embedder: Embedder,
     document_index: DocumentIndex,
+    index_name: str,
     documents: list[Document],
     index_attempt_metadata: IndexAttemptMetadata,
     ignore_time_skip: bool = False,
@@ -188,7 +189,7 @@ def index_doc_batch(
         # documents with chunks in this set, are fully represented by the chunks
         # in this set
         insertion_records = document_index.index(
-            chunks=access_aware_chunks,
+            chunks=access_aware_chunks, index_name=index_name
         )
 
         successful_doc_ids = [record.document_id for record in insertion_records]
@@ -217,6 +218,7 @@ def build_indexing_pipeline(
     chunker: Chunker | None = None,
     embedder: Embedder | None = None,
     document_index: DocumentIndex | None = None,
+    index_name: str,
     ignore_time_skip: bool = False,
 ) -> IndexingPipelineProtocol:
     """Builds a pipline which takes in a list (batch) of docs and indexes them."""
@@ -231,5 +233,6 @@ def build_indexing_pipeline(
         chunker=chunker,
         embedder=embedder,
         document_index=document_index,
+        index_name=index_name,
         ignore_time_skip=ignore_time_skip,
     )

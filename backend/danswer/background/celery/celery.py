@@ -28,6 +28,7 @@ from danswer.db.engine import SYNC_DB_API
 from danswer.db.models import DocumentSet
 from danswer.db.tasks import check_live_task_not_timed_out
 from danswer.db.tasks import get_latest_task
+from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
@@ -114,15 +115,17 @@ def sync_document_set_task(document_set_id: int) -> None:
             }
 
             # update Vespa
-            document_index.update(
-                update_requests=[
+            for index_name in get_both_index_names():
+                update_requests = [
                     UpdateRequest(
                         document_ids=[document_id],
                         document_sets=set(document_set_map.get(document_id, [])),
                     )
                     for document_id in document_ids
                 ]
-            )
+                document_index.update(
+                    update_requests=update_requests, index_name=index_name
+                )
 
     with Session(get_sqlalchemy_engine()) as db_session:
         try:

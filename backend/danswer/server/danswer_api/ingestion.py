@@ -15,6 +15,7 @@ from danswer.db.connector import fetch_ingestion_connector_by_name
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.engine import get_session
+from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.indexing.indexing_pipeline import build_indexing_pipeline
@@ -141,7 +142,11 @@ def document_ingestion(
     if document.source == DocumentSource.INGESTION_API:
         document.source = DocumentSource.FILE
 
-    indexing_pipeline = build_indexing_pipeline(ignore_time_skip=True)
+    index_names = get_both_index_names()
+
+    indexing_pipeline = build_indexing_pipeline(
+        ignore_time_skip=True, index_name=index_names[0]
+    )
 
     new_doc, chunks = indexing_pipeline(
         documents=[document],
@@ -150,5 +155,15 @@ def document_ingestion(
             credential_id=credential_id,
         ),
     )
+
+    # If there's a secondary index being built, index the doc but don't use it for return here
+    if len(index_names) > 1:
+        indexing_pipeline(
+            documents=[document],
+            index_attempt_metadata=IndexAttemptMetadata(
+                connector_id=connector_id,
+                credential_id=credential_id,
+            ),
+        )
 
     return IngestionResult(document_id=document.id, already_existed=not bool(new_doc))

@@ -1,11 +1,50 @@
 import math
 import uuid
+from typing import cast
 
+from danswer.configs.constants import CURRENT_EMBEDDING_MODEL
+from danswer.configs.constants import UPCOMING_EMBEDDING_MODEL
+from danswer.dynamic_configs import get_dynamic_config_store
+from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.indexing.models import IndexChunk
 from danswer.indexing.models import InferenceChunk
 
 
 DEFAULT_BATCH_SIZE = 30
+
+
+def clean_model_name(model_str: str) -> str:
+    return model_str.replace("/", "_").replace("-", "_").replace(".", "_")
+
+
+def get_index_name(secondary_index: bool = False) -> str:
+    # TODO make this more efficient if needed
+    kv_store = get_dynamic_config_store()
+    if not secondary_index:
+        try:
+            embed_model = cast(str, kv_store.load(CURRENT_EMBEDDING_MODEL))
+            return f"danswer_chunk_{clean_model_name(embed_model)}"
+        except ConfigNotFoundError:
+            return "danswer_chunk"
+
+    embed_model = cast(str, kv_store.load(UPCOMING_EMBEDDING_MODEL))
+    return f"danswer_chunk_{clean_model_name(embed_model)}"
+
+
+def get_both_index_names() -> list[str]:
+    kv_store = get_dynamic_config_store()
+    try:
+        embed_model = cast(str, kv_store.load(CURRENT_EMBEDDING_MODEL))
+        indices = [f"danswer_chunk_{clean_model_name(embed_model)}"]
+    except ConfigNotFoundError:
+        indices = ["danswer_chunk"]
+
+    try:
+        embed_model = cast(str, kv_store.load(UPCOMING_EMBEDDING_MODEL))
+        indices.append(f"danswer_chunk_{clean_model_name(embed_model)}")
+        return indices
+    except ConfigNotFoundError:
+        return indices
 
 
 def translate_boost_count_to_multiplier(boost: int) -> float:

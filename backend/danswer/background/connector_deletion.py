@@ -31,6 +31,7 @@ from danswer.db.document_set import (
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import delete_index_attempts
 from danswer.db.models import ConnectorCredentialPair
+from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
@@ -61,7 +62,10 @@ def _delete_connector_credential_pair_batch(
             document_id for document_id, cnt in document_connector_cnts if cnt == 1
         ]
         logger.debug(f"Deleting documents: {document_ids_to_delete}")
-        document_index.delete(doc_ids=document_ids_to_delete)
+
+        for index_name in get_both_index_names():
+            document_index.delete(doc_ids=document_ids_to_delete, index_name=index_name)
+
         delete_documents_complete(
             db_session=db_session,
             document_ids=document_ids_to_delete,
@@ -87,7 +91,12 @@ def _delete_connector_credential_pair_batch(
             for document_id, access in access_for_documents.items()
         ]
         logger.debug(f"Updating documents: {document_ids_to_update}")
-        document_index.update(update_requests=update_requests)
+
+        for index_name in get_both_index_names():
+            document_index.update(
+                update_requests=update_requests, index_name=index_name
+            )
+
         delete_document_by_connector_credential_pair(
             db_session=db_session,
             document_ids=document_ids_to_update,
