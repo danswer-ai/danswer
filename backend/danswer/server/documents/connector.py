@@ -56,6 +56,7 @@ from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import get_document_cnts_for_cc_pairs
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import create_index_attempt
+from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import User
 from danswer.dynamic_configs.interface import ConfigNotFoundError
@@ -512,10 +513,31 @@ def connector_run_once(
             detail="Connector has no valid credentials, cannot create index attempts.",
         )
 
+    skipped_credentials = [
+        credential_id
+        for credential_id in credential_ids
+        if get_index_attempts_for_cc_pair(
+            cc_pair_identifier=ConnectorCredentialPairIdentifier(
+                connector_id=run_info.connector_id,
+                credential_id=credential_id,
+            ),
+            disinclude_finished=True,
+            db_session=db_session,
+        )
+    ]
+
     index_attempt_ids = [
         create_index_attempt(run_info.connector_id, credential_id, db_session)
         for credential_id in credential_ids
+        if credential_id not in skipped_credentials
     ]
+
+    if not index_attempt_ids:
+        raise HTTPException(
+            status_code=400,
+            detail="No new indexing attempts created, indexing jobs are queued or running.",
+        )
+
     return StatusResponse(
         success=True,
         message=f"Successfully created {len(index_attempt_ids)} index attempts",
