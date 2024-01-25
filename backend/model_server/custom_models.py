@@ -1,5 +1,4 @@
 import numpy as np
-import tensorflow as tf  # type:ignore
 from fastapi import APIRouter
 
 from danswer.search.search_nlp_models import get_intent_model_tokenizer
@@ -13,6 +12,8 @@ router = APIRouter(prefix="/custom")
 
 @log_function_time(print_only=True)
 def classify_intent(query: str) -> list[float]:
+    import tensorflow as tf  # type:ignore
+
     tokenizer = get_intent_model_tokenizer()
     intent_model = get_local_intent_model()
     model_input = tokenizer(query, return_tensors="tf", truncation=True, padding=True)

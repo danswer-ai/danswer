@@ -1,4 +1,5 @@
-from sentence_transformers import SentenceTransformer  # type: ignore
+from typing import Optional
+from typing import TYPE_CHECKING
 
 from danswer.configs.app_configs import ENABLE_MINI_CHUNK
 from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
@@ -11,12 +12,16 @@ from danswer.search.models import Embedder
 from danswer.search.search_nlp_models import EmbeddingModel
 from danswer.utils.logger import setup_logger
 
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer  # type: ignore
+
+
 logger = setup_logger()
 
 
 def embed_chunks(
     chunks: list[DocAwareChunk],
-    embedding_model: SentenceTransformer | None = None,
+    embedding_model: Optional["SentenceTransformer"] = None,
     batch_size: int = BATCH_SIZE_ENCODE_CHUNKS,
     enable_mini_chunk: bool = ENABLE_MINI_CHUNK,
     passage_prefix: str = ASYM_PASSAGE_PREFIX,
