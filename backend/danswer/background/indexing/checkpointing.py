@@ -40,8 +40,13 @@ def _default_end_time(
 
 
 def find_end_time_for_indexing_attempt(
-    last_successful_run: datetime.datetime | None, source_type: DocumentSource
+    last_successful_run: datetime.datetime | None,
+    # source_type can be used to override the default for certain connectors, currently unused
+    source_type: DocumentSource,
 ) -> datetime.datetime | None:
+    """Is the current time unless the connector is run over a large period, in which case it is
+    split up into large time segments that become smaller as it approaches the present
+    """
     # NOTE: source_type can be used to override the default for certain connectors
     end_of_window = _default_end_time(last_successful_run)
     now = datetime.datetime.now(tz=datetime.timezone.utc)

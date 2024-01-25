@@ -63,7 +63,9 @@ def _should_create_new_indexing(
     if not last_index:
         return True
 
-    # only one scheduled job per connector at a time
+    # Only one scheduled job per connector at a time
+    # Can schedule another one if the current one is already running however
+    # Because the currently running one will not be until the latest time
     if last_index.status == IndexingStatus.NOT_STARTED:
         return False
 
