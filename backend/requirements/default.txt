@@ -6,7 +6,6 @@ celery==5.3.4
 chardet==5.2.0
 dask==2023.8.1
 distributed==2023.8.1
-python-dateutil==2.8.2
 fastapi==0.103.0
 fastapi-users==11.0.0
 fastapi-users-db-sqlalchemy==5.0.0
@@ -37,7 +36,9 @@ psycopg2-binary==2.9.9
 pycryptodome==3.19.1
 pydantic==1.10.7
 PyGithub==1.58.2
+python-dateutil==2.8.2
 python-gitlab==3.9.0
+python-pptx==0.6.23
 pypdf==3.17.0
 pytest-mock==3.12.0
 pytest-playwright==0.3.2
