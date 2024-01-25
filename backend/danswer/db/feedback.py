@@ -12,6 +12,7 @@ from danswer.db.chat import get_chat_message
 from danswer.db.models import ChatMessageFeedback
 from danswer.db.models import Document as DbDocument
 from danswer.db.models import DocumentRetrievalFeedback
+from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
 
@@ -57,7 +58,8 @@ def update_document_boost(
         boost=boost,
     )
 
-    document_index.update([update])
+    for index_name in get_both_index_names():
+        document_index.update(update_requests=[update], index_name=index_name)
 
     db_session.commit()
 
@@ -77,7 +79,8 @@ def update_document_hidden(
         hidden=hidden,
     )
 
-    document_index.update([update])
+    for index_name in get_both_index_names():
+        document_index.update(update_requests=[update], index_name=index_name)
 
     db_session.commit()
 
@@ -123,7 +126,8 @@ def create_doc_retrieval_feedback(
             document_ids=[document_id], boost=db_doc.boost, hidden=db_doc.hidden
         )
         # Updates are generally batched for efficiency, this case only 1 doc/value is updated
-        document_index.update([update])
+        for index_name in get_both_index_names():
+            document_index.update(update_requests=[update], index_name=index_name)
 
     db_session.add(retrieval_feedback)
     db_session.commit()

@@ -1,5 +1,5 @@
-schema danswer_chunk {
-    document danswer_chunk {
+schema DANSWER_CHUNK_NAME {
+    document DANSWER_CHUNK_NAME {
         # Not to be confused with the UUID generated for this chunk which is called documentid by default
         field document_id type string {
             indexing: summary | attribute
