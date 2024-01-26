@@ -146,10 +146,10 @@ export const Chat = ({
           (persona) => persona.id === existingChatSessionPersonaId
         )
       : defaultSelectedPersonaId !== undefined
-      ? availablePersonas.find(
-          (persona) => persona.id === defaultSelectedPersonaId
-        )
-      : undefined
+        ? availablePersonas.find(
+            (persona) => persona.id === defaultSelectedPersonaId
+          )
+        : undefined
   );
   const livePersona = selectedPersona || availablePersonas[0];
 
