@@ -792,11 +792,9 @@ class VespaIndex(DocumentIndex):
                 logger.error("Update request received but nothing to update")
                 continue
 
-            index_names = (
-                [self.index_name] + [self.secondary_index_name]
-                if self.secondary_index_name
-                else []
-            )
+            index_names = [self.index_name]
+            if self.secondary_index_name:
+                index_names.append(self.secondary_index_name)
 
             for index_name in index_names:
                 for document_id in update_request.document_ids:
@@ -822,11 +820,10 @@ class VespaIndex(DocumentIndex):
         # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficient for
         # indexing / updates / deletes since we have to make a large volume of requests.
         with httpx.Client(http2=True) as http_client:
-            index_names = (
-                [self.index_name] + [self.secondary_index_name]
-                if self.secondary_index_name
-                else []
-            )
+            index_names = [self.index_name]
+            if self.secondary_index_name:
+                index_names.append(self.secondary_index_name)
+
             for index_name in index_names:
                 _delete_vespa_docs(
                     document_ids=doc_ids, index_name=index_name, http_client=http_client

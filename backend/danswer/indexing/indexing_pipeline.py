@@ -225,7 +225,7 @@ def build_indexing_pipeline(
 
     if not document_index:
         with Session(get_sqlalchemy_engine()) as db_session:
-            get_default_document_index(
+            document_index = get_default_document_index(
                 primary_index_name=get_index_name(db_session), secondary_index_name=None
             )
 
