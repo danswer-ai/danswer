@@ -25,13 +25,13 @@ from danswer.connectors.models import InputType
 from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.productboard.connector import ProductboardConnector
 from danswer.connectors.requesttracker.connector import RequestTrackerConnector
+from danswer.connectors.sharepoint.connector import SharepointConnector
 from danswer.connectors.slab.connector import SlabConnector
 from danswer.connectors.slack.connector import SlackLoadConnector
 from danswer.connectors.slack.connector import SlackPollConnector
 from danswer.connectors.web.connector import WebConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
 from danswer.connectors.zulip.connector import ZulipConnector
-from danswer.connectors.sharepoint.connector import SharepointConnector
 
 
 class ConnectorMissingException(Exception):
