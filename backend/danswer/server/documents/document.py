@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_user
 from danswer.db.engine import get_session
 from danswer.db.models import User
+from danswer.document_index.document_index_utils import get_index_name
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.utils import get_default_llm_token_encode
 from danswer.search.access_filters import build_access_filters_for_user
@@ -35,6 +36,7 @@ def get_document_info(
         document_id=document_id,
         chunk_ind=None,
         filters=filters,
+        index_name=get_index_name(),
     )
 
     if not inference_chunks:
@@ -67,6 +69,7 @@ def get_chunk_info(
         document_id=document_id,
         chunk_ind=chunk_id,
         filters=filters,
+        index_name=get_index_name(),
     )
 
     if not inference_chunks:

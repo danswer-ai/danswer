@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from danswer.configs.chat_configs import BASE_RECENCY_DECAY
 from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.chat_configs import DISABLE_LLM_FILTER_EXTRACTION
 from danswer.configs.chat_configs import FAVOR_RECENT_DECAY_MULTIPLIER
@@ -41,6 +42,7 @@ def retrieval_preprocessing(
     skip_rerank_non_realtime: bool = not ENABLE_RERANKING_ASYNC_FLOW,
     disable_llm_filter_extraction: bool = DISABLE_LLM_FILTER_EXTRACTION,
     disable_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
+    base_recency_decay: float = BASE_RECENCY_DECAY,
     favor_recent_decay_multiplier: float = FAVOR_RECENT_DECAY_MULTIPLIER,
 ) -> tuple[SearchQuery, SearchType | None, QueryFlow | None]:
     """Logic is as follows:
@@ -148,17 +150,18 @@ def retrieval_preprocessing(
     if disable_llm_chunk_filter:
         llm_chunk_filter = False
 
+    # Decays at 1 / (1 + (multiplier * num years))
     if persona.recency_bias == RecencyBiasSetting.NO_DECAY:
         recency_bias_multiplier = 0.0
     elif persona.recency_bias == RecencyBiasSetting.BASE_DECAY:
-        recency_bias_multiplier = 1.0
+        recency_bias_multiplier = base_recency_decay
     elif persona.recency_bias == RecencyBiasSetting.FAVOR_RECENT:
-        recency_bias_multiplier = favor_recent_decay_multiplier
+        recency_bias_multiplier = base_recency_decay * favor_recent_decay_multiplier
     else:
         if predicted_favor_recent:
-            recency_bias_multiplier = favor_recent_decay_multiplier
+            recency_bias_multiplier = base_recency_decay * favor_recent_decay_multiplier
         else:
-            recency_bias_multiplier = 1.0
+            recency_bias_multiplier = base_recency_decay
 
     return (
         SearchQuery(

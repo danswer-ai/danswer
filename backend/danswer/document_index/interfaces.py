@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any
 
 from danswer.access.models import DocumentAccess
+from danswer.configs.model_configs import DOC_EMBEDDING_DIM
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.indexing.models import InferenceChunk
 from danswer.search.models import IndexFilters
@@ -50,14 +51,16 @@ class Verifiable(abc.ABC):
         self.index_name = index_name
 
     @abc.abstractmethod
-    def ensure_indices_exist(self) -> None:
+    def ensure_indices_exist(self, embedding_dim: int = DOC_EMBEDDING_DIM) -> None:
         raise NotImplementedError
 
 
 class Indexable(abc.ABC):
     @abc.abstractmethod
     def index(
-        self, chunks: list[DocMetadataAwareIndexChunk]
+        self,
+        chunks: list[DocMetadataAwareIndexChunk],
+        index_name: str,
     ) -> set[DocumentInsertionRecord]:
         """Indexes document chunks into the Document Index and return the IDs of all the documents indexed"""
         raise NotImplementedError
@@ -65,14 +68,14 @@ class Indexable(abc.ABC):
 
 class Deletable(abc.ABC):
     @abc.abstractmethod
-    def delete(self, doc_ids: list[str]) -> None:
+    def delete(self, doc_ids: list[str], index_name: str) -> None:
         """Removes the specified documents from the Index"""
         raise NotImplementedError
 
 
 class Updatable(abc.ABC):
     @abc.abstractmethod
-    def update(self, update_requests: list[UpdateRequest]) -> None:
+    def update(self, update_requests: list[UpdateRequest], index_name: str) -> None:
         """Updates metadata for the specified documents sets in the Index"""
         raise NotImplementedError
 
@@ -84,6 +87,7 @@ class IdRetrievalCapable(abc.ABC):
         document_id: str,
         chunk_ind: int | None,
         filters: IndexFilters,
+        index_name: str,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
 
@@ -95,6 +99,7 @@ class KeywordCapable(abc.ABC):
         query: str,
         filters: IndexFilters,
         time_decay_multiplier: float,
+        index_name: str,
         num_to_retrieve: int,
         offset: int = 0,
     ) -> list[InferenceChunk]:
@@ -108,6 +113,7 @@ class VectorCapable(abc.ABC):
         query: str,
         filters: IndexFilters,
         time_decay_multiplier: float,
+        index_name: str,
         num_to_retrieve: int,
         offset: int = 0,
     ) -> list[InferenceChunk]:
@@ -122,6 +128,7 @@ class HybridCapable(abc.ABC):
         filters: IndexFilters,
         time_decay_multiplier: float,
         num_to_retrieve: int,
+        index_name: str,
         offset: int = 0,
         hybrid_alpha: float | None = None,
     ) -> list[InferenceChunk]:
@@ -134,6 +141,7 @@ class AdminCapable(abc.ABC):
         self,
         query: str,
         filters: IndexFilters,
+        index_name: str,
         num_to_retrieve: int,
         offset: int = 0,
     ) -> list[InferenceChunk]:

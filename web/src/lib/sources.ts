@@ -19,6 +19,7 @@ import {
   NotionIcon,
   ProductboardIcon,
   RequestTrackerIcon,
+  SharepointIcon,
   SlabIcon,
   SlackIcon,
   ZendeskIcon,
@@ -156,6 +157,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   loopio: {
     icon: LoopioIcon,
     displayName: "Loopio",
+    category: SourceCategory.AppConnection,
+  },
+  sharepoint: {
+    icon: SharepointIcon,
+    displayName: "Sharepoint",
     category: SourceCategory.AppConnection,
   },
 };

@@ -9,6 +9,7 @@ SOURCE_LINKS = "source_links"
 SOURCE_LINK = "link"
 SEMANTIC_IDENTIFIER = "semantic_identifier"
 TITLE = "title"
+SKIP_TITLE_EMBEDDING = "skip_title"
 SECTION_CONTINUATION = "section_continuation"
 EMBEDDINGS = "embeddings"
 TITLE_EMBEDDING = "title_embedding"
@@ -46,6 +47,12 @@ SECTION_SEPARATOR = "\n\n"
 # For combining attributes, doesn't have to be unique/perfect to work
 INDEX_SEPARATOR = "==="
 
+# Index Related
+CURRENT_EMBEDDING_MODEL = "CURRENT_EMBEDDING_MODEL"
+CURRENT_EMBEDDING_DIM = "CURRENT_EMBEDDING_DIM"
+UPCOMING_EMBEDDING_MODEL = "UPCOMING_EMBEDDING_MODEL"
+UPCOMING_EMBEDDING_DIM = "UPCOMING_EMBEDDING_DIM"
+
 
 # Messages
 DISABLED_GEN_AI_MSG = (
@@ -82,6 +89,7 @@ class DocumentSource(str, Enum):
     ZENDESK = "zendesk"
     LOOPIO = "loopio"
     EXCHANGE = "exchange"
+    SHAREPOINT = "sharepoint"
 
 
 class DocumentIndexType(str, Enum):

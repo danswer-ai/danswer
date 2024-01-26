@@ -140,3 +140,19 @@ def read_file(
             file_content_raw += line
 
     return file_content_raw, metadata
+
+
+def is_text_file_extension(file_name: str) -> bool:
+    extensions = (
+        ".txt",
+        ".mdx",
+        ".md",
+        ".conf",
+        ".log",
+        ".json",
+        ".xml",
+        ".yaml",
+        ".yml",
+        ".json",
+    )
+    return any(file_name.endswith(ext) for ext in extensions)

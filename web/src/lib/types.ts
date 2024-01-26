@@ -32,6 +32,7 @@ export type ValidSources =
   | "file"
   | "google_sites"
   | "loopio"
+  | "sharepoint"
   | "exchange"
   | "zendesk";
 
@@ -109,6 +110,11 @@ export interface ConfluenceConfig {
 
 export interface JiraConfig {
   jira_project_url: string;
+}
+
+export interface SharepointConfig {
+  sites?: string[];
+  sites_group_name: string;
 }
 
 export interface ProductboardConfig {}
@@ -312,6 +318,12 @@ export interface ZendeskCredentialJson {
   zendesk_subdomain: string;
   zendesk_email: string;
   zendesk_token: string;
+}
+
+export interface SharepointCredentialJson {
+  aad_client_id: string;
+  aad_client_secret: string;
+  aad_directory_id: string;
 }
 
 // DELETION
