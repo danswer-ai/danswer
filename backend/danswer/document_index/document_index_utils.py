@@ -6,6 +6,7 @@ from danswer.configs.constants import CURRENT_EMBEDDING_MODEL
 from danswer.configs.constants import SECONDARY_EMBEDDING_MODEL
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.indexing.models import EmbeddingModelDetail
 from danswer.indexing.models import IndexChunk
 from danswer.indexing.models import InferenceChunk
 
@@ -22,26 +23,34 @@ def get_index_name(secondary_index: bool = False) -> str:
     kv_store = get_dynamic_config_store()
     if not secondary_index:
         try:
-            embed_model = cast(str, kv_store.load(CURRENT_EMBEDDING_MODEL))
-            return f"danswer_chunk_{clean_model_name(embed_model)}"
+            embed_model = EmbeddingModelDetail(
+                **cast(dict, kv_store.load(CURRENT_EMBEDDING_MODEL))
+            )
+            return f"danswer_chunk_{clean_model_name(embed_model.model_name)}"
         except ConfigNotFoundError:
             return "danswer_chunk"
 
-    embed_model = cast(str, kv_store.load(SECONDARY_EMBEDDING_MODEL))
-    return f"danswer_chunk_{clean_model_name(embed_model)}"
+    embed_model = EmbeddingModelDetail(
+        **cast(dict, kv_store.load(SECONDARY_EMBEDDING_MODEL))
+    )
+    return f"danswer_chunk_{clean_model_name(embed_model.model_name)}"
 
 
 def get_both_index_names() -> list[str]:
     kv_store = get_dynamic_config_store()
     try:
-        embed_model = cast(str, kv_store.load(CURRENT_EMBEDDING_MODEL))
-        indices = [f"danswer_chunk_{clean_model_name(embed_model)}"]
+        embed_model = EmbeddingModelDetail(
+            **cast(dict, kv_store.load(CURRENT_EMBEDDING_MODEL))
+        )
+        indices = [f"danswer_chunk_{clean_model_name(embed_model.model_name)}"]
     except ConfigNotFoundError:
         indices = ["danswer_chunk"]
 
     try:
-        embed_model = cast(str, kv_store.load(SECONDARY_EMBEDDING_MODEL))
-        indices.append(f"danswer_chunk_{clean_model_name(embed_model)}")
+        embed_model = EmbeddingModelDetail(
+            **cast(dict, kv_store.load(SECONDARY_EMBEDDING_MODEL))
+        )
+        indices.append(f"danswer_chunk_{clean_model_name(embed_model.model_name)}")
         return indices
     except ConfigNotFoundError:
         return indices
