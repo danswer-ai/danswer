@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from dataclasses import fields
 from datetime import datetime
 
+from pydantic import BaseModel
+
 from danswer.access.models import DocumentAccess
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import Document
@@ -120,3 +122,11 @@ class InferenceChunk(BaseChunk):
                 break
             short_blurb += " " + word
         return f"Inference Chunk: {self.document_id} - {short_blurb}..."
+
+
+class EmbeddingModelDetail(BaseModel):
+    model_name: str
+    model_dim: int
+    normalize: bool
+    query_prefix: str | None
+    passage_prefix: str | None

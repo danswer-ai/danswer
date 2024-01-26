@@ -3,7 +3,7 @@ import uuid
 from typing import cast
 
 from danswer.configs.constants import CURRENT_EMBEDDING_MODEL
-from danswer.configs.constants import UPCOMING_EMBEDDING_MODEL
+from danswer.configs.constants import SECONDARY_EMBEDDING_MODEL
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.indexing.models import IndexChunk
@@ -27,7 +27,7 @@ def get_index_name(secondary_index: bool = False) -> str:
         except ConfigNotFoundError:
             return "danswer_chunk"
 
-    embed_model = cast(str, kv_store.load(UPCOMING_EMBEDDING_MODEL))
+    embed_model = cast(str, kv_store.load(SECONDARY_EMBEDDING_MODEL))
     return f"danswer_chunk_{clean_model_name(embed_model)}"
 
 
@@ -40,7 +40,7 @@ def get_both_index_names() -> list[str]:
         indices = ["danswer_chunk"]
 
     try:
-        embed_model = cast(str, kv_store.load(UPCOMING_EMBEDDING_MODEL))
+        embed_model = cast(str, kv_store.load(SECONDARY_EMBEDDING_MODEL))
         indices.append(f"danswer_chunk_{clean_model_name(embed_model)}")
         return indices
     except ConfigNotFoundError:

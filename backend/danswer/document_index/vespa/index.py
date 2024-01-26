@@ -34,7 +34,6 @@ from danswer.configs.constants import BLURB
 from danswer.configs.constants import BOOST
 from danswer.configs.constants import CHUNK_ID
 from danswer.configs.constants import CONTENT
-from danswer.configs.constants import CURRENT_EMBEDDING_DIM
 from danswer.configs.constants import CURRENT_EMBEDDING_MODEL
 from danswer.configs.constants import DOC_UPDATED_AT
 from danswer.configs.constants import DOCUMENT_ID
@@ -46,6 +45,7 @@ from danswer.configs.constants import METADATA
 from danswer.configs.constants import METADATA_LIST
 from danswer.configs.constants import PRIMARY_OWNERS
 from danswer.configs.constants import RECENCY_BIAS
+from danswer.configs.constants import SECONDARY_EMBEDDING_MODEL
 from danswer.configs.constants import SECONDARY_OWNERS
 from danswer.configs.constants import SECTION_CONTINUATION
 from danswer.configs.constants import SEMANTIC_IDENTIFIER
@@ -55,8 +55,6 @@ from danswer.configs.constants import SOURCE_TYPE
 from danswer.configs.constants import TITLE
 from danswer.configs.constants import TITLE_EMBEDDING
 from danswer.configs.constants import TITLE_SEPARATOR
-from danswer.configs.constants import UPCOMING_EMBEDDING_DIM
-from danswer.configs.constants import UPCOMING_EMBEDDING_MODEL
 from danswer.configs.model_configs import DOC_EMBEDDING_DIM
 from danswer.configs.model_configs import SEARCH_DISTANCE_CUTOFF
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
@@ -71,6 +69,7 @@ from danswer.document_index.vespa.utils import remove_invalid_unicode_chars
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.indexing.models import DocMetadataAwareIndexChunk
+from danswer.indexing.models import EmbeddingModelDetail
 from danswer.indexing.models import InferenceChunk
 from danswer.search.models import IndexFilters
 from danswer.search.search_runner import embed_query
@@ -672,23 +671,30 @@ class VespaIndex(DocumentIndex):
 
         kv_store = get_dynamic_config_store()
         try:
-            curr_embed_model = cast(str, kv_store.load(CURRENT_EMBEDDING_MODEL))
-            schema_name = f"danswer_chunk_{clean_model_name(curr_embed_model)}"
-            embedding_dim = cast(int, kv_store.load(CURRENT_EMBEDDING_DIM))
+            curr_embed_model = EmbeddingModelDetail(
+                **cast(dict, kv_store.load(CURRENT_EMBEDDING_MODEL))
+            )
+            schema_name = (
+                f"danswer_chunk_{clean_model_name(curr_embed_model.model_name)}"
+            )
+            embedding_dim = curr_embed_model.model_dim
         except ConfigNotFoundError:
             schema_name = "danswer_chunk"
 
         doc_names = [schema_name]
 
         try:
-            upcoming_embed_model = cast(str, kv_store.load(UPCOMING_EMBEDDING_MODEL))
-            upcoming_schema_name = (
-                f"danswer_chunk_{clean_model_name(upcoming_embed_model)}"
+            secondary_embed_model = EmbeddingModelDetail(
+                **cast(dict, kv_store.load(SECONDARY_EMBEDDING_MODEL))
             )
-            upcoming_embedding_dim = cast(int, kv_store.load(UPCOMING_EMBEDDING_DIM))
-            doc_names.append(upcoming_schema_name)
+            secondary_schema_name = (
+                f"danswer_chunk_{clean_model_name(secondary_embed_model.model_name)}"
+            )
+            secondary_embedding_dim = secondary_embed_model.model_dim
+            doc_names.append(secondary_schema_name)
         except ConfigNotFoundError:
-            upcoming_schema_name = None
+            secondary_schema_name = None
+            secondary_embedding_dim = None
 
         with open(services_file, "r") as services_f:
             services_template = services_f.read()
@@ -708,11 +714,11 @@ class VespaIndex(DocumentIndex):
         ).replace(VESPA_DIM_REPLACEMENT_PAT, str(embedding_dim))
         zip_dict[f"schemas/{schema_name}.sd"] = schema.encode("utf-8")
 
-        if upcoming_schema_name:
-            upcoming_schema = schema_template.replace(
-                DANSWER_CHUNK_REPLACEMENT_PAT, upcoming_schema_name
-            ).replace(VESPA_DIM_REPLACEMENT_PAT, str(upcoming_embedding_dim))
-            zip_dict[f"schemas/{upcoming_schema_name}.sd"] = upcoming_schema.encode(
+        if secondary_schema_name:
+            secondary_schema = schema_template.replace(
+                DANSWER_CHUNK_REPLACEMENT_PAT, secondary_schema_name
+            ).replace(VESPA_DIM_REPLACEMENT_PAT, str(secondary_embedding_dim))
+            zip_dict[f"schemas/{secondary_schema_name}.sd"] = secondary_schema.encode(
                 "utf-8"
             )
 

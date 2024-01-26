@@ -61,6 +61,7 @@ from danswer.server.features.prompt.api import basic_router as prompt_router
 from danswer.server.gpts.api import router as gpts_router
 from danswer.server.manage.administrative import router as admin_router
 from danswer.server.manage.get_state import router as state_router
+from danswer.server.manage.secondary_index import router as secondary_index_router
 from danswer.server.manage.slack_bot import router as slack_bot_management_router
 from danswer.server.manage.users import router as user_router
 from danswer.server.query_and_chat.chat_backend import router as chat_router
@@ -139,6 +140,7 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, state_router)
     include_router_with_global_prefix_prepended(application, danswer_api_router)
     include_router_with_global_prefix_prepended(application, gpts_router)
+    include_router_with_global_prefix_prepended(application, secondary_index_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step
