@@ -76,7 +76,7 @@ def get_text_from_txt_driveitem(driveitem_object: DriveItem) -> str:
     return text_string
 
 
-def get_text_from_pptx_driveitem(driveitem_object: DriveItem):
+def get_text_from_pptx_driveitem(driveitem_object: DriveItem) -> str:
     file_content = driveitem_object.get_content().execute_query().value
     pptx_stream = io.BytesIO(file_content)
     with tempfile.NamedTemporaryFile() as temp:
@@ -235,7 +235,7 @@ class SharepointConnector(LoadConnector, PollConnector):
         elif driveitem_name.endswith(".xlsx"):
             driveitem_text = get_text_from_xlsx_driveitem(driveitem_object)
         elif driveitem_name.endswith(".pptx"):
-            driveitem_text = get_text_from_xlsx_driveitem(driveitem_object)
+            driveitem_text = get_text_from_pptx_driveitem(driveitem_object)
         elif is_text_file_extension(driveitem_name):
             driveitem_text = get_text_from_txt_driveitem(driveitem_object)
 
