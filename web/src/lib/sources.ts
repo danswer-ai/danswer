@@ -143,11 +143,6 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Google Sites",
     category: SourceCategory.ImportedKnowledge,
   },
-  requesttracker: {
-    icon: RequestTrackerIcon,
-    displayName: "Request Tracker",
-    category: SourceCategory.AppConnection,
-  },
   loopio: {
     icon: LoopioIcon,
     displayName: "Loopio",
@@ -156,6 +151,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   sharepoint: {
     icon: SharepointIcon,
     displayName: "Sharepoint",
+    category: SourceCategory.AppConnection,
+  },
+  requesttracker: {
+    icon: RequestTrackerIcon,
+    displayName: "Request Tracker",
     category: SourceCategory.AppConnection,
   },
 };
