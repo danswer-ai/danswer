@@ -384,6 +384,21 @@ class EmbeddingModel(Base):
         "IndexAttempt", back_populates="embedding_model"
     )
 
+    __table_args__ = (
+        Index(
+            "ix_embedding_model_present_unique",
+            "status",
+            unique=True,
+            postgresql_where=(status == IndexModelStatus.PRESENT),
+        ),
+        Index(
+            "ix_embedding_model_future_unique",
+            "status",
+            unique=True,
+            postgresql_where=(status == IndexModelStatus.FUTURE),
+        ),
+    )
+
 
 class IndexAttempt(Base):
     """

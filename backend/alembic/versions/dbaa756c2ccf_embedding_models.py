@@ -44,6 +44,20 @@ def upgrade() -> None:
         ["embedding_model_id"],
         ["id"],
     )
+    op.create_index(
+        "ix_embedding_model_present_unique",
+        "embedding_model",
+        ["status"],
+        unique=True,
+        postgresql_where=sa.text("status = 'PRESENT'"),
+    )
+    op.create_index(
+        "ix_embedding_model_future_unique",
+        "embedding_model",
+        ["status"],
+        unique=True,
+        postgresql_where=sa.text("status = 'FUTURE'"),
+    )
 
 
 def downgrade() -> None:
@@ -52,3 +66,5 @@ def downgrade() -> None:
     )
     op.drop_column("index_attempt", "embedding_model_id")
     op.drop_table("embedding_model")
+    op.drop_index("ix_embedding_model_present_unique", table_name="embedding_model")
+    op.drop_index("ix_embedding_model_future_unique", table_name="embedding_model")
