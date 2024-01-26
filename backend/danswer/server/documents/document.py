@@ -27,7 +27,9 @@ def get_document_info(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> DocumentInfo:
-    document_index = get_default_document_index()
+    document_index = get_default_document_index(
+        primary_index_name=get_index_name(db_session), secondary_index_name=None
+    )
 
     user_acl_filters = build_access_filters_for_user(user, db_session)
     filters = IndexFilters(access_control_list=user_acl_filters)
@@ -36,7 +38,6 @@ def get_document_info(
         document_id=document_id,
         chunk_ind=None,
         filters=filters,
-        index_name=get_index_name(),
     )
 
     if not inference_chunks:
@@ -60,7 +61,9 @@ def get_chunk_info(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ChunkInfo:
-    document_index = get_default_document_index()
+    document_index = get_default_document_index(
+        primary_index_name=get_index_name(db_session), secondary_index_name=None
+    )
 
     user_acl_filters = build_access_filters_for_user(user, db_session)
     filters = IndexFilters(access_control_list=user_acl_filters)
@@ -69,7 +72,6 @@ def get_chunk_info(
         document_id=document_id,
         chunk_ind=chunk_id,
         filters=filters,
-        index_name=get_index_name(),
     )
 
     if not inference_chunks:

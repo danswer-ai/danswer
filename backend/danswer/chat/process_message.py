@@ -35,6 +35,7 @@ from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.models import ChatMessage
 from danswer.db.models import SearchDoc as DbSearchDoc
 from danswer.db.models import User
+from danswer.document_index.document_index_utils import get_index_name
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.exceptions import GenAIDisabledException
@@ -187,7 +188,9 @@ def stream_chat_message(
             llm = None
 
         llm_tokenizer = get_default_llm_token_encode()
-        document_index = get_default_document_index()
+        document_index = get_default_document_index(
+            primary_index_name=get_index_name(db_session), secondary_index_name=None
+        )
 
         # Every chat Session begins with an empty root message
         root_message = get_or_create_root_message(
@@ -256,7 +259,7 @@ def stream_chat_message(
             # May extend to include chunk ranges
             llm_docs: list[LlmDoc] = inference_documents_from_ids(
                 doc_identifiers=identifier_tuples,
-                document_index=get_default_document_index(),
+                document_index=document_index,
             )
             doc_id_to_rank_map = map_document_id_order(
                 cast(list[InferenceChunk | LlmDoc], llm_docs)

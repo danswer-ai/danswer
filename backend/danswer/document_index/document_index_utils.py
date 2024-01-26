@@ -36,24 +36,23 @@ def get_index_name(
     return f"danswer_chunk_{clean_model_name(model.model_name)}"
 
 
-def get_both_index_names(db_session: Session) -> list[str]:
+def get_both_index_names(db_session: Session) -> tuple[str, str | None]:
     model = get_latest_embedding_model_by_status(
         status=IndexModelStatus.PRESENT, db_session=db_session
     )
-    indices = (
-        ["danswer_chunk"]
+    curr_index = (
+        "danswer_chunk"
         if not model
-        else [f"danswer_chunk_{clean_model_name(model.model_name)}"]
+        else f"danswer_chunk_{clean_model_name(model.model_name)}"
     )
 
     model_new = get_latest_embedding_model_by_status(
         status=IndexModelStatus.FUTURE, db_session=db_session
     )
     if not model_new:
-        return indices
+        return curr_index, None
 
-    indices.append(f"danswer_chunk_{clean_model_name(model_new.model_name)}")
-    return indices
+    return curr_index, f"danswer_chunk_{clean_model_name(model_new.model_name)}"
 
 
 def translate_boost_count_to_multiplier(boost: int) -> float:

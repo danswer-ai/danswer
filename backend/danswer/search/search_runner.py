@@ -17,7 +17,6 @@ from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
 from danswer.configs.model_configs import SIM_SCORE_RANGE_HIGH
 from danswer.configs.model_configs import SIM_SCORE_RANGE_LOW
-from danswer.document_index.document_index_utils import get_index_name
 from danswer.document_index.document_index_utils import (
     translate_boost_count_to_multiplier,
 )
@@ -143,14 +142,12 @@ def doc_index_retrieval(
     document_index: DocumentIndex,
     hybrid_alpha: float = HYBRID_ALPHA,
 ) -> list[InferenceChunk]:
-    index = get_index_name()
     if query.search_type == SearchType.KEYWORD:
         top_chunks = document_index.keyword_retrieval(
             query=query.query,
             filters=query.filters,
             time_decay_multiplier=query.recency_bias_multiplier,
             num_to_retrieve=query.num_hits,
-            index_name=index,
         )
 
     elif query.search_type == SearchType.SEMANTIC:
@@ -159,7 +156,6 @@ def doc_index_retrieval(
             filters=query.filters,
             time_decay_multiplier=query.recency_bias_multiplier,
             num_to_retrieve=query.num_hits,
-            index_name=index,
         )
 
     elif query.search_type == SearchType.HYBRID:
@@ -170,7 +166,6 @@ def doc_index_retrieval(
             num_to_retrieve=query.num_hits,
             offset=query.offset,
             hybrid_alpha=hybrid_alpha,
-            index_name=index,
         )
 
     else:
