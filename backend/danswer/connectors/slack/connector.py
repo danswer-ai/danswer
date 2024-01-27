@@ -285,6 +285,9 @@ class SlackLoadConnector(LoadConnector):
         workspace: str,
         export_path_str: str,
         channels: list[str] | None = None,
+        # if specified, will only include channels that match at least one of these
+        # regexes OR are in `channels`
+        channel_regexes: list[str] | None = None,
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.workspace = workspace
