@@ -7,6 +7,7 @@ from sqlalchemy import desc
 from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy import select
+from sqlalchemy import update
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
 
@@ -197,3 +198,32 @@ def delete_index_attempts(
         IndexAttempt.credential_id == credential_id,
     )
     db_session.execute(stmt)
+
+
+def expire_index_attempts(
+    embedding_model_id: int,
+    db_session: Session,
+) -> None:
+    update_query = (
+        update(IndexAttempt)
+        .where(IndexAttempt.embedding_model_id == embedding_model_id)
+        .where(IndexAttempt.status != IndexingStatus.SUCCESS)
+        .values(status=IndexingStatus.FAILED, error_msg="Embedding model swapped")
+    )
+    db_session.execute(update_query)
+    db_session.commit()
+
+
+def cancel_indexing_attempts_for_connector(
+    connector_id: int,
+    db_session: Session,
+    include_secondary_index: bool = False,
+) -> None:
+    stmt = delete(IndexAttempt).where(
+        IndexAttempt.connector_id == connector_id,
+        IndexAttempt.status == IndexingStatus.NOT_STARTED,
+    )
+
+    db_session.execute(stmt)
+
+    db_session.commit()

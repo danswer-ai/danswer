@@ -145,6 +145,10 @@ def _run_indexing(
                     # let the `except` block handle this
                     raise RuntimeError("Connector was disabled mid run")
 
+                db_session.refresh(index_attempt)
+                if index_attempt.status != IndexingStatus.IN_PROGRESS:
+                    raise RuntimeError("Index Attempt was canceled")
+
                 logger.debug(
                     f"Indexing batch of documents: {[doc.to_short_descriptor() for doc in doc_batch]}"
                 )
@@ -195,7 +199,11 @@ def _run_indexing(
             #
             # NOTE: if the connector is manually disabled, we should mark it as a failure regardless
             # to give better clarity in the UI, as the next run will never happen.
-            if ind == 0 or db_connector.disabled:
+            if (
+                ind == 0
+                or db_connector.disabled
+                or index_attempt.status != IndexingStatus.IN_PROGRESS
+            ):
                 mark_attempt_failed(index_attempt, db_session, failure_reason=str(e))
                 update_connector_credential_pair(
                     db_session=db_session,

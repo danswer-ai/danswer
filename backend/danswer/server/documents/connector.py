@@ -55,6 +55,7 @@ from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import get_document_cnts_for_cc_pairs
 from danswer.db.engine import get_session
+from danswer.db.index_attempt import cancel_indexing_attempts_for_connector
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.index_attempt import get_latest_index_attempts
@@ -448,6 +449,9 @@ def update_connector_from_model(
         raise HTTPException(
             status_code=404, detail=f"Connector {connector_id} does not exist"
         )
+
+    if updated_connector.disabled:
+        cancel_indexing_attempts_for_connector(connector_id, db_session)
 
     return ConnectorSnapshot(
         id=updated_connector.id,
