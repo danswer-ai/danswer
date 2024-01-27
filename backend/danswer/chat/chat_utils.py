@@ -382,10 +382,13 @@ def drop_messages_history_overflow(
     history_token_counts: list[int],
     final_msg: BaseMessage,
     final_msg_token_count: int,
+    max_allowed_tokens: int | None,
 ) -> list[BaseMessage]:
     """As message history grows, messages need to be dropped starting from the furthest in the past.
     The System message should be kept if at all possible and the latest user input which is inserted in the
     prompt template must be included"""
+    if max_allowed_tokens is None:
+        max_allowed_tokens = GEN_AI_MAX_INPUT_TOKENS
 
     if len(history_msgs) != len(history_token_counts):
         # This should never happen
@@ -395,7 +398,9 @@ def drop_messages_history_overflow(
 
     # Start dropping from the history if necessary
     all_tokens = history_token_counts + [system_token_count, final_msg_token_count]
-    ind_prev_msg_start = find_last_index(all_tokens)
+    ind_prev_msg_start = find_last_index(
+        all_tokens, max_prompt_tokens=max_allowed_tokens
+    )
 
     if system_msg and ind_prev_msg_start <= len(history_msgs):
         prompt.append(system_msg)

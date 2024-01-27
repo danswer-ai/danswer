@@ -76,10 +76,12 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
             id: persona.id.toString(),
             cells: [
               <div key="name" className="flex">
-                <FiEdit
-                  className="mr-1 my-auto cursor-pointer"
-                  onClick={() => router.push(`/admin/personas/${persona.id}`)}
-                />
+                {!persona.default_persona && (
+                  <FiEdit
+                    className="mr-1 my-auto cursor-pointer"
+                    onClick={() => router.push(`/admin/personas/${persona.id}`)}
+                  />
+                )}
                 <p className="text font-medium whitespace-normal break-none">
                   {persona.name}
                 </p>
@@ -129,9 +131,10 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
                 </div>
               </div>,
               <div key="edit" className="flex">
-                <div className="mx-auto my-auto hover:bg-hover rounded p-1 cursor-pointer">
+                <div className="mx-auto my-auto">
                   {!persona.default_persona ? (
                     <div
+                      className="hover:bg-hover rounded p-1 cursor-pointer"
                       onClick={async () => {
                         const response = await deletePersona(persona.id);
                         if (response.ok) {

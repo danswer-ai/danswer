@@ -33,6 +33,7 @@ from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.models import ChatMessage
+from danswer.db.models import Persona
 from danswer.db.models import SearchDoc as DbSearchDoc
 from danswer.db.models import User
 from danswer.document_index.document_index_utils import get_index_name
@@ -42,6 +43,7 @@ from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llm
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import get_default_llm_token_encode
+from danswer.llm.utils import get_llm_max_tokens
 from danswer.llm.utils import translate_history_to_basemessages
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RetrievalDetails
@@ -62,6 +64,7 @@ logger = setup_logger()
 def generate_ai_chat_response(
     query_message: ChatMessage,
     history: list[ChatMessage],
+    persona: Persona,
     context_docs: list[LlmDoc],
     doc_id_to_rank_map: dict[str, int],
     llm: LLM | None,
@@ -109,6 +112,9 @@ def generate_ai_chat_response(
             history_token_counts=history_token_counts,
             final_msg=user_message,
             final_msg_token_count=user_tokens,
+            max_allowed_tokens=get_llm_max_tokens(persona.llm_model_version_override)
+            if persona.llm_model_version_override
+            else None,
         )
 
         # Good Debug/Breakpoint
@@ -183,7 +189,9 @@ def stream_chat_message(
             )
 
         try:
-            llm = get_default_llm()
+            llm = get_default_llm(
+                gen_ai_model_version_override=persona.llm_model_version_override
+            )
         except GenAIDisabledException:
             llm = None
 
@@ -408,6 +416,7 @@ def stream_chat_message(
         response_packets = generate_ai_chat_response(
             query_message=final_msg,
             history=history_msgs,
+            persona=persona,
             context_docs=llm_docs,
             doc_id_to_rank_map=doc_id_to_rank_map,
             llm=llm,

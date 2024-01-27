@@ -62,7 +62,7 @@ def create_update_prompt(
 
 
 @basic_router.post("")
-def create_persona(
+def create_prompt(
     create_prompt_request: CreatePromptRequest,
     user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
