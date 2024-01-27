@@ -1,4 +1,4 @@
-import { listSourceMetadata } from "@/lib/sources";
+import { getSourceMetadataForSources, listSourceMetadata } from "@/lib/sources";
 import { ValidSources } from "@/lib/types";
 import Image from "next/image";
 import { Persona } from "../admin/personas/interfaces";
@@ -8,6 +8,7 @@ import { HoverPopup } from "@/components/HoverPopup";
 import { Modal } from "@/components/Modal";
 import { useState } from "react";
 import { FaRobot } from "react-icons/fa";
+import { SourceMetadata } from "@/lib/search/interfaces";
 
 const MAX_PERSONAS_TO_DISPLAY = 4;
 
@@ -90,10 +91,7 @@ export function ChatIntro({
   const [isAllPersonaOptionVisible, setIsAllPersonaOptionVisible] =
     useState(false);
 
-  const allSources = listSourceMetadata();
-  const availableSourceMetadata = allSources.filter((source) =>
-    availableSources.includes(source.internalName)
-  );
+  const availableSourceMetadata = getSourceMetadataForSources(availableSources);
 
   return (
     <>
@@ -133,29 +131,31 @@ export function ChatIntro({
                   <p className="font-bold mb-1 mt-4 text-emphasis">
                     Knowledge Sets:{" "}
                   </p>
-                  {selectedPersona.document_sets.map((documentSet) => (
-                    <div key={documentSet.id} className="w-fit">
-                      <HoverPopup
-                        mainContent={
-                          <span className="flex w-fit p-1 rounded border border-border text-xs font-medium cursor-default">
-                            <div className="mr-1 my-auto">
-                              <FiBookmark />
+                  <div className="flex flex-wrap gap-x-2">
+                    {selectedPersona.document_sets.map((documentSet) => (
+                      <div key={documentSet.id} className="w-fit">
+                        <HoverPopup
+                          mainContent={
+                            <span className="flex w-fit p-1 rounded border border-border text-xs font-medium cursor-default">
+                              <div className="mr-1 my-auto">
+                                <FiBookmark />
+                              </div>
+                              {documentSet.name}
+                            </span>
+                          }
+                          popupContent={
+                            <div className="flex py-1 w-96">
+                              <FiInfo className="my-auto mr-2" />
+                              <div className="text-sm">
+                                {documentSet.description}
+                              </div>
                             </div>
-                            {documentSet.name}
-                          </span>
-                        }
-                        popupContent={
-                          <div className="flex py-1 w-96">
-                            <FiInfo className="my-auto mr-2" />
-                            <div className="text-sm">
-                              {documentSet.description}
-                            </div>
-                          </div>
-                        }
-                        direction="top"
-                      />
-                    </div>
-                  ))}
+                          }
+                          direction="top"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
               {availableSources.length > 0 && (
