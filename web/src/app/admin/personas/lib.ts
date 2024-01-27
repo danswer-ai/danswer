@@ -7,6 +7,7 @@ interface PersonaCreationRequest {
   task_prompt: string;
   document_set_ids: number[];
   num_chunks: number | null;
+  include_citations: boolean;
   llm_relevance_filter: boolean | null;
   llm_model_version_override: string | null;
 }
@@ -20,6 +21,7 @@ interface PersonaUpdateRequest {
   task_prompt: string;
   document_set_ids: number[];
   num_chunks: number | null;
+  include_citations: boolean;
   llm_relevance_filter: boolean | null;
   llm_model_version_override: string | null;
 }
@@ -32,10 +34,12 @@ function createPrompt({
   personaName,
   systemPrompt,
   taskPrompt,
+  includeCitations,
 }: {
   personaName: string;
   systemPrompt: string;
   taskPrompt: string;
+  includeCitations: boolean;
 }) {
   return fetch("/api/prompt", {
     method: "POST",
@@ -48,6 +52,7 @@ function createPrompt({
       shared: true,
       system_prompt: systemPrompt,
       task_prompt: taskPrompt,
+      include_citations: includeCitations,
     }),
   });
 }
@@ -57,11 +62,13 @@ function updatePrompt({
   personaName,
   systemPrompt,
   taskPrompt,
+  includeCitations,
 }: {
   promptId: number;
   personaName: string;
   systemPrompt: string;
   taskPrompt: string;
+  includeCitations: boolean;
 }) {
   return fetch(`/api/prompt/${promptId}`, {
     method: "PATCH",
@@ -74,6 +81,7 @@ function updatePrompt({
       shared: true,
       system_prompt: systemPrompt,
       task_prompt: taskPrompt,
+      include_citations: includeCitations,
     }),
   });
 }
@@ -112,6 +120,7 @@ export async function createPersona(
     personaName: personaCreationRequest.name,
     systemPrompt: personaCreationRequest.system_prompt,
     taskPrompt: personaCreationRequest.task_prompt,
+    includeCitations: personaCreationRequest.include_citations,
   });
   const promptId = createPromptResponse.ok
     ? (await createPromptResponse.json()).id
@@ -147,6 +156,7 @@ export async function updatePersona(
       personaName: personaUpdateRequest.name,
       systemPrompt: personaUpdateRequest.system_prompt,
       taskPrompt: personaUpdateRequest.task_prompt,
+      includeCitations: personaUpdateRequest.include_citations,
     });
     promptId = existingPromptId;
   } else {
@@ -154,6 +164,7 @@ export async function updatePersona(
       personaName: personaUpdateRequest.name,
       systemPrompt: personaUpdateRequest.system_prompt,
       taskPrompt: personaUpdateRequest.task_prompt,
+      includeCitations: personaUpdateRequest.include_citations,
     });
     promptId = promptResponse.ok ? (await promptResponse.json()).id : null;
   }

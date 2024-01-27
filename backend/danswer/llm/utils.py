@@ -14,6 +14,7 @@ from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import BaseMessageChunk
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
+from litellm import get_max_tokens  # type: ignore
 from tiktoken.core import Encoding
 
 from danswer.configs.app_configs import LOG_LEVEL
@@ -188,3 +189,11 @@ def test_llm(llm: LLM) -> bool:
             logger.warning(f"GenAI API key failed for the following reason: {e}")
 
     return False
+
+
+def get_llm_max_tokens(model_name: str) -> int | None:
+    """Best effort attempt to get the max tokens for the LLM"""
+    try:
+        return get_max_tokens(model_name)
+    except Exception:
+        return None
