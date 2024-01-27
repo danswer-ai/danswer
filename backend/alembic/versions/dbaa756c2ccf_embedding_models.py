@@ -109,5 +109,4 @@ def downgrade() -> None:
     )
     op.drop_column("index_attempt", "embedding_model_id")
     op.drop_table("embedding_model")
-    op.drop_index("ix_embedding_model_present_unique", table_name="embedding_model")
-    op.drop_index("ix_embedding_model_future_unique", table_name="embedding_model")
+    op.execute("DROP TYPE indexmodelstatus;")

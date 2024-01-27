@@ -38,7 +38,7 @@ function AllPersonaOptionDisplay({
 }) {
   return (
     <Modal onOutsideClick={handleClose}>
-      <div className="px-8 py-12">
+      <div>
         <div className="flex w-full border-b border-border mb-4 pb-4">
           <h2 className="text-xl text-strong font-bold flex">
             <div className="p-1 bg-ai rounded-lg h-fit my-auto mr-2">

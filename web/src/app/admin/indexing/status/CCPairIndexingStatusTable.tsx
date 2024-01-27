@@ -17,7 +17,7 @@ import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
 import Link from "next/link";
 import { isCurrentlyDeleting } from "@/lib/documentDeletion";
-import { FiEdit, FiMaximize, FiMaximize2 } from "react-icons/fi";
+import { FiEdit } from "react-icons/fi";
 
 const NUM_IN_PAGE = 20;
 

@@ -7,6 +7,7 @@ import { ApiKeyForm } from "@/components/openai/ApiKeyForm";
 import { GEN_AI_API_KEY_URL } from "@/components/openai/constants";
 import { fetcher } from "@/lib/fetcher";
 import { Text, Title } from "@tremor/react";
+import { FiCpu } from "react-icons/fi";
 import useSWR, { mutate } from "swr";
 
 const ExistingKeys = () => {
@@ -51,7 +52,10 @@ const ExistingKeys = () => {
 const Page = () => {
   return (
     <div className="mx-auto container">
-      <AdminPageTitle title="OpenAI Keys" icon={<KeyIcon size={32} />} />
+      <AdminPageTitle
+        title="LLM Keys"
+        icon={<FiCpu size={32} className="my-auto" />}
+      />
 
       <ExistingKeys />
 
