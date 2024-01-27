@@ -25,7 +25,7 @@ export const ApiKeyModal = () => {
 
   return (
     <Modal className="max-w-4xl" onOutsideClick={() => setIsOpen(false)}>
-      <div className="px-8 py-6">
+      <div>
         <div>
           <Text className="mb-2.5">
             Can&apos;t find a valid registered OpenAI API key. Please provide

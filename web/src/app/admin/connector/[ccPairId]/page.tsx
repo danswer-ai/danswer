@@ -31,7 +31,8 @@ function Main({ ccPairId }: { ccPairId: number }) {
     error,
   } = useSWR<CCPairFullInfo>(
     buildCCPairInfoUrl(ccPairId),
-    errorHandlingFetcher
+    errorHandlingFetcher,
+    { refreshInterval: 5000 } // 5 seconds
   );
 
   if (isLoading) {

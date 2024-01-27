@@ -18,7 +18,7 @@ interface Props {
 export const ConnectorEditPopup = ({ existingConnector, onSubmit }: Props) => {
   return (
     <Modal onOutsideClick={onSubmit}>
-      <div className="px-8 py-6 bg-background">
+      <div className="bg-background">
         <h2 className="text-xl font-bold flex">
           Update Google Drive Connector
           <div

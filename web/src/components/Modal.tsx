@@ -1,8 +1,12 @@
+import { Divider } from "@tremor/react";
+import { FiX } from "react-icons/fi";
+
 interface ModalProps {
   children: JSX.Element | string;
   title?: JSX.Element | string;
   onOutsideClick?: () => void;
   className?: string;
+  width?: string;
 }
 
 export function Modal({
@@ -10,6 +14,7 @@ export function Modal({
   title,
   onOutsideClick,
   className,
+  width,
 }: ModalProps) {
   return (
     <div>
@@ -23,15 +28,26 @@ export function Modal({
         <div
           className={`
           bg-background rounded shadow-lg
-          relative w-1/2 text-sm
+          relative ${width ?? "w-1/2"} text-sm p-8
           ${className}
         `}
           onClick={(event) => event.stopPropagation()}
         >
           {title && (
-            <h2 className="text-xl font-bold mb-3 border-b border-border pt-4 pb-3 bg-background-strong px-6">
-              {title}
-            </h2>
+            <>
+              <div className="flex mb-4">
+                <h2 className="my-auto text-2xl font-bold">{title}</h2>
+                {onOutsideClick && (
+                  <div
+                    onClick={onOutsideClick}
+                    className="my-auto ml-auto p-2 hover:bg-hover rounded cursor-pointer"
+                  >
+                    <FiX size={20} />
+                  </div>
+                )}
+              </div>
+              <Divider />
+            </>
           )}
           {children}
         </div>
