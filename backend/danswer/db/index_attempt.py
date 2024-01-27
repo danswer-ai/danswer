@@ -11,8 +11,10 @@ from sqlalchemy import update
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
 
+from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
+from danswer.db.models import IndexModelStatus
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
@@ -31,11 +33,13 @@ def get_index_attempt(
 def create_index_attempt(
     connector_id: int,
     credential_id: int,
+    embedding_model_id: int | None,
     db_session: Session,
 ) -> int:
     new_attempt = IndexAttempt(
         connector_id=connector_id,
         credential_id=credential_id,
+        embedding_model_id=embedding_model_id,
         status=IndexingStatus.NOT_STARTED,
     )
     db_session.add(new_attempt)
@@ -116,11 +120,14 @@ def update_docs_indexed(
 def get_last_attempt(
     connector_id: int,
     credential_id: int,
+    embedding_model_id: int | None,
     db_session: Session,
 ) -> IndexAttempt | None:
-    stmt = select(IndexAttempt)
-    stmt = stmt.where(IndexAttempt.connector_id == connector_id)
-    stmt = stmt.where(IndexAttempt.credential_id == credential_id)
+    stmt = select(IndexAttempt).where(
+        IndexAttempt.connector_id == connector_id,
+        IndexAttempt.credential_id == credential_id,
+        IndexAttempt.embedding_model_id == embedding_model_id,
+    )
     # Note, the below is using time_created instead of time_updated
     stmt = stmt.order_by(desc(IndexAttempt.time_created))
 
@@ -219,10 +226,22 @@ def cancel_indexing_attempts_for_connector(
     db_session: Session,
     include_secondary_index: bool = False,
 ) -> None:
+    subquery = select(EmbeddingModel.id).where(
+        EmbeddingModel.status != IndexModelStatus.FUTURE
+    )
+
     stmt = delete(IndexAttempt).where(
         IndexAttempt.connector_id == connector_id,
         IndexAttempt.status == IndexingStatus.NOT_STARTED,
     )
+
+    if not include_secondary_index:
+        stmt = stmt.where(
+            or_(
+                IndexAttempt.embedding_model_id.is_(None),
+                IndexAttempt.embedding_model_id.in_(subquery),
+            )
+        )
 
     db_session.execute(stmt)
 

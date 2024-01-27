@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
+from danswer.db.embedding_model import create_embedding_model
 from danswer.db.embedding_model import get_latest_embedding_model_by_status
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import expire_index_attempts
@@ -13,6 +14,7 @@ from danswer.db.models import IndexModelStatus
 from danswer.db.models import User
 from danswer.indexing.models import EmbeddingModelDetail
 from danswer.server.manage.models import ModelVersionResponse
+from danswer.server.models import IdReturn
 from danswer.utils.logger import setup_logger
 
 router = APIRouter(prefix="/secondary-index")
@@ -24,7 +26,7 @@ def set_new_embedding_model(
     embed_model_details: EmbeddingModelDetail,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> None:
+) -> IdReturn:
     """Creates a new EmbeddingModel row and cancels the previous secondary indexing if any
     Gives an error if the same model name is used as the current or secondary index
     """
@@ -56,6 +58,12 @@ def set_new_embedding_model(
         expire_index_attempts(
             embedding_model_id=secondary_model.id, db_session=db_session
         )
+
+    new_model = create_embedding_model(
+        model_details=embed_model_details,
+        db_session=db_session,
+    )
+    return IdReturn(id=new_model.id)
 
 
 @router.post("/cancel-new-embedding")

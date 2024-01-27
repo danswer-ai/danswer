@@ -26,6 +26,7 @@ from danswer.db.index_attempt import mark_attempt_succeeded
 from danswer.db.index_attempt import update_docs_indexed
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
+from danswer.db.models import IndexModelStatus
 from danswer.indexing.indexing_pipeline import build_indexing_pipeline
 from danswer.utils.logger import IndexAttemptSingleton
 from danswer.utils.logger import setup_logger
@@ -93,6 +94,8 @@ def _run_indexing(
     """
     start_time = time.time()
 
+    db_embedding_model = index_attempt.embedding_model
+
     # mark as started
     mark_attempt_in_progress(index_attempt, db_session)
     update_connector_credential_pair(
@@ -139,9 +142,15 @@ def _run_indexing(
 
         try:
             for doc_batch in doc_batch_generator:
-                # check if connector is disabled mid run and stop if so
+                # Check if connector is disabled mid run and stop if so unless it's the secondary
+                # index being built. We want to populate it even for paused connectors
+                # Often paused connectors are sources that aren't updated frequently but the
+                # contents still need to be initially pulled.
                 db_session.refresh(db_connector)
-                if db_connector.disabled:
+                if (
+                    db_connector.disabled
+                    and db_embedding_model.status != IndexModelStatus.FUTURE
+                ):
                     # let the `except` block handle this
                     raise RuntimeError("Connector was disabled mid run")
 

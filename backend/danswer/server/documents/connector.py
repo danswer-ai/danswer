@@ -351,6 +351,7 @@ def get_connector_indexing_status(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[ConnectorIndexingStatus]:
+    # TODO make this count only the primary index runs
     indexing_statuses: list[ConnectorIndexingStatus] = []
 
     # TODO: make this one query
