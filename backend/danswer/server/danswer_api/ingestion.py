@@ -16,6 +16,7 @@ from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.engine import get_session
 from danswer.document_index.document_index_utils import get_both_index_names
+from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.indexing.indexing_pipeline import build_indexing_pipeline
@@ -142,10 +143,14 @@ def document_ingestion(
     if document.source == DocumentSource.INGESTION_API:
         document.source = DocumentSource.FILE
 
-    index_names = get_both_index_names()
+    # Need to index for both the primary and secondary index if possible
+    curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+    curr_doc_index = get_default_document_index(
+        primary_index_name=curr_ind_name, secondary_index_name=None
+    )
 
     indexing_pipeline = build_indexing_pipeline(
-        ignore_time_skip=True, index_name=index_names[0]
+        ignore_time_skip=True, document_index=curr_doc_index
     )
 
     new_doc, chunks = indexing_pipeline(
@@ -157,8 +162,16 @@ def document_ingestion(
     )
 
     # If there's a secondary index being built, index the doc but don't use it for return here
-    if len(index_names) > 1:
-        indexing_pipeline(
+    if sec_ind_name:
+        sec_doc_index = get_default_document_index(
+            primary_index_name=curr_ind_name, secondary_index_name=None
+        )
+
+        sec_ind_pipeline = build_indexing_pipeline(
+            ignore_time_skip=True, document_index=sec_doc_index
+        )
+
+        sec_ind_pipeline(
             documents=[document],
             index_attempt_metadata=IndexAttemptMetadata(
                 connector_id=connector_id,

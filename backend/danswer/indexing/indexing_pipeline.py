@@ -19,6 +19,7 @@ from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.tag import create_or_add_document_tag
 from danswer.db.tag import create_or_add_document_tag_list
+from danswer.document_index.document_index_utils import get_index_name
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentMetadata
@@ -96,7 +97,6 @@ def index_doc_batch(
     chunker: Chunker,
     embedder: Embedder,
     document_index: DocumentIndex,
-    index_name: str,
     documents: list[Document],
     index_attempt_metadata: IndexAttemptMetadata,
     ignore_time_skip: bool = False,
@@ -188,9 +188,7 @@ def index_doc_batch(
         # A document will not be spread across different batches, so all the
         # documents with chunks in this set, are fully represented by the chunks
         # in this set
-        insertion_records = document_index.index(
-            chunks=access_aware_chunks, index_name=index_name
-        )
+        insertion_records = document_index.index(chunks=access_aware_chunks)
 
         successful_doc_ids = [record.document_id for record in insertion_records]
         successful_docs = [
@@ -218,7 +216,6 @@ def build_indexing_pipeline(
     chunker: Chunker | None = None,
     embedder: Embedder | None = None,
     document_index: DocumentIndex | None = None,
-    index_name: str,
     ignore_time_skip: bool = False,
 ) -> IndexingPipelineProtocol:
     """Builds a pipline which takes in a list (batch) of docs and indexes them."""
@@ -226,13 +223,16 @@ def build_indexing_pipeline(
 
     embedder = embedder or DefaultEmbedder()
 
-    document_index = document_index or get_default_document_index()
+    if not document_index:
+        with Session(get_sqlalchemy_engine()) as db_session:
+            document_index = get_default_document_index(
+                primary_index_name=get_index_name(db_session), secondary_index_name=None
+            )
 
     return partial(
         index_doc_batch,
         chunker=chunker,
         embedder=embedder,
         document_index=document_index,
-        index_name=index_name,
         ignore_time_skip=ignore_time_skip,
     )

@@ -53,16 +53,18 @@ def admin_search(
         time_cutoff=question.filters.time_cutoff,
         access_control_list=user_acl_filters,
     )
-    document_index = get_default_document_index()
+
+    document_index = get_default_document_index(
+        primary_index_name=get_index_name(db_session), secondary_index_name=None
+    )
+
     if not isinstance(document_index, VespaIndex):
         raise HTTPException(
             status_code=400,
             detail="Cannot use admin-search when using a non-Vespa document index",
         )
 
-    matching_chunks = document_index.admin_retrieval(
-        query=query, filters=final_filters, index_name=get_index_name()
-    )
+    matching_chunks = document_index.admin_retrieval(query=query, filters=final_filters)
 
     documents = chunks_to_search_docs(matching_chunks)
 

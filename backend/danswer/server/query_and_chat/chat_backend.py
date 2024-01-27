@@ -20,6 +20,7 @@ from danswer.db.engine import get_session
 from danswer.db.feedback import create_chat_message_feedback
 from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.models import User
+from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.secondary_llm_flows.chat_session_naming import (
     get_renamed_conversation_name,
@@ -228,12 +229,18 @@ def create_search_feedback(
     """This endpoint isn't protected - it does not check if the user has access to the document
     Users could try changing boosts of arbitrary docs but this does not leak any data.
     """
+
+    curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+    document_index = get_default_document_index(
+        primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+    )
+
     create_doc_retrieval_feedback(
         message_id=feedback.message_id,
         document_id=feedback.document_id,
         document_rank=feedback.document_rank,
         clicked=feedback.click,
         feedback=feedback.search_feedback,
-        document_index=get_default_document_index(),
+        document_index=document_index,
         db_session=db_session,
     )

@@ -103,3 +103,7 @@ class SlackBotConfig(BaseModel):
     id: int
     persona: PersonaSnapshot | None
     channel_config: ChannelConfig
+
+
+class ModelVersionResponse(BaseModel):
+    model_name: str | None  # None only applicable to secondary index

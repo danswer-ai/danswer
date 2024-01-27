@@ -32,10 +32,6 @@ def set_acl_for_vespa(should_check_if_already_done: bool = False) -> None:
         except ConfigNotFoundError:
             pass
 
-    vespa_index = get_default_document_index()
-    if not isinstance(vespa_index, VespaIndex):
-        raise ValueError("This script is only for Vespa indexes")
-
     logger.info("Populating Access Control List fields in Vespa")
     with Session(get_sqlalchemy_engine()) as db_session:
         # for all documents, set the `access_control_list` field appropriately
@@ -46,15 +42,21 @@ def set_acl_for_vespa(should_check_if_already_done: bool = False) -> None:
             document_ids=[document.id for document in documents],
         )
 
-        for index_name in get_both_index_names():
-            update_requests = [
-                UpdateRequest(
-                    document_ids=[document_id],
-                    access=DocumentAccess.build(user_ids, is_public),
-                )
-                for document_id, user_ids, is_public in document_access_info
-            ]
-            vespa_index.update(update_requests=update_requests, index_name=index_name)
+        curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+        vespa_index = get_default_document_index(
+            primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+        )
+        if not isinstance(vespa_index, VespaIndex):
+            raise ValueError("This script is only for Vespa indexes")
+
+        update_requests = [
+            UpdateRequest(
+                document_ids=[document_id],
+                access=DocumentAccess.build(user_ids, is_public),
+            )
+            for document_id, user_ids, is_public in document_access_info
+        ]
+        vespa_index.update(update_requests=update_requests)
 
     dynamic_config_store.store(_COMPLETED_ACL_UPDATE_KEY, True)
 

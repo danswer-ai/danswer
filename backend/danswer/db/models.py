@@ -62,6 +62,12 @@ class TaskStatus(str, PyEnum):
     FAILURE = "FAILURE"
 
 
+class IndexModelStatus(str, PyEnum):
+    PAST = "PAST"
+    PRESENT = "PRESENT"
+    FUTURE = "FUTURE"
+
+
 class Base(DeclarativeBase):
     pass
 
@@ -363,6 +369,37 @@ class Credential(Base):
     user: Mapped[User | None] = relationship("User", back_populates="credentials")
 
 
+class EmbeddingModel(Base):
+    __tablename__ = "embedding_model"
+    # ID is used also to indicate the order that the models are configured by the admin
+    id: Mapped[int] = mapped_column(primary_key=True)
+    model_name: Mapped[str] = mapped_column(String)
+    model_dim: Mapped[int] = mapped_column(Integer)
+    normalize: Mapped[bool] = mapped_column(Boolean)
+    query_prefix: Mapped[str] = mapped_column(String)
+    passage_prefix: Mapped[str] = mapped_column(String)
+    status: Mapped[IndexModelStatus] = mapped_column(Enum(IndexModelStatus))
+
+    index_attempts: Mapped[List["IndexAttempt"]] = relationship(
+        "IndexAttempt", back_populates="embedding_model"
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_embedding_model_present_unique",
+            "status",
+            unique=True,
+            postgresql_where=(status == IndexModelStatus.PRESENT),
+        ),
+        Index(
+            "ix_embedding_model_future_unique",
+            "status",
+            unique=True,
+            postgresql_where=(status == IndexModelStatus.FUTURE),
+        ),
+    )
+
+
 class IndexAttempt(Base):
     """
     Represents an attempt to index a group of 1 or more documents from a
@@ -387,6 +424,11 @@ class IndexAttempt(Base):
     error_msg: Mapped[str | None] = mapped_column(
         Text, default=None
     )  # only filled if status = "failed"
+    # Nullable because in the past, we didn't allow swapping out embedding models live
+    embedding_model_id: Mapped[int | None] = mapped_column(
+        ForeignKey("embedding_model.id"),
+        nullable=True,
+    )
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -407,6 +449,9 @@ class IndexAttempt(Base):
     )
     credential: Mapped[Credential] = relationship(
         "Credential", back_populates="index_attempts"
+    )
+    embedding_model: Mapped[EmbeddingModel] = relationship(
+        "EmbeddingModel", back_populates="index_attempts"
     )
 
     __table_args__ = (
