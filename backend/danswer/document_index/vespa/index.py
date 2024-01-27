@@ -652,25 +652,6 @@ class VespaIndex(DocumentIndex):
         index_embedding_dim: int,
         secondary_index_embedding_dim: int | None,
     ) -> None:
-        """TODO remove
-        with Session(get_sqlalchemy_engine()) as db_session:
-            curr_model = get_latest_embedding_model_by_status(
-                status=IndexModelStatus.PRESENT,
-                db_session=db_session
-            )
-            next_model = get_latest_embedding_model_by_status(
-                status=IndexModelStatus.FUTURE,
-                db_session=db_session
-            )
-
-        schema_names = [f"danswer_chunk_{clean_model_name(curr_model.model_name)}" if curr_model else "danswer_chunk"]
-
-        new_dim = None
-        if next_model:
-            schema_names.append(f"danswer_chunk_{clean_model_name(next_model.model_name)}")
-            new_dim = next_model.model_dim
-        """
-
         deploy_url = f"{VESPA_APPLICATION_ENDPOINT}/tenant/default/prepareandactivate"
         logger.debug(f"Sending Vespa zip to {deploy_url}")
 

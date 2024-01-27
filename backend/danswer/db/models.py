@@ -65,7 +65,7 @@ class TaskStatus(str, PyEnum):
 class IndexModelStatus(str, PyEnum):
     PAST = "PAST"
     PRESENT = "PRESENT"
-    FUTURE = ""
+    FUTURE = "FUTURE"
 
 
 class Base(DeclarativeBase):
