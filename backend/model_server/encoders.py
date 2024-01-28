@@ -1,9 +1,10 @@
+from typing import TYPE_CHECKING
+
 from fastapi import APIRouter
 from fastapi import HTTPException
 
 from danswer.configs.model_configs import CROSS_ENCODER_MODEL_ENSEMBLE
-from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
-from danswer.search.search_nlp_models import get_local_embedding_model
+from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.search.search_nlp_models import get_local_reranking_model_ensemble
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
@@ -12,18 +13,46 @@ from shared_models.model_server_models import EmbedResponse
 from shared_models.model_server_models import RerankRequest
 from shared_models.model_server_models import RerankResponse
 
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer  # type: ignore
+
+
 logger = setup_logger()
 
 WARM_UP_STRING = "Danswer is amazing"
 
 router = APIRouter(prefix="/encoder")
 
+_GLOBAL_MODELS_DICT: dict[str, "SentenceTransformer"] = {}
+
+
+def get_embedding_model(
+    model_name: str,
+    max_context_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
+) -> "SentenceTransformer":
+    from sentence_transformers import SentenceTransformer  # type: ignore
+
+    global _GLOBAL_MODELS_DICT  # A dictionary to store models
+
+    if _GLOBAL_MODELS_DICT is None:
+        _GLOBAL_MODELS_DICT = {}
+
+    if model_name not in _GLOBAL_MODELS_DICT:
+        logger.info(f"Loading {model_name}")
+        model = SentenceTransformer(model_name)
+        model.max_seq_length = max_context_length
+        _GLOBAL_MODELS_DICT[model_name] = model
+    elif max_context_length != _GLOBAL_MODELS_DICT[model_name].max_seq_length:
+        _GLOBAL_MODELS_DICT[model_name].max_seq_length = max_context_length
+
+    return _GLOBAL_MODELS_DICT[model_name]
+
 
 @log_function_time(print_only=True)
 def embed_text(
     texts: list[str], model_name: str, normalize_embeddings: bool
 ) -> list[list[float]]:
-    model = get_local_embedding_model(model_name=model_name)
+    model = get_embedding_model(model_name=model_name)
     embeddings = model.encode(texts, normalize_embeddings=normalize_embeddings)
 
     if not isinstance(embeddings, list):
@@ -66,12 +95,6 @@ def process_rerank_request(embed_request: RerankRequest) -> RerankResponse:
         return RerankResponse(scores=sim_scores)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-def warm_up_bi_encoder() -> None:
-    logger.info(f"Warming up Bi-Encoders: {DOCUMENT_ENCODER_MODEL}")
-    # This may be the wrong model but can't know ahead of time anyway
-    get_local_embedding_model(model_name=DOCUMENT_ENCODER_MODEL).encode(WARM_UP_STRING)
 
 
 def warm_up_cross_encoders() -> None:
