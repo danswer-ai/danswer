@@ -387,7 +387,7 @@ def check_index_swap(db_session: Session) -> None:
 
         # Recount aggregates
         for cc_pair in all_cc_pairs:
-            resync_cc_pair(cc_pair)
+            resync_cc_pair(cc_pair, db_session=db_session)
 
 
 def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> None:

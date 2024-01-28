@@ -10,7 +10,6 @@ from danswer.utils.logger import setup_logger
 from model_server.custom_models import router as custom_models_router
 from model_server.custom_models import warm_up_intent_model
 from model_server.encoders import router as encoders_router
-from model_server.encoders import warm_up_bi_encoder
 from model_server.encoders import warm_up_cross_encoders
 
 
@@ -33,7 +32,6 @@ def get_model_app() -> FastAPI:
         torch.set_num_threads(max(MIN_THREADS_ML_MODELS, torch.get_num_threads()))
         logger.info(f"Torch Threads: {torch.get_num_threads()}")
 
-        warm_up_bi_encoder()
         warm_up_cross_encoders()
         warm_up_intent_model()
 
