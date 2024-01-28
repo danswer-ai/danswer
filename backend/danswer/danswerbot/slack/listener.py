@@ -1,3 +1,4 @@
+import nltk
 import time
 from threading import Event
 from typing import Any
@@ -357,6 +358,11 @@ if __name__ == "__main__":
 
     slack_bot_tokens: SlackBotTokens | None = None
     socket_client: SocketModeClient | None = None
+
+    logger.info("Verifying query preprocessing (NLTK) data is downloaded")
+    nltk.download("stopwords", quiet=True)
+    nltk.download('punkt', quiet=True)
+
     while True:
         try:
             latest_slack_bot_tokens = fetch_tokens()
