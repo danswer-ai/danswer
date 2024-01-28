@@ -176,6 +176,7 @@ def get_latest_index_attempts(
 def get_index_attempts_for_cc_pair(
     db_session: Session,
     cc_pair_identifier: ConnectorCredentialPairIdentifier,
+    only_current: bool = True,
     disinclude_finished: bool = False,
 ) -> Sequence[IndexAttempt]:
     stmt = select(IndexAttempt).where(
@@ -189,6 +190,10 @@ def get_index_attempts_for_cc_pair(
             IndexAttempt.status.in_(
                 [IndexingStatus.NOT_STARTED, IndexingStatus.IN_PROGRESS]
             )
+        )
+    if only_current:
+        stmt = stmt.join(EmbeddingModel).where(
+            EmbeddingModel.status == IndexModelStatus.PRESENT
         )
 
     stmt = stmt.order_by(IndexAttempt.time_created.desc())

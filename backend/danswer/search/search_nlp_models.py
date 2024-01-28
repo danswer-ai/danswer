@@ -35,8 +35,8 @@ if TYPE_CHECKING:
     from transformers import TFDistilBertForSequenceClassification  # type: ignore
 
 
-_TOKENIZER: Optional["AutoTokenizer"] = None
-_EMBED_MODEL: Optional["SentenceTransformer"] = None
+_TOKENIZER: tuple[Optional["AutoTokenizer"], str | None] = (None, None)
+_EMBED_MODEL: tuple[Optional["SentenceTransformer"], str | None] = (None, None)
 _RERANK_MODELS: Optional[list["CrossEncoder"]] = None
 _INTENT_TOKENIZER: Optional["AutoTokenizer"] = None
 _INTENT_MODEL: Optional["TFDistilBertForSequenceClassification"] = None
@@ -51,21 +51,31 @@ def clean_model_name(model_str: str) -> str:
     return model_str.replace("/", "_").replace("-", "_").replace(".", "_")
 
 
-def get_default_tokenizer() -> "AutoTokenizer":
+# NOTE: If None is used, it may not be using the "correct" tokenizer, for cases
+# where this is more important, be sure to refresh with the actual model name
+def get_default_tokenizer(model_name: str | None = None) -> "AutoTokenizer":
     # NOTE: doing a local import here to avoid reduce memory usage caused by
     # processes importing this file despite not using any of this
     from transformers import AutoTokenizer  # type: ignore
 
     global _TOKENIZER
-    if _TOKENIZER is None:
-        _TOKENIZER = AutoTokenizer.from_pretrained(DOCUMENT_ENCODER_MODEL)
-        if hasattr(_TOKENIZER, "is_fast") and _TOKENIZER.is_fast:
+    if _TOKENIZER[0] is None or (
+        _TOKENIZER[1] is not None and _TOKENIZER[1] != model_name
+    ):
+        if model_name is None:
+            # This could be inaccurate
+            model_name = DOCUMENT_ENCODER_MODEL
+
+        _TOKENIZER = (AutoTokenizer.from_pretrained(model_name), model_name)
+
+        if hasattr(_TOKENIZER[0], "is_fast") and _TOKENIZER[0].is_fast:
             os.environ["TOKENIZERS_PARALLELISM"] = "false"
-    return _TOKENIZER
+
+    return _TOKENIZER[0]
 
 
 def get_local_embedding_model(
-    model_name: str = DOCUMENT_ENCODER_MODEL,
+    model_name: str,
     max_context_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
 ) -> "SentenceTransformer":
     # NOTE: doing a local import here to avoid reduce memory usage caused by
@@ -73,11 +83,15 @@ def get_local_embedding_model(
     from sentence_transformers import SentenceTransformer  # type: ignore
 
     global _EMBED_MODEL
-    if _EMBED_MODEL is None or max_context_length != _EMBED_MODEL.max_seq_length:
+    if (
+        _EMBED_MODEL[0] is None
+        or max_context_length != _EMBED_MODEL[0].max_seq_length
+        or model_name != _EMBED_MODEL[1]
+    ):
         logger.info(f"Loading {model_name}")
-        _EMBED_MODEL = SentenceTransformer(model_name)
-        _EMBED_MODEL.max_seq_length = max_context_length
-    return _EMBED_MODEL
+        _EMBED_MODEL = (SentenceTransformer(model_name), model_name)
+        _EMBED_MODEL[0].max_seq_length = max_context_length
+    return _EMBED_MODEL[0]
 
 
 def get_local_reranking_model_ensemble(
@@ -340,7 +354,7 @@ def warm_up_models(
         "https://docs.danswer.dev/quickstart"
     )
 
-    get_default_tokenizer()(warm_up_str)
+    get_default_tokenizer(model_name=model_name)(warm_up_str)
 
     embed_model = EmbeddingModel(
         model_name=model_name,

@@ -25,7 +25,8 @@ def embed_text(
     texts: list[str],
     normalize_embeddings: bool = NORMALIZE_EMBEDDINGS,
 ) -> list[list[float]]:
-    model = get_local_embedding_model()
+    # TODO needs updating, also with prefixes
+    model = get_local_embedding_model(model_name="intfloat/e5-base-v2")
     embeddings = model.encode(texts, normalize_embeddings=normalize_embeddings)
 
     if not isinstance(embeddings, list):
@@ -68,7 +69,8 @@ def process_rerank_request(embed_request: RerankRequest) -> RerankResponse:
 
 def warm_up_bi_encoder() -> None:
     logger.info(f"Warming up Bi-Encoders: {DOCUMENT_ENCODER_MODEL}")
-    get_local_embedding_model().encode(WARM_UP_STRING)
+    # TODO the model server needs updating
+    get_local_embedding_model(model_name="intfloat/e5-base-v2").encode(WARM_UP_STRING)
 
 
 def warm_up_cross_encoders() -> None:
