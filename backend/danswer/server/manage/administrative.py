@@ -219,7 +219,7 @@ def create_deletion_attempt_for_connector_id(
         raise HTTPException(
             status_code=400,
             detail=f"Connector with ID '{connector_id}' and credential ID "
-            f"'{credential_id}' is not deletable. It must be both disabled AND have"
+            f"'{credential_id}' is not deletable. It must be both disabled AND have "
             "no ongoing / planned indexing attempts.",
         )
 
