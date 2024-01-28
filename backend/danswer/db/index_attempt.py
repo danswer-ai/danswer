@@ -136,6 +136,7 @@ def get_last_attempt(
 
 def get_latest_index_attempts(
     connector_credential_pair_identifiers: list[ConnectorCredentialPairIdentifier],
+    secondary_index: bool,
     db_session: Session,
 ) -> Sequence[IndexAttempt]:
     ids_stmt = select(
@@ -168,8 +169,16 @@ def get_latest_index_attempts(
                 ids_subqery.c.credential_id == IndexAttempt.credential_id,
             ),
         )
+        .join(EmbeddingModel, IndexAttempt.embedding_model_id == EmbeddingModel.id)
         .where(IndexAttempt.time_created == ids_subqery.c.max_time_created)
     )
+
+    # TODO Doesn't seem to work, not sure why @Chris any thoughts?
+    if secondary_index:
+        stmt = stmt.where(EmbeddingModel.status == IndexModelStatus.FUTURE)
+    else:
+        stmt = stmt.where(EmbeddingModel.status == IndexModelStatus.PRESENT)
+
     return db_session.execute(stmt).scalars().all()
 
 

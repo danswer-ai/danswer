@@ -350,10 +350,10 @@ def upload_files(
 
 @router.get("/admin/connector/indexing-status")
 def get_connector_indexing_status(
+    secondary_index: bool = False,
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[ConnectorIndexingStatus]:
-    # TODO make this count only the primary index runs
     indexing_statuses: list[ConnectorIndexingStatus] = []
 
     # TODO: make this one query
@@ -366,8 +366,9 @@ def get_connector_indexing_status(
     ]
 
     latest_index_attempts = get_latest_index_attempts(
-        db_session=db_session,
         connector_credential_pair_identifiers=cc_pair_identifiers,
+        secondary_index=secondary_index,
+        db_session=db_session,
     )
     cc_pair_to_latest_index_attempt = {
         (index_attempt.connector_id, index_attempt.credential_id): index_attempt
