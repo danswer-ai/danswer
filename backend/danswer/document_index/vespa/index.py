@@ -933,7 +933,7 @@ class VespaIndex(DocumentIndex):
             "input.query(decay_factor)": str(DOC_TIME_DECAY * time_decay_multiplier),
             "hits": num_to_retrieve,
             "offset": offset,
-            "ranking.profile": "semantic_search",
+            "ranking.profile": f"hybrid_search{len(query_embedding)}",
             "timeout": _VESPA_TIMEOUT,
         }
 
@@ -983,7 +983,7 @@ class VespaIndex(DocumentIndex):
             else TITLE_CONTENT_RATIO,
             "hits": num_to_retrieve,
             "offset": offset,
-            "ranking.profile": "hybrid_search",
+            "ranking.profile": f"hybrid_search{len(query_embedding)}",
             "timeout": _VESPA_TIMEOUT,
         }
 

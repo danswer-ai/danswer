@@ -246,3 +246,25 @@ def cancel_indexing_attempts_for_connector(
     db_session.execute(stmt)
 
     db_session.commit()
+
+
+def count_unique_cc_pairs_with_index_attempts(
+    embedding_model_id: int | None,
+    db_session: Session,
+) -> int:
+    unique_pairs_count = (
+        db_session.query(IndexAttempt.connector_id, IndexAttempt.credential_id)
+        .filter(
+            IndexAttempt.embedding_model_id == embedding_model_id,
+            # Should not be able to hang since indexing jobs expire after a limit
+            # It will then be marked failed, and the next cycle it will be in a completed state
+            or_(
+                IndexAttempt.status == IndexingStatus.SUCCESS,
+                IndexAttempt.status == IndexingStatus.FAILED,
+            ),
+        )
+        .distinct()
+        .count()
+    )
+
+    return unique_pairs_count

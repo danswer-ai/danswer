@@ -19,11 +19,14 @@ from danswer.configs.app_configs import LOG_LEVEL
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.configs.model_configs import MIN_THREADS_ML_MODELS
 from danswer.db.connector import fetch_connectors
+from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import mark_all_in_progress_cc_pairs_failed
 from danswer.db.connector_credential_pair import update_connector_credential_pair
 from danswer.db.embedding_model import get_latest_embedding_model_by_status
+from danswer.db.embedding_model import update_embedding_model_status
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.index_attempt import count_unique_cc_pairs_with_index_attempts
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
@@ -342,6 +345,47 @@ def kickoff_indexing_jobs(
     return existing_jobs_copy
 
 
+def check_index_swap(db_session: Session) -> None:
+    """Get count of cc-pairs and count of index_attempts for the new model grouped by
+    connector + credential, if it's the same, then assume new index is done building.
+    This does not take into consideration if the attempt failed or not"""
+    # Default CC-pair created for Ingestion API unused here
+    cc_pair_count = len(get_connector_credential_pairs(db_session)) - 1
+    embedding_model = get_latest_embedding_model_by_status(
+        status=IndexModelStatus.FUTURE, db_session=db_session
+    )
+
+    if not embedding_model:
+        return
+
+    unique_cc_indexings = count_unique_cc_pairs_with_index_attempts(
+        embedding_model_id=embedding_model.id, db_session=db_session
+    )
+
+    if unique_cc_indexings > cc_pair_count:
+        raise RuntimeError("More unique indexings than cc pairs, should not occur")
+
+    if cc_pair_count == unique_cc_indexings:
+        # Swap indices
+        now_old_embedding_model = get_latest_embedding_model_by_status(
+            status=IndexModelStatus.PRESENT, db_session=db_session
+        )
+        if now_old_embedding_model is not None:
+            update_embedding_model_status(
+                embedding_model=now_old_embedding_model,
+                new_status=IndexModelStatus.PAST,
+                db_session=db_session,
+            )
+
+        update_embedding_model_status(
+            embedding_model=embedding_model,
+            new_status=IndexModelStatus.PRESENT,
+            db_session=db_session,
+        )
+
+        # Recount aggregates
+
+
 def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> None:
     client_primary: Client | SimpleJobClient
     client_secondary: Client | SimpleJobClient
@@ -389,7 +433,8 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
             )
 
         try:
-            # TODO add logic to check when to switch index
+            with Session(get_sqlalchemy_engine()) as db_session:
+                check_index_swap(db_session)
             existing_jobs = cleanup_indexing_jobs(existing_jobs=existing_jobs)
             create_indexing_jobs(existing_jobs=existing_jobs)
             existing_jobs = kickoff_indexing_jobs(
