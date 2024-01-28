@@ -106,6 +106,7 @@ def get_search_results(
     top_chunks, llm_chunk_selection = full_chunk_search(
         query=search_query,
         document_index=document_index,
+        db_session=db_session,
         retrieval_metrics_callback=retrieval_metrics.record_metric,
         rerank_metrics_callback=rerank_metrics.record_metric,
     )

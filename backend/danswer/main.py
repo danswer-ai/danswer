@@ -42,15 +42,17 @@ from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
+from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
 from danswer.db.credentials import create_initial_public_credential
 from danswer.db.embedding_model import get_latest_embedding_model_by_status
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import IndexModelStatus
-from danswer.document_index.document_index_utils import clean_model_name
+from danswer.document_index.document_index_utils import DEFAULT_INDEX_NAME
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llm
+from danswer.search.search_nlp_models import clean_model_name
 from danswer.search.search_nlp_models import warm_up_models
 from danswer.server.danswer_api.ingestion import get_danswer_api_key
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
@@ -261,7 +263,22 @@ def get_application() -> FastAPI:
             )
         else:
             logger.info("Warming up local NLP models.")
-            warm_up_models(skip_cross_encoders=not ENABLE_RERANKING_REAL_TIME_FLOW)
+            with Session(get_sqlalchemy_engine()) as db_session:
+                embedding_model = get_latest_embedding_model_by_status(
+                    status=IndexModelStatus.PRESENT, db_session=db_session
+                )
+                if embedding_model:
+                    model_name = embedding_model.model_name
+                    normalize = embedding_model.normalize
+                else:
+                    model_name = DOCUMENT_ENCODER_MODEL
+                    normalize = NORMALIZE_EMBEDDINGS
+
+                warm_up_models(
+                    model_name=model_name,
+                    normalize=normalize,
+                    skip_cross_encoders=not ENABLE_RERANKING_REAL_TIME_FLOW,
+                )
 
             if torch.cuda.is_available():
                 logger.info("GPU is available")
@@ -275,7 +292,7 @@ def get_application() -> FastAPI:
         nltk.download("punkt", quiet=True)
 
         logger.info("Verifying default connector/credential exist.")
-        with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
+        with Session(get_sqlalchemy_engine()) as db_session:
             create_initial_public_credential(db_session)
             create_initial_default_connector(db_session)
             associate_default_cc_pair(db_session)
@@ -293,7 +310,7 @@ def get_application() -> FastAPI:
         primary_index = (
             f"danswer_chunk_{clean_model_name(primary_embedding_model.model_name)}"
             if primary_embedding_model
-            else "danswer_chunk"
+            else DEFAULT_INDEX_NAME
         )
         second_index = (
             f"danswer_chunk_{clean_model_name(secondary_embedding_model.model_name)}"

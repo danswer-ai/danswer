@@ -9,8 +9,6 @@ from danswer.configs.chat_configs import NUM_RERANKED_RESULTS
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
 from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
-from danswer.indexing.models import DocAwareChunk
-from danswer.indexing.models import IndexChunk
 
 MAX_METRICS_CONTENT = (
     200  # Just need enough characters to identify where in the doc the chunk is
@@ -41,11 +39,6 @@ class SearchType(str, Enum):
 class QueryFlow(str, Enum):
     SEARCH = "search"
     QUESTION_ANSWER = "question-answer"
-
-
-class Embedder:
-    def embed(self, chunks: list[DocAwareChunk]) -> list[IndexChunk]:
-        raise NotImplementedError
 
 
 class Tag(BaseModel):

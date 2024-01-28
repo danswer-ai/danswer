@@ -308,6 +308,7 @@ def stream_chat_message(
             documents_generator = full_chunk_search_generator(
                 search_query=retrieval_request,
                 document_index=document_index,
+                db_session=db_session,
             )
             time_cutoff = retrieval_request.filters.time_cutoff
             recency_bias_multiplier = retrieval_request.recency_bias_multiplier

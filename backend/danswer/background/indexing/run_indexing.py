@@ -8,6 +8,10 @@ from sqlalchemy.orm import Session
 
 from danswer.background.indexing.checkpointing import get_time_windows_for_index_attempt
 from danswer.configs.app_configs import POLL_CONNECTOR_OFFSET
+from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
+from danswer.configs.model_configs import ASYM_QUERY_PREFIX
+from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
+from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
@@ -27,6 +31,10 @@ from danswer.db.index_attempt import update_docs_indexed
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
+from danswer.document_index.document_index_utils import DEFAULT_INDEX_NAME
+from danswer.document_index.document_index_utils import get_index_name_from_model
+from danswer.document_index.factory import get_default_document_index
+from danswer.indexing.embedder import DefaultIndexingEmbedder
 from danswer.indexing.indexing_pipeline import build_indexing_pipeline
 from danswer.utils.logger import IndexAttemptSingleton
 from danswer.utils.logger import setup_logger
@@ -95,8 +103,13 @@ def _run_indexing(
     start_time = time.time()
 
     db_embedding_model = index_attempt.embedding_model
+    index_name = (
+        get_index_name_from_model(db_embedding_model.model_name)
+        if db_embedding_model
+        else DEFAULT_INDEX_NAME
+    )
 
-    # mark as started
+    # Mark as started
     mark_attempt_in_progress(index_attempt, db_session)
     update_connector_credential_pair(
         db_session=db_session,
@@ -105,8 +118,30 @@ def _run_indexing(
         attempt_status=IndexingStatus.IN_PROGRESS,
     )
 
-    # TODO UPDATE THIS FOR SECONDARY INDEXING
-    indexing_pipeline = build_indexing_pipeline()
+    # Indexing is only done into one index at a time
+    document_index = get_default_document_index(
+        primary_index_name=index_name, secondary_index_name=None
+    )
+
+    if db_embedding_model:
+        embedding_model = DefaultIndexingEmbedder(
+            model_name=db_embedding_model.model_name,
+            normalize=db_embedding_model.normalize,
+            query_prefix=db_embedding_model.query_prefix,
+            passage_prefix=db_embedding_model.passage_prefix,
+        )
+    else:
+        embedding_model = DefaultIndexingEmbedder(
+            model_name=DOCUMENT_ENCODER_MODEL,
+            normalize=NORMALIZE_EMBEDDINGS,
+            query_prefix=ASYM_QUERY_PREFIX,
+            passage_prefix=ASYM_PASSAGE_PREFIX,
+        )
+
+    # TODO need argument to skip docs already updated etc.
+    indexing_pipeline = build_indexing_pipeline(
+        embedder=embedding_model, document_index=document_index
+    )
 
     db_connector = index_attempt.connector
     db_credential = index_attempt.credential

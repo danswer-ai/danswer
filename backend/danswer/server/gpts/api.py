@@ -89,8 +89,7 @@ def gpt_search(
     )
 
     top_chunks, __ = full_chunk_search(
-        query=search_query,
-        document_index=document_index,
+        query=search_query, document_index=document_index, db_session=db_session
     )
 
     return GptSearchResponse(

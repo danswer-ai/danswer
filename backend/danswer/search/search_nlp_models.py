@@ -1,13 +1,12 @@
 import logging
 import os
+from enum import Enum
 from typing import Optional
 from typing import TYPE_CHECKING
 
 import numpy as np
 import requests
 
-from danswer.configs.app_configs import CURRENT_PROCESS_IS_AN_INDEXING_JOB
-from danswer.configs.app_configs import INDEXING_MODEL_SERVER_HOST
 from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import MODEL_SERVER_PORT
 from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
@@ -15,7 +14,6 @@ from danswer.configs.model_configs import CROSS_ENCODER_MODEL_ENSEMBLE
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import INTENT_MODEL_VERSION
-from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import QUERY_MAX_CONTEXT_SIZE
 from danswer.utils.logger import setup_logger
 from shared_models.model_server_models import EmbedRequest
@@ -42,6 +40,15 @@ _EMBED_MODEL: Optional["SentenceTransformer"] = None
 _RERANK_MODELS: Optional[list["CrossEncoder"]] = None
 _INTENT_TOKENIZER: Optional["AutoTokenizer"] = None
 _INTENT_MODEL: Optional["TFDistilBertForSequenceClassification"] = None
+
+
+class EmbedTextType(str, Enum):
+    QUERY = "query"
+    PASSAGE = "passage"
+
+
+def clean_model_name(model_str: str) -> str:
+    return model_str.replace("/", "_").replace("-", "_").replace(".", "_")
 
 
 def get_default_tokenizer() -> "AutoTokenizer":
@@ -142,25 +149,26 @@ def build_model_server_url(
 class EmbeddingModel:
     def __init__(
         self,
-        model_name: str = DOCUMENT_ENCODER_MODEL,
+        model_name: str,
+        query_prefix: str | None,
+        passage_prefix: str | None,
+        normalize: bool,
+        server_host: str | None,  # Changes depending on indexing or inference
+        server_port: int | None,
+        # The following are globals are currently not configurable
         max_seq_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
-        model_server_host: str | None = MODEL_SERVER_HOST,
-        indexing_model_server_host: str | None = INDEXING_MODEL_SERVER_HOST,
-        model_server_port: int = MODEL_SERVER_PORT,
-        is_indexing: bool = CURRENT_PROCESS_IS_AN_INDEXING_JOB,
     ) -> None:
         self.model_name = model_name
         self.max_seq_length = max_seq_length
+        self.query_prefix = query_prefix
+        self.passage_prefix = passage_prefix
+        self.normalize = normalize
 
-        used_model_server_host = (
-            indexing_model_server_host if is_indexing else model_server_host
-        )
-
-        model_server_url = build_model_server_url(
-            used_model_server_host, model_server_port
-        )
+        model_server_url = build_model_server_url(server_host, server_port)
         self.embed_server_endpoint = (
-            model_server_url + "/encoder/bi-encoder-embed" if model_server_url else None
+            f"{model_server_url}/encoder/{clean_model_name(model_name)}"
+            if model_server_url
+            else None
         )
 
     def load_model(self) -> Optional["SentenceTransformer"]:
@@ -171,11 +179,16 @@ class EmbeddingModel:
             model_name=self.model_name, max_context_length=self.max_seq_length
         )
 
-    def encode(
-        self, texts: list[str], normalize_embeddings: bool = NORMALIZE_EMBEDDINGS
-    ) -> list[list[float]]:
+    def encode(self, texts: list[str], text_type: EmbedTextType) -> list[list[float]]:
+        if text_type == EmbedTextType.QUERY and self.query_prefix:
+            prefixed_texts = [self.query_prefix + text for text in texts]
+        elif text_type == EmbedTextType.PASSAGE and self.passage_prefix:
+            prefixed_texts = [self.passage_prefix + text for text in texts]
+        else:
+            prefixed_texts = texts
+
         if self.embed_server_endpoint:
-            embed_request = EmbedRequest(texts=texts)
+            embed_request = EmbedRequest(texts=prefixed_texts)
 
             try:
                 response = requests.post(
@@ -194,7 +207,7 @@ class EmbeddingModel:
             raise RuntimeError("Failed to load local Embedding Model")
 
         return local_model.encode(
-            texts, normalize_embeddings=normalize_embeddings
+            prefixed_texts, normalize_embeddings=self.normalize
         ).tolist()
 
 
@@ -317,6 +330,8 @@ class IntentModel:
 
 
 def warm_up_models(
+    model_name: str,
+    normalize: bool,
     skip_cross_encoders: bool = False,
     indexer_only: bool = False,
 ) -> None:
@@ -324,9 +339,20 @@ def warm_up_models(
         "Danswer is amazing! Check out our easy deployment guide at "
         "https://docs.danswer.dev/quickstart"
     )
+
     get_default_tokenizer()(warm_up_str)
 
-    EmbeddingModel().encode(texts=[warm_up_str])
+    embed_model = EmbeddingModel(
+        model_name=model_name,
+        normalize=normalize,
+        # These don't matter, if it's a remote model, this function shouldn't be called
+        query_prefix=None,
+        passage_prefix=None,
+        server_host=None,
+        server_port=None,
+    )
+
+    embed_model.encode(texts=[warm_up_str], text_type=EmbedTextType.QUERY)
 
     if indexer_only:
         return

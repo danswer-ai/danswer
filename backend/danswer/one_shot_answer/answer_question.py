@@ -124,6 +124,7 @@ def stream_answer_objects(
     documents_generator = full_chunk_search_generator(
         search_query=retrieval_request,
         document_index=document_index,
+        db_session=db_session,
         retrieval_metrics_callback=retrieval_metrics_callback,
         rerank_metrics_callback=rerank_metrics_callback,
     )

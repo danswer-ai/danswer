@@ -296,7 +296,11 @@ def kickoff_indexing_jobs(
         return existing_jobs
 
     for attempt, embedding_model in new_indexing_attempts:
-        use_secondary_index = embedding_model.status == IndexModelStatus.FUTURE
+        use_secondary_index = (
+            embedding_model.status == IndexModelStatus.FUTURE
+            if embedding_model is not None
+            else False
+        )
         if attempt.connector is None:
             logger.warning(
                 f"Skipping index attempt as Connector has been deleted: {attempt}"

@@ -13,7 +13,9 @@ from sqlalchemy.orm import Session
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
+from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import ENABLE_RERANKING_ASYNC_FLOW
+from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.danswerbot.slack.config import get_slack_bot_config_for_channel
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
@@ -38,7 +40,9 @@ from danswer.danswerbot.slack.utils import get_danswer_bot_app_id
 from danswer.danswerbot.slack.utils import read_slack_thread
 from danswer.danswerbot.slack.utils import remove_danswer_bot_tag
 from danswer.danswerbot.slack.utils import respond_in_thread
+from danswer.db.embedding_model import get_latest_embedding_model_by_status
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.models import IndexModelStatus
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.search_nlp_models import warm_up_models
@@ -354,7 +358,22 @@ def _initialize_socket_client(socket_client: SocketModeClient) -> None:
 # NOTE: we are using Web Sockets so that you can run this from within a firewalled VPC
 # without issue.
 if __name__ == "__main__":
-    warm_up_models(skip_cross_encoders=not ENABLE_RERANKING_ASYNC_FLOW)
+    with Session(get_sqlalchemy_engine()) as db_session:
+        embedding_model = get_latest_embedding_model_by_status(
+            status=IndexModelStatus.PRESENT, db_session=db_session
+        )
+        if embedding_model:
+            model_name = embedding_model.model_name
+            normalize = embedding_model.normalize
+        else:
+            model_name = DOCUMENT_ENCODER_MODEL
+            normalize = NORMALIZE_EMBEDDINGS
+
+        warm_up_models(
+            model_name=model_name,
+            normalize=normalize,
+            skip_cross_encoders=not ENABLE_RERANKING_ASYNC_FLOW,
+        )
 
     slack_bot_tokens: SlackBotTokens | None = None
     socket_client: SocketModeClient | None = None

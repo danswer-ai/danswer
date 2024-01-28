@@ -64,7 +64,6 @@ from danswer.document_index.vespa.utils import remove_invalid_unicode_chars
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.indexing.models import InferenceChunk
 from danswer.search.models import IndexFilters
-from danswer.search.search_runner import embed_query
 from danswer.search.search_runner import query_processing
 from danswer.search.search_runner import remove_stop_words_and_punctuation
 from danswer.utils.batching import batch_generator
@@ -887,6 +886,7 @@ class VespaIndex(DocumentIndex):
     def semantic_retrieval(
         self,
         query: str,
+        query_embedding: list[float],
         filters: IndexFilters,
         time_decay_multiplier: float,
         num_to_retrieve: int = NUM_RETURNED_HITS,
@@ -905,8 +905,6 @@ class VespaIndex(DocumentIndex):
             # not working as desired
             + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
         )
-
-        query_embedding = embed_query(query)
 
         query_keywords = (
             " ".join(remove_stop_words_and_punctuation(query))
@@ -930,6 +928,7 @@ class VespaIndex(DocumentIndex):
     def hybrid_retrieval(
         self,
         query: str,
+        query_embedding: list[float],
         filters: IndexFilters,
         time_decay_multiplier: float,
         num_to_retrieve: int,
@@ -950,8 +949,6 @@ class VespaIndex(DocumentIndex):
             + 'or ({grammar: "weakAnd"}userInput(@query)) '
             + f'or ({{defaultIndex: "{CONTENT_SUMMARY}"}}userInput(@query)))'
         )
-
-        query_embedding = embed_query(query)
 
         query_keywords = (
             " ".join(remove_stop_words_and_punctuation(query))
