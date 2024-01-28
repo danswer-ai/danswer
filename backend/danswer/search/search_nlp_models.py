@@ -180,9 +180,7 @@ class EmbeddingModel:
 
         model_server_url = build_model_server_url(server_host, server_port)
         self.embed_server_endpoint = (
-            f"{model_server_url}/encoder/{clean_model_name(model_name)}"
-            if model_server_url
-            else None
+            f"{model_server_url}/encoder/bi-encoder-embed" if model_server_url else None
         )
 
     def load_model(self) -> Optional["SentenceTransformer"]:
@@ -202,7 +200,11 @@ class EmbeddingModel:
             prefixed_texts = texts
 
         if self.embed_server_endpoint:
-            embed_request = EmbedRequest(texts=prefixed_texts)
+            embed_request = EmbedRequest(
+                texts=prefixed_texts,
+                model_name=self.model_name,
+                normalize_embeddings=self.normalize,
+            )
 
             try:
                 response = requests.post(

@@ -3,7 +3,6 @@ from fastapi import HTTPException
 
 from danswer.configs.model_configs import CROSS_ENCODER_MODEL_ENSEMBLE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
-from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.search.search_nlp_models import get_local_embedding_model
 from danswer.search.search_nlp_models import get_local_reranking_model_ensemble
 from danswer.utils.logger import setup_logger
@@ -22,11 +21,9 @@ router = APIRouter(prefix="/encoder")
 
 @log_function_time(print_only=True)
 def embed_text(
-    texts: list[str],
-    normalize_embeddings: bool = NORMALIZE_EMBEDDINGS,
+    texts: list[str], model_name: str, normalize_embeddings: bool
 ) -> list[list[float]]:
-    # TODO needs updating, also with prefixes
-    model = get_local_embedding_model(model_name="intfloat/e5-base-v2")
+    model = get_local_embedding_model(model_name=model_name)
     embeddings = model.encode(texts, normalize_embeddings=normalize_embeddings)
 
     if not isinstance(embeddings, list):
@@ -50,7 +47,11 @@ def process_embed_request(
     embed_request: EmbedRequest,
 ) -> EmbedResponse:
     try:
-        embeddings = embed_text(texts=embed_request.texts)
+        embeddings = embed_text(
+            texts=embed_request.texts,
+            model_name=embed_request.model_name,
+            normalize_embeddings=embed_request.normalize_embeddings,
+        )
         return EmbedResponse(embeddings=embeddings)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -69,8 +70,8 @@ def process_rerank_request(embed_request: RerankRequest) -> RerankResponse:
 
 def warm_up_bi_encoder() -> None:
     logger.info(f"Warming up Bi-Encoders: {DOCUMENT_ENCODER_MODEL}")
-    # TODO the model server needs updating
-    get_local_embedding_model(model_name="intfloat/e5-base-v2").encode(WARM_UP_STRING)
+    # This may be the wrong model but can't know ahead of time anyway
+    get_local_embedding_model(model_name=DOCUMENT_ENCODER_MODEL).encode(WARM_UP_STRING)
 
 
 def warm_up_cross_encoders() -> None:
