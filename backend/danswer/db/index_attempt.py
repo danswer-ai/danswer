@@ -173,7 +173,7 @@ def get_latest_index_attempts(
         .where(IndexAttempt.time_created == ids_subqery.c.max_time_created)
     )
 
-    # TODO Doesn't seem to work, not sure why @Chris any thoughts?
+    # Note this does not work on the initial migration, as the join is empty
     if secondary_index:
         stmt = stmt.where(EmbeddingModel.status == IndexModelStatus.FUTURE)
     else:
