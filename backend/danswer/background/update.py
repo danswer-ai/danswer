@@ -21,6 +21,7 @@ from danswer.configs.model_configs import MIN_THREADS_ML_MODELS
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import mark_all_in_progress_cc_pairs_failed
+from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.connector_credential_pair import update_connector_credential_pair
 from danswer.db.embedding_model import get_latest_embedding_model_by_status
 from danswer.db.embedding_model import update_embedding_model_status
@@ -350,7 +351,8 @@ def check_index_swap(db_session: Session) -> None:
     connector + credential, if it's the same, then assume new index is done building.
     This does not take into consideration if the attempt failed or not"""
     # Default CC-pair created for Ingestion API unused here
-    cc_pair_count = len(get_connector_credential_pairs(db_session)) - 1
+    all_cc_pairs = get_connector_credential_pairs(db_session)
+    cc_pair_count = len(all_cc_pairs) - 1
     embedding_model = get_latest_embedding_model_by_status(
         status=IndexModelStatus.FUTURE, db_session=db_session
     )
@@ -384,6 +386,8 @@ def check_index_swap(db_session: Session) -> None:
         )
 
         # Recount aggregates
+        for cc_pair in all_cc_pairs:
+            resync_cc_pair(cc_pair)
 
 
 def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> None:
