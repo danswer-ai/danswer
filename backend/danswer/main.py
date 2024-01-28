@@ -50,9 +50,9 @@ from danswer.db.embedding_model import get_latest_embedding_model_by_status
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import IndexModelStatus
 from danswer.document_index.document_index_utils import DEFAULT_INDEX_NAME
+from danswer.document_index.document_index_utils import get_index_name_from_model
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llm
-from danswer.search.search_nlp_models import clean_model_name
 from danswer.search.search_nlp_models import warm_up_models
 from danswer.server.danswer_api.ingestion import get_danswer_api_key
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
@@ -308,12 +308,12 @@ def get_application() -> FastAPI:
             status=IndexModelStatus.FUTURE, db_session=db_session
         )
         primary_index = (
-            f"danswer_chunk_{clean_model_name(primary_embedding_model.model_name)}"
+            get_index_name_from_model(primary_embedding_model.model_name)
             if primary_embedding_model
             else DEFAULT_INDEX_NAME
         )
         second_index = (
-            f"danswer_chunk_{clean_model_name(secondary_embedding_model.model_name)}"
+            get_index_name_from_model(secondary_embedding_model.model_name)
             if secondary_embedding_model
             else None
         )

@@ -41,3 +41,10 @@ def get_latest_embedding_model_by_status(
     latest_model = result.scalars().first()
 
     return latest_model
+
+
+def update_embedding_model_status(
+    embedding_model: EmbeddingModel, new_status: IndexModelStatus, db_session: Session
+) -> None:
+    embedding_model.status = new_status
+    db_session.commit()

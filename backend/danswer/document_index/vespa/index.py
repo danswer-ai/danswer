@@ -75,6 +75,7 @@ logger = setup_logger()
 VESPA_DIM_REPLACEMENT_PAT = "VARIABLE_DIM"
 DANSWER_CHUNK_REPLACEMENT_PAT = "DANSWER_CHUNK_NAME"
 DOCUMENT_REPLACEMENT_PAT = "DOCUMENT_REPLACEMENT"
+DATE_REPLACEMENT = "DATE_REPLACEMENT"
 VESPA_CONFIG_SERVER_URL = f"http://{VESPA_HOST}:{VESPA_TENANT_PORT}"
 VESPA_APP_CONTAINER_URL = f"http://{VESPA_HOST}:{VESPA_PORT}"
 VESPA_APPLICATION_ENDPOINT = f"{VESPA_CONFIG_SERVER_URL}/application/v2"
@@ -659,6 +660,7 @@ class VespaIndex(DocumentIndex):
         )
         schema_file = os.path.join(vespa_schema_path, "schemas", "danswer_chunk.sd")
         services_file = os.path.join(vespa_schema_path, "services.xml")
+        overrides_file = os.path.join(vespa_schema_path, "validation-overrides.xml")
 
         with open(services_file, "r") as services_f:
             services_template = services_f.read()
@@ -668,8 +670,20 @@ class VespaIndex(DocumentIndex):
         doc_lines = _create_document_xml_lines(schema_names)
         services = services_template.replace(DOCUMENT_REPLACEMENT_PAT, doc_lines)
 
+        with open(overrides_file, "r") as overrides_f:
+            overrides_template = overrides_f.read()
+
+        # Vespa requires an override to erase data including the indices we're no longer using
+        # It also has a 30 day cap from current so we set it to 7 dynamically
+        now = datetime.now()
+        date_in_7_days = now + timedelta(days=7)
+        formatted_date = date_in_7_days.strftime("%Y-%m-%d")
+
+        overrides = overrides_template.replace(DATE_REPLACEMENT, formatted_date)
+
         zip_dict = {
             "services.xml": services.encode("utf-8"),
+            "validation-overrides.xml": overrides.encode("utf-8"),
         }
 
         with open(schema_file, "r") as schema_f:
