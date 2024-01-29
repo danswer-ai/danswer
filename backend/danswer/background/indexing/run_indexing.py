@@ -99,14 +99,19 @@ def _run_indexing(
     db_embedding_model = index_attempt.embedding_model
     index_name = db_embedding_model.index_name
 
+    # Only update cc-pair status for primary index jobs
+    # Secondary index syncs at the end when swapping
+    is_primary = index_attempt.embedding_model.status == IndexModelStatus.PRESENT
+
     # Mark as started
     mark_attempt_in_progress(index_attempt, db_session)
-    update_connector_credential_pair(
-        db_session=db_session,
-        connector_id=index_attempt.connector.id,
-        credential_id=index_attempt.credential.id,
-        attempt_status=IndexingStatus.IN_PROGRESS,
-    )
+    if is_primary:
+        update_connector_credential_pair(
+            db_session=db_session,
+            connector_id=index_attempt.connector.id,
+            credential_id=index_attempt.credential.id,
+            attempt_status=IndexingStatus.IN_PROGRESS,
+        )
 
     # Indexing is only done into one index at a time
     document_index = get_default_document_index(
@@ -207,14 +212,15 @@ def _run_indexing(
                 )
 
             run_end_dt = window_end
-            update_connector_credential_pair(
-                db_session=db_session,
-                connector_id=db_connector.id,
-                credential_id=db_credential.id,
-                attempt_status=IndexingStatus.IN_PROGRESS,
-                net_docs=net_doc_change,
-                run_dt=run_end_dt,
-            )
+            if is_primary:
+                update_connector_credential_pair(
+                    db_session=db_session,
+                    connector_id=db_connector.id,
+                    credential_id=db_credential.id,
+                    attempt_status=IndexingStatus.IN_PROGRESS,
+                    net_docs=net_doc_change,
+                    run_dt=run_end_dt,
+                )
         except Exception as e:
             logger.info(
                 f"Connector run ran into exception after elapsed time: {time.time() - start_time} seconds"
@@ -232,13 +238,14 @@ def _run_indexing(
                 or index_attempt.status != IndexingStatus.IN_PROGRESS
             ):
                 mark_attempt_failed(index_attempt, db_session, failure_reason=str(e))
-                update_connector_credential_pair(
-                    db_session=db_session,
-                    connector_id=index_attempt.connector.id,
-                    credential_id=index_attempt.credential.id,
-                    attempt_status=IndexingStatus.FAILED,
-                    net_docs=net_doc_change,
-                )
+                if is_primary:
+                    update_connector_credential_pair(
+                        db_session=db_session,
+                        connector_id=index_attempt.connector.id,
+                        credential_id=index_attempt.credential.id,
+                        attempt_status=IndexingStatus.FAILED,
+                        net_docs=net_doc_change,
+                    )
                 raise e
 
             # break => similar to success case. As mentioned above, if the next run fails for the same
@@ -246,14 +253,15 @@ def _run_indexing(
             break
 
     mark_attempt_succeeded(index_attempt, db_session)
-    update_connector_credential_pair(
-        db_session=db_session,
-        connector_id=db_connector.id,
-        credential_id=db_credential.id,
-        attempt_status=IndexingStatus.SUCCESS,
-        net_docs=net_doc_change,
-        run_dt=run_end_dt,
-    )
+    if is_primary:
+        update_connector_credential_pair(
+            db_session=db_session,
+            connector_id=db_connector.id,
+            credential_id=db_credential.id,
+            attempt_status=IndexingStatus.SUCCESS,
+            net_docs=net_doc_change,
+            run_dt=run_end_dt,
+        )
 
     logger.info(
         f"Indexed or refreshed {document_count} total documents for a total of {chunk_count} indexed chunks"

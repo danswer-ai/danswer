@@ -119,6 +119,7 @@ def _mark_run_failed(
     if (
         index_attempt.connector_id is not None
         and index_attempt.credential_id is not None
+        and index_attempt.embedding_model.status == IndexModelStatus.PRESENT
     ):
         update_connector_credential_pair(
             db_session=db_session,
@@ -186,7 +187,7 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
 
                     # CC-Pair will have the status that it should for the primary index
                     # Will be re-sync-ed once the indices are swapped
-                    if not model or model.status != IndexModelStatus.FUTURE:
+                    if model.status == IndexModelStatus.PRESENT:
                         update_connector_credential_pair(
                             db_session=db_session,
                             connector_id=connector.id,
