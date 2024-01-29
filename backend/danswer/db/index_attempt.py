@@ -143,7 +143,12 @@ def get_latest_index_attempts(
         IndexAttempt.connector_id,
         IndexAttempt.credential_id,
         func.max(IndexAttempt.time_created).label("max_time_created"),
-    )
+    ).join(EmbeddingModel, IndexAttempt.embedding_model_id == EmbeddingModel.id)
+
+    if secondary_index:
+        ids_stmt = ids_stmt.where(EmbeddingModel.status == IndexModelStatus.FUTURE)
+    else:
+        ids_stmt = ids_stmt.where(EmbeddingModel.status == IndexModelStatus.PRESENT)
 
     where_stmts: list[ColumnElement] = []
     for connector_credential_pair_identifier in connector_credential_pair_identifiers:
@@ -169,15 +174,8 @@ def get_latest_index_attempts(
                 ids_subqery.c.credential_id == IndexAttempt.credential_id,
             ),
         )
-        .join(EmbeddingModel, IndexAttempt.embedding_model_id == EmbeddingModel.id)
         .where(IndexAttempt.time_created == ids_subqery.c.max_time_created)
     )
-
-    # Note this does not work on the initial migration, as the join is empty
-    if secondary_index:
-        stmt = stmt.where(EmbeddingModel.status == IndexModelStatus.FUTURE)
-    else:
-        stmt = stmt.where(EmbeddingModel.status == IndexModelStatus.PRESENT)
 
     return db_session.execute(stmt).scalars().all()
 
