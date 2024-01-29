@@ -1,3 +1,4 @@
+import gc
 import logging
 import os
 from enum import Enum
@@ -62,6 +63,10 @@ def get_default_tokenizer(model_name: str | None = None) -> "AutoTokenizer":
     if _TOKENIZER[0] is None or (
         _TOKENIZER[1] is not None and _TOKENIZER[1] != model_name
     ):
+        if _TOKENIZER[0] is not None:
+            del _TOKENIZER
+            gc.collect()
+
         if model_name is None:
             # This could be inaccurate
             model_name = DOCUMENT_ENCODER_MODEL
@@ -88,6 +93,10 @@ def get_local_embedding_model(
         or max_context_length != _EMBED_MODEL[0].max_seq_length
         or model_name != _EMBED_MODEL[1]
     ):
+        if _EMBED_MODEL[0] is not None:
+            del _EMBED_MODEL
+            gc.collect()
+
         logger.info(f"Loading {model_name}")
         _EMBED_MODEL = (SentenceTransformer(model_name), model_name)
         _EMBED_MODEL[0].max_seq_length = max_context_length
