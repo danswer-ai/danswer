@@ -1,11 +1,10 @@
 import math
 import uuid
-from typing import cast
 
-from danswer.configs.constants import CURRENT_EMBEDDING_MODEL
-from danswer.configs.constants import UPCOMING_EMBEDDING_MODEL
-from danswer.dynamic_configs import get_dynamic_config_store
-from danswer.dynamic_configs.interface import ConfigNotFoundError
+from sqlalchemy.orm import Session
+
+from danswer.db.embedding_model import get_latest_embedding_model_by_status
+from danswer.db.models import IndexModelStatus
 from danswer.indexing.models import IndexChunk
 from danswer.indexing.models import InferenceChunk
 
@@ -17,34 +16,43 @@ def clean_model_name(model_str: str) -> str:
     return model_str.replace("/", "_").replace("-", "_").replace(".", "_")
 
 
-def get_index_name(secondary_index: bool = False) -> str:
-    # TODO make this more efficient if needed
-    kv_store = get_dynamic_config_store()
-    if not secondary_index:
-        try:
-            embed_model = cast(str, kv_store.load(CURRENT_EMBEDDING_MODEL))
-            return f"danswer_chunk_{clean_model_name(embed_model)}"
-        except ConfigNotFoundError:
-            return "danswer_chunk"
+def get_index_name(
+    db_session: Session,
+    secondary_index: bool = False,
+) -> str:
+    if secondary_index:
+        model = get_latest_embedding_model_by_status(
+            status=IndexModelStatus.FUTURE, db_session=db_session
+        )
+        if model is None:
+            raise RuntimeError("No secondary index being built")
+        return f"danswer_chunk_{clean_model_name(model.model_name)}"
 
-    embed_model = cast(str, kv_store.load(UPCOMING_EMBEDDING_MODEL))
-    return f"danswer_chunk_{clean_model_name(embed_model)}"
+    model = get_latest_embedding_model_by_status(
+        status=IndexModelStatus.PRESENT, db_session=db_session
+    )
+    if not model:
+        return "danswer_chunk"
+    return f"danswer_chunk_{clean_model_name(model.model_name)}"
 
 
-def get_both_index_names() -> list[str]:
-    kv_store = get_dynamic_config_store()
-    try:
-        embed_model = cast(str, kv_store.load(CURRENT_EMBEDDING_MODEL))
-        indices = [f"danswer_chunk_{clean_model_name(embed_model)}"]
-    except ConfigNotFoundError:
-        indices = ["danswer_chunk"]
+def get_both_index_names(db_session: Session) -> tuple[str, str | None]:
+    model = get_latest_embedding_model_by_status(
+        status=IndexModelStatus.PRESENT, db_session=db_session
+    )
+    curr_index = (
+        "danswer_chunk"
+        if not model
+        else f"danswer_chunk_{clean_model_name(model.model_name)}"
+    )
 
-    try:
-        embed_model = cast(str, kv_store.load(UPCOMING_EMBEDDING_MODEL))
-        indices.append(f"danswer_chunk_{clean_model_name(embed_model)}")
-        return indices
-    except ConfigNotFoundError:
-        return indices
+    model_new = get_latest_embedding_model_by_status(
+        status=IndexModelStatus.FUTURE, db_session=db_session
+    )
+    if not model_new:
+        return curr_index, None
+
+    return curr_index, f"danswer_chunk_{clean_model_name(model_new.model_name)}"
 
 
 def translate_boost_count_to_multiplier(boost: int) -> float:

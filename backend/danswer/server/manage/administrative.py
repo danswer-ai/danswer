@@ -18,6 +18,7 @@ from danswer.db.feedback import fetch_docs_ranked_by_boost
 from danswer.db.feedback import update_document_boost
 from danswer.db.feedback import update_document_hidden
 from danswer.db.models import User
+from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
@@ -68,12 +69,17 @@ def document_boost_update(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
+    curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+    document_index = get_default_document_index(
+        primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+    )
+
     try:
         update_document_boost(
             db_session=db_session,
             document_id=boost_update.document_id,
             boost=boost_update.boost,
-            document_index=get_default_document_index(),
+            document_index=document_index,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -85,12 +91,17 @@ def document_hidden_update(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
+    curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+    document_index = get_default_document_index(
+        primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+    )
+
     try:
         update_document_hidden(
             db_session=db_session,
             document_id=hidden_update.document_id,
             hidden=hidden_update.hidden,
-            document_index=get_default_document_index(),
+            document_index=document_index,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -208,7 +219,7 @@ def create_deletion_attempt_for_connector_id(
         raise HTTPException(
             status_code=400,
             detail=f"Connector with ID '{connector_id}' and credential ID "
-            f"'{credential_id}' is not deletable. It must be both disabled AND have"
+            f"'{credential_id}' is not deletable. It must be both disabled AND have "
             "no ongoing / planned indexing attempts.",
         )
 

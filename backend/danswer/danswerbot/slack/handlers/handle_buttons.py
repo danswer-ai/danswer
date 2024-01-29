@@ -27,6 +27,7 @@ from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.feedback import create_chat_message_feedback
 from danswer.db.feedback import create_doc_retrieval_feedback
+from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.utils.logger import setup_logger
 
@@ -102,11 +103,16 @@ def handle_slack_feedback(
             else:
                 feedback = SearchFeedbackType.HIDE
 
+            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+            document_index = get_default_document_index(
+                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+            )
+
             create_doc_retrieval_feedback(
                 message_id=message_id,
                 document_id=doc_id,
                 document_rank=doc_rank,
-                document_index=get_default_document_index(),
+                document_index=document_index,
                 db_session=db_session,
                 clicked=False,  # Not tracking this for Slack
                 feedback=feedback,

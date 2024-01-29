@@ -40,6 +40,8 @@ import { ResizableSection } from "@/components/resizable/ResizableSection";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { ChatIntro } from "./ChatIntro";
 import { HEADER_PADDING } from "@/lib/constants";
+import { getSourcesForPersona } from "@/lib/sources";
+import { computeAvailableFilters } from "@/lib/filters";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -146,10 +148,10 @@ export const Chat = ({
           (persona) => persona.id === existingChatSessionPersonaId
         )
       : defaultSelectedPersonaId !== undefined
-      ? availablePersonas.find(
-          (persona) => persona.id === defaultSelectedPersonaId
-        )
-      : undefined
+        ? availablePersonas.find(
+            (persona) => persona.id === defaultSelectedPersonaId
+          )
+        : undefined
   );
   const livePersona = selectedPersona || availablePersonas[0];
 
@@ -164,6 +166,12 @@ export const Chat = ({
   }, [defaultSelectedPersonaId]);
 
   const filterManager = useFilters();
+  const [finalAvailableSources, finalAvailableDocumentSets] =
+    computeAvailableFilters({
+      selectedPersona,
+      availableSources,
+      availableDocumentSets,
+    });
 
   // state for cancelling streaming
   const [isCancelled, setIsCancelled] = useState(false);
@@ -461,7 +469,7 @@ export const Chat = ({
                 !isFetchingChatMessages &&
                 !isStreaming && (
                   <ChatIntro
-                    availableSources={availableSources}
+                    availableSources={finalAvailableSources}
                     availablePersonas={availablePersonas}
                     selectedPersona={selectedPersona}
                     handlePersonaSelect={(persona) => {
@@ -616,8 +624,8 @@ export const Chat = ({
                     ) : (
                       <ChatFilters
                         {...filterManager}
-                        existingSources={availableSources}
-                        availableDocumentSets={availableDocumentSets}
+                        existingSources={finalAvailableSources}
+                        availableDocumentSets={finalAvailableDocumentSets}
                         availableTags={availableTags}
                       />
                     )}

@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.db.engine import get_session
+from danswer.document_index.document_index_utils import get_index_name
 from danswer.document_index.factory import get_default_document_index
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.models import IndexFilters
@@ -83,9 +84,13 @@ def gpt_search(
         skip_llm_chunk_filter=True,
     )
 
+    document_index = get_default_document_index(
+        primary_index_name=get_index_name(db_session), secondary_index_name=None
+    )
+
     top_chunks, __ = full_chunk_search(
         query=search_query,
-        document_index=get_default_document_index(),
+        document_index=document_index,
     )
 
     return GptSearchResponse(
