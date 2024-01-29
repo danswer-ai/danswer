@@ -1,15 +1,25 @@
+import base64
+import io
 import os
+import tempfile
 from datetime import datetime
 from datetime import timezone
 from typing import Any
 from typing import List
 from typing import Optional
 
+import docx  # type: ignore
+import openpyxl  # type: ignore
+import pptx  # type: ignore
 from bs4 import BeautifulSoup
-from O365 import Account
+from O365 import Account  # type: ignore
+from O365.mailbox import MailBox  # type: ignore
+from O365.message import Message  # type: ignore
+from O365.message import MessageAttachment  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -20,9 +30,87 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
 
-# Could not find a stubs file for this library
+UNSUPPORTED_FILE_TYPE_CONTENT = ""  # idea copied from the google drive side of thingsy
+# Supported file types
+SUPPORTED_FILE_TYPES = [".docx", ".xlsx", ".pptx", ".txt", ".pdf"]
 
 logger = setup_logger()
+
+
+def get_text_from_xlsx_attachment(attachment_object: MessageAttachment) -> str:
+    decoded_content = base64.b64decode(attachment_object.content)
+    file_content = decoded_content
+    logger.info(f"Proccessing XLXS Attachment: {attachment_object.name}")
+    excel_file = io.BytesIO(file_content)
+    workbook = openpyxl.load_workbook(excel_file, read_only=True)
+
+    full_text = []
+    for sheet in workbook.worksheets:
+        for row in sheet.iter_rows(min_row=1, values_only=True):
+            # Check if the row is not completely empty
+            if any(cell is not None for cell in row):
+                row_string = ",".join(
+                    map(lambda x: str(x) if x is not None else "", row)
+                )
+                # Speed up indexing and AI can handle not having all the empty cells
+                row_string = row_string.replace(",,", "")
+                full_text.append(row_string)
+
+    return "\n".join(full_text)
+
+
+def get_text_from_docx_attachment(attachment_object: MessageAttachment) -> str:
+    decoded_content = base64.b64decode(attachment_object.content)
+    file_content = decoded_content
+    full_text = []
+    logger.info(f"Proccessing DOCX Attachment: {attachment_object.name}")
+    with tempfile.TemporaryDirectory() as local_path:
+        with open(os.path.join(local_path, attachment_object.name), "wb") as local_file:
+            local_file.write(file_content)
+            doc = docx.Document(local_file.name)
+            for para in doc.paragraphs:
+                full_text.append(para.text)
+            for table in doc.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        full_text.append(cell.text)
+
+    return "\n".join(full_text)
+
+
+def get_text_from_pdf_attachment(attachment_object: MessageAttachment) -> str:
+    decoded_content = base64.b64decode(attachment_object.content)
+    file_content = decoded_content
+    logger.info(f"Proccessing PDF Attachment: {attachment_object.name}")
+    file_text = read_pdf_file(
+        file=io.BytesIO(file_content), file_name=attachment_object.name
+    )
+    return file_text
+
+
+def get_text_from_txt_attachment(attachment_object: MessageAttachment) -> str:
+    decoded_content = base64.b64decode(attachment_object.content)
+    logger.info(f"Proccessing TXT Attachment: {attachment_object.name}")
+    text_string = decoded_content.decode("utf-8")
+    return text_string
+
+
+def get_text_from_pptx_attachment(attachment_object: MessageAttachment) -> str:
+    decoded_content = base64.b64decode(attachment_object.content)
+    file_content = decoded_content
+    logger.info(f"Proccessing PPTX Attachment: {attachment_object.name}")
+    pptx_stream = io.BytesIO(file_content)
+
+    presentation = pptx.Presentation(pptx_stream)
+    extracted_text = ""
+    for slide_number, slide in enumerate(presentation.slides, start=1):
+        extracted_text += f"\nSlide {slide_number}:\n"
+
+        for shape in slide.shapes:
+            if hasattr(shape, "text"):
+                extracted_text += shape.text + "\n"
+
+    return extracted_text
 
 
 class ExchangeConnector(LoadConnector, PollConnector):
@@ -73,7 +161,7 @@ class ExchangeConnector(LoadConnector, PollConnector):
         categories: Optional[List[str]] = None,
         folders: Optional[List[str]] = None,
     ) -> list:
-        emails = []
+        emails: Message = []
         mailbox = self.account.mailbox()
         # Todo: Add support for pagination
 
@@ -149,7 +237,7 @@ class ExchangeConnector(LoadConnector, PollConnector):
 
         return emails
 
-    def get_folder_id(self, mailbox, folder_path: str) -> str:
+    def get_folder_id(self, mailbox: MailBox, folder_path: str) -> str:
         logger.info(f"Fetching Folder ID for: {folder_path}")
         # Split the path into a list of folders
         folders = folder_path.split("/")
@@ -164,9 +252,9 @@ class ExchangeConnector(LoadConnector, PollConnector):
         if folder:
             return folder.folder_id
         else:
-            return None
+            return ""
 
-    def clean_html(self, html):
+    def clean_html(self, html: str) -> str:
         # Remove HTML tags
         soup = BeautifulSoup(html, "html.parser")
         # Remove unnecessary tags
@@ -213,10 +301,32 @@ class ExchangeConnector(LoadConnector, PollConnector):
             if batch_count >= self.batch_size or total_count >= len(email_object_list):
                 yield doc_batch
                 batch_count = 0
-                doc_batch: list[Document] = []
+                doc_batch = []
+
+        doc_batch = []
+        # Attachments
+        batch_count = 0
+        total_count = 0
+        for email in email_object_list:
+            # Save Memory and Only download the attachments if there are any
+            if email.has_attachments:
+                email.attachments.download_attachments()
+                for attachment in email.attachments:
+                    if attachment.name.endswith(tuple(SUPPORTED_FILE_TYPES)):
+                        doc_batch.append(
+                            self.convert_attachment_to_document(attachment, email)
+                        )
+
+            batch_count += 1
+            total_count += 1
+            # Reached batch size or end of email list
+            if batch_count >= self.batch_size or total_count >= len(email_object_list):
+                yield doc_batch
+                batch_count = 0
+                doc_batch = []
         # yield doc_batch
 
-    def convert_email_to_document(self, email) -> Document:
+    def convert_email_to_document(self, email: Message) -> Document:
         # Get the email
         subject = email.subject
 
@@ -274,8 +384,43 @@ class ExchangeConnector(LoadConnector, PollConnector):
             metadata={},
         )
 
-        # Todo: handle attachments
         # Todo: handle calanders
+
+        return document
+
+    def convert_attachment_to_document(
+        self, attachment: MessageAttachment, email: Message
+    ) -> Document:
+        # Check attachment mime type
+        attachment_text = UNSUPPORTED_FILE_TYPE_CONTENT
+        # If it is a pdf, convert to text
+        if attachment.name.endswith(".pdf"):
+            attachment_text = get_text_from_pdf_attachment(attachment)
+        elif attachment.name.endswith(".xlsx"):
+            attachment_text = get_text_from_xlsx_attachment(attachment)
+        elif attachment.name.endswith(".docx"):
+            attachment_text = get_text_from_docx_attachment(attachment)
+        elif attachment.name.endswith(".txt"):
+            attachment_text = get_text_from_txt_attachment(attachment)
+        elif attachment.name.endswith(".pptx"):
+            attachment_text = get_text_from_pptx_attachment(attachment)
+
+        # Documents with the same name can be sent multiple times so adding recieved date to identity
+        date = email.received.strftime("%Y-%m-%d %H:%M:%S")
+        sender = email.sender.address
+        symantic_identifier = f"Attachment: {attachment.name} - {date}"
+        id = attachment.attachment_id
+        # Todo, link direct to attachment
+        link = f"https://outlook.office.com/owa/?ItemID={email.object_id}&viewmodel=ReadMessageItem&path=&exvsurl=1"
+        document = Document(
+            id=id,
+            sections=[Section(link=link, text=attachment_text)],
+            source=DocumentSource.EXCHANGE,
+            semantic_identifier=symantic_identifier,
+            doc_updated_at=email.modified.replace(tzinfo=timezone.utc),
+            primary_owners=[BasicExpertInfo(email=sender)],
+            metadata={},
+        )
 
         return document
 
