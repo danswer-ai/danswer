@@ -33,9 +33,6 @@ from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.constants import AuthType
-from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
-from danswer.configs.model_configs import ASYM_QUERY_PREFIX
-from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
@@ -245,17 +242,19 @@ def get_application() -> FastAPI:
                 f"Using multilingual flow with languages: {MULTILINGUAL_QUERY_EXPANSION}"
             )
 
-        if ENABLE_RERANKING_REAL_TIME_FLOW:
-            logger.info("Reranking step of search flow is enabled.")
-
-        logger.info(f'Using Embedding model: "{DOCUMENT_ENCODER_MODEL}"')
-        if ASYM_QUERY_PREFIX or ASYM_PASSAGE_PREFIX:
-            logger.info(f'Query embedding prefix: "{ASYM_QUERY_PREFIX}"')
-            logger.info(f'Passage embedding prefix: "{ASYM_PASSAGE_PREFIX}"')
-
         with Session(get_sqlalchemy_engine()) as db_session:
             db_embedding_model = get_current_db_embedding_model(db_session)
             secondary_db_embedding_model = get_secondary_db_embedding_model(db_session)
+
+        if ENABLE_RERANKING_REAL_TIME_FLOW:
+            logger.info("Reranking step of search flow is enabled.")
+
+        logger.info(f'Using Embedding model: "{db_embedding_model.model_name}"')
+        if db_embedding_model.query_prefix or db_embedding_model.passage_prefix:
+            logger.info(f'Query embedding prefix: "{db_embedding_model.query_prefix}"')
+            logger.info(
+                f'Passage embedding prefix: "{db_embedding_model.passage_prefix}"'
+            )
 
         if MODEL_SERVER_HOST:
             logger.info(

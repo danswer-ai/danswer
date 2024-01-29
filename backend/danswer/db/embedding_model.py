@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexModelStatus
 from danswer.indexing.models import EmbeddingModelDetail
+from danswer.search.search_nlp_models import clean_model_name
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -21,6 +22,9 @@ def create_embedding_model(
         query_prefix=model_details.query_prefix,
         passage_prefix=model_details.passage_prefix,
         status=status,
+        # Every single embedding model except the initial one from migrations has this name
+        # The initial one from migration is called "danswer_chunk"
+        index_name=f"danswer_chunk_{clean_model_name(model_details.model_name)}",
     )
 
     db_session.add(embedding_model)

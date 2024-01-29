@@ -218,14 +218,6 @@ def build_indexing_pipeline(
     """Builds a pipline which takes in a list (batch) of docs and indexes them."""
     chunker = chunker or DefaultChunker()
 
-    """
-    if not document_index:
-        with Session(get_sqlalchemy_engine()) as db_session:
-            document_index = get_default_document_index(
-                primary_index_name=get_index_name(db_session), secondary_index_name=None
-            )
-    """
-
     return partial(
         index_doc_batch,
         chunker=chunker,

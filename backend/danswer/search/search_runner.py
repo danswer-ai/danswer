@@ -15,12 +15,8 @@ from danswer.configs.app_configs import MODEL_SERVER_PORT
 from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.chat_configs import NUM_RERANKED_RESULTS
-from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
-from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
-from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
-from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import SIM_SCORE_RANGE_HIGH
 from danswer.configs.model_configs import SIM_SCORE_RANGE_LOW
 from danswer.db.embedding_model import get_current_db_embedding_model
@@ -153,18 +149,10 @@ def doc_index_retrieval(
         db_embedding_model = get_current_db_embedding_model(db_session)
 
         model = EmbeddingModel(
-            model_name=db_embedding_model.model_name
-            if db_embedding_model is not None
-            else DOCUMENT_ENCODER_MODEL,
-            query_prefix=db_embedding_model.query_prefix
-            if db_embedding_model is not None
-            else ASYM_QUERY_PREFIX,
-            passage_prefix=db_embedding_model.passage_prefix
-            if db_embedding_model is not None
-            else ASYM_PASSAGE_PREFIX,
-            normalize=db_embedding_model.normalize
-            if db_embedding_model is not None
-            else NORMALIZE_EMBEDDINGS,
+            model_name=db_embedding_model.model_name,
+            query_prefix=db_embedding_model.query_prefix,
+            passage_prefix=db_embedding_model.passage_prefix,
+            normalize=db_embedding_model.normalize,
             # The below are globally set, this flow always uses the indexing one
             server_host=MODEL_SERVER_HOST,
             server_port=MODEL_SERVER_PORT,

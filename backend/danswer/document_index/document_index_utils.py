@@ -7,15 +7,10 @@ from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.indexing.models import IndexChunk
 from danswer.indexing.models import InferenceChunk
-from danswer.search.search_nlp_models import clean_model_name
 
 
 DEFAULT_BATCH_SIZE = 30
 DEFAULT_INDEX_NAME = "danswer_chunk"
-
-
-def get_index_name_from_model(model_name: str) -> str:
-    return f"danswer_chunk_{clean_model_name(model_name)}"
 
 
 def get_both_index_names(db_session: Session) -> tuple[str, str | None]:

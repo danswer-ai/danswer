@@ -6,12 +6,8 @@ from sqlalchemy.orm import Session
 from danswer.configs.app_configs import ENABLE_MINI_CHUNK
 from danswer.configs.app_configs import INDEXING_MODEL_SERVER_HOST
 from danswer.configs.app_configs import MODEL_SERVER_PORT
-from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
-from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
-from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
-from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.models import EmbeddingModel as DbEmbeddingModel
@@ -49,10 +45,10 @@ class IndexingEmbedder(ABC):
 class DefaultIndexingEmbedder(IndexingEmbedder):
     def __init__(
         self,
-        model_name: str = DOCUMENT_ENCODER_MODEL,
-        normalize: bool = NORMALIZE_EMBEDDINGS,
-        query_prefix: str | None = ASYM_QUERY_PREFIX,
-        passage_prefix: str | None = ASYM_PASSAGE_PREFIX,
+        model_name: str,
+        normalize: bool,
+        query_prefix: str | None,
+        passage_prefix: str | None,
     ):
         super().__init__(model_name, normalize, query_prefix, passage_prefix)
         self.max_seq_length = DOC_EMBEDDING_CONTEXT_SIZE  # Currently not customizable
