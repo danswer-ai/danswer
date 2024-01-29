@@ -1,9 +1,9 @@
-import nltk
 import time
 from threading import Event
 from typing import Any
 from typing import cast
 
+import nltk  # type: ignore
 from slack_sdk import WebClient
 from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
@@ -369,7 +369,7 @@ if __name__ == "__main__":
 
     logger.info("Verifying query preprocessing (NLTK) data is downloaded")
     nltk.download("stopwords", quiet=True)
-    nltk.download('punkt', quiet=True)
+    nltk.download("punkt", quiet=True)
 
     while True:
         try:
