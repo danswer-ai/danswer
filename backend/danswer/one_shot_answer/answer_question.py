@@ -1,6 +1,6 @@
+import itertools
 from collections.abc import Callable
 from collections.abc import Iterator
-import itertools
 from typing import cast
 
 from sqlalchemy.orm import Session
@@ -237,17 +237,16 @@ def stream_answer_objects(
         contexts = DanswerContexts(
             contexts=[
                 DanswerContext(
-                        content=context_doc.content,
-                        document_id=context_doc.document_id,
-                        semantic_identifier=context_doc.semantic_identifier,
-                        blurb=context_doc.semantic_identifier,
+                    content=context_doc.content,
+                    document_id=context_doc.document_id,
+                    semantic_identifier=context_doc.semantic_identifier,
+                    blurb=context_doc.semantic_identifier,
                 )
                 for context_doc in llm_chunks
             ]
         )
 
         response_packets = itertools.chain(response_packets, [contexts])
-
 
     # Capture outputs and errors
     llm_output = ""
@@ -337,7 +336,7 @@ def get_search_answer(
         elif isinstance(packet, DanswerQuotes):
             qa_response.quotes = packet
         elif isinstance(packet, DanswerContexts):
-            qa_response.quotes = packet
+            qa_response.contexts = packet
         elif isinstance(packet, StreamingError):
             qa_response.error_msg = packet.error
         elif isinstance(packet, ChatMessageDetail):

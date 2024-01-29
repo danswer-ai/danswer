@@ -22,6 +22,5 @@ class QAModel:
         prompt: str,
         llm_context_docs: list[InferenceChunk],
         metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,
-        return_contexts: bool = False,
     ) -> AnswerQuestionStreamReturn:
         raise NotImplementedError
