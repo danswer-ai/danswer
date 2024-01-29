@@ -120,9 +120,10 @@ def _run_indexing(
         passage_prefix=db_embedding_model.passage_prefix,
     )
 
-    # TODO need argument to skip docs already updated etc.
     indexing_pipeline = build_indexing_pipeline(
-        embedder=embedding_model, document_index=document_index
+        embedder=embedding_model,
+        document_index=document_index,
+        ignore_time_skip=(db_embedding_model.status == IndexModelStatus.FUTURE),
     )
 
     db_connector = index_attempt.connector
