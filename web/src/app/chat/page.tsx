@@ -146,12 +146,12 @@ export default async function Page({
       <InstantSSRAutoRefresh />
       <ApiKeyModal />
 
-      {connectors.length === 0 && (
+      {connectors.length === 0 ? (
         <WelcomeModal embeddingModelName={embeddingModelName} />
-      )}
-
-      {!checkModelNameIsValid(embeddingModelName) && (
-        <SwitchModelModal embeddingModelName={embeddingModelName} />
+      ) : (
+        !checkModelNameIsValid(embeddingModelName) && (
+          <SwitchModelModal embeddingModelName={embeddingModelName} />
+        )
       )}
 
       <ChatLayout

@@ -128,12 +128,12 @@ export default async function Home() {
       <ApiKeyModal />
       <InstantSSRAutoRefresh />
 
-      {connectors.length === 0 && connectorsResponse?.ok && (
+      {connectors.length === 0 ? (
         <WelcomeModal embeddingModelName={embeddingModelName} />
-      )}
-
-      {!checkModelNameIsValid(embeddingModelName) && (
-        <SwitchModelModal embeddingModelName={embeddingModelName} />
+      ) : (
+        !checkModelNameIsValid(embeddingModelName) && (
+          <SwitchModelModal embeddingModelName={embeddingModelName} />
+        )
       )}
 
       <div className="px-24 pt-10 flex flex-col items-center min-h-screen">
