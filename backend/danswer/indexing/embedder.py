@@ -12,7 +12,9 @@ from danswer.configs.model_configs import BATCH_SIZE_ENCODE_CHUNKS
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
-from danswer.db.embedding_model import get_latest_embedding_model_by_status
+from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.embedding_model import get_secondary_db_embedding_model
+from danswer.db.models import EmbeddingModel as DbEmbeddingModel
 from danswer.db.models import IndexModelStatus
 from danswer.indexing.chunker import split_chunk_text_into_mini_chunks
 from danswer.indexing.models import ChunkEmbedding
@@ -141,21 +143,19 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
 def get_embedding_model_from_db_embedding_model(
     db_session: Session, index_model_status: IndexModelStatus = IndexModelStatus.PRESENT
 ) -> IndexingEmbedder:
-    db_embedding_model = get_latest_embedding_model_by_status(
-        status=index_model_status, db_session=db_session
-    )
-
-    if db_embedding_model:
-        return DefaultIndexingEmbedder(
-            model_name=db_embedding_model.model_name,
-            normalize=db_embedding_model.normalize,
-            query_prefix=db_embedding_model.query_prefix,
-            passage_prefix=db_embedding_model.passage_prefix,
-        )
+    db_embedding_model: DbEmbeddingModel | None
+    if index_model_status == IndexModelStatus.PRESENT:
+        db_embedding_model = get_current_db_embedding_model(db_session)
+    elif index_model_status == IndexModelStatus.FUTURE:
+        db_embedding_model = get_secondary_db_embedding_model(db_session)
+        if not db_embedding_model:
+            raise RuntimeError("No secondary index configured")
     else:
-        return DefaultIndexingEmbedder(
-            model_name=DOCUMENT_ENCODER_MODEL,
-            normalize=NORMALIZE_EMBEDDINGS,
-            query_prefix=ASYM_QUERY_PREFIX,
-            passage_prefix=ASYM_PASSAGE_PREFIX,
-        )
+        raise RuntimeError("Not supporting embedding model rollbacks")
+
+    return DefaultIndexingEmbedder(
+        model_name=db_embedding_model.model_name,
+        normalize=db_embedding_model.normalize,
+        query_prefix=db_embedding_model.query_prefix,
+        passage_prefix=db_embedding_model.passage_prefix,
+    )

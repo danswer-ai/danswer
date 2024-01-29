@@ -23,7 +23,8 @@ from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import mark_all_in_progress_cc_pairs_failed
 from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.connector_credential_pair import update_connector_credential_pair
-from danswer.db.embedding_model import get_latest_embedding_model_by_status
+from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.embedding_model import update_embedding_model_status
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
@@ -65,11 +66,11 @@ def _get_num_threads() -> int:
 def _should_create_new_indexing(
     connector: Connector,
     last_index: IndexAttempt | None,
-    model: EmbeddingModel | None,
+    model: EmbeddingModel,
     db_session: Session,
 ) -> bool:
     # When switching over models, always index at least once
-    if model is not None and model.status == IndexModelStatus.FUTURE and not last_index:
+    if model.status == IndexModelStatus.FUTURE and not last_index:
         if connector.id == 0:  # Ingestion API
             return False
         return True
@@ -137,7 +138,7 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
     3. There is not already an ongoing indexing attempt for this pair
     """
     with Session(get_sqlalchemy_engine()) as db_session:
-        ongoing: set[tuple[int | None, int | None, int | None]] = set()
+        ongoing: set[tuple[int | None, int | None, int]] = set()
         for attempt_id in existing_jobs:
             attempt = get_index_attempt(
                 db_session=db_session, index_attempt_id=attempt_id
@@ -156,14 +157,8 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
                 )
             )
 
-        embedding_models = [
-            get_latest_embedding_model_by_status(
-                status=IndexModelStatus.PRESENT, db_session=db_session
-            )
-        ]
-        secondary_embedding_model = get_latest_embedding_model_by_status(
-            status=IndexModelStatus.FUTURE, db_session=db_session
-        )
+        embedding_models = [get_current_db_embedding_model(db_session)]
+        secondary_embedding_model = get_secondary_db_embedding_model(db_session)
         if secondary_embedding_model is not None:
             embedding_models.append(secondary_embedding_model)
 
@@ -171,16 +166,14 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
         for connector in all_connectors:
             for association in connector.credentials:
                 for model in embedding_models:
-                    model_id = model.id if model else None
-
                     credential = association.credential
 
                     # Check if there is an ongoing indexing attempt for this connector + credential pair
-                    if (connector.id, credential.id, model_id) in ongoing:
+                    if (connector.id, credential.id, model.id) in ongoing:
                         continue
 
                     last_attempt = get_last_attempt(
-                        connector.id, credential.id, model_id, db_session
+                        connector.id, credential.id, model.id, db_session
                     )
                     if not _should_create_new_indexing(
                         connector, last_attempt, model, db_session
@@ -188,7 +181,7 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
                         continue
 
                     create_index_attempt(
-                        connector.id, credential.id, model_id, db_session
+                        connector.id, credential.id, model.id, db_session
                     )
 
                     # CC-Pair will have the status that it should for the primary index
@@ -353,9 +346,7 @@ def check_index_swap(db_session: Session) -> None:
     # Default CC-pair created for Ingestion API unused here
     all_cc_pairs = get_connector_credential_pairs(db_session)
     cc_pair_count = len(all_cc_pairs) - 1
-    embedding_model = get_latest_embedding_model_by_status(
-        status=IndexModelStatus.FUTURE, db_session=db_session
-    )
+    embedding_model = get_secondary_db_embedding_model(db_session)
 
     if not embedding_model:
         return
@@ -369,15 +360,12 @@ def check_index_swap(db_session: Session) -> None:
 
     if cc_pair_count == unique_cc_indexings:
         # Swap indices
-        now_old_embedding_model = get_latest_embedding_model_by_status(
-            status=IndexModelStatus.PRESENT, db_session=db_session
+        now_old_embedding_model = get_current_db_embedding_model(db_session)
+        update_embedding_model_status(
+            embedding_model=now_old_embedding_model,
+            new_status=IndexModelStatus.PAST,
+            db_session=db_session,
         )
-        if now_old_embedding_model is not None:
-            update_embedding_model_status(
-                embedding_model=now_old_embedding_model,
-                new_status=IndexModelStatus.PAST,
-                db_session=db_session,
-            )
 
         update_embedding_model_status(
             embedding_model=embedding_model,

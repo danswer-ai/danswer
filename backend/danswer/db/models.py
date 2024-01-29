@@ -379,6 +379,7 @@ class EmbeddingModel(Base):
     query_prefix: Mapped[str] = mapped_column(String)
     passage_prefix: Mapped[str] = mapped_column(String)
     status: Mapped[IndexModelStatus] = mapped_column(Enum(IndexModelStatus))
+    index_name: Mapped[str] = mapped_column(String)
 
     index_attempts: Mapped[List["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="embedding_model"
@@ -426,9 +427,9 @@ class IndexAttempt(Base):
         Text, default=None
     )  # only filled if status = "failed"
     # Nullable because in the past, we didn't allow swapping out embedding models live
-    embedding_model_id: Mapped[int | None] = mapped_column(
+    embedding_model_id: Mapped[int] = mapped_column(
         ForeignKey("embedding_model.id"),
-        nullable=True,
+        nullable=False,
     )
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),

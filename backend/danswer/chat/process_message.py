@@ -32,11 +32,11 @@ from danswer.db.chat import get_doc_query_identifiers_from_model
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
+from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.models import ChatMessage
 from danswer.db.models import Persona
 from danswer.db.models import SearchDoc as DbSearchDoc
 from danswer.db.models import User
-from danswer.document_index.document_index_utils import get_index_name
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.exceptions import GenAIDisabledException
@@ -196,8 +196,10 @@ def stream_chat_message(
             llm = None
 
         llm_tokenizer = get_default_llm_token_encode()
+
+        embedding_model = get_current_db_embedding_model(db_session)
         document_index = get_default_document_index(
-            primary_index_name=get_index_name(db_session), secondary_index_name=None
+            primary_index_name=embedding_model.index_name, secondary_index_name=None
         )
 
         # Every chat Session begins with an empty root message

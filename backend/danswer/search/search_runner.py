@@ -23,8 +23,7 @@ from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import SIM_SCORE_RANGE_HIGH
 from danswer.configs.model_configs import SIM_SCORE_RANGE_LOW
-from danswer.db.embedding_model import get_latest_embedding_model_by_status
-from danswer.db.models import IndexModelStatus
+from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.document_index.document_index_utils import (
     translate_boost_count_to_multiplier,
 )
@@ -151,9 +150,7 @@ def doc_index_retrieval(
             num_to_retrieve=query.num_hits,
         )
     else:
-        db_embedding_model = get_latest_embedding_model_by_status(
-            status=IndexModelStatus.PRESENT, db_session=db_session
-        )
+        db_embedding_model = get_current_db_embedding_model(db_session)
 
         model = EmbeddingModel(
             model_name=db_embedding_model.model_name

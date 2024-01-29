@@ -14,13 +14,14 @@ from danswer.db.connector import fetch_connector_by_id
 from danswer.db.connector import fetch_ingestion_connector_by_name
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.credentials import fetch_credential_by_id
+from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_session
-from danswer.db.models import IndexModelStatus
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.indexing.embedder import get_embedding_model_from_db_embedding_model
+from danswer.indexing.embedder import DefaultIndexingEmbedder
 from danswer.indexing.indexing_pipeline import build_indexing_pipeline
 from danswer.server.danswer_api.models import IngestionDocument
 from danswer.server.danswer_api.models import IngestionResult
@@ -151,10 +152,19 @@ def document_ingestion(
         primary_index_name=curr_ind_name, secondary_index_name=None
     )
 
-    embedding_model = get_embedding_model_from_db_embedding_model(db_session)
+    db_embedding_model = get_current_db_embedding_model(db_session)
+
+    index_embedding_model = DefaultIndexingEmbedder(
+        model_name=db_embedding_model.model_name,
+        normalize=db_embedding_model.normalize,
+        query_prefix=db_embedding_model.query_prefix,
+        passage_prefix=db_embedding_model.passage_prefix,
+    )
 
     indexing_pipeline = build_indexing_pipeline(
-        embedder=embedding_model, document_index=curr_doc_index, ignore_time_skip=True
+        embedder=index_embedding_model,
+        document_index=curr_doc_index,
+        ignore_time_skip=True,
     )
 
     new_doc, chunks = indexing_pipeline(
@@ -171,13 +181,23 @@ def document_ingestion(
             primary_index_name=curr_ind_name, secondary_index_name=None
         )
 
-        new_embedding_model = get_embedding_model_from_db_embedding_model(
-            index_model_status=IndexModelStatus.FUTURE,
-            db_session=db_session,
+        sec_db_embedding_model = get_secondary_db_embedding_model(db_session)
+
+        if sec_db_embedding_model is None:
+            # Should not ever happen
+            raise RuntimeError(
+                "Secondary index exists but no embedding model configured"
+            )
+
+        new_index_embedding_model = DefaultIndexingEmbedder(
+            model_name=sec_db_embedding_model.model_name,
+            normalize=sec_db_embedding_model.normalize,
+            query_prefix=sec_db_embedding_model.query_prefix,
+            passage_prefix=sec_db_embedding_model.passage_prefix,
         )
 
         sec_ind_pipeline = build_indexing_pipeline(
-            embedder=new_embedding_model,
+            embedder=new_index_embedding_model,
             document_index=sec_doc_index,
             ignore_time_skip=True,
         )

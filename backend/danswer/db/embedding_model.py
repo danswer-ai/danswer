@@ -29,12 +29,25 @@ def create_embedding_model(
     return embedding_model
 
 
-def get_latest_embedding_model_by_status(
-    status: IndexModelStatus, db_session: Session
-) -> EmbeddingModel | None:
+def get_current_db_embedding_model(db_session: Session) -> EmbeddingModel:
     query = (
         select(EmbeddingModel)
-        .where(EmbeddingModel.status == status)
+        .where(EmbeddingModel.status == IndexModelStatus.PRESENT)
+        .order_by(EmbeddingModel.id.desc())
+    )
+    result = db_session.execute(query)
+    latest_model = result.scalars().first()
+
+    if not latest_model:
+        raise RuntimeError("No embedding model selected, DB is not in a valid state")
+
+    return latest_model
+
+
+def get_secondary_db_embedding_model(db_session: Session) -> EmbeddingModel | None:
+    query = (
+        select(EmbeddingModel)
+        .where(EmbeddingModel.status == IndexModelStatus.FUTURE)
         .order_by(EmbeddingModel.id.desc())
     )
     result = db_session.execute(query)

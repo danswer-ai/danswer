@@ -35,22 +35,18 @@ from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.constants import AuthType
 from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
 from danswer.configs.model_configs import ASYM_QUERY_PREFIX
-from danswer.configs.model_configs import DOC_EMBEDDING_DIM
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
-from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
 from danswer.db.credentials import create_initial_public_credential
-from danswer.db.embedding_model import get_latest_embedding_model_by_status
+from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.models import IndexModelStatus
-from danswer.document_index.document_index_utils import DEFAULT_INDEX_NAME
-from danswer.document_index.document_index_utils import get_index_name_from_model
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llm
 from danswer.search.search_nlp_models import warm_up_models
@@ -257,28 +253,21 @@ def get_application() -> FastAPI:
             logger.info(f'Query embedding prefix: "{ASYM_QUERY_PREFIX}"')
             logger.info(f'Passage embedding prefix: "{ASYM_PASSAGE_PREFIX}"')
 
+        with Session(get_sqlalchemy_engine()) as db_session:
+            db_embedding_model = get_current_db_embedding_model(db_session)
+            secondary_db_embedding_model = get_secondary_db_embedding_model(db_session)
+
         if MODEL_SERVER_HOST:
             logger.info(
                 f"Using Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}"
             )
         else:
             logger.info("Warming up local NLP models.")
-            with Session(get_sqlalchemy_engine()) as db_session:
-                embedding_model = get_latest_embedding_model_by_status(
-                    status=IndexModelStatus.PRESENT, db_session=db_session
-                )
-                if embedding_model:
-                    model_name = embedding_model.model_name
-                    normalize = embedding_model.normalize
-                else:
-                    model_name = DOCUMENT_ENCODER_MODEL
-                    normalize = NORMALIZE_EMBEDDINGS
-
-                warm_up_models(
-                    model_name=model_name,
-                    normalize=normalize,
-                    skip_cross_encoders=not ENABLE_RERANKING_REAL_TIME_FLOW,
-                )
+            warm_up_models(
+                model_name=db_embedding_model.model_name,
+                normalize=db_embedding_model.normalize,
+                skip_cross_encoders=not ENABLE_RERANKING_REAL_TIME_FLOW,
+            )
 
             if torch.cuda.is_available():
                 logger.info("GPU is available")
@@ -301,32 +290,17 @@ def get_application() -> FastAPI:
         load_chat_yamls()
 
         logger.info("Verifying Document Index(s) is/are available.")
-        primary_embedding_model = get_latest_embedding_model_by_status(
-            status=IndexModelStatus.PRESENT, db_session=db_session
-        )
-        secondary_embedding_model = get_latest_embedding_model_by_status(
-            status=IndexModelStatus.FUTURE, db_session=db_session
-        )
-        primary_index = (
-            get_index_name_from_model(primary_embedding_model.model_name)
-            if primary_embedding_model
-            else DEFAULT_INDEX_NAME
-        )
-        second_index = (
-            get_index_name_from_model(secondary_embedding_model.model_name)
-            if secondary_embedding_model
-            else None
-        )
 
         document_index = get_default_document_index(
-            primary_index_name=primary_index, secondary_index_name=second_index
+            primary_index_name=db_embedding_model.index_name,
+            secondary_index_name=secondary_db_embedding_model.index_name
+            if secondary_db_embedding_model
+            else None,
         )
         document_index.ensure_indices_exist(
-            index_embedding_dim=primary_embedding_model.model_dim
-            if primary_embedding_model
-            else DOC_EMBEDDING_DIM,
-            secondary_index_embedding_dim=secondary_embedding_model.model_dim
-            if secondary_embedding_model
+            index_embedding_dim=db_embedding_model.model_dim,
+            secondary_index_embedding_dim=secondary_db_embedding_model.model_dim
+            if secondary_db_embedding_model
             else None,
         )
 

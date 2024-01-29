@@ -228,7 +228,7 @@ services:
         while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
   # Run with --profile model-server to bring up the danswer-model-server container
   # Be sure to change MODEL_SERVER_HOST (see above) as well
-  # ie. MODEL_SERVER_HOST="model_server" docker-compose -f docker-compose.dev.yml -p danswer-stack --profile model-server up -d --build
+  # ie. MODEL_SERVER_HOST="model_server" docker compose -f docker-compose.dev.yml -p danswer-stack --profile model-server up -d --build
   model_server:
     image: danswer/danswer-model-server:latest
     build:

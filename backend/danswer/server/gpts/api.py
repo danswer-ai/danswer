@@ -6,8 +6,8 @@ from fastapi import Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
-from danswer.document_index.document_index_utils import get_index_name
 from danswer.document_index.factory import get_default_document_index
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.models import IndexFilters
@@ -73,9 +73,7 @@ def gpt_search(
     query = search_request.query
 
     user_acl_filters = build_access_filters_for_user(None, db_session)
-    final_filters = IndexFilters(
-        access_control_list=user_acl_filters,
-    )
+    final_filters = IndexFilters(access_control_list=user_acl_filters)
 
     search_query = SearchQuery(
         query=query,
@@ -84,8 +82,10 @@ def gpt_search(
         skip_llm_chunk_filter=True,
     )
 
+    embedding_model = get_current_db_embedding_model(db_session)
+
     document_index = get_default_document_index(
-        primary_index_name=get_index_name(db_session), secondary_index_name=None
+        primary_index_name=embedding_model.index_name, secondary_index_name=None
     )
 
     top_chunks, __ = full_chunk_search(

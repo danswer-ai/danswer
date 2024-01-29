@@ -54,13 +54,13 @@ from danswer.db.credentials import delete_google_drive_service_account_credentia
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import get_document_cnts_for_cc_pairs
-from danswer.db.embedding_model import get_latest_embedding_model_by_status
+from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import cancel_indexing_attempts_for_connector
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.index_attempt import get_latest_index_attempts
-from danswer.db.models import IndexModelStatus
 from danswer.db.models import User
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.server.documents.models import AuthStatus
@@ -534,18 +534,13 @@ def connector_run_once(
         )
     ]
 
-    primary_embedding_model = get_latest_embedding_model_by_status(
-        status=IndexModelStatus.PRESENT, db_session=db_session
-    )
-    prim_emb_model_id = primary_embedding_model.id if primary_embedding_model else None
+    embedding_model = get_current_db_embedding_model(db_session)
 
-    secondary_embedding_model = get_latest_embedding_model_by_status(
-        status=IndexModelStatus.FUTURE, db_session=db_session
-    )
+    secondary_embedding_model = get_secondary_db_embedding_model(db_session)
 
     index_attempt_ids = [
         create_index_attempt(
-            run_info.connector_id, credential_id, prim_emb_model_id, db_session
+            run_info.connector_id, credential_id, embedding_model.id, db_session
         )
         for credential_id in credential_ids
         if credential_id not in skipped_credentials
