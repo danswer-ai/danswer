@@ -80,8 +80,8 @@ class ExchangeConnector(LoadConnector, PollConnector):
         # Only download at max N x Folder x Category most recently modified emails
         # We use Modified because setting catagory updates the modified date to now.
         # This ensures it will be indexed during next poll
-        if limit > 100:
-            limit = 100
+        if limit > 999:
+            limit = 999
 
         if categories is None:
             categories = []
