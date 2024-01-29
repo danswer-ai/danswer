@@ -145,7 +145,7 @@ schema DANSWER_CHUNK_NAME {
         match-features: recency_bias
     }
 
-    rank-profile hybrid_search inherits default, default_rank {
+    rank-profile hybrid_searchVARIABLE_DIM inherits default, default_rank {
         inputs {
             query(query_embedding) tensor<float>(x[VARIABLE_DIM])
         }
@@ -227,7 +227,7 @@ schema DANSWER_CHUNK_NAME {
         match-features: recency_bias document_boost bm25(content)
     }
 
-    rank-profile semantic_search inherits default, default_rank {
+    rank-profile semantic_searchVARIABLE_DIM inherits default, default_rank {
         inputs {
             query(query_embedding) tensor<float>(x[VARIABLE_DIM])
         }

@@ -117,7 +117,8 @@ class VectorCapable(abc.ABC):
     @abc.abstractmethod
     def semantic_retrieval(
         self,
-        query: str,
+        query: str,  # Needed for matching purposes
+        query_embedding: list[float],
         filters: IndexFilters,
         time_decay_multiplier: float,
         num_to_retrieve: int,
@@ -131,6 +132,7 @@ class HybridCapable(abc.ABC):
     def hybrid_retrieval(
         self,
         query: str,
+        query_embedding: list[float],
         filters: IndexFilters,
         time_decay_multiplier: float,
         num_to_retrieve: int,

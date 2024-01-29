@@ -2,6 +2,7 @@ from datetime import datetime
 
 from fastapi import HTTPException
 from sqlalchemy import delete
+from sqlalchemy import desc
 from sqlalchemy import select
 from sqlalchemy import update
 from sqlalchemy.orm import Session
@@ -9,7 +10,10 @@ from sqlalchemy.orm import Session
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.models import ConnectorCredentialPair
+from danswer.db.models import EmbeddingModel
+from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
+from danswer.db.models import IndexModelStatus
 from danswer.db.models import User
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
@@ -233,3 +237,52 @@ def remove_credential_from_connector(
         message=f"Connector already does not have Credential {credential_id}",
         data=connector_id,
     )
+
+
+def resync_cc_pair(
+    cc_pair: ConnectorCredentialPair,
+    db_session: Session,
+) -> None:
+    def find_latest_index_attempt(
+        connector_id: int,
+        credential_id: int,
+        only_include_success: bool,
+        db_session: Session,
+    ) -> IndexAttempt | None:
+        query = (
+            db_session.query(IndexAttempt)
+            .join(EmbeddingModel, IndexAttempt.embedding_model_id == EmbeddingModel.id)
+            .filter(
+                IndexAttempt.connector_id == connector_id,
+                IndexAttempt.credential_id == credential_id,
+                EmbeddingModel.status == IndexModelStatus.PRESENT,
+            )
+        )
+
+        if only_include_success:
+            query = query.filter(IndexAttempt.status == IndexingStatus.SUCCESS)
+
+        latest_index_attempt = query.order_by(desc(IndexAttempt.time_updated)).first()
+
+        return latest_index_attempt
+
+    last_success = find_latest_index_attempt(
+        connector_id=cc_pair.connector_id,
+        credential_id=cc_pair.credential_id,
+        only_include_success=True,
+        db_session=db_session,
+    )
+
+    cc_pair.last_successful_index_time = (
+        last_success.time_updated if last_success else None
+    )
+
+    last_run = find_latest_index_attempt(
+        connector_id=cc_pair.connector_id,
+        credential_id=cc_pair.credential_id,
+        only_include_success=False,
+        db_session=db_session,
+    )
+    cc_pair.last_attempt_status = last_run.status if last_run else None
+
+    db_session.commit()

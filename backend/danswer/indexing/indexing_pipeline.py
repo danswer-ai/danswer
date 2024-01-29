@@ -19,16 +19,13 @@ from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.tag import create_or_add_document_tag
 from danswer.db.tag import create_or_add_document_tag_list
-from danswer.document_index.document_index_utils import get_index_name
-from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentMetadata
 from danswer.indexing.chunker import Chunker
 from danswer.indexing.chunker import DefaultChunker
-from danswer.indexing.embedder import DefaultEmbedder
+from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
-from danswer.search.models import Embedder
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
@@ -95,7 +92,7 @@ def upsert_documents_in_db(
 def index_doc_batch(
     *,
     chunker: Chunker,
-    embedder: Embedder,
+    embedder: IndexingEmbedder,
     document_index: DocumentIndex,
     documents: list[Document],
     index_attempt_metadata: IndexAttemptMetadata,
@@ -152,7 +149,7 @@ def index_doc_batch(
         )
 
         logger.debug("Starting embedding")
-        chunks_with_embeddings = embedder.embed(chunks=chunks)
+        chunks_with_embeddings = embedder.embed_chunks(chunks=chunks)
 
         # Attach the latest status from Postgres (source of truth for access) to each
         # chunk. This access status will be attached to each chunk in the document index
@@ -213,21 +210,13 @@ def index_doc_batch(
 
 def build_indexing_pipeline(
     *,
+    embedder: IndexingEmbedder,
+    document_index: DocumentIndex,
     chunker: Chunker | None = None,
-    embedder: Embedder | None = None,
-    document_index: DocumentIndex | None = None,
     ignore_time_skip: bool = False,
 ) -> IndexingPipelineProtocol:
     """Builds a pipline which takes in a list (batch) of docs and indexes them."""
     chunker = chunker or DefaultChunker()
-
-    embedder = embedder or DefaultEmbedder()
-
-    if not document_index:
-        with Session(get_sqlalchemy_engine()) as db_session:
-            document_index = get_default_document_index(
-                primary_index_name=get_index_name(db_session), secondary_index_name=None
-            )
 
     return partial(
         index_doc_batch,

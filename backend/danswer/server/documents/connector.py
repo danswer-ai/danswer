@@ -54,7 +54,10 @@ from danswer.db.credentials import delete_google_drive_service_account_credentia
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import get_document_cnts_for_cc_pairs
+from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_session
+from danswer.db.index_attempt import cancel_indexing_attempts_for_connector
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.index_attempt import get_latest_index_attempts
@@ -347,6 +350,7 @@ def upload_files(
 
 @router.get("/admin/connector/indexing-status")
 def get_connector_indexing_status(
+    secondary_index: bool = False,
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[ConnectorIndexingStatus]:
@@ -362,8 +366,9 @@ def get_connector_indexing_status(
     ]
 
     latest_index_attempts = get_latest_index_attempts(
-        db_session=db_session,
         connector_credential_pair_identifiers=cc_pair_identifiers,
+        secondary_index=secondary_index,
+        db_session=db_session,
     )
     cc_pair_to_latest_index_attempt = {
         (index_attempt.connector_id, index_attempt.credential_id): index_attempt
@@ -449,6 +454,9 @@ def update_connector_from_model(
             status_code=404, detail=f"Connector {connector_id} does not exist"
         )
 
+    if updated_connector.disabled:
+        cancel_indexing_attempts_for_connector(connector_id, db_session)
+
     return ConnectorSnapshot(
         id=updated_connector.id,
         name=updated_connector.name,
@@ -526,11 +534,30 @@ def connector_run_once(
         )
     ]
 
+    embedding_model = get_current_db_embedding_model(db_session)
+
+    secondary_embedding_model = get_secondary_db_embedding_model(db_session)
+
     index_attempt_ids = [
-        create_index_attempt(run_info.connector_id, credential_id, db_session)
+        create_index_attempt(
+            run_info.connector_id, credential_id, embedding_model.id, db_session
+        )
         for credential_id in credential_ids
         if credential_id not in skipped_credentials
     ]
+
+    if secondary_embedding_model is not None:
+        # Secondary index doesn't have to be returned
+        [
+            create_index_attempt(
+                run_info.connector_id,
+                credential_id,
+                secondary_embedding_model.id,
+                db_session,
+            )
+            for credential_id in credential_ids
+            if credential_id not in skipped_credentials
+        ]
 
     if not index_attempt_ids:
         raise HTTPException(

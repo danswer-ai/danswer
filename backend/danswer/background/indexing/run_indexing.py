@@ -26,6 +26,9 @@ from danswer.db.index_attempt import mark_attempt_succeeded
 from danswer.db.index_attempt import update_docs_indexed
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
+from danswer.db.models import IndexModelStatus
+from danswer.document_index.factory import get_default_document_index
+from danswer.indexing.embedder import DefaultIndexingEmbedder
 from danswer.indexing.indexing_pipeline import build_indexing_pipeline
 from danswer.utils.logger import IndexAttemptSingleton
 from danswer.utils.logger import setup_logger
@@ -93,17 +96,40 @@ def _run_indexing(
     """
     start_time = time.time()
 
-    # mark as started
+    db_embedding_model = index_attempt.embedding_model
+    index_name = db_embedding_model.index_name
+
+    # Only update cc-pair status for primary index jobs
+    # Secondary index syncs at the end when swapping
+    is_primary = index_attempt.embedding_model.status == IndexModelStatus.PRESENT
+
+    # Mark as started
     mark_attempt_in_progress(index_attempt, db_session)
-    update_connector_credential_pair(
-        db_session=db_session,
-        connector_id=index_attempt.connector.id,
-        credential_id=index_attempt.credential.id,
-        attempt_status=IndexingStatus.IN_PROGRESS,
+    if is_primary:
+        update_connector_credential_pair(
+            db_session=db_session,
+            connector_id=index_attempt.connector.id,
+            credential_id=index_attempt.credential.id,
+            attempt_status=IndexingStatus.IN_PROGRESS,
+        )
+
+    # Indexing is only done into one index at a time
+    document_index = get_default_document_index(
+        primary_index_name=index_name, secondary_index_name=None
     )
 
-    # TODO UPDATE THIS FOR SECONDARY INDEXING
-    indexing_pipeline = build_indexing_pipeline()
+    embedding_model = DefaultIndexingEmbedder(
+        model_name=db_embedding_model.model_name,
+        normalize=db_embedding_model.normalize,
+        query_prefix=db_embedding_model.query_prefix,
+        passage_prefix=db_embedding_model.passage_prefix,
+    )
+
+    indexing_pipeline = build_indexing_pipeline(
+        embedder=embedding_model,
+        document_index=document_index,
+        ignore_time_skip=(db_embedding_model.status == IndexModelStatus.FUTURE),
+    )
 
     db_connector = index_attempt.connector
     db_credential = index_attempt.credential
@@ -139,11 +165,21 @@ def _run_indexing(
 
         try:
             for doc_batch in doc_batch_generator:
-                # check if connector is disabled mid run and stop if so
+                # Check if connector is disabled mid run and stop if so unless it's the secondary
+                # index being built. We want to populate it even for paused connectors
+                # Often paused connectors are sources that aren't updated frequently but the
+                # contents still need to be initially pulled.
                 db_session.refresh(db_connector)
-                if db_connector.disabled:
+                if (
+                    db_connector.disabled
+                    and db_embedding_model.status != IndexModelStatus.FUTURE
+                ):
                     # let the `except` block handle this
                     raise RuntimeError("Connector was disabled mid run")
+
+                db_session.refresh(index_attempt)
+                if index_attempt.status != IndexingStatus.IN_PROGRESS:
+                    raise RuntimeError("Index Attempt was canceled")
 
                 logger.debug(
                     f"Indexing batch of documents: {[doc.to_short_descriptor() for doc in doc_batch]}"
@@ -176,14 +212,15 @@ def _run_indexing(
                 )
 
             run_end_dt = window_end
-            update_connector_credential_pair(
-                db_session=db_session,
-                connector_id=db_connector.id,
-                credential_id=db_credential.id,
-                attempt_status=IndexingStatus.IN_PROGRESS,
-                net_docs=net_doc_change,
-                run_dt=run_end_dt,
-            )
+            if is_primary:
+                update_connector_credential_pair(
+                    db_session=db_session,
+                    connector_id=db_connector.id,
+                    credential_id=db_credential.id,
+                    attempt_status=IndexingStatus.IN_PROGRESS,
+                    net_docs=net_doc_change,
+                    run_dt=run_end_dt,
+                )
         except Exception as e:
             logger.info(
                 f"Connector run ran into exception after elapsed time: {time.time() - start_time} seconds"
@@ -195,15 +232,20 @@ def _run_indexing(
             #
             # NOTE: if the connector is manually disabled, we should mark it as a failure regardless
             # to give better clarity in the UI, as the next run will never happen.
-            if ind == 0 or db_connector.disabled:
+            if (
+                ind == 0
+                or db_connector.disabled
+                or index_attempt.status != IndexingStatus.IN_PROGRESS
+            ):
                 mark_attempt_failed(index_attempt, db_session, failure_reason=str(e))
-                update_connector_credential_pair(
-                    db_session=db_session,
-                    connector_id=index_attempt.connector.id,
-                    credential_id=index_attempt.credential.id,
-                    attempt_status=IndexingStatus.FAILED,
-                    net_docs=net_doc_change,
-                )
+                if is_primary:
+                    update_connector_credential_pair(
+                        db_session=db_session,
+                        connector_id=index_attempt.connector.id,
+                        credential_id=index_attempt.credential.id,
+                        attempt_status=IndexingStatus.FAILED,
+                        net_docs=net_doc_change,
+                    )
                 raise e
 
             # break => similar to success case. As mentioned above, if the next run fails for the same
@@ -211,14 +253,15 @@ def _run_indexing(
             break
 
     mark_attempt_succeeded(index_attempt, db_session)
-    update_connector_credential_pair(
-        db_session=db_session,
-        connector_id=db_connector.id,
-        credential_id=db_credential.id,
-        attempt_status=IndexingStatus.SUCCESS,
-        net_docs=net_doc_change,
-        run_dt=run_end_dt,
-    )
+    if is_primary:
+        update_connector_credential_pair(
+            db_session=db_session,
+            connector_id=db_connector.id,
+            credential_id=db_credential.id,
+            attempt_status=IndexingStatus.SUCCESS,
+            net_docs=net_doc_change,
+            run_dt=run_end_dt,
+        )
 
     logger.info(
         f"Indexed or refreshed {document_count} total documents for a total of {chunk_count} indexed chunks"

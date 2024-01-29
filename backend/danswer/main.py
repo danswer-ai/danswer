@@ -33,10 +33,6 @@ from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.constants import AuthType
-from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
-from danswer.configs.model_configs import ASYM_QUERY_PREFIX
-from danswer.configs.model_configs import DOC_EMBEDDING_DIM
-from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
@@ -45,10 +41,9 @@ from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
 from danswer.db.credentials import create_initial_public_credential
-from danswer.db.embedding_model import get_latest_embedding_model_by_status
+from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.models import IndexModelStatus
-from danswer.document_index.document_index_utils import clean_model_name
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llm
 from danswer.search.search_nlp_models import warm_up_models
@@ -65,6 +60,7 @@ from danswer.server.features.prompt.api import basic_router as prompt_router
 from danswer.server.gpts.api import router as gpts_router
 from danswer.server.manage.administrative import router as admin_router
 from danswer.server.manage.get_state import router as state_router
+from danswer.server.manage.secondary_index import router as secondary_index_router
 from danswer.server.manage.slack_bot import router as slack_bot_management_router
 from danswer.server.manage.users import router as user_router
 from danswer.server.query_and_chat.chat_backend import router as chat_router
@@ -134,6 +130,7 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, credential_router)
     include_router_with_global_prefix_prepended(application, cc_pair_router)
     include_router_with_global_prefix_prepended(application, document_set_router)
+    include_router_with_global_prefix_prepended(application, secondary_index_router)
     include_router_with_global_prefix_prepended(
         application, slack_bot_management_router
     )
@@ -245,13 +242,19 @@ def get_application() -> FastAPI:
                 f"Using multilingual flow with languages: {MULTILINGUAL_QUERY_EXPANSION}"
             )
 
+        with Session(get_sqlalchemy_engine()) as db_session:
+            db_embedding_model = get_current_db_embedding_model(db_session)
+            secondary_db_embedding_model = get_secondary_db_embedding_model(db_session)
+
         if ENABLE_RERANKING_REAL_TIME_FLOW:
             logger.info("Reranking step of search flow is enabled.")
 
-        logger.info(f'Using Embedding model: "{DOCUMENT_ENCODER_MODEL}"')
-        if ASYM_QUERY_PREFIX or ASYM_PASSAGE_PREFIX:
-            logger.info(f'Query embedding prefix: "{ASYM_QUERY_PREFIX}"')
-            logger.info(f'Passage embedding prefix: "{ASYM_PASSAGE_PREFIX}"')
+        logger.info(f'Using Embedding model: "{db_embedding_model.model_name}"')
+        if db_embedding_model.query_prefix or db_embedding_model.passage_prefix:
+            logger.info(f'Query embedding prefix: "{db_embedding_model.query_prefix}"')
+            logger.info(
+                f'Passage embedding prefix: "{db_embedding_model.passage_prefix}"'
+            )
 
         if MODEL_SERVER_HOST:
             logger.info(
@@ -259,7 +262,11 @@ def get_application() -> FastAPI:
             )
         else:
             logger.info("Warming up local NLP models.")
-            warm_up_models(skip_cross_encoders=not ENABLE_RERANKING_REAL_TIME_FLOW)
+            warm_up_models(
+                model_name=db_embedding_model.model_name,
+                normalize=db_embedding_model.normalize,
+                skip_cross_encoders=not ENABLE_RERANKING_REAL_TIME_FLOW,
+            )
 
             if torch.cuda.is_available():
                 logger.info("GPU is available")
@@ -273,7 +280,7 @@ def get_application() -> FastAPI:
         nltk.download("punkt", quiet=True)
 
         logger.info("Verifying default connector/credential exist.")
-        with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
+        with Session(get_sqlalchemy_engine()) as db_session:
             create_initial_public_credential(db_session)
             create_initial_default_connector(db_session)
             associate_default_cc_pair(db_session)
@@ -282,32 +289,17 @@ def get_application() -> FastAPI:
         load_chat_yamls()
 
         logger.info("Verifying Document Index(s) is/are available.")
-        primary_embedding_model = get_latest_embedding_model_by_status(
-            status=IndexModelStatus.PRESENT, db_session=db_session
-        )
-        secondary_embedding_model = get_latest_embedding_model_by_status(
-            status=IndexModelStatus.FUTURE, db_session=db_session
-        )
-        primary_index = (
-            f"danswer_chunk_{clean_model_name(primary_embedding_model.model_name)}"
-            if primary_embedding_model
-            else "danswer_chunk"
-        )
-        second_index = (
-            f"danswer_chunk_{clean_model_name(secondary_embedding_model.model_name)}"
-            if secondary_embedding_model
-            else None
-        )
 
         document_index = get_default_document_index(
-            primary_index_name=primary_index, secondary_index_name=second_index
+            primary_index_name=db_embedding_model.index_name,
+            secondary_index_name=secondary_db_embedding_model.index_name
+            if secondary_db_embedding_model
+            else None,
         )
         document_index.ensure_indices_exist(
-            index_embedding_dim=primary_embedding_model.model_dim
-            if primary_embedding_model
-            else DOC_EMBEDDING_DIM,
-            secondary_index_embedding_dim=secondary_embedding_model.model_dim
-            if secondary_embedding_model
+            index_embedding_dim=db_embedding_model.model_dim,
+            secondary_index_embedding_dim=secondary_db_embedding_model.model_dim
+            if secondary_db_embedding_model
             else None,
         )
 

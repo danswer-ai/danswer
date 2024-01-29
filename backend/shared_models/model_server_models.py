@@ -3,6 +3,8 @@ from pydantic import BaseModel
 
 class EmbedRequest(BaseModel):
     texts: list[str]
+    model_name: str
+    normalize_embeddings: bool
 
 
 class EmbedResponse(BaseModel):

@@ -57,6 +57,7 @@ def query_intent(query: str) -> tuple[SearchType, QueryFlow]:
 
 def recommend_search_flow(
     query: str,
+    model_name: str,
     keyword: bool = False,
     max_percent_stopwords: float = 0.30,  # ~Every third word max, ie "effects of caffeine" still viable keyword search
 ) -> HelperResponse:
@@ -69,7 +70,7 @@ def recommend_search_flow(
     non_stopword_percent = len(non_stopwords) / len(words)
 
     # UNK tokens -> suggest Keyword (still may be valid QA)
-    if count_unk_tokens(query, get_default_tokenizer()) > 0:
+    if count_unk_tokens(query, get_default_tokenizer(model_name=model_name)) > 0:
         if not keyword:
             heuristic_search_type = SearchType.KEYWORD
             message = "Unknown tokens in query."

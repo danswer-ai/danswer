@@ -7,10 +7,10 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.constants import DocumentSource
+from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.tag import get_tags_by_value_prefix_for_source_types
-from danswer.document_index.document_index_utils import get_index_name
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.one_shot_answer.answer_question import stream_search_answer
@@ -54,8 +54,10 @@ def admin_search(
         access_control_list=user_acl_filters,
     )
 
+    embedding_model = get_current_db_embedding_model(db_session)
+
     document_index = get_default_document_index(
-        primary_index_name=get_index_name(db_session), secondary_index_name=None
+        primary_index_name=embedding_model.index_name, secondary_index_name=None
     )
 
     if not isinstance(document_index, VespaIndex):
@@ -106,10 +108,15 @@ def get_tags(
 
 @basic_router.post("/search-intent")
 def get_search_type(
-    simple_query: SimpleQueryRequest, _: User = Depends(current_user)
+    simple_query: SimpleQueryRequest,
+    _: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
 ) -> HelperResponse:
     logger.info(f"Calculating intent for {simple_query.query}")
-    return recommend_search_flow(simple_query.query)
+    embedding_model = get_current_db_embedding_model(db_session)
+    return recommend_search_flow(
+        simple_query.query, model_name=embedding_model.model_name
+    )
 
 
 @basic_router.post("/query-validation")

@@ -7,16 +7,19 @@ import numpy
 from nltk.corpus import stopwords  # type:ignore
 from nltk.stem import WordNetLemmatizer  # type:ignore
 from nltk.tokenize import word_tokenize  # type:ignore
+from sqlalchemy.orm import Session
 
 from danswer.chat.models import LlmDoc
+from danswer.configs.app_configs import MODEL_SERVER_HOST
+from danswer.configs.app_configs import MODEL_SERVER_PORT
 from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.chat_configs import NUM_RERANKED_RESULTS
-from danswer.configs.model_configs import ASYM_QUERY_PREFIX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
 from danswer.configs.model_configs import SIM_SCORE_RANGE_HIGH
 from danswer.configs.model_configs import SIM_SCORE_RANGE_LOW
+from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.document_index.document_index_utils import (
     translate_boost_count_to_multiplier,
 )
@@ -32,6 +35,7 @@ from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.search.search_nlp_models import CrossEncoderEnsembleModel
 from danswer.search.search_nlp_models import EmbeddingModel
+from danswer.search.search_nlp_models import EmbedTextType
 from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_chunks
 from danswer.secondary_llm_flows.query_expansion import multilingual_query_expansion
 from danswer.utils.logger import setup_logger
@@ -74,15 +78,6 @@ def query_processing(
     query = " ".join(remove_stop_words_and_punctuation(query))
     query = " ".join(lemmatize_text(query))
     return query
-
-
-@log_function_time(print_only=True)
-def embed_query(
-    query: str,
-    prefix: str = ASYM_QUERY_PREFIX,
-) -> list[float]:
-    prefixed_query = prefix + query
-    return EmbeddingModel().encode([prefixed_query])[0]
 
 
 def chunks_to_search_docs(chunks: list[InferenceChunk] | None) -> list[SearchDoc]:
@@ -140,6 +135,7 @@ def combine_retrieval_results(
 def doc_index_retrieval(
     query: SearchQuery,
     document_index: DocumentIndex,
+    db_session: Session,
     hybrid_alpha: float = HYBRID_ALPHA,
 ) -> list[InferenceChunk]:
     if query.search_type == SearchType.KEYWORD:
@@ -149,27 +145,43 @@ def doc_index_retrieval(
             time_decay_multiplier=query.recency_bias_multiplier,
             num_to_retrieve=query.num_hits,
         )
-
-    elif query.search_type == SearchType.SEMANTIC:
-        top_chunks = document_index.semantic_retrieval(
-            query=query.query,
-            filters=query.filters,
-            time_decay_multiplier=query.recency_bias_multiplier,
-            num_to_retrieve=query.num_hits,
-        )
-
-    elif query.search_type == SearchType.HYBRID:
-        top_chunks = document_index.hybrid_retrieval(
-            query=query.query,
-            filters=query.filters,
-            time_decay_multiplier=query.recency_bias_multiplier,
-            num_to_retrieve=query.num_hits,
-            offset=query.offset,
-            hybrid_alpha=hybrid_alpha,
-        )
-
     else:
-        raise RuntimeError("Invalid Search Flow")
+        db_embedding_model = get_current_db_embedding_model(db_session)
+
+        model = EmbeddingModel(
+            model_name=db_embedding_model.model_name,
+            query_prefix=db_embedding_model.query_prefix,
+            passage_prefix=db_embedding_model.passage_prefix,
+            normalize=db_embedding_model.normalize,
+            # The below are globally set, this flow always uses the indexing one
+            server_host=MODEL_SERVER_HOST,
+            server_port=MODEL_SERVER_PORT,
+        )
+
+        query_embedding = model.encode([query.query], text_type=EmbedTextType.QUERY)[0]
+
+        if query.search_type == SearchType.SEMANTIC:
+            top_chunks = document_index.semantic_retrieval(
+                query=query.query,
+                query_embedding=query_embedding,
+                filters=query.filters,
+                time_decay_multiplier=query.recency_bias_multiplier,
+                num_to_retrieve=query.num_hits,
+            )
+
+        elif query.search_type == SearchType.HYBRID:
+            top_chunks = document_index.hybrid_retrieval(
+                query=query.query,
+                query_embedding=query_embedding,
+                filters=query.filters,
+                time_decay_multiplier=query.recency_bias_multiplier,
+                num_to_retrieve=query.num_hits,
+                offset=query.offset,
+                hybrid_alpha=hybrid_alpha,
+            )
+
+        else:
+            raise RuntimeError("Invalid Search Flow")
 
     return top_chunks
 
@@ -347,6 +359,7 @@ def _simplify_text(text: str) -> str:
 def retrieve_chunks(
     query: SearchQuery,
     document_index: DocumentIndex,
+    db_session: Session,
     hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
     multilingual_expansion_str: str | None = MULTILINGUAL_QUERY_EXPANSION,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
@@ -356,7 +369,10 @@ def retrieve_chunks(
     # Don't do query expansion on complex queries, rephrasings likely would not work well
     if not multilingual_expansion_str or "\n" in query.query or "\r" in query.query:
         top_chunks = doc_index_retrieval(
-            query=query, document_index=document_index, hybrid_alpha=hybrid_alpha
+            query=query,
+            document_index=document_index,
+            db_session=db_session,
+            hybrid_alpha=hybrid_alpha,
         )
     else:
         simplified_queries = set()
@@ -378,7 +394,10 @@ def retrieve_chunks(
 
             q_copy = query.copy(update={"query": rephrase}, deep=True)
             run_queries.append(
-                (doc_index_retrieval, (q_copy, document_index, hybrid_alpha))
+                (
+                    doc_index_retrieval,
+                    (q_copy, document_index, db_session, hybrid_alpha),
+                )
             )
         parallel_search_results = run_functions_tuples_in_parallel(run_queries)
         top_chunks = combine_retrieval_results(parallel_search_results)
@@ -459,6 +478,7 @@ def filter_chunks(
 def full_chunk_search(
     query: SearchQuery,
     document_index: DocumentIndex,
+    db_session: Session,
     hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
     multilingual_expansion_str: str | None = MULTILINGUAL_QUERY_EXPANSION,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
@@ -471,6 +491,7 @@ def full_chunk_search(
     search_generator = full_chunk_search_generator(
         search_query=query,
         document_index=document_index,
+        db_session=db_session,
         hybrid_alpha=hybrid_alpha,
         multilingual_expansion_str=multilingual_expansion_str,
         retrieval_metrics_callback=retrieval_metrics_callback,
@@ -489,6 +510,7 @@ def empty_search_generator() -> Iterator[list[InferenceChunk] | list[bool]]:
 def full_chunk_search_generator(
     search_query: SearchQuery,
     document_index: DocumentIndex,
+    db_session: Session,
     hybrid_alpha: float = HYBRID_ALPHA,  # Only applicable to hybrid search
     multilingual_expansion_str: str | None = MULTILINGUAL_QUERY_EXPANSION,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
@@ -503,6 +525,7 @@ def full_chunk_search_generator(
     retrieved_chunks = retrieve_chunks(
         query=search_query,
         document_index=document_index,
+        db_session=db_session,
         hybrid_alpha=hybrid_alpha,
         multilingual_expansion_str=multilingual_expansion_str,
         retrieval_metrics_callback=retrieval_metrics_callback,

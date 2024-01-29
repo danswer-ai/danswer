@@ -1,13 +1,13 @@
+import gc
 import logging
 import os
+from enum import Enum
 from typing import Optional
 from typing import TYPE_CHECKING
 
 import numpy as np
 import requests
 
-from danswer.configs.app_configs import CURRENT_PROCESS_IS_AN_INDEXING_JOB
-from danswer.configs.app_configs import INDEXING_MODEL_SERVER_HOST
 from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import MODEL_SERVER_PORT
 from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
@@ -15,7 +15,6 @@ from danswer.configs.model_configs import CROSS_ENCODER_MODEL_ENSEMBLE
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import INTENT_MODEL_VERSION
-from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import QUERY_MAX_CONTEXT_SIZE
 from danswer.utils.logger import setup_logger
 from shared_models.model_server_models import EmbedRequest
@@ -37,28 +36,51 @@ if TYPE_CHECKING:
     from transformers import TFDistilBertForSequenceClassification  # type: ignore
 
 
-_TOKENIZER: Optional["AutoTokenizer"] = None
-_EMBED_MODEL: Optional["SentenceTransformer"] = None
+_TOKENIZER: tuple[Optional["AutoTokenizer"], str | None] = (None, None)
+_EMBED_MODEL: tuple[Optional["SentenceTransformer"], str | None] = (None, None)
 _RERANK_MODELS: Optional[list["CrossEncoder"]] = None
 _INTENT_TOKENIZER: Optional["AutoTokenizer"] = None
 _INTENT_MODEL: Optional["TFDistilBertForSequenceClassification"] = None
 
 
-def get_default_tokenizer() -> "AutoTokenizer":
+class EmbedTextType(str, Enum):
+    QUERY = "query"
+    PASSAGE = "passage"
+
+
+def clean_model_name(model_str: str) -> str:
+    return model_str.replace("/", "_").replace("-", "_").replace(".", "_")
+
+
+# NOTE: If None is used, it may not be using the "correct" tokenizer, for cases
+# where this is more important, be sure to refresh with the actual model name
+def get_default_tokenizer(model_name: str | None = None) -> "AutoTokenizer":
     # NOTE: doing a local import here to avoid reduce memory usage caused by
     # processes importing this file despite not using any of this
     from transformers import AutoTokenizer  # type: ignore
 
     global _TOKENIZER
-    if _TOKENIZER is None:
-        _TOKENIZER = AutoTokenizer.from_pretrained(DOCUMENT_ENCODER_MODEL)
-        if hasattr(_TOKENIZER, "is_fast") and _TOKENIZER.is_fast:
+    if _TOKENIZER[0] is None or (
+        _TOKENIZER[1] is not None and _TOKENIZER[1] != model_name
+    ):
+        if _TOKENIZER[0] is not None:
+            del _TOKENIZER
+            gc.collect()
+
+        if model_name is None:
+            # This could be inaccurate
+            model_name = DOCUMENT_ENCODER_MODEL
+
+        _TOKENIZER = (AutoTokenizer.from_pretrained(model_name), model_name)
+
+        if hasattr(_TOKENIZER[0], "is_fast") and _TOKENIZER[0].is_fast:
             os.environ["TOKENIZERS_PARALLELISM"] = "false"
-    return _TOKENIZER
+
+    return _TOKENIZER[0]
 
 
 def get_local_embedding_model(
-    model_name: str = DOCUMENT_ENCODER_MODEL,
+    model_name: str,
     max_context_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
 ) -> "SentenceTransformer":
     # NOTE: doing a local import here to avoid reduce memory usage caused by
@@ -66,11 +88,19 @@ def get_local_embedding_model(
     from sentence_transformers import SentenceTransformer  # type: ignore
 
     global _EMBED_MODEL
-    if _EMBED_MODEL is None or max_context_length != _EMBED_MODEL.max_seq_length:
+    if (
+        _EMBED_MODEL[0] is None
+        or max_context_length != _EMBED_MODEL[0].max_seq_length
+        or model_name != _EMBED_MODEL[1]
+    ):
+        if _EMBED_MODEL[0] is not None:
+            del _EMBED_MODEL
+            gc.collect()
+
         logger.info(f"Loading {model_name}")
-        _EMBED_MODEL = SentenceTransformer(model_name)
-        _EMBED_MODEL.max_seq_length = max_context_length
-    return _EMBED_MODEL
+        _EMBED_MODEL = (SentenceTransformer(model_name), model_name)
+        _EMBED_MODEL[0].max_seq_length = max_context_length
+    return _EMBED_MODEL[0]
 
 
 def get_local_reranking_model_ensemble(
@@ -142,25 +172,24 @@ def build_model_server_url(
 class EmbeddingModel:
     def __init__(
         self,
-        model_name: str = DOCUMENT_ENCODER_MODEL,
+        model_name: str,
+        query_prefix: str | None,
+        passage_prefix: str | None,
+        normalize: bool,
+        server_host: str | None,  # Changes depending on indexing or inference
+        server_port: int | None,
+        # The following are globals are currently not configurable
         max_seq_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
-        model_server_host: str | None = MODEL_SERVER_HOST,
-        indexing_model_server_host: str | None = INDEXING_MODEL_SERVER_HOST,
-        model_server_port: int = MODEL_SERVER_PORT,
-        is_indexing: bool = CURRENT_PROCESS_IS_AN_INDEXING_JOB,
     ) -> None:
         self.model_name = model_name
         self.max_seq_length = max_seq_length
+        self.query_prefix = query_prefix
+        self.passage_prefix = passage_prefix
+        self.normalize = normalize
 
-        used_model_server_host = (
-            indexing_model_server_host if is_indexing else model_server_host
-        )
-
-        model_server_url = build_model_server_url(
-            used_model_server_host, model_server_port
-        )
+        model_server_url = build_model_server_url(server_host, server_port)
         self.embed_server_endpoint = (
-            model_server_url + "/encoder/bi-encoder-embed" if model_server_url else None
+            f"{model_server_url}/encoder/bi-encoder-embed" if model_server_url else None
         )
 
     def load_model(self) -> Optional["SentenceTransformer"]:
@@ -171,11 +200,20 @@ class EmbeddingModel:
             model_name=self.model_name, max_context_length=self.max_seq_length
         )
 
-    def encode(
-        self, texts: list[str], normalize_embeddings: bool = NORMALIZE_EMBEDDINGS
-    ) -> list[list[float]]:
+    def encode(self, texts: list[str], text_type: EmbedTextType) -> list[list[float]]:
+        if text_type == EmbedTextType.QUERY and self.query_prefix:
+            prefixed_texts = [self.query_prefix + text for text in texts]
+        elif text_type == EmbedTextType.PASSAGE and self.passage_prefix:
+            prefixed_texts = [self.passage_prefix + text for text in texts]
+        else:
+            prefixed_texts = texts
+
         if self.embed_server_endpoint:
-            embed_request = EmbedRequest(texts=texts)
+            embed_request = EmbedRequest(
+                texts=prefixed_texts,
+                model_name=self.model_name,
+                normalize_embeddings=self.normalize,
+            )
 
             try:
                 response = requests.post(
@@ -194,7 +232,7 @@ class EmbeddingModel:
             raise RuntimeError("Failed to load local Embedding Model")
 
         return local_model.encode(
-            texts, normalize_embeddings=normalize_embeddings
+            prefixed_texts, normalize_embeddings=self.normalize
         ).tolist()
 
 
@@ -317,6 +355,8 @@ class IntentModel:
 
 
 def warm_up_models(
+    model_name: str,
+    normalize: bool,
     skip_cross_encoders: bool = False,
     indexer_only: bool = False,
 ) -> None:
@@ -324,9 +364,20 @@ def warm_up_models(
         "Danswer is amazing! Check out our easy deployment guide at "
         "https://docs.danswer.dev/quickstart"
     )
-    get_default_tokenizer()(warm_up_str)
 
-    EmbeddingModel().encode(texts=[warm_up_str])
+    get_default_tokenizer(model_name=model_name)(warm_up_str)
+
+    embed_model = EmbeddingModel(
+        model_name=model_name,
+        normalize=normalize,
+        # These don't matter, if it's a remote model, this function shouldn't be called
+        query_prefix=None,
+        passage_prefix=None,
+        server_host=None,
+        server_port=None,
+    )
+
+    embed_model.encode(texts=[warm_up_str], text_type=EmbedTextType.QUERY)
 
     if indexer_only:
         return

@@ -3,56 +3,24 @@ import uuid
 
 from sqlalchemy.orm import Session
 
-from danswer.db.embedding_model import get_latest_embedding_model_by_status
-from danswer.db.models import IndexModelStatus
+from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.indexing.models import IndexChunk
 from danswer.indexing.models import InferenceChunk
 
 
 DEFAULT_BATCH_SIZE = 30
-
-
-def clean_model_name(model_str: str) -> str:
-    return model_str.replace("/", "_").replace("-", "_").replace(".", "_")
-
-
-def get_index_name(
-    db_session: Session,
-    secondary_index: bool = False,
-) -> str:
-    if secondary_index:
-        model = get_latest_embedding_model_by_status(
-            status=IndexModelStatus.FUTURE, db_session=db_session
-        )
-        if model is None:
-            raise RuntimeError("No secondary index being built")
-        return f"danswer_chunk_{clean_model_name(model.model_name)}"
-
-    model = get_latest_embedding_model_by_status(
-        status=IndexModelStatus.PRESENT, db_session=db_session
-    )
-    if not model:
-        return "danswer_chunk"
-    return f"danswer_chunk_{clean_model_name(model.model_name)}"
+DEFAULT_INDEX_NAME = "danswer_chunk"
 
 
 def get_both_index_names(db_session: Session) -> tuple[str, str | None]:
-    model = get_latest_embedding_model_by_status(
-        status=IndexModelStatus.PRESENT, db_session=db_session
-    )
-    curr_index = (
-        "danswer_chunk"
-        if not model
-        else f"danswer_chunk_{clean_model_name(model.model_name)}"
-    )
+    model = get_current_db_embedding_model(db_session)
 
-    model_new = get_latest_embedding_model_by_status(
-        status=IndexModelStatus.FUTURE, db_session=db_session
-    )
+    model_new = get_secondary_db_embedding_model(db_session)
     if not model_new:
-        return curr_index, None
+        return model.index_name, None
 
-    return curr_index, f"danswer_chunk_{clean_model_name(model_new.model_name)}"
+    return model.index_name, model_new.index_name
 
 
 def translate_boost_count_to_multiplier(boost: int) -> float:

@@ -1,9 +1,9 @@
-import nltk
 import time
 from threading import Event
 from typing import Any
 from typing import cast
 
+import nltk  # type: ignore
 from slack_sdk import WebClient
 from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
@@ -38,6 +38,7 @@ from danswer.danswerbot.slack.utils import get_danswer_bot_app_id
 from danswer.danswerbot.slack.utils import read_slack_thread
 from danswer.danswerbot.slack.utils import remove_danswer_bot_tag
 from danswer.danswerbot.slack.utils import respond_in_thread
+from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.one_shot_answer.models import ThreadMessage
@@ -354,14 +355,21 @@ def _initialize_socket_client(socket_client: SocketModeClient) -> None:
 # NOTE: we are using Web Sockets so that you can run this from within a firewalled VPC
 # without issue.
 if __name__ == "__main__":
-    warm_up_models(skip_cross_encoders=not ENABLE_RERANKING_ASYNC_FLOW)
+    with Session(get_sqlalchemy_engine()) as db_session:
+        embedding_model = get_current_db_embedding_model(db_session)
+
+        warm_up_models(
+            model_name=embedding_model.model_name,
+            normalize=embedding_model.normalize,
+            skip_cross_encoders=not ENABLE_RERANKING_ASYNC_FLOW,
+        )
 
     slack_bot_tokens: SlackBotTokens | None = None
     socket_client: SocketModeClient | None = None
 
     logger.info("Verifying query preprocessing (NLTK) data is downloaded")
     nltk.download("stopwords", quiet=True)
-    nltk.download('punkt', quiet=True)
+    nltk.download("punkt", quiet=True)
 
     while True:
         try:
