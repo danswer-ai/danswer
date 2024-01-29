@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_user
 from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
+from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
@@ -66,9 +67,13 @@ def handle_search_request(
         skip_llm_chunk_filter=disable_llm_chunk_filter,
     )
 
+    db_embedding_model = get_current_db_embedding_model(db_session)
+    document_index = get_default_document_index(
+        primary_index_name=db_embedding_model.index_name, secondary_index_name=None
+    )
+
     top_chunks, llm_selection = full_chunk_search(
-        query=search_query,
-        document_index=get_default_document_index(),
+        query=search_query, document_index=document_index, db_session=db_session
     )
 
     top_docs = chunks_to_search_docs(top_chunks)
