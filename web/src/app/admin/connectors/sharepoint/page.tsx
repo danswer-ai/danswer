@@ -72,6 +72,13 @@ const MainSection = () => {
 
   return (
     <>
+      <Text>
+        The Sharepoint connector allows you to index and search through your
+        Sharepoint files. Once setup, your Word documents, Excel files,
+        PowerPoint presentations, OneNote notebooks, PDFs, and uploaded files
+        will be queryable within Danswer.
+      </Text>
+
       <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide Sharepoint credentials
       </Title>
@@ -96,8 +103,16 @@ const MainSection = () => {
       ) : (
         <>
           <Text className="mb-2">
-            To index Sharepoint, please provide Azure AD client ID, Client
-            Secret, and Directory ID.
+            As a first step, please provide Application (client) ID, Directory
+            (tenant) ID, and Client Secret. You can follow the guide{" "}
+            <a
+              target="_blank"
+              href="https://docs.danswer.dev/connectors/sharepoint"
+              className="text-link"
+            >
+              here
+            </a>{" "}
+            to create an Azure AD application and obtain these values.
           </Text>
           <Card className="mt-2">
             <CredentialForm<SharepointCredentialJson>
@@ -105,28 +120,28 @@ const MainSection = () => {
                 <>
                   <TextFormField
                     name="aad_client_id"
-                    label="Azure AD Client ID:"
+                    label="Application (client) ID:"
                   />
                   <TextFormField
                     name="aad_directory_id"
-                    label="Azure AD Directory ID:"
+                    label="Directory (tenant) ID:"
                   />
                   <TextFormField
                     name="aad_client_secret"
-                    label="Azure AD Client Secret:"
+                    label="Client Secret:"
                     type="password"
                   />
                 </>
               }
               validationSchema={Yup.object().shape({
                 aad_client_id: Yup.string().required(
-                  "Please enter your Azure AD Client ID"
+                  "Please enter your Application (client) ID"
                 ),
                 aad_directory_id: Yup.string().required(
-                  "Please enter your Azure AD Directory ID"
+                  "Please enter your Directory (tenant) ID"
                 ),
                 aad_client_secret: Yup.string().required(
-                  "Please enter your Azure AD Client Secret"
+                  "Please enter your Client Secret"
                 ),
               })}
               initialValues={{
@@ -151,13 +166,9 @@ const MainSection = () => {
       {sharepointConnectorIndexingStatuses.length > 0 && (
         <>
           <Text className="mb-2">
-            We index the most recently updated tickets from each Sharepoint
-            instance listed below regularly.
-          </Text>
-          <Text className="mb-2">
-            The initial poll at this time retrieves tickets updated in the past
-            hour. All subsequent polls execute every ten minutes. This should be
-            configurable in the future.
+            The latest state of your Word documents, Excel files, PowerPoint
+            presentations, OneNote notebooks, PDFs, and uploaded files are
+            fetched every 10 minutes.
           </Text>
           <div className="mb-2">
             <ConnectorsTable<SharepointConfig, SharepointCredentialJson>
@@ -177,15 +188,6 @@ const MainSection = () => {
               }}
               specialColumns={[
                 {
-                  header: "Sites Group Name",
-                  key: "sites_group_name",
-                  getValue: (ccPairStatus) => {
-                    const connectorConfig =
-                      ccPairStatus.connector.connector_specific_config;
-                    return `${connectorConfig.sites_group_name}`;
-                  },
-                },
-                {
                   header: "Connectors",
                   key: "connectors",
                   getValue: (ccPairStatus) => {
@@ -195,6 +197,7 @@ const MainSection = () => {
                   },
                 },
               ]}
+              includeName
             />
           </div>
         </>
@@ -204,25 +207,24 @@ const MainSection = () => {
         <Card className="mt-4">
           <ConnectorForm<SharepointConfig>
             nameBuilder={(values) =>
-              `Sharepoint-${values.sites_group_name}`
+              values.sites && values.sites.length > 0
+                ? `Sharepoint-${values.sites.join("-")}`
+                : "Sharepoint"
             }
             ccPairNameBuilder={(values) =>
-              `Sharepoint ${values.sites_group_name}`
+              values.sites && values.sites.length > 0
+                ? `Sharepoint-${values.sites.join("-")}`
+                : "Sharepoint"
             }
             source="sharepoint"
             inputType="poll"
-            formBody={
-              <>
-                <TextFormField name="sites_group_name" label="Sites Group Name:" />
-              </>
-            }
             // formBody={<></>}
             formBodyBuilder={TextArrayFieldBuilder({
               name: "sites",
               label: "Sites:",
               subtext:
                 "Specify 0 or more sites to index. For example, specifying the site " +
-                "'support' for the 'danswerai' sharepoint will cause us to only index all content " +
+                "'support' for the 'danswerai' sharepoint will cause us to only index documents " +
                 "within the 'https://danswerai.sharepoint.com/sites/support' site. " +
                 "If no sites are specified, all sites in your organization will be indexed.",
             })}
@@ -230,13 +232,9 @@ const MainSection = () => {
               sites: Yup.array()
                 .of(Yup.string().required("Site names must be strings"))
                 .required(),
-                sites_group_name: Yup.string().required(
-                  "Please enter the name you would like to give this group of sites e.g. engineering "
-                ),
             })}
             initialValues={{
               sites: [],
-              sites_group_name: "",
             }}
             credentialId={sharepointCredential.id}
             refreshFreq={10 * 60} // 10 minutes
@@ -244,9 +242,9 @@ const MainSection = () => {
         </Card>
       ) : (
         <Text>
-          Please provide all Azure info in Step 1 first! Once you're done with
-          that, you can then specify which Sharepoint sites you want to make
-          searchable.
+          Please provide all Azure info in Step 1 first! Once you&apos;re done
+          with that, you can then specify which Sharepoint sites you want to
+          make searchable.
         </Text>
       )}
     </>
