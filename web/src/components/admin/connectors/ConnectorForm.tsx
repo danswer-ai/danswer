@@ -13,7 +13,7 @@ import { FormBodyBuilder, RequireAtLeastOne } from "./types";
 import { BooleanFormField, TextFormField } from "./Field";
 import { createCredential, linkCredential } from "@/lib/credential";
 import { useSWRConfig } from "swr";
-import { Button } from "@tremor/react";
+import { Button, Divider } from "@tremor/react";
 import { EE_ENABLED } from "@/lib/constants";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
@@ -245,7 +245,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
             {formBodyBuilder && formBodyBuilder(values)}
             {showNonPublicOption && (
               <>
-                <div className="border-t border-gray-600 py-2" />
+                <Divider />
                 <BooleanFormField
                   name="is_public"
                   label="Documents are Public?"
@@ -256,7 +256,7 @@ export function ConnectorForm<T extends Yup.AnyObject>({
                     "will have access"
                   }
                 />
-                <div className="border-t border-gray-600 py-2" />
+                <Divider />
               </>
             )}
             <div className="flex">
