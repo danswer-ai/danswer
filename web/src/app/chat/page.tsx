@@ -17,7 +17,7 @@ import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/conta
 import { personaComparator } from "../admin/personas/lib";
 import { ChatLayout } from "./ChatPage";
 import {
-  EmbeddingModelResponse,
+  FullEmbeddingModelResponse,
   checkModelNameIsValid,
 } from "../admin/models/embedding/embeddingModels";
 import { SwitchModelModal } from "@/components/SwitchModelModal";
@@ -37,7 +37,7 @@ export default async function Page({
     fetchSS("/persona?include_default=true"),
     fetchSS("/chat/get-user-chat-sessions"),
     fetchSS("/query/valid-tags"),
-    fetchSS("/secondary-index/get-current-embedding-model"),
+    fetchSS("/secondary-index/get-embedding-models"),
   ];
 
   // catch cases where the backend is completely unreachable here
@@ -47,7 +47,7 @@ export default async function Page({
     | User
     | Response
     | AuthTypeMetadata
-    | EmbeddingModelResponse
+    | FullEmbeddingModelResponse
     | null
   )[] = [null, null, null, null, null, null, null, null];
   try {
@@ -124,10 +124,14 @@ export default async function Page({
     console.log(`Failed to fetch tags - ${tagsResponse?.status}`);
   }
 
-  const embeddingModelName =
+  const embeddingModelVersionInfo =
     embeddingModelResponse && embeddingModelResponse.ok
-      ? ((await embeddingModelResponse.json()).model_name as string)
+      ? ((await embeddingModelResponse.json()) as FullEmbeddingModelResponse)
       : null;
+  const currentEmbeddingModelName =
+    embeddingModelVersionInfo?.current_model_name;
+  const nextEmbeddingModelName =
+    embeddingModelVersionInfo?.secondary_model_name;
 
   const defaultPersonaIdRaw = searchParams["personaId"];
   const defaultPersonaId = defaultPersonaIdRaw
@@ -147,10 +151,12 @@ export default async function Page({
       <ApiKeyModal />
 
       {connectors.length === 0 ? (
-        <WelcomeModal embeddingModelName={embeddingModelName} />
+        <WelcomeModal embeddingModelName={currentEmbeddingModelName} />
       ) : (
-        !checkModelNameIsValid(embeddingModelName) && (
-          <SwitchModelModal embeddingModelName={embeddingModelName} />
+        embeddingModelVersionInfo &&
+        !checkModelNameIsValid(currentEmbeddingModelName) &&
+        !nextEmbeddingModelName && (
+          <SwitchModelModal embeddingModelName={currentEmbeddingModelName} />
         )
       )}
 

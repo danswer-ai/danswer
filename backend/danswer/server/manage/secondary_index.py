@@ -5,6 +5,7 @@ from fastapi import status
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import current_user
 from danswer.db.embedding_model import create_embedding_model
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
@@ -15,6 +16,7 @@ from danswer.db.models import IndexModelStatus
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import EmbeddingModelDetail
+from danswer.server.manage.models import FullModelVersionResponse
 from danswer.server.manage.models import ModelVersionResponse
 from danswer.server.models import IdReturn
 from danswer.utils.logger import setup_logger
@@ -100,7 +102,7 @@ def cancel_new_embedding(
 
 @router.get("/get-current-embedding-model")
 def get_current_embedding_model(
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ModelVersionResponse:
     current_model = get_current_db_embedding_model(db_session)
@@ -109,11 +111,24 @@ def get_current_embedding_model(
 
 @router.get("/get-secondary-embedding-model")
 def get_secondary_embedding_model(
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ModelVersionResponse:
     next_model = get_secondary_db_embedding_model(db_session)
 
     return ModelVersionResponse(
         model_name=next_model.model_name if next_model else None
+    )
+
+
+@router.get("/get-embedding-models")
+def get_embedding_models(
+    _: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> FullModelVersionResponse:
+    current_model = get_current_db_embedding_model(db_session)
+    next_model = get_secondary_db_embedding_model(db_session)
+    return FullModelVersionResponse(
+        current_model_name=current_model.model_name,
+        secondary_model_name=next_model.model_name if next_model else None,
     )

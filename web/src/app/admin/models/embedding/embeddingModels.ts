@@ -2,6 +2,11 @@ export interface EmbeddingModelResponse {
   model_name: string | null;
 }
 
+export interface FullEmbeddingModelResponse {
+  current_model_name: string;
+  secondary_model_name: string | null;
+}
+
 export interface EmbeddingModelDescriptor {
   model_name: string;
   model_dim: number;

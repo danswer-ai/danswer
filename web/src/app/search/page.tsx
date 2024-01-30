@@ -17,7 +17,10 @@ import { WelcomeModal } from "@/components/WelcomeModal";
 import { unstable_noStore as noStore } from "next/cache";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { personaComparator } from "../admin/personas/lib";
-import { checkModelNameIsValid } from "../admin/models/embedding/embeddingModels";
+import {
+  FullEmbeddingModelResponse,
+  checkModelNameIsValid,
+} from "../admin/models/embedding/embeddingModels";
 import { SwitchModelModal } from "@/components/SwitchModelModal";
 
 export default async function Home() {
@@ -33,21 +36,19 @@ export default async function Home() {
     fetchSS("/manage/document-set"),
     fetchSS("/persona"),
     fetchSS("/query/valid-tags"),
-    fetchSS("/secondary-index/get-current-embedding-model"),
+    fetchSS("/secondary-index/get-embedding-models"),
   ];
 
   // catch cases where the backend is completely unreachable here
   // without try / catch, will just raise an exception and the page
   // will not render
-  let results: (User | Response | AuthTypeMetadata | null)[] = [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-  ];
+  let results: (
+    | User
+    | Response
+    | AuthTypeMetadata
+    | FullEmbeddingModelResponse
+    | null
+  )[] = [null, null, null, null, null, null, null];
   try {
     results = await Promise.all(tasks);
   } catch (e) {
@@ -104,10 +105,15 @@ export default async function Home() {
     console.log(`Failed to fetch tags - ${tagsResponse?.status}`);
   }
 
-  const embeddingModelName =
+  const embeddingModelVersionInfo =
     embeddingModelResponse && embeddingModelResponse.ok
-      ? ((await embeddingModelResponse.json()).model_name as string)
+      ? ((await embeddingModelResponse.json()) as FullEmbeddingModelResponse)
       : null;
+  const currentEmbeddingModelName =
+    embeddingModelVersionInfo?.current_model_name;
+  const nextEmbeddingModelName =
+    embeddingModelVersionInfo?.secondary_model_name;
+  console.log(embeddingModelVersionInfo);
 
   // needs to be done in a non-client side component due to nextjs
   const storedSearchType = cookies().get("searchType")?.value as
@@ -129,10 +135,12 @@ export default async function Home() {
       <InstantSSRAutoRefresh />
 
       {connectors.length === 0 ? (
-        <WelcomeModal embeddingModelName={embeddingModelName} />
+        <WelcomeModal embeddingModelName={currentEmbeddingModelName} />
       ) : (
-        !checkModelNameIsValid(embeddingModelName) && (
-          <SwitchModelModal embeddingModelName={embeddingModelName} />
+        embeddingModelVersionInfo &&
+        !checkModelNameIsValid(currentEmbeddingModelName) &&
+        !nextEmbeddingModelName && (
+          <SwitchModelModal embeddingModelName={currentEmbeddingModelName} />
         )
       )}
 
