@@ -56,20 +56,40 @@ def get_connector_credential_pair_from_id(
 def get_last_successful_attempt_time(
     connector_id: int,
     credential_id: int,
+    embedding_model: EmbeddingModel,
     db_session: Session,
 ) -> float:
     """Gets the timestamp of the last successful index run stored in
     the CC Pair row in the database"""
-    connector_credential_pair = get_connector_credential_pair(
-        connector_id, credential_id, db_session
+    if embedding_model.status == IndexModelStatus.PRESENT:
+        connector_credential_pair = get_connector_credential_pair(
+            connector_id, credential_id, db_session
+        )
+        if (
+            connector_credential_pair is None
+            or connector_credential_pair.last_successful_index_time is None
+        ):
+            return 0.0
+
+        return connector_credential_pair.last_successful_index_time.timestamp()
+
+    # For Secondary Index we don't keep track of the latest success, so have to calculate it live
+    attempt = (
+        db_session.query(IndexAttempt)
+        .filter(
+            IndexAttempt.connector_id == connector_id,
+            IndexAttempt.credential_id == credential_id,
+            IndexAttempt.embedding_model_id == embedding_model.id,
+            IndexAttempt.status == IndexingStatus.SUCCESS,
+        )
+        .order_by(IndexAttempt.time_updated.desc())
+        .first()
     )
-    if (
-        connector_credential_pair is None
-        or connector_credential_pair.last_successful_index_time is None
-    ):
+
+    if not attempt:
         return 0.0
 
-    return connector_credential_pair.last_successful_index_time.timestamp()
+    return attempt.time_updated.timestamp()
 
 
 def update_connector_credential_pair(
