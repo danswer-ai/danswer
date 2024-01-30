@@ -136,6 +136,7 @@ def _run_indexing(
     last_successful_index_time = get_last_successful_attempt_time(
         connector_id=db_connector.id,
         credential_id=db_credential.id,
+        embedding_model=index_attempt.embedding_model,
         db_session=db_session,
     )
 
