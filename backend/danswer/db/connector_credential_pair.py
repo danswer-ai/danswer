@@ -82,14 +82,14 @@ def get_last_successful_attempt_time(
             IndexAttempt.embedding_model_id == embedding_model.id,
             IndexAttempt.status == IndexingStatus.SUCCESS,
         )
-        .order_by(IndexAttempt.time_updated.desc())
+        .order_by(IndexAttempt.time_started.desc())
         .first()
     )
 
-    if not attempt:
+    if not attempt or not attempt.time_started:
         return 0.0
 
-    return attempt.time_updated.timestamp()
+    return attempt.time_started.timestamp()
 
 
 def update_connector_credential_pair(
@@ -282,7 +282,7 @@ def resync_cc_pair(
         if only_include_success:
             query = query.filter(IndexAttempt.status == IndexingStatus.SUCCESS)
 
-        latest_index_attempt = query.order_by(desc(IndexAttempt.time_updated)).first()
+        latest_index_attempt = query.order_by(desc(IndexAttempt.time_started)).first()
 
         return latest_index_attempt
 
@@ -294,7 +294,7 @@ def resync_cc_pair(
     )
 
     cc_pair.last_successful_index_time = (
-        last_success.time_updated if last_success else None
+        last_success.time_started if last_success else None
     )
 
     last_run = find_latest_index_attempt(
