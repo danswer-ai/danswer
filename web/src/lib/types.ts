@@ -114,6 +114,7 @@ export interface ProductboardConfig {}
 export interface SlackConfig {
   workspace: string;
   channels?: string[];
+  channel_regex_enabled?: boolean;
 }
 
 export interface SlabConfig {

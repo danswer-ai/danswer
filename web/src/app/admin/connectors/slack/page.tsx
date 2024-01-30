@@ -17,6 +17,8 @@ import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import {
   TextFormField,
   TextArrayFieldBuilder,
+  BooleanFormField,
+  TextArrayField,
 } from "@/components/admin/connectors/Field";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
 import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
@@ -207,15 +209,38 @@ const MainSection = () => {
                 <TextFormField name="workspace" label="Workspace" />
               </>
             }
-            formBodyBuilder={TextArrayFieldBuilder({
-              name: "channels",
-              label: "Channels:",
-              subtext:
-                "Specify 0 or more channels to index. For example, specifying the channel " +
-                "'support' will cause us to only index all content " +
-                "within the '#support' channel. " +
-                "If no channels are specified, all channels in your workspace will be indexed.",
-            })}
+            formBodyBuilder={(values) => {
+              return (
+                <>
+                  <Divider />
+                  {TextArrayFieldBuilder({
+                    name: "channels",
+                    label: "Channels:",
+                    subtext: `
+                      Specify 0 or more channels to index. For example, specifying the channel
+                      "support" will cause us to only index all content within the "#support" channel.
+                      If no channels are specified, all channels in your workspace will be indexed.`,
+                  })(values)}
+                  <BooleanFormField
+                    name="channel_regex_enabled"
+                    label="Regex Enabled?"
+                    subtext={
+                      <div>
+                        If enabled, we will treat the &quot;channels&quot;
+                        specified above as regular expressions. A channel&apos;s
+                        messages will be pulled in by the connector if the name
+                        of the channel fully matches any of the specified
+                        regular expressions.
+                        <br />
+                        For example, specifying <i>.*-support.*</i> as a
+                        &quot;channel&quot; will cause the connector to include
+                        any channels with &quot;-support&quot; in the name.
+                      </div>
+                    }
+                  />
+                </>
+              );
+            }}
             validationSchema={Yup.object().shape({
               workspace: Yup.string().required(
                 "Please enter the workspace to index"
@@ -223,10 +248,12 @@ const MainSection = () => {
               channels: Yup.array()
                 .of(Yup.string().required("Channel names must be strings"))
                 .required(),
+              channel_regex_enabled: Yup.boolean().required(),
             })}
             initialValues={{
               workspace: "",
               channels: [],
+              channel_regex_enabled: false,
             }}
             refreshFreq={10 * 60} // 10 minutes
             credentialId={slackCredential.id}
