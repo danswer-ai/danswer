@@ -3,13 +3,11 @@
 import { Button, Text } from "@tremor/react";
 import { Modal } from "./Modal";
 import Link from "next/link";
-import { FiCheckCircle } from "react-icons/fi";
-import { checkModelNameIsValid } from "@/app/admin/models/embedding/embeddingModels";
 
 export function SwitchModelModal({
   embeddingModelName,
 }: {
-  embeddingModelName: null | string;
+  embeddingModelName: undefined | null | string;
 }) {
   return (
     <Modal className="max-w-4xl">

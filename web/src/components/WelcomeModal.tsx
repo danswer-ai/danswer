@@ -9,7 +9,7 @@ import { checkModelNameIsValid } from "@/app/admin/models/embedding/embeddingMod
 export function WelcomeModal({
   embeddingModelName,
 }: {
-  embeddingModelName: null | string;
+  embeddingModelName: undefined | null | string;
 }) {
   const validModelSelected = checkModelNameIsValid(embeddingModelName);
 
