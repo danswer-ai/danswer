@@ -146,13 +146,20 @@ function Main() {
       )}
 
       {showAddConnectorPopup && (
-        <Modal width={"w-[600px]"}>
+        <Modal>
           <div>
             <div>
-              <b>Embeding model successfully selected</b> 🙌
+              <b className="text-base">Embeding model successfully selected</b>{" "}
+              🙌
               <br />
               <br />
-              To complete the initial setup, let&apos;s add a connector.
+              To complete the initial setup, let&apos;s add a connector!
+              <br />
+              <br />
+              Connectors are the way that Danswer gets data from your
+              organization&apos;s various data sources. Once setup, we&apos;ll
+              automatically sync data from your apps and docs into Danswer, so
+              you can search all through all of them in one place.
             </div>
             <div className="flex">
               <Link className="mx-auto mt-2 w-fit" href="/admin/add-connector">
@@ -213,76 +220,77 @@ function Main() {
         )
       )}
 
-      {!newModelSelection ? (
-        <div>
-          {currentModel ? (
-            <>
-              <Title className="mt-8">Switch your Embedding Model</Title>
-
-              <Text className="mb-4">
-                If the current model is not working for you, you can update your
-                model choice below. Note that this will require a complete
-                re-indexing of all your documents across every connected source.
-                We will take care of this in the background, but depending on
-                the size of your corpus, this could take hours, day, or even
-                weeks. You can monitor the progress of the re-indexing on this
-                page.
-              </Text>
-            </>
-          ) : (
-            <>
-              <Title className="mt-8 mb-4">Choose your Embedding Model</Title>
-            </>
-          )}
-
-          <ModelSelector
-            modelOptions={AVAILABLE_MODELS.filter(
-              (modelOption) => modelOption.model_name !== currentModelName
-            )}
-            setSelectedModel={onSelect}
-          />
-        </div>
-      ) : (
-        connectors &&
-        connectors.length > 0 && (
+      {!showAddConnectorPopup &&
+        (!newModelSelection ? (
           <div>
-            <Title className="mt-8">Current Upgrade Status</Title>
-            <div className="mt-4">
-              <div className="italic text-sm mb-2">
-                Currently in the process of switching to:
-              </div>
-              <ModelOption model={newModelSelection} />
+            {currentModel ? (
+              <>
+                <Title className="mt-8">Switch your Embedding Model</Title>
 
-              <Button
-                color="red"
-                size="xs"
-                className="mt-4"
-                onClick={() => setIsCancelling(true)}
-              >
-                Cancel
-              </Button>
+                <Text className="mb-4">
+                  If the current model is not working for you, you can update
+                  your model choice below. Note that this will require a
+                  complete re-indexing of all your documents across every
+                  connected source. We will take care of this in the background,
+                  but depending on the size of your corpus, this could take
+                  hours, day, or even weeks. You can monitor the progress of the
+                  re-indexing on this page.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Title className="mt-8 mb-4">Choose your Embedding Model</Title>
+              </>
+            )}
 
-              <Text className="my-4">
-                The table below shows the re-indexing progress of all existing
-                connectors. Once all connectors have been re-indexed, the new
-                model will be used for all search queries. Until then, we will
-                use the old model so that no downtime is necessary during this
-                transition.
-              </Text>
-
-              {isLoadingOngoingReIndexingStatus ? (
-                <ThreeDotsLoader />
-              ) : ongoingReIndexingStatus ? (
-                <ReindexingProgressTable
-                  reindexingProgress={ongoingReIndexingStatus}
-                />
-              ) : (
-                <ErrorCallout errorTitle="Failed to fetch re-indexing progress" />
+            <ModelSelector
+              modelOptions={AVAILABLE_MODELS.filter(
+                (modelOption) => modelOption.model_name !== currentModelName
               )}
-            </div>
+              setSelectedModel={onSelect}
+            />
           </div>
-        )
-      )}
+        ) : (
+          connectors &&
+          connectors.length > 0 && (
+            <div>
+              <Title className="mt-8">Current Upgrade Status</Title>
+              <div className="mt-4">
+                <div className="italic text-sm mb-2">
+                  Currently in the process of switching to:
+                </div>
+                <ModelOption model={newModelSelection} />
+
+                <Button
+                  color="red"
+                  size="xs"
+                  className="mt-4"
+                  onClick={() => setIsCancelling(true)}
+                >
+                  Cancel
+                </Button>
+
+                <Text className="my-4">
+                  The table below shows the re-indexing progress of all existing
+                  connectors. Once all connectors have been re-indexed, the new
+                  model will be used for all search queries. Until then, we will
+                  use the old model so that no downtime is necessary during this
+                  transition.
+                </Text>
+
+                {isLoadingOngoingReIndexingStatus ? (
+                  <ThreeDotsLoader />
+                ) : ongoingReIndexingStatus ? (
+                  <ReindexingProgressTable
+                    reindexingProgress={ongoingReIndexingStatus}
+                  />
+                ) : (
+                  <ErrorCallout errorTitle="Failed to fetch re-indexing progress" />
+                )}
+              </div>
+            </div>
+          )
+        ))}
     </div>
   );
 }
