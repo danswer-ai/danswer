@@ -83,6 +83,9 @@ export const ConnectorTitle = ({
         typedConnector.connector_specific_config.channels.join(", ")
       );
     }
+    if (typedConnector.connector_specific_config.channel_regex_enabled) {
+      additionalMetadata.set("Channel Regex Enabled", "True");
+    }
   } else if (connector.source === "zulip") {
     const typedConnector = connector as Connector<ZulipConfig>;
     additionalMetadata.set(

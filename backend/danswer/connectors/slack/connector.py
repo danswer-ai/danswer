@@ -1,4 +1,5 @@
 import json
+import re
 from collections.abc import Callable
 from collections.abc import Generator
 from datetime import datetime
@@ -204,10 +205,22 @@ def _default_msg_filter(message: MessageType) -> bool:
 
 
 def _filter_channels(
-    all_channels: list[dict[str, Any]], channels_to_connect: list[str] | None
+    all_channels: list[dict[str, Any]],
+    channels_to_connect: list[str] | None,
+    regex_enabled: bool,
 ) -> list[dict[str, Any]]:
     if not channels_to_connect:
         return all_channels
+
+    if regex_enabled:
+        return [
+            channel
+            for channel in all_channels
+            if any(
+                re.fullmatch(channel_to_connect, channel["name"])
+                for channel_to_connect in channels_to_connect
+            )
+        ]
 
     # validate that all channels in `channels_to_connect` are valid
     # fail loudly in the case of an invalid channel so that the user
@@ -229,6 +242,7 @@ def get_all_docs(
     client: WebClient,
     workspace: str,
     channels: list[str] | None = None,
+    channel_name_regex_enabled: bool = False,
     oldest: str | None = None,
     latest: str | None = None,
     msg_filter_func: Callable[[MessageType], bool] = _default_msg_filter,
@@ -237,7 +251,9 @@ def get_all_docs(
     slack_cleaner = SlackTextCleaner(client=client)
 
     all_channels = get_channels(client)
-    filtered_channels = _filter_channels(all_channels, channels)
+    filtered_channels = _filter_channels(
+        all_channels, channels, channel_name_regex_enabled
+    )
 
     for channel in filtered_channels:
         channel_docs = 0
@@ -285,13 +301,14 @@ class SlackLoadConnector(LoadConnector):
         workspace: str,
         export_path_str: str,
         channels: list[str] | None = None,
-        # if specified, will only include channels that match at least one of these
-        # regexes OR are in `channels`
-        channel_regexes: list[str] | None = None,
+        # if specified, will treat the specified channel strings as
+        # regexes, and will only index channels that fully match the regexes
+        channel_regex_enabled: bool = False,
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.workspace = workspace
         self.channels = channels
+        self.channel_regex_enabled = channel_regex_enabled
         self.export_path_str = export_path_str
         self.batch_size = batch_size
 
@@ -359,7 +376,9 @@ class SlackLoadConnector(LoadConnector):
         with open(export_path / "channels.json") as f:
             all_channels = json.load(f)
 
-        filtered_channels = _filter_channels(all_channels, self.channels)
+        filtered_channels = _filter_channels(
+            all_channels, self.channels, self.channel_regex_enabled
+        )
 
         document_batch: dict[str, Document] = {}
         for channel_info in filtered_channels:
@@ -393,10 +412,14 @@ class SlackPollConnector(PollConnector):
         self,
         workspace: str,
         channels: list[str] | None = None,
+        # if specified, will treat the specified channel strings as
+        # regexes, and will only index channels that fully match the regexes
+        channel_regex_enabled: bool = False,
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.workspace = workspace
         self.channels = channels
+        self.channel_regex_enabled = channel_regex_enabled
         self.batch_size = batch_size
         self.client: WebClient | None = None
 
@@ -416,6 +439,7 @@ class SlackPollConnector(PollConnector):
             client=self.client,
             workspace=self.workspace,
             channels=self.channels,
+            channel_name_regex_enabled=self.channel_regex_enabled,
             # NOTE: need to impute to `None` instead of using 0.0, since Slack will
             # throw an error if we use 0.0 on an account without infinite data
             # retention
