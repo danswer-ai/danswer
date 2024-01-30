@@ -50,6 +50,7 @@ import hubSpotIcon from "../../../public/HubSpot.png";
 import document360Icon from "../../../public/Document360.png";
 import googleSitesIcon from "../../../public/GoogleSites.png";
 import zendeskIcon from "../../../public/Zendesk.svg";
+import xenforoIcon from "../../../public/Xenforo.svg";
 import sharepointIcon from "../../../public/Sharepoint.png";
 import { FaRobot } from "react-icons/fa";
 
@@ -592,3 +593,17 @@ export const ZendeskIcon = ({
     <Image src={zendeskIcon} alt="Logo" width="96" height="96" />
   </div>
 );
+
+export const XenforoIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+      <div
+          style={{ width: `${size}px`, height: `${size}px` }}
+          className={`w-[${size}px] h-[${size}px] ` + className}
+      >
+        <Image src={xenforoIcon} alt="Logo" width="96" height="96" />
+      </div>
+  );
+};

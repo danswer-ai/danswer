@@ -7,13 +7,21 @@ import threading
 def monitor_process(process_name: str, process: subprocess.Popen) -> None:
     assert process.stdout is not None
 
+    # Set the stdout stream's encoding to utf-8
+    process.stdout.reconfigure(encoding='utf-8')
+
     while True:
-        output = process.stdout.readline()
+        try:
+            output = process.stdout.readline()
 
-        if output:
-            print(f"{process_name}: {output.strip()}")
+            if output:
+                print(f"{process_name}: {output.strip()}")
 
-        if process.poll() is not None:
+            if process.poll() is not None:
+                break
+
+        except UnicodeDecodeError as e:
+            print(f"Error decoding output from {process_name}: {e}")
             break
 
 
