@@ -260,7 +260,6 @@ def _run_indexing(
             connector_id=db_connector.id,
             credential_id=db_credential.id,
             attempt_status=IndexingStatus.SUCCESS,
-            net_docs=net_doc_change,
             run_dt=run_end_dt,
         )
 
