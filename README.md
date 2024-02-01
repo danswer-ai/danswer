@@ -36,10 +36,12 @@ Teams have used Danswer to:
 <h3>Usage</h3>
 
 Danswer Web App:
+
 https://github.com/danswer-ai/danswer/assets/32520769/563be14c-9304-47b5-bf0a-9049c2b6f410
 
 
 Or, plug Danswer into your existing Slack workflows (more integrations to come 😁):
+
 https://github.com/danswer-ai/danswer/assets/25087905/3e19739b-d178-4371-9a38-011430bdec1b
 
 
