@@ -126,10 +126,10 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
-    command: > 
-      /bin/sh -c "sleep 10 &&
-        envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template > /etc/nginx/conf.d/app.conf &&
-        while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
+    # the specified script waits for the api_server to start up. 
+    # Without this we've seen issues where nginx shows no error logs but 
+    # does not recieve any traffic  
+    command: "/bin/sh -c \"/etc/nginx/conf.d/run-nginx.sh app.conf.template\""
     env_file:
       - .env.nginx
   # follows https://pentacent.medium.com/nginx-and-lets-encrypt-with-docker-in-less-than-5-minutes-b4b8a60d3a71

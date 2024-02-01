@@ -219,13 +219,10 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
-    # sleep a little bit to allow the web_server / api_server to start up. 
+    # the specified script waits for the api_server to start up. 
     # Without this we've seen issues where nginx shows no error logs but 
     # does not recieve any traffic
-    command: > 
-      /bin/sh -c "sleep 10 &&
-        envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template.dev > /etc/nginx/conf.d/app.conf &&
-        while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
+    command: "/bin/sh -c \"/etc/nginx/conf.d/run-nginx.sh app.conf.template.dev\""
   # Run with --profile model-server to bring up the danswer-model-server container
   # Be sure to change MODEL_SERVER_HOST (see above) as well
   # ie. MODEL_SERVER_HOST="model_server" docker compose -f docker-compose.dev.yml -p danswer-stack --profile model-server up -d --build
