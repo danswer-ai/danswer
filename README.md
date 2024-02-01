@@ -47,14 +47,14 @@ https://github.com/danswer-ai/danswer/assets/25087905/3e19739b-d178-4371-9a38-01
 
 For more details on the Admin UI to manage connectors and users, check out our <strong><a href="https://www.youtube.com/watch?v=geNzY1nbCnU">Full Video Demo</a></strong>!
 
-<h3>Deployment</h3>
+## Deployment
 
 Danswer can easily be tested locally or deployed on a virtual machine with a single `docker compose` command. Checkout our [docs](https://docs.danswer.dev/quickstart) to learn more.
 
 We also have built-in support for deployment on Kubernetes. Files for that can be found [here](https://github.com/danswer-ai/danswer/tree/main/deployment/kubernetes).
 
 
-## 💃 Features 
+## 💃 Main Features 
 * Document Search + AI Answers for natural language queries.
 * Connectors to all common workplace tools like Google Drive, Confluence, Slack, etc.
 * Chat support (think ChatGPT but it has access to your private knowledge sources).
