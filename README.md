@@ -45,11 +45,13 @@ Or, plug Danswer into your existing Slack workflows (more integrations to come ð
 https://github.com/danswer-ai/danswer/assets/25087905/3e19739b-d178-4371-9a38-011430bdec1b
 
 
-For more details on the Admin UI to manage connectors and users, check out our <strong><a href="https://www.youtube.com/watch?v=geNzY1nbCnU">Full Video Demo</a></strong>!
+For more details on the Admin UI to manage connectors and users, check out our 
+<strong><a href="https://www.youtube.com/watch?v=geNzY1nbCnU">Full Video Demo</a></strong>!
 
 ## Deployment
 
-Danswer can easily be tested locally or deployed on a virtual machine with a single `docker compose` command. Checkout our [docs](https://docs.danswer.dev/quickstart) to learn more.
+Danswer can easily be run locally (even on a laptop) or deployed on a virtual machine with a single
+`docker compose` command. Checkout our [docs](https://docs.danswer.dev/quickstart) to learn more.
 
 We also have built-in support for deployment on Kubernetes. Files for that can be found [here](https://github.com/danswer-ai/danswer/tree/main/deployment/kubernetes).
 
