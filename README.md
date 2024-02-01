@@ -22,9 +22,9 @@
 </a>
 </p>
 
-<strong>[Danswer](https://www.danswer.ai/)</strong> lets you ask questions in natural language questions and get back answers based on
-your team specific documents. Ask followups or dive deeper with Danswer Chat. Connects to all common workplace 
-tools such as Slack, Google Drive, Confluence, etc.
+<strong>[Danswer](https://www.danswer.ai/)</strong> lets you ask questions in natural language questions and get back
+answers based on your team specific documents. Think ChatGPT if it had access to your team's unique
+knowledge. Connects to all common workplace tools such as Slack, Google Drive, Confluence, etc.
 
 Teams have used Danswer to:
 - Speedup customer support and escalation turnaround time.
