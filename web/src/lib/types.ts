@@ -351,6 +351,7 @@ export type AnswerFilterOption =
 export interface ChannelConfig {
   channel_names: string[];
   respond_tag_only?: boolean;
+  respond_to_bots?: boolean;
   respond_team_member_list?: string[];
   answer_filters?: AnswerFilterOption[];
   follow_up_tags?: string[];
