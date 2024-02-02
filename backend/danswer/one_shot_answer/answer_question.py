@@ -1,3 +1,4 @@
+import itertools
 from collections.abc import Callable
 from collections.abc import Iterator
 from typing import cast
@@ -6,6 +7,8 @@ from sqlalchemy.orm import Session
 
 from danswer.chat.chat_utils import get_chunks_for_qa
 from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import DanswerContext
+from danswer.chat.models import DanswerContexts
 from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import LLMMetricsContainer
 from danswer.chat.models import LLMRelevanceFilterResponse
@@ -67,6 +70,7 @@ def stream_answer_objects(
     | LLMRelevanceFilterResponse
     | DanswerAnswerPiece
     | DanswerQuotes
+    | DanswerContexts
     | StreamingError
     | ChatMessageDetail
 ]:
@@ -229,6 +233,21 @@ def stream_answer_objects(
         else no_gen_ai_response()
     )
 
+    if qa_model is not None and query_req.return_contexts:
+        contexts = DanswerContexts(
+            contexts=[
+                DanswerContext(
+                    content=context_doc.content,
+                    document_id=context_doc.document_id,
+                    semantic_identifier=context_doc.semantic_identifier,
+                    blurb=context_doc.semantic_identifier,
+                )
+                for context_doc in llm_chunks
+            ]
+        )
+
+        response_packets = itertools.chain(response_packets, [contexts])
+
     # Capture outputs and errors
     llm_output = ""
     error: str | None = None
@@ -316,6 +335,8 @@ def get_search_answer(
             qa_response.llm_chunks_indices = packet.relevant_chunk_indices
         elif isinstance(packet, DanswerQuotes):
             qa_response.quotes = packet
+        elif isinstance(packet, DanswerContexts):
+            qa_response.contexts = packet
         elif isinstance(packet, StreamingError):
             qa_response.error_msg = packet.error
         elif isinstance(packet, ChatMessageDetail):
