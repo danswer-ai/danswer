@@ -5,7 +5,7 @@
 </h2>
 
 <p align="center">
-<p align="center">OpenSource Enterprise Question-Answering</p>
+<p align="center">Open Source Unified Search and Gen-AI Chat with your Docs.</p>
 
 <p align="center">
 <a href="https://docs.danswer.dev/" target="_blank">
@@ -22,67 +22,79 @@
 </a>
 </p>
 
-<strong>[Danswer](https://www.danswer.ai/)</strong> allows you to ask natural language questions against internal documents and get back reliable answers backed by quotes and references from the source material so that you can always trust what you get back. You can connect to a number of common tools such as Slack, GitHub, Confluence, amongst others.
+<strong>[Danswer](https://www.danswer.ai/)</strong> lets you ask questions in natural language questions and get back
+answers based on your team specific documents. Think ChatGPT if it had access to your team's unique
+knowledge. Connects to all common workplace tools such as Slack, Google Drive, Confluence, etc.
+
+Teams have used Danswer to:
+- Speedup customer support and escalation turnaround time.
+- Improve Engineering efficiency by making documentation and code changelogs easy to find.
+- Let sales team get fuller context and faster in preparation for calls.
+- Track customer requests and priorities for Product teams.
+- Help teams self-serve IT, Onboarding, HR, etc.
 
 <h3>Usage</h3>
 
-Danswer provides a fully-featured web UI:
-
-
-
+Danswer Web App:
 
 https://github.com/danswer-ai/danswer/assets/32520769/563be14c-9304-47b5-bf0a-9049c2b6f410
 
 
-
-
-Or, if you prefer, you can plug Danswer into your existing Slack workflows (more integrations to come 😁):
-
+Or, plug Danswer into your existing Slack workflows (more integrations to come 😁):
 
 https://github.com/danswer-ai/danswer/assets/25087905/3e19739b-d178-4371-9a38-011430bdec1b
 
 
-For more details on the admin controls, check out our <strong><a href="https://www.youtube.com/watch?v=geNzY1nbCnU">Full Video Demo</a></strong>!
+For more details on the Admin UI to manage connectors and users, check out our 
+<strong><a href="https://www.youtube.com/watch?v=geNzY1nbCnU">Full Video Demo</a></strong>!
 
-<h3>Deployment</h3>
+## Deployment
 
-Danswer can easily be tested locally or deployed on a virtual machine with a single `docker compose` command. Checkout our [docs](https://docs.danswer.dev/quickstart) to learn more.
+Danswer can easily be run locally (even on a laptop) or deployed on a virtual machine with a single
+`docker compose` command. Checkout our [docs](https://docs.danswer.dev/quickstart) to learn more.
 
 We also have built-in support for deployment on Kubernetes. Files for that can be found [here](https://github.com/danswer-ai/danswer/tree/main/deployment/kubernetes).
 
-## 💃 Features 
-* Direct QA + Chat powered by Generative AI models with answers backed by quotes and source links.
-* Intelligent Document Retrieval (Hybrid Search + Reranking) using the latest NLP models.
-* Automatic time/source filter extraction from natural language + custom model to identify user intent.
-* User authentication and document level access management.
-* Support for LLMs of your choice (GPT-4, Mixstral, Llama2, etc.)
-* Management Dashboards to manage connectors and set up features such as live update fetching.
-* One line Docker Compose (or Kubernetes) deployment to host Danswer anywhere.
 
-## 🔌 Connectors 
+## 💃 Main Features 
+* Document Search + AI Answers for natural language queries.
+* Connectors to all common workplace tools like Google Drive, Confluence, Slack, etc.
+* Chat support (think ChatGPT but it has access to your private knowledge sources).
+* Create custom AI Assistants with different prompts and backing knowledge sets.
+* Slack integration to get answers and search results directly in Slack.
 
+
+## Other Noteable Benefits of Danswer
+* Best in class Hybrid Search across all sources (BM-25 + prefix aware embedding models).
+* User Authentication with document level access management.
+* Admin Dashboard to configure connectors, document-sets, access, etc.
+* Custom deep learning models + learn from user feedback.
+* Connect Danswer with LLM of your choice for a fully airgapped solution.
+* Easy deployment and ability to host Danswer anywhere of your choosing.
+
+
+## 🔌 Connectors
 Efficiently pulls the latest changes from:
   * Slack
   * GitHub
-  * Gmail
   * Google Drive
   * Confluence
   * Jira
   * Zendesk
+  * Gmail
   * Notion
   * Gong
   * Slab
   * Linear
   * Productboard
   * Guru
-  * Zulip
   * Bookstack
   * Document360
-  * Request Tracker
+  * Sharepoint
   * Hubspot
   * Local Files
   * Websites
-  * With more to come...
+  * And more ...
 
 ## 🚧 Roadmap
 * Organizational understanding.
