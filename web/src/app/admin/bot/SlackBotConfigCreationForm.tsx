@@ -69,6 +69,8 @@ export const SlackBotCreationForm = ({
             ).includes("questionmark_prefilter"),
             respond_tag_only:
               existingSlackBotConfig?.channel_config?.respond_tag_only || false,
+            respond_to_bots:
+              existingSlackBotConfig?.channel_config?.respond_to_bots || false,
             respond_team_member_list:
               existingSlackBotConfig?.channel_config
                 ?.respond_team_member_list || ([] as string[]),
@@ -94,6 +96,7 @@ export const SlackBotCreationForm = ({
             answer_validity_check_enabled: Yup.boolean().required(),
             questionmark_prefilter_enabled: Yup.boolean().required(),
             respond_tag_only: Yup.boolean().required(),
+            respond_to_bots: Yup.boolean().required(),
             respond_team_member_list: Yup.array().of(Yup.string()).required(),
             still_need_help_enabled: Yup.boolean().required(),
             follow_up_tags: Yup.array().of(Yup.string()),
@@ -186,6 +189,11 @@ export const SlackBotCreationForm = ({
                   name="respond_tag_only"
                   label="Respond to @DanswerBot Only"
                   subtext="If set, DanswerBot will only respond when directly tagged"
+                />
+                <BooleanFormField
+                  name="respond_to_bots"
+                  label="Responds to Bot messages"
+                  subtext="If not set, DanswerBot will always ignore messages from Bots"
                 />
                 <TextArrayField
                   name="respond_team_member_list"

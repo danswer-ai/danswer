@@ -8,6 +8,7 @@ interface SlackBotConfigCreationRequest {
   answer_validity_check_enabled: boolean;
   questionmark_prefilter_enabled: boolean;
   respond_tag_only: boolean;
+  respond_to_bots: boolean;
   respond_team_member_list: string[];
   follow_up_tags?: string[];
   usePersona: boolean;
@@ -32,6 +33,7 @@ const buildRequestBodyFromCreationRequest = (
   return JSON.stringify({
     channel_names: creationRequest.channel_names,
     respond_tag_only: creationRequest.respond_tag_only,
+    respond_to_bots: creationRequest.respond_to_bots,
     respond_team_member_list: creationRequest.respond_team_member_list,
     answer_filters: buildFiltersFromCreationRequest(creationRequest),
     follow_up_tags: creationRequest.follow_up_tags?.filter((tag) => tag !== ""),

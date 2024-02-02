@@ -786,6 +786,7 @@ class ChannelConfig(TypedDict):
 
     channel_names: list[str]
     respond_tag_only: NotRequired[bool]  # defaults to False
+    respond_to_bots: NotRequired[bool]  # defaults to False
     respond_team_member_list: NotRequired[list[str]]
     answer_filters: NotRequired[list[AllowedAnswerFilters]]
     # If None then no follow up

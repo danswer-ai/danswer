@@ -19,6 +19,7 @@ from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_RESOLVED_ACTION_ID
+from danswer.danswerbot.slack.constants import IMMEDIATE_RESOLVED_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
 from danswer.danswerbot.slack.constants import VIEW_DOC_FEEDBACK_ID
@@ -87,8 +88,20 @@ def prefilter_requests(req: SocketModeRequest, client: SocketModeClient) -> bool
                 return False
 
         if event.get("bot_profile"):
-            channel_specific_logger.info("Ignoring message from bot")
-            return False
+            channel_name, _ = get_channel_name_from_id(
+                client=client.web_client, channel_id=channel
+            )
+
+            engine = get_sqlalchemy_engine()
+            with Session(engine) as db_session:
+                slack_bot_config = get_slack_bot_config_for_channel(
+                    channel_name=channel_name, db_session=db_session
+                )
+            if not slack_bot_config or not slack_bot_config.channel_config.get(
+                "respond_to_bots"
+            ):
+                channel_specific_logger.info("Ignoring message from bot")
+                return False
 
         # Ignore things like channel_join, channel_leave, etc.
         # NOTE: "file_share" is just a message with a file attachment, so we
@@ -300,8 +313,10 @@ def action_routing(req: SocketModeRequest, client: SocketModeClient) -> None:
             return handle_doc_feedback_button(req, client)
         elif action["action_id"] == FOLLOWUP_BUTTON_ACTION_ID:
             return handle_followup_button(req, client)
+        elif action["action_id"] == IMMEDIATE_RESOLVED_BUTTON_ACTION_ID:
+            return handle_followup_resolved_button(req, client, immediate=True)
         elif action["action_id"] == FOLLOWUP_BUTTON_RESOLVED_ACTION_ID:
-            return handle_followup_resolved_button(req, client)
+            return handle_followup_resolved_button(req, client, immediate=False)
 
 
 def view_routing(req: SocketModeRequest, client: SocketModeClient) -> None:

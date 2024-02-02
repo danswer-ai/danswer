@@ -20,6 +20,7 @@ from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_RESOLVED_ACTION_ID
+from danswer.danswerbot.slack.constants import IMMEDIATE_RESOLVED_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.utils import build_feedback_id
 from danswer.danswerbot.slack.utils import remove_slack_text_interactions
@@ -280,10 +281,15 @@ def build_follow_up_block(message_id: int | None) -> ActionsBlock:
         block_id=build_feedback_id(message_id) if message_id is not None else None,
         elements=[
             ButtonElement(
+                action_id=IMMEDIATE_RESOLVED_BUTTON_ACTION_ID,
+                style="primary",
+                text="I'm all set!",
+            ),
+            ButtonElement(
                 action_id=FOLLOWUP_BUTTON_ACTION_ID,
                 style="danger",
                 text="I need more help from a human!",
-            )
+            ),
         ],
     )
 

@@ -75,6 +75,7 @@ class SlackBotConfigCreationRequest(BaseModel):
     persona_id: int | None  # NOTE: only one of `document_sets` / `persona_id` should be set
     channel_names: list[str]
     respond_tag_only: bool = False
+    respond_to_bots: bool = False
     # If no team members, assume respond in the channel to everyone
     respond_team_member_list: list[str] = []
     answer_filters: list[AllowedAnswerFilters] = []

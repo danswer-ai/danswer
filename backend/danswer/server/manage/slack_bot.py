@@ -77,6 +77,10 @@ def _form_channel_config(
     if follow_up_tags is not None:
         channel_config["follow_up_tags"] = follow_up_tags
 
+    channel_config[
+        "respond_to_bots"
+    ] = slack_bot_config_creation_request.respond_to_bots
+
     return channel_config
 
 
