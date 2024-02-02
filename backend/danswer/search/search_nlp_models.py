@@ -24,6 +24,9 @@ from shared_models.model_server_models import IntentResponse
 from shared_models.model_server_models import RerankRequest
 from shared_models.model_server_models import RerankResponse
 
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 logger = setup_logger()
 # Remove useless info about layer initialization
 logging.getLogger("transformers").setLevel(logging.ERROR)

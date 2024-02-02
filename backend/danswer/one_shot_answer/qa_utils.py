@@ -181,7 +181,7 @@ def process_answer(
         return DanswerAnswer(answer=answer), DanswerQuotes(quotes=[])
     logger.info(f"All quotes (including unmatched): {quote_strings}")
     quotes = match_quotes_to_docs(quote_strings, chunks)
-    logger.info(f"Final quotes: {quotes}")
+    logger.debug(f"Final quotes: {quotes}")
 
     return DanswerAnswer(answer=answer), quotes
 
