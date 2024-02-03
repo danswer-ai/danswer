@@ -79,7 +79,7 @@ const MainSection = () => {
               {zulipCredential.credential_json.zuliprc_content}
             </Text>{" "}
             <button
-              className="ml-1 hover:bg-hover rounded p-1"
+              className="ml-1 hover:bg-hover dark:hover:bg-neutral-800 rounded p-1"
               onClick={async () => {
                 await adminDeleteCredential(zulipCredential.id);
                 refreshCredentials();
@@ -96,7 +96,7 @@ const MainSection = () => {
             zuliprc config file. For more details on setting up the Danswer
             Zulip connector, see the{" "}
             <a
-              className="text-link"
+              className="text-link dark:text-blue-300"
               href="https://docs.danswer.dev/connectors/zulip"
               target="_blank"
             >
@@ -104,7 +104,7 @@ const MainSection = () => {
             </a>
             .
           </Text>
-          <Card className="mt-4">
+          <Card className="mt-4 dark:bg-neutral-700">
             <CredentialForm<ZulipCredentialJson>
               formBody={
                 <>
@@ -183,7 +183,7 @@ const MainSection = () => {
             </>
           )}
 
-          <Card className="mt-4">
+          <Card className="mt-4 dark:bg-neutral-700">
             <h2 className="font-bold mb-3">Connect to a New Realm</h2>
             <ConnectorForm<ZulipConfig>
               nameBuilder={(values) => `ZulipConnector-${values.realm_name}`}

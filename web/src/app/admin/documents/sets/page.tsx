@@ -67,14 +67,14 @@ const EditRow = ({
         />
       )}
       {isSyncingTooltipOpen && (
-        <div className="flex flex-nowrap absolute w-64 top-0 left-0 mt-8 border border-border bg-background px-3 py-2 rounded shadow-lg">
+        <div className="flex flex-nowrap absolute w-64 top-0 left-0 mt-8 border border-border dark:border-neutral-900 bg-background dark:bg-neutral-800 px-3 py-2 rounded shadow-lg">
           <InfoIcon className="mt-1 flex flex-shrink-0 mr-2" /> Cannot update
           while syncing! Wait for the sync to finish, then try again.
         </div>
       )}
       <div
         className={
-          "text-emphasis font-medium my-auto p-1 hover:bg-hover-light flex" +
+          "text-emphasis dark:text-gray-400 font-medium my-auto p-1 hover:bg-neutral-200 dark:hover:bg-neutral-600 flex" +
           (documentSet.is_up_to_date ? " cursor-pointer" : "")
         }
         onClick={() => {
@@ -93,7 +93,7 @@ const EditRow = ({
           }
         }}
       >
-        <FiEdit className="text-emphasis mr-1 my-auto" />
+        <FiEdit className="text-emphasis dark:text-gray-400 mr-1 my-auto" />
         {documentSet.name}
       </div>
     </div>
@@ -145,7 +145,7 @@ const DocumentSetTable = ({
               return (
                 <TableRow key={documentSet.id}>
                   <TableCell className="whitespace-normal break-all">
-                    <div className="flex gap-x-1 text-emphasis">
+                    <div className="flex gap-x-1 text-emphasis dark:text-gray-400">
                       <EditRow
                         documentSet={documentSet}
                         ccPairs={ccPairs}

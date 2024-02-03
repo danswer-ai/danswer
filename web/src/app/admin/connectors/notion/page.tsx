@@ -83,7 +83,7 @@ const Main = () => {
               {notionCredential.credential_json?.notion_integration_token}
             </p>
             <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+              className="ml-1 hover:bg-emphasis dark:hover:bg-emphasis-dark rounded-full p-1"
               onClick={async () => {
                 if (notionConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -191,7 +191,7 @@ const Main = () => {
 
       {notionCredential && (
         <>
-          <Card className="mt-4">
+          <Card className="mt-4 dark:bg-neutral-700">
             <h2 className="font-bold mb-1">Create New Connection</h2>
             <p className="text-sm mb-4">
               Press connect below to start the connection to Notion.

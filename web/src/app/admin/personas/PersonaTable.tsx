@@ -117,7 +117,7 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
                     });
                   }
                 }}
-                className="px-1 py-0.5 hover:bg-hover-light rounded flex cursor-pointer select-none w-fit"
+                className="px-1 py-0.5 hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded flex cursor-pointer select-none w-fit"
               >
                 <div className="my-auto w-12">
                   {!persona.is_visible ? (
@@ -134,7 +134,7 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
                 <div className="mx-auto my-auto">
                   {!persona.default_persona ? (
                     <div
-                      className="hover:bg-hover rounded p-1 cursor-pointer"
+                      className="hover:bg-hover dark:hover:bg-neutral-800 rounded p-1 cursor-pointer"
                       onClick={async () => {
                         const response = await deletePersona(persona.id);
                         if (response.ok) {

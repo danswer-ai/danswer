@@ -63,7 +63,7 @@ export default function GoogleSites() {
           <a
             href="https://docs.danswer.dev/connectors/google_sites"
             target="_blank"
-            className="text-blue-500"
+            className="text-blue-500 dark:text-blue-300"
           >
             the documentation
           </a>
@@ -72,7 +72,7 @@ export default function GoogleSites() {
 
         <div className="mt-4">
           <Title className="mb-2">Upload Files</Title>
-          <Card>
+          <Card className="dark:bg-neutral-700">
             <div className="mx-auto w-full">
               <Formik
                 initialValues={{
@@ -225,7 +225,7 @@ export default function GoogleSites() {
                     ccPairStatus.connector.connector_specific_config;
                   return (
                     <a
-                      className="text-blue-500"
+                      className="text-blue-500 dark:text-blue-300"
                       href={connectorConfig.base_url}
                     >
                       {connectorConfig.base_url}

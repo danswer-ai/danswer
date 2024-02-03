@@ -75,7 +75,7 @@ export default async function Page({
         <h1 className="text-3xl font-bold pl-2">Edit Persona</h1>
       </div>
 
-      <Card>
+      <Card className="dark:bg-neutral-700">
         <PersonaEditor
           existingPersona={persona}
           documentSets={documentSets}

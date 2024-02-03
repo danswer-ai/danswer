@@ -72,7 +72,7 @@ const GoogleDriveConnectorManagement = ({
   //         Fill out the form below to create a connector. We will refresh the
   //         latest documents from Google Drive every <b>10</b> minutes.
   //       </p>
-  //       <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+  //       <div className="border-solid dark:border-solid-dark border-default border rounded-md p-6 mt-4">
   //         <h2 className="font-bold mb-3">Add Connector</h2>
   //         <ConnectorForm<GoogleDriveConfig>
   //           nameBuilder={googleDriveConnectorNameBuilder}
@@ -158,7 +158,7 @@ const GoogleDriveConnectorManagement = ({
           {googleDriveConnectorIndexingStatuses.length > 0 ? (
             <>
               Checkout the{" "}
-              <a href="/admin/indexing/status" className="text-blue-500">
+              <a href="/admin/indexing/status" className="text-blue-500 dark:text-blue-300">
                 status page
               </a>{" "}
               for the latest indexing status. We fetch the latest documents from
@@ -188,7 +188,7 @@ const GoogleDriveConnectorManagement = ({
       {googleDriveConnectorIndexingStatuses.length > 0 && (
         <h2 className="font-bold mt-3 text-sm">Add New Connector:</h2>
       )}
-      <Card className="mt-4">
+      <Card className="mt-4 dark:bg-neutral-700">
         <ConnectorForm<GoogleDriveConfig>
           nameBuilder={googleDriveConnectorNameBuilder}
           source="google_drive"

@@ -68,7 +68,7 @@ export function SourceSelector({
 
   return (
     <div>
-      <div className="flex mb-4 pb-2 border-b border-border text-emphasis">
+      <div className="flex mb-4 pb-2 border-b dark:border-b-border-dark border-border dark:border-neutral-900 text-emphasis dark:text-gray-400 ">
         <h2 className="font-bold my-auto">Filters</h2>
         <FiFilter className="my-auto ml-2" size="16" />
       </div>
@@ -95,13 +95,13 @@ export function SourceSelector({
                     (selectedSources
                       .map((source) => source.internalName)
                       .includes(source.internalName)
-                      ? "bg-hover"
-                      : "hover:bg-hover-light")
+                      ? "bg-hover dark:bg-hover-dark"
+                      : "hover:bg-neutral-200 dark:hover:bg-neutral-600")
                   }
                   onClick={() => handleSelect(source)}
                 >
                   <SourceIcon sourceType={source.internalName} iconSize={16} />
-                  <span className="ml-2 text-sm text-default">
+                  <span className="ml-2 text-sm">
                     {source.displayName}
                   </span>
                 </div>
@@ -124,8 +124,8 @@ export function SourceSelector({
                     "flex cursor-pointer w-full items-center " +
                     "py-1.5 rounded-lg px-2 " +
                     (selectedDocumentSets.includes(documentSet.name)
-                      ? "bg-hover"
-                      : "hover:bg-hover-light")
+                      ? "bg-hover dark:bg-hover-dark"
+                      : "hover:bg-hover-light dark:hover:bg-neutral-800")
                   }
                   onClick={() => handleDocumentSetSelect(documentSet.name)}
                 >
@@ -177,8 +177,8 @@ function SelectedBubble({
   return (
     <div
       className={
-        "flex cursor-pointer items-center border border-border " +
-        "py-1 my-1.5 rounded-lg px-2 w-fit hover:bg-hover"
+        "flex cursor-pointer items-center border border-border dark:border-neutral-900 " +
+        "py-1 my-1.5 rounded-lg px-2 w-fit hover:bg-hover dark:hover:bg-neutral-800"
       }
       onClick={onClick}
     >

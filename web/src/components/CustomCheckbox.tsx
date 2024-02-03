@@ -16,8 +16,8 @@ export const CustomCheckbox = ({
       />
       <span className="relative">
         <span
-          className={`block w-3 h-3 border border-border-strong rounded ${
-            checked ? "bg-green-700" : "bg-background"
+          className={`block w-3 h-3 border border-border dark:border-neutral-900-strong rounded ${
+            checked ? "bg-green-700" : "bg-background dark:bg-neutral-800"
           } transition duration-300`}
         >
           {checked && (

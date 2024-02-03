@@ -84,7 +84,7 @@ const MainSection = () => {
               {requestTrackerCredential.credential_json.requesttracker_username}
             </Text>
             <button
-              className="ml-1 hover:bg-hover rounded p-1"
+              className="ml-1 hover:bg-hover rounded p-1 dark:hover:bg-neutral-800"
               onClick={async () => {
                 await adminDeleteCredential(requestTrackerCredential.id);
                 refreshCredentials();
@@ -103,7 +103,7 @@ const MainSection = () => {
           <Text className="mb-2">
             This connector currently supports{" "}
             <a
-              className="text-link"
+              className="text-link dark:text-blue-300"
               href="https://rt-wiki.bestpractical.com/wiki/REST"
               target="_blank"
             >
@@ -203,7 +203,7 @@ const MainSection = () => {
 
       {requestTrackerCredential &&
       requestTrackerConnectorIndexingStatuses.length === 0 ? (
-        <Card className="mt-4">
+        <Card className="mt-4 dark:bg-neutral-700">
           <ConnectorForm<RequestTrackerConfig>
             nameBuilder={(values) =>
               `RequestTracker-${requestTrackerCredential.credential_json.requesttracker_base_url}`

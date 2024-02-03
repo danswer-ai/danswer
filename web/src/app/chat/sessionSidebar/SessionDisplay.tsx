@@ -73,7 +73,7 @@ export function ChatSessionDisplay({
                 className="-my-px px-1 mr-2 w-full rounded"
               />
             ) : (
-              <p className="text-ellipsis break-all line-clamp-1 mr-3 text-emphasis">
+              <p className="text-ellipsis break-all line-clamp-1 mr-3 text-emphasis dark:text-gray-400">
                 {chatName || `Chat ${chatSession.id}`}
               </p>
             )}

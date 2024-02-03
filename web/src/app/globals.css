@@ -30,3 +30,16 @@
   width: 8px; /* Vertical scrollbar width */
   height: 8px; /* Horizontal scrollbar height */
 }
+
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-track {
+    background: #2E2E2E;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #555;
+  }
+  *, ::before, ::after {
+    border-color: #131313;
+  }
+}

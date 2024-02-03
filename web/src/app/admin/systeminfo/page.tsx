@@ -15,7 +15,7 @@ const Page = async () => {
 
   return (
     <div>
-      <div className="border-solid border-gray-600 border-b pb-2 mb-4 flex">
+      <div className="border-solid dark:border-solid-dark border-default dark:border-neutral-600 border-b dark:border-b-border-dark pb-2 mb-4 flex">
         <NotebookIcon size={32} />
         <h1 className="text-3xl font-bold pl-2">Version</h1>
       </div>

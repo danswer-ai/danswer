@@ -80,7 +80,7 @@ const Main = () => {
               {gitlabCredential.credential_json.gitlab_access_token}
             </p>{" "}
             <button
-              className="ml-1 hover:bg-hover rounded p-1"
+              className="ml-1 hover:bg-hover rounded p-1 dark:hover:bg-neutral-800"
               onClick={async () => {
                 await adminDeleteCredential(gitlabCredential.id);
                 refreshCredentials();
@@ -95,7 +95,7 @@ const Main = () => {
           <Text>
             If you don&apos;t have an access token, read the guide{" "}
             <a
-              className="text-blue-500"
+              className="text-blue-500 dark:text-blue-300"
               href="https://docs.danswer.dev/connectors/gitlab"
               target="_blank"
             >
@@ -103,7 +103,7 @@ const Main = () => {
             </a>{" "}
             on how to get one from Gitlab.
           </Text>
-          <Card className="mt-4">
+          <Card className="mt-4 dark:bg-neutral-700">
             <CredentialForm<GitlabCredentialJson>
               formBody={
                 <>
@@ -188,7 +188,7 @@ const Main = () => {
       )}
 
       {gitlabCredential ? (
-        <Card className="mt-4">
+        <Card className="mt-4 dark:bg-neutral-700">
           <h2 className="font-bold mb-3">Connect to a New Project</h2>
           <ConnectorForm<GitlabConfig>
             nameBuilder={(values) =>

@@ -74,7 +74,7 @@ const Page = async ({
           </div>
           {authUrl && authTypeMetadata && (
             <>
-              <h2 className="text-center text-xl text-strong font-bold mt-6">
+              <h2 className="text-center text-xl text-strong dark:text-strong-dark font-bold mt-6">
                 Log In to Danswer
               </h2>
 
@@ -95,7 +95,7 @@ const Page = async ({
               <div className="flex">
                 <Text className="mt-4 mx-auto">
                   Don&apos;t have an account?{" "}
-                  <Link href="/auth/signup" className="text-link font-medium">
+                  <Link href="/auth/signup" className="text-link dark:text-blue-300 font-medium">
                     Create an account
                   </Link>
                 </Text>

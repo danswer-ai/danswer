@@ -29,7 +29,7 @@ export const DocumentSetCreationForm = ({
         onClick={onClose}
       >
         <div
-          className="bg-background p-6 rounded border border-border shadow-lg relative w-1/2 text-sm"
+          className="bg-background dark:bg-neutral-800 p-6 rounded border border-border dark:border-neutral-900 shadow-lg relative w-1/2 text-sm"
           onClick={(event) => event.stopPropagation()}
         >
           <Formik
@@ -88,7 +88,7 @@ export const DocumentSetCreationForm = ({
           >
             {({ isSubmitting, values }) => (
               <Form>
-                <h2 className="text-lg text-emphasis font-bold mb-3">
+                <h2 className="text-lg text-emphasis dark:text-gray-400 font-bold mb-3">
                   {isUpdate
                     ? "Update a Document Set"
                     : "Create a new Document Set"}
@@ -129,13 +129,13 @@ export const DocumentSetCreationForm = ({
                               py-1
                               rounded-lg 
                               border
-                              border-border 
+                              border-border dark:border-neutral-900 
                               w-fit 
                               flex 
                               cursor-pointer ` +
                               (isSelected
-                                ? " bg-background-strong"
-                                : " hover:bg-hover")
+                                ? " bg-background-strong dark:bg-background-strong-dark"
+                                : " hover:bg-hover dark:hover:bg-neutral-800")
                             }
                             onClick={() => {
                               if (isSelected) {

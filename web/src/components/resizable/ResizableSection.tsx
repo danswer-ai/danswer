@@ -90,14 +90,14 @@ export function ResizableSection({
           onMouseDown={startResizing}
           className={`
           cursor-col-resize 
-          border-l 
-          border-border 
+          border-l dark:border-l-border-dark 
+          border-border dark:border-neutral-900 
           h-full
           w-full
-          transition-all duration-300 ease-in hover:border-border-strong hover:border-l-2
+          transition-all duration-300 ease-in hover:border-border dark:border-neutral-900-strong hover:border-l dark:border-l-border-dark-2
           ${
             isResizing
-              ? "transition-all duration-300 ease-in border-border-strong border-l-2"
+              ? "transition-all duration-300 ease-in border-border dark:border-neutral-900-strong border-l dark:border-l-border-dark-2"
               : ""
           }
           `}

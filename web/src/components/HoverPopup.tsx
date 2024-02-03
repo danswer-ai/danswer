@@ -51,7 +51,7 @@ export const HoverPopup = ({
         >
           <div
             className={
-              `px-3 py-2 rounded bg-background border border-border` +
+              `px-3 py-2 rounded bg-background dark:bg-neutral-800 border border-border dark:border-neutral-900` +
               (classNameModifications || "")
             }
           >

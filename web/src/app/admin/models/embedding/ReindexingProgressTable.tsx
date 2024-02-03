@@ -41,7 +41,7 @@ export function ReindexingProgressTable({
                   <TableCell>
                     <Link
                       href={`/admin/connector/${reindexingProgress.cc_pair_id}`}
-                      className="text-link cursor-pointer flex"
+                      className="text-link dark:text-blue-300 cursor-pointer flex"
                     >
                       <FiMaximize2 className="my-auto mr-1" />
                       {reindexingProgress.name}

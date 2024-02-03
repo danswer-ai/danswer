@@ -12,15 +12,15 @@ export function BasicClickable({
       onClick={onClick}
       className={`
         border 
-        border-border 
+        border-border dark:border-neutral-900 
         shadow-md
         rounded
         font-medium 
-        text-emphasis 
+        text-emphasis dark:text-gray-400 
         text-sm
         p-1
         select-none
-        hover:bg-hover
+        hover:bg-hover dark:hover:bg-neutral-800
         ${fullWidth ? "w-full" : ""}`}
     >
       {children}
@@ -42,16 +42,16 @@ export function EmphasizedClickable({
       onClick={onClick}
       className={`
         border 
-        border-border 
+        border-border dark:border-neutral-900 
         shadow-md
         rounded
         font-medium 
-        text-emphasis
+        text-emphasis dark:text-gray-400
         text-sm
         p-1
         select-none
-        bg-hover-light
-        hover:bg-hover
+        bg-hover-light dark:bg-neutral-600 
+        hover:bg-hover dark:hover:bg-neutral-800
         ${fullWidth ? "w-full" : ""}`}
     >
       {children}
@@ -75,12 +75,12 @@ export function BasicSelectable({
       className={`
         rounded
         font-medium 
-        text-emphasis 
+        text-emphasis dark:text-gray-400 
         text-sm
         p-1
         select-none
-        ${hasBorder ? "border border-border" : ""}
-        ${selected ? "bg-hover" : "hover:bg-hover"}
+        ${hasBorder ? "border border-border dark:border-neutral-900" : ""}
+        ${selected ? "bg-hover dark:bg-hover-dark" : "hover:bg-hover dark:hover:bg-neutral-800"}
         ${fullWidth ? "w-full" : ""}`}
     >
       {children}
