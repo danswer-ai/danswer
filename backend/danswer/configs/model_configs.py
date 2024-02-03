@@ -104,4 +104,10 @@ GEN_AI_MAX_INPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_INPUT_TOKENS") or 3000)
 # History for secondary LLM flows, not primary chat flow, generally we don't need to
 # include as much as possible as this just bumps up the cost unnecessarily
 GEN_AI_HISTORY_CUTOFF = int(0.5 * GEN_AI_MAX_INPUT_TOKENS)
+# This is used when computing how much context space is available for documents
+# ahead of time in order to let the user know if they can "select" more documents
+# It represents a maximum "expected" number of input tokens from the latest user
+# message. At query time, we don't actually enforce this - we will only throw an
+# error if the total # of tokens exceeds the max input tokens.
+GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS = 512
 GEN_AI_TEMPERATURE = float(os.environ.get("GEN_AI_TEMPERATURE") or 0)

@@ -5,6 +5,7 @@ from fastapi import Query
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
+from danswer.chat.chat_utils import build_doc_context_str
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
 from danswer.db.models import User
@@ -47,12 +48,22 @@ def get_document_info(
 
     contents = [chunk.content for chunk in inference_chunks]
 
-    combined = "\n".join(contents)
+    combined_contents = "\n".join(contents)
 
+    # get actual document context used for LLM
+    first_chunk = inference_chunks[0]
     tokenizer_encode = get_default_llm_token_encode()
+    full_context_str = build_doc_context_str(
+        semantic_identifier=first_chunk.semantic_identifier,
+        source_type=first_chunk.source_type,
+        content=combined_contents,
+        updated_at=first_chunk.updated_at,
+        ind=0,
+    )
 
     return DocumentInfo(
-        num_chunks=len(inference_chunks), num_tokens=len(tokenizer_encode(combined))
+        num_chunks=len(inference_chunks),
+        num_tokens=len(tokenizer_encode(full_context_str)),
     )
 
 
