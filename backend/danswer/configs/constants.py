@@ -96,6 +96,7 @@ class DocumentSource(str, Enum):
     SHAREPOINT = "sharepoint"
     DISCOURSE = "discourse"
     AXERO = "axero"
+    XENFORO = "xenforo"
 
 
 class DocumentIndexType(str, Enum):

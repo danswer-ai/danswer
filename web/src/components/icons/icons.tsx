@@ -53,6 +53,7 @@ import googleSitesIcon from "../../../public/GoogleSites.png";
 import zendeskIcon from "../../../public/Zendesk.svg";
 import sharepointIcon from "../../../public/Sharepoint.png";
 import discourseIcon from "../../../public/Discourse.png";
+import xenforoIcon from "../../../public/Xenforo.svg";
 import { FaRobot } from "react-icons/fa";
 
 interface IconProps {
@@ -625,3 +626,17 @@ export const AxeroIcon = ({
     <Image src="/Axero.jpeg" alt="Logo" width="96" height="96" />
   </div>
 );
+
+export const XenforoIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+      <div
+          style={{ width: `${size}px`, height: `${size}px` }}
+          className={`w-[${size}px] h-[${size}px] ` + className}
+      >
+        <Image src={xenforoIcon} alt="Logo" width="96" height="96" />
+      </div>
+  );
+};

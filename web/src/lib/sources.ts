@@ -25,6 +25,7 @@ import {
   SlackIcon,
   ZendeskIcon,
   ZulipIcon,
+  XenforoIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import { SourceCategory, SourceMetadata } from "./search/interfaces";
@@ -170,6 +171,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
     icon: RequestTrackerIcon,
     displayName: "Request Tracker",
     category: SourceCategory.AppConnection,
+  },
+  xenforo: {
+    icon: XenforoIcon,
+    displayName: "Xenforo",
+    category: SourceCategory.ImportedKnowledge,
   },
 };
 
