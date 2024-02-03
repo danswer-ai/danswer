@@ -88,7 +88,7 @@ const Main = () => {
               {guruCredential.credential_json?.guru_user_token}
             </Text>
             <button
-              className="ml-1 hover:bg-hover rounded p-1"
+              className="ml-1 hover:bg-hover dark:hover:bg-neutral-800 rounded p-1"
               onClick={async () => {
                 if (guruConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -111,7 +111,7 @@ const Main = () => {
           <Text>
             To use the Guru connector, first follow the guide{" "}
             <a
-              className="text-link"
+              className="text-link dark:text-blue-300"
               href="https://help.getguru.com/s/article/how-to-obtain-your-api-credentials"
               target="_blank"
             >
@@ -119,7 +119,7 @@ const Main = () => {
             </a>{" "}
             to generate a User Token.
           </Text>
-          <Card className="mt-4">
+          <Card className="mt-4 dark:bg-neutral-700">
             <CredentialForm<GuruCredentialJson>
               formBody={
                 <>

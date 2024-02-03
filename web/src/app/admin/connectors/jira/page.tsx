@@ -99,7 +99,7 @@ const Main = () => {
               {jiraCredential.credential_json?.jira_api_token}
             </p>
             <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+              className="ml-1 hover:bg-emphasis dark:hover:bg-emphasis-dark rounded-full p-1"
               onClick={async () => {
                 if (jiraConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -134,7 +134,7 @@ const Main = () => {
           <Text>
             To use the Jira connector, first follow the guide{" "}
             <a
-              className="text-link"
+              className="text-link dark:text-blue-300"
               href="https://docs.danswer.dev/connectors/jira#setting-up"
               target="_blank"
             >
@@ -144,7 +144,7 @@ const Main = () => {
             (for server). Submit only one form.
           </Text>
           <Title className="mb-2 mt-6 ml-auto mr-auto">Cloud</Title>
-          <Card className="mt-4">
+          <Card className="mt-4 dark:bg-neutral-700">
             <CredentialForm<JiraCredentialJson>
               formBody={
                 <>
@@ -176,7 +176,7 @@ const Main = () => {
             />
           </Card>
           <Title className="mb-2 mt-6 ml-auto mr-auto">Server</Title>
-          <Card className="mt-4">
+          <Card className="mt-4 dark:bg-neutral-700">
             <CredentialForm<JiraServerCredentialJson>
               formBody={
                 <>
@@ -257,7 +257,7 @@ const Main = () => {
                           ccPairStatus.connector.connector_specific_config;
                         return (
                           <a
-                            className="text-blue-500"
+                            className="text-blue-500 dark:text-blue-300"
                             href={connectorConfig.jira_project_url}
                           >
                             {connectorConfig.jira_project_url}
@@ -286,7 +286,7 @@ const Main = () => {
               <Divider />
             </>
           )}
-          <Card className="mt-4">
+          <Card className="mt-4 dark:bg-neutral-700">
             <h2 className="font-bold mb-3">Add a New Project</h2>
             <ConnectorForm<JiraConfig>
               nameBuilder={(values) =>

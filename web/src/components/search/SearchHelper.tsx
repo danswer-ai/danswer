@@ -7,7 +7,7 @@ import {
 } from "@/lib/search/interfaces";
 import { BrainIcon } from "../icons/icons";
 
-const CLICKABLE_CLASS_NAME = "text-link cursor-pointer";
+const CLICKABLE_CLASS_NAME = " text-link dark:text-blue-300 cursor-pointer";
 const NUM_DOCUMENTS_FED_TO_GPT = 5;
 
 interface Props {
@@ -89,10 +89,10 @@ export const SearchHelper: React.FC<Props> = (props) => {
   }
 
   return (
-    <div className="border border-border rounded p-3 text-sm">
+    <div className="border border-border dark:border-neutral-900 rounded p-3 text-sm">
       <div className="flex">
         <BrainIcon size={20} />
-        <b className="ml-2 text-strong">AI Assistant</b>
+        <b className="ml-2 text-strong dark:text-strong-dark">AI Assistant</b>
       </div>
 
       <div className="mt-1">{message}</div>

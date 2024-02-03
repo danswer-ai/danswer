@@ -65,7 +65,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
     <>
       <BackButton />
       <div className="pb-1 flex mt-1">
-        <h1 className="text-3xl text-emphasis font-bold">{ccPair.name}</h1>
+        <h1 className="text-3xl text-emphasis dark:text-gray-400 font-bold">{ccPair.name}</h1>
 
         <div className="ml-auto">
           <ModifyStatusButtonCluster ccPair={ccPair} />
@@ -80,7 +80,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
 
       <div className="text-sm mt-1">
         Total Documents Indexed:{" "}
-        <b className="text-emphasis">{totalDocsIndexed}</b>
+        <b className="text-emphasis dark:text-gray-400">{totalDocsIndexed}</b>
       </div>
 
       <Divider />

@@ -34,7 +34,7 @@ export function DocumentSelector({
       >
         <p className="mr-2 my-auto">Select</p>
         <input
-          className="my-auto"
+          className="my-auto dark:bg-background-emphasis-dark"
           type="checkbox"
           checked={isSelected}
           // dummy function to prevent warning

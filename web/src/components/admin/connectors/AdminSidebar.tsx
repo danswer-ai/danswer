@@ -18,12 +18,12 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
       <nav className="space-y-2 pl-4">
         {collections.map((collection, collectionInd) => (
           <div key={collectionInd}>
-            <h2 className="text-xs text-strong font-bold pb-2 ">
+            <h2 className="text-xs text-strong dark:text-strong-dark font-bold pb-2 ">
               <div>{collection.name}</div>
             </h2>
             {collection.items.map((item) => (
               <Link key={item.link} href={item.link}>
-                <button className="text-sm block w-48 py-2 px-2 text-left hover:bg-hover-light rounded">
+                <button className="text-sm block w-48 py-2 px-2 text-left hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded">
                   <div className="">{item.name}</div>
                 </button>
               </Link>

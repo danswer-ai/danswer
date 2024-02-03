@@ -51,12 +51,12 @@ function checkLLMSupportsImageGeneration(provider: string, model: string) {
 
 function Label({ children }: { children: string | JSX.Element }) {
   return (
-    <div className="block font-medium text-base text-emphasis">{children}</div>
+    <div className="block font-medium text-base text-emphasis dark:text-gray-400">{children}</div>
   );
 }
 
 function SubLabel({ children }: { children: string | JSX.Element }) {
-  return <div className="text-sm text-subtle mb-2">{children}</div>;
+  return <div className="text-sm text-subtle dark:text-neutral-400 mb-2">{children}</div>;
 }
 
 export function AssistantEditor({
@@ -586,7 +586,7 @@ export function AssistantEditor({
                         <a
                           href="https://platform.openai.com/docs/models"
                           target="_blank"
-                          className="text-blue-500"
+                          className="text-blue-500 dark:text-blue-300"
                         >
                           OpenAI docs
                         </a>

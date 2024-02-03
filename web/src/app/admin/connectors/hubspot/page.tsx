@@ -90,7 +90,7 @@ const Main = () => {
               {hubSpotCredential.credential_json?.hubspot_access_token}
             </Text>
             <button
-              className="ml-1 hover:bg-hover rounded p-1"
+              className="ml-1 hover:bg-hover dark:hover:bg-neutral-800 rounded p-1"
               onClick={async () => {
                 if (hubSpotConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -113,7 +113,7 @@ const Main = () => {
           <Text>
             To use the HubSpot connector, provide the HubSpot Access Token.
           </Text>
-          <Card className="mt-4">
+          <Card className="mt-4 dark:bg-neutral-700">
             <CredentialForm<HubSpotCredentialJson>
               formBody={
                 <>

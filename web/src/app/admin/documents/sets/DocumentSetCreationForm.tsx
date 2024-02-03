@@ -135,13 +135,13 @@ export const DocumentSetCreationForm = ({
                               py-1
                               rounded-lg 
                               border
-                              border-border 
+                              border-border dark:border-neutral-900 
                               w-fit 
                               flex 
                               cursor-pointer ` +
                           (isSelected
-                            ? " bg-background-strong"
-                            : " hover:bg-hover")
+                            ? " bg-background-strong dark:bg-background-strong-dark"
+                            : " hover:bg-hover dark:hover:bg-neutral-800")
                         }
                         onClick={() => {
                           if (isSelected) {

@@ -18,7 +18,7 @@ export const DeleteChatModal = ({
           <h2 className="my-auto text-2xl font-bold">Delete chat?</h2>
           <div
             onClick={onClose}
-            className="my-auto ml-auto p-2 hover:bg-hover rounded cursor-pointer"
+            className="my-auto ml-auto p-2 hover:bg-hover dark:hover:bg-neutral-800 rounded cursor-pointer"
           >
             <FiX size={20} />
           </div>

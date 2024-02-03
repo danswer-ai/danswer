@@ -70,7 +70,7 @@ export const buildDocumentSummaryDisplay = (
             finalJSX[finalJSX.length - 1] = finalJSX[finalJSX.length - 1] + " ";
           }
           finalJSX.push(
-            <b key={index} className="text-default bg-highlight-text">
+            <b key={index} className="bg-highlight-text dark:bg-yellow-900">
               {currentText}
             </b>
           );
@@ -94,7 +94,7 @@ export const buildDocumentSummaryDisplay = (
         finalJSX[finalJSX.length - 1] = finalJSX[finalJSX.length - 1] + " ";
       }
       finalJSX.push(
-        <b key={sections.length} className="text-default bg-highlight-text">
+        <b key={sections.length} className="bg-highlight-text dark:bg-yellow-900">
           {currentText}
         </b>
       );
@@ -122,7 +122,7 @@ export function DocumentMetadataBlock({
       )}
       {Object.entries(document.metadata).length > 0 && (
         <>
-          <div className="pl-1 border-l border-border" />
+          <div className="pl-1 border-l dark:border-l-border-dark border-border dark:border-neutral-900" />
           {Object.entries(document.metadata)
             .filter(
               ([key, value]) => (key + value).length <= MAXIMUM_TAG_LENGTH
@@ -167,14 +167,14 @@ export const DocumentDisplay = ({
   return (
     <div
       key={document.semantic_identifier}
-      className="text-sm border-b border-border mb-3"
+      className="text-sm border-b dark:border-b-border-dark border-border dark:border-neutral-900 mb-3 "
       onMouseEnter={() => {
         setIsHovered(true);
       }}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex relative">
-        {document.score !== null && (
+        {(
           <div
             className={
               "absolute top-2/4 -translate-y-2/4 flex " +
@@ -184,12 +184,12 @@ export const DocumentDisplay = ({
             {isSelected && (
               <div className="w-4 h-4 my-auto mr-1 flex flex-col">
                 <HoverPopup
-                  mainContent={<FiRadio className="text-gray-500 my-auto" />}
+                  mainContent={<FiRadio className="text-subtle dark:text-neutral-400 my-auto"/>}
                   popupContent={
                     <div className="text-xs text-gray-300 w-36 flex">
                       <div className="flex mx-auto">
                         <div className="w-3 h-3 flex flex-col my-auto mr-1">
-                          <FiInfo className="my-auto" />
+                          <FiInfo className="my-auto"/>
                         </div>
                         <div className="my-auto">The AI liked this doc!</div>
                       </div>
@@ -203,8 +203,8 @@ export const DocumentDisplay = ({
             <div
               className={`
                 text-xs
-                text-emphasis
-                bg-hover
+                text-emphasis dark:text-gray-400
+                bg-hover dark:bg-hover-dark 
                 rounded
                 p-0.5
                 w-fit
@@ -219,7 +219,7 @@ export const DocumentDisplay = ({
         )}
         <a
           className={
-            "rounded-lg flex font-bold text-link max-w-full " +
+            "rounded-lg flex font-bold  text-link dark:text-blue-300 max-w-full " +
             (document.link ? "" : "pointer-events-none")
           }
           href={document.link}

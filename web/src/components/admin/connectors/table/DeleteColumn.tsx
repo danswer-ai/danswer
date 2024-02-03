@@ -44,7 +44,7 @@ export function DeleteColumn<ConnectorConfigType, ConnectorCredentialType>({
       ) : (
         <div>
           {deleteHovered && (
-            <div className="w-64 z-30 whitespace-normal flex absolute mt-8 top-0 left-0 bg-background border border-border px-3 py-2 rounded shadow-lg text-xs">
+            <div className="w-64 z-30 whitespace-normal flex absolute mt-8 top-0 left-0 bg-background dark:bg-neutral-800 border border-border dark:border-neutral-900 px-3 py-2 rounded shadow-lg text-xs">
               <InfoIcon className="flex flex-shrink-0 mr-2" />
               In order to delete a connector it must be disabled and have no
               ongoing / planned index jobs.

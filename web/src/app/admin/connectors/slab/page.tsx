@@ -85,7 +85,7 @@ const Main = () => {
               {slabCredential.credential_json?.slab_bot_token}
             </Text>
             <button
-              className="ml-1 hover:bg-hover rounded p-1"
+              className="ml-1 hover:bg-hover dark:hover:bg-neutral-800 rounded p-1"
               onClick={async () => {
                 if (slabConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -108,7 +108,7 @@ const Main = () => {
           <Text>
             To use the Slab connector, first follow the guide{" "}
             <a
-              className="text-link"
+              className="text-link dark:text-blue-300"
               href="https://docs.danswer.dev/connectors/slab"
               target="_blank"
             >
@@ -193,7 +193,7 @@ const Main = () => {
                         ccPairStatus.connector.connector_specific_config;
                       return (
                         <a
-                          className="text-blue-500"
+                          className="text-blue-500 dark:text-blue-300"
                           href={connectorConfig.base_url}
                         >
                           {connectorConfig.base_url}
@@ -216,7 +216,7 @@ const Main = () => {
                   <i>https://danswer.slab.com/</i>
                 </b>
               </Text>
-              <Card className="mt-4">
+              <Card className="mt-4 dark:bg-neutral-700">
                 <h2 className="font-bold mb-3">Add a New Space</h2>
                 <ConnectorForm<SlabConfig>
                   nameBuilder={(values) => `SlabConnector-${values.base_url}`}

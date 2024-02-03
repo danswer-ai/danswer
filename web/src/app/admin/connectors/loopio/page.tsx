@@ -89,7 +89,7 @@ const Main = () => {
               {loopioCredential.credential_json?.loopio_client_token}
             </p>
             <button
-              className="ml-1 hover:bg-gray-700 rounded-full p-1"
+              className="ml-1 hover:bg-emphasis dark:hover:bg-emphasis-dark rounded-full p-1"
               onClick={async () => {
                 if (loopioConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -109,7 +109,7 @@ const Main = () => {
         </>
       ) : (
         <>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-2">
+          <div className="border-solid dark:border-solid-dark border-default dark:border-neutral-600 border rounded-md p-6 mt-2">
             <CredentialForm<LoopioCredentialJson>
               formBody={
                 <>
@@ -196,7 +196,7 @@ const Main = () => {
 
       {loopioCredential ? (
         <>
-          <div className="border-solid border-gray-600 border rounded-md p-6 mt-4">
+          <div className="border-solid dark:border-solid-dark border-default dark:border-neutral-600 border rounded-md p-6 mt-4">
             <h2 className="font-bold mb-3">Create a new Loopio Connector</h2>
             <ConnectorForm<LoopioConfig>
               nameBuilder={(values) =>
@@ -242,7 +242,7 @@ export default function Page() {
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="border-solid border-gray-600 border-b mb-4 pb-2 flex">
+      <div className="border-solid dark:border-solid-dark border-default dark:border-neutral-600 border-b dark:border-b-border-dark mb-4 pb-2 flex">
         <LoopioIcon size={32} />
         <h1 className="text-3xl font-bold pl-2">Loopio</h1>
       </div>

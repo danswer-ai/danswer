@@ -42,7 +42,7 @@ export const AnswerSection = (props: AnswerSectionProps) => {
     if (props.answer) {
       body = (
         <ReactMarkdown
-          className="prose text-sm max-w-full"
+          className="prose text-sm max-w-full dark:text-gray-300"
           remarkPlugins={[remarkGfm]}
         >
           {replaceNewlines(props.answer)}
@@ -67,7 +67,7 @@ export const AnswerSection = (props: AnswerSectionProps) => {
     header = <>AI answer</>;
     body = (
       <ReactMarkdown
-        className="prose text-sm max-w-full"
+        className="prose text-sm max-w-full dark:text-gray-300"
         remarkPlugins={[remarkGfm]}
       >
         {replaceNewlines(props.answer)}
@@ -84,7 +84,7 @@ export const AnswerSection = (props: AnswerSectionProps) => {
       status={status}
       header={
         <div className="flex">
-          <div className="ml-2 text-strong">{header}</div>
+          <div className="ml-2 text-strong dark:text-strong-dark">{header}</div>
         </div>
       }
       body={

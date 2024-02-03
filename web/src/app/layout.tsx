@@ -3,6 +3,7 @@ import "./globals.css";
 
 import { Inter } from "next/font/google";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
+import {ThemeProvider} from "@/app/ThemeContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,17 +25,19 @@ export default async function RootLayout({
   const combinedSettings = await fetchSettingsSS();
 
   return (
-    <html lang="en">
-      <body
-        className={`${inter.variable} font-sans text-default bg-background ${
-          // TODO: remove this once proper dark mode exists
-          process.env.THEME_IS_DARK?.toLowerCase() === "true" ? "dark" : ""
-        }`}
-      >
-        <SettingsProvider settings={combinedSettings}>
-          {children}
-        </SettingsProvider>
-      </body>
-    </html>
+    <ThemeProvider>
+      <html lang="en">
+        <body
+          className={`${inter.variable} font-sans text-default bg-background dark:bg-neutral-800 dark:text-gray-400 ${
+            // TODO: remove this once proper dark mode exists
+            process.env.THEME_IS_DARK?.toLowerCase() === "true" ? "dark" : ""
+          }`}
+        >
+          <SettingsProvider settings={combinedSettings}>
+            {children}
+          </SettingsProvider>
+        </body>
+      </html>
+    </ThemeProvider>
   );
 }

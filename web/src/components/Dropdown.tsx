@@ -25,7 +25,7 @@ function StandardDropdownOption<T>({
     <button
       onClick={() => handleSelect(option)}
       className={`w-full text-left block px-4 py-2.5 text-sm hover:bg-gray-800 ${
-        index !== 0 ? " border-t-2 border-gray-600" : ""
+        index !== 0 ? " border-t dark:border-t-border-dark-2 border-default dark:border-neutral-600" : ""
       }`}
       role="menuitem"
     >
@@ -101,17 +101,17 @@ export function SearchMultiSelectDropdown({
           px-4 
           py-2 
           text-sm 
-          bg-gray-700 
+          bg-emphasis dark:bg-background-emphasis-dark 
           rounded-md 
           shadow-sm 
-          focus:ring focus:ring-offset-0 focus:ring-1 focus:ring-offset-gray-800 focus:ring-blue-800`}
+          focus:ring focus:ring-offset-0 focus:ring-offset-gray-800 focus:ring-blue-800`}
           onClick={(e) => e.stopPropagation()}
         />
         <button
           type="button"
           className={`absolute top-0 right-0 
             text-sm 
-            h-full px-2 border-l border-gray-800`}
+            h-full px-2 border-l dark:border-l-border-dark border-gray-800`}
           aria-expanded="true"
           aria-haspopup="true"
           onClick={() => setIsOpen(!isOpen)}
@@ -129,9 +129,9 @@ export function SearchMultiSelectDropdown({
             w-full
             rounded-md
             shadow-lg
-            bg-gray-700
+            bg-emphasis dark:bg-emphasis-dark
             border-2
-            border-gray-600
+            border-default dark:border-neutral-600 
             max-h-80
             overflow-y-auto
             overscroll-contain`}
@@ -251,9 +251,9 @@ export function DefaultDropdownElement({
         my-1
         select-none 
         cursor-pointer 
-        bg-background
+        bg-background dark:bg-neutral-800
         rounded
-        hover:bg-hover-light
+        hover:bg-neutral-200 dark:hover:bg-neutral-600
       `}
       onClick={onSelect}
     >
@@ -304,7 +304,7 @@ export function DefaultDropdown({
       className={`
       flex 
       text-sm 
-      bg-background 
+      bg-background dark:bg-neutral-800
       px-3
       py-1.5 
       rounded-lg 
@@ -412,12 +412,12 @@ export function ControlledPopup({
           className={`
             absolute 
             top-0 
-            bg-background 
+            bg-background dark:bg-neutral-800 
             border 
-            border-border 
+            border-border dark:border-neutral-900 
             z-30 
             rounded 
-            text-emphasis 
+            text-emphasis dark:text-gray-400 
             shadow-lg`}
           style={{ transform: "translateY(calc(-100% - 5px))" }}
         >

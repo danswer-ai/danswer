@@ -86,7 +86,7 @@ export const SearchResultsDisplay = ({
             </div>
           </div>
         ) : (
-          <div className="text-subtle">No matching documents found.</div>
+          <div className="text-subtle dark:text-neutral-400">No matching documents found.</div>
         )}
       </div>
     );
@@ -116,15 +116,15 @@ export const SearchResultsDisplay = ({
     <>
       {popup}
       {shouldDisplayQA && (
-        <div className="min-h-[16rem] p-4 border-2 border-border rounded-lg relative">
+        <div className="min-h-[16rem] p-4 border-2 border-border dark:border-neutral-900 rounded-lg relative ">
           <div>
             <div className="flex mb-1">
-              <h2 className="text-emphasis font-bold my-auto mb-1 w-full">
+              <h2 className="text-emphasis dark:text-gray-400 font-bold my-auto mb-1 w-full">
                 AI Answer
               </h2>
             </div>
 
-            <div className="mb-2 pt-1 border-t border-border w-full">
+            <div className="mb-2 pt-1 border-t dark:border-t-border-dark border-border dark:border-neutral-900 w-full ">
               <AnswerSection
                 answer={answer}
                 quotes={quotes}
@@ -139,7 +139,7 @@ export const SearchResultsDisplay = ({
             </div>
 
             {quotes !== null && answer && !isPersona && (
-              <div className="pt-1 border-t border-border w-full">
+              <div className="pt-1 border-t dark:border-t-border-dark border-border dark:border-neutral-900 w-full ">
                 <QuotesSection
                   quotes={dedupedQuotes}
                   isFetching={isFetching}
@@ -162,7 +162,7 @@ export const SearchResultsDisplay = ({
 
       {documents && documents.length > 0 && (
         <div className="mt-4">
-          <div className="font-bold text-emphasis border-b mb-3 pb-1 border-border text-lg">
+          <div className="font-bold text-emphasis dark:text-gray-400 border-b dark:border-b-border-dark mb-3 pb-1 border-border dark:border-neutral-900 text-lg ">
             Results
           </div>
           {removeDuplicateDocs(documents).map((document, ind) => (

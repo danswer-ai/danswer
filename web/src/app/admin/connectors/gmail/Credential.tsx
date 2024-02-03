@@ -33,9 +33,9 @@ const DriveJsonUpload = ({
     <>
       <input
         className={
-          "mr-3 text-sm text-gray-900 border border-gray-300 rounded-lg " +
+          "mr-3 text-sm text-strong dark:text-strong-dark border border-strong dark:border-strong-dark rounded-lg " +
           "cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none " +
-          "dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+          "dark:bg-background-emphasis-dark dark:placeholder-gray-400"
         }
         type="file"
         accept=".json"
@@ -243,7 +243,7 @@ export const GmailJsonUploadSection = ({
       <p className="text-sm mb-2">
         Follow the guide{" "}
         <a
-          className="text-link"
+          className="text-link dark:text-blue-300"
           target="_blank"
           href="https://docs.danswer.dev/connectors/gmail#authorization"
         >
@@ -327,7 +327,7 @@ export const GmailOAuthSection = ({
           the documents you want to index with the service account.
         </p>
 
-        <Card>
+        <Card className="dark:bg-neutral-700">
           <Formik
             initialValues={{
               gmail_delegated_user: "",

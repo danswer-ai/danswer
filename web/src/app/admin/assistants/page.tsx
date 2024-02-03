@@ -46,7 +46,7 @@ export default async function Page() {
         <Title>Create an Assistant</Title>
         <Link
           href="/admin/assistants/new"
-          className="flex py-2 px-4 mt-2 border border-border h-fit cursor-pointer hover:bg-hover text-sm w-40"
+          className="flex py-2 px-4 mt-2 border border-border dark:border-neutral-900 h-fit cursor-pointer hover:bg-hover text-sm w-40"
         >
           <div className="mx-auto flex">
             <FiPlusSquare className="my-auto mr-2" />

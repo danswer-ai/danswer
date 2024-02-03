@@ -123,7 +123,7 @@ const Main = () => {
               {confluenceCredential.credential_json?.confluence_access_token}
             </p>
             <button
-              className="ml-1 hover:bg-hover rounded p-1"
+              className="ml-1 hover:bg-hover rounded p-1 dark:hover:bg-neutral-800"
               onClick={async () => {
                 if (confluenceConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -146,7 +146,7 @@ const Main = () => {
           <Text>
             To use the Confluence connector, first follow the guide{" "}
             <a
-              className="text-link"
+              className=" text-link dark:text-blue-300"
               href="https://docs.danswer.dev/connectors/confluence#setting-up"
               target="_blank"
             >
@@ -154,7 +154,7 @@ const Main = () => {
             </a>{" "}
             to generate an Access Token.
           </Text>
-          <Card className="mt-4">
+          <Card className="dark:bg-neutral-700 mt-4">
             <CredentialForm<ConfluenceCredentialJson>
               formBody={
                 <>
@@ -241,7 +241,7 @@ const Main = () => {
                       key: "url",
                       getValue: (ccPairStatus) => (
                         <a
-                          className="text-blue-500"
+                          className=" text-link dark:text-blue-300"
                           href={
                             ccPairStatus.connector.connector_specific_config
                               .wiki_page_url
@@ -264,7 +264,7 @@ const Main = () => {
             </>
           )}
 
-          <Card className="mt-4">
+          <Card className="dark:bg-neutral-700 mt-4">
             <h2 className="font-bold mb-3">Add a New Space</h2>
             <ConnectorForm<ConfluenceConfig>
               nameBuilder={(values) =>

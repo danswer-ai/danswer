@@ -34,7 +34,7 @@ function Main() {
     return (
       <Text>
         It looks like you don&apos;t have any connectors setup yet. Visit the{" "}
-        <Link className="text-blue-500" href="/admin/add-connector">
+        <Link className="text-blue-500 dark:text-blue-300" href="/admin/add-connector">
           Add Connector
         </Link>{" "}
         page to get started!

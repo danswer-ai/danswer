@@ -18,7 +18,7 @@ function SectionHeader({
   icon: React.FC<{ className: string }>;
 }) {
   return (
-    <div className="text-lg text-emphasis font-medium flex pb-0.5 mb-3.5 mt-2 font-bold">
+    <div className="text-lg text-emphasis dark:text-gray-400 font-medium flex pb-0.5 mb-3.5 mt-2 font-bold">
       {icon({ className: "my-auto mr-1" })}
       {name}
     </div>
@@ -74,7 +74,7 @@ export function DocumentSidebar({
       {popup}
 
       <div className="h-4/6 flex flex-col mt-4">
-        <div className="px-3 mb-3 flex border-b border-border">
+        <div className="px-3 mb-3 flex border-b dark:border-b-border-dark border-border dark:border-neutral-900">
           <SectionHeader
             name={
               selectedMessageRetrievalType === RetrievalType.SelectedDocs
@@ -95,7 +95,7 @@ export function DocumentSidebar({
                     className={
                       ind === dedupedDocuments.length - 1
                         ? "mb-5"
-                        : "border-b border-border-light mb-3"
+                        : "border-b dark:border-b-border-dark border-border dark:border-neutral-900-light mb-3"
                     }
                   >
                     <ChatDocumentDisplay
@@ -136,8 +136,8 @@ export function DocumentSidebar({
         )}
       </div>
 
-      <div className="text-sm mb-4 border-t border-border pt-4 overflow-y-hidden flex flex-col">
-        <div className="flex border-b border-border px-3">
+      <div className="text-sm mb-4 border-t dark:border-t-border-dark border-border dark:border-neutral-900 pt-4 overflow-y-hidden flex flex-col">
+        <div className="flex border-b dark:border-b-border-dark border-border dark:border-neutral-900 px-3">
           <div className="flex">
             <SectionHeader name="Selected Documents" icon={FiFileText} />
 

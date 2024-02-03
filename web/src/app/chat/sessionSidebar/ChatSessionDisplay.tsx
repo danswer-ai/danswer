@@ -124,7 +124,7 @@ export function ChatSessionDisplay({
                   className="-my-px px-1 mr-2 w-full rounded"
                 />
               ) : (
-                <p className="break-all overflow-hidden whitespace-nowrap mr-3 text-emphasis">
+                <p className="break-all overflow-hidden whitespace-nowrap mr-3 text-emphasis dark:text-gray-400">
                   {chatName || `Chat ${chatSession.id}`}
                 </p>
               )}
@@ -197,10 +197,10 @@ export function ChatSessionDisplay({
                 ))}
             </div>
             {isSelected && !isRenamingChat && !delayedSkipGradient && (
-              <div className="absolute bottom-0 right-0 top-0 bg-gradient-to-l to-transparent from-hover w-20 from-60% rounded" />
+              <div className="absolute bottom-0 right-0 top-0 bg-gradient-to-l to-transparent from-hover dark:from-dark-tremor-background-muted w-30 from-60% rounded" />
             )}
             {!isSelected && !delayedSkipGradient && (
-              <div className="absolute bottom-0 right-0 top-0 bg-gradient-to-l to-transparent from-background w-8 from-0% rounded" />
+              <div className="absolute bottom-0 right-0 top-0 bg-gradient-to-l to-transparent from-background dark:from-dark-tremor-background-muted w-100 from-10% rounded" />
             )}
           </>
         </BasicSelectable>

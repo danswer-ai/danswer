@@ -25,7 +25,7 @@ export function Label({ children }: { children: string | JSX.Element }) {
 }
 
 export function SubLabel({ children }: { children: string | JSX.Element }) {
-  return <div className="text-sm text-subtle mb-2">{children}</div>;
+  return <div className="text-sm text-subtle dark:text-neutral-400 mb-2">{children}</div>;
 }
 
 export function ManualErrorMessage({ children }: { children: string }) {
@@ -67,14 +67,14 @@ export function TextFormField({
         className={
           `
         border 
-        border-border 
+        border-border dark:border-neutral-900 
         rounded 
         w-full 
         py-2 
         px-3 
         mt-1
         ${isTextArea ? " h-28" : ""}
-      ` + (disabled ? " bg-background-strong" : " bg-background-emphasis")
+      ` + (disabled ? " bg-background-strong dark:bg-background-strong-dark" : " bg-background-emphasis dark:bg-background-emphasis-dark")
         }
         disabled={disabled}
         placeholder={placeholder}
@@ -166,8 +166,8 @@ export function TextArrayField<T extends Yup.AnyObject>({
                       id={name}
                       className={`
                       border 
-                      border-border 
-                      bg-background 
+                      border-border dark:border-neutral-900 
+                      bg-background dark:bg-neutral-800 
                       rounded 
                       w-full 
                       py-2 
@@ -179,7 +179,7 @@ export function TextArrayField<T extends Yup.AnyObject>({
                     />
                     <div className="my-auto">
                       <FiX
-                        className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
+                        className="my-auto w-10 h-10 cursor-pointer hover:bg-hover dark:hover:bg-neutral-800 rounded p-2"
                         onClick={() => arrayHelpers.remove(index)}
                       />
                     </div>

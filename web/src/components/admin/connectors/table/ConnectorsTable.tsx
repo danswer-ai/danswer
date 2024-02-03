@@ -64,7 +64,7 @@ export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
           onClick={() => disableConnector(connector, setPopup, onUpdate)}
         >
           {statusHovered && (
-            <div className="flex flex-nowrap absolute top-0 left-0 ml-8 bg-background border border-border px-3 py-2 rounded shadow-lg">
+            <div className="flex flex-nowrap absolute top-0 left-0 ml-8 bg-background dark:bg-neutral-800 border border-border dark:border-neutral-900 px-3 py-2 rounded shadow-lg">
               {connector.disabled ? "Enable!" : "Pause!"}
             </div>
           )}

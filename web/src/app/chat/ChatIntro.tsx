@@ -20,7 +20,7 @@ function HelperItemDisplay({
   description: string;
 }) {
   return (
-    <div className="cursor-pointer hover:bg-hover-light border border-border rounded py-2 px-4">
+    <div className="cursor-pointer hover:bg-hover-light dark:hover:bg-hover-dark border border-border dark:border-neutral-900 rounded py-2 px-4">
       <div className="text-emphasis font-bold text-lg flex">{title}</div>
       <div className="text-sm">{description}</div>
     </div>
@@ -39,8 +39,8 @@ function AllPersonaOptionDisplay({
   return (
     <Modal onOutsideClick={handleClose}>
       <div>
-        <div className="flex w-full border-b border-border mb-4 pb-4">
-          <h2 className="text-xl text-strong font-bold flex">
+        <div className="flex w-full border-b dark:border-b-border-dark border-border dark:border-neutral-900 mb-4 pb-4">
+          <h2 className="text-xl text-strong dark:text-strong-dark font-bold flex">
             <div className="p-1 bg-ai rounded-lg h-fit my-auto mr-2">
               <div className="text-inverted">
                 <FiCpu size={16} className="my-auto mx-auto" />
@@ -51,7 +51,7 @@ function AllPersonaOptionDisplay({
 
           <div
             onClick={handleClose}
-            className="ml-auto p-1 rounded hover:bg-hover"
+            className="ml-auto p-1 rounded hover:bg-hover dark:hover:bg-neutral-800"
           >
             <FiX size={18} />
           </div>
@@ -115,7 +115,7 @@ export function ChatIntro({
                     height="1520"
                   />
                 </div>
-                <div className="m-auto text-3xl font-bold text-strong mt-4 w-fit">
+                <div className="m-auto text-3xl font-bold text-strong dark:text-strong-dark mt-4 w-fit">
                   {selectedPersona?.name || "How can I help you today?"}
                 </div>
                 {selectedPersona && (
@@ -130,7 +130,7 @@ export function ChatIntro({
                 <div>
                   {selectedPersona.document_sets.length > 0 && (
                     <div className="mt-2">
-                      <p className="font-bold mb-1 mt-4 text-emphasis">
+                      <p className="font-bold mb-1 mt-4 text-emphasis dark:text-gray-400">
                         Knowledge Sets:{" "}
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -138,7 +138,7 @@ export function ChatIntro({
                           <div key={documentSet.id} className="w-fit">
                             <HoverPopup
                               mainContent={
-                                <span className="flex w-fit p-1 rounded border border-border text-xs font-medium cursor-default">
+                                <span className="flex w-fit p-1 rounded border border-border dark:border-neutral-900 text-xs font-medium cursor-default">
                                   <div className="mr-1 my-auto">
                                     <FiBookmark />
                                   </div>
@@ -162,14 +162,14 @@ export function ChatIntro({
                   )}
                   {availableSources.length > 0 && (
                     <div className="mt-2">
-                      <p className="font-bold mb-1 mt-4 text-emphasis">
+                      <p className="font-bold mb-1 mt-4 text-emphasis dark:text-gray-400">
                         Connected Sources:{" "}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {availableSourceMetadata.map((sourceMetadata) => (
                           <span
                             key={sourceMetadata.internalName}
-                            className="flex w-fit p-1 rounded border border-border text-xs font-medium cursor-default"
+                            className="flex w-fit p-1 rounded border border-border dark:border-neutral-900 text-xs font-medium cursor-default"
                           >
                             <div className="mr-1 my-auto">
                               {sourceMetadata.icon({})}
@@ -195,7 +195,7 @@ export function ChatIntro({
             </div>
 
             <div className="mt-2">
-              <p className="font-bold text-xl mb-1 mt-4 text-emphasis text-center">
+              <p className="font-bold text-xl mb-1 mt-4 text-emphasis dark:text-gray-400 text-center">
                 Which assistant do you want to chat with today?{" "}
               </p>
               <p className="text-sm text-center">
@@ -221,7 +221,7 @@ export function ChatIntro({
                 <div className="mt-4 flex">
                   <div
                     onClick={() => setIsAllPersonaOptionVisible(true)}
-                    className="text-sm flex mx-auto p-1 hover:bg-hover-light rounded cursor-default"
+                    className="text-sm flex mx-auto p-1 hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded cursor-default hover:cursor-pointer"
                   >
                     <FiZoomIn className="my-auto mr-1" /> See more
                   </div>

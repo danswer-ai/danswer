@@ -83,7 +83,7 @@ const Main = () => {
               {zendeskCredential.credential_json?.zendesk_token}
             </p>
             <button
-              className="ml-1 hover:bg-hover rounded p-1"
+              className="ml-1 hover:bg-hover rounded p-1 dark:hover:bg-neutral-800"
               onClick={async () => {
                 if (zendeskConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -194,7 +194,7 @@ const Main = () => {
 
       {zendeskCredential && zendeskConnectorIndexingStatuses.length === 0 && (
         <>
-          <Card className="mt-4">
+          <Card className="mt-4 dark:bg-neutral-700">
             <h2 className="font-bold mb-3">Create Connection</h2>
             <p className="text-sm mb-4">
               Press connect below to start the connection to your Zendesk

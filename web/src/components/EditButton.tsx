@@ -9,12 +9,12 @@ export function EditButton({ onClick }: { onClick: () => void }) {
         my-auto 
         flex 
         mb-1 
-        hover:bg-hover 
+        hover:bg-hover dark:hover:bg-neutral-800 
         w-fit 
         p-2 
         cursor-pointer 
         rounded-lg
-        border-border
+        border-border dark:border-neutral-900
         text-sm`}
       onClick={onClick}
     >

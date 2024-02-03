@@ -25,7 +25,7 @@ export const SlackBotTokensForm = ({
   existingTokens,
 }: SlackBotTokensFormProps) => {
   return (
-    <Card>
+    <Card className="dark:bg-neutral-700">
       <Formik
         initialValues={existingTokens || { app_token: "", bot_token: "" }}
         validationSchema={Yup.object().shape({

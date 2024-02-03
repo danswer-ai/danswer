@@ -51,7 +51,7 @@ export const FeedbackModal = ({
   return (
     <ModalWrapper onClose={onClose} modalClassName="max-w-5xl">
       <>
-        <h2 className="text-2xl text-emphasis font-bold mb-4 flex">
+        <h2 className="text-2xl text-emphasis dark:text-gray-400 font-bold mb-4 flex">
           <div className="mr-1 my-auto">
             {feedbackType === "like" ? (
               <FiThumbsUp className="text-green-500 my-auto mr-2" />
@@ -77,9 +77,9 @@ export const FeedbackModal = ({
           autoFocus
           className={`
             w-full flex-grow 
-            border border-border-strong rounded 
+            border border-border-strong rounded  dark:border-neutral-900-strong
             outline-none placeholder-subtle 
-            pl-4 pr-4 py-4 bg-background 
+            pl-4 pr-4 py-4 bg-background dark:bg-neutral-800 
             overflow-hidden h-28 
             whitespace-normal resize-none 
             break-all overscroll-contain

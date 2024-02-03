@@ -93,7 +93,7 @@ export const AIMessage = ({
               </div>
             </div>
 
-            <div className="font-bold text-emphasis ml-2 my-auto">
+            <div className="font-bold text-emphasis dark:text-gray-400 ml-2 my-auto">
               {personaName || "Danswer"}
             </div>
 
@@ -155,12 +155,12 @@ export const AIMessage = ({
                 )}
                 {typeof content === "string" ? (
                   <ReactMarkdown
-                    className="prose max-w-full"
+                    className="prose max-w-full dark:text-gray-400"
                     components={{
                       a: ({ node, ...props }) => (
                         <a
                           {...props}
-                          className="text-blue-500 hover:text-blue-700"
+                          className="text-blue-500 dark:text-blue-300 hover:text-blue-700"
                           target="_blank"
                           rel="noopener noreferrer"
                         />
@@ -179,13 +179,13 @@ export const AIMessage = ({
             )}
             {citedDocuments && citedDocuments.length > 0 && (
               <div className="mt-2">
-                <b className="text-sm text-emphasis">Sources:</b>
+                <b className="text-sm text-emphasis dark:text-gray-400">Sources:</b>
                 <div className="flex flex-wrap gap-2">
                   {citedDocuments
                     .filter(([_, document]) => document.semantic_identifier)
-                    .map(([citationKey, document], ind) => {
+                    .map(([citationKey, document]) => {
                       const display = (
-                        <div className="max-w-350 text-ellipsis flex text-sm border border-border py-1 px-2 rounded flex">
+                        <div className="max-w-350 text-ellipsis flex text-sm border border-border dark:border-neutral-900 py-1 px-2 rounded">
                           <div className="mr-1 my-auto">
                             <SourceIcon
                               sourceType={document.source_type}
@@ -201,7 +201,7 @@ export const AIMessage = ({
                             key={document.document_id}
                             href={document.link}
                             target="_blank"
-                            className="cursor-pointer hover:bg-hover"
+                            className="cursor-pointer hover:bg-hover dark:hover:bg-neutral-800"
                           >
                             {display}
                           </a>
@@ -331,7 +331,7 @@ export const HumanMessage = ({
               </div>
             </div>
 
-            <div className="font-bold text-emphasis ml-2 my-auto">You</div>
+            <div className="font-bold text-emphasis dark:text-gray-400 ml-2 my-auto">You</div>
           </div>
           <div className="mx-auto mt-1 ml-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default flex flex-wrap">
             <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words">
@@ -442,12 +442,12 @@ export const HumanMessage = ({
                 </div>
               ) : typeof content === "string" ? (
                 <ReactMarkdown
-                  className="prose max-w-full"
+                  className="prose max-w-full dark:text-gray-400"
                   components={{
                     a: ({ node, ...props }) => (
                       <a
                         {...props}
-                        className="text-blue-500 hover:text-blue-700"
+                        className="text-blue-500 dark:text-blue-300 hover:text-blue-700"
                         target="_blank"
                         rel="noopener noreferrer"
                       />

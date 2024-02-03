@@ -17,9 +17,9 @@ function SourceTile({ sourceMetadata }: { sourceMetadata: SourceMetadata }) {
         rounded-lg 
         w-40 
         cursor-pointer
-        bg-hover-light
+        bg-hover-light dark:bg-neutral-600 
         shadow-md
-        hover:bg-hover
+        hover:bg-hover dark:hover:bg-neutral-800
       `}
       href={sourceMetadata.adminUrl}
     >

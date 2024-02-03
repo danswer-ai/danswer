@@ -781,7 +781,7 @@ export function ChatPage({
       <HealthCheckBanner />
       <InstantSSRAutoRefresh />
 
-      <div className="flex relative bg-background text-default overflow-x-hidden">
+      <div className="flex relative bg-background dark:bg-neutral-800 overflow-x-hidden">
         <ChatSidebar
           existingChats={chatSessions}
           currentChatSession={selectedChatSession}
@@ -869,7 +869,7 @@ export function ChatPage({
                       ref={scrollableDivRef}
                     >
                       {livePersona && (
-                        <div className="sticky top-0 left-80 z-10 w-full bg-background/90 flex">
+                        <div className="sticky top-0 left-80 z-10 w-full bg-background/90 flex dark:bg-neutral-800">
                           <div className="ml-2 p-1 rounded mt-2 w-fit">
                             <ChatPersonaSelector
                               personas={availablePersonas}
@@ -1162,7 +1162,7 @@ export function ChatPage({
                       </div>
                     </div>
 
-                    <div className="absolute bottom-0 z-10 w-full bg-background border-t border-border">
+                    <div className="absolute bottom-0 z-10 w-full bg-background  dark:bg-neutral-800 border-t border-border dark:border-neutral-900">
                       <div className="w-full pb-4 pt-2">
                         {!retrievalDisabled && (
                           <div className="flex">
@@ -1196,6 +1196,7 @@ export function ChatPage({
                               flex-col
                               border 
                               border-border 
+                              dark:border-neutral-900
                               rounded-lg 
                               [&:has(textarea:focus)]::ring-1
                               [&:has(textarea:focus)]::ring-black

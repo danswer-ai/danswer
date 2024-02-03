@@ -12,7 +12,7 @@ export function SwitchModelModal({
   return (
     <Modal className="max-w-4xl">
       <div className="text-base">
-        <h2 className="text-xl font-bold mb-4 pb-2 border-b border-border flex">
+        <h2 className="text-xl font-bold mb-4 pb-2 border-b dark:border-b-border-dark border-border dark:border-neutral-900 flex">
           ❗ Switch Embedding Model ❗
         </h2>
         <Text>

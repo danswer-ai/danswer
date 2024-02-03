@@ -59,7 +59,7 @@ export default function Web() {
       <p className="text-sm mb-2">
         We re-fetch the latest state of the website once a day.
       </p>
-      <Card>
+      <Card className="dark:bg-neutral-700">
         <ConnectorForm<WebConfig>
           nameBuilder={(values) => `WebConnector-${values.base_url}`}
           ccPairNameBuilder={(values) => values.base_url}
@@ -142,11 +142,11 @@ export default function Web() {
                 return (
                   <div className="flex w-fit">
                     <a
-                      className="text-blue-500 ml-1 my-auto flex"
+                      className="text-blue-500 dark:text-blue-300 ml-1 my-auto flex"
                       href={connectorConfig.base_url}
                     >
                       {connectorConfig.base_url}
-                      <ArrowSquareOutIcon className="my-auto flex flex-shrink-0 text-blue-500" />
+                      <ArrowSquareOutIcon className="my-auto flex flex-shrink-0 text-blue-500 dark:text-blue-300" />
                     </a>
                     <a
                       className="my-auto"
