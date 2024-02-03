@@ -685,12 +685,12 @@ def translate_db_search_doc_to_server_search_doc(
 
 
 def get_retrieval_docs_from_chat_message(chat_message: ChatMessage) -> RetrievalDocs:
-    return RetrievalDocs(
-        top_documents=[
-            translate_db_search_doc_to_server_search_doc(db_doc)
-            for db_doc in chat_message.search_docs
-        ]
-    )
+    top_documents = [
+        translate_db_search_doc_to_server_search_doc(db_doc)
+        for db_doc in chat_message.search_docs
+    ]
+    top_documents = sorted(top_documents, key=lambda doc: doc.score, reverse=True)  # type: ignore
+    return RetrievalDocs(top_documents=top_documents)
 
 
 def translate_db_message_to_chat_message_detail(
