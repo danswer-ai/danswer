@@ -32,6 +32,7 @@ from danswer.connectors.slack.load_connector import SlackLoadConnector
 from danswer.connectors.web.connector import WebConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
 from danswer.connectors.zulip.connector import ZulipConnector
+from danswer.connectors.xenforo.connector import XenforoConnector
 
 
 class ConnectorMissingException(Exception):
@@ -70,6 +71,7 @@ def identify_connector_class(
         DocumentSource.ZENDESK: ZendeskConnector,
         DocumentSource.LOOPIO: LoopioConnector,
         DocumentSource.SHAREPOINT: SharepointConnector,
+        DocumentSource.XENFORO: XenforoConnector,
     }
     connector_by_source = connector_map.get(source, {})
 

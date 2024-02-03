@@ -33,7 +33,8 @@ export type ValidSources =
   | "google_sites"
   | "loopio"
   | "sharepoint"
-  | "zendesk";
+  | "zendesk"
+  | "xenforo";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
@@ -160,6 +161,10 @@ export interface GoogleSitesConfig {
 }
 
 export interface ZendeskConfig {}
+
+export interface XenforoConfig {
+  base_url: string;
+}
 
 export interface IndexAttemptSnapshot {
   id: number;
