@@ -4,7 +4,6 @@ import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { DocumentFeedbackBlock } from "@/components/search/DocumentFeedbackBlock";
 import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBadge";
 import { DanswerDocument } from "@/lib/search/interfaces";
-import { useState } from "react";
 import { FiInfo, FiRadio } from "react-icons/fi";
 import { DocumentSelector } from "./DocumentSelector";
 import {
@@ -19,6 +18,7 @@ interface DocumentDisplayProps {
   isSelected: boolean;
   handleSelect: (documentId: string) => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
+  tokenLimitReached: boolean;
 }
 
 export function ChatDocumentDisplay({
@@ -28,27 +28,19 @@ export function ChatDocumentDisplay({
   isSelected,
   handleSelect,
   setPopup,
+  tokenLimitReached,
 }: DocumentDisplayProps) {
-  const [isHovered, setIsHovered] = useState(false);
-
   // Consider reintroducing null scored docs in the future
   if (document.score === null) {
     return null;
   }
 
   return (
-    <div
-      key={document.semantic_identifier}
-      className="text-sm px-3"
-      onMouseEnter={() => {
-        setIsHovered(true);
-      }}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className="flex relative w-full overflow-x-hidden">
+    <div key={document.semantic_identifier} className="text-sm px-3">
+      <div className="flex relative w-full overflow-y-visible">
         <a
           className={
-            "rounded-lg flex font-bold flex-shrink truncate  " +
+            "rounded-lg flex font-bold flex-shrink truncate " +
             (document.link ? "" : "pointer-events-none")
           }
           href={document.link}
@@ -102,6 +94,7 @@ export function ChatDocumentDisplay({
         <DocumentSelector
           isSelected={isSelected}
           handleSelect={() => handleSelect(document.document_id)}
+          isDisabled={tokenLimitReached && !isSelected}
         />
       </div>
       <div>

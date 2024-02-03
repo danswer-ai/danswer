@@ -7,6 +7,9 @@ from sqlalchemy.orm import Session
 
 from danswer.chat.chat_utils import build_chat_system_message
 from danswer.chat.chat_utils import build_chat_user_message
+from danswer.chat.chat_utils import build_doc_context_str
+from danswer.chat.chat_utils import compute_max_document_tokens
+from danswer.chat.chat_utils import compute_max_llm_input_tokens
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.chat_utils import drop_messages_history_overflow
 from danswer.chat.chat_utils import extract_citations_from_stream
@@ -42,8 +45,8 @@ from danswer.indexing.models import InferenceChunk
 from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llm
 from danswer.llm.interfaces import LLM
-from danswer.llm.utils import get_default_llm_token_encode
-from danswer.llm.utils import get_llm_max_tokens
+from danswer.llm.utils import get_default_llm_tokenizer
+from danswer.llm.utils import tokenizer_trim_content
 from danswer.llm.utils import translate_history_to_basemessages
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RetrievalDetails
@@ -68,7 +71,7 @@ def generate_ai_chat_response(
     context_docs: list[LlmDoc],
     doc_id_to_rank_map: dict[str, int],
     llm: LLM | None,
-    llm_tokenizer: Callable,
+    llm_tokenizer_encode_func: Callable,
     all_doc_useful: bool,
 ) -> Iterator[DanswerAnswerPiece | CitationInfo | StreamingError]:
     if llm is None:
@@ -88,7 +91,7 @@ def generate_ai_chat_response(
         system_message_or_none, system_tokens = build_chat_system_message(
             prompt=query_message.prompt,
             context_exists=context_exists,
-            llm_tokenizer=llm_tokenizer,
+            llm_tokenizer_encode_func=llm_tokenizer_encode_func,
         )
 
         history_basemessages, history_token_counts = translate_history_to_basemessages(
@@ -101,7 +104,7 @@ def generate_ai_chat_response(
             chat_message=query_message,
             prompt=query_message.prompt,
             context_docs=context_docs,
-            llm_tokenizer=llm_tokenizer,
+            llm_tokenizer_encode_func=llm_tokenizer_encode_func,
             all_doc_useful=all_doc_useful,
         )
 
@@ -112,9 +115,7 @@ def generate_ai_chat_response(
             history_token_counts=history_token_counts,
             final_msg=user_message,
             final_msg_token_count=user_tokens,
-            max_allowed_tokens=get_llm_max_tokens(persona.llm_model_version_override)
-            if persona.llm_model_version_override
-            else None,
+            max_allowed_tokens=compute_max_llm_input_tokens(persona),
         )
 
         # Good Debug/Breakpoint
@@ -195,7 +196,10 @@ def stream_chat_message(
         except GenAIDisabledException:
             llm = None
 
-        llm_tokenizer = get_default_llm_token_encode()
+        llm_tokenizer = get_default_llm_tokenizer()
+        llm_tokenizer_encode_func = cast(
+            Callable[[str], list[int]], llm_tokenizer.encode
+        )
 
         embedding_model = get_current_db_embedding_model(db_session)
         document_index = get_default_document_index(
@@ -223,7 +227,7 @@ def stream_chat_message(
             parent_message=parent_message,
             prompt_id=prompt_id,
             message=message_text,
-            token_count=len(llm_tokenizer(message_text)),
+            token_count=len(llm_tokenizer_encode_func(message_text)),
             message_type=MessageType.USER,
             db_session=db_session,
             commit=False,
@@ -271,6 +275,66 @@ def stream_chat_message(
                 doc_identifiers=identifier_tuples,
                 document_index=document_index,
             )
+
+            # truncate the last document if it exceeds the token limit
+            max_document_tokens = compute_max_document_tokens(
+                persona, actual_user_input=message_text
+            )
+            tokens_per_doc = [
+                len(
+                    llm_tokenizer_encode_func(
+                        build_doc_context_str(
+                            semantic_identifier=llm_doc.semantic_identifier,
+                            source_type=llm_doc.source_type,
+                            content=llm_doc.content,
+                            updated_at=llm_doc.updated_at,
+                            ind=ind,
+                        )
+                    )
+                )
+                for ind, llm_doc in enumerate(llm_docs)
+            ]
+            final_doc_ind = None
+            total_tokens = 0
+            for ind, tokens in enumerate(tokens_per_doc):
+                total_tokens += tokens
+                if total_tokens > max_document_tokens:
+                    final_doc_ind = ind
+                    break
+            if final_doc_ind is not None:
+                # only allow the final document to get truncated
+                # if more than that, then the user message is too long
+                if final_doc_ind != len(tokens_per_doc) - 1:
+                    yield get_json_line(
+                        StreamingError(
+                            error="LLM context window exceeded. Please de-select some documents or shorten your query."
+                        ).dict()
+                    )
+                    return
+
+                final_doc_desired_length = tokens_per_doc[final_doc_ind] - (
+                    total_tokens - max_document_tokens
+                )
+                # 75 tokens is a reasonable over-estimate of the metadata and title
+                final_doc_content_length = final_doc_desired_length - 75
+                # this could occur if we only have space for the title / metadata
+                # not ideal, but it's the most reasonable thing to do
+                # NOTE: the frontend prevents documents from being selected if
+                # less than 75 tokens are available to try and avoid this situation
+                # from occuring in the first place
+                if final_doc_content_length <= 0:
+                    logger.error(
+                        f"Final doc ({llm_docs[final_doc_ind].semantic_identifier}) content "
+                        "length is less than 0. Removing this doc from the final prompt."
+                    )
+                    llm_docs.pop()
+                else:
+                    llm_docs[final_doc_ind].content = tokenizer_trim_content(
+                        content=llm_docs[final_doc_ind].content,
+                        desired_length=final_doc_content_length,
+                        tokenizer=llm_tokenizer,
+                    )
+
             doc_id_to_rank_map = map_document_id_order(
                 cast(list[InferenceChunk | LlmDoc], llm_docs)
             )
@@ -423,7 +487,7 @@ def stream_chat_message(
             context_docs=llm_docs,
             doc_id_to_rank_map=doc_id_to_rank_map,
             llm=llm,
-            llm_tokenizer=llm_tokenizer,
+            llm_tokenizer_encode_func=llm_tokenizer_encode_func,
             all_doc_useful=reference_doc_ids is not None,
         )
 
@@ -467,7 +531,7 @@ def stream_chat_message(
         # Saving Gen AI answer and responding with message info
         gen_ai_response_message = partial_response(
             message=llm_output,
-            token_count=len(llm_tokenizer(llm_output)),
+            token_count=len(llm_tokenizer_encode_func(llm_output)),
             citations=db_citations,
             error=error,
         )

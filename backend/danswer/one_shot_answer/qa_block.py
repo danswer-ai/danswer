@@ -4,7 +4,7 @@ from collections.abc import Callable
 from collections.abc import Iterator
 from typing import cast
 
-from danswer.chat.chat_utils import build_context_str
+from danswer.chat.chat_utils import build_complete_context_str
 from danswer.chat.models import AnswerQuestionStreamReturn
 from danswer.chat.models import DanswerAnswer
 from danswer.chat.models import DanswerAnswerPiece
@@ -145,7 +145,7 @@ class SingleMessageQAHandler(QAHandler):
     ) -> str:
         context_block = ""
         if context_chunks:
-            context_docs_str = build_context_str(
+            context_docs_str = build_complete_context_str(
                 cast(list[LlmDoc | InferenceChunk], context_chunks)
             )
             context_block = CONTEXT_BLOCK.format(context_docs_str=context_docs_str)
@@ -194,7 +194,7 @@ class SingleMessageScratchpadHandler(QAHandler):
     def build_prompt(
         self, query: str, history_str: str, context_chunks: list[InferenceChunk]
     ) -> str:
-        context_docs_str = build_context_str(
+        context_docs_str = build_complete_context_str(
             cast(list[LlmDoc | InferenceChunk], context_chunks)
         )
 

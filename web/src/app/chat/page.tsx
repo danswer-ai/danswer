@@ -49,7 +49,7 @@ export default async function Page({
     | AuthTypeMetadata
     | FullEmbeddingModelResponse
     | null
-  )[] = [null, null, null, null, null, null, null, null];
+  )[] = [null, null, null, null, null, null, null, null, null];
   try {
     results = await Promise.all(tasks);
   } catch (e) {

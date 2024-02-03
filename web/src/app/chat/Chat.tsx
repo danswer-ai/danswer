@@ -40,8 +40,8 @@ import { ResizableSection } from "@/components/resizable/ResizableSection";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { ChatIntro } from "./ChatIntro";
 import { HEADER_PADDING } from "@/lib/constants";
-import { getSourcesForPersona } from "@/lib/sources";
 import { computeAvailableFilters } from "@/lib/filters";
+import { useDocumentSelection } from "./useDocumentSelection";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -138,9 +138,6 @@ export const Chat = ({
         selectedMessageForDocDisplay
       )
     : { aiMessage: null };
-  const [selectedDocuments, setSelectedDocuments] = useState<DanswerDocument[]>(
-    []
-  );
 
   const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
     existingChatSessionPersonaId !== undefined
@@ -164,6 +161,30 @@ export const Chat = ({
       );
     }
   }, [defaultSelectedPersonaId]);
+
+  const [
+    selectedDocuments,
+    toggleDocumentSelection,
+    clearSelectedDocuments,
+    selectedDocumentTokens,
+  ] = useDocumentSelection();
+  // just choose a conservative default, this will be updated in the
+  // background on initial load / on persona change
+  const [maxTokens, setMaxTokens] = useState<number>(4096);
+  // fetch # of allowed document tokens for the selected Persona
+  useEffect(() => {
+    async function fetchMaxTokens() {
+      const response = await fetch(
+        `/api/chat/max-selected-document-tokens?persona_id=${livePersona.id}`
+      );
+      if (response.ok) {
+        const maxTokens = (await response.json()).max_tokens as number;
+        setMaxTokens(maxTokens);
+      }
+    }
+
+    fetchMaxTokens();
+  }, [livePersona]);
 
   const filterManager = useFilters();
   const [finalAvailableSources, finalAvailableDocumentSets] =
@@ -725,7 +746,10 @@ export const Chat = ({
             <DocumentSidebar
               selectedMessage={aiMessage}
               selectedDocuments={selectedDocuments}
-              setSelectedDocuments={setSelectedDocuments}
+              toggleDocumentSelection={toggleDocumentSelection}
+              clearSelectedDocuments={clearSelectedDocuments}
+              selectedDocumentTokens={selectedDocumentTokens}
+              maxTokens={maxTokens}
               isLoading={isFetchingChatMessages}
             />
           </ResizableSection>

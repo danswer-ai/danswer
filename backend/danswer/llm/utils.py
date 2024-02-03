@@ -35,7 +35,7 @@ _LLM_TOKENIZER: Any = None
 _LLM_TOKENIZER_ENCODE: Callable[[str], Any] | None = None
 
 
-def get_default_llm_tokenizer() -> Any:
+def get_default_llm_tokenizer() -> Encoding:
     """Currently only supports the OpenAI default tokenizer: tiktoken"""
     global _LLM_TOKENIZER
     if _LLM_TOKENIZER is None:
@@ -56,16 +56,26 @@ def get_default_llm_token_encode() -> Callable[[str], Any]:
     return _LLM_TOKENIZER_ENCODE
 
 
+def tokenizer_trim_content(
+    content: str, desired_length: int, tokenizer: Encoding
+) -> str:
+    tokenizer = get_default_llm_tokenizer()
+    tokens = tokenizer.encode(content)
+    if len(tokens) > desired_length:
+        content = tokenizer.decode(tokens[:desired_length])
+    return content
+
+
 def tokenizer_trim_chunks(
     chunks: list[InferenceChunk], max_chunk_toks: int = DOC_EMBEDDING_CONTEXT_SIZE
 ) -> list[InferenceChunk]:
     tokenizer = get_default_llm_tokenizer()
     new_chunks = copy(chunks)
     for ind, chunk in enumerate(new_chunks):
-        tokens = tokenizer.encode(chunk.content)
-        if len(tokens) > max_chunk_toks:
+        new_content = tokenizer_trim_content(chunk.content, max_chunk_toks, tokenizer)
+        if len(new_content) != len(chunk.content):
             new_chunk = copy(chunk)
-            new_chunk.content = tokenizer.decode(tokens[:max_chunk_toks])
+            new_chunk.content = new_content
             new_chunks[ind] = new_chunk
     return new_chunks
 

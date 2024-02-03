@@ -4,7 +4,7 @@ interface HoverPopupProps {
   mainContent: string | JSX.Element;
   popupContent: string | JSX.Element;
   classNameModifications?: string;
-  direction?: "left" | "bottom" | "top";
+  direction?: "left" | "left-top" | "bottom" | "top";
   style?: "basic" | "dark";
 }
 
@@ -18,9 +18,15 @@ export const HoverPopup = ({
   const [hovered, setHovered] = useState(false);
 
   let popupDirectionClass;
+  let popupStyle = {};
   switch (direction) {
     case "left":
-      popupDirectionClass = "top-0 left-0 transform translate-x-[-110%]";
+      popupDirectionClass = "top-0 left-0 transform";
+      popupStyle = { transform: "translateX(calc(-100% - 5px))" };
+      break;
+    case "left-top":
+      popupDirectionClass = "bottom-0 left-0";
+      popupStyle = { transform: "translate(calc(-100% - 5px), 0)" };
       break;
     case "bottom":
       popupDirectionClass = "top-0 left-0 mt-6 pt-2";
@@ -39,7 +45,10 @@ export const HoverPopup = ({
       onMouseLeave={() => setHovered(false)}
     >
       {hovered && (
-        <div className={`absolute ${popupDirectionClass} z-30`}>
+        <div
+          className={`absolute ${popupDirectionClass} z-30`}
+          style={popupStyle}
+        >
           <div
             className={
               `px-3 py-2 rounded bg-background border border-border` +

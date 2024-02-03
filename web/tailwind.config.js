@@ -59,6 +59,7 @@ module.exports = {
         },
         error: "#ef4444", // red-500
         success: "#059669", // emerald-600
+        alert: "#f59e0b", // amber-600
         user: "#fb7185", // yellow-400
         ai: "#60a5fa", // blue-400
         // light mode
