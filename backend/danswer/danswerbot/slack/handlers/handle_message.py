@@ -11,6 +11,7 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from sqlalchemy.orm import Session
 
+from danswer.configs.app_configs import DISABLE_TELEMETRY
 from danswer.configs.danswerbot_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_COT
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
@@ -32,6 +33,7 @@ from danswer.danswerbot.slack.utils import SlackRateLimiter
 from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
+from danswer.db.users import get_user_by_email
 from danswer.one_shot_answer.answer_question import get_search_answer
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
@@ -121,8 +123,6 @@ def handle_message(
     is_bot_msg = message_info.is_bot_msg
     is_bot_dm = message_info.is_bot_dm
 
-    engine = get_sqlalchemy_engine()
-
     document_set_names: list[str] | None = None
     persona = channel_config.persona if channel_config else None
     prompt = None
@@ -208,19 +208,37 @@ def handle_message(
     )
     @rate_limits(client=client, channel=channel, thread_ts=message_ts_to_respond_to)
     def _get_answer(new_message_request: DirectQARequest) -> OneShotQAResponse:
-        action = "slack_message"
-        if is_bot_msg:
-            action = "slack_slash_message"
-        elif bypass_filters:
-            action = "slack_tag_message"
-        elif is_bot_dm:
-            action = "slack_dm_message"
-        optional_telemetry(
-            record_type=RecordType.USAGE,
-            data={"action": action},
-        )
+        engine = get_sqlalchemy_engine()
 
-        with Session(engine, expire_on_commit=False) as db_session:
+        if not DISABLE_TELEMETRY:
+            danswer_user = None
+            sender_email = None
+            try:
+                sender_email = client.users_info(user=sender_id).data["user"]["profile"]["email"]  # type: ignore
+            except Exception:
+                logger.warning("Unable to find sender email")
+
+            if sender_email is not None:
+                with Session(engine, expire_on_commit=False) as db_session:
+                    danswer_user = get_user_by_email(
+                        email=sender_email, db_session=db_session
+                    )
+
+            action = "slack_message"
+            if is_bot_msg:
+                action = "slack_slash_message"
+            elif bypass_filters:
+                action = "slack_tag_message"
+            elif is_bot_dm:
+                action = "slack_dm_message"
+
+            optional_telemetry(
+                record_type=RecordType.USAGE,
+                data={"action": action},
+                user_id=str(danswer_user.id) if danswer_user else "Non-Danswer-User",
+            )
+
+        with Session(engine) as db_session:
             # This also handles creating the query event in postgres
             answer = get_search_answer(
                 query_req=new_message_request,

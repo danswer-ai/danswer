@@ -184,7 +184,11 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         self, user: User, request: Optional[Request] = None
     ) -> None:
         logger.info(f"User {user.id} has registered.")
-        optional_telemetry(record_type=RecordType.SIGN_UP, data={"user": "create"})
+        optional_telemetry(
+            record_type=RecordType.SIGN_UP,
+            data={"action": "create"},
+            user_id=str(user.id),
+        )
 
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None

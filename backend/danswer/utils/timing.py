@@ -24,6 +24,7 @@ def log_function_time(
         @wraps(func)
         def wrapped_func(*args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
+            user = kwargs.get("user")
             result = func(*args, **kwargs)
             elapsed_time_str = str(time.time() - start_time)
             log_name = func_name or func.__name__
@@ -33,6 +34,7 @@ def log_function_time(
                 optional_telemetry(
                     record_type=RecordType.LATENCY,
                     data={"function": log_name, "latency": str(elapsed_time_str)},
+                    user_id=str(user.id) if user else "Unknown",
                 )
 
             return result
@@ -49,6 +51,7 @@ def log_generator_function_time(
         @wraps(func)
         def wrapped_func(*args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
+            user = kwargs.get("user")
             gen = func(*args, **kwargs)
             try:
                 value = next(gen)
@@ -65,6 +68,7 @@ def log_generator_function_time(
                     optional_telemetry(
                         record_type=RecordType.LATENCY,
                         data={"function": log_name, "latency": str(elapsed_time_str)},
+                        user_id=str(user.id) if user else "Unknown",
                     )
 
         return cast(FG, wrapped_func)

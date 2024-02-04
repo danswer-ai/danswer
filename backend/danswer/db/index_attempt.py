@@ -101,7 +101,9 @@ def mark_attempt_failed(
     db_session.commit()
 
     source = index_attempt.connector.source
-    optional_telemetry(record_type=RecordType.FAILURE, data={"connector": source})
+    optional_telemetry(
+        record_type=RecordType.FAILURE, data={"connector": source}, user_id=None
+    )
 
 
 def update_docs_indexed(
