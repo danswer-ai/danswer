@@ -32,7 +32,7 @@ def get_or_generate_uuid() -> str:
 
 
 def optional_telemetry(
-    record_type: RecordType, data: dict, user_id: str | None
+    record_type: RecordType, data: dict, user_id: str | None = None
 ) -> None:
     if DISABLE_TELEMETRY:
         return

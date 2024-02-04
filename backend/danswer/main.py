@@ -304,7 +304,7 @@ def get_application() -> FastAPI:
         )
 
         optional_telemetry(
-            record_type=RecordType.VERSION, data={"version": __version__}, user_id=None
+            record_type=RecordType.VERSION, data={"version": __version__}
         )
 
     application.add_middleware(
