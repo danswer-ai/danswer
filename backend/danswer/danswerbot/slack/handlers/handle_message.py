@@ -28,6 +28,7 @@ from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import ChannelIdAdapter
 from danswer.danswerbot.slack.utils import fetch_userids_from_emails
 from danswer.danswerbot.slack.utils import respond_in_thread
+from danswer.danswerbot.slack.utils import slack_usage_report
 from danswer.danswerbot.slack.utils import SlackRateLimiter
 from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
@@ -39,8 +40,6 @@ from danswer.search.models import BaseFilters
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RetrievalDetails
 from danswer.utils.logger import setup_logger
-from danswer.utils.telemetry import optional_telemetry
-from danswer.utils.telemetry import RecordType
 
 logger_base = setup_logger()
 
@@ -120,8 +119,6 @@ def handle_message(
     bypass_filters = message_info.bypass_filters
     is_bot_msg = message_info.is_bot_msg
     is_bot_dm = message_info.is_bot_dm
-
-    engine = get_sqlalchemy_engine()
 
     document_set_names: list[str] | None = None
     persona = channel_config.persona if channel_config else None
@@ -215,12 +212,10 @@ def handle_message(
             action = "slack_tag_message"
         elif is_bot_dm:
             action = "slack_dm_message"
-        optional_telemetry(
-            record_type=RecordType.USAGE,
-            data={"action": action},
-        )
 
-        with Session(engine, expire_on_commit=False) as db_session:
+        slack_usage_report(action=action, sender_id=sender_id, client=client)
+
+        with Session(get_sqlalchemy_engine()) as db_session:
             # This also handles creating the query event in postgres
             answer = get_search_answer(
                 query_req=new_message_request,

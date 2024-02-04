@@ -13,7 +13,9 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_sdk.models.blocks import Block
 from slack_sdk.models.metadata import Metadata
+from sqlalchemy.orm import Session
 
+from danswer.configs.app_configs import DISABLE_TELEMETRY
 from danswer.configs.constants import ID_SEPARATOR
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_MAX_QPM
@@ -23,8 +25,12 @@ from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.connectors.slack.utils import SlackTextCleaner
 from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
 from danswer.danswerbot.slack.tokens import fetch_tokens
+from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.users import get_user_by_email
 from danswer.one_shot_answer.models import ThreadMessage
 from danswer.utils.logger import setup_logger
+from danswer.utils.telemetry import optional_telemetry
+from danswer.utils.telemetry import RecordType
 from danswer.utils.text_processing import replace_whitespaces_w_space
 
 logger = setup_logger()
@@ -351,6 +357,28 @@ def read_slack_thread(
         )
 
     return thread_messages
+
+
+def slack_usage_report(action: str, sender_id: str | None, client: WebClient) -> None:
+    if DISABLE_TELEMETRY:
+        return
+
+    danswer_user = None
+    sender_email = None
+    try:
+        sender_email = client.users_info(user=sender_id).data["user"]["profile"]["email"]  # type: ignore
+    except Exception:
+        logger.warning("Unable to find sender email")
+
+    if sender_email is not None:
+        with Session(get_sqlalchemy_engine()) as db_session:
+            danswer_user = get_user_by_email(email=sender_email, db_session=db_session)
+
+    optional_telemetry(
+        record_type=RecordType.USAGE,
+        data={"action": action},
+        user_id=str(danswer_user.id) if danswer_user else "Non-Danswer-Or-No-Auth-User",
+    )
 
 
 class SlackRateLimiter:
