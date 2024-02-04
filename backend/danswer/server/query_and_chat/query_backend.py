@@ -11,7 +11,6 @@ from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.tag import get_tags_by_value_prefix_for_source_types
-from danswer.db.users import get_user_by_email
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.one_shot_answer.answer_question import stream_search_answer
@@ -148,11 +147,9 @@ def stream_query_validation(
 @basic_router.post("/stream-answer-with-quote")
 def get_answer_with_quote(
     query_request: DirectQARequest,
-    # user: User = Depends(current_user),
+    user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
-    # TODO remove hack
-    user = get_user_by_email("yuhong@danswer.ai", db_session)
     query = query_request.messages[0].message
     logger.info(f"Received query for one shot answer with quotes: {query}")
     packets = stream_search_answer(
