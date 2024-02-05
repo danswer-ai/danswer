@@ -14,12 +14,9 @@ from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
-from danswer.configs.chat_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
 from danswer.configs.chat_configs import STOP_STREAM_PAT
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
-from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS
 from danswer.db.chat import get_chat_messages_by_session
@@ -28,7 +25,7 @@ from danswer.db.models import Persona
 from danswer.db.models import Prompt
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import check_number_of_tokens
-from danswer.llm.utils import get_llm_max_tokens
+from danswer.llm.utils import get_max_input_tokens
 from danswer.prompts.chat_prompts import CHAT_USER_CONTEXT_FREE_PROMPT
 from danswer.prompts.chat_prompts import CHAT_USER_PROMPT
 from danswer.prompts.chat_prompts import CITATION_REMINDER
@@ -239,7 +236,7 @@ def _get_usable_chunks(
 
 def get_usable_chunks(
     chunks: list[InferenceChunk],
-    token_limit: int = NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
+    token_limit: int,
     offset: int = 0,
 ) -> list[InferenceChunk]:
     offset_into_chunks = 0
@@ -261,7 +258,7 @@ def get_usable_chunks(
 def get_chunks_for_qa(
     chunks: list[InferenceChunk],
     llm_chunk_selection: list[bool],
-    token_limit: float | None = NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL,
+    token_limit: int | None,
     batch_offset: int = 0,
 ) -> list[int]:
     """
@@ -363,10 +360,10 @@ def create_chat_chain(
 
 def combine_message_chain(
     messages: list[ChatMessage],
-    msg_limit: int | None = 10,
-    token_limit: int | None = GEN_AI_HISTORY_CUTOFF,
+    token_limit: int,
+    msg_limit: int | None = None,
 ) -> str:
-    """Used for secondary LLM flows that require the chat history"""
+    """Used for secondary LLM flows that require the chat history,"""
     message_strs: list[str] = []
     total_token_count = 0
 
@@ -376,10 +373,7 @@ def combine_message_chain(
     for message in reversed(messages):
         message_token_count = message.token_count
 
-        if (
-            token_limit is not None
-            and total_token_count + message_token_count > token_limit
-        ):
+        if total_token_count + message_token_count > token_limit:
             break
 
         role = message.message_type.value.upper()
@@ -557,7 +551,9 @@ _MISC_BUFFER = 40
 
 
 def compute_max_document_tokens(
-    persona: Persona, actual_user_input: str | None = None
+    persona: Persona,
+    actual_user_input: str | None = None,
+    max_llm_token_override: int | None = None,
 ) -> int:
     """Estimates the number of tokens available for context documents. Formula is roughly:
 
@@ -575,8 +571,13 @@ def compute_max_document_tokens(
         llm_name = persona.llm_model_version_override
 
     # if we can't find a number of tokens, just assume some common default
-    model_full_context_window = get_llm_max_tokens(llm_name) or 4096
+    max_input_tokens = (
+        max_llm_token_override
+        if max_llm_token_override
+        else get_max_input_tokens(llm_name)
+    )
     if persona.prompts:
+        # TODO this may not always be the first prompt
         prompt_tokens = get_prompt_tokens(persona.prompts[0])
     else:
         raise RuntimeError("Persona has no prompts - this should never happen")
@@ -586,13 +587,7 @@ def compute_max_document_tokens(
         else GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS
     )
 
-    return (
-        model_full_context_window
-        - GEN_AI_MAX_OUTPUT_TOKENS
-        - prompt_tokens
-        - user_input_tokens
-        - _MISC_BUFFER
-    )
+    return max_input_tokens - prompt_tokens - user_input_tokens - _MISC_BUFFER
 
 
 def compute_max_llm_input_tokens(persona: Persona) -> int:
@@ -601,5 +596,5 @@ def compute_max_llm_input_tokens(persona: Persona) -> int:
     if persona.llm_model_version_override:
         llm_name = persona.llm_model_version_override
 
-    model_full_context_window = get_llm_max_tokens(llm_name) or 4096
-    return model_full_context_window - GEN_AI_MAX_OUTPUT_TOKENS - _MISC_BUFFER
+    input_tokens = get_max_input_tokens(model_name=llm_name)
+    return input_tokens - _MISC_BUFFER

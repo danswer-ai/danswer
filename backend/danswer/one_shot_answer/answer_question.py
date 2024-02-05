@@ -5,6 +5,7 @@ from typing import cast
 
 from sqlalchemy.orm import Session
 
+from danswer.chat.chat_utils import compute_max_document_tokens
 from danswer.chat.chat_utils import get_chunks_for_qa
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import DanswerContext
@@ -14,7 +15,7 @@ from danswer.chat.models import LLMMetricsContainer
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
-from danswer.configs.chat_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
+from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import CHUNK_SIZE
@@ -54,9 +55,14 @@ logger = setup_logger()
 def stream_answer_objects(
     query_req: DirectQARequest,
     user: User | None,
+    # These need to be passed in because in Web UI one shot flow,
+    # we can have much more document as there is no history.
+    # For Slack flow, we need to save more tokens for the thread context
+    max_document_tokens: int | None,
+    max_history_tokens: int | None,
     db_session: Session,
     # Needed to translate persona num_chunks to tokens to the LLM
-    default_num_chunks: float = DEFAULT_NUM_CHUNKS_FED_TO_CHAT,
+    default_num_chunks: float = MAX_CHUNKS_FED_TO_CHAT,
     default_chunk_size: int = CHUNK_SIZE,
     timeout: int = QA_TIMEOUT,
     bypass_acl: bool = False,
@@ -106,7 +112,9 @@ def stream_answer_objects(
         chat_session_id=chat_session.id, db_session=db_session
     )
 
-    history_str = combine_message_thread(history)
+    history_str = combine_message_thread(
+        messages=history, max_tokens=max_history_tokens
+    )
 
     rephrased_query = thread_based_query_rephrase(
         user_query=query_msg.message,
@@ -174,10 +182,20 @@ def stream_answer_objects(
         if chat_session.persona.num_chunks is not None
         else default_num_chunks
     )
+
+    chunk_token_limit = int(num_llm_chunks * default_chunk_size)
+    if max_document_tokens:
+        chunk_token_limit = min(chunk_token_limit, max_document_tokens)
+    else:
+        max_document_tokens = compute_max_document_tokens(
+            persona=chat_session.persona, actual_user_input=query_msg.message
+        )
+        chunk_token_limit = min(chunk_token_limit, max_document_tokens)
+
     llm_chunks_indices = get_chunks_for_qa(
         chunks=top_chunks,
         llm_chunk_selection=llm_chunk_selection,
-        token_limit=num_llm_chunks * default_chunk_size,
+        token_limit=chunk_token_limit,
     )
     llm_chunks = [top_chunks[i] for i in llm_chunks_indices]
 
@@ -288,10 +306,16 @@ def stream_answer_objects(
 def stream_search_answer(
     query_req: DirectQARequest,
     user: User | None,
+    max_document_tokens: int | None,
+    max_history_tokens: int | None,
     db_session: Session,
 ) -> Iterator[str]:
     objects = stream_answer_objects(
-        query_req=query_req, user=user, db_session=db_session
+        query_req=query_req,
+        user=user,
+        max_document_tokens=max_document_tokens,
+        max_history_tokens=max_history_tokens,
+        db_session=db_session,
     )
     for obj in objects:
         yield get_json_line(obj.dict())
@@ -300,6 +324,8 @@ def stream_search_answer(
 def get_search_answer(
     query_req: DirectQARequest,
     user: User | None,
+    max_document_tokens: int | None,
+    max_history_tokens: int | None,
     db_session: Session,
     answer_generation_timeout: int = QA_TIMEOUT,
     enable_reflexion: bool = False,
@@ -315,6 +341,8 @@ def get_search_answer(
     results = stream_answer_objects(
         query_req=query_req,
         user=user,
+        max_document_tokens=max_document_tokens,
+        max_history_tokens=max_history_tokens,
         db_session=db_session,
         bypass_acl=bypass_acl,
         timeout=answer_generation_timeout,

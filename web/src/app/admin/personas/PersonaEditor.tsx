@@ -86,7 +86,7 @@ export function PersonaEditor({
           description: existingPersona?.description ?? "",
           system_prompt: existingPrompt?.system_prompt ?? "",
           task_prompt: existingPrompt?.task_prompt ?? "",
-          disable_retrieval: (existingPersona?.num_chunks ?? 5) === 0,
+          disable_retrieval: (existingPersona?.num_chunks ?? 10) === 0,
           document_set_ids:
             existingPersona?.document_sets?.map(
               (documentSet) => documentSet.id
@@ -148,7 +148,7 @@ export function PersonaEditor({
           // to tell the backend to not fetch any documents
           const numChunks = values.disable_retrieval
             ? 0
-            : values.num_chunks || 5;
+            : values.num_chunks || 10;
 
           let promptResponse;
           let personaResponse;
@@ -414,7 +414,7 @@ export function PersonaEditor({
                         input length limit.
                         <br />
                         <br />
-                        If unspecified, will use 5 chunks.
+                        If unspecified, will use 10 chunks.
                       </div>
                     }
                     onChange={(e) => {

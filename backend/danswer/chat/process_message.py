@@ -22,10 +22,12 @@ from danswer.chat.models import LlmDoc
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
-from danswer.configs.chat_configs import CHUNK_SIZE
-from danswer.configs.chat_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
+from danswer.configs.chat_configs import CHAT_TARGET_CHUNK_PERCENTAGE
+from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.constants import DISABLED_GEN_AI_MSG
 from danswer.configs.constants import MessageType
+from danswer.configs.model_configs import CHUNK_SIZE
+from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.chat import create_db_search_doc
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_chat_message
@@ -46,6 +48,7 @@ from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llm
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import get_default_llm_tokenizer
+from danswer.llm.utils import get_max_input_tokens
 from danswer.llm.utils import tokenizer_trim_content
 from danswer.llm.utils import translate_history_to_basemessages
 from danswer.search.models import OptionalSearchSetting
@@ -156,8 +159,11 @@ def stream_chat_message(
     user: User | None,
     db_session: Session,
     # Needed to translate persona num_chunks to tokens to the LLM
-    default_num_chunks: float = DEFAULT_NUM_CHUNKS_FED_TO_CHAT,
+    default_num_chunks: float = MAX_CHUNKS_FED_TO_CHAT,
     default_chunk_size: int = CHUNK_SIZE,
+    # For flow with search, don't include as many chunks as possible since we need to leave space
+    # for the chat history, for smaller models, we likely won't get MAX_CHUNKS_FED_TO_CHAT chunks
+    max_document_percentage: float = CHAT_TARGET_CHUNK_PERCENTAGE,
 ) -> Iterator[str]:
     """Streams in order:
     1. [conditional] Retrieved documents if a search needs to be run
@@ -260,6 +266,10 @@ def stream_chat_message(
                     query_message=final_msg, history=history_msgs, llm=llm
                 )
 
+        max_document_tokens = compute_max_document_tokens(
+            persona=persona, actual_user_input=message_text
+        )
+
         rephrased_query = None
         if reference_doc_ids:
             identifier_tuples = get_doc_query_identifiers_from_model(
@@ -277,9 +287,6 @@ def stream_chat_message(
             )
 
             # truncate the last document if it exceeds the token limit
-            max_document_tokens = compute_max_document_tokens(
-                persona, actual_user_input=message_text
-            )
             tokens_per_doc = [
                 len(
                     llm_tokenizer_encode_func(
@@ -431,10 +438,26 @@ def stream_chat_message(
                 if persona.num_chunks is not None
                 else default_num_chunks
             )
+
+            llm_name = GEN_AI_MODEL_VERSION
+            if persona.llm_model_version_override:
+                llm_name = persona.llm_model_version_override
+
+            llm_max_input_tokens = get_max_input_tokens(llm_name)
+
+            llm_token_based_chunk_lim = max_document_percentage * llm_max_input_tokens
+
+            chunk_token_limit = int(
+                min(
+                    num_llm_chunks * default_chunk_size,
+                    max_document_tokens,
+                    llm_token_based_chunk_lim,
+                )
+            )
             llm_chunks_indices = get_chunks_for_qa(
                 chunks=top_chunks,
                 llm_chunk_selection=llm_chunk_selection,
-                token_limit=num_llm_chunks * default_chunk_size,
+                token_limit=chunk_token_limit,
             )
             llm_chunks = [top_chunks[i] for i in llm_chunks_indices]
             llm_docs = [llm_doc_from_inference_chunk(chunk) for chunk in llm_chunks]

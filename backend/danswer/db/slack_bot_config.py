@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from danswer.configs.chat_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
+from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.db.chat import upsert_persona
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.document_set import get_document_sets_by_ids
@@ -35,7 +35,7 @@ def create_slack_bot_persona(
     channel_names: list[str],
     document_set_ids: list[int],
     existing_persona_id: int | None = None,
-    num_chunks: float = DEFAULT_NUM_CHUNKS_FED_TO_CHAT,
+    num_chunks: float = MAX_CHUNKS_FED_TO_CHAT,
 ) -> Persona:
     """NOTE: does not commit changes"""
     document_sets = list(

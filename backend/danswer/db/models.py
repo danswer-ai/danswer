@@ -723,7 +723,6 @@ class Persona(Base):
         Enum(SearchType), default=SearchType.HYBRID
     )
     # Number of chunks to pass to the LLM for generation.
-    # If unspecified, uses the default DEFAULT_NUM_CHUNKS_FED_TO_CHAT set in the env variable
     num_chunks: Mapped[float | None] = mapped_column(Float, nullable=True)
     # Pass every chunk through LLM for evaluation, fairly expensive
     # Can be turned off globally by admin, in which case, this setting is ignored

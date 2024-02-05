@@ -78,7 +78,7 @@ INTENT_MODEL_VERSION = "danswer/intent-model"
 # Set GEN_AI_MODEL_PROVIDER to "gpt4all" to use gpt4all models running locally
 GEN_AI_MODEL_PROVIDER = os.environ.get("GEN_AI_MODEL_PROVIDER") or "openai"
 # If using Azure, it's the engine name, for example: Danswer
-GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION") or "gpt-3.5-turbo"
+GEN_AI_MODEL_VERSION = os.environ.get("GEN_AI_MODEL_VERSION") or "gpt-3.5-turbo-0125"
 # For secondary flows like extracting filters or deciding if a chunk is useful, we don't need
 # as powerful of a model as say GPT-4 so we can use an alternative that is faster and cheaper
 FAST_GEN_AI_MODEL_VERSION = (
@@ -96,14 +96,15 @@ GEN_AI_API_ENDPOINT = os.environ.get("GEN_AI_API_ENDPOINT") or None
 GEN_AI_API_VERSION = os.environ.get("GEN_AI_API_VERSION") or None
 # LiteLLM custom_llm_provider
 GEN_AI_LLM_PROVIDER_TYPE = os.environ.get("GEN_AI_LLM_PROVIDER_TYPE") or None
-
+# If the max tokens can't be found from the name, use this as the backup
+# This happens if user is configuring a different LLM to use
+GEN_AI_MAX_TOKENS = int(os.environ.get("GEN_AI_MAX_TOKENS") or 4096)
 # Set this to be enough for an answer + quotes. Also used for Chat
 GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS") or 1024)
-# This next restriction is only used for chat ATM, used to expire old messages as needed
-GEN_AI_MAX_INPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_INPUT_TOKENS") or 3000)
-# History for secondary LLM flows, not primary chat flow, generally we don't need to
-# include as much as possible as this just bumps up the cost unnecessarily
-GEN_AI_HISTORY_CUTOFF = int(0.5 * GEN_AI_MAX_INPUT_TOKENS)
+# Number of tokens from chat history to include at maximum
+# 3000 should be enough context regardless of use, no need to include as much as possible
+# as this drives up the cost unnecessarily
+GEN_AI_HISTORY_CUTOFF = 3000
 # This is used when computing how much context space is available for documents
 # ahead of time in order to let the user know if they can "select" more documents
 # It represents a maximum "expected" number of input tokens from the latest user

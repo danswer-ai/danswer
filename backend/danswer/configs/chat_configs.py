@@ -1,28 +1,18 @@
 import os
 
-from danswer.configs.model_configs import CHUNK_SIZE
 
 PROMPTS_YAML = "./danswer/chat/prompts.yaml"
 PERSONAS_YAML = "./danswer/chat/personas.yaml"
 
 NUM_RETURNED_HITS = 50
 NUM_RERANKED_RESULTS = 15
-# We feed in document chunks until we reach this token limit.
-# Default is ~5 full chunks (max chunk size is 2000 chars), although some chunks may be
-# significantly smaller which could result in passing in more total chunks.
-# There is also a slight bit of overhead, not accounted for here such as separator patterns
-# between the docs, metadata for the docs, etc.
-# Finally, this is combined with the rest of the QA prompt, so don't set this too close to the
-# model token limit
-NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL = int(
-    os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL") or (CHUNK_SIZE * 5)
-)
-DEFAULT_NUM_CHUNKS_FED_TO_CHAT: float = (
-    float(NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL) / CHUNK_SIZE
-)
-NUM_DOCUMENT_TOKENS_FED_TO_CHAT = int(
-    os.environ.get("NUM_DOCUMENT_TOKENS_FED_TO_CHAT") or (CHUNK_SIZE * 3)
-)
+
+# May be less depending on model
+MAX_CHUNKS_FED_TO_CHAT = float(os.environ.get("MAX_CHUNKS_FED_TO_CHAT") or 10.0)
+# For Chat, need to keep enough space for history and other prompt pieces
+# ~3k input, half for docs, half for chat history + prompts
+CHAT_TARGET_CHUNK_PERCENTAGE = 512 * 3 / 3072
+
 # For selecting a different LLM question-answering prompt format
 # Valid values: default, cot, weak
 QA_PROMPT_OVERRIDE = os.environ.get("QA_PROMPT_OVERRIDE") or None
@@ -60,7 +50,7 @@ if os.environ.get("EDIT_KEYWORD_QUERY"):
 else:
     EDIT_KEYWORD_QUERY = not os.environ.get("DOCUMENT_ENCODER_MODEL")
 # Weighting factor between Vector and Keyword Search, 1 for completely vector search
-HYBRID_ALPHA = max(0, min(1, float(os.environ.get("HYBRID_ALPHA") or 0.66)))
+HYBRID_ALPHA = max(0, min(1, float(os.environ.get("HYBRID_ALPHA") or 0.62)))
 # Weighting factor between Title and Content of documents during search, 1 for completely
 # Title based. Default heavily favors Content because Title is also included at the top of
 # Content. This is to avoid cases where the Content is very relevant but it may not be clear

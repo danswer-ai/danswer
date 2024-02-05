@@ -13,9 +13,8 @@ personas:
       - "Answer-Question"
     # Default number of chunks to include as context, set to 0 to disable retrieval
     # Remove the field to set to the system default number of chunks/tokens to pass to Gen AI
-    # If selecting documents, user can bypass this up until NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
     # Each chunk is 512 tokens long
-    num_chunks: 5
+    num_chunks: 10
     # Enable/Disable usage of the LLM chunk filter feature whereby each chunk is passed to the LLM to determine
     # if the chunk is useful or not towards the latest user query
     # This feature can be overriden for all personas via DISABLE_LLM_CHUNK_FILTER env variable
@@ -46,7 +45,7 @@ personas:
       extrapolate any answers for you.
     prompts:
       - "Summarize"
-    num_chunks: 5
+    num_chunks: 10
     llm_relevance_filter: true
     llm_filter_extraction: true
     recency_bias: "auto"
@@ -58,7 +57,7 @@ personas:
       The least creative default assistant that only provides quotes from the documents.
     prompts:
       - "Paraphrase"
-    num_chunks: 5
+    num_chunks: 10
     llm_relevance_filter: true
     llm_filter_extraction: true
     recency_bias: "auto"

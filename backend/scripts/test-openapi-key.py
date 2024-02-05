@@ -10,6 +10,7 @@ VALID_MODEL_LIST = [
     "gpt-4-32k",
     "gpt-4-32k-0314",
     "gpt-4-32k-0613",
+    "gpt-3.5-turbo-0125",
     "gpt-3.5-turbo-1106",
     "gpt-3.5-turbo",
     "gpt-3.5-turbo-16k",
