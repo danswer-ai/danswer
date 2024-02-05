@@ -13,7 +13,6 @@ personas:
       - "Answer-Question"
     # Default number of chunks to include as context, set to 0 to disable retrieval
     # Remove the field to set to the system default number of chunks/tokens to pass to Gen AI
-    # If selecting documents, user can bypass this up until NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
     # Each chunk is 512 tokens long
     num_chunks: 5
     # Enable/Disable usage of the LLM chunk filter feature whereby each chunk is passed to the LLM to determine

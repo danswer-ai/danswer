@@ -17,7 +17,6 @@ from danswer.configs.chat_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.configs.constants import MessageType
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import get_default_llm_token_encode
-from danswer.llm.utils import get_max_input_tokens
 from danswer.one_shot_answer.models import ThreadMessage
 from danswer.prompts.constants import ANSWER_PAT
 from danswer.prompts.constants import QUOTE_PAT
@@ -279,11 +278,13 @@ def simulate_streaming_response(model_out: str) -> Generator[str, None, None]:
 
 def combine_message_thread(
     messages: list[ThreadMessage],
-    llm_name: str | None,
+    max_tokens: int | None,
     llm_tokenizer: Callable | None = None,
-    default_proportion: float = 0.33,
 ) -> str:
     """Used to create a single combined message context from threads"""
+    if not messages:
+        return ""
+
     message_strs: list[str] = []
     total_token_count = 0
     if llm_tokenizer is None:
@@ -304,10 +305,10 @@ def combine_message_thread(
         msg_str = f"{role_str}:\n{message.message}"
         message_token_count = len(llm_tokenizer(msg_str))
 
-        num_input_tokens = get_max_input_tokens(model_name=llm_name)
-        history_token_limit = int(num_input_tokens * default_proportion)
-
-        if total_token_count + message_token_count > history_token_limit:
+        if (
+            max_tokens is not None
+            and total_token_count + message_token_count > max_tokens
+        ):
             break
 
         message_strs.insert(0, msg_str)

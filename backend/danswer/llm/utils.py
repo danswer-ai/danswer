@@ -62,7 +62,6 @@ def get_default_llm_token_encode() -> Callable[[str], Any]:
 def tokenizer_trim_content(
     content: str, desired_length: int, tokenizer: Encoding
 ) -> str:
-    tokenizer = get_default_llm_tokenizer()
     tokens = tokenizer.encode(content)
     if len(tokens) > desired_length:
         content = tokenizer.decode(tokens[:desired_length])
