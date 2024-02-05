@@ -175,18 +175,19 @@ class LinearConnector(LoadConnector, PollConnector):
                         sections=[
                             Section(
                                 link=node["url"],
-                                text=node["description"],
+                                text=node["description"] or "",
                             )
                         ]
                         + [
                             Section(
                                 link=node["url"],
-                                text=comment["body"],
+                                text=comment["body"] or "",
                             )
                             for comment in node["comments"]["nodes"]
                         ],
                         source=DocumentSource.LINEAR,
-                        semantic_identifier=node["identifier"],
+                        semantic_identifier=f"[{node['identifier']}] {node['title']}",
+                        title=node["title"],
                         doc_updated_at=time_str_to_utc(node["updatedAt"]),
                         metadata={
                             "team": node["team"]["name"],
