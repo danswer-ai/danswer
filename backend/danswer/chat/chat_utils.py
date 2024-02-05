@@ -17,7 +17,6 @@ from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.chat_configs import STOP_STREAM_PAT
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS
 from danswer.db.chat import get_chat_messages_by_session
@@ -26,7 +25,6 @@ from danswer.db.models import Persona
 from danswer.db.models import Prompt
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import check_number_of_tokens
-from danswer.llm.utils import get_llm_max_tokens
 from danswer.llm.utils import get_max_input_tokens
 from danswer.prompts.chat_prompts import CHAT_USER_CONTEXT_FREE_PROMPT
 from danswer.prompts.chat_prompts import CHAT_USER_PROMPT
@@ -598,5 +596,5 @@ def compute_max_llm_input_tokens(persona: Persona) -> int:
     if persona.llm_model_version_override:
         llm_name = persona.llm_model_version_override
 
-    model_full_context_window = get_llm_max_tokens(llm_name)
-    return model_full_context_window - GEN_AI_MAX_OUTPUT_TOKENS - _MISC_BUFFER
+    input_tokens = get_max_input_tokens(model_name=llm_name)
+    return input_tokens - _MISC_BUFFER
