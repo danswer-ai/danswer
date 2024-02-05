@@ -23,10 +23,10 @@ from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
 from danswer.configs.chat_configs import CHAT_TARGET_CHUNK_PERCENTAGE
-from danswer.configs.chat_configs import CHUNK_SIZE
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.constants import DISABLED_GEN_AI_MSG
 from danswer.configs.constants import MessageType
+from danswer.configs.model_configs import CHUNK_SIZE
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.chat import create_db_search_doc
 from danswer.db.chat import create_new_chat_message
