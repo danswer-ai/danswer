@@ -4,6 +4,7 @@ from langchain.schema import SystemMessage
 
 from danswer.chat.chat_utils import combine_message_chain
 from danswer.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
+from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.db.models import ChatMessage
 from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llm
@@ -77,7 +78,9 @@ def check_if_need_search(
             # as just a search engine
             return True
 
-    history_str = combine_message_chain(history)
+    history_str = combine_message_chain(
+        messages=history, token_limit=GEN_AI_HISTORY_CUTOFF
+    )
 
     prompt_msgs = _get_search_messages(
         question=query_message.message, history_str=history_str

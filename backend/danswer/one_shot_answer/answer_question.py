@@ -106,7 +106,8 @@ def stream_answer_objects(
         chat_session_id=chat_session.id, db_session=db_session
     )
 
-    history_str = combine_message_thread(history)
+    llm_name_or_none = chat_session.persona.llm_model_version_override
+    history_str = combine_message_thread(messages=history, llm_name=llm_name_or_none)
 
     rephrased_query = thread_based_query_rephrase(
         user_query=query_msg.message,

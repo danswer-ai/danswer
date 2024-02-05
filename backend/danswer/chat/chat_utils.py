@@ -18,7 +18,6 @@ from danswer.configs.chat_configs import NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_M
 from danswer.configs.chat_configs import STOP_STREAM_PAT
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS
@@ -363,10 +362,10 @@ def create_chat_chain(
 
 def combine_message_chain(
     messages: list[ChatMessage],
-    msg_limit: int | None = 10,
-    token_limit: int | None = GEN_AI_HISTORY_CUTOFF,
+    token_limit: int,
+    msg_limit: int | None = None,
 ) -> str:
-    """Used for secondary LLM flows that require the chat history"""
+    """Used for secondary LLM flows that require the chat history,"""
     message_strs: list[str] = []
     total_token_count = 0
 
@@ -376,10 +375,7 @@ def combine_message_chain(
     for message in reversed(messages):
         message_token_count = message.token_count
 
-        if (
-            token_limit is not None
-            and total_token_count + message_token_count > token_limit
-        ):
+        if total_token_count + message_token_count > token_limit:
             break
 
         role = message.message_type.value.upper()
@@ -575,7 +571,7 @@ def compute_max_document_tokens(
         llm_name = persona.llm_model_version_override
 
     # if we can't find a number of tokens, just assume some common default
-    model_full_context_window = get_llm_max_tokens(llm_name) or 4096
+    model_full_context_window = get_llm_max_tokens(llm_name)
     if persona.prompts:
         prompt_tokens = get_prompt_tokens(persona.prompts[0])
     else:
@@ -601,5 +597,5 @@ def compute_max_llm_input_tokens(persona: Persona) -> int:
     if persona.llm_model_version_override:
         llm_name = persona.llm_model_version_override
 
-    model_full_context_window = get_llm_max_tokens(llm_name) or 4096
+    model_full_context_window = get_llm_max_tokens(llm_name)
     return model_full_context_window - GEN_AI_MAX_OUTPUT_TOKENS - _MISC_BUFFER
