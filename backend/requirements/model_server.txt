@@ -1,4 +1,4 @@
-fastapi==0.103.0
+fastapi==0.109.1
 pydantic==1.10.7
 safetensors==0.3.1
 sentence-transformers==2.2.2
