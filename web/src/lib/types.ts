@@ -227,6 +227,10 @@ export interface JiraCredentialJson {
   jira_api_token: string;
 }
 
+export interface JiraServerCredentialJson {
+  jira_api_token: string;
+}
+
 export interface ProductboardCredentialJson {
   productboard_access_token: string;
 }
