@@ -306,7 +306,7 @@ const Main = () => {
       ) : (
         <>
           <Text>
-            Please provide your access token in Step 2 first! Once done with
+            Please provide your access token in Step 1 first! Once done with
             that, you can then specify which Jira projects you want to make
             searchable.
           </Text>
