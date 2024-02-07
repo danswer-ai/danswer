@@ -226,7 +226,8 @@ const GoogleDriveConnectorManagement = ({
                 label="Only Org-Wide Public Docs"
                 subtext={
                   "If checked, then only documents that are shared to the entire organization " +
-                  "are included."
+                  "are included. Note: if you have multiple orgs, this check will pass for docs " +
+                  "shared with any of the orgs."
                 }
               />
             </>
