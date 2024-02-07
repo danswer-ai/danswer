@@ -189,6 +189,7 @@ class ConnectorCredentialPairDescriptor(BaseModel):
 class RunConnectorRequest(BaseModel):
     connector_id: int
     credential_ids: list[int] | None
+    from_beginning: bool = False
 
 
 """Connectors Models"""

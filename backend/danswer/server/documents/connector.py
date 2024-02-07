@@ -55,7 +55,6 @@ from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import get_document_cnts_for_cc_pairs
 from danswer.db.embedding_model import get_current_db_embedding_model
-from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import cancel_indexing_attempts_for_connector
 from danswer.db.index_attempt import create_index_attempt
@@ -529,6 +528,7 @@ def connector_run_once(
                 connector_id=run_info.connector_id,
                 credential_id=credential_id,
             ),
+            only_current=True,
             disinclude_finished=True,
             db_session=db_session,
         )
@@ -536,28 +536,17 @@ def connector_run_once(
 
     embedding_model = get_current_db_embedding_model(db_session)
 
-    secondary_embedding_model = get_secondary_db_embedding_model(db_session)
-
     index_attempt_ids = [
         create_index_attempt(
-            run_info.connector_id, credential_id, embedding_model.id, db_session
+            connector_id=run_info.connector_id,
+            credential_id=credential_id,
+            embedding_model_id=embedding_model.id,
+            from_beginning=run_info.from_beginning,
+            db_session=db_session,
         )
         for credential_id in credential_ids
         if credential_id not in skipped_credentials
     ]
-
-    if secondary_embedding_model is not None:
-        # Secondary index doesn't have to be returned
-        [
-            create_index_attempt(
-                run_info.connector_id,
-                credential_id,
-                secondary_embedding_model.id,
-                db_session,
-            )
-            for credential_id in credential_ids
-            if credential_id not in skipped_credentials
-        ]
 
     if not index_attempt_ids:
         raise HTTPException(
