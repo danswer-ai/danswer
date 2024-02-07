@@ -128,7 +128,8 @@ def _run_indexing(
     indexing_pipeline = build_indexing_pipeline(
         embedder=embedding_model,
         document_index=document_index,
-        ignore_time_skip=(db_embedding_model.status == IndexModelStatus.FUTURE),
+        ignore_time_skip=index_attempt.from_beginning
+        or (db_embedding_model.status == IndexModelStatus.FUTURE),
     )
 
     db_connector = index_attempt.connector
