@@ -121,6 +121,7 @@ POLL_CONNECTOR_OFFSET = 30  # Minutes overlap between poll windows
 
 GOOGLE_DRIVE_INCLUDE_SHARED = False
 GOOGLE_DRIVE_FOLLOW_SHORTCUTS = False
+GOOGLE_DRIVE_ONLY_ORG_PUBLIC = False
 
 FILE_CONNECTOR_TMP_STORAGE_PATH = os.environ.get(
     "FILE_CONNECTOR_TMP_STORAGE_PATH", "/home/file_connector_storage"
