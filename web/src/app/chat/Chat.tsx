@@ -78,6 +78,21 @@ export const Chat = ({
   // session they are using
   useEffect(() => {
     textareaRef.current?.focus();
+
+    // only clear things if we're going from one chat session to another
+    if (chatSessionId !== null && existingChatSessionId !== chatSessionId) {
+      // de-select documents
+      clearSelectedDocuments();
+      // reset all filters
+      filterManager.setSelectedDocumentSets([]);
+      filterManager.setSelectedSources([]);
+      filterManager.setSelectedTags([]);
+      filterManager.setTimeRange(null);
+      if (isStreaming) {
+        setIsCancelled(true);
+      }
+    }
+
     setChatSessionId(existingChatSessionId);
 
     async function initialSessionFetch() {
@@ -405,9 +420,13 @@ export const Chat = ({
         setSelectedMessageForDocDisplay(finalMessage.message_id);
       }
       await nameChatSession(currChatSessionId, currMessage);
-      router.push(`/chat?chatId=${currChatSessionId}`, {
-        scroll: false,
-      });
+
+      // NOTE: don't switch pages if the user has navigated away from the chat
+      if (currChatSessionId === chatSessionId) {
+        router.push(`/chat?chatId=${currChatSessionId}`, {
+          scroll: false,
+        });
+      }
     }
     if (
       finalMessage?.context_docs &&
@@ -464,9 +483,9 @@ export const Chat = ({
 
       {documentSidebarInitialWidth !== undefined ? (
         <>
-          <div className="w-full sm:relative">
+          <div className="w-full sm:relative h-screen pb-[140px]">
             <div
-              className={`w-full h-screen ${HEADER_PADDING} flex flex-col overflow-y-auto relative`}
+              className={`w-full h-full ${HEADER_PADDING} flex flex-col overflow-y-auto overflow-x-hidden relative`}
               ref={scrollableDivRef}
             >
               {livePersona && (
@@ -628,7 +647,7 @@ export const Chat = ({
                   )}
 
                 {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
-                <div className={`min-h-[200px] w-full`}></div>
+                <div className={`min-h-[30px] w-full`}></div>
 
                 <div ref={endDivRef} />
               </div>
@@ -693,7 +712,8 @@ export const Chat = ({
                         if (
                           event.key === "Enter" &&
                           !event.shiftKey &&
-                          message
+                          message &&
+                          !isStreaming
                         ) {
                           onSubmit();
                           event.preventDefault();
