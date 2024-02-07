@@ -35,11 +35,13 @@ def create_index_attempt(
     credential_id: int,
     embedding_model_id: int | None,
     db_session: Session,
+    from_beginning: bool = False,
 ) -> int:
     new_attempt = IndexAttempt(
         connector_id=connector_id,
         credential_id=credential_id,
         embedding_model_id=embedding_model_id,
+        from_beginning=from_beginning,
         status=IndexingStatus.NOT_STARTED,
     )
     db_session.add(new_attempt)

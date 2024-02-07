@@ -133,11 +133,15 @@ def _run_indexing(
 
     db_connector = index_attempt.connector
     db_credential = index_attempt.credential
-    last_successful_index_time = get_last_successful_attempt_time(
-        connector_id=db_connector.id,
-        credential_id=db_credential.id,
-        embedding_model=index_attempt.embedding_model,
-        db_session=db_session,
+    last_successful_index_time = (
+        0.0
+        if index_attempt.from_beginning
+        else get_last_successful_attempt_time(
+            connector_id=db_connector.id,
+            credential_id=db_credential.id,
+            embedding_model=index_attempt.embedding_model,
+            db_session=db_session,
+        )
     )
 
     net_doc_change = 0

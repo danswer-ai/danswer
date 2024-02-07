@@ -419,6 +419,10 @@ class IndexAttempt(Base):
         ForeignKey("credential.id"),
         nullable=True,
     )
+    # Some index attempts that run from beginning will still have this as False
+    # This is only for attempts that are explicitly marked as from the start via
+    # the run once API
+    from_beginning: Mapped[bool] = mapped_column(Boolean)
     status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
     # The two below may be slightly out of sync if user switches Embedding Model
     new_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
