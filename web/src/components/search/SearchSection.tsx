@@ -213,7 +213,7 @@ export const SearchSection = ({
 
   return (
     <div className="relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
-      <div className="absolute left-0 hidden 2xl:block w-64">
+      <div className="absolute left-0 hidden 2xl:block w-52 3xl:w-64">
         {(connectors.length > 0 || documentSets.length > 0) && (
           <SourceSelector
             {...filterManager}
@@ -246,7 +246,7 @@ export const SearchSection = ({
           />
         </div>
       </div>
-      <div className="w-[800px] mx-auto">
+      <div className="w-[720px] 3xl:w-[800px] mx-auto">
         {personas.length > 0 ? (
           <div className="flex mb-2 w-fit">
             <PersonaSelector
