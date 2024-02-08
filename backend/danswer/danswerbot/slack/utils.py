@@ -21,6 +21,7 @@ from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_MAX_QPM
 from danswer.configs.danswerbot_configs import DANSWER_BOT_MAX_WAIT_TIME
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_RETRIES
+from danswer.connectors.slack.utils import fetch_user_semantic_id_from_id
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.connectors.slack.utils import SlackTextCleaner
 from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
@@ -303,20 +304,6 @@ def fetch_groupids_from_names(
         logger.error(f"Error fetching user groups: {str(e)}")
 
     return list(group_ids), failed_to_find
-
-
-def fetch_user_semantic_id_from_id(user_id: str, client: WebClient) -> str | None:
-    response = client.users_info(user=user_id)
-    if not response["ok"]:
-        return None
-
-    user: dict = cast(dict[Any, dict], response.data).get("user", {})
-
-    return (
-        user.get("real_name")
-        or user.get("name")
-        or user.get("profile", {}).get("email")
-    )
 
 
 def read_slack_thread(

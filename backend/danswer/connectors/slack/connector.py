@@ -12,6 +12,7 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import SlackResponse
 
+from danswer.configs.app_configs import ENABLE_EXPENSIVE_EXPERT_CALLS
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
@@ -22,6 +23,8 @@ from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.connectors.slack.utils import expert_info_from_slack_id
+from danswer.connectors.slack.utils import fetch_user_semantic_id_from_id
 from danswer.connectors.slack.utils import get_message_link
 from danswer.connectors.slack.utils import make_slack_api_call_logged
 from danswer.connectors.slack.utils import make_slack_api_call_paginated
@@ -154,8 +157,33 @@ def thread_to_doc(
     channel: ChannelType,
     thread: ThreadType,
     slack_cleaner: SlackTextCleaner,
+    client: WebClient,
 ) -> Document:
     channel_id = channel["id"]
+    initial_sender_name = fetch_user_semantic_id_from_id(
+        user_id=thread[0].get("user"), client=client
+    )
+
+    all_sender_ids = [m.get("user") for m in thread]
+
+    valid_experts = None
+    if ENABLE_EXPENSIVE_EXPERT_CALLS:
+        experts = [
+            expert_info_from_slack_id(sender_id, client)
+            for sender_id in all_sender_ids
+            if sender_id
+        ]
+        valid_experts = [expert for expert in experts if expert]
+
+    first_message = slack_cleaner.index_clean(cast(str, thread[0]["text"]))
+    snippet = (
+        first_message[:50].rstrip() + "..."
+        if len(first_message) > 50
+        else first_message
+    )
+
+    doc_sem_id = f"{initial_sender_name} in #{channel['name']}: {snippet}"
+
     return Document(
         id=f"{channel_id}__{thread[0]['ts']}",
         sections=[
@@ -168,10 +196,11 @@ def thread_to_doc(
             for m in thread
         ],
         source=DocumentSource.SLACK,
-        semantic_identifier=channel["name"],
+        semantic_identifier=doc_sem_id,
         doc_updated_at=get_latest_message_time(thread),
         title="",  # slack docs don't really have a "title"
-        metadata={},
+        primary_owners=valid_experts,
+        metadata={"Channel": channel["name"]},
     )
 
 
@@ -288,6 +317,7 @@ def get_all_docs(
                         channel=channel,
                         thread=filtered_thread,
                         slack_cleaner=slack_cleaner,
+                        client=client,
                     )
 
         logger.info(
