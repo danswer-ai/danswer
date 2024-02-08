@@ -30,13 +30,13 @@ jobs:
         platforms: linux/amd64,linux/arm64
         push: true
         tags: |
-          danswer/danswer-backend:${{ github.ref_name }}
-          danswer/danswer-backend:latest
+          danswer/danswer-backend-no-zulip:${{ github.ref_name }}
+          danswer/danswer-backend-no-zulip:latest
         build-args: |
           DANSWER_VERSION=${{ github.ref_name }}
 
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: docker.io/danswer/danswer-backend:${{ github.ref_name }}
+        image-ref: docker.io/danswer/danswer-backend-no-zulip:${{ github.ref_name }}
         severity: 'CRITICAL,HIGH'
