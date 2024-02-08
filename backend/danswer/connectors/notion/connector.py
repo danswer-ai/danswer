@@ -202,6 +202,12 @@ class NotionConnector(LoadConnector, PollConnector):
                 result_type = result["type"]
                 result_obj = result[result_type]
 
+                if result_type == "ai_block":
+                    logger.warning(f"Skipping 'ai_block' ('{result_block_id}') for page '{page_block_id}': "
+                                   f"Notion API does not currently support reading AI blocks (as of 24/02/09) "
+                                   f"(discussion: https://github.com/danswer-ai/danswer/issues/1053)")
+                    continue
+
                 cur_result_text_arr = []
                 if "rich_text" in result_obj:
                     for rich_text in result_obj["rich_text"]:
