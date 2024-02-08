@@ -29,4 +29,4 @@ jobs:
 
     - name: Pull, Tag and Push API Server Image
       run: |
-        docker buildx imagetools create -t danswer/danswer-backend:latest danswer/danswer-backend:${{ github.event.inputs.version }}
+        docker buildx imagetools create -t danswer/danswer-backend-no-zulip:latest danswer/danswer-backend-no-zulip:${{ github.event.inputs.version }}

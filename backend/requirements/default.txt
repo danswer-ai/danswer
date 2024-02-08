@@ -68,6 +68,5 @@ torch==2.0.1
 torchvision==0.15.2
 transformers==4.36.2
 uvicorn==0.21.1
-zulip==0.8.2
 hubspot-api-client==8.1.0
 zenpy==2.0.41

@@ -1,7 +1,7 @@
 version: '3'
 services:
   api_server:
-    image: danswer/danswer-backend:latest
+    image: danswer/danswer-backend-no-zulip:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -82,7 +82,7 @@ services:
         max-size: "50m"
         max-file: "6"
   background:
-    image: danswer/danswer-backend:latest
+    image: danswer/danswer-backend-no-zulip:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
