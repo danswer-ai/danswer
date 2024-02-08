@@ -205,7 +205,8 @@ def test_llm(llm: LLM) -> bool:
 
 
 def get_llm_max_tokens(
-    model_provider: str, model_name: str | None = GEN_AI_MODEL_VERSION
+    model_name: str | None = GEN_AI_MODEL_VERSION,
+    model_provider: str = GEN_AI_MODEL_PROVIDER,
 ) -> int:
     """Best effort attempt to get the max tokens for the LLM"""
     if GEN_AI_MAX_TOKENS:
@@ -228,7 +229,10 @@ def get_max_input_tokens(
     model_provider: str = GEN_AI_MODEL_PROVIDER,
     output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
 ) -> int:
-    input_toks = get_llm_max_tokens(model_provider, model_name) - output_tokens
+    input_toks = (
+        get_llm_max_tokens(model_name=model_name, model_provider=model_provider)
+        - output_tokens
+    )
 
     if input_toks <= 0:
         raise RuntimeError("No tokens for input for the LLM given settings")
