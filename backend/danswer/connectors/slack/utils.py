@@ -105,25 +105,6 @@ def make_slack_api_rate_limited(
     return rate_limited_call
 
 
-def fetch_user_semantic_id_from_id(
-    user_id: str | None, client: WebClient
-) -> str | None:
-    if not user_id:
-        return None
-
-    response = make_slack_api_rate_limited(client.users_info)(user=user_id)
-    if not response["ok"]:
-        return None
-
-    user: dict = cast(dict[Any, dict], response.data).get("user", {})
-
-    return (
-        user.get("real_name")
-        or user.get("name")
-        or user.get("profile", {}).get("email")
-    )
-
-
 def expert_info_from_slack_id(
     user_id: str | None,
     client: WebClient,
