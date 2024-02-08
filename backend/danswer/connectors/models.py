@@ -42,6 +42,25 @@ class BasicExpertInfo(BaseModel):
     last_name: str | None = None
     email: str | None = None
 
+    def get_semantic_name(self) -> str:
+        if self.first_name and self.last_name:
+            name_parts = [self.first_name]
+            if self.middle_initial:
+                name_parts.append(self.middle_initial + ".")
+            name_parts.append(self.last_name)
+            return " ".join([name_part.capitalize() for name_part in name_parts])
+
+        if self.display_name:
+            return self.display_name
+
+        if self.email:
+            return self.email
+
+        if self.first_name:
+            return self.first_name.capitalize()
+
+        return "Unknown"
+
 
 class DocumentBase(BaseModel):
     """Used for Danswer ingestion api, the ID is inferred before use if not provided"""
