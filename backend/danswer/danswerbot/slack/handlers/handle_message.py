@@ -224,8 +224,12 @@ def handle_message(
         max_document_tokens: int | None = None
         max_history_tokens: int | None = None
         if len(new_message_request.messages) > 1:
+            llm_name = GEN_AI_MODEL_VERSION
+            if persona and persona.llm_model_version_override:
+                llm_name = persona.llm_model_version_override
+
             # In cases of threads, split the available tokens between docs and thread context
-            input_tokens = get_max_input_tokens(GEN_AI_MODEL_VERSION)
+            input_tokens = get_max_input_tokens(model_name=llm_name)
             max_history_tokens = int(input_tokens * thread_context_percent)
 
             remaining_tokens = input_tokens - max_history_tokens

@@ -574,7 +574,7 @@ def compute_max_document_tokens(
     max_input_tokens = (
         max_llm_token_override
         if max_llm_token_override
-        else get_max_input_tokens(llm_name)
+        else get_max_input_tokens(model_name=llm_name)
     )
     if persona.prompts:
         # TODO this may not always be the first prompt

@@ -443,7 +443,7 @@ def stream_chat_message(
             if persona.llm_model_version_override:
                 llm_name = persona.llm_model_version_override
 
-            llm_max_input_tokens = get_max_input_tokens(llm_name)
+            llm_max_input_tokens = get_max_input_tokens(model_name=llm_name)
 
             llm_token_based_chunk_lim = max_document_percentage * llm_max_input_tokens
 

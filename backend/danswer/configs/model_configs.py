@@ -96,9 +96,8 @@ GEN_AI_API_ENDPOINT = os.environ.get("GEN_AI_API_ENDPOINT") or None
 GEN_AI_API_VERSION = os.environ.get("GEN_AI_API_VERSION") or None
 # LiteLLM custom_llm_provider
 GEN_AI_LLM_PROVIDER_TYPE = os.environ.get("GEN_AI_LLM_PROVIDER_TYPE") or None
-# If the max tokens can't be found from the name, use this as the backup
-# This happens if user is configuring a different LLM to use
-GEN_AI_MAX_TOKENS = int(os.environ.get("GEN_AI_MAX_TOKENS") or 4096)
+# Override the auto-detection of LLM max context length
+GEN_AI_MAX_TOKENS = int(os.environ.get("GEN_AI_MAX_TOKENS") or 0) or None
 # Set this to be enough for an answer + quotes. Also used for Chat
 GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS") or 1024)
 # Number of tokens from chat history to include at maximum
