@@ -119,6 +119,11 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 #####
 POLL_CONNECTOR_OFFSET = 30  # Minutes overlap between poll windows
 
+# Some calls to get information on expert users are quite costly especially with rate limiting
+# Since experts are not used in the actual user experience, currently it is turned off
+# for some connectors
+ENABLE_EXPENSIVE_EXPERT_CALLS = False
+
 GOOGLE_DRIVE_INCLUDE_SHARED = False
 GOOGLE_DRIVE_FOLLOW_SHORTCUTS = False
 GOOGLE_DRIVE_ONLY_ORG_PUBLIC = False

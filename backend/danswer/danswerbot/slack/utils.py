@@ -305,8 +305,13 @@ def fetch_groupids_from_names(
     return list(group_ids), failed_to_find
 
 
-def fetch_user_semantic_id_from_id(user_id: str, client: WebClient) -> str | None:
-    response = client.users_info(user=user_id)
+def fetch_user_semantic_id_from_id(
+    user_id: str | None, client: WebClient
+) -> str | None:
+    if not user_id:
+        return None
+
+    response = make_slack_api_rate_limited(client.users_info)(user=user_id)
     if not response["ok"]:
         return None
 
