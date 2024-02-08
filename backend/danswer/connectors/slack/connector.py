@@ -160,14 +160,14 @@ def thread_to_doc(
     client: WebClient,
 ) -> Document:
     channel_id = channel["id"]
+
     initial_sender_name = fetch_user_semantic_id_from_id(
         user_id=thread[0].get("user"), client=client
     )
 
-    all_sender_ids = [m.get("user") for m in thread]
-
     valid_experts = None
     if ENABLE_EXPENSIVE_EXPERT_CALLS:
+        all_sender_ids = [m.get("user") for m in thread]
         experts = [
             expert_info_from_slack_id(sender_id, client)
             for sender_id in all_sender_ids
