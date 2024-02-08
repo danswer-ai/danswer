@@ -129,7 +129,11 @@ services:
     # the specified script waits for the api_server to start up. 
     # Without this we've seen issues where nginx shows no error logs but 
     # does not recieve any traffic  
-    command: "/bin/sh -c \"/etc/nginx/conf.d/run-nginx.sh app.conf.template\""
+    # NOTE: we have to use dos2unix to remove Carriage Return chars from the file
+    # in order to make this work on both Unix-like systems and windows
+    command: > 
+      /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
+      && /etc/nginx/conf.d/run-nginx.sh app.conf.template"
     env_file:
       - .env.nginx
   # follows https://pentacent.medium.com/nginx-and-lets-encrypt-with-docker-in-less-than-5-minutes-b4b8a60d3a71

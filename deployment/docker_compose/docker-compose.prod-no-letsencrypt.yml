@@ -125,7 +125,11 @@ services:
     # the specified script waits for the api_server to start up. 
     # Without this we've seen issues where nginx shows no error logs but 
     # does not recieve any traffic
-    command: "/bin/sh -c \"/etc/nginx/conf.d/run-nginx.sh app.conf.template.no-letsencrypt\""
+    # NOTE: we have to use dos2unix to remove Carriage Return chars from the file
+    # in order to make this work on both Unix-like systems and windows
+    command: > 
+      /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
+      && /etc/nginx/conf.d/run-nginx.sh app.conf.template.no-letsencrypt"
     env_file:
       - .env.nginx
   # Run with --profile model-server to bring up the danswer-model-server container
