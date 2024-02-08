@@ -24,6 +24,7 @@ from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MAX_TOKENS
+from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.models import ChatMessage
 from danswer.dynamic_configs import get_dynamic_config_store
@@ -203,22 +204,35 @@ def test_llm(llm: LLM) -> bool:
     return False
 
 
-def get_llm_max_tokens(model_name: str | None = GEN_AI_MODEL_VERSION) -> int:
+def get_llm_max_tokens(
+    model_name: str | None = GEN_AI_MODEL_VERSION,
+    model_provider: str = GEN_AI_MODEL_PROVIDER,
+) -> int:
     """Best effort attempt to get the max tokens for the LLM"""
-    if not model_name:
+    if GEN_AI_MAX_TOKENS:
+        # This is an override, so always return this
         return GEN_AI_MAX_TOKENS
 
+    if not model_name:
+        return 4096
+
     try:
-        return get_max_tokens(model_name)
+        if model_provider == "openai":
+            return get_max_tokens(model_name)
+        return get_max_tokens("/".join([model_provider, model_name]))
     except Exception:
-        return GEN_AI_MAX_TOKENS
+        return 4096
 
 
 def get_max_input_tokens(
     model_name: str | None = GEN_AI_MODEL_VERSION,
+    model_provider: str = GEN_AI_MODEL_PROVIDER,
     output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
 ) -> int:
-    input_toks = get_llm_max_tokens(model_name) - output_tokens
+    input_toks = (
+        get_llm_max_tokens(model_name=model_name, model_provider=model_provider)
+        - output_tokens
+    )
 
     if input_toks <= 0:
         raise RuntimeError("No tokens for input for the LLM given settings")
