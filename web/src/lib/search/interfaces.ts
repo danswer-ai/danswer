@@ -62,10 +62,6 @@ export interface LLMRelevanceFilterPacket {
   relevant_chunk_indices: number[];
 }
 
-export interface QueryEventIdPacket {
-  query_event_id: number;
-}
-
 export interface SearchResponse {
   suggestedSearchType: SearchType | null;
   suggestedFlowType: FlowType | null;
@@ -74,7 +70,7 @@ export interface SearchResponse {
   documents: DanswerDocument[] | null;
   selectedDocIndices: number[] | null;
   error: string | null;
-  queryEventId: number | null;
+  messageId: number | null;
 }
 
 export enum SourceCategory {
@@ -116,7 +112,7 @@ export interface SearchRequestArgs {
   updateSuggestedSearchType: (searchType: SearchType) => void;
   updateSuggestedFlowType: (flowType: FlowType) => void;
   updateError: (error: string) => void;
-  updateQueryEventId: (queryEventID: number) => void;
+  updateMessageId: (messageId: number) => void;
   selectedSearchType: SearchType | null;
 }
 

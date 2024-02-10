@@ -106,13 +106,15 @@ export function ChatDocumentDisplay({
         {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)}
       </p>
       <div className="mb-2">
+        {/* 
+        // TODO: find a way to include this
         {queryEventId && (
           <DocumentFeedbackBlock
             documentId={document.document_id}
             queryId={queryEventId}
             setPopup={setPopup}
           />
-        )}
+        )} */}
       </div>
     </div>
   );

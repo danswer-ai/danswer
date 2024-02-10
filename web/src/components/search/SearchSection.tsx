@@ -95,7 +95,7 @@ export const SearchSection = ({
     suggestedFlowType: null,
     selectedDocIndices: null,
     error: null,
-    queryEventId: null,
+    messageId: null,
   };
   const updateCurrentAnswer = (answer: string) =>
     setSearchResponse((prevState) => ({
@@ -132,10 +132,10 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       error,
     }));
-  const updateQueryEventId = (queryEventId: number) =>
+  const updateMessageId = (messageId: number) =>
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
-      queryEventId,
+      messageId,
     }));
 
   let lastSearchCancellationToken = useRef<CancellationToken | null>(null);
@@ -190,9 +190,9 @@ export const SearchSection = ({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateError,
       }),
-      updateQueryEventId: cancellable({
+      updateMessageId: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
-        fn: updateQueryEventId,
+        fn: updateMessageId,
       }),
       selectedSearchType: searchType ?? selectedSearchType,
       offset: offset ?? defaultOverrides.offset,

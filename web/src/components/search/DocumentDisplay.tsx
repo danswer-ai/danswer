@@ -133,14 +133,16 @@ export function DocumentMetadataBlock({
 
 interface DocumentDisplayProps {
   document: DanswerDocument;
-  queryEventId: number | null;
+  messageId: number | null;
+  documentRank: number;
   isSelected: boolean;
   setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 export const DocumentDisplay = ({
   document,
-  queryEventId,
+  messageId,
+  documentRank,
   isSelected,
   setPopup,
 }: DocumentDisplayProps) => {
@@ -219,10 +221,11 @@ export const DocumentDisplay = ({
           </p>
         </a>
         <div className="ml-auto">
-          {isHovered && queryEventId && (
+          {isHovered && messageId && (
             <DocumentFeedbackBlock
               documentId={document.document_id}
-              queryId={queryEventId}
+              messageId={messageId}
+              documentRank={documentRank}
               setPopup={setPopup}
             />
           )}
