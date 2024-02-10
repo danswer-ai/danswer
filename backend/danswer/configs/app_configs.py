@@ -46,8 +46,8 @@ MASK_CREDENTIAL_PREFIX = (
 
 SECRET = os.environ.get("SECRET", "")
 SESSION_EXPIRE_TIME_SECONDS = int(
-    os.environ.get("SESSION_EXPIRE_TIME_SECONDS") or 86400
-)  # 1 day
+    os.environ.get("SESSION_EXPIRE_TIME_SECONDS") or 86400 * 7
+)  # 7 days
 
 # set `VALID_EMAIL_DOMAINS` to a comma seperated list of domains in order to
 # restrict access to Danswer to only users with emails from those domains.
