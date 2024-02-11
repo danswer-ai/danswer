@@ -14,6 +14,7 @@ import { SearchSummary, ShowHideDocsButton } from "./SearchSummary";
 import { SourceIcon } from "@/components/SourceIcon";
 import { ThreeDots } from "react-loader-spinner";
 import { SkippedSearch } from "./SkippedSearch";
+import { SelectedDocuments } from "../modifiers/SelectedDocuments";
 
 export const Hoverable: React.FC<{
   children: JSX.Element;
@@ -99,11 +100,14 @@ export const AIMessage = ({
                   />
                 </div>
               )}
-            {handleForceSearch && content && query === undefined && (
-              <div className="my-1">
-                <SkippedSearch handleForceSearch={handleForceSearch} />
-              </div>
-            )}
+            {handleForceSearch &&
+              content &&
+              query === undefined &&
+              !hasDocs && (
+                <div className="my-1">
+                  <SkippedSearch handleForceSearch={handleForceSearch} />
+                </div>
+              )}
 
             {content ? (
               <>

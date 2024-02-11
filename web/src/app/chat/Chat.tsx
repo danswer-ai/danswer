@@ -84,10 +84,7 @@ export const Chat = ({
     textareaRef.current?.focus();
 
     // only clear things if we're going from one chat session to another
-    if (
-      existingChatSessionId !== null &&
-      existingChatSessionId !== chatSessionId
-    ) {
+    if (chatSessionId !== null && existingChatSessionId !== chatSessionId) {
       // de-select documents
       clearSelectedDocuments();
       // reset all filters
