@@ -294,6 +294,7 @@ def stream_chat_message(
                             semantic_identifier=llm_doc.semantic_identifier,
                             source_type=llm_doc.source_type,
                             content=llm_doc.content,
+                            metadata_dict=llm_doc.metadata,
                             updated_at=llm_doc.updated_at,
                             ind=ind,
                         )

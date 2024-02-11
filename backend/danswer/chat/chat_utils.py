@@ -63,14 +63,23 @@ def build_doc_context_str(
     semantic_identifier: str,
     source_type: DocumentSource,
     content: str,
+    metadata_dict: dict[str, str | list[str]],
+    updated_at: datetime | None,
     ind: int,
     include_metadata: bool = True,
-    updated_at: datetime | None = None,
 ) -> str:
     context_str = ""
     if include_metadata:
         context_str += f"DOCUMENT {ind}: {semantic_identifier}\n"
         context_str += f"Source: {clean_up_source(source_type)}\n"
+
+        for k, v in metadata_dict.items():
+            if isinstance(v, list):
+                v_str = ", ".join(v)
+                context_str += f"{k.capitalize()}: {v_str}\n"
+            else:
+                context_str += f"{k.capitalize()}: {v}\n"
+
         if updated_at:
             update_str = updated_at.strftime("%B %d, %Y %H:%M")
             context_str += f"Updated: {update_str}\n"
@@ -88,6 +97,7 @@ def build_complete_context_str(
             semantic_identifier=doc.semantic_identifier,
             source_type=doc.source_type,
             content=doc.content,
+            metadata_dict=doc.metadata,
             updated_at=doc.updated_at,
             ind=ind,
             include_metadata=include_metadata,
@@ -145,6 +155,7 @@ def llm_doc_from_inference_chunk(inf_chunk: InferenceChunk) -> LlmDoc:
         content=inf_chunk.content,
         semantic_identifier=inf_chunk.semantic_identifier,
         source_type=inf_chunk.source_type,
+        metadata=inf_chunk.metadata,
         updated_at=inf_chunk.updated_at,
         link=inf_chunk.source_links[0] if inf_chunk.source_links else None,
     )

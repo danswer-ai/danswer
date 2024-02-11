@@ -57,6 +57,7 @@ def get_document_info(
         semantic_identifier=first_chunk.semantic_identifier,
         source_type=first_chunk.source_type,
         content=combined_contents,
+        metadata_dict=first_chunk.metadata,
         updated_at=first_chunk.updated_at,
         ind=0,
     )
