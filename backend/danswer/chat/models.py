@@ -18,6 +18,7 @@ class LlmDoc(BaseModel):
     content: str
     semantic_identifier: str
     source_type: DocumentSource
+    metadata: dict[str, str | list[str]]
     updated_at: datetime | None
     link: str | None
 
