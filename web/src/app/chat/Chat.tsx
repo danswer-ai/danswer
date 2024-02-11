@@ -74,13 +74,20 @@ export const Chat = ({
     existingChatSessionId !== null
   );
 
+  // needed so closures (e.g. onSubmit) can access the current value
+  const urlChatSessionId = useRef<number | null>();
   // this is triggered every time the user switches which chat
   // session they are using
   useEffect(() => {
+    urlChatSessionId.current = existingChatSessionId;
+
     textareaRef.current?.focus();
 
     // only clear things if we're going from one chat session to another
-    if (chatSessionId !== null && existingChatSessionId !== chatSessionId) {
+    if (
+      existingChatSessionId !== null &&
+      existingChatSessionId !== chatSessionId
+    ) {
       // de-select documents
       clearSelectedDocuments();
       // reset all filters
@@ -286,7 +293,12 @@ export const Chat = ({
   const onSubmit = async ({
     messageIdToResend,
     queryOverride,
-  }: { messageIdToResend?: number; queryOverride?: string } = {}) => {
+    forceSearch,
+  }: {
+    messageIdToResend?: number;
+    queryOverride?: string;
+    forceSearch?: boolean;
+  } = {}) => {
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
     if (isNewSession) {
@@ -357,6 +369,7 @@ export const Chat = ({
           )
           .map((document) => document.db_doc_id as number),
         queryOverride,
+        forceSearch,
       })) {
         for (const packet of packetBunch) {
           if (Object.hasOwn(packet, "answer_piece")) {
@@ -422,7 +435,10 @@ export const Chat = ({
       await nameChatSession(currChatSessionId, currMessage);
 
       // NOTE: don't switch pages if the user has navigated away from the chat
-      if (currChatSessionId === chatSessionId) {
+      if (
+        currChatSessionId === urlChatSessionId.current ||
+        urlChatSessionId.current === null
+      ) {
         router.push(`/chat?chatId=${currChatSessionId}`, {
           scroll: false,
         });
@@ -601,6 +617,20 @@ export const Chat = ({
                               } else {
                                 setSelectedMessageForDocDisplay(-1);
                               }
+                            }
+                          }}
+                          handleForceSearch={() => {
+                            if (previousMessage && previousMessage.messageId) {
+                              onSubmit({
+                                messageIdToResend: previousMessage.messageId,
+                                forceSearch: true,
+                              });
+                            } else {
+                              setPopup({
+                                type: "error",
+                                message:
+                                  "Failed to force search - please refresh the page and try again.",
+                              });
                             }
                           }}
                         />
