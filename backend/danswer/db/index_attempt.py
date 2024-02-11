@@ -95,10 +95,14 @@ def mark_attempt_succeeded(
 
 
 def mark_attempt_failed(
-    index_attempt: IndexAttempt, db_session: Session, failure_reason: str = "Unknown"
+    index_attempt: IndexAttempt,
+    db_session: Session,
+    failure_reason: str = "Unknown",
+    full_exception_trace: str | None = None,
 ) -> None:
     index_attempt.status = IndexingStatus.FAILED
     index_attempt.error_msg = failure_reason
+    index_attempt.full_exception_trace = full_exception_trace
     db_session.add(index_attempt)
     db_session.commit()
 

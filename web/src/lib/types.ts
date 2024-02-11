@@ -167,6 +167,7 @@ export interface IndexAttemptSnapshot {
   new_docs_indexed: number;
   total_docs_indexed: number;
   error_msg: string | null;
+  full_exception_trace: string | null;
   time_started: string | null;
   time_updated: string;
 }

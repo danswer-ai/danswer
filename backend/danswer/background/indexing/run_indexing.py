@@ -1,4 +1,5 @@
 import time
+import traceback
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
@@ -243,7 +244,12 @@ def _run_indexing(
                 or db_connector.disabled
                 or index_attempt.status != IndexingStatus.IN_PROGRESS
             ):
-                mark_attempt_failed(index_attempt, db_session, failure_reason=str(e))
+                mark_attempt_failed(
+                    index_attempt,
+                    db_session,
+                    failure_reason=str(e),
+                    full_exception_trace=traceback.format_exc(),
+                )
                 if is_primary:
                     update_connector_credential_pair(
                         db_session=db_session,
