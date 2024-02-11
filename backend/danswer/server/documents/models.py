@@ -32,6 +32,7 @@ class IndexAttemptSnapshot(BaseModel):
     new_docs_indexed: int  # only includes completely new docs
     total_docs_indexed: int  # includes docs that are updated
     error_msg: str | None
+    full_exception_trace: str | None
     time_started: str | None
     time_updated: str
 
@@ -45,6 +46,7 @@ class IndexAttemptSnapshot(BaseModel):
             new_docs_indexed=index_attempt.new_docs_indexed or 0,
             total_docs_indexed=index_attempt.total_docs_indexed or 0,
             error_msg=index_attempt.error_msg,
+            full_exception_trace=index_attempt.full_exception_trace,
             time_started=index_attempt.time_started.isoformat()
             if index_attempt.time_started
             else None,
