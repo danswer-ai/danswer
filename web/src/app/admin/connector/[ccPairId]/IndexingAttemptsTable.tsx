@@ -111,19 +111,21 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                   <TableCell>{indexAttempt.new_docs_indexed}</TableCell>
                   <TableCell>{indexAttempt.total_docs_indexed}</TableCell>
                   <TableCell>
-                    <Text className="flex flex-wrap whitespace-normal">
-                      <div>{indexAttempt.error_msg || "-"}</div>
+                    <div>
+                      <Text className="flex flex-wrap whitespace-normal">
+                        {indexAttempt.error_msg || "-"}
+                      </Text>
                       {indexAttempt.full_exception_trace && (
-                        <div
+                        <Text
                           onClick={() =>
                             setIndexAttemptTracePopupId(indexAttempt.id)
                           }
                           className="mt-2 text-link cursor-pointer"
                         >
                           View Full Trace
-                        </div>
+                        </Text>
                       )}
-                    </Text>
+                    </div>
                   </TableCell>
                 </TableRow>
               );
