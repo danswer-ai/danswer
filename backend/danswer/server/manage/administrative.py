@@ -7,7 +7,10 @@ from typing import cast
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Body
 from sqlalchemy.orm import Session
+
+import json
 
 from danswer.auth.users import current_admin_user
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
@@ -16,6 +19,13 @@ from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
 from danswer.configs.constants import GEN_AI_DETECTED_MODEL
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
+from danswer.configs.constants import (
+    GEN_AI_API_KEY_STORAGE_KEY,
+    ENABLE_TOKEN_BUDGET,
+    TOKEN_BUDGET,
+    TOKEN_BUDGET_TIME_PERIOD,
+    TOKEN_BUDGET_SETTINGS,
+)
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.engine import get_session
@@ -262,3 +272,34 @@ def create_deletion_attempt_for_connector_id(
         file_store = get_default_file_store(db_session)
         for file_name in connector.connector_specific_config["file_locations"]:
             file_store.delete_file(file_name)
+
+
+@router.get("/admin/token-budget-settings")
+def get_token_budget_settings(_: User = Depends(current_admin_user)) -> dict:
+    try:
+        settings_json = get_dynamic_config_store().load(TOKEN_BUDGET_SETTINGS)
+        settings = json.loads(settings_json)
+        return settings
+    except ConfigNotFoundError:
+        raise HTTPException(status_code=404, detail="Token budget settings not found.")
+
+
+@router.put("/admin/token-budget-settings")
+def update_token_budget_settings(
+    _: User = Depends(current_admin_user),
+    enable_token_budget: bool = Body(..., embed=True),
+    token_budget: int = Body(..., ge=0, embed=True),  # Ensure non-negative
+    token_budget_time_period: int = Body(..., ge=1, embed=True),  # Ensure positive
+) -> None:
+    # Prepare the settings as a JSON string
+    settings_json = json.dumps(
+        {
+            ENABLE_TOKEN_BUDGET: enable_token_budget,
+            TOKEN_BUDGET: token_budget,
+            TOKEN_BUDGET_TIME_PERIOD: token_budget_time_period,
+        }
+    )
+
+    # Store the settings in the dynamic config store
+    get_dynamic_config_store().store(TOKEN_BUDGET_SETTINGS, settings_json)
+    return {"message": "Token budget settings updated successfully."}
