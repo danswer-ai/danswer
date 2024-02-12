@@ -99,6 +99,7 @@ export function PersonaEditor({
           system_prompt: existingPrompt?.system_prompt ?? "",
           task_prompt: existingPrompt?.task_prompt ?? "",
           disable_retrieval: (existingPersona?.num_chunks ?? 10) === 0,
+          enable_token_budget: true,
           is_public: existingPersona?.is_public ?? true,
           document_set_ids:
             existingPersona?.document_sets?.map(
