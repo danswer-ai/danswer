@@ -1,18 +1,18 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
+from typing import cast
 
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 
-from danswer.db.models import ChatMessage
+from danswer.configs.constants import ENABLE_TOKEN_BUDGET
+from danswer.configs.constants import TOKEN_BUDGET
+from danswer.configs.constants import TOKEN_BUDGET_SETTINGS
+from danswer.configs.constants import TOKEN_BUDGET_TIME_PERIOD
 from danswer.db.engine import get_session_context_manager
-from danswer.configs.constants import (
-    ENABLE_TOKEN_BUDGET,
-    TOKEN_BUDGET,
-    TOKEN_BUDGET_TIME_PERIOD,
-    TOKEN_BUDGET_SETTINGS,
-)
+from danswer.db.models import ChatMessage
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 
 BUDGET_LIMIT_DEFAULT = -1  # Default to no limit
@@ -20,7 +20,7 @@ TIME_PERIOD_HOURS_DEFAULT = 12
 
 
 def is_under_token_budget(db_session: Session) -> bool:
-    settings_json = get_dynamic_config_store().load(TOKEN_BUDGET_SETTINGS)
+    settings_json = cast(str, get_dynamic_config_store().load(TOKEN_BUDGET_SETTINGS))
     settings = json.loads(settings_json)
 
     is_enabled = settings.get(ENABLE_TOKEN_BUDGET, False)
@@ -60,7 +60,7 @@ def is_under_token_budget(db_session: Session) -> bool:
     )  # Budget limit is expressed in thousands of tokens
 
 
-def check_token_budget():
+def check_token_budget() -> None:
     with get_session_context_manager() as db_session:
         # Perform the token budget check here, possibly using `user` and `db_session` for database access if needed
         if not is_under_token_budget(db_session):

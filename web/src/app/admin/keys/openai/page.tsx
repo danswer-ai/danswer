@@ -4,7 +4,11 @@ import { Form, Formik } from "formik";
 import { useEffect, useState } from "react";
 import { LoadingAnimation } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { BooleanFormField, SectionHeader, TextFormField } from "@/components/admin/connectors/Field";
+import {
+  BooleanFormField,
+  SectionHeader,
+  TextFormField,
+} from "@/components/admin/connectors/Field";
 import { Popup } from "@/components/admin/connectors/Popup";
 import { TrashIcon } from "@/components/icons/icons";
 import { ApiKeyForm } from "@/components/openai/ApiKeyForm";
@@ -61,8 +65,8 @@ const LLMOptions = () => {
 
   const [initialValues, setInitialValues] = useState({
     enable_token_budget: false,
-    token_budget: '',
-    token_budget_time_period: '',
+    token_budget: "",
+    token_budget_time_period: "",
   });
 
   const fetchConfig = async () => {
@@ -72,8 +76,8 @@ const LLMOptions = () => {
       // Assuming the config object directly matches the structure needed for initialValues
       setInitialValues({
         enable_token_budget: config.enable_token_budget || false,
-        token_budget: config.token_budget || '',
-        token_budget_time_period: config.token_budget_time_period || '',
+        token_budget: config.token_budget || "",
+        token_budget_time_period: config.token_budget_time_period || "",
       });
     } else {
       // Handle error or provide fallback values
@@ -83,7 +87,7 @@ const LLMOptions = () => {
       });
     }
   };
-    
+
   // Fetch current config when the component mounts
   useEffect(() => {
     fetchConfig();
@@ -96,56 +100,58 @@ const LLMOptions = () => {
         enableReinitialize={true}
         initialValues={initialValues}
         onSubmit={async (values) => {
-            const response = await fetch("/api/manage/admin/token-budget-settings", {
+          const response = await fetch(
+            "/api/manage/admin/token-budget-settings",
+            {
               method: "PUT",
               headers: {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify(values),
-            });
-            if (response.ok) {
-              setPopup({
-                message: "Updated LLM Options",
-                type: "success",
-              });
-              await fetchConfig();
-            } else {
-              const body = await response.json();
-              if (body.detail) {
-                setPopup({ message: body.detail, type: "error" });
-              } else {
-                setPopup({
-                  message:
-                    "Unable to update LLM options.",
-                  type: "error",
-                });
-              }
-              setTimeout(() => {
-                setPopup(null);
-              }, 4000);
             }
-          }}
+          );
+          if (response.ok) {
+            setPopup({
+              message: "Updated LLM Options",
+              type: "success",
+            });
+            await fetchConfig();
+          } else {
+            const body = await response.json();
+            if (body.detail) {
+              setPopup({ message: body.detail, type: "error" });
+            } else {
+              setPopup({
+                message: "Unable to update LLM options.",
+                type: "error",
+              });
+            }
+            setTimeout(() => {
+              setPopup(null);
+            }, 4000);
+          }
+        }}
       >
         {({ isSubmitting, values, setFieldValue, setValues }) => {
           return (
             <Form>
               <Divider />
               <>
-                <SectionHeader>
-                  Token Budget
-                </SectionHeader>
+                <SectionHeader>Token Budget</SectionHeader>
                 <Text>
-                  Set a maximum token use per time period. If the token budget is exceeded, the persona will not be able to respond to queries until the next time period.
+                  Set a maximum token use per time period. If the token budget
+                  is exceeded, the persona will not be able to respond to
+                  queries until the next time period.
                 </Text>
-                <br/>
+                <br />
                 <BooleanFormField
                   name="enable_token_budget"
                   label="Enable Token Budget"
-                  subtext= "If enabled, the persona will be limited to the token budget specified below."
+                  subtext="If enabled, the persona will be limited to the token budget specified below."
                   onChange={(e) => {
                     setFieldValue("enable_token_budget", e.target.checked);
                   }}
-                  />
+                />
                 {values.enable_token_budget && (
                   <>
                     <TextFormField
@@ -153,7 +159,8 @@ const LLMOptions = () => {
                       label="Token Budget"
                       subtext={
                         <div>
-                          How many tokens (in thousands) can be used per time period? If unspecified, no limit will be set.
+                          How many tokens (in thousands) can be used per time
+                          period? If unspecified, no limit will be set.
                         </div>
                       }
                       onChange={(e) => {
@@ -163,13 +170,14 @@ const LLMOptions = () => {
                           setFieldValue("token_budget", value);
                         }
                       }}
-                      />
+                    />
                     <TextFormField
                       name="token_budget_time_period"
                       label="Token Budget Time Period (hours)"
                       subtext={
                         <div>
-                          Specify the length of the time period, in hours, over which the token budget will be applied.
+                          Specify the length of the time period, in hours, over
+                          which the token budget will be applied.
                         </div>
                       }
                       onChange={(e) => {
@@ -179,7 +187,7 @@ const LLMOptions = () => {
                           setFieldValue("token_budget_time_period", value);
                         }
                       }}
-                      />
+                    />
                   </>
                 )}
               </>
@@ -193,12 +201,12 @@ const LLMOptions = () => {
                 </Button>
               </div>
             </Form>
-          )
+          );
         }}
       </Formik>
     </>
-  )
-}
+  );
+};
 
 const Page = () => {
   return (
