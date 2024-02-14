@@ -370,15 +370,6 @@ def _initialize_socket_client(socket_client: SocketModeClient) -> None:
 # NOTE: we are using Web Sockets so that you can run this from within a firewalled VPC
 # without issue.
 if __name__ == "__main__":
-    with Session(get_sqlalchemy_engine()) as db_session:
-        embedding_model = get_current_db_embedding_model(db_session)
-
-        warm_up_models(
-            model_name=embedding_model.model_name,
-            normalize=embedding_model.normalize,
-            skip_cross_encoders=not ENABLE_RERANKING_ASYNC_FLOW,
-        )
-
     slack_bot_tokens: SlackBotTokens | None = None
     socket_client: SocketModeClient | None = None
 
@@ -393,6 +384,18 @@ if __name__ == "__main__":
             if latest_slack_bot_tokens != slack_bot_tokens:
                 if slack_bot_tokens is not None:
                     logger.info("Slack Bot tokens have changed - reconnecting")
+                else:
+                    # This happens on the very first time the listener process comes up
+                    # or the tokens have updated (set up for the first time)
+                    with Session(get_sqlalchemy_engine()) as db_session:
+                        embedding_model = get_current_db_embedding_model(db_session)
+
+                        warm_up_models(
+                            model_name=embedding_model.model_name,
+                            normalize=embedding_model.normalize,
+                            skip_cross_encoders=not ENABLE_RERANKING_ASYNC_FLOW,
+                        )
+
                 slack_bot_tokens = latest_slack_bot_tokens
                 # potentially may cause a message to be dropped, but it is complicated
                 # to avoid + (1) if the user is changing tokens, they are likely okay with some
