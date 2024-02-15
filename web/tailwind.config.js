@@ -1,13 +1,11 @@
 var merge = require("lodash/merge");
 
 const baseThemes = require("./tailwind-themes/tailwind.config.js");
-const customThemes =
-  process.env.NEXT_PUBLIC_ENABLE_PAID_EE_FEATURES &&
-  process.env.NEXT_PUBLIC_THEME
-    ? require(
-        `./tailwind-themes/custom/${process.env.NEXT_PUBLIC_THEME}/tailwind.config.js`
-      )
-    : null;
+const customThemes = process.env.NEXT_PUBLIC_THEME
+  ? require(
+      `./tailwind-themes/custom/${process.env.NEXT_PUBLIC_THEME}/tailwind.config.js`
+    )
+  : null;
 
 /** @type {import('tailwindcss').Config} */
 module.exports = customThemes ? merge(baseThemes, customThemes) : baseThemes;

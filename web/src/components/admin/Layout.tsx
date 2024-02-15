@@ -19,7 +19,7 @@ import {
   getAuthTypeMetadataSS,
   getCurrentUserSS,
 } from "@/lib/userSS";
-import { EE_ENABLED } from "@/lib/constants";
+import { SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import {
   FiActivity,
@@ -194,7 +194,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     ),
                     link: "/admin/users",
                   },
-                  ...(EE_ENABLED
+                  ...(SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED
                     ? [
                         {
                           name: (
@@ -227,7 +227,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                   },
                 ],
               },
-              ...(EE_ENABLED
+              ...(SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED
                 ? [
                     {
                       name: "Performance",
@@ -275,7 +275,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     ),
                     link: "/admin/settings",
                   },
-                  ...(EE_ENABLED
+                  ...(SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED
                     ? [
                         {
                           name: (

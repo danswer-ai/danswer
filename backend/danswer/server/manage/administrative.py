@@ -145,7 +145,9 @@ def create_deletion_attempt_for_connector_id(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    from danswer.background.celery.celery import cleanup_connector_credential_pair_task
+    from danswer.background.celery.celery_app import (
+        cleanup_connector_credential_pair_task,
+    )
 
     connector_id = connector_credential_pair_identifier.connector_id
     credential_id = connector_credential_pair_identifier.credential_id

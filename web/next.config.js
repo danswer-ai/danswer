@@ -9,64 +9,17 @@ const nextConfig = {
   output: "standalone",
   swcMinify: true,
   rewrites: async () => {
-    const eeRedirects =
-      process.env.NEXT_PUBLIC_ENABLE_PAID_EE_FEATURES?.toLowerCase() === "true"
-        ? [
-            // user group pages
-            {
-              source: "/admin/groups",
-              destination: "/ee/admin/groups",
-            },
-            {
-              source: "/admin/groups/:path*",
-              destination: "/ee/admin/groups/:path*",
-            },
-            {
-              source: "/admin/api-key",
-              destination: "/ee/admin/api-key",
-            },
-            // analytics / audit log pages
-            {
-              source: "/admin/performance/usage",
-              destination: "/ee/admin/performance/usage",
-            },
-            {
-              source: "/admin/performance/query-history",
-              destination: "/ee/admin/performance/query-history",
-            },
-            {
-              source: "/admin/performance/query-history/:path*",
-              destination: "/ee/admin/performance/query-history/:path*",
-            },
-            // whitelabeling
-            {
-              source: "/admin/whitelabeling",
-              destination: "/ee/admin/whitelabeling",
-            },
-            // custom analytics/tracking
-            {
-              source: "/admin/performance/custom-analytics",
-              destination: "/ee/admin/performance/custom-analytics",
-            },
-            // token rate limits
-            {
-              source: "/admin/token-rate-limits",
-              destination: "/ee/admin/token-rate-limits",
-            },
-          ]
-        : [];
-
     // In production, something else (nginx in the one box setup) should take
     // care of this rewrite. TODO (chris): better support setups where
     // web_server and api_server are on different machines.
-    if (process.env.NODE_ENV === "production") return eeRedirects;
+    if (process.env.NODE_ENV === "production") return [];
 
     return [
       {
         source: "/api/:path*",
         destination: "http://127.0.0.1:8080/:path*", // Proxy to Backend
       },
-    ].concat(eeRedirects);
+    ];
   },
   redirects: async () => {
     // In production, something else (nginx in the one box setup) should take

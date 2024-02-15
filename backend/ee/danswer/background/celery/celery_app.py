@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from sqlalchemy.orm import Session
 
-from danswer.background.celery.celery import celery_app
+from danswer.background.celery.celery_app import celery_app
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.tasks import check_live_task_not_timed_out

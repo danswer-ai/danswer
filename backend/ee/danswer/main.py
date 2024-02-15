@@ -1,18 +1,15 @@
-import uvicorn
 from fastapi import FastAPI
 from httpx_oauth.clients.openid import OpenID
 
 from danswer.auth.users import auth_backend
 from danswer.auth.users import fastapi_users
-from danswer.configs.app_configs import APP_HOST
-from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
-from danswer.main import get_application
+from danswer.main import get_application as get_application_base
 from danswer.main import include_router_with_global_prefix_prepended
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
@@ -45,14 +42,14 @@ from ee.danswer.utils.encryption import test_encryption
 logger = setup_logger()
 
 
-def get_ee_application() -> FastAPI:
+def get_application() -> FastAPI:
     # Anything that happens at import time is not guaranteed to be running ee-version
     # Anything after the server startup will be running ee version
     global_version.set_ee()
 
     test_encryption()
 
-    application = get_application()
+    application = get_application_base()
 
     if AUTH_TYPE == AuthType.OIDC:
         include_router_with_global_prefix_prepended(
@@ -108,13 +105,3 @@ def get_ee_application() -> FastAPI:
     seed_db()
 
     return application
-
-
-app = get_ee_application()
-
-
-if __name__ == "__main__":
-    logger.info(
-        f"Running Enterprise Danswer API Service on http://{APP_HOST}:{str(APP_PORT)}/"
-    )
-    uvicorn.run(app, host=APP_HOST, port=APP_PORT)

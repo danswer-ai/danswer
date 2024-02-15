@@ -279,3 +279,15 @@ TOKEN_BUDGET_GLOBALLY_ENABLED = (
 CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
     os.environ.get("CUSTOM_ANSWER_VALIDITY_CONDITIONS", "[]")
 )
+
+
+#####
+# Enterprise Edition Configs
+#####
+# NOTE: this should only be enabled if you have purchased an enterprise license.
+# if you're interested in an enterprise license, please reach out to us at
+# founders@danswer.ai OR message Chris Weaver or Yuhong Sun in the Danswer
+# Slack community (https://join.slack.com/t/danswer/shared_invite/zt-1w76msxmd-HJHLe3KNFIAIzk_0dSOKaQ)
+ENTERPRISE_EDITION_ENABLED = (
+    os.environ.get("ENABLE_PAID_EE_FEATURES", "").lower() == "true"
+)

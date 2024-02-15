@@ -90,6 +90,8 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+from danswer.utils.variable_functionality import global_version
+from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
 from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
@@ -369,11 +371,18 @@ def get_application() -> FastAPI:
     return application
 
 
-app = get_application()
+# NOTE: needs to be outside of the `if __name__ == "__main__"` block so that the
+# app is exportable
+set_is_ee_based_on_env_variable()
+app = fetch_versioned_implementation(module="danswer.main", attribute="get_application")
 
 
 if __name__ == "__main__":
     logger.info(
         f"Starting Danswer Backend version {__version__} on http://{APP_HOST}:{str(APP_PORT)}/"
     )
+
+    if global_version.get_is_ee_version():
+        logger.info("Running Enterprise Edition")
+
     uvicorn.run(app, host=APP_HOST, port=APP_PORT)

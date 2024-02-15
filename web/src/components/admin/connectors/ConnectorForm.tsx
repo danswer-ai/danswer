@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
@@ -14,8 +16,8 @@ import { BooleanFormField, TextFormField } from "./Field";
 import { createCredential, linkCredential } from "@/lib/credential";
 import { useSWRConfig } from "swr";
 import { Button, Divider } from "@tremor/react";
-import { EE_ENABLED } from "@/lib/constants";
 import IsPublicField from "./IsPublicField";
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 
@@ -76,7 +78,6 @@ interface BaseProps<T extends Yup.AnyObject> {
   // If specified, then we will create an empty credential and associate
   // the connector with it. If credentialId is specified, then this will be ignored
   shouldCreateEmptyCredentialForConnector?: boolean;
-  showNonPublicOption?: boolean;
 }
 
 type ConnectorFormProps<T extends Yup.AnyObject> = RequireAtLeastOne<
@@ -98,11 +99,12 @@ export function ConnectorForm<T extends Yup.AnyObject>({
   pruneFreq,
   onSubmit,
   shouldCreateEmptyCredentialForConnector,
-  // only show this option for EE, since groups are not supported in CE
-  showNonPublicOption = EE_ENABLED,
 }: ConnectorFormProps<T>): JSX.Element {
   const { mutate } = useSWRConfig();
   const { popup, setPopup } = usePopup();
+
+  // only show this option for EE, since groups are not supported in CE
+  const showNonPublicOption = usePaidEnterpriseFeaturesEnabled();
 
   const shouldHaveNameInput = credentialId !== undefined && !ccPairNameBuilder;
 
