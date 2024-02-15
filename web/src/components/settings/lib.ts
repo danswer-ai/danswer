@@ -1,10 +1,13 @@
 import { EnterpriseSettings, Settings } from "@/app/admin/settings/interfaces";
-import { CUSTOM_ANALYTICS_ENABLED, EE_ENABLED } from "@/lib/constants";
+import {
+  CUSTOM_ANALYTICS_ENABLED,
+  SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED,
+} from "@/lib/constants";
 import { fetchSS } from "@/lib/utilsSS";
 
 export async function fetchSettingsSS() {
   const tasks = [fetchSS("/settings")];
-  if (EE_ENABLED) {
+  if (SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED) {
     tasks.push(fetchSS("/enterprise-settings"));
     if (CUSTOM_ANALYTICS_ENABLED) {
       tasks.push(fetchSS("/enterprise-settings/custom-analytics-script"));

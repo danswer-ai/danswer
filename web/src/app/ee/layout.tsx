@@ -1,11 +1,11 @@
-import { EE_ENABLED } from "@/lib/constants";
+import { SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED } from "@/lib/constants";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  if (!EE_ENABLED) {
+  if (!SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED) {
     return (
       <div className="flex h-screen">
         <div className="mx-auto my-auto text-lg font-bold text-red-500">

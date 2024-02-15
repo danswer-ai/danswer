@@ -22,7 +22,7 @@ import { GenericTokenRateLimitTable } from "./TokenRateLimitTables";
 import { mutate } from "swr";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { CreateRateLimitModal } from "./CreateRateLimitModal";
-import { EE_ENABLED } from "@/lib/constants";
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
 const BASE_URL = "/api/admin/token-rate-limits";
 const GLOBAL_TOKEN_FETCH_URL = `${BASE_URL}/global`;
@@ -68,6 +68,8 @@ function Main() {
   const [tabIndex, setTabIndex] = useState(0);
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const { popup, setPopup } = usePopup();
+
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   const updateTable = (target_scope: Scope) => {
     if (target_scope === Scope.GLOBAL) {
@@ -120,7 +122,7 @@ function Main() {
             token spend.
           </Text>
         </li>
-        {EE_ENABLED && (
+        {isPaidEnterpriseFeaturesEnabled && (
           <>
             <li>
               <Text>
@@ -150,7 +152,7 @@ function Main() {
         Create a Token Rate Limit
       </Button>
 
-      {EE_ENABLED && (
+      {isPaidEnterpriseFeaturesEnabled && (
         <TabGroup className="mt-6" index={tabIndex} onIndexChange={setTabIndex}>
           <TabList variant="line">
             <Tab icon={FiGlobe}>Global</Tab>
@@ -191,7 +193,7 @@ function Main() {
         </TabGroup>
       )}
 
-      {!EE_ENABLED && (
+      {!isPaidEnterpriseFeaturesEnabled && (
         <div className="mt-6">
           <GenericTokenRateLimitTable
             fetchUrl={GLOBAL_TOKEN_FETCH_URL}
@@ -206,7 +208,9 @@ function Main() {
         setIsOpen={() => setModalIsOpen(false)}
         setPopup={setPopup}
         onSubmit={handleSubmit}
-        forSpecificScope={EE_ENABLED ? undefined : Scope.GLOBAL}
+        forSpecificScope={
+          isPaidEnterpriseFeaturesEnabled ? undefined : Scope.GLOBAL
+        }
       />
     </div>
   );

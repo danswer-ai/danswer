@@ -25,12 +25,14 @@ import { getNameFromPath } from "@/lib/fileUtils";
 import { Button, Card, Divider, Text } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import IsPublicField from "@/components/admin/connectors/IsPublicField";
-import { EE_ENABLED } from "@/lib/constants";
+import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
 const Main = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [filesAreUploading, setFilesAreUploading] = useState<boolean>(false);
   const { popup, setPopup } = usePopup();
+
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   const { mutate } = useSWRConfig();
 
@@ -90,13 +92,13 @@ const Main = () => {
               initialValues={{
                 name: "",
                 selectedFiles: [],
-                is_public: EE_ENABLED ? false : undefined,
+                is_public: isPaidEnterpriseFeaturesEnabled ? false : undefined,
               }}
               validationSchema={Yup.object().shape({
                 name: Yup.string().required(
                   "Please enter a descriptive name for the files"
                 ),
-                ...(EE_ENABLED && {
+                ...(isPaidEnterpriseFeaturesEnabled && {
                   is_public: Yup.boolean().required(),
                 }),
               })}
@@ -226,7 +228,7 @@ const Main = () => {
                     setSelectedFiles={setSelectedFiles}
                   />
 
-                  {EE_ENABLED && (
+                  {isPaidEnterpriseFeaturesEnabled && (
                     <>
                       <Divider />
                       <IsPublicField />
