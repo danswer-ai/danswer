@@ -75,6 +75,13 @@ def _should_create_new_indexing(
             return False
         return True
 
+    # If the connector is disabled, don't index
+    # NOTE: during an embedding model switch over, we ignore this
+    # and index the disabled connectors as well (which is why this if
+    # statement is below the first condition above)
+    if connector.disabled:
+        return False
+
     if connector.refresh_freq is None:
         return False
     if not last_index:
