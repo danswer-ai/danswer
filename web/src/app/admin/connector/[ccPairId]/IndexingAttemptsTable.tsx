@@ -80,6 +80,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
             <TableHeaderCell>Time Started</TableHeaderCell>
             <TableHeaderCell>Status</TableHeaderCell>
             <TableHeaderCell>New Doc Cnt</TableHeaderCell>
+            <TableHeaderCell>Removed Doc Cnt</TableHeaderCell>
             <TableHeaderCell>Total Doc Cnt</TableHeaderCell>
             <TableHeaderCell>Error Msg</TableHeaderCell>
           </TableRow>
@@ -109,6 +110,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                     )}
                   </TableCell>
                   <TableCell>{indexAttempt.new_docs_indexed}</TableCell>
+                  <TableCell>{indexAttempt.docs_removed_from_index}</TableCell>
                   <TableCell>{indexAttempt.total_docs_indexed}</TableCell>
                   <TableCell>
                     <div>

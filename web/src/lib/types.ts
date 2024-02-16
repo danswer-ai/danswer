@@ -165,6 +165,7 @@ export interface IndexAttemptSnapshot {
   id: number;
   status: ValidStatuses | null;
   new_docs_indexed: number;
+  docs_removed_from_index: number;
   total_docs_indexed: number;
   error_msg: string | null;
   full_exception_trace: string | null;
