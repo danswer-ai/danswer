@@ -427,6 +427,7 @@ class IndexAttempt(Base):
     # The two below may be slightly out of sync if user switches Embedding Model
     new_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
     total_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
+    docs_removed_from_index: Mapped[int | None] = mapped_column(Integer, default=0)
     # only filled if status = "failed"
     error_msg: Mapped[str | None] = mapped_column(Text, default=None)
     # only filled if status = "failed" AND an unhandled exception caused the failure

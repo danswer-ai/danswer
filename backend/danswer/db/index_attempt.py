@@ -115,9 +115,11 @@ def update_docs_indexed(
     index_attempt: IndexAttempt,
     total_docs_indexed: int,
     new_docs_indexed: int,
+    docs_removed_from_index: int,
 ) -> None:
     index_attempt.total_docs_indexed = total_docs_indexed
     index_attempt.new_docs_indexed = new_docs_indexed
+    index_attempt.docs_removed_from_index = docs_removed_from_index
 
     db_session.add(index_attempt)
     db_session.commit()
