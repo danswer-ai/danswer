@@ -74,6 +74,8 @@ class GuruConnector(LoadConnector, PollConnector):
             if response.status_code == 204:
                 break
 
+            response.raise_for_status()
+
             cards = json.loads(response.text)
             for card in cards:
                 title = card["preferredPhrase"]
