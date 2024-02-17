@@ -191,6 +191,12 @@ export interface ConnectorIndexingStatus<
   is_deletable: boolean;
 }
 
+export interface CCPairBasicInfo {
+  docs_indexed: number;
+  has_successful_run: boolean;
+  source: ValidSources;
+}
+
 // CREDENTIALS
 export interface CredentialBase<T> {
   credential_json: T;

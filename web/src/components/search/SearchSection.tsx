@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { SearchBar } from "./SearchBar";
 import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SourceSelector } from "./filtering/Filters";
-import { Connector, DocumentSet, Tag } from "@/lib/types";
+import { CCPairBasicInfo, Connector, DocumentSet, Tag } from "@/lib/types";
 import {
   DanswerDocument,
   Quote,
@@ -36,7 +36,7 @@ const VALID_QUESTION_RESPONSE_DEFAULT: ValidQuestionResponse = {
 };
 
 interface SearchSectionProps {
-  connectors: Connector<any>[];
+  ccPairs: CCPairBasicInfo[];
   documentSets: DocumentSet[];
   personas: Persona[];
   tags: Tag[];
@@ -44,7 +44,7 @@ interface SearchSectionProps {
 }
 
 export const SearchSection = ({
-  connectors,
+  ccPairs,
   documentSets,
   personas,
   tags,
@@ -72,7 +72,7 @@ export const SearchSection = ({
 
   // Filters
   const filterManager = useFilters();
-  const availableSources = connectors.map((connector) => connector.source);
+  const availableSources = ccPairs.map((ccPair) => ccPair.source);
   const [finalAvailableSources, finalAvailableDocumentSets] =
     computeAvailableFilters({
       selectedPersona: personas.find(
@@ -214,7 +214,7 @@ export const SearchSection = ({
   return (
     <div className="relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
       <div className="absolute left-0 hidden 2xl:block w-52 3xl:w-64">
-        {(connectors.length > 0 || documentSets.length > 0) && (
+        {(ccPairs.length > 0 || documentSets.length > 0) && (
           <SourceSelector
             {...filterManager}
             availableDocumentSets={finalAvailableDocumentSets}

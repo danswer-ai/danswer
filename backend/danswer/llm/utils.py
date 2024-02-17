@@ -192,16 +192,18 @@ def get_gen_ai_api_key() -> str | None:
     return GEN_AI_API_KEY
 
 
-def test_llm(llm: LLM) -> bool:
+def test_llm(llm: LLM) -> str | None:
     # try for up to 2 timeouts (e.g. 10 seconds in total)
+    error_msg = None
     for _ in range(2):
         try:
             llm.invoke("Do not respond")
-            return True
+            return None
         except Exception as e:
-            logger.warning(f"GenAI API key failed for the following reason: {e}")
+            error_msg = str(e)
+            logger.warning(f"Failed to call LLM with the following error: {error_msg}")
 
-    return False
+    return error_msg
 
 
 def get_llm_max_tokens(

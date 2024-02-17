@@ -5,12 +5,21 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { fetchSS } from "@/lib/utilsSS";
-import { Connector, DocumentSet, Tag, User, ValidSources } from "@/lib/types";
+import {
+  CCPairBasicInfo,
+  DocumentSet,
+  Tag,
+  User,
+  ValidSources,
+} from "@/lib/types";
 import { ChatSession } from "./interfaces";
 import { unstable_noStore as noStore } from "next/cache";
 import { Persona } from "../admin/personas/interfaces";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
-import { WelcomeModal } from "@/components/WelcomeModal";
+import {
+  WelcomeModal,
+  hasCompletedWelcomeFlowSS,
+} from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
 import { cookies } from "next/headers";
 import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/contants";
@@ -21,6 +30,8 @@ import {
   checkModelNameIsValid,
 } from "../admin/models/embedding/embeddingModels";
 import { SwitchModelModal } from "@/components/SwitchModelModal";
+import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
+import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 
 export default async function Page({
   searchParams,
@@ -32,7 +43,7 @@ export default async function Page({
   const tasks = [
     getAuthTypeMetadataSS(),
     getCurrentUserSS(),
-    fetchSS("/manage/connector"),
+    fetchSS("/manage/indexing-status"),
     fetchSS("/manage/document-set"),
     fetchSS("/persona?include_default=true"),
     fetchSS("/chat/get-user-chat-sessions"),
@@ -57,7 +68,7 @@ export default async function Page({
   }
   const authTypeMetadata = results[0] as AuthTypeMetadata | null;
   const user = results[1] as User | null;
-  const connectorsResponse = results[2] as Response | null;
+  const ccPairsResponse = results[2] as Response | null;
   const documentSetsResponse = results[3] as Response | null;
   const personasResponse = results[4] as Response | null;
   const chatSessionsResponse = results[5] as Response | null;
@@ -73,16 +84,16 @@ export default async function Page({
     return redirect("/auth/waiting-on-verification");
   }
 
-  let connectors: Connector<any>[] = [];
-  if (connectorsResponse?.ok) {
-    connectors = await connectorsResponse.json();
+  let ccPairs: CCPairBasicInfo[] = [];
+  if (ccPairsResponse?.ok) {
+    ccPairs = await ccPairsResponse.json();
   } else {
-    console.log(`Failed to fetch connectors - ${connectorsResponse?.status}`);
+    console.log(`Failed to fetch connectors - ${ccPairsResponse?.status}`);
   }
   const availableSources: ValidSources[] = [];
-  connectors.forEach((connector) => {
-    if (!availableSources.includes(connector.source)) {
-      availableSources.push(connector.source);
+  ccPairs.forEach((ccPair) => {
+    if (!availableSources.includes(ccPair.source)) {
+      availableSources.push(ccPair.source);
     }
   });
 
@@ -145,19 +156,31 @@ export default async function Page({
     ? parseInt(documentSidebarCookieInitialWidth.value)
     : undefined;
 
+  const shouldShowWelcomeModal = !hasCompletedWelcomeFlowSS();
+  const hasAnyConnectors = ccPairs.length > 0;
+  const shouldDisplaySourcesIncompleteModal =
+    hasAnyConnectors &&
+    !shouldShowWelcomeModal &&
+    !ccPairs.some(
+      (ccPair) => ccPair.has_successful_run && ccPair.docs_indexed > 0
+    );
+
+  // if no connectors are setup, only show personas that are pure
+  // passthrough and don't do any retrieval
+  if (!hasAnyConnectors) {
+    personas = personas.filter((persona) => persona.num_chunks === 0);
+  }
+
   return (
     <>
       <InstantSSRAutoRefresh />
-      <ApiKeyModal />
 
-      {connectors.length === 0 ? (
-        <WelcomeModal embeddingModelName={currentEmbeddingModelName} />
-      ) : (
-        embeddingModelVersionInfo &&
-        !checkModelNameIsValid(currentEmbeddingModelName) &&
-        !nextEmbeddingModelName && (
-          <SwitchModelModal embeddingModelName={currentEmbeddingModelName} />
-        )
+      {shouldShowWelcomeModal && <WelcomeModal />}
+      {!shouldShowWelcomeModal && !shouldDisplaySourcesIncompleteModal && (
+        <ApiKeyModal />
+      )}
+      {shouldDisplaySourcesIncompleteModal && (
+        <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}
 
       <ChatLayout

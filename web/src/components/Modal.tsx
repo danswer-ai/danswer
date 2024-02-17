@@ -7,6 +7,8 @@ interface ModalProps {
   onOutsideClick?: () => void;
   className?: string;
   width?: string;
+  titleSize?: string;
+  hideDividerForTitle?: boolean;
 }
 
 export function Modal({
@@ -15,6 +17,8 @@ export function Modal({
   onOutsideClick,
   className,
   width,
+  titleSize,
+  hideDividerForTitle,
 }: ModalProps) {
   return (
     <div>
@@ -36,7 +40,11 @@ export function Modal({
           {title && (
             <>
               <div className="flex mb-4">
-                <h2 className="my-auto text-2xl font-bold">{title}</h2>
+                <h2
+                  className={"my-auto font-bold " + (titleSize || "text-2xl")}
+                >
+                  {title}
+                </h2>
                 {onOutsideClick && (
                   <div
                     onClick={onOutsideClick}
@@ -46,7 +54,7 @@ export function Modal({
                   </div>
                 )}
               </div>
-              <Divider />
+              {!hideDividerForTitle && <Divider />}
             </>
           )}
           {children}

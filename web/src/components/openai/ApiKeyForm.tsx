@@ -51,25 +51,24 @@ export const ApiKeyForm = ({ handleResponse }: Props) => {
             }
             setTimeout(() => {
               setPopup(null);
-            }, 4000);
+            }, 10000);
           }
         }}
       >
         {({ isSubmitting }) =>
           isSubmitting ? (
-            <LoadingAnimation text="Validating API key" />
+            <div className="text-base">
+              <LoadingAnimation text="Validating API key" />
+            </div>
           ) : (
             <Form>
-              <TextFormField
-                name="apiKey"
-                type="password"
-                label="OpenAI API Key:"
-              />
+              <TextFormField name="apiKey" type="password" label="API Key:" />
               <div className="flex">
                 <Button
+                  size="xs"
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-64 mx-auto"
+                  className="w-48 mx-auto"
                 >
                   Submit
                 </Button>

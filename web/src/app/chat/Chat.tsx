@@ -481,9 +481,7 @@ export const Chat = ({
     }
   };
 
-  const retrievalDisabled = selectedPersona
-    ? !personaIncludesRetrieval(selectedPersona)
-    : false;
+  const retrievalDisabled = !personaIncludesRetrieval(livePersona);
 
   return (
     <div className="flex w-full overflow-x-hidden" ref={masterFlexboxRef}>

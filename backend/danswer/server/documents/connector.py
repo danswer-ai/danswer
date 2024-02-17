@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from fastapi import Request
 from fastapi import Response
 from fastapi import UploadFile
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
@@ -689,3 +690,43 @@ def get_connector_by_id(
         time_updated=connector.time_updated,
         disabled=connector.disabled,
     )
+
+
+class BasicCCPairInfo(BaseModel):
+    docs_indexed: int
+    has_successful_run: bool
+    source: DocumentSource
+
+
+@router.get("/indexing-status")
+def get_basic_connector_indexing_status(
+    _: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> list[BasicCCPairInfo]:
+    cc_pairs = get_connector_credential_pairs(db_session)
+    cc_pair_identifiers = [
+        ConnectorCredentialPairIdentifier(
+            connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id
+        )
+        for cc_pair in cc_pairs
+    ]
+    document_count_info = get_document_cnts_for_cc_pairs(
+        db_session=db_session,
+        cc_pair_identifiers=cc_pair_identifiers,
+    )
+    cc_pair_to_document_cnt = {
+        (connector_id, credential_id): cnt
+        for connector_id, credential_id, cnt in document_count_info
+    }
+    return [
+        BasicCCPairInfo(
+            docs_indexed=cc_pair_to_document_cnt.get(
+                (cc_pair.connector_id, cc_pair.credential_id)
+            )
+            or 0,
+            has_successful_run=cc_pair.last_successful_index_time is not None,
+            source=cc_pair.connector.source,
+        )
+        for cc_pair in cc_pairs
+        if cc_pair.connector.source != DocumentSource.INGESTION_API
+    ]

@@ -9,7 +9,6 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
-from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
@@ -107,7 +106,7 @@ def document_hidden_update(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.head("/admin/genai-api-key/validate")
+@router.get("/admin/genai-api-key/validate")
 def validate_existing_genai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
@@ -119,7 +118,8 @@ def validate_existing_genai_api_key(
         last_check = datetime.fromtimestamp(
             cast(float, kv_store.load(check_key_time)), tz=timezone.utc
         )
-        check_freq_sec = timedelta(seconds=GENERATIVE_MODEL_ACCESS_CHECK_FREQ)
+        # GENERATIVE_MODEL_ACCESS_CHECK_FREQ
+        check_freq_sec = timedelta(seconds=1)
         if curr_time - last_check < check_freq_sec:
             return
     except ConfigNotFoundError:
@@ -133,12 +133,12 @@ def validate_existing_genai_api_key(
     except GenAIDisabledException:
         return
 
-    is_valid = test_llm(llm)
+    error_msg = test_llm(llm)
 
-    if not is_valid:
+    if error_msg:
         if genai_api_key is None:
             raise HTTPException(status_code=404, detail="Key not found")
-        raise HTTPException(status_code=400, detail="Invalid API key provided")
+        raise HTTPException(status_code=400, detail=error_msg)
 
     # Mark check as successful
     get_dynamic_config_store().store(check_key_time, curr_time.timestamp())
@@ -172,10 +172,10 @@ def store_genai_api_key(
             raise HTTPException(400, "No API key provided")
 
         llm = get_default_llm(api_key=request.api_key, timeout=10)
-        is_valid = test_llm(llm)
+        error_msg = test_llm(llm)
 
-        if not is_valid:
-            raise HTTPException(400, "Invalid API key provided")
+        if error_msg:
+            raise HTTPException(400, detail=error_msg)
 
         get_dynamic_config_store().store(GEN_AI_API_KEY_STORAGE_KEY, request.api_key)
     except GenAIDisabledException:
