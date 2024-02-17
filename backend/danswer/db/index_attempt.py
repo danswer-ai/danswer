@@ -33,7 +33,7 @@ def get_index_attempt(
 def create_index_attempt(
     connector_id: int,
     credential_id: int,
-    embedding_model_id: int | None,
+    embedding_model_id: int,
     db_session: Session,
     from_beginning: bool = False,
 ) -> int:
@@ -248,20 +248,37 @@ def cancel_indexing_attempts_for_connector(
         EmbeddingModel.status != IndexModelStatus.FUTURE
     )
 
-    stmt = delete(IndexAttempt).where(
-        IndexAttempt.connector_id == connector_id,
-        IndexAttempt.status == IndexingStatus.NOT_STARTED,
+    stmt = (
+        update(IndexAttempt)
+        .where(
+            IndexAttempt.connector_id == connector_id,
+            IndexAttempt.status == IndexingStatus.NOT_STARTED,
+        )
+        .values(status=IndexingStatus.FAILED)
     )
 
     if not include_secondary_index:
-        stmt = stmt.where(
-            or_(
-                IndexAttempt.embedding_model_id.is_(None),
-                IndexAttempt.embedding_model_id.in_(subquery),
-            )
-        )
+        stmt = stmt.where(IndexAttempt.embedding_model_id.in_(subquery))
 
     db_session.execute(stmt)
+
+    db_session.commit()
+
+
+def cancel_indexing_attempts_past_model(
+    db_session: Session,
+) -> None:
+    db_session.execute(
+        update(IndexAttempt)
+        .where(
+            IndexAttempt.status.in_(
+                [IndexingStatus.IN_PROGRESS, IndexingStatus.NOT_STARTED]
+            ),
+            IndexAttempt.embedding_model_id == EmbeddingModel.id,
+            EmbeddingModel.status == IndexModelStatus.PAST,
+        )
+        .values(status=IndexingStatus.FAILED)
+    )
 
     db_session.commit()
 

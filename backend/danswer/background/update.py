@@ -28,6 +28,7 @@ from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.embedding_model import update_embedding_model_status
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import count_unique_cc_pairs_with_index_attempts
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
@@ -380,6 +381,9 @@ def check_index_swap(db_session: Session) -> None:
             new_status=IndexModelStatus.PRESENT,
             db_session=db_session,
         )
+
+        # Expire jobs for the now past index/embedding model
+        cancel_indexing_attempts_past_model(db_session)
 
         # Recount aggregates
         for cc_pair in all_cc_pairs:
