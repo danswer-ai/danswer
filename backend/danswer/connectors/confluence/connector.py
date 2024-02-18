@@ -127,8 +127,13 @@ def parse_html_page(text: str, confluence_client: Confluence) -> str:
         user_id = (
             user.attrs["ri:account-id"]
             if "ri:account-id" in user.attrs
-            else user.attrs["ri:userkey"]
+            else user.get("ri:userkey")
         )
+        if not user_id:
+            logger.warning(
+                "ri:userkey not found in ri:user element. " f"Found attrs: {user.attrs}"
+            )
+            continue
         # Include @ sign for tagging, more clear for LLM
         user.replaceWith("@" + _get_user(user_id, confluence_client))
     return format_document_soup(soup)
