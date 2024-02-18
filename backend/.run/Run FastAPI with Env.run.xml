@@ -1,0 +1,24 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run FastAPI with Env" type="Python.FastAPI">
+    <option name="additionalOptions" value="--reload --port 8080" />
+    <option name="file" value="$PROJECT_DIR$/danswer/main.py" />
+    <module name="backend" />
+    <option name="ENV_FILES" value="" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="PARENT_ENVS" value="true" />
+    <envs>
+      <env name="AUTH_TYPE" value="disabled" />
+      <env name="DYNAMIC_CONFIG_DIR_PATH" value="./dynamic_config_storage" />
+      <env name="VESPA_DEPLOYMENT_ZIP" value="./vault-ai/document_index/vespa/vespa-app.zip" />
+    </envs>
+    <option name="SDK_HOME" value="$PROJECT_DIR$/venv/bin/python" />
+    <option name="SDK_NAME" value="Python 3.11 (backend)" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="IS_MODULE_SDK" value="false" />
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+    <option name="launchJavascriptDebuger" value="false" />
+    <method v="2" />
+  </configuration>
+</component>

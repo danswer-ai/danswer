@@ -17,13 +17,13 @@ export function WelcomeModal({
     <Modal className="max-w-4xl">
       <div className="text-base">
         <h2 className="text-xl font-bold mb-4 pb-2 border-b border-border flex">
-          Welcome to Danswer 🎉
+          Welcome to ChatOpenSource 🎉
         </h2>
         <div>
           <p>
-            Danswer is the AI-powered search engine for your organization&apos;s
+            ChatOpenSource is the AI-powered search engine for your organization&apos;s
             internal knowledge. Whenever you need to find any piece of internal
-            information, Danswer is there to help!
+            information, ChatOpenSource is there to help!
           </p>
         </div>
         <div className="flex mt-8 mb-2">
@@ -36,7 +36,7 @@ export function WelcomeModal({
           <>
             To get started, the first step is to choose your{" "}
             <i>embedding model</i>. This machine learning model helps power
-            Danswer&apos;s search. Different models have different strengths,
+            ChatOpenSource&apos;s search. Different models have different strengths,
             but don&apos;t worry we&apos;ll guide you through the process of
             choosing the right one for your organization.
           </>
@@ -54,9 +54,9 @@ export function WelcomeModal({
           Step 2: Add Your First Connector
         </Text>
         Next, we need to to configure some <i>connectors</i>. Connectors are the
-        way that Danswer gets data from your organization&apos;s various data
+        way that ChatOpenSource gets data from your organization&apos;s various data
         sources. Once setup, we&apos;ll automatically sync data from your apps
-        and docs into Danswer, so you can search all through all of them in one
+        and docs into ChatOpenSource, so you can search all through all of them in one
         place.
         <div className="flex mt-3">
           <Link href="/admin/add-connector">

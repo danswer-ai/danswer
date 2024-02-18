@@ -76,7 +76,7 @@ const MainSection = () => {
         The Sharepoint connector allows you to index and search through your
         Sharepoint files. Once setup, your Word documents, Excel files,
         PowerPoint presentations, OneNote notebooks, PDFs, and uploaded files
-        will be queryable within Danswer.
+        will be queryable within ChatOpenSource.
       </Text>
 
       <Title className="mb-2 mt-6 ml-auto mr-auto">
@@ -224,8 +224,8 @@ const MainSection = () => {
               label: "Sites:",
               subtext:
                 "Specify 0 or more sites to index. For example, specifying the site " +
-                "'support' for the 'danswerai' sharepoint will cause us to only index documents " +
-                "within the 'https://danswerai.sharepoint.com/sites/support' site. " +
+                "'support' for the 'ChatOpenSourceai' sharepoint will cause us to only index documents " +
+                "within the 'https://ChatOpenSourceai.sharepoint.com/sites/support' site. " +
                 "If no sites are specified, all sites in your organization will be indexed.",
             })}
             validationSchema={Yup.object().shape({
