@@ -248,17 +248,18 @@ def cancel_indexing_attempts_for_connector(
         EmbeddingModel.status != IndexModelStatus.FUTURE
     )
 
-    stmt = (
-        update(IndexAttempt)
-        .where(
-            IndexAttempt.connector_id == connector_id,
-            IndexAttempt.status == IndexingStatus.NOT_STARTED,
-        )
-        .values(status=IndexingStatus.FAILED)
+    stmt = delete(IndexAttempt).where(
+        IndexAttempt.connector_id == connector_id,
+        IndexAttempt.status == IndexingStatus.NOT_STARTED,
     )
 
     if not include_secondary_index:
-        stmt = stmt.where(IndexAttempt.embedding_model_id.in_(subquery))
+        stmt = stmt.where(
+            or_(
+                IndexAttempt.embedding_model_id.is_(None),
+                IndexAttempt.embedding_model_id.in_(subquery),
+            )
+        )
 
     db_session.execute(stmt)
 
