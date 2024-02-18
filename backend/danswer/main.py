@@ -2,7 +2,7 @@ from typing import Any
 from typing import cast
 
 import nltk  # type:ignore
-import torch
+import torch  # Import here is fine, API server needs torch anyway and nothing imports main.py
 import uvicorn
 from fastapi import APIRouter
 from fastapi import FastAPI

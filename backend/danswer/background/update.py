@@ -3,7 +3,6 @@ import time
 from datetime import datetime
 
 import dask
-import torch
 from dask.distributed import Client
 from dask.distributed import Future
 from distributed import LocalCluster
@@ -61,6 +60,8 @@ def _get_num_threads() -> int:
     """Get # of "threads" to use for ML models in an indexing job. By default uses
     the torch implementation, which returns the # of physical cores on the machine.
     """
+    import torch
+
     return max(MIN_THREADS_ML_MODELS, torch.get_num_threads())
 
 
@@ -457,6 +458,8 @@ def update__main() -> None:
     # needed for CUDA to work with multiprocessing
     # NOTE: needs to be done on application startup
     # before any other torch code has been run
+    import torch
+
     if not DASK_JOB_CLIENT_ENABLED:
         torch.multiprocessing.set_start_method("spawn")
 
