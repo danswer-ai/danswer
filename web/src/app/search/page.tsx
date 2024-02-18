@@ -95,6 +95,8 @@ export default async function Home() {
   }
   // remove those marked as hidden by an admin
   personas = personas.filter((persona) => persona.is_visible);
+  // hide personas with no retrieval
+  personas = personas.filter((persona) => persona.num_chunks !== 0);
   // sort them in priority order
   personas.sort(personaComparator);
 

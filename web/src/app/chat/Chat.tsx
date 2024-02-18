@@ -22,6 +22,7 @@ import {
   handleAutoScroll,
   handleChatFeedback,
   nameChatSession,
+  personaIncludesRetrieval,
   processRawChatHistory,
   sendMessage,
 } from "./lib";
@@ -172,7 +173,7 @@ export const Chat = ({
   const livePersona = selectedPersona || availablePersonas[0];
 
   useEffect(() => {
-    if (messageHistory.length === 0) {
+    if (messageHistory.length === 0 && chatSessionId === null) {
       setSelectedPersona(
         availablePersonas.find(
           (persona) => persona.id === defaultSelectedPersonaId
@@ -480,6 +481,10 @@ export const Chat = ({
     }
   };
 
+  const retrievalDisabled = selectedPersona
+    ? !personaIncludesRetrieval(selectedPersona)
+    : false;
+
   return (
     <div className="flex w-full overflow-x-hidden" ref={masterFlexboxRef}>
       {popup}
@@ -510,6 +515,7 @@ export const Chat = ({
                       onPersonaChange={(persona) => {
                         if (persona) {
                           setSelectedPersona(persona);
+                          textareaRef.current?.focus();
                           router.push(`/chat?personaId=${persona.id}`);
                         }
                       }}
@@ -527,6 +533,7 @@ export const Chat = ({
                     selectedPersona={selectedPersona}
                     handlePersonaSelect={(persona) => {
                       setSelectedPersona(persona);
+                      textareaRef.current?.focus();
                       router.push(`/chat?personaId=${persona.id}`);
                     }}
                   />
@@ -630,6 +637,7 @@ export const Chat = ({
                               });
                             }
                           }}
+                          retrievalDisabled={retrievalDisabled}
                         />
                       </div>
                     );
@@ -682,22 +690,24 @@ export const Chat = ({
 
             <div className="absolute bottom-0 z-10 w-full bg-background border-t border-border">
               <div className="w-full pb-4 pt-2">
-                <div className="flex">
-                  <div className="w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar mx-auto px-4 pt-1 flex">
-                    {selectedDocuments.length > 0 ? (
-                      <SelectedDocuments
-                        selectedDocuments={selectedDocuments}
-                      />
-                    ) : (
-                      <ChatFilters
-                        {...filterManager}
-                        existingSources={finalAvailableSources}
-                        availableDocumentSets={finalAvailableDocumentSets}
-                        availableTags={availableTags}
-                      />
-                    )}
+                {!retrievalDisabled && (
+                  <div className="flex">
+                    <div className="w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar mx-auto px-4 pt-1 flex">
+                      {selectedDocuments.length > 0 ? (
+                        <SelectedDocuments
+                          selectedDocuments={selectedDocuments}
+                        />
+                      ) : (
+                        <ChatFilters
+                          {...filterManager}
+                          existingSources={finalAvailableSources}
+                          availableDocumentSets={finalAvailableDocumentSets}
+                          availableTags={availableTags}
+                        />
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="flex justify-center py-2 max-w-screen-lg mx-auto mb-2">
                   <div className="w-full shrink relative px-4 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar mx-auto">
@@ -785,21 +795,26 @@ export const Chat = ({
             </div>
           </div>
 
-          <ResizableSection
-            intialWidth={documentSidebarInitialWidth}
-            minWidth={400}
-            maxWidth={maxDocumentSidebarWidth || undefined}
-          >
-            <DocumentSidebar
-              selectedMessage={aiMessage}
-              selectedDocuments={selectedDocuments}
-              toggleDocumentSelection={toggleDocumentSelection}
-              clearSelectedDocuments={clearSelectedDocuments}
-              selectedDocumentTokens={selectedDocumentTokens}
-              maxTokens={maxTokens}
-              isLoading={isFetchingChatMessages}
-            />
-          </ResizableSection>
+          {!retrievalDisabled ? (
+            <ResizableSection
+              intialWidth={documentSidebarInitialWidth}
+              minWidth={400}
+              maxWidth={maxDocumentSidebarWidth || undefined}
+            >
+              <DocumentSidebar
+                selectedMessage={aiMessage}
+                selectedDocuments={selectedDocuments}
+                toggleDocumentSelection={toggleDocumentSelection}
+                clearSelectedDocuments={clearSelectedDocuments}
+                selectedDocumentTokens={selectedDocumentTokens}
+                maxTokens={maxTokens}
+                isLoading={isFetchingChatMessages}
+              />
+            </ResizableSection>
+          ) : // Another option is to use a div with the width set to the initial width, so that the
+          // chat section appears in the same place as before
+          // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
+          null}
         </>
       ) : (
         <div className="mx-auto h-full flex flex-col">

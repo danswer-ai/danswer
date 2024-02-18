@@ -214,9 +214,27 @@ function smallerNumberFirstComparator(a: number, b: number) {
   return a > b ? 1 : -1;
 }
 
+function closerToZeroNegativesFirstComparator(a: number, b: number) {
+  if (a < 0 && b > 0) {
+    return -1;
+  }
+  if (a > 0 && b < 0) {
+    return 1;
+  }
+
+  const absA = Math.abs(a);
+  const absB = Math.abs(b);
+
+  if (absA === absB) {
+    return a > b ? 1 : -1;
+  }
+
+  return absA > absB ? 1 : -1;
+}
+
 export function personaComparator(a: Persona, b: Persona) {
   if (a.display_priority === null && b.display_priority === null) {
-    return smallerNumberFirstComparator(a.id, b.id);
+    return closerToZeroNegativesFirstComparator(a.id, b.id);
   }
 
   if (a.display_priority !== b.display_priority) {
@@ -230,5 +248,5 @@ export function personaComparator(a: Persona, b: Persona) {
     return smallerNumberFirstComparator(a.display_priority, b.display_priority);
   }
 
-  return smallerNumberFirstComparator(a.id, b.id);
+  return closerToZeroNegativesFirstComparator(a.id, b.id);
 }
