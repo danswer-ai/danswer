@@ -551,7 +551,13 @@ def mark_delete_persona_by_name(
 def delete_old_default_personas(
     db_session: Session,
 ) -> None:
-    stmt = update(Persona).where(Persona.default_persona).values(deleted=True)
+    """Note, this locks out the Summarize and Paraphrase personas for now
+    Need a more graceful fix later or those need to never have IDs"""
+    stmt = (
+        update(Persona)
+        .where(Persona.default_persona, Persona.id > 0)
+        .values(deleted=True)
+    )
 
     db_session.execute(stmt)
     db_session.commit()

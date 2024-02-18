@@ -78,9 +78,11 @@ def load_personas_from_yaml(
                 if not prompts:
                     prompts = None
 
+            p_id = persona.get("id")
             upsert_persona(
                 user_id=None,
-                persona_id=persona.get("id"),
+                # Negative to not conflict with existing personas
+                persona_id=(-1 * p_id) if p_id is not None else None,
                 name=persona["name"],
                 description=persona["description"],
                 num_chunks=persona.get("num_chunks")

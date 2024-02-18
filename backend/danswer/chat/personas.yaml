@@ -39,7 +39,8 @@ personas:
     document_sets: []
 
 
-  - name: "AI Assistant (No Sources)"
+  - id: 1
+    name: "AI Assistant (No Sources)"
     description: >
       Assistant with no access to documents. Chat with just the Language Model.
     prompts:
@@ -51,7 +52,8 @@ personas:
     document_sets: []
 
 
-  - name: "Paraphrase Assistant"
+  - id: 2
+    name: "Paraphrase Assistant"
     description: >
       Assistant that is heavily constrained and only provides exact quotes from Connected Sources.
     prompts:
