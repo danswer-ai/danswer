@@ -116,14 +116,14 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                         {indexAttempt.error_msg || "-"}
                       </Text>
                       {indexAttempt.full_exception_trace && (
-                        <Text
-                          onClick={() =>
-                            setIndexAttemptTracePopupId(indexAttempt.id)
-                          }
-                          className="mt-2 text-link cursor-pointer"
+                        <div
+                          onClick={() => {
+                            setIndexAttemptTracePopupId(indexAttempt.id);
+                          }}
+                          className="mt-2 text-link cursor-pointer select-none"
                         >
                           View Full Trace
-                        </Text>
+                        </div>
                       )}
                     </div>
                   </TableCell>
