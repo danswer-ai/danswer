@@ -551,12 +551,10 @@ def mark_delete_persona_by_name(
 def delete_old_default_personas(
     db_session: Session,
 ) -> None:
-    # Since people have different persona ordering, we can't do it by id,
-    # These are the ones from the yaml file that have since changed
-    # also it's difficult to actual delete due to foreign keys and mapping to existing
-    # chat sessions so just marking deleted instead
-    mark_delete_persona_by_name("Summarize", db_session=db_session)
-    mark_delete_persona_by_name("Paraphrase", db_session=db_session)
+    stmt = update(Persona).where(Persona.default_persona).values(deleted=True)
+
+    db_session.execute(stmt)
+    db_session.commit()
 
 
 def update_persona_visibility(
