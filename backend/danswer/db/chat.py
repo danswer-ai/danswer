@@ -6,6 +6,7 @@ from sqlalchemy import not_
 from sqlalchemy import nullsfirst
 from sqlalchemy import or_
 from sqlalchemy import select
+from sqlalchemy import update
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import Session
 
@@ -534,6 +535,34 @@ def mark_persona_as_deleted(
     db_session.commit()
 
 
+def mark_delete_persona_by_name(
+    persona_name: str, db_session: Session, is_default: bool = True
+) -> None:
+    stmt = (
+        update(Persona)
+        .where(Persona.name == persona_name, Persona.default_persona == is_default)
+        .values(deleted=True)
+    )
+
+    db_session.execute(stmt)
+    db_session.commit()
+
+
+def delete_old_default_personas(
+    db_session: Session,
+) -> None:
+    """Note, this locks out the Summarize and Paraphrase personas for now
+    Need a more graceful fix later or those need to never have IDs"""
+    stmt = (
+        update(Persona)
+        .where(Persona.default_persona, Persona.id > 0)
+        .values(deleted=True)
+    )
+
+    db_session.execute(stmt)
+    db_session.commit()
+
+
 def update_persona_visibility(
     persona_id: int,
     is_visible: bool,
@@ -709,3 +738,15 @@ def translate_db_message_to_chat_message_detail(
     )
 
     return chat_msg_detail
+
+
+def delete_persona_by_name(
+    persona_name: str, db_session: Session, is_default: bool = True
+) -> None:
+    stmt = delete(Persona).where(
+        Persona.name == persona_name, Persona.default_persona == is_default
+    )
+
+    db_session.execute(stmt)
+
+    db_session.commit()

@@ -38,6 +38,7 @@ from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
+from danswer.db.chat import delete_old_default_personas
 from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
 from danswer.db.credentials import create_initial_public_credential
@@ -292,6 +293,7 @@ def get_application() -> FastAPI:
             associate_default_cc_pair(db_session)
 
             logger.info("Loading default Prompts and Personas")
+            delete_old_default_personas(db_session)
             load_chat_yamls()
 
             logger.info("Verifying Document Index(s) is/are available.")
