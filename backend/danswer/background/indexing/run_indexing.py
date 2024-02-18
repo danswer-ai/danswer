@@ -4,7 +4,6 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 
-import torch
 from sqlalchemy.orm import Session
 
 from danswer.background.indexing.checkpointing import get_time_windows_for_index_attempt
@@ -286,6 +285,8 @@ def run_indexing_entrypoint(index_attempt_id: int, num_threads: int) -> None:
     """Entrypoint for indexing run when using dask distributed.
     Wraps the actual logic in a `try` block so that we can catch any exceptions
     and mark the attempt as failed."""
+    import torch
+
     try:
         # set the indexing attempt ID so that all log messages from this process
         # will have it added as a prefix

@@ -1,8 +1,6 @@
 import abc
 from collections.abc import Callable
-
-from llama_index.text_splitter import SentenceSplitter
-from transformers import AutoTokenizer  # type:ignore
+from typing import TYPE_CHECKING
 
 from danswer.configs.app_configs import BLURB_SIZE
 from danswer.configs.app_configs import CHUNK_OVERLAP
@@ -16,10 +14,15 @@ from danswer.search.search_nlp_models import get_default_tokenizer
 from danswer.utils.text_processing import shared_precompare_cleanup
 
 
+if TYPE_CHECKING:
+    from transformers import AutoTokenizer  # type:ignore
+
 ChunkFunc = Callable[[Document], list[DocAwareChunk]]
 
 
 def extract_blurb(text: str, blurb_size: int) -> str:
+    from llama_index.text_splitter import SentenceSplitter
+
     token_count_func = get_default_tokenizer().tokenize
     blurb_splitter = SentenceSplitter(
         tokenizer=token_count_func, chunk_size=blurb_size, chunk_overlap=0
@@ -33,11 +36,13 @@ def chunk_large_section(
     section_link_text: str,
     document: Document,
     start_chunk_id: int,
-    tokenizer: AutoTokenizer,
+    tokenizer: "AutoTokenizer",
     chunk_size: int = CHUNK_SIZE,
     chunk_overlap: int = CHUNK_OVERLAP,
     blurb_size: int = BLURB_SIZE,
 ) -> list[DocAwareChunk]:
+    from llama_index.text_splitter import SentenceSplitter
+
     blurb = extract_blurb(section_text, blurb_size)
 
     sentence_aware_splitter = SentenceSplitter(
@@ -155,6 +160,8 @@ def chunk_document(
 def split_chunk_text_into_mini_chunks(
     chunk_text: str, mini_chunk_size: int = MINI_CHUNK_SIZE
 ) -> list[str]:
+    from llama_index.text_splitter import SentenceSplitter
+
     token_count_func = get_default_tokenizer().tokenize
     sentence_aware_splitter = SentenceSplitter(
         tokenizer=token_count_func, chunk_size=mini_chunk_size, chunk_overlap=0

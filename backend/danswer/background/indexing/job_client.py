@@ -8,13 +8,15 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 from typing import Literal
-
-from torch import multiprocessing
+from typing import Optional
+from typing import TYPE_CHECKING
 
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
+if TYPE_CHECKING:
+    from torch.multiprocessing import Process
 
 JobStatusType = (
     Literal["error"]
@@ -30,7 +32,7 @@ class SimpleJob:
     """Drop in replacement for `dask.distributed.Future`"""
 
     id: int
-    process: multiprocessing.Process | None = None
+    process: Optional["Process"] = None
 
     def cancel(self) -> bool:
         return self.release()
@@ -87,6 +89,8 @@ class SimpleJobClient:
 
     def submit(self, func: Callable, *args: Any, pure: bool = True) -> SimpleJob | None:
         """NOTE: `pure` arg is needed so this can be a drop in replacement for Dask"""
+        from torch.multiprocessing import Process
+
         self._cleanup_completed_jobs()
         if len(self.jobs) >= self.n_workers:
             logger.debug("No available workers to run job")
@@ -95,7 +99,7 @@ class SimpleJobClient:
         job_id = self.job_id_counter
         self.job_id_counter += 1
 
-        process = multiprocessing.Process(target=func, args=args, daemon=True)
+        process = Process(target=func, args=args, daemon=True)
         job = SimpleJob(id=job_id, process=process)
         process.start()
 
