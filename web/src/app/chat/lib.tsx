@@ -14,6 +14,7 @@ import {
   RetrievalType,
   StreamingError,
 } from "./interfaces";
+import { Persona } from "../admin/personas/interfaces";
 
 export async function createChatSession(personaId: number): Promise<number> {
   const createChatSessionResponse = await fetch(
@@ -348,4 +349,8 @@ export function processRawChatHistory(rawMessages: BackendMessage[]) {
     });
 
   return messages;
+}
+
+export function personaIncludesRetrieval(selectedPersona: Persona) {
+  return selectedPersona.num_chunks !== 0;
 }
