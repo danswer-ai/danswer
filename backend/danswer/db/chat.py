@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from uuid import UUID
 
 from sqlalchemy import delete
+from sqlalchemy import func
 from sqlalchemy import not_
 from sqlalchemy import nullsfirst
 from sqlalchemy import or_
@@ -556,7 +557,7 @@ def delete_old_default_personas(
     stmt = (
         update(Persona)
         .where(Persona.default_persona, Persona.id > 0)
-        .values(deleted=True)
+        .values(deleted=True, name=func.concat(Persona.name, "_old"))
     )
 
     db_session.execute(stmt)
