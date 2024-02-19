@@ -103,9 +103,15 @@ class JiraConnector(LoadConnector, PollConnector):
         self.jira_client: JIRA | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        email = credentials["jira_user_email"]
         api_token = credentials["jira_api_token"]
-        self.jira_client = JIRA(basic_auth=(email, api_token), server=self.jira_base)
+        # if user provide an email we assume it's cloud
+        if "jira_user_email" in credentials:
+            email = credentials["jira_user_email"]
+            self.jira_client = JIRA(
+                basic_auth=(email, api_token), server=self.jira_base
+            )
+        else:
+            self.jira_client = JIRA(token_auth=api_token, server=self.jira_base)
         return None
 
     def load_from_state(self) -> GenerateDocumentsOutput:

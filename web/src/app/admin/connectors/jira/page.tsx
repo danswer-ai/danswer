@@ -8,6 +8,7 @@ import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import {
   JiraConfig,
   JiraCredentialJson,
+  JiraServerCredentialJson,
   ConnectorIndexingStatus,
 } from "@/lib/types";
 import useSWR, { useSWRConfig } from "swr";
@@ -71,7 +72,7 @@ const Main = () => {
 
   const jiraConnectorIndexingStatuses: ConnectorIndexingStatus<
     JiraConfig,
-    JiraCredentialJson
+    JiraCredentialJson | JiraServerCredentialJson
   >[] = connectorIndexingStatuses.filter(
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "jira"
@@ -90,12 +91,6 @@ const Main = () => {
       {jiraCredential ? (
         <>
           <div className="flex mb-1 text-sm">
-            {/* <div className="flex">
-                <p className="my-auto">Existing Username: </p>
-                <p className="ml-1 italic my-auto max-w-md truncate">
-                  {confluenceCredential.credential_json?.confluence_username}
-                </p>{" "}
-              </div> */}
             <p className="my-auto">Existing Access Token: </p>
             <p className="ml-1 italic my-auto max-w-md truncate">
               {jiraCredential.credential_json?.jira_api_token}
@@ -142,8 +137,10 @@ const Main = () => {
             >
               here
             </a>{" "}
-            to generate an Access Token.
+            to generate an Access Token (for cloud) or Personal Access Token
+            (for server). Submit only one form.
           </Text>
+          <Title className="mb-2 mt-6 ml-auto mr-auto">Cloud</Title>
           <Card className="mt-4">
             <CredentialForm<JiraCredentialJson>
               formBody={
@@ -166,6 +163,33 @@ const Main = () => {
               })}
               initialValues={{
                 jira_user_email: "",
+                jira_api_token: "",
+              }}
+              onSubmit={(isSuccess) => {
+                if (isSuccess) {
+                  refreshCredentials();
+                }
+              }}
+            />
+          </Card>
+          <Title className="mb-2 mt-6 ml-auto mr-auto">Server</Title>
+          <Card className="mt-4">
+            <CredentialForm<JiraServerCredentialJson>
+              formBody={
+                <>
+                  <TextFormField
+                    name="jira_api_token"
+                    label="Personal Access Token:"
+                    type="password"
+                  />
+                </>
+              }
+              validationSchema={Yup.object().shape({
+                jira_api_token: Yup.string().required(
+                  "Please enter your Jira personal access token"
+                ),
+              })}
+              initialValues={{
                 jira_api_token: "",
               }}
               onSubmit={(isSuccess) => {
@@ -202,7 +226,10 @@ const Main = () => {
                 below every <b>10</b> minutes.
               </Text>
               <div className="mb-2">
-                <ConnectorsTable<JiraConfig, JiraCredentialJson>
+                <ConnectorsTable<
+                  JiraConfig,
+                  JiraCredentialJson | JiraServerCredentialJson
+                >
                   connectorIndexingStatuses={jiraConnectorIndexingStatuses}
                   liveCredential={jiraCredential}
                   getCredential={(credential) => {
