@@ -19,8 +19,11 @@ from danswer.utils.variable_functionality import global_version
 from ee.danswer.configs.app_configs import OPENID_CONFIG_URL
 from ee.danswer.server.analytics.api import router as analytics_router
 from ee.danswer.server.api_key.api import router as api_key_router
+from ee.danswer.server.query_and_chat.chat_backend import (
+    router as chat_router,
+)
 from ee.danswer.server.query_and_chat.query_backend import (
-    basic_router as chat_query_router,
+    basic_router as query_router,
 )
 from ee.danswer.server.query_history.api import router as query_history_router
 from ee.danswer.server.saml import router as saml_router
@@ -69,8 +72,8 @@ def get_ee_application() -> FastAPI:
     # Api key management
     include_router_with_global_prefix_prepended(application, api_key_router)
     # EE only backend APIs
-    include_router_with_global_prefix_prepended(application, chat_query_router)
-
+    include_router_with_global_prefix_prepended(application, query_router)
+    include_router_with_global_prefix_prepended(application, chat_router)
     return application
 
 
