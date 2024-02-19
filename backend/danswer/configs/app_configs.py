@@ -177,6 +177,11 @@ EXPERIMENTAL_CHECKPOINTING_ENABLED = (
 CONTINUE_ON_CONNECTOR_FAILURE = os.environ.get(
     "CONTINUE_ON_CONNECTOR_FAILURE", ""
 ).lower() not in ["false", ""]
+# When swapping to a new embedding model, a secondary index is created in the background, to conserve
+# resources, we pause updates on the primary index by default while the secondary index is created
+DISABLE_INDEX_UPDATE_ON_SWAP = (
+    os.environ.get("DISABLE_INDEX_UPDATE_ON_SWAP", "").lower() == "true"
+)
 # Controls how many worker processes we spin up to index documents in the
 # background. This is useful for speeding up indexing, but does require a
 # fairly large amount of memory in order to increase substantially, since

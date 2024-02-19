@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
+from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
+from danswer.db.connector_credential_pair import get_connector_credential_pairs
+from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.embedding_model import create_embedding_model
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
@@ -77,6 +80,14 @@ def set_new_embedding_model(
         index_embedding_dim=current_model.model_dim,
         secondary_index_embedding_dim=new_model.model_dim,
     )
+
+    # Pause index attempts for the currently in use index to preserve resources
+    if DISABLE_INDEX_UPDATE_ON_SWAP:
+        expire_index_attempts(
+            embedding_model_id=current_model.id, db_session=db_session
+        )
+        for cc_pair in get_connector_credential_pairs(db_session):
+            resync_cc_pair(cc_pair, db_session=db_session)
 
     return IdReturn(id=new_model.id)
 

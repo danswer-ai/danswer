@@ -25,6 +25,7 @@ from danswer.configs.app_configs import APP_HOST
 from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
+from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import MODEL_SERVER_PORT
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
@@ -41,12 +42,15 @@ from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.chat import delete_old_default_personas
 from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
+from danswer.db.connector_credential_pair import get_connector_credential_pairs
+from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.credentials import create_initial_public_credential
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.embedding_model import insert_initial_embedding_models
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
+from danswer.db.index_attempt import expire_index_attempts
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llm
 from danswer.search.search_nlp_models import warm_up_models
@@ -257,7 +261,16 @@ def get_application() -> FastAPI:
 
             secondary_db_embedding_model = get_secondary_db_embedding_model(db_session)
 
-            # cleanup "NOT_STARTED" indexing attempts for embedding models that are no longer used
+            # Break bad state for thrashing indexes
+            if secondary_db_embedding_model and DISABLE_INDEX_UPDATE_ON_SWAP:
+                expire_index_attempts(
+                    embedding_model_id=db_embedding_model.id, db_session=db_session
+                )
+
+                for cc_pair in get_connector_credential_pairs(db_session):
+                    resync_cc_pair(cc_pair, db_session=db_session)
+
+            # Expire all old embedding models indexing attempts, technically redundant
             cancel_indexing_attempts_past_model(db_session)
 
             logger.info(f'Using Embedding model: "{db_embedding_model.model_name}"')
