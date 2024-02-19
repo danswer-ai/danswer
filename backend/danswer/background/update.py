@@ -14,6 +14,7 @@ from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.configs.app_configs import CLEANUP_INDEXING_JOBS_TIMEOUT
 from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
+from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.app_configs import LOG_LEVEL
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.configs.model_configs import MIN_THREADS_ML_MODELS
@@ -69,8 +70,15 @@ def _should_create_new_indexing(
     connector: Connector,
     last_index: IndexAttempt | None,
     model: EmbeddingModel,
+    secondary_index_building: bool,
     db_session: Session,
 ) -> bool:
+    # User can still manually create single indexing attempts via the UI for the
+    # currently in use index
+    if DISABLE_INDEX_UPDATE_ON_SWAP:
+        if model.status == IndexModelStatus.PRESENT and secondary_index_building:
+            return False
+
     # When switching over models, always index at least once
     if model.status == IndexModelStatus.FUTURE and not last_index:
         if connector.id == 0:  # Ingestion API
@@ -186,7 +194,11 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
                         connector.id, credential.id, model.id, db_session
                     )
                     if not _should_create_new_indexing(
-                        connector, last_attempt, model, db_session
+                        connector=connector,
+                        last_index=last_attempt,
+                        model=model,
+                        secondary_index_building=len(embedding_models) > 1,
+                        db_session=db_session,
                     ):
                         continue
 
@@ -255,6 +267,9 @@ def cleanup_indexing_jobs(
             )
             for index_attempt in in_progress_indexing_attempts:
                 if index_attempt.id in existing_jobs:
+                    # If index attempt is canceled, stop the run
+                    if index_attempt.status == IndexingStatus.FAILED:
+                        existing_jobs[index_attempt.id].cancel()
                     # check to see if the job has been updated in last `timeout_hours` hours, if not
                     # assume it to frozen in some bad state and just mark it as failed. Note: this relies
                     # on the fact that the `time_updated` field is constantly updated every

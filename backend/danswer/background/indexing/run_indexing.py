@@ -185,6 +185,7 @@ def _run_indexing(
 
                 db_session.refresh(index_attempt)
                 if index_attempt.status != IndexingStatus.IN_PROGRESS:
+                    # Likely due to user manually disabling it or model swap
                     raise RuntimeError("Index Attempt was canceled")
 
                 logger.debug(
