@@ -2,6 +2,12 @@
 envsubst '$DOMAIN $SSL_CERT_FILE_NAME $SSL_CERT_KEY_FILE_NAME' < "/etc/nginx/conf.d/$1" > /etc/nginx/conf.d/app.conf
 
 # wait for the api_server to be ready
+echo "Waiting for API server to boot up; this may take a minute or two..."
+echo "If this takes more than ~5 minutes, check the logs of the API server container for errors with the following command:"
+echo
+echo "docker logs danswer-stack_api_server-1"
+echo
+
 while true; do
   # Use curl to send a request and capture the HTTP status code
   status_code=$(curl -o /dev/null -s -w "%{http_code}\n" "http://api_server:8080/health")
