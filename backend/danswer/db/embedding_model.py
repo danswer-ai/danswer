@@ -10,7 +10,6 @@ from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
 from danswer.configs.model_configs import OLD_DEFAULT_DOCUMENT_ENCODER_MODEL
 from danswer.configs.model_configs import OLD_DEFAULT_MODEL_DOC_EMBEDDING_DIM
 from danswer.configs.model_configs import OLD_DEFAULT_MODEL_NORMALIZE_EMBEDDINGS
-from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexModelStatus
 from danswer.indexing.models import EmbeddingModelDetail
@@ -77,53 +76,40 @@ def update_embedding_model_status(
     db_session.commit()
 
 
-def insert_initial_embedding_models(db_session: Session) -> None:
-    """Should be called on startup to ensure that the initial
-    embedding model is present in the DB."""
-    existing_embedding_models = db_session.scalars(select(EmbeddingModel)).all()
-    if existing_embedding_models:
-        logger.error(
-            "Called `insert_initial_embedding_models` but models already exist in the DB. Skipping."
-        )
-        return
+def user_has_overridden_embedding_model() -> bool:
+    return DOCUMENT_ENCODER_MODEL != DEFAULT_DOCUMENT_ENCODER_MODEL
 
-    existing_cc_pairs = get_connector_credential_pairs(db_session)
 
-    # if the user is overriding the `DOCUMENT_ENCODER_MODEL`, then
-    # allow them to continue to use that model and do nothing fancy
-    # in the background OR if the user has no connectors, then we can
-    # also just use the new model immediately
-    can_skip_upgrade = (
-        DOCUMENT_ENCODER_MODEL != DEFAULT_DOCUMENT_ENCODER_MODEL
-        or not existing_cc_pairs
+def get_old_default_embedding_model() -> EmbeddingModel:
+    is_overridden = user_has_overridden_embedding_model()
+    return EmbeddingModel(
+        model_name=(
+            DOCUMENT_ENCODER_MODEL
+            if is_overridden
+            else OLD_DEFAULT_DOCUMENT_ENCODER_MODEL
+        ),
+        model_dim=(
+            DOC_EMBEDDING_DIM if is_overridden else OLD_DEFAULT_MODEL_DOC_EMBEDDING_DIM
+        ),
+        normalize=(
+            NORMALIZE_EMBEDDINGS
+            if is_overridden
+            else OLD_DEFAULT_MODEL_NORMALIZE_EMBEDDINGS
+        ),
+        query_prefix=(ASYM_QUERY_PREFIX if is_overridden else ""),
+        passage_prefix=(ASYM_PASSAGE_PREFIX if is_overridden else ""),
+        status=IndexModelStatus.PRESENT,
+        index_name="danswer_chunk",
     )
 
-    # if we need to automatically upgrade the user, then create
-    # an entry which will automatically be replaced by the
-    # below desired model
-    if not can_skip_upgrade:
-        embedding_model_to_upgrade = EmbeddingModel(
-            model_name=OLD_DEFAULT_DOCUMENT_ENCODER_MODEL,
-            model_dim=OLD_DEFAULT_MODEL_DOC_EMBEDDING_DIM,
-            normalize=OLD_DEFAULT_MODEL_NORMALIZE_EMBEDDINGS,
-            query_prefix="",
-            passage_prefix="",
-            status=IndexModelStatus.PRESENT,
-            index_name="danswer_chunk",
-        )
-        db_session.add(embedding_model_to_upgrade)
 
-    desired_embedding_model = EmbeddingModel(
+def get_new_default_embedding_model(is_present: bool) -> EmbeddingModel:
+    return EmbeddingModel(
         model_name=DOCUMENT_ENCODER_MODEL,
         model_dim=DOC_EMBEDDING_DIM,
         normalize=NORMALIZE_EMBEDDINGS,
         query_prefix=ASYM_QUERY_PREFIX,
         passage_prefix=ASYM_PASSAGE_PREFIX,
-        status=IndexModelStatus.PRESENT
-        if can_skip_upgrade
-        else IndexModelStatus.FUTURE,
+        status=IndexModelStatus.PRESENT if is_present else IndexModelStatus.FUTURE,
         index_name=f"danswer_chunk_{clean_model_name(DOCUMENT_ENCODER_MODEL)}",
     )
-    db_session.add(desired_embedding_model)
-
-    db_session.commit()
