@@ -25,12 +25,7 @@ import { cookies } from "next/headers";
 import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/contants";
 import { personaComparator } from "../admin/personas/lib";
 import { ChatLayout } from "./ChatPage";
-import {
-  FullEmbeddingModelResponse,
-  checkModelNameIsValid,
-} from "../admin/models/embedding/embeddingModels";
-import { SwitchModelModal } from "@/components/SwitchModelModal";
-import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
+import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingModels";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 
 export default async function Page({
@@ -156,8 +151,11 @@ export default async function Page({
     ? parseInt(documentSidebarCookieInitialWidth.value)
     : undefined;
 
-  const shouldShowWelcomeModal = !hasCompletedWelcomeFlowSS();
   const hasAnyConnectors = ccPairs.length > 0;
+  const shouldShowWelcomeModal =
+    !hasCompletedWelcomeFlowSS() &&
+    !hasAnyConnectors &&
+    (!user || user.role === "admin");
   const shouldDisplaySourcesIncompleteModal =
     hasAnyConnectors &&
     !shouldShowWelcomeModal &&

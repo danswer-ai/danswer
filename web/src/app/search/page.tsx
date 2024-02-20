@@ -127,7 +127,11 @@ export default async function Home() {
       ? (storedSearchType as SearchType)
       : SearchType.SEMANTIC; // default to semantic
 
-  const shouldShowWelcomeModal = !hasCompletedWelcomeFlowSS();
+  const hasAnyConnectors = ccPairs.length > 0;
+  const shouldShowWelcomeModal =
+    !hasCompletedWelcomeFlowSS() &&
+    !hasAnyConnectors &&
+    (!user || user.role === "admin");
   const shouldDisplayNoSourcesModal =
     ccPairs.length === 0 && !shouldShowWelcomeModal;
   const shouldDisplaySourcesIncompleteModal =
