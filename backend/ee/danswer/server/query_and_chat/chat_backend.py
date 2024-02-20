@@ -66,7 +66,7 @@ def handle_simplified_chat_message(
         parent_message, _ = create_chat_chain(
             chat_session_id=chat_message_req.chat_session_id, db_session=db_session
         )
-    except RuntimeError:
+    except Exception:
         parent_message = get_or_create_root_message(
             chat_session_id=chat_message_req.chat_session_id, db_session=db_session
         )
