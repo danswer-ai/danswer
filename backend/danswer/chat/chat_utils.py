@@ -17,7 +17,6 @@ from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.chat_configs import STOP_STREAM_PAT
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS
 from danswer.db.chat import get_chat_messages_by_session
 from danswer.db.models import ChatMessage
@@ -25,6 +24,7 @@ from danswer.db.models import Persona
 from danswer.db.models import Prompt
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import check_number_of_tokens
+from danswer.llm.utils import get_default_llm_version
 from danswer.llm.utils import get_max_input_tokens
 from danswer.prompts.chat_prompts import CHAT_USER_CONTEXT_FREE_PROMPT
 from danswer.prompts.chat_prompts import CHAT_USER_PROMPT
@@ -577,7 +577,7 @@ def compute_max_document_tokens(
     if we're trying to determine if the user should be able to select another document) then we just set an
     arbitrary "upper bound".
     """
-    llm_name = GEN_AI_MODEL_VERSION
+    llm_name = get_default_llm_version()[0]
     if persona.llm_model_version_override:
         llm_name = persona.llm_model_version_override
 
@@ -603,7 +603,7 @@ def compute_max_document_tokens(
 
 def compute_max_llm_input_tokens(persona: Persona) -> int:
     """Maximum tokens allows in the input to the LLM (of any type)."""
-    llm_name = GEN_AI_MODEL_VERSION
+    llm_name = get_default_llm_version()[0]
     if persona.llm_model_version_override:
         llm_name = persona.llm_model_version_override
 

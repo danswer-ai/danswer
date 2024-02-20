@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from collections.abc import Iterator
 from copy import copy
+from functools import lru_cache
 from typing import Any
 from typing import cast
 
@@ -19,8 +20,10 @@ from tiktoken.core import Encoding
 
 from danswer.configs.app_configs import LOG_LEVEL
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
+from danswer.configs.constants import GEN_AI_DETECTED_MODEL
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
+from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MAX_TOKENS
@@ -37,6 +40,34 @@ logger = setup_logger()
 
 _LLM_TOKENIZER: Any = None
 _LLM_TOKENIZER_ENCODE: Callable[[str], Any] | None = None
+
+
+@lru_cache()
+def get_default_llm_version() -> tuple[str, str]:
+    default_openai_model = "gpt-3.5-turbo-16k-0613"
+    if GEN_AI_MODEL_VERSION:
+        llm_version = GEN_AI_MODEL_VERSION
+    else:
+        if GEN_AI_MODEL_PROVIDER != "openai":
+            logger.warning("No LLM Model Version set")
+            # Either this value is unused or it will throw an error
+            llm_version = default_openai_model
+        else:
+            kv_store = get_dynamic_config_store()
+            try:
+                llm_version = cast(str, kv_store.load(GEN_AI_DETECTED_MODEL))
+            except ConfigNotFoundError:
+                llm_version = default_openai_model
+
+    if FAST_GEN_AI_MODEL_VERSION:
+        fast_llm_version = FAST_GEN_AI_MODEL_VERSION
+    else:
+        if GEN_AI_MODEL_PROVIDER == "openai":
+            fast_llm_version = default_openai_model
+        else:
+            fast_llm_version = llm_version
+
+    return llm_version, fast_llm_version
 
 
 def get_default_llm_tokenizer() -> Encoding:
@@ -215,8 +246,7 @@ def get_llm_max_tokens(
         # This is an override, so always return this
         return GEN_AI_MAX_TOKENS
 
-    if not model_name:
-        return 4096
+    model_name = model_name or get_default_llm_version()[0]
 
     try:
         if model_provider == "openai":
@@ -231,6 +261,7 @@ def get_max_input_tokens(
     model_provider: str = GEN_AI_MODEL_PROVIDER,
     output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
 ) -> int:
+    model_name = model_name or get_default_llm_version()[0]
     input_toks = (
         get_llm_max_tokens(model_name=model_name, model_provider=model_provider)
         - output_tokens

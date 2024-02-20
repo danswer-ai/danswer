@@ -35,10 +35,8 @@ from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.constants import AuthType
 from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
-from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
-from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.chat import delete_old_default_personas
 from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
@@ -53,6 +51,7 @@ from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llm
+from danswer.llm.utils import get_default_llm_version
 from danswer.search.search_nlp_models import warm_up_models
 from danswer.server.danswer_api.ingestion import get_danswer_api_key
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
@@ -235,11 +234,10 @@ def get_application() -> FastAPI:
             logger.info("Generative AI Q&A disabled")
         else:
             logger.info(f"Using LLM Provider: {GEN_AI_MODEL_PROVIDER}")
-            logger.info(f"Using LLM Model Version: {GEN_AI_MODEL_VERSION}")
-            if GEN_AI_MODEL_VERSION != FAST_GEN_AI_MODEL_VERSION:
-                logger.info(
-                    f"Using Fast LLM Model Version: {FAST_GEN_AI_MODEL_VERSION}"
-                )
+            base, fast = get_default_llm_version()
+            logger.info(f"Using LLM Model Version: {base}")
+            if base != fast:
+                logger.info(f"Using Fast LLM Model Version: {fast}")
             if GEN_AI_API_ENDPOINT:
                 logger.info(f"Using LLM Endpoint: {GEN_AI_API_ENDPOINT}")
 

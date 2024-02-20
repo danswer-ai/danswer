@@ -48,6 +48,10 @@ SECTION_SEPARATOR = "\n\n"
 INDEX_SEPARATOR = "==="
 
 
+# Key-Value store constants
+GEN_AI_DETECTED_MODEL = "gen_ai_detected_model"
+
+
 # Messages
 DISABLED_GEN_AI_MSG = (
     "Your System Admin has disabled the Generative AI functionalities of Danswer.\n"

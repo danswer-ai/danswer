@@ -15,6 +15,7 @@ from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_TEMPERATURE
 from danswer.llm.interfaces import LLM
+from danswer.llm.utils import get_default_llm_version
 from danswer.llm.utils import message_generator_to_string_generator
 from danswer.llm.utils import should_be_verbose
 from danswer.utils.logger import setup_logger
@@ -92,7 +93,8 @@ def _get_model_str(
         return model_version
 
     # User specified something wrong, just use Danswer default
-    return GEN_AI_MODEL_VERSION
+    base, _ = get_default_llm_version()
+    return base
 
 
 class DefaultMultiLLM(LangChainChatLLM):
@@ -109,7 +111,7 @@ class DefaultMultiLLM(LangChainChatLLM):
         api_key: str | None,
         timeout: int,
         model_provider: str = GEN_AI_MODEL_PROVIDER,
-        model_version: str = GEN_AI_MODEL_VERSION,
+        model_version: str | None = GEN_AI_MODEL_VERSION,
         api_base: str | None = GEN_AI_API_ENDPOINT,
         api_version: str | None = GEN_AI_API_VERSION,
         custom_llm_provider: str | None = GEN_AI_LLM_PROVIDER_TYPE,
@@ -120,6 +122,8 @@ class DefaultMultiLLM(LangChainChatLLM):
         # Can place this in the call below once integration is in
         litellm.api_key = api_key or "dummy-key"
         litellm.api_version = api_version
+
+        model_version = model_version or get_default_llm_version()[0]
 
         self._llm = ChatLiteLLM(  # type: ignore
             model=model_version
