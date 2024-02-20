@@ -47,7 +47,6 @@ from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.credentials import create_initial_public_credential
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
-from danswer.db.embedding_model import insert_initial_embedding_models
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
@@ -252,13 +251,7 @@ def get_application() -> FastAPI:
             )
 
         with Session(engine) as db_session:
-            try:
-                db_embedding_model = get_current_db_embedding_model(db_session)
-            except RuntimeError:
-                logger.info("No embedding model's found in DB, creating initial model.")
-                insert_initial_embedding_models(db_session)
-                db_embedding_model = get_current_db_embedding_model(db_session)
-
+            db_embedding_model = get_current_db_embedding_model(db_session)
             secondary_db_embedding_model = get_secondary_db_embedding_model(db_session)
 
             # Break bad state for thrashing indexes
