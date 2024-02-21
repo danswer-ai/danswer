@@ -84,7 +84,7 @@ class NotionConnector(LoadConnector, PollConnector):
         self.indexed_pages: set[str] = set()
         self.root_page_id = root_page_id
         # if enabled, will recursively index child pages as they are found rather
-        # relying entirely on the `search` API. We have recieved reports that the
+        # relying entirely on the `search` API. We have received reports that the
         # `search` API misses many pages - in those cases, this might need to be
         # turned on. It's not currently known why/when this is required.
         # NOTE: this also removes all benefits polling, since we need to traverse
