@@ -12,7 +12,7 @@ RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 # zip for Vespa step futher down
 # ca-certificates for HTTPS
 RUN apt-get update && \
-    apt-get install -y cmake curl zip ca-certificates && \
+    apt-get install -y cmake curl zip ca-certificates libgnutls30=3.7.9-2+deb12u2 && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
