@@ -21,7 +21,6 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTA
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.configs.danswerbot_configs import DISABLE_DANSWER_BOT_FILTER_DETECT
 from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
-from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.danswerbot.slack.blocks import build_documents_blocks
 from danswer.danswerbot.slack.blocks import build_follow_up_block
 from danswer.danswerbot.slack.blocks import build_qa_response_blocks
@@ -37,6 +36,7 @@ from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
 from danswer.llm.utils import check_number_of_tokens
+from danswer.llm.utils import get_default_llm_version
 from danswer.llm.utils import get_max_input_tokens
 from danswer.one_shot_answer.answer_question import get_search_answer
 from danswer.one_shot_answer.models import DirectQARequest
@@ -224,7 +224,7 @@ def handle_message(
         max_document_tokens: int | None = None
         max_history_tokens: int | None = None
         if len(new_message_request.messages) > 1:
-            llm_name = GEN_AI_MODEL_VERSION
+            llm_name = get_default_llm_version()[0]
             if persona and persona.llm_model_version_override:
                 llm_name = persona.llm_model_version_override
 

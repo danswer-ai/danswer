@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
-from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.chat import get_persona_by_id
 from danswer.db.chat import get_personas
 from danswer.db.chat import get_prompts_by_ids
@@ -18,6 +17,7 @@ from danswer.db.chat import upsert_persona
 from danswer.db.document_set import get_document_sets_by_ids
 from danswer.db.engine import get_session
 from danswer.db.models import User
+from danswer.llm.utils import get_default_llm_version
 from danswer.one_shot_answer.qa_block import build_dummy_prompt
 from danswer.server.features.persona.models import CreatePersonaRequest
 from danswer.server.features.persona.models import PersonaSnapshot
@@ -239,4 +239,4 @@ def get_default_model(
     if GEN_AI_MODEL_PROVIDER != "openai":
         return ""
 
-    return GEN_AI_MODEL_VERSION
+    return get_default_llm_version()[0]
