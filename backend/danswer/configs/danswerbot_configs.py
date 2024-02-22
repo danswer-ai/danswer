@@ -52,6 +52,8 @@ ENABLE_DANSWERBOT_REFLEXION = (
 )
 # Currently not support chain of thought, probably will add back later
 DANSWER_BOT_DISABLE_COT = True
+# if set, will default DanswerBot to use quotes and reference documents
+DANSWER_BOT_USE_QUOTES = os.environ.get("DANSWER_BOT_USE_QUOTES", "").lower() == "true"
 
 # Maximum Questions Per Minute, Default Uncapped
 DANSWER_BOT_MAX_QPM = int(os.environ.get("DANSWER_BOT_MAX_QPM") or 0) or None
