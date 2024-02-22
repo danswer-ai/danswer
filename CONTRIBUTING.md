@@ -79,6 +79,8 @@ _For Windows, activate the virtual environment using Command Prompt:_
 If using PowerShell, the command slightly differs:
 ```powershell
 .venv\Scripts\Activate.ps1
+```
+
 Install the required python dependencies:
 ```bash
 pip install -r danswer/backend/requirements/default.txt
