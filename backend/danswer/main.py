@@ -82,16 +82,24 @@ from danswer.utils.variable_functionality import fetch_versioned_implementation
 logger = setup_logger()
 
 
-def validation_exception_handler(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
+def validation_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    if not isinstance(exc, RequestValidationError):
+        logger.error(
+            f"Unexpected exception type in validation_exception_handler - {type(exc)}"
+        )
+        raise exc
+
     exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
     logger.exception(f"{request}: {exc_str}")
     content = {"status_code": 422, "message": exc_str, "data": None}
     return JSONResponse(content=content, status_code=422)
 
 
-def value_error_handler(_: Request, exc: ValueError) -> JSONResponse:
+def value_error_handler(_: Request, exc: Exception) -> JSONResponse:
+    if not isinstance(exc, ValueError):
+        logger.error(f"Unexpected exception type in value_error_handler - {type(exc)}")
+        raise exc
+
     try:
         raise (exc)
     except Exception:
