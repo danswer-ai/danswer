@@ -181,7 +181,7 @@ def _run_indexing(
         )
 
         try:
-            all_connector_doc_ids = set()
+            all_connector_doc_ids: set[str] = set()
             for doc_batch in doc_batch_generator:
                 # Check if connector is disabled mid run and stop if so unless it's the secondary
                 # index being built. We want to populate it even for paused connectors
@@ -238,8 +238,8 @@ def _run_indexing(
                     d.id
                     for d in get_documents_for_connector_credential_pair(
                         db_session=db_session,
-                        connector_id=index_attempt.connector_id,
-                        credential_id=index_attempt.credential_id,
+                        connector_id=db_connector.id,
+                        credential_id=db_credential.id,
                     )
                 }
                 doc_ids_to_remove = list(
@@ -252,8 +252,8 @@ def _run_indexing(
                 # delete docs from cc-pair and receive the number of completely deleted docs in return
                 _delete_connector_credential_pair_batch(
                     document_ids=doc_ids_to_remove,
-                    connector_id=index_attempt.connector_id,
-                    credential_id=index_attempt.credential_id,
+                    connector_id=db_connector.id,
+                    credential_id=db_credential.id,
                     document_index=document_index,
                 )
 
