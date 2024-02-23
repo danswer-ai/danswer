@@ -1,6 +1,7 @@
 version: '3'
 services:
   api_server:
+    container_name: api_server
     image: danswer/danswer-backend:latest
     build:
       context: ../../backend
@@ -31,6 +32,7 @@ services:
         max-size: "50m"
         max-file: "6"
   background:
+    container_name: background
     image: danswer/danswer-backend:latest
     build:
       context: ../../backend
@@ -58,6 +60,7 @@ services:
         max-size: "50m"
         max-file: "6"
   web_server:
+    container_name: web_server
     image: danswer/danswer-web-server:latest
     build:
       context: ../../web
@@ -77,6 +80,7 @@ services:
         max-size: "50m"
         max-file: "6"
   relational_db:
+    container_name: relational_db
     image: postgres:15.2-alpine
     restart: always
     # POSTGRES_USER and POSTGRES_PASSWORD should be set in .env file
@@ -91,6 +95,7 @@ services:
         max-file: "6"
   # This container name cannot have an underscore in it due to Vespa expectations of the URL
   index:
+    container_name: index
     image: vespaengine/vespa:8.277.17
     restart: always
     ports:
@@ -104,6 +109,7 @@ services:
         max-size: "50m"
         max-file: "6"
   nginx:
+    container_name: nginx
     image: nginx:1.23.4-alpine
     restart: always
     # nginx will immediately crash with `nginx: [emerg] host not found in upstream`
@@ -138,6 +144,7 @@ services:
       - .env.nginx
   # follows https://pentacent.medium.com/nginx-and-lets-encrypt-with-docker-in-less-than-5-minutes-b4b8a60d3a71
   certbot:
+    container_name: certbot
     image: certbot/certbot
     restart: always
     volumes:
@@ -151,6 +158,7 @@ services:
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
   # Run with --profile model-server to bring up the danswer-model-server container
   model_server:
+    container_name: model_server
     image: danswer/danswer-model-server:latest
     build:
       context: ../../backend

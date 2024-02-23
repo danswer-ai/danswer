@@ -1,6 +1,7 @@
 version: '3'
 services:
   api_server:
+    container_name: api_server
     image: danswer/danswer-backend:latest
     build:
       context: ../../backend
@@ -82,6 +83,7 @@ services:
         max-size: "50m"
         max-file: "6"
   background:
+    container_name: background
     image: danswer/danswer-backend:latest
     build:
       context: ../../backend
@@ -169,6 +171,7 @@ services:
         max-size: "50m"
         max-file: "6"
   web_server:
+    container_name: web_server
     image: danswer/danswer-web-server:latest
     build:
       context: ../../web
@@ -182,6 +185,7 @@ services:
       - INTERNAL_URL=http://api_server:8080
       - WEB_DOMAIN=${WEB_DOMAIN:-}
   relational_db:
+    container_name: relational_db
     image: postgres:15.2-alpine
     restart: always
     environment:
@@ -193,6 +197,7 @@ services:
       - db_volume:/var/lib/postgresql/data
   # This container name cannot have an underscore in it due to Vespa expectations of the URL
   index:
+    container_name: index
     image: vespaengine/vespa:8.277.17
     restart: always
     ports:
@@ -206,6 +211,7 @@ services:
         max-size: "50m"
         max-file: "6"
   nginx:
+    container_name: nginx
     image: nginx:1.23.4-alpine
     restart: always
     # nginx will immediately crash with `nginx: [emerg] host not found in upstream`
@@ -237,6 +243,7 @@ services:
   # Be sure to change MODEL_SERVER_HOST (see above) as well
   # ie. MODEL_SERVER_HOST="model_server" docker compose -f docker-compose.dev.yml -p danswer-stack --profile model-server up -d --build
   model_server:
+    container_name: model_server
     image: danswer/danswer-model-server:latest
     build:
       context: ../../backend
