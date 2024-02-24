@@ -57,9 +57,9 @@ def handle_simplified_chat_message(
     db_session: Session = Depends(get_session),
 ) -> ChatBasicResponse:
     """This is a Non-Streaming version that only gives back a minimal set of information"""
-    logger.info(f"Received new chat message: {chat_message_req.message}")
+    logger.info(f"Received new simple api chat message: {chat_message_req.message}")
 
-    if not chat_message_req.message and chat_message_req.prompt_id is not None:
+    if not chat_message_req.message:
         raise HTTPException(status_code=400, detail="Empty chat message is invalid")
 
     try:
@@ -86,7 +86,7 @@ def handle_simplified_chat_message(
         chat_session_id=chat_message_req.chat_session_id,
         parent_message_id=parent_message.id,
         message=chat_message_req.message,
-        prompt_id=chat_message_req.prompt_id,
+        prompt_id=None,
         search_doc_ids=chat_message_req.search_doc_ids,
         retrieval_options=retrieval_options,
         query_override=chat_message_req.query_override,

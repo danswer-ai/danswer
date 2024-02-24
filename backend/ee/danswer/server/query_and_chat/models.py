@@ -17,9 +17,6 @@ class BasicCreateChatMessageRequest(BaseModel):
     # Allows the caller to specify the exact search query they want to use
     # will disable Query Rewording if specified
     query_override: str | None = None
-    # If no prompt provided, provide canned retrieval answer, no actually LLM flow
-    # Use prompt_id 0 to use the system default prompt which is Answer-Question
-    prompt_id: int | None = 0
     # If search_doc_ids provided, then retrieval options are unused
     search_doc_ids: list[int] | None = None
 
