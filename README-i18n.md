@@ -13,7 +13,7 @@ OR
 **Status:**
 
 In this release, only the minimal i18n infrastructure is included.
-There is a SINGLE message translated in the Welcome popup.
+Only the Welcome popup is translated.
 There are 'en' and 'it' locales only.
 
 To verify it:
