@@ -12,6 +12,8 @@ import { BackButton } from "@/components/BackButton";
 import { ApiKeyForm } from "@/components/openai/ApiKeyForm";
 import { checkApiKey } from "@/components/openai/ApiKeyModal";
 
+import { useTranslation } from 'react-i18next';
+
 function setWelcomeFlowComplete() {
   Cookies.set(COMPLETED_WELCOME_FLOW_COOKIE, "true", { expires: 365 });
 }
@@ -53,6 +55,9 @@ function UsageTypeSection({
 }
 
 export function _WelcomeModal() {
+  
+  const { t } = useTranslation();
+
   const router = useRouter();
   const [selectedFlow, setSelectedFlow] = useState<null | "search" | "chat">(
     null
@@ -232,7 +237,7 @@ export function _WelcomeModal() {
       );
       break;
     default:
-      title = "🎉 Welcome to Danswer";
+      title = "🎉 " + t("welcome_to") +" Danswer";
       body = (
         <>
           <div>

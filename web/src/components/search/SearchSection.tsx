@@ -20,7 +20,7 @@ import { SearchHelper } from "./SearchHelper";
 import { CancellationToken, cancellable } from "@/lib/search/cancellable";
 import { useFilters, useObjectState } from "@/lib/hooks";
 import { questionValidationStreamed } from "@/lib/search/streamingQuestionValidation";
-import { Persona } from "@/app/admin/personas/interfaces";
+import { Persona } from "@/app/[locale]/admin/personas/interfaces";
 import { PersonaSelector } from "./PersonaSelector";
 import { computeAvailableFilters } from "@/lib/filters";
 

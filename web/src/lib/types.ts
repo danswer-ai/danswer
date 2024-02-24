@@ -1,4 +1,4 @@
-import { Persona } from "@/app/admin/personas/interfaces";
+import { Persona } from "@/app/[locale]/admin/personas/interfaces";
 
 export interface User {
   id: string;
