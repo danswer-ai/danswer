@@ -191,11 +191,15 @@ def stream_chat_message_objects(
         message_text = new_msg_req.message
         chat_session_id = new_msg_req.chat_session_id
         parent_id = new_msg_req.parent_message_id
-        prompt_id = new_msg_req.prompt_id
         reference_doc_ids = new_msg_req.search_doc_ids
         retrieval_options = new_msg_req.retrieval_options
         persona = chat_session.persona
         query_override = new_msg_req.query_override
+
+        # After this section, no_ai_answer is represented by prompt being None
+        prompt_id = new_msg_req.prompt_id
+        if prompt_id is None and persona.prompts and not new_msg_req.no_ai_answer:
+            prompt_id = sorted(persona.prompts, key=lambda x: x.id)[-1].id
 
         if reference_doc_ids is None and retrieval_options is None:
             raise RuntimeError(
