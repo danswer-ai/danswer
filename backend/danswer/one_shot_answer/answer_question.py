@@ -120,6 +120,8 @@ def stream_answer_objects(
         user_query=query_msg.message,
         history_str=history_str,
     )
+    # Given back ahead of the documents for latency reasons
+    # In chat flow it's given back along with the documents
     yield QueryRephrase(rephrased_query=rephrased_query)
 
     (
@@ -154,6 +156,7 @@ def stream_answer_objects(
 
     # Since this is in the one shot answer flow, we don't need to actually save the docs to DB
     initial_response = QADocsResponse(
+        rephrased_query=rephrased_query,
         top_documents=fake_saved_docs,
         predicted_flow=predicted_flow,
         predicted_search=predicted_search_type,
