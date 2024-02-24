@@ -111,7 +111,9 @@ const SlackBotConfigsTable = ({
                       {slackBotConfig.persona &&
                       slackBotConfig.persona.document_sets.length > 0
                         ? slackBotConfig.persona.document_sets
-                            .map((documentSet: { name: any; } ) => documentSet.name)
+                            .map(
+                              (documentSet: { name: any }) => documentSet.name
+                            )
                             .join(", ")
                         : "-"}
                     </div>

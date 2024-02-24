@@ -21,7 +21,7 @@ export function useDocumentSelection(): [
   DanswerDocument[],
   (document: DanswerDocument) => void,
   () => void,
-  number,
+  number
 ] {
   const [selectedDocuments, setSelectedDocuments] = useState<DanswerDocument[]>(
     []
