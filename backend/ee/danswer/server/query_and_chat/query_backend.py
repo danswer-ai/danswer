@@ -3,12 +3,20 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
+from danswer.chat.chat_utils import compute_max_document_tokens
 from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
+from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTAGE
+from danswer.db.chat import get_persona_by_id
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
+from danswer.llm.utils import get_default_llm_version
+from danswer.llm.utils import get_max_input_tokens
+from danswer.one_shot_answer.answer_question import get_search_answer
+from danswer.one_shot_answer.models import DirectQARequest
+from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.models import IndexFilters
 from danswer.search.models import SavedSearchDoc
@@ -87,3 +95,42 @@ def handle_search_request(
     return SearchResponse(
         top_documents=fake_saved_docs, llm_indices=llm_selection_indices
     )
+
+
+@basic_router.post("/answer-with-quote")
+def get_answer_with_quote(
+    query_request: DirectQARequest,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> OneShotQAResponse:
+    query = query_request.messages[0].message
+    logger.info(f"Received query for one shot answer API with quotes: {query}")
+
+    persona = get_persona_by_id(
+        persona_id=query_request.persona_id, user_id=user.id, db_session=db_session
+    )
+
+    llm_name = get_default_llm_version()[0]
+    if persona and persona.llm_model_version_override:
+        llm_name = persona.llm_model_version_override
+
+    input_tokens = get_max_input_tokens(model_name=llm_name)
+    max_history_tokens = int(input_tokens * DANSWER_BOT_TARGET_CHUNK_PERCENTAGE)
+
+    remaining_tokens = input_tokens - max_history_tokens
+
+    max_document_tokens = compute_max_document_tokens(
+        persona=persona,
+        actual_user_input=query,
+        max_llm_token_override=remaining_tokens,
+    )
+
+    answer_details = get_search_answer(
+        query_req=query_request,
+        user=user,
+        max_document_tokens=max_document_tokens,
+        max_history_tokens=max_history_tokens,
+        db_session=db_session,
+    )
+
+    return answer_details
