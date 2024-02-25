@@ -4,11 +4,15 @@ import { useRouter } from "next/navigation";
 
 import { FiChevronLeft } from "react-icons/fi";
 
+import { useTranslation } from "react-i18next";
+
 export function BackButton({
   behaviorOverride,
 }: {
   behaviorOverride?: () => void;
 }) {
+  const { t } = useTranslation();
+
   const router = useRouter();
 
   return (
@@ -33,7 +37,7 @@ export function BackButton({
       }}
     >
       <FiChevronLeft className="mr-1 my-auto" />
-      Back
+      {t("Back")}
     </div>
   );
 }

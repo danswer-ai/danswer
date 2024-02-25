@@ -46,7 +46,7 @@ const SingleUseConnectorStatus = ({
 
 export function SingleUseConnectorsTable<
   ConnectorConfigType,
-  ConnectorCredentialType,
+  ConnectorCredentialType
 >({
   connectorIndexingStatuses,
   liveCredential,

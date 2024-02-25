@@ -1,4 +1,4 @@
-import { Persona } from "@/app/admin/personas/interfaces";
+import { Persona } from "@/app/[locale]/admin/personas/interfaces";
 
 export interface User {
   id: string;
@@ -175,7 +175,7 @@ export interface IndexAttemptSnapshot {
 
 export interface ConnectorIndexingStatus<
   ConnectorConfigType,
-  ConnectorCredentialType,
+  ConnectorCredentialType
 > {
   cc_pair_id: number;
   name: string | null;
