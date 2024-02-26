@@ -68,6 +68,9 @@ def _process_file(
         file_content_raw, file_metadata = read_file(file)
     file_metadata = {**metadata, **file_metadata}
 
+    # If this is set, we will show this in the UI as the "name" of the file
+    file_display_name_override = file_metadata.get("file_display_name")
+
     time_updated = file_metadata.get("time_updated", datetime.now(timezone.utc))
     if isinstance(time_updated, str):
         time_updated = time_str_to_utc(time_updated)
@@ -87,17 +90,18 @@ def _process_file(
             "primary_owners",
             "secondary_owners",
             "filename",
+            "file_display_name",
         ]
     }
 
     return [
         Document(
-            id=file_name,
+            id=f"FILE_CONNECTOR__{file_name}",  # add a prefix to avoid conflicts with other connectors
             sections=[
                 Section(link=metadata.get("link"), text=file_content_raw.strip())
             ],
             source=DocumentSource.FILE,
-            semantic_identifier=file_name,
+            semantic_identifier=file_display_name_override or file_name,
             doc_updated_at=final_time_updated,
             primary_owners=metadata.get("primary_owners"),
             secondary_owners=metadata.get("secondary_owners"),

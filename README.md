@@ -22,7 +22,7 @@
 </a>
 </p>
 
-<strong>[Danswer](https://www.danswer.ai/)</strong> lets you ask questions in natural language questions and get back
+<strong>[Danswer](https://www.danswer.ai/)</strong> lets you ask questions in natural language and get back
 answers based on your team specific documents. Think ChatGPT if it had access to your team's unique
 knowledge. Connects to all common workplace tools such as Slack, Google Drive, Confluence, etc.
 
