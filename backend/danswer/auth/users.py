@@ -53,7 +53,6 @@ from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 
-
 logger = setup_logger()
 
 USER_WHITELIST_FILE = "/home/danswer_whitelist.txt"
@@ -213,7 +212,10 @@ async def get_user_manager(
     yield UserManager(user_db)
 
 
-cookie_transport = CookieTransport(cookie_max_age=SESSION_EXPIRE_TIME_SECONDS)
+cookie_transport = CookieTransport(
+    cookie_max_age=SESSION_EXPIRE_TIME_SECONDS,
+    cookie_secure=WEB_DOMAIN.startswith("https"),
+)
 
 
 def get_database_strategy(
