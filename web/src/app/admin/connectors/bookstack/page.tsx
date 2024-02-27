@@ -83,7 +83,7 @@ const Main = () => {
               {bookstackCredential.credential_json?.bookstack_api_token_id}
             </Text>
             <button
-              className="ml-1 hover:bg-hover rounded p-1"
+              className="ml-1 hover:bg-hover dark:hover:bg-neutral-800 rounded p-1"
               onClick={async () => {
                 if (bookstackConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -111,7 +111,7 @@ const Main = () => {
             to be assigned a BookStack role which has the &apos;Access system
             API&apos; system permission assigned.
           </Text>
-          <Card className="mt-2 mb-4">
+          <Card className="dark:bg-neutral-700 mt-2 mb-4">
             <CredentialForm<BookstackCredentialJson>
               formBody={
                 <>
@@ -194,7 +194,7 @@ const Main = () => {
       {bookstackCredential &&
         bookstackConnectorIndexingStatuses.length === 0 && (
           <>
-            <Card className="mt-4">
+            <Card className="dark:bg-neutral-700 mt-4">
               <h2 className="font-bold mb-3">Create Connection</h2>
               <Text className="mb-4">
                 Press connect below to start the connection to your BookStack

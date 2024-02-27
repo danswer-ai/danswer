@@ -80,7 +80,7 @@ const Main = () => {
               {githubCredential.credential_json.github_access_token}
             </p>{" "}
             <button
-              className="ml-1 hover:bg-hover rounded p-1"
+              className="ml-1 hover:bg-hover rounded p-1 dark:hover:bg-neutral-800"
               onClick={async () => {
                 await adminDeleteCredential(githubCredential.id);
                 refreshCredentials();
@@ -95,7 +95,7 @@ const Main = () => {
           <Text>
             If you don&apos;t have an access token, read the guide{" "}
             <a
-              className="text-blue-500"
+              className="text-blue-500 dark:text-blue-300"
               href="https://docs.danswer.dev/connectors/github"
               target="_blank"
             >
@@ -103,7 +103,7 @@ const Main = () => {
             </a>{" "}
             on how to get one from Github.
           </Text>
-          <Card className="mt-4">
+          <Card className="mt-4 dark:bg-neutral-700">
             <CredentialForm<GithubCredentialJson>
               formBody={
                 <>
@@ -176,7 +176,7 @@ const Main = () => {
       )}
 
       {githubCredential ? (
-        <Card className="mt-4">
+        <Card className="mt-4 dark:bg-neutral-700">
           <h2 className="font-bold mb-3">Connect to a New Repository</h2>
           <ConnectorForm<GithubConfig>
             nameBuilder={(values) =>

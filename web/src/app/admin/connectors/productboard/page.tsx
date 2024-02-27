@@ -96,7 +96,7 @@ const Main = () => {
               }
             </Text>
             <button
-              className="ml-1 hover:bg-hover rounded p-1"
+              className="ml-1 hover:bg-hover rounded p-1 dark:hover:bg-neutral-800"
               onClick={async () => {
                 if (productboardConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -119,7 +119,7 @@ const Main = () => {
           <Text>
             To use the Productboard connector, first follow the guide{" "}
             <a
-              className="text-link"
+              className="text-link dark:text-blue-300"
               href="https://developer.productboard.com/#section/Authentication/Public-API-Access-Token"
               target="_blank"
             >
@@ -127,7 +127,7 @@ const Main = () => {
             </a>{" "}
             to generate an Access Token.
           </Text>
-          <Card className="mt-4">
+          <Card className="mt-4 dark:bg-neutral-700">
             <CredentialForm<ProductboardCredentialJson>
               formBody={
                 <>

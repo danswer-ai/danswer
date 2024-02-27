@@ -68,7 +68,7 @@ const Page = async () => {
             <div className="flex">
               <Text className="mt-4 mx-auto">
                 Already have an account?{" "}
-                <Link href="/auth/login" className="text-link font-medium">
+                <Link href="/auth/login" className="text-link dark:text-blue-300 font-medium">
                   Log In
                 </Link>
               </Text>

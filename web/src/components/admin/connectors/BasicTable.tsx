@@ -26,7 +26,7 @@ export const BasicTable: FC<BasicTableProps> = ({
     <div>
       <table className="w-full table-auto">
         <thead>
-          <tr className="text-left bg-gray-700">
+          <tr className="text-left bg-emphasis">
             {columns.map((column, index) => {
               const isRightAligned = column?.alignment === "right";
               return (
@@ -67,7 +67,7 @@ export const BasicTable: FC<BasicTableProps> = ({
                     className={
                       (column.width ? `w-${column.width} ` : "") +
                       (isRightAligned ? "flex" : "") +
-                      "py-2 px-4 border-b border-gray-800"
+                      "py-2 px-4 border-b dark:border-b-border-dark border-gray-800"
                     }
                   >
                     <div>{row[column.key]}</div>

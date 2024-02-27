@@ -109,7 +109,7 @@ export function SearchSummary({
               event.preventDefault();
             }
           }}
-          className="px-1 py-0.5 h-[28px] text-sm mr-2 w-full rounded-sm border border-border-strong"
+          className="px-1 py-0.5 h-[28px] text-sm mr-2 w-full rounded-sm border border-border dark:border-neutral-900-strong dark:bg-background-emphasis-dark"
         />
       </div>
       <div className="ml-2 my-auto flex">

@@ -52,17 +52,17 @@ export function ChatDocumentDisplay({
             {document.semantic_identifier || document.document_id}
           </p>
         </a>
-        {document.score !== null && (
+        {(
           <div className="my-auto">
             {isAIPick && (
               <div className="w-4 h-4 my-auto mr-1 flex flex-col">
                 <HoverPopup
-                  mainContent={<FiRadio className="text-gray-500 my-auto" />}
+                  mainContent={<FiRadio className="text-subtle dark:text-neutral-400 my-auto"/>}
                   popupContent={
                     <div className="text-xs text-gray-300 w-36 flex">
                       <div className="flex mx-auto">
                         <div className="w-3 h-3 flex flex-col my-auto mr-1">
-                          <FiInfo className="my-auto" />
+                          <FiInfo className="my-auto"/>
                         </div>
                         <div className="my-auto">The AI liked this doc!</div>
                       </div>
@@ -76,8 +76,8 @@ export function ChatDocumentDisplay({
             <div
               className={`
                 text-xs
-                text-emphasis
-                bg-hover
+                text-emphasis dark:text-gray-400
+                bg-hover dark:bg-hover-dark 
                 rounded
                 p-0.5
                 w-fit

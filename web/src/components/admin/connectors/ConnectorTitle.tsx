@@ -94,7 +94,7 @@ export const ConnectorTitle = ({
     );
   }
 
-  const mainSectionClassName = "text-blue-500 flex w-fit";
+  const mainSectionClassName = " text-link dark:text-blue-300 flex w-fit";
   const mainDisplay = (
     <>
       {sourceMetadata.icon({ size: 20 })}

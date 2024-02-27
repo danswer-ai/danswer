@@ -65,7 +65,7 @@ export function Verify({ user }: { user: User | null }) {
               {user && (
                 <div className="text-center">
                   <RequestNewVerificationEmail email={user.email}>
-                    <Text className="mt-2 text-link">
+                    <Text className="mt-2 text-link dark:text-blue-300">
                       Get new verification email
                     </Text>
                   </RequestNewVerificationEmail>

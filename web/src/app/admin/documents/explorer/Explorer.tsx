@@ -30,7 +30,7 @@ const DocumentDisplay = ({
   return (
     <div
       key={document.document_id}
-      className="text-sm border-b border-border mb-3"
+      className="text-sm border-b dark:border-b-border-dark border-border dark:border-neutral-900 mb-3"
     >
       <div className="flex relative">
         <a
@@ -76,7 +76,7 @@ const DocumentDisplay = ({
               });
             }
           }}
-          className="px-1 py-0.5 bg-hover hover:bg-hover-light rounded flex cursor-pointer select-none"
+          className="px-1 py-0.5 bg-hover hover:bg-hover-light dark:bg-neutral-600 rounded flex cursor-pointer select-none"
         >
           <div className="my-auto">
             {document.hidden ? (
@@ -160,7 +160,7 @@ export function Explorer({
     <div>
       {popup}
       <div className="justify-center py-2">
-        <div className="flex items-center w-full border-2 border-border rounded-lg px-4 py-2 focus-within:border-accent">
+        <div className="flex items-center w-full border-2 border-border dark:border-neutral-900 rounded-lg px-4 py-2 focus-within:border-accent">
           <MagnifyingGlass />
           <textarea
             autoFocus
@@ -181,7 +181,7 @@ export function Explorer({
             suppressContentEditableWarning={true}
           />
         </div>
-        <div className="mt-4 border-b border-border">
+        <div className="mt-4 border-b dark:border-b-border-dark border-border dark:border-neutral-900">
           <HorizontalFilters
             {...filterManager}
             availableDocumentSets={documentSets}
@@ -205,7 +205,7 @@ export function Explorer({
         </div>
       )}
       {!query && (
-        <div className="flex text-emphasis mt-3">
+        <div className="flex text-emphasis dark:text-gray-400 mt-3">
           Search for a document above to modify it&apos;s boost or hide it from
           searches.
         </div>

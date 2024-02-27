@@ -1,6 +1,7 @@
 import "./globals.css";
 
 import { Inter } from "next/font/google";
+import {ThemeProvider} from "@/app/ThemeContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -20,12 +21,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body
-        className={`${inter.variable} font-sans text-default bg-background`}
-      >
-        {children}
-      </body>
-    </html>
+    <ThemeProvider>
+      <html lang="en">
+        <body
+          className={`${inter.variable} font-sans bg-background dark:bg-neutral-800 dark:text-gray-400`}
+        >
+          {children}
+        </body>
+      </html>
+    </ThemeProvider>
   );
 }

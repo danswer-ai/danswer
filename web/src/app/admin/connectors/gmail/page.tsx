@@ -62,7 +62,7 @@ const GmailConnectorManagement = ({
           {gmailConnectorIndexingStatuses.length > 0 ? (
             <>
               Checkout the{" "}
-              <a href="/admin/indexing/status" className="text-blue-500">
+              <a href="/admin/indexing/status" className="text-blue-500 dark:text-blue-300">
                 status page
               </a>{" "}
               for the latest indexing status. We fetch the latest mails from
@@ -90,7 +90,7 @@ const GmailConnectorManagement = ({
       {gmailConnectorIndexingStatuses.length > 0 && (
         <h2 className="font-bold mt-3 text-sm">Add New Connector:</h2>
       )}
-      <Card className="mt-4">
+      <Card className="mt-4 dark:bg-neutral-700">
         <ConnectorForm<GmailConfig>
           nameBuilder={gmailConnectorNameBuilder}
           source="gmail"

@@ -103,14 +103,14 @@ const MainSection = () => {
             corresponding to the Slack App set up in your workspace. For more
             details on setting up the Danswer Slack App, see the{" "}
             <a
-              className="text-blue-500"
+              className="text-blue-500 dark:text-blue-300"
               href="https://docs.danswer.dev/connectors/slack#setting-up"
             >
               docs
             </a>
             .
           </p>
-          <Card>
+          <Card className="dark:bg-neutral-700">
             <CredentialForm<SlackCredentialJson>
               formBody={
                 <>
@@ -192,7 +192,7 @@ const MainSection = () => {
       )}
 
       {slackCredential ? (
-        <Card>
+        <Card className="dark:bg-neutral-700">
           <h2 className="font-bold mb-3">Connect to a New Workspace</h2>
           <ConnectorForm<SlackConfig>
             nameBuilder={(values) =>

@@ -13,11 +13,11 @@ export function DeleteButton({
         my-auto 
         flex 
         mb-1 
-        ${disabled ? "cursor-default" : "hover:bg-hover cursor-pointer"} 
+        ${disabled ? "cursor-default" : "hover:bg-hover dark:hover:bg-neutral-800 cursor-pointer"} 
         w-fit 
         p-2 
         rounded-lg
-        border-border
+        border-border dark:border-neutral-900
         text-sm`}
       onClick={onClick}
     >

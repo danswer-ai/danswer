@@ -31,12 +31,12 @@ export const FileUpload: FC<FileUploadProps> = ({
               {...getRootProps()}
               className={
                 "flex flex-col items-center w-full px-4 py-12 rounded " +
-                "shadow-lg tracking-wide border border-border cursor-pointer" +
+                "shadow-lg tracking-wide border border-border dark:border-neutral-900 cursor-pointer" +
                 (dragActive ? " border-accent" : "")
               }
             >
               <input {...getInputProps()} />
-              <b className="text-emphasis">
+              <b className="text-emphasis dark:text-gray-400">
                 {message ||
                   "Drag and drop some files here, or click to select files"}
               </b>

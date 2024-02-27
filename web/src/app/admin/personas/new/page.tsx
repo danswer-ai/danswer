@@ -54,7 +54,7 @@ export default async function Page() {
         icon={<RobotIcon size={32} />}
       />
 
-      <Card>
+      <Card className="dark:bg-neutral-700">
         <PersonaEditor
           documentSets={documentSets}
           llmOverrideOptions={llmOverrideOptions}

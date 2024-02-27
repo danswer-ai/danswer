@@ -55,7 +55,7 @@ export function ConfigDisplay({
   return (
     <>
       <Title className="mb-2">Configuration</Title>
-      <Card>
+      <Card className="dark:bg-neutral-700">
         <List>
           {configEntries.map(([key, value]) => (
             <ListItem key={key}>

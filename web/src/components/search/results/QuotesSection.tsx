@@ -18,7 +18,7 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
     >
       {detailIsOpen && (
         <div className="absolute top-0 mt-9 pt-2 z-50">
-          <div className="flex flex-shrink-0 rounded-lg w-96 bg-background border border-border shadow p-3 text-sm leading-relaxed">
+          <div className="flex flex-shrink-0 rounded-lg w-96 bg-background dark:bg-neutral-800 border border-border dark:border-neutral-900 shadow p-3 text-sm leading-relaxed">
             <div>
               <b>Quote:</b> <i>{quoteInfo.quote}</i>
             </div>
@@ -32,7 +32,7 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
                 }, 1000);
               }}
             >
-              <div className="p-1 rounded hover:bg-hover cursor-pointer">
+              <div className="p-1 rounded hover:bg-hover dark:hover:bg-neutral-800 cursor-pointer">
                 {copyClicked ? (
                   <CheckmarkIcon
                     className="my-auto flex flex-shrink-0"
@@ -48,7 +48,7 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
       )}
       <button className="text-sm flex w-fit">
         <a
-          className="flex max-w-[300px] shrink box-border p-2 border border-border rounded-lg hover:bg-hover-light"
+          className="flex max-w-[300px] shrink box-border p-2 border border-border dark:border-neutral-900 rounded-lg hover:bg-hover-light dark:hover:bg-neutral-800"
           href={quoteInfo.link || undefined}
           target="_blank"
           rel="noopener noreferrer"
@@ -60,11 +60,11 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
         </a>
 
         {/* <div
-          className="cursor-pointer h-full pt-2 pb-2 px-1 border-t border-b border-r border-gray-800 rounded-r-lg hover:bg-gray-800"
+          className="cursor-pointer h-full pt-2 pb-2 px-1 border-t dark:border-t-border-dark border-b dark:border-b-border-dark border-r dark:border-r-border-dark border-gray-800 rounded-r-lg hover:bg-gray-800"
           onClick={() => setDetailIsOpen(!detailIsOpen)}
         >
           <div className="pt-0.5 mx-auto h-[20px]">
-            <ZoomInIcon className="text-gray-500" size={14} />
+            <ZoomInIcon className="text-subtle dark:text-neutral-400" size={14} />
           </div>
         </div> */}
       </button>
@@ -133,7 +133,7 @@ export const QuotesSection = (props: QuotesSectionProps) => {
     <ResponseSection
       status={status}
       header={
-        <div className="ml-2 text-emphasis">{<QuotesHeader {...props} />}</div>
+        <div className="ml-2 text-emphasis dark:text-gray-400">{<QuotesHeader {...props} />}</div>
       }
       body={<QuotesBody {...props} />}
       desiredOpenStatus={true}

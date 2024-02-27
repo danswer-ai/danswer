@@ -46,7 +46,7 @@ export const ApiKeyModal = () => {
             Or if you&apos;d rather look around first,{" "}
             <strong
               onClick={() => setErrorMsg(null)}
-              className="text-link cursor-pointer"
+              className="text-link dark:text-blue-300 cursor-pointer"
             >
               skip this step
             </strong>

@@ -26,9 +26,9 @@ export function FilterDropdown({
           <div
             className={`
           border 
-          border-border 
+          border-border dark:border-neutral-900 
           rounded-lg 
-          bg-background
+          bg-background dark:bg-neutral-800
           flex 
           flex-col 
           w-64 
@@ -48,10 +48,10 @@ export function FilterDropdown({
                     py-2.5 
                     select-none 
                     cursor-pointer 
-                    text-emphasis
-                    hover:bg-hover-light
+                    text-emphasis dark:text-gray-400
+                    hover:bg-neutral-200 dark:hover:bg-neutral-600
                     ${
-                      ind === options.length - 1 ? "" : "border-b border-border"
+                      ind === options.length - 1 ? "" : "border-b dark:border-b-border-dark border-border dark:border-neutral-900"
                     } 
                   `}
                   onClick={(event) => {
@@ -81,9 +81,9 @@ export function FilterDropdown({
         py-1.5 
         rounded-lg 
         border 
-        border-border
+        border-border dark:border-neutral-900
         cursor-pointer 
-        hover:bg-hover-light`}
+        hover:bg-hover-light dark:hover:bg-neutral-800`}
         >
           {icon}
           {selected.length === 0 ? (

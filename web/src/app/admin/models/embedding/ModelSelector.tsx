@@ -13,7 +13,7 @@ export function ModelOption({
   return (
     <div
       className={
-        "p-2 border border-border rounded shadow-md bg-hover-light w-96 flex flex-col"
+        "p-2 border border-border dark:border-neutral-900 rounded shadow-md bg-hover-light dark:bg-neutral-600 w-96 flex flex-col"
       }
     >
       <div className="font-bold text-lg flex">
@@ -25,7 +25,7 @@ export function ModelOption({
         <a
           target="_blank"
           href={model.link}
-          className="text-xs text-link mx-1 mt-1"
+          className="text-xs text-link dark:text-blue-300 mx-1 mt-1"
         >
           See More Details
         </a>
@@ -34,19 +34,18 @@ export function ModelOption({
         <div
           className={`
             m-auto 
-            flex 
-            mt-3
+            flex
             mb-1 
             w-fit 
             p-2 
             rounded-lg
-            bg-background
+            bg-background dark:bg-neutral-800
             border
-            border-border
+            border-border dark:border-neutral-900
             cursor-pointer
             hover:bg-hover
             text-sm
-            mt-auto`}
+            mt-auto dark:hover:bg-neutral-800`}
           onClick={() => onSelect(model.model_name)}
         >
           Select Model

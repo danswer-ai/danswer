@@ -9,9 +9,9 @@ export function MetadataBadge({
     <div
       className={`
       text-xs 
-      text-strong
+      text-strong dark:text-strong-dark
       flex
-      bg-hover 
+      bg-hover dark:bg-hover-dark 
       rounded-full 
       px-1
       py-0.5 

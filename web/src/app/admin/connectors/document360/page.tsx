@@ -84,7 +84,7 @@ const MainSection = () => {
               {document360Credential.credential_json.document360_api_token}
             </Text>
             <button
-              className="ml-1 hover:bg-hover rounded p-1"
+              className="ml-1 hover:bg-hover rounded p-1 dark:hover:bg-neutral-800"
               onClick={async () => {
                 await adminDeleteCredential(document360Credential.id);
                 refreshCredentials();
@@ -101,7 +101,7 @@ const MainSection = () => {
             token and portal ID corresponding to your Document360 setup. See
             setup guide{" "}
             <a
-              className="text-link"
+              className="text-link dark:text-blue-300"
               href="https://docs.danswer.dev/connectors/document360"
               target="_blank"
             >
@@ -109,7 +109,7 @@ const MainSection = () => {
             </a>{" "}
             for more detail.
           </Text>
-          <Card className="mt-2">
+          <Card className="dark:bg-neutral-700 mt-2">
             <CredentialForm<Document360CredentialJson>
               formBody={
                 <>
@@ -195,7 +195,7 @@ const MainSection = () => {
       )}
 
       {document360Credential ? (
-        <Card className="mt-4">
+        <Card className="dark:bg-neutral-700 mt-4">
           <h2 className="font-bold mb-3">Connect to a New Workspace</h2>
           <ConnectorForm<Document360Config>
             nameBuilder={(values) =>

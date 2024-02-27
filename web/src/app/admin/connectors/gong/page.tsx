@@ -81,7 +81,7 @@ const Main = () => {
         This connector allows you to sync all your Gong Transcripts into
         Danswer. More details on how to setup the Gong connector can be found in{" "}
         <a
-          className="text-link"
+          className="text-link dark:text-blue-300"
           href="https://docs.danswer.dev/connectors/gong"
           target="_blank"
         >
@@ -101,7 +101,7 @@ const Main = () => {
               {gongCredential.credential_json?.gong_access_key_secret}
             </p>
             <button
-              className="ml-1 hover:bg-hover rounded p-1"
+              className="ml-1 hover:bg-hover dark:hover:bg-neutral-800 rounded p-1"
               onClick={async () => {
                 if (gongConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -121,7 +121,7 @@ const Main = () => {
         </>
       ) : (
         <>
-          <Card className="mt-4">
+          <Card className="mt-4 dark:bg-neutral-700">
             <CredentialForm<GongCredentialJson>
               formBody={
                 <>
@@ -204,7 +204,7 @@ const Main = () => {
 
       {gongCredential ? (
         <>
-          <Card className="mt-4">
+          <Card className="mt-4 dark:bg-neutral-700">
             <h2 className="font-bold mb-3">Create a new Gong Connector</h2>
             <ConnectorForm<GongConfig>
               nameBuilder={(values) =>

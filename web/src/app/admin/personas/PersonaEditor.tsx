@@ -23,12 +23,12 @@ function SectionHeader({ children }: { children: string | JSX.Element }) {
 
 function Label({ children }: { children: string | JSX.Element }) {
   return (
-    <div className="block font-medium text-base text-emphasis">{children}</div>
+    <div className="block font-medium text-base text-emphasis dark:text-gray-400">{children}</div>
   );
 }
 
 function SubLabel({ children }: { children: string | JSX.Element }) {
-  return <div className="text-sm text-subtle mb-2">{children}</div>;
+  return <div className="text-sm text-subtle dark:text-neutral-400 mb-2">{children}</div>;
 }
 
 export function PersonaEditor({
@@ -300,7 +300,7 @@ export function PersonaEditor({
                               Select which{" "}
                               <Link
                                 href="/admin/documents/sets"
-                                className="text-blue-500"
+                                className="text-link dark:text-blue-300"
                                 target="_blank"
                               >
                                 Document Sets
@@ -327,13 +327,13 @@ export function PersonaEditor({
                               py-1
                               rounded-lg 
                               border
-                              border-border
+                              border-border dark:border-neutral-900
                               w-fit 
                               flex 
                               cursor-pointer ` +
                                   (isSelected
-                                    ? " bg-hover"
-                                    : " bg-background hover:bg-hover-light")
+                                    ? " bg-hover dark:bg-hover-dark"
+                                    : " bg-background dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-600")
                                 }
                                 onClick={() => {
                                   if (isSelected) {
@@ -371,7 +371,7 @@ export function PersonaEditor({
                     <a
                       href="https://platform.openai.com/docs/models"
                       target="_blank"
-                      className="text-blue-500"
+                      className="text-link dark:text-blue-300"
                     >
                       OpenAI docs
                     </a>

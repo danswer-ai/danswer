@@ -34,7 +34,7 @@ const ExistingKeys = () => {
       <div className="flex mb-1">
         <p className="text-sm italic my-auto">sk- ****...**{data?.api_key}</p>
         <button
-          className="ml-1 my-auto hover:bg-hover rounded p-1"
+          className="ml-1 my-auto hover:bg-hover dark:hover:bg-neutral-800 rounded p-1"
           onClick={async () => {
             await fetch(GEN_AI_API_KEY_URL, {
               method: "DELETE",
@@ -63,7 +63,7 @@ const Page = () => {
       <Text className="mb-2">
         Specify an OpenAI API key and click the &quot;Submit&quot; button.
       </Text>
-      <div className="border rounded-md border-border p-3">
+      <div className="border rounded-md border-border dark:border-neutral-900 p-3">
         <ApiKeyForm
           handleResponse={(response) => {
             if (response.ok) {

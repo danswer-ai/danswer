@@ -58,7 +58,7 @@ export function TagFilter({
     <div className="relative">
       <input
         ref={inputRef}
-        className="w-full border border-border py-0.5 px-2 rounded text-sm h-8"
+        className="w-full border border-border dark:border-neutral-900 py-0.5 px-2 rounded text-sm h-8 dark:bg-background-emphasis-dark"
         placeholder="Find a tag"
         value={filterValue}
         onChange={(event) => setFilterValue(event.target.value)}
@@ -71,7 +71,7 @@ export function TagFilter({
               <div
                 key={tag.tag_key + tag.tag_value}
                 onClick={() => onSelectTag(tag)}
-                className="max-w-full break-all line-clamp-1 text-ellipsis flex text-sm border border-border py-0.5 px-2 rounded cursor-pointer bg-background hover:bg-hover"
+                className="max-w-full break-all line-clamp-1 text-ellipsis flex text-sm border border-border dark:border-neutral-900 py-0.5 px-2 rounded cursor-pointer bg-background dark:bg-neutral-800 hover:bg-hover dark:hover:bg-neutral-800"
               >
                 {tag.tag_key}
                 <b>=</b>
@@ -92,9 +92,9 @@ export function TagFilter({
         <div className="absolute top-0 right-0 transform translate-x-[105%] z-40">
           <div
             ref={popupRef}
-            className="p-2 border border-border rounded shadow-lg w-72 bg-background"
+            className="p-2 border border-border dark:border-neutral-900 rounded shadow-lg w-72 bg-background dark:bg-neutral-800"
           >
-            <div className="flex border-b border-border font-medium pb-1 text-xs mb-2">
+            <div className="flex border-b dark:border-b-border-dark border-border dark:border-neutral-900 font-medium pb-1 text-xs mb-2">
               <FiTag className="mr-1 my-auto" />
               Tags
             </div>
@@ -108,13 +108,13 @@ export function TagFilter({
                     text-sm 
                     max-w-full
                     border 
-                    border-border 
+                    border-border dark:border-neutral-900 
                     py-0.5 
                     px-2 
                     rounded 
                     cursor-pointer 
-                    bg-background 
-                    hover:bg-hover
+                    bg-background dark:bg-neutral-800 
+                    hover:bg-hover dark:hover:bg-neutral-800
                     ${selectedTags.includes(tag) ? "bg-hover" : ""}
                   `}
                   >

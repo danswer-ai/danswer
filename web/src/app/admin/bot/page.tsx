@@ -96,7 +96,7 @@ const SlackBotConfigsTable = ({
                     !isPersonaASlackBotPersona(slackBotConfig.persona) ? (
                       <Link
                         href={`/admin/personas/${slackBotConfig.persona.id}`}
-                        className="text-blue-500 flex"
+                        className="text-blue-500 dark:text-blue-300 flex"
                       >
                         <FiArrowUpRight className="my-auto mr-1" />
                         {slackBotConfig.persona.name}
@@ -211,7 +211,7 @@ const Main = () => {
       <Text className="mb-6">
         Follow the{" "}
         <a
-          className="text-blue-500"
+          className="text-blue-500 dark:text-blue-300"
           href="https://docs.danswer.dev/slack_bot_setup"
           target="_blank"
         >

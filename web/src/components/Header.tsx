@@ -9,6 +9,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { CustomDropdown, DefaultDropdownElement } from "./Dropdown";
 import { FiMessageSquare, FiSearch } from "react-icons/fi";
 import { usePathname } from "next/navigation";
+import { FiSun, FiMoon } from "react-icons/fi";
+import { useTheme} from "@/app/ThemeContext";
 
 interface HeaderProps {
   user: User | null;
@@ -19,6 +21,7 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     const response = await logout();
@@ -54,14 +57,14 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
   }, [dropdownOpen]);
 
   return (
-    <header className="border-b border-border bg-background-emphasis">
-      <div className="mx-8 flex h-16">
-        <Link className="py-4" href="/search">
-          <div className="flex">
+      <header className="border-b dark:border-b-border-dark border-border dark:border-neutral-900 bg-background-emphasis dark:bg-background-strong-dark dark:text-neutral-400">
+        <div className="mx-8 flex h-16">
+          <Link className="py-4" href="/search">
+            <div className="flex">
             <div className="h-[32px] w-[30px]">
               <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
             </div>
-            <h1 className="flex text-2xl text-strong font-bold my-auto">
+            <h1 className="flex text-2xl text-strong dark:text-strong-dark font-bold my-auto dark:text-neutral-400">
               Danswer
             </h1>
           </div>
@@ -69,52 +72,55 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
 
         <Link
           href="/search"
-          className={"ml-6 h-full flex flex-col hover:bg-hover"}
+          className={"ml-6 h-full flex flex-col hover:bg-hover dark:hover:bg-neutral-800"}
         >
           <div className="w-24 flex my-auto">
-            <div className={"mx-auto flex text-strong px-2"}>
+            <div className={"mx-auto flex text-strong dark:text-strong-dark px-2"}>
               <FiSearch className="my-auto mr-1" />
-              <h1 className="flex text-sm font-bold my-auto">Search</h1>
+              <h1 className="flex text-sm font-bold my-auto dark:text-neutral-400">Search</h1>
             </div>
           </div>
         </Link>
 
-        <Link href="/chat" className="h-full flex flex-col hover:bg-hover">
+        <Link href="/chat" className="h-full flex flex-col hover:bg-hover dark:hover:bg-neutral-800">
           <div className="w-24 flex my-auto">
-            <div className="mx-auto flex text-strong px-2">
+            <div className="mx-auto flex text-strong dark:text-strong-dark px-2">
               <FiMessageSquare className="my-auto mr-1" />
-              <h1 className="flex text-sm font-bold my-auto">Chat</h1>
+              <h1 className="flex text-sm font-bold my-auto dark:text-neutral-400">Chat</h1>
             </div>
           </div>
         </Link>
 
         <div className="ml-auto h-full flex flex-col">
-          <div className="my-auto">
+          <div className="my-auto flex items-center">
+            <button onClick={toggleTheme} className="my-auto mr-4">
+              {theme === 'dark' ? <FiSun size={20}/> : <FiMoon size={20}/>}
+            </button>
             <CustomDropdown
-              dropdown={
-                <div
-                  className={
-                    "absolute right-0 mt-2 bg-background rounded border border-border " +
-                    "w-48 overflow-hidden shadow-xl z-10 text-sm"
-                  }
-                >
-                  {/* Show connector option if (1) auth is disabled or (2) user is an admin */}
-                  {(!user || user.role === "admin") && (
-                    <Link href="/admin/indexing/status">
-                      <DefaultDropdownElement name="Admin Panel" />
-                    </Link>
-                  )}
-                  {user && (
-                    <DefaultDropdownElement
-                      name="Logout"
-                      onSelect={handleLogout}
-                    />
-                  )}
-                </div>
-              }
+                dropdown={
+                  <div
+                      className={
+                          "absolute right-0 mt-2 bg-background dark:bg-neutral-800 rounded border border-border dark:border-neutral-900 " +
+                          "w-48 overflow-hidden shadow-xl z-10 text-sm"
+                      }
+                  >
+                    {/* Show connector option if (1) auth is disabled or (2) user is an admin */}
+                    {(!user || user.role === "admin") && (
+                        <Link href="/admin/indexing/status">
+                          <DefaultDropdownElement name="Admin Panel"/>
+                        </Link>
+                    )}
+                    {user && (
+                        <DefaultDropdownElement
+                            name="Logout"
+                            onSelect={handleLogout}
+                        />
+                    )}
+                  </div>
+                }
             >
-              <div className="hover:bg-hover rounded p-1 w-fit">
-                <div className="my-auto bg-user text-sm rounded-lg px-1.5 select-none">
+              <div className="hover:bg-hover dark:hover:bg-neutral-800 rounded p-1 w-fit cursor-pointer">
+                <div className="my-auto bg-user text-sm rounded-lg px-1.5 select-none dark:text-neutral-900">
                   {user && user.email ? user.email[0].toUpperCase() : "A"}
                 </div>
               </div>

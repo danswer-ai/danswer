@@ -84,7 +84,7 @@ const Main = () => {
               {linearCredential.credential_json?.linear_api_key}
             </Text>
             <button
-              className="ml-1 hover:bg-hover rounded p-1"
+              className="ml-1 hover:bg-hover rounded p-1 dark:hover:bg-neutral-800"
               onClick={async () => {
                 if (linearConnectorIndexingStatuses.length > 0) {
                   setPopup({
@@ -107,7 +107,7 @@ const Main = () => {
           <Text>
             To use the Linear connector, first follow the guide{" "}
             <a
-              className="text-blue-500"
+              className="text-blue-500 dark:text-blue-300"
               href="https://docs.danswer.dev/connectors/linear"
               target="_blank"
             >
@@ -115,7 +115,7 @@ const Main = () => {
             </a>{" "}
             to generate an API Key.
           </Text>
-          <Card className="mt-4">
+          <Card className="mt-4 dark:bg-neutral-700">
             <CredentialForm<LinearCredentialJson>
               formBody={
                 <>
@@ -179,7 +179,7 @@ const Main = () => {
               </div>
             </>
           ) : (
-            <Card className="mt-4">
+            <Card className="mt-4 dark:bg-neutral-700">
               <h2 className="font-bold mb-3">Create Connector</h2>
               <p className="text-sm mb-4">
                 Press connect below to start the connection Linear. We pull the

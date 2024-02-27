@@ -18,7 +18,7 @@ export function RequestNewVerificationEmail({
 
   return (
     <button
-      className="text-link"
+      className="text-link dark:text-blue-300"
       onClick={async () => {
         setIsRequestingVerification(true);
         const response = await requestEmailVerification(email);

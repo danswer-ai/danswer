@@ -46,7 +46,7 @@ export default async function Page() {
         <Title>Create a Persona</Title>
         <Link
           href="/admin/personas/new"
-          className="flex py-2 px-4 mt-2 border border-border h-fit cursor-pointer hover:bg-hover text-sm w-36"
+          className="flex py-2 px-4 mt-2 border border-border dark:border-neutral-900 h-fit cursor-pointer hover:bg-hover dark:hover:bg-neutral-800 text-sm w-36"
         >
           <div className="mx-auto flex">
             <FiPlusSquare className="my-auto mr-2" />

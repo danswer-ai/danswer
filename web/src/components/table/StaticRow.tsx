@@ -4,7 +4,7 @@ import { Row } from "./interfaces";
 
 export function StaticRow({ row }: { row: Row }) {
   return (
-    <TableRow className="bg-background border-b border-border">
+    <TableRow className="bg-background dark:bg-neutral-800 border-b dark:border-b-border-dark border-border dark:border-neutral-900">
       <TableCell>
         <DragHandle isDragging />
       </TableCell>

@@ -36,8 +36,8 @@ function SelectedBubble({
   return (
     <div
       className={
-        "flex text-xs cursor-pointer items-center border border-border " +
-        "py-1 rounded-lg px-2 w-fit select-none hover:bg-hover"
+        "flex text-xs cursor-pointer items-center border border-border dark:border-neutral-900 " +
+        "py-1 rounded-lg px-2 w-fit select-none hover:bg-hover dark:hover:bg-neutral-800"
       }
       onClick={onClick}
     >
@@ -257,10 +257,10 @@ function TagsSection({
         )}
       </div>
 
-      <div className="mx-2 mb-2 pt-2 border-t border-border">
+      <div className="mx-2 mb-2 pt-2 border-t dark:border-t-border-dark border-border dark:border-neutral-900">
         <input
           ref={inputRef}
-          className="w-full border border-border py-0.5 px-2 rounded text-sm h-8 "
+          className="w-full border border-border dark:border-neutral-900 py-0.5 px-2 rounded text-sm h-8 "
           placeholder="Find a tag"
           value={filterValue}
           onChange={(event) => setFilterValue(event.target.value)}

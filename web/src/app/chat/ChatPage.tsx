@@ -45,7 +45,7 @@ export function ChatLayout({
       <HealthCheckBanner />
       <InstantSSRAutoRefresh />
 
-      <div className="flex relative bg-background text-default overflow-x-hidden">
+      <div className="flex relative bg-background dark:bg-neutral-800 overflow-x-hidden">
         <ChatSidebar
           existingChats={chatSessions}
           currentChatId={chatId}

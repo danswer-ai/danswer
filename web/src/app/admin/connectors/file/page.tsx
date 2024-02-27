@@ -69,14 +69,14 @@ const Main = () => {
         search result. More details on this can be found in the{" "}
         <a
           href="https://docs.danswer.dev/connectors/file"
-          className="text-link"
+          className="text-link dark:text-blue-300"
         >
           documentation.
         </a>
       </Text>
       <div className="flex mt-4">
         <div className="mx-auto w-full">
-          <Card>
+          <Card className="dark:bg-neutral-700">
             <Formik
               initialValues={{
                 name: "",
@@ -195,7 +195,7 @@ const Main = () => {
             >
               {({ values, isSubmitting }) => (
                 <Form>
-                  <h2 className="font-bold text-emphasis text-xl mb-2">
+                  <h2 className="font-bold text-emphasis dark:text-gray-400 text-xl mb-2">
                     Upload Files
                   </h2>
                   <TextFormField
@@ -205,7 +205,7 @@ const Main = () => {
                     autoCompleteDisabled={true}
                   />
 
-                  <p className="mb-1 font-medium text-emphasis">Files:</p>
+                  <p className="mb-1 font-medium text-emphasis dark:text-gray-400">Files:</p>
                   <FileUpload
                     selectedFiles={selectedFiles}
                     setSelectedFiles={setSelectedFiles}
