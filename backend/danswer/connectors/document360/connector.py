@@ -130,7 +130,7 @@ class Document360Connector(LoadConnector, PollConnector):
                 continue
 
             authors = [
-                author["email_id"]
+                {"name": author.get("name", "Unknown"), "email": author["email_id"]}
                 for author in article_details.get("authors", [])
                 if author["email_id"]
             ]
