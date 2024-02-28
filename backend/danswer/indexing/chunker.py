@@ -7,7 +7,7 @@ from danswer.configs.app_configs import CHUNK_OVERLAP
 from danswer.configs.app_configs import MINI_CHUNK_SIZE
 from danswer.configs.constants import SECTION_SEPARATOR
 from danswer.configs.constants import TITLE_SEPARATOR
-from danswer.configs.model_configs import CHUNK_SIZE
+from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.connectors.models import Document
 from danswer.indexing.models import DocAwareChunk
 from danswer.search.search_nlp_models import get_default_tokenizer
@@ -37,7 +37,7 @@ def chunk_large_section(
     document: Document,
     start_chunk_id: int,
     tokenizer: "AutoTokenizer",
-    chunk_size: int = CHUNK_SIZE,
+    chunk_size: int = DOC_EMBEDDING_CONTEXT_SIZE,
     chunk_overlap: int = CHUNK_OVERLAP,
     blurb_size: int = BLURB_SIZE,
 ) -> list[DocAwareChunk]:
@@ -67,7 +67,7 @@ def chunk_large_section(
 
 def chunk_document(
     document: Document,
-    chunk_tok_size: int = CHUNK_SIZE,
+    chunk_tok_size: int = DOC_EMBEDDING_CONTEXT_SIZE,
     subsection_overlap: int = CHUNK_OVERLAP,
     blurb_size: int = BLURB_SIZE,
 ) -> list[DocAwareChunk]:

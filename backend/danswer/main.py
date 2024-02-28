@@ -1,3 +1,5 @@
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from typing import Any
 from typing import cast
 
@@ -130,8 +132,124 @@ def include_router_with_global_prefix_prepended(
     application.include_router(router, **final_kwargs)
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator:
+    engine = get_sqlalchemy_engine()
+
+    verify_auth = fetch_versioned_implementation(
+        "danswer.auth.users", "verify_auth_setting"
+    )
+    # Will throw exception if an issue is found
+    verify_auth()
+
+    # Danswer APIs key
+    api_key = get_danswer_api_key()
+    logger.info(f"Danswer API Key: {api_key}")
+
+    if OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET:
+        logger.info("Both OAuth Client ID and Secret are configured.")
+
+    if DISABLE_GENERATIVE_AI:
+        logger.info("Generative AI Q&A disabled")
+    else:
+        logger.info(f"Using LLM Provider: {GEN_AI_MODEL_PROVIDER}")
+        base, fast = get_default_llm_version()
+        logger.info(f"Using LLM Model Version: {base}")
+        if base != fast:
+            logger.info(f"Using Fast LLM Model Version: {fast}")
+        if GEN_AI_API_ENDPOINT:
+            logger.info(f"Using LLM Endpoint: {GEN_AI_API_ENDPOINT}")
+
+        # Any additional model configs logged here
+        get_default_llm().log_model_configs()
+
+    if MULTILINGUAL_QUERY_EXPANSION:
+        logger.info(
+            f"Using multilingual flow with languages: {MULTILINGUAL_QUERY_EXPANSION}"
+        )
+
+    with Session(engine) as db_session:
+        db_embedding_model = get_current_db_embedding_model(db_session)
+        secondary_db_embedding_model = get_secondary_db_embedding_model(db_session)
+
+        # Break bad state for thrashing indexes
+        if secondary_db_embedding_model and DISABLE_INDEX_UPDATE_ON_SWAP:
+            expire_index_attempts(
+                embedding_model_id=db_embedding_model.id, db_session=db_session
+            )
+
+            for cc_pair in get_connector_credential_pairs(db_session):
+                resync_cc_pair(cc_pair, db_session=db_session)
+
+        # Expire all old embedding models indexing attempts, technically redundant
+        cancel_indexing_attempts_past_model(db_session)
+
+        logger.info(f'Using Embedding model: "{db_embedding_model.model_name}"')
+        if db_embedding_model.query_prefix or db_embedding_model.passage_prefix:
+            logger.info(f'Query embedding prefix: "{db_embedding_model.query_prefix}"')
+            logger.info(
+                f'Passage embedding prefix: "{db_embedding_model.passage_prefix}"'
+            )
+
+        if ENABLE_RERANKING_REAL_TIME_FLOW:
+            logger.info("Reranking step of search flow is enabled.")
+
+        if MODEL_SERVER_HOST:
+            logger.info(
+                f"Using Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}"
+            )
+        else:
+            logger.info("Warming up local NLP models.")
+            warm_up_models(
+                model_name=db_embedding_model.model_name,
+                normalize=db_embedding_model.normalize,
+                skip_cross_encoders=not ENABLE_RERANKING_REAL_TIME_FLOW,
+            )
+
+            if torch.cuda.is_available():
+                logger.info("GPU is available")
+            else:
+                logger.info("GPU is not available")
+            logger.info(f"Torch Threads: {torch.get_num_threads()}")
+
+        logger.info("Verifying query preprocessing (NLTK) data is downloaded")
+        nltk.download("stopwords", quiet=True)
+        nltk.download("wordnet", quiet=True)
+        nltk.download("punkt", quiet=True)
+
+        logger.info("Verifying default connector/credential exist.")
+        create_initial_public_credential(db_session)
+        create_initial_default_connector(db_session)
+        associate_default_cc_pair(db_session)
+
+        logger.info("Loading default Prompts and Personas")
+        delete_old_default_personas(db_session)
+        load_chat_yamls()
+
+        logger.info("Verifying Document Index(s) is/are available.")
+
+        document_index = get_default_document_index(
+            primary_index_name=db_embedding_model.index_name,
+            secondary_index_name=secondary_db_embedding_model.index_name
+            if secondary_db_embedding_model
+            else None,
+        )
+        document_index.ensure_indices_exist(
+            index_embedding_dim=db_embedding_model.model_dim,
+            secondary_index_embedding_dim=secondary_db_embedding_model.model_dim
+            if secondary_db_embedding_model
+            else None,
+        )
+
+    optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
+
+    yield
+
+
 def get_application() -> FastAPI:
-    application = FastAPI(title="Danswer Backend", version=__version__)
+    application = FastAPI(
+        title="Danswer Backend", version=__version__, lifespan=lifespan
+    )
 
     include_router_with_global_prefix_prepended(application, chat_router)
     include_router_with_global_prefix_prepended(application, query_router)
@@ -219,121 +337,6 @@ def get_application() -> FastAPI:
     )
 
     application.add_exception_handler(ValueError, value_error_handler)
-
-    @application.on_event("startup")
-    def startup_event() -> None:
-        engine = get_sqlalchemy_engine()
-
-        verify_auth = fetch_versioned_implementation(
-            "danswer.auth.users", "verify_auth_setting"
-        )
-        # Will throw exception if an issue is found
-        verify_auth()
-
-        # Danswer APIs key
-        api_key = get_danswer_api_key()
-        logger.info(f"Danswer API Key: {api_key}")
-
-        if OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET:
-            logger.info("Both OAuth Client ID and Secret are configured.")
-
-        if DISABLE_GENERATIVE_AI:
-            logger.info("Generative AI Q&A disabled")
-        else:
-            logger.info(f"Using LLM Provider: {GEN_AI_MODEL_PROVIDER}")
-            base, fast = get_default_llm_version()
-            logger.info(f"Using LLM Model Version: {base}")
-            if base != fast:
-                logger.info(f"Using Fast LLM Model Version: {fast}")
-            if GEN_AI_API_ENDPOINT:
-                logger.info(f"Using LLM Endpoint: {GEN_AI_API_ENDPOINT}")
-
-            # Any additional model configs logged here
-            get_default_llm().log_model_configs()
-
-        if MULTILINGUAL_QUERY_EXPANSION:
-            logger.info(
-                f"Using multilingual flow with languages: {MULTILINGUAL_QUERY_EXPANSION}"
-            )
-
-        with Session(engine) as db_session:
-            db_embedding_model = get_current_db_embedding_model(db_session)
-            secondary_db_embedding_model = get_secondary_db_embedding_model(db_session)
-
-            # Break bad state for thrashing indexes
-            if secondary_db_embedding_model and DISABLE_INDEX_UPDATE_ON_SWAP:
-                expire_index_attempts(
-                    embedding_model_id=db_embedding_model.id, db_session=db_session
-                )
-
-                for cc_pair in get_connector_credential_pairs(db_session):
-                    resync_cc_pair(cc_pair, db_session=db_session)
-
-            # Expire all old embedding models indexing attempts, technically redundant
-            cancel_indexing_attempts_past_model(db_session)
-
-            logger.info(f'Using Embedding model: "{db_embedding_model.model_name}"')
-            if db_embedding_model.query_prefix or db_embedding_model.passage_prefix:
-                logger.info(
-                    f'Query embedding prefix: "{db_embedding_model.query_prefix}"'
-                )
-                logger.info(
-                    f'Passage embedding prefix: "{db_embedding_model.passage_prefix}"'
-                )
-
-            if ENABLE_RERANKING_REAL_TIME_FLOW:
-                logger.info("Reranking step of search flow is enabled.")
-
-            if MODEL_SERVER_HOST:
-                logger.info(
-                    f"Using Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}"
-                )
-            else:
-                logger.info("Warming up local NLP models.")
-                warm_up_models(
-                    model_name=db_embedding_model.model_name,
-                    normalize=db_embedding_model.normalize,
-                    skip_cross_encoders=not ENABLE_RERANKING_REAL_TIME_FLOW,
-                )
-
-                if torch.cuda.is_available():
-                    logger.info("GPU is available")
-                else:
-                    logger.info("GPU is not available")
-                logger.info(f"Torch Threads: {torch.get_num_threads()}")
-
-            logger.info("Verifying query preprocessing (NLTK) data is downloaded")
-            nltk.download("stopwords", quiet=True)
-            nltk.download("wordnet", quiet=True)
-            nltk.download("punkt", quiet=True)
-
-            logger.info("Verifying default connector/credential exist.")
-            create_initial_public_credential(db_session)
-            create_initial_default_connector(db_session)
-            associate_default_cc_pair(db_session)
-
-            logger.info("Loading default Prompts and Personas")
-            delete_old_default_personas(db_session)
-            load_chat_yamls()
-
-            logger.info("Verifying Document Index(s) is/are available.")
-
-            document_index = get_default_document_index(
-                primary_index_name=db_embedding_model.index_name,
-                secondary_index_name=secondary_db_embedding_model.index_name
-                if secondary_db_embedding_model
-                else None,
-            )
-            document_index.ensure_indices_exist(
-                index_embedding_dim=db_embedding_model.model_dim,
-                secondary_index_embedding_dim=secondary_db_embedding_model.model_dim
-                if secondary_db_embedding_model
-                else None,
-            )
-
-        optional_telemetry(
-            record_type=RecordType.VERSION, data={"version": __version__}
-        )
 
     application.add_middleware(
         CORSMiddleware,
