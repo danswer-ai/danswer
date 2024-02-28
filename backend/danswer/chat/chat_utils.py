@@ -9,6 +9,7 @@ from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 from sqlalchemy.orm import Session
+from tiktoken.core import Encoding
 
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
@@ -17,6 +18,7 @@ from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.chat_configs import STOP_STREAM_PAT
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
+from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS
 from danswer.db.chat import get_chat_messages_by_session
 from danswer.db.models import ChatMessage
@@ -24,8 +26,10 @@ from danswer.db.models import Persona
 from danswer.db.models import Prompt
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.utils import check_number_of_tokens
+from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import get_default_llm_version
 from danswer.llm.utils import get_max_input_tokens
+from danswer.llm.utils import tokenizer_trim_content
 from danswer.prompts.chat_prompts import CHAT_USER_CONTEXT_FREE_PROMPT
 from danswer.prompts.chat_prompts import CHAT_USER_PROMPT
 from danswer.prompts.chat_prompts import CITATION_REMINDER
@@ -42,6 +46,9 @@ from danswer.prompts.token_counts import (
 from danswer.prompts.token_counts import CITATION_REMINDER_TOKEN_CNT
 from danswer.prompts.token_counts import CITATION_STATEMENT_TOKEN_CNT
 from danswer.prompts.token_counts import LANGUAGE_HINT_TOKEN_CNT
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
 
 # Maps connector enum string to a more natural language representation for the LLM
 # If not on the list, uses the original but slightly cleaned up, see below
@@ -270,6 +277,7 @@ def get_chunks_for_qa(
     chunks: list[InferenceChunk],
     llm_chunk_selection: list[bool],
     token_limit: int | None,
+    llm_tokenizer: Encoding | None = None,
     batch_offset: int = 0,
 ) -> list[int]:
     """
@@ -282,6 +290,7 @@ def get_chunks_for_qa(
     there's no way to know which chunks were included in the prior batches without recounting atm,
     this is somewhat slow as it requires tokenizing all the chunks again
     """
+    token_leeway = 50
     batch_index = 0
     latest_batch_indices: list[int] = []
     token_count = 0
@@ -296,8 +305,19 @@ def get_chunks_for_qa(
 
             # We calculate it live in case the user uses a different LLM + tokenizer
             chunk_token = check_number_of_tokens(chunk.content)
+            if chunk_token > DOC_EMBEDDING_CONTEXT_SIZE + token_leeway:
+                logger.warning(
+                    "Found more tokens in chunk than expected, "
+                    "likely mismatch between embedding and LLM tokenizers. Trimming content..."
+                )
+                chunk.content = tokenizer_trim_content(
+                    content=chunk.content,
+                    desired_length=DOC_EMBEDDING_CONTEXT_SIZE,
+                    tokenizer=llm_tokenizer or get_default_llm_tokenizer(),
+                )
+
             # 50 for an approximate/slight overestimate for # tokens for metadata for the chunk
-            token_count += chunk_token + 50
+            token_count += chunk_token + token_leeway
 
             # Always use at least 1 chunk
             if (
