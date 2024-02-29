@@ -51,6 +51,7 @@ import document360Icon from "../../../public/Document360.png";
 import googleSitesIcon from "../../../public/GoogleSites.png";
 import zendeskIcon from "../../../public/Zendesk.svg";
 import sharepointIcon from "../../../public/Sharepoint.png";
+import teamsIcon from "../../../public/Teams.png";
 import { FaRobot } from "react-icons/fa";
 
 interface IconProps {
@@ -523,6 +524,18 @@ export const SharepointIcon = ({
     className={`w-[${size}px] h-[${size}px] ` + className}
   >
     <Image src={sharepointIcon} alt="Logo" width="96" height="96" />
+  </div>
+);
+
+export const TeamsIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src={teamsIcon} alt="Logo" width="96" height="96" />
   </div>
 );
 

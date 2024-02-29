@@ -19,6 +19,7 @@ import {
   ProductboardIcon,
   RequestTrackerIcon,
   SharepointIcon,
+  TeamsIcon,
   SlabIcon,
   SlackIcon,
   ZendeskIcon,
@@ -152,6 +153,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   sharepoint: {
     icon: SharepointIcon,
     displayName: "Sharepoint",
+    category: SourceCategory.AppConnection,
+  },
+  teams: {
+    icon: TeamsIcon,
+    displayName: "Teams",
     category: SourceCategory.AppConnection,
   },
   requesttracker: {
