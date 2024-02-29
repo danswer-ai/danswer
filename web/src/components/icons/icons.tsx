@@ -57,6 +57,7 @@ import teamsIcon from "../../../public/Teams.png";
 import mediawikiIcon from "../../../public/MediaWiki.svg";
 import wikipediaIcon from "../../../public/Wikipedia.svg";
 import discourseIcon from "../../../public/Discourse.png";
+import teamsIcon from "../../../public/Teams.png";
 import { FaRobot } from "react-icons/fa";
 
 interface IconProps {

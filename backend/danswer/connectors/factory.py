@@ -82,6 +82,7 @@ def identify_connector_class(
         DocumentSource.AXERO: AxeroConnector,
         DocumentSource.MEDIAWIKI: MediaWikiConnector,
         DocumentSource.WIKIPEDIA: WikipediaConnector,
+        DocumentSource.TEAMS: TeamsConnector,
     }
     connector_by_source = connector_map.get(source, {})
 

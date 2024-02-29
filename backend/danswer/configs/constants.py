@@ -100,6 +100,7 @@ class DocumentSource(str, Enum):
     AXERO = "axero"
     MEDIAWIKI = "mediawiki"
     WIKIPEDIA = "wikipedia"
+    TEAMS = "teams"
 
 
 class DocumentIndexType(str, Enum):
