@@ -353,7 +353,7 @@ export const Chat = ({
         message: currMessage,
         parentMessageId: lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
-        promptId: selectedPersona?.prompts[0]?.id || 0,
+        promptId: livePersona?.prompts[0]?.id || 0,
         filters: buildFilters(
           filterManager.selectedSources,
           filterManager.selectedDocumentSets,
