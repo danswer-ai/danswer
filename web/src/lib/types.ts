@@ -33,6 +33,7 @@ export type ValidSources =
   | "google_sites"
   | "loopio"
   | "sharepoint"
+  | "teams"
   | "zendesk";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
@@ -109,6 +110,10 @@ export interface JiraConfig {
 
 export interface SharepointConfig {
   sites?: string[];
+}
+
+export interface TeamsConfig {
+  teams?: string[];
 }
 
 export interface ProductboardConfig {}
@@ -321,6 +326,12 @@ export interface ZendeskCredentialJson {
 }
 
 export interface SharepointCredentialJson {
+  aad_client_id: string;
+  aad_client_secret: string;
+  aad_directory_id: string;
+}
+
+export interface TeamsCredentialJson {
   aad_client_id: string;
   aad_client_secret: string;
   aad_directory_id: string;
