@@ -21,6 +21,7 @@ from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS
 from danswer.db.chat import get_chat_messages_by_session
+from danswer.db.chat import get_default_prompt
 from danswer.db.models import ChatMessage
 from danswer.db.models import Persona
 from danswer.db.models import Prompt
@@ -30,6 +31,7 @@ from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import get_default_llm_version
 from danswer.llm.utils import get_max_input_tokens
 from danswer.llm.utils import tokenizer_trim_content
+from danswer.prompts.chat_prompts import ADDITIONAL_INFO
 from danswer.prompts.chat_prompts import CHAT_USER_CONTEXT_FREE_PROMPT
 from danswer.prompts.chat_prompts import CHAT_USER_PROMPT
 from danswer.prompts.chat_prompts import CITATION_REMINDER
@@ -40,6 +42,7 @@ from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.prompts.constants import TRIPLE_BACKTICK
 from danswer.prompts.direct_qa_prompts import LANGUAGE_HINT
 from danswer.prompts.prompt_utils import get_current_llm_day_time
+from danswer.prompts.token_counts import ADDITIONAL_INFO_TOKEN_CNT
 from danswer.prompts.token_counts import (
     CHAT_USER_PROMPT_WITH_CONTEXT_OVERHEAD_TOKEN_CNT,
 )
@@ -129,8 +132,8 @@ def build_chat_system_message(
             system_prompt += no_citation_line
     if prompt.datetime_aware:
         if system_prompt:
-            system_prompt += (
-                f"\n\nAdditional Information:\n\t- {get_current_llm_day_time()}."
+            system_prompt += ADDITIONAL_INFO.format(
+                datetime_info=get_current_llm_day_time()
             )
         else:
             system_prompt = get_current_llm_day_time()
@@ -566,6 +569,7 @@ def extract_citations_from_stream(
 
 
 def get_prompt_tokens(prompt: Prompt) -> int:
+    # Note: currently custom prompts do not allow datetime aware, only default prompts
     return (
         check_number_of_tokens(prompt.system_prompt)
         + check_number_of_tokens(prompt.task_prompt)
@@ -573,6 +577,7 @@ def get_prompt_tokens(prompt: Prompt) -> int:
         + CITATION_STATEMENT_TOKEN_CNT
         + CITATION_REMINDER_TOKEN_CNT
         + (LANGUAGE_HINT_TOKEN_CNT if bool(MULTILINGUAL_QUERY_EXPANSION) else 0)
+        + (ADDITIONAL_INFO_TOKEN_CNT if prompt.datetime_aware else 0)
     )
 
 
@@ -611,7 +616,8 @@ def compute_max_document_tokens(
         # TODO this may not always be the first prompt
         prompt_tokens = get_prompt_tokens(persona.prompts[0])
     else:
-        raise RuntimeError("Persona has no prompts - this should never happen")
+        prompt_tokens = get_prompt_tokens(get_default_prompt())
+
     user_input_tokens = (
         check_number_of_tokens(actual_user_input)
         if actual_user_input is not None
