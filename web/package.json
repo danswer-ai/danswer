@@ -21,7 +21,7 @@
     "autoprefixer": "^10.4.14",
     "formik": "^2.2.9",
     "js-cookie": "^3.0.5",
-    "next": "^14.0.0",
+    "next": "^14.1.0",
     "postcss": "^8.4.31",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -39,7 +39,7 @@
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.10",
     "eslint": "^8.48.0",
-    "eslint-config-next": "^14.0.0",
+    "eslint-config-next": "^14.1.0",
     "prettier": "2.8.8"
   }
 }
