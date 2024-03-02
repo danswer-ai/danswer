@@ -107,4 +107,4 @@ $COMPOSE_CMD -f docker-compose.prod.yml run --name danswer-stack --rm --entrypoi
 echo
 
 echo "### Reloading nginx ..."
-$COMPOSE_CMD -f docker-compose.prod.yml -p danswer-stack up --force-recreate -d nginx
+$COMPOSE_CMD -f docker-compose.prod.yml -p danswer-stack up --force-recreate -d

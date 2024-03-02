@@ -14,6 +14,8 @@ CITATION_REMINDER = """
 Remember to provide inline citations in the format [1], [2], [3], etc.
 """
 
+ADDITIONAL_INFO = "\n\nAdditional Information:\n\t- {datetime_info}."
+
 
 DEFAULT_IGNORE_STATEMENT = " Ignore any context documents that are not relevant."
 

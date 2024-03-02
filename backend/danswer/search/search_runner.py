@@ -249,7 +249,7 @@ def semantic_reranking(
 
         rerank_metrics_callback(
             RerankMetricsContainer(
-                metrics=chunk_metrics, raw_similarity_scores=ranked_raw_scores
+                metrics=chunk_metrics, raw_similarity_scores=ranked_raw_scores  # type: ignore
             )
         )
 

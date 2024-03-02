@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from functools import lru_cache
 from uuid import UUID
 
 from sqlalchemy import delete
@@ -14,6 +15,7 @@ from sqlalchemy.orm import Session
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
 from danswer.db.models import DocumentSet as DBDocumentSet
@@ -301,6 +303,20 @@ def get_prompt_by_id(
         )
 
     return prompt
+
+
+@lru_cache()
+def get_default_prompt() -> Prompt:
+    with Session(get_sqlalchemy_engine()) as db_session:
+        stmt = select(Prompt).where(Prompt.id == 0)
+
+        result = db_session.execute(stmt)
+        prompt = result.scalar_one_or_none()
+
+        if prompt is None:
+            raise RuntimeError("Default Prompt not found")
+
+        return prompt
 
 
 def get_persona_by_id(

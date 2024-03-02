@@ -213,7 +213,10 @@ async def get_user_manager(
     yield UserManager(user_db)
 
 
-cookie_transport = CookieTransport(cookie_max_age=SESSION_EXPIRE_TIME_SECONDS)
+cookie_transport = CookieTransport(
+    cookie_max_age=SESSION_EXPIRE_TIME_SECONDS,
+    cookie_secure=WEB_DOMAIN.startswith("https"),
+)
 
 
 def get_database_strategy(

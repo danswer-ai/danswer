@@ -18,7 +18,7 @@ from danswer.chat.models import StreamingError
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.constants import MessageType
-from danswer.configs.model_configs import CHUNK_SIZE
+from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_or_create_root_message
@@ -63,7 +63,7 @@ def stream_answer_objects(
     db_session: Session,
     # Needed to translate persona num_chunks to tokens to the LLM
     default_num_chunks: float = MAX_CHUNKS_FED_TO_CHAT,
-    default_chunk_size: int = CHUNK_SIZE,
+    default_chunk_size: int = DOC_EMBEDDING_CONTEXT_SIZE,
     timeout: int = QA_TIMEOUT,
     bypass_acl: bool = False,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]

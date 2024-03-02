@@ -23,7 +23,7 @@
     "i18next": "^23.10.0",
     "i18next-resources-to-backend": "^1.2.0",
     "js-cookie": "^3.0.5",
-    "next": "^14.0.0",
+    "next": "^14.1.0",
     "next-i18n-router": "^5.3.1",
     "postcss": "^8.4.31",
     "react": "^18.2.0",
@@ -43,7 +43,7 @@
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.10",
     "eslint": "^8.48.0",
-    "eslint-config-next": "^14.0.0",
+    "eslint-config-next": "^14.1.0",
     "prettier": "2.8.8"
   }
 }
