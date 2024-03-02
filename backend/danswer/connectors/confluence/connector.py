@@ -207,7 +207,8 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     limit=batch_size,
                     expand="body.storage.value,version",
                 )
-            except Exception:
+            except Exception as e:
+                print(e)
                 logger.warning(
                     f"Batch failed with space {self.space} at offset {start_ind} "
                     f"with size {batch_size}, processing pages individually..."
