@@ -10,6 +10,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
+from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
 from danswer.configs.constants import GEN_AI_DETECTED_MODEL
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
@@ -170,8 +171,7 @@ def validate_existing_genai_api_key(
         last_check = datetime.fromtimestamp(
             cast(float, kv_store.load(GEN_AI_KEY_CHECK_TIME)), tz=timezone.utc
         )
-        # GENERATIVE_MODEL_ACCESS_CHECK_FREQ
-        check_freq_sec = timedelta(seconds=1)
+        check_freq_sec = timedelta(seconds=GENERATIVE_MODEL_ACCESS_CHECK_FREQ)
         if curr_time - last_check < check_freq_sec:
             return
     except ConfigNotFoundError:
