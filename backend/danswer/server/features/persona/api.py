@@ -66,6 +66,7 @@ def create_update_persona(
             prompts=prompts,
             document_sets=document_sets,
             llm_model_version_override=create_persona_request.llm_model_version_override,
+            starter_messages=create_persona_request.starter_messages,
             shared=create_persona_request.shared,
             db_session=db_session,
         )
