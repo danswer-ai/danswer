@@ -77,6 +77,8 @@ services:
       - model_cache_torch:/root/.cache/torch/
       - model_cache_nltk:/root/nltk_data/
       - model_cache_huggingface:/root/.cache/huggingface/
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     logging:
       driver: json-file
       options:
@@ -167,6 +169,8 @@ services:
       - model_cache_torch:/root/.cache/torch/
       - model_cache_nltk:/root/nltk_data/
       - model_cache_huggingface:/root/.cache/huggingface/
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     logging:
       driver: json-file
       options:
