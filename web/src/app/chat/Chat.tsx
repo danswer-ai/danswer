@@ -564,6 +564,7 @@ export const Chat = ({
                           messageId={message.messageId}
                           content={message.message}
                           query={messageHistory[i]?.query || undefined}
+                          personaName={livePersona.name}
                           citedDocuments={getCitedDocumentsFromMessage(message)}
                           isComplete={
                             i !== messageHistory.length - 1 || !isStreaming
@@ -644,6 +645,7 @@ export const Chat = ({
                       <div key={i}>
                         <AIMessage
                           messageId={message.messageId}
+                          personaName={livePersona.name}
                           content={
                             <p className="text-red-700 text-sm my-auto">
                               {message.message}
@@ -661,6 +663,7 @@ export const Chat = ({
                     <div key={messageHistory.length}>
                       <AIMessage
                         messageId={null}
+                        personaName={livePersona.name}
                         content={
                           <div className="text-sm my-auto">
                             <ThreeDots
