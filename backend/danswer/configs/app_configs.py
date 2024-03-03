@@ -20,7 +20,7 @@ APP_API_PREFIX = os.environ.get("API_PREFIX", "")
 #####
 BLURB_SIZE = 128  # Number Encoder Tokens included in the chunk blurb
 GENERATIVE_MODEL_ACCESS_CHECK_FREQ = int(
-    os.environ.get("GENERATIVE_MODEL_ACCESS_CHECK_FREQ", 86400)
+    os.environ.get("GENERATIVE_MODEL_ACCESS_CHECK_FREQ") or 86400
 )  # 1 day
 DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "true"
 
