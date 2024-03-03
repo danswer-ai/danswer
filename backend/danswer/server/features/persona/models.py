@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from danswer.db.models import Persona
+from danswer.db.models import StarterMessage
 from danswer.search.models import RecencyBiasSetting
 from danswer.server.features.document_set.models import DocumentSet
 from danswer.server.features.prompt.models import PromptSnapshot
@@ -17,6 +18,7 @@ class CreatePersonaRequest(BaseModel):
     prompt_ids: list[int]
     document_set_ids: list[int]
     llm_model_version_override: str | None = None
+    starter_messages: list[StarterMessage] | None = None
 
 
 class PersonaSnapshot(BaseModel):
@@ -30,6 +32,7 @@ class PersonaSnapshot(BaseModel):
     llm_relevance_filter: bool
     llm_filter_extraction: bool
     llm_model_version_override: str | None
+    starter_messages: list[StarterMessage] | None
     default_persona: bool
     prompts: list[PromptSnapshot]
     document_sets: list[DocumentSet]
@@ -50,6 +53,7 @@ class PersonaSnapshot(BaseModel):
             llm_relevance_filter=persona.llm_relevance_filter,
             llm_filter_extraction=persona.llm_filter_extraction,
             llm_model_version_override=persona.llm_model_version_override,
+            starter_messages=persona.starter_messages,
             default_persona=persona.default_persona,
             prompts=[PromptSnapshot.from_model(prompt) for prompt in persona.prompts],
             document_sets=[

@@ -20,7 +20,7 @@ function HelperItemDisplay({
   description: string;
 }) {
   return (
-    <div className="cursor-default hover:bg-hover-light border border-border rounded py-2 px-4">
+    <div className="cursor-pointer hover:bg-hover-light border border-border rounded py-2 px-4">
       <div className="text-emphasis font-bold text-lg flex">{title}</div>
       <div className="text-sm">{description}</div>
     </div>

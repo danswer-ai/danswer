@@ -1,4 +1,4 @@
-import { Persona, Prompt } from "./interfaces";
+import { Persona, Prompt, StarterMessage } from "./interfaces";
 
 interface PersonaCreationRequest {
   name: string;
@@ -10,6 +10,7 @@ interface PersonaCreationRequest {
   include_citations: boolean;
   llm_relevance_filter: boolean | null;
   llm_model_version_override: string | null;
+  starter_messages: StarterMessage[] | null;
 }
 
 interface PersonaUpdateRequest {
@@ -24,6 +25,7 @@ interface PersonaUpdateRequest {
   include_citations: boolean;
   llm_relevance_filter: boolean | null;
   llm_model_version_override: string | null;
+  starter_messages: StarterMessage[] | null;
 }
 
 function promptNameFromPersonaName(personaName: string) {
@@ -109,6 +111,7 @@ function buildPersonaAPIBody(
     prompt_ids: [promptId],
     document_set_ids,
     llm_model_version_override: creationRequest.llm_model_version_override,
+    starter_messages: creationRequest.starter_messages,
   };
 }
 
