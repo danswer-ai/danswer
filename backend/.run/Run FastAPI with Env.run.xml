@@ -9,6 +9,7 @@
     <envs>
       <env name="AUTH_TYPE" value="disabled" />
       <env name="DYNAMIC_CONFIG_DIR_PATH" value="./dynamic_config_storage" />
+      <env name="FILE_CONNECTOR_TMP_STORAGE_PATH" value="./tmp_storage/file_connector_storage" />
       <env name="VESPA_DEPLOYMENT_ZIP" value="./vault-ai/document_index/vespa/vespa-app.zip" />
     </envs>
     <option name="SDK_HOME" value="$PROJECT_DIR$/venv/bin/python" />
