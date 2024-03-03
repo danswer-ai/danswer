@@ -294,5 +294,9 @@ def delete_user_group(db_session: Session, user_group: UserGroup) -> None:
         user_group_id=user_group.id,
         outdated_only=False,
     )
+
+    # need to flush so that we don't get a foreign key error when deleting the user group row
+    db_session.flush()
+
     db_session.delete(user_group)
     db_session.commit()
