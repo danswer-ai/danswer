@@ -505,7 +505,9 @@ export const Chat = ({
 
       {documentSidebarInitialWidth !== undefined ? (
         <>
-          <div className="w-full sm:relative h-screen pb-[140px]">
+          <div
+            className={`w-full sm:relative h-screen ${retrievalDisabled ? "pb-[111px]" : "pb-[140px]"}`}
+          >
             <div
               className={`w-full h-full ${HEADER_PADDING} flex flex-col overflow-y-auto overflow-x-hidden relative`}
               ref={scrollableDivRef}
@@ -697,7 +699,21 @@ export const Chat = ({
                   selectedPersona &&
                   messageHistory.length === 0 &&
                   !isFetchingChatMessages && (
-                    <div className="mx-auto px-4 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar grid gap-4 grid-cols-1 grid-rows-1 mt-4 md:grid-cols-2">
+                    <div
+                      className={`
+                      mx-auto 
+                      px-4 
+                      w-searchbar-xs 
+                      2xl:w-searchbar-sm 
+                      3xl:w-searchbar 
+                      grid 
+                      gap-4 
+                      grid-cols-1 
+                      grid-rows-1 
+                      mt-4 
+                      md:grid-cols-2 
+                      mb-6`}
+                    >
                       {livePersona.starter_messages.map((starterMessage, i) => (
                         <div key={i} className="w-full">
                           <StarterMessage
