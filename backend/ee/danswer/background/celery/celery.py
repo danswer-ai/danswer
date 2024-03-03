@@ -24,7 +24,8 @@ global_version.set_ee()
 
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def sync_user_group_task(user_group_id: int) -> None:
-    with Session(get_sqlalchemy_engine()) as db_session:
+    engine = get_sqlalchemy_engine()
+    with Session(engine) as db_session:
         task_name = name_user_group_sync_task(user_group_id)
         mark_task_start(task_name, db_session)
 
@@ -36,6 +37,9 @@ def sync_user_group_task(user_group_id: int) -> None:
             error_msg = str(e)
             logger.exception(f"Failed to sync user group - {error_msg}")
 
+    # need a new session so this can be committed (previous transaction may have
+    # been rolled back due to the exception)
+    with Session(engine) as db_session:
         mark_task_finished(task_name, db_session, success=error_msg is None)
 
 
