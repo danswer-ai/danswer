@@ -6,11 +6,11 @@ spec:
   replicas: {{ .Values.nginx.deployment.replicas }}
   selector:
     matchLabels:
-      app: {{ .Values.nginx.deployment.name }}
+      app: {{ .Values.nginx.deployment.app }}
   template:
     metadata:
       labels:
-        app: {{ .Values.nginx.deployment.name }}
+        app: {{ .Values.nginx.deployment.app }}
     spec:
       containers:
       - name: nginx
@@ -20,11 +20,19 @@ spec:
          {{- range .Values.nginx.deployment.command }}
          - {{ . | quote }}
          {{- end }}
-        volumeMounts:
-        {{- range .Values.nginx.deployment.volumeMounts }}
-        - name: {{ .name }}
-          mountPath: {{ .mountPath }}
-        {{- end }}
+      ports:
+        - containerPort: {{ .Values.nginx.deployment.port }}
+      env:
+        - name: {{ .Values.nginx.deployment.env.name }}
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Values.nginx.deployment.env.ConfigMapKeyReference.name }}
+              key: {{ .Values.nginx.deployment.env.ConfigMapKeyReference.key }}
+      volumeMounts:
+      {{- range .Values.nginx.deployment.volumeMounts }}
+      - name: {{ .name }}
+        mountPath: {{ .mountPath }}
+      {{- end }}
       volumes:
       {{- range .Values.nginx.deployment.volumes }}
       - name: {{ .name }}

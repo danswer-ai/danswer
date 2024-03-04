@@ -5,6 +5,7 @@ apiService:
     replicas: 1
     image: danswer/danswer-backend:latest
     imagePullPolicy: Always
+    port: 8080
     command: 
       - "/bin/sh"
       - "-c"
@@ -92,9 +93,6 @@ vespa:
           resources:
             requests:
               storage: 1Gi
-    env:
-      - name: VESPA_CONFIGSERVERS
-        value: vespa-0.vespa.unoplat-ke.svc.cluster.local
 
 nginx:
   service:
@@ -108,6 +106,7 @@ nginx:
         port: 3000
         targetPort: 80
   deployment:
+    app: nginx
     name: nginx-deployment
     replicas: 1
     image: nginx:1.23.4-alpine
@@ -123,6 +122,12 @@ nginx:
     volumes:
       - name: nginx-conf
         configMapName: nginx-configmap
+    env: 
+      name: DOMAIN
+      ConfigMapKeyReference:
+        name: env-configmap
+        key: DOMAIN
+    port: 80
 
 
 postgresql:
@@ -133,6 +138,7 @@ postgresql:
         port: 5432
         targetPort: 5432
   statefulSet:
+    app: relational-db
     name: relational-db-statefulset
     replicas: 1
     image: postgres:15.2-alpine
@@ -150,18 +156,39 @@ postgresql:
           resources:
             requests:
               storage: 1Gi
-    env:
-      - name: POSTGRES_USER
-        valueFrom:
-          secretKeyRef:
-            name: danswer-secrets
-            key: postgres_user
-      - name: POSTGRES_PASSWORD
-        valueFrom:
-          secretKeyRef:
-            name: danswer-secrets
-            key: postgres_password
-danswerSecrets:
-  postgres_user: postgres_user
-  postgres_password: postgres_password
   # Add other secret keys as needed
+
+webServer:
+  service:
+    metadata:
+      name: web-server-service
+    spec:
+      selector:
+        app: web-server
+      ports:
+        - protocol: TCP
+          port: 80
+          targetPort: 3000
+      type: ClusterIP
+  deployment:
+    metadata:
+      name: web-server-deployment
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: web-server
+      template:
+        metadata:
+          labels:
+            app: web-server
+        spec:
+          containers:
+            - name: web-server
+              image: danswer/danswer-web-server:latest
+              imagePullPolicy: IfNotPresent
+              ports:
+                - containerPort: 3000
+              envFrom:
+                - configMapRef:
+                    name: env-configmap    

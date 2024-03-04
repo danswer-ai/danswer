@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.webServer.deployment.metadata.name }}
+spec:
+  replicas: {{ .Values.webServer.deployment.spec.replicas }}
+  selector:
+    matchLabels:
+      app: {{ index .Values.webServer.deployment.spec.selector.matchLabels "app" }}
+  template:
+    metadata:
+      labels:
+        app: {{ index .Values.webServer.deployment.spec.template.metadata.labels "app" }}
+    spec:
+      containers:
+        - name: {{ index .Values.webServer.deployment.spec.template.spec.containers 0 "name" }}
+          image: {{ index .Values.webServer.deployment.spec.template.spec.containers 0 "image" }}
+          imagePullPolicy: {{ index .Values.webServer.deployment.spec.template.spec.containers 0 "imagePullPolicy" }}
+          ports:
+            - containerPort: {{ index .Values.webServer.deployment.spec.template.spec.containers 0 "ports" 0 "containerPort" }}
+          envFrom:
+            - configMapRef:
+                name: {{ index .Values.webServer.deployment.spec.template.spec.containers 0 "envFrom" 0 "configMapRef" "name" }}

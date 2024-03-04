@@ -7,14 +7,14 @@ spec:
   replicas: {{ .Values.postgresql.statefulSet.replicas }}
   selector:
     matchLabels:
-      app: {{ .Values.postgresql.statefulSet.name }}
+      app: {{ .Values.postgresql.statefulSet.app }}
   template:
     metadata:
       labels:
-        app: {{ .Values.postgresql.statefulSet.name }}
+        app: {{ .Values.postgresql.statefulSet.app }}
     spec:
       containers:
-      - name: postgresql
+      - name: {{ .Values.postgresql.statefulSet.app }}
         image: {{ .Values.postgresql.statefulSet.image }}
         ports:
         {{- range .Values.postgresql.statefulSet.ports }}
@@ -27,13 +27,16 @@ spec:
           subPath: {{ .subPath }}
         {{- end }}
         env:
-        {{- range .Values.postgresql.statefulSet.env }}
-        - name: {{ .name }}
+        - name: POSTGRES_USER
           valueFrom:
-            secretKeyRef:
-              name: {{ .valueFrom.secretKeyRef.name }}
-              key: {{ .valueFrom.secretKeyRef.key }}
-        {{- end }}
+            secretKeyRef:       
+              name: danswer-secrets
+              key: postgres_user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:       
+              name: danswer-secrets
+              key: postgres_password     
   volumeClaimTemplates:
   {{- range .Values.postgresql.statefulSet.volumeClaimTemplates }}
   - metadata:

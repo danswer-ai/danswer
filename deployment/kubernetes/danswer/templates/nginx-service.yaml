@@ -4,7 +4,7 @@ metadata:
   name: {{ .Values.nginx.service.name }}
 spec:
   selector:
-    app: {{ .Values.nginx.deployment.name }}
+    app: {{ .Values.nginx.deployment.app }}
   ports:
     {{- range .Values.nginx.service.ports }}
     - name: {{ .name }}

@@ -32,10 +32,8 @@ spec:
           mountPath: {{ .mountPath }}
         {{- end }}
         env:
-        {{- range .Values.vespa.statefulSet.env }}
-        - name: {{ .name }}
-          value: {{ .value }}
-        {{- end }}
+        - name: VESPA_CONFIGSERVERS
+          value: vespa-0.vespa.{{ .Release.Namespace }}.svc.cluster.local
   volumeClaimTemplates:
   {{- range .Values.vespa.statefulSet.volumeClaimTemplates }}
   - metadata:

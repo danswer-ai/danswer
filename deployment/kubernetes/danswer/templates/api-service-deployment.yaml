@@ -20,6 +20,8 @@ spec:
           {{- range .Values.apiService.deployment.command }}
           - {{ . | quote }}
           {{- end }}
+        ports:
+        - containerPort: {{ .Values.apiService.deployment.port }}  
         envFrom:
         - configMapRef:
             name: {{ .Values.apiService.deployment.envFromConfigMap }}

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.webServer.service.metadata.name }}
+spec:
+  selector:
+    app: {{ .Values.webServer.service.spec.selector.app }}
+  ports:
+    - protocol: {{ index .Values.webServer.service.spec.ports 0 "protocol" }}
+      port: {{ index .Values.webServer.service.spec.ports 0 "port" }}
+      targetPort: {{ index .Values.webServer.service.spec.ports 0 "targetPort" }}
+  type: {{ .Values.webServer.service.spec.type }}

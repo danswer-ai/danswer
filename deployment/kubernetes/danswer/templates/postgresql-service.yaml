@@ -4,10 +4,11 @@ metadata:
   name: {{ .Values.postgresql.service.name }}
 spec:
   selector:
-    app: {{ .Values.postgresql.statefulSet.name }}
+    app: {{ .Values.postgresql.statefulSet.app }}
   ports:
     {{- range .Values.postgresql.service.ports }}
     - protocol: {{ .protocol }}
       port: {{ .port }}
       targetPort: {{ .targetPort }}
     {{- end }}
+  clusterIP: None  
