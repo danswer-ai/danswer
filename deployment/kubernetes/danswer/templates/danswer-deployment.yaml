@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.danswerBackend.deployment.name }}
+spec:
+  replicas: {{ .Values.danswerBackend.deployment.replicas }}
+  selector:
+    matchLabels:
+      app: background
+  template:
+    metadata:
+      labels:
+        app: background
+    spec:
+      containers:
+      - name: background
+        image: {{ .Values.danswerBackend.deployment.image }}
+        imagePullPolicy: {{ .Values.danswerBackend.deployment.imagePullPolicy }}
+        command: {{ .Values.danswerBackend.deployment.command }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.danswerBackend.deployment.envFromConfigMap }}
+        volumeMounts:
+          {{- range .Values.danswerBackend.deployment.volumeMounts }}
+          - name: {{ .name }}
+            mountPath: {{ .mountPath }}
+          {{- end }}
+      volumes:
+        {{- range .Values.danswerBackend.deployment.volumes }}
+        - name: {{ .name }}
+          persistentVolumeClaim:
+            claimName: {{ .persistentVolumeClaim.claimName }}
+        {{- end }}

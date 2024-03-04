@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ index .Values.danswerBackend.deployment.volumes 0 "persistentVolumeClaim" "claimName" }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi  # Adjust as per your requirements
+  storageClassName: nfs-storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ index .Values.danswerBackend.deployment.volumes 1 "persistentVolumeClaim" "claimName" }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi 
+  storageClassName: nfs-storage     # Adjust as per your requirements

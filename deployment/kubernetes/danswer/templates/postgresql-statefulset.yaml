@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.postgresql.statefulSet.name }}
+spec:
+  serviceName: {{ .Values.postgresql.service.name }}
+  replicas: {{ .Values.postgresql.statefulSet.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.postgresql.statefulSet.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.postgresql.statefulSet.name }}
+    spec:
+      containers:
+      - name: postgresql
+        image: {{ .Values.postgresql.statefulSet.image }}
+        ports:
+        {{- range .Values.postgresql.statefulSet.ports }}
+        - containerPort: {{ .containerPort }}
+        {{- end }}
+        volumeMounts:
+        {{- range .Values.postgresql.statefulSet.volumeMounts }}
+        - name: {{ .name }}
+          mountPath: {{ .mountPath }}
+          subPath: {{ .subPath }}
+        {{- end }}
+        env:
+        {{- range .Values.postgresql.statefulSet.env }}
+        - name: {{ .name }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .valueFrom.secretKeyRef.name }}
+              key: {{ .valueFrom.secretKeyRef.key }}
+        {{- end }}
+  volumeClaimTemplates:
+  {{- range .Values.postgresql.statefulSet.volumeClaimTemplates }}
+  - metadata:
+      name: {{ .metadata.name }}
+    spec:
+      accessModes: {{ .spec.accessModes }}
+      resources:
+        requests:
+          storage: {{ .spec.resources.requests.storage }}
+  {{- end }}

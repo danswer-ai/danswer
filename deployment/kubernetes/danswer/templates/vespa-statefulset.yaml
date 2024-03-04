@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.vespa.statefulSet.name }}
+spec:
+  serviceName: {{ .Values.vespa.statefulSet.name }}
+  replicas: {{ .Values.vespa.statefulSet.replicas }}
+  selector:
+    matchLabels:
+      app: vespa
+  template:
+    metadata:
+      labels:
+        app: vespa
+    spec:
+      containers:
+      - name: vespa
+        image: {{ .Values.vespa.statefulSet.image }}
+        imagePullPolicy: {{ .Values.vespa.statefulSet.imagePullPolicy }}
+        ports:
+        {{- range .Values.vespa.statefulSet.ports }}
+        - containerPort: {{ .containerPort }}
+        {{- end }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.vespa.statefulSet.readinessProbe.httpGet.path }}
+            port: {{ .Values.vespa.statefulSet.readinessProbe.httpGet.port }}
+            scheme: {{ .Values.vespa.statefulSet.readinessProbe.httpGet.scheme }}
+        volumeMounts:
+        {{- range .Values.vespa.statefulSet.volumeMounts }}
+        - name: {{ .name }}
+          mountPath: {{ .mountPath }}
+        {{- end }}
+        env:
+        {{- range .Values.vespa.statefulSet.env }}
+        - name: {{ .name }}
+          value: {{ .value }}
+        {{- end }}
+  volumeClaimTemplates:
+  {{- range .Values.vespa.statefulSet.volumeClaimTemplates }}
+  - metadata:
+      name: {{ .metadata.name }}
+    spec:
+      accessModes: {{ .spec.accessModes }}
+      resources:
+        requests:
+          storage: {{ .spec.resources.requests.storage }}
+  {{- end }}

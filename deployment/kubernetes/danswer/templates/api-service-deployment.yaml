@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.apiService.deployment.name }}
+spec:
+  replicas: {{ .Values.apiService.deployment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.apiService.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.apiService.name }}
+    spec:
+      containers:
+      - name: {{ .Values.apiService.name }}
+        image: {{ .Values.apiService.deployment.image }}
+        imagePullPolicy: {{ .Values.apiService.deployment.imagePullPolicy }}
+        command: 
+          {{- range .Values.apiService.deployment.command }}
+          - {{ . | quote }}
+          {{- end }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.apiService.deployment.envFromConfigMap }}
+        volumeMounts:
+        {{- range .Values.apiService.deployment.volumeMounts }}
+        - name: {{ .name }}
+          mountPath: {{ .mountPath }}
+        {{- end }}
+      volumes:
+      {{- range .Values.apiService.deployment.volumes }}
+      - name: {{ .name }}
+        persistentVolumeClaim:
+          claimName: {{ .persistentVolumeClaim.claimName }}
+      {{- end }}

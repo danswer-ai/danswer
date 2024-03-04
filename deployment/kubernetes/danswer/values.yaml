@@ -1,0 +1,167 @@
+apiService:
+  name: api-server
+  deployment:
+    name: api-server-deployment
+    replicas: 1
+    image: danswer/danswer-backend:latest
+    imagePullPolicy: Always
+    command: 
+      - "/bin/sh"
+      - "-c"
+      - |
+        alembic upgrade head &&
+        echo "Starting Danswer Api Server" &&
+        uvicorn danswer.main:app --host 0.0.0.0 --port 8080
+    envFromConfigMap: env-configmap
+    volumeMounts:
+      - name: dynamic-storage
+        mountPath: /home/storage
+      - name: file-connector-storage
+        mountPath: /home/file_connector_storage
+    volumes:
+      - name: dynamic-storage
+        persistentVolumeClaim:
+          claimName: dynamic-pvc
+      - name: file-connector-storage
+        persistentVolumeClaim:
+          claimName: file-connector-pvc
+  service:
+    name: api-server-service
+    type: ClusterIP
+    ports:
+      - name: api-server-port
+        port: 80
+        targetPort: 8080
+
+
+danswerBackend:
+  deployment:
+    name: background-deployment
+    replicas: 1
+    image: danswer/danswer-backend:latest
+    imagePullPolicy: Always
+    command: ["/usr/bin/supervisord"]
+    envFromConfigMap: env-configmap
+    volumeMounts:
+      - name: dynamic-storage
+        mountPath: /home/storage
+      - name: file-connector-storage
+        mountPath: /home/file_connector_storage
+    volumes:
+      - name: dynamic-storage
+        persistentVolumeClaim:
+          claimName: dynamic-pvc
+      - name: file-connector-storage
+        persistentVolumeClaim:
+          claimName: file-connector-pvc
+
+
+vespa:
+  service:
+    name: document-index-service
+    type: LoadBalancer
+    ports:
+      - name: vespa-tenant-port
+        port: 19071
+        targetPort: 19071
+      - name: vespa-port
+        port: 8081
+        targetPort: 8081
+  statefulSet:
+    name: vespa
+    replicas: 1
+    image: vespaengine/vespa:8.277.17
+    imagePullPolicy: IfNotPresent
+    ports:
+      - containerPort: 19071
+      - containerPort: 8081
+    readinessProbe:
+      httpGet:
+        path: /state/v1/health
+        port: 19071
+        scheme: HTTP
+    volumeMounts:
+      - name: vespa-storage
+        mountPath: /opt/vespa/var/
+    volumeClaimTemplates:
+      - metadata:
+          name: vespa-storage
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+    env:
+      - name: VESPA_CONFIGSERVERS
+        value: vespa-0.vespa.unoplat-ke.svc.cluster.local
+
+nginx:
+  service:
+    name: nginx-service
+    type: LoadBalancer
+    ports:
+      - name: http
+        port: 80
+        targetPort: 80
+      - name: danswer
+        port: 3000
+        targetPort: 80
+  deployment:
+    name: nginx-deployment
+    replicas: 1
+    image: nginx:1.23.4-alpine
+    imagePullPolicy: Always
+    command:
+      - /bin/sh
+      - -c
+      - |
+        while :; do sleep 6h & wait $!; nginx -s reload; done & nginx -g "daemon off;"
+    volumeMounts:
+      - name: nginx-conf
+        mountPath: /etc/nginx/conf.d
+    volumes:
+      - name: nginx-conf
+        configMapName: nginx-configmap
+
+
+postgresql:
+  service:
+    name: relational-db-service
+    ports:
+      - protocol: TCP
+        port: 5432
+        targetPort: 5432
+  statefulSet:
+    name: relational-db-statefulset
+    replicas: 1
+    image: postgres:15.2-alpine
+    ports:
+      - containerPort: 5432
+    volumeMounts:
+      - mountPath: /var/lib/postgresql/data
+        name: db-storage
+        subPath: postgres
+    volumeClaimTemplates:
+      - metadata:
+          name: db-storage
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 1Gi
+    env:
+      - name: POSTGRES_USER
+        valueFrom:
+          secretKeyRef:
+            name: danswer-secrets
+            key: postgres_user
+      - name: POSTGRES_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: danswer-secrets
+            key: postgres_password
+danswerSecrets:
+  postgres_user: postgres_user
+  postgres_password: postgres_password
+  # Add other secret keys as needed
