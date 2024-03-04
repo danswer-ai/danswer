@@ -2,7 +2,14 @@
 
 import { DocumentSet } from "@/lib/types";
 import { Button, Divider, Text } from "@tremor/react";
-import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
+import {
+  ArrayHelpers,
+  ErrorMessage,
+  Field,
+  FieldArray,
+  Form,
+  Formik,
+} from "formik";
 
 import * as Yup from "yup";
 import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
@@ -16,10 +23,8 @@ import {
   SelectorFormField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
-
-function SectionHeader({ children }: { children: string | JSX.Element }) {
-  return <div className="mb-4 font-bold text-lg">{children}</div>;
-}
+import { HidableSection } from "./HidableSection";
+import { FiPlus, FiX } from "react-icons/fi";
 
 function Label({ children }: { children: string | JSX.Element }) {
   return (
@@ -97,6 +102,7 @@ export function PersonaEditor({
           llm_relevance_filter: existingPersona?.llm_relevance_filter ?? false,
           llm_model_version_override:
             existingPersona?.llm_model_version_override ?? null,
+          starter_messages: existingPersona?.starter_messages ?? null,
         }}
         validationSchema={Yup.object()
           .shape({
@@ -112,6 +118,13 @@ export function PersonaEditor({
             include_citations: Yup.boolean().required(),
             llm_relevance_filter: Yup.boolean().required(),
             llm_model_version_override: Yup.string().nullable(),
+            starter_messages: Yup.array().of(
+              Yup.object().shape({
+                name: Yup.string().required(),
+                description: Yup.string().required(),
+                message: Yup.string().required(),
+              })
+            ),
           })
           .test(
             "system-prompt-or-task-prompt",
@@ -188,171 +201,175 @@ export function PersonaEditor({
         {({ isSubmitting, values, setFieldValue }) => (
           <Form>
             <div className="pb-6">
-              <SectionHeader>Who am I?</SectionHeader>
+              <HidableSection sectionTitle="Who am I?">
+                <>
+                  <TextFormField
+                    name="name"
+                    label="Name"
+                    disabled={isUpdate}
+                    subtext="Users will be able to select this Persona based on this name."
+                  />
 
-              <TextFormField
-                name="name"
-                label="Name"
-                disabled={isUpdate}
-                subtext="Users will be able to select this Persona based on this name."
-              />
-
-              <TextFormField
-                name="description"
-                label="Description"
-                subtext="Provide a short descriptions which gives users a hint as to what they should use this Persona for."
-              />
+                  <TextFormField
+                    name="description"
+                    label="Description"
+                    subtext="Provide a short descriptions which gives users a hint as to what they should use this Persona for."
+                  />
+                </>
+              </HidableSection>
 
               <Divider />
 
-              <SectionHeader>Customize my response style</SectionHeader>
+              <HidableSection sectionTitle="Customize my response style">
+                <>
+                  <TextFormField
+                    name="system_prompt"
+                    label="System Prompt"
+                    isTextArea={true}
+                    subtext={
+                      'Give general info about what the Persona is about. For example, "You are an assistant for On-Call engineers. Your goal is to read the provided context documents and give recommendations as to how to resolve the issue."'
+                    }
+                    onChange={(e) => {
+                      setFieldValue("system_prompt", e.target.value);
+                      triggerFinalPromptUpdate(
+                        e.target.value,
+                        values.task_prompt,
+                        values.disable_retrieval
+                      );
+                    }}
+                    error={finalPromptError}
+                  />
 
-              <TextFormField
-                name="system_prompt"
-                label="System Prompt"
-                isTextArea={true}
-                subtext={
-                  'Give general info about what the Persona is about. For example, "You are an assistant for On-Call engineers. Your goal is to read the provided context documents and give recommendations as to how to resolve the issue."'
-                }
-                onChange={(e) => {
-                  setFieldValue("system_prompt", e.target.value);
-                  triggerFinalPromptUpdate(
-                    e.target.value,
-                    values.task_prompt,
-                    values.disable_retrieval
-                  );
-                }}
-                error={finalPromptError}
-              />
+                  <TextFormField
+                    name="task_prompt"
+                    label="Task Prompt"
+                    isTextArea={true}
+                    subtext={
+                      'Give specific instructions as to what to do with the user query. For example, "Find any relevant sections from the provided documents that can help the user resolve their issue and explain how they are relevant."'
+                    }
+                    onChange={(e) => {
+                      setFieldValue("task_prompt", e.target.value);
+                      triggerFinalPromptUpdate(
+                        values.system_prompt,
+                        e.target.value,
+                        values.disable_retrieval
+                      );
+                    }}
+                    error={finalPromptError}
+                  />
 
-              <TextFormField
-                name="task_prompt"
-                label="Task Prompt"
-                isTextArea={true}
-                subtext={
-                  'Give specific instructions as to what to do with the user query. For example, "Find any relevant sections from the provided documents that can help the user resolve their issue and explain how they are relevant."'
-                }
-                onChange={(e) => {
-                  setFieldValue("task_prompt", e.target.value);
-                  triggerFinalPromptUpdate(
-                    values.system_prompt,
-                    e.target.value,
-                    values.disable_retrieval
-                  );
-                }}
-                error={finalPromptError}
-              />
+                  {!values.disable_retrieval && (
+                    <BooleanFormField
+                      name="include_citations"
+                      label="Include Citations"
+                      subtext={`
+                        If set, the response will include bracket citations ([1], [2], etc.) 
+                        for each document used by the LLM to help inform the response. This is 
+                        the same technique used by the default Personas. In general, we recommend 
+                        to leave this enabled in order to increase trust in the LLM answer.`}
+                    />
+                  )}
 
-              {!values.disable_retrieval && (
-                <BooleanFormField
-                  name="include_citations"
-                  label="Include Citations"
-                  subtext={`
-                    If set, the response will include bracket citations ([1], [2], etc.) 
-                    for each document used by the LLM to help inform the response. This is 
-                    the same technique used by the default Personas. In general, we recommend 
-                    to leave this enabled in order to increase trust in the LLM answer.`}
-                />
-              )}
+                  <BooleanFormField
+                    name="disable_retrieval"
+                    label="Disable Retrieval"
+                    subtext={`
+                      If set, the Persona will not fetch any context documents to aid in the response. 
+                      Instead, it will only use the supplied system and task prompts plus the user 
+                      query in order to generate a response`}
+                    onChange={(e) => {
+                      setFieldValue("disable_retrieval", e.target.checked);
+                      triggerFinalPromptUpdate(
+                        values.system_prompt,
+                        values.task_prompt,
+                        e.target.checked
+                      );
+                    }}
+                  />
 
-              <BooleanFormField
-                name="disable_retrieval"
-                label="Disable Retrieval"
-                subtext={`
-                If set, the Persona will not fetch any context documents to aid in the response. 
-                Instead, it will only use the supplied system and task prompts plus the user 
-                query in order to generate a response`}
-                onChange={(e) => {
-                  setFieldValue("disable_retrieval", e.target.checked);
-                  triggerFinalPromptUpdate(
-                    values.system_prompt,
-                    values.task_prompt,
-                    e.target.checked
-                  );
-                }}
-              />
+                  <Label>Final Prompt</Label>
 
-              <Label>Final Prompt</Label>
-
-              {finalPrompt ? (
-                <pre className="text-sm mt-2 whitespace-pre-wrap">
-                  {finalPrompt}
-                </pre>
-              ) : (
-                "-"
-              )}
+                  {finalPrompt ? (
+                    <pre className="text-sm mt-2 whitespace-pre-wrap">
+                      {finalPrompt}
+                    </pre>
+                  ) : (
+                    "-"
+                  )}
+                </>
+              </HidableSection>
 
               <Divider />
 
               {!values.disable_retrieval && (
                 <>
-                  <SectionHeader>
-                    What data should I have access to?
-                  </SectionHeader>
-
-                  <FieldArray
-                    name="document_set_ids"
-                    render={(arrayHelpers: ArrayHelpers) => (
-                      <div>
-                        <div>
-                          <SubLabel>
-                            <>
-                              Select which{" "}
-                              <Link
-                                href="/admin/documents/sets"
-                                className="text-blue-500"
-                                target="_blank"
-                              >
-                                Document Sets
-                              </Link>{" "}
-                              that this Persona should search through. If none
-                              are specified, the Persona will search through all
-                              available documents in order to try and response
-                              to queries.
-                            </>
-                          </SubLabel>
-                        </div>
-                        <div className="mb-3 mt-2 flex gap-2 flex-wrap text-sm">
-                          {documentSets.map((documentSet) => {
-                            const ind = values.document_set_ids.indexOf(
-                              documentSet.id
-                            );
-                            let isSelected = ind !== -1;
-                            return (
-                              <div
-                                key={documentSet.id}
-                                className={
-                                  `
-                              px-3 
-                              py-1
-                              rounded-lg 
-                              border
-                              border-border
-                              w-fit 
-                              flex 
-                              cursor-pointer ` +
-                                  (isSelected
-                                    ? " bg-hover"
-                                    : " bg-background hover:bg-hover-light")
-                                }
-                                onClick={() => {
-                                  if (isSelected) {
-                                    arrayHelpers.remove(ind);
-                                  } else {
-                                    arrayHelpers.push(documentSet.id);
-                                  }
-                                }}
-                              >
-                                <div className="my-auto">
-                                  {documentSet.name}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  />
+                  <HidableSection sectionTitle="What data should I have access to?">
+                    <>
+                      <FieldArray
+                        name="document_set_ids"
+                        render={(arrayHelpers: ArrayHelpers) => (
+                          <div>
+                            <div>
+                              <SubLabel>
+                                <>
+                                  Select which{" "}
+                                  <Link
+                                    href="/admin/documents/sets"
+                                    className="text-blue-500"
+                                    target="_blank"
+                                  >
+                                    Document Sets
+                                  </Link>{" "}
+                                  that this Persona should search through. If
+                                  none are specified, the Persona will search
+                                  through all available documents in order to
+                                  try and response to queries.
+                                </>
+                              </SubLabel>
+                            </div>
+                            <div className="mb-3 mt-2 flex gap-2 flex-wrap text-sm">
+                              {documentSets.map((documentSet) => {
+                                const ind = values.document_set_ids.indexOf(
+                                  documentSet.id
+                                );
+                                let isSelected = ind !== -1;
+                                return (
+                                  <div
+                                    key={documentSet.id}
+                                    className={
+                                      `
+                                      px-3 
+                                      py-1
+                                      rounded-lg 
+                                      border
+                                      border-border
+                                      w-fit 
+                                      flex 
+                                      cursor-pointer ` +
+                                      (isSelected
+                                        ? " bg-hover"
+                                        : " bg-background hover:bg-hover-light")
+                                    }
+                                    onClick={() => {
+                                      if (isSelected) {
+                                        arrayHelpers.remove(ind);
+                                      } else {
+                                        arrayHelpers.push(documentSet.id);
+                                      }
+                                    }}
+                                  >
+                                    <div className="my-auto">
+                                      {documentSet.name}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      />
+                    </>
+                  </HidableSection>
 
                   <Divider />
                 </>
@@ -360,83 +377,229 @@ export function PersonaEditor({
 
               {llmOverrideOptions.length > 0 && defaultLLM && (
                 <>
-                  <SectionHeader>[Advanced] Model Selection</SectionHeader>
-
-                  <Text>
-                    Pick which LLM to use for this Persona. If left as Default,
-                    will use <b className="italic">{defaultLLM}</b>.
-                    <br />
-                    <br />
-                    For more information on the different LLMs, checkout the{" "}
-                    <a
-                      href="https://platform.openai.com/docs/models"
-                      target="_blank"
-                      className="text-blue-500"
-                    >
-                      OpenAI docs
-                    </a>
-                    .
-                  </Text>
-
-                  <div className="w-96">
-                    <SelectorFormField
-                      name="llm_model_version_override"
-                      options={llmOverrideOptions.map((llmOption) => {
-                        return {
-                          name: llmOption,
-                          value: llmOption,
-                        };
-                      })}
-                      includeDefault={true}
-                    />
-                  </div>
-                </>
-              )}
-
-              <Divider />
-
-              {!values.disable_retrieval && (
-                <>
-                  <SectionHeader>
-                    [Advanced] Retrieval Customization
-                  </SectionHeader>
-
-                  <TextFormField
-                    name="num_chunks"
-                    label="Number of Chunks"
-                    subtext={
-                      <div>
-                        How many chunks should we feed into the LLM when
-                        generating the final response? Each chunk is ~400 words
-                        long. If you are using gpt-3.5-turbo or other similar
-                        models, setting this to a value greater than 5 will
-                        result in errors at query time due to the model&apos;s
-                        input length limit.
+                  <HidableSection sectionTitle="[Advanced] Model Selection">
+                    <>
+                      <Text>
+                        Pick which LLM to use for this Persona. If left as
+                        Default, will use <b className="italic">{defaultLLM}</b>
+                        .
                         <br />
                         <br />
-                        If unspecified, will use 10 chunks.
+                        For more information on the different LLMs, checkout the{" "}
+                        <a
+                          href="https://platform.openai.com/docs/models"
+                          target="_blank"
+                          className="text-blue-500"
+                        >
+                          OpenAI docs
+                        </a>
+                        .
+                      </Text>
+
+                      <div className="w-96">
+                        <SelectorFormField
+                          name="llm_model_version_override"
+                          options={llmOverrideOptions.map((llmOption) => {
+                            return {
+                              name: llmOption,
+                              value: llmOption,
+                            };
+                          })}
+                          includeDefault={true}
+                        />
                       </div>
-                    }
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Allow only integer values
-                      if (value === "" || /^[0-9]+$/.test(value)) {
-                        setFieldValue("num_chunks", value);
-                      }
-                    }}
-                  />
-
-                  <BooleanFormField
-                    name="llm_relevance_filter"
-                    label="Apply LLM Relevance Filter"
-                    subtext={
-                      "If enabled, the LLM will filter out chunks that are not relevant to the user query."
-                    }
-                  />
+                    </>
+                  </HidableSection>
 
                   <Divider />
                 </>
               )}
+
+              {!values.disable_retrieval && (
+                <>
+                  <HidableSection sectionTitle="[Advanced] Retrieval Customization">
+                    <>
+                      <TextFormField
+                        name="num_chunks"
+                        label="Number of Chunks"
+                        subtext={
+                          <div>
+                            How many chunks should we feed into the LLM when
+                            generating the final response? Each chunk is ~400
+                            words long. If you are using gpt-3.5-turbo or other
+                            similar models, setting this to a value greater than
+                            5 will result in errors at query time due to the
+                            model&apos;s input length limit.
+                            <br />
+                            <br />
+                            If unspecified, will use 10 chunks.
+                          </div>
+                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // Allow only integer values
+                          if (value === "" || /^[0-9]+$/.test(value)) {
+                            setFieldValue("num_chunks", value);
+                          }
+                        }}
+                      />
+
+                      <BooleanFormField
+                        name="llm_relevance_filter"
+                        label="Apply LLM Relevance Filter"
+                        subtext={
+                          "If enabled, the LLM will filter out chunks that are not relevant to the user query."
+                        }
+                      />
+                    </>
+                  </HidableSection>
+
+                  <Divider />
+                </>
+              )}
+
+              <HidableSection sectionTitle="[Advanced] Starter Messages">
+                <>
+                  <div className="mb-4">
+                    <SubLabel>
+                      Starter Messages help guide users to use this Persona.
+                      They are shown to the user as clickable options when they
+                      select this Persona. When selected, the specified message
+                      is sent to the LLM as the initial user message.
+                    </SubLabel>
+                  </div>
+
+                  <FieldArray
+                    name="starter_messages"
+                    render={(arrayHelpers: ArrayHelpers) => (
+                      <div>
+                        {values.starter_messages &&
+                          values.starter_messages.length > 0 &&
+                          values.starter_messages.map((_, index) => (
+                            <div
+                              key={index}
+                              className={index === 0 ? "mt-2" : "mt-6"}
+                            >
+                              <div className="flex">
+                                <div className="w-full mr-6 border border-border p-3 rounded">
+                                  <div>
+                                    <Label>Name</Label>
+                                    <SubLabel>
+                                      Shows up as the &quot;title&quot; for this
+                                      Starter Message. For example, &quot;Write
+                                      an email&quot;.
+                                    </SubLabel>
+                                    <Field
+                                      name={`starter_messages.${index}.name`}
+                                      className={`
+                                        border 
+                                        border-border 
+                                        bg-background 
+                                        rounded 
+                                        w-full 
+                                        py-2 
+                                        px-3 
+                                        mr-4
+                                      `}
+                                      autoComplete="off"
+                                    />
+                                    <ErrorMessage
+                                      name={`starter_messages.${index}.name`}
+                                      component="div"
+                                      className="text-error text-sm mt-1"
+                                    />
+                                  </div>
+
+                                  <div className="mt-3">
+                                    <Label>Description</Label>
+                                    <SubLabel>
+                                      A description which tells the user what
+                                      they might want to use this Starter
+                                      Message for. For example &quot;to a client
+                                      about a new feature&quot;
+                                    </SubLabel>
+                                    <Field
+                                      name={`starter_messages.${index}.description`}
+                                      className={`
+                                        border 
+                                        border-border 
+                                        bg-background 
+                                        rounded 
+                                        w-full 
+                                        py-2 
+                                        px-3 
+                                        mr-4
+                                      `}
+                                      autoComplete="off"
+                                    />
+                                    <ErrorMessage
+                                      name={`starter_messages.${index}.description`}
+                                      component="div"
+                                      className="text-error text-sm mt-1"
+                                    />
+                                  </div>
+
+                                  <div className="mt-3">
+                                    <Label>Message</Label>
+                                    <SubLabel>
+                                      The actual message to be sent as the
+                                      initial user message if a user selects
+                                      this starter prompt. For example,
+                                      &quot;Write me an email to a client about
+                                      a new billing feature we just
+                                      released.&quot;
+                                    </SubLabel>
+                                    <Field
+                                      name={`starter_messages.${index}.message`}
+                                      className={`
+                                        border 
+                                        border-border 
+                                        bg-background 
+                                        rounded 
+                                        w-full 
+                                        py-2 
+                                        px-3 
+                                        mr-4
+                                      `}
+                                      as="textarea"
+                                      autoComplete="off"
+                                    />
+                                    <ErrorMessage
+                                      name={`starter_messages.${index}.message`}
+                                      component="div"
+                                      className="text-error text-sm mt-1"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="my-auto">
+                                  <FiX
+                                    className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
+                                    onClick={() => arrayHelpers.remove(index)}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+
+                        <Button
+                          onClick={() => {
+                            arrayHelpers.push("");
+                          }}
+                          className="mt-3"
+                          color="green"
+                          size="xs"
+                          type="button"
+                          icon={FiPlus}
+                        >
+                          Add New
+                        </Button>
+                      </div>
+                    )}
+                  />
+                </>
+              </HidableSection>
+
+              <Divider />
 
               <div className="flex">
                 <Button

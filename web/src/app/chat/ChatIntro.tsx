@@ -20,7 +20,7 @@ function HelperItemDisplay({
   description: string;
 }) {
   return (
-    <div className="cursor-default hover:bg-hover-light border border-border rounded py-2 px-4">
+    <div className="cursor-pointer hover:bg-hover-light border border-border rounded py-2 px-4">
       <div className="text-emphasis font-bold text-lg flex">{title}</div>
       <div className="text-sm">{description}</div>
     </div>
@@ -133,7 +133,7 @@ export function ChatIntro({
                       <p className="font-bold mb-1 mt-4 text-emphasis">
                         Knowledge Sets:{" "}
                       </p>
-                      <div className="flex flex-wrap gap-x-2">
+                      <div className="flex flex-wrap gap-2">
                         {selectedPersona.document_sets.map((documentSet) => (
                           <div key={documentSet.id} className="w-fit">
                             <HoverPopup
@@ -165,7 +165,7 @@ export function ChatIntro({
                       <p className="font-bold mb-1 mt-4 text-emphasis">
                         Connected Sources:{" "}
                       </p>
-                      <div className="flex flex-wrap gap-x-2">
+                      <div className="flex flex-wrap gap-2">
                         {availableSourceMetadata.map((sourceMetadata) => (
                           <span
                             key={sourceMetadata.internalName}

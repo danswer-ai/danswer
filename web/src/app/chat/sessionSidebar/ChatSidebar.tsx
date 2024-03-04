@@ -14,21 +14,23 @@ import { useRouter } from "next/navigation";
 import { User } from "@/lib/types";
 import { logout } from "@/lib/user";
 import { BasicClickable, BasicSelectable } from "@/components/BasicClickable";
-import Image from "next/image";
 import { ChatSessionDisplay } from "./SessionDisplay";
 import { ChatSession } from "../interfaces";
 import { groupSessionsByDateRange } from "../lib";
-import { HEADER_PADDING } from "@/lib/constants";
+import {
+  HEADER_PADDING,
+  NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA,
+} from "@/lib/constants";
 
 interface ChatSidebarProps {
   existingChats: ChatSession[];
-  currentChatId: number | null;
+  currentChatSession: ChatSession | null | undefined;
   user: User | null;
 }
 
 export const ChatSidebar = ({
   existingChats,
-  currentChatId,
+  currentChatSession,
   user,
 }: ChatSidebarProps) => {
   const router = useRouter();
@@ -65,6 +67,8 @@ export const ChatSidebar = ({
     };
   }, []);
 
+  const currentChatId = currentChatSession?.id;
+
   return (
     <div
       className={`
@@ -79,7 +83,15 @@ export const ChatSidebar = ({
         transition-transform`}
       id="chat-sidebar"
     >
-      <Link href="/chat" className="mx-3 mt-5">
+      <Link
+        href={
+          "/chat" +
+          (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA && currentChatSession
+            ? `?personaId=${currentChatSession.persona_id}`
+            : "")
+        }
+        className="mx-3 mt-5"
+      >
         <BasicClickable fullWidth>
           <div className="flex text-sm">
             <FiPlusSquare className="my-auto mr-2" /> New Chat

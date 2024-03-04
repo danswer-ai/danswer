@@ -23,6 +23,7 @@ from danswer.db.models import Persona
 from danswer.db.models import Prompt
 from danswer.db.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
+from danswer.db.models import StarterMessage
 from danswer.search.models import RecencyBiasSetting
 from danswer.search.models import RetrievalDocs
 from danswer.search.models import SavedSearchDoc
@@ -465,6 +466,7 @@ def upsert_persona(
     prompts: list[Prompt] | None,
     document_sets: list[DBDocumentSet] | None,
     llm_model_version_override: str | None,
+    starter_messages: list[StarterMessage] | None,
     shared: bool,
     db_session: Session,
     persona_id: int | None = None,
@@ -490,6 +492,7 @@ def upsert_persona(
         persona.recency_bias = recency_bias
         persona.default_persona = default_persona
         persona.llm_model_version_override = llm_model_version_override
+        persona.starter_messages = starter_messages
         persona.deleted = False  # Un-delete if previously deleted
 
         # Do not delete any associations manually added unless
@@ -516,6 +519,7 @@ def upsert_persona(
             prompts=prompts or [],
             document_sets=document_sets or [],
             llm_model_version_override=llm_model_version_override,
+            starter_messages=starter_messages,
         )
         db_session.add(persona)
 

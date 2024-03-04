@@ -89,6 +89,7 @@ def load_personas_from_yaml(
                 if persona.get("num_chunks") is not None
                 else default_chunks,
                 llm_relevance_filter=persona.get("llm_relevance_filter"),
+                starter_messages=persona.get("starter_messages"),
                 llm_filter_extraction=persona.get("llm_filter_extraction"),
                 llm_model_version_override=None,
                 recency_bias=RecencyBiasSetting(persona["recency_bias"]),
