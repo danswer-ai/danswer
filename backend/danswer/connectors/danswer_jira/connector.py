@@ -9,6 +9,8 @@ from jira.resources import Issue
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
+from danswer.connectors.danswer_jira.utils import CommonFieldExtractor
+from danswer.connectors.danswer_jira.utils import CustomFieldExtractor
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -18,7 +20,6 @@ from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
-
 
 logger = setup_logger()
 PROJECT_URL_PAT = "projects"
@@ -47,6 +48,8 @@ def fetch_jira_issues_batch(
     start_index: int,
     jira_client: JIRA,
     batch_size: int = INDEX_BATCH_SIZE,
+    custom_fields: dict = None,
+    comment_email_blacklist: tuple[str, ...] = (),
 ) -> tuple[list[Document], int]:
     doc_batch = []
 
@@ -61,8 +64,26 @@ def fetch_jira_issues_batch(
             logger.warning(f"Found Jira object not of type Issue {jira}")
             continue
 
-        semantic_rep = f"{jira.fields.description}\n" + "\n".join(
-            [f"Comment: {comment.body}" for comment in jira.fields.comment.comments]
+        jira_common_fields = CommonFieldExtractor.get_issue_common_fields(jira)
+
+        jira_custom_fields = CustomFieldExtractor.get_issue_custom_fields(
+            jira, custom_fields
+        )
+
+        jira_fields = {**jira_common_fields, **jira_custom_fields}
+
+        jira_fields_str = ", ".join([f"{k}:{v}" for (k, v) in jira_fields.items()])
+
+        semantic_rep = (
+            f"{jira_fields_str}"
+            + f"{jira.fields.description}\n"
+            + "\n".join(
+                [
+                    f"Comment: {comment.body}"
+                    for comment in jira.fields.comment.comments
+                    if comment.author.emailAddress not in comment_email_blacklist
+                ]
+            )
         )
 
         page_url = f"{jira_client.client_info()}/browse/{jira.key}"
@@ -96,11 +117,17 @@ class JiraConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         jira_project_url: str,
+        comment_email_blacklist: list[str],
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.batch_size = batch_size
         self.jira_base, self.jira_project = extract_jira_project(jira_project_url)
         self.jira_client: JIRA | None = None
+        self._comment_email_blacklist = comment_email_blacklist
+
+    @property
+    def comment_email_blacklist(self):
+        return tuple(email.strip() for email in self._comment_email_blacklist)
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         api_token = credentials["jira_api_token"]
@@ -153,6 +180,8 @@ class JiraConnector(LoadConnector, PollConnector):
             f"updated <= '{end_date_str}'"
         )
 
+        custom_fields_dct = CustomFieldExtractor.get_all_custom_fields(self.jira_client)
+
         start_ind = 0
         while True:
             doc_batch, fetched_batch_size = fetch_jira_issues_batch(
@@ -160,6 +189,8 @@ class JiraConnector(LoadConnector, PollConnector):
                 start_ind,
                 self.jira_client,
                 self.batch_size,
+                custom_fields_dct,
+                self.comment_email_blacklist,
             )
 
             if doc_batch:
