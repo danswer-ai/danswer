@@ -2,8 +2,8 @@ from danswer.llm.utils import check_number_of_tokens
 from danswer.prompts.chat_prompts import ADDITIONAL_INFO
 from danswer.prompts.chat_prompts import CHAT_USER_PROMPT
 from danswer.prompts.chat_prompts import CITATION_REMINDER
-from danswer.prompts.chat_prompts import DEFAULT_IGNORE_STATEMENT
 from danswer.prompts.chat_prompts import REQUIRE_CITATION_STATEMENT
+from danswer.prompts.constants import DEFAULT_IGNORE_STATEMENT
 from danswer.prompts.direct_qa_prompts import LANGUAGE_HINT
 from danswer.prompts.prompt_utils import get_current_llm_day_time
 

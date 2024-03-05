@@ -33,6 +33,7 @@ export const AIMessage = ({
   messageId,
   content,
   query,
+  personaName,
   citedDocuments,
   isComplete,
   hasDocs,
@@ -46,6 +47,7 @@ export const AIMessage = ({
   messageId: number | null;
   content: string | JSX.Element;
   query?: string;
+  personaName?: string;
   citedDocuments?: [string, DanswerDocument][] | null;
   isComplete?: boolean;
   hasDocs?: boolean;
@@ -68,7 +70,9 @@ export const AIMessage = ({
               </div>
             </div>
 
-            <div className="font-bold text-emphasis ml-2 my-auto">Danswer</div>
+            <div className="font-bold text-emphasis ml-2 my-auto">
+              {personaName || "Danswer"}
+            </div>
 
             {query === undefined &&
               hasDocs &&

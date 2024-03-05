@@ -346,8 +346,12 @@ def read_slack_thread(
             if len(blocks) <= 1:
                 continue
 
-            # The useful block is the second one after the header block that says AI Answer
-            message = reply["blocks"][1]["text"]["text"]
+            # For the old flow, the useful block is the second one after the header block that says AI Answer
+            if reply["blocks"][0]["text"]["text"] == "AI Answer":
+                message = reply["blocks"][1]["text"]["text"]
+            else:
+                # for the new flow, the answer is the first block
+                message = reply["blocks"][0]["text"]["text"]
 
             if message.startswith("_Filters"):
                 if len(blocks) <= 2:

@@ -134,7 +134,11 @@ class DefaultMultiLLM(LangChainChatLLM):
             max_tokens=max_output_tokens,
             temperature=temperature,
             request_timeout=timeout,
-            model_kwargs=DefaultMultiLLM.DEFAULT_MODEL_PARAMS,
+            # LiteLLM and some model providers don't handle these params well
+            # only turning it on for OpenAI
+            model_kwargs=DefaultMultiLLM.DEFAULT_MODEL_PARAMS
+            if model_provider == "openai"
+            else {},
             verbose=should_be_verbose(),
             max_retries=0,  # retries are handled outside of langchain
         )

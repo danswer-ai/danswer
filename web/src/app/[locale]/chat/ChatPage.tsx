@@ -48,7 +48,7 @@ export function ChatLayout({
       <div className="flex relative bg-background text-default overflow-x-hidden">
         <ChatSidebar
           existingChats={chatSessions}
-          currentChatId={chatId}
+          currentChatSession={selectedChatSession}
           user={user}
         />
 

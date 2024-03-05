@@ -43,6 +43,7 @@ import { ChatIntro } from "./ChatIntro";
 import { HEADER_PADDING } from "@/lib/constants";
 import { computeAvailableFilters } from "@/lib/filters";
 import { useDocumentSelection } from "./useDocumentSelection";
+import { StarterMessage } from "./StarterMessage";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -290,10 +291,12 @@ export const Chat = ({
 
   const onSubmit = async ({
     messageIdToResend,
+    messageOverride,
     queryOverride,
     forceSearch,
   }: {
     messageIdToResend?: number;
+    messageOverride?: string;
     queryOverride?: string;
     forceSearch?: boolean;
   } = {}) => {
@@ -321,7 +324,10 @@ export const Chat = ({
       return;
     }
 
-    const currMessage = messageToResend ? messageToResend.message : message;
+    let currMessage = messageToResend ? messageToResend.message : message;
+    if (messageOverride) {
+      currMessage = messageOverride;
+    }
     const currMessageHistory =
       messageToResendIndex !== null
         ? messageHistory.slice(0, messageToResendIndex)
@@ -499,7 +505,9 @@ export const Chat = ({
 
       {documentSidebarInitialWidth !== undefined ? (
         <>
-          <div className="w-full sm:relative h-screen pb-[140px]">
+          <div
+            className={`w-full sm:relative h-screen ${retrievalDisabled ? "pb-[111px]" : "pb-[140px]"}`}
+          >
             <div
               className={`w-full h-full ${HEADER_PADDING} flex flex-col overflow-y-auto overflow-x-hidden relative`}
               ref={scrollableDivRef}
@@ -564,6 +572,7 @@ export const Chat = ({
                           messageId={message.messageId}
                           content={message.message}
                           query={messageHistory[i]?.query || undefined}
+                          personaName={livePersona.name}
                           citedDocuments={getCitedDocumentsFromMessage(message)}
                           isComplete={
                             i !== messageHistory.length - 1 || !isStreaming
@@ -644,6 +653,7 @@ export const Chat = ({
                       <div key={i}>
                         <AIMessage
                           messageId={message.messageId}
+                          personaName={livePersona.name}
                           content={
                             <p className="text-red-700 text-sm my-auto">
                               {message.message}
@@ -661,6 +671,7 @@ export const Chat = ({
                     <div key={messageHistory.length}>
                       <AIMessage
                         messageId={null}
+                        personaName={livePersona.name}
                         content={
                           <div className="text-sm my-auto">
                             <ThreeDots
@@ -681,6 +692,42 @@ export const Chat = ({
 
                 {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                 <div className={`min-h-[30px] w-full`}></div>
+
+                {livePersona &&
+                  livePersona.starter_messages &&
+                  livePersona.starter_messages.length > 0 &&
+                  selectedPersona &&
+                  messageHistory.length === 0 &&
+                  !isFetchingChatMessages && (
+                    <div
+                      className={`
+                      mx-auto 
+                      px-4 
+                      w-searchbar-xs 
+                      2xl:w-searchbar-sm 
+                      3xl:w-searchbar 
+                      grid 
+                      gap-4 
+                      grid-cols-1 
+                      grid-rows-1 
+                      mt-4 
+                      md:grid-cols-2 
+                      mb-6`}
+                    >
+                      {livePersona.starter_messages.map((starterMessage, i) => (
+                        <div key={i} className="w-full">
+                          <StarterMessage
+                            starterMessage={starterMessage}
+                            onClick={() =>
+                              onSubmit({
+                                messageOverride: starterMessage.message,
+                              })
+                            }
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                 <div ref={endDivRef} />
               </div>
@@ -713,30 +760,30 @@ export const Chat = ({
                       ref={textareaRef}
                       autoFocus
                       className={`
-                    opacity-100
-                    w-full
-                    shrink
-                    border 
-                    border-border 
-                    rounded-lg 
-                    outline-none 
-                    placeholder-gray-400 
-                    pl-4
-                    pr-12 
-                    py-4 
-                    overflow-hidden
-                    h-14
-                    ${
-                      (textareaRef?.current?.scrollHeight || 0) >
-                      MAX_INPUT_HEIGHT
-                        ? "overflow-y-auto"
-                        : ""
-                    } 
-                    whitespace-normal 
-                    break-word
-                    overscroll-contain
-                    resize-none
-                    `}
+                        opacity-100
+                        w-full
+                        shrink
+                        border 
+                        border-border 
+                        rounded-lg 
+                        outline-none 
+                        placeholder-gray-400 
+                        pl-4
+                        pr-12 
+                        py-4 
+                        overflow-hidden
+                        h-14
+                        ${
+                          (textareaRef?.current?.scrollHeight || 0) >
+                          MAX_INPUT_HEIGHT
+                            ? "overflow-y-auto"
+                            : ""
+                        } 
+                        whitespace-normal 
+                        break-word
+                        overscroll-contain
+                        resize-none
+                      `}
                       style={{ scrollbarWidth: "thin" }}
                       role="textarea"
                       aria-multiline

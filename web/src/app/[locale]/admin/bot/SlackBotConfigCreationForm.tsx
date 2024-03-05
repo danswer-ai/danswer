@@ -90,9 +90,13 @@ export const SlackBotCreationForm = ({
               !isPersonaASlackBotPersona(existingSlackBotConfig.persona)
                 ? existingSlackBotConfig.persona.id
                 : null,
+            response_type: existingSlackBotConfig?.response_type || "citations",
           }}
           validationSchema={Yup.object().shape({
             channel_names: Yup.array().of(Yup.string()),
+            response_type: Yup.string()
+              .oneOf(["quotes", "citations"])
+              .required(),
             answer_validity_check_enabled: Yup.boolean().required(),
             questionmark_prefilter_enabled: Yup.boolean().required(),
             respond_tag_only: Yup.boolean().required(),
@@ -171,6 +175,33 @@ export const SlackBotCreationForm = ({
                     </div>
                   }
                 />
+
+                <SelectorFormField
+                  name="response_type"
+                  label="Response Format"
+                  subtext={
+                    <>
+                      If set to Citations, DanswerBot will respond with a direct
+                      answer with inline citations. It will also provide links
+                      to these cited documents below the answer. When in doubt,
+                      choose this option.
+                      <br />
+                      <br />
+                      If set to Quotes, DanswerBot will respond with a direct
+                      answer as well as with quotes pulled from the context
+                      documents to support that answer. DanswerBot will also
+                      give a list of relevant documents. Choose this option if
+                      you want a very detailed response AND/OR a list of
+                      relevant documents would be useful just in case the LLM
+                      missed anything.
+                    </>
+                  }
+                  options={[
+                    { name: "Citations", value: "citations" },
+                    { name: "Quotes", value: "quotes" },
+                  ]}
+                />
+
                 <Divider />
 
                 <SectionHeader>When should DanswerBot respond?</SectionHeader>
