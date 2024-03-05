@@ -69,6 +69,12 @@ export const ChatSidebar = ({
 
   const currentChatId = currentChatSession?.id;
 
+  // prevent the NextJS Router cache from causing the chat sidebar to not
+  // update / show an outdated list of chats
+  useEffect(() => {
+    router.refresh();
+  }, [currentChatId]);
+
   return (
     <div
       className={`
