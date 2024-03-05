@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nginx-configmap
+  namespace: {{ .Release.Namespace }}
 data:
   nginx.conf: |
     upstream api_server {

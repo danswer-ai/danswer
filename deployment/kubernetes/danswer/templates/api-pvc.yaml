@@ -2,6 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ index .Values.danswerBackend.deployment.volumes 0 "persistentVolumeClaim" "claimName" }}
+  namespace: {{ .Release.Namespace }}
 spec:
   accessModes:
     - ReadWriteMany

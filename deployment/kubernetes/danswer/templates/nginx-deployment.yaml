@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.nginx.deployment.name }}
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{ .Values.nginx.deployment.replicas }}
   selector:
@@ -18,10 +19,10 @@ spec:
         imagePullPolicy: {{ .Values.nginx.deployment.imagePullPolicy }}
         command: 
          {{- range .Values.nginx.deployment.command }}
-         - {{ . | quote }}
+         - {{ . }}
          {{- end }}
-      ports:
-        - containerPort: {{ .Values.nginx.deployment.port }}
+        ports:
+          - containerPort: {{ .Values.nginx.deployment.port }}
       env:
         - name: {{ .Values.nginx.deployment.env.name }}
           valueFrom:

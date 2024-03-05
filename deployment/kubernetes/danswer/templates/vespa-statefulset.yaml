@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ .Values.vespa.statefulSet.name }}
+  namespace: {{ .Release.Namespace }}
 spec:
   serviceName: {{ .Values.vespa.statefulSet.name }}
   replicas: {{ .Values.vespa.statefulSet.replicas }}

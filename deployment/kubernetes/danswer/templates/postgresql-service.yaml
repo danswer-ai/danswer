@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.postgresql.service.name }}
+  namespace: {{ .Release.Namespace }}
 spec:
   selector:
     app: {{ .Values.postgresql.statefulSet.app }}
