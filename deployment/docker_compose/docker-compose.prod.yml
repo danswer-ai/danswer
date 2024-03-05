@@ -8,7 +8,7 @@ services:
     command: >
       /bin/sh -c "alembic upgrade head &&
       echo \"Starting Danswer Api Server\" &&
-      uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
+      uvicorn danswer.main:app --host 0.0.0.0 --port 8079"
     depends_on:
       - relational_db
       - index
@@ -60,7 +60,7 @@ services:
     env_file:
       - .env
     environment:
-      - INTERNAL_URL=http://api_server:8080
+      - INTERNAL_URL=http://api_server:8079
   relational_db:
     image: postgres:15.2-alpine
     restart: always
@@ -75,7 +75,7 @@ services:
     restart: always
     ports:
       - "19071:19071"
-      - "8081:8081"
+      - "8086:8081"
     volumes:
       - vespa_volume:/opt/vespa/var
   nginx:
@@ -87,29 +87,18 @@ services:
       - api_server
       - web_server
     ports:
-      - "80:80"
-      - "443:443"
+      - "180:80"
     volumes:
       - ../data/nginx:/etc/nginx/conf.d
-      - ../data/certbot/conf:/etc/letsencrypt
-      - ../data/certbot/www:/var/www/certbot
     # sleep a little bit to allow the web_server / api_server to start up. 
     # Without this we've seen issues where nginx shows no error logs but 
     # does not recieve any traffic
     command: > 
-      /bin/sh -c "sleep 10 &&
-        envsubst '$$\{DOMAIN\}' < /etc/nginx/conf.d/app.conf.template > /etc/nginx/conf.d/app.conf &&
+      /bin/sh -c "sleep 10 && 
+        envsubst '$$\{DOMAIN\} $$\{SSL_CERT_FILE_NAME\} $$\{SSL_CERT_KEY_FILE_NAME\}' < /etc/nginx/conf.d/app.conf.template.no-letsencrypt > /etc/nginx/conf.d/app.conf &&
         while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
     env_file:
       - .env.nginx
-  # follows https://pentacent.medium.com/nginx-and-lets-encrypt-with-docker-in-less-than-5-minutes-b4b8a60d3a71
-  certbot:
-    image: certbot/certbot
-    restart: always
-    volumes:
-      - ../data/certbot/conf:/etc/letsencrypt
-      - ../data/certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
   # Run with --profile model-server to bring up the danswer-model-server container
   model_server:
     image: danswer/danswer-model-server:latest
