@@ -14,6 +14,6 @@ rdctl shell sudo apk add nfs-utils
 helm repo add openebs https://openebs.github.io/charts
 helm repo update
 helm install openebs openebs/openebs -n openebs --create-namespace --set nfs-provisioner.enabled=true
-kubectl apply -f kubernetes/danswer/storage-class/storage-class-nfs.yaml
+kubectl apply -f deployment/kubernetes/danswer/storage-class/storage-class-nfs.yaml
 ```
 
