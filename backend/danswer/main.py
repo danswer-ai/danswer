@@ -139,6 +139,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     verify_auth = fetch_versioned_implementation(
         "danswer.auth.users", "verify_auth_setting"
     )
+    # verify_auth = variable_functionality_manager.get_func(VariableFunctionalityIdentifier.VERIFY_AUTH_SETTING)
     # Will throw exception if an issue is found
     verify_auth()
 
