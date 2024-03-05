@@ -314,6 +314,10 @@ async def current_user(
     double_check_user = fetch_versioned_implementation(
         "danswer.auth.users", "double_check_user"
     )
+    logger.info(
+        f"fetch_versioned_implementation cache hits: {fetch_versioned_implementation.cache_info().hits}"
+    )
+
     user = await double_check_user(request, user, db_session)
     return user
 

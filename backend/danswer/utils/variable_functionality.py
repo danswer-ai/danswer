@@ -2,6 +2,8 @@ import functools
 import importlib
 from typing import Any
 
+from danswer.utils.timing import log_function_time
+
 
 class DanswerVersion:
     def __init__(self) -> None:
@@ -17,6 +19,7 @@ class DanswerVersion:
 global_version = DanswerVersion()
 
 
+@log_function_time(print_only=True, include_args=True)
 @functools.lru_cache(maxsize=128)
 def fetch_versioned_implementation(module: str, attribute: str) -> Any:
     module_full = f"ee.{module}" if global_version.get_is_ee_version() else module
