@@ -133,9 +133,9 @@ services:
     # does not recieve any traffic  
     # NOTE: we have to use dos2unix to remove Carriage Return chars from the file
     # in order to make this work on both Unix-like systems and windows
-    command: >  /bin/sh -c "sleep 10 && 
-        envsubst '$$\{DOMAIN\} $$\{SSL_CERT_FILE_NAME\} $$\{SSL_CERT_KEY_FILE_NAME\}' < /etc/nginx/conf.d/app.conf.template.no-letsencrypt > /etc/nginx/conf.d/app.conf &&
-        while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
+    command: >
+      /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
+      && /etc/nginx/conf.d/run-nginx.sh app.conf.template"
     env_file:
       - .env.nginx
   # Run with --profile model-server to bring up the danswer-model-server container
