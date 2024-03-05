@@ -23,17 +23,17 @@ spec:
          {{- end }}
         ports:
           - containerPort: {{ .Values.nginx.deployment.port }}
-      env:
-        - name: {{ .Values.nginx.deployment.env.name }}
+        env:
+          - name: {{ .Values.nginx.deployment.env.name }}
           valueFrom:
             configMapKeyRef:
               name: {{ .Values.nginx.deployment.env.ConfigMapKeyReference.name }}
               key: {{ .Values.nginx.deployment.env.ConfigMapKeyReference.key }}
-      volumeMounts:
-      {{- range .Values.nginx.deployment.volumeMounts }}
-      - name: {{ .name }}
-        mountPath: {{ .mountPath }}
-      {{- end }}
+        volumeMounts:
+        {{- range .Values.nginx.deployment.volumeMounts }}
+        - name: {{ .name }}
+          mountPath: {{ .mountPath }}
+        {{- end }}
       volumes:
       {{- range .Values.nginx.deployment.volumes }}
       - name: {{ .name }}
