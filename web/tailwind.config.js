@@ -38,7 +38,7 @@ module.exports = {
       },
       colors: {
         link: "#3b82f6", // blue-500
-        subtle: "#9ca3af", // gray-400
+        subtle: "#6b7280", // gray-500
         default: "#4b5563", // gray-600
         emphasis: "#374151", // gray-700
         strong: "#111827", // gray-900
@@ -59,6 +59,7 @@ module.exports = {
         },
         error: "#ef4444", // red-500
         success: "#059669", // emerald-600
+        alert: "#f59e0b", // amber-600
         user: "#fb7185", // yellow-400
         ai: "#60a5fa", // blue-400
         // light mode

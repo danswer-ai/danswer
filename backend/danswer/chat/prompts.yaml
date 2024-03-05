@@ -30,6 +30,14 @@ prompts:
     include_citations: true
 
 
+  - name: "OnlyLLM"
+    description: "Chat directly with the LLM!"
+    system: "You are a helpful assistant."
+    task: ""
+    datetime_aware: true
+    include_citations: true
+
+
   - name: "Summarize"
     description: "Summarize relevant information from retrieved context!"
     system: >

@@ -1,8 +1,10 @@
 from sqlalchemy.orm import Session
 
+from danswer.configs.chat_configs import BASE_RECENCY_DECAY
 from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.chat_configs import DISABLE_LLM_FILTER_EXTRACTION
 from danswer.configs.chat_configs import FAVOR_RECENT_DECAY_MULTIPLIER
+from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.model_configs import ENABLE_RERANKING_ASYNC_FLOW
 from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.db.models import Persona
@@ -18,10 +20,16 @@ from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.secondary_llm_flows.source_filter import extract_source_filter
 from danswer.secondary_llm_flows.time_filter import extract_time_filter
+from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
+from danswer.utils.timing import log_function_time
 
 
+logger = setup_logger()
+
+
+@log_function_time(print_only=True)
 def retrieval_preprocessing(
     query: str,
     retrieval_details: RetrievalDetails,
@@ -34,6 +42,7 @@ def retrieval_preprocessing(
     skip_rerank_non_realtime: bool = not ENABLE_RERANKING_ASYNC_FLOW,
     disable_llm_filter_extraction: bool = DISABLE_LLM_FILTER_EXTRACTION,
     disable_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
+    base_recency_decay: float = BASE_RECENCY_DECAY,
     favor_recent_decay_multiplier: float = FAVOR_RECENT_DECAY_MULTIPLIER,
 ) -> tuple[SearchQuery, SearchType | None, QueryFlow | None]:
     """Logic is as follows:
@@ -57,15 +66,19 @@ def retrieval_preprocessing(
         auto_detect_time_filter = False
         auto_detect_source_filter = False
     elif retrieval_details.enable_auto_detect_filters is False:
+        logger.debug("Retrieval details disables auto detect filters")
         auto_detect_time_filter = False
         auto_detect_source_filter = False
     elif persona.llm_filter_extraction is False:
+        logger.debug("Persona disables auto detect filters")
         auto_detect_time_filter = False
         auto_detect_source_filter = False
 
     if time_filter is not None and persona.recency_bias != RecencyBiasSetting.AUTO:
         auto_detect_time_filter = False
+        logger.debug("Not extract time filter - already provided")
     if source_filter is not None:
+        logger.debug("Not extract source filter - already provided")
         auto_detect_source_filter = False
 
     # Based on the query figure out if we should apply any hard time filters /
@@ -137,17 +150,18 @@ def retrieval_preprocessing(
     if disable_llm_chunk_filter:
         llm_chunk_filter = False
 
+    # Decays at 1 / (1 + (multiplier * num years))
     if persona.recency_bias == RecencyBiasSetting.NO_DECAY:
         recency_bias_multiplier = 0.0
     elif persona.recency_bias == RecencyBiasSetting.BASE_DECAY:
-        recency_bias_multiplier = 1.0
+        recency_bias_multiplier = base_recency_decay
     elif persona.recency_bias == RecencyBiasSetting.FAVOR_RECENT:
-        recency_bias_multiplier = favor_recent_decay_multiplier
+        recency_bias_multiplier = base_recency_decay * favor_recent_decay_multiplier
     else:
         if predicted_favor_recent:
-            recency_bias_multiplier = favor_recent_decay_multiplier
+            recency_bias_multiplier = base_recency_decay * favor_recent_decay_multiplier
         else:
-            recency_bias_multiplier = 1.0
+            recency_bias_multiplier = base_recency_decay
 
     return (
         SearchQuery(
@@ -155,6 +169,10 @@ def retrieval_preprocessing(
             search_type=persona.search_type,
             filters=final_filters,
             recency_bias_multiplier=recency_bias_multiplier,
+            num_hits=retrieval_details.limit
+            if retrieval_details.limit is not None
+            else NUM_RETURNED_HITS,
+            offset=retrieval_details.offset or 0,
             skip_rerank=skip_reranking,
             skip_llm_chunk_filter=not llm_chunk_filter,
         ),

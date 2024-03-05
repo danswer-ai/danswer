@@ -272,6 +272,7 @@ interface DriveCredentialSectionProps {
   appCredentialData?: { client_id: string };
   setPopup: (popupSpec: PopupSpec | null) => void;
   refreshCredentials: () => void;
+  connectorExists: boolean;
 }
 
 export const DriveOAuthSection = ({
@@ -281,6 +282,7 @@ export const DriveOAuthSection = ({
   appCredentialData,
   setPopup,
   refreshCredentials,
+  connectorExists,
 }: DriveCredentialSectionProps) => {
   const router = useRouter();
 
@@ -294,6 +296,14 @@ export const DriveOAuthSection = ({
         </p>
         <Button
           onClick={async () => {
+            if (connectorExists) {
+              setPopup({
+                message:
+                  "Cannot revoke access to Google Drive while any connector is still setup. Please delete all connectors, then try again.",
+                type: "error",
+              });
+              return;
+            }
             await adminDeleteCredential(existingCredential.id);
             setPopup({
               message: "Successfully revoked access to Google Drive!",

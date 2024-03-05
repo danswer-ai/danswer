@@ -18,6 +18,7 @@ class LlmDoc(BaseModel):
     content: str
     semantic_identifier: str
     source_type: DocumentSource
+    metadata: dict[str, str | list[str]]
     updated_at: datetime | None
     link: str | None
 
@@ -74,12 +75,24 @@ class DanswerQuotes(BaseModel):
     quotes: list[DanswerQuote]
 
 
+class DanswerContext(BaseModel):
+    content: str
+    document_id: str
+    semantic_identifier: str
+    blurb: str
+
+
+class DanswerContexts(BaseModel):
+    contexts: list[DanswerContext]
+
+
 class DanswerAnswer(BaseModel):
     answer: str | None
 
 
 class QAResponse(SearchResponse, DanswerAnswer):
     quotes: list[DanswerQuote] | None
+    contexts: list[DanswerContexts] | None
     predicted_flow: QueryFlow
     predicted_search: SearchType
     eval_res_valid: bool | None = None
@@ -87,11 +100,8 @@ class QAResponse(SearchResponse, DanswerAnswer):
     error_msg: str | None = None
 
 
-AnswerQuestionReturn = tuple[DanswerAnswer, DanswerQuotes]
-
-
 AnswerQuestionStreamReturn = Iterator[
-    DanswerAnswerPiece | DanswerQuotes | StreamingError
+    DanswerAnswerPiece | DanswerQuotes | DanswerContexts | StreamingError
 ]
 
 

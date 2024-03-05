@@ -1,17 +1,21 @@
 from collections.abc import Sequence
+from functools import lru_cache
 from uuid import UUID
 
 from sqlalchemy import delete
+from sqlalchemy import func
 from sqlalchemy import not_
 from sqlalchemy import nullsfirst
 from sqlalchemy import or_
 from sqlalchemy import select
+from sqlalchemy import update
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
 from danswer.db.models import DocumentSet as DBDocumentSet
@@ -19,6 +23,7 @@ from danswer.db.models import Persona
 from danswer.db.models import Prompt
 from danswer.db.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
+from danswer.db.models import StarterMessage
 from danswer.search.models import RecencyBiasSetting
 from danswer.search.models import RetrievalDocs
 from danswer.search.models import SavedSearchDoc
@@ -301,6 +306,20 @@ def get_prompt_by_id(
     return prompt
 
 
+@lru_cache()
+def get_default_prompt() -> Prompt:
+    with Session(get_sqlalchemy_engine()) as db_session:
+        stmt = select(Prompt).where(Prompt.id == 0)
+
+        result = db_session.execute(stmt)
+        prompt = result.scalar_one_or_none()
+
+        if prompt is None:
+            raise RuntimeError("Default Prompt not found")
+
+        return prompt
+
+
 def get_persona_by_id(
     persona_id: int,
     # if user_id is `None` assume the user is an admin or auth is disabled
@@ -447,6 +466,7 @@ def upsert_persona(
     prompts: list[Prompt] | None,
     document_sets: list[DBDocumentSet] | None,
     llm_model_version_override: str | None,
+    starter_messages: list[StarterMessage] | None,
     shared: bool,
     db_session: Session,
     persona_id: int | None = None,
@@ -472,6 +492,7 @@ def upsert_persona(
         persona.recency_bias = recency_bias
         persona.default_persona = default_persona
         persona.llm_model_version_override = llm_model_version_override
+        persona.starter_messages = starter_messages
         persona.deleted = False  # Un-delete if previously deleted
 
         # Do not delete any associations manually added unless
@@ -498,6 +519,7 @@ def upsert_persona(
             prompts=prompts or [],
             document_sets=document_sets or [],
             llm_model_version_override=llm_model_version_override,
+            starter_messages=starter_messages,
         )
         db_session.add(persona)
 
@@ -531,6 +553,34 @@ def mark_persona_as_deleted(
         persona_id=persona_id, user_id=user_id, db_session=db_session
     )
     persona.deleted = True
+    db_session.commit()
+
+
+def mark_delete_persona_by_name(
+    persona_name: str, db_session: Session, is_default: bool = True
+) -> None:
+    stmt = (
+        update(Persona)
+        .where(Persona.name == persona_name, Persona.default_persona == is_default)
+        .values(deleted=True)
+    )
+
+    db_session.execute(stmt)
+    db_session.commit()
+
+
+def delete_old_default_personas(
+    db_session: Session,
+) -> None:
+    """Note, this locks out the Summarize and Paraphrase personas for now
+    Need a more graceful fix later or those need to never have IDs"""
+    stmt = (
+        update(Persona)
+        .where(Persona.default_persona, Persona.id > 0)
+        .values(deleted=True, name=func.concat(Persona.name, "_old"))
+    )
+
+    db_session.execute(stmt)
     db_session.commit()
 
 
@@ -685,12 +735,12 @@ def translate_db_search_doc_to_server_search_doc(
 
 
 def get_retrieval_docs_from_chat_message(chat_message: ChatMessage) -> RetrievalDocs:
-    return RetrievalDocs(
-        top_documents=[
-            translate_db_search_doc_to_server_search_doc(db_doc)
-            for db_doc in chat_message.search_docs
-        ]
-    )
+    top_documents = [
+        translate_db_search_doc_to_server_search_doc(db_doc)
+        for db_doc in chat_message.search_docs
+    ]
+    top_documents = sorted(top_documents, key=lambda doc: doc.score, reverse=True)  # type: ignore
+    return RetrievalDocs(top_documents=top_documents)
 
 
 def translate_db_message_to_chat_message_detail(
@@ -709,3 +759,15 @@ def translate_db_message_to_chat_message_detail(
     )
 
     return chat_msg_detail
+
+
+def delete_persona_by_name(
+    persona_name: str, db_session: Session, is_default: bool = True
+) -> None:
+    stmt = delete(Persona).where(
+        Persona.name == persona_name, Persona.default_persona == is_default
+    )
+
+    db_session.execute(stmt)
+
+    db_session.commit()

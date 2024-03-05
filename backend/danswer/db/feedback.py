@@ -57,7 +57,7 @@ def update_document_boost(
         boost=boost,
     )
 
-    document_index.update([update])
+    document_index.update(update_requests=[update])
 
     db_session.commit()
 
@@ -77,7 +77,7 @@ def update_document_hidden(
         hidden=hidden,
     )
 
-    document_index.update([update])
+    document_index.update(update_requests=[update])
 
     db_session.commit()
 
@@ -123,7 +123,7 @@ def create_doc_retrieval_feedback(
             document_ids=[document_id], boost=db_doc.boost, hidden=db_doc.hidden
         )
         # Updates are generally batched for efficiency, this case only 1 doc/value is updated
-        document_index.update([update])
+        document_index.update(update_requests=[update])
 
     db_session.add(retrieval_feedback)
     db_session.commit()
@@ -146,8 +146,10 @@ def create_chat_message_feedback(
     chat_message_id: int,
     user_id: UUID | None,
     db_session: Session,
+    # Slack user requested help from human
+    required_followup: bool | None = None,
 ) -> None:
-    if is_positive is None and feedback_text is None:
+    if is_positive is None and feedback_text is None and required_followup is None:
         raise ValueError("No feedback provided")
 
     chat_message = get_chat_message(
@@ -161,6 +163,7 @@ def create_chat_message_feedback(
         chat_message_id=chat_message_id,
         is_positive=is_positive,
         feedback_text=feedback_text,
+        required_followup=required_followup,
     )
 
     db_session.add(message_feedback)

@@ -31,6 +31,7 @@ from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_AUTH
+from danswer.configs.app_configs import EMAIL_FROM
 from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
@@ -107,10 +108,16 @@ def verify_email_domain(email: str) -> None:
             )
 
 
-def send_user_verification_email(user_email: str, token: str) -> None:
+def send_user_verification_email(
+    user_email: str,
+    token: str,
+    mail_from: str = EMAIL_FROM,
+) -> None:
     msg = MIMEMultipart()
     msg["Subject"] = "Danswer Email Verification"
     msg["To"] = user_email
+    if mail_from:
+        msg["From"] = mail_from
 
     link = f"{WEB_DOMAIN}/auth/verify-email?token={token}"
 
@@ -177,7 +184,11 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         self, user: User, request: Optional[Request] = None
     ) -> None:
         logger.info(f"User {user.id} has registered.")
-        optional_telemetry(record_type=RecordType.SIGN_UP, data={"user": "create"})
+        optional_telemetry(
+            record_type=RecordType.SIGN_UP,
+            data={"action": "create"},
+            user_id=str(user.id),
+        )
 
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None
@@ -202,7 +213,10 @@ async def get_user_manager(
     yield UserManager(user_db)
 
 
-cookie_transport = CookieTransport(cookie_max_age=SESSION_EXPIRE_TIME_SECONDS)
+cookie_transport = CookieTransport(
+    cookie_max_age=SESSION_EXPIRE_TIME_SECONDS,
+    cookie_secure=WEB_DOMAIN.startswith("https"),
+)
 
 
 def get_database_strategy(

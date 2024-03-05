@@ -17,3 +17,7 @@ class StatusResponse(GenericModel, Generic[DataT]):
 
 class ApiKey(BaseModel):
     api_key: str
+
+
+class IdReturn(BaseModel):
+    id: int

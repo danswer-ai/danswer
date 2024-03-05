@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer  # type:ignore
+from typing import TYPE_CHECKING
 
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
@@ -10,8 +10,11 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
+if TYPE_CHECKING:
+    from transformers import AutoTokenizer  # type:ignore
 
-def count_unk_tokens(text: str, tokenizer: AutoTokenizer) -> int:
+
+def count_unk_tokens(text: str, tokenizer: "AutoTokenizer") -> int:
     """Unclear if the wordpiece tokenizer used is actually tokenizing anything as the [UNK] token
     It splits up even foreign characters and unicode emojis without using UNK"""
     tokenized_text = tokenizer.tokenize(text)
@@ -57,6 +60,7 @@ def query_intent(query: str) -> tuple[SearchType, QueryFlow]:
 
 def recommend_search_flow(
     query: str,
+    model_name: str,
     keyword: bool = False,
     max_percent_stopwords: float = 0.30,  # ~Every third word max, ie "effects of caffeine" still viable keyword search
 ) -> HelperResponse:
@@ -69,7 +73,7 @@ def recommend_search_flow(
     non_stopword_percent = len(non_stopwords) / len(words)
 
     # UNK tokens -> suggest Keyword (still may be valid QA)
-    if count_unk_tokens(query, get_default_tokenizer()) > 0:
+    if count_unk_tokens(query, get_default_tokenizer(model_name=model_name)) > 0:
         if not keyword:
             heuristic_search_type = SearchType.KEYWORD
             message = "Unknown tokens in query."

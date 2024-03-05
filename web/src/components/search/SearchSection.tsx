@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { SearchBar } from "./SearchBar";
 import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SourceSelector } from "./filtering/Filters";
-import { Connector, DocumentSet, Tag } from "@/lib/types";
+import { CCPairBasicInfo, Connector, DocumentSet, Tag } from "@/lib/types";
 import {
   DanswerDocument,
   Quote,
@@ -22,6 +22,7 @@ import { useFilters, useObjectState } from "@/lib/hooks";
 import { questionValidationStreamed } from "@/lib/search/streamingQuestionValidation";
 import { Persona } from "@/app/admin/personas/interfaces";
 import { PersonaSelector } from "./PersonaSelector";
+import { computeAvailableFilters } from "@/lib/filters";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   forceDisplayQA: false,
@@ -35,7 +36,7 @@ const VALID_QUESTION_RESPONSE_DEFAULT: ValidQuestionResponse = {
 };
 
 interface SearchSectionProps {
-  connectors: Connector<any>[];
+  ccPairs: CCPairBasicInfo[];
   documentSets: DocumentSet[];
   personas: Persona[];
   tags: Tag[];
@@ -43,7 +44,7 @@ interface SearchSectionProps {
 }
 
 export const SearchSection = ({
-  connectors,
+  ccPairs,
   documentSets,
   personas,
   tags,
@@ -61,9 +62,6 @@ export const SearchSection = ({
   const [validQuestionResponse, setValidQuestionResponse] =
     useObjectState<ValidQuestionResponse>(VALID_QUESTION_RESPONSE_DEFAULT);
 
-  // Filters
-  const filterManager = useFilters();
-
   // Search Type
   const [selectedSearchType, setSelectedSearchType] =
     useState<SearchType>(defaultSearchType);
@@ -71,6 +69,18 @@ export const SearchSection = ({
   const [selectedPersona, setSelectedPersona] = useState<number>(
     personas[0]?.id || 0
   );
+
+  // Filters
+  const filterManager = useFilters();
+  const availableSources = ccPairs.map((ccPair) => ccPair.source);
+  const [finalAvailableSources, finalAvailableDocumentSets] =
+    computeAvailableFilters({
+      selectedPersona: personas.find(
+        (persona) => persona.id === selectedPersona
+      ),
+      availableSources: availableSources,
+      availableDocumentSets: documentSets,
+    });
 
   // Overrides for default behavior that only last a single query
   const [defaultOverrides, setDefaultOverrides] =
@@ -85,7 +95,7 @@ export const SearchSection = ({
     suggestedFlowType: null,
     selectedDocIndices: null,
     error: null,
-    queryEventId: null,
+    messageId: null,
   };
   const updateCurrentAnswer = (answer: string) =>
     setSearchResponse((prevState) => ({
@@ -122,10 +132,10 @@ export const SearchSection = ({
       ...(prevState || initialSearchResponse),
       error,
     }));
-  const updateQueryEventId = (queryEventId: number) =>
+  const updateMessageId = (messageId: number) =>
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),
-      queryEventId,
+      messageId,
     }));
 
   let lastSearchCancellationToken = useRef<CancellationToken | null>(null);
@@ -180,9 +190,9 @@ export const SearchSection = ({
         cancellationToken: lastSearchCancellationToken.current,
         fn: updateError,
       }),
-      updateQueryEventId: cancellable({
+      updateMessageId: cancellable({
         cancellationToken: lastSearchCancellationToken.current,
-        fn: updateQueryEventId,
+        fn: updateMessageId,
       }),
       selectedSearchType: searchType ?? selectedSearchType,
       offset: offset ?? defaultOverrides.offset,
@@ -203,12 +213,12 @@ export const SearchSection = ({
 
   return (
     <div className="relative max-w-[2000px] xl:max-w-[1430px] mx-auto">
-      <div className="absolute left-0 hidden 2xl:block w-64">
-        {(connectors.length > 0 || documentSets.length > 0) && (
+      <div className="absolute left-0 hidden 2xl:block w-52 3xl:w-64">
+        {(ccPairs.length > 0 || documentSets.length > 0) && (
           <SourceSelector
             {...filterManager}
-            availableDocumentSets={documentSets}
-            existingSources={connectors.map((connector) => connector.source)}
+            availableDocumentSets={finalAvailableDocumentSets}
+            existingSources={finalAvailableSources}
             availableTags={tags}
           />
         )}
@@ -236,7 +246,7 @@ export const SearchSection = ({
           />
         </div>
       </div>
-      <div className="w-[800px] mx-auto">
+      <div className="w-[720px] 3xl:w-[800px] mx-auto">
         {personas.length > 0 ? (
           <div className="flex mb-2 w-fit">
             <PersonaSelector

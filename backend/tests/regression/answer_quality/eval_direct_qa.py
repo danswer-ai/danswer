@@ -108,6 +108,8 @@ def get_answer_for_question(
     answer = get_search_answer(
         query_req=new_message_request,
         user=None,
+        max_document_tokens=None,
+        max_history_tokens=None,
         db_session=db_session,
         answer_generation_timeout=100,
         enable_reflexion=False,

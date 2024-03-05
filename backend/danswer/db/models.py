@@ -62,6 +62,12 @@ class TaskStatus(str, PyEnum):
     FAILURE = "FAILURE"
 
 
+class IndexModelStatus(str, PyEnum):
+    PAST = "PAST"
+    PRESENT = "PRESENT"
+    FUTURE = "FUTURE"
+
+
 class Base(DeclarativeBase):
     pass
 
@@ -95,6 +101,21 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 
 class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
     pass
+
+
+class ApiKey(Base):
+    __tablename__ = "api_key"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    hashed_api_key: Mapped[str] = mapped_column(String, unique=True)
+    api_key_display: Mapped[str] = mapped_column(String, unique=True)
+    # the ID of the "user" who represents the access credentials for the API key
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
+    # the ID of the user who owns the key
+    owner_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
 
 """
@@ -348,6 +369,38 @@ class Credential(Base):
     user: Mapped[User | None] = relationship("User", back_populates="credentials")
 
 
+class EmbeddingModel(Base):
+    __tablename__ = "embedding_model"
+    # ID is used also to indicate the order that the models are configured by the admin
+    id: Mapped[int] = mapped_column(primary_key=True)
+    model_name: Mapped[str] = mapped_column(String)
+    model_dim: Mapped[int] = mapped_column(Integer)
+    normalize: Mapped[bool] = mapped_column(Boolean)
+    query_prefix: Mapped[str] = mapped_column(String)
+    passage_prefix: Mapped[str] = mapped_column(String)
+    status: Mapped[IndexModelStatus] = mapped_column(Enum(IndexModelStatus))
+    index_name: Mapped[str] = mapped_column(String)
+
+    index_attempts: Mapped[List["IndexAttempt"]] = relationship(
+        "IndexAttempt", back_populates="embedding_model"
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_embedding_model_present_unique",
+            "status",
+            unique=True,
+            postgresql_where=(status == IndexModelStatus.PRESENT),
+        ),
+        Index(
+            "ix_embedding_model_future_unique",
+            "status",
+            unique=True,
+            postgresql_where=(status == IndexModelStatus.FUTURE),
+        ),
+    )
+
+
 class IndexAttempt(Base):
     """
     Represents an attempt to index a group of 1 or more documents from a
@@ -366,12 +419,24 @@ class IndexAttempt(Base):
         ForeignKey("credential.id"),
         nullable=True,
     )
+    # Some index attempts that run from beginning will still have this as False
+    # This is only for attempts that are explicitly marked as from the start via
+    # the run once API
+    from_beginning: Mapped[bool] = mapped_column(Boolean)
     status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
+    # The two below may be slightly out of sync if user switches Embedding Model
     new_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
     total_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
-    error_msg: Mapped[str | None] = mapped_column(
-        Text, default=None
-    )  # only filled if status = "failed"
+    docs_removed_from_index: Mapped[int | None] = mapped_column(Integer, default=0)
+    # only filled if status = "failed"
+    error_msg: Mapped[str | None] = mapped_column(Text, default=None)
+    # only filled if status = "failed" AND an unhandled exception caused the failure
+    full_exception_trace: Mapped[str | None] = mapped_column(Text, default=None)
+    # Nullable because in the past, we didn't allow swapping out embedding models live
+    embedding_model_id: Mapped[int] = mapped_column(
+        ForeignKey("embedding_model.id"),
+        nullable=False,
+    )
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -392,6 +457,9 @@ class IndexAttempt(Base):
     )
     credential: Mapped[Credential] = relationship(
         "Credential", back_populates="index_attempts"
+    )
+    embedding_model: Mapped[EmbeddingModel] = relationship(
+        "EmbeddingModel", back_populates="index_attempts"
     )
 
     __table_args__ = (
@@ -587,6 +655,7 @@ class ChatMessageFeedback(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     chat_message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
     is_positive: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    required_followup: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     feedback_text: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     chat_message: Mapped[ChatMessage] = relationship(
@@ -647,6 +716,15 @@ class Prompt(Base):
     )
 
 
+class StarterMessage(TypedDict):
+    """NOTE: is a `TypedDict` so it can be used as a type hint for a JSONB column
+    in Postgres"""
+
+    name: str
+    description: str
+    message: str
+
+
 class Persona(Base):
     __tablename__ = "persona"
 
@@ -660,7 +738,6 @@ class Persona(Base):
         Enum(SearchType), default=SearchType.HYBRID
     )
     # Number of chunks to pass to the LLM for generation.
-    # If unspecified, uses the default DEFAULT_NUM_CHUNKS_FED_TO_CHAT set in the env variable
     num_chunks: Mapped[float | None] = mapped_column(Float, nullable=True)
     # Pass every chunk through LLM for evaluation, fairly expensive
     # Can be turned off globally by admin, in which case, this setting is ignored
@@ -675,6 +752,9 @@ class Persona(Base):
     # auto-detected time filters, relevance filters, etc.
     llm_model_version_override: Mapped[str | None] = mapped_column(
         String, nullable=True
+    )
+    starter_messages: Mapped[list[StarterMessage] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
     )
     # Default personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
@@ -723,8 +803,17 @@ class ChannelConfig(TypedDict):
 
     channel_names: list[str]
     respond_tag_only: NotRequired[bool]  # defaults to False
+    respond_to_bots: NotRequired[bool]  # defaults to False
     respond_team_member_list: NotRequired[list[str]]
     answer_filters: NotRequired[list[AllowedAnswerFilters]]
+    # If None then no follow up
+    # If empty list, follow up with no tags
+    follow_up_tags: NotRequired[list[str]]
+
+
+class SlackBotResponseType(str, PyEnum):
+    QUOTES = "quotes"
+    CITATIONS = "citations"
 
 
 class SlackBotConfig(Base):
@@ -737,6 +826,9 @@ class SlackBotConfig(Base):
     # JSON for flexibility. Contains things like: channel name, team members, etc.
     channel_config: Mapped[ChannelConfig] = mapped_column(
         postgresql.JSONB(), nullable=False
+    )
+    response_type: Mapped[SlackBotResponseType] = mapped_column(
+        Enum(SlackBotResponseType, native_enum=False), nullable=False
     )
 
     persona: Mapped[Persona | None] = relationship("Persona")

@@ -17,6 +17,7 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -130,7 +131,9 @@ class Document360Connector(LoadConnector, PollConnector):
                 continue
 
             authors = [
-                author["email_id"]
+                BasicExpertInfo(
+                    display_name=author.get("name"), email=author["email_id"]
+                )
                 for author in article_details.get("authors", [])
                 if author["email_id"]
             ]

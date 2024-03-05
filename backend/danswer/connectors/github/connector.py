@@ -1,15 +1,19 @@
-import itertools
+import time
 from collections.abc import Iterator
 from datetime import datetime
+from datetime import timedelta
 from datetime import timezone
 from typing import Any
 from typing import cast
 
 from github import Github
+from github import RateLimitExceededException
+from github import Repository
 from github.Issue import Issue
 from github.PaginatedList import PaginatedList
 from github.PullRequest import PullRequest
 
+from danswer.configs.app_configs import GITHUB_CONNECTOR_BASE_URL
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -19,21 +23,61 @@ from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
 
 
+_MAX_NUM_RATE_LIMIT_RETRIES = 5
+
+
+def _sleep_after_rate_limit_exception(github_client: Github) -> None:
+    sleep_time = github_client.get_rate_limit().core.reset.replace(
+        tzinfo=timezone.utc
+    ) - datetime.now(tz=timezone.utc)
+    sleep_time += timedelta(minutes=1)  # add an extra minute just to be safe
+    logger.info(f"Ran into Github rate-limit. Sleeping {sleep_time.seconds} seconds.")
+    time.sleep(sleep_time.seconds)
+
+
+def _get_batch_rate_limited(
+    git_objs: PaginatedList, page_num: int, github_client: Github, attempt_num: int = 0
+) -> list[Any]:
+    if attempt_num > _MAX_NUM_RATE_LIMIT_RETRIES:
+        raise RuntimeError(
+            "Re-tried fetching batch too many times. Something is going wrong with fetching objects from Github"
+        )
+
+    try:
+        objs = list(git_objs.get_page(page_num))
+        # fetch all data here to disable lazy loading later
+        # this is needed to capture the rate limit exception here (if one occurs)
+        for obj in objs:
+            if hasattr(obj, "raw_data"):
+                getattr(obj, "raw_data")
+        return objs
+    except RateLimitExceededException:
+        _sleep_after_rate_limit_exception(github_client)
+        return _get_batch_rate_limited(
+            git_objs, page_num, github_client, attempt_num + 1
+        )
+
+
 def _batch_github_objects(
-    git_objs: PaginatedList, batch_size: int
-) -> Iterator[list[PullRequest | Issue]]:
-    it = iter(git_objs)
+    git_objs: PaginatedList, github_client: Github, batch_size: int
+) -> Iterator[list[Any]]:
+    page_num = 0
     while True:
-        batch = list(itertools.islice(it, batch_size))
+        batch = _get_batch_rate_limited(git_objs, page_num, github_client)
+        page_num += 1
+
         if not batch:
             break
-        yield batch
+
+        for mini_batch in batch_generator(batch, batch_size=batch_size):
+            yield mini_batch
 
 
 def _convert_pr_to_document(pull_request: PullRequest) -> Document:
@@ -91,8 +135,28 @@ class GithubConnector(LoadConnector, PollConnector):
         self.github_client: Github | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        self.github_client = Github(credentials["github_access_token"])
+        self.github_client = (
+            Github(
+                credentials["github_access_token"], base_url=GITHUB_CONNECTOR_BASE_URL
+            )
+            if GITHUB_CONNECTOR_BASE_URL
+            else Github(credentials["github_access_token"])
+        )
         return None
+
+    def _get_github_repo(
+        self, github_client: Github, attempt_num: int = 0
+    ) -> Repository.Repository:
+        if attempt_num > _MAX_NUM_RATE_LIMIT_RETRIES:
+            raise RuntimeError(
+                "Re-tried fetching repo too many times. Something is going wrong with fetching objects from Github"
+            )
+
+        try:
+            return github_client.get_repo(f"{self.repo_owner}/{self.repo_name}")
+        except RateLimitExceededException:
+            _sleep_after_rate_limit_exception(github_client)
+            return self._get_github_repo(github_client, attempt_num + 1)
 
     def _fetch_from_github(
         self, start: datetime | None = None, end: datetime | None = None
@@ -100,14 +164,16 @@ class GithubConnector(LoadConnector, PollConnector):
         if self.github_client is None:
             raise ConnectorMissingCredentialError("GitHub")
 
-        repo = self.github_client.get_repo(f"{self.repo_owner}/{self.repo_name}")
+        repo = self._get_github_repo(self.github_client)
 
         if self.include_prs:
             pull_requests = repo.get_pulls(
                 state=self.state_filter, sort="updated", direction="desc"
             )
 
-            for pr_batch in _batch_github_objects(pull_requests, self.batch_size):
+            for pr_batch in _batch_github_objects(
+                pull_requests, self.github_client, self.batch_size
+            ):
                 doc_batch: list[Document] = []
                 for pr in pr_batch:
                     if start is not None and pr.updated_at < start:
@@ -123,7 +189,9 @@ class GithubConnector(LoadConnector, PollConnector):
                 state=self.state_filter, sort="updated", direction="desc"
             )
 
-            for issue_batch in _batch_github_objects(issues, self.batch_size):
+            for issue_batch in _batch_github_objects(
+                issues, self.github_client, self.batch_size
+            ):
                 doc_batch = []
                 for issue in issue_batch:
                     issue = cast(Issue, issue)
@@ -146,7 +214,17 @@ class GithubConnector(LoadConnector, PollConnector):
     ) -> GenerateDocumentsOutput:
         start_datetime = datetime.utcfromtimestamp(start)
         end_datetime = datetime.utcfromtimestamp(end)
-        return self._fetch_from_github(start_datetime, end_datetime)
+
+        # Move start time back by 3 hours, since some Issues/PRs are getting dropped
+        # Could be due to delayed processing on GitHub side
+        # The non-updated issues since last poll will be shortcut-ed and not embedded
+        adjusted_start_datetime = start_datetime - timedelta(hours=3)
+
+        epoch = datetime.utcfromtimestamp(0)
+        if adjusted_start_datetime < epoch:
+            adjusted_start_datetime = epoch
+
+        return self._fetch_from_github(adjusted_start_datetime, end_datetime)
 
 
 if __name__ == "__main__":

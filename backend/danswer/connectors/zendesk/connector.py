@@ -21,6 +21,8 @@ def _article_to_document(article: Article) -> Document:
         display_name=article.author.name, email=article.author.email
     )
     update_time = time_str_to_utc(article.updated_at)
+    labels = [str(label) for label in article.label_names]
+
     return Document(
         id=f"article:{article.id}",
         sections=[
@@ -30,7 +32,7 @@ def _article_to_document(article: Article) -> Document:
         semantic_identifier=article.title,
         doc_updated_at=update_time,
         primary_owners=[author],
-        metadata={"type": "article"},
+        metadata={"labels": labels} if labels else {},
     )
 
 
@@ -45,8 +47,15 @@ class ZendeskConnector(LoadConnector, PollConnector):
         self.zendesk_client: Zenpy | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
+        # Subdomain is actually the whole URL
+        subdomain = (
+            credentials["zendesk_subdomain"]
+            .replace("https://", "")
+            .split(".zendesk.com")[0]
+        )
+
         self.zendesk_client = Zenpy(
-            subdomain=credentials["zendesk_subdomain"],
+            subdomain=subdomain,
             email=credentials["zendesk_email"],
             token=credentials["zendesk_token"],
         )

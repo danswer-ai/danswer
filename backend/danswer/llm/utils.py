@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from collections.abc import Iterator
 from copy import copy
+from functools import lru_cache
 from typing import Any
 from typing import cast
 
@@ -14,13 +15,20 @@ from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import BaseMessageChunk
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
+from litellm import get_max_tokens  # type: ignore
 from tiktoken.core import Encoding
 
 from danswer.configs.app_configs import LOG_LEVEL
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
+from danswer.configs.constants import GEN_AI_DETECTED_MODEL
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
+from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_API_KEY
+from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
+from danswer.configs.model_configs import GEN_AI_MAX_TOKENS
+from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
+from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.models import ChatMessage
 from danswer.dynamic_configs import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
@@ -34,7 +42,35 @@ _LLM_TOKENIZER: Any = None
 _LLM_TOKENIZER_ENCODE: Callable[[str], Any] | None = None
 
 
-def get_default_llm_tokenizer() -> Any:
+@lru_cache()
+def get_default_llm_version() -> tuple[str, str]:
+    default_openai_model = "gpt-3.5-turbo-16k-0613"
+    if GEN_AI_MODEL_VERSION:
+        llm_version = GEN_AI_MODEL_VERSION
+    else:
+        if GEN_AI_MODEL_PROVIDER != "openai":
+            logger.warning("No LLM Model Version set")
+            # Either this value is unused or it will throw an error
+            llm_version = default_openai_model
+        else:
+            kv_store = get_dynamic_config_store()
+            try:
+                llm_version = cast(str, kv_store.load(GEN_AI_DETECTED_MODEL))
+            except ConfigNotFoundError:
+                llm_version = default_openai_model
+
+    if FAST_GEN_AI_MODEL_VERSION:
+        fast_llm_version = FAST_GEN_AI_MODEL_VERSION
+    else:
+        if GEN_AI_MODEL_PROVIDER == "openai":
+            fast_llm_version = default_openai_model
+        else:
+            fast_llm_version = llm_version
+
+    return llm_version, fast_llm_version
+
+
+def get_default_llm_tokenizer() -> Encoding:
     """Currently only supports the OpenAI default tokenizer: tiktoken"""
     global _LLM_TOKENIZER
     if _LLM_TOKENIZER is None:
@@ -55,16 +91,25 @@ def get_default_llm_token_encode() -> Callable[[str], Any]:
     return _LLM_TOKENIZER_ENCODE
 
 
+def tokenizer_trim_content(
+    content: str, desired_length: int, tokenizer: Encoding
+) -> str:
+    tokens = tokenizer.encode(content)
+    if len(tokens) > desired_length:
+        content = tokenizer.decode(tokens[:desired_length])
+    return content
+
+
 def tokenizer_trim_chunks(
     chunks: list[InferenceChunk], max_chunk_toks: int = DOC_EMBEDDING_CONTEXT_SIZE
 ) -> list[InferenceChunk]:
     tokenizer = get_default_llm_tokenizer()
     new_chunks = copy(chunks)
     for ind, chunk in enumerate(new_chunks):
-        tokens = tokenizer.encode(chunk.content)
-        if len(tokens) > max_chunk_toks:
+        new_content = tokenizer_trim_content(chunk.content, max_chunk_toks, tokenizer)
+        if len(new_content) != len(chunk.content):
             new_chunk = copy(chunk)
-            new_chunk.content = tokenizer.decode(tokens[:max_chunk_toks])
+            new_chunk.content = new_content
             new_chunks[ind] = new_chunk
     return new_chunks
 
@@ -178,13 +223,51 @@ def get_gen_ai_api_key() -> str | None:
     return GEN_AI_API_KEY
 
 
-def test_llm(llm: LLM) -> bool:
+def test_llm(llm: LLM) -> str | None:
     # try for up to 2 timeouts (e.g. 10 seconds in total)
+    error_msg = None
     for _ in range(2):
         try:
             llm.invoke("Do not respond")
-            return True
+            return None
         except Exception as e:
-            logger.warning(f"GenAI API key failed for the following reason: {e}")
+            error_msg = str(e)
+            logger.warning(f"Failed to call LLM with the following error: {error_msg}")
 
-    return False
+    return error_msg
+
+
+def get_llm_max_tokens(
+    model_name: str | None = GEN_AI_MODEL_VERSION,
+    model_provider: str = GEN_AI_MODEL_PROVIDER,
+) -> int:
+    """Best effort attempt to get the max tokens for the LLM"""
+    if GEN_AI_MAX_TOKENS:
+        # This is an override, so always return this
+        return GEN_AI_MAX_TOKENS
+
+    model_name = model_name or get_default_llm_version()[0]
+
+    try:
+        if model_provider == "openai":
+            return get_max_tokens(model_name)
+        return get_max_tokens("/".join([model_provider, model_name]))
+    except Exception:
+        return 4096
+
+
+def get_max_input_tokens(
+    model_name: str | None = GEN_AI_MODEL_VERSION,
+    model_provider: str = GEN_AI_MODEL_PROVIDER,
+    output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
+) -> int:
+    model_name = model_name or get_default_llm_version()[0]
+    input_toks = (
+        get_llm_max_tokens(model_name=model_name, model_provider=model_provider)
+        - output_tokens
+    )
+
+    if input_toks <= 0:
+        raise RuntimeError("No tokens for input for the LLM given settings")
+
+    return input_toks

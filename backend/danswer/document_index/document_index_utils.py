@@ -1,11 +1,26 @@
 import math
 import uuid
 
+from sqlalchemy.orm import Session
+
+from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.indexing.models import IndexChunk
 from danswer.indexing.models import InferenceChunk
 
 
 DEFAULT_BATCH_SIZE = 30
+DEFAULT_INDEX_NAME = "danswer_chunk"
+
+
+def get_both_index_names(db_session: Session) -> tuple[str, str | None]:
+    model = get_current_db_embedding_model(db_session)
+
+    model_new = get_secondary_db_embedding_model(db_session)
+    if not model_new:
+        return model.index_name, None
+
+    return model.index_name, model_new.index_name
 
 
 def translate_boost_count_to_multiplier(boost: int) -> float:

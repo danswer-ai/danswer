@@ -7,6 +7,7 @@ from danswer.access.models import DocumentAccess
 from danswer.db.document import get_acccess_info_for_documents
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import Document
+from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.document_index.vespa.index import VespaIndex
@@ -31,28 +32,31 @@ def set_acl_for_vespa(should_check_if_already_done: bool = False) -> None:
         except ConfigNotFoundError:
             pass
 
-    vespa_index = get_default_document_index()
-    if not isinstance(vespa_index, VespaIndex):
-        raise ValueError("This script is only for Vespa indexes")
-
     logger.info("Populating Access Control List fields in Vespa")
     with Session(get_sqlalchemy_engine()) as db_session:
-        # for all documents, set the `access_control_list` field apporpriately
+        # for all documents, set the `access_control_list` field appropriately
         # based on the state of Postgres
         documents = db_session.scalars(select(Document)).all()
         document_access_info = get_acccess_info_for_documents(
             db_session=db_session,
             document_ids=[document.id for document in documents],
         )
-        vespa_index.update(
-            update_requests=[
-                UpdateRequest(
-                    document_ids=[document_id],
-                    access=DocumentAccess.build(user_ids, is_public),
-                )
-                for document_id, user_ids, is_public in document_access_info
-            ],
+
+        curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+        vespa_index = get_default_document_index(
+            primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
         )
+        if not isinstance(vespa_index, VespaIndex):
+            raise ValueError("This script is only for Vespa indexes")
+
+        update_requests = [
+            UpdateRequest(
+                document_ids=[document_id],
+                access=DocumentAccess.build(user_ids, is_public),
+            )
+            for document_id, user_ids, is_public in document_access_info
+        ]
+        vespa_index.update(update_requests=update_requests)
 
     dynamic_config_store.store(_COMPLETED_ACL_UPDATE_KEY, True)
 

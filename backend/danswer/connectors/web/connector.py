@@ -195,7 +195,7 @@ class WebConnector(LoadConnector):
                     continue
 
                 page = context.new_page()
-                page.goto(current_url)
+                page_response = page.goto(current_url)
                 final_page = page.url
                 if final_page != current_url:
                     logger.info(f"Redirected to {final_page}")
@@ -213,6 +213,12 @@ class WebConnector(LoadConnector):
                     for link in internal_links:
                         if link not in visited_links:
                             to_visit.append(link)
+
+                if page_response and str(page_response.status)[0] in ("4", "5"):
+                    logger.info(
+                        f"Skipped indexing {current_url} due to HTTP {page_response.status} response"
+                    )
+                    continue
 
                 parsed_html = web_html_cleanup(soup, self.mintlify_cleanup)
 

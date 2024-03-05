@@ -19,7 +19,9 @@ APP_API_PREFIX = os.environ.get("API_PREFIX", "")
 # User Facing Features Configs
 #####
 BLURB_SIZE = 128  # Number Encoder Tokens included in the chunk blurb
-GENERATIVE_MODEL_ACCESS_CHECK_FREQ = 86400  # 1 day
+GENERATIVE_MODEL_ACCESS_CHECK_FREQ = int(
+    os.environ.get("GENERATIVE_MODEL_ACCESS_CHECK_FREQ") or 86400
+)  # 1 day
 DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "true"
 
 
@@ -27,7 +29,10 @@ DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "
 # Web Configs
 #####
 # WEB_DOMAIN is used to set the redirect_uri after login flows
-WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://127.0.0.1:3000"
+# NOTE: if you are having problems accessing the Danswer web UI locally (especially
+# on Windows, try  setting this to `http://127.0.0.1:3000` instead and see if that
+# fixes it)
+WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
 
 
 #####
@@ -43,8 +48,8 @@ MASK_CREDENTIAL_PREFIX = (
 
 SECRET = os.environ.get("SECRET", "")
 SESSION_EXPIRE_TIME_SECONDS = int(
-    os.environ.get("SESSION_EXPIRE_TIME_SECONDS") or 86400
-)  # 1 day
+    os.environ.get("SESSION_EXPIRE_TIME_SECONDS") or 86400 * 7
+)  # 7 days
 
 # set `VALID_EMAIL_DOMAINS` to a comma seperated list of domains in order to
 # restrict access to Danswer to only users with emails from those domains.
@@ -78,6 +83,7 @@ SMTP_SERVER = os.environ.get("SMTP_SERVER") or "smtp.gmail.com"
 SMTP_PORT = int(os.environ.get("SMTP_PORT") or "587")
 SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
 SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
+EMAIL_FROM = os.environ.get("EMAIL_FROM") or SMTP_USER
 
 
 #####
@@ -113,8 +119,16 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 #####
 # Connector Configs
 #####
+POLL_CONNECTOR_OFFSET = 30  # Minutes overlap between poll windows
+
+# Some calls to get information on expert users are quite costly especially with rate limiting
+# Since experts are not used in the actual user experience, currently it is turned off
+# for some connectors
+ENABLE_EXPENSIVE_EXPERT_CALLS = False
+
 GOOGLE_DRIVE_INCLUDE_SHARED = False
 GOOGLE_DRIVE_FOLLOW_SHORTCUTS = False
+GOOGLE_DRIVE_ONLY_ORG_PUBLIC = False
 
 FILE_CONNECTOR_TMP_STORAGE_PATH = os.environ.get(
     "FILE_CONNECTOR_TMP_STORAGE_PATH", "/home/file_connector_storage"
@@ -146,6 +160,8 @@ CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
 
 GONG_CONNECTOR_START_TIME = os.environ.get("GONG_CONNECTOR_START_TIME")
 
+GITHUB_CONNECTOR_BASE_URL = os.environ.get("GITHUB_CONNECTOR_BASE_URL") or None
+
 DASK_JOB_CLIENT_ENABLED = (
     os.environ.get("DASK_JOB_CLIENT_ENABLED", "").lower() == "true"
 )
@@ -163,6 +179,11 @@ EXPERIMENTAL_CHECKPOINTING_ENABLED = (
 CONTINUE_ON_CONNECTOR_FAILURE = os.environ.get(
     "CONTINUE_ON_CONNECTOR_FAILURE", ""
 ).lower() not in ["false", ""]
+# When swapping to a new embedding model, a secondary index is created in the background, to conserve
+# resources, we pause updates on the primary index by default while the secondary index is created
+DISABLE_INDEX_UPDATE_ON_SWAP = (
+    os.environ.get("DISABLE_INDEX_UPDATE_ON_SWAP", "").lower() == "true"
+)
 # Controls how many worker processes we spin up to index documents in the
 # background. This is useful for speeding up indexing, but does require a
 # fairly large amount of memory in order to increase substantially, since
@@ -176,7 +197,11 @@ ENABLE_MINI_CHUNK = os.environ.get("ENABLE_MINI_CHUNK", "").lower() == "true"
 # tokens. But we need it to be at least as big as 1/4th chunk size to avoid having a tiny mini-chunk at the end
 MINI_CHUNK_SIZE = 150
 # Timeout to wait for job's last update before killing it, in hours
-CLEANUP_INDEXING_JOBS_TIMEOUT = int(os.environ.get("CLEANUP_INDEXING_JOBS_TIMEOUT", 1))
+CLEANUP_INDEXING_JOBS_TIMEOUT = int(os.environ.get("CLEANUP_INDEXING_JOBS_TIMEOUT", 3))
+# If set to true, then will not clean up documents that "no longer exist" when running Load connectors
+DISABLE_DOCUMENT_CLEANUP = (
+    os.environ.get("DISABLE_DOCUMENT_CLEANUP", "").lower() == "true"
+)
 
 
 #####

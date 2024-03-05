@@ -2,9 +2,11 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
+from danswer.chat.chat_utils import compute_max_document_tokens
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.process_message import stream_chat_message
 from danswer.db.chat import create_chat_session
@@ -13,6 +15,7 @@ from danswer.db.chat import get_chat_message
 from danswer.db.chat import get_chat_messages_by_session
 from danswer.db.chat import get_chat_session_by_id
 from danswer.db.chat import get_chat_sessions_by_user
+from danswer.db.chat import get_persona_by_id
 from danswer.db.chat import set_as_latest_chat_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import update_chat_session
@@ -20,6 +23,7 @@ from danswer.db.engine import get_session
 from danswer.db.feedback import create_chat_message_feedback
 from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.models import User
+from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.secondary_llm_flows.chat_session_naming import (
     get_renamed_conversation_name,
@@ -228,12 +232,42 @@ def create_search_feedback(
     """This endpoint isn't protected - it does not check if the user has access to the document
     Users could try changing boosts of arbitrary docs but this does not leak any data.
     """
+
+    curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+    document_index = get_default_document_index(
+        primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+    )
+
     create_doc_retrieval_feedback(
         message_id=feedback.message_id,
         document_id=feedback.document_id,
         document_rank=feedback.document_rank,
         clicked=feedback.click,
         feedback=feedback.search_feedback,
-        document_index=get_default_document_index(),
+        document_index=document_index,
         db_session=db_session,
+    )
+
+
+class MaxSelectedDocumentTokens(BaseModel):
+    max_tokens: int
+
+
+@router.get("/max-selected-document-tokens")
+def get_max_document_tokens(
+    persona_id: int,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> MaxSelectedDocumentTokens:
+    try:
+        persona = get_persona_by_id(
+            persona_id=persona_id,
+            user_id=user.id if user else None,
+            db_session=db_session,
+        )
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Persona not found")
+
+    return MaxSelectedDocumentTokens(
+        max_tokens=compute_max_document_tokens(persona),
     )

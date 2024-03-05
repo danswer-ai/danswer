@@ -5,22 +5,28 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { fetchSS } from "@/lib/utilsSS";
-import { Connector, DocumentSet, Tag, User, ValidSources } from "@/lib/types";
 import {
-  BackendMessage,
-  ChatSession,
-  Message,
-  RetrievalType,
-} from "./interfaces";
+  CCPairBasicInfo,
+  DocumentSet,
+  Tag,
+  User,
+  ValidSources,
+} from "@/lib/types";
+import { ChatSession } from "./interfaces";
 import { unstable_noStore as noStore } from "next/cache";
 import { Persona } from "../admin/personas/interfaces";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
-import { WelcomeModal } from "@/components/WelcomeModal";
+import {
+  WelcomeModal,
+  hasCompletedWelcomeFlowSS,
+} from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
 import { cookies } from "next/headers";
 import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/contants";
 import { personaComparator } from "../admin/personas/lib";
 import { ChatLayout } from "./ChatPage";
+import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingModels";
+import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 
 export default async function Page({
   searchParams,
@@ -32,25 +38,24 @@ export default async function Page({
   const tasks = [
     getAuthTypeMetadataSS(),
     getCurrentUserSS(),
-    fetchSS("/manage/connector"),
+    fetchSS("/manage/indexing-status"),
     fetchSS("/manage/document-set"),
     fetchSS("/persona?include_default=true"),
     fetchSS("/chat/get-user-chat-sessions"),
     fetchSS("/query/valid-tags"),
+    fetchSS("/secondary-index/get-embedding-models"),
   ];
 
   // catch cases where the backend is completely unreachable here
   // without try / catch, will just raise an exception and the page
   // will not render
-  let results: (User | Response | AuthTypeMetadata | null)[] = [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-  ];
+  let results: (
+    | User
+    | Response
+    | AuthTypeMetadata
+    | FullEmbeddingModelResponse
+    | null
+  )[] = [null, null, null, null, null, null, null, null, null];
   try {
     results = await Promise.all(tasks);
   } catch (e) {
@@ -58,11 +63,12 @@ export default async function Page({
   }
   const authTypeMetadata = results[0] as AuthTypeMetadata | null;
   const user = results[1] as User | null;
-  const connectorsResponse = results[2] as Response | null;
+  const ccPairsResponse = results[2] as Response | null;
   const documentSetsResponse = results[3] as Response | null;
   const personasResponse = results[4] as Response | null;
   const chatSessionsResponse = results[5] as Response | null;
   const tagsResponse = results[6] as Response | null;
+  const embeddingModelResponse = results[7] as Response | null;
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -73,16 +79,16 @@ export default async function Page({
     return redirect("/auth/waiting-on-verification");
   }
 
-  let connectors: Connector<any>[] = [];
-  if (connectorsResponse?.ok) {
-    connectors = await connectorsResponse.json();
+  let ccPairs: CCPairBasicInfo[] = [];
+  if (ccPairsResponse?.ok) {
+    ccPairs = await ccPairsResponse.json();
   } else {
-    console.log(`Failed to fetch connectors - ${connectorsResponse?.status}`);
+    console.log(`Failed to fetch connectors - ${ccPairsResponse?.status}`);
   }
   const availableSources: ValidSources[] = [];
-  connectors.forEach((connector) => {
-    if (!availableSources.includes(connector.source)) {
-      availableSources.push(connector.source);
+  ccPairs.forEach((ccPair) => {
+    if (!availableSources.includes(ccPair.source)) {
+      availableSources.push(ccPair.source);
     }
   });
 
@@ -124,6 +130,15 @@ export default async function Page({
     console.log(`Failed to fetch tags - ${tagsResponse?.status}`);
   }
 
+  const embeddingModelVersionInfo =
+    embeddingModelResponse && embeddingModelResponse.ok
+      ? ((await embeddingModelResponse.json()) as FullEmbeddingModelResponse)
+      : null;
+  const currentEmbeddingModelName =
+    embeddingModelVersionInfo?.current_model_name;
+  const nextEmbeddingModelName =
+    embeddingModelVersionInfo?.secondary_model_name;
+
   const defaultPersonaIdRaw = searchParams["personaId"];
   const defaultPersonaId = defaultPersonaIdRaw
     ? parseInt(defaultPersonaIdRaw)
@@ -136,12 +151,35 @@ export default async function Page({
     ? parseInt(documentSidebarCookieInitialWidth.value)
     : undefined;
 
+  const hasAnyConnectors = ccPairs.length > 0;
+  const shouldShowWelcomeModal =
+    !hasCompletedWelcomeFlowSS() &&
+    !hasAnyConnectors &&
+    (!user || user.role === "admin");
+  const shouldDisplaySourcesIncompleteModal =
+    hasAnyConnectors &&
+    !shouldShowWelcomeModal &&
+    !ccPairs.some(
+      (ccPair) => ccPair.has_successful_run && ccPair.docs_indexed > 0
+    );
+
+  // if no connectors are setup, only show personas that are pure
+  // passthrough and don't do any retrieval
+  if (!hasAnyConnectors) {
+    personas = personas.filter((persona) => persona.num_chunks === 0);
+  }
+
   return (
     <>
       <InstantSSRAutoRefresh />
-      <ApiKeyModal />
 
-      {connectors.length === 0 && <WelcomeModal />}
+      {shouldShowWelcomeModal && <WelcomeModal />}
+      {!shouldShowWelcomeModal && !shouldDisplaySourcesIncompleteModal && (
+        <ApiKeyModal />
+      )}
+      {shouldDisplaySourcesIncompleteModal && (
+        <NoCompleteSourcesModal ccPairs={ccPairs} />
+      )}
 
       <ChatLayout
         user={user}

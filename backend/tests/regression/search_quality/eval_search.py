@@ -5,7 +5,10 @@ from contextlib import contextmanager
 from typing import Any
 from typing import TextIO
 
+from sqlalchemy.orm import Session
+
 from danswer.chat.chat_utils import get_chunks_for_qa
+from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import InferenceChunk
@@ -93,9 +96,17 @@ def get_search_results(
     retrieval_metrics = MetricsHander[RetrievalMetricsContainer]()
     rerank_metrics = MetricsHander[RerankMetricsContainer]()
 
+    with Session(get_sqlalchemy_engine()) as db_session:
+        embedding_model = get_current_db_embedding_model(db_session)
+
+    document_index = get_default_document_index(
+        primary_index_name=embedding_model.index_name, secondary_index_name=None
+    )
+
     top_chunks, llm_chunk_selection = full_chunk_search(
         query=search_query,
-        document_index=get_default_document_index(),
+        document_index=document_index,
+        db_session=db_session,
         retrieval_metrics_callback=retrieval_metrics.record_metric,
         rerank_metrics_callback=rerank_metrics.record_metric,
     )

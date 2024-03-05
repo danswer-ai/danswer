@@ -85,7 +85,8 @@ class CreateChatMessageRequest(BaseModel):
     parent_message_id: int | None
     # New message contents
     message: str
-    # If no prompt provided, provide canned retrieval answer, no actually LLM flow
+    # If no prompt provided, uses the largest prompt of the chat session
+    # but really this should be explicitly specified, only in the simplified APIs is this inferred
     # Use prompt_id 0 to use the system default prompt which is Answer-Question
     prompt_id: int | None
     # If search_doc_ids provided, then retrieval options are unused
@@ -94,6 +95,7 @@ class CreateChatMessageRequest(BaseModel):
     # allows the caller to specify the exact search query they want to use
     # will disable Query Rewording if specified
     query_override: str | None = None
+    no_ai_answer: bool = False
 
     @root_validator
     def check_search_doc_ids_or_retrieval_options(cls: BaseModel, values: dict) -> dict:

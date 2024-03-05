@@ -1,9 +1,8 @@
-import json
+import re
 from collections.abc import Callable
 from collections.abc import Generator
 from datetime import datetime
 from datetime import timezone
-from pathlib import Path
 from typing import Any
 from typing import cast
 
@@ -11,15 +10,18 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import SlackResponse
 
+from danswer.configs.app_configs import ENABLE_EXPENSIVE_EXPERT_CALLS
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
 from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.connectors.slack.utils import expert_info_from_slack_id
 from danswer.connectors.slack.utils import get_message_link
 from danswer.connectors.slack.utils import make_slack_api_call_logged
 from danswer.connectors.slack.utils import make_slack_api_call_paginated
@@ -35,19 +37,25 @@ MessageType = dict[str, Any]
 # list of messages in a thread
 ThreadType = list[MessageType]
 
+basic_retry_wrapper = retry_builder()
+
 
 def _make_paginated_slack_api_call(
     call: Callable[..., SlackResponse], **kwargs: Any
 ) -> Generator[dict[str, Any], None, None]:
     return make_slack_api_call_paginated(
-        make_slack_api_rate_limited(make_slack_api_call_logged(call))
+        basic_retry_wrapper(
+            make_slack_api_rate_limited(make_slack_api_call_logged(call))
+        )
     )(**kwargs)
 
 
 def _make_slack_api_call(
     call: Callable[..., SlackResponse], **kwargs: Any
 ) -> SlackResponse:
-    return make_slack_api_rate_limited(make_slack_api_call_logged(call))(**kwargs)
+    return basic_retry_wrapper(
+        make_slack_api_rate_limited(make_slack_api_call_logged(call))
+    )(**kwargs)
 
 
 def get_channel_info(client: WebClient, channel_id: str) -> ChannelType:
@@ -134,20 +142,46 @@ def get_latest_message_time(thread: ThreadType) -> datetime:
     return datetime.fromtimestamp(max_ts, tz=timezone.utc)
 
 
-def get_event_time(event: dict[str, Any]) -> datetime | None:
-    ts = event.get("ts")
-    if not ts:
-        return None
-    return datetime.fromtimestamp(float(ts), tz=timezone.utc)
-
-
 def thread_to_doc(
     workspace: str,
     channel: ChannelType,
     thread: ThreadType,
     slack_cleaner: SlackTextCleaner,
+    client: WebClient,
+    user_cache: dict[str, BasicExpertInfo | None],
 ) -> Document:
     channel_id = channel["id"]
+
+    initial_sender_expert_info = expert_info_from_slack_id(
+        user_id=thread[0].get("user"), client=client, user_cache=user_cache
+    )
+    initial_sender_name = (
+        initial_sender_expert_info.get_semantic_name()
+        if initial_sender_expert_info
+        else "Unknown"
+    )
+
+    valid_experts = None
+    if ENABLE_EXPENSIVE_EXPERT_CALLS:
+        all_sender_ids = [m.get("user") for m in thread]
+        experts = [
+            expert_info_from_slack_id(
+                user_id=sender_id, client=client, user_cache=user_cache
+            )
+            for sender_id in all_sender_ids
+            if sender_id
+        ]
+        valid_experts = [expert for expert in experts if expert]
+
+    first_message = slack_cleaner.index_clean(cast(str, thread[0]["text"]))
+    snippet = (
+        first_message[:50].rstrip() + "..."
+        if len(first_message) > 50
+        else first_message
+    )
+
+    doc_sem_id = f"{initial_sender_name} in #{channel['name']}: {snippet}"
+
     return Document(
         id=f"{channel_id}__{thread[0]['ts']}",
         sections=[
@@ -160,10 +194,11 @@ def thread_to_doc(
             for m in thread
         ],
         source=DocumentSource.SLACK,
-        semantic_identifier=channel["name"],
+        semantic_identifier=doc_sem_id,
         doc_updated_at=get_latest_message_time(thread),
         title="",  # slack docs don't really have a "title"
-        metadata={},
+        primary_owners=valid_experts,
+        metadata={"Channel": channel["name"]},
     )
 
 
@@ -196,11 +231,23 @@ def _default_msg_filter(message: MessageType) -> bool:
     return False
 
 
-def _filter_channels(
-    all_channels: list[dict[str, Any]], channels_to_connect: list[str] | None
+def filter_channels(
+    all_channels: list[dict[str, Any]],
+    channels_to_connect: list[str] | None,
+    regex_enabled: bool,
 ) -> list[dict[str, Any]]:
     if not channels_to_connect:
         return all_channels
+
+    if regex_enabled:
+        return [
+            channel
+            for channel in all_channels
+            if any(
+                re.fullmatch(channel_to_connect, channel["name"])
+                for channel_to_connect in channels_to_connect
+            )
+        ]
 
     # validate that all channels in `channels_to_connect` are valid
     # fail loudly in the case of an invalid channel so that the user
@@ -222,6 +269,7 @@ def get_all_docs(
     client: WebClient,
     workspace: str,
     channels: list[str] | None = None,
+    channel_name_regex_enabled: bool = False,
     oldest: str | None = None,
     latest: str | None = None,
     msg_filter_func: Callable[[MessageType], bool] = _default_msg_filter,
@@ -229,8 +277,13 @@ def get_all_docs(
     """Get all documents in the workspace, channel by channel"""
     slack_cleaner = SlackTextCleaner(client=client)
 
+    # Cache to prevent refetching via API since users
+    user_cache: dict[str, BasicExpertInfo | None] = {}
+
     all_channels = get_channels(client)
-    filtered_channels = _filter_channels(all_channels, channels)
+    filtered_channels = filter_channels(
+        all_channels, channels, channel_name_regex_enabled
+    )
 
     for channel in filtered_channels:
         channel_docs = 0
@@ -265,6 +318,8 @@ def get_all_docs(
                         channel=channel,
                         thread=filtered_thread,
                         slack_cleaner=slack_cleaner,
+                        client=client,
+                        user_cache=user_cache,
                     )
 
         logger.info(
@@ -272,121 +327,19 @@ def get_all_docs(
         )
 
 
-class SlackLoadConnector(LoadConnector):
-    def __init__(
-        self,
-        workspace: str,
-        export_path_str: str,
-        channels: list[str] | None = None,
-        batch_size: int = INDEX_BATCH_SIZE,
-    ) -> None:
-        self.workspace = workspace
-        self.channels = channels
-        self.export_path_str = export_path_str
-        self.batch_size = batch_size
-
-    def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        if credentials:
-            logger.warning("Unexpected credentials provided for Slack Load Connector")
-        return None
-
-    @staticmethod
-    def _process_batch_event(
-        slack_event: dict[str, Any],
-        channel: dict[str, Any],
-        matching_doc: Document | None,
-        workspace: str,
-    ) -> Document | None:
-        if (
-            slack_event["type"] == "message"
-            and slack_event.get("subtype") != "channel_join"
-        ):
-            if matching_doc:
-                return Document(
-                    id=matching_doc.id,
-                    sections=matching_doc.sections
-                    + [
-                        Section(
-                            link=get_message_link(
-                                event=slack_event,
-                                workspace=workspace,
-                                channel_id=channel["id"],
-                            ),
-                            text=slack_event["text"],
-                        )
-                    ],
-                    source=matching_doc.source,
-                    semantic_identifier=matching_doc.semantic_identifier,
-                    title="",  # slack docs don't really have a "title"
-                    doc_updated_at=get_event_time(slack_event),
-                    metadata=matching_doc.metadata,
-                )
-
-            return Document(
-                id=slack_event["ts"],
-                sections=[
-                    Section(
-                        link=get_message_link(
-                            event=slack_event,
-                            workspace=workspace,
-                            channel_id=channel["id"],
-                        ),
-                        text=slack_event["text"],
-                    )
-                ],
-                source=DocumentSource.SLACK,
-                semantic_identifier=channel["name"],
-                title="",  # slack docs don't really have a "title"
-                doc_updated_at=get_event_time(slack_event),
-                metadata={},
-            )
-
-        return None
-
-    def load_from_state(self) -> GenerateDocumentsOutput:
-        export_path = Path(self.export_path_str)
-
-        with open(export_path / "channels.json") as f:
-            all_channels = json.load(f)
-
-        filtered_channels = _filter_channels(all_channels, self.channels)
-
-        document_batch: dict[str, Document] = {}
-        for channel_info in filtered_channels:
-            channel_dir_path = export_path / cast(str, channel_info["name"])
-            channel_file_paths = [
-                channel_dir_path / file_name
-                for file_name in os.listdir(channel_dir_path)
-            ]
-            for path in channel_file_paths:
-                with open(path) as f:
-                    events = cast(list[dict[str, Any]], json.load(f))
-                for slack_event in events:
-                    doc = self._process_batch_event(
-                        slack_event=slack_event,
-                        channel=channel_info,
-                        matching_doc=document_batch.get(
-                            slack_event.get("thread_ts", "")
-                        ),
-                        workspace=self.workspace,
-                    )
-                    if doc:
-                        document_batch[doc.id] = doc
-                        if len(document_batch) >= self.batch_size:
-                            yield list(document_batch.values())
-
-        yield list(document_batch.values())
-
-
 class SlackPollConnector(PollConnector):
     def __init__(
         self,
         workspace: str,
         channels: list[str] | None = None,
+        # if specified, will treat the specified channel strings as
+        # regexes, and will only index channels that fully match the regexes
+        channel_regex_enabled: bool = False,
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.workspace = workspace
         self.channels = channels
+        self.channel_regex_enabled = channel_regex_enabled
         self.batch_size = batch_size
         self.client: WebClient | None = None
 
@@ -406,6 +359,7 @@ class SlackPollConnector(PollConnector):
             client=self.client,
             workspace=self.workspace,
             channels=self.channels,
+            channel_name_regex_enabled=self.channel_regex_enabled,
             # NOTE: need to impute to `None` instead of using 0.0, since Slack will
             # throw an error if we use 0.0 on an account without infinite data
             # retention
@@ -425,8 +379,10 @@ if __name__ == "__main__":
     import os
     import time
 
+    slack_channel = os.environ.get("SLACK_CHANNEL")
     connector = SlackPollConnector(
-        workspace=os.environ["SLACK_WORKSPACE"], channels=[os.environ["SLACK_CHANNEL"]]
+        workspace=os.environ["SLACK_WORKSPACE"],
+        channels=[slack_channel] if slack_channel else None,
     )
     connector.load_credentials({"slack_bot_token": os.environ["SLACK_BOT_TOKEN"]})
 

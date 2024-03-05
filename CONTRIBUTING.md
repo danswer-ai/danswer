@@ -22,7 +22,7 @@ Your input is vital to making sure that Danswer moves in the right direction.
 Before starting on implementation, please raise a GitHub issue.
 
 And always feel free to message us (Chris Weaver / Yuhong Sun) on 
-[Slack](https://join.slack.com/t/danswer/shared_invite/zt-1u3h3ke3b-VGh1idW19R8oiNRiKBYv2w) / 
+[Slack](https://join.slack.com/t/danswer/shared_invite/zt-2afut44lv-Rw3kSWu6_OmdAXRpCv80DQ) / 
 [Discord](https://discord.gg/TDJ59cGV2X) directly about anything at all. 
 
 
@@ -40,7 +40,7 @@ Our goal is to make contributing as easy as possible. If you run into any issues
 That way we can help future contributors and users can avoid the same issue.
 
 We also have support channels and generally interesting discussions on our
-[Slack](https://join.slack.com/t/danswer/shared_invite/zt-1u3h3ke3b-VGh1idW19R8oiNRiKBYv2w)
+[Slack](https://join.slack.com/t/danswer/shared_invite/zt-2afut44lv-Rw3kSWu6_OmdAXRpCv80DQ)
 and 
 [Discord](https://discord.gg/TDJ59cGV2X).
 
@@ -58,9 +58,10 @@ development purposes but also feel free to just use the containers and update wi
 
 
 ### Local Set Up
-It is recommended to use Python versions >= 3.11.
+It is recommended to use Python version 3.11
 
-This guide skips setting up User Authentication for the purpose of simplicity
+If using a lower version, modifications will have to be made to the code.
+If using a higher version, the version of Tensorflow we use may not be available for your platform.
 
 
 #### Installing Requirements
@@ -71,9 +72,13 @@ For convenience here's a command for it:
 python -m venv .venv
 source .venv/bin/activate
 ```
-_For Windows activate via:_
+_For Windows, activate the virtual environment using Command Prompt:_
 ```bash
 .venv\Scripts\activate
+```
+If using PowerShell, the command slightly differs:
+```powershell
+.venv\Scripts\Activate.ps1
 ```
 
 Install the required python dependencies:

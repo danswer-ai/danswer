@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
-from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.chat import get_persona_by_id
 from danswer.db.chat import get_personas
 from danswer.db.chat import get_prompts_by_ids
@@ -18,6 +17,7 @@ from danswer.db.chat import upsert_persona
 from danswer.db.document_set import get_document_sets_by_ids
 from danswer.db.engine import get_session
 from danswer.db.models import User
+from danswer.llm.utils import get_default_llm_version
 from danswer.one_shot_answer.qa_block import build_dummy_prompt
 from danswer.server.features.persona.models import CreatePersonaRequest
 from danswer.server.features.persona.models import PersonaSnapshot
@@ -66,6 +66,7 @@ def create_update_persona(
             prompts=prompts,
             document_sets=document_sets,
             llm_model_version_override=create_persona_request.llm_model_version_override,
+            starter_messages=create_persona_request.starter_messages,
             shared=create_persona_request.shared,
             db_session=db_session,
         )
@@ -156,11 +157,14 @@ def delete_persona(
 def list_personas(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
+    include_deleted: bool = False,
 ) -> list[PersonaSnapshot]:
     user_id = user.id if user is not None else None
     return [
         PersonaSnapshot.from_model(persona)
-        for persona in get_personas(user_id=user_id, db_session=db_session)
+        for persona in get_personas(
+            user_id=user_id, include_deleted=include_deleted, db_session=db_session
+        )
     ]
 
 
@@ -236,4 +240,4 @@ def get_default_model(
     if GEN_AI_MODEL_PROVIDER != "openai":
         return ""
 
-    return GEN_AI_MODEL_VERSION
+    return get_default_llm_version()[0]

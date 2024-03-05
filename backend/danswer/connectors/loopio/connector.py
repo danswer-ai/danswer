@@ -1,10 +1,11 @@
 import json
+from collections.abc import Generator
 from datetime import datetime
 from datetime import timezone
 from typing import Any
 
 from oauthlib.oauth2 import BackendApplicationClient
-from requests_oauthlib import OAuth2Session
+from requests_oauthlib import OAuth2Session  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -37,14 +38,13 @@ class LoopioConnector(LoadConnector, PollConnector):
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.batch_size = batch_size
-        self.loopio_client_id = None
-        self.loopio_client_token = None
+        self.loopio_client_id: str | None = None
+        self.loopio_client_token: str | None = None
         self.loopio_stack_name = loopio_stack_name
-        self.search_filter = {}
 
     def _fetch_data(
         self, resource: str, params: dict[str, str | int]
-    ) -> dict[str, Any]:
+    ) -> Generator[dict[str, Any], None, None]:
         client = BackendApplicationClient(
             client_id=self.loopio_client_id, scope=["library:read"]
         )
@@ -75,9 +75,9 @@ class LoopioConnector(LoadConnector, PollConnector):
             yield response_data
 
     def _build_search_filter(
-        self, stack_name: str, start: str, end: str
+        self, stack_name: str | None, start: str | None, end: str | None
     ) -> dict[str, Any]:
-        filter = {}
+        filter: dict[str, Any] = {}
         if start is not None and end is not None:
             filter["lastUpdatedDate"] = {"gte": start, "lt": end}
 
@@ -152,12 +152,12 @@ class LoopioConnector(LoadConnector, PollConnector):
                 last_reviewed_by = entry.get("lastReviewedBy")
 
                 primary_owners: list[BasicExpertInfo] = [
-                    {"display_name": owner.get("name")}
+                    BasicExpertInfo(display_name=owner.get("name"))
                     for owner in [creator, last_updated_by]
                     if owner is not None
                 ]
                 secondary_owners: list[BasicExpertInfo] = [
-                    {"display_name": owner.get("name")}
+                    BasicExpertInfo(display_name=owner.get("name"))
                     for owner in [last_reviewed_by]
                     if owner is not None
                 ]
@@ -173,7 +173,7 @@ class LoopioConnector(LoadConnector, PollConnector):
                         metadata={
                             "topic": topic,
                             "questions": "\n".join(questions),
-                            "creator": creator.get("name") if creator else None,
+                            "creator": creator.get("name") if creator else "",
                         },
                     )
                 )

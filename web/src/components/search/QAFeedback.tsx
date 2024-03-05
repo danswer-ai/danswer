@@ -5,30 +5,30 @@ import { ThumbsDownIcon, ThumbsUpIcon } from "../icons/icons";
 type Feedback = "like" | "dislike";
 
 const giveFeedback = async (
-  queryId: number,
+  messageId: number,
   feedback: Feedback
 ): Promise<boolean> => {
-  const response = await fetch("/api/query-feedback", {
+  const response = await fetch("/api/chat/create-chat-message-feedback", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      query_id: queryId,
-      feedback,
+      chat_message_id: messageId,
+      is_positive: feedback === "like",
     }),
   });
   return response.ok;
 };
 
 interface QAFeedbackIconProps {
-  queryId: number;
+  messageId: number;
   setPopup: (popupSpec: PopupSpec | null) => void;
   feedbackType: Feedback;
 }
 
 const QAFeedback = ({
-  queryId,
+  messageId,
   setPopup,
   feedbackType,
 }: QAFeedbackIconProps) => {
@@ -40,7 +40,7 @@ const QAFeedback = ({
   return (
     <div
       onClick={async () => {
-        const isSuccessful = await giveFeedback(queryId, feedbackType);
+        const isSuccessful = await giveFeedback(messageId, feedbackType);
         if (isSuccessful) {
           setPopup({
             message: "Thanks for your feedback!",
@@ -70,20 +70,24 @@ const QAFeedback = ({
 };
 
 interface QAFeedbackBlockProps {
-  queryId: number;
+  messageId: number;
   setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 export const QAFeedbackBlock = ({
-  queryId,
+  messageId,
   setPopup,
 }: QAFeedbackBlockProps) => {
   return (
     <div className="flex">
-      <QAFeedback queryId={queryId} setPopup={setPopup} feedbackType="like" />
+      <QAFeedback
+        messageId={messageId}
+        setPopup={setPopup}
+        feedbackType="like"
+      />
       <div className="ml-2">
         <QAFeedback
-          queryId={queryId}
+          messageId={messageId}
           setPopup={setPopup}
           feedbackType="dislike"
         />

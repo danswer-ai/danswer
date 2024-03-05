@@ -20,7 +20,9 @@ server {
 
     client_max_body_size 5G;    # Maximum upload size    
 
-    location ~ ^/api(.*)$ {
+    # Match both /api/* and /openapi.json in a single rule
+    location ~ ^/(api|openapi.json)(/.*)?$ {
+        # Rewrite /api prefixed matched paths
         rewrite ^/api(/.*)$ $1 break;
 
         # misc headers

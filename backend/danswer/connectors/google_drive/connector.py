@@ -17,6 +17,7 @@ from googleapiclient.errors import HttpError  # type: ignore
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import GOOGLE_DRIVE_FOLLOW_SHORTCUTS
 from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
+from danswer.configs.app_configs import GOOGLE_DRIVE_ONLY_ORG_PUBLIC
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
@@ -46,8 +47,6 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-# allow 10 minutes for modifiedTime to get propagated
-DRIVE_START_TIME_OFFSET = 60 * 10
 DRIVE_FOLDER_TYPE = "application/vnd.google-apps.folder"
 DRIVE_SHORTCUT_TYPE = "application/vnd.google-apps.shortcut"
 UNSUPPORTED_FILE_TYPE_CONTENT = ""  # keep empty for now
@@ -90,7 +89,7 @@ def _run_drive_file_query(
                     supportsAllDrives=include_shared,
                     includeItemsFromAllDrives=include_shared,
                     fields=(
-                        "nextPageToken, files(mimeType, id, name, "
+                        "nextPageToken, files(mimeType, id, name, permissions, "
                         "modifiedTime, webViewLink, shortcutDetails)"
                     ),
                     pageToken=next_page_token,
@@ -110,7 +109,7 @@ def _run_drive_file_query(
                             .get(
                                 fileId=file["shortcutDetails"]["targetId"],
                                 supportsAllDrives=include_shared,
-                                fields="mimeType, id, name, modifiedTime, webViewLink, shortcutDetails",
+                                fields="mimeType, id, name, modifiedTime, webViewLink, permissions, shortcutDetails",
                             )
                             .execute()
                         )
@@ -344,12 +343,14 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         batch_size: int = INDEX_BATCH_SIZE,
         include_shared: bool = GOOGLE_DRIVE_INCLUDE_SHARED,
         follow_shortcuts: bool = GOOGLE_DRIVE_FOLLOW_SHORTCUTS,
+        only_org_public: bool = GOOGLE_DRIVE_ONLY_ORG_PUBLIC,
         continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
     ) -> None:
         self.folder_paths = folder_paths or []
         self.batch_size = batch_size
         self.include_shared = include_shared
         self.follow_shortcuts = follow_shortcuts
+        self.only_org_public = only_org_public
         self.continue_on_failure = continue_on_failure
         self.creds: Credentials | None = None
 
@@ -466,6 +467,15 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
             doc_batch = []
             for file in files_batch:
                 try:
+                    if self.only_org_public:
+                        if "permissions" not in file:
+                            continue
+                        if not any(
+                            permission["type"] == "domain"
+                            for permission in file["permissions"]
+                        ):
+                            continue
+
                     text_contents = extract_text(file, service) or ""
 
                     doc_batch.append(
@@ -502,9 +512,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         # propogation if a document is modified, it takes some time for the API to
         # reflect these changes if we do not have an offset, then we may "miss" the
         # update when polling
-        yield from self._fetch_docs_from_drive(
-            max(start - DRIVE_START_TIME_OFFSET, 0, 0), end
-        )
+        yield from self._fetch_docs_from_drive(start, end)
 
 
 if __name__ == "__main__":

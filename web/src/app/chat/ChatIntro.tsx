@@ -1,4 +1,4 @@
-import { listSourceMetadata } from "@/lib/sources";
+import { getSourceMetadataForSources, listSourceMetadata } from "@/lib/sources";
 import { ValidSources } from "@/lib/types";
 import Image from "next/image";
 import { Persona } from "../admin/personas/interfaces";
@@ -8,6 +8,7 @@ import { HoverPopup } from "@/components/HoverPopup";
 import { Modal } from "@/components/Modal";
 import { useState } from "react";
 import { FaRobot } from "react-icons/fa";
+import { SourceMetadata } from "@/lib/search/interfaces";
 
 const MAX_PERSONAS_TO_DISPLAY = 4;
 
@@ -19,7 +20,7 @@ function HelperItemDisplay({
   description: string;
 }) {
   return (
-    <div className="cursor-default hover:bg-hover-light border border-border rounded py-2 px-4">
+    <div className="cursor-pointer hover:bg-hover-light border border-border rounded py-2 px-4">
       <div className="text-emphasis font-bold text-lg flex">{title}</div>
       <div className="text-sm">{description}</div>
     </div>
@@ -37,7 +38,7 @@ function AllPersonaOptionDisplay({
 }) {
   return (
     <Modal onOutsideClick={handleClose}>
-      <div className="px-8 py-12">
+      <div>
         <div className="flex w-full border-b border-border mb-4 pb-4">
           <h2 className="text-xl text-strong font-bold flex">
             <div className="p-1 bg-ai rounded-lg h-fit my-auto mr-2">
@@ -90,10 +91,7 @@ export function ChatIntro({
   const [isAllPersonaOptionVisible, setIsAllPersonaOptionVisible] =
     useState(false);
 
-  const allSources = listSourceMetadata();
-  const availableSourceMetadata = allSources.filter((source) =>
-    availableSources.includes(source.internalName)
-  );
+  const availableSourceMetadata = getSourceMetadataForSources(availableSources);
 
   return (
     <>
@@ -126,59 +124,67 @@ export function ChatIntro({
               </div>
             </div>
 
-            <Divider />
-            <div>
-              {selectedPersona && selectedPersona.document_sets.length > 0 && (
-                <div className="mt-2">
-                  <p className="font-bold mb-1 mt-4 text-emphasis">
-                    Knowledge Sets:{" "}
-                  </p>
-                  {selectedPersona.document_sets.map((documentSet) => (
-                    <div key={documentSet.id} className="w-fit">
-                      <HoverPopup
-                        mainContent={
-                          <span className="flex w-fit p-1 rounded border border-border text-xs font-medium cursor-default">
-                            <div className="mr-1 my-auto">
-                              <FiBookmark />
-                            </div>
-                            {documentSet.name}
-                          </span>
-                        }
-                        popupContent={
-                          <div className="flex py-1 w-96">
-                            <FiInfo className="my-auto mr-2" />
-                            <div className="text-sm">
-                              {documentSet.description}
-                            </div>
+            {selectedPersona && selectedPersona.num_chunks !== 0 && (
+              <>
+                <Divider />
+                <div>
+                  {selectedPersona.document_sets.length > 0 && (
+                    <div className="mt-2">
+                      <p className="font-bold mb-1 mt-4 text-emphasis">
+                        Knowledge Sets:{" "}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedPersona.document_sets.map((documentSet) => (
+                          <div key={documentSet.id} className="w-fit">
+                            <HoverPopup
+                              mainContent={
+                                <span className="flex w-fit p-1 rounded border border-border text-xs font-medium cursor-default">
+                                  <div className="mr-1 my-auto">
+                                    <FiBookmark />
+                                  </div>
+                                  {documentSet.name}
+                                </span>
+                              }
+                              popupContent={
+                                <div className="flex py-1 w-96">
+                                  <FiInfo className="my-auto mr-2" />
+                                  <div className="text-sm">
+                                    {documentSet.description}
+                                  </div>
+                                </div>
+                              }
+                              direction="top"
+                            />
                           </div>
-                        }
-                        direction="top"
-                      />
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                  )}
+                  {availableSources.length > 0 && (
+                    <div className="mt-2">
+                      <p className="font-bold mb-1 mt-4 text-emphasis">
+                        Connected Sources:{" "}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {availableSourceMetadata.map((sourceMetadata) => (
+                          <span
+                            key={sourceMetadata.internalName}
+                            className="flex w-fit p-1 rounded border border-border text-xs font-medium cursor-default"
+                          >
+                            <div className="mr-1 my-auto">
+                              {sourceMetadata.icon({})}
+                            </div>
+                            <div className="my-auto">
+                              {sourceMetadata.displayName}
+                            </div>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-              {availableSources.length > 0 && (
-                <div className="mt-2">
-                  <p className="font-bold mb-1 mt-4 text-emphasis">
-                    Connected Sources:{" "}
-                  </p>
-                  <div className="flex flex-wrap gap-x-2">
-                    {availableSourceMetadata.map((sourceMetadata) => (
-                      <span
-                        key={sourceMetadata.internalName}
-                        className="flex w-fit p-1 rounded border border-border text-xs font-medium cursor-default"
-                      >
-                        <div className="mr-1 my-auto">
-                          {sourceMetadata.icon({})}
-                        </div>
-                        {sourceMetadata.displayName}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="px-12 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">

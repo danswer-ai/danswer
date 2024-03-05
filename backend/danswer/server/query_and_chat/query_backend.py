@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
-from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.constants import DocumentSource
+from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.tag import get_tags_by_value_prefix_for_source_types
@@ -18,17 +18,12 @@ from danswer.one_shot_answer.models import DirectQARequest
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.models import IndexFilters
-from danswer.search.models import SavedSearchDoc
 from danswer.search.models import SearchDoc
-from danswer.search.models import SearchQuery
-from danswer.search.models import SearchResponse
 from danswer.search.search_runner import chunks_to_search_docs
-from danswer.search.search_runner import full_chunk_search
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
 from danswer.server.query_and_chat.models import AdminSearchRequest
 from danswer.server.query_and_chat.models import AdminSearchResponse
-from danswer.server.query_and_chat.models import DocumentSearchRequest
 from danswer.server.query_and_chat.models import HelperResponse
 from danswer.server.query_and_chat.models import QueryValidationResponse
 from danswer.server.query_and_chat.models import SimpleQueryRequest
@@ -58,7 +53,13 @@ def admin_search(
         time_cutoff=question.filters.time_cutoff,
         access_control_list=user_acl_filters,
     )
-    document_index = get_default_document_index()
+
+    embedding_model = get_current_db_embedding_model(db_session)
+
+    document_index = get_default_document_index(
+        primary_index_name=embedding_model.index_name, secondary_index_name=None
+    )
+
     if not isinstance(document_index, VespaIndex):
         raise HTTPException(
             status_code=400,
@@ -107,10 +108,15 @@ def get_tags(
 
 @basic_router.post("/search-intent")
 def get_search_type(
-    simple_query: SimpleQueryRequest, _: User = Depends(current_user)
+    simple_query: SimpleQueryRequest,
+    _: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
 ) -> HelperResponse:
     logger.info(f"Calculating intent for {simple_query.query}")
-    return recommend_search_flow(simple_query.query)
+    embedding_model = get_current_db_embedding_model(db_session)
+    return recommend_search_flow(
+        simple_query.query, model_name=embedding_model.model_name
+    )
 
 
 @basic_router.post("/query-validation")
@@ -138,55 +144,6 @@ def stream_query_validation(
     )
 
 
-@basic_router.post("/document-search")
-def handle_search_request(
-    search_request: DocumentSearchRequest,
-    user: User | None = Depends(current_user),
-    db_session: Session = Depends(get_session),
-    # Default to running LLM filter unless globally disabled
-    disable_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
-) -> SearchResponse:
-    """Simple search endpoint, does not create a new message or records in the DB"""
-    query = search_request.message
-    filters = search_request.retrieval_options.filters
-
-    logger.info(f"Received document search query: {query}")
-
-    user_acl_filters = build_access_filters_for_user(user, db_session)
-    final_filters = IndexFilters(
-        source_type=filters.source_type if filters else None,
-        document_set=filters.document_set if filters else None,
-        time_cutoff=filters.time_cutoff if filters else None,
-        access_control_list=user_acl_filters,
-    )
-
-    search_query = SearchQuery(
-        query=query,
-        search_type=search_request.search_type,
-        filters=final_filters,
-        recency_bias_multiplier=search_request.recency_bias_multiplier,
-        skip_rerank=search_request.skip_rerank,
-        skip_llm_chunk_filter=disable_llm_chunk_filter,
-    )
-
-    top_chunks, llm_selection = full_chunk_search(
-        query=search_query,
-        document_index=get_default_document_index(),
-    )
-
-    top_docs = chunks_to_search_docs(top_chunks)
-    llm_selection_indices = [
-        index for index, value in enumerate(llm_selection) if value
-    ]
-
-    # No need to save the docs for this API
-    fake_saved_docs = [SavedSearchDoc.from_search_doc(doc) for doc in top_docs]
-
-    return SearchResponse(
-        top_documents=fake_saved_docs, llm_indices=llm_selection_indices
-    )
-
-
 @basic_router.post("/stream-answer-with-quote")
 def get_answer_with_quote(
     query_request: DirectQARequest,
@@ -196,6 +153,10 @@ def get_answer_with_quote(
     query = query_request.messages[0].message
     logger.info(f"Received query for one shot answer with quotes: {query}")
     packets = stream_search_answer(
-        query_req=query_request, user=user, db_session=db_session
+        query_req=query_request,
+        user=user,
+        max_document_tokens=None,
+        max_history_tokens=0,
+        db_session=db_session,
     )
     return StreamingResponse(packets, media_type="application/json")

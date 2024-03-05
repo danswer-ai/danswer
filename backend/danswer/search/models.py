@@ -9,8 +9,6 @@ from danswer.configs.chat_configs import NUM_RERANKED_RESULTS
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
 from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
-from danswer.indexing.models import DocAwareChunk
-from danswer.indexing.models import IndexChunk
 
 MAX_METRICS_CONTENT = (
     200  # Just need enough characters to identify where in the doc the chunk is
@@ -43,11 +41,6 @@ class QueryFlow(str, Enum):
     QUESTION_ANSWER = "question-answer"
 
 
-class Embedder:
-    def embed(self, chunks: list[DocAwareChunk]) -> list[IndexChunk]:
-        raise NotImplementedError
-
-
 class Tag(BaseModel):
     tag_key: str
     tag_value: str
@@ -76,6 +69,7 @@ class SearchQuery(BaseModel):
     filters: IndexFilters
     recency_bias_multiplier: float
     num_hits: int = NUM_RETURNED_HITS
+    offset: int = 0
     search_type: SearchType = SearchType.HYBRID
     skip_rerank: bool = not ENABLE_RERANKING_REAL_TIME_FLOW
     # Only used if not skip_rerank
@@ -92,16 +86,17 @@ class RetrievalDetails(BaseModel):
     # Use LLM to determine whether to do a retrieval or only rely on existing history
     # If the Persona is configured to not run search (0 chunks), this is bypassed
     # If no Prompt is configured, the only search results are shown, this is bypassed
-    run_search: OptionalSearchSetting
+    run_search: OptionalSearchSetting = OptionalSearchSetting.ALWAYS
     # Is this a real-time/streaming call or a question where Danswer can take more time?
     # Used to determine reranking flow
-    real_time: bool
+    real_time: bool = True
     # The following have defaults in the Persona settings which can be overriden via
     # the query, if None, then use Persona settings
     filters: BaseFilters | None = None
     enable_auto_detect_filters: bool | None = None
-    # TODO Pagination/Offset options
-    # offset: int | None = None
+    # if None, no offset / limit
+    offset: int | None = None
+    limit: int | None = None
 
 
 class SearchDoc(BaseModel):
@@ -137,13 +132,16 @@ class SearchDoc(BaseModel):
 
 class SavedSearchDoc(SearchDoc):
     db_doc_id: int
+    score: float = 0.0
 
     @classmethod
     def from_search_doc(
         cls, search_doc: SearchDoc, db_doc_id: int = 0
     ) -> "SavedSearchDoc":
         """IMPORTANT: careful using this and not providing a db_doc_id"""
-        return cls(**search_doc.dict(), db_doc_id=db_doc_id)
+        search_doc_data = search_doc.dict()
+        search_doc_data["score"] = search_doc_data.get("score", 0.0)
+        return cls(**search_doc_data, db_doc_id=db_doc_id)
 
 
 class RetrievalDocs(BaseModel):

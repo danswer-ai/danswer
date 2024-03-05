@@ -12,8 +12,10 @@ export interface User {
 export type ValidSources =
   | "web"
   | "github"
+  | "gitlab"
   | "slack"
   | "google_drive"
+  | "gmail"
   | "bookstack"
   | "confluence"
   | "jira"
@@ -30,6 +32,7 @@ export type ValidSources =
   | "file"
   | "google_sites"
   | "loopio"
+  | "sharepoint"
   | "zendesk";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
@@ -77,11 +80,21 @@ export interface GithubConfig {
   include_issues: boolean;
 }
 
+export interface GitlabConfig {
+  project_owner: string;
+  project_name: string;
+  include_mrs: boolean;
+  include_issues: boolean;
+}
+
 export interface GoogleDriveConfig {
   folder_paths?: string[];
   include_shared?: boolean;
   follow_shortcuts?: boolean;
+  only_org_public?: boolean;
 }
+
+export interface GmailConfig {}
 
 export interface BookstackConfig {}
 
@@ -93,11 +106,16 @@ export interface JiraConfig {
   jira_project_url: string;
 }
 
+export interface SharepointConfig {
+  sites?: string[];
+}
+
 export interface ProductboardConfig {}
 
 export interface SlackConfig {
   workspace: string;
   channels?: string[];
+  channel_regex_enabled?: boolean;
 }
 
 export interface SlabConfig {
@@ -147,15 +165,17 @@ export interface IndexAttemptSnapshot {
   id: number;
   status: ValidStatuses | null;
   new_docs_indexed: number;
+  docs_removed_from_index: number;
   total_docs_indexed: number;
   error_msg: string | null;
+  full_exception_trace: string | null;
   time_started: string | null;
   time_updated: string;
 }
 
 export interface ConnectorIndexingStatus<
   ConnectorConfigType,
-  ConnectorCredentialType
+  ConnectorCredentialType,
 > {
   cc_pair_id: number;
   name: string | null;
@@ -170,6 +190,12 @@ export interface ConnectorIndexingStatus<
   latest_index_attempt: IndexAttemptSnapshot | null;
   deletion_attempt: DeletionAttemptSnapshot | null;
   is_deletable: boolean;
+}
+
+export interface CCPairBasicInfo {
+  docs_indexed: number;
+  has_successful_run: boolean;
+  source: ValidSources;
 }
 
 // CREDENTIALS
@@ -189,6 +215,11 @@ export interface GithubCredentialJson {
   github_access_token: string;
 }
 
+export interface GitlabCredentialJson {
+  gitlab_url: string;
+  gitlab_access_token: string;
+}
+
 export interface BookstackCredentialJson {
   bookstack_base_url: string;
   bookstack_api_token_id: string;
@@ -205,6 +236,10 @@ export interface JiraCredentialJson {
   jira_api_token: string;
 }
 
+export interface JiraServerCredentialJson {
+  jira_api_token: string;
+}
+
 export interface ProductboardCredentialJson {
   productboard_access_token: string;
 }
@@ -213,8 +248,17 @@ export interface SlackCredentialJson {
   slack_bot_token: string;
 }
 
+export interface GmailCredentialJson {
+  gmail_tokens: string;
+}
+
 export interface GoogleDriveCredentialJson {
   google_drive_tokens: string;
+}
+
+export interface GmailServiceAccountCredentialJson {
+  gmail_service_account_key: string;
+  gmail_delegated_user: string;
 }
 
 export interface GoogleDriveServiceAccountCredentialJson {
@@ -275,6 +319,12 @@ export interface ZendeskCredentialJson {
   zendesk_token: string;
 }
 
+export interface SharepointCredentialJson {
+  aad_client_id: string;
+  aad_client_secret: string;
+  aad_directory_id: string;
+}
+
 // DELETION
 
 export interface DeletionAttemptSnapshot {
@@ -314,14 +364,19 @@ export type AnswerFilterOption =
 export interface ChannelConfig {
   channel_names: string[];
   respond_tag_only?: boolean;
+  respond_to_bots?: boolean;
   respond_team_member_list?: string[];
   answer_filters?: AnswerFilterOption[];
+  follow_up_tags?: string[];
 }
+
+export type SlackBotResponseType = "quotes" | "citations";
 
 export interface SlackBotConfig {
   id: number;
   persona: Persona | null;
   channel_config: ChannelConfig;
+  response_type: SlackBotResponseType;
 }
 
 export interface SlackBotTokens {

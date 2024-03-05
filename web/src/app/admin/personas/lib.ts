@@ -1,4 +1,4 @@
-import { Persona, Prompt } from "./interfaces";
+import { Persona, Prompt, StarterMessage } from "./interfaces";
 
 interface PersonaCreationRequest {
   name: string;
@@ -7,8 +7,10 @@ interface PersonaCreationRequest {
   task_prompt: string;
   document_set_ids: number[];
   num_chunks: number | null;
+  include_citations: boolean;
   llm_relevance_filter: boolean | null;
   llm_model_version_override: string | null;
+  starter_messages: StarterMessage[] | null;
 }
 
 interface PersonaUpdateRequest {
@@ -20,8 +22,10 @@ interface PersonaUpdateRequest {
   task_prompt: string;
   document_set_ids: number[];
   num_chunks: number | null;
+  include_citations: boolean;
   llm_relevance_filter: boolean | null;
   llm_model_version_override: string | null;
+  starter_messages: StarterMessage[] | null;
 }
 
 function promptNameFromPersonaName(personaName: string) {
@@ -32,10 +36,12 @@ function createPrompt({
   personaName,
   systemPrompt,
   taskPrompt,
+  includeCitations,
 }: {
   personaName: string;
   systemPrompt: string;
   taskPrompt: string;
+  includeCitations: boolean;
 }) {
   return fetch("/api/prompt", {
     method: "POST",
@@ -48,6 +54,7 @@ function createPrompt({
       shared: true,
       system_prompt: systemPrompt,
       task_prompt: taskPrompt,
+      include_citations: includeCitations,
     }),
   });
 }
@@ -57,11 +64,13 @@ function updatePrompt({
   personaName,
   systemPrompt,
   taskPrompt,
+  includeCitations,
 }: {
   promptId: number;
   personaName: string;
   systemPrompt: string;
   taskPrompt: string;
+  includeCitations: boolean;
 }) {
   return fetch(`/api/prompt/${promptId}`, {
     method: "PATCH",
@@ -74,6 +83,7 @@ function updatePrompt({
       shared: true,
       system_prompt: systemPrompt,
       task_prompt: taskPrompt,
+      include_citations: includeCitations,
     }),
   });
 }
@@ -101,6 +111,7 @@ function buildPersonaAPIBody(
     prompt_ids: [promptId],
     document_set_ids,
     llm_model_version_override: creationRequest.llm_model_version_override,
+    starter_messages: creationRequest.starter_messages,
   };
 }
 
@@ -112,6 +123,7 @@ export async function createPersona(
     personaName: personaCreationRequest.name,
     systemPrompt: personaCreationRequest.system_prompt,
     taskPrompt: personaCreationRequest.task_prompt,
+    includeCitations: personaCreationRequest.include_citations,
   });
   const promptId = createPromptResponse.ok
     ? (await createPromptResponse.json()).id
@@ -147,6 +159,7 @@ export async function updatePersona(
       personaName: personaUpdateRequest.name,
       systemPrompt: personaUpdateRequest.system_prompt,
       taskPrompt: personaUpdateRequest.task_prompt,
+      includeCitations: personaUpdateRequest.include_citations,
     });
     promptId = existingPromptId;
   } else {
@@ -154,6 +167,7 @@ export async function updatePersona(
       personaName: personaUpdateRequest.name,
       systemPrompt: personaUpdateRequest.system_prompt,
       taskPrompt: personaUpdateRequest.task_prompt,
+      includeCitations: personaUpdateRequest.include_citations,
     });
     promptId = promptResponse.ok ? (await promptResponse.json()).id : null;
   }
@@ -203,9 +217,27 @@ function smallerNumberFirstComparator(a: number, b: number) {
   return a > b ? 1 : -1;
 }
 
+function closerToZeroNegativesFirstComparator(a: number, b: number) {
+  if (a < 0 && b > 0) {
+    return -1;
+  }
+  if (a > 0 && b < 0) {
+    return 1;
+  }
+
+  const absA = Math.abs(a);
+  const absB = Math.abs(b);
+
+  if (absA === absB) {
+    return a > b ? 1 : -1;
+  }
+
+  return absA > absB ? 1 : -1;
+}
+
 export function personaComparator(a: Persona, b: Persona) {
   if (a.display_priority === null && b.display_priority === null) {
-    return smallerNumberFirstComparator(a.id, b.id);
+    return closerToZeroNegativesFirstComparator(a.id, b.id);
   }
 
   if (a.display_priority !== b.display_priority) {
@@ -219,5 +251,5 @@ export function personaComparator(a: Persona, b: Persona) {
     return smallerNumberFirstComparator(a.display_priority, b.display_priority);
   }
 
-  return smallerNumberFirstComparator(a.id, b.id);
+  return closerToZeroNegativesFirstComparator(a.id, b.id);
 }

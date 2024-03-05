@@ -28,8 +28,8 @@ from danswer.db.engine import SYNC_DB_API
 from danswer.db.models import DocumentSet
 from danswer.db.tasks import check_live_task_not_timed_out
 from danswer.db.tasks import get_latest_task
+from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
-from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
@@ -78,9 +78,13 @@ def cleanup_connector_credential_pair_task(
 
         try:
             # The bulk of the work is in here, updates Postgres and Vespa
+            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+            document_index = get_default_document_index(
+                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+            )
             return delete_connector_credential_pair(
                 db_session=db_session,
-                document_index=get_default_document_index(),
+                document_index=document_index,
                 cc_pair=cc_pair,
             )
         except Exception as e:
@@ -94,9 +98,7 @@ def sync_document_set_task(document_set_id: int) -> None:
     """For document sets marked as not up to date, sync the state from postgres
     into the datastore. Also handles deletions."""
 
-    def _sync_document_batch(
-        document_ids: list[str], document_index: DocumentIndex
-    ) -> None:
+    def _sync_document_batch(document_ids: list[str]) -> None:
         logger.debug(f"Syncing document sets for: {document_ids}")
         # begin a transaction, release lock at the end
         with Session(get_sqlalchemy_engine()) as db_session:
@@ -114,19 +116,21 @@ def sync_document_set_task(document_set_id: int) -> None:
             }
 
             # update Vespa
-            document_index.update(
-                update_requests=[
-                    UpdateRequest(
-                        document_ids=[document_id],
-                        document_sets=set(document_set_map.get(document_id, [])),
-                    )
-                    for document_id in document_ids
-                ]
+            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+            document_index = get_default_document_index(
+                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
             )
+            update_requests = [
+                UpdateRequest(
+                    document_ids=[document_id],
+                    document_sets=set(document_set_map.get(document_id, [])),
+                )
+                for document_id in document_ids
+            ]
+            document_index.update(update_requests=update_requests)
 
     with Session(get_sqlalchemy_engine()) as db_session:
         try:
-            document_index = get_default_document_index()
             documents_to_update = fetch_documents_for_document_set(
                 document_set_id=document_set_id,
                 db_session=db_session,
@@ -136,8 +140,7 @@ def sync_document_set_task(document_set_id: int) -> None:
                 documents_to_update, _SYNC_BATCH_SIZE
             ):
                 _sync_document_batch(
-                    document_ids=[document.id for document in document_batch],
-                    document_index=document_index,
+                    document_ids=[document.id for document in document_batch]
                 )
 
             # if there are no connectors, then delete the document set. Otherwise, just

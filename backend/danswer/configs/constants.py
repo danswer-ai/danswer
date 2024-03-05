@@ -9,6 +9,7 @@ SOURCE_LINKS = "source_links"
 SOURCE_LINK = "link"
 SEMANTIC_IDENTIFIER = "semantic_identifier"
 TITLE = "title"
+SKIP_TITLE_EMBEDDING = "skip_title"
 SECTION_CONTINUATION = "section_continuation"
 EMBEDDINGS = "embeddings"
 TITLE_EMBEDDING = "title_embedding"
@@ -47,6 +48,10 @@ SECTION_SEPARATOR = "\n\n"
 INDEX_SEPARATOR = "==="
 
 
+# Key-Value store constants
+GEN_AI_DETECTED_MODEL = "gen_ai_detected_model"
+
+
 # Messages
 DISABLED_GEN_AI_MSG = (
     "Your System Admin has disabled the Generative AI functionalities of Danswer.\n"
@@ -61,8 +66,10 @@ class DocumentSource(str, Enum):
     SLACK = "slack"
     WEB = "web"
     GOOGLE_DRIVE = "google_drive"
+    GMAIL = "gmail"
     REQUESTTRACKER = "requesttracker"
     GITHUB = "github"
+    GITLAB = "gitlab"
     GURU = "guru"
     BOOKSTACK = "bookstack"
     CONFLUENCE = "confluence"
@@ -79,6 +86,7 @@ class DocumentSource(str, Enum):
     GOOGLE_SITES = "google_sites"
     ZENDESK = "zendesk"
     LOOPIO = "loopio"
+    SHAREPOINT = "sharepoint"
 
 
 class DocumentIndexType(str, Enum):

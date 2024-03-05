@@ -84,15 +84,13 @@ class NotionConnector(LoadConnector, PollConnector):
         self.indexed_pages: set[str] = set()
         self.root_page_id = root_page_id
         # if enabled, will recursively index child pages as they are found rather
-        # relying entirely on the `search` API. We have recieved reports that the
+        # relying entirely on the `search` API. We have received reports that the
         # `search` API misses many pages - in those cases, this might need to be
         # turned on. It's not currently known why/when this is required.
         # NOTE: this also removes all benefits polling, since we need to traverse
         # all pages regardless of if they are updated. If the notion workspace is
         # very large, this may not be practical.
-        self.recursive_index_enabled = (
-            recursive_index_enabled or self.root_page_id is not None
-        )
+        self.recursive_index_enabled = recursive_index_enabled or self.root_page_id
 
     @retry(tries=3, delay=1, backoff=2)
     def _fetch_blocks(self, block_id: str, cursor: str | None = None) -> dict[str, Any]:
@@ -204,6 +202,14 @@ class NotionConnector(LoadConnector, PollConnector):
                 result_type = result["type"]
                 result_obj = result[result_type]
 
+                if result_type == "ai_block":
+                    logger.warning(
+                        f"Skipping 'ai_block' ('{result_block_id}') for page '{page_block_id}': "
+                        f"Notion API does not currently support reading AI blocks (as of 24/02/09) "
+                        f"(discussion: https://github.com/danswer-ai/danswer/issues/1053)"
+                    )
+                    continue
+
                 cur_result_text_arr = []
                 if "rich_text" in result_obj:
                     for rich_text in result_obj["rich_text"]:
@@ -289,12 +295,15 @@ class NotionConnector(LoadConnector, PollConnector):
         if self.recursive_index_enabled and all_child_page_ids:
             # NOTE: checking if page_id is in self.indexed_pages to prevent extra
             # calls to `_fetch_page` for pages we've already indexed
-            all_child_pages = [
-                self._fetch_page(page_id)
-                for page_id in all_child_page_ids
-                if page_id not in self.indexed_pages
-            ]
-            yield from self._read_pages(all_child_pages)
+            for child_page_batch_ids in batch_generator(
+                all_child_page_ids, batch_size=INDEX_BATCH_SIZE
+            ):
+                child_page_batch = [
+                    self._fetch_page(page_id)
+                    for page_id in child_page_batch_ids
+                    if page_id not in self.indexed_pages
+                ]
+                yield from self._read_pages(child_page_batch)
 
     @retry(tries=3, delay=1, backoff=2)
     def _search_notion(self, query_dict: dict[str, Any]) -> NotionSearchResponse:

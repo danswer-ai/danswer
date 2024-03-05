@@ -4,7 +4,6 @@ from collections.abc import Callable
 from collections.abc import Iterator
 from typing import cast
 
-from danswer.chat.chat_utils import build_context_str
 from danswer.chat.models import AnswerQuestionStreamReturn
 from danswer.chat.models import DanswerAnswer
 from danswer.chat.models import DanswerAnswerPiece
@@ -33,6 +32,7 @@ from danswer.prompts.direct_qa_prompts import PARAMATERIZED_PROMPT_WITHOUT_CONTE
 from danswer.prompts.direct_qa_prompts import WEAK_LLM_PROMPT
 from danswer.prompts.direct_qa_prompts import WEAK_MODEL_SYSTEM_PROMPT
 from danswer.prompts.direct_qa_prompts import WEAK_MODEL_TASK_PROMPT
+from danswer.prompts.prompt_utils import build_complete_context_str
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_up_code_blocks
 from danswer.utils.text_processing import escape_newlines
@@ -145,7 +145,7 @@ class SingleMessageQAHandler(QAHandler):
     ) -> str:
         context_block = ""
         if context_chunks:
-            context_docs_str = build_context_str(
+            context_docs_str = build_complete_context_str(
                 cast(list[LlmDoc | InferenceChunk], context_chunks)
             )
             context_block = CONTEXT_BLOCK.format(context_docs_str=context_docs_str)
@@ -194,7 +194,7 @@ class SingleMessageScratchpadHandler(QAHandler):
     def build_prompt(
         self, query: str, history_str: str, context_chunks: list[InferenceChunk]
     ) -> str:
-        context_docs_str = build_context_str(
+        context_docs_str = build_complete_context_str(
             cast(list[LlmDoc | InferenceChunk], context_chunks)
         )
 

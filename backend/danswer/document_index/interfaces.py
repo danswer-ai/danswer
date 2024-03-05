@@ -45,19 +45,31 @@ class UpdateRequest:
 
 class Verifiable(abc.ABC):
     @abc.abstractmethod
-    def __init__(self, index_name: str, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        index_name: str,
+        secondary_index_name: str | None,
+        *args: Any,
+        **kwargs: Any
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.index_name = index_name
+        self.secondary_index_name = secondary_index_name
 
     @abc.abstractmethod
-    def ensure_indices_exist(self) -> None:
+    def ensure_indices_exist(
+        self,
+        index_embedding_dim: int,
+        secondary_index_embedding_dim: int | None,
+    ) -> None:
         raise NotImplementedError
 
 
 class Indexable(abc.ABC):
     @abc.abstractmethod
     def index(
-        self, chunks: list[DocMetadataAwareIndexChunk]
+        self,
+        chunks: list[DocMetadataAwareIndexChunk],
     ) -> set[DocumentInsertionRecord]:
         """Indexes document chunks into the Document Index and return the IDs of all the documents indexed"""
         raise NotImplementedError
@@ -96,6 +108,7 @@ class KeywordCapable(abc.ABC):
         filters: IndexFilters,
         time_decay_multiplier: float,
         num_to_retrieve: int,
+        offset: int = 0,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
 
@@ -104,10 +117,12 @@ class VectorCapable(abc.ABC):
     @abc.abstractmethod
     def semantic_retrieval(
         self,
-        query: str,
+        query: str,  # Needed for matching purposes
+        query_embedding: list[float],
         filters: IndexFilters,
         time_decay_multiplier: float,
         num_to_retrieve: int,
+        offset: int = 0,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
 
@@ -117,9 +132,11 @@ class HybridCapable(abc.ABC):
     def hybrid_retrieval(
         self,
         query: str,
+        query_embedding: list[float],
         filters: IndexFilters,
         time_decay_multiplier: float,
         num_to_retrieve: int,
+        offset: int = 0,
         hybrid_alpha: float | None = None,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
@@ -132,6 +149,7 @@ class AdminCapable(abc.ABC):
         query: str,
         filters: IndexFilters,
         num_to_retrieve: int,
+        offset: int = 0,
     ) -> list[InferenceChunk]:
         raise NotImplementedError
 
