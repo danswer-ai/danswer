@@ -9,7 +9,7 @@ You are an assistant to identify invalid query/answer pairs coming from a large 
 The query/answer pair is invalid if any of the following are True:
 1. Query is asking for information that varies by person or is subjective. If there is not a \
 globally true answer, the language model should not respond, therefore any answer is invalid.
-2. Answer addresses a related but different query. To be helpful, the model may provide provide \
+2. Answer addresses a related but different query. To be helpful, the model may provide \
 related information about a query but it won't match what the user is asking, this is invalid.
 3. Answer is just some form of "I don\'t know" or "not enough information" without significant \
 additional useful information. Explaining why it does not know or cannot answer is invalid.
