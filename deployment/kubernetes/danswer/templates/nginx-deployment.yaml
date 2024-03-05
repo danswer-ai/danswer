@@ -25,10 +25,10 @@ spec:
           - containerPort: {{ .Values.nginx.deployment.port }}
         env:
           - name: {{ .Values.nginx.deployment.env.name }}
-          valueFrom:
-            configMapKeyRef:
-              name: {{ .Values.nginx.deployment.env.ConfigMapKeyReference.name }}
-              key: {{ .Values.nginx.deployment.env.ConfigMapKeyReference.key }}
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.nginx.deployment.env.ConfigMapKeyReference.name }}
+                key: {{ .Values.nginx.deployment.env.ConfigMapKeyReference.key }}
         volumeMounts:
         {{- range .Values.nginx.deployment.volumeMounts }}
         - name: {{ .name }}
