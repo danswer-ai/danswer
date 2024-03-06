@@ -5,6 +5,8 @@ from fastapi import Request
 from passlib.hash import sha256_crypt
 from pydantic import BaseModel
 
+from ee.danswer.configs.app_configs import API_KEY_HASH_ROUNDS
+
 
 _API_KEY_HEADER_NAME = "Authorization"
 _BEARER_PREFIX = "Bearer "
@@ -27,7 +29,7 @@ def generate_api_key() -> str:
 def hash_api_key(api_key: str) -> str:
     # NOTE: no salt is needed, as the API key is randomly generated
     # and overlaps are impossible
-    return sha256_crypt.hash(api_key, salt="")
+    return sha256_crypt.hash(api_key, salt="", rounds=API_KEY_HASH_ROUNDS)
 
 
 def build_displayable_api_key(api_key: str) -> str:
