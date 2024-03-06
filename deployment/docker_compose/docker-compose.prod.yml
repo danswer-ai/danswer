@@ -100,7 +100,7 @@ services:
     restart: always
     ports:
       - "19071:19071"
-      - "8086:8081"
+      - "8081:8081"
     volumes:
       - vespa_volume:/opt/vespa/var
     logging:
