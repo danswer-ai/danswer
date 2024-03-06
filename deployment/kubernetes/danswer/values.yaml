@@ -26,6 +26,13 @@ apiService:
       - name: file-connector-storage
         persistentVolumeClaim:
           claimName: file-connector-pvc
+    resources:
+      requests:
+        memory: "3000Mi"
+        cpu: "1000m"
+      limits:
+        memory: "5000Mi"
+        cpu: "2500m"    
   service:
     name: api-server-service
     type: ClusterIP
@@ -43,6 +50,13 @@ danswerBackend:
     imagePullPolicy: Always
     command: ["/usr/bin/supervisord"]
     envFromConfigMap: env-configmap
+    resources:
+      requests:
+        memory: "3000Mi"
+        cpu: "1000m"
+      limits:
+        memory: "5000Mi"
+        cpu: "2500m"
     volumeMounts:
       - name: dynamic-storage
         mountPath: /home/storage
@@ -55,6 +69,7 @@ danswerBackend:
       - name: file-connector-storage
         persistentVolumeClaim:
           claimName: file-connector-pvc
+
 
 
 vespa:
@@ -81,6 +96,13 @@ vespa:
         path: /state/v1/health
         port: 19071
         scheme: HTTP
+    resources:
+      requests:
+        memory: "3000Mi"
+        cpu: "1000m"
+      limits:
+        memory: "5000Mi"
+        cpu: "2500m"    
     volumeMounts:
       - name: vespa-storage
         mountPath: /opt/vespa/var/
@@ -93,6 +115,7 @@ vespa:
           resources:
             requests:
               storage: 1Gi
+
 
 nginx:
   service:
@@ -116,6 +139,13 @@ nginx:
       - -c
       - |
         while :; do sleep 6h & wait $!; nginx -s reload; done & nginx -g "daemon off;"
+    resources:
+      requests:
+        memory: "100Mi"
+        cpu: "500m"
+      limits:
+        memory: "500Mi"
+        cpu: "1000m"    
     volumeMounts:
       - name: nginx-conf
         mountPath: /etc/nginx/conf.d
@@ -148,6 +178,13 @@ postgresql:
       - mountPath: /var/lib/postgresql/data
         name: db-storage
         subPath: postgres
+    resources:
+      requests:
+        memory: "1000Mi"
+        cpu: "500m"
+      limits:
+        memory: "2000Mi"
+        cpu: "2000m"    
     volumeClaimTemplates:
       - metadata:
           name: db-storage

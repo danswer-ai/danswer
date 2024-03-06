@@ -17,6 +17,13 @@ spec:
       containers:
       - name: {{ .Values.postgresql.statefulSet.app }}
         image: {{ .Values.postgresql.statefulSet.image }}
+        resources:
+          requests:
+            memory: "{{ .Values.postgresql.statefulSet.resources.requests.memory }}"
+            cpu: "{{ .Values.postgresql.statefulSet.resources.requests.cpu }}"
+          limits:
+            memory: "{{ .Values.postgresql.statefulSet.resources.limits.memory }}"
+            cpu: "{{ .Values.postgresql.statefulSet.resources.limits.cpu }}"        
         ports:
         {{- range .Values.postgresql.statefulSet.ports }}
         - containerPort: {{ .containerPort }}

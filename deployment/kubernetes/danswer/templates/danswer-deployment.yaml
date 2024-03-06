@@ -26,6 +26,14 @@ spec:
           - name: {{ .name }}
             mountPath: {{ .mountPath }}
           {{- end }}
+        resources:
+          requests:
+            memory: "{{ .Values.danswerBackend.deployment.resources.requests.memory }}"
+            cpu: "{{ .Values.danswerBackend.deployment.resources.requests.cpu }}"
+          limits:
+            memory: "{{ .Values.danswerBackend.deployment.resources.limits.memory }}"
+            cpu: "{{ .Values.danswerBackend.deployment.resources.limits.cpu }}"
+
       volumes:
         {{- range .Values.danswerBackend.deployment.volumes }}
         - name: {{ .name }}

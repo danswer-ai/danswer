@@ -31,6 +31,14 @@ spec:
         - name: {{ .name }}
           mountPath: {{ .mountPath }}
         {{- end }}
+        resources:
+          requests:
+            memory: "{{ .Values.apiService.deployment.resources.requests.memory }}"
+            cpu: "{{ .Values.apiService.deployment.resources.requests.cpu }}"
+          limits:
+            memory: "{{ .Values.apiService.deployment.resources.limits.memory }}"
+            cpu: "{{ .Values.apiService.deployment.resources.limits.cpu }}"
+         
       volumes:
       {{- range .Values.apiService.deployment.volumes }}
       - name: {{ .name }}

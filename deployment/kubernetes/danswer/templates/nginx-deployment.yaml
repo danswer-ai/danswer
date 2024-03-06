@@ -17,6 +17,13 @@ spec:
       - name: nginx
         image: {{ .Values.nginx.deployment.image }}
         imagePullPolicy: {{ .Values.nginx.deployment.imagePullPolicy }}
+        resources:
+          requests:
+            memory: "{{ .Values.nginx.deployment.resources.requests.memory }}"
+            cpu: "{{ .Values.nginx.deployment.resources.requests.cpu }}"
+          limits:
+            memory: "{{ .Values.nginx.deployment.resources.limits.memory }}"
+            cpu: "{{ .Values.nginx.deployment.resources.limits.cpu }}"
         command: 
          {{- range .Values.nginx.deployment.command }}
          - {{ . }}
