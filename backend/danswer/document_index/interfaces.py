@@ -199,6 +199,10 @@ class IdRetrievalCapable(abc.ABC):
         - chunk_ind: chunk index to return, if None, return all of the chunks in order
         - filters: standard filters object, in this case only the access filter is applied as a
                 permission check
+
+        Returns:
+            list of chunks for the document id or the specific chunk by the specified chunk index
+            and document id
         """
         raise NotImplementedError
 
@@ -235,6 +239,9 @@ class KeywordCapable(abc.ABC):
                 based on the persona settings, will have this be a 2x or 3x of the default
         - num_to_retrieve: number of highest matching chunks to return
         - offset: number of highest matching chunks to skip (kind of like pagination)
+
+        Returns:
+            best matching chunks based on keyword matching (should be BM25 algorithm ideally)
         """
         raise NotImplementedError
 
@@ -267,6 +274,9 @@ class VectorCapable(abc.ABC):
                 based on the persona settings, will have this be a 2x or 3x of the default
         - num_to_retrieve: number of highest matching chunks to return
         - offset: number of highest matching chunks to skip (kind of like pagination)
+
+        Returns:
+            best matching chunks based on vector similarity
         """
         raise NotImplementedError
 
@@ -309,6 +319,9 @@ class HybridCapable(abc.ABC):
                 that the two scores are normalized to the same range so that a meaningful
                 comparison can be made. 1 for 100% weighting on vector score, 0 for 100% weighting
                 on keyword score.
+
+        Returns:
+            best matching chunks based on weighted sum of keyword and vector/semantic search scores
         """
         raise NotImplementedError
 
@@ -342,6 +355,9 @@ class AdminCapable(abc.ABC):
         - filters: standard filter object
         - num_to_retrieve: number of highest matching chunks to return
         - offset: number of highest matching chunks to skip (kind of like pagination)
+
+        Returns:
+            list of best matching chunks for the explorer page query
         """
         raise NotImplementedError
 
