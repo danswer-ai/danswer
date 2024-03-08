@@ -100,14 +100,16 @@ def handle_search_request(
 @basic_router.post("/answer-with-quote")
 def get_answer_with_quote(
     query_request: DirectQARequest,
-    user: User = Depends(current_user),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> OneShotQAResponse:
     query = query_request.messages[0].message
     logger.info(f"Received query for one shot answer API with quotes: {query}")
 
     persona = get_persona_by_id(
-        persona_id=query_request.persona_id, user_id=user.id, db_session=db_session
+        persona_id=query_request.persona_id,
+        user_id=user.id if user else None,
+        db_session=db_session,
     )
 
     llm_name = get_default_llm_version()[0]
