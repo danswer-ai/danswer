@@ -47,8 +47,8 @@ def fetch_jira_issues_batch(
     jql: str,
     start_index: int,
     jira_client: JIRA,
+    custom_fields: dict,
     batch_size: int = INDEX_BATCH_SIZE,
-    custom_fields: dict = None,
     comment_email_blacklist: tuple[str, ...] = (),
 ) -> tuple[list[Document], int]:
     doc_batch = []
@@ -126,7 +126,7 @@ class JiraConnector(LoadConnector, PollConnector):
         self._comment_email_blacklist = comment_email_blacklist
 
     @property
-    def comment_email_blacklist(self):
+    def comment_email_blacklist(self) -> tuple:
         return tuple(email.strip() for email in self._comment_email_blacklist)
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
@@ -145,13 +145,16 @@ class JiraConnector(LoadConnector, PollConnector):
         if self.jira_client is None:
             raise ConnectorMissingCredentialError("Jira")
 
+        custom_fields_dct = CustomFieldExtractor.get_all_custom_fields(self.jira_client)
+
         start_ind = 0
         while True:
             doc_batch, fetched_batch_size = fetch_jira_issues_batch(
-                f"project = {self.jira_project}",
-                start_ind,
-                self.jira_client,
-                self.batch_size,
+                jql=f"project = {self.jira_project}",
+                start_index=start_ind,
+                jira_client=self.jira_client,
+                batch_size=self.batch_size,
+                custom_fields=custom_fields_dct,
             )
 
             if doc_batch:
@@ -185,12 +188,12 @@ class JiraConnector(LoadConnector, PollConnector):
         start_ind = 0
         while True:
             doc_batch, fetched_batch_size = fetch_jira_issues_batch(
-                jql,
-                start_ind,
-                self.jira_client,
-                self.batch_size,
-                custom_fields_dct,
-                self.comment_email_blacklist,
+                jql=jql,
+                start_index=start_ind,
+                jira_client=self.jira_client,
+                batch_size=self.batch_size,
+                custom_fields=custom_fields_dct,
+                comment_email_blacklist=self.comment_email_blacklist,
             )
 
             if doc_batch:
@@ -204,7 +207,9 @@ class JiraConnector(LoadConnector, PollConnector):
 if __name__ == "__main__":
     import os
 
-    connector = JiraConnector(os.environ["JIRA_PROJECT_URL"])
+    connector = JiraConnector(
+        os.environ["JIRA_PROJECT_URL"], comment_email_blacklist=[]
+    )
     connector.load_credentials(
         {
             "jira_user_email": os.environ["JIRA_USER_EMAIL"],
