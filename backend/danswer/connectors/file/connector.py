@@ -98,7 +98,7 @@ def _process_file(
         Document(
             id=f"FILE_CONNECTOR__{file_name}",  # add a prefix to avoid conflicts with other connectors
             sections=[
-                Section(link=metadata.get("link"), text=file_content_raw.strip())
+                Section(link=file_metadata.get("link"), text=file_content_raw.strip())
             ],
             source=DocumentSource.FILE,
             semantic_identifier=file_display_name_override or file_name,
