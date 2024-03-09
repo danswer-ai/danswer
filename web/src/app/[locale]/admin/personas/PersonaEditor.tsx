@@ -15,7 +15,7 @@ import * as Yup from "yup";
 import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
 import { useRouter } from "next/navigation";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { Persona } from "./interfaces";
+import { Persona, StarterMessage } from "./interfaces";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
@@ -102,7 +102,7 @@ export function PersonaEditor({
           llm_relevance_filter: existingPersona?.llm_relevance_filter ?? false,
           llm_model_version_override:
             existingPersona?.llm_model_version_override ?? null,
-          starter_messages: existingPersona?.starter_messages ?? null,
+          starter_messages: existingPersona?.starter_messages ?? [],
         }}
         validationSchema={Yup.object()
           .shape({
@@ -471,27 +471,28 @@ export function PersonaEditor({
 
                   <FieldArray
                     name="starter_messages"
-                    render={(arrayHelpers: ArrayHelpers) => (
+                    render={(arrayHelpers: ArrayHelpers<StarterMessage[]>) => (
                       <div>
                         {values.starter_messages &&
                           values.starter_messages.length > 0 &&
-                          values.starter_messages.map((_, index) => (
-                            <div
-                              key={index}
-                              className={index === 0 ? "mt-2" : "mt-6"}
-                            >
-                              <div className="flex">
-                                <div className="w-full mr-6 border border-border p-3 rounded">
-                                  <div>
-                                    <Label>Name</Label>
-                                    <SubLabel>
-                                      Shows up as the &quot;title&quot; for this
-                                      Starter Message. For example, &quot;Write
-                                      an email&quot;.
-                                    </SubLabel>
-                                    <Field
-                                      name={`starter_messages.${index}.name`}
-                                      className={`
+                          values.starter_messages.map((_, index) => {
+                            return (
+                              <div
+                                key={index}
+                                className={index === 0 ? "mt-2" : "mt-6"}
+                              >
+                                <div className="flex">
+                                  <div className="w-full mr-6 border border-border p-3 rounded">
+                                    <div>
+                                      <Label>Name</Label>
+                                      <SubLabel>
+                                        Shows up as the &quot;title&quot; for
+                                        this Starter Message. For example,
+                                        &quot;Write an email&quot;.
+                                      </SubLabel>
+                                      <Field
+                                        name={`starter_messages[${index}].name`}
+                                        className={`
                                         border 
                                         border-border 
                                         bg-background 
@@ -501,26 +502,26 @@ export function PersonaEditor({
                                         px-3 
                                         mr-4
                                       `}
-                                      autoComplete="off"
-                                    />
-                                    <ErrorMessage
-                                      name={`starter_messages.${index}.name`}
-                                      component="div"
-                                      className="text-error text-sm mt-1"
-                                    />
-                                  </div>
+                                        autoComplete="off"
+                                      />
+                                      <ErrorMessage
+                                        name={`starter_messages[${index}].name`}
+                                        component="div"
+                                        className="text-error text-sm mt-1"
+                                      />
+                                    </div>
 
-                                  <div className="mt-3">
-                                    <Label>Description</Label>
-                                    <SubLabel>
-                                      A description which tells the user what
-                                      they might want to use this Starter
-                                      Message for. For example &quot;to a client
-                                      about a new feature&quot;
-                                    </SubLabel>
-                                    <Field
-                                      name={`starter_messages.${index}.description`}
-                                      className={`
+                                    <div className="mt-3">
+                                      <Label>Description</Label>
+                                      <SubLabel>
+                                        A description which tells the user what
+                                        they might want to use this Starter
+                                        Message for. For example &quot;to a
+                                        client about a new feature&quot;
+                                      </SubLabel>
+                                      <Field
+                                        name={`starter_messages.${index}.description`}
+                                        className={`
                                         border 
                                         border-border 
                                         bg-background 
@@ -530,28 +531,28 @@ export function PersonaEditor({
                                         px-3 
                                         mr-4
                                       `}
-                                      autoComplete="off"
-                                    />
-                                    <ErrorMessage
-                                      name={`starter_messages.${index}.description`}
-                                      component="div"
-                                      className="text-error text-sm mt-1"
-                                    />
-                                  </div>
+                                        autoComplete="off"
+                                      />
+                                      <ErrorMessage
+                                        name={`starter_messages[${index}].description`}
+                                        component="div"
+                                        className="text-error text-sm mt-1"
+                                      />
+                                    </div>
 
-                                  <div className="mt-3">
-                                    <Label>Message</Label>
-                                    <SubLabel>
-                                      The actual message to be sent as the
-                                      initial user message if a user selects
-                                      this starter prompt. For example,
-                                      &quot;Write me an email to a client about
-                                      a new billing feature we just
-                                      released.&quot;
-                                    </SubLabel>
-                                    <Field
-                                      name={`starter_messages.${index}.message`}
-                                      className={`
+                                    <div className="mt-3">
+                                      <Label>Message</Label>
+                                      <SubLabel>
+                                        The actual message to be sent as the
+                                        initial user message if a user selects
+                                        this starter prompt. For example,
+                                        &quot;Write me an email to a client
+                                        about a new billing feature we just
+                                        released.&quot;
+                                      </SubLabel>
+                                      <Field
+                                        name={`starter_messages[${index}].message`}
+                                        className={`
                                         border 
                                         border-border 
                                         bg-background 
@@ -561,29 +562,34 @@ export function PersonaEditor({
                                         px-3 
                                         mr-4
                                       `}
-                                      as="textarea"
-                                      autoComplete="off"
-                                    />
-                                    <ErrorMessage
-                                      name={`starter_messages.${index}.message`}
-                                      component="div"
-                                      className="text-error text-sm mt-1"
+                                        as="textarea"
+                                        autoComplete="off"
+                                      />
+                                      <ErrorMessage
+                                        name={`starter_messages[${index}].message`}
+                                        component="div"
+                                        className="text-error text-sm mt-1"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="my-auto">
+                                    <FiX
+                                      className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
+                                      onClick={() => arrayHelpers.remove(index)}
                                     />
                                   </div>
-                                </div>
-                                <div className="my-auto">
-                                  <FiX
-                                    className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
-                                    onClick={() => arrayHelpers.remove(index)}
-                                  />
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
 
                         <Button
                           onClick={() => {
-                            arrayHelpers.push("");
+                            arrayHelpers.push({
+                              name: "",
+                              description: "",
+                              message: "",
+                            });
                           }}
                           className="mt-3"
                           color="green"
