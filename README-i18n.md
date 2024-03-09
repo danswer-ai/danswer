@@ -3,9 +3,9 @@ This is a version of Danswer with Internationalization (i18n) support.
 
 **i18n patch install instructions**
 
-install the prerequisite i18next & react packages
+install the prerequisite i18next & react packages from the package.json specs
 
-	npm install i18next react-i18next i18next-resources-to-backend next-i18n-router
+	npm install 
 OR
 	put "npm install" inside the Dockerfile. :)
 
