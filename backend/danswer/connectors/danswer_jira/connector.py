@@ -9,8 +9,6 @@ from jira.resources import Issue
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
-from danswer.connectors.danswer_jira.utils import CommonFieldExtractor
-from danswer.connectors.danswer_jira.utils import CustomFieldExtractor
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -43,11 +41,28 @@ def extract_jira_project(url: str) -> tuple[str, str]:
     return jira_base, jira_project
 
 
+def _get_comment_strs(
+    jira: Issue,
+    comment_email_blacklist: tuple[str, ...] = (),
+) -> list[str]:
+    comment_strs = []
+    for comment in jira.fields.comment.comments:
+        # Can't test Jira server so can't be sure this works for everyone, wrapping in a try just
+        # in case
+        try:
+            comment_strs.append(comment.body)
+            # If this fails, we just assume it's ok to keep the comment
+            if comment.author.emailAddress in comment_email_blacklist:
+                comment_strs.pop()
+        except Exception:
+            pass
+    return comment_strs
+
+
 def fetch_jira_issues_batch(
     jql: str,
     start_index: int,
     jira_client: JIRA,
-    custom_fields: dict,
     batch_size: int = INDEX_BATCH_SIZE,
     comment_email_blacklist: tuple[str, ...] = (),
 ) -> tuple[list[Document], int]:
@@ -64,39 +79,45 @@ def fetch_jira_issues_batch(
             logger.warning(f"Found Jira object not of type Issue {jira}")
             continue
 
-        jira_common_fields = CommonFieldExtractor.get_issue_common_fields(jira)
-
-        jira_custom_fields = CustomFieldExtractor.get_issue_custom_fields(
-            jira, custom_fields
-        )
-
-        jira_fields = {**jira_common_fields, **jira_custom_fields}
-
-        jira_fields_str = ", ".join([f"{k}:{v}" for (k, v) in jira_fields.items()])
-
-        semantic_rep = (
-            f"{jira_fields_str}"
-            + f"{jira.fields.description}\n"
-            + "\n".join(
-                [
-                    f"Comment: {comment.body}"
-                    for comment in jira.fields.comment.comments
-                    if comment.author.emailAddress not in comment_email_blacklist
-                ]
-            )
+        comments = _get_comment_strs(jira, comment_email_blacklist)
+        semantic_rep = f"{jira.fields.description}\n" + "\n".join(
+            [f"Comment: {comment}" for comment in comments]
         )
 
         page_url = f"{jira_client.client_info()}/browse/{jira.key}"
 
-        author = None
+        people = set()
         try:
-            author = BasicExpertInfo(
-                display_name=jira.fields.creator.displayName,
-                email=jira.fields.creator.emailAddress,
+            people.add(
+                BasicExpertInfo(
+                    display_name=jira.fields.creator.displayName,
+                    email=jira.fields.creator.emailAddress,
+                )
             )
         except Exception:
             # Author should exist but if not, doesn't matter
             pass
+
+        try:
+            people.add(
+                BasicExpertInfo(
+                    display_name=jira.fields.assignee.displayName,  # type: ignore
+                    email=jira.fields.assignee.emailAddress,  # type: ignore
+                )
+            )
+        except Exception:
+            # Author should exist but if not, doesn't matter
+            pass
+
+        metadata_dict = {}
+        if jira.fields.priority:
+            metadata_dict["priority"] = jira.fields.priority.name
+        if jira.fields.status:
+            metadata_dict["status"] = jira.fields.status.name
+        if jira.fields.resolution:
+            metadata_dict["resolution"] = jira.fields.resolution.name
+        if jira.fields.labels:
+            metadata_dict["label"] = jira.fields.labels
 
         doc_batch.append(
             Document(
@@ -105,9 +126,9 @@ def fetch_jira_issues_batch(
                 source=DocumentSource.JIRA,
                 semantic_identifier=jira.fields.summary,
                 doc_updated_at=time_str_to_utc(jira.fields.updated),
-                primary_owners=[author] if author is not None else None,
-                # TODO add secondary_owners if needed
-                metadata={"label": jira.fields.labels} if jira.fields.labels else {},
+                primary_owners=list(people) or None,
+                # TODO add secondary_owners (commenters) if needed
+                metadata=metadata_dict,
             )
         )
     return doc_batch, len(batch)
@@ -145,8 +166,6 @@ class JiraConnector(LoadConnector, PollConnector):
         if self.jira_client is None:
             raise ConnectorMissingCredentialError("Jira")
 
-        custom_fields_dct = CustomFieldExtractor.get_all_custom_fields(self.jira_client)
-
         start_ind = 0
         while True:
             doc_batch, fetched_batch_size = fetch_jira_issues_batch(
@@ -154,7 +173,6 @@ class JiraConnector(LoadConnector, PollConnector):
                 start_index=start_ind,
                 jira_client=self.jira_client,
                 batch_size=self.batch_size,
-                custom_fields=custom_fields_dct,
             )
 
             if doc_batch:
@@ -183,8 +201,6 @@ class JiraConnector(LoadConnector, PollConnector):
             f"updated <= '{end_date_str}'"
         )
 
-        custom_fields_dct = CustomFieldExtractor.get_all_custom_fields(self.jira_client)
-
         start_ind = 0
         while True:
             doc_batch, fetched_batch_size = fetch_jira_issues_batch(
@@ -192,7 +208,6 @@ class JiraConnector(LoadConnector, PollConnector):
                 start_index=start_ind,
                 jira_client=self.jira_client,
                 batch_size=self.batch_size,
-                custom_fields=custom_fields_dct,
                 comment_email_blacklist=self.comment_email_blacklist,
             )
 

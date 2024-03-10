@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -60,6 +61,34 @@ class BasicExpertInfo(BaseModel):
             return self.first_name.capitalize()
 
         return "Unknown"
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, BasicExpertInfo):
+            return False
+        return (
+            self.display_name,
+            self.first_name,
+            self.middle_initial,
+            self.last_name,
+            self.email,
+        ) == (
+            other.display_name,
+            other.first_name,
+            other.middle_initial,
+            other.last_name,
+            other.email,
+        )
+
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self.display_name,
+                self.first_name,
+                self.middle_initial,
+                self.last_name,
+                self.email,
+            )
+        )
 
 
 class DocumentBase(BaseModel):
