@@ -19,6 +19,7 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
 
+
 logger = setup_logger()
 PROJECT_URL_PAT = "projects"
 
@@ -138,13 +139,13 @@ class JiraConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         jira_project_url: str,
-        comment_email_blacklist: list[str],
+        comment_email_blacklist: list[str] | None = None,
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.batch_size = batch_size
         self.jira_base, self.jira_project = extract_jira_project(jira_project_url)
         self.jira_client: JIRA | None = None
-        self._comment_email_blacklist = comment_email_blacklist
+        self._comment_email_blacklist = comment_email_blacklist or []
 
     @property
     def comment_email_blacklist(self) -> tuple:
