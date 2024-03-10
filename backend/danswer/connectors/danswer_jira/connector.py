@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from datetime import timezone
 from typing import Any
@@ -22,6 +23,7 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 PROJECT_URL_PAT = "projects"
+JIRA_API_VERSION = os.environ.get("JIRA_API_VERSION") or "2"
 
 
 def extract_jira_project(url: str) -> tuple[str, str]:
@@ -157,10 +159,16 @@ class JiraConnector(LoadConnector, PollConnector):
         if "jira_user_email" in credentials:
             email = credentials["jira_user_email"]
             self.jira_client = JIRA(
-                basic_auth=(email, api_token), server=self.jira_base
+                basic_auth=(email, api_token),
+                server=self.jira_base,
+                options={"rest_api_version": JIRA_API_VERSION},
             )
         else:
-            self.jira_client = JIRA(token_auth=api_token, server=self.jira_base)
+            self.jira_client = JIRA(
+                token_auth=api_token,
+                server=self.jira_base,
+                options={"rest_api_version": JIRA_API_VERSION},
+            )
         return None
 
     def load_from_state(self) -> GenerateDocumentsOutput:
