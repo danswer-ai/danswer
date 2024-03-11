@@ -21,6 +21,7 @@ from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.linear.connector import LinearConnector
 from danswer.connectors.loopio.connector import LoopioConnector
+from danswer.connectors.mediawiki.wiki import MediaWikiConnector
 from danswer.connectors.models import InputType
 from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.productboard.connector import ProductboardConnector
@@ -70,6 +71,7 @@ def identify_connector_class(
         DocumentSource.ZENDESK: ZendeskConnector,
         DocumentSource.LOOPIO: LoopioConnector,
         DocumentSource.SHAREPOINT: SharepointConnector,
+        DocumentSource.MEDIAWIKI: MediaWikiConnector,
     }
     connector_by_source = connector_map.get(source, {})
 
