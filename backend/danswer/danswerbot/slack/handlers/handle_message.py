@@ -9,6 +9,7 @@ from typing import TypeVar
 from retry import retry
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
+from slack_sdk.models.blocks import DividerBlock
 from sqlalchemy.orm import Session
 
 from danswer.chat.chat_utils import compute_max_document_tokens
@@ -18,12 +19,14 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANS
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTAGE
+from danswer.configs.danswerbot_configs import DANSWER_BOT_USE_QUOTES
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.configs.danswerbot_configs import DISABLE_DANSWER_BOT_FILTER_DETECT
 from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
 from danswer.danswerbot.slack.blocks import build_documents_blocks
 from danswer.danswerbot.slack.blocks import build_follow_up_block
 from danswer.danswerbot.slack.blocks import build_qa_response_blocks
+from danswer.danswerbot.slack.blocks import build_sources_blocks
 from danswer.danswerbot.slack.blocks import get_restate_blocks
 from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
 from danswer.danswerbot.slack.models import SlackMessageInfo
@@ -35,6 +38,7 @@ from danswer.danswerbot.slack.utils import SlackRateLimiter
 from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
+from danswer.db.models import SlackBotResponseType
 from danswer.llm.utils import check_number_of_tokens
 from danswer.llm.utils import get_default_llm_version
 from danswer.llm.utils import get_max_input_tokens
@@ -136,6 +140,13 @@ def handle_message(
         prompt = persona.prompts[0] if persona.prompts else None
 
     should_respond_even_with_no_docs = persona.num_chunks == 0 if persona else False
+
+    # figure out if we want to use citations or quotes
+    use_citations = (
+        not DANSWER_BOT_USE_QUOTES
+        if channel_config is None
+        else channel_config.response_type == SlackBotResponseType.CITATIONS
+    )
 
     # List of user id to send message to, if None, send to everyone in channel
     send_to: list[str] | None = None
@@ -259,6 +270,7 @@ def handle_message(
                 answer_generation_timeout=answer_generation_timeout,
                 enable_reflexion=reflexion,
                 bypass_acl=bypass_acl,
+                use_citations=use_citations,
             )
             if not answer.error_msg:
                 return answer
@@ -387,7 +399,10 @@ def handle_message(
         source_filters=retrieval_info.applied_source_filters,
         time_cutoff=retrieval_info.applied_time_cutoff,
         favor_recent=retrieval_info.recency_bias_multiplier > 1,
-        skip_quotes=persona is not None,  # currently Personas don't support quotes
+        # currently Personas don't support quotes
+        # if citations are enabled, also don't use quotes
+        skip_quotes=persona is not None or use_citations,
+        process_message_for_citations=use_citations,
     )
 
     # Get the chunks fed to the LLM only, then fill with other docs
@@ -397,16 +412,33 @@ def handle_message(
         doc for idx, doc in enumerate(top_docs) if idx not in llm_doc_inds
     ]
     priority_ordered_docs = llm_docs + remaining_docs
-    document_blocks = (
-        build_documents_blocks(
+
+    document_blocks = []
+    citations_block = []
+    # if citations are enabled, only show cited documents
+    if use_citations:
+        citations = answer.citations or []
+        cited_docs = []
+        for citation in citations:
+            matching_doc = next(
+                (d for d in top_docs if d.document_id == citation.document_id),
+                None,
+            )
+            if matching_doc:
+                cited_docs.append((citation.citation_num, matching_doc))
+
+        cited_docs.sort()
+        citations_block = build_sources_blocks(cited_documents=cited_docs)
+    elif priority_ordered_docs:
+        document_blocks = build_documents_blocks(
             documents=priority_ordered_docs,
             message_id=answer.chat_message_id,
         )
-        if priority_ordered_docs
-        else []
-    )
+        document_blocks = [DividerBlock()] + document_blocks
 
-    all_blocks = restate_question_block + answer_blocks + document_blocks
+    all_blocks = (
+        restate_question_block + answer_blocks + citations_block + document_blocks
+    )
 
     if channel_conf and channel_conf.get("follow_up_tags") is not None:
         all_blocks.append(build_follow_up_block(message_id=answer.chat_message_id))

@@ -811,7 +811,7 @@ class VespaIndex(DocumentIndex):
     def delete(self, doc_ids: list[str]) -> None:
         logger.info(f"Deleting {len(doc_ids)} documents from Vespa")
 
-        # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficient for
+        # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficial for
         # indexing / updates / deletes since we have to make a large volume of requests.
         with httpx.Client(http2=True) as http_client:
             index_names = [self.index_name]
@@ -844,9 +844,6 @@ class VespaIndex(DocumentIndex):
                 for vespa_chunk_id in vespa_chunk_ids
             ]
 
-            logger.debug(
-                "Running LLM usefulness eval in parallel (following logging may be out of order)"
-            )
             inference_chunks = run_functions_tuples_in_parallel(
                 functions_with_args, allow_failures=True
             )

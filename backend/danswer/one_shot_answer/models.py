@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from pydantic import Field
 from pydantic import root_validator
 
+from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerContexts
 from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import QADocsResponse
@@ -51,6 +52,7 @@ class OneShotQAResponse(BaseModel):
     answer: str | None = None
     rephrase: str | None = None
     quotes: DanswerQuotes | None = None
+    citations: list[CitationInfo] | None = None
     docs: QADocsResponse | None = None
     llm_chunks_indices: list[int] | None = None
     error_msg: str | None = None

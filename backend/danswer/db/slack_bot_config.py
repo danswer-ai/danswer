@@ -11,6 +11,7 @@ from danswer.db.models import ChannelConfig
 from danswer.db.models import Persona
 from danswer.db.models import Persona__DocumentSet
 from danswer.db.models import SlackBotConfig
+from danswer.db.models import SlackBotResponseType
 from danswer.search.models import RecencyBiasSetting
 
 
@@ -72,11 +73,13 @@ def create_slack_bot_persona(
 def insert_slack_bot_config(
     persona_id: int | None,
     channel_config: ChannelConfig,
+    response_type: SlackBotResponseType,
     db_session: Session,
 ) -> SlackBotConfig:
     slack_bot_config = SlackBotConfig(
         persona_id=persona_id,
         channel_config=channel_config,
+        response_type=response_type,
     )
     db_session.add(slack_bot_config)
     db_session.commit()
@@ -88,6 +91,7 @@ def update_slack_bot_config(
     slack_bot_config_id: int,
     persona_id: int | None,
     channel_config: ChannelConfig,
+    response_type: SlackBotResponseType,
     db_session: Session,
 ) -> SlackBotConfig:
     slack_bot_config = db_session.scalar(
@@ -105,6 +109,7 @@ def update_slack_bot_config(
     # will encounter `violates foreign key constraint` errors
     slack_bot_config.persona_id = persona_id
     slack_bot_config.channel_config = channel_config
+    slack_bot_config.response_type = response_type
 
     # if the persona has changed, then clean up the old persona
     if persona_id != existing_persona_id and existing_persona_id:

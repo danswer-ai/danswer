@@ -2,7 +2,10 @@
 
 import * as Yup from "yup";
 import { JiraIcon, TrashIcon } from "@/components/icons/icons";
-import { TextFormField } from "@/components/admin/connectors/Field";
+import {
+  TextFormField,
+  TextArrayFieldBuilder,
+} from "@/components/admin/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import {
@@ -262,6 +265,18 @@ const Main = () => {
                         );
                       },
                     },
+                    {
+                      header: "Disable comments from users",
+                      key: "comment_email_blacklist",
+                      getValue: (ccPairStatus) => {
+                        const connectorConfig =
+                          ccPairStatus.connector.connector_specific_config;
+                        return connectorConfig.comment_email_blacklist &&
+                          connectorConfig.comment_email_blacklist.length > 0
+                          ? connectorConfig.comment_email_blacklist.join(", ")
+                          : "";
+                      },
+                    },
                   ]}
                   onUpdate={() =>
                     mutate("/api/manage/admin/connector/indexing-status")
@@ -291,13 +306,30 @@ const Main = () => {
                   />
                 </>
               }
+              formBodyBuilder={(values) => {
+                return (
+                  <>
+                    <Divider />
+                    {TextArrayFieldBuilder({
+                      name: "comment_email_blacklist",
+                      label: "Disable comments from users:",
+                      subtext: `
+                      This is generally useful to ignore certain bots. Add user emails which comments should NOT be indexed.`,
+                    })(values)}
+                  </>
+                );
+              }}
               validationSchema={Yup.object().shape({
                 jira_project_url: Yup.string().required(
                   "Please enter any link to your jira project e.g. https://danswer.atlassian.net/jira/software/projects/DAN/boards/1"
                 ),
+                comment_email_blacklist: Yup.array()
+                  .of(Yup.string().required("Emails names must be strings"))
+                  .required(),
               })}
               initialValues={{
                 jira_project_url: "",
+                comment_email_blacklist: [],
               }}
               refreshFreq={10 * 60} // 10 minutes
             />

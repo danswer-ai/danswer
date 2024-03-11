@@ -100,10 +100,12 @@ def extract_urls_from_sitemap(sitemap_url: str) -> list[str]:
     response.raise_for_status()
 
     soup = BeautifulSoup(response.content, "html.parser")
-    urls = [loc_tag.text for loc_tag in soup.find_all("loc")]
+    return [_ensure_absolute_url(sitemap_url, loc_tag.text) for loc_tag in soup.find_all("loc")]
 
-    return urls
-
+def _ensure_absolute_url(source_url:str, maybe_relative_url: str) -> str:
+    if not urlparse(maybe_relative_url).netloc:
+        return urljoin(source_url, maybe_relative_url)
+    return maybe_relative_url
 
 def _ensure_valid_url(url: str) -> str:
     if "://" not in url:

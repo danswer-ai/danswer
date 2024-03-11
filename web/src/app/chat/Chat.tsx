@@ -506,7 +506,9 @@ export const Chat = ({
       {documentSidebarInitialWidth !== undefined ? (
         <>
           <div
-            className={`w-full sm:relative h-screen ${retrievalDisabled ? "pb-[111px]" : "pb-[140px]"}`}
+            className={`w-full sm:relative h-screen ${
+              retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
+            }`}
           >
             <div
               className={`w-full h-full ${HEADER_PADDING} flex flex-col overflow-y-auto overflow-x-hidden relative`}

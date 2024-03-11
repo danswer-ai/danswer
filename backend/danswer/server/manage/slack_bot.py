@@ -19,7 +19,6 @@ from danswer.db.slack_bot_config import insert_slack_bot_config
 from danswer.db.slack_bot_config import remove_slack_bot_config
 from danswer.db.slack_bot_config import update_slack_bot_config
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.manage.models import SlackBotConfig
 from danswer.server.manage.models import SlackBotConfigCreationRequest
 from danswer.server.manage.models import SlackBotTokens
@@ -108,17 +107,10 @@ def create_slack_bot_config(
     slack_bot_config_model = insert_slack_bot_config(
         persona_id=persona_id,
         channel_config=channel_config,
+        response_type=slack_bot_config_creation_request.response_type,
         db_session=db_session,
     )
-    return SlackBotConfig(
-        id=slack_bot_config_model.id,
-        persona=(
-            PersonaSnapshot.from_model(slack_bot_config_model.persona)
-            if slack_bot_config_model.persona
-            else None
-        ),
-        channel_config=slack_bot_config_model.channel_config,
-    )
+    return SlackBotConfig.from_model(slack_bot_config_model)
 
 
 @router.patch("/admin/slack-bot/config/{slack_bot_config_id}")
@@ -170,17 +162,10 @@ def patch_slack_bot_config(
         slack_bot_config_id=slack_bot_config_id,
         persona_id=persona_id,
         channel_config=channel_config,
+        response_type=slack_bot_config_creation_request.response_type,
         db_session=db_session,
     )
-    return SlackBotConfig(
-        id=slack_bot_config_model.id,
-        persona=(
-            PersonaSnapshot.from_model(slack_bot_config_model.persona)
-            if slack_bot_config_model.persona
-            else None
-        ),
-        channel_config=slack_bot_config_model.channel_config,
-    )
+    return SlackBotConfig.from_model(slack_bot_config_model)
 
 
 @router.delete("/admin/slack-bot/config/{slack_bot_config_id}")
@@ -201,15 +186,7 @@ def list_slack_bot_configs(
 ) -> list[SlackBotConfig]:
     slack_bot_config_models = fetch_slack_bot_configs(db_session=db_session)
     return [
-        SlackBotConfig(
-            id=slack_bot_config_model.id,
-            persona=(
-                PersonaSnapshot.from_model(slack_bot_config_model.persona)
-                if slack_bot_config_model.persona
-                else None
-            ),
-            channel_config=slack_bot_config_model.channel_config,
-        )
+        SlackBotConfig.from_model(slack_bot_config_model)
         for slack_bot_config_model in slack_bot_config_models
     ]
 

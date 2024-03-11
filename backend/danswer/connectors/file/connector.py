@@ -17,10 +17,10 @@ from danswer.connectors.file.utils import check_file_ext_is_valid
 from danswer.connectors.file.utils import get_file_ext
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
+from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
-
 
 logger = setup_logger()
 
@@ -66,22 +66,22 @@ def _process_file(
         )
     else:
         file_content_raw, file_metadata = read_file(file)
-    file_metadata = {**metadata, **file_metadata}
+    all_metadata = {**metadata, **file_metadata}
 
     # If this is set, we will show this in the UI as the "name" of the file
-    file_display_name_override = file_metadata.get("file_display_name")
+    file_display_name_override = all_metadata.get("file_display_name")
 
-    time_updated = file_metadata.get("time_updated", datetime.now(timezone.utc))
+    time_updated = all_metadata.get("time_updated", datetime.now(timezone.utc))
     if isinstance(time_updated, str):
         time_updated = time_str_to_utc(time_updated)
 
-    dt_str = metadata.get("doc_updated_at")
+    dt_str = all_metadata.get("doc_updated_at")
     final_time_updated = time_str_to_utc(dt_str) if dt_str else time_updated
 
-    # add tags
+    # Metadata tags separate from the Danswer specific fields
     metadata_tags = {
         k: v
-        for k, v in file_metadata.items()
+        for k, v in all_metadata.items()
         if k
         not in [
             "time_updated",
@@ -94,17 +94,30 @@ def _process_file(
         ]
     }
 
+    p_owner_names = all_metadata.get("primary_owners")
+    s_owner_names = all_metadata.get("secondary_owners")
+    p_owners = (
+        [BasicExpertInfo(display_name=name) for name in p_owner_names]
+        if p_owner_names
+        else None
+    )
+    s_owners = (
+        [BasicExpertInfo(display_name=name) for name in s_owner_names]
+        if s_owner_names
+        else None
+    )
+
     return [
         Document(
             id=f"FILE_CONNECTOR__{file_name}",  # add a prefix to avoid conflicts with other connectors
             sections=[
-                Section(link=metadata.get("link"), text=file_content_raw.strip())
+                Section(link=all_metadata.get("link"), text=file_content_raw.strip())
             ],
             source=DocumentSource.FILE,
             semantic_identifier=file_display_name_override or file_name,
             doc_updated_at=final_time_updated,
-            primary_owners=metadata.get("primary_owners"),
-            secondary_owners=metadata.get("secondary_owners"),
+            primary_owners=p_owners,
+            secondary_owners=s_owners,
             # currently metadata just houses tags, other stuff like owners / updated at have dedicated fields
             metadata=metadata_tags,
         )

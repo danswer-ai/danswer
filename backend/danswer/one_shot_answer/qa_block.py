@@ -4,7 +4,6 @@ from collections.abc import Callable
 from collections.abc import Iterator
 from typing import cast
 
-from danswer.chat.chat_utils import build_complete_context_str
 from danswer.chat.models import AnswerQuestionStreamReturn
 from danswer.chat.models import DanswerAnswer
 from danswer.chat.models import DanswerAnswerPiece
@@ -33,6 +32,7 @@ from danswer.prompts.direct_qa_prompts import PARAMATERIZED_PROMPT_WITHOUT_CONTE
 from danswer.prompts.direct_qa_prompts import WEAK_LLM_PROMPT
 from danswer.prompts.direct_qa_prompts import WEAK_MODEL_SYSTEM_PROMPT
 from danswer.prompts.direct_qa_prompts import WEAK_MODEL_TASK_PROMPT
+from danswer.prompts.prompt_utils import build_complete_context_str
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import clean_up_code_blocks
 from danswer.utils.text_processing import escape_newlines

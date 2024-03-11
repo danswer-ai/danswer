@@ -811,6 +811,11 @@ class ChannelConfig(TypedDict):
     follow_up_tags: NotRequired[list[str]]
 
 
+class SlackBotResponseType(str, PyEnum):
+    QUOTES = "quotes"
+    CITATIONS = "citations"
+
+
 class SlackBotConfig(Base):
     __tablename__ = "slack_bot_config"
 
@@ -821,6 +826,9 @@ class SlackBotConfig(Base):
     # JSON for flexibility. Contains things like: channel name, team members, etc.
     channel_config: Mapped[ChannelConfig] = mapped_column(
         postgresql.JSONB(), nullable=False
+    )
+    response_type: Mapped[SlackBotResponseType] = mapped_column(
+        Enum(SlackBotResponseType, native_enum=False), nullable=False
     )
 
     persona: Mapped[Persona | None] = relationship("Persona")
