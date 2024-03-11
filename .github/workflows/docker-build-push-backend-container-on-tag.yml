@@ -7,7 +7,9 @@ on:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    # for EE, run on special image-builders runners
+    runs-on: 
+      group: image-builders
 
     steps:
     - name: Checkout code
