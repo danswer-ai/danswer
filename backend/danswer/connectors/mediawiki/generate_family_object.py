@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import itertools
 from typing import Any
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse
+from urllib.parse import urlunparse
 
-from pywikibot.scripts import generate_family_file
-
-from pywikibot import family, pagegenerators
-from pywikibot.scripts.generate_user_files import pywikibot
-
+from pywikibot import family
+from pywikibot import pagegenerators
+from pywikibot.scripts import generate_family_file  # type: ignore[import-untyped]
+from pywikibot.scripts.generate_user_files import pywikibot  # type: ignore[import-untyped]
 
 
 class FamilyFileGeneratorInMemory(generate_family_file.FamilyFileGenerator):
@@ -23,15 +23,20 @@ class FamilyFileGeneratorInMemory(generate_family_file.FamilyFileGenerator):
     ):
         """Initialize the FamilyFileGeneratorInMemory."""
 
-        url_parse = urlparse(url, 'https')
+        url_parse = urlparse(url, "https")
         if not url_parse.netloc and url_parse.path:
-            url = urlunparse((url_parse.scheme, url_parse.path, url_parse.netloc, *url_parse[3:]))
+            url = urlunparse(
+                (url_parse.scheme, url_parse.path, url_parse.netloc, *url_parse[3:])
+            )
         else:
             url = urlunparse(url_parse)
         assert isinstance(url, str)
 
         if any(x not in generate_family_file.NAME_CHARACTERS for x in name):
-            raise ValueError('ERROR: Name of family "{}" must be ASCII letters and digits [a-zA-Z0-9]', self.name)
+            raise ValueError(
+                'ERROR: Name of family "{}" must be ASCII letters and digits [a-zA-Z0-9]',
+                self.name,
+            )
 
         if isinstance(dointerwiki, bool):
             dointerwiki = "Y" if dointerwiki else "N"
@@ -52,7 +57,7 @@ class FamilyFileGeneratorInMemory(generate_family_file.FamilyFileGenerator):
         """
         return True
 
-    def writefile(self, verify:Any) -> None:
+    def writefile(self, verify: Any) -> None:
         """Write the family file.
 
         This overrides the method in the parent class to write the family definition to memory instead of to disk.
@@ -61,30 +66,31 @@ class FamilyFileGeneratorInMemory(generate_family_file.FamilyFileGenerator):
             verify: unused argument necessary to match the signature of the method in the parent class.
         """
         code_hostname_pairs = {
-            f'{k}': f'{urlparse(w.server).netloc}'
-            for k, w in self.wikis.items()}
+            f"{k}": f"{urlparse(w.server).netloc}" for k, w in self.wikis.items()
+        }
 
-        code_path_pairs = {
-            f'{k}': f'{w.scriptpath}'
-            for k, w in self.wikis.items()}
+        code_path_pairs = {f"{k}": f"{w.scriptpath}" for k, w in self.wikis.items()}
 
-        code_protocol_pairs = {f'{k}': f'{urlparse(w.server).scheme}' for k, w in self.wikis.items()}
+        code_protocol_pairs = {
+            f"{k}": f"{urlparse(w.server).scheme}" for k, w in self.wikis.items()
+        }
 
         class Family(family.Family):  # noqa: D101
             """The family definition for the wiki."""
 
-            name = '%(name)s'
+            name = "%(name)s"
             langs = code_hostname_pairs
 
-            def scriptpath(self, code: str)->str:
+            def scriptpath(self, code: str) -> str:
                 return code_path_pairs[code]
 
-            def protocol(self, code: str)->str:
+            def protocol(self, code: str) -> str:
                 return code_protocol_pairs[code]
 
         self.family_definition = Family
 
-def generate_family_class(url:str, name:str) -> type[family.Family]:
+
+def generate_family_class(url: str, name: str) -> type[family.Family]:
     """Generate a family file for a given URL and name.
 
     Args:
@@ -105,23 +111,28 @@ def generate_family_class(url:str, name:str) -> type[family.Family]:
     return generator.family_definition
 
 
-
-
 if __name__ == "__main__":
     url = "fallout.fandom.com/wiki/Fallout_Wiki"
     name = "falloutfandom"
 
-    categories = []
+    categories: list[str] = []
     pages = ["Fallout: New Vegas"]
     recursion_depth = 1
-    family = generate_family_class(url, name)
+    family_type = generate_family_class(url, name)
 
-    site = pywikibot.Site(fam=family(), code='en')
-    categories = [pywikibot.Category(site, f"Category:{category.replace(' ', '_')}") for category in categories]
+    site = pywikibot.Site(fam=family_type(), code="en")
+    categories = [
+        pywikibot.Category(site, f"Category:{category.replace(' ', '_')}")
+        for category in categories
+    ]
     pages = [pywikibot.Page(site, page) for page in pages]
-    all_pages = itertools.chain(pages,
-                                *[pagegenerators.CategorizedPageGenerator(category, recurse=recursion_depth) for
-                                  category in categories])
+    all_pages = itertools.chain(
+        pages,
+        *[
+            pagegenerators.CategorizedPageGenerator(category, recurse=recursion_depth)
+            for category in categories
+        ],
+    )
     for page in all_pages:
         print(page.title())
         print(page.text[:1000])
