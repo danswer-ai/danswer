@@ -6,6 +6,7 @@ from typing import Any
 
 import pywikibot  # type: ignore[import-untyped]
 from pywikibot import pagegenerators
+from pywikibot import textlib
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -43,19 +44,30 @@ class MediaWikiConnector(LoadConnector, PollConnector):
         return None
 
     def _get_doc_from_page(self, page: pywikibot.Page) -> Document:
+        page_text = page.text
+        sections_extracted: textlib.Content = textlib.extract_sections(
+            page_text, self.site
+        )
+
+        sections = [
+            Section(
+                link=f"{page.full_url()}#" + section.heading.replace(" ", "_"),
+                text=section.title + "\n" + section.content,
+            )
+            for section in sections_extracted.sections
+        ]
+        sections.append(
+            Section(
+                link=page.full_url(),
+                text=sections_extracted.header,
+            )
+        )
+
         return Document(
             source=DocumentSource.MEDIAWIKI,
             title=page.title(),
-            text=page.text,
-            url=page.full_url(),
-            created_at=page.oldest_revision.timestamp,
-            updated_at=page.latest_revision.timestamp,
-            sections=[
-                Section(
-                    link=page.full_url(),
-                    text=page.text,
-                )
-            ],
+            doc_updated_at=page.latest_revision.timestamp,
+            sections=sections,
             semantic_identifier=page.title(),
             metadata={
                 "categories": [category.title() for category in page.categories()]
