@@ -366,3 +366,9 @@ export interface SlackBotTokens {
   bot_token: string;
   app_token: string;
 }
+
+export interface TokenBudgetConfig {
+  enable_token_budget: boolean;
+  token_budget: string | null;
+  token_budget_time_period: string | null;
+}
