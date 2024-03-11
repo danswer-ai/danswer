@@ -1,4 +1,4 @@
-import { Persona, Prompt } from "./interfaces";
+import { Persona, Prompt, StarterMessage } from "./interfaces";
 
 interface PersonaCreationRequest {
   name: string;
@@ -10,6 +10,7 @@ interface PersonaCreationRequest {
   include_citations: boolean;
   llm_relevance_filter: boolean | null;
   llm_model_version_override: string | null;
+  starter_messages: StarterMessage[] | null;
 }
 
 interface PersonaUpdateRequest {
@@ -24,6 +25,7 @@ interface PersonaUpdateRequest {
   include_citations: boolean;
   llm_relevance_filter: boolean | null;
   llm_model_version_override: string | null;
+  starter_messages: StarterMessage[] | null;
 }
 
 function promptNameFromPersonaName(personaName: string) {
@@ -109,6 +111,7 @@ function buildPersonaAPIBody(
     prompt_ids: [promptId],
     document_set_ids,
     llm_model_version_override: creationRequest.llm_model_version_override,
+    starter_messages: creationRequest.starter_messages,
   };
 }
 
@@ -214,9 +217,27 @@ function smallerNumberFirstComparator(a: number, b: number) {
   return a > b ? 1 : -1;
 }
 
+function closerToZeroNegativesFirstComparator(a: number, b: number) {
+  if (a < 0 && b > 0) {
+    return -1;
+  }
+  if (a > 0 && b < 0) {
+    return 1;
+  }
+
+  const absA = Math.abs(a);
+  const absB = Math.abs(b);
+
+  if (absA === absB) {
+    return a > b ? 1 : -1;
+  }
+
+  return absA > absB ? 1 : -1;
+}
+
 export function personaComparator(a: Persona, b: Persona) {
   if (a.display_priority === null && b.display_priority === null) {
-    return smallerNumberFirstComparator(a.id, b.id);
+    return closerToZeroNegativesFirstComparator(a.id, b.id);
   }
 
   if (a.display_priority !== b.display_priority) {
@@ -230,5 +251,5 @@ export function personaComparator(a: Persona, b: Persona) {
     return smallerNumberFirstComparator(a.display_priority, b.display_priority);
   }
 
-  return smallerNumberFirstComparator(a.id, b.id);
+  return closerToZeroNegativesFirstComparator(a.id, b.id);
 }

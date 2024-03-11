@@ -100,10 +100,12 @@ def extract_urls_from_sitemap(sitemap_url: str) -> list[str]:
     response.raise_for_status()
 
     soup = BeautifulSoup(response.content, "html.parser")
-    urls = [loc_tag.text for loc_tag in soup.find_all("loc")]
+    return [_ensure_absolute_url(sitemap_url, loc_tag.text) for loc_tag in soup.find_all("loc")]
 
-    return urls
-
+def _ensure_absolute_url(source_url:str, maybe_relative_url: str) -> str:
+    if not urlparse(maybe_relative_url).netloc:
+        return urljoin(source_url, maybe_relative_url)
+    return maybe_relative_url
 
 def _ensure_valid_url(url: str) -> str:
     if "://" not in url:
@@ -195,7 +197,7 @@ class WebConnector(LoadConnector):
                     continue
 
                 page = context.new_page()
-                page.goto(current_url)
+                page_response = page.goto(current_url)
                 final_page = page.url
                 if final_page != current_url:
                     logger.info(f"Redirected to {final_page}")
@@ -213,6 +215,12 @@ class WebConnector(LoadConnector):
                     for link in internal_links:
                         if link not in visited_links:
                             to_visit.append(link)
+
+                if page_response and str(page_response.status)[0] in ("4", "5"):
+                    logger.info(
+                        f"Skipped indexing {current_url} due to HTTP {page_response.status} response"
+                    )
+                    continue
 
                 parsed_html = web_html_cleanup(soup, self.mintlify_cleanup)
 

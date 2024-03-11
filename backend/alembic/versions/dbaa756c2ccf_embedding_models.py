@@ -9,11 +9,11 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import table, column, String, Integer, Boolean
 
-from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
-from danswer.configs.model_configs import DOC_EMBEDDING_DIM
-from danswer.configs.model_configs import NORMALIZE_EMBEDDINGS
-from danswer.configs.model_configs import ASYM_QUERY_PREFIX
-from danswer.configs.model_configs import ASYM_PASSAGE_PREFIX
+from danswer.db.embedding_model import (
+    get_new_default_embedding_model,
+    get_old_default_embedding_model,
+    user_has_overridden_embedding_model,
+)
 from danswer.db.models import IndexModelStatus
 
 # revision identifiers, used by Alembic.
@@ -40,6 +40,9 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
+    # since all index attempts must be associated with an embedding model,
+    # need to put something in here to avoid nulls. On server startup,
+    # this value will be overriden
     EmbeddingModel = table(
         "embedding_model",
         column("id", Integer),
@@ -53,20 +56,44 @@ def upgrade() -> None:
             "status", sa.Enum(IndexModelStatus, name="indexmodelstatus", native=False)
         ),
     )
+    # insert an embedding model row that corresponds to the embedding model
+    # the user selected via env variables before this change. This is needed since
+    # all index_attempts must be associated with an embedding model, so without this
+    # we will run into violations of non-null contraints
+    old_embedding_model = get_old_default_embedding_model()
     op.bulk_insert(
         EmbeddingModel,
         [
             {
-                "model_name": DOCUMENT_ENCODER_MODEL,
-                "model_dim": DOC_EMBEDDING_DIM,
-                "normalize": NORMALIZE_EMBEDDINGS,
-                "query_prefix": ASYM_QUERY_PREFIX,
-                "passage_prefix": ASYM_PASSAGE_PREFIX,
-                "index_name": "danswer_chunk",
-                "status": IndexModelStatus.PRESENT,
+                "model_name": old_embedding_model.model_name,
+                "model_dim": old_embedding_model.model_dim,
+                "normalize": old_embedding_model.normalize,
+                "query_prefix": old_embedding_model.query_prefix,
+                "passage_prefix": old_embedding_model.passage_prefix,
+                "index_name": old_embedding_model.index_name,
+                "status": old_embedding_model.status,
             }
         ],
     )
+    # if the user has not overridden the default embedding model via env variables,
+    # insert the new default model into the database to auto-upgrade them
+    if not user_has_overridden_embedding_model():
+        new_embedding_model = get_new_default_embedding_model(is_present=False)
+        op.bulk_insert(
+            EmbeddingModel,
+            [
+                {
+                    "model_name": new_embedding_model.model_name,
+                    "model_dim": new_embedding_model.model_dim,
+                    "normalize": new_embedding_model.normalize,
+                    "query_prefix": new_embedding_model.query_prefix,
+                    "passage_prefix": new_embedding_model.passage_prefix,
+                    "index_name": new_embedding_model.index_name,
+                    "status": IndexModelStatus.FUTURE,
+                }
+            ],
+        )
+
     op.add_column(
         "index_attempt",
         sa.Column("embedding_model_id", sa.Integer(), nullable=True),

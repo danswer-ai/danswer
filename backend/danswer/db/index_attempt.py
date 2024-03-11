@@ -33,13 +33,15 @@ def get_index_attempt(
 def create_index_attempt(
     connector_id: int,
     credential_id: int,
-    embedding_model_id: int | None,
+    embedding_model_id: int,
     db_session: Session,
+    from_beginning: bool = False,
 ) -> int:
     new_attempt = IndexAttempt(
         connector_id=connector_id,
         credential_id=credential_id,
         embedding_model_id=embedding_model_id,
+        from_beginning=from_beginning,
         status=IndexingStatus.NOT_STARTED,
     )
     db_session.add(new_attempt)
@@ -93,10 +95,14 @@ def mark_attempt_succeeded(
 
 
 def mark_attempt_failed(
-    index_attempt: IndexAttempt, db_session: Session, failure_reason: str = "Unknown"
+    index_attempt: IndexAttempt,
+    db_session: Session,
+    failure_reason: str = "Unknown",
+    full_exception_trace: str | None = None,
 ) -> None:
     index_attempt.status = IndexingStatus.FAILED
     index_attempt.error_msg = failure_reason
+    index_attempt.full_exception_trace = full_exception_trace
     db_session.add(index_attempt)
     db_session.commit()
 
@@ -109,9 +115,11 @@ def update_docs_indexed(
     index_attempt: IndexAttempt,
     total_docs_indexed: int,
     new_docs_indexed: int,
+    docs_removed_from_index: int,
 ) -> None:
     index_attempt.total_docs_indexed = total_docs_indexed
     index_attempt.new_docs_indexed = new_docs_indexed
+    index_attempt.docs_removed_from_index = docs_removed_from_index
 
     db_session.add(index_attempt)
     db_session.commit()
@@ -223,13 +231,24 @@ def expire_index_attempts(
     embedding_model_id: int,
     db_session: Session,
 ) -> None:
+    delete_query = (
+        delete(IndexAttempt)
+        .where(IndexAttempt.embedding_model_id == embedding_model_id)
+        .where(IndexAttempt.status == IndexingStatus.NOT_STARTED)
+    )
+    db_session.execute(delete_query)
+
     update_query = (
         update(IndexAttempt)
         .where(IndexAttempt.embedding_model_id == embedding_model_id)
         .where(IndexAttempt.status != IndexingStatus.SUCCESS)
-        .values(status=IndexingStatus.FAILED, error_msg="Embedding model swapped")
+        .values(
+            status=IndexingStatus.FAILED,
+            error_msg="Canceled due to embedding model swap",
+        )
     )
     db_session.execute(update_query)
+
     db_session.commit()
 
 
@@ -238,24 +257,36 @@ def cancel_indexing_attempts_for_connector(
     db_session: Session,
     include_secondary_index: bool = False,
 ) -> None:
-    subquery = select(EmbeddingModel.id).where(
-        EmbeddingModel.status != IndexModelStatus.FUTURE
-    )
-
     stmt = delete(IndexAttempt).where(
         IndexAttempt.connector_id == connector_id,
         IndexAttempt.status == IndexingStatus.NOT_STARTED,
     )
 
     if not include_secondary_index:
-        stmt = stmt.where(
-            or_(
-                IndexAttempt.embedding_model_id.is_(None),
-                IndexAttempt.embedding_model_id.in_(subquery),
-            )
+        subquery = select(EmbeddingModel.id).where(
+            EmbeddingModel.status != IndexModelStatus.FUTURE
         )
+        stmt = stmt.where(IndexAttempt.embedding_model_id.in_(subquery))
 
     db_session.execute(stmt)
+
+    db_session.commit()
+
+
+def cancel_indexing_attempts_past_model(
+    db_session: Session,
+) -> None:
+    db_session.execute(
+        update(IndexAttempt)
+        .where(
+            IndexAttempt.status.in_(
+                [IndexingStatus.IN_PROGRESS, IndexingStatus.NOT_STARTED]
+            ),
+            IndexAttempt.embedding_model_id == EmbeddingModel.id,
+            EmbeddingModel.status == IndexModelStatus.PAST,
+        )
+        .values(status=IndexingStatus.FAILED)
+    )
 
     db_session.commit()
 

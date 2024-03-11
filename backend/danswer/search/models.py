@@ -86,10 +86,10 @@ class RetrievalDetails(BaseModel):
     # Use LLM to determine whether to do a retrieval or only rely on existing history
     # If the Persona is configured to not run search (0 chunks), this is bypassed
     # If no Prompt is configured, the only search results are shown, this is bypassed
-    run_search: OptionalSearchSetting
+    run_search: OptionalSearchSetting = OptionalSearchSetting.ALWAYS
     # Is this a real-time/streaming call or a question where Danswer can take more time?
     # Used to determine reranking flow
-    real_time: bool
+    real_time: bool = True
     # The following have defaults in the Persona settings which can be overriden via
     # the query, if None, then use Persona settings
     filters: BaseFilters | None = None
@@ -132,13 +132,16 @@ class SearchDoc(BaseModel):
 
 class SavedSearchDoc(SearchDoc):
     db_doc_id: int
+    score: float = 0.0
 
     @classmethod
     def from_search_doc(
         cls, search_doc: SearchDoc, db_doc_id: int = 0
     ) -> "SavedSearchDoc":
         """IMPORTANT: careful using this and not providing a db_doc_id"""
-        return cls(**search_doc.dict(), db_doc_id=db_doc_id)
+        search_doc_data = search_doc.dict()
+        search_doc_data["score"] = search_doc_data.get("score", 0.0)
+        return cls(**search_doc_data, db_doc_id=db_doc_id)
 
 
 class RetrievalDocs(BaseModel):

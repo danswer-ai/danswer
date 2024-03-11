@@ -47,6 +47,10 @@ def _delete_connector_credential_pair_batch(
     credential_id: int,
     document_index: DocumentIndex,
 ) -> None:
+    """
+    Removes a batch of documents ids from a cc-pair. If no other cc-pair uses a document anymore
+    it gets permanently deleted.
+    """
     with Session(get_sqlalchemy_engine()) as db_session:
         # acquire lock for all documents in this batch so that indexing can't
         # override the deletion

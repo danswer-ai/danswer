@@ -2,9 +2,9 @@ import abc
 from collections.abc import Iterator
 
 import litellm  # type:ignore
-from langchain.chat_models import ChatLiteLLM
 from langchain.chat_models.base import BaseChatModel
 from langchain.schema.language_model import LanguageModelInput
+from langchain_community.chat_models import ChatLiteLLM
 
 from danswer.configs.app_configs import LOG_ALL_MODEL_INTERACTIONS
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
@@ -15,6 +15,7 @@ from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_TEMPERATURE
 from danswer.llm.interfaces import LLM
+from danswer.llm.utils import get_default_llm_version
 from danswer.llm.utils import message_generator_to_string_generator
 from danswer.llm.utils import should_be_verbose
 from danswer.utils.logger import setup_logger
@@ -92,7 +93,8 @@ def _get_model_str(
         return model_version
 
     # User specified something wrong, just use Danswer default
-    return GEN_AI_MODEL_VERSION
+    base, _ = get_default_llm_version()
+    return base
 
 
 class DefaultMultiLLM(LangChainChatLLM):
@@ -109,7 +111,7 @@ class DefaultMultiLLM(LangChainChatLLM):
         api_key: str | None,
         timeout: int,
         model_provider: str = GEN_AI_MODEL_PROVIDER,
-        model_version: str = GEN_AI_MODEL_VERSION,
+        model_version: str | None = GEN_AI_MODEL_VERSION,
         api_base: str | None = GEN_AI_API_ENDPOINT,
         api_version: str | None = GEN_AI_API_VERSION,
         custom_llm_provider: str | None = GEN_AI_LLM_PROVIDER_TYPE,
@@ -121,6 +123,8 @@ class DefaultMultiLLM(LangChainChatLLM):
         litellm.api_key = api_key or "dummy-key"
         litellm.api_version = api_version
 
+        model_version = model_version or get_default_llm_version()[0]
+
         self._llm = ChatLiteLLM(  # type: ignore
             model=model_version
             if custom_llm_provider
@@ -130,7 +134,11 @@ class DefaultMultiLLM(LangChainChatLLM):
             max_tokens=max_output_tokens,
             temperature=temperature,
             request_timeout=timeout,
-            model_kwargs=DefaultMultiLLM.DEFAULT_MODEL_PARAMS,
+            # LiteLLM and some model providers don't handle these params well
+            # only turning it on for OpenAI
+            model_kwargs=DefaultMultiLLM.DEFAULT_MODEL_PARAMS
+            if model_provider == "openai"
+            else {},
             verbose=should_be_verbose(),
             max_retries=0,  # retries are handled outside of langchain
         )

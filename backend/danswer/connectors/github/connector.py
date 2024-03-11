@@ -214,7 +214,17 @@ class GithubConnector(LoadConnector, PollConnector):
     ) -> GenerateDocumentsOutput:
         start_datetime = datetime.utcfromtimestamp(start)
         end_datetime = datetime.utcfromtimestamp(end)
-        return self._fetch_from_github(start_datetime, end_datetime)
+
+        # Move start time back by 3 hours, since some Issues/PRs are getting dropped
+        # Could be due to delayed processing on GitHub side
+        # The non-updated issues since last poll will be shortcut-ed and not embedded
+        adjusted_start_datetime = start_datetime - timedelta(hours=3)
+
+        epoch = datetime.utcfromtimestamp(0)
+        if adjusted_start_datetime < epoch:
+            adjusted_start_datetime = epoch
+
+        return self._fetch_from_github(adjusted_start_datetime, end_datetime)
 
 
 if __name__ == "__main__":

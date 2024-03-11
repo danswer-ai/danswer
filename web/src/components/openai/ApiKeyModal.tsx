@@ -3,46 +3,62 @@
 import { useState, useEffect } from "react";
 import { ApiKeyForm } from "./ApiKeyForm";
 import { Modal } from "../Modal";
-import { Text } from "@tremor/react";
+import { Divider, Text } from "@tremor/react";
+
+export async function checkApiKey() {
+  const response = await fetch("/api/manage/admin/genai-api-key/validate");
+  if (!response.ok && (response.status === 404 || response.status === 400)) {
+    const jsonResponse = await response.json();
+    return jsonResponse.detail;
+  }
+  return null;
+}
 
 export const ApiKeyModal = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/manage/admin/genai-api-key/validate", {
-      method: "HEAD",
-    }).then((res) => {
-      // show popup if either the API key is not set or the API key is invalid
-      if (!res.ok && (res.status === 404 || res.status === 400)) {
-        setIsOpen(true);
+    checkApiKey().then((error) => {
+      console.log(error);
+      if (error) {
+        setErrorMsg(error);
       }
     });
   }, []);
 
-  if (!isOpen) {
+  if (!errorMsg) {
     return null;
   }
 
   return (
-    <Modal className="max-w-4xl" onOutsideClick={() => setIsOpen(false)}>
+    <Modal
+      title="LLM Key Setup"
+      className="max-w-4xl"
+      onOutsideClick={() => setErrorMsg(null)}
+    >
       <div>
         <div>
-          <Text className="mb-2.5">
-            Can&apos;t find a valid registered OpenAI API key. Please provide
-            one to be able to ask questions! Or if you&apos;d rather just look
-            around for now,{" "}
+          <div className="mb-2.5 text-base">
+            Please provide a valid OpenAI API key below in order to start using
+            Danswer Search or Danswer Chat.
+            <br />
+            <br />
+            Or if you&apos;d rather look around first,{" "}
             <strong
-              onClick={() => setIsOpen(false)}
+              onClick={() => setErrorMsg(null)}
               className="text-link cursor-pointer"
             >
               skip this step
             </strong>
             .
-          </Text>
+          </div>
+
+          <Divider />
+
           <ApiKeyForm
             handleResponse={(response) => {
               if (response.ok) {
-                setIsOpen(false);
+                setErrorMsg(null);
               }
             }}
           />

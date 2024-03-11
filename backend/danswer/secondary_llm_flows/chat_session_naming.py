@@ -1,4 +1,5 @@
 from danswer.chat.chat_utils import combine_message_chain
+from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.db.models import ChatMessage
 from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llm
@@ -31,7 +32,9 @@ def get_renamed_conversation_name(
             # clear thing we can do
             return full_history[0].message
 
-    history_str = combine_message_chain(full_history)
+    history_str = combine_message_chain(
+        messages=full_history, token_limit=GEN_AI_HISTORY_CUTOFF
+    )
 
     prompt_msgs = get_chat_rename_messages(history_str)
 

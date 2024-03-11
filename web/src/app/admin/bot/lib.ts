@@ -1,4 +1,8 @@
-import { ChannelConfig, SlackBotTokens } from "@/lib/types";
+import {
+  ChannelConfig,
+  SlackBotResponseType,
+  SlackBotTokens,
+} from "@/lib/types";
 import { Persona } from "../personas/interfaces";
 
 interface SlackBotConfigCreationRequest {
@@ -8,9 +12,11 @@ interface SlackBotConfigCreationRequest {
   answer_validity_check_enabled: boolean;
   questionmark_prefilter_enabled: boolean;
   respond_tag_only: boolean;
+  respond_to_bots: boolean;
   respond_team_member_list: string[];
   follow_up_tags?: string[];
   usePersona: boolean;
+  response_type: SlackBotResponseType;
 }
 
 const buildFiltersFromCreationRequest = (
@@ -32,12 +38,14 @@ const buildRequestBodyFromCreationRequest = (
   return JSON.stringify({
     channel_names: creationRequest.channel_names,
     respond_tag_only: creationRequest.respond_tag_only,
+    respond_to_bots: creationRequest.respond_to_bots,
     respond_team_member_list: creationRequest.respond_team_member_list,
     answer_filters: buildFiltersFromCreationRequest(creationRequest),
     follow_up_tags: creationRequest.follow_up_tags?.filter((tag) => tag !== ""),
     ...(creationRequest.usePersona
       ? { persona_id: creationRequest.persona_id }
       : { document_sets: creationRequest.document_sets }),
+    response_type: creationRequest.response_type,
   });
 };
 

@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -41,6 +42,53 @@ class BasicExpertInfo(BaseModel):
     middle_initial: str | None = None
     last_name: str | None = None
     email: str | None = None
+
+    def get_semantic_name(self) -> str:
+        if self.first_name and self.last_name:
+            name_parts = [self.first_name]
+            if self.middle_initial:
+                name_parts.append(self.middle_initial + ".")
+            name_parts.append(self.last_name)
+            return " ".join([name_part.capitalize() for name_part in name_parts])
+
+        if self.display_name:
+            return self.display_name
+
+        if self.email:
+            return self.email
+
+        if self.first_name:
+            return self.first_name.capitalize()
+
+        return "Unknown"
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, BasicExpertInfo):
+            return False
+        return (
+            self.display_name,
+            self.first_name,
+            self.middle_initial,
+            self.last_name,
+            self.email,
+        ) == (
+            other.display_name,
+            other.first_name,
+            other.middle_initial,
+            other.last_name,
+            other.email,
+        )
+
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self.display_name,
+                self.first_name,
+                self.middle_initial,
+                self.last_name,
+                self.email,
+            )
+        )
 
 
 class DocumentBase(BaseModel):

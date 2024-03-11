@@ -84,7 +84,7 @@ class NotionConnector(LoadConnector, PollConnector):
         self.indexed_pages: set[str] = set()
         self.root_page_id = root_page_id
         # if enabled, will recursively index child pages as they are found rather
-        # relying entirely on the `search` API. We have recieved reports that the
+        # relying entirely on the `search` API. We have received reports that the
         # `search` API misses many pages - in those cases, this might need to be
         # turned on. It's not currently known why/when this is required.
         # NOTE: this also removes all benefits polling, since we need to traverse
@@ -201,6 +201,14 @@ class NotionConnector(LoadConnector, PollConnector):
                 result_block_id = result["id"]
                 result_type = result["type"]
                 result_obj = result[result_type]
+
+                if result_type == "ai_block":
+                    logger.warning(
+                        f"Skipping 'ai_block' ('{result_block_id}') for page '{page_block_id}': "
+                        f"Notion API does not currently support reading AI blocks (as of 24/02/09) "
+                        f"(discussion: https://github.com/danswer-ai/danswer/issues/1053)"
+                    )
+                    continue
 
                 cur_result_text_arr = []
                 if "rich_text" in result_obj:

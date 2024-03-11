@@ -231,7 +231,7 @@ interface SelectorFormFieldProps {
   name: string;
   label?: string;
   options: StringOrNumberOption[];
-  subtext?: string;
+  subtext?: string | JSX.Element;
   includeDefault?: boolean;
 }
 

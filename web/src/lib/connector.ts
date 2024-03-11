@@ -74,12 +74,17 @@ export async function deleteConnector(
 
 export async function runConnector(
   connectorId: number,
-  credentialIds: number[] | null = null
+  credentialIds: number[],
+  fromBeginning: boolean = false
 ): Promise<string | null> {
   const response = await fetch("/api/manage/admin/connector/run-once", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ connector_id: connectorId, credentialIds }),
+    body: JSON.stringify({
+      connector_id: connectorId,
+      credentialIds,
+      from_beginning: fromBeginning,
+    }),
   });
   if (!response.ok) {
     return (await response.json()).detail;

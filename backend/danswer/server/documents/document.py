@@ -10,6 +10,7 @@ from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.llm.utils import get_default_llm_token_encode
+from danswer.prompts.prompt_utils import build_doc_context_str
 from danswer.search.access_filters import build_access_filters_for_user
 from danswer.search.models import IndexFilters
 from danswer.server.documents.models import ChunkInfo
@@ -47,12 +48,23 @@ def get_document_info(
 
     contents = [chunk.content for chunk in inference_chunks]
 
-    combined = "\n".join(contents)
+    combined_contents = "\n".join(contents)
 
+    # get actual document context used for LLM
+    first_chunk = inference_chunks[0]
     tokenizer_encode = get_default_llm_token_encode()
+    full_context_str = build_doc_context_str(
+        semantic_identifier=first_chunk.semantic_identifier,
+        source_type=first_chunk.source_type,
+        content=combined_contents,
+        metadata_dict=first_chunk.metadata,
+        updated_at=first_chunk.updated_at,
+        ind=0,
+    )
 
     return DocumentInfo(
-        num_chunks=len(inference_chunks), num_tokens=len(tokenizer_encode(combined))
+        num_chunks=len(inference_chunks),
+        num_tokens=len(tokenizer_encode(full_context_str)),
     )
 
 

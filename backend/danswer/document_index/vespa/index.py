@@ -157,7 +157,7 @@ def _get_vespa_chunk_ids_by_document_id(
         "hits": hits_per_page,
     }
     while True:
-        results = requests.get(SEARCH_ENDPOINT, params=params).json()
+        results = requests.post(SEARCH_ENDPOINT, json=params).json()
         hits = results["root"].get("children", [])
 
         doc_chunk_ids.extend(
@@ -559,9 +559,9 @@ def _query_vespa(query_params: Mapping[str, str | int | float]) -> list[Inferenc
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError("No/empty query received")
 
-    response = requests.get(
+    response = requests.post(
         SEARCH_ENDPOINT,
-        params=dict(
+        json=dict(
             **query_params,
             **{
                 "presentation.timing": True,
@@ -811,7 +811,7 @@ class VespaIndex(DocumentIndex):
     def delete(self, doc_ids: list[str]) -> None:
         logger.info(f"Deleting {len(doc_ids)} documents from Vespa")
 
-        # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficient for
+        # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficial for
         # indexing / updates / deletes since we have to make a large volume of requests.
         with httpx.Client(http2=True) as http_client:
             index_names = [self.index_name]
@@ -844,9 +844,6 @@ class VespaIndex(DocumentIndex):
                 for vespa_chunk_id in vespa_chunk_ids
             ]
 
-            logger.debug(
-                "Running LLM usefulness eval in parallel (following logging may be out of order)"
-            )
             inference_chunks = run_functions_tuples_in_parallel(
                 functions_with_args, allow_failures=True
             )

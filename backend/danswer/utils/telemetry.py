@@ -31,7 +31,9 @@ def get_or_generate_uuid() -> str:
         return customer_id
 
 
-def optional_telemetry(record_type: RecordType, data: dict) -> None:
+def optional_telemetry(
+    record_type: RecordType, data: dict, user_id: str | None = None
+) -> None:
     if DISABLE_TELEMETRY:
         return
 
@@ -42,6 +44,9 @@ def optional_telemetry(record_type: RecordType, data: dict) -> None:
                 payload = {
                     "data": data,
                     "record": record_type,
+                    # If None then it's a flow that doesn't include a user
+                    # For cases where the User itself is None, a string is provided instead
+                    "user_id": user_id,
                     "customer_uuid": get_or_generate_uuid(),
                 }
                 requests.post(

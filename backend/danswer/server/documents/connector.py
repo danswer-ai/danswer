@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from fastapi import Request
 from fastapi import Response
 from fastapi import UploadFile
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
@@ -55,9 +56,9 @@ from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import get_document_cnts_for_cc_pairs
 from danswer.db.embedding_model import get_current_db_embedding_model
-from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_session
 from danswer.db.index_attempt import cancel_indexing_attempts_for_connector
+from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.index_attempt import get_latest_index_attempts
@@ -457,6 +458,9 @@ def update_connector_from_model(
     if updated_connector.disabled:
         cancel_indexing_attempts_for_connector(connector_id, db_session)
 
+        # Just for good measure
+        cancel_indexing_attempts_past_model(db_session)
+
     return ConnectorSnapshot(
         id=updated_connector.id,
         name=updated_connector.name,
@@ -529,6 +533,7 @@ def connector_run_once(
                 connector_id=run_info.connector_id,
                 credential_id=credential_id,
             ),
+            only_current=True,
             disinclude_finished=True,
             db_session=db_session,
         )
@@ -536,28 +541,17 @@ def connector_run_once(
 
     embedding_model = get_current_db_embedding_model(db_session)
 
-    secondary_embedding_model = get_secondary_db_embedding_model(db_session)
-
     index_attempt_ids = [
         create_index_attempt(
-            run_info.connector_id, credential_id, embedding_model.id, db_session
+            connector_id=run_info.connector_id,
+            credential_id=credential_id,
+            embedding_model_id=embedding_model.id,
+            from_beginning=run_info.from_beginning,
+            db_session=db_session,
         )
         for credential_id in credential_ids
         if credential_id not in skipped_credentials
     ]
-
-    if secondary_embedding_model is not None:
-        # Secondary index doesn't have to be returned
-        [
-            create_index_attempt(
-                run_info.connector_id,
-                credential_id,
-                secondary_embedding_model.id,
-                db_session,
-            )
-            for credential_id in credential_ids
-            if credential_id not in skipped_credentials
-        ]
 
     if not index_attempt_ids:
         raise HTTPException(
@@ -696,3 +690,43 @@ def get_connector_by_id(
         time_updated=connector.time_updated,
         disabled=connector.disabled,
     )
+
+
+class BasicCCPairInfo(BaseModel):
+    docs_indexed: int
+    has_successful_run: bool
+    source: DocumentSource
+
+
+@router.get("/indexing-status")
+def get_basic_connector_indexing_status(
+    _: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> list[BasicCCPairInfo]:
+    cc_pairs = get_connector_credential_pairs(db_session)
+    cc_pair_identifiers = [
+        ConnectorCredentialPairIdentifier(
+            connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id
+        )
+        for cc_pair in cc_pairs
+    ]
+    document_count_info = get_document_cnts_for_cc_pairs(
+        db_session=db_session,
+        cc_pair_identifiers=cc_pair_identifiers,
+    )
+    cc_pair_to_document_cnt = {
+        (connector_id, credential_id): cnt
+        for connector_id, credential_id, cnt in document_count_info
+    }
+    return [
+        BasicCCPairInfo(
+            docs_indexed=cc_pair_to_document_cnt.get(
+                (cc_pair.connector_id, cc_pair.credential_id)
+            )
+            or 0,
+            has_successful_run=cc_pair.last_successful_index_time is not None,
+            source=cc_pair.connector.source,
+        )
+        for cc_pair in cc_pairs
+        if cc_pair.connector.source != DocumentSource.INGESTION_API
+    ]

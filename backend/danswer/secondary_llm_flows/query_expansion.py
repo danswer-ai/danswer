@@ -2,6 +2,8 @@ from collections.abc import Callable
 from typing import cast
 
 from danswer.chat.chat_utils import combine_message_chain
+from danswer.configs.chat_configs import DISABLE_LLM_QUERY_REPHRASE
+from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.db.models import ChatMessage
 from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llm
@@ -94,6 +96,10 @@ def history_based_query_rephrase(
 ) -> str:
     user_query = cast(str, query_message.message)
 
+    # Globally disabled, just use the exact user query
+    if DISABLE_LLM_QUERY_REPHRASE:
+        return user_query
+
     if not user_query:
         raise ValueError("Can't rephrase/search an empty query")
 
@@ -119,7 +125,9 @@ def history_based_query_rephrase(
     if count_punctuation(user_query) >= punctuation_heuristic:
         return user_query
 
-    history_str = combine_message_chain(history)
+    history_str = combine_message_chain(
+        messages=history, token_limit=GEN_AI_HISTORY_CUTOFF
+    )
 
     prompt_msgs = get_contextual_rephrase_messages(
         question=user_query, history_str=history_str

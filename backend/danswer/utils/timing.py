@@ -18,21 +18,31 @@ FG = TypeVar("FG", bound=Callable[..., Generator | Iterator])
 
 
 def log_function_time(
-    func_name: str | None = None, print_only: bool = False
+    func_name: str | None = None,
+    print_only: bool = False,
+    debug_only: bool = False,
+    include_args: bool = False,
 ) -> Callable[[F], F]:
     def decorator(func: F) -> F:
         @wraps(func)
         def wrapped_func(*args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
+            user = kwargs.get("user")
             result = func(*args, **kwargs)
             elapsed_time_str = str(time.time() - start_time)
             log_name = func_name or func.__name__
-            logger.info(f"{log_name} took {elapsed_time_str} seconds")
+            args_str = f" args={args} kwargs={kwargs}" if include_args else ""
+            final_log = f"{log_name}{args_str} took {elapsed_time_str} seconds"
+            if debug_only:
+                logger.debug(final_log)
+            else:
+                logger.info(final_log)
 
             if not print_only:
                 optional_telemetry(
                     record_type=RecordType.LATENCY,
                     data={"function": log_name, "latency": str(elapsed_time_str)},
+                    user_id=str(user.id) if user else "Unknown",
                 )
 
             return result
@@ -49,6 +59,7 @@ def log_generator_function_time(
         @wraps(func)
         def wrapped_func(*args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
+            user = kwargs.get("user")
             gen = func(*args, **kwargs)
             try:
                 value = next(gen)
@@ -65,6 +76,7 @@ def log_generator_function_time(
                     optional_telemetry(
                         record_type=RecordType.LATENCY,
                         data={"function": log_name, "latency": str(elapsed_time_str)},
+                        user_id=str(user.id) if user else "Unknown",
                     )
 
         return cast(FG, wrapped_func)

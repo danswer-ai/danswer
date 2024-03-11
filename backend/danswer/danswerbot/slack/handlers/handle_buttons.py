@@ -192,14 +192,11 @@ def handle_followup_button(
         )
 
 
-def handle_followup_resolved_button(
+def get_clicker_name(
     req: SocketModeRequest,
     client: SocketModeClient,
-) -> None:
-    channel_id = req.payload["container"]["channel_id"]
-    message_ts = req.payload["container"]["message_ts"]
-    thread_ts = req.payload["container"]["thread_ts"]
-    clicker_backup_name = req.payload.get("user", {}).get("name", "Someone")
+) -> str:
+    clicker_name = req.payload.get("user", {}).get("name", "Someone")
     clicker_real_name = None
     try:
         clicker = client.web_client.users_info(user=req.payload["user"]["id"])
@@ -210,6 +207,23 @@ def handle_followup_resolved_button(
         # Likely a scope issue
         pass
 
+    if clicker_real_name:
+        clicker_name = clicker_real_name
+
+    return clicker_name
+
+
+def handle_followup_resolved_button(
+    req: SocketModeRequest,
+    client: SocketModeClient,
+    immediate: bool = False,
+) -> None:
+    channel_id = req.payload["container"]["channel_id"]
+    message_ts = req.payload["container"]["message_ts"]
+    thread_ts = req.payload["container"]["thread_ts"]
+
+    clicker_name = get_clicker_name(req, client)
+
     update_emote_react(
         emoji=DANSWER_FOLLOWUP_EMOJI,
         channel=channel_id,
@@ -218,20 +232,27 @@ def handle_followup_resolved_button(
         client=client.web_client,
     )
 
-    slack_call = make_slack_api_rate_limited(client.web_client.chat_delete)
-    response = slack_call(
-        channel=channel_id,
-        ts=message_ts,
-    )
+    # Delete the message with the option to mark resolved
+    if not immediate:
+        slack_call = make_slack_api_rate_limited(client.web_client.chat_delete)
+        response = slack_call(
+            channel=channel_id,
+            ts=message_ts,
+        )
 
-    if not response.get("ok"):
-        logger_base.error("Unable to delete message for resolved")
+        if not response.get("ok"):
+            logger_base.error("Unable to delete message for resolved")
 
-    resolved_block = SectionBlock(
-        text=f"{clicker_real_name or clicker_backup_name} has marked this question as resolved! "
-        f'\n\n You can always click the "I need more help button" to let the team '
-        f"know that your problem still needs attention."
-    )
+    if immediate:
+        msg_text = f"{clicker_name} has marked this question as resolved!"
+    else:
+        msg_text = (
+            f"{clicker_name} has marked this question as resolved! "
+            f'\n\n You can always click the "I need more help button" to let the team '
+            f"know that your problem still needs attention."
+        )
+
+    resolved_block = SectionBlock(text=msg_text)
 
     respond_in_thread(
         client=client.web_client,

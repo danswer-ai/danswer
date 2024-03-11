@@ -1,8 +1,11 @@
 from typing import Any
 
 from pydantic import BaseModel
+from pydantic import Field
 from pydantic import root_validator
 
+from danswer.chat.models import CitationInfo
+from danswer.chat.models import DanswerContexts
 from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import QADocsResponse
 from danswer.configs.constants import MessageType
@@ -16,15 +19,16 @@ class QueryRephrase(BaseModel):
 class ThreadMessage(BaseModel):
     message: str
     sender: str | None
-    role: MessageType
+    role: MessageType = MessageType.USER
 
 
 class DirectQARequest(BaseModel):
     messages: list[ThreadMessage]
     prompt_id: int | None
     persona_id: int
-    retrieval_options: RetrievalDetails
+    retrieval_options: RetrievalDetails = Field(default_factory=RetrievalDetails)
     chain_of_thought: bool = False
+    return_contexts: bool = False
 
     @root_validator
     def check_chain_of_thought_and_prompt_id(
@@ -48,8 +52,10 @@ class OneShotQAResponse(BaseModel):
     answer: str | None = None
     rephrase: str | None = None
     quotes: DanswerQuotes | None = None
+    citations: list[CitationInfo] | None = None
     docs: QADocsResponse | None = None
     llm_chunks_indices: list[int] | None = None
     error_msg: str | None = None
     answer_valid: bool = True  # Reflexion result, default True if Reflexion not run
     chat_message_id: int | None = None
+    contexts: DanswerContexts | None = None

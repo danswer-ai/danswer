@@ -9,6 +9,8 @@ from danswer.configs.constants import AuthType
 from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
 from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
+from danswer.db.models import SlackBotConfig as SlackBotConfigModel
+from danswer.db.models import SlackBotResponseType
 from danswer.server.features.persona.models import PersonaSnapshot
 
 
@@ -75,11 +77,13 @@ class SlackBotConfigCreationRequest(BaseModel):
     persona_id: int | None  # NOTE: only one of `document_sets` / `persona_id` should be set
     channel_names: list[str]
     respond_tag_only: bool = False
+    respond_to_bots: bool = False
     # If no team members, assume respond in the channel to everyone
     respond_team_member_list: list[str] = []
     answer_filters: list[AllowedAnswerFilters] = []
     # list of user emails
     follow_up_tags: list[str] | None = None
+    response_type: SlackBotResponseType
 
     @validator("answer_filters", pre=True)
     def validate_filters(cls, value: list[str]) -> list[str]:
@@ -103,6 +107,22 @@ class SlackBotConfig(BaseModel):
     id: int
     persona: PersonaSnapshot | None
     channel_config: ChannelConfig
+    response_type: SlackBotResponseType
+
+    @classmethod
+    def from_model(
+        cls, slack_bot_config_model: SlackBotConfigModel
+    ) -> "SlackBotConfig":
+        return cls(
+            id=slack_bot_config_model.id,
+            persona=(
+                PersonaSnapshot.from_model(slack_bot_config_model.persona)
+                if slack_bot_config_model.persona
+                else None
+            ),
+            channel_config=slack_bot_config_model.channel_config,
+            response_type=slack_bot_config_model.response_type,
+        )
 
 
 class ModelVersionResponse(BaseModel):

@@ -110,6 +110,9 @@ export function DocumentMetadataBlock({
 }: {
   document: DanswerDocument;
 }) {
+  // don't display super long tags, as they are ugly
+  const MAXIMUM_TAG_LENGTH = 40;
+
   return (
     <div className="flex flex-wrap gap-1">
       {document.updated_at && (
@@ -120,11 +123,19 @@ export function DocumentMetadataBlock({
       {Object.entries(document.metadata).length > 0 && (
         <>
           <div className="pl-1 border-l border-border" />
-          {Object.entries(document.metadata).map(([key, value]) => {
-            return (
-              <MetadataBadge key={key} icon={FiTag} value={`${key}=${value}`} />
-            );
-          })}
+          {Object.entries(document.metadata)
+            .filter(
+              ([key, value]) => (key + value).length <= MAXIMUM_TAG_LENGTH
+            )
+            .map(([key, value]) => {
+              return (
+                <MetadataBadge
+                  key={key}
+                  icon={FiTag}
+                  value={`${key}=${value}`}
+                />
+              );
+            })}
         </>
       )}
     </div>
@@ -133,14 +144,16 @@ export function DocumentMetadataBlock({
 
 interface DocumentDisplayProps {
   document: DanswerDocument;
-  queryEventId: number | null;
+  messageId: number | null;
+  documentRank: number;
   isSelected: boolean;
   setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 export const DocumentDisplay = ({
   document,
-  queryEventId,
+  messageId,
+  documentRank,
   isSelected,
   setPopup,
 }: DocumentDisplayProps) => {
@@ -219,10 +232,11 @@ export const DocumentDisplay = ({
           </p>
         </a>
         <div className="ml-auto">
-          {isHovered && queryEventId && (
+          {isHovered && messageId && (
             <DocumentFeedbackBlock
               documentId={document.document_id}
-              queryId={queryEventId}
+              messageId={messageId}
+              documentRank={documentRank}
               setPopup={setPopup}
             />
           )}

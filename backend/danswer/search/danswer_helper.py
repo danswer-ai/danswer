@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer  # type:ignore
+from typing import TYPE_CHECKING
 
 from danswer.search.models import QueryFlow
 from danswer.search.models import SearchType
@@ -10,8 +10,11 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
+if TYPE_CHECKING:
+    from transformers import AutoTokenizer  # type:ignore
 
-def count_unk_tokens(text: str, tokenizer: AutoTokenizer) -> int:
+
+def count_unk_tokens(text: str, tokenizer: "AutoTokenizer") -> int:
     """Unclear if the wordpiece tokenizer used is actually tokenizing anything as the [UNK] token
     It splits up even foreign characters and unicode emojis without using UNK"""
     tokenized_text = tokenizer.tokenize(text)

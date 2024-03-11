@@ -72,9 +72,13 @@ For convenience here's a command for it:
 python -m venv .venv
 source .venv/bin/activate
 ```
-_For Windows activate via:_
+_For Windows, activate the virtual environment using Command Prompt:_
 ```bash
 .venv\Scripts\activate
+```
+If using PowerShell, the command slightly differs:
+```powershell
+.venv\Scripts\Activate.ps1
 ```
 
 Install the required python dependencies:

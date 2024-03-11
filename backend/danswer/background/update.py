@@ -3,7 +3,6 @@ import time
 from datetime import datetime
 
 import dask
-import torch
 from dask.distributed import Client
 from dask.distributed import Future
 from distributed import LocalCluster
@@ -15,6 +14,7 @@ from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.configs.app_configs import CLEANUP_INDEXING_JOBS_TIMEOUT
 from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
+from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.app_configs import LOG_LEVEL
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.configs.model_configs import MIN_THREADS_ML_MODELS
@@ -28,6 +28,7 @@ from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.embedding_model import update_embedding_model_status
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import count_unique_cc_pairs_with_index_attempts
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
@@ -60,6 +61,8 @@ def _get_num_threads() -> int:
     """Get # of "threads" to use for ML models in an indexing job. By default uses
     the torch implementation, which returns the # of physical cores on the machine.
     """
+    import torch
+
     return max(MIN_THREADS_ML_MODELS, torch.get_num_threads())
 
 
@@ -67,13 +70,27 @@ def _should_create_new_indexing(
     connector: Connector,
     last_index: IndexAttempt | None,
     model: EmbeddingModel,
+    secondary_index_building: bool,
     db_session: Session,
 ) -> bool:
+    # User can still manually create single indexing attempts via the UI for the
+    # currently in use index
+    if DISABLE_INDEX_UPDATE_ON_SWAP:
+        if model.status == IndexModelStatus.PRESENT and secondary_index_building:
+            return False
+
     # When switching over models, always index at least once
     if model.status == IndexModelStatus.FUTURE and not last_index:
         if connector.id == 0:  # Ingestion API
             return False
         return True
+
+    # If the connector is disabled, don't index
+    # NOTE: during an embedding model switch over, we ignore this
+    # and index the disabled connectors as well (which is why this if
+    # statement is below the first condition above)
+    if connector.disabled:
+        return False
 
     if connector.refresh_freq is None:
         return False
@@ -177,7 +194,11 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
                         connector.id, credential.id, model.id, db_session
                     )
                     if not _should_create_new_indexing(
-                        connector, last_attempt, model, db_session
+                        connector=connector,
+                        last_index=last_attempt,
+                        model=model,
+                        secondary_index_building=len(embedding_models) > 1,
+                        db_session=db_session,
                     ):
                         continue
 
@@ -246,6 +267,9 @@ def cleanup_indexing_jobs(
             )
             for index_attempt in in_progress_indexing_attempts:
                 if index_attempt.id in existing_jobs:
+                    # If index attempt is canceled, stop the run
+                    if index_attempt.status == IndexingStatus.FAILED:
+                        existing_jobs[index_attempt.id].cancel()
                     # check to see if the job has been updated in last `timeout_hours` hours, if not
                     # assume it to frozen in some bad state and just mark it as failed. Note: this relies
                     # on the fact that the `time_updated` field is constantly updated every
@@ -374,6 +398,9 @@ def check_index_swap(db_session: Session) -> None:
             db_session=db_session,
         )
 
+        # Expire jobs for the now past index/embedding model
+        cancel_indexing_attempts_past_model(db_session)
+
         # Recount aggregates
         for cc_pair in all_cc_pairs:
             resync_cc_pair(cc_pair, db_session=db_session)
@@ -446,6 +473,8 @@ def update__main() -> None:
     # needed for CUDA to work with multiprocessing
     # NOTE: needs to be done on application startup
     # before any other torch code has been run
+    import torch
+
     if not DASK_JOB_CLIENT_ENABLED:
         torch.multiprocessing.set_start_method("spawn")
 

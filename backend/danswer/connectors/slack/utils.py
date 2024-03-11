@@ -10,6 +10,7 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import SlackResponse
 
+from danswer.connectors.models import BasicExpertInfo
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -102,6 +103,38 @@ def make_slack_api_rate_limited(
         raise Exception(f"Max retries ({max_retries}) exceeded")
 
     return rate_limited_call
+
+
+def expert_info_from_slack_id(
+    user_id: str | None,
+    client: WebClient,
+    user_cache: dict[str, BasicExpertInfo | None],
+) -> BasicExpertInfo | None:
+    if not user_id:
+        return None
+
+    if user_id in user_cache:
+        return user_cache[user_id]
+
+    response = make_slack_api_rate_limited(client.users_info)(user=user_id)
+
+    if not response["ok"]:
+        user_cache[user_id] = None
+        return None
+
+    user: dict = cast(dict[Any, dict], response.data).get("user", {})
+    profile = user.get("profile", {})
+
+    expert = BasicExpertInfo(
+        display_name=user.get("real_name") or profile.get("display_name"),
+        first_name=profile.get("first_name"),
+        last_name=profile.get("last_name"),
+        email=profile.get("email"),
+    )
+
+    user_cache[user_id] = expert
+
+    return expert
 
 
 class SlackTextCleaner:

@@ -5,20 +5,21 @@ type DocumentFeedbackType = "endorse" | "reject" | "hide" | "unhide";
 
 const giveDocumentFeedback = async (
   documentId: string,
-  queryId: number,
+  messageId: number,
+  documentRank: number,
   searchFeedback: DocumentFeedbackType
 ): Promise<string | null> => {
-  const response = await fetch("/api/doc-retrieval-feedback", {
+  const response = await fetch("/api/chat/document-search-feedback", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      query_id: queryId,
-      search_feedback: searchFeedback,
-      click: false,
-      document_rank: 0,
+      message_id: messageId,
       document_id: documentId,
+      document_rank: documentRank,
+      click: false,
+      search_feedback: searchFeedback,
     }),
   });
   return response.ok
@@ -28,14 +29,16 @@ const giveDocumentFeedback = async (
 
 interface DocumentFeedbackIconProps {
   documentId: string;
-  queryId: number;
+  messageId: number;
+  documentRank: number;
   setPopup: (popupSpec: PopupSpec | null) => void;
   feedbackType: DocumentFeedbackType;
 }
 
 const DocumentFeedback = ({
   documentId,
-  queryId,
+  messageId,
+  documentRank,
   setPopup,
   feedbackType,
 }: DocumentFeedbackIconProps) => {
@@ -67,7 +70,8 @@ const DocumentFeedback = ({
       onClick={async () => {
         const errorMsg = await giveDocumentFeedback(
           documentId,
-          queryId,
+          messageId,
+          documentRank,
           feedbackType
         );
         if (!errorMsg) {
@@ -91,27 +95,31 @@ const DocumentFeedback = ({
 
 interface DocumentFeedbackBlockProps {
   documentId: string;
-  queryId: number;
+  messageId: number;
+  documentRank: number;
   setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 export const DocumentFeedbackBlock = ({
   documentId,
-  queryId,
+  messageId,
+  documentRank,
   setPopup,
 }: DocumentFeedbackBlockProps) => {
   return (
     <div className="flex">
       <DocumentFeedback
         documentId={documentId}
-        queryId={queryId}
+        messageId={messageId}
+        documentRank={documentRank}
         setPopup={setPopup}
         feedbackType="endorse"
       />
       <div className="ml-2">
         <DocumentFeedback
           documentId={documentId}
-          queryId={queryId}
+          messageId={messageId}
+          documentRank={documentRank}
           setPopup={setPopup}
           feedbackType="reject"
         />

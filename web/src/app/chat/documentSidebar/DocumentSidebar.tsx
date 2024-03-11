@@ -2,12 +2,13 @@ import { DanswerDocument } from "@/lib/search/interfaces";
 import { Text } from "@tremor/react";
 import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { FiFileText } from "react-icons/fi";
+import { FiAlertTriangle, FiFileText } from "react-icons/fi";
 import { SelectedDocumentDisplay } from "./SelectedDocumentDisplay";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { BasicSelectable } from "@/components/BasicClickable";
 import { Message, RetrievalType } from "../interfaces";
 import { HEADER_PADDING } from "@/lib/constants";
+import { HoverPopup } from "@/components/HoverPopup";
 
 function SectionHeader({
   name,
@@ -27,12 +28,18 @@ function SectionHeader({
 export function DocumentSidebar({
   selectedMessage,
   selectedDocuments,
-  setSelectedDocuments,
+  toggleDocumentSelection,
+  clearSelectedDocuments,
+  selectedDocumentTokens,
+  maxTokens,
   isLoading,
 }: {
   selectedMessage: Message | null;
   selectedDocuments: DanswerDocument[] | null;
-  setSelectedDocuments: (documents: DanswerDocument[]) => void;
+  toggleDocumentSelection: (document: DanswerDocument) => void;
+  clearSelectedDocuments: () => void;
+  selectedDocumentTokens: number;
+  maxTokens: number;
   isLoading: boolean;
 }) {
   const { popup, setPopup } = usePopup();
@@ -44,6 +51,13 @@ export function DocumentSidebar({
 
   const currentDocuments = selectedMessage?.documents || null;
   const dedupedDocuments = removeDuplicateDocs(currentDocuments || []);
+
+  // NOTE: do not allow selection if less than 75 tokens are left
+  // this is to prevent the case where they are able to select the doc
+  // but it basically is unused since it's truncated right at the very
+  // start of the document (since title + metadata + misc overhead) takes up
+  // space
+  const tokenLimitReached = selectedDocumentTokens > maxTokens - 75;
   return (
     <div
       className={`
@@ -72,7 +86,7 @@ export function DocumentSidebar({
         </div>
 
         {currentDocuments ? (
-          <div className="overflow-y-auto dark-scrollbar overflow-x-hidden flex flex-col">
+          <div className="overflow-y-auto dark-scrollbar flex flex-col">
             <div>
               {dedupedDocuments.length > 0 ? (
                 dedupedDocuments.map((document, ind) => (
@@ -93,21 +107,13 @@ export function DocumentSidebar({
                         document.document_id
                       )}
                       handleSelect={(documentId) => {
-                        if (selectedDocumentIds.includes(documentId)) {
-                          setSelectedDocuments(
-                            selectedDocuments!.filter(
-                              (document) => document.document_id !== documentId
-                            )
-                          );
-                        } else {
-                          setSelectedDocuments([
-                            ...selectedDocuments!,
-                            currentDocuments.find(
-                              (document) => document.document_id === documentId
-                            )!,
-                          ]);
-                        }
+                        toggleDocumentSelection(
+                          dedupedDocuments.find(
+                            (document) => document.document_id === documentId
+                          )!
+                        );
                       }}
+                      tokenLimitReached={tokenLimitReached}
                     />
                   </div>
                 ))
@@ -132,15 +138,48 @@ export function DocumentSidebar({
 
       <div className="text-sm mb-4 border-t border-border pt-4 overflow-y-hidden flex flex-col">
         <div className="flex border-b border-border px-3">
-          <div>
+          <div className="flex">
             <SectionHeader name="Selected Documents" icon={FiFileText} />
+
+            {tokenLimitReached && (
+              <div className="ml-2 my-auto">
+                <div className="mb-2">
+                  <HoverPopup
+                    mainContent={
+                      <FiAlertTriangle
+                        className="text-alert my-auto"
+                        size="16"
+                      />
+                    }
+                    popupContent={
+                      <Text className="w-40">
+                        Over LLM context length by:{" "}
+                        <i>{selectedDocumentTokens - maxTokens} tokens</i>
+                        <br />
+                        <br />
+                        {selectedDocuments && selectedDocuments.length > 0 && (
+                          <>
+                            Truncating: &quot;
+                            <i>
+                              {
+                                selectedDocuments[selectedDocuments.length - 1]
+                                  .semantic_identifier
+                              }
+                            </i>
+                            &quot;
+                          </>
+                        )}
+                      </Text>
+                    }
+                    direction="left"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {selectedDocuments && selectedDocuments.length > 0 && (
-            <div
-              className="ml-auto my-auto"
-              onClick={() => setSelectedDocuments([])}
-            >
+            <div className="ml-auto my-auto" onClick={clearSelectedDocuments}>
               <BasicSelectable selected={false}>De-Select All</BasicSelectable>
             </div>
           )}
@@ -153,10 +192,10 @@ export function DocumentSidebar({
                 key={document.document_id}
                 document={document}
                 handleDeselect={(documentId) => {
-                  setSelectedDocuments(
-                    selectedDocuments!.filter(
-                      (document) => document.document_id !== documentId
-                    )
+                  toggleDocumentSelection(
+                    dedupedDocuments.find(
+                      (document) => document.document_id === documentId
+                    )!
                   );
                 }}
               />

@@ -419,13 +419,19 @@ class IndexAttempt(Base):
         ForeignKey("credential.id"),
         nullable=True,
     )
+    # Some index attempts that run from beginning will still have this as False
+    # This is only for attempts that are explicitly marked as from the start via
+    # the run once API
+    from_beginning: Mapped[bool] = mapped_column(Boolean)
     status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
     # The two below may be slightly out of sync if user switches Embedding Model
     new_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
     total_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
-    error_msg: Mapped[str | None] = mapped_column(
-        Text, default=None
-    )  # only filled if status = "failed"
+    docs_removed_from_index: Mapped[int | None] = mapped_column(Integer, default=0)
+    # only filled if status = "failed"
+    error_msg: Mapped[str | None] = mapped_column(Text, default=None)
+    # only filled if status = "failed" AND an unhandled exception caused the failure
+    full_exception_trace: Mapped[str | None] = mapped_column(Text, default=None)
     # Nullable because in the past, we didn't allow swapping out embedding models live
     embedding_model_id: Mapped[int] = mapped_column(
         ForeignKey("embedding_model.id"),
@@ -710,6 +716,15 @@ class Prompt(Base):
     )
 
 
+class StarterMessage(TypedDict):
+    """NOTE: is a `TypedDict` so it can be used as a type hint for a JSONB column
+    in Postgres"""
+
+    name: str
+    description: str
+    message: str
+
+
 class Persona(Base):
     __tablename__ = "persona"
 
@@ -723,7 +738,6 @@ class Persona(Base):
         Enum(SearchType), default=SearchType.HYBRID
     )
     # Number of chunks to pass to the LLM for generation.
-    # If unspecified, uses the default DEFAULT_NUM_CHUNKS_FED_TO_CHAT set in the env variable
     num_chunks: Mapped[float | None] = mapped_column(Float, nullable=True)
     # Pass every chunk through LLM for evaluation, fairly expensive
     # Can be turned off globally by admin, in which case, this setting is ignored
@@ -738,6 +752,9 @@ class Persona(Base):
     # auto-detected time filters, relevance filters, etc.
     llm_model_version_override: Mapped[str | None] = mapped_column(
         String, nullable=True
+    )
+    starter_messages: Mapped[list[StarterMessage] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
     )
     # Default personas are configured via backend during deployment
     # Treated specially (cannot be user edited etc.)
@@ -786,11 +803,17 @@ class ChannelConfig(TypedDict):
 
     channel_names: list[str]
     respond_tag_only: NotRequired[bool]  # defaults to False
+    respond_to_bots: NotRequired[bool]  # defaults to False
     respond_team_member_list: NotRequired[list[str]]
     answer_filters: NotRequired[list[AllowedAnswerFilters]]
     # If None then no follow up
     # If empty list, follow up with no tags
     follow_up_tags: NotRequired[list[str]]
+
+
+class SlackBotResponseType(str, PyEnum):
+    QUOTES = "quotes"
+    CITATIONS = "citations"
 
 
 class SlackBotConfig(Base):
@@ -803,6 +826,9 @@ class SlackBotConfig(Base):
     # JSON for flexibility. Contains things like: channel name, team members, etc.
     channel_config: Mapped[ChannelConfig] = mapped_column(
         postgresql.JSONB(), nullable=False
+    )
+    response_type: Mapped[SlackBotResponseType] = mapped_column(
+        Enum(SlackBotResponseType, native_enum=False), nullable=False
     )
 
     persona: Mapped[Persona | None] = relationship("Persona")

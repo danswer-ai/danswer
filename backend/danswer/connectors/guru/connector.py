@@ -70,6 +70,7 @@ class GuruConnector(LoadConnector, PollConnector):
         current_url = GURU_QUERY_ENDPOINT  # This is how they handle pagination, a different url will be provided
         while True:
             response = session.get(current_url, params=params)
+            response.raise_for_status()
 
             if response.status_code == 204:
                 break
