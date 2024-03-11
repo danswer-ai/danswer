@@ -36,6 +36,7 @@ from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.query_and_chat.models import CreateChatSessionID
 from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
+from danswer.server.query_and_chat.token_budget import check_token_budget
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -160,6 +161,7 @@ def handle_new_chat_message(
     chat_message_req: CreateChatMessageRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
+    _: bool = Depends(check_token_budget),
 ) -> StreamingResponse:
     """This endpoint is both used for all the following purposes:
     - Sending a new message in the session
