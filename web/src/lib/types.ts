@@ -104,6 +104,7 @@ export interface ConfluenceConfig {
 
 export interface JiraConfig {
   jira_project_url: string;
+  comment_email_blacklist?: string[];
 }
 
 export interface SharepointConfig {
