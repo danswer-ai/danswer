@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import requests
+from langchain_google_vertexai import VertexAIEmbeddings
 from transformers import logging as transformer_logging  # type:ignore
 
 from danswer.configs.app_configs import MODEL_SERVER_HOST
@@ -210,6 +211,10 @@ class EmbeddingModel:
             prefixed_texts = [self.passage_prefix + text for text in texts]
         else:
             prefixed_texts = texts
+
+        if self.model_name == "textembedding-gecko@001":
+            embed = VertexAIEmbeddings(model_name=self.model_name)
+            return embed.embed_documents(prefixed_texts)
 
         if self.embed_server_endpoint:
             embed_request = EmbedRequest(
