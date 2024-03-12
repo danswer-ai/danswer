@@ -94,21 +94,28 @@ class PSQLIndex(DocumentIndex):
     def semantic_retrieval(self, query: str, query_embedding: list[float], filters: IndexFilters,
                            time_decay_multiplier: float, num_to_retrieve: int, offset: int = 0) -> list[InferenceChunk]:
         with self.session() as session:
-            results = session.execute(text("""
-                            SELECT document_id, chunk_id
-                            FROM (
-                                SELECT document_id, chunk_id, 1 - (embedding_vector::vector <=> embedding('textembedding-gecko@001', :query_embedding)::vector) AS similarity  
+            detailed_chunk_query = text("""
+                            SELECT document_id, chunk_id, semantic_identifier, skip_title, title, content, content_summary,
+                                   title_embedding, embeddings, blurb, source_type, source_links, section_continuation,
+                                   boost, hidden, metadata_list, metadata, doc_updated_at, primary_owners, secondary_owners,
+                                   access_control_list, document_sets
+                            FROM document_chunk
+                            WHERE document_id IN (
+                                SELECT document_id
                                 FROM document_chunk
-                                WHERE 1 - (embedding_vector::vector <=> embedding('textembedding-gecko@001', :query_embedding)::vector) > :similarity_threshold
-                                ORDER BY similarity DESC
-                                LIMIT :top_k
-                            ) AS sorted_results
-                            """), {'query_embedding': query_embedding, 'similarity_threshold': 0.5,
-                                   'top_k': num_to_retrieve})
-
-            results_as_dict = results.mappings().all()
+                                WHERE 1 - (embedding_vector::vector <=> :query_embedding::vector) > :similarity_threshold
+                                LIMIT :top_k OFFSET :offset
+                            )
+                            ORDER BY 1 - (embedding_vector::vector <=> :query_embedding::vector) DESC
+                        """)
+            detailed_chunk_results = session.execute(detailed_chunk_query, {
+                'query_embedding': query_embedding,
+                'similarity_threshold': 0.5,
+                'top_k': num_to_retrieve,
+                'offset': offset
+            })
             inference_chunks: List[InferenceChunk] = []
-            for result in results_as_dict:
+            for result in detailed_chunk_results:
                 detailed_chunk_query = text("""
                     SELECT document_id, chunk_id, semantic_identifier, skip_title, title, content, content_summary,
                            title_embedding, embeddings, blurb, source_type, source_links, section_continuation,
@@ -158,7 +165,7 @@ class PSQLIndex(DocumentIndex):
                 already_existed = existing_chunk is not None
 
                 # If the document chunk exists, delete it before re-inserting
-                if existing_chunk:
+                if already_existed:
                     continue
 
                 # Transform chunk into a dictionary suitable for insertion
@@ -169,21 +176,6 @@ class PSQLIndex(DocumentIndex):
                 insertion_records.add(DocumentInsertionRecord(document_id=doc_id, already_existed=already_existed))
 
         return insertion_records
-
-    def _get_existing_documents_from_chunks(
-            self,
-            chunks: list[DocMetadataAwareIndexChunk],
-            session: Session
-    ) -> set[str]:
-        document_ids: set[str] = set()
-        for chunk in chunks:
-            doc_chunk_id = docs_util.get_uuid_from_chunk(chunk)
-            exists = session.query(
-                session.query(DocumentChunk).filter_by(document_id=doc_chunk_id).exists()
-            ).scalar()
-            if exists:
-                document_ids.add(chunk.source_document.id)
-        return document_ids
 
 
 def chunk_to_dict(chunk: DocMetadataAwareIndexChunk) -> dict:

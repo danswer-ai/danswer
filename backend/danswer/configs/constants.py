@@ -50,7 +50,7 @@ INDEX_SEPARATOR = "==="
 
 # Key-Value store constants
 GEN_AI_DETECTED_MODEL = "gen_ai_detected_model"
-
+CHUNK_PLATFORM_ALLOYDB = "alloydb"
 
 # Messages
 DISABLED_GEN_AI_MSG = (

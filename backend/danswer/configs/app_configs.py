@@ -114,7 +114,7 @@ POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD") or "password"
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
 POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
-
+CHUNK_DB_PLATFORM = os.environ.get("CHUNK_DB_PLATFORM") or "vespa"
 
 #####
 # Connector Configs
