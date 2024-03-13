@@ -43,7 +43,7 @@ class DocumentChunk(Base):
     boost = Column(Float)
     hidden = Column(Boolean)
     metadata_list = Column(JSONB)
-    metadata = Column(JSONB)
+    metadata_object = Column(JSONB, name="metadata")
     doc_updated_at = Column(Integer)
     primary_owners = Column(JSONB)
     secondary_owners = Column(JSONB)
@@ -199,7 +199,7 @@ def chunk_to_dict(chunk: DocMetadataAwareIndexChunk) -> dict:
         "boost": chunk.boost,
         "hidden": False,  # Assuming default value as False since it's not provided in Vespa function
         "metadata_list": json.dumps(chunk.source_document.get_metadata_str_attributes()),
-        "metadata": json.dumps(document.metadata),
+        "metadata_object": json.dumps(document.metadata),
         "doc_updated_at": get_updated_at_attribute(document.doc_updated_at),
         "primary_owners": json.dumps(get_experts_stores_representations(document.primary_owners)),
         "secondary_owners": json.dumps(get_experts_stores_representations(document.secondary_owners)),
