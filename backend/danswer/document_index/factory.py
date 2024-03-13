@@ -17,7 +17,7 @@ def get_default_document_index(
         platform = CHUNK_DB_PLATFORM
     if platform == CHUNK_PLATFORM_ALLOYDB:
         from danswer.db.engine import get_sqlalchemy_engine
-        return PSQLIndex(get_sqlalchemy_engine(), "document_chunk")
+        return PSQLIndex(get_sqlalchemy_engine())
     return VespaIndex(
         index_name=primary_index_name, secondary_index_name=secondary_index_name
     )

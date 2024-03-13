@@ -52,8 +52,7 @@ class DocumentChunk(Base):
 
 
 class PSQLIndex(DocumentIndex):
-    def __init__(self, engine, index_name: str, **kwargs: Any) -> None:
-        super().__init__(index_name, **kwargs)
+    def __init__(self, engine) -> None:
         self.engine = engine
         self.Session = sessionmaker(bind=self.engine)
 
