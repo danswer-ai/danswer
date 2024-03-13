@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel
-from pydantic import root_validator
+from pydantic import model_validator
 
 from danswer.chat.models import RetrievalDocs
 from danswer.configs.constants import DocumentSource
@@ -46,7 +46,7 @@ class ChatFeedbackRequest(BaseModel):
     is_positive: bool | None = None
     feedback_text: str | None = None
 
-    @root_validator
+    @model_validator(mode='after')
     def check_is_positive_or_feedback_text(cls: BaseModel, values: dict) -> dict:
         is_positive, feedback_text = values.get("is_positive"), values.get(
             "feedback_text"
@@ -97,7 +97,7 @@ class CreateChatMessageRequest(BaseModel):
     query_override: str | None = None
     no_ai_answer: bool = False
 
-    @root_validator
+    @model_validator(mode='after')
     def check_search_doc_ids_or_retrieval_options(cls: BaseModel, values: dict) -> dict:
         search_doc_ids, retrieval_options = values.get("search_doc_ids"), values.get(
             "retrieval_options"
@@ -142,7 +142,7 @@ class SearchFeedbackRequest(BaseModel):
     click: bool
     search_feedback: SearchFeedbackType | None
 
-    @root_validator
+    @model_validator(mode='after')
     def check_click_or_search_feedback(cls: BaseModel, values: dict) -> dict:
         click, feedback = values.get("click"), values.get("search_feedback")
 

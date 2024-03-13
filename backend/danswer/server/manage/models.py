@@ -1,7 +1,7 @@
 from typing import Any
 
 from pydantic import BaseModel
-from pydantic import root_validator
+from pydantic import model_validator
 from pydantic import validator
 
 from danswer.auth.schemas import UserRole
@@ -93,7 +93,7 @@ class SlackBotConfigCreationRequest(BaseModel):
             )
         return value
 
-    @root_validator
+    @model_validator(mode='after')
     def validate_document_sets_and_persona_id(
         cls, values: dict[str, Any]
     ) -> dict[str, Any]:
