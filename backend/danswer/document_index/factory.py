@@ -8,7 +8,7 @@ from danswer.document_index.alloydb.index import PSQLIndex
 def get_default_document_index(
         primary_index_name: str,
         secondary_index_name: str | None,
-        platform: str | None
+        platform: str = None
 ) -> DocumentIndex:
     """Primary index is the index that is used for querying/updating etc.
     Secondary index is for when both the currently used index and the upcoming
