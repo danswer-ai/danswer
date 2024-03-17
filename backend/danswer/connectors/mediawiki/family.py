@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import builtins
 import itertools
 from typing import Any
+from unittest import mock
 from urllib.parse import urlparse
 from urllib.parse import urlunparse
 
@@ -10,7 +12,15 @@ from pywikibot import pagegenerators
 from pywikibot.scripts import generate_family_file  # type: ignore[import-untyped]
 from pywikibot.scripts.generate_user_files import pywikibot  # type: ignore[import-untyped]
 
+from danswer.utils.logger import setup_logger
 
+
+logger = setup_logger()
+
+
+@mock.patch.object(
+    builtins, "print", lambda *args: logger.info("\t".join(map(str, args)))
+)
 class FamilyFileGeneratorInMemory(generate_family_file.FamilyFileGenerator):
     """A subclass of FamilyFileGenerator that writes the family file to memory instead of to disk."""
 
@@ -35,7 +45,7 @@ class FamilyFileGeneratorInMemory(generate_family_file.FamilyFileGenerator):
         if any(x not in generate_family_file.NAME_CHARACTERS for x in name):
             raise ValueError(
                 'ERROR: Name of family "{}" must be ASCII letters and digits [a-zA-Z0-9]',
-                self.name,
+                name,
             )
 
         if isinstance(dointerwiki, bool):
@@ -109,6 +119,22 @@ def generate_family_class(url: str, name: str) -> type[family.Family]:
     if generator.family_definition is None:
         raise ValueError("Family definition was not generated.")
     return generator.family_definition
+
+
+def family_class_dispatch(url: str, name: str) -> type[family.Family]:
+    """Find or generate a family class for a given URL and name.
+
+    Args:
+        url: The URL of the wiki.
+        name: The short name of the wiki (customizable by the user).
+
+    """
+    if "wikipedia" in url:
+        import pywikibot.families.wikipedia_family
+
+        return pywikibot.families.wikipedia_family.Family
+    # TODO: Support additional families pre-defined in `pywikibot.families.*_family.py` files
+    return generate_family_class(url, name)
 
 
 if __name__ == "__main__":

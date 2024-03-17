@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import datetime
 import itertools
 from collections.abc import Generator
 from typing import Any
 
-import pywikibot  # type: ignore[import-untyped]
+import pywikibot.time
 from pywikibot import pagegenerators
 from pywikibot import textlib
 
@@ -14,23 +15,33 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
-from danswer.connectors.mediawiki.generate_family_object import generate_family_class
+from danswer.connectors.mediawiki.family import family_class_dispatch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+
+
+def pywikibot_timestamp_to_utc_datetime(
+    timestamp: pywikibot.time.Timestamp,
+) -> datetime.datetime:
+    return datetime.datetime.astimezone(timestamp, tz=datetime.timezone.utc)
 
 
 class MediaWikiConnector(LoadConnector, PollConnector):
     def __init__(
         self,
+        hostname: str,
         categories: list[str],
         pages: list[str],
-        hostname: str,
         recurse_depth: int | None,
+        connector_name: str,
+        language_code: str = "en",
         batch_size: int = INDEX_BATCH_SIZE,
-        wiki_family_shortname: str = "mediawiki",
     ) -> None:
-        self.family = generate_family_class(hostname, wiki_family_shortname)()
-        self.site = pywikibot.Site(fam=self.family, code="en")
+        self.connector_name = connector_name
+        # short names can only have ascii letters and digits
+        connector_name = "".join(ch for ch in connector_name if ch.isalnum())
+        self.family = family_class_dispatch(hostname, connector_name)()
+        self.site = pywikibot.Site(fam=self.family, code=language_code)
         self.batch_size = batch_size
 
         self.categories = [
@@ -38,7 +49,11 @@ class MediaWikiConnector(LoadConnector, PollConnector):
             for category in categories
         ]
         self.pages = [pywikibot.Page(self.site, page) for page in pages]
-        self.recurse_depth = recurse_depth
+        self.recurse_depth = int(recurse_depth) if recurse_depth is not None else None
+        if not isinstance(self.recurse_depth, int):
+            raise ValueError(
+                f"recurse_depth must be an integer. Got {recurse_depth} (type {type(recurse_depth)}) instead."
+            )
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         return None
@@ -66,7 +81,9 @@ class MediaWikiConnector(LoadConnector, PollConnector):
         return Document(
             source=DocumentSource.MEDIAWIKI,
             title=page.title(),
-            doc_updated_at=page.latest_revision.timestamp,
+            doc_updated_at=pywikibot_timestamp_to_utc_datetime(
+                page.latest_revision.timestamp
+            ),
             sections=sections,
             semantic_identifier=page.title(),
             metadata={
@@ -81,11 +98,16 @@ class MediaWikiConnector(LoadConnector, PollConnector):
         end: SecondsSinceUnixEpoch | None = None,
     ) -> Generator[list[Document], None, None]:
         doc_batch: list[Document] = []
-
         category_pages = [
             pagegenerators.PreloadingGenerator(
-                pagegenerators.CategorizedPageGenerator(
-                    category, recurse=self.recurse_depth
+                pagegenerators.EdittimeFilterPageGenerator(
+                    pagegenerators.CategorizedPageGenerator(
+                        category, recurse=self.recurse_depth
+                    ),
+                    last_edit_start=datetime.datetime.fromtimestamp(start)
+                    if start
+                    else None,
+                    last_edit_end=datetime.datetime.fromtimestamp(end) if end else None,
                 ),
                 groupsize=self.batch_size,
             )
@@ -115,18 +137,18 @@ class MediaWikiConnector(LoadConnector, PollConnector):
 
 
 if __name__ == "__main__":
-    import datetime
-
     HOSTNAME = "fallout.fandom.com"
     test_connector = MediaWikiConnector(
+        connector_name="Fallout",
+        hostname=HOSTNAME,
         categories=["Fallout:_New_Vegas_factions"],
         pages=["Fallout: New Vegas"],
-        hostname=HOSTNAME,
         recurse_depth=1,
     )
 
     all_docs = list(test_connector.load_from_state())
+    print("All docs", all_docs)
     current = datetime.datetime.now().timestamp()
-    one_day_ago = current - 24 * 60 * 60  # 1 day
+    one_day_ago = current - 30 * 24 * 60 * 60  # 30 days
     latest_docs = list(test_connector.poll_source(one_day_ago, current))
-    print(latest_docs)
+    print("Latest docs", latest_docs)
