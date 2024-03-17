@@ -23,74 +23,99 @@ from danswer.connectors.models import Section
 def pywikibot_timestamp_to_utc_datetime(
     timestamp: pywikibot.time.Timestamp,
 ) -> datetime.datetime:
+    """Convert a pywikibot timestamp to a datetime object in UTC.
+
+    Args:
+        timestamp: The pywikibot timestamp to convert.
+
+    Returns:
+        A datetime object in UTC.
+    """
     return datetime.datetime.astimezone(timestamp, tz=datetime.timezone.utc)
 
 
+def get_doc_from_page(page: pywikibot.Page, site: pywikibot.Site | None) -> Document:
+    page_text = page.text
+    sections_extracted: textlib.Content = textlib.extract_sections(page_text, site)
+
+    sections = [
+        Section(
+            link=f"{page.full_url()}#" + section.heading.replace(" ", "_"),
+            text=section.title + section.content,
+        )
+        for section in sections_extracted.sections
+    ]
+    sections.append(
+        Section(
+            link=page.full_url(),
+            text=sections_extracted.header,
+        )
+    )
+
+    return Document(
+        source=DocumentSource.MEDIAWIKI,
+        title=page.title(),
+        doc_updated_at=pywikibot_timestamp_to_utc_datetime(
+            page.latest_revision.timestamp
+        ),
+        sections=sections,
+        semantic_identifier=page.title(),
+        metadata={"categories": [category.title() for category in page.categories()]},
+        id=page.pageid,
+    )
+
+
 class MediaWikiConnector(LoadConnector, PollConnector):
+    """A connector for MediaWiki wikis.
+
+    Args:
+        hostname: The hostname of the wiki.
+        categories: The categories to include in the index.
+        pages: The pages to include in the index.
+        recurse_depth: The depth to recurse into categories. -1 means unbounded recursion.
+        connector_name: The name of the connector.
+        language_code: The language code of the wiki.
+        batch_size: The batch size for loading documents.
+
+    Raises:
+        ValueError: If `recurse_depth` is not an integer greater than or equal to -1.
+
+
+    """
+
     def __init__(
         self,
         hostname: str,
         categories: list[str],
         pages: list[str],
-        recurse_depth: int | None,
+        recurse_depth: int,
         connector_name: str,
         language_code: str = "en",
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
-        self.connector_name = connector_name
-        # short names can only have ascii letters and digits
-        connector_name = "".join(ch for ch in connector_name if ch.isalnum())
-        self.family = family_class_dispatch(hostname, connector_name)()
-        self.site = pywikibot.Site(fam=self.family, code=language_code)
+        if recurse_depth < -1:
+            raise ValueError(
+                f"recurse_depth must be an integer greater than or equal to -1. Got {recurse_depth} instead."
+            )
+        # -1 means infinite recursion, which `pywikibot` will only do with `True`
+        self.recurse_depth: bool | int = True if recurse_depth == -1 else recurse_depth
+
         self.batch_size = batch_size
 
+        # short names can only have ascii letters and digits
+        self.connector_name = connector_name
+        connector_name = "".join(ch for ch in connector_name if ch.isalnum())
+
+        self.family = family_class_dispatch(hostname, connector_name)()
+        self.site = pywikibot.Site(fam=self.family, code=language_code)
         self.categories = [
             pywikibot.Category(self.site, f"Category:{category.replace(' ', '_')}")
             for category in categories
         ]
         self.pages = [pywikibot.Page(self.site, page) for page in pages]
-        self.recurse_depth = int(recurse_depth) if recurse_depth is not None else None
-        if not isinstance(self.recurse_depth, int):
-            raise ValueError(
-                f"recurse_depth must be an integer. Got {recurse_depth} (type {type(recurse_depth)}) instead."
-            )
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         return None
-
-    def _get_doc_from_page(self, page: pywikibot.Page) -> Document:
-        page_text = page.text
-        sections_extracted: textlib.Content = textlib.extract_sections(
-            page_text, self.site
-        )
-
-        sections = [
-            Section(
-                link=f"{page.full_url()}#" + section.heading.replace(" ", "_"),
-                text=section.title + "\n" + section.content,
-            )
-            for section in sections_extracted.sections
-        ]
-        sections.append(
-            Section(
-                link=page.full_url(),
-                text=sections_extracted.header,
-            )
-        )
-
-        return Document(
-            source=DocumentSource.MEDIAWIKI,
-            title=page.title(),
-            doc_updated_at=pywikibot_timestamp_to_utc_datetime(
-                page.latest_revision.timestamp
-            ),
-            sections=sections,
-            semantic_identifier=page.title(),
-            metadata={
-                "categories": [category.title() for category in page.categories()]
-            },
-            id=page.pageid,
-        )
 
     def _get_doc_batch(
         self,
@@ -116,11 +141,7 @@ class MediaWikiConnector(LoadConnector, PollConnector):
 
         all_pages = itertools.chain(self.pages, *category_pages)
         for page in all_pages:
-            if start and page.latest_revision.timestamp.timestamp() < start:
-                continue
-            if end and page.oldest_revision.timestamp.timestamp() > end:
-                continue
-            doc_batch.append(self._get_doc_from_page(page))
+            doc_batch.append(get_doc_from_page(page, self.site))
             if len(doc_batch) >= self.batch_size:
                 yield doc_batch
                 doc_batch = []
@@ -128,11 +149,25 @@ class MediaWikiConnector(LoadConnector, PollConnector):
             yield doc_batch
 
     def load_from_state(self) -> GenerateDocumentsOutput:
+        """Load all documents from the source.
+
+        Returns:
+            A generator of documents.
+        """
         return self.poll_source(None, None)
 
     def poll_source(
         self, start: SecondsSinceUnixEpoch | None, end: SecondsSinceUnixEpoch | None
     ) -> GenerateDocumentsOutput:
+        """Poll the source for new documents.
+
+        Args:
+            start: The start of the time range to poll.
+            end: The end of the time range to poll.
+
+        Returns:
+            A generator of documents.
+        """
         return self._get_doc_batch(start, end)
 
 

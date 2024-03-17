@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import builtins
+import functools
 import itertools
 from typing import Any
 from unittest import mock
@@ -100,6 +101,7 @@ class FamilyFileGeneratorInMemory(generate_family_file.FamilyFileGenerator):
         self.family_definition = Family
 
 
+@functools.lru_cache(maxsize=None)
 def generate_family_class(url: str, name: str) -> type[family.Family]:
     """Generate a family file for a given URL and name.
 

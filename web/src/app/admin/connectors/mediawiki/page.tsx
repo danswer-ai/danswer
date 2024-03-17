@@ -113,8 +113,12 @@ const Main = () => {
                 instance.
               </Text>
               <ConnectorForm<MediaWikiConfig>
-                nameBuilder={(values) => `MediaWikiConnector`}
-                ccPairNameBuilder={(values) => `MediaWikiConnector`}
+                nameBuilder={(values) =>
+                  `MediaWikiConnector-${values.connector_name}`
+                }
+                ccPairNameBuilder={(values) =>
+                  `MediaWikiConnector-${values.connector_name}`
+                }
                 source="mediawiki"
                 inputType="poll"
                 // formBody={<></>}
@@ -148,7 +152,9 @@ const Main = () => {
                     })(values)}
                     <TextFormField
                       name="recurse_depth"
-                      label="Recursion Depth (when indexing categories that have sub-categories):"
+                      label="Recursion Depth:"
+                      type="number"
+                      subtext="When indexing categories that have sub-categories, this will determine how may levels to index. Specify 0 to only index the category itself (i.e. no recursion). Specify -1 for unlimited recursion depth. Note, that in some rare instances, a category might contain itself in its dependencies, which will cause an infinite loop. Only use -1 if you confident that this will not happen."
                     />
                   </div>
                 )}
@@ -160,9 +166,6 @@ const Main = () => {
                     "Please enter the base URL for your MediaWiki site"
                   ),
                   language_code: Yup.string().default("en"),
-                  recurse_depth: Yup.number().required(
-                    "Please enter the recursion depth for your MediaWiki site. If you specify categories that have sub-categories, this will determine how many levels deep to index."
-                  ),
                   categories: Yup.array().of(
                     Yup.string().required(
                       "Please enter categories to index from your MediaWiki site"
@@ -172,6 +175,9 @@ const Main = () => {
                     Yup.string().required(
                       "Please enter pages to index from your MediaWiki site"
                     )
+                  ),
+                  recurse_depth: Yup.number().required(
+                    "Please enter the recursion depth for your MediaWiki site."
                   ),
                 })}
                 initialValues={{
