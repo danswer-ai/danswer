@@ -51,6 +51,7 @@ def handle_search_request(
         source_type=filters.source_type if filters else None,
         document_set=filters.document_set if filters else None,
         time_cutoff=filters.time_cutoff if filters else None,
+        tags=filters.tags if filters else None,
         access_control_list=user_acl_filters,
     )
 
