@@ -103,97 +103,93 @@ const Main = () => {
         </>
       )}
 
-      {mediawikiCredential &&
-        mediawikiConnectorIndexingStatuses.length === 0 && (
-          <>
-            <Card className="mt-4">
-              <h2 className="font-bold mb-3">Create Connection</h2>
-              <Text className="mb-4">
-                Press connect below to start the connection to your MediaWiki
-                instance.
-              </Text>
-              <ConnectorForm<MediaWikiConfig>
-                nameBuilder={(values) =>
-                  `MediaWikiConnector-${values.connector_name}`
-                }
-                ccPairNameBuilder={(values) =>
-                  `MediaWikiConnector-${values.connector_name}`
-                }
-                source="mediawiki"
-                inputType="poll"
-                // formBody={<></>}
-                formBodyBuilder={(values) => (
-                  <div>
-                    <TextFormField
-                      name="connector_name"
-                      label="Connector Name:"
-                    />
-                    <TextFormField
-                      name="hostname"
-                      label="MediaWiki Site URL:"
-                    />
-                    <TextFormField
-                      name="language_code"
-                      label="MediaWiki Site Language Code (e.g. 'en', 'sp', etc...):"
-                    />
-                    {TextArrayFieldBuilder({
-                      name: "pages",
-                      label: "Pages to index:",
-                      subtext:
-                        "Specify 0 or more names of pages to index. Only specify the name of the page, not its url.",
-                    })(values)}
-                    {TextArrayFieldBuilder({
-                      name: "categories",
-                      label: "Categories to index:",
-                      subtext:
-                        "Specify 0 or more names of categories to index. For most MediaWiki sites, these are pages" +
-                        " with a name of the form 'Category: XYZ', that are lists of other pages/categories. Only" +
-                        " specify the name of the category, not its url.",
-                    })(values)}
-                    <TextFormField
-                      name="recurse_depth"
-                      label="Recursion Depth:"
-                      type="number"
-                      subtext="When indexing categories that have sub-categories, this will determine how may levels to index. Specify 0 to only index the category itself (i.e. no recursion). Specify -1 for unlimited recursion depth. Note, that in some rare instances, a category might contain itself in its dependencies, which will cause an infinite loop. Only use -1 if you confident that this will not happen."
-                    />
-                  </div>
-                )}
-                validationSchema={Yup.object().shape({
-                  connector_name: Yup.string().required(
-                    "Please enter a name for your MediaWiki connector."
-                  ),
-                  hostname: Yup.string().required(
-                    "Please enter the base URL for your MediaWiki site"
-                  ),
-                  language_code: Yup.string().default("en"),
-                  categories: Yup.array().of(
-                    Yup.string().required(
-                      "Please enter categories to index from your MediaWiki site"
-                    )
-                  ),
-                  pages: Yup.array().of(
-                    Yup.string().required(
-                      "Please enter pages to index from your MediaWiki site"
-                    )
-                  ),
-                  recurse_depth: Yup.number().required(
-                    "Please enter the recursion depth for your MediaWiki site."
-                  ),
-                })}
-                initialValues={{
-                  connector_name: "",
-                  hostname: "",
-                  language_code: "en",
-                  categories: [],
-                  pages: [],
-                  recurse_depth: 0,
-                }}
-                refreshFreq={10 * 60} // 10 minutes
-                credentialId={mediawikiCredential.id}
-              />
-            </Card>
-          </>
-        )}
+      {mediawikiCredential && (
+        <>
+          <Card className="mt-4">
+            <h2 className="font-bold mb-3">Create Connection</h2>
+            <Text className="mb-4">
+              Press connect below to start the connection to your MediaWiki
+              instance.
+            </Text>
+            <ConnectorForm<MediaWikiConfig>
+              nameBuilder={(values) =>
+                `MediaWikiConnector-${values.connector_name}`
+              }
+              ccPairNameBuilder={(values) =>
+                `MediaWikiConnector-${values.connector_name}`
+              }
+              source="mediawiki"
+              inputType="poll"
+              // formBody={<></>}
+              formBodyBuilder={(values) => (
+                <div>
+                  <TextFormField
+                    name="connector_name"
+                    label="Connector Name:"
+                  />
+                  <TextFormField name="hostname" label="MediaWiki Site URL:" />
+                  <TextFormField
+                    name="language_code"
+                    label="MediaWiki Site Language Code (e.g. 'en', 'sp', etc...):"
+                  />
+                  {TextArrayFieldBuilder({
+                    name: "pages",
+                    label: "Pages to index:",
+                    subtext:
+                      "Specify 0 or more names of pages to index. Only specify the name of the page, not its url.",
+                  })(values)}
+                  {TextArrayFieldBuilder({
+                    name: "categories",
+                    label: "Categories to index:",
+                    subtext:
+                      "Specify 0 or more names of categories to index. For most MediaWiki sites, these are pages" +
+                      " with a name of the form 'Category: XYZ', that are lists of other pages/categories. Only" +
+                      " specify the name of the category, not its url.",
+                  })(values)}
+                  <TextFormField
+                    name="recurse_depth"
+                    label="Recursion Depth:"
+                    type="number"
+                    subtext="When indexing categories that have sub-categories, this will determine how may levels to index. Specify 0 to only index the category itself (i.e. no recursion). Specify -1 for unlimited recursion depth. Note, that in some rare instances, a category might contain itself in its dependencies, which will cause an infinite loop. Only use -1 if you confident that this will not happen."
+                  />
+                </div>
+              )}
+              validationSchema={Yup.object().shape({
+                connector_name: Yup.string().required(
+                  "Please enter a name for your MediaWiki connector."
+                ),
+                hostname: Yup.string().required(
+                  "Please enter the base URL for your MediaWiki site"
+                ),
+                language_code: Yup.string().default("en"),
+                categories: Yup.array().of(
+                  Yup.string().required(
+                    "Please enter categories to index from your MediaWiki site"
+                  )
+                ),
+                pages: Yup.array().of(
+                  Yup.string().required(
+                    "Please enter pages to index from your MediaWiki site"
+                  )
+                ),
+                recurse_depth: Yup.number().required(
+                  "Please enter the recursion depth for your MediaWiki site."
+                ),
+              })}
+              initialValues={{
+                connector_name: "",
+                hostname: "",
+                language_code: "en",
+                categories: [],
+                pages: [],
+                recurse_depth: 0,
+              }}
+              refreshFreq={10 * 60} // 10 minutes
+              credentialId={mediawikiCredential.id}
+            />
+          </Card>
+        </>
+      )}
     </>
   );
 };
