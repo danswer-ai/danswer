@@ -57,7 +57,7 @@ def get_sqlalchemy_engine() -> Engine:
     global _SYNC_ENGINE
     if _SYNC_ENGINE is None:
         connection_string = build_connection_string(db_api=SYNC_DB_API)
-        _SYNC_ENGINE = create_engine(connection_string, pool_size=50, max_overflow=100)
+        _SYNC_ENGINE = create_engine(connection_string, pool_size=50, max_overflow=25)
     return _SYNC_ENGINE
 
 
