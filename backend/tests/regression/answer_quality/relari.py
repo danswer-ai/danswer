@@ -19,6 +19,7 @@ def get_answer_for_question(query: str, db_session: Session) -> OneShotQARespons
         source_type=None,
         document_set=None,
         time_cutoff=None,
+        tags=None,
         access_control_list=None,
     )
 

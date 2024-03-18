@@ -82,6 +82,7 @@ def get_answer_for_question(
         source_type=None,
         document_set=None,
         time_cutoff=None,
+        tags=None,
         access_control_list=None,
     )
 
