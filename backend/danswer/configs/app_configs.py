@@ -225,7 +225,7 @@ INDEXING_MODEL_SERVER_HOST = (
 # Miscellaneous
 #####
 DYNAMIC_CONFIG_STORE = (
-    os.environ.get("DYNAMIC_CONFIG_STORE") or "FileSystemBackedDynamicConfigStore"
+    os.environ.get("DYNAMIC_CONFIG_STORE") or "PostgresBackedDynamicConfigStore"
 )
 DYNAMIC_CONFIG_DIR_PATH = os.environ.get("DYNAMIC_CONFIG_DIR_PATH", "/home/storage")
 JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
