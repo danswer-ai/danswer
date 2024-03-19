@@ -24,7 +24,7 @@ from danswer.db.feedback import update_document_hidden
 from danswer.db.models import User
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
-from danswer.dynamic_configs import get_dynamic_config_store
+from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llm
