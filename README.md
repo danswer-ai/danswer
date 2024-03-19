@@ -64,10 +64,7 @@ We also have built-in support for deployment on Kubernetes. Files for that can b
 * Multi-Model model support, chat with images, video etc.
 * Choosing between LLMs and parameters during chat session.
 * Tool calling and agent configurations options.
-* Organizational understanding.
-* Ability to locate and suggest experts from your team.
-* Code Search.
-* Structured Query Languages (SQL, Excel formulas, etc.)
+* Organizational understanding and ability to locate and suggest experts from your team.
 
 
 ## Other Noteable Benefits of Danswer
