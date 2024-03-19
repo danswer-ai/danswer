@@ -22,10 +22,10 @@
 </a>
 </p>
 
-<strong>[Danswer](https://www.danswer.ai/)</strong> is the Generative AI Chat for teams.
+<strong>[Danswer](https://www.danswer.ai/)</strong> is the ChatGPT for teams.
 Deploy anywhere and have full control over your data.
-Think ChatGPT if it had access to your team's unique knowledge.
-Connects to all common workplace tools such as Slack, Google Drive, Confluence, etc.
+Generative AI Chat with access to your team's unique knowledge -
+connects to all common workplace tools such as Slack, Google Drive, Confluence, etc.
 
 
 Teams have used Danswer to:
