@@ -30,8 +30,8 @@ management (admin/basic users), chat persistence, and a UI for configuring Perso
 
 Danswer also serves as a Unified Search across all common workplace tools such as Slack, Google Drive, Confluence, etc.
 By combining LLMs and team specific knowledge, Danswer becomes a subject matter expert for the team. Imagine ChatGPT if
-it had access to your team's unique knowledge! It enables questions such as "Which customer requested X feature?" or
-"What's the target date for finishing Y?"
+it had access to your team's unique knowledge! It enables questions such as "A customer wants feature X, is this already
+supported?" or "Where's the pull request for feature Y?"
 
 <h3>Usage</h3>
 
