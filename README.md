@@ -5,7 +5,7 @@
 </h2>
 
 <p align="center">
-<p align="center">Open Source Unified Search and Gen-AI Chat with your Docs.</p>
+<p align="center">Open Source Gen-AI Chat + Unified Search.</p>
 
 <p align="center">
 <a href="https://docs.danswer.dev/" target="_blank">
@@ -22,9 +22,11 @@
 </a>
 </p>
 
-<strong>[Danswer](https://www.danswer.ai/)</strong> lets you ask questions in natural language and get back
-answers based on your team specific documents. Think ChatGPT if it had access to your team's unique
-knowledge. Connects to all common workplace tools such as Slack, Google Drive, Confluence, etc.
+<strong>[Danswer](https://www.danswer.ai/)</strong> is the Generative AI Chat for teams.
+Deploy anywhere and have full control over your data.
+Think ChatGPT if it had access to your team's unique knowledge.
+Connects to all common workplace tools such as Slack, Google Drive, Confluence, etc.
+
 
 Teams have used Danswer to:
 - Speedup customer support and escalation turnaround time.
@@ -57,19 +59,30 @@ We also have built-in support for deployment on Kubernetes. Files for that can b
 
 
 ## 💃 Main Features 
+* Chat UI with the ability to select documents to chat with.
+* Create custom AI Assistants with different prompts and backing knowledge sets.
+* Connect Danswer with LLM of your choice (self-host for a fully airgapped solution).
 * Document Search + AI Answers for natural language queries.
 * Connectors to all common workplace tools like Google Drive, Confluence, Slack, etc.
-* Chat support (think ChatGPT but it has access to your private knowledge sources).
-* Create custom AI Assistants with different prompts and backing knowledge sets.
 * Slack integration to get answers and search results directly in Slack.
 
 
+## 🚧 Roadmap
+* Chat/Prompt sharing with specific teammates and user groups.
+* Multi-Model model support, chat with images, video etc.
+* Choosing between LLMs and parameters during chat session.
+* Tool calling and agent configurations options.
+* Organizational understanding.
+* Ability to locate and suggest experts from your team.
+* Code Search.
+* Structured Query Languages (SQL, Excel formulas, etc.)
+
+
 ## Other Noteable Benefits of Danswer
-* Best in class Hybrid Search across all sources (BM-25 + prefix aware embedding models).
 * User Authentication with document level access management.
+* Best in class Hybrid Search across all sources (BM-25 + prefix aware embedding models).
 * Admin Dashboard to configure connectors, document-sets, access, etc.
 * Custom deep learning models + learn from user feedback.
-* Connect Danswer with LLM of your choice for a fully airgapped solution.
 * Easy deployment and ability to host Danswer anywhere of your choosing.
 
 
@@ -95,12 +108,6 @@ Efficiently pulls the latest changes from:
   * Local Files
   * Websites
   * And more ...
-
-## 🚧 Roadmap
-* Organizational understanding.
-* Ability to locate and suggest experts from your team.
-* Code Search
-* Structured Query Languages (SQL, Excel formulas, etc.)
 
 ## 💡 Contributing
 Looking to contribute? Please check out the [Contribution Guide](CONTRIBUTING.md) for more details.
