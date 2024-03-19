@@ -35,6 +35,7 @@ from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
+from danswer.dynamic_configs.interface import JSON_ro
 from danswer.search.models import RecencyBiasSetting
 from danswer.search.models import SearchType
 
@@ -851,3 +852,10 @@ class TaskQueueState(Base):
     register_time: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class KVStore(Base):
+    __tablename__ = "key_value_store"
+
+    key: Mapped[str] = mapped_column(String, primary_key=True)
+    value: Mapped[JSON_ro] = mapped_column(postgresql.JSONB(), nullable=False)

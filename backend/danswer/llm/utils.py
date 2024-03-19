@@ -30,7 +30,7 @@ from danswer.configs.model_configs import GEN_AI_MAX_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.models import ChatMessage
-from danswer.dynamic_configs import get_dynamic_config_store
+from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.interfaces import LLM
