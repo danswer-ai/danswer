@@ -27,14 +27,6 @@ Deploy anywhere and have full control over your data.
 Generative AI Chat with access to your team's unique knowledge -
 connects to all common workplace tools such as Slack, Google Drive, Confluence, etc.
 
-
-Teams have used Danswer to:
-- Speedup customer support and escalation turnaround time.
-- Improve Engineering efficiency by making documentation and code changelogs easy to find.
-- Let sales team get fuller context and faster in preparation for calls.
-- Track customer requests and priorities for Product teams.
-- Help teams self-serve IT, Onboarding, HR, etc.
-
 <h3>Usage</h3>
 
 Danswer Web App:
