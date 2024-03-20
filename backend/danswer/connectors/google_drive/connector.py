@@ -136,7 +136,7 @@ def _get_folder_id(
     """
     Get the ID of a folder given its name and the ID of its parent folder.
     """
-    query = f"'{parent_id}' in parents and name='{folder_name}' and "
+    query = f"('{parent_id}' in parents or sharedWithMe) and name='{folder_name}' and "
     if follow_shortcuts:
         query += f"(mimeType='{DRIVE_FOLDER_TYPE}' or mimeType='{DRIVE_SHORTCUT_TYPE}')"
     else:
