@@ -5,6 +5,7 @@ from functools import lru_cache
 from typing import Any
 from typing import cast
 
+import litellm  # type: ignore
 import tiktoken
 from langchain.prompts.base import StringPromptValue
 from langchain.prompts.chat import ChatPromptValue
@@ -15,7 +16,6 @@ from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import BaseMessageChunk
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
-from litellm import get_max_tokens  # type: ignore
 from tiktoken.core import Encoding
 
 from danswer.configs.app_configs import LOG_LEVEL
@@ -247,12 +247,28 @@ def get_llm_max_tokens(
         return GEN_AI_MAX_TOKENS
 
     model_name = model_name or get_default_llm_version()[0]
+    # NOTE: we previously used `litellm.get_max_tokens()`, but despite the name, this actually
+    # returns the max OUTPUT tokens. Under the hood, this uses the `litellm.model_cost` dict,
+    # and there is no other interface to get what we want. This should be okay though, since the
+    # `model_cost` dict is a named public interface:
+    # https://litellm.vercel.app/docs/completion/token_usage#7-model_cost
+    litellm_model_map = litellm.model_cost
 
     try:
         if model_provider == "openai":
-            return get_max_tokens(model_name)
-        return get_max_tokens("/".join([model_provider, model_name]))
+            model_obj = litellm_model_map[model_name]
+        else:
+            model_obj = litellm_model_map[f"{model_provider}/{model_name}"]
+        if "max_tokens" in model_obj:
+            return model_obj["max_tokens"]
+        elif "max_input_tokens" in model_obj and "max_output_tokens" in model_obj:
+            return model_obj["max_input_tokens"] + model_obj["max_output_tokens"]
+
+        raise RuntimeError("No max tokens found for LLM")
     except Exception:
+        logger.exception(
+            f"Failed to get max tokens for LLM with name {model_name}. Defaulting to 4096."
+        )
         return 4096
 
 
