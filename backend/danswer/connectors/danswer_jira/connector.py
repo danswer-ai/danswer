@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from datetime import timezone
 from typing import Any
@@ -22,6 +23,7 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 PROJECT_URL_PAT = "projects"
+JIRA_API_VERSION = os.environ.get("JIRA_API_VERSION") or "2"
 
 
 def extract_jira_project(url: str) -> tuple[str, str]:
@@ -42,11 +44,30 @@ def extract_jira_project(url: str) -> tuple[str, str]:
     return jira_base, jira_project
 
 
+def _get_comment_strs(
+    jira: Issue,
+    comment_email_blacklist: tuple[str, ...] = (),
+) -> list[str]:
+    comment_strs = []
+    for comment in jira.fields.comment.comments:
+        # Can't test Jira server so can't be sure this works for everyone, wrapping in a try just
+        # in case
+        try:
+            comment_strs.append(comment.body)
+            # If this fails, we just assume it's ok to keep the comment
+            if comment.author.emailAddress in comment_email_blacklist:
+                comment_strs.pop()
+        except Exception:
+            pass
+    return comment_strs
+
+
 def fetch_jira_issues_batch(
     jql: str,
     start_index: int,
     jira_client: JIRA,
     batch_size: int = INDEX_BATCH_SIZE,
+    comment_email_blacklist: tuple[str, ...] = (),
 ) -> tuple[list[Document], int]:
     doc_batch = []
 
@@ -61,21 +82,45 @@ def fetch_jira_issues_batch(
             logger.warning(f"Found Jira object not of type Issue {jira}")
             continue
 
+        comments = _get_comment_strs(jira, comment_email_blacklist)
         semantic_rep = f"{jira.fields.description}\n" + "\n".join(
-            [f"Comment: {comment.body}" for comment in jira.fields.comment.comments]
+            [f"Comment: {comment}" for comment in comments]
         )
 
         page_url = f"{jira_client.client_info()}/browse/{jira.key}"
 
-        author = None
+        people = set()
         try:
-            author = BasicExpertInfo(
-                display_name=jira.fields.creator.displayName,
-                email=jira.fields.creator.emailAddress,
+            people.add(
+                BasicExpertInfo(
+                    display_name=jira.fields.creator.displayName,
+                    email=jira.fields.creator.emailAddress,
+                )
             )
         except Exception:
             # Author should exist but if not, doesn't matter
             pass
+
+        try:
+            people.add(
+                BasicExpertInfo(
+                    display_name=jira.fields.assignee.displayName,  # type: ignore
+                    email=jira.fields.assignee.emailAddress,  # type: ignore
+                )
+            )
+        except Exception:
+            # Author should exist but if not, doesn't matter
+            pass
+
+        metadata_dict = {}
+        if jira.fields.priority:
+            metadata_dict["priority"] = jira.fields.priority.name
+        if jira.fields.status:
+            metadata_dict["status"] = jira.fields.status.name
+        if jira.fields.resolution:
+            metadata_dict["resolution"] = jira.fields.resolution.name
+        if jira.fields.labels:
+            metadata_dict["label"] = jira.fields.labels
 
         doc_batch.append(
             Document(
@@ -84,9 +129,9 @@ def fetch_jira_issues_batch(
                 source=DocumentSource.JIRA,
                 semantic_identifier=jira.fields.summary,
                 doc_updated_at=time_str_to_utc(jira.fields.updated),
-                primary_owners=[author] if author is not None else None,
-                # TODO add secondary_owners if needed
-                metadata={"label": jira.fields.labels} if jira.fields.labels else {},
+                primary_owners=list(people) or None,
+                # TODO add secondary_owners (commenters) if needed
+                metadata=metadata_dict,
             )
         )
     return doc_batch, len(batch)
@@ -96,11 +141,17 @@ class JiraConnector(LoadConnector, PollConnector):
     def __init__(
         self,
         jira_project_url: str,
+        comment_email_blacklist: list[str] | None = None,
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.batch_size = batch_size
         self.jira_base, self.jira_project = extract_jira_project(jira_project_url)
         self.jira_client: JIRA | None = None
+        self._comment_email_blacklist = comment_email_blacklist or []
+
+    @property
+    def comment_email_blacklist(self) -> tuple:
+        return tuple(email.strip() for email in self._comment_email_blacklist)
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         api_token = credentials["jira_api_token"]
@@ -108,10 +159,16 @@ class JiraConnector(LoadConnector, PollConnector):
         if "jira_user_email" in credentials:
             email = credentials["jira_user_email"]
             self.jira_client = JIRA(
-                basic_auth=(email, api_token), server=self.jira_base
+                basic_auth=(email, api_token),
+                server=self.jira_base,
+                options={"rest_api_version": JIRA_API_VERSION},
             )
         else:
-            self.jira_client = JIRA(token_auth=api_token, server=self.jira_base)
+            self.jira_client = JIRA(
+                token_auth=api_token,
+                server=self.jira_base,
+                options={"rest_api_version": JIRA_API_VERSION},
+            )
         return None
 
     def load_from_state(self) -> GenerateDocumentsOutput:
@@ -121,10 +178,10 @@ class JiraConnector(LoadConnector, PollConnector):
         start_ind = 0
         while True:
             doc_batch, fetched_batch_size = fetch_jira_issues_batch(
-                f"project = {self.jira_project}",
-                start_ind,
-                self.jira_client,
-                self.batch_size,
+                jql=f"project = {self.jira_project}",
+                start_index=start_ind,
+                jira_client=self.jira_client,
+                batch_size=self.batch_size,
             )
 
             if doc_batch:
@@ -156,10 +213,11 @@ class JiraConnector(LoadConnector, PollConnector):
         start_ind = 0
         while True:
             doc_batch, fetched_batch_size = fetch_jira_issues_batch(
-                jql,
-                start_ind,
-                self.jira_client,
-                self.batch_size,
+                jql=jql,
+                start_index=start_ind,
+                jira_client=self.jira_client,
+                batch_size=self.batch_size,
+                comment_email_blacklist=self.comment_email_blacklist,
             )
 
             if doc_batch:
@@ -173,7 +231,9 @@ class JiraConnector(LoadConnector, PollConnector):
 if __name__ == "__main__":
     import os
 
-    connector = JiraConnector(os.environ["JIRA_PROJECT_URL"])
+    connector = JiraConnector(
+        os.environ["JIRA_PROJECT_URL"], comment_email_blacklist=[]
+    )
     connector.load_credentials(
         {
             "jira_user_email": os.environ["JIRA_USER_EMAIL"],
