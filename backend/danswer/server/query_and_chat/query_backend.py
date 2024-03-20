@@ -148,7 +148,6 @@ def stream_query_validation(
 def get_answer_with_quote(
     query_request: DirectQARequest,
     user: User = Depends(current_user),
-    db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
     query = query_request.messages[0].message
     logger.info(f"Received query for one shot answer with quotes: {query}")
@@ -157,6 +156,5 @@ def get_answer_with_quote(
         user=user,
         max_document_tokens=None,
         max_history_tokens=0,
-        db_session=db_session,
     )
     return StreamingResponse(packets, media_type="application/json")

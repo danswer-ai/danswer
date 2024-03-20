@@ -1,6 +1,8 @@
+import contextlib
 from collections.abc import AsyncGenerator
 from collections.abc import Generator
 from datetime import datetime
+from typing import ContextManager
 
 from ddtrace import tracer
 from sqlalchemy import text
@@ -68,6 +70,10 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
         connection_string = build_connection_string()
         _ASYNC_ENGINE = create_async_engine(connection_string)
     return _ASYNC_ENGINE
+
+
+def get_session_context_manager() -> ContextManager:
+    return contextlib.contextmanager(get_session)()
 
 
 def get_session() -> Generator[Session, None, None]:
