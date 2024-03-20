@@ -102,9 +102,9 @@ class DocumentBase(BaseModel):
     # UTC time
     doc_updated_at: datetime | None = None
     # Owner, creator, etc.
-    primary_owners: list[BasicExpertInfo] | None = None
+    primary_owners: str | None = None
     # Assignee, space owner, etc.
-    secondary_owners: list[BasicExpertInfo] | None = None
+    secondary_owners: str | None = None
     # title is used for search whereas semantic_identifier is used for displaying in the UI
     # different because Slack message may display as #general but general should not be part
     # of the search, at least not in the same way as a document title should be for like Confluence
