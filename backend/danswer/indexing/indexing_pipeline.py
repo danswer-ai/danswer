@@ -57,7 +57,7 @@ def upsert_documents_in_db(
             document_id=doc.id,
             semantic_identifier=doc.semantic_identifier,
             first_link=first_link,
-            primary_owners=doc.primary_owners,
+            primary_owners=str(index_attempt_metadata.connector_id),
             secondary_owners=doc.secondary_owners,
             from_ingestion_api=doc.from_ingestion_api,
         )
