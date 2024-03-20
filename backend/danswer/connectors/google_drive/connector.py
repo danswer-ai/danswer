@@ -147,7 +147,6 @@ def _get_folder_id(
     else:
         query += f"mimeType='{DRIVE_FOLDER_TYPE}'"
 
-    # TODO: support specifying folder path in shared drive rather than just `My Drive`
     results = add_retries(
         lambda: (
             service.files()
