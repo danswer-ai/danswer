@@ -266,13 +266,9 @@ class Document(Base):
     # The following are not attached to User because the account/email may not be known
     # within Danswer
     # Something like the document creator
-    primary_owners: Mapped[list[str] | None] = mapped_column(
-        postgresql.ARRAY(String), nullable=True
-    )
+    primary_owners: Mapped[str] = mapped_column(String)
     # Something like assignee or space owner
-    secondary_owners: Mapped[list[str] | None] = mapped_column(
-        postgresql.ARRAY(String), nullable=True
-    )
+    secondary_owners: Mapped[str] = mapped_column(String)
     # TODO if more sensitive data is added here for display, make sure to add user/group permission
 
     retrieval_feedbacks: Mapped[List["DocumentRetrievalFeedback"]] = relationship(
