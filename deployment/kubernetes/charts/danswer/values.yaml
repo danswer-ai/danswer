@@ -22,7 +22,15 @@ nginx:
     http: 1024
   extraEnvVars: 
     - name: DOMAIN
-      value: localhost    
+      value: localhost
+  service:
+    ports:
+      http: 80
+      danswer: 3000
+    targetPort:
+      http: http
+      danswer: http  
+
   serverBlock: |-
     upstream api_server {
         server api-server-service:80 fail_timeout=0;
