@@ -1,14 +1,14 @@
 from uuid import UUID
 
 from pydantic import BaseModel
-from danswer.server.documents.models import (
-    ConnectorCredentialPairDescriptor,
-    ConnectorSnapshot,
-    CredentialSnapshot,
-)
-from danswer.server.manage.models import UserInfo
 
-from ee.danswer.db.models import UserGroup as UserGroupModel
+from danswer.db.models import UserGroup as UserGroupModel
+from danswer.server.documents.models import ConnectorCredentialPairDescriptor
+from danswer.server.documents.models import ConnectorSnapshot
+from danswer.server.documents.models import CredentialSnapshot
+from danswer.server.features.document_set.models import DocumentSet
+from danswer.server.features.persona.models import PersonaSnapshot
+from danswer.server.manage.models import UserInfo
 
 
 class UserGroup(BaseModel):
@@ -16,14 +16,16 @@ class UserGroup(BaseModel):
     name: str
     users: list[UserInfo]
     cc_pairs: list[ConnectorCredentialPairDescriptor]
+    document_sets: list[DocumentSet]
+    personas: list[PersonaSnapshot]
     is_up_to_date: bool
     is_up_for_deletion: bool
 
     @classmethod
-    def from_model(cls, document_set_model: UserGroupModel) -> "UserGroup":
+    def from_model(cls, user_group_model: UserGroupModel) -> "UserGroup":
         return cls(
-            id=document_set_model.id,
-            name=document_set_model.name,
+            id=user_group_model.id,
+            name=user_group_model.name,
             users=[
                 UserInfo(
                     id=str(user.id),
@@ -33,7 +35,7 @@ class UserGroup(BaseModel):
                     is_verified=user.is_verified,
                     role=user.role,
                 )
-                for user in document_set_model.users
+                for user in user_group_model.users
             ],
             cc_pairs=[
                 ConnectorCredentialPairDescriptor(
@@ -46,11 +48,18 @@ class UserGroup(BaseModel):
                         cc_pair_relationship.cc_pair.credential
                     ),
                 )
-                for cc_pair_relationship in document_set_model.cc_pair_relationships
+                for cc_pair_relationship in user_group_model.cc_pair_relationships
                 if cc_pair_relationship.is_current
             ],
-            is_up_to_date=document_set_model.is_up_to_date,
-            is_up_for_deletion=document_set_model.is_up_for_deletion,
+            document_sets=[
+                DocumentSet.from_model(ds) for ds in user_group_model.document_sets
+            ],
+            personas=[
+                PersonaSnapshot.from_model(persona)
+                for persona in user_group_model.personas
+            ],
+            is_up_to_date=user_group_model.is_up_to_date,
+            is_up_for_deletion=user_group_model.is_up_for_deletion,
         )
 
 

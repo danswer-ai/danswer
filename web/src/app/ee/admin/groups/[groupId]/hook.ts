@@ -1,4 +1,4 @@
-import { useUserGroups } from "../hooks";
+import { useUserGroups } from "@/lib/hooks";
 
 export const useSpecificUserGroup = (groupId: string) => {
   const { data, isLoading, error, refreshUserGroups } = useUserGroups();

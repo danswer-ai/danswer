@@ -8,8 +8,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
+from danswer.db.models import SamlAccount
 from danswer.db.models import User
-from ee.danswer.db.models import SamlAccount
 
 
 def upsert_saml_account(

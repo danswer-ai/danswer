@@ -6,8 +6,11 @@ import { UserGroupCreationForm } from "./UserGroupCreationForm";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { ThreeDotsLoader } from "@/components/Loading";
-import { useConnectorCredentialIndexingStatus, useUsers } from "@/lib/hooks";
-import { useUserGroups } from "./hooks";
+import {
+  useConnectorCredentialIndexingStatus,
+  useUserGroups,
+  useUsers,
+} from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Button, Divider } from "@tremor/react";
 

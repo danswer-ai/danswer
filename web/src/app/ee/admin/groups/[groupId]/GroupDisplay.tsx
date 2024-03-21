@@ -2,12 +2,11 @@
 
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
-import { UserGroup } from "../types";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { AddMemberForm } from "./AddMemberForm";
 import { updateUserGroup } from "./lib";
 import { LoadingAnimation } from "@/components/Loading";
-import { ConnectorIndexingStatus, User } from "@/lib/types";
+import { ConnectorIndexingStatus, User, UserGroup } from "@/lib/types";
 import { AddConnectorForm } from "./AddConnectorForm";
 import {
   Table,
@@ -21,6 +20,8 @@ import {
   Text,
 } from "@tremor/react";
 import { DeleteButton } from "@/components/DeleteButton";
+import { Bubble } from "@/components/Bubble";
+import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
 
 interface GroupDisplayProps {
   users: User[];
@@ -250,6 +251,56 @@ export const GroupDisplay = ({
           setPopup={setPopup}
         />
       )}
+
+      <Divider />
+
+      <h2 className="text-xl font-bold mt-8 mb-2">Document Sets</h2>
+
+      <div>
+        {userGroup.document_sets.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {userGroup.document_sets.map((documentSet) => {
+              return (
+                <Bubble isSelected key={documentSet.id}>
+                  <div className="flex">
+                    <BookmarkIcon />
+                    <Text className="ml-1">{documentSet.name}</Text>
+                  </div>
+                </Bubble>
+              );
+            })}
+          </div>
+        ) : (
+          <>
+            <Text>No document sets in this group...</Text>
+          </>
+        )}
+      </div>
+
+      <Divider />
+
+      <h2 className="text-xl font-bold mt-8 mb-2">Personas</h2>
+
+      <div>
+        {userGroup.document_sets.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {userGroup.personas.map((persona) => {
+              return (
+                <Bubble isSelected key={persona.id}>
+                  <div className="flex">
+                    <RobotIcon />
+                    <Text className="ml-1">{persona.name}</Text>
+                  </div>
+                </Bubble>
+              );
+            })}
+          </div>
+        ) : (
+          <>
+            <Text>No Personas in this group...</Text>
+          </>
+        )}
+      </div>
     </div>
   );
 };

@@ -10,10 +10,10 @@ from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Document
 from danswer.db.models import DocumentByConnectorCredentialPair
 from danswer.db.models import User
+from danswer.db.models import User__UserGroup
+from danswer.db.models import UserGroup
+from danswer.db.models import UserGroup__ConnectorCredentialPair
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
-from ee.danswer.db.models import User__UserGroup
-from ee.danswer.db.models import UserGroup
-from ee.danswer.db.models import UserGroup__ConnectorCredentialPair
 from ee.danswer.server.user_group.models import UserGroupCreate
 from ee.danswer.server.user_group.models import UserGroupUpdate
 
