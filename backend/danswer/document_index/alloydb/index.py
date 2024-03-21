@@ -45,8 +45,8 @@ class DocumentChunk(Base):
     metadata_list = Column(JSONB)
     metadata_object = Column(JSONB, name="metadata")
     doc_updated_at = Column(Integer)
-    primary_owners = Column(JSONB)
-    secondary_owners = Column(JSONB)
+    primary_owners = Column(Text)
+    secondary_owners = Column(Text)
     access_control_list = Column(JSONB)
     document_sets = Column(JSONB)
 
@@ -141,8 +141,8 @@ class PSQLIndex(DocumentIndex):
                         metadata=json.loads(detailed_chunk.metadata),
                         match_highlights=json.loads(detailed_chunk.match_highlights),
                         updated_at=detailed_chunk.updated_at,
-                        primary_owners=json.loads(detailed_chunk.primary_owners),
-                        secondary_owners=json.loads(detailed_chunk.secondary_owners)
+                        primary_owners=detailed_chunk.primary_owners,
+                        secondary_owners=detailed_chunk.secondary_owners
                     )
                     inference_chunks.append(inference_chunk)
 

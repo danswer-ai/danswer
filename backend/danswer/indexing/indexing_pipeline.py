@@ -35,15 +35,15 @@ logger = setup_logger()
 
 class IndexingPipelineProtocol(Protocol):
     def __call__(
-        self, documents: list[Document], index_attempt_metadata: IndexAttemptMetadata
+            self, documents: list[Document], index_attempt_metadata: IndexAttemptMetadata
     ) -> tuple[int, int]:
         ...
 
 
 def upsert_documents_in_db(
-    documents: list[Document],
-    index_attempt_metadata: IndexAttemptMetadata,
-    db_session: Session,
+        documents: list[Document],
+        index_attempt_metadata: IndexAttemptMetadata,
+        db_session: Session,
 ) -> None:
     # Metadata here refers to basic document info, not metadata about the actual content
     doc_m_batch: list[DocumentMetadata] = []
@@ -57,8 +57,8 @@ def upsert_documents_in_db(
             document_id=doc.id,
             semantic_identifier=doc.semantic_identifier,
             first_link=first_link,
-            primary_owners=get_experts_stores_representations(doc.primary_owners),
-            secondary_owners=get_experts_stores_representations(doc.secondary_owners),
+            primary_owners=str(index_attempt_metadata.connector_id),
+            secondary_owners=doc.secondary_owners,
             from_ingestion_api=doc.from_ingestion_api,
         )
         doc_m_batch.append(db_doc_metadata)
@@ -90,7 +90,7 @@ def upsert_documents_in_db(
 
 
 def get_doc_ids_to_update(
-    documents: list[Document], db_docs: list[DBDocument]
+        documents: list[Document], db_docs: list[DBDocument]
 ) -> list[Document]:
     """Figures out which documents actually need to be updated. If a document is already present
     and the `updated_at` hasn't changed, we shouldn't need to do anything with it."""
@@ -101,9 +101,9 @@ def get_doc_ids_to_update(
     updatable_docs: list[Document] = []
     for doc in documents:
         if (
-            doc.id in id_update_time_map
-            and doc.doc_updated_at
-            and doc.doc_updated_at <= id_update_time_map[doc.id]
+                doc.id in id_update_time_map
+                and doc.doc_updated_at
+                and doc.doc_updated_at <= id_update_time_map[doc.id]
         ):
             continue
         updatable_docs.append(doc)
@@ -113,13 +113,13 @@ def get_doc_ids_to_update(
 
 @log_function_time()
 def index_doc_batch(
-    *,
-    chunker: Chunker,
-    embedder: IndexingEmbedder,
-    document_index: DocumentIndex,
-    documents: list[Document],
-    index_attempt_metadata: IndexAttemptMetadata,
-    ignore_time_skip: bool = False,
+        *,
+        chunker: Chunker,
+        embedder: IndexingEmbedder,
+        document_index: DocumentIndex,
+        documents: list[Document],
+        index_attempt_metadata: IndexAttemptMetadata,
+        ignore_time_skip: bool = False,
 ) -> tuple[int, int]:
     """Takes different pieces of the indexing pipeline and applies it to a batch of documents
     Note that the documents should already be batched at this point so that it does not inflate the
@@ -178,18 +178,19 @@ def index_doc_batch(
         }
         access_aware_chunks = [
             DocMetadataAwareIndexChunk.from_index_chunk(
-                index_chunk=chunk,
-                access=document_id_to_access_info[chunk.source_document.id],
+                index_chunk=modified_chunk,
+                access=document_id_to_access_info[modified_chunk.source_document.id],
                 document_sets=set(
-                    document_id_to_document_set.get(chunk.source_document.id, [])
+                    document_id_to_document_set.get(modified_chunk.source_document.id, [])
                 ),
                 boost=(
-                    id_to_db_doc_map[chunk.source_document.id].boost
-                    if chunk.source_document.id in id_to_db_doc_map
+                    id_to_db_doc_map[modified_chunk.source_document.id].boost
+                    if modified_chunk.source_document.id in id_to_db_doc_map
                     else DEFAULT_BOOST
                 ),
             )
             for chunk in chunks_with_embeddings
+            if (modified_chunk := _modify_chunk(chunk, str(index_attempt_metadata.connector_id)))
         ]
 
         logger.debug(
@@ -222,11 +223,11 @@ def index_doc_batch(
 
 
 def build_indexing_pipeline(
-    *,
-    embedder: IndexingEmbedder,
-    document_index: DocumentIndex,
-    chunker: Chunker | None = None,
-    ignore_time_skip: bool = False,
+        *,
+        embedder: IndexingEmbedder,
+        document_index: DocumentIndex,
+        chunker: Chunker | None = None,
+        ignore_time_skip: bool = False,
 ) -> IndexingPipelineProtocol:
     """Builds a pipline which takes in a list (batch) of docs and indexes them."""
     chunker = chunker or DefaultChunker()
@@ -238,3 +239,8 @@ def build_indexing_pipeline(
         document_index=document_index,
         ignore_time_skip=ignore_time_skip,
     )
+
+
+def _modify_chunk(chunk, connector_id: str):
+    chunk.source_document.primary_owners = connector_id
+    return chunk
