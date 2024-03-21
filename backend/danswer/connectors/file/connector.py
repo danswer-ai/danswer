@@ -1,10 +1,12 @@
 import os
-from collections.abc import Generator
+from collections.abc import Iterator
 from datetime import datetime
 from datetime import timezone
 from pathlib import Path
 from typing import Any
 from typing import IO
+
+from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -20,31 +22,37 @@ from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.file_store import PostgresBackedFileStore
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
 
-def _open_files_at_location(
-    file_path: str | Path,
-) -> Generator[tuple[str, IO[Any], dict[str, Any]], Any, None]:
-    extension = get_file_ext(file_path)
+def _read_files_and_metadata(
+    file_name: str,
+    db_session: Session,
+) -> Iterator[tuple[str, IO[Any], dict[str, Any]]]:
+    """Reads the file into IO, in the case of a zip file, yields each individual
+    file contained within, also includes the metadata dict if packaged in the zip"""
+    extension = get_file_ext(file_name)
     metadata: dict[str, Any] = {}
+
+    file_content = PostgresBackedFileStore(db_session).read_file(file_name, mode="b")
 
     if extension == ".zip":
         for file_info, file, metadata in load_files_from_zip(
-            file_path, ignore_dirs=True
+            file_content, ignore_dirs=True
         ):
             yield file_info.filename, file, metadata
     elif extension in [".txt", ".md", ".mdx"]:
-        encoding = detect_encoding(file_path)
-        with open(file_path, "r", encoding=encoding, errors="replace") as file:
-            yield os.path.basename(file_path), file, metadata
+        encoding = detect_encoding(file_name)
+        file = file_content.read().decode(encoding, errors="replace")
+        yield os.path.basename(file_name), file, metadata
     elif extension == ".pdf":
-        with open(file_path, "rb") as file:
-            yield os.path.basename(file_path), file, metadata
+        yield os.path.basename(file_name), file_content, metadata
     else:
-        logger.warning(f"Skipping file '{file_path}' with extension '{extension}'")
+        logger.warning(f"Skipping file '{file_name}' with extension '{extension}'")
 
 
 def _process_file(
@@ -140,24 +148,27 @@ class LocalFileConnector(LoadConnector):
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         documents: list[Document] = []
-        for file_location in self.file_locations:
-            current_datetime = datetime.now(timezone.utc)
-            files = _open_files_at_location(file_location)
-
-            for file_name, file, metadata in files:
-                metadata["time_updated"] = metadata.get(
-                    "time_updated", current_datetime
-                )
-                documents.extend(
-                    _process_file(file_name, file, metadata, self.pdf_pass)
+        with Session(get_sqlalchemy_engine()) as db_session:
+            for file_path in self.file_locations:
+                current_datetime = datetime.now(timezone.utc)
+                files = _read_files_and_metadata(
+                    file_name=str(file_path), db_session=db_session
                 )
 
-                if len(documents) >= self.batch_size:
-                    yield documents
-                    documents = []
+                for file_name, file, metadata in files:
+                    metadata["time_updated"] = metadata.get(
+                        "time_updated", current_datetime
+                    )
+                    documents.extend(
+                        _process_file(file_name, file, metadata, self.pdf_pass)
+                    )
 
-        if documents:
-            yield documents
+                    if len(documents) >= self.batch_size:
+                        yield documents
+                        documents = []
+
+            if documents:
+                yield documents
 
 
 if __name__ == "__main__":

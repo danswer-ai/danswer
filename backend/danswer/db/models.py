@@ -859,3 +859,9 @@ class KVStore(Base):
 
     key: Mapped[str] = mapped_column(String, primary_key=True)
     value: Mapped[JSON_ro] = mapped_column(postgresql.JSONB(), nullable=False)
+
+
+class PGFileStore(Base):
+    __tablename__ = "file_store"
+    file_name = mapped_column(String, primary_key=True)
+    lobj_oid = mapped_column(Integer, nullable=False)
