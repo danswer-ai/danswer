@@ -17,6 +17,15 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
+postgresql:
+  global:
+    auth:
+      existingSecret: danswer-secrets
+      secretKeys:
+        adminPasswordKey: postgres_password
+        
+    
+
 nginx:
   containerPorts:
     http: 1024
