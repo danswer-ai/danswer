@@ -1,8 +1,7 @@
 import { Modal } from "@/components/Modal";
 import { updateUserGroup } from "./lib";
-import { UserGroup } from "../types";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { User } from "@/lib/types";
+import { User, UserGroup } from "@/lib/types";
 import { UserEditor } from "../UserEditor";
 import { useState } from "react";
 

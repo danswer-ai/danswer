@@ -8,7 +8,6 @@ import {
   TableBody,
   TableCell,
 } from "@tremor/react";
-import { UserGroup } from "./types";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { LoadingAnimation } from "@/components/Loading";
 import { BasicTable } from "@/components/admin/connectors/BasicTable";
@@ -17,7 +16,7 @@ import { TrashIcon } from "@/components/icons/icons";
 import { deleteUserGroup } from "./lib";
 import { useRouter } from "next/navigation";
 import { FiEdit, FiUser } from "react-icons/fi";
-import { User } from "@/lib/types";
+import { User, UserGroup } from "@/lib/types";
 import Link from "next/link";
 import { DeleteButton } from "@/components/DeleteButton";
 

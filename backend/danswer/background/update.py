@@ -311,14 +311,14 @@ def kickoff_indexing_jobs(
                 run_indexing_entrypoint,
                 attempt.id,
                 global_version.get_is_ee_version(),
-                pure=False
+                pure=False,
             )
         else:
             run = client.submit(
                 run_indexing_entrypoint,
                 attempt.id,
                 global_version.get_is_ee_version(),
-                pure=False
+                pure=False,
             )
 
         if run:

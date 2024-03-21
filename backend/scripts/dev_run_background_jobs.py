@@ -21,7 +21,7 @@ def run_jobs(exclude_indexing: bool) -> None:
     cmd_worker = [
         "celery",
         "-A",
-        "danswer.background.celery",
+        "ee.danswer.background.celery",
         "worker",
         "--pool=threads",
         "--autoscale=3,10",
@@ -29,7 +29,13 @@ def run_jobs(exclude_indexing: bool) -> None:
         "--concurrency=1",
     ]
 
-    cmd_beat = ["celery", "-A", "danswer.background.celery", "beat", "--loglevel=INFO"]
+    cmd_beat = [
+        "celery",
+        "-A",
+        "ee.danswer.background.celery",
+        "beat",
+        "--loglevel=INFO",
+    ]
 
     worker_process = subprocess.Popen(
         cmd_worker, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
