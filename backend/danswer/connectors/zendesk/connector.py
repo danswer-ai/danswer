@@ -79,7 +79,7 @@ class ZendeskConnector(LoadConnector, PollConnector):
         )
         doc_batch = []
         for article in articles:
-            if article.body is None:
+            if article.body is None or article.draft:
                 continue
 
             doc_batch.append(_article_to_document(article))

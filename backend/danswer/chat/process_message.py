@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from danswer.chat.chat_utils import build_chat_system_message
 from danswer.chat.chat_utils import build_chat_user_message
-from danswer.chat.chat_utils import build_doc_context_str
 from danswer.chat.chat_utils import compute_max_document_tokens
 from danswer.chat.chat_utils import compute_max_llm_input_tokens
 from danswer.chat.chat_utils import create_chat_chain
@@ -51,6 +50,7 @@ from danswer.llm.utils import get_default_llm_version
 from danswer.llm.utils import get_max_input_tokens
 from danswer.llm.utils import tokenizer_trim_content
 from danswer.llm.utils import translate_history_to_basemessages
+from danswer.prompts.prompt_utils import build_doc_context_str
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RetrievalDetails
 from danswer.search.request_preprocessing import retrieval_preprocessing

@@ -1,4 +1,8 @@
-import { ChannelConfig, SlackBotTokens } from "@/lib/types";
+import {
+  ChannelConfig,
+  SlackBotResponseType,
+  SlackBotTokens,
+} from "@/lib/types";
 import { Persona } from "../personas/interfaces";
 
 interface SlackBotConfigCreationRequest {
@@ -12,6 +16,7 @@ interface SlackBotConfigCreationRequest {
   respond_team_member_list: string[];
   follow_up_tags?: string[];
   usePersona: boolean;
+  response_type: SlackBotResponseType;
 }
 
 const buildFiltersFromCreationRequest = (
@@ -40,6 +45,7 @@ const buildRequestBodyFromCreationRequest = (
     ...(creationRequest.usePersona
       ? { persona_id: creationRequest.persona_id }
       : { document_sets: creationRequest.document_sets }),
+    response_type: creationRequest.response_type,
   });
 };
 

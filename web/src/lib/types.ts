@@ -104,6 +104,7 @@ export interface ConfluenceConfig {
 
 export interface JiraConfig {
   jira_project_url: string;
+  comment_email_blacklist?: string[];
 }
 
 export interface SharepointConfig {
@@ -370,10 +371,13 @@ export interface ChannelConfig {
   follow_up_tags?: string[];
 }
 
+export type SlackBotResponseType = "quotes" | "citations";
+
 export interface SlackBotConfig {
   id: number;
   persona: Persona | null;
   channel_config: ChannelConfig;
+  response_type: SlackBotResponseType;
 }
 
 export interface SlackBotTokens {

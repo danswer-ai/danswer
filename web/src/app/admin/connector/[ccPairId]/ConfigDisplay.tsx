@@ -11,7 +11,7 @@ function convertObjectToString(obj: any): string | any {
       if (obj.length === 0) {
         return null;
       }
-      return obj.map((item) => convertObjectToString(item));
+      return obj.map((item) => convertObjectToString(item)).join(", ");
     }
   }
   if (typeof obj === "boolean") {
