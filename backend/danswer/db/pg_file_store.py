@@ -1,3 +1,4 @@
+from io import BytesIO
 from typing import IO
 
 from psycopg2.extensions import connection
@@ -35,7 +36,7 @@ def read_lobj(lobj_oid: int, db_session: Session, mode: str | None = None) -> IO
     large_object = (
         pg_conn.lobject(lobj_oid, mode=mode) if mode else pg_conn.lobject(lobj_oid)
     )
-    return large_object.read()
+    return BytesIO(large_object.read())
 
 
 def delete_lobj_by_id(
