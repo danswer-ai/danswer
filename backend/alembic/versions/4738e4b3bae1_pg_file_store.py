@@ -1,7 +1,7 @@
 """PG File Store
 
 Revision ID: 4738e4b3bae1
-Revises: 91fd3b470d1a
+Revises: e91df4e935ef
 Create Date: 2024-03-20 18:53:32.461518
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "4738e4b3bae1"
-down_revision = "91fd3b470d1a"
+down_revision = "e91df4e935ef"
 branch_labels = None
 depends_on = None
 
