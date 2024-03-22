@@ -2,13 +2,15 @@
 
 import { LoadingAnimation } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { KeyIcon, TrashIcon } from "@/components/icons/icons";
+import { SectionHeader } from "@/components/admin/connectors/Field";
+import { TrashIcon } from "@/components/icons/icons";
 import { ApiKeyForm } from "@/components/openai/ApiKeyForm";
 import { GEN_AI_API_KEY_URL } from "@/components/openai/constants";
 import { fetcher } from "@/lib/fetcher";
 import { Text, Title } from "@tremor/react";
 import { FiCpu } from "react-icons/fi";
 import useSWR, { mutate } from "swr";
+import { LLMOptions } from "./LLMOptions";
 
 const ExistingKeys = () => {
   const { data, isLoading, error } = useSWR<{ api_key: string }>(
@@ -53,9 +55,11 @@ const Page = () => {
   return (
     <div className="mx-auto container">
       <AdminPageTitle
-        title="LLM Keys"
+        title="LLM Options"
         icon={<FiCpu size={32} className="my-auto" />}
       />
+
+      <SectionHeader>LLM Keys</SectionHeader>
 
       <ExistingKeys />
 
@@ -72,6 +76,7 @@ const Page = () => {
           }}
         />
       </div>
+      <LLMOptions />
     </div>
   );
 };
