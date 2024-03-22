@@ -149,6 +149,10 @@ class WebConnector(LoadConnector):
             self.to_visit_list = extract_urls_from_sitemap(_ensure_valid_url(base_url))
 
         elif web_connector_type == WEB_CONNECTOR_VALID_SETTINGS.UPLOAD:
+            logger.warning(
+                "This is not a UI supported Web Connector flow, "
+                "are you sure you want to do this?"
+            )
             self.to_visit_list = _read_urls_file(base_url)
 
         else:
