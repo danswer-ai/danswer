@@ -67,7 +67,8 @@ class GoogleSitesConnector(LoadConnector):
         documents: list[Document] = []
 
         # load the HTML files
-        files = load_files_from_zip(self.zip_path)
+        with open(self.zip_path, "rb") as zip_file:
+            files = load_files_from_zip(zip_file)
         count = 0
         for file_info, file_io, _metadata in files:
             # skip non-published files
