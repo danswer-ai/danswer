@@ -1,11 +1,9 @@
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
-from fastapi import status
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import AUTH_TYPE
-from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.constants import AuthType
 from danswer.db.engine import get_session
 from danswer.db.models import User
@@ -23,15 +21,11 @@ def verify_auth_setting() -> None:
     logger.info(f"Using Auth Type: {AUTH_TYPE.value}")
 
 
-async def double_check_user(
+async def optional_user_(
     request: Request,
     user: User | None,
     db_session: Session,
-    optional: bool = DISABLE_AUTH,
 ) -> User | None:
-    if optional:
-        return None
-
     # Check if the user has a session cookie from SAML
     if AUTH_TYPE == AuthType.SAML:
         saved_cookie = extract_hashed_cookie(request)
@@ -45,12 +39,6 @@ async def double_check_user(
         hashed_api_key = get_hashed_api_key_from_request(request)
         if hashed_api_key:
             user = fetch_user_for_api_key(hashed_api_key, db_session)
-
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. User is not authenticated.",
-        )
 
     return user
 
