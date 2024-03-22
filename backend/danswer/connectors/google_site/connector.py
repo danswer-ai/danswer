@@ -70,12 +70,12 @@ class GoogleSitesConnector(LoadConnector):
         documents: list[Document] = []
 
         with Session(get_sqlalchemy_engine()) as db_session:
-            file_content = get_default_file_store(db_session).read_file(
+            file_content_io = get_default_file_store(db_session).read_file(
                 self.zip_path, mode="b"
             )
 
         # load the HTML files
-        files = load_files_from_zip(file_content)
+        files = load_files_from_zip(file_content_io)
         count = 0
         for file_info, file_io, _metadata in files:
             # skip non-published files
