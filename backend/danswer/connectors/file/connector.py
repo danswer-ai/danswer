@@ -23,7 +23,7 @@ from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.file_store import PostgresBackedFileStore
+from danswer.db.file_store import get_default_file_store
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -39,7 +39,7 @@ def _read_files_and_metadata(
     metadata: dict[str, Any] = {}
     directory_path = os.path.dirname(file_name)
 
-    file_content = PostgresBackedFileStore(db_session).read_file(file_name, mode="b")
+    file_content = get_default_file_store(db_session).read_file(file_name, mode="b")
 
     if extension == ".zip":
         for file_info, file, metadata in load_files_from_zip(

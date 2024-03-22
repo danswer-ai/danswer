@@ -48,9 +48,7 @@ def delete_lobj_by_id(
 
 
 def upsert_pgfilestore(
-    file_name: str,
-    lobj_oid: int,
-    db_session: Session,
+    file_name: str, lobj_oid: int, db_session: Session, commit: bool = False
 ) -> PGFileStore:
     pgfilestore = db_session.query(PGFileStore).filter_by(file_name=file_name).first()
 
@@ -70,7 +68,8 @@ def upsert_pgfilestore(
         pgfilestore = PGFileStore(file_name=file_name, lobj_oid=lobj_oid)
         db_session.add(pgfilestore)
 
-    db_session.commit()
+    if commit:
+        db_session.commit()
 
     return pgfilestore
 

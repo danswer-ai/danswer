@@ -66,21 +66,18 @@ class PostgresBackedFileStore(FileStore):
             upsert_pgfilestore(
                 file_name=file_name, lobj_oid=obj_id, db_session=self.db_session
             )
+            self.db_session.commit()
         except Exception:
             self.db_session.rollback()
             raise
 
     def read_file(self, file_name: str, mode: str | None = None) -> IO:
-        try:
-            file_record = get_pgfilestore_by_file_name(
-                file_name=file_name, db_session=self.db_session
-            )
-            return read_lobj(
-                lobj_oid=file_record.lobj_oid, db_session=self.db_session, mode=mode
-            )
-        except Exception:
-            self.db_session.rollback()
-            raise
+        file_record = get_pgfilestore_by_file_name(
+            file_name=file_name, db_session=self.db_session
+        )
+        return read_lobj(
+            lobj_oid=file_record.lobj_oid, db_session=self.db_session, mode=mode
+        )
 
     def delete_file(self, file_name: str) -> None:
         try:
@@ -91,6 +88,12 @@ class PostgresBackedFileStore(FileStore):
             delete_pgfilestore_by_file_name(
                 file_name=file_name, db_session=self.db_session
             )
+            self.db_session.commit()
         except Exception:
             self.db_session.rollback()
             raise
+
+
+def get_default_file_store(db_session: Session) -> FileStore:
+    # The only supported file store now is the Postgres File Store
+    return PostgresBackedFileStore(db_session=db_session)

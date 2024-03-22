@@ -58,7 +58,7 @@ from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import get_document_cnts_for_cc_pairs
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
-from danswer.db.file_store import PostgresBackedFileStore
+from danswer.db.file_store import get_default_file_store
 from danswer.db.index_attempt import cancel_indexing_attempts_for_connector
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import create_index_attempt
@@ -345,7 +345,7 @@ def upload_files(
         if not file.filename:
             raise HTTPException(status_code=400, detail="File name cannot be empty")
     try:
-        file_store = PostgresBackedFileStore(db_session)
+        file_store = get_default_file_store(db_session)
         deduped_file_paths = []
         for file in files:
             file_path = os.path.join(str(uuid.uuid4()), cast(str, file.filename))
