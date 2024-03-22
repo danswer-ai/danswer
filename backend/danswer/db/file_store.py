@@ -14,14 +14,13 @@ from danswer.db.pg_file_store import upsert_pgfilestore
 
 class FileStore(ABC):
     """
-    An abstraction for storing files and large binary objects. Currently needed for:
-    - File Connector communication between API Server and Indexing Job (Background Container)
+    An abstraction for storing files and large binary objects.
     """
 
     @abstractmethod
     def save_file(self, file_name: str, content: IO) -> None:
         """
-        Save a file along with the associated connector (CC-Pair) name.
+        Save a file to the blob store
 
         Parameters:
         - connector_name: Name of the CC-Pair (as specified by the user in the UI)
@@ -33,9 +32,7 @@ class FileStore(ABC):
     @abstractmethod
     def read_file(self, file_name: str, mode: str | None) -> IO:
         """
-        Get the content and metadata of a file by its name. Makes assumption that if a file has a
-        duplicate name to a file from another connector then the file should be updated
-        (is duplicate). Also returns the metadata options extracted from the file header if exists
+        Read the content of a given file by the name
 
         Parameters:
         - file_name: Name of file to read
