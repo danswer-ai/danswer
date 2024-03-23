@@ -62,6 +62,7 @@ def create_slack_bot_persona(
         llm_model_version_override=None,
         starter_messages=None,
         shared=True,
+        is_public=True,
         default_persona=False,
         db_session=db_session,
         commit=False,
