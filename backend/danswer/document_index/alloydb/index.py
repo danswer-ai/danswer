@@ -200,8 +200,8 @@ def chunk_to_dict(chunk: DocMetadataAwareIndexChunk) -> dict:
         "metadata_list": json.dumps(chunk.source_document.get_metadata_str_attributes()),
         "metadata_object": json.dumps(document.metadata),
         "doc_updated_at": get_updated_at_attribute(document.doc_updated_at),
-        "primary_owners": json.dumps(get_experts_stores_representations(document.primary_owners)),
-        "secondary_owners": json.dumps(get_experts_stores_representations(document.secondary_owners)),
+        "primary_owners": document.primary_owners,
+        "secondary_owners": "",
         "access_control_list": json.dumps({acl_entry: 1 for acl_entry in chunk.access.to_acl()}),
         "document_sets": json.dumps({document_set: 1 for document_set in chunk.document_sets}),
         "title_embedding": chunk.title_embedding,  # Assuming it's already a list of floats
