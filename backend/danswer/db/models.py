@@ -242,7 +242,7 @@ class ConnectorCredentialPair(Base):
         DateTime(timezone=True), default=None
     )
     last_attempt_status: Mapped[IndexingStatus | None] = mapped_column(
-        Enum(IndexingStatus)
+        Enum(IndexingStatus, native_enum=False)
     )
     total_docs_indexed: Mapped[int] = mapped_column(Integer, default=0)
 
@@ -309,7 +309,9 @@ class Tag(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     tag_key: Mapped[str] = mapped_column(String)
     tag_value: Mapped[str] = mapped_column(String)
-    source: Mapped[DocumentSource] = mapped_column(Enum(DocumentSource))
+    source: Mapped[DocumentSource] = mapped_column(
+        Enum(DocumentSource, native_enum=False)
+    )
 
     documents = relationship(
         "Document",
@@ -396,7 +398,9 @@ class EmbeddingModel(Base):
     normalize: Mapped[bool] = mapped_column(Boolean)
     query_prefix: Mapped[str] = mapped_column(String)
     passage_prefix: Mapped[str] = mapped_column(String)
-    status: Mapped[IndexModelStatus] = mapped_column(Enum(IndexModelStatus))
+    status: Mapped[IndexModelStatus] = mapped_column(
+        Enum(IndexModelStatus, native_enum=False)
+    )
     index_name: Mapped[str] = mapped_column(String)
 
     index_attempts: Mapped[List["IndexAttempt"]] = relationship(
@@ -441,7 +445,9 @@ class IndexAttempt(Base):
     # This is only for attempts that are explicitly marked as from the start via
     # the run once API
     from_beginning: Mapped[bool] = mapped_column(Boolean)
-    status: Mapped[IndexingStatus] = mapped_column(Enum(IndexingStatus))
+    status: Mapped[IndexingStatus] = mapped_column(
+        Enum(IndexingStatus, native_enum=False)
+    )
     # The two below may be slightly out of sync if user switches Embedding Model
     new_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
     total_docs_indexed: Mapped[int | None] = mapped_column(Integer, default=0)
@@ -544,7 +550,9 @@ class SearchDoc(Base):
     link: Mapped[str | None] = mapped_column(String, nullable=True)
     blurb: Mapped[str] = mapped_column(String)
     boost: Mapped[int] = mapped_column(Integer)
-    source_type: Mapped[DocumentSource] = mapped_column(Enum(DocumentSource))
+    source_type: Mapped[DocumentSource] = mapped_column(
+        Enum(DocumentSource, native_enum=False)
+    )
     hidden: Mapped[bool] = mapped_column(Boolean)
     doc_metadata: Mapped[dict[str, str | list[str]]] = mapped_column(postgresql.JSONB())
     score: Mapped[float] = mapped_column(Float)
@@ -617,7 +625,9 @@ class ChatMessage(Base):
     # If prompt is None, then token_count is 0 as this message won't be passed into
     # the LLM's context (not included in the history of messages)
     token_count: Mapped[int] = mapped_column(Integer)
-    message_type: Mapped[MessageType] = mapped_column(Enum(MessageType))
+    message_type: Mapped[MessageType] = mapped_column(
+        Enum(MessageType, native_enum=False)
+    )
     # Maps the citation numbers to a SearchDoc id
     citations: Mapped[dict[int, int]] = mapped_column(postgresql.JSONB(), nullable=True)
     # Only applies for LLM
@@ -656,7 +666,7 @@ class DocumentRetrievalFeedback(Base):
     document_rank: Mapped[int] = mapped_column(Integer)
     clicked: Mapped[bool] = mapped_column(Boolean, default=False)
     feedback: Mapped[SearchFeedbackType | None] = mapped_column(
-        Enum(SearchFeedbackType), nullable=True
+        Enum(SearchFeedbackType, native_enum=False), nullable=True
     )
 
     chat_message: Mapped[ChatMessage] = relationship(
@@ -768,7 +778,7 @@ class Persona(Base):
     description: Mapped[str] = mapped_column(String)
     # Currently stored but unused, all flows use hybrid
     search_type: Mapped[SearchType] = mapped_column(
-        Enum(SearchType), default=SearchType.HYBRID
+        Enum(SearchType, native_enum=False), default=SearchType.HYBRID
     )
     # Number of chunks to pass to the LLM for generation.
     num_chunks: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -778,7 +788,9 @@ class Persona(Base):
     # Enables using LLM to extract time and source type filters
     # Can also be admin disabled globally
     llm_filter_extraction: Mapped[bool] = mapped_column(Boolean)
-    recency_bias: Mapped[RecencyBiasSetting] = mapped_column(Enum(RecencyBiasSetting))
+    recency_bias: Mapped[RecencyBiasSetting] = mapped_column(
+        Enum(RecencyBiasSetting, native_enum=False)
+    )
     # Allows the Persona to specify a different LLM version than is controlled
     # globablly via env variables. For flexibility, validity is not currently enforced
     # NOTE: only is applied on the actual response generation - is not used for things like
@@ -891,7 +903,7 @@ class TaskQueueState(Base):
     # For any job type, this would be the same
     task_name: Mapped[str] = mapped_column(String)
     # Note that if the task dies, this won't necessarily be marked FAILED correctly
-    status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus))
+    status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus, native_enum=False))
     start_time: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True)
     )
