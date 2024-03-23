@@ -35,8 +35,8 @@ def upgrade() -> None:
         existing_nullable=False,
     )
 
-    # Because the indexmodelstatus does not have a mapping to a string type
-    # We need this workaround instead of directly changing the type
+    # Because the indexmodelstatus enum does not have a mapping to a string type
+    # we need this workaround instead of directly changing the type
     op.add_column("embedding_model", sa.Column("temp_status", sa.String))
     op.execute("UPDATE embedding_model SET temp_status = status::text")
     op.drop_column("embedding_model", "status")
