@@ -97,6 +97,7 @@ def load_personas_from_yaml(
                 document_sets=doc_sets,
                 default_persona=True,
                 shared=True,
+                is_public=True,
                 db_session=db_session,
             )
 
