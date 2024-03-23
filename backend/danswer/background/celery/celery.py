@@ -182,7 +182,7 @@ def check_for_document_sets_sync_task() -> None:
     with Session(get_sqlalchemy_engine()) as db_session:
         # check if any document sets are not synced
         document_set_info = fetch_document_sets(
-            db_session=db_session, include_outdated=True
+            user_id=None, db_session=db_session, include_outdated=True
         )
         for document_set, _ in document_set_info:
             if not document_set.is_up_to_date:
