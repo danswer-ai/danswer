@@ -34,6 +34,7 @@ export type ValidSources =
   | "loopio"
   | "sharepoint"
   | "zendesk"
+  | "wikipedia"
   | "mediawiki";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
@@ -163,14 +164,18 @@ export interface GoogleSitesConfig {
 
 export interface ZendeskConfig {}
 
-export interface MediaWikiConfig {
+export interface MediaWikiBaseConfig {
   connector_name: string;
-  hostname: string;
   language_code: string;
   categories?: string[];
   pages?: string[];
   recurse_depth?: number;
 }
+export interface MediaWikiConfig extends MediaWikiBaseConfig {
+  hostname: string;
+}
+
+export interface WikipediaConfig extends MediaWikiBaseConfig {}
 
 export interface IndexAttemptSnapshot {
   id: number;
@@ -337,6 +342,7 @@ export interface SharepointCredentialJson {
 }
 
 export interface MediaWikiCredentialJson {}
+export interface WikipediaCredentialJson extends MediaWikiCredentialJson {}
 
 // DELETION
 

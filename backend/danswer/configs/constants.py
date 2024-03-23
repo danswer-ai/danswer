@@ -88,6 +88,7 @@ class DocumentSource(str, Enum):
     LOOPIO = "loopio"
     SHAREPOINT = "sharepoint"
     MEDIAWIKI = "mediawiki"
+    WIKIPEDIA = "wikipedia"
 
 
 class DocumentIndexType(str, Enum):

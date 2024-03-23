@@ -24,6 +24,7 @@ import {
   ZendeskIcon,
   ZulipIcon,
   MediaWikiIcon,
+  WikipediaIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import { SourceCategory, SourceMetadata } from "./search/interfaces";
@@ -159,6 +160,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
     icon: RequestTrackerIcon,
     displayName: "Request Tracker",
     category: SourceCategory.AppConnection,
+  },
+  wikipedia: {
+    icon: WikipediaIcon,
+    displayName: "Wikipedia",
+    category: SourceCategory.ImportedKnowledge,
   },
   mediawiki: {
     icon: MediaWikiIcon,

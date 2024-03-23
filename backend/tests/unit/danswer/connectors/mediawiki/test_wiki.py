@@ -82,7 +82,7 @@ class MockPage(pywikibot.Page):
 
 def test_get_doc_from_page(site: pywikibot.Site) -> None:
     test_page = MockPage(site, "Test Page", _has_categories=True)
-    doc = wiki.get_doc_from_page(test_page, site)
+    doc = wiki.get_doc_from_page(test_page, site, wiki.DocumentSource.MEDIAWIKI)
     assert doc.source == wiki.DocumentSource.MEDIAWIKI
     assert doc.title == test_page.title()
     assert doc.doc_updated_at == wiki.pywikibot_timestamp_to_utc_datetime(

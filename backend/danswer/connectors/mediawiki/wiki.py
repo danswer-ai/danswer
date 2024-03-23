@@ -4,6 +4,7 @@ import datetime
 import itertools
 from collections.abc import Generator
 from typing import Any
+from typing import ClassVar
 
 import pywikibot.time
 from pywikibot import pagegenerators
@@ -34,7 +35,9 @@ def pywikibot_timestamp_to_utc_datetime(
     return datetime.datetime.astimezone(timestamp, tz=datetime.timezone.utc)
 
 
-def get_doc_from_page(page: pywikibot.Page, site: pywikibot.Site | None) -> Document:
+def get_doc_from_page(
+    page: pywikibot.Page, site: pywikibot.Site | None, source_type: DocumentSource
+) -> Document:
     page_text = page.text
     sections_extracted: textlib.Content = textlib.extract_sections(page_text, site)
 
@@ -53,7 +56,7 @@ def get_doc_from_page(page: pywikibot.Page, site: pywikibot.Site | None) -> Docu
     )
 
     return Document(
-        source=DocumentSource.MEDIAWIKI,
+        source=source_type,
         title=page.title(),
         doc_updated_at=pywikibot_timestamp_to_utc_datetime(
             page.latest_revision.timestamp
@@ -82,6 +85,8 @@ class MediaWikiConnector(LoadConnector, PollConnector):
 
 
     """
+
+    document_source_type: ClassVar[DocumentSource] = DocumentSource.MEDIAWIKI
 
     def __init__(
         self,
@@ -141,7 +146,9 @@ class MediaWikiConnector(LoadConnector, PollConnector):
 
         all_pages = itertools.chain(self.pages, *category_pages)
         for page in all_pages:
-            doc_batch.append(get_doc_from_page(page, self.site))
+            doc_batch.append(
+                get_doc_from_page(page, self.site, self.document_source_type)
+            )
             if len(doc_batch) >= self.batch_size:
                 yield doc_batch
                 doc_batch = []
