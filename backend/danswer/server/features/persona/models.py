@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from danswer.db.models import Persona
 from danswer.db.models import StarterMessage
-from danswer.search.models import RecencyBiasSetting
+from danswer.search.enums import RecencyBiasSetting
 from danswer.server.features.document_set.models import DocumentSet
 from danswer.server.features.prompt.models import PromptSnapshot
 
