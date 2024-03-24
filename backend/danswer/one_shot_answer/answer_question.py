@@ -1,7 +1,6 @@
 import itertools
 from collections.abc import Callable
 from collections.abc import Iterator
-from typing import cast
 
 from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
@@ -33,11 +32,9 @@ from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import get_persona_by_id
 from danswer.db.chat import get_prompt_by_id
 from danswer.db.chat import translate_db_message_to_chat_message_detail
-from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session_context_manager
 from danswer.db.models import Prompt
 from danswer.db.models import User
-from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import InferenceChunk
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import get_default_llm_token_encode
@@ -55,9 +52,9 @@ from danswer.prompts.prompt_utils import build_task_prompt_reminders
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SavedSearchDoc
-from danswer.search.request_preprocessing import retrieval_preprocessing
-from danswer.search.search_runner import chunks_to_search_docs
-from danswer.search.search_runner import full_chunk_search_generator
+from danswer.search.models import SearchRequest
+from danswer.search.pipeline import SearchPipeline
+from danswer.search.utils import chunks_to_search_docs
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.secondary_llm_flows.query_expansion import thread_based_query_rephrase
 from danswer.server.query_and_chat.models import ChatMessageDetail
@@ -221,12 +218,6 @@ def stream_answer_objects(
 
     llm_tokenizer = get_default_llm_token_encode()
 
-    embedding_model = get_current_db_embedding_model(db_session)
-
-    document_index = get_default_document_index(
-        primary_index_name=embedding_model.index_name, secondary_index_name=None
-    )
-
     # Create a chat session which will just store the root message, the query, and the AI response
     root_message = get_or_create_root_message(
         chat_session_id=chat_session.id, db_session=db_session
@@ -244,33 +235,23 @@ def stream_answer_objects(
     # In chat flow it's given back along with the documents
     yield QueryRephrase(rephrased_query=rephrased_query)
 
-    (
-        retrieval_request,
-        predicted_search_type,
-        predicted_flow,
-    ) = retrieval_preprocessing(
-        query=rephrased_query,
-        retrieval_details=query_req.retrieval_options,
-        persona=chat_session.persona,
+    search_pipeline = SearchPipeline(
+        search_request=SearchRequest(
+            query=rephrased_query,
+            human_selected_filters=query_req.retrieval_options.filters,
+            persona=chat_session.persona,
+            offset=query_req.retrieval_options.offset,
+            limit=query_req.retrieval_options.limit,
+        ),
         user=user,
         db_session=db_session,
         bypass_acl=bypass_acl,
-    )
-
-    documents_generator = full_chunk_search_generator(
-        search_query=retrieval_request,
-        document_index=document_index,
-        db_session=db_session,
         retrieval_metrics_callback=retrieval_metrics_callback,
         rerank_metrics_callback=rerank_metrics_callback,
     )
-    applied_time_cutoff = retrieval_request.filters.time_cutoff
-    recency_bias_multiplier = retrieval_request.recency_bias_multiplier
-    run_llm_chunk_filter = not retrieval_request.skip_llm_chunk_filter
 
     # First fetch and return the top chunks so the user can immediately see some results
-    top_chunks = cast(list[InferenceChunk], next(documents_generator))
-
+    top_chunks = search_pipeline.reranked_docs
     top_docs = chunks_to_search_docs(top_chunks)
     fake_saved_docs = [SavedSearchDoc.from_search_doc(doc) for doc in top_docs]
 
@@ -278,24 +259,17 @@ def stream_answer_objects(
     initial_response = QADocsResponse(
         rephrased_query=rephrased_query,
         top_documents=fake_saved_docs,
-        predicted_flow=predicted_flow,
-        predicted_search=predicted_search_type,
-        applied_source_filters=retrieval_request.filters.source_type,
-        applied_time_cutoff=applied_time_cutoff,
-        recency_bias_multiplier=recency_bias_multiplier,
+        predicted_flow=search_pipeline.predicted_flow,
+        predicted_search=search_pipeline.predicted_search_type,
+        applied_source_filters=search_pipeline.search_query.filters.source_type,
+        applied_time_cutoff=search_pipeline.search_query.filters.time_cutoff,
+        recency_bias_multiplier=search_pipeline.search_query.recency_bias_multiplier,
     )
     yield initial_response
 
-    # Get the final ordering of chunks for the LLM call
-    llm_chunk_selection = cast(list[bool], next(documents_generator))
-
     # Yield the list of LLM selected chunks for showing the LLM selected icons in the UI
     llm_relevance_filtering_response = LLMRelevanceFilterResponse(
-        relevant_chunk_indices=[
-            index for index, value in enumerate(llm_chunk_selection) if value
-        ]
-        if run_llm_chunk_filter
-        else []
+        relevant_chunk_indices=search_pipeline.relevant_chunk_indicies
     )
     yield llm_relevance_filtering_response
 
@@ -317,7 +291,7 @@ def stream_answer_objects(
 
     llm_chunks_indices = get_chunks_for_qa(
         chunks=top_chunks,
-        llm_chunk_selection=llm_chunk_selection,
+        llm_chunk_selection=search_pipeline.chunk_relevance_list,
         token_limit=chunk_token_limit,
     )
     llm_chunks = [top_chunks[i] for i in llm_chunks_indices]

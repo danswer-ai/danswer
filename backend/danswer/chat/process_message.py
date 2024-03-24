@@ -53,11 +53,10 @@ from danswer.llm.utils import tokenizer_trim_content
 from danswer.llm.utils import translate_history_to_basemessages
 from danswer.prompts.prompt_utils import build_doc_context_str
 from danswer.search.models import OptionalSearchSetting
-from danswer.search.models import RetrievalDetails
-from danswer.search.request_preprocessing import retrieval_preprocessing
-from danswer.search.search_runner import chunks_to_search_docs
-from danswer.search.search_runner import full_chunk_search_generator
-from danswer.search.search_runner import inference_documents_from_ids
+from danswer.search.models import SearchRequest
+from danswer.search.pipeline import SearchPipeline
+from danswer.search.retrieval.search_runner import inference_documents_from_ids
+from danswer.search.utils import chunks_to_search_docs
 from danswer.secondary_llm_flows.choose_search import check_if_need_search
 from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
 from danswer.server.query_and_chat.models import ChatMessageDetail
@@ -377,37 +376,25 @@ def stream_chat_message_objects(
                 else query_override
             )
 
-            (
-                retrieval_request,
-                predicted_search_type,
-                predicted_flow,
-            ) = retrieval_preprocessing(
-                query=rephrased_query,
-                retrieval_details=cast(RetrievalDetails, retrieval_options),
-                persona=persona,
+            search_pipeline = SearchPipeline(
+                search_request=SearchRequest(
+                    query=rephrased_query,
+                    human_selected_filters=retrieval_options.filters
+                    if retrieval_options
+                    else None,
+                    persona=persona,
+                    offset=retrieval_options.offset if retrieval_options else None,
+                    limit=retrieval_options.limit if retrieval_options else None,
+                ),
                 user=user,
                 db_session=db_session,
             )
 
-            documents_generator = full_chunk_search_generator(
-                search_query=retrieval_request,
-                document_index=document_index,
-                db_session=db_session,
-            )
-            time_cutoff = retrieval_request.filters.time_cutoff
-            recency_bias_multiplier = retrieval_request.recency_bias_multiplier
-            run_llm_chunk_filter = not retrieval_request.skip_llm_chunk_filter
-
-            # First fetch and return the top chunks to the UI so the user can
-            # immediately see some results
-            top_chunks = cast(list[InferenceChunk], next(documents_generator))
+            top_chunks = search_pipeline.reranked_docs
+            top_docs = chunks_to_search_docs(top_chunks)
 
             # Get ranking of the documents for citation purposes later
-            doc_id_to_rank_map = map_document_id_order(
-                cast(list[InferenceChunk | LlmDoc], top_chunks)
-            )
-
-            top_docs = chunks_to_search_docs(top_chunks)
+            doc_id_to_rank_map = map_document_id_order(top_chunks)
 
             reference_db_search_docs = [
                 create_db_search_doc(server_search_doc=top_doc, db_session=db_session)
@@ -422,24 +409,17 @@ def stream_chat_message_objects(
             initial_response = QADocsResponse(
                 rephrased_query=rephrased_query,
                 top_documents=response_docs,
-                predicted_flow=predicted_flow,
-                predicted_search=predicted_search_type,
-                applied_source_filters=retrieval_request.filters.source_type,
-                applied_time_cutoff=time_cutoff,
-                recency_bias_multiplier=recency_bias_multiplier,
+                predicted_flow=search_pipeline.predicted_flow,
+                predicted_search=search_pipeline.predicted_search_type,
+                applied_source_filters=search_pipeline.search_query.filters.source_type,
+                applied_time_cutoff=search_pipeline.search_query.filters.time_cutoff,
+                recency_bias_multiplier=search_pipeline.search_query.recency_bias_multiplier,
             )
             yield initial_response
 
-            # Get the final ordering of chunks for the LLM call
-            llm_chunk_selection = cast(list[bool], next(documents_generator))
-
             # Yield the list of LLM selected chunks for showing the LLM selected icons in the UI
             llm_relevance_filtering_response = LLMRelevanceFilterResponse(
-                relevant_chunk_indices=[
-                    index for index, value in enumerate(llm_chunk_selection) if value
-                ]
-                if run_llm_chunk_filter
-                else []
+                relevant_chunk_indices=search_pipeline.relevant_chunk_indicies
             )
             yield llm_relevance_filtering_response
 
@@ -467,7 +447,7 @@ def stream_chat_message_objects(
             )
             llm_chunks_indices = get_chunks_for_qa(
                 chunks=top_chunks,
-                llm_chunk_selection=llm_chunk_selection,
+                llm_chunk_selection=search_pipeline.chunk_relevance_list,
                 token_limit=chunk_token_limit,
                 llm_tokenizer=llm_tokenizer,
             )

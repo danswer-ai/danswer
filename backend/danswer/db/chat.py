@@ -27,7 +27,7 @@ from danswer.db.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.db.models import StarterMessage
 from danswer.db.models import User__UserGroup
-from danswer.search.models import RecencyBiasSetting
+from danswer.search.enums import RecencyBiasSetting
 from danswer.search.models import RetrievalDocs
 from danswer.search.models import SavedSearchDoc
 from danswer.search.models import SearchDoc as ServerSearchDoc
