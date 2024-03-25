@@ -7,9 +7,9 @@ from typing import TextIO
 
 from sqlalchemy.orm import Session
 
-from danswer.chat.chat_utils import get_chunks_for_qa
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.indexing.models import InferenceChunk
+from danswer.llm.answering.doc_pruning import reorder_docs
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SearchRequest
@@ -95,16 +95,8 @@ def get_search_results(
         top_chunks = search_pipeline.reranked_docs
         llm_chunk_selection = search_pipeline.chunk_relevance_list
 
-    llm_chunks_indices = get_chunks_for_qa(
-        chunks=top_chunks,
-        llm_chunk_selection=llm_chunk_selection,
-        token_limit=None,
-    )
-
-    llm_chunks = [top_chunks[i] for i in llm_chunks_indices]
-
     return (
-        llm_chunks,
+        reorder_docs(top_chunks, llm_chunk_selection),
         retrieval_metrics.metrics,
         rerank_metrics.metrics,
     )
