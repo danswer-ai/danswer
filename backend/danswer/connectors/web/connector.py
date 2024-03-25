@@ -42,15 +42,17 @@ class WEB_CONNECTOR_VALID_SETTINGS(str, Enum):
     # Given a file upload where every line is a URL, parse all the URLs provided
     UPLOAD = "upload"
 
-def check_internet_connection() -> bool:
+
+def check_internet_connection() -> None:
     dns_servers = [("1.1.1.1", 53), ("8.8.8.8", 53)]
     for server in dns_servers:
         try:
             socket.create_connection(server, timeout=3)
-            return True
-        except OSError: # try the next server
-            continue 
+            return
+        except OSError:
+            continue
     raise Exception("Unable to contact DNS server - check your internet connection")
+
 
 def is_valid_url(url: str) -> bool:
     try:
