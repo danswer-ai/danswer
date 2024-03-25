@@ -1,4 +1,4 @@
-name: Build and Push Web Image on Tag
+name: (GAR) Build and Push Web Image on Tag
 
 on:
   push:
