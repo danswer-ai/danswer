@@ -51,7 +51,7 @@ jobs:
         uses: int128/kaniko-action@v1
         with:
           context: ./backend
-          file: ./backend/Dockerfile
+          file: ./backend/Dockerfile.model_server
           push: true
           cache: true
           cache-repository: us-docker.pkg.dev/${{ env.GarProjectID }}/${{ env.GarCacheRepo }}/${{ env.GarImageName }}
