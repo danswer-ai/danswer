@@ -162,7 +162,6 @@ def delete_chat_session_by_id(
 def handle_new_chat_message(
     chat_message_req: CreateChatMessageRequest,
     user: User | None = Depends(current_user),
-    db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
     """This endpoint is both used for all the following purposes:
     - Sending a new message in the session
@@ -176,11 +175,7 @@ def handle_new_chat_message(
     if not chat_message_req.message and chat_message_req.prompt_id is not None:
         raise HTTPException(status_code=400, detail="Empty chat message is invalid")
 
-    packets = stream_chat_message(
-        new_msg_req=chat_message_req,
-        user=user,
-        db_session=db_session,
-    )
+    packets = stream_chat_message(new_msg_req=chat_message_req, user=user)
 
     return StreamingResponse(packets, media_type="application/json")
 
