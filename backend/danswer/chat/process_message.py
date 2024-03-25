@@ -36,6 +36,7 @@ from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.engine import get_session_context_manager
 from danswer.db.models import ChatMessage
 from danswer.db.models import Persona
 from danswer.db.models import SearchDoc as DbSearchDoc
@@ -582,12 +583,12 @@ def stream_chat_message_objects(
 def stream_chat_message(
     new_msg_req: CreateChatMessageRequest,
     user: User | None,
-    db_session: Session,
 ) -> Iterator[str]:
-    objects = stream_chat_message_objects(
-        new_msg_req=new_msg_req,
-        user=user,
-        db_session=db_session,
-    )
-    for obj in objects:
-        yield get_json_line(obj.dict())
+    with get_session_context_manager() as db_session:
+        objects = stream_chat_message_objects(
+            new_msg_req=new_msg_req,
+            user=user,
+            db_session=db_session,
+        )
+        for obj in objects:
+            yield get_json_line(obj.dict())
