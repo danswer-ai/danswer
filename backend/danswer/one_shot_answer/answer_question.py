@@ -34,6 +34,7 @@ from danswer.db.chat import get_persona_by_id
 from danswer.db.chat import get_prompt_by_id
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.engine import get_session_context_manager
 from danswer.db.models import Prompt
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
@@ -418,17 +419,17 @@ def stream_search_answer(
     user: User | None,
     max_document_tokens: int | None,
     max_history_tokens: int | None,
-    db_session: Session,
 ) -> Iterator[str]:
-    objects = stream_answer_objects(
-        query_req=query_req,
-        user=user,
-        max_document_tokens=max_document_tokens,
-        max_history_tokens=max_history_tokens,
-        db_session=db_session,
-    )
-    for obj in objects:
-        yield get_json_line(obj.dict())
+    with get_session_context_manager() as session:
+        objects = stream_answer_objects(
+            query_req=query_req,
+            user=user,
+            max_document_tokens=max_document_tokens,
+            max_history_tokens=max_history_tokens,
+            db_session=session,
+        )
+        for obj in objects:
+            yield get_json_line(obj.dict())
 
 
 def get_search_answer(
