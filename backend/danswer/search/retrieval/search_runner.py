@@ -223,11 +223,13 @@ def combine_inference_chunks(inf_chunks: list[InferenceChunk]) -> LlmDoc:
     return LlmDoc(
         document_id=first_chunk.document_id,
         content="\n".join(chunk_texts),
+        blurb=first_chunk.blurb,
         semantic_identifier=first_chunk.semantic_identifier,
         source_type=first_chunk.source_type,
         metadata=first_chunk.metadata,
         updated_at=first_chunk.updated_at,
         link=first_chunk.source_links[0] if first_chunk.source_links else None,
+        source_links=first_chunk.source_links,
     )
 
 

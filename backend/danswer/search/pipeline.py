@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from collections.abc import Generator
 from typing import cast
 
 from sqlalchemy.orm import Session
@@ -50,6 +51,11 @@ class SearchPipeline:
         self._retrieved_docs: list[InferenceChunk] | None = None
         self._reranked_docs: list[InferenceChunk] | None = None
         self._relevant_chunk_indicies: list[int] | None = None
+
+        # generator state
+        self._postprocessing_generator: Generator[
+            list[InferenceChunk] | list[str], None, None
+        ] | None = None
 
     """Pre-processing"""
 
@@ -113,36 +119,38 @@ class SearchPipeline:
 
     """Post-Processing"""
 
-    def _run_postprocessing(self) -> None:
-        postprocessing_generator = search_postprocessing(
-            search_query=self.search_query,
-            retrieved_chunks=self.retrieved_docs,
-            rerank_metrics_callback=self.rerank_metrics_callback,
-        )
-        self._reranked_docs = cast(list[InferenceChunk], next(postprocessing_generator))
-
-        relevant_chunk_ids = cast(list[str], next(postprocessing_generator))
-        self._relevant_chunk_indicies = [
-            ind
-            for ind, chunk in enumerate(self._reranked_docs)
-            if chunk.unique_id in relevant_chunk_ids
-        ]
-
     @property
     def reranked_docs(self) -> list[InferenceChunk]:
         if self._reranked_docs is not None:
             return self._reranked_docs
 
-        self._run_postprocessing()
-        return cast(list[InferenceChunk], self._reranked_docs)
+        self._postprocessing_generator = search_postprocessing(
+            search_query=self.search_query,
+            retrieved_chunks=self.retrieved_docs,
+            rerank_metrics_callback=self.rerank_metrics_callback,
+        )
+        self._reranked_docs = cast(
+            list[InferenceChunk], next(self._postprocessing_generator)
+        )
+        return self._reranked_docs
 
     @property
     def relevant_chunk_indicies(self) -> list[int]:
         if self._relevant_chunk_indicies is not None:
             return self._relevant_chunk_indicies
 
-        self._run_postprocessing()
-        return cast(list[int], self._relevant_chunk_indicies)
+        # run first step of postprocessing generator if not already done
+        reranked_docs = self.reranked_docs
+
+        relevant_chunk_ids = next(
+            cast(Generator[list[str], None, None], self._postprocessing_generator)
+        )
+        self._relevant_chunk_indicies = [
+            ind
+            for ind, chunk in enumerate(reranked_docs)
+            if chunk.unique_id in relevant_chunk_ids
+        ]
+        return self._relevant_chunk_indicies
 
     @property
     def chunk_relevance_list(self) -> list[bool]:

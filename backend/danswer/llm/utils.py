@@ -33,6 +33,7 @@ from danswer.db.models import ChatMessage
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.indexing.models import InferenceChunk
+from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.interfaces import LLM
 from danswer.utils.logger import setup_logger
 
@@ -114,7 +115,9 @@ def tokenizer_trim_chunks(
     return new_chunks
 
 
-def translate_danswer_msg_to_langchain(msg: ChatMessage) -> BaseMessage:
+def translate_danswer_msg_to_langchain(
+    msg: ChatMessage | PreviousMessage,
+) -> BaseMessage:
     if msg.message_type == MessageType.SYSTEM:
         raise ValueError("System messages are not currently part of history")
     if msg.message_type == MessageType.ASSISTANT:
@@ -126,7 +129,7 @@ def translate_danswer_msg_to_langchain(msg: ChatMessage) -> BaseMessage:
 
 
 def translate_history_to_basemessages(
-    history: list[ChatMessage],
+    history: list[ChatMessage] | list[PreviousMessage],
 ) -> tuple[list[BaseMessage], list[int]]:
     history_basemessages = [
         translate_danswer_msg_to_langchain(msg)

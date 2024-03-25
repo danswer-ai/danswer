@@ -14,8 +14,8 @@ from danswer.db.chat import update_persona_visibility
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.persona import create_update_persona
+from danswer.llm.answering.prompts.utils import build_dummy_prompt
 from danswer.llm.utils import get_default_llm_version
-from danswer.one_shot_answer.qa_block import build_dummy_prompt
 from danswer.server.features.persona.models import CreatePersonaRequest
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.features.persona.models import PromptTemplateResponse

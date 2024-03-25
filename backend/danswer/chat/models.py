@@ -16,11 +16,13 @@ class LlmDoc(BaseModel):
 
     document_id: str
     content: str
+    blurb: str
     semantic_identifier: str
     source_type: DocumentSource
     metadata: dict[str, str | list[str]]
     updated_at: datetime | None
     link: str | None
+    source_links: dict[int, str] | None
 
 
 # First chunk of info for streaming QA
@@ -100,9 +102,12 @@ class QAResponse(SearchResponse, DanswerAnswer):
     error_msg: str | None = None
 
 
-AnswerQuestionStreamReturn = Iterator[
-    DanswerAnswerPiece | DanswerQuotes | DanswerContexts | StreamingError
-]
+AnswerQuestionPossibleReturn = (
+    DanswerAnswerPiece | DanswerQuotes | CitationInfo | DanswerContexts | StreamingError
+)
+
+
+AnswerQuestionStreamReturn = Iterator[AnswerQuestionPossibleReturn]
 
 
 class LLMMetricsContainer(BaseModel):
