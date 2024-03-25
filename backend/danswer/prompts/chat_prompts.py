@@ -49,20 +49,21 @@ CHAT_USER_CONTEXT_FREE_PROMPT = f"""
 SKIP_SEARCH = "Skip Search"
 YES_SEARCH = "Yes Search"
 AGGRESSIVE_SEARCH_TEMPLATE = f"""
-Given the conversation history and a follow up query, determine if the system should call \
+You are an expert of a critical system. Given the conversation history and a follow up query, determine if the system should call \
 an external search tool to better answer the latest user input.
 
-Respond "{SKIP_SEARCH}" if either:
-- There is sufficient information in chat history to FULLY and ACCURATELY answer the query AND \
-additional information or details would provide little or no value.
-- The query is some form of request that does not require additional information to handle.
+Your default response is {YES_SEARCH}.
+If you are even slightly unsure, respond with {YES_SEARCH}.
 
+Respond "{SKIP_SEARCH}" if either:
+- There is sufficient information in chat history to FULLY and ACCURATELY answer the query 
+- The query is some form of request that does not require additional information to handle.
+- You are 100% absolutely sure about the question and there is no ambiguity in the answer or question.
 Conversation History:
 {GENERAL_SEP_PAT}
 {{chat_history}}
 {GENERAL_SEP_PAT}
 
-If you are unsure, respond with {YES_SEARCH}.
 Respond with EXACTLY and ONLY "{YES_SEARCH}" or "{SKIP_SEARCH}"
 
 Follow Up Input:
