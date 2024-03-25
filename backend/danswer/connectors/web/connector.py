@@ -1,4 +1,5 @@
 import io
+import socket
 from enum import Enum
 from typing import Any
 from typing import cast
@@ -41,6 +42,15 @@ class WEB_CONNECTOR_VALID_SETTINGS(str, Enum):
     # Given a file upload where every line is a URL, parse all the URLs provided
     UPLOAD = "upload"
 
+def check_internet_connection() -> bool:
+    dns_servers = [("1.1.1.1", 53), ("8.8.8.8", 53)]
+    for server in dns_servers:
+        try:
+            socket.create_connection(server, timeout=3)
+            return True
+        except OSError: # try the next server
+            continue 
+    raise Exception("Unable to contact DNS server - check your internet connection")
 
 def is_valid_url(url: str) -> bool:
     try:
@@ -173,6 +183,7 @@ class WebConnector(LoadConnector):
         base_url = to_visit[0]  # For the recursive case
         doc_batch: list[Document] = []
 
+        check_internet_connection()
         playwright, context = start_playwright()
         restart_playwright = False
         while to_visit:
