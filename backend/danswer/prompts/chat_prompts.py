@@ -52,6 +52,7 @@ YES_SEARCH = "Yes Search"
 AGGRESSIVE_SEARCH_TEMPLATE = f"""
 Given the conversation history and a follow up query, determine if the system should call \
 an external search tool to better answer the latest user input.
+Your default response is {YES_SEARCH}.
 
 Respond "{SKIP_SEARCH}" if either:
 - There is sufficient information in chat history to FULLY and ACCURATELY answer the query AND \
@@ -63,7 +64,7 @@ Conversation History:
 {{chat_history}}
 {GENERAL_SEP_PAT}
 
-If you are unsure, respond with {YES_SEARCH}.
+If you are at all unsure, respond with {YES_SEARCH}.
 Respond with EXACTLY and ONLY "{YES_SEARCH}" or "{SKIP_SEARCH}"
 
 Follow Up Input:
