@@ -1,0 +1,68 @@
+name: Build and Push Web Image on Tag
+
+on:
+  push:
+    tags:
+      - "*"
+
+env:
+  GarProjectID: ${{ vars.GCR_PROJECT_ID }}
+  GarImageName: prod-danswer-backend-gke
+  GarRepo: mv-danswer
+  GarCacheRepo: mv-apps-container-cache
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Git repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCP_WIP }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Login to GAR
+        uses: docker/login-action@v3
+        with:
+          registry: us-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - uses: docker/metadata-action@v5
+        id: metadata
+        with:
+          images: |
+            us-docker.pkg.dev/${{ env.GarProjectID }}/${{ env.GarRepo }}/${{ env.GarImageName }}:${{ github.ref_name }}
+
+      - name: Web Image Docker Build and Push
+        uses: int128/kaniko-action@v1
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          cache: true
+          cache-repository: us-docker.pkg.dev/${{ env.GarProjectID }}/${{ env.GarCacheRepo }}/${{ env.GarImageName }}
+          labels: ${{ steps.metadata.outputs.labels }}
+          kaniko-args: |
+            --snapshot-mode=redo
+            --cache-ttl=730h
+          tags: |
+            us-docker.pkg.dev/${{ env.GarProjectID }}/${{ env.GarRepo }}/${{ env.GarImageName }}:${{ github.ref_name }}
+            us-docker.pkg.dev/${{ env.GarProjectID }}/${{ env.GarRepo }}/${{ env.GarImageName }}:latest
+          build-args: |
+            DANSWER_VERSION=${{ github.ref_name }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: docker.io/danswer/danswer-web-server:${{ github.ref_name }}
+          severity: "CRITICAL,HIGH"
