@@ -57,7 +57,6 @@ jobs:
           cache-repository: us-docker.pkg.dev/${{ env.GarProjectID }}/${{ env.GarCacheRepo }}/${{ env.GarImageName }}
           labels: ${{ steps.metadata.outputs.labels }}
           kaniko-args: |
-            --custom-platform=linux/arm64
             --snapshot-mode=redo
             --cache-ttl=730h
           tags: |
