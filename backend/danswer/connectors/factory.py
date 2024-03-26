@@ -6,6 +6,7 @@ from danswer.connectors.bookstack.connector import BookstackConnector
 from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.danswer_jira.connector import JiraConnector
 from danswer.connectors.document360.connector import Document360Connector
+from danswer.connectors.exchange.connector import ExchangeConnector
 from danswer.connectors.file.connector import LocalFileConnector
 from danswer.connectors.github.connector import GithubConnector
 from danswer.connectors.gitlab.connector import GitlabConnector
@@ -70,6 +71,7 @@ def identify_connector_class(
         DocumentSource.ZENDESK: ZendeskConnector,
         DocumentSource.LOOPIO: LoopioConnector,
         DocumentSource.SHAREPOINT: SharepointConnector,
+        DocumentSource.EXCHANGE: ExchangeConnector,
     }
     connector_by_source = connector_map.get(source, {})
 

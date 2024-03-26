@@ -33,6 +33,7 @@ export type ValidSources =
   | "google_sites"
   | "loopio"
   | "sharepoint"
+  | "exchange"
   | "zendesk";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
@@ -86,6 +87,12 @@ export interface GitlabConfig {
   project_name: string;
   include_mrs: boolean;
   include_issues: boolean;
+}
+
+export interface ExchangeConfig {
+  exchange_categories?: string[];
+  exchange_folders?: string[];
+  exchange_max_poll_size?: number;
 }
 
 export interface GoogleDriveConfig {
@@ -220,6 +227,13 @@ export interface GithubCredentialJson {
 export interface GitlabCredentialJson {
   gitlab_url: string;
   gitlab_access_token: string;
+}
+
+export interface ExchangeCredentialJson {
+  aad_app_id: string;
+  aad_app_secret: string;
+  aad_tenant_id: string;
+  aad_user_id: string;
 }
 
 export interface BookstackCredentialJson {

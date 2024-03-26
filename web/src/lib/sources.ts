@@ -2,6 +2,7 @@ import {
   BookstackIcon,
   ConfluenceIcon,
   Document360Icon,
+  ExchangeIcon,
   FileIcon,
   GithubIcon,
   GitlabIcon,
@@ -77,6 +78,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   confluence: {
     icon: ConfluenceIcon,
     displayName: "Confluence",
+    category: SourceCategory.AppConnection,
+  },
+  exchange: {
+    icon: ExchangeIcon,
+    displayName: "Exchange",
     category: SourceCategory.AppConnection,
   },
   jira: {
