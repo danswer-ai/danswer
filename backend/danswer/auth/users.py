@@ -51,7 +51,7 @@ from danswer.db.models import User
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
-from danswer.utils.variable_functionality import fetch_versioned_implementation
+from danswer.utils.variable_functionality import VariableFunctionalityIdentifier, variable_functionality_manager, fetch_versioned_implementation
 
 
 logger = setup_logger()
@@ -59,7 +59,7 @@ logger = setup_logger()
 USER_WHITELIST_FILE = "/home/danswer_whitelist.txt"
 _user_whitelist: list[str] | None = None
 
-
+@variable_functionality_manager.register(VariableFunctionalityIdentifier.VERIFY_AUTH_SETTING)
 def verify_auth_setting() -> None:
     if AUTH_TYPE not in [AuthType.DISABLED, AuthType.BASIC, AuthType.GOOGLE_OAUTH]:
         raise ValueError(
