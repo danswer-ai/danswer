@@ -15,11 +15,11 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.one_shot_answer.answer_question import stream_search_answer
 from danswer.one_shot_answer.models import DirectQARequest
-from danswer.search.access_filters import build_access_filters_for_user
-from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.models import IndexFilters
 from danswer.search.models import SearchDoc
-from danswer.search.search_runner import chunks_to_search_docs
+from danswer.search.preprocessing.access_filters import build_access_filters_for_user
+from danswer.search.preprocessing.danswer_helper import recommend_search_flow
+from danswer.search.utils import chunks_to_search_docs
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
 from danswer.server.query_and_chat.models import AdminSearchRequest

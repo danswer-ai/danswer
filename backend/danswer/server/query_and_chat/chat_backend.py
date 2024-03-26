@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
-from danswer.chat.chat_utils import compute_max_document_tokens
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.process_message import stream_chat_message
 from danswer.db.chat import create_chat_session
@@ -25,6 +24,7 @@ from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.models import User
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
+from danswer.llm.answering.prompts.citations_prompt import compute_max_document_tokens
 from danswer.secondary_llm_flows.chat_session_naming import (
     get_renamed_conversation_name,
 )

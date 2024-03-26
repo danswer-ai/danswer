@@ -36,8 +36,8 @@ from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.connectors.models import InputType
 from danswer.dynamic_configs.interface import JSON_ro
-from danswer.search.models import RecencyBiasSetting
-from danswer.search.models import SearchType
+from danswer.search.enums import RecencyBiasSetting
+from danswer.search.enums import SearchType
 
 
 class IndexingStatus(str, PyEnum):
