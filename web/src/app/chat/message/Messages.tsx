@@ -14,6 +14,7 @@ import { SearchSummary, ShowHideDocsButton } from "./SearchSummary";
 import { SourceIcon } from "@/components/SourceIcon";
 import { ThreeDots } from "react-loader-spinner";
 import { SkippedSearch } from "./SkippedSearch";
+import remarkGfm from "remark-gfm";
 
 export const Hoverable: React.FC<{
   children: JSX.Element;
@@ -132,6 +133,7 @@ export const AIMessage = ({
                         />
                       ),
                     }}
+                    remarkPlugins={[remarkGfm]}
                   >
                     {content}
                   </ReactMarkdown>
@@ -255,6 +257,7 @@ export const HumanMessage = ({
                       />
                     ),
                   }}
+                  remarkPlugins={[remarkGfm]}
                 >
                   {content}
                 </ReactMarkdown>
