@@ -3,27 +3,22 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
-from danswer.chat.chat_utils import compute_max_document_tokens
 from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
-from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTAGE
 from danswer.db.chat import get_persona_by_id
-from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
 from danswer.db.models import User
-from danswer.document_index.factory import get_default_document_index
+from danswer.llm.answering.prompts.citations_prompt import compute_max_document_tokens
 from danswer.llm.utils import get_default_llm_version
 from danswer.llm.utils import get_max_input_tokens
 from danswer.one_shot_answer.answer_question import get_search_answer
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
-from danswer.search.access_filters import build_access_filters_for_user
-from danswer.search.models import IndexFilters
 from danswer.search.models import SavedSearchDoc
-from danswer.search.models import SearchQuery
+from danswer.search.models import SearchRequest
 from danswer.search.models import SearchResponse
-from danswer.search.search_runner import chunks_to_search_docs
-from danswer.search.search_runner import full_chunk_search
+from danswer.search.pipeline import SearchPipeline
+from danswer.search.utils import chunks_to_search_docs
 from danswer.server.query_and_chat.models import DocumentSearchRequest
 from danswer.utils.logger import setup_logger
 
@@ -42,59 +37,31 @@ def handle_search_request(
 ) -> SearchResponse:
     """Simple search endpoint, does not create a new message or records in the DB"""
     query = search_request.message
-    filters = search_request.retrieval_options.filters
-
     logger.info(f"Received document search query: {query}")
 
-    user_acl_filters = build_access_filters_for_user(user, db_session)
-    final_filters = IndexFilters(
-        source_type=filters.source_type if filters else None,
-        document_set=filters.document_set if filters else None,
-        time_cutoff=filters.time_cutoff if filters else None,
-        tags=filters.tags if filters else None,
-        access_control_list=user_acl_filters,
+    search_pipeline = SearchPipeline(
+        search_request=SearchRequest(
+            query=query,
+            search_type=search_request.search_type,
+            human_selected_filters=search_request.retrieval_options.filters,
+            enable_auto_detect_filters=search_request.retrieval_options.enable_auto_detect_filters,
+            persona=None,  # For simplicity, default settings should be good for this search
+            offset=search_request.retrieval_options.offset,
+            limit=search_request.retrieval_options.limit,
+        ),
+        user=user,
+        db_session=db_session,
+        bypass_acl=False,
     )
-
-    limit = (
-        search_request.retrieval_options.limit
-        if search_request.retrieval_options.limit is not None
-        else NUM_RETURNED_HITS
-    )
-    offset = (
-        search_request.retrieval_options.offset
-        if search_request.retrieval_options.offset is not None
-        else 0
-    )
-    search_query = SearchQuery(
-        query=query,
-        search_type=search_request.search_type,
-        filters=final_filters,
-        recency_bias_multiplier=search_request.recency_bias_multiplier,
-        num_hits=limit,
-        offset=offset,
-        skip_rerank=search_request.skip_rerank,
-        skip_llm_chunk_filter=disable_llm_chunk_filter,
-    )
-
-    db_embedding_model = get_current_db_embedding_model(db_session)
-    document_index = get_default_document_index(
-        primary_index_name=db_embedding_model.index_name, secondary_index_name=None
-    )
-
-    top_chunks, llm_selection = full_chunk_search(
-        query=search_query, document_index=document_index, db_session=db_session
-    )
-
+    top_chunks = search_pipeline.reranked_docs
+    relevant_chunk_indices = search_pipeline.relevant_chunk_indicies
     top_docs = chunks_to_search_docs(top_chunks)
-    llm_selection_indices = [
-        index for index, value in enumerate(llm_selection) if value
-    ]
 
     # No need to save the docs for this API
     fake_saved_docs = [SavedSearchDoc.from_search_doc(doc) for doc in top_docs]
 
     return SearchResponse(
-        top_documents=fake_saved_docs, llm_indices=llm_selection_indices
+        top_documents=fake_saved_docs, llm_indices=relevant_chunk_indices
     )
 
 
