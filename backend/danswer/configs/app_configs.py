@@ -247,3 +247,5 @@ LOG_VESPA_TIMING_INFORMATION = (
 DISABLE_TELEMETRY = os.environ.get("DISABLE_TELEMETRY", "").lower() == "true"
 # notset, debug, info, warning, error, or critical
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "info")
+
+PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH","/root/.cache/ms-playwright/chromium-1097/chrome-linux/chrome")
