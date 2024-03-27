@@ -16,6 +16,7 @@ from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.constants import MessageType
 from danswer.db.chat import create_chat_session
+from danswer.db.chat import create_db_search_doc
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import get_prompt_by_id
@@ -202,6 +203,11 @@ def stream_answer_objects(
     )
     yield from answer.processed_streamed_output
 
+    reference_db_search_docs = [
+        create_db_search_doc(server_search_doc=top_doc, db_session=db_session)
+        for top_doc in top_docs
+    ]
+
     # Saving Gen AI answer and responding with message info
     gen_ai_response_message = create_new_chat_message(
         chat_session_id=chat_session.id,
@@ -211,7 +217,7 @@ def stream_answer_objects(
         token_count=len(llm_tokenizer(answer.llm_answer)),
         message_type=MessageType.ASSISTANT,
         error=None,
-        reference_docs=None,  # Don't need to save reference docs for one shot flow
+        reference_docs=reference_db_search_docs,
         db_session=db_session,
         commit=True,
     )
