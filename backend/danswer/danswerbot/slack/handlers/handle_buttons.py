@@ -17,6 +17,9 @@ from danswer.danswerbot.slack.config import get_slack_bot_config_for_channel
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import VIEW_DOC_FEEDBACK_ID
+from danswer.danswerbot.slack.handlers.handle_message import (
+    remove_scheduled_feedback_reminder,
+)
 from danswer.danswerbot.slack.utils import build_feedback_id
 from danswer.danswerbot.slack.utils import decompose_action_id
 from danswer.danswerbot.slack.utils import fetch_groupids_from_names
@@ -70,6 +73,7 @@ def handle_doc_feedback_button(
 def handle_slack_feedback(
     feedback_id: str,
     feedback_type: str,
+    feedback_msg_reminder: str,
     client: WebClient,
     user_id_to_post_confirmation: str,
     channel_id_to_post_confirmation: str,
@@ -87,6 +91,11 @@ def handle_slack_feedback(
                 chat_message_id=message_id,
                 user_id=None,  # no "user" for Slack bot for now
                 db_session=db_session,
+            )
+            remove_scheduled_feedback_reminder(
+                client=client,
+                channel=user_id_to_post_confirmation,
+                msg_id=feedback_msg_reminder,
             )
         elif feedback_type in [
             SearchFeedbackType.ENDORSE.value,
