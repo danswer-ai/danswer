@@ -22,8 +22,7 @@ postgresql:
     auth:
       existingSecret: danswer-secrets
       secretKeys:
-        adminPasswordKey: postgres_password
-        
+        adminPasswordKey: postgres_password                
     
 
 nginx:
