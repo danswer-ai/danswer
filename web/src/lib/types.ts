@@ -33,7 +33,8 @@ export type ValidSources =
   | "google_sites"
   | "loopio"
   | "sharepoint"
-  | "zendesk";
+  | "zendesk"
+  | "axero";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
@@ -325,6 +326,10 @@ export interface SharepointCredentialJson {
   aad_client_id: string;
   aad_client_secret: string;
   aad_directory_id: string;
+}
+
+export interface AxeroCredentialJson {
+  axero_api_token: string;
 }
 
 // DELETION
