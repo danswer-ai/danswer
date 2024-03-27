@@ -345,9 +345,10 @@ persistence:
     accessModes:
       - ReadWriteOnce
     size: 1Gi
-  dynamic:
+  api:
     enabled: true
-    existingClaim: ""
+    dynamic-storage-claim-name: "dynamic-pvc"
+    file-connector-storage-claim-name: "file-connector-pvc"
     storageClassName: ""
     accessModes:
       - ReadWriteOnce
