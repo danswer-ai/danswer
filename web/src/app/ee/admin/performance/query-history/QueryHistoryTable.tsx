@@ -61,6 +61,7 @@ function QueryHistoryTableRow({
         <FeedbackBadge feedback={finalFeedback} />
       </TableCell>
       <TableCell>{chatSessionSnapshot.user_email || "-"}</TableCell>
+      <TableCell>{chatSessionSnapshot.persona_name || "Unknown"}</TableCell>
       <TableCell>
         {timestampToReadableDate(chatSessionSnapshot.time_created)}
       </TableCell>
@@ -144,6 +145,7 @@ export function QueryHistoryTable() {
                 <TableHeaderCell>First AI Response</TableHeaderCell>
                 <TableHeaderCell>Feedback</TableHeaderCell>
                 <TableHeaderCell>User</TableHeaderCell>
+                <TableHeaderCell>Persona</TableHeaderCell>
                 <TableHeaderCell>Date</TableHeaderCell>
               </TableRow>
             </TableHead>

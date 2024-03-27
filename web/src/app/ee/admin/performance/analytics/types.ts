@@ -31,5 +31,6 @@ export interface ChatSessionSnapshot {
   user_email: string | null;
   name: string | null;
   messages: MessageSnapshot[];
+  persona_name: string | null;
   time_created: string;
 }
