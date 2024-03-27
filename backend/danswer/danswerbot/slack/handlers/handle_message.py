@@ -114,8 +114,9 @@ def schedule_feedback_reminder(
 
     try:
         permalink = client.chat_getPermalink(
-            channel=details.channel_to_respond, message_ts=details.msg_to_respond
-        )  # type:ignore
+            channel=details.channel_to_respond,
+            message_ts=details.msg_to_respond,  # type:ignore
+        )
     except SlackApiError as e:
         logger.error(f"Unable to generate the feedback reminder permalink: {e}")
         return None
@@ -128,8 +129,10 @@ def schedule_feedback_reminder(
             channel=details.sender,  # type:ignore
             post_at=int(future.timestamp()),
             blocks=[
-                get_feedback_reminder_blocks(thread_link=permalink.data["permalink"])
-            ],  # type:ignore
+                get_feedback_reminder_blocks(
+                    thread_link=permalink.data["permalink"]  # type:ignore
+                )
+            ],
             text="",
         )
         logger.info("Scheduled feedback reminder configured")
@@ -149,8 +152,8 @@ def remove_scheduled_feedback_reminder(
 
     try:
         client.chat_deleteScheduledMessage(
-            channel=channel, scheduled_message_id=msg_id
-        )  # type:ignore
+            channel=channel, scheduled_message_id=msg_id  # type:ignore
+        )
         logger.info("Scheduled feedback reminder deleted")
     except SlackApiError as e:
         if e.response["error"] == "invalid_scheduled_message_id":
