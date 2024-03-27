@@ -99,7 +99,9 @@ def send_msg_ack_to_user(details: SlackMessageInfo, client: WebClient) -> None:
     )
 
 
-def schedule_feedback_reminder(details: SlackMessageInfo, client: WebClient) -> str:
+def schedule_feedback_reminder(
+    details: SlackMessageInfo, client: WebClient
+) -> str | None:
     logger = cast(
         logging.Logger,
         ChannelIdAdapter(
@@ -108,36 +110,37 @@ def schedule_feedback_reminder(details: SlackMessageInfo, client: WebClient) -> 
     )
     if not DANSWER_BOT_FEEDBACK_REMINDER:
         logger.info("Scheduled feedback reminder disabled...")
-        return
+        return None
 
     try:
         permalink = client.chat_getPermalink(
             channel=details.channel_to_respond, message_ts=details.msg_to_respond
-        )
+        )  # type:ignore
     except SlackApiError as e:
         logger.error(f"Unable to generate the feedback reminder permalink: {e}")
-        return
+        return None
 
     now = datetime.datetime.now()
     future = now + datetime.timedelta(minutes=DANSWER_BOT_FEEDBACK_REMINDER)
 
     try:
         response = client.chat_scheduleMessage(
-            channel=details.sender,
+            channel=details.sender,  # type:ignore
             post_at=int(future.timestamp()),
             blocks=[
                 get_feedback_reminder_blocks(thread_link=permalink.data["permalink"])
-            ],
+            ],  # type:ignore
             text="",
         )
         logger.info("Scheduled feedback reminder configured")
-        return response.data["scheduled_message_id"]
+        return response.data["scheduled_message_id"]  # type:ignore
     except SlackApiError as e:
         logger.error(f"Unable to generate the feedback reminder message: {e}")
+        return None
 
 
 def remove_scheduled_feedback_reminder(
-    client: WebClient, channel: str, msg_id: str
+    client: WebClient, channel: str | None, msg_id: str
 ) -> None:
     logger = cast(
         logging.Logger,
@@ -145,7 +148,9 @@ def remove_scheduled_feedback_reminder(
     )
 
     try:
-        client.chat_deleteScheduledMessage(channel=channel, scheduled_message_id=msg_id)
+        client.chat_deleteScheduledMessage(
+            channel=channel, scheduled_message_id=msg_id
+        )  # type:ignore
         logger.info("Scheduled feedback reminder deleted")
     except SlackApiError as e:
         if e.response["error"] == "invalid_scheduled_message_id":
@@ -158,7 +163,7 @@ def handle_message(
     message_info: SlackMessageInfo,
     channel_config: SlackBotConfig | None,
     client: WebClient,
-    feedback_reminder_id: str,
+    feedback_reminder_id: str | None,
     num_retries: int = DANSWER_BOT_NUM_RETRIES,
     answer_generation_timeout: int = DANSWER_BOT_ANSWER_GENERATION_TIMEOUT,
     should_respond_with_error_msgs: bool = DANSWER_BOT_DISPLAY_ERROR_MSGS,

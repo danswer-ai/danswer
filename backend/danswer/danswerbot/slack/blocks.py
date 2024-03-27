@@ -337,7 +337,7 @@ def build_qa_response_blocks(
     skip_quotes: bool = False,
     process_message_for_citations: bool = False,
     skip_ai_feedback: bool = False,
-    feedback_reminder_id: str = None,
+    feedback_reminder_id: str | None = None,
 ) -> list[Block]:
     if DISABLE_GENERATIVE_AI:
         return []
