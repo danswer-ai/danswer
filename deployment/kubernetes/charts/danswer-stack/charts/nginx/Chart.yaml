@@ -1,0 +1,36 @@
+annotations:
+  category: Infrastructure
+  images: |
+    - name: git
+      image: docker.io/bitnami/git:2.43.2-debian-12-r2
+    - name: nginx
+      image: docker.io/bitnami/nginx:1.25.4-debian-12-r2
+    - name: nginx-exporter
+      image: docker.io/bitnami/nginx-exporter:1.1.0-debian-12-r7
+  licenses: Apache-2.0
+apiVersion: v2
+appVersion: 1.25.4
+dependencies:
+- name: common
+  repository: oci://registry-1.docker.io/bitnamicharts
+  tags:
+  - bitnami-common
+  version: 2.x.x
+description: NGINX Open Source is a web server that can be also used as a reverse
+  proxy, load balancer, and HTTP cache. Recommended for high-demanding sites due to
+  its ability to provide faster content.
+home: https://bitnami.com
+icon: https://bitnami.com/assets/stacks/nginx/img/nginx-stack-220x234.png
+keywords:
+- nginx
+- http
+- web
+- www
+- reverse proxy
+maintainers:
+- name: VMware, Inc.
+  url: https://github.com/bitnami/charts
+name: nginx
+sources:
+- https://github.com/bitnami/charts/tree/main/bitnami/nginx
+version: 15.14.0
