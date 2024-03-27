@@ -6,9 +6,13 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+
+config:
+  envConfigMapName: env-configmap
+
 serviceAccount:
   # Specifies whether a service account should be created
-  create: true
+  create: false
   # Automatically mount a ServiceAccount's API credentials?
   automount: true
   # Annotations to add to the service account
