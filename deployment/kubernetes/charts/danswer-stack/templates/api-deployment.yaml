@@ -73,23 +73,19 @@ spec:
           volumeMounts:
             - name: dynamic-storage
               mountPath: /home/storage
-            - name: connector-storage
+            - name: file-connector-storage
               mountPath: /home/file_connector_storage
           {{- if .Values.api.volumeMounts }}
             {{- .Values.api.volumeMounts | toYaml | nindent 12}}
           {{- end }}
       volumes:
         - name: dynamic-storage
-          {{- if .Values.persistence.dynamic.enabled }}
           persistentVolumeClaim:
-            claimName: {{ .Values.persistence.dynamic.existingClaim | default (list (include "danswer-stack.fullname" .) "dynamic" | join "-") }}
-          {{- else }}
-          emptyDir: { }
-          {{- end }}
-        - name: connector-storage
+            claimName: {{ .Values.persistence.api.dynamic-storage-claim-name | default (list (include "danswer-stack.fullname" .) "dynamic" | join "-") }}
+        - name: file-connector-storage
           {{- if .Values.persistence.connector.enabled }}
           persistentVolumeClaim:
-            claimName: {{ .Values.persistence.connector.existingClaim | default (list (include "danswer-stack.fullname" .) "connector" | join "-") }}
+            claimName: {{ .Values.persistence.api.file-connector-storage-claim-name | default (list (include "danswer-stack.fullname" .) "connector" | join "-") }}
           {{- else }}
           emptyDir: { }
           {{- end }}
