@@ -3,6 +3,7 @@ import {
   ConfluenceIcon,
   Document360Icon,
   FileIcon,
+  FreshdeskIcon,
   GithubIcon,
   GitlabIcon,
   GlobeIcon,
@@ -157,6 +158,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   requesttracker: {
     icon: RequestTrackerIcon,
     displayName: "Request Tracker",
+    category: SourceCategory.AppConnection,
+  },
+  freshdesk: {
+    icon: FreshdeskIcon,
+    displayName: "Freshdesk",
     category: SourceCategory.AppConnection,
   },
 };

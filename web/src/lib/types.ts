@@ -33,7 +33,8 @@ export type ValidSources =
   | "google_sites"
   | "loopio"
   | "sharepoint"
-  | "zendesk";
+  | "zendesk"
+  | "freshdesk";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
@@ -162,6 +163,12 @@ export interface GoogleSitesConfig {
 }
 
 export interface ZendeskConfig {}
+
+export interface FreshdeskConfig {
+  api_key: string;
+  domain: string;
+  password: string;
+}
 
 export interface IndexAttemptSnapshot {
   id: number;
@@ -325,6 +332,12 @@ export interface SharepointCredentialJson {
   aad_client_id: string;
   aad_client_secret: string;
   aad_directory_id: string;
+}
+
+export interface FreshdeskCredentialJson {
+  freshdesk_api_key: string;
+  freshdesk_domain: string;
+  freshdesk_password: string;
 }
 
 // DELETION
