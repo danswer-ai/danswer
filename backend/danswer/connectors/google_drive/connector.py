@@ -136,13 +136,17 @@ def _get_folder_id(
     """
     Get the ID of a folder given its name and the ID of its parent folder.
     """
-    query = f"'{parent_id}' in parents and name='{folder_name}' and "
+    query = f"name='{folder_name}' and "
+    if include_shared:
+        query += f"('{parent_id}' in parents or sharedWithMe) and "
+    else:
+        query += f"'{parent_id}' in parents and "
+
     if follow_shortcuts:
         query += f"(mimeType='{DRIVE_FOLDER_TYPE}' or mimeType='{DRIVE_SHORTCUT_TYPE}')"
     else:
         query += f"mimeType='{DRIVE_FOLDER_TYPE}'"
 
-    # TODO: support specifying folder path in shared drive rather than just `My Drive`
     results = add_retries(
         lambda: (
             service.files()
