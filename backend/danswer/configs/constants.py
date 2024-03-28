@@ -88,6 +88,7 @@ class DocumentSource(str, Enum):
     LOOPIO = "loopio"
     SHAREPOINT = "sharepoint"
     AXERO = "axero"
+    FRESHDESK = "freshdesk"
 
 
 class DocumentIndexType(str, Enum):
