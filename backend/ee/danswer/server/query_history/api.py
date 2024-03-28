@@ -141,7 +141,7 @@ def fetch_and_process_chat_session_history(
     limit: int | None = 500,
 ) -> list[ChatSessionSnapshot]:
     chat_sessions = fetch_chat_sessions_by_time(
-        start=start, end=end, db_session=db_session
+        start=start, end=end, db_session=db_session, limit=limit
     )
 
     chat_session_snapshots = [
@@ -149,29 +149,32 @@ def fetch_and_process_chat_session_history(
         for chat_session in chat_sessions
     ]
 
+    valid_snapshots = [
+        snapshot for snapshot in chat_session_snapshots if snapshot is not None
+    ]
+
     if feedback_type:
-        chat_session_snapshots = [
-            chat_session_snapshot
-            for chat_session_snapshot in chat_session_snapshots
-            if any(
-                message.feedback == feedback_type
-                for message in chat_session_snapshot.messages
-            )
+        valid_snapshots = [
+            snapshot
+            for snapshot in valid_snapshots
+            if any(message.feedback == feedback_type for message in snapshot.messages)
         ]
 
-    chat_session_snapshots.sort(key=lambda x: x.time_created, reverse=True)
-
-    return chat_session_snapshots[:limit]
+    return valid_snapshots
 
 
 def snapshot_from_chat_session(
     chat_session: ChatSession,
     db_session: Session,
-) -> ChatSessionSnapshot:
-    last_message, messages = create_chat_chain(
-        chat_session_id=chat_session.id, db_session=db_session
-    )
-    messages.append(last_message)
+) -> ChatSessionSnapshot | None:
+    try:
+        # Older chats may not have the right structure
+        last_message, messages = create_chat_chain(
+            chat_session_id=chat_session.id, db_session=db_session
+        )
+        messages.append(last_message)
+    except RuntimeError:
+        return None
 
     return ChatSessionSnapshot(
         id=chat_session.id,
@@ -223,8 +226,17 @@ def get_chat_session_admin(
         raise HTTPException(
             400, f"Chat session with id '{chat_session_id}' does not exist."
         )
+    snapshot = snapshot_from_chat_session(
+        chat_session=chat_session, db_session=db_session
+    )
 
-    return snapshot_from_chat_session(chat_session=chat_session, db_session=db_session)
+    if snapshot is None:
+        raise HTTPException(
+            400,
+            f"Could not create snapshot for chat session with id '{chat_session_id}'",
+        )
+
+    return snapshot
 
 
 @router.get("/admin/query-history-csv")
