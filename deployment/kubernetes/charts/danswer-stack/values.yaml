@@ -233,16 +233,6 @@ background:
 
   nodeSelector: {}
   tolerations: []
-  affinity:
-    podAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchExpressions:
-              - key: scope
-                operator: In
-                values:
-                  - danswer-backend
-          topologyKey: "kubernetes.io/hostname"
 
 vespa:
   replicaCount: 1
