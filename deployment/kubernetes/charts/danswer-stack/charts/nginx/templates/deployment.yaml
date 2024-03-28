@@ -1,0 +1,356 @@
+{{- /*
+Copyright VMware, Inc.
+SPDX-License-Identifier: APACHE-2.0
+*/}}
+
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ include "common.names.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  {{- if .Values.updateStrategy }}
+  strategy: {{- toYaml .Values.updateStrategy | nindent 4 }}
+  {{- end }}
+  {{- $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "common.labels.standard" ( dict "customLabels" $podLabels "context" $ ) | nindent 8 }}
+      annotations:
+        {{- if .Values.podAnnotations }}
+        {{- include "common.tplvalues.render" ( dict "value" .Values.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+        {{- if and .Values.metrics.enabled .Values.metrics.podAnnotations }}
+        {{- include "common.tplvalues.render" ( dict "value" .Values.metrics.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+        {{- if and .Values.serverBlock (not .Values.existingServerBlockConfigmap) }}
+        checksum/server-block-configuration: {{ include (print $.Template.BasePath "/server-block-configmap.yaml") . | sha256sum }}
+        {{- end }}
+    spec:
+      {{- include "nginx.imagePullSecrets" . | nindent 6 }}
+      shareProcessNamespace: {{ .Values.sidecarSingleProcessNamespace }}
+      serviceAccountName: {{ template "nginx.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- if .Values.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.affinity }}
+      affinity: {{- include "common.tplvalues.render" (dict "value" .Values.affinity "context" $) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAffinityPreset "customLabels" $podLabels "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAntiAffinityPreset "customLabels" $podLabels "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.nodeAffinityPreset.type "key" .Values.nodeAffinityPreset.key "values" .Values.nodeAffinityPreset.values) | nindent 10 }}
+      {{- end }}
+      hostNetwork: {{ .Values.hostNetwork }}
+      hostIPC: {{ .Values.hostIPC }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName | quote }}
+      {{- end }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" (dict "value" .Values.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.schedulerName }}
+      schedulerName: {{ .Values.schedulerName | quote }}
+      {{- end }}
+      {{- if .Values.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "common.tplvalues.render" (dict "value" .Values.topologySpreadConstraints "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.podSecurityContext.enabled }}
+      securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.podSecurityContext "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- end }}
+      initContainers:
+        - name: preserve-logs-symlinks
+          image: {{ include "nginx.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.resources }}
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          {{- else if ne .Values.resourcesPreset "none" }}
+          resources: {{- include "common.resources.preset" (dict "type" .Values.resourcesPreset) | nindent 12 }}
+          {{- end }}
+          command:
+            - /bin/bash
+          args:
+            - -ec
+            - |
+              #!/bin/bash
+              . /opt/bitnami/scripts/libfs.sh
+              # We copy the logs folder because it has symlinks to stdout and stderr
+              if ! is_dir_empty /opt/bitnami/nginx/logs; then
+                cp -r /opt/bitnami/nginx/logs /emptydir/app-logs-dir
+              fi
+          volumeMounts:
+            - name: empty-dir
+              mountPath: /emptydir
+      {{- if or .Values.cloneStaticSiteFromGit.enabled .Values.initContainers }}
+        {{- if .Values.cloneStaticSiteFromGit.enabled }}
+        - name: git-clone-repository
+          image: {{ include "nginx.cloneStaticSiteFromGit.image" . }}
+          imagePullPolicy: {{ .Values.cloneStaticSiteFromGit.image.pullPolicy | quote }}
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.containerSecurityContext "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.cloneStaticSiteFromGit.gitClone.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.cloneStaticSiteFromGit.gitClone.command "context" $) | nindent 12 }}
+          {{- else }}
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              [[ -f "/opt/bitnami/scripts/git/entrypoint.sh" ]] && source "/opt/bitnami/scripts/git/entrypoint.sh"
+              git clone {{ .Values.cloneStaticSiteFromGit.repository }} --branch {{ .Values.cloneStaticSiteFromGit.branch }} /tmp/app
+              [[ "$?" -eq 0 ]] && shopt -s dotglob && rm -rf /app/* && mv /tmp/app/* /app/
+          {{- end }}
+          {{- if .Values.cloneStaticSiteFromGit.gitClone.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.cloneStaticSiteFromGit.gitClone.args "context" $) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: empty-dir
+              mountPath: /tmp
+              subPath: tmp-dir
+            - name: staticsite
+              mountPath: /app
+            {{- if .Values.cloneStaticSiteFromGit.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.cloneStaticSiteFromGit.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- end }}
+          {{- if .Values.cloneStaticSiteFromGit.extraEnvVars }}
+          env: {{- include "common.tplvalues.render" (dict "value" .Values.cloneStaticSiteFromGit.extraEnvVars "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.cloneStaticSiteFromGit.extraEnvVarsSecret }}
+          envFrom:
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.cloneStaticSiteFromGit.extraEnvVarsSecret "context" $) }}
+          {{- end }}
+        {{- end }}
+        {{- if .Values.initContainers }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.initContainers "context" $) | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      containers:
+        {{- if .Values.cloneStaticSiteFromGit.enabled }}
+        - name: git-repo-syncer
+          image: {{ include "nginx.cloneStaticSiteFromGit.image" . }}
+          imagePullPolicy: {{ .Values.cloneStaticSiteFromGit.image.pullPolicy | quote }}
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.containerSecurityContext "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.cloneStaticSiteFromGit.gitSync.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.cloneStaticSiteFromGit.gitSync.command "context" $) | nindent 12 }}
+          {{- else }}
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              [[ -f "/opt/bitnami/scripts/git/entrypoint.sh" ]] && source "/opt/bitnami/scripts/git/entrypoint.sh"
+              while true; do
+                  cd /app && git -c safe.directory=/app pull origin {{ .Values.cloneStaticSiteFromGit.branch }}
+                  sleep {{ .Values.cloneStaticSiteFromGit.interval }}
+              done
+          {{- end }}
+          {{- if .Values.cloneStaticSiteFromGit.gitSync.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.cloneStaticSiteFromGit.gitSync.args "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.cloneStaticSiteFromGit.gitSync.resources }}
+          resources: {{- toYaml .Values.cloneStaticSiteFromGit.gitSync.resources | nindent 12 }}
+          {{- else if ne .Values.cloneStaticSiteFromGit.gitSync.resourcesPreset "none" }}
+          resources: {{- include "common.resources.preset" (dict "type" .Values.cloneStaticSiteFromGit.gitSync.resourcesPreset) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: empty-dir
+              mountPath: /tmp
+              subPath: tmp-dir
+            - name: staticsite
+              mountPath: /app
+            {{- if .Values.cloneStaticSiteFromGit.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.cloneStaticSiteFromGit.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- end }}
+          {{- if .Values.cloneStaticSiteFromGit.extraEnvVars }}
+          env: {{- include "common.tplvalues.render" (dict "value" .Values.cloneStaticSiteFromGit.extraEnvVars "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.cloneStaticSiteFromGit.extraEnvVarsSecret }}
+          envFrom:
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.cloneStaticSiteFromGit.extraEnvVarsSecret "context" $) }}
+          {{- end }}
+        {{- end }}
+        - name: nginx
+          image: {{ include "nginx.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.containerSecurityContext "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.diagnosticMode.enabled }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 12 }}
+          {{- else if .Values.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.diagnosticMode.enabled }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.args "context" $) | nindent 12 }}
+          {{- else if .Values.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.args "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            - name: BITNAMI_DEBUG
+              value: {{ ternary "true" "false" .Values.image.debug | quote }}
+            {{- if .Values.containerPorts.http }}
+            - name: NGINX_HTTP_PORT_NUMBER
+              value: {{ .Values.containerPorts.http | quote }}
+            {{- end }}
+            {{- if .Values.containerPorts.https }}
+            - name: NGINX_HTTPS_PORT_NUMBER
+              value: {{ .Values.containerPorts.https | quote }}
+            {{- end }}
+            {{- if .Values.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          ports:
+            {{- if .Values.containerPorts.http }}
+            - name: http
+              containerPort: {{ .Values.containerPorts.http }}
+            {{- end }}
+            {{- if .Values.containerPorts.https }}
+            - name: https
+              containerPort: {{ .Values.containerPorts.https }}
+            {{- end }}
+            {{- if .Values.extraContainerPorts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.extraContainerPorts "context" $) | nindent 12 }}
+            {{- end }}
+          {{- if not .Values.diagnosticMode.enabled }}
+          {{- if .Values.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.customLivenessProbe "context" $) | nindent 12 }}
+          {{- else if .Values.livenessProbe.enabled }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.livenessProbe "enabled") "context" $) | nindent 12 }}
+            tcpSocket:
+              port: {{ ternary "http" "https" (not .Values.containerPorts.https) }}
+          {{- end }}
+          {{- if .Values.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.customReadinessProbe "context" $) | nindent 12 }}
+          {{- else if .Values.readinessProbe.enabled }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.readinessProbe "enabled") "context" $) | nindent 12 }}
+            tcpSocket:
+              port: {{ ternary "http" "https" (not .Values.containerPorts.https) }}
+          {{- end }}
+          {{- if .Values.customStartupProbe }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.customStartupProbe "context" $) | nindent 12 }}
+          {{- else if .Values.startupProbe.enabled }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.startupProbe "enabled") "context" $) | nindent 12 }}
+            tcpSocket:
+              port: {{ ternary "http" "https" (not .Values.containerPorts.https) }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.resources }}
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          {{- else if ne .Values.resourcesPreset "none" }}
+          resources: {{- include "common.resources.preset" (dict "type" .Values.resourcesPreset) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: empty-dir
+              mountPath: /tmp
+              subPath: tmp-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/nginx/conf
+              subPath: app-conf-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/nginx/logs
+              subPath: app-logs-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/nginx/tmp
+              subPath: app-tmp-dir
+            {{- if or .Values.serverBlock .Values.existingServerBlockConfigmap }}
+            - name: nginx-server-block
+              mountPath: /opt/bitnami/nginx/conf/server_blocks
+            {{- end }}
+            {{- if (include "nginx.useStaticSite" .) }}
+            - name: staticsite
+              mountPath: /app
+            {{- end }}
+            {{- if .Values.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" ( dict "value" .Values.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- end }}
+        {{- if .Values.metrics.enabled }}
+        - name: metrics
+          image: {{ include "nginx.metrics.image" . }}
+          imagePullPolicy: {{ .Values.metrics.image.pullPolicy | quote }}
+          {{- if .Values.metrics.securityContext.enabled }}
+          securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.metrics.securityContext "context" $) | nindent 12 }}
+          {{- end }}
+          command:
+            - exporter
+          args:
+            - --nginx.scrape-uri
+            - {{ printf "http://127.0.0.1:%d/status" (int (default .Values.containerPorts.http .Values.metrics.port)) | quote }}
+            - --web.listen-address
+            - {{ printf ":%d" (int .Values.metrics.containerPorts.metrics) | quote }}
+            {{- if .Values.metrics.extraArgs }}
+            {{- include "common.tplvalues.render" ( dict "value" .Values.metrics.extraArgs "context" $ ) | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.metrics.containerPorts.metrics }}
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+          {{- if .Values.metrics.resources }}
+          resources: {{- toYaml .Values.metrics.resources | nindent 12 }}
+          {{- else if ne .Values.metrics.resourcesPreset "none" }}
+          resources: {{- include "common.resources.preset" (dict "type" .Values.metrics.resourcesPreset) | nindent 12 }}
+          {{- end }}
+        {{- end }}
+        {{- if .Values.sidecars }}
+        {{- include "common.tplvalues.render" ( dict "value" .Values.sidecars "context" $) | nindent 8 }}
+        {{- end }}
+      volumes:
+        - name: empty-dir
+          emptyDir: {}
+        {{- if or .Values.serverBlock .Values.existingServerBlockConfigmap }}
+        - name: nginx-server-block
+          configMap:
+            name: {{ include "nginx.serverBlockConfigmapName" . }}
+        {{- end }}
+        {{- if (include "nginx.useStaticSite" .) }}
+        - name: staticsite
+          {{- include "nginx.staticSiteVolume" . | nindent 10 }}
+        {{- end }}
+        {{- if .Values.extraVolumes }}
+        {{- include "common.tplvalues.render" ( dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
+        {{- end }}
