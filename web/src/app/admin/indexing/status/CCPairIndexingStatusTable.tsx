@@ -9,17 +9,16 @@ import {
   TableCell,
 } from "@tremor/react";
 import { CCPairStatus, IndexAttemptStatus } from "@/components/Status";
-import { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import { PageSelector } from "@/components/PageSelector";
 import { timeAgo } from "@/lib/time";
 import { ConnectorIndexingStatus } from "@/lib/types";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
+import { ItemsPerPageSelector } from "@/components/admin/connectors/ItemsPerPageSelector";
 import { getDocsProcessedPerMinute } from "@/lib/indexAttempt";
 import Link from "next/link";
 import { isCurrentlyDeleting } from "@/lib/documentDeletion";
 import { FiEdit } from "react-icons/fi";
-
-const NUM_IN_PAGE = 20;
 
 function CCPairIndexingStatusDisplay({
   ccPairsIndexingStatus,
@@ -74,13 +73,61 @@ export function CCPairIndexingStatusTable({
   ccPairsIndexingStatuses: ConnectorIndexingStatus<any, any>[];
 }) {
   const [page, setPage] = useState(1);
-  const ccPairsIndexingStatusesForPage = ccPairsIndexingStatuses.slice(
-    NUM_IN_PAGE * (page - 1),
-    NUM_IN_PAGE * page
+  const [filterText, setFilterText] = useState('');
+  const getInitialItemsPerPage = () => {
+    try {
+      const savedItemsPerPage = localStorage.getItem('itemsPerPage');
+      return savedItemsPerPage ? Number(savedItemsPerPage) : 10;
+    } catch (error) {
+      console.error("Failed to load itemsPerPage from localStorage:", error);
+      return 10; // Default value if error occurs
+    }
+  };
+  const [itemsPerPage, setItemsPerPage] = useState(getInitialItemsPerPage());
+  const filteredStatuses = ccPairsIndexingStatuses.filter(status =>
+    status.connector.name.toLowerCase().includes(filterText.toLowerCase())
   );
+
+  const ccPairsIndexingStatusesForPage = filteredStatuses.slice(
+    itemsPerPage * (page - 1),
+    itemsPerPage * page
+  );
+  
+  useEffect(() => {
+    try {
+      const savedItemsPerPage = localStorage.getItem('itemsPerPage');
+      if (savedItemsPerPage) {
+        const parsedItemsPerPage = Number(savedItemsPerPage);
+        if (!isNaN(parsedItemsPerPage) && [10, 25, 50, 100].includes(parsedItemsPerPage)) {
+          setItemsPerPage(parsedItemsPerPage);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load itemsPerPage from localStorage:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('itemsPerPage', itemsPerPage.toString());
+    } catch (error) {
+      console.error("Failed to save itemsPerPage in localStorage:", error);
+    }
+  
+  }, [itemsPerPage]);
+  useEffect(() => {
+    setPage(1);
+  }, [filterText, itemsPerPage]);
 
   return (
     <div>
+      <input
+        type="text"
+        placeholder="Filter connectors..."
+        value={filterText}
+        onChange={(e) => setFilterText(e.target.value)}
+        className="mb-4"
+      />
       <Table className="overflow-visible">
         <TableHead>
           <TableRow>
@@ -132,26 +179,30 @@ export function CCPairIndexingStatusTable({
           })}
         </TableBody>
       </Table>
-      {ccPairsIndexingStatuses.length > NUM_IN_PAGE && (
-        <div className="mt-3 flex">
-          <div className="mx-auto">
-            <PageSelector
-              totalPages={Math.ceil(
-                ccPairsIndexingStatuses.length / NUM_IN_PAGE
-              )}
-              currentPage={page}
-              onPageChange={(newPage) => {
-                setPage(newPage);
-                window.scrollTo({
-                  top: 0,
-                  left: 0,
-                  behavior: "smooth",
-                });
-              }}
-            />
-          </div>
-        </div>
-      )}
+      <div className="flex flex-col items-center mt-3">
+        {ccPairsIndexingStatuses.length > itemsPerPage && (
+          <PageSelector
+            totalPages={Math.ceil(
+              filteredStatuses.length / itemsPerPage
+            )}
+            currentPage={page}
+            onPageChange={(newPage) => {
+              setPage(newPage);
+              window.scrollTo({
+                top: 0,
+                left: 0,
+                behavior: "smooth",
+              });
+            }}
+          />
+        )}
+        <div className="flex items-center w-[20%] mt-2">
+          <ItemsPerPageSelector
+              itemsPerPage={itemsPerPage}
+              onItemsPerPageChange={(value) => setItemsPerPage(value)}
+          />
+        </div>  
+      </div>
     </div>
   );
 }
