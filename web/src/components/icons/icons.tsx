@@ -602,6 +602,18 @@ export const ZendeskIcon = ({
   </div>
 );
 
+export const AxeroIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src="/Axero.jpeg" alt="Logo" width="96" height="96" />
+  </div>
+);
+
 export const FreshdeskIcon = ({
   size = 16,
   className = defaultTailwindCSS,

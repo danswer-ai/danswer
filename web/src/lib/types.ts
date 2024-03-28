@@ -34,6 +34,7 @@ export type ValidSources =
   | "loopio"
   | "sharepoint"
   | "zendesk"
+  | "axero"
   | "freshdesk";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
@@ -332,6 +333,10 @@ export interface SharepointCredentialJson {
   aad_client_id: string;
   aad_client_secret: string;
   aad_directory_id: string;
+}
+
+export interface AxeroCredentialJson {
+  axero_api_token: string;
 }
 
 export interface FreshdeskCredentialJson {

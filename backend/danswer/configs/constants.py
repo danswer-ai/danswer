@@ -87,6 +87,7 @@ class DocumentSource(str, Enum):
     ZENDESK = "zendesk"
     LOOPIO = "loopio"
     SHAREPOINT = "sharepoint"
+    AXERO = "axero"
     FRESHDESK = "freshdesk"
 
 
