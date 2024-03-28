@@ -138,9 +138,11 @@ class SavedSearchDoc(SearchDoc):
     def from_search_doc(
         cls, search_doc: SearchDoc, db_doc_id: int = 0
     ) -> "SavedSearchDoc":
-        """IMPORTANT: careful using this and not providing a db_doc_id"""
+        """IMPORTANT: careful using this and not providing a db_doc_id If db_doc_id is not
+        provided, it won't be able to actually fetch the saved doc and info later on. So only skip
+        providing this if the SavedSearchDoc will not be used in the future"""
         search_doc_data = search_doc.dict()
-        search_doc_data["score"] = search_doc_data.get("score", 0.0)
+        search_doc_data["score"] = search_doc_data.get("score") or 0.0
         return cls(**search_doc_data, db_doc_id=db_doc_id)
 
 
