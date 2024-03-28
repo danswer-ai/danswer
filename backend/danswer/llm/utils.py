@@ -257,10 +257,12 @@ def get_llm_max_tokens(
             model_obj = model_map[model_name]
         else:
             model_obj = model_map[f"{model_provider}/{model_name}"]
+
+        if "max_input_tokens" in model_obj:
+            return model_obj["max_input_tokens"]
+
         if "max_tokens" in model_obj:
             return model_obj["max_tokens"]
-        elif "max_input_tokens" in model_obj and "max_output_tokens" in model_obj:
-            return model_obj["max_input_tokens"] + model_obj["max_output_tokens"]
 
         raise RuntimeError("No max tokens found for LLM")
     except Exception:
@@ -268,41 +270,6 @@ def get_llm_max_tokens(
             f"Failed to get max tokens for LLM with name {model_name}. Defaulting to 4096."
         )
         return 4096
-
-
-def get_llm_max_input_tokens(
-    output_tokens: int,
-    model_map: dict,
-    model_name: str | None = GEN_AI_MODEL_VERSION,
-    model_provider: str = GEN_AI_MODEL_PROVIDER,
-) -> int | None:
-    try:
-        if model_provider == "openai":
-            model_obj = model_map[model_name]
-        else:
-            model_obj = model_map[f"{model_provider}/{model_name}"]
-
-        max_in = model_obj.get("max_input_tokens")
-        max_out = model_obj.get("max_output_tokens")
-        if max_in is None or max_out is None:
-            # Can't calculate precisely, use the fallback method
-            return None
-
-        # Some APIs may not actually work like this, but it's a safer approach generally speaking
-        # since worst case we remove some extra tokens from the input space
-        output_token_debt = 0
-        if output_tokens > max_out:
-            logger.warning(
-                "More output tokens requested than model is likely able to handle"
-            )
-            output_token_debt = output_tokens - max_out
-
-        remaining_max_input_tokens = max_in - output_token_debt
-        return remaining_max_input_tokens
-
-    except Exception:
-        # We can try the less accurate approach if this fails
-        return None
 
 
 def get_max_input_tokens(
@@ -320,22 +287,14 @@ def get_max_input_tokens(
 
     model_name = model_name or get_default_llm_version()[0]
 
-    input_toks = get_llm_max_input_tokens(
-        output_tokens=output_tokens,
-        model_map=litellm_model_map,
-        model_name=model_name,
-        model_provider=model_provider,
-    )
-
-    if input_toks is None:
-        input_toks = (
-            get_llm_max_tokens(
-                model_name=model_name,
-                model_provider=model_provider,
-                model_map=litellm_model_map,
-            )
-            - output_tokens
+    input_toks = (
+        get_llm_max_tokens(
+            model_name=model_name,
+            model_provider=model_provider,
+            model_map=litellm_model_map,
         )
+        - output_tokens
+    )
 
     if input_toks <= 0:
         raise RuntimeError("No tokens for input for the LLM given settings")
