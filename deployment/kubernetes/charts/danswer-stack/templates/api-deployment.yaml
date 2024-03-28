@@ -11,6 +11,9 @@ spec:
   selector:
     matchLabels:
       {{- include "danswer-stack.selectorLabels" . | nindent 6 }}
+      {{- if .Values.api.deploymentLabels }}
+      {{- toYaml .Values.api.deploymentLabels | nindent 6 }}
+      {{- end }}
   template:
     metadata:
       {{- with .Values.api.podAnnotations }}
@@ -81,11 +84,11 @@ spec:
       volumes:
         - name: dynamic-storage
           persistentVolumeClaim:
-            claimName: {{ .Values.persistence.api.dynamic-storage-claim-name | default (list (include "danswer-stack.fullname" .) "dynamic" | join "-") }}
+            claimName: {{ include "danswer-stack.fullname" . }}-api-dynamic
         - name: file-connector-storage
-          {{- if .Values.persistence.connector.enabled }}
+          {{- if .Values.persistence.api.connector.enabled }}
           persistentVolumeClaim:
-            claimName: {{ .Values.persistence.api.file-connector-storage-claim-name | default (list (include "danswer-stack.fullname" .) "connector" | join "-") }}
+            claimName: {{ include "danswer-stack.fullname" . }}-api-connector
           {{- else }}
           emptyDir: { }
           {{- end }}

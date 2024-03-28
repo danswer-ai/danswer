@@ -27,7 +27,9 @@ postgresql:
       existingSecret: danswer-secrets
       secretKeys:
         adminPasswordKey: postgres_password                
-    
+  primary:
+    persistence:
+      size: 1Gi 
 
 nginx:
   containerPorts:
@@ -43,45 +45,7 @@ nginx:
       http: http
       danswer: http  
 
-  serverBlock: |-
-    upstream api_server {
-        server api-server-service:80 fail_timeout=0;
-      }
-
-    upstream web_server {
-        server web-server-service:80 fail_timeout=0;
-      }
-
-    server {
-      listen 1024;
-      server_name $$DOMAIN;
-
-        client_max_body_size 5G;    # Maximum upload size
-
-        location ~ ^/api(.*)$ {
-            rewrite ^/api(/.*)$ $1 break;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_set_header X-Forwarded-Host $host;
-            proxy_set_header Host $host;
-            proxy_http_version 1.1;
-            proxy_buffering off;
-            proxy_redirect off;
-            proxy_pass http://api_server;
-        }
-
-        location / {
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_set_header X-Forwarded-Host $host;
-            proxy_set_header Host $host;
-            proxy_http_version 1.1;
-            proxy_redirect off;
-            proxy_pass http://web_server;
-        }
-    }
+  existingServerBlockConfigmap: danswer-nginx-conf
 
 webserver:
   replicaCount: 1
@@ -90,10 +54,11 @@ webserver:
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
-
+  deploymentLables:
+    app: web-server
   podAnnotations: {}
-  podLabels: {}
-
+  podLabels: 
+    app: web-server
   podSecurityContext: {}
     # fsGroup: 2000
 
@@ -152,10 +117,12 @@ api:
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
-
+  deploymentLabels:
+    app: api-server
   podAnnotations: {}
   podLabels:
     scope: danswer-backend
+    app: api-server
 
   podSecurityContext: {}
     # fsGroup: 2000
@@ -218,7 +185,9 @@ background:
   podAnnotations: {}
   podLabels:
     scope: danswer-backend
-
+    app: background
+  deploymentLabels:
+    app: background
   podSecurityContext: {}
     # fsGroup: 2000
 
@@ -346,10 +315,89 @@ persistence:
       - ReadWriteOnce
     size: 1Gi
   api:
-    enabled: true
-    dynamic-storage-claim-name: "dynamic-pvc"
-    file-connector-storage-claim-name: "file-connector-pvc"
-    storageClassName: ""
-    accessModes:
-      - ReadWriteOnce
-    size: 1Gi
+    connector:
+      enabled: true
+      storageClassName: ""
+      accessModes:
+        - ReadWriteOnce
+      size: 1Gi
+    dynamic:
+      enabled: true
+      storageClassName: ""
+      accessModes:
+        - ReadWriteOnce
+      size: 1Gi 
+  background:
+    connector:
+      enabled: true
+      storageClassName: ""
+      accessModes:
+        - ReadWriteOnce
+      size: 1Gi
+    dynamic:
+      enabled: true
+      storageClassName: ""
+      accessModes:
+        - ReadWriteOnce
+      size: 1Gi  
+
+configMap:
+  AUTH_TYPE: "disabled"
+  SESSION_EXPIRE_TIME_SECONDS: "86400"
+  VALID_EMAIL_DOMAINS: ""
+  SMTP_SERVER: ""
+  SMTP_PORT: ""
+  SMTP_USER: ""
+  SMTP_PASS: ""
+  EMAIL_FROM: ""
+  GEN_AI_MODEL_PROVIDER: ""
+  GEN_AI_MODEL_VERSION: ""
+  FAST_GEN_AI_MODEL_VERSION: ""
+  GEN_AI_API_KEY: ""
+  GEN_AI_API_ENDPOINT: ""
+  GEN_AI_API_VERSION: ""
+  GEN_AI_LLM_PROVIDER_TYPE: ""
+  GEN_AI_MAX_TOKENS: ""
+  QA_TIMEOUT: "60"
+  MAX_CHUNKS_FED_TO_CHAT: ""
+  DISABLE_LLM_FILTER_EXTRACTION: ""
+  DISABLE_LLM_CHUNK_FILTER: ""
+  DISABLE_LLM_CHOOSE_SEARCH: ""
+  DISABLE_LLM_QUERY_REPHRASE: ""
+  DOC_TIME_DECAY: ""
+  HYBRID_ALPHA: ""
+  EDIT_KEYWORD_QUERY: ""
+  MULTILINGUAL_QUERY_EXPANSION: ""
+  QA_PROMPT_OVERRIDE: ""
+  DOCUMENT_ENCODER_MODEL: ""
+  NORMALIZE_EMBEDDINGS: ""
+  ASYM_QUERY_PREFIX: ""
+  ASYM_PASSAGE_PREFIX: ""
+  ENABLE_RERANKING_REAL_TIME_FLOW: ""
+  ENABLE_RERANKING_ASYNC_FLOW: ""
+  MODEL_SERVER_HOST: ""
+  MODEL_SERVER_PORT: ""
+  INDEXING_MODEL_SERVER_HOST: ""
+  MIN_THREADS_ML_MODELS: ""
+  NUM_INDEXING_WORKERS: ""
+  DISABLE_INDEX_UPDATE_ON_SWAP: ""
+  DASK_JOB_CLIENT_ENABLED: ""
+  CONTINUE_ON_CONNECTOR_FAILURE: ""
+  EXPERIMENTAL_CHECKPOINTING_ENABLED: ""
+  CONFLUENCE_CONNECTOR_LABELS_TO_SKIP: ""
+  JIRA_API_VERSION: ""
+  GONG_CONNECTOR_START_TIME: ""
+  NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP: ""
+  DANSWER_BOT_SLACK_APP_TOKEN: ""
+  DANSWER_BOT_SLACK_BOT_TOKEN: ""
+  DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER: ""
+  DANSWER_BOT_DISPLAY_ERROR_MSGS: ""
+  DANSWER_BOT_RESPOND_EVERY_CHANNEL: ""
+  DANSWER_BOT_DISABLE_COT: ""
+  NOTIFY_SLACKBOT_NO_ANSWER: ""
+  DISABLE_TELEMETRY: ""
+  LOG_LEVEL: ""
+  LOG_ALL_MODEL_INTERACTIONS: ""
+  LOG_VESPA_TIMING_INFORMATION: ""
+  WEB_DOMAIN: "http://localhost:3000"
+  DOMAIN: "localhost"
