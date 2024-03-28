@@ -87,7 +87,7 @@ export function StatusRow<ConnectorConfigType, ConnectorCredentialType>({
 
 export interface ColumnSpecification<
   ConnectorConfigType,
-  ConnectorCredentialType,
+  ConnectorCredentialType
 > {
   header: string;
   key: string;
@@ -101,7 +101,7 @@ export interface ColumnSpecification<
 
 export interface ConnectorsTableProps<
   ConnectorConfigType,
-  ConnectorCredentialType,
+  ConnectorCredentialType
 > {
   connectorIndexingStatuses: ConnectorIndexingStatus<
     ConnectorConfigType,

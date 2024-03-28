@@ -10,11 +10,15 @@ import { CustomDropdown, DefaultDropdownElement } from "./Dropdown";
 import { FiMessageSquare, FiSearch } from "react-icons/fi";
 import { usePathname } from "next/navigation";
 
+import { useTranslation } from "react-i18next";
+
 interface HeaderProps {
   user: User | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({ user }) => {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -74,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
           <div className="w-24 flex my-auto">
             <div className={"mx-auto flex text-strong px-2"}>
               <FiSearch className="my-auto mr-1" />
-              <h1 className="flex text-sm font-bold my-auto">Search</h1>
+              <h1 className="flex text-sm font-bold my-auto">{t("Search")}</h1>
             </div>
           </div>
         </Link>
@@ -83,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
           <div className="w-24 flex my-auto">
             <div className="mx-auto flex text-strong px-2">
               <FiMessageSquare className="my-auto mr-1" />
-              <h1 className="flex text-sm font-bold my-auto">Chat</h1>
+              <h1 className="flex text-sm font-bold my-auto">{t("Chat")}</h1>
             </div>
           </div>
         </Link>

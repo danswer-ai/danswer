@@ -6,11 +6,15 @@ import { GEN_AI_API_KEY_URL } from "./constants";
 import { LoadingAnimation } from "../Loading";
 import { Button } from "@tremor/react";
 
+import { useTranslation } from "react-i18next";
+
 interface Props {
   handleResponse?: (response: Response) => void;
 }
 
 export const ApiKeyForm = ({ handleResponse }: Props) => {
+  const { t } = useTranslation();
+
   const [popup, setPopup] = useState<{
     message: string;
     type: "success" | "error";
@@ -34,7 +38,7 @@ export const ApiKeyForm = ({ handleResponse }: Props) => {
           }
           if (response.ok) {
             setPopup({
-              message: "Updated API key!",
+              message: t("Updated API key!"),
               type: "success",
             });
             formikHelpers.resetForm();
@@ -44,8 +48,9 @@ export const ApiKeyForm = ({ handleResponse }: Props) => {
               setPopup({ message: body.detail, type: "error" });
             } else {
               setPopup({
-                message:
-                  "Unable to set API key. Check if the provided key is valid.",
+                message: t(
+                  "Unable to set API key. Check if the provided key is valid."
+                ),
                 type: "error",
               });
             }
@@ -58,11 +63,15 @@ export const ApiKeyForm = ({ handleResponse }: Props) => {
         {({ isSubmitting }) =>
           isSubmitting ? (
             <div className="text-base">
-              <LoadingAnimation text="Validating API key" />
+              <LoadingAnimation text={t("Validating API key")} />
             </div>
           ) : (
             <Form>
-              <TextFormField name="apiKey" type="password" label="API Key:" />
+              <TextFormField
+                name="apiKey"
+                type="password"
+                label={t("API Key:")}
+              />
               <div className="flex">
                 <Button
                   size="xs"
@@ -70,7 +79,7 @@ export const ApiKeyForm = ({ handleResponse }: Props) => {
                   disabled={isSubmitting}
                   className="w-48 mx-auto"
                 >
-                  Submit
+                  {t("Submit")}
                 </Button>
               </div>
             </Form>

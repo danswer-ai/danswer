@@ -68,7 +68,7 @@ if __name__ == "__main__":
 [here](https://github.com/danswer-ai/danswer/blob/main/backend/danswer/connectors/factory.py#L33)
 
 #### Frontend Changes
-- Create the new connector directory and admin page under `danswer/web/src/app/admin/connectors/`
+- Create the new connector directory and admin page under `danswer/web/src/app/[locale]/admin/connectors/`
 - Create the new icon, type, source, and filter changes
 (refer to existing [PR](https://github.com/danswer-ai/danswer/pull/139))
 
