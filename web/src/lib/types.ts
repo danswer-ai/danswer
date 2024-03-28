@@ -33,7 +33,8 @@ export type ValidSources =
   | "google_sites"
   | "loopio"
   | "sharepoint"
-  | "zendesk";
+  | "zendesk"
+  | "axero";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
@@ -42,6 +43,7 @@ export type ValidStatuses =
   | "in_progress"
   | "not_started";
 export type TaskStatus = "PENDING" | "STARTED" | "SUCCESS" | "FAILURE";
+export type Feedback = "like" | "dislike";
 
 export interface DocumentBoostStatus {
   document_id: string;
@@ -326,6 +328,10 @@ export interface SharepointCredentialJson {
   aad_directory_id: string;
 }
 
+export interface AxeroCredentialJson {
+  axero_api_token: string;
+}
+
 // DELETION
 
 export interface DeletionAttemptSnapshot {
@@ -348,6 +354,9 @@ export interface DocumentSet {
   description: string;
   cc_pair_descriptors: CCPairDescriptor<any, any>[];
   is_up_to_date: boolean;
+  is_public: boolean;
+  users: string[];
+  groups: number[];
 }
 
 export interface Tag {
@@ -383,4 +392,16 @@ export interface SlackBotConfig {
 export interface SlackBotTokens {
   bot_token: string;
   app_token: string;
+}
+
+/* EE Only Types */
+export interface UserGroup {
+  id: number;
+  name: string;
+  users: User[];
+  cc_pairs: CCPairDescriptor<any, any>[];
+  document_sets: DocumentSet[];
+  personas: Persona[];
+  is_up_to_date: boolean;
+  is_up_for_deletion: boolean;
 }
