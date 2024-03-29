@@ -43,7 +43,6 @@ export default async function Page({
     fetchSS("/persona?include_default=true"),
     fetchSS("/chat/get-user-chat-sessions"),
     fetchSS("/query/valid-tags"),
-    fetchSS("/secondary-index/get-embedding-models"),
   ];
 
   // catch cases where the backend is completely unreachable here
@@ -68,7 +67,6 @@ export default async function Page({
   const personasResponse = results[4] as Response | null;
   const chatSessionsResponse = results[5] as Response | null;
   const tagsResponse = results[6] as Response | null;
-  const embeddingModelResponse = results[7] as Response | null;
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -129,15 +127,6 @@ export default async function Page({
   } else {
     console.log(`Failed to fetch tags - ${tagsResponse?.status}`);
   }
-
-  const embeddingModelVersionInfo =
-    embeddingModelResponse && embeddingModelResponse.ok
-      ? ((await embeddingModelResponse.json()) as FullEmbeddingModelResponse)
-      : null;
-  const currentEmbeddingModelName =
-    embeddingModelVersionInfo?.current_model_name;
-  const nextEmbeddingModelName =
-    embeddingModelVersionInfo?.secondary_model_name;
 
   const defaultPersonaIdRaw = searchParams["personaId"];
   const defaultPersonaId = defaultPersonaIdRaw

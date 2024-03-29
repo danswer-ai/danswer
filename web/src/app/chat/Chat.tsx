@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FiRefreshCcw, FiSend, FiStopCircle } from "react-icons/fi";
+import { FiSend, FiShare2, FiStopCircle } from "react-icons/fi";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
 import {
   BackendChatSession,
   BackendMessage,
+  ChatSessionSharedStatus,
   DocumentsResponse,
   Message,
   RetrievalType,
@@ -44,6 +45,7 @@ import { HEADER_PADDING } from "@/lib/constants";
 import { computeAvailableFilters } from "@/lib/filters";
 import { useDocumentSelection } from "./useDocumentSelection";
 import { StarterMessage } from "./StarterMessage";
+import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -114,6 +116,7 @@ export const Chat = ({
           setSelectedPersona(undefined);
         }
         setMessageHistory([]);
+        setChatSessionSharedStatus(ChatSessionSharedStatus.Private);
         return;
       }
 
@@ -127,6 +130,7 @@ export const Chat = ({
           (persona) => persona.id === chatSession.persona_id
         )
       );
+
       const newMessageHistory = processRawChatHistory(chatSession.messages);
       setMessageHistory(newMessageHistory);
 
@@ -135,6 +139,8 @@ export const Chat = ({
       setSelectedMessageForDocDisplay(
         latestMessageId !== undefined ? latestMessageId : null
       );
+
+      setChatSessionSharedStatus(chatSession.shared_status);
 
       setIsFetchingChatMessages(false);
     }
@@ -172,6 +178,9 @@ export const Chat = ({
         : undefined
   );
   const livePersona = selectedPersona || availablePersonas[0];
+
+  const [chatSessionSharedStatus, setChatSessionSharedStatus] =
+    useState<ChatSessionSharedStatus>(ChatSessionSharedStatus.Private);
 
   useEffect(() => {
     if (messageHistory.length === 0 && chatSessionId === null) {
@@ -225,6 +234,8 @@ export const Chat = ({
   const [currentFeedback, setCurrentFeedback] = useState<
     [FeedbackType, number] | null
   >(null);
+  const [sharingModalVisible, setSharingModalVisible] =
+    useState<boolean>(false);
 
   // auto scroll as message comes out
   const scrollableDivRef = useRef<HTMLDivElement>(null);
@@ -503,6 +514,21 @@ export const Chat = ({
         />
       )}
 
+      {sharingModalVisible && chatSessionId !== null && (
+        <ShareChatSessionModal
+          chatSessionId={chatSessionId}
+          existingSharedStatus={chatSessionSharedStatus}
+          onClose={() => setSharingModalVisible(false)}
+          onShare={(shared) =>
+            setChatSessionSharedStatus(
+              shared
+                ? ChatSessionSharedStatus.Public
+                : ChatSessionSharedStatus.Private
+            )
+          }
+        />
+      )}
+
       {documentSidebarInitialWidth !== undefined ? (
         <>
           <div
@@ -515,7 +541,7 @@ export const Chat = ({
               ref={scrollableDivRef}
             >
               {livePersona && (
-                <div className="sticky top-0 left-80 z-10 w-full bg-background/90">
+                <div className="sticky top-0 left-80 z-10 w-full bg-background/90 flex">
                   <div className="ml-2 p-1 rounded mt-2 w-fit">
                     <ChatPersonaSelector
                       personas={availablePersonas}
@@ -529,6 +555,15 @@ export const Chat = ({
                       }}
                     />
                   </div>
+
+                  {chatSessionId !== null && (
+                    <div
+                      onClick={() => setSharingModalVisible(true)}
+                      className="ml-auto mr-6 my-auto border-border border p-2 rounded cursor-pointer hover:bg-hover-light"
+                    >
+                      <FiShare2 />
+                    </div>
+                  )}
                 </div>
               )}
 
