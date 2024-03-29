@@ -21,6 +21,7 @@ from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import get_prompt_by_id
 from danswer.db.chat import translate_db_message_to_chat_message_detail
+from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.engine import get_session_context_manager
 from danswer.db.models import User
 from danswer.llm.answering.answer import Answer
@@ -35,7 +36,6 @@ from danswer.one_shot_answer.models import QueryRephrase
 from danswer.one_shot_answer.qa_utils import combine_message_thread
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
-from danswer.search.models import SavedSearchDoc
 from danswer.search.models import SearchRequest
 from danswer.search.pipeline import SearchPipeline
 from danswer.search.utils import chunks_to_search_docs
@@ -135,12 +135,20 @@ def stream_answer_objects(
     # First fetch and return the top chunks so the user can immediately see some results
     top_chunks = search_pipeline.reranked_docs
     top_docs = chunks_to_search_docs(top_chunks)
-    fake_saved_docs = [SavedSearchDoc.from_search_doc(doc) for doc in top_docs]
 
-    # Since this is in the one shot answer flow, we don't need to actually save the docs to DB
+    reference_db_search_docs = [
+        create_db_search_doc(server_search_doc=top_doc, db_session=db_session)
+        for top_doc in top_docs
+    ]
+
+    response_docs = [
+        translate_db_search_doc_to_server_search_doc(db_search_doc)
+        for db_search_doc in reference_db_search_docs
+    ]
+
     initial_response = QADocsResponse(
         rephrased_query=rephrased_query,
-        top_documents=fake_saved_docs,
+        top_documents=response_docs,
         predicted_flow=search_pipeline.predicted_flow,
         predicted_search=search_pipeline.predicted_search_type,
         applied_source_filters=search_pipeline.search_query.filters.source_type,

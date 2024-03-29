@@ -219,4 +219,4 @@ def search_postprocessing(
             if chunk.unique_id in llm_chunk_selection
         ]
     else:
-        yield []
+        yield cast(list[str], [])

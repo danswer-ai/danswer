@@ -169,7 +169,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
             f"Using multilingual flow with languages: {MULTILINGUAL_QUERY_EXPANSION}"
         )
 
-    port_filesystem_to_postgres()
+    try:
+        port_filesystem_to_postgres()
+    except Exception:
+        logger.debug(
+            "Skipping port of persistent volumes. Maybe these have already been removed?"
+        )
 
     with Session(engine) as db_session:
         db_embedding_model = get_current_db_embedding_model(db_session)

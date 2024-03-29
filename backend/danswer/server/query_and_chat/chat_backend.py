@@ -35,6 +35,7 @@ from danswer.server.query_and_chat.models import ChatSessionCreationRequest
 from danswer.server.query_and_chat.models import ChatSessionDetailResponse
 from danswer.server.query_and_chat.models import ChatSessionDetails
 from danswer.server.query_and_chat.models import ChatSessionsResponse
+from danswer.server.query_and_chat.models import ChatSessionUpdateRequest
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.query_and_chat.models import CreateChatSessionID
 from danswer.server.query_and_chat.models import RenameChatSessionResponse
@@ -64,6 +65,7 @@ def get_user_chat_sessions(
                 name=chat.description,
                 persona_id=chat.persona_id,
                 time_created=chat.time_created.isoformat(),
+                shared_status=chat.shared_status,
             )
             for chat in chat_sessions
         ]
@@ -73,6 +75,7 @@ def get_user_chat_sessions(
 @router.get("/get-chat-session/{session_id}")
 def get_chat_session(
     session_id: int,
+    is_shared: bool = False,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ChatSessionDetailResponse:
@@ -80,7 +83,10 @@ def get_chat_session(
 
     try:
         chat_session = get_chat_session_by_id(
-            chat_session_id=session_id, user_id=user_id, db_session=db_session
+            chat_session_id=session_id,
+            user_id=user_id,
+            db_session=db_session,
+            is_shared=is_shared,
         )
     except ValueError:
         raise ValueError("Chat session does not exist or has been deleted")
@@ -93,9 +99,15 @@ def get_chat_session(
         chat_session_id=session_id,
         description=chat_session.description,
         persona_id=chat_session.persona_id,
+        persona_name=chat_session.persona.name,
         messages=[
-            translate_db_message_to_chat_message_detail(msg) for msg in session_messages
+            translate_db_message_to_chat_message_detail(
+                msg, remove_doc_content=is_shared  # if shared, don't leak doc content
+            )
+            for msg in session_messages
         ],
+        time_created=chat_session.time_created,
+        shared_status=chat_session.shared_status,
     )
 
 
@@ -133,7 +145,12 @@ def rename_chat_session(
     logger.info(f"Received rename request for chat session: {chat_session_id}")
 
     if name:
-        update_chat_session(user_id, chat_session_id, name, db_session)
+        update_chat_session(
+            db_session=db_session,
+            user_id=user_id,
+            chat_session_id=chat_session_id,
+            description=name,
+        )
         return RenameChatSessionResponse(new_name=name)
 
     final_msg, history_msgs = create_chat_chain(
@@ -143,9 +160,31 @@ def rename_chat_session(
 
     new_name = get_renamed_conversation_name(full_history=full_history)
 
-    update_chat_session(user_id, chat_session_id, new_name, db_session)
+    update_chat_session(
+        db_session=db_session,
+        user_id=user_id,
+        chat_session_id=chat_session_id,
+        description=new_name,
+    )
 
     return RenameChatSessionResponse(new_name=new_name)
+
+
+@router.patch("/chat-session/{session_id}")
+def patch_chat_session(
+    session_id: int,
+    chat_session_update_req: ChatSessionUpdateRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    user_id = user.id if user is not None else None
+    update_chat_session(
+        db_session=db_session,
+        user_id=user_id,
+        chat_session_id=session_id,
+        sharing_status=chat_session_update_req.sharing_status,
+    )
+    return None
 
 
 @router.delete("/delete-chat-session/{session_id}")
