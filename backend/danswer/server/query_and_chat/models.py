@@ -8,6 +8,7 @@ from danswer.chat.models import RetrievalDocs
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
+from danswer.db.models import ChatSessionSharedStatus
 from danswer.search.models import BaseFilters
 from danswer.search.models import RetrievalDetails
 from danswer.search.models import SearchDoc
@@ -120,6 +121,10 @@ class ChatRenameRequest(BaseModel):
     name: str | None = None
 
 
+class ChatSessionUpdateRequest(BaseModel):
+    sharing_status: ChatSessionSharedStatus
+
+
 class RenameChatSessionResponse(BaseModel):
     new_name: str  # This is only really useful if the name is generated
 
@@ -129,6 +134,7 @@ class ChatSessionDetails(BaseModel):
     name: str
     persona_id: int
     time_created: str
+    shared_status: ChatSessionSharedStatus
 
 
 class ChatSessionsResponse(BaseModel):
@@ -174,7 +180,10 @@ class ChatSessionDetailResponse(BaseModel):
     chat_session_id: int
     description: str
     persona_id: int
+    persona_name: str
     messages: list[ChatMessageDetail]
+    time_created: datetime
+    shared_status: ChatSessionSharedStatus
 
 
 class QueryValidationResponse(BaseModel):
