@@ -89,6 +89,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
     retrieved_documents: list[AbridgedSearchDoc]
     feedback: QAFeedbackType | None
     persona_name: str
+    user_email: str | None
     time_created: datetime
 
     @classmethod
@@ -112,6 +113,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
                 retrieved_documents=ai_message.documents,
                 feedback=ai_message.feedback,
                 persona_name=chat_session_snapshot.persona_name,
+                user_email=chat_session_snapshot.user_email,
                 time_created=user_message.time_created,
             )
             for user_message, ai_message in message_pairs
@@ -129,6 +131,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
             ),
             "feedback": self.feedback.value if self.feedback else "",
             "persona_name": self.persona_name,
+            "user_email": self.user_email if self.user_email else "",
             "time_created": str(self.time_created),
         }
 
