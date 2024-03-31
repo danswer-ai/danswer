@@ -113,6 +113,11 @@ export interface SharepointConfig {
   sites?: string[];
 }
 
+export interface AxeroConfig {
+  base_url: string;
+  spaces?: string[];
+}
+
 export interface ProductboardConfig {}
 
 export interface SlackConfig {
