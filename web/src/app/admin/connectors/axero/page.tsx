@@ -113,6 +113,7 @@ const MainSection = () => {
             <CredentialForm<AxeroCredentialJson>
               formBody={
                 <>
+                  <TextFormField name="base_url" label="Axero Base URL:" />
                   <TextFormField
                     name="axero_api_token"
                     label="Axero API Key:"
@@ -121,11 +122,15 @@ const MainSection = () => {
                 </>
               }
               validationSchema={Yup.object().shape({
+                base_url: Yup.string().required(
+                  "Please enter the base URL of your Axero instance"
+                ),
                 axero_api_token: Yup.string().required(
                   "Please enter your Axero API Token"
                 ),
               })}
               initialValues={{
+                base_url: "",
                 axero_api_token: "",
               }}
               onSubmit={(isSuccess) => {
@@ -190,16 +195,11 @@ const MainSection = () => {
           <ConnectorForm<AxeroConfig>
             nameBuilder={(values) =>
               values.spaces
-                ? `AxeroConnector-${values.base_url}-${values.spaces.join("_")}`
-                : `AxeroConnector-${values.base_url}`
+                ? `AxeroConnector-${values.spaces.join("_")}`
+                : `AxeroConnector`
             }
             source="axero"
             inputType="poll"
-            formBody={
-              <>
-                <TextFormField name="base_url" label="Base URL" />
-              </>
-            }
             formBodyBuilder={(values) => {
               return (
                 <>
@@ -208,22 +208,18 @@ const MainSection = () => {
                     name: "spaces",
                     label: "Space IDs:",
                     subtext: `
-                      Specify 0 or more spaces to index (by the Space IDs). If no spaces
-                      are specified, all spaces will be indexed.`,
+                      Specify zero or more Spaces to index (by the Space IDs). If no Space IDs
+                      are specified, all Spaces will be indexed.`,
                   })(values)}
                 </>
               );
             }}
             validationSchema={Yup.object().shape({
-              base_url: Yup.string().required(
-                "Please enter the base url of your Axero instance."
-              ),
               spaces: Yup.array()
                 .of(Yup.string().required("Space Ids cannot be empty"))
                 .required(),
             })}
             initialValues={{
-              base_url: "",
               spaces: [],
             }}
             refreshFreq={10 * 60} // 10 minutes

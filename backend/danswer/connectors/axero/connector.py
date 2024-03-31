@@ -121,7 +121,6 @@ def _translate_content_to_doc(content: dict) -> Document:
 class AxeroConnector(PollConnector):
     def __init__(
         self,
-        base_url: str,
         # Strings of the integer ids of the spaces
         spaces: list[str] | None = None,
         include_article: bool = True,
@@ -136,21 +135,24 @@ class AxeroConnector(PollConnector):
         self.include_wiki = include_wiki
         self.include_forum = include_forum
         self.batch_size = batch_size
-        self.axero_key = None
         self.space_ids = spaces
-
-        if not base_url.endswith("/"):
-            base_url += "/"
-        self.base_url = base_url
+        self.axero_key = None
+        self.base_url = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         self.axero_key = credentials["axero_api_token"]
+        # As the API key specifically applies to a particular deployment, this is
+        # included as part of the credential
+        base_url = credentials["base_url"]
+        if not base_url.endswith("/"):
+            base_url += "/"
+        self.base_url = base_url
         return None
 
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        if not self.axero_key:
+        if not self.axero_key or not self.base_url:
             raise ConnectorMissingCredentialError("Axero")
 
         start_datetime = datetime.utcfromtimestamp(start).replace(tzinfo=timezone.utc)
@@ -188,8 +190,13 @@ class AxeroConnector(PollConnector):
 if __name__ == "__main__":
     import os
 
-    connector = AxeroConnector(base_url=os.environ["AXERO_BASE_URL"])
-    connector.load_credentials({"axero_api_token": os.environ["AXERO_API_TOKEN"]})
+    connector = AxeroConnector()
+    connector.load_credentials(
+        {
+            "axero_api_token": os.environ["AXERO_API_TOKEN"],
+            "base_url": os.environ["AXERO_BASE_URL"],
+        }
+    )
     current = time.time()
 
     one_year_ago = current - 24 * 60 * 60 * 360
