@@ -28,6 +28,8 @@ from danswer.llm.answering.answer import Answer
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import CitationConfig
 from danswer.llm.answering.models import DocumentPruningConfig
+from danswer.llm.answering.models import LLMConfig
+from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.models import QuotesConfig
 from danswer.llm.utils import get_default_llm_token_encode
 from danswer.one_shot_answer.models import DirectQARequest
@@ -124,6 +126,8 @@ def stream_answer_objects(
             persona=chat_session.persona,
             offset=query_req.retrieval_options.offset,
             limit=query_req.retrieval_options.limit,
+            skip_rerank=query_req.skip_rerank,
+            skip_llm_chunk_filter=query_req.skip_llm_chunk_filter,
         ),
         user=user,
         db_session=db_session,
@@ -203,8 +207,8 @@ def stream_answer_objects(
         question=query_msg.message,
         docs=[llm_doc_from_inference_chunk(chunk) for chunk in top_chunks],
         answer_style_config=answer_config,
-        prompt=prompt,
-        persona=chat_session.persona,
+        prompt_config=PromptConfig.from_model(prompt),
+        llm_config=LLMConfig.from_persona(chat_session.persona),
         doc_relevance_list=search_pipeline.chunk_relevance_list,
         single_message_history=history_str,
         timeout=timeout,

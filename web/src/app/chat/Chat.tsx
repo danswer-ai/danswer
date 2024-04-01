@@ -1,20 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FiRefreshCcw, FiSend, FiStopCircle } from "react-icons/fi";
+import { FiSend, FiShare2, FiStopCircle } from "react-icons/fi";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
 import {
   BackendChatSession,
   BackendMessage,
+  ChatSessionSharedStatus,
   DocumentsResponse,
   Message,
   RetrievalType,
   StreamingError,
 } from "./interfaces";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FeedbackType } from "./types";
 import {
+  buildChatUrl,
   createChatSession,
   getCitedDocumentsFromMessage,
   getHumanAndAIMessageFromMessageNumber,
@@ -44,6 +46,8 @@ import { HEADER_PADDING } from "@/lib/constants";
 import { computeAvailableFilters } from "@/lib/filters";
 import { useDocumentSelection } from "./useDocumentSelection";
 import { StarterMessage } from "./StarterMessage";
+import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
+import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -69,6 +73,13 @@ export const Chat = ({
   shouldhideBeforeScroll?: boolean;
 }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // used to track whether or not the initial "submit on load" has been performed
+  // this only applies if `?submit-on-load=true` or `?submit-on-load=1` is in the URL
+  // NOTE: this is required due to React strict mode, where all `useEffect` hooks
+  // are run twice on initial load during development
+  const submitOnLoadPerformed = useRef<boolean>(false);
+
   const { popup, setPopup } = usePopup();
 
   // fetch messages for the chat session
@@ -114,6 +125,17 @@ export const Chat = ({
           setSelectedPersona(undefined);
         }
         setMessageHistory([]);
+        setChatSessionSharedStatus(ChatSessionSharedStatus.Private);
+
+        // if we're supposed to submit on initial load, then do that here
+        if (
+          shouldSubmitOnLoad(searchParams) &&
+          !submitOnLoadPerformed.current
+        ) {
+          submitOnLoadPerformed.current = true;
+          onSubmit();
+        }
+
         return;
       }
 
@@ -127,6 +149,7 @@ export const Chat = ({
           (persona) => persona.id === chatSession.persona_id
         )
       );
+
       const newMessageHistory = processRawChatHistory(chatSession.messages);
       setMessageHistory(newMessageHistory);
 
@@ -135,6 +158,8 @@ export const Chat = ({
       setSelectedMessageForDocDisplay(
         latestMessageId !== undefined ? latestMessageId : null
       );
+
+      setChatSessionSharedStatus(chatSession.shared_status);
 
       setIsFetchingChatMessages(false);
     }
@@ -145,7 +170,9 @@ export const Chat = ({
   const [chatSessionId, setChatSessionId] = useState<number | null>(
     existingChatSessionId
   );
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(
+    searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
+  );
   const [messageHistory, setMessageHistory] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
 
@@ -172,6 +199,9 @@ export const Chat = ({
         : undefined
   );
   const livePersona = selectedPersona || availablePersonas[0];
+
+  const [chatSessionSharedStatus, setChatSessionSharedStatus] =
+    useState<ChatSessionSharedStatus>(ChatSessionSharedStatus.Private);
 
   useEffect(() => {
     if (messageHistory.length === 0 && chatSessionId === null) {
@@ -225,6 +255,8 @@ export const Chat = ({
   const [currentFeedback, setCurrentFeedback] = useState<
     [FeedbackType, number] | null
   >(null);
+  const [sharingModalVisible, setSharingModalVisible] =
+    useState<boolean>(false);
 
   // auto scroll as message comes out
   const scrollableDivRef = useRef<HTMLDivElement>(null);
@@ -374,6 +406,13 @@ export const Chat = ({
           .map((document) => document.db_doc_id as number),
         queryOverride,
         forceSearch,
+        modelVersion:
+          searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) || undefined,
+        temperature:
+          parseFloat(searchParams.get(SEARCH_PARAM_NAMES.TEMPERATURE) || "") ||
+          undefined,
+        systemPromptOverride:
+          searchParams.get(SEARCH_PARAM_NAMES.SYSTEM_PROMPT) || undefined,
       })) {
         for (const packet of packetBunch) {
           if (Object.hasOwn(packet, "answer_piece")) {
@@ -443,7 +482,7 @@ export const Chat = ({
         currChatSessionId === urlChatSessionId.current ||
         urlChatSessionId.current === null
       ) {
-        router.push(`/chat?chatId=${currChatSessionId}`, {
+        router.push(buildChatUrl(searchParams, currChatSessionId, null), {
           scroll: false,
         });
       }
@@ -503,6 +542,21 @@ export const Chat = ({
         />
       )}
 
+      {sharingModalVisible && chatSessionId !== null && (
+        <ShareChatSessionModal
+          chatSessionId={chatSessionId}
+          existingSharedStatus={chatSessionSharedStatus}
+          onClose={() => setSharingModalVisible(false)}
+          onShare={(shared) =>
+            setChatSessionSharedStatus(
+              shared
+                ? ChatSessionSharedStatus.Public
+                : ChatSessionSharedStatus.Private
+            )
+          }
+        />
+      )}
+
       {documentSidebarInitialWidth !== undefined ? (
         <>
           <div
@@ -515,7 +569,7 @@ export const Chat = ({
               ref={scrollableDivRef}
             >
               {livePersona && (
-                <div className="sticky top-0 left-80 z-10 w-full bg-background/90">
+                <div className="sticky top-0 left-80 z-10 w-full bg-background/90 flex">
                   <div className="ml-2 p-1 rounded mt-2 w-fit">
                     <ChatPersonaSelector
                       personas={availablePersonas}
@@ -524,11 +578,22 @@ export const Chat = ({
                         if (persona) {
                           setSelectedPersona(persona);
                           textareaRef.current?.focus();
-                          router.push(`/chat?personaId=${persona.id}`);
+                          router.push(
+                            buildChatUrl(searchParams, null, persona.id)
+                          );
                         }
                       }}
                     />
                   </div>
+
+                  {chatSessionId !== null && (
+                    <div
+                      onClick={() => setSharingModalVisible(true)}
+                      className="ml-auto mr-6 my-auto border-border border p-2 rounded cursor-pointer hover:bg-hover-light"
+                    >
+                      <FiShare2 />
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -542,7 +607,7 @@ export const Chat = ({
                     handlePersonaSelect={(persona) => {
                       setSelectedPersona(persona);
                       textareaRef.current?.focus();
-                      router.push(`/chat?personaId=${persona.id}`);
+                      router.push(buildChatUrl(searchParams, null, persona.id));
                     }}
                   />
                 )}

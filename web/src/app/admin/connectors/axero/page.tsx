@@ -1,30 +1,32 @@
 "use client";
 
 import * as Yup from "yup";
-import { AxeroIcon, LinearIcon, TrashIcon } from "@/components/icons/icons";
-import { TextFormField } from "@/components/admin/connectors/Field";
+import { AxeroIcon, TrashIcon } from "@/components/icons/icons";
+import { fetcher } from "@/lib/fetcher";
+import useSWR, { useSWRConfig } from "swr";
+import { LoadingAnimation } from "@/components/Loading";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
+import {
+  AxeroConfig,
+  AxeroCredentialJson,
+  ConnectorIndexingStatus,
+  Credential,
+} from "@/lib/types";
+import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import {
-  Credential,
-  ConnectorIndexingStatus,
-  LinearCredentialJson,
-  AxeroCredentialJson,
-} from "@/lib/types";
-import useSWR, { useSWRConfig } from "swr";
-import { fetcher } from "@/lib/fetcher";
-import { LoadingAnimation } from "@/components/Loading";
-import { adminDeleteCredential, linkCredential } from "@/lib/credential";
-import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
+  TextFormField,
+  TextArrayFieldBuilder,
+  BooleanFormField,
+  TextArrayField,
+} from "@/components/admin/connectors/Field";
 import { ConnectorsTable } from "@/components/admin/connectors/table/ConnectorsTable";
-import { usePopup } from "@/components/admin/connectors/Popup";
+import { ConnectorForm } from "@/components/admin/connectors/ConnectorForm";
 import { usePublicCredentials } from "@/lib/hooks";
-import { Card, Text, Title } from "@tremor/react";
+import { Button, Card, Divider, Text, Title } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 
-const Main = () => {
-  const { popup, setPopup } = usePopup();
-
+const MainSection = () => {
   const { mutate } = useSWRConfig();
   const {
     data: connectorIndexingStatuses,
@@ -32,21 +34,19 @@ const Main = () => {
     error: isConnectorIndexingStatusesError,
   } = useSWR<ConnectorIndexingStatus<any, any>[]>(
     "/api/manage/admin/connector/indexing-status",
-    fetcher,
-    { refreshInterval: 5000 } // 5 seconds
+    fetcher
   );
+
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,
     error: isCredentialsError,
-    isValidating: isCredentialsValidating,
     refreshCredentials,
   } = usePublicCredentials();
 
   if (
-    isConnectorIndexingStatusesLoading ||
-    isCredentialsLoading ||
-    isCredentialsValidating
+    (!connectorIndexingStatuses && isConnectorIndexingStatusesLoading) ||
+    (!credentialsData && isCredentialsLoading)
   ) {
     return <LoadingAnimation text="Loading" />;
   }
@@ -60,7 +60,7 @@ const Main = () => {
   }
 
   const axeroConnectorIndexingStatuses: ConnectorIndexingStatus<
-    {},
+    AxeroConfig,
     AxeroCredentialJson
   >[] = connectorIndexingStatuses.filter(
     (connectorIndexingStatus) =>
@@ -73,40 +73,32 @@ const Main = () => {
 
   return (
     <>
-      {popup}
       <Title className="mb-2 mt-6 ml-auto mr-auto">
-        Step 1: Provide your Credentials
+        Step 1: Provide Axero API Key
       </Title>
-
       {axeroCredential ? (
         <>
           <div className="flex mb-1 text-sm">
-            <Text className="my-auto">Existing API Key: </Text>
-            <Text className="ml-1 italic my-auto max-w-md truncate">
-              {axeroCredential.credential_json?.axero_api_token}
+            <Text className="my-auto">Existing Axero API Key: </Text>
+            <Text className="ml-1 italic my-auto">
+              {axeroCredential.credential_json.axero_api_token}
             </Text>
-            <button
-              className="ml-1 hover:bg-hover rounded p-1"
+            <Button
+              size="xs"
+              color="red"
+              className="ml-3 text-inverted"
               onClick={async () => {
-                if (axeroConnectorIndexingStatuses.length > 0) {
-                  setPopup({
-                    type: "error",
-                    message:
-                      "Must delete all connectors before deleting credentials",
-                  });
-                  return;
-                }
                 await adminDeleteCredential(axeroCredential.id);
                 refreshCredentials();
               }}
             >
               <TrashIcon />
-            </button>
+            </Button>
           </div>
         </>
       ) : (
         <>
-          <Text>
+          <p className="text-sm mb-4">
             To use the Axero connector, first follow the guide{" "}
             <a
               className="text-blue-500"
@@ -116,11 +108,12 @@ const Main = () => {
               here
             </a>{" "}
             to generate an API Key.
-          </Text>
-          <Card className="mt-4">
+          </p>
+          <Card>
             <CredentialForm<AxeroCredentialJson>
               formBody={
                 <>
+                  <TextFormField name="base_url" label="Axero Base URL:" />
                   <TextFormField
                     name="axero_api_token"
                     label="Axero API Key:"
@@ -129,11 +122,15 @@ const Main = () => {
                 </>
               }
               validationSchema={Yup.object().shape({
+                base_url: Yup.string().required(
+                  "Please enter the base URL of your Axero instance"
+                ),
                 axero_api_token: Yup.string().required(
-                  "Please enter your Axero API Key!"
+                  "Please enter your Axero API Token"
                 ),
               })}
               initialValues={{
+                base_url: "",
                 axero_api_token: "",
               }}
               onSubmit={(isSuccess) => {
@@ -147,79 +144,93 @@ const Main = () => {
       )}
 
       <Title className="mb-2 mt-6 ml-auto mr-auto">
-        Step 2: Start indexing
+        Step 2: Which spaces do you want to connect?
       </Title>
-      {axeroCredential ? (
+
+      {axeroConnectorIndexingStatuses.length > 0 && (
         <>
-          {axeroConnectorIndexingStatuses.length > 0 ? (
-            <>
-              <Text className="mb-2">
-                We pull the latest <i>Articles</i>, <i>Blogs</i>, and{" "}
-                <i>Wikis</i> every <b>10</b> minutes.
-              </Text>
-              <div className="mb-2">
-                <ConnectorsTable<{}, AxeroCredentialJson>
-                  connectorIndexingStatuses={axeroConnectorIndexingStatuses}
-                  liveCredential={axeroCredential}
-                  getCredential={(credential) => {
-                    return (
-                      <div>
-                        <p>{credential.credential_json.axero_api_token}</p>
-                      </div>
-                    );
-                  }}
-                  onCredentialLink={async (connectorId) => {
-                    if (axeroCredential) {
-                      await linkCredential(connectorId, axeroCredential.id);
-                      mutate("/api/manage/admin/connector/indexing-status");
-                    }
-                  }}
-                  onUpdate={() =>
-                    mutate("/api/manage/admin/connector/indexing-status")
-                  }
-                />
-              </div>
-            </>
-          ) : (
-            <Card className="mt-4">
-              <h2 className="font-bold mb-3">Create Connector</h2>
-              <p className="text-sm mb-4">
-                Press connect below to start the connection Axero. We pull the
-                latest <i>Articles</i>, <i>Blogs</i>, and <i>Wikis</i> every{" "}
-                <b>10</b> minutes.
-              </p>
-              <ConnectorForm<{}>
-                nameBuilder={() => "AxeroConnector"}
-                ccPairNameBuilder={() => "Axero"}
-                source="axero"
-                inputType="poll"
-                formBody={
-                  <>
-                    <TextFormField
-                      name="base_url"
-                      label="Axero Base URL"
-                      subtext="The base URL you use to visit Axero."
-                      placeholder="E.g. https://my-company.axero.com"
-                    />
-                  </>
-                }
-                validationSchema={Yup.object().shape({})}
-                initialValues={{
-                  base_url: "",
-                }}
-                refreshFreq={10 * 60} // 10 minutes
-                credentialId={axeroCredential.id}
-              />
-            </Card>
-          )}
-        </>
-      ) : (
-        <>
-          <Text>
-            Please provide your access token in Step 1 first! Once done with
-            that, you can then start indexing Linear.
+          <Text className="mb-2">
+            We pull the latest <i>Articles</i>, <i>Blogs</i>, and <i>Wikis</i>{" "}
+            every <b>10</b> minutes.
           </Text>
+          <div className="mb-2">
+            <ConnectorsTable<AxeroConfig, AxeroCredentialJson>
+              connectorIndexingStatuses={axeroConnectorIndexingStatuses}
+              liveCredential={axeroCredential}
+              getCredential={(credential) =>
+                credential.credential_json.axero_api_token
+              }
+              specialColumns={[
+                {
+                  header: "Space",
+                  key: "spaces",
+                  getValue: (ccPairStatus) => {
+                    const connectorConfig =
+                      ccPairStatus.connector.connector_specific_config;
+                    return connectorConfig.spaces &&
+                      connectorConfig.spaces.length > 0
+                      ? connectorConfig.spaces.join(", ")
+                      : "";
+                  },
+                },
+              ]}
+              onUpdate={() =>
+                mutate("/api/manage/admin/connector/indexing-status")
+              }
+              onCredentialLink={async (connectorId) => {
+                if (axeroCredential) {
+                  await linkCredential(connectorId, axeroCredential.id);
+                  mutate("/api/manage/admin/connector/indexing-status");
+                }
+              }}
+            />
+          </div>
+          <Divider />
         </>
+      )}
+
+      {axeroCredential ? (
+        <Card>
+          <h2 className="font-bold mb-3">Configure an Axero Connector</h2>
+          <ConnectorForm<AxeroConfig>
+            nameBuilder={(values) =>
+              values.spaces
+                ? `AxeroConnector-${values.spaces.join("_")}`
+                : `AxeroConnector`
+            }
+            source="axero"
+            inputType="poll"
+            formBodyBuilder={(values) => {
+              return (
+                <>
+                  <Divider />
+                  {TextArrayFieldBuilder({
+                    name: "spaces",
+                    label: "Space IDs:",
+                    subtext: `
+                      Specify zero or more Spaces to index (by the Space IDs). If no Space IDs
+                      are specified, all Spaces will be indexed.`,
+                  })(values)}
+                </>
+              );
+            }}
+            validationSchema={Yup.object().shape({
+              spaces: Yup.array()
+                .of(Yup.string().required("Space Ids cannot be empty"))
+                .required(),
+            })}
+            initialValues={{
+              spaces: [],
+            }}
+            refreshFreq={10 * 60} // 10 minutes
+            credentialId={axeroCredential.id}
+          />
+        </Card>
+      ) : (
+        <Text>
+          Please provide your Axero API Token in Step 1 first! Once done with
+          that, you can then specify which spaces you want to connect.
+        </Text>
       )}
     </>
   );
@@ -234,7 +245,7 @@ export default function Page() {
 
       <AdminPageTitle icon={<AxeroIcon size={32} />} title="Axero" />
 
-      <Main />
+      <MainSection />
     </div>
   );
 }

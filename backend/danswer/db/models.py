@@ -69,6 +69,11 @@ class IndexModelStatus(str, PyEnum):
     FUTURE = "FUTURE"
 
 
+class ChatSessionSharedStatus(str, PyEnum):
+    PUBLIC = "public"
+    PRIVATE = "private"
+
+
 class Base(DeclarativeBase):
     pass
 
@@ -586,6 +591,11 @@ class ChatSession(Base):
     one_shot: Mapped[bool] = mapped_column(Boolean, default=False)
     # Only ever set to True if system is set to not hard-delete chats
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
+    # controls whether or not this conversation is viewable by others
+    shared_status: Mapped[ChatSessionSharedStatus] = mapped_column(
+        Enum(ChatSessionSharedStatus, native_enum=False),
+        default=ChatSessionSharedStatus.PRIVATE,
+    )
     time_updated: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

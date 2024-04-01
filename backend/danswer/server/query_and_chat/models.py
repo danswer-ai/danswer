@@ -8,6 +8,7 @@ from danswer.chat.models import RetrievalDocs
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
+from danswer.db.models import ChatSessionSharedStatus
 from danswer.search.models import BaseFilters
 from danswer.search.models import RetrievalDetails
 from danswer.search.models import SearchDoc
@@ -63,7 +64,20 @@ class DocumentSearchRequest(BaseModel):
     search_type: SearchType
     retrieval_options: RetrievalDetails
     recency_bias_multiplier: float = 1.0
-    skip_rerank: bool = False
+    # This is to forcibly skip (or run) the step, if None it uses the system defaults
+    skip_rerank: bool | None = None
+    skip_llm_chunk_filter: bool | None = None
+
+
+class LLMOverride(BaseModel):
+    model_provider: str | None = None
+    model_version: str | None = None
+    temperature: float | None = None
+
+
+class PromptOverride(BaseModel):
+    system_prompt: str | None = None
+    task_prompt: str | None = None
 
 
 """
@@ -97,6 +111,10 @@ class CreateChatMessageRequest(BaseModel):
     query_override: str | None = None
     no_ai_answer: bool = False
 
+    # allows the caller to override the Persona / Prompt
+    llm_override: LLMOverride | None = None
+    prompt_override: PromptOverride | None = None
+
     @root_validator
     def check_search_doc_ids_or_retrieval_options(cls: BaseModel, values: dict) -> dict:
         search_doc_ids, retrieval_options = values.get("search_doc_ids"), values.get(
@@ -120,6 +138,10 @@ class ChatRenameRequest(BaseModel):
     name: str | None = None
 
 
+class ChatSessionUpdateRequest(BaseModel):
+    sharing_status: ChatSessionSharedStatus
+
+
 class RenameChatSessionResponse(BaseModel):
     new_name: str  # This is only really useful if the name is generated
 
@@ -129,6 +151,7 @@ class ChatSessionDetails(BaseModel):
     name: str
     persona_id: int
     time_created: str
+    shared_status: ChatSessionSharedStatus
 
 
 class ChatSessionsResponse(BaseModel):
@@ -174,7 +197,10 @@ class ChatSessionDetailResponse(BaseModel):
     chat_session_id: int
     description: str
     persona_id: int
+    persona_name: str
     messages: list[ChatMessageDetail]
+    time_created: datetime
+    shared_status: ChatSessionSharedStatus
 
 
 class QueryValidationResponse(BaseModel):

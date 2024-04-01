@@ -116,6 +116,9 @@ def get_local_reranking_model_ensemble(
 
     global _RERANK_MODELS
     if _RERANK_MODELS is None or max_context_length != _RERANK_MODELS[0].max_length:
+        del _RERANK_MODELS
+        gc.collect()
+
         _RERANK_MODELS = []
         for model_name in model_names:
             logger.info(f"Loading {model_name}")
