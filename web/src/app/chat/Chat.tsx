@@ -13,9 +13,10 @@ import {
   RetrievalType,
   StreamingError,
 } from "./interfaces";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FeedbackType } from "./types";
 import {
+  buildChatUrl,
   createChatSession,
   getCitedDocumentsFromMessage,
   getHumanAndAIMessageFromMessageNumber,
@@ -46,6 +47,7 @@ import { computeAvailableFilters } from "@/lib/filters";
 import { useDocumentSelection } from "./useDocumentSelection";
 import { StarterMessage } from "./StarterMessage";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
+import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -71,6 +73,13 @@ export const Chat = ({
   shouldhideBeforeScroll?: boolean;
 }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // used to track whether or not the initial "submit on load" has been performed
+  // this only applies if `?submit-on-load=true` or `?submit-on-load=1` is in the URL
+  // NOTE: this is required due to React strict mode, where all `useEffect` hooks
+  // are run twice on initial load during development
+  const submitOnLoadPerformed = useRef<boolean>(false);
+
   const { popup, setPopup } = usePopup();
 
   // fetch messages for the chat session
@@ -117,6 +126,16 @@ export const Chat = ({
         }
         setMessageHistory([]);
         setChatSessionSharedStatus(ChatSessionSharedStatus.Private);
+
+        // if we're supposed to submit on initial load, then do that here
+        if (
+          shouldSubmitOnLoad(searchParams) &&
+          !submitOnLoadPerformed.current
+        ) {
+          submitOnLoadPerformed.current = true;
+          onSubmit();
+        }
+
         return;
       }
 
@@ -151,7 +170,9 @@ export const Chat = ({
   const [chatSessionId, setChatSessionId] = useState<number | null>(
     existingChatSessionId
   );
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(
+    searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
+  );
   const [messageHistory, setMessageHistory] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
 
@@ -385,6 +406,13 @@ export const Chat = ({
           .map((document) => document.db_doc_id as number),
         queryOverride,
         forceSearch,
+        modelVersion:
+          searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) || undefined,
+        temperature:
+          parseFloat(searchParams.get(SEARCH_PARAM_NAMES.TEMPERATURE) || "") ||
+          undefined,
+        systemPromptOverride:
+          searchParams.get(SEARCH_PARAM_NAMES.SYSTEM_PROMPT) || undefined,
       })) {
         for (const packet of packetBunch) {
           if (Object.hasOwn(packet, "answer_piece")) {
@@ -454,7 +482,7 @@ export const Chat = ({
         currChatSessionId === urlChatSessionId.current ||
         urlChatSessionId.current === null
       ) {
-        router.push(`/chat?chatId=${currChatSessionId}`, {
+        router.push(buildChatUrl(searchParams, currChatSessionId, null), {
           scroll: false,
         });
       }
@@ -550,7 +578,9 @@ export const Chat = ({
                         if (persona) {
                           setSelectedPersona(persona);
                           textareaRef.current?.focus();
-                          router.push(`/chat?personaId=${persona.id}`);
+                          router.push(
+                            buildChatUrl(searchParams, null, persona.id)
+                          );
                         }
                       }}
                     />
@@ -577,7 +607,7 @@ export const Chat = ({
                     handlePersonaSelect={(persona) => {
                       setSelectedPersona(persona);
                       textareaRef.current?.focus();
-                      router.push(`/chat?personaId=${persona.id}`);
+                      router.push(buildChatUrl(searchParams, null, persona.id));
                     }}
                   />
                 )}
