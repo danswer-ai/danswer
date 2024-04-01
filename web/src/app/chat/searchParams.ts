@@ -11,6 +11,8 @@ export const SEARCH_PARAM_NAMES = {
   // user message
   USER_MESSAGE: "user-message",
   SUBMIT_ON_LOAD: "submit-on-load",
+  // chat title
+  TITLE: "title",
 };
 
 export function shouldSubmitOnLoad(searchParams: ReadonlyURLSearchParams) {

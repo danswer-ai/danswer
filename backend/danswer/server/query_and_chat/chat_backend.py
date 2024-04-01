@@ -123,7 +123,8 @@ def create_new_chat_session(
     try:
         new_chat_session = create_chat_session(
             db_session=db_session,
-            description="",  # Leave the naming till later to prevent delay
+            description=chat_session_creation_request.description
+            or "",  # Leave the naming till later to prevent delay
             user_id=user_id,
             persona_id=chat_session_creation_request.persona_id,
         )

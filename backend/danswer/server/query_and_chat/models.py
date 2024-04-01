@@ -31,6 +31,7 @@ class SimpleQueryRequest(BaseModel):
 class ChatSessionCreationRequest(BaseModel):
     # If not specified, use Danswer default persona
     persona_id: int = 0
+    description: str | None = None
 
 
 class HelperResponse(BaseModel):
