@@ -18,7 +18,10 @@ import { Persona } from "../admin/personas/interfaces";
 import { ReadonlyURLSearchParams } from "next/navigation";
 import { SEARCH_PARAM_NAMES } from "./searchParams";
 
-export async function createChatSession(personaId: number): Promise<number> {
+export async function createChatSession(
+  personaId: number,
+  description: string | null
+): Promise<number> {
   const createChatSessionResponse = await fetch(
     "/api/chat/create-chat-session",
     {
@@ -28,6 +31,7 @@ export async function createChatSession(personaId: number): Promise<number> {
       },
       body: JSON.stringify({
         persona_id: personaId,
+        description,
       }),
     }
   );
@@ -373,6 +377,7 @@ export function personaIncludesRetrieval(selectedPersona: Persona) {
 const PARAMS_TO_SKIP = [
   SEARCH_PARAM_NAMES.SUBMIT_ON_LOAD,
   SEARCH_PARAM_NAMES.USER_MESSAGE,
+  SEARCH_PARAM_NAMES.TITLE,
   // only use these if explicitly passed in
   SEARCH_PARAM_NAMES.CHAT_ID,
   SEARCH_PARAM_NAMES.PERSONA_ID,

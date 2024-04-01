@@ -334,8 +334,14 @@ export const Chat = ({
   } = {}) => {
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
+    const searchParamBasedChatSessionName =
+      searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
+
     if (isNewSession) {
-      currChatSessionId = await createChatSession(livePersona?.id || 0);
+      currChatSessionId = await createChatSession(
+        livePersona?.id || 0,
+        searchParamBasedChatSessionName
+      );
     } else {
       currChatSessionId = chatSessionId as number;
     }
@@ -475,7 +481,9 @@ export const Chat = ({
       if (finalMessage) {
         setSelectedMessageForDocDisplay(finalMessage.message_id);
       }
-      await nameChatSession(currChatSessionId, currMessage);
+      if (!searchParamBasedChatSessionName) {
+        await nameChatSession(currChatSessionId, currMessage);
+      }
 
       // NOTE: don't switch pages if the user has navigated away from the chat
       if (
