@@ -22,6 +22,7 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_USE_QUOTES
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.configs.danswerbot_configs import DISABLE_DANSWER_BOT_FILTER_DETECT
 from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
+from danswer.configs.model_configs import ENABLE_RERANKING_ASYNC_FLOW
 from danswer.danswerbot.slack.blocks import build_documents_blocks
 from danswer.danswerbot.slack.blocks import build_follow_up_block
 from danswer.danswerbot.slack.blocks import build_qa_response_blocks
@@ -310,6 +311,7 @@ def handle_message(
                 persona_id=persona.id if persona is not None else 0,
                 retrieval_options=retrieval_details,
                 chain_of_thought=not disable_cot,
+                skip_rerank=not ENABLE_RERANKING_ASYNC_FLOW,
             )
         )
     except Exception as e:
