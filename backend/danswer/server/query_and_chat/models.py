@@ -64,7 +64,9 @@ class DocumentSearchRequest(BaseModel):
     search_type: SearchType
     retrieval_options: RetrievalDetails
     recency_bias_multiplier: float = 1.0
-    skip_rerank: bool = False
+    # This is to forcibly skip (or run) the step, if None it uses the system defaults
+    skip_rerank: bool | None = None
+    skip_llm_chunk_filter: bool | None = None
 
 
 class LLMOverride(BaseModel):

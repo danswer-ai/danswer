@@ -126,6 +126,8 @@ def stream_answer_objects(
             persona=chat_session.persona,
             offset=query_req.retrieval_options.offset,
             limit=query_req.retrieval_options.limit,
+            skip_rerank=query_req.skip_rerank,
+            skip_llm_chunk_filter=query_req.skip_llm_chunk_filter,
         ),
         user=user,
         db_session=db_session,

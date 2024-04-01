@@ -53,11 +53,11 @@ requests==2.31.0
 requests-oauthlib==1.3.1
 retry==0.9.2  # This pulls in py which is in CVE-2022-42969, must remove py from image
 rfc3986==1.5.0
+rt==3.1.2
 # need to pin `safetensors` version, since the latest versions requires
 # building from source using Rust
-rt==3.1.2
-safetensors==0.3.1
-sentence-transformers==2.2.2
+safetensors==0.4.2
+sentence-transformers==2.6.1
 slack-sdk==3.20.2
 SQLAlchemy[mypy]==2.0.15
 starlette==0.36.3
@@ -67,7 +67,7 @@ tiktoken==0.4.0
 timeago==1.0.16
 torch==2.0.1
 torchvision==0.15.2
-transformers==4.36.2
+transformers==4.39.2
 uvicorn==0.21.1
 zulip==0.8.2
 hubspot-api-client==8.1.0

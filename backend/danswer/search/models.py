@@ -58,7 +58,9 @@ class SearchRequest(BaseModel):
 
     recency_bias_multiplier: float = 1.0
     hybrid_alpha: float = HYBRID_ALPHA
-    skip_rerank: bool = True
+    # This is to forcibly skip (or run) the step, if None it uses the system defaults
+    skip_rerank: bool | None = None
+    skip_llm_chunk_filter: bool | None = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -72,9 +74,9 @@ class SearchQuery(BaseModel):
     offset: int = 0
     search_type: SearchType = SearchType.HYBRID
     skip_rerank: bool = not ENABLE_RERANKING_REAL_TIME_FLOW
+    skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER
     # Only used if not skip_rerank
     num_rerank: int | None = NUM_RERANKED_RESULTS
-    skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER
     # Only used if not skip_llm_chunk_filter
     max_llm_filter_chunks: int = NUM_RERANKED_RESULTS
 
