@@ -34,7 +34,9 @@ from danswer.llm.answering.answer import Answer
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import CitationConfig
 from danswer.llm.answering.models import DocumentPruningConfig
+from danswer.llm.answering.models import LLMConfig
 from danswer.llm.answering.models import PreviousMessage
+from danswer.llm.answering.models import PromptConfig
 from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import get_default_llm_tokenizer
@@ -343,8 +345,12 @@ def stream_chat_message_objects(
                 ),
                 document_pruning_config=document_pruning_config,
             ),
-            prompt=final_msg.prompt,
-            persona=persona,
+            prompt_config=PromptConfig.from_model(
+                final_msg.prompt, prompt_override=new_msg_req.prompt_override
+            ),
+            llm_config=LLMConfig.from_persona(
+                persona, llm_override=new_msg_req.llm_override
+            ),
             message_history=[
                 PreviousMessage.from_chat_message(msg) for msg in history_msgs
             ],

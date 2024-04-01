@@ -38,7 +38,9 @@ from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
 from danswer.db.models import SlackBotResponseType
-from danswer.llm.answering.prompts.citations_prompt import compute_max_document_tokens
+from danswer.llm.answering.prompts.citations_prompt import (
+    compute_max_document_tokens_for_persona,
+)
 from danswer.llm.utils import check_number_of_tokens
 from danswer.llm.utils import get_default_llm_version
 from danswer.llm.utils import get_max_input_tokens
@@ -247,7 +249,7 @@ def handle_message(
 
             query_text = new_message_request.messages[0].message
             if persona:
-                max_document_tokens = compute_max_document_tokens(
+                max_document_tokens = compute_max_document_tokens_for_persona(
                     persona=persona,
                     actual_user_input=query_text,
                     max_llm_token_override=remaining_tokens,
