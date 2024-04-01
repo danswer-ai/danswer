@@ -82,14 +82,22 @@ class TeamsConnector(LoadConnector, PollConnector):
         self.graph_client = GraphClient(_acquire_token_func)
         return None
     
-    def get_message_list_from_channel(self, channel_object: Channel) -> list[ChatMessage]:
-        message_list: list[ChatMessage] = []
-        message_object_collection = channel_object.messages.get().execute_query()
-        message_list.extend(message_object_collection)
-        
-        return message_list
+    def get_post_message_lists_from_channel(self, channel_object: Channel) -> list[ChatMessage]:
+    
+        base_message_list: list[ChatMessage] = channel_object.messages.get().execute_query()
 
-    def get_all_channels(
+        post_message_lists: list[list[ChatMessage]] = []
+        for message in base_message_list:
+            replies = message.replies.get().execute_query()
+
+            post_message_list: list[ChatMessage] = [message]
+            post_message_list.extend(replies)
+
+            post_message_lists.append(post_message_list)
+        
+        return post_message_lists
+
+    def get_channel_object_list_from_team_list(
         self,
         team_object_list: list[Team],
         start: datetime | None = None,
@@ -109,7 +117,7 @@ class TeamsConnector(LoadConnector, PollConnector):
 
         return channel_list
 
-    def get_all_teams_objects(self) -> list[Team]:
+    def get_all_team_objects(self) -> list[Team]:
         team_object_list: list[Team] = []
 
         teams_object = self.graph_client.teams.get().execute_query()
@@ -132,9 +140,9 @@ class TeamsConnector(LoadConnector, PollConnector):
         if self.graph_client is None:
             raise ConnectorMissingCredentialError("Teams")
 
-        team_object_list = self.get_all_teams_objects()
+        team_object_list = self.get_all_team_objects()
 
-        channel_list = self.get_all_channels(
+        channel_list = self.get_channel_object_list_from_team_list(
             team_object_list=team_object_list,
             start=start,
             end=end,
@@ -144,8 +152,10 @@ class TeamsConnector(LoadConnector, PollConnector):
         doc_batch: list[Document] = []
         batch_count = 0
         for channel_object in channel_list:
+            post_message_lists = self.get_post_message_lists_from_channel(channel_object)
             doc_batch.append(
-                self.convert_channel_object_to_document(channel_object)
+                self.convert_post_message_list_to_document(channel_object, 
+                                                           post_message_lists)
             )
 
             batch_count += 1
@@ -155,19 +165,60 @@ class TeamsConnector(LoadConnector, PollConnector):
                 doc_batch = []
         yield doc_batch
 
-    def convert_channel_object_to_document(
+    def convert_post_message_list_to_document(
         self,
         channel_object: Channel,
+        post_message_list: list[ChatMessage],
     ) -> Document:
-        channel_text, most_recent_message_datetime = self.extract_channel_text_and_latest_datetime(channel_object)
-        channel_members = self.extract_channel_members(channel_object)
+        most_recent_message_datetime: datetime | None = None
+        semantic_string: str = "Channel/Post: " + channel_object.properties["displayName"]
+        post_id: str = channel_object.id
+        web_url: str = channel_object.web_url
+        messages_text = ""
+        post_members_list: list[BasicExpertInfo] = []
+
+        sorted_post_message_list = sorted(post_message_list, key=get_created_datetime, reverse=True)
+
+        if sorted_post_message_list:
+            most_recent_message = sorted_post_message_list[0]
+            most_recent_message_datetime = datetime.strptime(most_recent_message.properties["createdDateTime"], 
+                                                    '%Y-%m-%dT%H:%M:%S.%f%z')
+            
+        for message in post_message_list:
+            # add text and a newline
+            if message.body.content:
+                html_parser = HTMLFilter()
+                html_parser.feed(message.body.content)
+                messages_text += html_parser.text + '\n'
+
+            # if it has a subject, that means its the top level post message, so grab its id, url, and subject
+            if message.properties['subject']:
+                semantic_string += "/" + message.properties["subject"]
+                post_id = message.properties["id"]
+                web_url = message.web_url
+
+            # check to make sure there is a valid display name
+            if message.properties["from"]:
+                if message.properties["from"]["user"]:
+                    if message.properties["from"]["user"]["displayName"]:
+                        message_sender = message.properties["from"]["user"]["displayName"]
+                        # if its not a duplicate, add it to the list
+                        if message_sender not in [member.display_name for member in post_members_list]:
+                            post_members_list.append(
+                                BasicExpertInfo(display_name=message_sender)
+                        )
+
+        # if there are no found post members, grab the members from the parent channel
+        if not post_members_list:
+            post_members_list = self.extract_channel_members(channel_object)
+
         doc = Document(
-            id=channel_object.id,
-            sections=[Section(link=channel_object.web_url, text=channel_text)],
+            id=post_id,
+            sections=[Section(link=web_url, text=messages_text)],
             source=DocumentSource.TEAMS,
-            semantic_identifier=channel_object.properties["displayName"],
+            semantic_identifier=semantic_string,
             doc_updated_at=most_recent_message_datetime,
-            primary_owners=channel_members,
+            primary_owners=post_members_list,
             metadata={},
         )
         return doc
@@ -180,23 +231,6 @@ class TeamsConnector(LoadConnector, PollConnector):
                 BasicExpertInfo(display_name=member_object.display_name)
             )
         return channel_members_list
-    
-    def extract_channel_text_and_latest_datetime(self, channel_object: Channel):
-        message_list = self.get_message_list_from_channel(channel_object)
-        sorted_message_list = sorted(message_list, key=get_created_datetime, reverse=True)
-        most_recent_datetime: datetime | None = None
-        if sorted_message_list:
-            most_recent_message = sorted_message_list[0]
-            most_recent_datetime = datetime.strptime(most_recent_message.properties["createdDateTime"], 
-                                                    '%Y-%m-%dT%H:%M:%S.%f%z')
-        messages_text = ""
-        for message in message_list:
-            if message.body.content:
-                html_parser = HTMLFilter()
-                html_parser.feed(message.body.content)
-                messages_text += html_parser.text
-
-        return messages_text, most_recent_datetime
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         return self._fetch_from_teams()
