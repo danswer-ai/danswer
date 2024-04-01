@@ -88,7 +88,7 @@ class TeamsConnector(LoadConnector, PollConnector):
 
         post_message_lists: list[list[ChatMessage]] = []
         for message in base_message_list:
-            replies = message.replies.get().execute_query()
+            replies = message.replies.get_all().execute_query()
 
             post_message_list: list[ChatMessage] = [message]
             post_message_list.extend(replies)
