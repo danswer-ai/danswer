@@ -222,7 +222,7 @@ const MainSection = () => {
             initialValues={{
               spaces: [],
             }}
-            refreshFreq={10 * 60} // 10 minutes
+            refreshFreq={60 * 60 * 24} // 1 day
             credentialId={axeroCredential.id}
           />
         </Card>
