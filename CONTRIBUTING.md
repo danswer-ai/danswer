@@ -159,15 +159,13 @@ pre-commit install
 
 Additionally, we use `mypy` for static type checking.
 Danswer is fully type-annotated, and we would like to keep it that way! 
-Right now, there is no automated type checking at the moment (coming soon), but we ask you to manually run it before
-creating a pull requests with `python -m mypy .` from the `danswer/backend` directory.
+To run the mypy checks manually, run `python -m mypy .` from the `danswer/backend` directory.
 
 
 #### Web
 We use `prettier` for formatting. The desired version (2.8.8) will be installed via a `npm i` from the `danswer/web` directory. 
 To run the formatter, use `npx prettier --write .` from the `danswer/web` directory.
-Like `mypy`, we have no automated formatting yet (coming soon), but we request that, for now,
-you run this manually before creating a pull request.
+Please double check that prettier passes before creating a pull request.
 
 
 ### Release Process
