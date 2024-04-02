@@ -1,5 +1,4 @@
 import io
-import socket
 from enum import Enum
 from typing import Any
 from typing import cast
@@ -49,6 +48,7 @@ def check_internet_connection(url: str) -> None:
         response.raise_for_status()
     except (requests.RequestException, ValueError):
         raise Exception(f"Unable to reach {url} - check your internet connection")
+
 
 def is_valid_url(url: str) -> bool:
     try:
