@@ -28,6 +28,8 @@ from danswer.db.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.db.models import StarterMessage
 from danswer.db.models import User__UserGroup
+from danswer.llm.override_models import LLMOverride
+from danswer.llm.override_models import PromptOverride
 from danswer.search.enums import RecencyBiasSetting
 from danswer.search.models import RetrievalDocs
 from danswer.search.models import SavedSearchDoc
@@ -53,7 +55,9 @@ def get_chat_session_by_id(
         # if user_id is None, assume this is an admin who should be able
         # to view all chat sessions
         if user_id is not None:
-            stmt = stmt.where(ChatSession.user_id == user_id)
+            stmt = stmt.where(
+                or_(ChatSession.user_id == user_id, ChatSession.user_id.is_(None))
+            )
 
     result = db_session.execute(stmt)
     chat_session = result.scalar_one_or_none()
@@ -92,12 +96,16 @@ def create_chat_session(
     description: str,
     user_id: UUID | None,
     persona_id: int | None = None,
+    llm_override: LLMOverride | None = None,
+    prompt_override: PromptOverride | None = None,
     one_shot: bool = False,
 ) -> ChatSession:
     chat_session = ChatSession(
         user_id=user_id,
         persona_id=persona_id,
         description=description,
+        llm_override=llm_override,
+        prompt_override=prompt_override,
         one_shot=one_shot,
     )
 
