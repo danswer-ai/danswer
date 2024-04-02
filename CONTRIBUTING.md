@@ -112,24 +112,10 @@ docker compose -f docker-compose.dev.yml -p danswer-stack up -d index relational
 (index refers to Vespa and relational_db refers to Postgres)
 
 #### Running Danswer
-
-Setup a folder to store config. Navigate to `danswer/backend` and run:
-```bash
-mkdir dynamic_config_storage
-```
-
 To start the frontend, navigate to `danswer/web` and run:
 ```bash
 npm run dev
 ```
-
-Package the Vespa schema. This will only need to be done when the Vespa schema is updated locally.
-
-Navigate to `danswer/backend/danswer/document_index/vespa/app_config` and run:
-```bash
-zip -r ../vespa-app.zip .
-```
-- Note: If you don't have the `zip` utility, you will need to install it prior to running the above
 
 The first time running Danswer, you will also need to run the DB migrations for Postgres.
 After the first time, this is no longer required unless the DB models change.
@@ -149,17 +135,12 @@ python ./scripts/dev_run_background_jobs.py
 
 To run the backend API server, navigate back to `danswer/backend` and run:
 ```bash
-AUTH_TYPE=disabled \
-DYNAMIC_CONFIG_DIR_PATH=./dynamic_config_storage \
-VESPA_DEPLOYMENT_ZIP=./danswer/document_index/vespa/vespa-app.zip \
-uvicorn danswer.main:app --reload --port 8080
+AUTH_TYPE=disabled uvicorn danswer.main:app --reload --port 8080
 ```
 _For Windows (for compatibility with both PowerShell and Command Prompt):_
 ```bash
 powershell -Command "
     $env:AUTH_TYPE='disabled'
-    $env:DYNAMIC_CONFIG_DIR_PATH='./dynamic_config_storage'
-    $env:VESPA_DEPLOYMENT_ZIP='./danswer/document_index/vespa/vespa-app.zip'
     uvicorn danswer.main:app --reload --port 8080 
 "
 ```
@@ -193,5 +174,3 @@ you run this manually before creating a pull request.
 Danswer follows the semver versioning standard.
 A set of Docker containers will be pushed automatically to DockerHub with every tag.
 You can see the containers [here](https://hub.docker.com/search?q=danswer%2F).
-
-As pre-1.0 software, even patch releases may contain breaking or non-backwards-compatible changes.
