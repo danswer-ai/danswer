@@ -133,7 +133,7 @@ export const Chat = ({
           !submitOnLoadPerformed.current
         ) {
           submitOnLoadPerformed.current = true;
-          onSubmit();
+          await onSubmit();
         }
 
         return;
@@ -162,6 +162,21 @@ export const Chat = ({
       setChatSessionSharedStatus(chatSession.shared_status);
 
       setIsFetchingChatMessages(false);
+
+      // if this is a seeded chat, then kick off the AI message generation
+      if (newMessageHistory.length === 1 && !submitOnLoadPerformed.current) {
+        submitOnLoadPerformed.current = true;
+        const seededMessage = newMessageHistory[0].message;
+        await onSubmit({
+          isSeededChat: true,
+          messageOverride: seededMessage,
+        });
+        // force re-name if the chat session doesn't have one
+        if (!chatSession.description) {
+          await nameChatSession(existingChatSessionId, seededMessage);
+          router.refresh(); // need to refresh to update name on sidebar
+        }
+      }
     }
 
     initialSessionFetch();
@@ -326,11 +341,13 @@ export const Chat = ({
     messageOverride,
     queryOverride,
     forceSearch,
+    isSeededChat,
   }: {
     messageIdToResend?: number;
     messageOverride?: string;
     queryOverride?: string;
     forceSearch?: boolean;
+    isSeededChat?: boolean;
   } = {}) => {
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
@@ -419,6 +436,7 @@ export const Chat = ({
           undefined,
         systemPromptOverride:
           searchParams.get(SEARCH_PARAM_NAMES.SYSTEM_PROMPT) || undefined,
+        useExistingUserMessage: isSeededChat,
       })) {
         for (const packet of packetBunch) {
           if (Object.hasOwn(packet, "answer_piece")) {

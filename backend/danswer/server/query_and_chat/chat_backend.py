@@ -8,12 +8,16 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_user
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.process_message import stream_chat_message
+from danswer.configs.app_configs import WEB_DOMAIN
+from danswer.configs.constants import MessageType
 from danswer.db.chat import create_chat_session
+from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import delete_chat_session
 from danswer.db.chat import get_chat_message
 from danswer.db.chat import get_chat_messages_by_session
 from danswer.db.chat import get_chat_session_by_id
 from danswer.db.chat import get_chat_sessions_by_user
+from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import get_persona_by_id
 from danswer.db.chat import set_as_latest_chat_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
@@ -27,6 +31,7 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
+from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.secondary_llm_flows.chat_session_naming import (
     get_renamed_conversation_name,
 )
@@ -40,6 +45,8 @@ from danswer.server.query_and_chat.models import ChatSessionsResponse
 from danswer.server.query_and_chat.models import ChatSessionUpdateRequest
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.query_and_chat.models import CreateChatSessionID
+from danswer.server.query_and_chat.models import LLMOverride
+from danswer.server.query_and_chat.models import PromptOverride
 from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
 from danswer.utils.logger import setup_logger
@@ -92,6 +99,13 @@ def get_chat_session(
         )
     except ValueError:
         raise ValueError("Chat session does not exist or has been deleted")
+
+    # for chat-seeding: if the session is unassigned, assign it now. This is done here
+    # to avoid another back and forth between FE -> BE before starting the first
+    # message generation
+    if chat_session.user_id is None and user_id is not None:
+        chat_session.user_id = user_id
+        db_session.commit()
 
     session_messages = get_chat_messages_by_session(
         chat_session_id=session_id, user_id=user_id, db_session=db_session
@@ -209,15 +223,24 @@ def handle_new_chat_message(
     - Sending a new message in the session
     - Regenerating a message in the session (just send the same one again)
     - Editing a message (similar to regenerating but sending a different message)
+    - Kicking off a seeded chat session (set `use_existing_user_message`)
 
     To avoid extra overhead/latency, this assumes (and checks) that previous messages on the path
     have already been set as latest"""
     logger.info(f"Received new chat message: {chat_message_req.message}")
 
-    if not chat_message_req.message and chat_message_req.prompt_id is not None:
+    if (
+        not chat_message_req.message
+        and chat_message_req.prompt_id is not None
+        and not chat_message_req.use_existing_user_message
+    ):
         raise HTTPException(status_code=400, detail="Empty chat message is invalid")
 
-    packets = stream_chat_message(new_msg_req=chat_message_req, user=user)
+    packets = stream_chat_message(
+        new_msg_req=chat_message_req,
+        user=user,
+        use_existing_user_message=chat_message_req.use_existing_user_message,
+    )
 
     return StreamingResponse(packets, media_type="application/json")
 
@@ -307,4 +330,72 @@ def get_max_document_tokens(
 
     return MaxSelectedDocumentTokens(
         max_tokens=compute_max_document_tokens_for_persona(persona),
+    )
+
+
+"""Endpoints for chat seeding"""
+
+
+class ChatSeedRequest(BaseModel):
+    # standard chat session stuff
+    persona_id: int
+    prompt_id: int | None = None
+
+    # overrides / seeding
+    llm_override: LLMOverride | None = None
+    prompt_override: PromptOverride | None = None
+    description: str | None = None
+    message: str | None = None
+
+    # TODO: support this
+    # initial_message_retrieval_options: RetrievalDetails | None = None
+
+
+class ChatSeedResponse(BaseModel):
+    redirect_url: str
+
+
+@router.post("/seed-chat-session")
+def seed_chat(
+    chat_seed_request: ChatSeedRequest,
+    # NOTE: realistically, this will be an API key not an actual user
+    _: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> ChatSeedResponse:
+    try:
+        new_chat_session = create_chat_session(
+            db_session=db_session,
+            description=chat_seed_request.description or "",
+            user_id=None,  # this chat session is "unassigned" until a user visits the web UI
+            persona_id=chat_seed_request.persona_id,
+            llm_override=chat_seed_request.llm_override,
+            prompt_override=chat_seed_request.prompt_override,
+        )
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=400, detail="Invalid Persona provided.")
+
+    if chat_seed_request.message is not None:
+        root_message = get_or_create_root_message(
+            chat_session_id=new_chat_session.id, db_session=db_session
+        )
+        create_new_chat_message(
+            chat_session_id=new_chat_session.id,
+            parent_message=root_message,
+            prompt_id=chat_seed_request.prompt_id
+            or (
+                new_chat_session.persona.prompts[0].id
+                if new_chat_session.persona.prompts
+                else None
+            ),
+            message=chat_seed_request.message,
+            token_count=len(
+                get_default_llm_tokenizer().encode(chat_seed_request.message)
+            ),
+            message_type=MessageType.USER,
+            db_session=db_session,
+        )
+
+    return ChatSeedResponse(
+        redirect_url=f"{WEB_DOMAIN}/chat?chatId={new_chat_session.id}"
     )
