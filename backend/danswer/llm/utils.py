@@ -4,6 +4,8 @@ from copy import copy
 from functools import lru_cache
 from typing import Any
 from typing import cast
+from typing import TYPE_CHECKING
+from typing import Union
 
 import litellm  # type: ignore
 import tiktoken
@@ -33,9 +35,11 @@ from danswer.db.models import ChatMessage
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.indexing.models import InferenceChunk
-from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.interfaces import LLM
 from danswer.utils.logger import setup_logger
+
+if TYPE_CHECKING:
+    from danswer.llm.answering.models import PreviousMessage
 
 logger = setup_logger()
 
@@ -116,7 +120,7 @@ def tokenizer_trim_chunks(
 
 
 def translate_danswer_msg_to_langchain(
-    msg: ChatMessage | PreviousMessage,
+    msg: Union[ChatMessage, "PreviousMessage"],
 ) -> BaseMessage:
     if msg.message_type == MessageType.SYSTEM:
         raise ValueError("System messages are not currently part of history")
@@ -129,7 +133,7 @@ def translate_danswer_msg_to_langchain(
 
 
 def translate_history_to_basemessages(
-    history: list[ChatMessage] | list[PreviousMessage],
+    history: list[ChatMessage] | list["PreviousMessage"],
 ) -> tuple[list[BaseMessage], list[int]]:
     history_basemessages = [
         translate_danswer_msg_to_langchain(msg)

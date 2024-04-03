@@ -76,6 +76,8 @@ from danswer.server.query_and_chat.query_backend import (
     admin_router as admin_query_router,
 )
 from danswer.server.query_and_chat.query_backend import basic_router as query_router
+from danswer.server.settings.api import admin_router as settings_admin_router
+from danswer.server.settings.api import basic_router as settings_router
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
@@ -279,6 +281,8 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, state_router)
     include_router_with_global_prefix_prepended(application, danswer_api_router)
     include_router_with_global_prefix_prepended(application, gpts_router)
+    include_router_with_global_prefix_prepended(application, settings_router)
+    include_router_with_global_prefix_prepended(application, settings_admin_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step

@@ -117,7 +117,7 @@ export const ChatSidebar = ({
                   {chatSessions.map((chat) => {
                     const isSelected = currentChatId === chat.id;
                     return (
-                      <div key={chat.id} className="mr-3">
+                      <div key={`${chat.id}-${chat.name}`} className="mr-3">
                         <ChatSessionDisplay
                           chatSession={chat}
                           isSelected={isSelected}

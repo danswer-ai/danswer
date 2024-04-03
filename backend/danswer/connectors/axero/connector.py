@@ -38,6 +38,7 @@ def _get_entities(
     axero_base_url: str,
     start: datetime,
     end: datetime,
+    space_id: str | None = None,
 ) -> list[dict]:
     endpoint = axero_base_url + "api/content/list"
     page_num = 1
@@ -51,6 +52,10 @@ def _get_entities(
             "SortOrder": "1",  # descending
             "StartPage": str(page_num),
         }
+
+        if space_id is not None:
+            params["SpaceID"] = space_id
+
         res = requests.get(endpoint, headers=_get_auth_header(api_key), params=params)
         res.raise_for_status()
 
@@ -116,7 +121,8 @@ def _translate_content_to_doc(content: dict) -> Document:
 class AxeroConnector(PollConnector):
     def __init__(
         self,
-        base_url: str,
+        # Strings of the integer ids of the spaces
+        spaces: list[str] | None = None,
         include_article: bool = True,
         include_blog: bool = True,
         include_wiki: bool = True,
@@ -129,20 +135,24 @@ class AxeroConnector(PollConnector):
         self.include_wiki = include_wiki
         self.include_forum = include_forum
         self.batch_size = batch_size
+        self.space_ids = spaces
         self.axero_key = None
-
-        if not base_url.endswith("/"):
-            base_url += "/"
-        self.base_url = base_url
+        self.base_url = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         self.axero_key = credentials["axero_api_token"]
+        # As the API key specifically applies to a particular deployment, this is
+        # included as part of the credential
+        base_url = credentials["base_url"]
+        if not base_url.endswith("/"):
+            base_url += "/"
+        self.base_url = base_url
         return None
 
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        if not self.axero_key:
+        if not self.axero_key or not self.base_url:
             raise ConnectorMissingCredentialError("Axero")
 
         start_datetime = datetime.utcfromtimestamp(start).replace(tzinfo=timezone.utc)
@@ -158,26 +168,35 @@ class AxeroConnector(PollConnector):
         if self.include_forum:
             raise NotImplementedError("Forums for Axero not supported currently")
 
-        for entity in entity_types:
-            articles = _get_entities(
-                entity_type=entity,
-                api_key=self.axero_key,
-                axero_base_url=self.base_url,
-                start=start_datetime,
-                end=end_datetime,
-            )
-            yield from process_in_batches(
-                objects=articles,
-                process_function=_translate_content_to_doc,
-                batch_size=self.batch_size,
-            )
+        iterable_space_ids = self.space_ids if self.space_ids else [None]
+
+        for space_id in iterable_space_ids:
+            for entity in entity_types:
+                axero_obj = _get_entities(
+                    entity_type=entity,
+                    api_key=self.axero_key,
+                    axero_base_url=self.base_url,
+                    start=start_datetime,
+                    end=end_datetime,
+                    space_id=space_id,
+                )
+                yield from process_in_batches(
+                    objects=axero_obj,
+                    process_function=_translate_content_to_doc,
+                    batch_size=self.batch_size,
+                )
 
 
 if __name__ == "__main__":
     import os
 
-    connector = AxeroConnector(base_url=os.environ["AXERO_BASE_URL"])
-    connector.load_credentials({"axero_api_token": os.environ["AXERO_API_TOKEN"]})
+    connector = AxeroConnector()
+    connector.load_credentials(
+        {
+            "axero_api_token": os.environ["AXERO_API_TOKEN"],
+            "base_url": os.environ["AXERO_BASE_URL"],
+        }
+    )
     current = time.time()
 
     one_year_ago = current - 24 * 60 * 60 * 360

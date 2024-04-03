@@ -24,7 +24,9 @@ from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.models import User
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
-from danswer.llm.answering.prompts.citations_prompt import compute_max_document_tokens
+from danswer.llm.answering.prompts.citations_prompt import (
+    compute_max_document_tokens_for_persona,
+)
 from danswer.secondary_llm_flows.chat_session_naming import (
     get_renamed_conversation_name,
 )
@@ -121,7 +123,8 @@ def create_new_chat_session(
     try:
         new_chat_session = create_chat_session(
             db_session=db_session,
-            description="",  # Leave the naming till later to prevent delay
+            description=chat_session_creation_request.description
+            or "",  # Leave the naming till later to prevent delay
             user_id=user_id,
             persona_id=chat_session_creation_request.persona_id,
         )
@@ -303,5 +306,5 @@ def get_max_document_tokens(
         raise HTTPException(status_code=404, detail="Persona not found")
 
     return MaxSelectedDocumentTokens(
-        max_tokens=compute_max_document_tokens(persona),
+        max_tokens=compute_max_document_tokens_for_persona(persona),
     )

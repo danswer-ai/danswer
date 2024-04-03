@@ -31,6 +31,7 @@ class SimpleQueryRequest(BaseModel):
 class ChatSessionCreationRequest(BaseModel):
     # If not specified, use Danswer default persona
     persona_id: int = 0
+    description: str | None = None
 
 
 class HelperResponse(BaseModel):
@@ -64,7 +65,20 @@ class DocumentSearchRequest(BaseModel):
     search_type: SearchType
     retrieval_options: RetrievalDetails
     recency_bias_multiplier: float = 1.0
-    skip_rerank: bool = False
+    # This is to forcibly skip (or run) the step, if None it uses the system defaults
+    skip_rerank: bool | None = None
+    skip_llm_chunk_filter: bool | None = None
+
+
+class LLMOverride(BaseModel):
+    model_provider: str | None = None
+    model_version: str | None = None
+    temperature: float | None = None
+
+
+class PromptOverride(BaseModel):
+    system_prompt: str | None = None
+    task_prompt: str | None = None
 
 
 """
@@ -97,6 +111,10 @@ class CreateChatMessageRequest(BaseModel):
     # will disable Query Rewording if specified
     query_override: str | None = None
     no_ai_answer: bool = False
+
+    # allows the caller to override the Persona / Prompt
+    llm_override: LLMOverride | None = None
+    prompt_override: PromptOverride | None = None
 
     @root_validator
     def check_search_doc_ids_or_retrieval_options(cls: BaseModel, values: dict) -> dict:

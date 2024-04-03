@@ -113,6 +113,10 @@ export interface SharepointConfig {
   sites?: string[];
 }
 
+export interface AxeroConfig {
+  spaces?: string[];
+}
+
 export interface ProductboardConfig {}
 
 export interface SlackConfig {
@@ -329,6 +333,7 @@ export interface SharepointCredentialJson {
 }
 
 export interface AxeroCredentialJson {
+  base_url: string;
   axero_api_token: string;
 }
 

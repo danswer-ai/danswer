@@ -736,7 +736,8 @@ def create_db_search_doc(
         boost=server_search_doc.boost,
         hidden=server_search_doc.hidden,
         doc_metadata=server_search_doc.metadata,
-        score=server_search_doc.score,
+        # For docs further down that aren't reranked, we can't use the retrieval score
+        score=server_search_doc.score or 0.0,
         match_highlights=server_search_doc.match_highlights,
         updated_at=server_search_doc.updated_at,
         primary_owners=server_search_doc.primary_owners,
