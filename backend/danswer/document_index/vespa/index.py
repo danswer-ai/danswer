@@ -112,13 +112,13 @@ def _does_document_exist(
     """Returns whether the document already exists and the users/group whitelists
     Specifically in this case, document refers to a vespa document which is equivalent to a Danswer
     chunk. This checks for whether the chunk exists already in the index"""
-    doc_fetch_response = http_client.get(
-        f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{doc_chunk_id}"
-    )
+    doc_url = f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{doc_chunk_id}"
+    doc_fetch_response = http_client.get(doc_url)
     if doc_fetch_response.status_code == 404:
         return False
 
     if doc_fetch_response.status_code != 200:
+        logger.debug(f"Failed to check for document with URL {doc_url}")
         raise RuntimeError(
             f"Unexpected fetch document by ID value from Vespa "
             f"with error {doc_fetch_response.status_code}"
@@ -157,7 +157,23 @@ def _get_vespa_chunk_ids_by_document_id(
         "hits": hits_per_page,
     }
     while True:
-        results = requests.post(SEARCH_ENDPOINT, json=params).json()
+        res = requests.post(SEARCH_ENDPOINT, json=params)
+        try:
+            res.raise_for_status()
+        except requests.RequestException as e:
+            request_info = f"Headers: {res.request.headers}\n" f"Payload: {params}"
+            response_info = (
+                f"Status Code: {res.status_code}\n" f"Response Content: {res.text}"
+            )
+            logger.error(
+                f"Error occurred getting chunk by ID:\n"
+                f"{request_info}\n"
+                f"{response_info}\n"
+                f"Exception: {e}"
+            )
+            raise
+
+        results = res.json()
         hits = results["root"].get("children", [])
 
         doc_chunk_ids.extend(
@@ -179,10 +195,14 @@ def _delete_vespa_doc_chunks(
     )
 
     for chunk_id in doc_chunk_ids:
-        res = http_client.delete(
-            f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{chunk_id}"
-        )
-        res.raise_for_status()
+        try:
+            res = http_client.delete(
+                f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{chunk_id}"
+            )
+            res.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Failed to delete chunk, details: {e.response.text}")
+            raise
 
 
 def _delete_vespa_docs(
@@ -559,18 +579,34 @@ def _query_vespa(query_params: Mapping[str, str | int | float]) -> list[Inferenc
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError("No/empty query received")
 
-    response = requests.post(
-        SEARCH_ENDPOINT,
-        json=dict(
-            **query_params,
-            **{
-                "presentation.timing": True,
-            }
-            if LOG_VESPA_TIMING_INFORMATION
-            else {},
-        ),
+    params = dict(
+        **query_params,
+        **{
+            "presentation.timing": True,
+        }
+        if LOG_VESPA_TIMING_INFORMATION
+        else {},
     )
-    response.raise_for_status()
+
+    response = requests.post(
+        "http://localhost:8081/fasdfasdfafg",
+        json=params,
+    )
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        request_info = f"Headers: {response.request.headers}\n" f"Payload: {params}"
+        response_info = (
+            f"Status Code: {response.status_code}\n"
+            f"Response Content: {response.text}"
+        )
+        logger.error(
+            f"Failed to Query Vespa:\n"
+            f"{request_info}\n"
+            f"{response_info}\n"
+            f"Exception: {e}"
+        )
+        raise
 
     response_json: dict[str, Any] = response.json()
     if LOG_VESPA_TIMING_INFORMATION:
