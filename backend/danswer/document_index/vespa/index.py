@@ -160,18 +160,19 @@ def _get_vespa_chunk_ids_by_document_id(
         res = requests.post(SEARCH_ENDPOINT, json=params)
         try:
             res.raise_for_status()
-        except requests.RequestException as e:
-            request_info = f"Headers: {res.request.headers}\n" f"Payload: {params}"
+        except requests.HTTPError as e:
+            request_info = f"Headers: {res.request.headers}\nPayload: {params}"
             response_info = (
-                f"Status Code: {res.status_code}\n" f"Response Content: {res.text}"
+                f"Status Code: {res.status_code}\nResponse Content: {res.text}"
             )
+            error_base = f"Error occurred getting chunk by Document ID {document_id}"
             logger.error(
-                f"Error occurred getting chunk by ID:\n"
+                f"{error_base}:\n"
                 f"{request_info}\n"
                 f"{response_info}\n"
                 f"Exception: {e}"
             )
-            raise
+            raise requests.HTTPError(error_base) from e
 
         results = res.json()
         hits = results["root"].get("children", [])
@@ -589,24 +590,25 @@ def _query_vespa(query_params: Mapping[str, str | int | float]) -> list[Inferenc
     )
 
     response = requests.post(
-        "http://localhost:8081/fasdfasdfafg",
+        SEARCH_ENDPOINT,
         json=params,
     )
     try:
         response.raise_for_status()
-    except requests.exceptions.HTTPError as e:
-        request_info = f"Headers: {response.request.headers}\n" f"Payload: {params}"
+    except requests.HTTPError as e:
+        request_info = f"Headers: {response.request.headers}\nPayload: {params}"
         response_info = (
             f"Status Code: {response.status_code}\n"
             f"Response Content: {response.text}"
         )
+        error_base = "Failed to query Vespa"
         logger.error(
-            f"Failed to Query Vespa:\n"
+            f"{error_base}:\n"
             f"{request_info}\n"
             f"{response_info}\n"
             f"Exception: {e}"
         )
-        raise
+        raise requests.HTTPError(error_base) from e
 
     response_json: dict[str, Any] = response.json()
     if LOG_VESPA_TIMING_INFORMATION:
