@@ -267,8 +267,9 @@ class CrossEncoderEnsembleModel:
             ENABLE_RERANKING_REAL_TIME_FLOW is False
             and ENABLE_RERANKING_ASYNC_FLOW is False
         ):
-            raise RuntimeError(
-                "Should not be loading rerankers, they have been globally disabled"
+            logger.warning(
+                "Running rerankers but they are globally disabled."
+                "Was this specified explicitly via an API?"
             )
 
         if self.rerank_server_endpoint:
