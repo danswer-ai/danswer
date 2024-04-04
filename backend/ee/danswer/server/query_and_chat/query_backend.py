@@ -8,7 +8,9 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTA
 from danswer.db.chat import get_persona_by_id
 from danswer.db.engine import get_session
 from danswer.db.models import User
-from danswer.llm.answering.prompts.citations_prompt import compute_max_document_tokens
+from danswer.llm.answering.prompts.citations_prompt import (
+    compute_max_document_tokens_for_persona,
+)
 from danswer.llm.utils import get_default_llm_version
 from danswer.llm.utils import get_max_input_tokens
 from danswer.one_shot_answer.answer_question import get_search_answer
@@ -48,6 +50,8 @@ def handle_search_request(
             persona=None,  # For simplicity, default settings should be good for this search
             offset=search_request.retrieval_options.offset,
             limit=search_request.retrieval_options.limit,
+            skip_rerank=search_request.skip_rerank,
+            skip_llm_chunk_filter=search_request.skip_llm_chunk_filter,
         ),
         user=user,
         db_session=db_session,
@@ -89,7 +93,7 @@ def get_answer_with_quote(
 
     remaining_tokens = input_tokens - max_history_tokens
 
-    max_document_tokens = compute_max_document_tokens(
+    max_document_tokens = compute_max_document_tokens_for_persona(
         persona=persona,
         actual_user_input=query,
         max_llm_token_override=remaining_tokens,
