@@ -14,6 +14,8 @@ from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
 from danswer.configs.model_configs import CROSS_ENCODER_MODEL_ENSEMBLE
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
+from danswer.configs.model_configs import ENABLE_RERANKING_ASYNC_FLOW
+from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.configs.model_configs import INTENT_MODEL_VERSION
 from danswer.configs.model_configs import QUERY_MAX_CONTEXT_SIZE
 from danswer.utils.logger import setup_logger
@@ -261,6 +263,14 @@ class CrossEncoderEnsembleModel:
         )
 
     def load_model(self) -> list["CrossEncoder"] | None:
+        if (
+            ENABLE_RERANKING_REAL_TIME_FLOW is False
+            and ENABLE_RERANKING_ASYNC_FLOW is False
+        ):
+            raise RuntimeError(
+                "Should not be loading rerankers, they have been globally disabled"
+            )
+
         if self.rerank_server_endpoint:
             return None
 
@@ -363,7 +373,7 @@ class IntentModel:
 def warm_up_models(
     model_name: str,
     normalize: bool,
-    skip_cross_encoders: bool = False,
+    skip_cross_encoders: bool = True,
     indexer_only: bool = False,
 ) -> None:
     warm_up_str = (
