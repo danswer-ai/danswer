@@ -150,8 +150,8 @@ const MainSection = () => {
       {axeroConnectorIndexingStatuses.length > 0 && (
         <>
           <Text className="mb-2">
-            We pull the latest <i>Articles</i>, <i>Blogs</i>, and <i>Wikis</i>{" "}
-            every <b>10</b> minutes.
+            We pull the latest <i>Articles</i>, <i>Blogs</i>, <i>Wikis</i> and{" "}
+            <i>Forums</i> once per day.
           </Text>
           <div className="mb-2">
             <ConnectorsTable<AxeroConfig, AxeroCredentialJson>

@@ -358,7 +358,7 @@ if __name__ == "__main__":
     )
     current = time.time()
 
-    one_year_ago = current - 24 * 60 * 60 * 360 * 10
+    one_year_ago = current - 24 * 60 * 60 * 360
     latest_docs = connector.poll_source(one_year_ago, current)
 
     print(next(latest_docs))
