@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
+from danswer.configs.app_configs import TOKEN_BUDGET_GLOBALLY_ENABLED
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import ENABLE_TOKEN_BUDGET
 from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
@@ -272,6 +273,11 @@ def create_deletion_attempt_for_connector_id(
 
 @router.get("/admin/token-budget-settings")
 def get_token_budget_settings(_: User = Depends(current_admin_user)) -> dict:
+    if not TOKEN_BUDGET_GLOBALLY_ENABLED:
+        raise HTTPException(
+            status_code=400, detail="Token budget is not enabled in the application."
+        )
+
     try:
         settings_json = cast(
             str, get_dynamic_config_store().load(TOKEN_BUDGET_SETTINGS)

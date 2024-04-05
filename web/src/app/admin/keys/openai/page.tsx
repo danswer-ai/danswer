@@ -63,6 +63,8 @@ const LLMOptions = () => {
     type: "success" | "error";
   } | null>(null);
 
+  const [tokenBudgetGloballyEnabled, setTokenBudgetGloballyEnabled] =
+    useState(false);
   const [initialValues, setInitialValues] = useState({
     enable_token_budget: false,
     token_budget: "",
@@ -79,6 +81,7 @@ const LLMOptions = () => {
         token_budget: config.token_budget || "",
         token_budget_time_period: config.token_budget_time_period || "",
       });
+      setTokenBudgetGloballyEnabled(true);
     } else {
       // Handle error or provide fallback values
       setPopup({
@@ -92,6 +95,10 @@ const LLMOptions = () => {
   useEffect(() => {
     fetchConfig();
   }, []);
+
+  if (!tokenBudgetGloballyEnabled) {
+    return null;
+  }
 
   return (
     <>
@@ -132,7 +139,7 @@ const LLMOptions = () => {
           }
         }}
       >
-        {({ isSubmitting, values, setFieldValue, setValues }) => {
+        {({ isSubmitting, values, setFieldValue }) => {
           return (
             <Form>
               <Divider />
@@ -140,14 +147,14 @@ const LLMOptions = () => {
                 <SectionHeader>Token Budget</SectionHeader>
                 <Text>
                   Set a maximum token use per time period. If the token budget
-                  is exceeded, the persona will not be able to respond to
-                  queries until the next time period.
+                  is exceeded, Danswer will not be able to respond to queries
+                  until the next time period.
                 </Text>
                 <br />
                 <BooleanFormField
                   name="enable_token_budget"
                   label="Enable Token Budget"
-                  subtext="If enabled, the persona will be limited to the token budget specified below."
+                  subtext="If enabled, Danswer will be limited to the token budget specified below."
                   onChange={(e) => {
                     setFieldValue("enable_token_budget", e.target.checked);
                   }}

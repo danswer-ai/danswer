@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from danswer.configs.app_configs import TOKEN_BUDGET_GLOBALLY_ENABLED
 from danswer.configs.constants import ENABLE_TOKEN_BUDGET
 from danswer.configs.constants import TOKEN_BUDGET
 from danswer.configs.constants import TOKEN_BUDGET_SETTINGS
@@ -61,6 +62,9 @@ def is_under_token_budget(db_session: Session) -> bool:
 
 
 def check_token_budget() -> None:
+    if not TOKEN_BUDGET_GLOBALLY_ENABLED:
+        return None
+
     with get_session_context_manager() as db_session:
         # Perform the token budget check here, possibly using `user` and `db_session` for database access if needed
         if not is_under_token_budget(db_session):

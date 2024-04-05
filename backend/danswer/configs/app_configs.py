@@ -247,3 +247,6 @@ LOG_VESPA_TIMING_INFORMATION = (
 DISABLE_TELEMETRY = os.environ.get("DISABLE_TELEMETRY", "").lower() == "true"
 # notset, debug, info, warning, error, or critical
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "info")
+TOKEN_BUDGET_GLOBALLY_ENABLED = (
+    os.environ.get("TOKEN_BUDGET_GLOBALLY_ENABLED", "").lower() == "true"
+)
