@@ -38,6 +38,16 @@ def pywikibot_timestamp_to_utc_datetime(
 def get_doc_from_page(
     page: pywikibot.Page, site: pywikibot.Site | None, source_type: DocumentSource
 ) -> Document:
+    """Generate Danswer Document from a MediaWiki page object.
+
+    Args:
+        page: Page from a MediaWiki site.
+        site: MediaWiki site (used to parse the sections of the page using the site template, if available).
+        source_type: Source of the document.
+
+    Returns:
+        Generated document.
+    """
     page_text = page.text
     sections_extracted: textlib.Content = textlib.extract_sections(page_text, site)
 
@@ -82,8 +92,6 @@ class MediaWikiConnector(LoadConnector, PollConnector):
 
     Raises:
         ValueError: If `recurse_depth` is not an integer greater than or equal to -1.
-
-
     """
 
     document_source_type: ClassVar[DocumentSource] = DocumentSource.MEDIAWIKI
@@ -120,6 +128,13 @@ class MediaWikiConnector(LoadConnector, PollConnector):
         self.pages = [pywikibot.Page(self.site, page) for page in pages]
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
+        """Load credentials for a MediaWiki site.
+
+        Note:
+            For most read-only operations, MediaWiki API credentials are not necessary.
+            This method can be overridden in the event that a particular MediaWiki site
+            requires credentials.
+        """
         return None
 
     def _get_doc_batch(
@@ -127,7 +142,18 @@ class MediaWikiConnector(LoadConnector, PollConnector):
         start: SecondsSinceUnixEpoch | None = None,
         end: SecondsSinceUnixEpoch | None = None,
     ) -> Generator[list[Document], None, None]:
+        """Request batches of pages from a MediaWiki site.
+
+        Args:
+            start: The beginning of the time period of pages to request.
+            end: The end of the time period of pages to request.
+
+        Yields:
+            Lists of Documents containing each parsed page in a batch.
+        """
         doc_batch: list[Document] = []
+
+        # Pywikibot can handle batching for us, including only loading page contents when we finally request them.
         category_pages = [
             pagegenerators.PreloadingGenerator(
                 pagegenerators.EdittimeFilterPageGenerator(
@@ -144,6 +170,7 @@ class MediaWikiConnector(LoadConnector, PollConnector):
             for category in self.categories
         ]
 
+        # Since we can specify both individual pages and categories, we need to iterate over all of them.
         all_pages = itertools.chain(self.pages, *category_pages)
         for page in all_pages:
             doc_batch.append(
