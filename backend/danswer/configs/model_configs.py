@@ -48,11 +48,8 @@ ENABLE_RERANKING_ASYNC_FLOW = (
 ENABLE_RERANKING_REAL_TIME_FLOW = (
     os.environ.get("ENABLE_RERANKING_REAL_TIME_FLOW", "").lower() == "true"
 )
-# https://www.sbert.net/docs/pretrained-models/ce-msmarco.html
-CROSS_ENCODER_MODEL_ENSEMBLE = [
-    "cross-encoder/ms-marco-MiniLM-L-4-v2",
-    "cross-encoder/ms-marco-TinyBERT-L-2-v2",
-]
+# Only using one for now
+CROSS_ENCODER_MODEL_ENSEMBLE = ["mixedbread-ai/mxbai-rerank-xsmall-v1"]
 # For score normalizing purposes, only way is to know the expected ranges
 CROSS_ENCODER_RANGE_MAX = 12
 CROSS_ENCODER_RANGE_MIN = -12

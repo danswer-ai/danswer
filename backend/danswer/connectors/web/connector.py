@@ -42,6 +42,14 @@ class WEB_CONNECTOR_VALID_SETTINGS(str, Enum):
     UPLOAD = "upload"
 
 
+def check_internet_connection(url: str) -> None:
+    try:
+        response = requests.get(url, timeout=3)
+        response.raise_for_status()
+    except (requests.RequestException, ValueError):
+        raise Exception(f"Unable to reach {url} - check your internet connection")
+
+
 def is_valid_url(url: str) -> bool:
     try:
         result = urlparse(url)
@@ -184,6 +192,7 @@ class WebConnector(LoadConnector):
             logger.info(f"Visiting {current_url}")
 
             try:
+                check_internet_connection(current_url)
                 if restart_playwright:
                     playwright, context = start_playwright()
                     restart_playwright = False

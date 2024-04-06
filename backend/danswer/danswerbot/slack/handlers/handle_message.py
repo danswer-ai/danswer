@@ -12,7 +12,6 @@ from slack_sdk.errors import SlackApiError
 from slack_sdk.models.blocks import DividerBlock
 from sqlalchemy.orm import Session
 
-from danswer.chat.chat_utils import compute_max_document_tokens
 from danswer.configs.danswerbot_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_COT
 from danswer.configs.danswerbot_configs import DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER
@@ -23,6 +22,7 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_USE_QUOTES
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.configs.danswerbot_configs import DISABLE_DANSWER_BOT_FILTER_DETECT
 from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
+from danswer.configs.model_configs import ENABLE_RERANKING_ASYNC_FLOW
 from danswer.danswerbot.slack.blocks import build_documents_blocks
 from danswer.danswerbot.slack.blocks import build_follow_up_block
 from danswer.danswerbot.slack.blocks import build_qa_response_blocks
@@ -39,6 +39,9 @@ from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import SlackBotConfig
 from danswer.db.models import SlackBotResponseType
+from danswer.llm.answering.prompts.citations_prompt import (
+    compute_max_document_tokens_for_persona,
+)
 from danswer.llm.utils import check_number_of_tokens
 from danswer.llm.utils import get_default_llm_version
 from danswer.llm.utils import get_max_input_tokens
@@ -247,7 +250,7 @@ def handle_message(
 
             query_text = new_message_request.messages[0].message
             if persona:
-                max_document_tokens = compute_max_document_tokens(
+                max_document_tokens = compute_max_document_tokens_for_persona(
                     persona=persona,
                     actual_user_input=query_text,
                     max_llm_token_override=remaining_tokens,
@@ -308,6 +311,7 @@ def handle_message(
                 persona_id=persona.id if persona is not None else 0,
                 retrieval_options=retrieval_details,
                 chain_of_thought=not disable_cot,
+                skip_rerank=not ENABLE_RERANKING_ASYNC_FLOW,
             )
         )
     except Exception as e:

@@ -34,6 +34,7 @@ export type ValidSources =
   | "loopio"
   | "sharepoint"
   | "zendesk"
+  | "axero"
   | "wikipedia"
   | "mediawiki";
 
@@ -112,6 +113,10 @@ export interface JiraConfig {
 
 export interface SharepointConfig {
   sites?: string[];
+}
+
+export interface AxeroConfig {
+  spaces?: string[];
 }
 
 export interface ProductboardConfig {}
@@ -340,6 +345,11 @@ export interface SharepointCredentialJson {
   aad_client_id: string;
   aad_client_secret: string;
   aad_directory_id: string;
+}
+
+export interface AxeroCredentialJson {
+  base_url: string;
+  axero_api_token: string;
 }
 
 export interface MediaWikiCredentialJson {}

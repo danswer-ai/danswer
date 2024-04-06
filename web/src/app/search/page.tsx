@@ -23,6 +23,8 @@ import { personaComparator } from "../admin/personas/lib";
 import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingModels";
 import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
+import { getSettingsSS } from "@/lib/settings";
+import { Settings } from "../admin/settings/interfaces";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -38,6 +40,7 @@ export default async function Home() {
     fetchSS("/persona"),
     fetchSS("/query/valid-tags"),
     fetchSS("/secondary-index/get-embedding-models"),
+    getSettingsSS(),
   ];
 
   // catch cases where the backend is completely unreachable here
@@ -48,6 +51,7 @@ export default async function Home() {
     | Response
     | AuthTypeMetadata
     | FullEmbeddingModelResponse
+    | Settings
     | null
   )[] = [null, null, null, null, null, null, null];
   try {
@@ -62,6 +66,7 @@ export default async function Home() {
   const personaResponse = results[4] as Response | null;
   const tagsResponse = results[5] as Response | null;
   const embeddingModelResponse = results[6] as Response | null;
+  const settings = results[7] as Settings | null;
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -70,6 +75,10 @@ export default async function Home() {
 
   if (user && !user.is_verified && authTypeMetadata?.requiresVerification) {
     return redirect("/auth/waiting-on-verification");
+  }
+
+  if (settings && !settings.search_page_enabled) {
+    return redirect("/chat");
   }
 
   let ccPairs: CCPairBasicInfo[] = [];
@@ -143,7 +152,7 @@ export default async function Home() {
 
   return (
     <>
-      <Header user={user} />
+      <Header user={user} settings={settings} />
       <div className="m-3">
         <HealthCheckBanner />
       </div>

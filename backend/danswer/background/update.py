@@ -29,7 +29,9 @@ from danswer.db.embedding_model import update_embedding_model_status
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
-from danswer.db.index_attempt import count_unique_cc_pairs_with_index_attempts
+from danswer.db.index_attempt import (
+    count_unique_cc_pairs_with_successful_index_attempts,
+)
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
@@ -365,9 +367,9 @@ def kickoff_indexing_jobs(
 
 
 def check_index_swap(db_session: Session) -> None:
-    """Get count of cc-pairs and count of index_attempts for the new model grouped by
-    connector + credential, if it's the same, then assume new index is done building.
-    This does not take into consideration if the attempt failed or not"""
+    """Get count of cc-pairs and count of successful index_attempts for the
+    new model grouped by connector + credential, if it's the same, then assume
+    new index is done building. If so, swap the indices and expire the old one."""
     # Default CC-pair created for Ingestion API unused here
     all_cc_pairs = get_connector_credential_pairs(db_session)
     cc_pair_count = len(all_cc_pairs) - 1
@@ -376,7 +378,7 @@ def check_index_swap(db_session: Session) -> None:
     if not embedding_model:
         return
 
-    unique_cc_indexings = count_unique_cc_pairs_with_index_attempts(
+    unique_cc_indexings = count_unique_cc_pairs_with_successful_index_attempts(
         embedding_model_id=embedding_model.id, db_session=db_session
     )
 
