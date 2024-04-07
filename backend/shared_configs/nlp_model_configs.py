@@ -15,3 +15,5 @@ CROSS_EMBED_CONTEXT_SIZE = 512
 # This controls the minimum number of pytorch "threads" to allocate to the embedding
 # model. If torch finds more threads on its own, this value is not used.
 MIN_THREADS_ML_MODELS = int(os.environ.get("MIN_THREADS_ML_MODELS") or 1)
+
+INDEXING_ONLY = os.environ.get("INDEXING_ONLY", "").lower() == "true"

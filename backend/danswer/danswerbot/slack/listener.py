@@ -44,7 +44,7 @@ from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.one_shot_answer.models import ThreadMessage
-from danswer.search.search_nlp_models import warm_up_models
+from danswer.search.search_nlp_models import warm_up_encoders
 from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
 
@@ -391,7 +391,7 @@ if __name__ == "__main__":
                     with Session(get_sqlalchemy_engine()) as db_session:
                         embedding_model = get_current_db_embedding_model(db_session)
 
-                        warm_up_models(
+                        warm_up_encoders(
                             model_name=embedding_model.model_name,
                             normalize=embedding_model.normalize,
                             model_server_host=MODEL_SERVER_HOST,

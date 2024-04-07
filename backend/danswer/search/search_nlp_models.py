@@ -1,5 +1,6 @@
 import gc
 import os
+import time
 from typing import Optional
 from typing import TYPE_CHECKING
 
@@ -115,16 +116,10 @@ class EmbeddingModel:
             normalize_embeddings=self.normalize,
         )
 
-        try:
-            response = requests.post(
-                self.embed_server_endpoint, json=embed_request.dict()
-            )
-            response.raise_for_status()
+        response = requests.post(self.embed_server_endpoint, json=embed_request.dict())
+        response.raise_for_status()
 
-            return EmbedResponse(**response.json()).embeddings
-        except requests.RequestException as e:
-            logger.exception(f"Failed to get Embedding: {e}")
-            raise
+        return EmbedResponse(**response.json()).embeddings
 
 
 class CrossEncoderEnsembleModel:
@@ -139,16 +134,12 @@ class CrossEncoderEnsembleModel:
     def predict(self, query: str, passages: list[str]) -> list[list[float]]:
         rerank_request = RerankRequest(query=query, documents=passages)
 
-        try:
-            response = requests.post(
-                self.rerank_server_endpoint, json=rerank_request.dict()
-            )
-            response.raise_for_status()
+        response = requests.post(
+            self.rerank_server_endpoint, json=rerank_request.dict()
+        )
+        response.raise_for_status()
 
-            return RerankResponse(**response.json()).scores
-        except requests.RequestException as e:
-            logger.exception(f"Failed to get Reranking Scores: {e}")
-            raise
+        return RerankResponse(**response.json()).scores
 
 
 class IntentModel:
@@ -166,19 +157,15 @@ class IntentModel:
     ) -> list[float]:
         intent_request = IntentRequest(query=query)
 
-        try:
-            response = requests.post(
-                self.intent_server_endpoint, json=intent_request.dict()
-            )
-            response.raise_for_status()
+        response = requests.post(
+            self.intent_server_endpoint, json=intent_request.dict()
+        )
+        response.raise_for_status()
 
-            return IntentResponse(**response.json()).class_probs
-        except requests.RequestException as e:
-            logger.exception(f"Failed to get Embedding: {e}")
-            raise
+        return IntentResponse(**response.json()).class_probs
 
 
-def warm_up_models(
+def warm_up_encoders(
     model_name: str,
     normalize: bool,
     model_server_host: str = MODEL_SERVER_HOST,
@@ -201,4 +188,16 @@ def warm_up_models(
         server_port=model_server_port,
     )
 
-    embed_model.encode(texts=[warm_up_str], text_type=EmbedTextType.QUERY)
+    # First time downloading the models it may take even longer, but just in case,
+    # retry the whole server
+    wait_time = 5
+    for attempt in range(20):
+        try:
+            embed_model.encode(texts=[warm_up_str], text_type=EmbedTextType.QUERY)
+            return
+        except Exception:
+            logger.info(
+                f"Failed to run test embedding, retrying in {wait_time} seconds..."
+            )
+            time.sleep(wait_time)
+    raise Exception("Failed to run test embedding.")

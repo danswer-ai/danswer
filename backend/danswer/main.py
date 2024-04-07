@@ -1,3 +1,4 @@
+import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
@@ -53,7 +54,7 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs.port_configs import port_filesystem_to_postgres
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import get_default_llm_version
-from danswer.search.search_nlp_models import warm_up_models
+from danswer.search.search_nlp_models import warm_up_encoders
 from danswer.server.danswer_api.ingestion import get_danswer_api_key
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
 from danswer.server.documents.cc_pair import router as cc_pair_router
@@ -218,24 +219,29 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         load_chat_yamls()
 
         logger.info("Verifying Document Index(s) is/are available.")
-
         document_index = get_default_document_index(
             primary_index_name=db_embedding_model.index_name,
             secondary_index_name=secondary_db_embedding_model.index_name
             if secondary_db_embedding_model
             else None,
         )
-        document_index.ensure_indices_exist(
-            index_embedding_dim=db_embedding_model.model_dim,
-            secondary_index_embedding_dim=secondary_db_embedding_model.model_dim
-            if secondary_db_embedding_model
-            else None,
-        )
+        # Vespa startup is a bit slow, so give it a few seconds
+        wait_time = 5
+        for attempt in range(5):
+            try:
+                document_index.ensure_indices_exist(
+                    index_embedding_dim=db_embedding_model.model_dim,
+                    secondary_index_embedding_dim=secondary_db_embedding_model.model_dim
+                    if secondary_db_embedding_model
+                    else None,
+                )
+                break
+            except Exception:
+                logger.info(f"Waiting on Vespa, retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
 
-    # Do this last as the model server needs startup time
     logger.info(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
-    logger.info("Warming up local NLP models.")
-    warm_up_models(
+    warm_up_encoders(
         model_name=db_embedding_model.model_name,
         normalize=db_embedding_model.normalize,
         model_server_host=MODEL_SERVER_HOST,

@@ -7,14 +7,15 @@ from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
 from danswer.utils.logger import setup_logger
-from danswer.utils.timing import log_function_time
 from model_server.constants import MODEL_WARM_UP_STRING
+from model_server.utils import simple_log_function_time
 from shared_configs.model_server_models import EmbedRequest
 from shared_configs.model_server_models import EmbedResponse
 from shared_configs.model_server_models import RerankRequest
 from shared_configs.model_server_models import RerankResponse
 from shared_configs.nlp_model_configs import CROSS_EMBED_CONTEXT_SIZE
 from shared_configs.nlp_model_configs import CROSS_ENCODER_MODEL_ENSEMBLE
+from shared_configs.nlp_model_configs import INDEXING_ONLY
 
 logger = setup_logger()
 
@@ -74,7 +75,7 @@ def warm_up_cross_encoders() -> None:
     ]
 
 
-@log_function_time(print_only=True)
+@simple_log_function_time()
 def embed_text(
     texts: list[str],
     model_name: str,
@@ -92,7 +93,7 @@ def embed_text(
     return embeddings
 
 
-@log_function_time(print_only=True)
+@simple_log_function_time()
 def calc_sim_scores(query: str, docs: list[str]) -> list[list[float]]:
     cross_encoders = get_local_reranking_model_ensemble()
     sim_scores = [
@@ -121,6 +122,9 @@ async def process_embed_request(
 @router.post("/cross-encoder-scores")
 async def process_rerank_request(embed_request: RerankRequest) -> RerankResponse:
     """Cross encoders can be purely black box from the app perspective"""
+    if INDEXING_ONLY:
+        raise RuntimeError("Indexing model server should not call intent endpoint")
+
     try:
         sim_scores = calc_sim_scores(
             query=embed_request.query, docs=embed_request.documents
