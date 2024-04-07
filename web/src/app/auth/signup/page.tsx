@@ -6,10 +6,10 @@ import {
   AuthTypeMetadata,
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
-import Image from "next/image";
 import { EmailPasswordForm } from "../login/EmailPasswordForm";
 import { Card, Title, Text } from "@tremor/react";
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 
 const Page = async () => {
   // catch cases where the backend is completely unreachable here
@@ -51,9 +51,8 @@ const Page = async () => {
       </div>
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div>
-          <div className="h-16 w-16 mx-auto">
-            <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
-          </div>
+          <Logo height={64} width={64} className="mx-auto w-fit" />
+
           <Card className="mt-4 w-96">
             <div className="flex">
               <Title className="mb-2 mx-auto font-bold">

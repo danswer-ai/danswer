@@ -38,6 +38,11 @@ const nextConfig = {
               source: "/admin/performance/query-history/:path*",
               destination: "/ee/admin/performance/query-history/:path*",
             },
+            // whitelabeling
+            {
+              source: "/admin/whitelabeling",
+              destination: "/ee/admin/whitelabeling",
+            },
           ]
         : [];
 
