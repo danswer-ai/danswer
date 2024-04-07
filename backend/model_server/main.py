@@ -41,9 +41,10 @@ def get_model_app() -> FastAPI:
         logger.info(f"Torch Threads: {torch.get_num_threads()}")
 
         if not INDEXING_ONLY:
-            logger.info("This model server should only run document indexing.")
             warm_up_cross_encoders()
             warm_up_intent_model()
+        else:
+            logger.info("This model server should only run document indexing.")
 
     return application
 

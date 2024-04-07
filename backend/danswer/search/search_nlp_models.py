@@ -5,7 +5,6 @@ from typing import Optional
 from typing import TYPE_CHECKING
 
 import requests
-from transformers import logging as transformer_logging  # type:ignore
 
 from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import MODEL_SERVER_PORT
@@ -25,7 +24,6 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 
 logger = setup_logger()
-transformer_logging.set_verbosity_error()
 
 
 if TYPE_CHECKING:
