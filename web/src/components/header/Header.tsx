@@ -2,7 +2,6 @@
 
 import { User } from "@/lib/types";
 import { logout } from "@/lib/user";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useContext, useEffect, useRef, useState } from "react";
@@ -11,6 +10,7 @@ import { FiMessageSquare, FiSearch } from "react-icons/fi";
 import { HeaderWrapper } from "./HeaderWrapper";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { UserDropdown } from "../UserDropdown";
+import { Logo } from "../Logo";
 
 interface HeaderProps {
   user: User | null;
@@ -22,6 +22,7 @@ export function Header({ user }: HeaderProps) {
     return null;
   }
   const settings = combinedSettings.settings;
+  const enterpriseSettings = combinedSettings.enterpriseSettings;
 
   return (
     <HeaderWrapper>
@@ -33,11 +34,12 @@ export function Header({ user }: HeaderProps) {
           }
         >
           <div className="flex">
-            <div className="h-[32px] w-[30px]">
-              <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
+            <div className="mr-1">
+              <Logo />
             </div>
             <h1 className="flex text-2xl text-strong font-bold my-auto">
-              Danswer
+              {(enterpriseSettings && enterpriseSettings.application_name) ||
+                "Danswer"}
             </h1>
           </div>
         </Link>

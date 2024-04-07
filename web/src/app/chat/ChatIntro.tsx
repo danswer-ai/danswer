@@ -7,8 +7,7 @@ import { FiBookmark, FiCpu, FiInfo, FiX, FiZoomIn } from "react-icons/fi";
 import { HoverPopup } from "@/components/HoverPopup";
 import { Modal } from "@/components/Modal";
 import { useState } from "react";
-import { FaRobot } from "react-icons/fa";
-import { SourceMetadata } from "@/lib/search/interfaces";
+import { Logo } from "@/components/Logo";
 
 const MAX_PERSONAS_TO_DISPLAY = 4;
 
