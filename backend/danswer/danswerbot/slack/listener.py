@@ -10,10 +10,11 @@ from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 from sqlalchemy.orm import Session
 
+from danswer.configs.app_configs import MODEL_SERVER_HOST
+from danswer.configs.app_configs import MODEL_SERVER_PORT
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
-from danswer.configs.model_configs import ENABLE_RERANKING_ASYNC_FLOW
 from danswer.danswerbot.slack.config import get_slack_bot_config_for_channel
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
@@ -393,7 +394,8 @@ if __name__ == "__main__":
                         warm_up_models(
                             model_name=embedding_model.model_name,
                             normalize=embedding_model.normalize,
-                            skip_cross_encoders=not ENABLE_RERANKING_ASYNC_FLOW,
+                            model_server_host=MODEL_SERVER_HOST,
+                            model_server_port=MODEL_SERVER_PORT,
                         )
 
                 slack_bot_tokens = latest_slack_bot_tokens

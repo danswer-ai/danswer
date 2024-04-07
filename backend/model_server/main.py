@@ -1,6 +1,9 @@
+import os
+
 import torch
 import uvicorn
 from fastapi import FastAPI
+from transformers import logging as transformer_logging  # type:ignore
 
 from danswer import __version__
 from danswer.configs.app_configs import MODEL_SERVER_ALLOWED_HOST
@@ -12,6 +15,10 @@ from model_server.custom_models import warm_up_intent_model
 from model_server.encoders import router as encoders_router
 from model_server.encoders import warm_up_cross_encoders
 
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+
+transformer_logging.set_verbosity_error()
 
 logger = setup_logger()
 

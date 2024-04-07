@@ -1,29 +1,28 @@
-from typing import TYPE_CHECKING
+import gc
+from typing import Optional
 
 from fastapi import APIRouter
 from fastapi import HTTPException
+from sentence_transformers import CrossEncoder
+from sentence_transformers import SentenceTransformer  # type: ignore
 
+from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
 from danswer.configs.model_configs import CROSS_ENCODER_MODEL_ENSEMBLE
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
-from danswer.search.search_nlp_models import get_local_reranking_model_ensemble
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
+from model_server.constants import MODEL_WARM_UP_STRING
 from shared_models.model_server_models import EmbedRequest
 from shared_models.model_server_models import EmbedResponse
 from shared_models.model_server_models import RerankRequest
 from shared_models.model_server_models import RerankResponse
 
-if TYPE_CHECKING:
-    from sentence_transformers import SentenceTransformer  # type: ignore
-
-
 logger = setup_logger()
-
-WARM_UP_STRING = "Danswer is amazing"
 
 router = APIRouter(prefix="/encoder")
 
 _GLOBAL_MODELS_DICT: dict[str, "SentenceTransformer"] = {}
+_RERANK_MODELS: Optional[list["CrossEncoder"]] = None
 
 
 def get_embedding_model(
@@ -46,6 +45,34 @@ def get_embedding_model(
         _GLOBAL_MODELS_DICT[model_name].max_seq_length = max_context_length
 
     return _GLOBAL_MODELS_DICT[model_name]
+
+
+def get_local_reranking_model_ensemble(
+    model_names: list[str] = CROSS_ENCODER_MODEL_ENSEMBLE,
+    max_context_length: int = CROSS_EMBED_CONTEXT_SIZE,
+) -> list[CrossEncoder]:
+    global _RERANK_MODELS
+    if _RERANK_MODELS is None or max_context_length != _RERANK_MODELS[0].max_length:
+        del _RERANK_MODELS
+        gc.collect()
+
+        _RERANK_MODELS = []
+        for model_name in model_names:
+            logger.info(f"Loading {model_name}")
+            model = CrossEncoder(model_name)
+            model.max_length = max_context_length
+            _RERANK_MODELS.append(model)
+    return _RERANK_MODELS
+
+
+def warm_up_cross_encoders() -> None:
+    logger.info(f"Warming up Cross-Encoders: {CROSS_ENCODER_MODEL_ENSEMBLE}")
+
+    cross_encoders = get_local_reranking_model_ensemble()
+    [
+        cross_encoder.predict((MODEL_WARM_UP_STRING, MODEL_WARM_UP_STRING))
+        for cross_encoder in cross_encoders
+    ]
 
 
 @log_function_time(print_only=True)
@@ -72,7 +99,7 @@ def calc_sim_scores(query: str, docs: list[str]) -> list[list[float]]:
 
 
 @router.post("/bi-encoder-embed")
-def process_embed_request(
+async def process_embed_request(
     embed_request: EmbedRequest,
 ) -> EmbedResponse:
     try:
@@ -87,7 +114,8 @@ def process_embed_request(
 
 
 @router.post("/cross-encoder-scores")
-def process_rerank_request(embed_request: RerankRequest) -> RerankResponse:
+async def process_rerank_request(embed_request: RerankRequest) -> RerankResponse:
+    """Cross encoders can be purely black box from the app perspective"""
     try:
         sim_scores = calc_sim_scores(
             query=embed_request.query, docs=embed_request.documents
@@ -95,13 +123,3 @@ def process_rerank_request(embed_request: RerankRequest) -> RerankResponse:
         return RerankResponse(scores=sim_scores)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-def warm_up_cross_encoders() -> None:
-    logger.info(f"Warming up Cross-Encoders: {CROSS_ENCODER_MODEL_ENSEMBLE}")
-
-    cross_encoders = get_local_reranking_model_ensemble()
-    [
-        cross_encoder.predict((WARM_UP_STRING, WARM_UP_STRING))
-        for cross_encoder in cross_encoders
-    ]

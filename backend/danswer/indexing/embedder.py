@@ -16,8 +16,8 @@ from danswer.indexing.chunker import split_chunk_text_into_mini_chunks
 from danswer.indexing.models import ChunkEmbedding
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import IndexChunk
+from danswer.search.enums import EmbedTextType
 from danswer.search.search_nlp_models import EmbeddingModel
-from danswer.search.search_nlp_models import EmbedTextType
 from danswer.utils.logger import setup_logger
 
 

@@ -207,15 +207,11 @@ DISABLE_DOCUMENT_CLEANUP = (
 #####
 # Model Server Configs
 #####
-# If MODEL_SERVER_HOST is set, the NLP models required for Danswer are offloaded to the server via
-# requests. Be sure to include the scheme in the MODEL_SERVER_HOST value.
-MODEL_SERVER_HOST = os.environ.get("MODEL_SERVER_HOST") or None
+MODEL_SERVER_HOST = os.environ.get("MODEL_SERVER_HOST") or "localhost"
 MODEL_SERVER_ALLOWED_HOST = os.environ.get("MODEL_SERVER_HOST") or "0.0.0.0"
 MODEL_SERVER_PORT = int(os.environ.get("MODEL_SERVER_PORT") or "9000")
-
-# specify this env variable directly to have a different model server for the background
-# indexing job vs the api server so that background indexing does not effect query-time
-# performance
+# Model server for indexing should use a separate one to not allow indexing to introduce delay
+# for inference
 INDEXING_MODEL_SERVER_HOST = (
     os.environ.get("INDEXING_MODEL_SERVER_HOST") or MODEL_SERVER_HOST
 )

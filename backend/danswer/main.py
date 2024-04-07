@@ -4,7 +4,6 @@ from typing import Any
 from typing import cast
 
 import nltk  # type:ignore
-import torch  # Import here is fine, API server needs torch anyway and nothing imports main.py
 import uvicorn
 from fastapi import APIRouter
 from fastapi import FastAPI
@@ -204,24 +203,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         if ENABLE_RERANKING_REAL_TIME_FLOW:
             logger.info("Reranking step of search flow is enabled.")
 
-        if MODEL_SERVER_HOST:
-            logger.info(
-                f"Using Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}"
-            )
-        else:
-            logger.info("Warming up local NLP models.")
-            warm_up_models(
-                model_name=db_embedding_model.model_name,
-                normalize=db_embedding_model.normalize,
-                skip_cross_encoders=not ENABLE_RERANKING_REAL_TIME_FLOW,
-            )
-
-            if torch.cuda.is_available():
-                logger.info("GPU is available")
-            else:
-                logger.info("GPU is not available")
-            logger.info(f"Torch Threads: {torch.get_num_threads()}")
-
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")
         nltk.download("stopwords", quiet=True)
         nltk.download("wordnet", quiet=True)
@@ -250,6 +231,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
             if secondary_db_embedding_model
             else None,
         )
+
+    # Do this last as the model server needs startup time
+    logger.info(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
+    logger.info("Warming up local NLP models.")
+    warm_up_models(
+        model_name=db_embedding_model.model_name,
+        normalize=db_embedding_model.normalize,
+        model_server_host=MODEL_SERVER_HOST,
+        model_server_port=MODEL_SERVER_PORT,
+    )
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
 
