@@ -67,7 +67,7 @@ services:
       - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}
       - ENABLE_RERANKING_REAL_TIME_FLOW=${ENABLE_RERANKING_REAL_TIME_FLOW:-}
       - ENABLE_RERANKING_ASYNC_FLOW=${ENABLE_RERANKING_ASYNC_FLOW:-}
-      - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-}
+      - MODEL_SERVER_HOST=inference_model_server
       - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
       # Leave this on pretty please? Nothing sensitive is collected!
       # https://docs.danswer.dev/more/telemetry
@@ -90,6 +90,8 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
+
+
   background:
     image: danswer/danswer-backend:latest
     build:
@@ -137,10 +139,9 @@ services:
       - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
       - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}  # Needed by DanswerBot
       - ASYM_PASSAGE_PREFIX=${ASYM_PASSAGE_PREFIX:-}
-      - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-}
+      - MODEL_SERVER_HOST=inference_model_server
       - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
-      - INDEXING_MODEL_SERVER_HOST=${INDEXING_MODEL_SERVER_HOST:-}
-      - MIN_THREADS_ML_MODELS=${MIN_THREADS_ML_MODELS:-}
+      - INDEXING_MODEL_SERVER_HOST=indexing_model_server
       # Indexing Configs
       - NUM_INDEXING_WORKERS=${NUM_INDEXING_WORKERS:-}
       - DISABLE_INDEX_UPDATE_ON_SWAP=${DISABLE_INDEX_UPDATE_ON_SWAP:-}
@@ -184,6 +185,8 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
+
+
   web_server:
     image: danswer/danswer-web-server:latest
     build:
@@ -198,6 +201,50 @@ services:
     environment:
       - INTERNAL_URL=http://api_server:8080
       - WEB_DOMAIN=${WEB_DOMAIN:-}
+
+
+  inference_model_server:
+    image: danswer/danswer-model-server:latest
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile.model_server
+    command: uvicorn model_server.main:app --host 0.0.0.0 --port 9000
+    restart: always
+    environment:
+      - MIN_THREADS_ML_MODELS=${MIN_THREADS_ML_MODELS:-}
+      # Set to debug to get more fine-grained logs
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - model_cache_torch:/root/.cache/torch/
+      - model_cache_huggingface:/root/.cache/huggingface/
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+
+
+  indexing_model_server:
+    image: danswer/danswer-model-server:latest
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile.model_server
+    command: uvicorn model_server.main:app --host 0.0.0.0 --port 9000
+    restart: always
+    environment:
+      - MIN_THREADS_ML_MODELS=${MIN_THREADS_ML_MODELS:-}
+      # Set to debug to get more fine-grained logs
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - model_cache_torch:/root/.cache/torch/
+      - model_cache_huggingface:/root/.cache/huggingface/
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+
+
   relational_db:
     image: postgres:15.2-alpine
     restart: always
@@ -208,6 +255,8 @@ services:
       - "5432:5432"
     volumes:
       - db_volume:/var/lib/postgresql/data
+
+
   # This container name cannot have an underscore in it due to Vespa expectations of the URL
   index:
     image: vespaengine/vespa:8.277.17
@@ -222,6 +271,8 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
+
+
   nginx:
     image: nginx:1.23.4-alpine
     restart: always
@@ -250,32 +301,8 @@ services:
     command: > 
       /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
       && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
-  # Run with --profile model-server to bring up the danswer-model-server container
-  # Be sure to change MODEL_SERVER_HOST (see above) as well
-  # ie. MODEL_SERVER_HOST="model_server" docker compose -f docker-compose.dev.yml -p danswer-stack --profile model-server up -d --build
-  model_server:
-    image: danswer/danswer-model-server:latest
-    build:
-      context: ../../backend
-      dockerfile: Dockerfile.model_server
-    profiles:
-      - "model-server"
-    command: uvicorn model_server.main:app --host 0.0.0.0 --port 9000
-    restart: always
-    environment:
-      - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
-      - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
-      - MIN_THREADS_ML_MODELS=${MIN_THREADS_ML_MODELS:-}
-      # Set to debug to get more fine-grained logs
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-    volumes:
-      - model_cache_torch:/root/.cache/torch/
-      - model_cache_huggingface:/root/.cache/huggingface/
-    logging:
-      driver: json-file
-      options:
-        max-size: "50m"
-        max-file: "6"
+        
+
 volumes:
   local_dynamic_storage:
   file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them

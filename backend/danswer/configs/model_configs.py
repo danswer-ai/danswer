@@ -37,9 +37,6 @@ ASYM_QUERY_PREFIX = os.environ.get("ASYM_QUERY_PREFIX", "query: ")
 ASYM_PASSAGE_PREFIX = os.environ.get("ASYM_PASSAGE_PREFIX", "passage: ")
 # Purely an optimization, memory limitation consideration
 BATCH_SIZE_ENCODE_CHUNKS = 8
-# This controls the minimum number of pytorch "threads" to allocate to the embedding
-# model. If torch finds more threads on its own, this value is not used.
-MIN_THREADS_ML_MODELS = int(os.environ.get("MIN_THREADS_ML_MODELS") or 1)
 
 # Cross Encoder Settings
 ENABLE_RERANKING_ASYNC_FLOW = (

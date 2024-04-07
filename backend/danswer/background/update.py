@@ -17,7 +17,6 @@ from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.app_configs import LOG_LEVEL
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
-from danswer.configs.model_configs import MIN_THREADS_ML_MODELS
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import mark_all_in_progress_cc_pairs_failed
@@ -54,18 +53,6 @@ dask.config.set({"distributed.scheduler.allowed-failures": 0})
 _UNEXPECTED_STATE_FAILURE_REASON = (
     "Stopped mid run, likely due to the background process being killed"
 )
-
-
-"""Util funcs"""
-
-
-def _get_num_threads() -> int:
-    """Get # of "threads" to use for ML models in an indexing job. By default uses
-    the torch implementation, which returns the # of physical cores on the machine.
-    """
-    import torch
-
-    return max(MIN_THREADS_ML_MODELS, torch.get_num_threads())
 
 
 def _should_create_new_indexing(
@@ -346,12 +333,10 @@ def kickoff_indexing_jobs(
 
         if use_secondary_index:
             run = secondary_client.submit(
-                run_indexing_entrypoint, attempt.id, _get_num_threads(), pure=False
+                run_indexing_entrypoint, attempt.id, pure=False
             )
         else:
-            run = client.submit(
-                run_indexing_entrypoint, attempt.id, _get_num_threads(), pure=False
-            )
+            run = client.submit(run_indexing_entrypoint, attempt.id, pure=False)
 
         if run:
             secondary_str = "(secondary index) " if use_secondary_index else ""
