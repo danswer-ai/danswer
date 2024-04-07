@@ -6,12 +6,12 @@ from fastapi import APIRouter
 from transformers import AutoTokenizer  # type: ignore
 from transformers import TFDistilBertForSequenceClassification
 
-from danswer.configs.model_configs import INTENT_MODEL_VERSION
-from danswer.configs.model_configs import QUERY_MAX_CONTEXT_SIZE
 from danswer.utils.timing import log_function_time
 from model_server.constants import MODEL_WARM_UP_STRING
-from shared_models.model_server_models import IntentRequest
-from shared_models.model_server_models import IntentResponse
+from shared_configs.model_server_models import IntentRequest
+from shared_configs.model_server_models import IntentResponse
+from shared_configs.nlp_model_configs import INTENT_MODEL_CONTEXT_SIZE
+from shared_configs.nlp_model_configs import INTENT_MODEL_VERSION
 
 
 router = APIRouter(prefix="/custom")
@@ -31,7 +31,7 @@ def get_intent_model_tokenizer(
 
 def get_local_intent_model(
     model_name: str = INTENT_MODEL_VERSION,
-    max_context_length: int = QUERY_MAX_CONTEXT_SIZE,
+    max_context_length: int = INTENT_MODEL_CONTEXT_SIZE,
 ) -> TFDistilBertForSequenceClassification:
     global _INTENT_MODEL
     if _INTENT_MODEL is None or max_context_length != _INTENT_MODEL.max_seq_length:

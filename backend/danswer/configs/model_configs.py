@@ -48,21 +48,12 @@ ENABLE_RERANKING_ASYNC_FLOW = (
 ENABLE_RERANKING_REAL_TIME_FLOW = (
     os.environ.get("ENABLE_RERANKING_REAL_TIME_FLOW", "").lower() == "true"
 )
-# Only using one for now
-CROSS_ENCODER_MODEL_ENSEMBLE = ["mixedbread-ai/mxbai-rerank-xsmall-v1"]
-# For score normalizing purposes, only way is to know the expected ranges
+# For score display purposes, only way is to know the expected ranges
 CROSS_ENCODER_RANGE_MAX = 12
 CROSS_ENCODER_RANGE_MIN = -12
-CROSS_EMBED_CONTEXT_SIZE = 512
 
 # Unused currently, can't be used with the current default encoder model due to its output range
 SEARCH_DISTANCE_CUTOFF = 0
-
-# Intent model max context size
-QUERY_MAX_CONTEXT_SIZE = 256
-
-# Danswer custom Deep Learning Models
-INTENT_MODEL_VERSION = "danswer/intent-model"
 
 
 #####

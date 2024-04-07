@@ -8,20 +8,16 @@ from transformers import logging as transformer_logging  # type:ignore
 
 from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import MODEL_SERVER_PORT
-from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
-from danswer.configs.model_configs import CROSS_ENCODER_MODEL_ENSEMBLE
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
-from danswer.configs.model_configs import INTENT_MODEL_VERSION
-from danswer.configs.model_configs import QUERY_MAX_CONTEXT_SIZE
 from danswer.search.enums import EmbedTextType
 from danswer.utils.logger import setup_logger
-from shared_models.model_server_models import EmbedRequest
-from shared_models.model_server_models import EmbedResponse
-from shared_models.model_server_models import IntentRequest
-from shared_models.model_server_models import IntentResponse
-from shared_models.model_server_models import RerankRequest
-from shared_models.model_server_models import RerankResponse
+from shared_configs.model_server_models import EmbedRequest
+from shared_configs.model_server_models import EmbedResponse
+from shared_configs.model_server_models import IntentRequest
+from shared_configs.model_server_models import IntentResponse
+from shared_configs.model_server_models import RerankRequest
+from shared_configs.model_server_models import RerankResponse
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -115,6 +111,7 @@ class EmbeddingModel:
         embed_request = EmbedRequest(
             texts=prefixed_texts,
             model_name=self.model_name,
+            max_context_length=self.max_seq_length,
             normalize_embeddings=self.normalize,
         )
 
@@ -133,14 +130,9 @@ class EmbeddingModel:
 class CrossEncoderEnsembleModel:
     def __init__(
         self,
-        model_names: list[str] = CROSS_ENCODER_MODEL_ENSEMBLE,
-        max_seq_length: int = CROSS_EMBED_CONTEXT_SIZE,
         model_server_host: str = MODEL_SERVER_HOST,
         model_server_port: int = MODEL_SERVER_PORT,
     ) -> None:
-        self.model_names = model_names
-        self.max_seq_length = max_seq_length
-
         model_server_url = build_model_server_url(model_server_host, model_server_port)
         self.rerank_server_endpoint = model_server_url + "/encoder/cross-encoder-scores"
 
@@ -162,14 +154,9 @@ class CrossEncoderEnsembleModel:
 class IntentModel:
     def __init__(
         self,
-        model_name: str = INTENT_MODEL_VERSION,
-        max_seq_length: int = QUERY_MAX_CONTEXT_SIZE,
         model_server_host: str = MODEL_SERVER_HOST,
         model_server_port: int = MODEL_SERVER_PORT,
     ) -> None:
-        self.model_name = model_name
-        self.max_seq_length = max_seq_length
-
         model_server_url = build_model_server_url(model_server_host, model_server_port)
         self.intent_server_endpoint = model_server_url + "/custom/intent-model"
 

@@ -5,6 +5,7 @@ class EmbedRequest(BaseModel):
     # This already includes any prefixes, the text is just passed directly to the model
     texts: list[str]
     model_name: str
+    max_context_length: int
     normalize_embeddings: bool
 
 

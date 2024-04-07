@@ -3,19 +3,18 @@ from typing import Optional
 
 from fastapi import APIRouter
 from fastapi import HTTPException
-from sentence_transformers import CrossEncoder
+from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
-from danswer.configs.model_configs import CROSS_EMBED_CONTEXT_SIZE
-from danswer.configs.model_configs import CROSS_ENCODER_MODEL_ENSEMBLE
-from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 from model_server.constants import MODEL_WARM_UP_STRING
-from shared_models.model_server_models import EmbedRequest
-from shared_models.model_server_models import EmbedResponse
-from shared_models.model_server_models import RerankRequest
-from shared_models.model_server_models import RerankResponse
+from shared_configs.model_server_models import EmbedRequest
+from shared_configs.model_server_models import EmbedResponse
+from shared_configs.model_server_models import RerankRequest
+from shared_configs.model_server_models import RerankResponse
+from shared_configs.nlp_model_configs import CROSS_EMBED_CONTEXT_SIZE
+from shared_configs.nlp_model_configs import CROSS_ENCODER_MODEL_ENSEMBLE
 
 logger = setup_logger()
 
@@ -27,7 +26,7 @@ _RERANK_MODELS: Optional[list["CrossEncoder"]] = None
 
 def get_embedding_model(
     model_name: str,
-    max_context_length: int = DOC_EMBEDDING_CONTEXT_SIZE,
+    max_context_length: int,
 ) -> "SentenceTransformer":
     from sentence_transformers import SentenceTransformer  # type: ignore
 
@@ -77,9 +76,14 @@ def warm_up_cross_encoders() -> None:
 
 @log_function_time(print_only=True)
 def embed_text(
-    texts: list[str], model_name: str, normalize_embeddings: bool
+    texts: list[str],
+    model_name: str,
+    max_context_length: int,
+    normalize_embeddings: bool,
 ) -> list[list[float]]:
-    model = get_embedding_model(model_name=model_name)
+    model = get_embedding_model(
+        model_name=model_name, max_context_length=max_context_length
+    )
     embeddings = model.encode(texts, normalize_embeddings=normalize_embeddings)
 
     if not isinstance(embeddings, list):
@@ -106,6 +110,7 @@ async def process_embed_request(
         embeddings = embed_text(
             texts=embed_request.texts,
             model_name=embed_request.model_name,
+            max_context_length=embed_request.max_context_length,
             normalize_embeddings=embed_request.normalize_embeddings,
         )
         return EmbedResponse(embeddings=embeddings)
