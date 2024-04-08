@@ -5,6 +5,7 @@ from typing import Optional
 from typing import TYPE_CHECKING
 
 import requests
+from transformers import logging as transformer_logging  # type:ignore
 
 from danswer.configs.app_configs import MODEL_SERVER_HOST
 from danswer.configs.app_configs import MODEL_SERVER_PORT
@@ -19,6 +20,7 @@ from shared_configs.model_server_models import IntentResponse
 from shared_configs.model_server_models import RerankRequest
 from shared_configs.model_server_models import RerankResponse
 
+transformer_logging.set_verbosity_error()
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
