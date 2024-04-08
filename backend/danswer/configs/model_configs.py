@@ -37,14 +37,6 @@ ASYM_QUERY_PREFIX = os.environ.get("ASYM_QUERY_PREFIX", "query: ")
 ASYM_PASSAGE_PREFIX = os.environ.get("ASYM_PASSAGE_PREFIX", "passage: ")
 # Purely an optimization, memory limitation consideration
 BATCH_SIZE_ENCODE_CHUNKS = 8
-
-# Cross Encoder Settings
-ENABLE_RERANKING_ASYNC_FLOW = (
-    os.environ.get("ENABLE_RERANKING_ASYNC_FLOW", "").lower() == "true"
-)
-ENABLE_RERANKING_REAL_TIME_FLOW = (
-    os.environ.get("ENABLE_RERANKING_REAL_TIME_FLOW", "").lower() == "true"
-)
 # For score display purposes, only way is to know the expected ranges
 CROSS_ENCODER_RANGE_MAX = 12
 CROSS_ENCODER_RANGE_MIN = -12

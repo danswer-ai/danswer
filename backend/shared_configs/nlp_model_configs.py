@@ -8,6 +8,13 @@ INTENT_MODEL_CONTEXT_SIZE = 256
 # Bi-Encoder, other details
 DOC_EMBEDDING_CONTEXT_SIZE = 512
 
+# Cross Encoder Settings
+ENABLE_RERANKING_ASYNC_FLOW = (
+    os.environ.get("ENABLE_RERANKING_ASYNC_FLOW", "").lower() == "true"
+)
+ENABLE_RERANKING_REAL_TIME_FLOW = (
+    os.environ.get("ENABLE_RERANKING_REAL_TIME_FLOW", "").lower() == "true"
+)
 # Only using one cross-encoder for now
 CROSS_ENCODER_MODEL_ENSEMBLE = ["mixedbread-ai/mxbai-rerank-xsmall-v1"]
 CROSS_EMBED_CONTEXT_SIZE = 512
