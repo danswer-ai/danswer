@@ -126,7 +126,7 @@ uvicorn model_server.main:app --reload --port 9000
 _For Windows (for compatibility with both PowerShell and Command Prompt):_
 ```bash
 powershell -Command "
-    uvicorn danswer.main:app --reload --port 9000
+    uvicorn model_server.main:app --reload --port 9000
 "
 ```
 
