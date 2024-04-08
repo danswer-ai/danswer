@@ -5,7 +5,6 @@ from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.chat_configs import DISABLE_LLM_FILTER_EXTRACTION
 from danswer.configs.chat_configs import FAVOR_RECENT_DECAY_MULTIPLIER
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
-from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.db.models import User
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import RecencyBiasSetting
@@ -22,6 +21,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
 from danswer.utils.timing import log_function_time
+from shared_configs.nlp_model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 
 
 logger = setup_logger()
