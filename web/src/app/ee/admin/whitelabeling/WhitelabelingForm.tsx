@@ -50,14 +50,10 @@ export function WhitelabelingForm() {
         initialValues={{
           application_name: enterpriseSettings?.application_name || null,
           use_custom_logo: enterpriseSettings?.use_custom_logo || false,
-          color_config: enterpriseSettings?.color_config || null,
         }}
         validationSchema={Yup.object().shape({
           application_name: Yup.string(),
           use_custom_logo: Yup.boolean().required(),
-          color_config: Yup.object().shape({
-            primary: Yup.string(),
-          }),
         })}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
@@ -67,6 +63,7 @@ export function WhitelabelingForm() {
 
             const formData = new FormData();
             formData.append("file", selectedFile);
+            setSelectedFile(null);
             const response = await fetch(
               "/api/admin/enterprise-settings/logo",
               {
@@ -80,7 +77,6 @@ export function WhitelabelingForm() {
               formikHelpers.setSubmitting(false);
               return;
             }
-            setSelectedFile(null);
           }
 
           formikHelpers.setValues(values);
@@ -103,7 +99,7 @@ export function WhitelabelingForm() {
               <div className="mt-3">
                 <SubLabel>Current Custom Logo: </SubLabel>
                 <img
-                  src="/api/enterprise-settings/logo"
+                  src={"/api/enterprise-settings/logo?u=" + Date.now()}
                   alt="logo"
                   style={{ objectFit: "contain" }}
                   className="w-32 h-32 mb-10 mt-4"

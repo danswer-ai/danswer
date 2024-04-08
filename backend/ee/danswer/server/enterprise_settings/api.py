@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Response
 from fastapi import UploadFile
-from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
@@ -43,7 +43,7 @@ def upload_logo(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
 ) -> None:
-    if (
+    if not file.filename or (
         not file.filename.endswith(".png")
         and not file.filename.endswith(".jpg")
         and not file.filename.endswith(".jpeg")
@@ -59,7 +59,9 @@ def upload_logo(
 
 
 @basic_router.get("/logo")
-def fetch_logo(db_session: Session = Depends(get_session)) -> StreamingResponse:
+def fetch_logo(db_session: Session = Depends(get_session)) -> Response:
     file_store = get_default_file_store(db_session)
     file_io = file_store.read_file(_LOGO_FILENAME, mode="b")
-    return StreamingResponse(content=file_io, media_type="image/jpeg")
+    # NOTE: specifying "image/jpeg" here, but it still works for pngs
+    # TODO: do this properly
+    return Response(content=file_io.read(), media_type="image/jpeg")
