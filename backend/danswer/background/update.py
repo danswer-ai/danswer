@@ -403,6 +403,7 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
 
     # So that the first time users aren't surprised by really slow speed of first
     # batch of documents indexed
+    logger.info("Running a first inference to warm up embedding model")
     warm_up_encoders(
         model_name=db_embedding_model.model_name,
         normalize=db_embedding_model.normalize,

@@ -1,4 +1,6 @@
 import os
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
 import torch
 import uvicorn
@@ -26,28 +28,33 @@ transformer_logging.set_verbosity_error()
 logger = setup_logger()
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator:
+    if torch.cuda.is_available():
+        logger.info("GPU is available")
+    else:
+        logger.info("GPU is not available")
+
+    torch.set_num_threads(max(MIN_THREADS_ML_MODELS, torch.get_num_threads()))
+    logger.info(f"Torch Threads: {torch.get_num_threads()}")
+
+    if not INDEXING_ONLY:
+        warm_up_intent_model()
+        if ENABLE_RERANKING_REAL_TIME_FLOW or ENABLE_RERANKING_ASYNC_FLOW:
+            warm_up_cross_encoders()
+    else:
+        logger.info("This model server should only run document indexing.")
+
+    yield
+
+
 def get_model_app() -> FastAPI:
-    application = FastAPI(title="Danswer Model Server", version=__version__)
+    application = FastAPI(
+        title="Danswer Model Server", version=__version__, lifespan=lifespan
+    )
 
     application.include_router(encoders_router)
     application.include_router(custom_models_router)
-
-    @application.on_event("startup")
-    def startup_event() -> None:
-        if torch.cuda.is_available():
-            logger.info("GPU is available")
-        else:
-            logger.info("GPU is not available")
-
-        torch.set_num_threads(max(MIN_THREADS_ML_MODELS, torch.get_num_threads()))
-        logger.info(f"Torch Threads: {torch.get_num_threads()}")
-
-        if not INDEXING_ONLY:
-            warm_up_intent_model()
-            if ENABLE_RERANKING_REAL_TIME_FLOW or ENABLE_RERANKING_ASYNC_FLOW:
-                warm_up_cross_encoders()
-        else:
-            logger.info("This model server should only run document indexing.")
 
     return application
 
