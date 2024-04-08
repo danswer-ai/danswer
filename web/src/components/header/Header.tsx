@@ -12,6 +12,10 @@ import { SettingsContext } from "../settings/SettingsProvider";
 import { UserDropdown } from "../UserDropdown";
 import { Logo } from "../Logo";
 
+function HeaderTitle({ children }: { children: JSX.Element | string }) {
+  return <h1 className="flex text-2xl text-strong font-bold">{children}</h1>;
+}
+
 interface HeaderProps {
   user: User | null;
 }
@@ -28,19 +32,29 @@ export function Header({ user }: HeaderProps) {
     <HeaderWrapper>
       <div className="flex h-full">
         <Link
-          className="py-4"
+          className="py-3 flex flex-col"
           href={
             settings && settings.default_page === "chat" ? "/chat" : "/search"
           }
         >
-          <div className="flex">
-            <div className="mr-1">
+          <div className="flex my-auto">
+            <div className="mr-1 my-auto">
               <Logo />
             </div>
-            <h1 className="flex text-2xl text-strong font-bold my-auto">
-              {(enterpriseSettings && enterpriseSettings.application_name) ||
-                "Danswer"}
-            </h1>
+            <div className="my-auto">
+              {enterpriseSettings && enterpriseSettings.application_name ? (
+                <div>
+                  <HeaderTitle>
+                    {enterpriseSettings.application_name}
+                  </HeaderTitle>
+                  <p className="text-xs text-subtle -mt-1.5">
+                    Powered by Danswer
+                  </p>
+                </div>
+              ) : (
+                <HeaderTitle>Danswer</HeaderTitle>
+              )}
+            </div>
           </div>
         </Link>
 

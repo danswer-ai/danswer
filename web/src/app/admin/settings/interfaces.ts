@@ -4,10 +4,6 @@ export interface Settings {
   default_page: "search" | "chat";
 }
 
-export interface ColorConfig {
-  primary: string | null;
-}
-
 export interface EnterpriseSettings {
   application_name: string | null;
   use_custom_logo: boolean;
@@ -16,7 +12,6 @@ export interface EnterpriseSettings {
   custom_header_content: string | null;
   custom_popup_header: string | null;
   custom_popup_content: string | null;
-  color_config: ColorConfig | null;
 }
 
 export interface CombinedSettings {
