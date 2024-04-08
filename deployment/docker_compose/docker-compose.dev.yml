@@ -208,6 +208,7 @@ services:
         - NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS=${NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS:-}
         - NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS=${NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS:-}
         - NEXT_PUBLIC_DISABLE_LOGOUT=${NEXT_PUBLIC_DISABLE_LOGOUT:-}
+        - NEXT_PUBLIC_THEME=${NEXT_PUBLIC_THEME:-}
         - NEXT_PUBLIC_EE_ENABLED=${NEXT_PUBLIC_EE_ENABLED:-true}
     depends_on:
       - api_server
@@ -215,6 +216,7 @@ services:
     environment:
       - INTERNAL_URL=http://api_server:8080
       - WEB_DOMAIN=${WEB_DOMAIN:-}
+      - THEME_IS_DARK=${THEME_IS_DARK:-}
 
 
   inference_model_server:
@@ -270,7 +272,6 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
-
 
   relational_db:
     image: postgres:15.2-alpine

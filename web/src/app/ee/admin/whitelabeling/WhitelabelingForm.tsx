@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { EnterpriseSettings, Settings } from "@/app/admin/settings/interfaces";
+import { EnterpriseSettings } from "@/app/admin/settings/interfaces";
 import { useContext, useState } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProviderClientSideHelper";
 import { Form, Formik } from "formik";
@@ -42,6 +42,7 @@ export function WhitelabelingForm() {
       alert(`Failed to update settings. ${errorMsg}`);
     }
   }
+  console.log(enterpriseSettings);
 
   return (
     <div>
@@ -49,10 +50,14 @@ export function WhitelabelingForm() {
         initialValues={{
           application_name: enterpriseSettings?.application_name || null,
           use_custom_logo: enterpriseSettings?.use_custom_logo || false,
+          color_config: enterpriseSettings?.color_config || null,
         }}
         validationSchema={Yup.object().shape({
           application_name: Yup.string(),
           use_custom_logo: Yup.boolean().required(),
+          color_config: Yup.object().shape({
+            primary: Yup.string(),
+          }),
         })}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);

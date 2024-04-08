@@ -286,6 +286,9 @@ export const AIMessage = ({
                       code: (props) => (
                         <CodeBlock {...props} content={content as string} />
                       ),
+                      p: ({ node, ...props }) => (
+                        <p {...props} className="text-default" />
+                      ),
                     }}
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}

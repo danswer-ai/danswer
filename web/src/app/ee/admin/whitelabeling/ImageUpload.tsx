@@ -13,7 +13,6 @@ export function ImageUpload({
 }) {
   const [tmpImageUrl, setTmpImageUrl] = useState<string>("");
 
-  console.log(selectedFile);
   useEffect(() => {
     if (selectedFile) {
       setTmpImageUrl(URL.createObjectURL(selectedFile));
