@@ -18,13 +18,19 @@ from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
+from danswer.db.models import ChatSessionSharedStatus
 from danswer.db.models import DocumentSet as DBDocumentSet
 from danswer.db.models import Persona
+from danswer.db.models import Persona__User
+from danswer.db.models import Persona__UserGroup
 from danswer.db.models import Prompt
 from danswer.db.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.db.models import StarterMessage
-from danswer.search.models import RecencyBiasSetting
+from danswer.db.models import User__UserGroup
+from danswer.llm.override_models import LLMOverride
+from danswer.llm.override_models import PromptOverride
+from danswer.search.enums import RecencyBiasSetting
 from danswer.search.models import RetrievalDocs
 from danswer.search.models import SavedSearchDoc
 from danswer.search.models import SearchDoc as ServerSearchDoc
@@ -35,11 +41,23 @@ logger = setup_logger()
 
 
 def get_chat_session_by_id(
-    chat_session_id: int, user_id: UUID | None, db_session: Session
+    chat_session_id: int,
+    user_id: UUID | None,
+    db_session: Session,
+    include_deleted: bool = False,
+    is_shared: bool = False,
 ) -> ChatSession:
-    stmt = select(ChatSession).where(
-        ChatSession.id == chat_session_id, ChatSession.user_id == user_id
-    )
+    stmt = select(ChatSession).where(ChatSession.id == chat_session_id)
+
+    if is_shared:
+        stmt = stmt.where(ChatSession.shared_status == ChatSessionSharedStatus.PUBLIC)
+    else:
+        # if user_id is None, assume this is an admin who should be able
+        # to view all chat sessions
+        if user_id is not None:
+            stmt = stmt.where(
+                or_(ChatSession.user_id == user_id, ChatSession.user_id.is_(None))
+            )
 
     result = db_session.execute(stmt)
     chat_session = result.scalar_one_or_none()
@@ -47,7 +65,7 @@ def get_chat_session_by_id(
     if not chat_session:
         raise ValueError("Invalid Chat Session ID provided")
 
-    if chat_session.deleted:
+    if not include_deleted and chat_session.deleted:
         raise ValueError("Chat session has been deleted")
 
     return chat_session
@@ -78,12 +96,16 @@ def create_chat_session(
     description: str,
     user_id: UUID | None,
     persona_id: int | None = None,
+    llm_override: LLMOverride | None = None,
+    prompt_override: PromptOverride | None = None,
     one_shot: bool = False,
 ) -> ChatSession:
     chat_session = ChatSession(
         user_id=user_id,
         persona_id=persona_id,
         description=description,
+        llm_override=llm_override,
+        prompt_override=prompt_override,
         one_shot=one_shot,
     )
 
@@ -94,7 +116,11 @@ def create_chat_session(
 
 
 def update_chat_session(
-    user_id: UUID | None, chat_session_id: int, description: str, db_session: Session
+    db_session: Session,
+    user_id: UUID | None,
+    chat_session_id: int,
+    description: str | None = None,
+    sharing_status: ChatSessionSharedStatus | None = None,
 ) -> ChatSession:
     chat_session = get_chat_session_by_id(
         chat_session_id=chat_session_id, user_id=user_id, db_session=db_session
@@ -103,7 +129,10 @@ def update_chat_session(
     if chat_session.deleted:
         raise ValueError("Trying to rename a deleted chat session")
 
-    chat_session.description = description
+    if description is not None:
+        chat_session.description = description
+    if sharing_status is not None:
+        chat_session.shared_status = sharing_status
 
     db_session.commit()
 
@@ -468,6 +497,7 @@ def upsert_persona(
     llm_model_version_override: str | None,
     starter_messages: list[StarterMessage] | None,
     shared: bool,
+    is_public: bool,
     db_session: Session,
     persona_id: int | None = None,
     default_persona: bool = False,
@@ -494,6 +524,7 @@ def upsert_persona(
         persona.llm_model_version_override = llm_model_version_override
         persona.starter_messages = starter_messages
         persona.deleted = False  # Un-delete if previously deleted
+        persona.is_public = is_public
 
         # Do not delete any associations manually added unless
         # a new updated list is provided
@@ -509,6 +540,7 @@ def upsert_persona(
         persona = Persona(
             id=persona_id,
             user_id=None if shared else user_id,
+            is_public=is_public,
             name=name,
             description=description,
             num_chunks=num_chunks,
@@ -638,9 +670,28 @@ def get_personas(
     include_slack_bot_personas: bool = False,
     include_deleted: bool = False,
 ) -> Sequence[Persona]:
-    stmt = select(Persona)
+    stmt = select(Persona).distinct()
     if user_id is not None:
-        stmt = stmt.where(or_(Persona.user_id == user_id, Persona.user_id.is_(None)))
+        # Subquery to find all groups the user belongs to
+        user_groups_subquery = (
+            select(User__UserGroup.user_group_id)
+            .where(User__UserGroup.user_id == user_id)
+            .subquery()
+        )
+
+        # Include personas where the user is directly related or part of a user group that has access
+        access_conditions = or_(
+            Persona.is_public == True,  # noqa: E712
+            Persona.id.in_(  # User has access through list of users with access
+                select(Persona__User.persona_id).where(Persona__User.user_id == user_id)
+            ),
+            Persona.id.in_(  # User is part of a group that has access
+                select(Persona__UserGroup.persona_id).where(
+                    Persona__UserGroup.user_group_id.in_(user_groups_subquery)  # type: ignore
+                )
+            ),
+        )
+        stmt = stmt.where(access_conditions)
 
     if not include_default:
         stmt = stmt.where(Persona.default_persona.is_(False))
@@ -693,7 +744,8 @@ def create_db_search_doc(
         boost=server_search_doc.boost,
         hidden=server_search_doc.hidden,
         doc_metadata=server_search_doc.metadata,
-        score=server_search_doc.score,
+        # For docs further down that aren't reranked, we can't use the retrieval score
+        score=server_search_doc.score or 0.0,
         match_highlights=server_search_doc.match_highlights,
         updated_at=server_search_doc.updated_at,
         primary_owners=server_search_doc.primary_owners,
@@ -714,6 +766,7 @@ def get_db_search_doc_by_id(doc_id: int, db_session: Session) -> DBSearchDoc | N
 
 def translate_db_search_doc_to_server_search_doc(
     db_search_doc: SearchDoc,
+    remove_doc_content: bool = False,
 ) -> SavedSearchDoc:
     return SavedSearchDoc(
         db_doc_id=db_search_doc.id,
@@ -721,22 +774,30 @@ def translate_db_search_doc_to_server_search_doc(
         chunk_ind=db_search_doc.chunk_ind,
         semantic_identifier=db_search_doc.semantic_id,
         link=db_search_doc.link,
-        blurb=db_search_doc.blurb,
+        blurb=db_search_doc.blurb if not remove_doc_content else "",
         source_type=db_search_doc.source_type,
         boost=db_search_doc.boost,
         hidden=db_search_doc.hidden,
-        metadata=db_search_doc.doc_metadata,
+        metadata=db_search_doc.doc_metadata if not remove_doc_content else {},
         score=db_search_doc.score,
-        match_highlights=db_search_doc.match_highlights,
-        updated_at=db_search_doc.updated_at,
-        primary_owners=db_search_doc.primary_owners,
-        secondary_owners=db_search_doc.secondary_owners,
+        match_highlights=db_search_doc.match_highlights
+        if not remove_doc_content
+        else [],
+        updated_at=db_search_doc.updated_at if not remove_doc_content else None,
+        primary_owners=db_search_doc.primary_owners if not remove_doc_content else [],
+        secondary_owners=db_search_doc.secondary_owners
+        if not remove_doc_content
+        else [],
     )
 
 
-def get_retrieval_docs_from_chat_message(chat_message: ChatMessage) -> RetrievalDocs:
+def get_retrieval_docs_from_chat_message(
+    chat_message: ChatMessage, remove_doc_content: bool = False
+) -> RetrievalDocs:
     top_documents = [
-        translate_db_search_doc_to_server_search_doc(db_doc)
+        translate_db_search_doc_to_server_search_doc(
+            db_doc, remove_doc_content=remove_doc_content
+        )
         for db_doc in chat_message.search_docs
     ]
     top_documents = sorted(top_documents, key=lambda doc: doc.score, reverse=True)  # type: ignore
@@ -744,7 +805,7 @@ def get_retrieval_docs_from_chat_message(chat_message: ChatMessage) -> Retrieval
 
 
 def translate_db_message_to_chat_message_detail(
-    chat_message: ChatMessage,
+    chat_message: ChatMessage, remove_doc_content: bool = False
 ) -> ChatMessageDetail:
     chat_msg_detail = ChatMessageDetail(
         message_id=chat_message.id,
@@ -752,7 +813,9 @@ def translate_db_message_to_chat_message_detail(
         latest_child_message=chat_message.latest_child_message,
         message=chat_message.message,
         rephrased_query=chat_message.rephrased_query,
-        context_docs=get_retrieval_docs_from_chat_message(chat_message),
+        context_docs=get_retrieval_docs_from_chat_message(
+            chat_message, remove_doc_content=remove_doc_content
+        ),
         message_type=chat_message.message_type,
         time_sent=chat_message.time_sent,
         citations=chat_message.citations,

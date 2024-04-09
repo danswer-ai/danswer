@@ -1,44 +1,22 @@
 from datetime import datetime
-from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel
 
 from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
+from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import NUM_RERANKED_RESULTS
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
-from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
+from danswer.db.models import Persona
+from danswer.search.enums import OptionalSearchSetting
+from danswer.search.enums import SearchType
+from shared_configs.nlp_model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
+
 
 MAX_METRICS_CONTENT = (
     200  # Just need enough characters to identify where in the doc the chunk is
 )
-
-
-class OptionalSearchSetting(str, Enum):
-    ALWAYS = "always"
-    NEVER = "never"
-    # Determine whether to run search based on history and latest query
-    AUTO = "auto"
-
-
-class RecencyBiasSetting(str, Enum):
-    FAVOR_RECENT = "favor_recent"  # 2x decay rate
-    BASE_DECAY = "base_decay"
-    NO_DECAY = "no_decay"
-    # Determine based on query if to use base_decay or favor_recent
-    AUTO = "auto"
-
-
-class SearchType(str, Enum):
-    KEYWORD = "keyword"
-    SEMANTIC = "semantic"
-    HYBRID = "hybrid"
-
-
-class QueryFlow(str, Enum):
-    SEARCH = "search"
-    QUESTION_ANSWER = "question-answer"
 
 
 class Tag(BaseModel):
@@ -64,6 +42,30 @@ class ChunkMetric(BaseModel):
     score: float
 
 
+class SearchRequest(BaseModel):
+    """Input to the SearchPipeline."""
+
+    query: str
+    search_type: SearchType = SearchType.HYBRID
+
+    human_selected_filters: BaseFilters | None = None
+    enable_auto_detect_filters: bool | None = None
+    persona: Persona | None = None
+
+    # if None, no offset / limit
+    offset: int | None = None
+    limit: int | None = None
+
+    recency_bias_multiplier: float = 1.0
+    hybrid_alpha: float = HYBRID_ALPHA
+    # This is to forcibly skip (or run) the step, if None it uses the system defaults
+    skip_rerank: bool | None = None
+    skip_llm_chunk_filter: bool | None = None
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
 class SearchQuery(BaseModel):
     query: str
     filters: IndexFilters
@@ -72,9 +74,9 @@ class SearchQuery(BaseModel):
     offset: int = 0
     search_type: SearchType = SearchType.HYBRID
     skip_rerank: bool = not ENABLE_RERANKING_REAL_TIME_FLOW
+    skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER
     # Only used if not skip_rerank
     num_rerank: int | None = NUM_RERANKED_RESULTS
-    skip_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER
     # Only used if not skip_llm_chunk_filter
     max_llm_filter_chunks: int = NUM_RERANKED_RESULTS
 
@@ -138,9 +140,11 @@ class SavedSearchDoc(SearchDoc):
     def from_search_doc(
         cls, search_doc: SearchDoc, db_doc_id: int = 0
     ) -> "SavedSearchDoc":
-        """IMPORTANT: careful using this and not providing a db_doc_id"""
+        """IMPORTANT: careful using this and not providing a db_doc_id If db_doc_id is not
+        provided, it won't be able to actually fetch the saved doc and info later on. So only skip
+        providing this if the SavedSearchDoc will not be used in the future"""
         search_doc_data = search_doc.dict()
-        search_doc_data["score"] = search_doc_data.get("score", 0.0)
+        search_doc_data["score"] = search_doc_data.get("score") or 0.0
         return cls(**search_doc_data, db_doc_id=db_doc_id)
 
 

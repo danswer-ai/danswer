@@ -42,6 +42,14 @@ class WEB_CONNECTOR_VALID_SETTINGS(str, Enum):
     UPLOAD = "upload"
 
 
+def check_internet_connection(url: str) -> None:
+    try:
+        response = requests.get(url, timeout=3)
+        response.raise_for_status()
+    except (requests.RequestException, ValueError):
+        raise Exception(f"Unable to reach {url} - check your internet connection")
+
+
 def is_valid_url(url: str) -> bool:
     try:
         result = urlparse(url)
@@ -149,6 +157,10 @@ class WebConnector(LoadConnector):
             self.to_visit_list = extract_urls_from_sitemap(_ensure_valid_url(base_url))
 
         elif web_connector_type == WEB_CONNECTOR_VALID_SETTINGS.UPLOAD:
+            logger.warning(
+                "This is not a UI supported Web Connector flow, "
+                "are you sure you want to do this?"
+            )
             self.to_visit_list = _read_urls_file(base_url)
 
         else:
@@ -180,6 +192,7 @@ class WebConnector(LoadConnector):
             logger.info(f"Visiting {current_url}")
 
             try:
+                check_internet_connection(current_url)
                 if restart_playwright:
                     playwright, context = start_playwright()
                     restart_playwright = False
