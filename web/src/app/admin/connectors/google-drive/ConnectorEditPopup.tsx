@@ -60,6 +60,11 @@ export const ConnectorEditPopup = ({ existingConnector, onSubmit }: Props) => {
                 name="only_org_public"
                 label="Only Include Org Public Files"
               />
+              <BooleanFormField
+              name="use_ocr"
+              label="Run OCR on documents"
+              subtext="If enabled, will use OCR to extract text from image-based PDFs and images."
+              />
             </div>
           )}
           validationSchema={Yup.object().shape({
@@ -73,6 +78,7 @@ export const ConnectorEditPopup = ({ existingConnector, onSubmit }: Props) => {
             include_shared: Yup.boolean().required(),
             follow_shortcuts: Yup.boolean().required(),
             only_org_public: Yup.boolean().required(),
+            use_ocr: Yup.boolean().required(),
           })}
           onSubmit={onSubmit}
         />

@@ -7,4 +7,6 @@ export const googleDriveConnectorNameBuilder = (values: GoogleDriveConfig) =>
     values.only_org_public ? "org-public" : "all"
   }-${
     values.follow_shortcuts ? "follow-shortcuts" : "do-not-follow-shortcuts"
+  }-${values.follow_shortcuts ? "follow-shortcuts" : "do-not-follow-shortcuts"}-${
+    values.use_ocr ? "ocr" : "no-ocr"
   }`;

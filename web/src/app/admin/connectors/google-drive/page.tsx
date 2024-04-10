@@ -230,6 +230,13 @@ const GoogleDriveConnectorManagement = ({
                   "shared with any of the orgs."
                 }
               />
+              <BooleanFormField
+                name="use_ocr"
+                label="Use OCR"
+                subtext={
+                  "If checked, OCR will be run on any PDFs in the folder, extracting text from scanned documents. Warning: this can take 4x longer."
+                }
+              />
             </>
           )}
           validationSchema={Yup.object().shape({
@@ -243,12 +250,14 @@ const GoogleDriveConnectorManagement = ({
             include_shared: Yup.boolean().required(),
             follow_shortcuts: Yup.boolean().required(),
             only_org_public: Yup.boolean().required(),
+            use_ocr: Yup.boolean().required(),
           })}
           initialValues={{
             folder_paths: [],
             include_shared: false,
             follow_shortcuts: false,
             only_org_public: false,
+            use_ocr: false,
           }}
           refreshFreq={10 * 60} // 10 minutes
           credentialId={liveCredential.id}

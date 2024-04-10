@@ -18,6 +18,7 @@ from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import GOOGLE_DRIVE_FOLLOW_SHORTCUTS
 from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
 from danswer.configs.app_configs import GOOGLE_DRIVE_ONLY_ORG_PUBLIC
+from danswer.configs.app_configs import GOOGLE_DRIVE_USE_OCR
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
@@ -299,7 +300,9 @@ def get_all_files_batched(
                 )
 
 
-def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
+def extract_text(file: dict[str, str], 
+                 service: discovery.Resource, 
+                 use_ocr: bool) -> str:
     mime_type = file["mimeType"]
     if mime_type not in set(item.value for item in GDriveMimeType):
         # Unsupported file types can still have a title, finding this way is still useful
@@ -328,7 +331,9 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
         return docx2txt.process(temp_path)
     elif mime_type == GDriveMimeType.PDF.value:
         response = service.files().get_media(fileId=file["id"]).execute()
-        file_contents = read_pdf_file(file=io.BytesIO(response), file_name=file["name"])
+        file_contents = read_pdf_file(file=io.BytesIO(response), 
+                                      file_name=file["name"], 
+                                      use_ocr=use_ocr)
         return file_contents
 
     return UNSUPPORTED_FILE_TYPE_CONTENT
@@ -345,6 +350,8 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         follow_shortcuts: bool = GOOGLE_DRIVE_FOLLOW_SHORTCUTS,
         only_org_public: bool = GOOGLE_DRIVE_ONLY_ORG_PUBLIC,
         continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
+        use_ocr: bool = GOOGLE_DRIVE_USE_OCR,
+
     ) -> None:
         self.folder_paths = folder_paths or []
         self.batch_size = batch_size
@@ -353,6 +360,8 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         self.only_org_public = only_org_public
         self.continue_on_failure = continue_on_failure
         self.creds: Credentials | None = None
+        self.use_ocr = use_ocr  
+
 
     @staticmethod
     def _process_folder_paths(
@@ -476,13 +485,15 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                         ):
                             continue
 
-                    text_contents = extract_text(file, service) or ""
+                    text_contents = extract_text(file, service,
+                                                 use_ocr=self.use_ocr) or ""
 
                     doc_batch.append(
                         Document(
                             id=file["webViewLink"],
                             sections=[
-                                Section(link=file["webViewLink"], text=text_contents)
+                                Section(link=file["webViewLink"], 
+                                        text=text_contents)
                             ],
                             source=DocumentSource.GOOGLE_DRIVE,
                             semantic_identifier=file["name"],

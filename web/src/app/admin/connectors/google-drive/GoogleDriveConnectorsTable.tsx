@@ -92,6 +92,7 @@ export const GoogleDriveConnectorsTable = ({
             <TableHeaderCell>Include Shared</TableHeaderCell>
             <TableHeaderCell>Follow Shortcuts</TableHeaderCell>
             <TableHeaderCell>Only Org Public</TableHeaderCell>
+            <TableHeaderCell>Use OCR</TableHeaderCell>
             <TableHeaderCell>Status</TableHeaderCell>
             <TableHeaderCell>Delete</TableHeaderCell>
           </TableRow>
@@ -156,6 +157,16 @@ export const GoogleDriveConnectorsTable = ({
                     </div>
                   </TableCell>
                   <TableCell>
+                    <div>
+                      {connectorIndexingStatus.connector
+                        .connector_specific_config.use_ocr ? (
+                        <i>Yes</i>
+                      ) : (
+                        <i>No</i>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
                     <StatusRow
                       connectorIndexingStatus={connectorIndexingStatus}
                       hasCredentialsIssue={
@@ -209,6 +220,10 @@ export const GoogleDriveConnectorsTable = ({
         {
           header: "Only Org Public",
           key: "only_org_public",
+        },
+        {
+          header: "Use OCR",
+          key: "use_ocr",
         },
         {
           header: "Status",
@@ -266,6 +281,16 @@ export const GoogleDriveConnectorsTable = ({
             <div>
               {connectorIndexingStatus.connector.connector_specific_config
                 .only_org_public ? (
+                <i>Yes</i>
+              ) : (
+                <i>No</i>
+              )}
+            </div>
+          ),
+          use_ocr: (
+            <div>
+              {connectorIndexingStatus.connector.connector_specific_config
+                .use_ocr ? (
                 <i>Yes</i>
               ) : (
                 <i>No</i>

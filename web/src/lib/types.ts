@@ -94,6 +94,7 @@ export interface GoogleDriveConfig {
   include_shared?: boolean;
   follow_shortcuts?: boolean;
   only_org_public?: boolean;
+  use_ocr?: boolean; 
 }
 
 export interface GmailConfig {}
