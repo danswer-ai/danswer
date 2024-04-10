@@ -304,9 +304,7 @@ def _prepare_index_attempt(db_session: Session, index_attempt_id: int) -> IndexA
     return attempt
 
 
-def run_indexing_entrypoint(
-    index_attempt_id: int, is_ee: bool = False
-) -> None:
+def run_indexing_entrypoint(index_attempt_id: int, is_ee: bool = False) -> None:
     """Entrypoint for indexing run when using dask distributed.
     Wraps the actual logic in a `try` block so that we can catch any exceptions
     and mark the attempt as failed."""

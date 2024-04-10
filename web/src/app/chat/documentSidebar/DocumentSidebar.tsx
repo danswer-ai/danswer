@@ -7,8 +7,8 @@ import { SelectedDocumentDisplay } from "./SelectedDocumentDisplay";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { BasicSelectable } from "@/components/BasicClickable";
 import { Message, RetrievalType } from "../interfaces";
-import { HEADER_PADDING } from "@/lib/constants";
 import { HoverPopup } from "@/components/HoverPopup";
+import { HEADER_PADDING } from "@/lib/constants";
 
 function SectionHeader({
   name,

@@ -35,10 +35,10 @@ from danswer.db.models import IndexModelStatus
 from danswer.db.swap_index import check_index_swap
 from danswer.search.search_nlp_models import warm_up_encoders
 from danswer.utils.logger import setup_logger
+from danswer.utils.variable_functionality import global_version
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import LOG_LEVEL
 from shared_configs.configs import MODEL_SERVER_PORT
-from danswer.utils.variable_functionality import global_version
 
 logger = setup_logger()
 

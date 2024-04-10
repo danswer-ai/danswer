@@ -11,7 +11,7 @@ import {
   SubLabel,
   TextFormField,
 } from "@/components/admin/connectors/Field";
-import { Button } from "@tremor/react";
+import { Button, Divider } from "@tremor/react";
 import { ImageUpload } from "./ImageUpload";
 
 export function WhitelabelingForm() {
@@ -42,7 +42,6 @@ export function WhitelabelingForm() {
       alert(`Failed to update settings. ${errorMsg}`);
     }
   }
-  console.log(enterpriseSettings);
 
   return (
     <div>
@@ -50,10 +49,17 @@ export function WhitelabelingForm() {
         initialValues={{
           application_name: enterpriseSettings?.application_name || null,
           use_custom_logo: enterpriseSettings?.use_custom_logo || false,
+          custom_header_content:
+            enterpriseSettings?.custom_header_content || "",
+          custom_popup_header: enterpriseSettings?.custom_popup_header || "",
+          custom_popup_content: enterpriseSettings?.custom_popup_content || "",
         }}
         validationSchema={Yup.object().shape({
-          application_name: Yup.string(),
+          application_name: Yup.string().nullable(),
           use_custom_logo: Yup.boolean().required(),
+          custom_header_content: Yup.string().nullable(),
+          custom_popup_header: Yup.string().nullable(),
+          custom_popup_content: Yup.string().nullable(),
         })}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
@@ -137,6 +143,44 @@ export function WhitelabelingForm() {
               selectedFile={selectedFile}
               setSelectedFile={setSelectedFile}
             />
+
+            <Divider />
+
+            <div className="mt-4">
+              <TextFormField
+                label="Custom Chat Header Content"
+                name="custom_header_content"
+                subtext={`Custom Markdown content that will be displayed as a banner at the top of the Chat page.`}
+                placeholder="Your header content..."
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <Divider />
+
+            <div className="mt-4">
+              <TextFormField
+                label="Custom Popup Header"
+                name="custom_popup_header"
+                subtext={`The title for the popup that will be displayed for each user on their initial visit 
+                to the application. If left blank AND Custom Popup Content is specified, will use "Welcome to ${
+                  values.application_name || "Danswer"
+                }!".`}
+                placeholder="Initial Popup Header"
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="mt-4">
+              <TextFormField
+                label="Custom Popup Content"
+                name="custom_popup_content"
+                subtext={`Custom Markdown content that will be displayed as a popup on initial visit to the application.`}
+                placeholder="Your popup content..."
+                isTextArea
+                disabled={isSubmitting}
+              />
+            </div>
 
             <Button type="submit" className="mt-4">
               Update
