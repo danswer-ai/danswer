@@ -68,7 +68,7 @@ export function Header({ user, settings }: HeaderProps) {
               <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
             </div>
             <h1 className="flex text-2xl text-strong font-bold my-auto">
-              Danswer
+              GrantGPT
             </h1>
           </div>
         </Link>

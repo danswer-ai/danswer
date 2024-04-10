@@ -149,14 +149,14 @@ export const ChatSidebar = ({
                 className="flex py-3 px-4 cursor-pointer hover:bg-hover"
               >
                 <FiSearch className="my-auto mr-2" />
-                Danswer Search
+                GrantGPT Search
               </Link>
               <Link
                 href="/chat"
                 className="flex py-3 px-4 cursor-pointer hover:bg-hover"
               >
                 <FiMessageSquare className="my-auto mr-2" />
-                Danswer Chat
+                GrantGPT Chat
               </Link>
               {(!user || user.role === "admin") && (
                 <Link

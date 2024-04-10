@@ -23,7 +23,7 @@ export default async function Page() {
       />
 
       <Text className="mb-8">
-        Manage general Danswer settings applicable to all users in the
+        Manage general GrantGPT settings applicable to all users in the
         workspace.
       </Text>
 
