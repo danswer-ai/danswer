@@ -157,6 +157,11 @@ CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
     )
     if ignored_tag
 ]
+JIRA_CONNECTOR_LABELS_TO_SKIP = [
+    ignored_tag
+    for ignored_tag in os.environ.get("JIRA_CONNECTOR_LABELS_TO_SKIP", "").split(",")
+    if ignored_tag
+]
 
 GONG_CONNECTOR_START_TIME = os.environ.get("GONG_CONNECTOR_START_TIME")
 
