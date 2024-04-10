@@ -170,54 +170,26 @@ services:
         max-file: "6"
 
 
-  nginx:
-    image: nginx:1.23.4-alpine
-    restart: always
-    # nginx will immediately crash with `nginx: [emerg] host not found in upstream`
-    # if api_server / web_server are not up 
-    depends_on:
-      - api_server
-      - web_server
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ../data/nginx:/etc/nginx/conf.d
-      - ../data/certbot/conf:/etc/letsencrypt
-      - ../data/certbot/www:/var/www/certbot
-    # sleep a little bit to allow the web_server / api_server to start up. 
-    # Without this we've seen issues where nginx shows no error logs but 
-    # does not recieve any traffic
-    logging:
-      driver: json-file
-      options:
-        max-size: "50m"
-        max-file: "6"
-    # the specified script waits for the api_server to start up. 
-    # Without this we've seen issues where nginx shows no error logs but 
-    # does not recieve any traffic  
-    # NOTE: we have to use dos2unix to remove Carriage Return chars from the file
-    # in order to make this work on both Unix-like systems and windows
-    command: > 
-      /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
-      && /etc/nginx/conf.d/run-nginx.sh app.conf.template"
-    env_file:
-      - .env.nginx
-
-
-  # follows https://pentacent.medium.com/nginx-and-lets-encrypt-with-docker-in-less-than-5-minutes-b4b8a60d3a71
-  certbot:
-    image: certbot/certbot
-    restart: always
-    volumes:
-      - ../data/certbot/conf:/etc/letsencrypt
-      - ../data/certbot/www:/var/www/certbot
-    logging:
-      driver: json-file
-      options:
-        max-size: "50m"
-        max-file: "6"
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+  caddy:
+      image: caddy:2-alpine
+      restart: always
+      ports:
+        - "80:80"
+        - "443:443"
+      volumes:
+        - ../data/caddy/Caddyfile:/etc/caddy/Caddyfile
+        - caddy_data:/data
+        - caddy_config:/config
+      env_file:
+        - .env
+      depends_on:
+        - api_server
+        - web_server
+      logging:
+        driver: json-file
+        options:
+          max-size: "50m"
+          max-file: "6"
 
 
 volumes:
@@ -228,3 +200,5 @@ volumes:
   model_cache_torch:
   model_cache_nltk:
   model_cache_huggingface:
+  caddy_data:
+  caddy_config:

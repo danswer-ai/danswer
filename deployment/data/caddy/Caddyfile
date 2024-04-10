@@ -1,0 +1,22 @@
+# Insert website URL here, for example:
+{$DOMAIN:localhost} {
+    # Handle /api requests
+    handle_path /api/* {
+        reverse_proxy api_server:8080 {
+            header_up Host {host}
+            transport http {
+                versions 1.1
+            }
+        }
+    }
+
+    # Handle all other requests
+    handle {
+        reverse_proxy web_server:3000 {
+            header_up Host {host}
+            transport http {
+                versions 1.1
+            }
+        }
+    }
+}
