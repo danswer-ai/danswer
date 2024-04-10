@@ -72,6 +72,7 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { UserDropdown } from "@/components/UserDropdown";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
+import { ChatPopup } from "./ChatPopup";
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
@@ -871,6 +872,10 @@ export function ChatPage({
       </div> */}
       <HealthCheckBanner />
       <InstantSSRAutoRefresh />
+
+      {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
+      Only used in the EE version of the app. */}
+      <ChatPopup />
 
       <div className="flex relative bg-background text-default overflow-x-hidden">
         <ChatSidebar

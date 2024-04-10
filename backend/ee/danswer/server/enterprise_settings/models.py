@@ -9,5 +9,10 @@ class EnterpriseSettings(BaseModel):
     application_name: str | None = None
     use_custom_logo: bool = False
 
+    # custom Chat components
+    custom_header_content: str | None = None
+    custom_popup_header: str | None = None
+    custom_popup_content: str | None = None
+
     def check_validity(self) -> None:
         return

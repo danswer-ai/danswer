@@ -41,13 +41,14 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { ResizableSection } from "@/components/resizable/ResizableSection";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { ChatIntro } from "./ChatIntro";
-import { HEADER_PADDING } from "@/lib/constants";
 import { computeAvailableFilters } from "@/lib/filters";
 import { useDocumentSelection } from "./useDocumentSelection";
 import { StarterMessage } from "./StarterMessage";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { Persona } from "../admin/assistants/interfaces";
+import { ChatBanner } from "./ChatBanner";
+import { HEADER_PADDING } from "@/lib/constants";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -594,6 +595,10 @@ export const Chat = ({
               className={`w-full h-full ${HEADER_PADDING} flex flex-col overflow-y-auto overflow-x-hidden relative`}
               ref={scrollableDivRef}
             >
+              {/* ChatBanner is a custom banner that displays a admin-specified message at 
+              the top of the chat page. Only used in the EE version of the app. */}
+              <ChatBanner />
+
               {livePersona && (
                 <div className="sticky top-0 left-80 z-10 w-full bg-background/90 flex">
                   <div className="ml-2 p-1 rounded mt-2 w-fit">

@@ -42,9 +42,11 @@ module.exports = {
         "background-emphasis": "#f6f7f8",
         "background-strong": "#eaecef",
         "background-search": "#ffffff",
+        "background-custom-header": "#f3f4f6",
 
         // text or icons
         link: "#3b82f6", // blue-500
+        "link-hover": "#1d4ed8", // blue-700
         subtle: "#6b7280", // gray-500
         default: "#4b5563", // gray-600
         emphasis: "#374151", // gray-700
