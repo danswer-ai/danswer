@@ -8,8 +8,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Danswer",
-  description: "Question answering for your documents",
+  title: "GrantGPT",
+  description: "AI powered research tool for EU Grants",
 };
 
 export const dynamic = "force-dynamic";
