@@ -55,24 +55,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ .Values.config.envConfigMapName }}
-          # env:
-          #   - name: INTERNAL_URL
-          #     value: {{ (list "http://" (include "danswer-stack.fullname" .) "-api:" .Values.api.service.port | join "") | quote }}
-          #   - name: VESPA_HOST
-          #     value: {{ (list (include "danswer-stack.fullname" .) "vespa" | join "-") }}
-          #   {{- if .Values.postgresql.enabled }}
-          #   - name: POSTGRES_HOST
-          #     value: {{ (list .Release.Name "postgresql" | join "-") }}
-          #   - name: POSTGRES_DB
-          #     value: {{ .Values.postgresql.auth.database }}
-          #   - name: POSTGRES_USER
-          #     value: {{ .Values.postgresql.auth.username }}
-          #   - name: POSTGRES_PASSWORD
-          #     valueFrom:
-          #       secretKeyRef:
-          #         name: {{ (list .Release.Name "postgresql" | join "-") }}
-          #         key: password
-          #   {{- end }}
           volumeMounts:
             - name: dynamic-storage
               mountPath: /home/storage
