@@ -6,6 +6,40 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+inferenceCapability:
+  service:
+    name: inference-model-server-service
+    type: ClusterIP
+    port: 9000
+  pvc:
+    name: inference-model-pvc
+    accessModes: 
+      - ReadWriteOnce
+    storage: 3Gi
+  deployment:
+    name: inference-model-server-deployment
+    replicas: 1
+    labels:
+      - key: app
+        value: inference-model-server
+    image:
+      repository: danswer/danswer-model-server
+      tag: latest
+      pullPolicy: IfNotPresent
+    command: ["uvicorn", "model_server.main:app", "--host", "0.0.0.0", "--port", "9000"]
+    port: 9000
+    volumeMounts:
+      - name: inference-model-storage
+        mountPath: /root/.cache
+    volumes:
+      - name: inference-model-storage
+        persistentVolumeClaim:
+          claimName: inference-model-pvc
+  podLabels:
+    - key: app
+      value: inference-model-server
+
+
 
 config:
   envConfigMapName: env-configmap

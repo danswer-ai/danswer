@@ -8,8 +8,8 @@ data:
   INTERNAL_URL: "{{ include "danswer-stack.fullname" . }}-api:80"
   POSTGRES_HOST: {{ .Release.Name }}-postgres
   VESPA_HOST: "document-index-service"
-  MODEL_SERVER_HOST: "inference-model-server-service"
-  INDEXING_MODEL_SERVER_HOST: "indexing-model-server-service"
+  MODEL_SERVER_HOST: "{{ include "danswer-stack.fullname" . }}-inference-model-service"
+  INDEXING_MODEL_SERVER_HOST: "{{ include "danswer-stack.fullname" . }}-indexing-model-service"
 {{- range $key, $value := .Values.configMap }}
   {{ $key }}: "{{ $value }}"
 {{- end }}
