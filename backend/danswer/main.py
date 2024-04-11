@@ -28,8 +28,6 @@ from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
-from danswer.configs.app_configs import MODEL_SERVER_HOST
-from danswer.configs.app_configs import MODEL_SERVER_PORT
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import SECRET
@@ -81,7 +79,9 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
-from shared_configs.nlp_model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
+from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
+from shared_configs.configs import MODEL_SERVER_HOST
+from shared_configs.configs import MODEL_SERVER_PORT
 
 
 logger = setup_logger()
