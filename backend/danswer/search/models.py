@@ -11,7 +11,7 @@ from danswer.configs.constants import DocumentSource
 from danswer.db.models import Persona
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import SearchType
-from shared_configs.nlp_model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
+from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
 
 
 MAX_METRICS_CONTENT = (
