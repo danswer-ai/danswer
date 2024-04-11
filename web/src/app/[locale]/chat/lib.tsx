@@ -57,6 +57,7 @@ export async function* sendMessage({
   modelVersion,
   temperature,
   systemPromptOverride,
+  useExistingUserMessage,
 }: {
   message: string;
   parentMessageId: number | null;
@@ -71,6 +72,9 @@ export async function* sendMessage({
   temperature?: number;
   // prompt overrides
   systemPromptOverride?: string;
+  // if specified, will use the existing latest user message
+  // and will ignore the specified `message`
+  useExistingUserMessage?: boolean;
 }) {
   const documentsAreSelected =
     selectedDocumentIds && selectedDocumentIds.length > 0;
@@ -99,13 +103,19 @@ export async function* sendMessage({
           }
         : null,
       query_override: queryOverride,
-      prompt_override: {
-        system_prompt: systemPromptOverride,
-      },
-      llm_override: {
-        temperature,
-        model_version: modelVersion,
-      },
+      prompt_override: systemPromptOverride
+        ? {
+            system_prompt: systemPromptOverride,
+          }
+        : null,
+      llm_override:
+        temperature || modelVersion
+          ? {
+              temperature,
+              model_version: modelVersion,
+            }
+          : null,
+      use_existing_user_message: useExistingUserMessage,
     }),
   });
   if (!sendMessageResponse.ok) {

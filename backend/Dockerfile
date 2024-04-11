@@ -40,7 +40,7 @@ RUN apt-get remove -y --allow-remove-essential perl-base xserver-common xvfb cma
 # Set up application files
 WORKDIR /app
 COPY ./danswer /app/danswer
-COPY ./shared_models /app/shared_models
+COPY ./shared_configs /app/shared_configs
 COPY ./alembic /app/alembic
 COPY ./alembic.ini /app/alembic.ini
 COPY supervisord.conf /usr/etc/supervisord.conf

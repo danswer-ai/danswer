@@ -7,13 +7,12 @@ from nltk.tokenize import word_tokenize  # type:ignore
 from sqlalchemy.orm import Session
 
 from danswer.chat.models import LlmDoc
-from danswer.configs.app_configs import MODEL_SERVER_HOST
-from danswer.configs.app_configs import MODEL_SERVER_PORT
 from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.indexing.models import InferenceChunk
+from danswer.search.enums import EmbedTextType
 from danswer.search.models import ChunkMetric
 from danswer.search.models import IndexFilters
 from danswer.search.models import MAX_METRICS_CONTENT
@@ -21,11 +20,12 @@ from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SearchQuery
 from danswer.search.models import SearchType
 from danswer.search.search_nlp_models import EmbeddingModel
-from danswer.search.search_nlp_models import EmbedTextType
 from danswer.secondary_llm_flows.query_expansion import multilingual_query_expansion
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 from danswer.utils.timing import log_function_time
+from shared_configs.configs import MODEL_SERVER_HOST
+from shared_configs.configs import MODEL_SERVER_PORT
 
 
 logger = setup_logger()

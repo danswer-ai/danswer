@@ -10,9 +10,9 @@ from pydantic import root_validator
 from danswer.chat.models import AnswerQuestionStreamReturn
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
+from danswer.llm.override_models import LLMOverride
+from danswer.llm.override_models import PromptOverride
 from danswer.llm.utils import get_default_llm_version
-from danswer.server.query_and_chat.models import LLMOverride
-from danswer.server.query_and_chat.models import PromptOverride
 
 if TYPE_CHECKING:
     from danswer.db.models import ChatMessage
