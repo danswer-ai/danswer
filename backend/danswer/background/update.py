@@ -15,9 +15,6 @@ from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.configs.app_configs import CLEANUP_INDEXING_JOBS_TIMEOUT
 from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
-from danswer.configs.app_configs import INDEXING_MODEL_SERVER_HOST
-from danswer.configs.app_configs import LOG_LEVEL
-from danswer.configs.app_configs import MODEL_SERVER_PORT
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
@@ -46,6 +43,9 @@ from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
 from danswer.search.search_nlp_models import warm_up_encoders
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
+from shared_configs.configs import LOG_LEVEL
+from shared_configs.configs import MODEL_SERVER_PORT
 
 logger = setup_logger()
 

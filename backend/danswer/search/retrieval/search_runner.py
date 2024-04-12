@@ -7,8 +7,6 @@ from nltk.tokenize import word_tokenize  # type:ignore
 from sqlalchemy.orm import Session
 
 from danswer.chat.models import LlmDoc
-from danswer.configs.app_configs import MODEL_SERVER_HOST
-from danswer.configs.app_configs import MODEL_SERVER_PORT
 from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
@@ -26,6 +24,8 @@ from danswer.secondary_llm_flows.query_expansion import multilingual_query_expan
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 from danswer.utils.timing import log_function_time
+from shared_configs.configs import MODEL_SERVER_HOST
+from shared_configs.configs import MODEL_SERVER_PORT
 
 
 logger = setup_logger()
