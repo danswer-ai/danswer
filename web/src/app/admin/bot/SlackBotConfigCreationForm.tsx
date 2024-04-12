@@ -166,7 +166,7 @@ export const SlackBotCreationForm = ({
                     <div>
                       The names of the Slack channels you want this
                       configuration to apply to. For example,
-                      &apos;#ask-danswer&apos;.
+                      &apos;#ask-grantgpt&apos;.
                       <br />
                       <br />
                       <i>NOTE</i>: you still need to add GrantGPT-Bot to the
