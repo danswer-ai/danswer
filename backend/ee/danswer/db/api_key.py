@@ -12,6 +12,7 @@ from ee.danswer.auth.api_key import build_displayable_api_key
 from ee.danswer.auth.api_key import generate_api_key
 from ee.danswer.auth.api_key import hash_api_key
 from ee.danswer.db.constants import DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN
+from ee.danswer.server.api_key.models import APIKeyArgs
 
 _DANSWER_API_KEY = "danswer_api_key"
 
@@ -28,6 +29,7 @@ def fetch_api_keys(db_session: Session) -> list[ApiKeyDescriptor]:
         ApiKeyDescriptor(
             api_key_id=api_key.id,
             api_key_display=api_key.api_key_display,
+            api_key_name=api_key.name,
             user_id=api_key.user_id,
         )
         for api_key in api_keys
@@ -44,7 +46,9 @@ def fetch_user_for_api_key(hashed_api_key: str, db_session: Session) -> User | N
     return db_session.scalar(select(User).where(User.id == api_key.user_id))  # type: ignore
 
 
-def insert_api_key(db_session: Session, user_id: uuid.UUID | None) -> ApiKeyDescriptor:
+def insert_api_key(
+    db_session: Session, api_key_args: APIKeyArgs, user_id: uuid.UUID | None
+) -> ApiKeyDescriptor:
     std_password_helper = PasswordHelper()
     api_key = generate_api_key()
     api_key_user_id = uuid.uuid4()
@@ -62,6 +66,7 @@ def insert_api_key(db_session: Session, user_id: uuid.UUID | None) -> ApiKeyDesc
     db_session.add(api_key_user_row)
 
     api_key_row = ApiKey(
+        name=api_key_args.name,
         hashed_api_key=hash_api_key(api_key),
         api_key_display=build_displayable_api_key(api_key),
         user_id=api_key_user_id,
@@ -74,7 +79,26 @@ def insert_api_key(db_session: Session, user_id: uuid.UUID | None) -> ApiKeyDesc
         api_key_id=api_key_row.id,
         api_key_display=api_key_row.api_key_display,
         api_key=api_key,
+        api_key_name=api_key_args.name,
         user_id=api_key_user_id,
+    )
+
+
+def update_api_key(
+    db_session: Session, api_key_id: int, api_key_args: APIKeyArgs
+) -> ApiKeyDescriptor:
+    existing_api_key = db_session.scalar(select(ApiKey).where(ApiKey.id == api_key_id))
+    if existing_api_key is None:
+        raise ValueError(f"API key with id {api_key_id} does not exist")
+
+    existing_api_key.name = api_key_args.name
+    db_session.commit()
+
+    return ApiKeyDescriptor(
+        api_key_id=existing_api_key.id,
+        api_key_display=existing_api_key.api_key_display,
+        api_key_name=api_key_args.name,
+        user_id=existing_api_key.user_id,
     )
 
 
@@ -93,6 +117,7 @@ def regenerate_api_key(db_session: Session, api_key_id: int) -> ApiKeyDescriptor
         api_key_id=existing_api_key.id,
         api_key_display=existing_api_key.api_key_display,
         api_key=new_api_key,
+        api_key_name=existing_api_key.name,
         user_id=existing_api_key.user_id,
     )
 
