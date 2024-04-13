@@ -87,6 +87,7 @@ class ApiKey(Base):
     __tablename__ = "api_key"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str | None] = mapped_column(String, nullable=True)
     hashed_api_key: Mapped[str] = mapped_column(String, unique=True)
     api_key_display: Mapped[str] = mapped_column(String, unique=True)
     # the ID of the "user" who represents the access credentials for the API key
