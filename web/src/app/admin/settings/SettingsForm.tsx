@@ -6,7 +6,7 @@ import { Settings } from "./interfaces";
 import { useRouter } from "next/navigation";
 import { DefaultDropdown, Option } from "@/components/Dropdown";
 import { useContext } from "react";
-import { SettingsContext } from "@/components/settings/SettingsProviderClientSideHelper";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 function Checkbox({
   label,

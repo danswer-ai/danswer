@@ -27,8 +27,8 @@ const nextConfig = {
             },
             // analytics / audit log pages
             {
-              source: "/admin/performance/analytics",
-              destination: "/ee/admin/performance/analytics",
+              source: "/admin/performance/usage",
+              destination: "/ee/admin/performance/usage",
             },
             {
               source: "/admin/performance/query-history",
@@ -42,6 +42,11 @@ const nextConfig = {
             {
               source: "/admin/whitelabeling",
               destination: "/ee/admin/whitelabeling",
+            },
+            // custom analytics/tracking
+            {
+              source: "/admin/performance/custom-analytics",
+              destination: "/ee/admin/performance/custom-analytics",
             },
           ]
         : [];

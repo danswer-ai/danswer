@@ -1,7 +1,7 @@
 "use client";
 
 import { useContext } from "react";
-import { SettingsContext } from "./settings/SettingsProviderClientSideHelper";
+import { SettingsContext } from "./settings/SettingsProvider";
 import Image from "next/image";
 
 export function Logo({

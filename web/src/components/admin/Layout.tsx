@@ -21,7 +21,16 @@ import {
 } from "@/lib/userSS";
 import { EE_ENABLED } from "@/lib/constants";
 import { redirect } from "next/navigation";
-import { FiCpu, FiImage, FiPackage, FiSettings, FiSlack, FiTool } from "react-icons/fi";
+import {
+  FiActivity,
+  FiBarChart2,
+  FiCpu,
+  FiImage,
+  FiPackage,
+  FiSettings,
+  FiSlack,
+  FiTool,
+} from "react-icons/fi";
 
 export async function Layout({ children }: { children: React.ReactNode }) {
   const tasks = [getAuthTypeMetadataSS(), getCurrentUserSS()];
@@ -216,11 +225,11 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                         {
                           name: (
                             <div className="flex">
-                              <BarChartIcon size={18} />
-                              <div className="ml-1">Analytics</div>
+                              <FiActivity size={18} />
+                              <div className="ml-1">Usage Statistics</div>
                             </div>
                           ),
-                          link: "/admin/performance/analytics",
+                          link: "/admin/performance/usage",
                         },
                         {
                           name: (
@@ -230,6 +239,15 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                             </div>
                           ),
                           link: "/admin/performance/query-history",
+                        },
+                        {
+                          name: (
+                            <div className="flex">
+                              <FiBarChart2 size={18} />
+                              <div className="ml-1">Custom Analytics</div>
+                            </div>
+                          ),
+                          link: "/admin/performance/custom-analytics",
                         },
                       ],
                     },

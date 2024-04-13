@@ -1,7 +1,7 @@
 "use client";
 
 import ReactMarkdown from "react-markdown";
-import { SettingsContext } from "@/components/settings/SettingsProviderClientSideHelper";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { useContext } from "react";
 import remarkGfm from "remark-gfm";
 
@@ -15,11 +15,13 @@ export function ChatBanner() {
     <div
       className={`
       z-[39] 
-      w-full 
       h-[30px]
       bg-background-custom-header
+      shadow-sm
+      m-2
+      rounded
       border-border
-      border-b 
+      border
       flex`}
     >
       <div className="mx-auto text-emphasis text-sm flex flex-col">

@@ -1,7 +1,7 @@
 "use client";
 
 import { Bold, Text, Card, Title, Divider } from "@tremor/react";
-import { ChatSessionSnapshot, MessageSnapshot } from "../../analytics/types";
+import { ChatSessionSnapshot, MessageSnapshot } from "../../usage/types";
 import { FiBook } from "react-icons/fi";
 import { timestampToReadableDate } from "@/lib/dateUtils";
 import { BackButton } from "@/components/BackButton";

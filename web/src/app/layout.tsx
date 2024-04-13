@@ -1,7 +1,8 @@
-import { fetchSettingsSS } from "@/components/settings/lib";
 import "./globals.css";
 
 import { Inter } from "next/font/google";
+import { fetchSettingsSS } from "@/components/settings/lib";
+import { CUSTOM_ANALYTICS_ENABLED } from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
 
 const inter = Inter({
@@ -25,6 +26,16 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
+      {CUSTOM_ANALYTICS_ENABLED && combinedSettings.customAnalyticsScript && (
+        <head>
+          <script
+            type="text/javascript"
+            dangerouslySetInnerHTML={{
+              __html: combinedSettings.customAnalyticsScript,
+            }}
+          />
+        </head>
+      )}
       <body
         className={`${inter.variable} font-sans text-default bg-background ${
           // TODO: remove this once proper dark mode exists

@@ -4,7 +4,7 @@ import {
   ChatSessionSnapshot,
   QueryAnalytics,
   UserAnalytics,
-} from "./analytics/types";
+} from "./usage/types";
 import { useState } from "react";
 import { buildApiPath } from "@/lib/urlBuilder";
 import { Feedback } from "@/lib/types";

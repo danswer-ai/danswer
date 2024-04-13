@@ -9,8 +9,11 @@ from danswer.auth.users import current_admin_user
 from danswer.db.engine import get_session
 from danswer.db.file_store import get_default_file_store
 from danswer.db.models import User
+from ee.danswer.server.enterprise_settings.models import AnalyticsScriptUpload
 from ee.danswer.server.enterprise_settings.models import EnterpriseSettings
+from ee.danswer.server.enterprise_settings.store import load_analytics_script
 from ee.danswer.server.enterprise_settings.store import load_settings
+from ee.danswer.server.enterprise_settings.store import store_analytics_script
 from ee.danswer.server.enterprise_settings.store import store_settings
 
 
@@ -65,3 +68,18 @@ def fetch_logo(db_session: Session = Depends(get_session)) -> Response:
     # NOTE: specifying "image/jpeg" here, but it still works for pngs
     # TODO: do this properly
     return Response(content=file_io.read(), media_type="image/jpeg")
+
+
+@admin_router.put("/custom-analytics-script")
+def upload_custom_analytics_script(
+    script_upload: AnalyticsScriptUpload, _: User | None = Depends(current_admin_user)
+) -> None:
+    try:
+        store_analytics_script(script_upload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@basic_router.get("/custom-analytics-script")
+def fetch_custom_analytics_script() -> str | None:
+    return load_analytics_script()

@@ -13,7 +13,7 @@ import {
 import { Divider } from "@tremor/react";
 import { Select, SelectItem } from "@tremor/react";
 import { ThreeDotsLoader } from "@/components/Loading";
-import { ChatSessionSnapshot } from "../analytics/types";
+import { ChatSessionSnapshot } from "../usage/types";
 import { timestampToReadableDate } from "@/lib/dateUtils";
 import { FiFrown, FiMinus, FiSmile } from "react-icons/fi";
 import { useState } from "react";
