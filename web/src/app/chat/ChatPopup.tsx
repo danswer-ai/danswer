@@ -1,7 +1,7 @@
 "use client";
 
 import { Modal } from "@/components/Modal";
-import { SettingsContext } from "@/components/settings/SettingsProviderClientSideHelper";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { Button } from "@tremor/react";
 import { useContext, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";

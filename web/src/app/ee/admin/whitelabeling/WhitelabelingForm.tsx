@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { EnterpriseSettings } from "@/app/admin/settings/interfaces";
 import { useContext, useState } from "react";
-import { SettingsContext } from "@/components/settings/SettingsProviderClientSideHelper";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { Form, Formik } from "formik";
 import * as Yup from "yup";
 import {

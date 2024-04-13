@@ -16,3 +16,8 @@ class EnterpriseSettings(BaseModel):
 
     def check_validity(self) -> None:
         return
+
+
+class AnalyticsScriptUpload(BaseModel):
+    script: str
+    secret_key: str

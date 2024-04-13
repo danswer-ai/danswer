@@ -6,6 +6,7 @@ import { QueryPerformanceChart } from "./QueryPerformanceChart";
 import { BarChartIcon } from "@/components/icons/icons";
 import { useTimeRange } from "../lib";
 import { AdminPageTitle } from "@/components/admin/Title";
+import { FiActivity } from "react-icons/fi";
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useTimeRange();
@@ -13,7 +14,10 @@ export default function AnalyticsPage() {
   return (
     <main className="pt-4 mx-auto container">
       {/* TODO: remove this `dark` once we have a mode selector */}
-      <AdminPageTitle title="Analytics" icon={<BarChartIcon size={32} />} />
+      <AdminPageTitle
+        title="Usage Statistics"
+        icon={<FiActivity size={32} />}
+      />
 
       <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
 
