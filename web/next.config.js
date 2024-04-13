@@ -10,7 +10,7 @@ const nextConfig = {
   swcMinify: true,
   rewrites: async () => {
     const eeRedirects =
-      process.env.NEXT_PUBLIC_EE_ENABLED === "true"
+      process.env.NEXT_PUBLIC_ENABLE_PAID_EE_FEATURES === "true"
         ? [
             // user group pages
             {

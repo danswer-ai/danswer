@@ -37,4 +37,4 @@ spec:
         - configMapRef:
             name: env-configmap
         args:
-          - "NEXT_PUBLIC_EE_ENABLED=true"
+          - "NEXT_PUBLIC_ENABLE_PAID_EE_FEATURES=true"
