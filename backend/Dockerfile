@@ -1,9 +1,11 @@
 FROM python:3.11.7-slim-bookworm
 
 LABEL com.danswer.maintainer="founders@danswer.ai"
-LABEL com.danswer.description="This image is for the backend of Danswer. It is MIT Licensed and \
-free for all to use. You can find it at https://hub.docker.com/r/danswer/danswer-backend. For \
-more details, visit https://github.com/danswer-ai/danswer."
+LABEL com.danswer.description="This image is the Enterprise Edition (Paid Edition) backend of \
+Danswer. If you do not have a contract or agreement with DanswerAI, you are not permitted to use \
+this container outside of personal development or testing purposes. Please reach out to \
+founders@danswer.ai for more information. You can access the MIT version of Danswer at \
+https://github.com/danswer-ai/danswer"
 
 # Default DANSWER_VERSION, typically overriden during builds by GitHub Actions.
 ARG DANSWER_VERSION=0.3-dev

@@ -1,10 +1,11 @@
 FROM node:20-alpine AS base
 
 LABEL com.danswer.maintainer="founders@danswer.ai"
-LABEL com.danswer.description="This image is for the frontend/webserver of Danswer. It is MIT \
-Licensed and free for all to use. You can find it at \
-https://hub.docker.com/r/danswer/danswer-web-server. For more details, visit \
-https://github.com/danswer-ai/danswer."
+LABEL com.danswer.description="This image is the Enterprise Edition (Paid Edition) \
+frontend/webserver of Danswer. If you do not have a contract or agreement with DanswerAI, you are \
+not permitted to use this container outside of personal development or testing purposes. Please \
+reach out to founders@danswer.ai for more information. You can access the MIT version of Danswer \
+at https://github.com/danswer-ai/danswer"
 
 # Default DANSWER_VERSION, typically overriden during builds by GitHub Actions.
 ARG DANSWER_VERSION=0.3-dev
@@ -56,8 +57,8 @@ ENV NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS=${NEXT_PUBLIC_NEGATIVE_PRED
 ARG NEXT_PUBLIC_THEME
 ENV NEXT_PUBLIC_THEME=${NEXT_PUBLIC_THEME}
 
-ARG NEXT_PUBLIC_EE_ENABLED
-ENV NEXT_PUBLIC_EE_ENABLED=${NEXT_PUBLIC_EE_ENABLED}
+ARG NEXT_PUBLIC_ENABLE_PAID_EE_FEATURES
+ENV NEXT_PUBLIC_ENABLE_PAID_EE_FEATURES=${NEXT_PUBLIC_ENABLE_PAID_EE_FEATURES}
 
 ARG NEXT_PUBLIC_DISABLE_LOGOUT
 ENV NEXT_PUBLIC_DISABLE_LOGOUT=${NEXT_PUBLIC_DISABLE_LOGOUT}
@@ -109,8 +110,8 @@ ENV NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS=${NEXT_PUBLIC_NEGATIVE_PRED
 ARG NEXT_PUBLIC_THEME
 ENV NEXT_PUBLIC_THEME=${NEXT_PUBLIC_THEME}
 
-ARG NEXT_PUBLIC_EE_ENABLED
-ENV NEXT_PUBLIC_EE_ENABLED=${NEXT_PUBLIC_EE_ENABLED}
+ARG NEXT_PUBLIC_ENABLE_PAID_EE_FEATURES
+ENV NEXT_PUBLIC_ENABLE_PAID_EE_FEATURES=${NEXT_PUBLIC_ENABLE_PAID_EE_FEATURES}
 
 ARG NEXT_PUBLIC_DISABLE_LOGOUT
 ENV NEXT_PUBLIC_DISABLE_LOGOUT=${NEXT_PUBLIC_DISABLE_LOGOUT}
