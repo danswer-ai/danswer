@@ -23,8 +23,8 @@ function Main() {
     <div>
       <Text className="mb-8">
         This allows you to bring your own analytics tool to Danswer! Copy the
-        Web snippet from your analytics provider into the box below, and we'll
-        start sending usage events.
+        Web snippet from your analytics provider into the box below, and
+        we&apos;ll start sending usage events.
       </Text>
 
       <CustomAnalyticsUpdateForm />
