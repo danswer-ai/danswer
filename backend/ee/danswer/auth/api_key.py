@@ -18,6 +18,7 @@ class ApiKeyDescriptor(BaseModel):
     api_key_id: int
     api_key_display: str
     api_key: str | None = None  # only present on initial creation
+    api_key_name: str | None = None
 
     user_id: uuid.UUID
 

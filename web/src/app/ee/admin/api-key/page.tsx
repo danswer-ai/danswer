@@ -21,16 +21,11 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { Table } from "@tremor/react";
 import { DeleteButton } from "@/components/DeleteButton";
-import { FiCopy, FiRefreshCw, FiX } from "react-icons/fi";
+import { FiCopy, FiEdit, FiRefreshCw, FiX } from "react-icons/fi";
 import { Modal } from "@/components/Modal";
 import { Spinner } from "@/components/Spinner";
-
-interface APIKey {
-  api_key_id: number;
-  api_key_display: string;
-  api_key: string | null; // only present on initial creation
-  user_id: string;
-}
+import { deleteApiKey, regenerateApiKey } from "./lib";
+import { DanswerApiKeyForm } from "./DanswerApiKeyForm";
 
 const API_KEY_TEXT = `
 API Keys allow you to access Danswer APIs programmatically. Click the button below to generate a new API Key.
@@ -97,6 +92,13 @@ function Main() {
 
   const [fullApiKey, setFullApiKey] = useState<string | null>(null);
   const [keyIsGenerating, setKeyIsGenerating] = useState(false);
+  const [showCreateUpdateForm, setShowCreateUpdateForm] = useState(false);
+  const [selectedApiKey, setSelectedApiKey] = useState<APIKey | undefined>();
+
+  const handleEdit = (apiKey: APIKey) => {
+    setSelectedApiKey(apiKey);
+    setShowCreateUpdateForm(true);
+  };
 
   if (isLoading) {
     return <ThreeDotsLoader />;
@@ -116,24 +118,7 @@ function Main() {
       color="green"
       size="xs"
       className="mt-3"
-      onClick={async () => {
-        setKeyIsGenerating(true);
-        const response = await fetch("/api/admin/api-key", {
-          method: "POST",
-        });
-        setKeyIsGenerating(false);
-        if (!response.ok) {
-          const errorMsg = await response.text();
-          setPopup({
-            type: "error",
-            message: `Failed to create API Key: ${errorMsg}`,
-          });
-          return;
-        }
-        const newKey = (await response.json()) as APIKey;
-        setFullApiKey(newKey.api_key);
-        mutate("/api/admin/api-key");
-      }}
+      onClick={() => setShowCreateUpdateForm(true)}
     >
       Create API Key
     </Button>
@@ -145,12 +130,29 @@ function Main() {
         {popup}
         <Text>{API_KEY_TEXT}</Text>
         {newApiKeyButton}
+
+        {showCreateUpdateForm && (
+          <DanswerApiKeyForm
+            onCreateApiKey={(apiKey) => {
+              setFullApiKey(apiKey.api_key);
+            }}
+            onClose={() => {
+              setShowCreateUpdateForm(false);
+              setSelectedApiKey(undefined);
+              mutate("/api/admin/api-key");
+            }}
+            setPopup={setPopup}
+            apiKey={selectedApiKey}
+          />
+        )}
       </div>
     );
   }
 
   return (
     <div>
+      {popup}
+
       {fullApiKey && (
         <NewApiKeyModal
           apiKey={fullApiKey}
@@ -169,6 +171,7 @@ function Main() {
       <Table className="overflow-visible">
         <TableHead>
           <TableRow>
+            <TableHeaderCell>Name</TableHeaderCell>
             <TableHeaderCell>API Key</TableHeaderCell>
             <TableHeaderCell>Regenerate</TableHeaderCell>
             <TableHeaderCell>Delete</TableHeaderCell>
@@ -177,6 +180,24 @@ function Main() {
         <TableBody>
           {apiKeys.map((apiKey) => (
             <TableRow key={apiKey.api_key_id}>
+              <TableCell>
+                <div
+                  className={`
+                  my-auto 
+                  flex 
+                  mb-1 
+                  w-fit 
+                  hover:bg-hover cursor-pointer
+                  p-2 
+                  rounded-lg
+                  border-border
+                  text-sm`}
+                  onClick={() => handleEdit(apiKey)}
+                >
+                  <FiEdit className="my-auto mr-2" />
+                  {apiKey.api_key_name || <i>null</i>}
+                </div>
+              </TableCell>
               <TableCell className="max-w-64">
                 {apiKey.api_key_display}
               </TableCell>
@@ -194,12 +215,7 @@ function Main() {
                   text-sm`}
                   onClick={async () => {
                     setKeyIsGenerating(true);
-                    const response = await fetch(
-                      `/api/admin/api-key/${apiKey.api_key_id}`,
-                      {
-                        method: "PATCH",
-                      }
-                    );
+                    const response = await regenerateApiKey(apiKey);
                     setKeyIsGenerating(false);
                     if (!response.ok) {
                       const errorMsg = await response.text();
@@ -221,12 +237,7 @@ function Main() {
               <TableCell>
                 <DeleteButton
                   onClick={async () => {
-                    const response = await fetch(
-                      `/api/admin/api-key/${apiKey.api_key_id}`,
-                      {
-                        method: "DELETE",
-                      }
-                    );
+                    const response = await deleteApiKey(apiKey.api_key_id);
                     if (!response.ok) {
                       const errorMsg = await response.text();
                       setPopup({
@@ -243,6 +254,21 @@ function Main() {
           ))}
         </TableBody>
       </Table>
+
+      {showCreateUpdateForm && (
+        <DanswerApiKeyForm
+          onCreateApiKey={(apiKey) => {
+            setFullApiKey(apiKey.api_key);
+          }}
+          onClose={() => {
+            setShowCreateUpdateForm(false);
+            setSelectedApiKey(undefined);
+            mutate("/api/admin/api-key");
+          }}
+          setPopup={setPopup}
+          apiKey={selectedApiKey}
+        />
+      )}
     </div>
   );
 }
