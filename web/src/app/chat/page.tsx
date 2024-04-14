@@ -20,7 +20,7 @@ import {
   WelcomeModal,
   hasCompletedWelcomeFlowSS,
 } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
-import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
+import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import { cookies } from "next/headers";
 import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/contants";
 import { personaComparator } from "../admin/assistants/lib";
@@ -169,9 +169,9 @@ export default async function Page({
     <>
       <InstantSSRAutoRefresh />
 
-      {shouldShowWelcomeModal && <WelcomeModal />}
+      {shouldShowWelcomeModal && <WelcomeModal user={user} />}
       {!shouldShowWelcomeModal && !shouldDisplaySourcesIncompleteModal && (
-        <ApiKeyModal />
+        <ApiKeyModal user={user} />
       )}
       {shouldDisplaySourcesIncompleteModal && (
         <NoCompleteSourcesModal ccPairs={ccPairs} />

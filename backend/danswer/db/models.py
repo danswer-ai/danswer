@@ -8,8 +8,8 @@ from typing import Optional
 from typing import TypedDict
 from uuid import UUID
 
-from fastapi_users.db import SQLAlchemyBaseOAuthAccountTableUUID
-from fastapi_users.db import SQLAlchemyBaseUserTableUUID
+from fastapi_users_db_sqlalchemy import SQLAlchemyBaseOAuthAccountTableUUID
+from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
 from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyBaseAccessTokenTableUUID
 from sqlalchemy import Boolean
 from sqlalchemy import DateTime
@@ -695,6 +695,33 @@ Structures, Organizational, Configurations Tables
 """
 
 
+class LLMProvider(Base):
+    __tablename__ = "llm_provider"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    api_key: Mapped[str | None] = mapped_column(String, nullable=True)
+    api_base: Mapped[str | None] = mapped_column(String, nullable=True)
+    api_version: Mapped[str | None] = mapped_column(String, nullable=True)
+    # custom configs that should be passed to the LLM provider at inference time
+    # (e.g. `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, etc. for bedrock)
+    custom_config: Mapped[dict[str, str] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
+    )
+    default_model_name: Mapped[str] = mapped_column(String)
+    fast_default_model_name: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    # The LLMs that are available for this provider. Only required if not a default provider.
+    # If a default provider, then the LLM options are pulled from the `options.py` file.
+    # If needed, can be pulled out as a separate table in the future.
+    model_names: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
+
+    # should only be set for a single provider
+    is_default_provider: Mapped[bool | None] = mapped_column(Boolean, unique=True)
+
+
 class DocumentSet(Base):
     __tablename__ = "document_set"
 
@@ -792,6 +819,9 @@ class Persona(Base):
     # globablly via env variables. For flexibility, validity is not currently enforced
     # NOTE: only is applied on the actual response generation - is not used for things like
     # auto-detected time filters, relevance filters, etc.
+    llm_model_provider_override: Mapped[str | None] = mapped_column(
+        String, nullable=True
+    )
     llm_model_version_override: Mapped[str | None] = mapped_column(
         String, nullable=True
     )

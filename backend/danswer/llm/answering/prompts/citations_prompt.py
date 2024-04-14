@@ -11,9 +11,10 @@ from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.model_configs import GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS
 from danswer.db.chat import get_default_prompt
 from danswer.db.models import Persona
-from danswer.llm.answering.models import LLMConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
+from danswer.llm.factory import get_llm_for_persona
+from danswer.llm.interfaces import LLMConfig
 from danswer.llm.utils import check_number_of_tokens
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import get_max_input_tokens
@@ -131,7 +132,9 @@ def compute_max_document_tokens(
     max_input_tokens = (
         max_llm_token_override
         if max_llm_token_override
-        else get_max_input_tokens(model_name=llm_config.model_version)
+        else get_max_input_tokens(
+            model_name=llm_config.model_name, model_provider=llm_config.model_provider
+        )
     )
     prompt_tokens = get_prompt_tokens(prompt_config)
 
@@ -152,7 +155,7 @@ def compute_max_document_tokens_for_persona(
     prompt = persona.prompts[0] if persona.prompts else get_default_prompt()
     return compute_max_document_tokens(
         prompt_config=PromptConfig.from_model(prompt),
-        llm_config=LLMConfig.from_persona(persona),
+        llm_config=get_llm_for_persona(persona).config,
         actual_user_input=actual_user_input,
         max_llm_token_override=max_llm_token_override,
     )
@@ -162,7 +165,7 @@ def compute_max_llm_input_tokens(llm_config: LLMConfig) -> int:
     """Maximum tokens allows in the input to the LLM (of any type)."""
 
     input_tokens = get_max_input_tokens(
-        model_name=llm_config.model_version, model_provider=llm_config.model_provider
+        model_name=llm_config.model_name, model_provider=llm_config.model_provider
     )
     return input_tokens - _MISC_BUFFER
 
