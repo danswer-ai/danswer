@@ -498,6 +498,7 @@ def upsert_persona(
     recency_bias: RecencyBiasSetting,
     prompts: list[Prompt] | None,
     document_sets: list[DBDocumentSet] | None,
+    llm_model_provider_override: str | None,
     llm_model_version_override: str | None,
     starter_messages: list[StarterMessage] | None,
     is_public: bool,
@@ -524,6 +525,7 @@ def upsert_persona(
         persona.llm_filter_extraction = llm_filter_extraction
         persona.recency_bias = recency_bias
         persona.default_persona = default_persona
+        persona.llm_model_provider_override = llm_model_provider_override
         persona.llm_model_version_override = llm_model_version_override
         persona.starter_messages = starter_messages
         persona.deleted = False  # Un-delete if previously deleted
@@ -553,6 +555,7 @@ def upsert_persona(
             default_persona=default_persona,
             prompts=prompts or [],
             document_sets=document_sets or [],
+            llm_model_provider_override=llm_model_provider_override,
             llm_model_version_override=llm_model_version_override,
             starter_messages=starter_messages,
         )

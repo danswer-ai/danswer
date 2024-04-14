@@ -12,7 +12,6 @@ from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.llm.answering.doc_pruning import prune_documents
 from danswer.llm.answering.models import AnswerStyleConfig
-from danswer.llm.answering.models import LLMConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.models import StreamProcessor
@@ -26,7 +25,7 @@ from danswer.llm.answering.stream_processing.citation_processing import (
 from danswer.llm.answering.stream_processing.quotes_processing import (
     build_quotes_processor,
 )
-from danswer.llm.factory import get_default_llm
+from danswer.llm.interfaces import LLM
 from danswer.llm.utils import get_default_llm_tokenizer
 
 
@@ -53,7 +52,7 @@ class Answer:
         question: str,
         docs: list[LlmDoc],
         answer_style_config: AnswerStyleConfig,
-        llm_config: LLMConfig,
+        llm: LLM,
         prompt_config: PromptConfig,
         # must be the same length as `docs`. If None, all docs are considered "relevant"
         doc_relevance_list: list[bool] | None = None,
@@ -74,15 +73,9 @@ class Answer:
         self.single_message_history = single_message_history
 
         self.answer_style_config = answer_style_config
-        self.llm_config = llm_config
         self.prompt_config = prompt_config
 
-        self.llm = get_default_llm(
-            gen_ai_model_provider=self.llm_config.model_provider,
-            gen_ai_model_version_override=self.llm_config.model_version,
-            timeout=timeout,
-            temperature=self.llm_config.temperature,
-        )
+        self.llm = llm
         self.llm_tokenizer = get_default_llm_tokenizer()
 
         self._final_prompt: list[BaseMessage] | None = None
@@ -101,7 +94,7 @@ class Answer:
             docs=self.docs,
             doc_relevance_list=self.doc_relevance_list,
             prompt_config=self.prompt_config,
-            llm_config=self.llm_config,
+            llm_config=self.llm.config,
             question=self.question,
             document_pruning_config=self.answer_style_config.document_pruning_config,
         )
@@ -116,7 +109,7 @@ class Answer:
             self._final_prompt = build_citations_prompt(
                 question=self.question,
                 message_history=self.message_history,
-                llm_config=self.llm_config,
+                llm_config=self.llm.config,
                 prompt_config=self.prompt_config,
                 context_docs=self.pruned_docs,
                 all_doc_useful=self.answer_style_config.citation_config.all_docs_useful,

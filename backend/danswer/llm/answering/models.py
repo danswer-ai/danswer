@@ -9,15 +9,11 @@ from pydantic import root_validator
 
 from danswer.chat.models import AnswerQuestionStreamReturn
 from danswer.configs.constants import MessageType
-from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
-from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
-from danswer.llm.utils import get_default_llm_version
 
 if TYPE_CHECKING:
     from danswer.db.models import ChatMessage
     from danswer.db.models import Prompt
-    from danswer.db.models import Persona
 
 
 StreamProcessor = Callable[[Iterator[str]], AnswerQuestionStreamReturn]
@@ -84,36 +80,6 @@ class AnswerStyleConfig(BaseModel):
             )
 
         return values
-
-
-class LLMConfig(BaseModel):
-    """Final representation of the LLM configuration passed into
-    the `Answer` object."""
-
-    model_provider: str
-    model_version: str
-    temperature: float
-
-    @classmethod
-    def from_persona(
-        cls, persona: "Persona", llm_override: LLMOverride | None = None
-    ) -> "LLMConfig":
-        model_provider_override = llm_override.model_provider if llm_override else None
-        model_version_override = llm_override.model_version if llm_override else None
-        temperature_override = llm_override.temperature if llm_override else None
-
-        return cls(
-            model_provider=model_provider_override or GEN_AI_MODEL_PROVIDER,
-            model_version=(
-                model_version_override
-                or persona.llm_model_version_override
-                or get_default_llm_version()[0]
-            ),
-            temperature=temperature_override or 0.0,
-        )
-
-    class Config:
-        frozen = True
 
 
 class PromptConfig(BaseModel):

@@ -34,11 +34,10 @@ from danswer.llm.answering.answer import Answer
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import CitationConfig
 from danswer.llm.answering.models import DocumentPruningConfig
-from danswer.llm.answering.models import LLMConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.factory import get_default_llm
+from danswer.llm.factory import get_llm_for_persona
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import SearchRequest
@@ -135,8 +134,8 @@ def stream_chat_message_objects(
             )
 
         try:
-            llm = get_default_llm(
-                gen_ai_model_version_override=persona.llm_model_version_override
+            llm = get_llm_for_persona(
+                persona, new_msg_req.llm_override or chat_session.llm_override
             )
         except GenAIDisabledException:
             llm = None
@@ -373,9 +372,11 @@ def stream_chat_message_objects(
                     new_msg_req.prompt_override or chat_session.prompt_override
                 ),
             ),
-            llm_config=LLMConfig.from_persona(
-                persona,
-                llm_override=(new_msg_req.llm_override or chat_session.llm_override),
+            llm=(
+                llm
+                or get_llm_for_persona(
+                    persona, new_msg_req.llm_override or chat_session.llm_override
+                )
             ),
             doc_relevance_list=llm_relevance_list,
             message_history=[

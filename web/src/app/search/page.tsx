@@ -7,7 +7,7 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
+import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import { fetchSS } from "@/lib/utilsSS";
 import { CCPairBasicInfo, DocumentSet, Tag, User } from "@/lib/types";
 import { cookies } from "next/headers";
@@ -147,10 +147,10 @@ export default async function Home() {
       <div className="m-3">
         <HealthCheckBanner />
       </div>
-      {shouldShowWelcomeModal && <WelcomeModal />}
+      {shouldShowWelcomeModal && <WelcomeModal user={user} />}
       {!shouldShowWelcomeModal &&
         !shouldDisplayNoSourcesModal &&
-        !shouldDisplaySourcesIncompleteModal && <ApiKeyModal />}
+        !shouldDisplaySourcesIncompleteModal && <ApiKeyModal user={user} />}
       {shouldDisplayNoSourcesModal && <NoSourcesModal />}
       {shouldDisplaySourcesIncompleteModal && (
         <NoCompleteSourcesModal ccPairs={ccPairs} />
