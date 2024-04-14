@@ -6,7 +6,7 @@ from typing import cast
 from sqlalchemy.orm import Session
 
 from danswer.chat.chat_utils import create_chat_chain
-from danswer.chat.chat_utils import llm_doc_from_inference_chunk
+from danswer.chat.chat_utils import llm_doc_from_inference_section
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
@@ -44,7 +44,7 @@ from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import SearchRequest
 from danswer.search.pipeline import SearchPipeline
 from danswer.search.retrieval.search_runner import inference_documents_from_ids
-from danswer.search.utils import chunks_to_search_docs
+from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.secondary_llm_flows.choose_search import check_if_need_search
 from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
 from danswer.server.query_and_chat.models import ChatMessageDetail
@@ -263,13 +263,16 @@ def stream_chat_message_objects(
                     persona=persona,
                     offset=retrieval_options.offset if retrieval_options else None,
                     limit=retrieval_options.limit if retrieval_options else None,
+                    chunks_above=new_msg_req.chunks_above,
+                    chunks_below=new_msg_req.chunks_below,
+                    full_doc=new_msg_req.full_doc,
                 ),
                 user=user,
                 db_session=db_session,
             )
 
-            top_chunks = search_pipeline.reranked_docs
-            top_docs = chunks_to_search_docs(top_chunks)
+            top_sections = search_pipeline.reranked_sections
+            top_docs = chunks_or_sections_to_search_docs(top_sections)
 
             reference_db_search_docs = [
                 create_db_search_doc(server_search_doc=top_doc, db_session=db_session)
@@ -294,7 +297,7 @@ def stream_chat_message_objects(
 
             # Yield the list of LLM selected chunks for showing the LLM selected icons in the UI
             llm_relevance_filtering_response = LLMRelevanceFilterResponse(
-                relevant_chunk_indices=search_pipeline.relevant_chunk_indicies
+                relevant_chunk_indices=search_pipeline.relevant_chunk_indices
             )
             yield llm_relevance_filtering_response
 
@@ -305,9 +308,12 @@ def stream_chat_message_objects(
                     else default_num_chunks
                 ),
                 max_window_percentage=max_document_percentage,
+                use_sections=search_pipeline.ran_merge_chunk,
             )
 
-            llm_docs = [llm_doc_from_inference_chunk(chunk) for chunk in top_chunks]
+            llm_docs = [
+                llm_doc_from_inference_section(section) for section in top_sections
+            ]
 
         else:
             llm_docs = []

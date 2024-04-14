@@ -11,10 +11,10 @@ from danswer.configs.chat_configs import HYBRID_ALPHA
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.document_index.interfaces import DocumentIndex
-from danswer.indexing.models import InferenceChunk
 from danswer.search.enums import EmbedTextType
 from danswer.search.models import ChunkMetric
 from danswer.search.models import IndexFilters
+from danswer.search.models import InferenceChunk
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RetrievalMetricsContainer
 from danswer.search.models import SearchQuery
@@ -244,7 +244,7 @@ def inference_documents_from_ids(
     filters = IndexFilters(access_control_list=None)
 
     functions_with_args: list[tuple[Callable, tuple]] = [
-        (document_index.id_based_retrieval, (doc_id, None, filters))
+        (document_index.id_based_retrieval, (doc_id, None, None, filters))
         for doc_id in doc_ids_set
     ]
 

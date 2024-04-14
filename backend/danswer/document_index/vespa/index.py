@@ -62,8 +62,8 @@ from danswer.document_index.interfaces import DocumentInsertionRecord
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.document_index.vespa.utils import remove_invalid_unicode_chars
 from danswer.indexing.models import DocMetadataAwareIndexChunk
-from danswer.indexing.models import InferenceChunk
 from danswer.search.models import IndexFilters
+from danswer.search.models import InferenceChunk
 from danswer.search.retrieval.search_runner import query_processing
 from danswer.search.retrieval.search_runner import remove_stop_words_and_punctuation
 from danswer.utils.batching import batch_generator
@@ -864,10 +864,11 @@ class VespaIndex(DocumentIndex):
     def id_based_retrieval(
         self,
         document_id: str,
-        chunk_ind: int | None,
+        min_chunk_ind: int | None,
+        max_chunk_ind: int | None,
         filters: IndexFilters,
     ) -> list[InferenceChunk]:
-        if chunk_ind is None:
+        if min_chunk_ind is None and max_chunk_ind is None:
             vespa_chunk_ids = _get_vespa_chunk_ids_by_document_id(
                 document_id=document_id,
                 index_name=self.index_name,
@@ -888,14 +889,22 @@ class VespaIndex(DocumentIndex):
             inference_chunks.sort(key=lambda chunk: chunk.chunk_id)
             return inference_chunks
 
-        else:
-            filters_str = _build_vespa_filters(filters=filters, include_hidden=True)
-            yql = (
-                VespaIndex.yql_base.format(index_name=self.index_name)
-                + filters_str
-                + f"({DOCUMENT_ID} contains '{document_id}' and {CHUNK_ID} contains '{chunk_ind}')"
-            )
-        return _query_vespa({"yql": yql})
+        filters_str = _build_vespa_filters(filters=filters, include_hidden=True)
+        yql = (
+            VespaIndex.yql_base.format(index_name=self.index_name)
+            + filters_str
+            + f"({DOCUMENT_ID} contains '{document_id}'"
+        )
+
+        if min_chunk_ind is not None:
+            yql += f" and {min_chunk_ind} <= {CHUNK_ID}"
+        if max_chunk_ind is not None:
+            yql += f" and {max_chunk_ind} >= {CHUNK_ID}"
+        yql = yql + ")"
+
+        inference_chunks = _query_vespa({"yql": yql})
+        inference_chunks.sort(key=lambda chunk: chunk.chunk_id)
+        return inference_chunks
 
     def keyword_retrieval(
         self,

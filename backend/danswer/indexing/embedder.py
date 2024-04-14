@@ -149,7 +149,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
                     title_embed_dict[title] = title_embedding
 
             new_embedded_chunk = IndexChunk(
-                **{k: getattr(chunk, k) for k in chunk.__dataclass_fields__},
+                **chunk.dict(),
                 embeddings=ChunkEmbedding(
                     full_embedding=chunk_embeddings[0],
                     mini_chunk_embeddings=chunk_embeddings[1:],
