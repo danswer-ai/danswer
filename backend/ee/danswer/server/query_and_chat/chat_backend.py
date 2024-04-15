@@ -16,6 +16,7 @@ from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RetrievalDetails
+from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.utils.logger import setup_logger
 from ee.danswer.server.query_and_chat.models import BasicCreateChatMessageRequest
@@ -111,6 +112,8 @@ def handle_simplified_chat_message(
             response.simple_search_docs = translate_doc_response_to_simple_doc(packet)
         elif isinstance(packet, StreamingError):
             response.error_msg = packet.error
+        elif isinstance(packet, ChatMessageDetail):
+            response.message_id = packet.message_id
 
     response.answer = answer
     if answer:
