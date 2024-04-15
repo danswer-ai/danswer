@@ -47,3 +47,4 @@ class ChatBasicResponse(BaseModel):
     answer_citationless: str | None = None
     simple_search_docs: list[SimpleDoc] | None = None
     error_msg: str | None = None
+    message_id: int | None = None
