@@ -22,6 +22,8 @@ import {
 import { DeleteButton } from "@/components/DeleteButton";
 import { Bubble } from "@/components/Bubble";
 import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
+import { AddTokenRateLimitForm } from "./AddTokenRateLimitForm";
+import { GenericTokenRateLimitTable } from "@/app/admin/token-rate-limits/TokenRateLimitTables";
 
 interface GroupDisplayProps {
   users: User[];
@@ -39,6 +41,7 @@ export const GroupDisplay = ({
   const { popup, setPopup } = usePopup();
   const [addMemberFormVisible, setAddMemberFormVisible] = useState(false);
   const [addConnectorFormVisible, setAddConnectorFormVisible] = useState(false);
+  const [addRateLimitFormVisible, setAddRateLimitFormVisible] = useState(false);
 
   return (
     <div>
@@ -301,6 +304,31 @@ export const GroupDisplay = ({
           </>
         )}
       </div>
+
+      <Divider />
+
+      <h2 className="text-xl font-bold mt-8 mb-2">Token Rate Limits</h2>
+
+      <AddTokenRateLimitForm
+        isOpen={addRateLimitFormVisible}
+        setIsOpen={setAddRateLimitFormVisible}
+        setPopup={setPopup}
+        userGroupId={userGroup.id}
+      />
+
+      <GenericTokenRateLimitTable
+        fetchUrl={`/api/admin/token-rate-limits/user-group/${userGroup.id}`}
+        hideHeading
+      />
+
+      <Button
+        color="green"
+        size="xs"
+        className="mt-3"
+        onClick={() => setAddRateLimitFormVisible(true)}
+      >
+        Create a Token Rate Limit
+      </Button>
     </div>
   );
 };

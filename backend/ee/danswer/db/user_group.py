@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Document
 from danswer.db.models import DocumentByConnectorCredentialPair
+from danswer.db.models import TokenRateLimit__UserGroup
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
 from danswer.db.models import UserGroup
@@ -241,6 +242,21 @@ def update_user_group(
     return db_user_group
 
 
+def _cleanup_token_rate_limit__user_group_relationships__no_commit(
+    db_session: Session, user_group_id: int
+) -> None:
+    """NOTE: does not commit the transaction."""
+    token_rate_limit__user_group_relationships = db_session.scalars(
+        select(TokenRateLimit__UserGroup).where(
+            TokenRateLimit__UserGroup.user_group_id == user_group_id
+        )
+    ).all()
+    for (
+        token_rate_limit__user_group_relationship
+    ) in token_rate_limit__user_group_relationships:
+        db_session.delete(token_rate_limit__user_group_relationship)
+
+
 def prepare_user_group_for_deletion(db_session: Session, user_group_id: int) -> None:
     stmt = select(UserGroup).where(UserGroup.id == user_group_id)
     db_user_group = db_session.scalar(stmt)
@@ -255,6 +271,10 @@ def prepare_user_group_for_deletion(db_session: Session, user_group_id: int) -> 
     _mark_user_group__cc_pair_relationships_outdated__no_commit(
         db_session=db_session, user_group_id=user_group_id
     )
+    _cleanup_token_rate_limit__user_group_relationships__no_commit(
+        db_session=db_session, user_group_id=user_group_id
+    )
+
     db_user_group.is_up_to_date = False
     db_user_group.is_up_for_deletion = True
     db_session.commit()

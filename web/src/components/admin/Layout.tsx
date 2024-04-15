@@ -28,6 +28,7 @@ import {
   FiImage,
   FiPackage,
   FiSettings,
+  FiShield,
   FiSlack,
   FiTool,
 } from "react-icons/fi";
@@ -215,6 +216,15 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                         },
                       ]
                     : []),
+                  {
+                    name: (
+                      <div className="flex">
+                        <FiShield size={18} />
+                        <div className="ml-1">Token Rate Limits</div>
+                      </div>
+                    ),
+                    link: "/admin/token-rate-limits",
+                  },
                 ],
               },
               ...(EE_ENABLED
