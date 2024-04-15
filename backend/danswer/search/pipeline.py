@@ -149,8 +149,8 @@ class SearchPipeline:
                 functions_with_args, allow_failures=False
             )
 
-            for chunk in unique_chunks:
-                inf_chunks = list_inference_chunks.pop(0)
+            for ind, chunk in enumerate(unique_chunks):
+                inf_chunks = list_inference_chunks[ind]
                 combined_content = "\n".join([chunk.content for chunk in inf_chunks])
                 final_inference_sections.append(
                     InferenceSection.from_chunk(chunk, content=combined_content)
@@ -202,8 +202,8 @@ class SearchPipeline:
             functions_with_args, allow_failures=False
         )
 
-        for chunk_range in reverse_map.values():
-            inf_chunks = list_inference_chunks.pop(0)
+        for ind, chunk_range in enumerate(reverse_map.values()):
+            inf_chunks = list_inference_chunks[ind]
             combined_content = "\n".join([chunk.content for chunk in inf_chunks])
             chunk_range.combined_content = combined_content
 
@@ -334,12 +334,17 @@ class SearchPipeline:
 
     @property
     def chunk_relevance_list(self) -> list[bool]:
-        if not self.ran_merge_chunk:
-            count = len(self.reranked_chunks)
-        else:
-            count = len(self.reranked_sections)
+        return [
+            True if ind in self.relevant_chunk_indices else False
+            for ind in range(len(self.reranked_chunks))
+        ]
+
+    @property
+    def section_relevance_list(self) -> list[bool]:
+        if self.ran_merge_chunk:
+            return [False] * len(self.reranked_sections)
 
         return [
             True if ind in self.relevant_chunk_indices else False
-            for ind in range(count)
+            for ind in range(len(self.reranked_chunks))
         ]

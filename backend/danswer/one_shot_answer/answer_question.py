@@ -213,7 +213,7 @@ def stream_answer_objects(
         answer_style_config=answer_config,
         prompt_config=PromptConfig.from_model(prompt),
         llm_config=LLMConfig.from_persona(chat_session.persona),
-        doc_relevance_list=search_pipeline.chunk_relevance_list,
+        doc_relevance_list=search_pipeline.section_relevance_list,
         single_message_history=history_str,
         timeout=timeout,
     )

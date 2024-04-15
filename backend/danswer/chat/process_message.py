@@ -216,6 +216,7 @@ def stream_chat_message_objects(
                 )
 
         rephrased_query = None
+        llm_relevance_list = None
         if reference_doc_ids:
             identifier_tuples = get_doc_query_identifiers_from_model(
                 search_doc_ids=reference_doc_ids,
@@ -314,6 +315,7 @@ def stream_chat_message_objects(
             llm_docs = [
                 llm_doc_from_inference_section(section) for section in top_sections
             ]
+            llm_relevance_list = search_pipeline.section_relevance_list
 
         else:
             llm_docs = []
@@ -375,6 +377,7 @@ def stream_chat_message_objects(
                 persona,
                 llm_override=(new_msg_req.llm_override or chat_session.llm_override),
             ),
+            doc_relevance_list=llm_relevance_list,
             message_history=[
                 PreviousMessage.from_chat_message(msg) for msg in history_msgs
             ],
