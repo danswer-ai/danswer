@@ -3,7 +3,6 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
-from danswer.configs.chat_configs import DISABLE_LLM_CHUNK_FILTER
 from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTAGE
 from danswer.db.chat import get_persona_by_id
 from danswer.db.engine import get_session
@@ -20,9 +19,9 @@ from danswer.search.models import SavedSearchDoc
 from danswer.search.models import SearchRequest
 from danswer.search.models import SearchResponse
 from danswer.search.pipeline import SearchPipeline
-from danswer.search.utils import chunks_to_search_docs
-from danswer.server.query_and_chat.models import DocumentSearchRequest
+from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.utils.logger import setup_logger
+from ee.danswer.server.query_and_chat.models import DocumentSearchRequest
 
 
 logger = setup_logger()
@@ -34,8 +33,6 @@ def handle_search_request(
     search_request: DocumentSearchRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-    # Default to running LLM filter unless globally disabled
-    disable_llm_chunk_filter: bool = DISABLE_LLM_CHUNK_FILTER,
 ) -> SearchResponse:
     """Simple search endpoint, does not create a new message or records in the DB"""
     query = search_request.message
@@ -52,14 +49,18 @@ def handle_search_request(
             limit=search_request.retrieval_options.limit,
             skip_rerank=search_request.skip_rerank,
             skip_llm_chunk_filter=search_request.skip_llm_chunk_filter,
+            chunks_above=search_request.chunks_above,
+            chunks_below=search_request.chunks_below,
+            full_doc=search_request.full_doc,
         ),
         user=user,
         db_session=db_session,
         bypass_acl=False,
     )
-    top_chunks = search_pipeline.reranked_docs
-    relevant_chunk_indices = search_pipeline.relevant_chunk_indicies
-    top_docs = chunks_to_search_docs(top_chunks)
+    top_sections = search_pipeline.reranked_sections
+    # If using surrounding context or full doc, this will be empty
+    relevant_chunk_indices = search_pipeline.relevant_chunk_indices
+    top_docs = chunks_or_sections_to_search_docs(top_sections)
 
     # No need to save the docs for this API
     fake_saved_docs = [SavedSearchDoc.from_search_doc(doc) for doc in top_docs]
