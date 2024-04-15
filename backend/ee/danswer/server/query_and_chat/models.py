@@ -1,10 +1,22 @@
 from pydantic import BaseModel
 
 from danswer.configs.constants import DocumentSource
+from danswer.search.enums import SearchType
+from danswer.search.models import ChunkContext
 from danswer.search.models import RetrievalDetails
 
 
-class BasicCreateChatMessageRequest(BaseModel):
+class DocumentSearchRequest(ChunkContext):
+    message: str
+    search_type: SearchType
+    retrieval_options: RetrievalDetails
+    recency_bias_multiplier: float = 1.0
+    # This is to forcibly skip (or run) the step, if None it uses the system defaults
+    skip_rerank: bool | None = None
+    skip_llm_chunk_filter: bool | None = None
+
+
+class BasicCreateChatMessageRequest(ChunkContext):
     """Before creating messages, be sure to create a chat_session and get an id
     Note, for simplicity this option only allows for a single linear chain of messages
     """

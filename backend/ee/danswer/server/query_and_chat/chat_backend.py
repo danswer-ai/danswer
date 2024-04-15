@@ -90,6 +90,9 @@ def handle_simplified_chat_message(
         search_doc_ids=chat_message_req.search_doc_ids,
         retrieval_options=retrieval_options,
         query_override=chat_message_req.query_override,
+        chunks_above=chat_message_req.chunks_above,
+        chunks_below=chat_message_req.chunks_below,
+        full_doc=chat_message_req.full_doc,
     )
 
     packets = stream_chat_message_objects(
