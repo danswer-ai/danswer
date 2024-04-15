@@ -15,7 +15,6 @@ from danswer.search.models import BaseFilters
 from danswer.search.models import ChunkContext
 from danswer.search.models import RetrievalDetails
 from danswer.search.models import SearchDoc
-from danswer.search.models import SearchType
 from danswer.search.models import Tag
 
 
@@ -61,16 +60,6 @@ class ChatFeedbackRequest(BaseModel):
             raise ValueError("Empty feedback received.")
 
         return values
-
-
-class DocumentSearchRequest(BaseModel):
-    message: str
-    search_type: SearchType
-    retrieval_options: RetrievalDetails
-    recency_bias_multiplier: float = 1.0
-    # This is to forcibly skip (or run) the step, if None it uses the system defaults
-    skip_rerank: bool | None = None
-    skip_llm_chunk_filter: bool | None = None
 
 
 """
