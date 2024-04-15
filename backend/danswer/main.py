@@ -83,6 +83,9 @@ from danswer.server.settings.api import basic_router as settings_router
 from danswer.tools.built_in_tools import auto_add_search_tool_to_personas
 from danswer.tools.built_in_tools import load_builtin_tools
 from danswer.tools.built_in_tools import refresh_built_in_tools_cache
+from danswer.server.token_rate_limits.api import (
+    router as token_rate_limit_settings_router,
+)
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
@@ -281,6 +284,9 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, settings_admin_router)
     include_router_with_global_prefix_prepended(application, llm_admin_router)
     include_router_with_global_prefix_prepended(application, llm_router)
+    include_router_with_global_prefix_prepended(
+        application, token_rate_limit_settings_router
+    )
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step

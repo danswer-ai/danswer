@@ -48,6 +48,11 @@ const nextConfig = {
               source: "/admin/performance/custom-analytics",
               destination: "/ee/admin/performance/custom-analytics",
             },
+            // token rate limits
+            {
+              source: "/admin/token-rate-limits",
+              destination: "/ee/admin/token-rate-limits",
+            },
           ]
         : [];
 

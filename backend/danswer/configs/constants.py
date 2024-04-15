@@ -41,10 +41,6 @@ DEFAULT_BOOST = 0
 SESSION_KEY = "session"
 QUERY_EVENT_ID = "query_event_id"
 LLM_CHUNKS = "llm_chunks"
-TOKEN_BUDGET = "token_budget"
-TOKEN_BUDGET_TIME_PERIOD = "token_budget_time_period"
-ENABLE_TOKEN_BUDGET = "enable_token_budget"
-TOKEN_BUDGET_SETTINGS = "token_budget_settings"
 
 # For chunking/processing chunks
 TITLE_SEPARATOR = "\n\r\n"
