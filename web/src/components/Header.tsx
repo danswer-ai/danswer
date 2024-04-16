@@ -64,11 +64,16 @@ export function Header({ user, settings }: HeaderProps) {
           }
         >
           <div className="flex">
-            <div className="h-[32px] w-[30px]">
-              <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
-            </div>
+            <Image
+              className="mr-2"
+              alt="ginetta logo"
+              decoding="async"
+              width={32}
+              height={32}
+              src="/logo.png"
+            />
             <h1 className="flex text-2xl text-strong font-bold my-auto">
-              Danswer
+              Ask Ginetta
             </h1>
           </div>
         </Link>
@@ -136,7 +141,3 @@ export function Header({ user, settings }: HeaderProps) {
     </header>
   );
 }
-
-/* 
-
-*/
