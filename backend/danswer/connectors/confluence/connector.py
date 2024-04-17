@@ -1,3 +1,5 @@
+import io
+import os
 from collections.abc import Callable
 from collections.abc import Collection
 from datetime import datetime
@@ -27,6 +29,11 @@ from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.file_processing.extract_file_text import docx_to_text
+from danswer.file_processing.extract_file_text import is_text_file_extension
+from danswer.file_processing.extract_file_text import pdf_to_text
+from danswer.file_processing.extract_file_text import pptx_to_text
+from danswer.file_processing.extract_file_text import xlsx_to_text
 from danswer.file_processing.html_utils import format_document_soup
 from danswer.utils.logger import setup_logger
 
@@ -145,6 +152,40 @@ def parse_html_page(text: str, confluence_client: Confluence) -> str:
         # Include @ sign for tagging, more clear for LLM
         user.replaceWith("@" + _get_user(user_id, confluence_client))
     return format_document_soup(soup)
+
+
+def get_used_attachments(text: str, confluence_client: Confluence) -> list[str]:
+    """Parse a Confluence html page to generate a list of current
+        attachment in used
+
+    Args:
+        text (str): The page content
+        confluence_client (Confluence): Confluence client
+
+    Returns:
+        list[str]: List of filename currently in used
+    """
+    files_in_used = []
+    soup = bs4.BeautifulSoup(text, "html.parser")
+    for attachment in soup.findAll("ri:attachment"):
+        files_in_used.append(attachment.attrs["ri:filename"])
+    return files_in_used
+
+
+def extract_file_content(file_content: Any, file_name: str) -> str:
+    if file_name.endswith(".pdf"):
+        return pdf_to_text(io.BytesIO(file_content), file_name)
+    elif file_name.endswith(".docx"):
+        return docx_to_text(io.BytesIO(file_content))
+    elif file_name.endswith(".xlsx"):
+        return xlsx_to_text(io.BytesIO(file_content))
+    elif file_name.endswith(".pptx"):
+        return pptx_to_text(io.BytesIO(file_content))
+    elif is_text_file_extension(file_name):
+        return file_content.decode("utf-8")
+    else:
+        logger.info(f"Not supported file extension. Ignoring '{file_name}'")
+        return ""
 
 
 def _comment_dfs(
@@ -321,6 +362,43 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             logger.exception("Ran into exception when fetching labels from Confluence")
             return []
 
+    def _fetch_attachments(
+        self, confluence_client: Confluence, page_id: str, files_in_used: list[str]
+    ) -> str:
+        get_attachments_from_content = make_confluence_call_handle_rate_limit(
+            confluence_client.get_attachments_from_content
+        )
+        files_attachment_content: list = []
+
+        try:
+            attachments_container = get_attachments_from_content(
+                page_id, start=0, limit=500
+            )
+            for attachment in attachments_container["results"]:
+                if attachment["metadata"]["mediaType"] in ["image/jpeg", "image/png"]:
+                    continue
+
+                if attachment["title"] not in files_in_used:
+                    continue
+
+                download_link = confluence_client.url + attachment["_links"]["download"]
+                response = confluence_client._session.get(download_link)
+
+                if response.status_code == 200:
+                    extract = extract_file_content(
+                        response.content, attachment["title"]
+                    )
+                    files_attachment_content.append(extract)
+
+        except Exception as e:
+            if not self.continue_on_failure:
+                raise e
+            logger.exception(
+                f"Ran into exception when fetching attachments from Confluence: {e}"
+            )
+
+        return "\n".join(files_attachment_content)
+
     def _get_doc_batch(
         self, start_ind: int, time_filter: Callable[[datetime], bool] | None = None
     ) -> tuple[list[Document], int]:
@@ -366,6 +444,12 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     logger.debug("Page is empty, skipping: %s", page_url)
                     continue
                 page_text = parse_html_page(page_html, self.confluence_client)
+
+                files_in_used = get_used_attachments(page_html, self.confluence_client)
+                attachment_text = self._fetch_attachments(
+                    self.confluence_client, page_id, files_in_used
+                )
+                page_text += attachment_text
                 comments_text = self._fetch_comments(self.confluence_client, page_id)
                 page_text += comments_text
 
@@ -423,8 +507,6 @@ class ConfluenceConnector(LoadConnector, PollConnector):
 
 
 if __name__ == "__main__":
-    import os
-
     connector = ConfluenceConnector(os.environ["CONFLUENCE_TEST_SPACE_URL"])
     connector.load_credentials(
         {
