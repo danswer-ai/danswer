@@ -4,7 +4,6 @@ from contextlib import asynccontextmanager
 from typing import Any
 from typing import cast
 
-import nltk  # type:ignore
 import uvicorn
 from fastapi import APIRouter
 from fastapi import FastAPI
@@ -51,6 +50,7 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs.port_configs import port_filesystem_to_postgres
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import get_default_llm_version
+from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.search.search_nlp_models import warm_up_encoders
 from danswer.server.danswer_api.ingestion import get_danswer_api_key
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
@@ -205,9 +205,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
             logger.info("Reranking step of search flow is enabled.")
 
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")
-        nltk.download("stopwords", quiet=True)
-        nltk.download("wordnet", quiet=True)
-        nltk.download("punkt", quiet=True)
+        download_nltk_data()
 
         logger.info("Verifying default connector/credential exist.")
         create_initial_public_credential(db_session)
