@@ -56,9 +56,9 @@ def lemmatize_text(text: str) -> list[str]:
     try:
         lemmatizer = WordNetLemmatizer()
         word_tokens = word_tokenize(text)
+        return [lemmatizer.lemmatize(word) for word in word_tokens]
     except Exception:
         return text.split(" ")
-    return [lemmatizer.lemmatize(word) for word in word_tokens]
 
 
 def remove_stop_words_and_punctuation(text: str) -> list[str]:
