@@ -12,7 +12,6 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.file_utils import detect_encoding
 from danswer.connectors.cross_connector_utils.file_utils import load_files_from_zip
-from danswer.connectors.cross_connector_utils.file_utils import protected_url_check
 from danswer.connectors.cross_connector_utils.file_utils import read_file
 from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
@@ -141,8 +140,6 @@ class LocalFileConnector(LoadConnector):
         self.file_locations = [Path(file_location) for file_location in file_locations]
         self.batch_size = batch_size
         self.pdf_pass: str | None = None
-
-        [protected_url_check(file_location) for file_location in file_locations]
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         self.pdf_pass = credentials.get("pdf_password")

@@ -5,7 +5,6 @@ import zipfile
 from collections.abc import Iterator
 from typing import Any
 from typing import IO
-from urllib.parse import urlparse
 
 import chardet
 from pypdf import PdfReader
@@ -157,16 +156,3 @@ def is_text_file_extension(file_name: str) -> bool:
         ".json",
     )
     return any(file_name.endswith(ext) for ext in extensions)
-
-
-def protected_url_check(url: str) -> None:
-    parse = urlparse(url)
-    if parse.scheme == "file":
-        raise ValueError("Not permitted to read local files via Web Connector.")
-    if (
-        parse.scheme == "localhost"
-        or parse.scheme == "127.0.0.1"
-        or parse.hostname == "localhost"
-        or parse.hostname == "127.0.0.1"
-    ):
-        raise ValueError("Not permitted to read localhost urls.")
