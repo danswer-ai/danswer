@@ -19,6 +19,7 @@ from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_ID
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_TOKEN_URL
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.file_utils import protected_url_check
 from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
 from danswer.connectors.cross_connector_utils.html_utils import web_html_cleanup
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -188,6 +189,8 @@ class WebConnector(LoadConnector):
             if current_url in visited_links:
                 continue
             visited_links.add(current_url)
+
+            protected_url_check(current_url)
 
             logger.info(f"Visiting {current_url}")
 
