@@ -78,7 +78,7 @@ export async function* sendMessage({
 }) {
   const documentsAreSelected =
     selectedDocumentIds && selectedDocumentIds.length > 0;
-  const sendMessageResponse = await fetch("/api/chat/send-message", {
+  const sendMessageResponse = await fetch("http://localhost:8080/chat/send-message", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
