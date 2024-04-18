@@ -192,12 +192,15 @@ def list_slack_bot_configs(
 
 
 @router.put("/admin/slack-bot/tokens")
-def put_tokens(tokens: SlackBotTokens) -> None:
+def put_tokens(
+    tokens: SlackBotTokens,
+    _: User | None = Depends(current_admin_user),
+) -> None:
     save_tokens(tokens=tokens)
 
 
 @router.get("/admin/slack-bot/tokens")
-def get_tokens() -> SlackBotTokens:
+def get_tokens(_: User | None = Depends(current_admin_user)) -> SlackBotTokens:
     try:
         return fetch_tokens()
     except ConfigNotFoundError:
