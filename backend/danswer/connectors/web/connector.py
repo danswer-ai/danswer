@@ -42,6 +42,19 @@ class WEB_CONNECTOR_VALID_SETTINGS(str, Enum):
     UPLOAD = "upload"
 
 
+def protected_url_check(url: str) -> None:
+    parse = urlparse(url)
+    if parse.scheme == "file":
+        raise ValueError("Not permitted to read local files via Web Connector.")
+    if (
+        parse.scheme == "localhost"
+        or parse.scheme == "127.0.0.1"
+        or parse.hostname == "localhost"
+        or parse.hostname == "127.0.0.1"
+    ):
+        raise ValueError("Not permitted to read localhost urls.")
+
+
 def check_internet_connection(url: str) -> None:
     try:
         response = requests.get(url, timeout=3)
@@ -188,6 +201,8 @@ class WebConnector(LoadConnector):
             if current_url in visited_links:
                 continue
             visited_links.add(current_url)
+
+            protected_url_check(current_url)
 
             logger.info(f"Visiting {current_url}")
 
