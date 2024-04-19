@@ -20,7 +20,6 @@ from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
 from danswer.auth.users import fastapi_users
-from danswer.background.update import check_index_swap
 from danswer.chat.load_yamls import load_chat_yamls
 from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.configs.app_configs import APP_HOST
@@ -47,6 +46,7 @@ from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
+from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs.port_configs import port_filesystem_to_postgres
 from danswer.llm.factory import get_default_llm
