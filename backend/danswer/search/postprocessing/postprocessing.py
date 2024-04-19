@@ -9,8 +9,8 @@ from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
 from danswer.document_index.document_index_utils import (
     translate_boost_count_to_multiplier,
 )
-from danswer.indexing.models import InferenceChunk
 from danswer.search.models import ChunkMetric
+from danswer.search.models import InferenceChunk
 from danswer.search.models import MAX_METRICS_CONTENT
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import SearchQuery
@@ -158,6 +158,7 @@ def search_postprocessing(
     post_processing_tasks: list[FunctionCall] = []
 
     rerank_task_id = None
+    chunks_yielded = False
     if should_rerank(search_query):
         post_processing_tasks.append(
             FunctionCall(
@@ -219,4 +220,4 @@ def search_postprocessing(
             if chunk.unique_id in llm_chunk_selection
         ]
     else:
-        yield []
+        yield cast(list[str], [])

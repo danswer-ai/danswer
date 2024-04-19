@@ -1,10 +1,9 @@
+import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 from typing import cast
 
-import nltk  # type:ignore
-import torch  # Import here is fine, API server needs torch anyway and nothing imports main.py
 import uvicorn
 from fastapi import APIRouter
 from fastapi import FastAPI
@@ -28,15 +27,12 @@ from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
-from danswer.configs.app_configs import MODEL_SERVER_HOST
-from danswer.configs.app_configs import MODEL_SERVER_PORT
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.constants import AuthType
-from danswer.configs.model_configs import ENABLE_RERANKING_REAL_TIME_FLOW
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.db.chat import delete_old_default_personas
@@ -54,7 +50,8 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs.port_configs import port_filesystem_to_postgres
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import get_default_llm_version
-from danswer.search.search_nlp_models import warm_up_models
+from danswer.search.retrieval.search_runner import download_nltk_data
+from danswer.search.search_nlp_models import warm_up_encoders
 from danswer.server.danswer_api.ingestion import get_danswer_api_key
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
 from danswer.server.documents.cc_pair import router as cc_pair_router
@@ -76,10 +73,15 @@ from danswer.server.query_and_chat.query_backend import (
     admin_router as admin_query_router,
 )
 from danswer.server.query_and_chat.query_backend import basic_router as query_router
+from danswer.server.settings.api import admin_router as settings_admin_router
+from danswer.server.settings.api import basic_router as settings_router
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+from shared_configs.configs import ENABLE_RERANKING_REAL_TIME_FLOW
+from shared_configs.configs import MODEL_SERVER_HOST
+from shared_configs.configs import MODEL_SERVER_PORT
 
 
 logger = setup_logger()
@@ -169,7 +171,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
             f"Using multilingual flow with languages: {MULTILINGUAL_QUERY_EXPANSION}"
         )
 
-    port_filesystem_to_postgres()
+    try:
+        port_filesystem_to_postgres()
+    except Exception:
+        logger.debug(
+            "Skipping port of persistent volumes. Maybe these have already been removed?"
+        )
 
     with Session(engine) as db_session:
         db_embedding_model = get_current_db_embedding_model(db_session)
@@ -197,28 +204,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         if ENABLE_RERANKING_REAL_TIME_FLOW:
             logger.info("Reranking step of search flow is enabled.")
 
-        if MODEL_SERVER_HOST:
-            logger.info(
-                f"Using Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}"
-            )
-        else:
-            logger.info("Warming up local NLP models.")
-            warm_up_models(
-                model_name=db_embedding_model.model_name,
-                normalize=db_embedding_model.normalize,
-                skip_cross_encoders=not ENABLE_RERANKING_REAL_TIME_FLOW,
-            )
-
-            if torch.cuda.is_available():
-                logger.info("GPU is available")
-            else:
-                logger.info("GPU is not available")
-            logger.info(f"Torch Threads: {torch.get_num_threads()}")
-
         logger.info("Verifying query preprocessing (NLTK) data is downloaded")
-        nltk.download("stopwords", quiet=True)
-        nltk.download("wordnet", quiet=True)
-        nltk.download("punkt", quiet=True)
+        download_nltk_data()
 
         logger.info("Verifying default connector/credential exist.")
         create_initial_public_credential(db_session)
@@ -230,19 +217,34 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         load_chat_yamls()
 
         logger.info("Verifying Document Index(s) is/are available.")
-
         document_index = get_default_document_index(
             primary_index_name=db_embedding_model.index_name,
             secondary_index_name=secondary_db_embedding_model.index_name
             if secondary_db_embedding_model
             else None,
         )
-        document_index.ensure_indices_exist(
-            index_embedding_dim=db_embedding_model.model_dim,
-            secondary_index_embedding_dim=secondary_db_embedding_model.model_dim
-            if secondary_db_embedding_model
-            else None,
-        )
+        # Vespa startup is a bit slow, so give it a few seconds
+        wait_time = 5
+        for attempt in range(5):
+            try:
+                document_index.ensure_indices_exist(
+                    index_embedding_dim=db_embedding_model.model_dim,
+                    secondary_index_embedding_dim=secondary_db_embedding_model.model_dim
+                    if secondary_db_embedding_model
+                    else None,
+                )
+                break
+            except Exception:
+                logger.info(f"Waiting on Vespa, retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+
+    logger.info(f"Model Server: http://{MODEL_SERVER_HOST}:{MODEL_SERVER_PORT}")
+    warm_up_encoders(
+        model_name=db_embedding_model.model_name,
+        normalize=db_embedding_model.normalize,
+        model_server_host=MODEL_SERVER_HOST,
+        model_server_port=MODEL_SERVER_PORT,
+    )
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
 
@@ -274,6 +276,8 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, state_router)
     include_router_with_global_prefix_prepended(application, danswer_api_router)
     include_router_with_global_prefix_prepended(application, gpts_router)
+    include_router_with_global_prefix_prepended(application, settings_router)
+    include_router_with_global_prefix_prepended(application, settings_admin_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step

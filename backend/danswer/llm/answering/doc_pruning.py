@@ -6,13 +6,14 @@ from danswer.chat.models import (
 )
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
-from danswer.db.models import Persona
-from danswer.indexing.models import InferenceChunk
 from danswer.llm.answering.models import DocumentPruningConfig
+from danswer.llm.answering.models import LLMConfig
+from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.prompts.citations_prompt import compute_max_document_tokens
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import tokenizer_trim_content
 from danswer.prompts.prompt_utils import build_doc_context_str
+from danswer.search.models import InferenceChunk
 from danswer.utils.logger import setup_logger
 
 
@@ -28,14 +29,15 @@ class PruningError(Exception):
 
 
 def _compute_limit(
-    persona: Persona,
+    prompt_config: PromptConfig,
+    llm_config: LLMConfig,
     question: str,
     max_chunks: int | None,
     max_window_percentage: float | None,
     max_tokens: int | None,
 ) -> int:
     llm_max_document_tokens = compute_max_document_tokens(
-        persona=persona, actual_user_input=question
+        prompt_config=prompt_config, llm_config=llm_config, actual_user_input=question
     )
 
     window_percentage_based_limit = (
@@ -85,6 +87,7 @@ def _apply_pruning(
     doc_relevance_list: list[bool] | None,
     token_limit: int,
     is_manually_selected_docs: bool,
+    use_sections: bool,
 ) -> list[LlmDoc]:
     llm_tokenizer = get_default_llm_tokenizer()
     docs = deepcopy(docs)  # don't modify in place
@@ -115,6 +118,7 @@ def _apply_pruning(
         # than the LLM tokenizer
         if (
             not is_manually_selected_docs
+            and not use_sections
             and doc_tokens > DOC_EMBEDDING_CONTEXT_SIZE + _METADATA_TOKEN_ESTIMATE
         ):
             logger.warning(
@@ -134,13 +138,19 @@ def _apply_pruning(
             break
 
     if final_doc_ind is not None:
-        if is_manually_selected_docs:
+        if is_manually_selected_docs or use_sections:
             # for document selection, only allow the final document to get truncated
             # if more than that, then the user message is too long
             if final_doc_ind != len(docs) - 1:
-                raise PruningError(
-                    "LLM context window exceeded. Please de-select some documents or shorten your query."
-                )
+                if use_sections:
+                    # Truncate the rest of the list since we're over the token limit
+                    # for the last one, trim it. In this case, the Sections can be rather long
+                    # so better to trim the back than throw away the whole thing.
+                    docs = docs[: final_doc_ind + 1]
+                else:
+                    raise PruningError(
+                        "LLM context window exceeded. Please de-select some documents or shorten your query."
+                    )
 
             final_doc_desired_length = tokens_per_doc[final_doc_ind] - (
                 total_tokens - token_limit
@@ -152,7 +162,7 @@ def _apply_pruning(
             # not ideal, but it's the most reasonable thing to do
             # NOTE: the frontend prevents documents from being selected if
             # less than 75 tokens are available to try and avoid this situation
-            # from occuring in the first place
+            # from occurring in the first place
             if final_doc_content_length <= 0:
                 logger.error(
                     f"Final doc ({docs[final_doc_ind].semantic_identifier}) content "
@@ -166,7 +176,8 @@ def _apply_pruning(
                     tokenizer=llm_tokenizer,
                 )
         else:
-            # for regular search, don't truncate the final document unless it's the only one
+            # For regular search, don't truncate the final document unless it's the only one
+            # If it's not the only one, we can throw it away, if it's the only one, we have to truncate
             if final_doc_ind != 0:
                 docs = docs[:final_doc_ind]
             else:
@@ -183,7 +194,8 @@ def _apply_pruning(
 def prune_documents(
     docs: list[LlmDoc],
     doc_relevance_list: list[bool] | None,
-    persona: Persona,
+    prompt_config: PromptConfig,
+    llm_config: LLMConfig,
     question: str,
     document_pruning_config: DocumentPruningConfig,
 ) -> list[LlmDoc]:
@@ -191,7 +203,8 @@ def prune_documents(
         assert len(docs) == len(doc_relevance_list)
 
     doc_token_limit = _compute_limit(
-        persona=persona,
+        prompt_config=prompt_config,
+        llm_config=llm_config,
         question=question,
         max_chunks=document_pruning_config.max_chunks,
         max_window_percentage=document_pruning_config.max_window_percentage,
@@ -202,4 +215,5 @@ def prune_documents(
         doc_relevance_list=doc_relevance_list,
         token_limit=doc_token_limit,
         is_manually_selected_docs=document_pruning_config.is_manually_selected_docs,
+        use_sections=document_pruning_config.use_sections,
     )

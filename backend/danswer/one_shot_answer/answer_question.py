@@ -3,7 +3,7 @@ from collections.abc import Iterator
 
 from sqlalchemy.orm import Session
 
-from danswer.chat.chat_utils import llm_doc_from_inference_chunk
+from danswer.chat.chat_utils import llm_doc_from_inference_section
 from danswer.chat.chat_utils import reorganize_citations
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
@@ -16,16 +16,20 @@ from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.constants import MessageType
 from danswer.db.chat import create_chat_session
+from danswer.db.chat import create_db_search_doc
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import get_prompt_by_id
 from danswer.db.chat import translate_db_message_to_chat_message_detail
+from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.engine import get_session_context_manager
 from danswer.db.models import User
 from danswer.llm.answering.answer import Answer
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import CitationConfig
 from danswer.llm.answering.models import DocumentPruningConfig
+from danswer.llm.answering.models import LLMConfig
+from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.models import QuotesConfig
 from danswer.llm.utils import get_default_llm_token_encode
 from danswer.one_shot_answer.models import DirectQARequest
@@ -34,10 +38,9 @@ from danswer.one_shot_answer.models import QueryRephrase
 from danswer.one_shot_answer.qa_utils import combine_message_thread
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
-from danswer.search.models import SavedSearchDoc
 from danswer.search.models import SearchRequest
 from danswer.search.pipeline import SearchPipeline
-from danswer.search.utils import chunks_to_search_docs
+from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.secondary_llm_flows.query_expansion import thread_based_query_rephrase
 from danswer.server.query_and_chat.models import ChatMessageDetail
@@ -123,6 +126,11 @@ def stream_answer_objects(
             persona=chat_session.persona,
             offset=query_req.retrieval_options.offset,
             limit=query_req.retrieval_options.limit,
+            skip_rerank=query_req.skip_rerank,
+            skip_llm_chunk_filter=query_req.skip_llm_chunk_filter,
+            chunks_above=query_req.chunks_above,
+            chunks_below=query_req.chunks_below,
+            full_doc=query_req.full_doc,
         ),
         user=user,
         db_session=db_session,
@@ -132,14 +140,22 @@ def stream_answer_objects(
     )
 
     # First fetch and return the top chunks so the user can immediately see some results
-    top_chunks = search_pipeline.reranked_docs
-    top_docs = chunks_to_search_docs(top_chunks)
-    fake_saved_docs = [SavedSearchDoc.from_search_doc(doc) for doc in top_docs]
+    top_sections = search_pipeline.reranked_sections
+    top_docs = chunks_or_sections_to_search_docs(top_sections)
 
-    # Since this is in the one shot answer flow, we don't need to actually save the docs to DB
+    reference_db_search_docs = [
+        create_db_search_doc(server_search_doc=top_doc, db_session=db_session)
+        for top_doc in top_docs
+    ]
+
+    response_docs = [
+        translate_db_search_doc_to_server_search_doc(db_search_doc)
+        for db_search_doc in reference_db_search_docs
+    ]
+
     initial_response = QADocsResponse(
         rephrased_query=rephrased_query,
-        top_documents=fake_saved_docs,
+        top_documents=response_docs,
         predicted_flow=search_pipeline.predicted_flow,
         predicted_search=search_pipeline.predicted_search_type,
         applied_source_filters=search_pipeline.search_query.filters.source_type,
@@ -150,7 +166,7 @@ def stream_answer_objects(
 
     # Yield the list of LLM selected chunks for showing the LLM selected icons in the UI
     llm_relevance_filtering_response = LLMRelevanceFilterResponse(
-        relevant_chunk_indices=search_pipeline.relevant_chunk_indicies
+        relevant_chunk_indices=search_pipeline.relevant_chunk_indices
     )
     yield llm_relevance_filtering_response
 
@@ -188,19 +204,25 @@ def stream_answer_objects(
                 else default_num_chunks
             ),
             max_tokens=max_document_tokens,
+            use_sections=search_pipeline.ran_merge_chunk,
         ),
     )
     answer = Answer(
         question=query_msg.message,
-        docs=[llm_doc_from_inference_chunk(chunk) for chunk in top_chunks],
+        docs=[llm_doc_from_inference_section(section) for section in top_sections],
         answer_style_config=answer_config,
-        prompt=prompt,
-        persona=chat_session.persona,
-        doc_relevance_list=search_pipeline.chunk_relevance_list,
+        prompt_config=PromptConfig.from_model(prompt),
+        llm_config=LLMConfig.from_persona(chat_session.persona),
+        doc_relevance_list=search_pipeline.section_relevance_list,
         single_message_history=history_str,
         timeout=timeout,
     )
     yield from answer.processed_streamed_output
+
+    reference_db_search_docs = [
+        create_db_search_doc(server_search_doc=top_doc, db_session=db_session)
+        for top_doc in top_docs
+    ]
 
     # Saving Gen AI answer and responding with message info
     gen_ai_response_message = create_new_chat_message(
@@ -211,7 +233,7 @@ def stream_answer_objects(
         token_count=len(llm_tokenizer(answer.llm_answer)),
         message_type=MessageType.ASSISTANT,
         error=None,
-        reference_docs=None,  # Don't need to save reference docs for one shot flow
+        reference_docs=reference_db_search_docs,
         db_session=db_session,
         commit=True,
     )

@@ -7,16 +7,19 @@ from danswer.chat.models import CitationInfo
 from danswer.chat.models import LlmDoc
 from danswer.db.chat import get_chat_messages_by_session
 from danswer.db.models import ChatMessage
-from danswer.indexing.models import InferenceChunk
+from danswer.search.models import InferenceChunk
+from danswer.search.models import InferenceSection
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
 
-def llm_doc_from_inference_chunk(inf_chunk: InferenceChunk) -> LlmDoc:
+def llm_doc_from_inference_section(inf_chunk: InferenceSection) -> LlmDoc:
     return LlmDoc(
         document_id=inf_chunk.document_id,
-        content=inf_chunk.content,
+        # This one is using the combined content of all the chunks of the section
+        # In default settings, this is the same as just the content of base chunk
+        content=inf_chunk.combined_content,
         blurb=inf_chunk.blurb,
         semantic_identifier=inf_chunk.semantic_identifier,
         source_type=inf_chunk.source_type,
@@ -55,7 +58,7 @@ def create_chat_chain(
     id_to_msg = {msg.id: msg for msg in all_chat_messages}
 
     if not all_chat_messages:
-        raise ValueError("No messages in Chat Session")
+        raise RuntimeError("No messages in Chat Session")
 
     root_message = all_chat_messages[0]
     if root_message.parent_message is not None:

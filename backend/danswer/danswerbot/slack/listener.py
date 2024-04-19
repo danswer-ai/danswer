@@ -3,7 +3,6 @@ from threading import Event
 from typing import Any
 from typing import cast
 
-import nltk  # type: ignore
 from slack_sdk import WebClient
 from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
@@ -13,7 +12,6 @@ from sqlalchemy.orm import Session
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
-from danswer.configs.model_configs import ENABLE_RERANKING_ASYNC_FLOW
 from danswer.danswerbot.slack.config import get_slack_bot_config_for_channel
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
@@ -43,9 +41,12 @@ from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.one_shot_answer.models import ThreadMessage
-from danswer.search.search_nlp_models import warm_up_models
+from danswer.search.retrieval.search_runner import download_nltk_data
+from danswer.search.search_nlp_models import warm_up_encoders
 from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import MODEL_SERVER_HOST
+from shared_configs.configs import MODEL_SERVER_PORT
 
 logger = setup_logger()
 
@@ -374,8 +375,7 @@ if __name__ == "__main__":
     socket_client: SocketModeClient | None = None
 
     logger.info("Verifying query preprocessing (NLTK) data is downloaded")
-    nltk.download("stopwords", quiet=True)
-    nltk.download("punkt", quiet=True)
+    download_nltk_data()
 
     while True:
         try:
@@ -390,10 +390,11 @@ if __name__ == "__main__":
                     with Session(get_sqlalchemy_engine()) as db_session:
                         embedding_model = get_current_db_embedding_model(db_session)
 
-                        warm_up_models(
+                        warm_up_encoders(
                             model_name=embedding_model.model_name,
                             normalize=embedding_model.normalize,
-                            skip_cross_encoders=not ENABLE_RERANKING_ASYNC_FLOW,
+                            model_server_host=MODEL_SERVER_HOST,
+                            model_server_port=MODEL_SERVER_PORT,
                         )
 
                 slack_bot_tokens = latest_slack_bot_tokens

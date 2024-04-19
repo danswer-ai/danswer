@@ -62,8 +62,8 @@ from danswer.document_index.interfaces import DocumentInsertionRecord
 from danswer.document_index.interfaces import UpdateRequest
 from danswer.document_index.vespa.utils import remove_invalid_unicode_chars
 from danswer.indexing.models import DocMetadataAwareIndexChunk
-from danswer.indexing.models import InferenceChunk
 from danswer.search.models import IndexFilters
+from danswer.search.models import InferenceChunk
 from danswer.search.retrieval.search_runner import query_processing
 from danswer.search.retrieval.search_runner import remove_stop_words_and_punctuation
 from danswer.utils.batching import batch_generator
@@ -112,13 +112,13 @@ def _does_document_exist(
     """Returns whether the document already exists and the users/group whitelists
     Specifically in this case, document refers to a vespa document which is equivalent to a Danswer
     chunk. This checks for whether the chunk exists already in the index"""
-    doc_fetch_response = http_client.get(
-        f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{doc_chunk_id}"
-    )
+    doc_url = f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{doc_chunk_id}"
+    doc_fetch_response = http_client.get(doc_url)
     if doc_fetch_response.status_code == 404:
         return False
 
     if doc_fetch_response.status_code != 200:
+        logger.debug(f"Failed to check for document with URL {doc_url}")
         raise RuntimeError(
             f"Unexpected fetch document by ID value from Vespa "
             f"with error {doc_fetch_response.status_code}"
@@ -157,7 +157,24 @@ def _get_vespa_chunk_ids_by_document_id(
         "hits": hits_per_page,
     }
     while True:
-        results = requests.post(SEARCH_ENDPOINT, json=params).json()
+        res = requests.post(SEARCH_ENDPOINT, json=params)
+        try:
+            res.raise_for_status()
+        except requests.HTTPError as e:
+            request_info = f"Headers: {res.request.headers}\nPayload: {params}"
+            response_info = (
+                f"Status Code: {res.status_code}\nResponse Content: {res.text}"
+            )
+            error_base = f"Error occurred getting chunk by Document ID {document_id}"
+            logger.error(
+                f"{error_base}:\n"
+                f"{request_info}\n"
+                f"{response_info}\n"
+                f"Exception: {e}"
+            )
+            raise requests.HTTPError(error_base) from e
+
+        results = res.json()
         hits = results["root"].get("children", [])
 
         doc_chunk_ids.extend(
@@ -179,10 +196,14 @@ def _delete_vespa_doc_chunks(
     )
 
     for chunk_id in doc_chunk_ids:
-        res = http_client.delete(
-            f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{chunk_id}"
-        )
-        res.raise_for_status()
+        try:
+            res = http_client.delete(
+                f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{chunk_id}"
+            )
+            res.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Failed to delete chunk, details: {e.response.text}")
+            raise
 
 
 def _delete_vespa_docs(
@@ -559,18 +580,35 @@ def _query_vespa(query_params: Mapping[str, str | int | float]) -> list[Inferenc
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError("No/empty query received")
 
+    params = dict(
+        **query_params,
+        **{
+            "presentation.timing": True,
+        }
+        if LOG_VESPA_TIMING_INFORMATION
+        else {},
+    )
+
     response = requests.post(
         SEARCH_ENDPOINT,
-        json=dict(
-            **query_params,
-            **{
-                "presentation.timing": True,
-            }
-            if LOG_VESPA_TIMING_INFORMATION
-            else {},
-        ),
+        json=params,
     )
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        request_info = f"Headers: {response.request.headers}\nPayload: {params}"
+        response_info = (
+            f"Status Code: {response.status_code}\n"
+            f"Response Content: {response.text}"
+        )
+        error_base = "Failed to query Vespa"
+        logger.error(
+            f"{error_base}:\n"
+            f"{request_info}\n"
+            f"{response_info}\n"
+            f"Exception: {e}"
+        )
+        raise requests.HTTPError(error_base) from e
 
     response_json: dict[str, Any] = response.json()
     if LOG_VESPA_TIMING_INFORMATION:
@@ -826,10 +864,11 @@ class VespaIndex(DocumentIndex):
     def id_based_retrieval(
         self,
         document_id: str,
-        chunk_ind: int | None,
+        min_chunk_ind: int | None,
+        max_chunk_ind: int | None,
         filters: IndexFilters,
     ) -> list[InferenceChunk]:
-        if chunk_ind is None:
+        if min_chunk_ind is None and max_chunk_ind is None:
             vespa_chunk_ids = _get_vespa_chunk_ids_by_document_id(
                 document_id=document_id,
                 index_name=self.index_name,
@@ -850,14 +889,22 @@ class VespaIndex(DocumentIndex):
             inference_chunks.sort(key=lambda chunk: chunk.chunk_id)
             return inference_chunks
 
-        else:
-            filters_str = _build_vespa_filters(filters=filters, include_hidden=True)
-            yql = (
-                VespaIndex.yql_base.format(index_name=self.index_name)
-                + filters_str
-                + f"({DOCUMENT_ID} contains '{document_id}' and {CHUNK_ID} contains '{chunk_ind}')"
-            )
-        return _query_vespa({"yql": yql})
+        filters_str = _build_vespa_filters(filters=filters, include_hidden=True)
+        yql = (
+            VespaIndex.yql_base.format(index_name=self.index_name)
+            + filters_str
+            + f"({DOCUMENT_ID} contains '{document_id}'"
+        )
+
+        if min_chunk_ind is not None:
+            yql += f" and {min_chunk_ind} <= {CHUNK_ID}"
+        if max_chunk_ind is not None:
+            yql += f" and {max_chunk_ind} >= {CHUNK_ID}"
+        yql = yql + ")"
+
+        inference_chunks = _query_vespa({"yql": yql})
+        inference_chunks.sort(key=lambda chunk: chunk.chunk_id)
+        return inference_chunks
 
     def keyword_retrieval(
         self,
