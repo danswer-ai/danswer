@@ -10,6 +10,10 @@ const exampleMessages = [
   {
     heading: "What's the weather in NYC?",
     message: "What's the weather in NYC?",
+  },
+  {
+    heading: "When was bruno's parental leave?",
+    message: "When was bruno's parental leave?",
   }
 ];
 
@@ -22,11 +26,10 @@ export function EmptyScreen({
     <div className="mx-auto max-w-2xl px-4">
       <div className="rounded-lg border bg-background p-8 mb-4">
         <h1 className="mb-2 text-lg font-semibold">
-          Welcome to AI SDK 3.0 Generative UI demo!
+          Welcome to Power Chat Beta.
         </h1>
         <p className="mb-2 leading-normal text-muted-foreground">
-          This is a demo of an interactive financial assistant. It can show you
-          stocks, tell you their prices, and even help you buy shares.
+          This is a demo of an interactive financial assistant.
         </p>
         <p className="mb-2 leading-normal text-muted-foreground">
           The demo is built with{' '}

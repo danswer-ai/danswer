@@ -88,6 +88,7 @@ export function runOpenAICompletion<
               parsedArgs.data,
               (result: JSONValue) => {
                 console.log('result: ', result);
+                hasFunction = true;
                 // Recursively call the completion with the new tool results messages.
                 return openai.chat.completions.create({
                   ...rest,
@@ -104,9 +105,9 @@ export function runOpenAICompletion<
           onCompletion(text) {
             if (text.startsWith('{')) return;
             if (hasFinished) return;
-            console.log(text, true);
+            console.log('onCompletion', text, true);
             hasFinished = true;
-            onTextContent(text, true);
+            onTextContent(text, false);
           },
           onToken(token) {
             if (hasFinished) return;
@@ -117,6 +118,7 @@ export function runOpenAICompletion<
           onFinal() {
             if (hasFinished) return;
             if (hasFunction) return;
+            console.log('hasFinished: ', hasFinished, text);
             onTextContent(text, true);
             hasFinished = true;
           },

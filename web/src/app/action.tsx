@@ -128,7 +128,8 @@ You are a Ask Ginetta conversation bot and you can help users find messages on S
 Messages inside [] means that it's a UI element or a user event. For example:
 - "[Documents results ...]" means that a message is shown to the user with that information.
 
-Besides that, you can also chat with users and do whatever is need to help a Ginetta employee to do their job.`,
+Besides that, you can also chat with users and do whatever is need to help a Ginetta employee to do their job.
+Today is ${new Date().toLocaleDateString()} and the time is ${new Date().toLocaleTimeString()}.`,
       },
       ...aiState.get().map((info: any) => ({
         role: info.role,
@@ -154,6 +155,13 @@ Besides that, you can also chat with users and do whatever is need to help a Gin
             .describe(
               'The message is not structured query languages like SQL, but a natural language query. Use text that would likely be found in a slack message or document.'
             ),
+          selectedDocumentIds: z.array(
+            z
+              .number()
+              .describe(
+                "List of db_doc_id's' to narrow down the search results. Use this to get more context about these specific documents."
+              )
+          ),
         }),
       },
     ],
@@ -170,7 +178,7 @@ Besides that, you can also chat with users and do whatever is need to help a Gin
 
   completion.onFunctionCall(
     'weather',
-    async ({ location }, appendToolCallMessage) => {
+    async ({ location }, appendFunctionCallMessage) => {
       console.log('==============================');
       console.log('Function calling: weather');
 
@@ -180,124 +188,98 @@ Besides that, you can also chat with users and do whatever is need to help a Gin
         </BotCard>
       );
 
-      // await sleep(2000);
-
-      const stream = await appendToolCallMessage({
+      return appendFunctionCallMessage({
         temperature: (5 + 30 * Math.random()).toFixed(2),
       });
-      console.log('stream: ', stream);
-      return stream;
-      // let text = '';
-      // OpenAIStream(stream, {
-      //   onToken(token) {
-      //     text += token;
-      //     if (text.startsWith('{')) return;
-      //     reply.update(<BotCard>{text}</BotCard>);
-      //   },
-      //   // onFinal() {
-      //   //   reply.done(<BotCard>{text}</BotCard>);
-      //   // },
-      // });
-
-      // aiState.done([
-      //   ...aiState.get(),
-      //   {
-      //     role: "function",
-      //     name: "search_documents",
-      //     // content: `[Documents results ${finalMessage.message}\n\n${citationsContext}]`,
-      //   },
-      // ]);
-      // console.log("response: ", response);
-
-      // return response;
-
-      // console.log("response: ", response);
-
-      // reply.done(<BotCard>Done check the console</BotCard>);
-
-      // return;
     }
   );
-  completion.onFunctionCall('search_documents', async ({ message }) => {
-    console.log('==============================');
-    console.log('Function calling: search_documents');
-    // console.log("message: ", message);
+  completion.onFunctionCall(
+    'search_documents',
+    async ({ message }, appendFunctionCallMessage) => {
+      console.log('==============================');
+      console.log('Function calling: search_documents');
+      console.log('message: ', message);
+      // console.log("message: ", message);
 
-    reply.update(<BotCard>{spinner}</BotCard>);
+      reply.update(<BotCard>{spinner}</BotCard>);
 
-    // Fetch the api
-    // const documentsMessage = await (await fetch("")).json();
-    // let finalMessage: BackendMessage | null = null;
+      // Fetch the api
+      // const documentsMessage = await (await fetch("")).json();
+      // let finalMessage: BackendMessage | null = null;
 
-    let answer = '';
-    for await (const packetBunch of sendMessage({
-      message,
-      queryOverride: message,
-      parentMessageId: null,
-      chatSessionId: 15,
-      promptId: 4,
-      filters: null,
-      selectedDocumentIds: null,
-    })) {
-      for (const packet of packetBunch) {
-        console.log('packet: ', packet);
-        if (Object.hasOwn(packet, 'answer_piece')) {
-          answer += (packet as AnswerPiecePacket).answer_piece;
-        } else if (Object.hasOwn(packet, 'top_documents')) {
-          // documents = (packet as DocumentsResponse).top_documents;
-          // query = (packet as DocumentsResponse).rephrased_query;
-          // retrievalType = RetrievalType.Search;
-          // if (documents && documents.length > 0) {
-          //   // point to the latest message (we don't know the messageId yet, which is why
-          //   // we have to use -1)
-          //   setSelectedMessageForDocDisplay(-1);
-          // }
-        } else if (Object.hasOwn(packet, 'error')) {
-          const error = (packet as StreamingError).error;
-          reply.done(<BotCard>{error}</BotCard>);
+      let answer = '';
+      for await (const packetBunch of sendMessage({
+        message,
+        queryOverride: message,
+        parentMessageId: null,
+        chatSessionId: 15,
+        promptId: 4,
+        filters: null,
+        selectedDocumentIds: null,
+      })) {
+        for (const packet of packetBunch) {
+          if (Object.hasOwn(packet, 'answer_piece')) {
+            answer += (packet as AnswerPiecePacket).answer_piece;
+          } else if (Object.hasOwn(packet, 'top_documents')) {
+            // documents = (packet as DocumentsResponse).top_documents;
+            // query = (packet as DocumentsResponse).rephrased_query;
+            // retrievalType = RetrievalType.Search;
+            // if (documents && documents.length > 0) {
+            //   // point to the latest message (we don't know the messageId yet, which is why
+            //   // we have to use -1)
+            //   setSelectedMessageForDocDisplay(-1);
+            // }
+          } else if (Object.hasOwn(packet, 'error')) {
+            const error = (packet as StreamingError).error;
+            reply.done(<BotCard>{error}</BotCard>);
 
-          aiState.done([
-            ...aiState.get(),
-            {
-              role: 'function',
-              name: 'search_documents',
-              content: `[Error: ${error}]`,
-            },
-          ]);
-        } else if (Object.hasOwn(packet, 'message_id')) {
-          const finalMessage = packet as BackendMessage;
-          reply.done(<BotCard>{finalMessage.message}</BotCard>);
+            aiState.done([
+              ...aiState.get(),
+              {
+                role: 'function',
+                name: 'search_documents',
+                content: `[Error: ${error}]`,
+              },
+            ]);
+            return appendFunctionCallMessage({ message: error });
+          } else if (Object.hasOwn(packet, 'message_id')) {
+            const finalMessage = packet as BackendMessage;
+            reply.update(<BotCard>{finalMessage.message}</BotCard>);
 
-          // Add citation to the AI state to allow the AI to know about when and who the citation was made.
-          const citationsContext = Object.entries(finalMessage?.citations)?.map(
-            ([i, db_doc_id]) => {
+            // Add citation to the AI state to allow the AI to know about when and who the citation was made.
+            const citationsContext = Object.entries(
+              finalMessage?.citations
+            )?.map(([i, db_doc_id]) => {
               const foundDoc = finalMessage?.context_docs?.top_documents?.find(
                 (doc) => doc.db_doc_id === db_doc_id
               );
 
               if (foundDoc) {
-                return `Citation [${i}]: ${foundDoc.semantic_identifier}
+                return `Citation [${i}]: db_doc_id: ${foundDoc.db_doc_id}, ${foundDoc.semantic_identifier}
 At: ${foundDoc.updated_at}`;
               }
-            }
-          );
-          console.log('citationsContext: ', citationsContext);
+            });
+            console.log('citationsContext: ', citationsContext);
 
-          aiState.done([
-            ...aiState.get(),
-            {
-              role: 'function',
-              name: 'search_documents',
-              content: `[Documents results ${finalMessage.message}\n\n${citationsContext}]`,
-            },
-          ]);
-          return;
+            aiState.update([
+              ...aiState.get(),
+              {
+                role: 'function',
+                name: 'search_documents',
+                content: `[Documents results ${finalMessage.message}\n\n${citationsContext}]`,
+              },
+            ]);
+            return appendFunctionCallMessage({
+              message: finalMessage.message,
+              citationsContext,
+            });
+          }
+
+          reply.update(<BotCard>{answer}</BotCard>);
         }
-
-        reply.update(<BotCard>{answer}</BotCard>);
       }
     }
-  });
+  );
 
   return {
     id: Date.now(),
