@@ -52,6 +52,7 @@ from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import get_default_llm_version
 from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.search.search_nlp_models import warm_up_encoders
+from danswer.server.auth_check import check_router_auth
 from danswer.server.danswer_api.ingestion import get_danswer_api_key
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
 from danswer.server.documents.cc_pair import router as cc_pair_router
@@ -352,6 +353,9 @@ def get_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Ensure all routes have auth enabled or are explicitly marked as public
+    check_router_auth(application)
 
     return application
 

@@ -32,7 +32,7 @@ from shared_configs.configs import MODEL_SERVER_PORT
 logger = setup_logger()
 
 
-def download_nltk_data():
+def download_nltk_data() -> None:
     resources = {
         "stopwords": "corpora/stopwords",
         "wordnet": "corpora/wordnet",
