@@ -42,6 +42,9 @@ RUN apt-get remove -y --allow-remove-essential perl-base xserver-common xvfb cma
     rm -rf /var/lib/apt/lists/* && \
     rm /usr/local/lib/python3.11/site-packages/tornado/test/test.key
 
+# Pre-downloading models for setups with limited egress
+RUN python -c "from transformers import AutoTokenizer; AutoTokenizer.from_pretrained('intfloat/e5-base-v2')"
+
 # Pre-downloading NLTK for setups with limited egress
 RUN python -c "import nltk; \
 nltk.download('stopwords', quiet=True); \
