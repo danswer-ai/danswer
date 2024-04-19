@@ -360,7 +360,7 @@ def check_index_swap(db_session: Session) -> None:
     new index is done building. If so, swap the indices and expire the old one."""
     # Default CC-pair created for Ingestion API unused here
     all_cc_pairs = get_connector_credential_pairs(db_session)
-    cc_pair_count = len(all_cc_pairs) - 1
+    cc_pair_count = max(len(all_cc_pairs) - 1, 0)
     embedding_model = get_secondary_db_embedding_model(db_session)
 
     if not embedding_model:
@@ -374,6 +374,7 @@ def check_index_swap(db_session: Session) -> None:
         raise RuntimeError("More unique indexings than cc pairs, should not occur")
 
     if cc_pair_count == unique_cc_indexings:
+        logger.info("Updating Vespa Index")
         # Swap indices
         now_old_embedding_model = get_current_db_embedding_model(db_session)
         update_embedding_model_status(
@@ -388,17 +389,19 @@ def check_index_swap(db_session: Session) -> None:
             db_session=db_session,
         )
 
-        # Expire jobs for the now past index/embedding model
-        cancel_indexing_attempts_past_model(db_session)
+        if unique_cc_indexings > 0:
+            # Expire jobs for the now past index/embedding model
+            cancel_indexing_attempts_past_model(db_session)
 
-        # Recount aggregates
-        for cc_pair in all_cc_pairs:
-            resync_cc_pair(cc_pair, db_session=db_session)
+            # Recount aggregates
+            for cc_pair in all_cc_pairs:
+                resync_cc_pair(cc_pair, db_session=db_session)
 
 
 def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> None:
     engine = get_sqlalchemy_engine()
     with Session(engine) as db_session:
+        check_index_swap(db_session=db_session)
         db_embedding_model = get_current_db_embedding_model(db_session)
 
     # So that the first time users aren't surprised by really slow speed of first

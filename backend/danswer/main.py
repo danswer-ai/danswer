@@ -20,6 +20,7 @@ from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
 from danswer.auth.users import fastapi_users
+from danswer.background.update import check_index_swap
 from danswer.chat.load_yamls import load_chat_yamls
 from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.configs.app_configs import APP_HOST
@@ -179,6 +180,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         )
 
     with Session(engine) as db_session:
+        check_index_swap(db_session=db_session)
         db_embedding_model = get_current_db_embedding_model(db_session)
         secondary_db_embedding_model = get_secondary_db_embedding_model(db_session)
 
