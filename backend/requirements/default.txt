@@ -9,6 +9,7 @@ dask==2023.8.1
 ddtrace==2.6.5
 distributed==2023.8.1
 fastapi==0.109.2
+fastapi-health==0.4.0
 fastapi-users==12.1.3
 fastapi-users-db-sqlalchemy==5.0.0
 filelock==3.12.0
