@@ -3,7 +3,7 @@ name: Build and Push Web Image on Tag
 on:
   push:
     tags:
-      - 'DISABLED'
+      - '*'
 
 jobs:
   build-and-push:
