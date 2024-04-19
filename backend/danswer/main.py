@@ -46,6 +46,7 @@ from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
+from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs.port_configs import port_filesystem_to_postgres
 from danswer.llm.factory import get_default_llm
@@ -180,6 +181,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         )
 
     with Session(engine) as db_session:
+        check_index_swap(db_session=db_session)
         db_embedding_model = get_current_db_embedding_model(db_session)
         secondary_db_embedding_model = get_secondary_db_embedding_model(db_session)
 
