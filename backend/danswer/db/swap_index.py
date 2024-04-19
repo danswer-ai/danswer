@@ -35,7 +35,6 @@ def check_index_swap(db_session: Session) -> None:
         raise RuntimeError("More unique indexings than cc pairs, should not occur")
 
     if cc_pair_count == 0 or cc_pair_count == unique_cc_indexings:
-        logger.info("Updating Vespa Index")
         # Swap indices
         now_old_embedding_model = get_current_db_embedding_model(db_session)
         update_embedding_model_status(
