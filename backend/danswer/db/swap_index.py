@@ -50,7 +50,7 @@ def check_index_swap(db_session: Session) -> None:
             db_session=db_session,
         )
 
-        if unique_cc_indexings > 0:
+        if cc_pair_count > 0:
             # Expire jobs for the now past index/embedding model
             cancel_indexing_attempts_past_model(db_session)
 
