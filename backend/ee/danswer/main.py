@@ -19,6 +19,7 @@ from danswer.utils.variable_functionality import global_version
 from ee.danswer.configs.app_configs import OPENID_CONFIG_URL
 from ee.danswer.server.analytics.api import router as analytics_router
 from ee.danswer.server.api_key.api import router as api_key_router
+from ee.danswer.server.auth_check import check_ee_router_auth
 from ee.danswer.server.enterprise_settings.api import (
     admin_router as enterprise_settings_admin_router,
 )
@@ -85,6 +86,10 @@ def get_ee_application() -> FastAPI:
         application, enterprise_settings_admin_router
     )
     include_router_with_global_prefix_prepended(application, enterprise_settings_router)
+
+    # Ensure all routes have auth enabled or are explicitly marked as public
+    check_ee_router_auth(application)
+
     return application
 
 
