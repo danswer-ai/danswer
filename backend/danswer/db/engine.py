@@ -52,7 +52,7 @@ def build_connection_string(
     port: str = POSTGRES_PORT,
     db: str = POSTGRES_DB,
 ) -> str:
-    return f"postgresql+{db_api}://{user}:{password}@{host}:{port}/{db}"
+    return f"postgresql+{db_api}://{user}:{password}@{host}:{port}/{db}?sslmode=disable"
 
 
 def get_sqlalchemy_engine() -> Engine:
