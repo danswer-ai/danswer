@@ -68,7 +68,7 @@ def protected_url_check(url: str) -> None:
         ip = address[4][0]
         if not ipaddress.ip_address(ip).is_global:
             raise ValueError(
-                f"Non-global IP address detected: {ip}, skipping page {url}."
+                f"Non-global IP address detected: {ip}, skipping page {url}. "
                 f"The Web Connector is not allowed to read loopback, link-local, or private ranges"
             )
 
@@ -212,6 +212,10 @@ class WebConnector(LoadConnector):
         base_url = to_visit[0]  # For the recursive case
         doc_batch: list[Document] = []
 
+        # Needed to report error
+        at_least_one_doc = False
+        last_error = None
+
         playwright, context = start_playwright()
         restart_playwright = False
         while to_visit:
@@ -222,8 +226,9 @@ class WebConnector(LoadConnector):
 
             try:
                 protected_url_check(current_url)
-            except Exception:
-                logger.warning(f"Invalid URL: {current_url}")
+            except Exception as e:
+                last_error = f"Invalid URL {current_url} due to {e}"
+                logger.warning(last_error)
                 continue
 
             logger.info(f"Visiting {current_url}")
@@ -273,9 +278,8 @@ class WebConnector(LoadConnector):
                             to_visit.append(link)
 
                 if page_response and str(page_response.status)[0] in ("4", "5"):
-                    logger.info(
-                        f"Skipped indexing {current_url} due to HTTP {page_response.status} response"
-                    )
+                    last_error = f"Skipped indexing {current_url} due to HTTP {page_response.status} response"
+                    logger.info(last_error)
                     continue
 
                 parsed_html = web_html_cleanup(soup, self.mintlify_cleanup)
@@ -294,7 +298,8 @@ class WebConnector(LoadConnector):
 
                 page.close()
             except Exception as e:
-                logger.error(f"Failed to fetch '{current_url}': {e}")
+                last_error = f"Failed to fetch '{current_url}': {e}"
+                logger.error(last_error)
                 playwright.stop()
                 restart_playwright = True
                 continue
@@ -302,12 +307,19 @@ class WebConnector(LoadConnector):
             if len(doc_batch) >= self.batch_size:
                 playwright.stop()
                 restart_playwright = True
+                at_least_one_doc = True
                 yield doc_batch
                 doc_batch = []
 
         if doc_batch:
             playwright.stop()
+            at_least_one_doc = True
             yield doc_batch
+
+        if not at_least_one_doc:
+            if last_error:
+                raise RuntimeError(last_error)
+            raise RuntimeError("No valid pages found.")
 
 
 if __name__ == "__main__":
