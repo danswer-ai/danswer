@@ -1,4 +1,6 @@
 import io
+import ipaddress
+import socket
 from enum import Enum
 from typing import Any
 from typing import cast
@@ -27,7 +29,6 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
 
-
 logger = setup_logger()
 
 
@@ -44,15 +45,26 @@ class WEB_CONNECTOR_VALID_SETTINGS(str, Enum):
 
 def protected_url_check(url: str) -> None:
     parse = urlparse(url)
-    if parse.scheme == "file":
-        raise ValueError("Not permitted to read local files via Web Connector.")
-    if (
-        parse.scheme == "localhost"
-        or parse.scheme == "127.0.0.1"
-        or parse.hostname == "localhost"
-        or parse.hostname == "127.0.0.1"
-    ):
-        raise ValueError("Not permitted to read localhost urls.")
+    if parse.scheme != "http" and parse.scheme != "https":
+        raise ValueError("URL must be of scheme https?://")
+
+    if not parse.hostname:
+        raise ValueError("URL must include a hostname")
+
+    try:
+        # This may give a large list of IP addresses for domains with extensive DNS configurations
+        # such as large distributed systems of CDNs
+        info = socket.getaddrinfo(parse.hostname, None)
+    except socket.gaierror as e:
+        raise ConnectionError(f"DNS resolution failed for {parse.hostname}: {e}")
+
+    for address in info:
+        ip = address[4][0]
+        if not ipaddress.ip_address(ip).is_global:
+            raise ValueError(
+                f"Non-global IP address detected: {ip}, skipping page {url}."
+                f"The Web Connector is not allowed to read loopback, link-local, or private ranges"
+            )
 
 
 def check_internet_connection(url: str) -> None:
@@ -202,7 +214,11 @@ class WebConnector(LoadConnector):
                 continue
             visited_links.add(current_url)
 
-            protected_url_check(current_url)
+            try:
+                protected_url_check(current_url)
+            except Exception:
+                logger.warning(f"Invalid URL: {current_url}")
+                continue
 
             logger.info(f"Visiting {current_url}")
 
