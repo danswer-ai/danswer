@@ -67,7 +67,7 @@ def get_sqlalchemy_engine() -> Engine:
 
 
 def get_sqlalchemy_async_engine() -> AsyncEngine:
-    connect_args = {"sslmode": "disable"}
+    connect_args = {"ssl": "disable"}
     global _ASYNC_ENGINE
     if _ASYNC_ENGINE is None:
         connection_string = build_connection_string()
