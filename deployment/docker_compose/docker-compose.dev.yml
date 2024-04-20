@@ -80,7 +80,6 @@ services:
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
-      - model_cache_nltk:/root/nltk_data/
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -174,7 +173,6 @@ services:
     volumes:
       - local_dynamic_storage:/home/storage
       - file_connector_tmp_storage:/home/file_connector_storage
-      - model_cache_nltk:/root/nltk_data/
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -218,7 +216,6 @@ services:
       # Set to debug to get more fine-grained logs
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
-      - model_cache_torch:/root/.cache/torch/
       - model_cache_huggingface:/root/.cache/huggingface/
     logging:
       driver: json-file
@@ -246,7 +243,6 @@ services:
       # Set to debug to get more fine-grained logs
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
-      - model_cache_torch:/root/.cache/torch/
       - model_cache_huggingface:/root/.cache/huggingface/
     logging:
       driver: json-file
@@ -314,10 +310,12 @@ services:
         
 
 volumes:
+  # local_dynamic_storage is legacy only now
   local_dynamic_storage:
-  file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them
+  # used to store files uploaded by the user temporarily while we are indexing them
+  # file_connector_tmp_storage is legacy only now
+  file_connector_tmp_storage:
   db_volume:
   vespa_volume:
-  model_cache_torch:
-  model_cache_nltk:
+  # Created by the container itself
   model_cache_huggingface:
