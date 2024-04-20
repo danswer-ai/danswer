@@ -31,8 +31,10 @@ def check_index_swap(db_session: Session) -> None:
         embedding_model_id=embedding_model.id, db_session=db_session
     )
 
+    # Index Attempts are cleaned up as well when the cc-pair is deleted so the logic in this
+    # function is correct. The unique_cc_indexings are specifically for the existing cc-pairs
     if unique_cc_indexings > cc_pair_count:
-        raise RuntimeError("More unique indexings than cc pairs, should not occur")
+        logger.error("More unique indexings than cc pairs, should not occur")
 
     if cc_pair_count == 0 or cc_pair_count == unique_cc_indexings:
         # Swap indices
