@@ -736,7 +736,6 @@ class Prompt(Base):
     __tablename__ = "prompt"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # If not belong to a user, then it's shared
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
@@ -770,7 +769,6 @@ class Persona(Base):
     __tablename__ = "persona"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # If not belong to a user, then it's shared
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
@@ -824,7 +822,7 @@ class Persona(Base):
         back_populates="personas",
     )
     # Owner
-    user: Mapped[User] = relationship("User", back_populates="personas")
+    user: Mapped[User | None] = relationship("User", back_populates="personas")
     # Other users with access
     users: Mapped[list[User]] = relationship(
         "User",

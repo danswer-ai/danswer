@@ -140,7 +140,7 @@ def patch_slack_bot_config(
         existing_persona_id = existing_slack_bot_config.persona_id
         if existing_persona_id is not None:
             persona = get_persona_by_id(
-                persona_id=existing_persona_id, user_id=None, db_session=db_session
+                persona_id=existing_persona_id, user=None, db_session=db_session
             )
 
             if not persona.name.startswith(SLACK_BOT_PERSONA_PREFIX):

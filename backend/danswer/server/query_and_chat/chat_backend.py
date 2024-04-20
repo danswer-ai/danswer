@@ -327,7 +327,7 @@ def get_max_document_tokens(
     try:
         persona = get_persona_by_id(
             persona_id=persona_id,
-            user_id=user.id if user else None,
+            user=user,
             db_session=db_session,
         )
     except ValueError:

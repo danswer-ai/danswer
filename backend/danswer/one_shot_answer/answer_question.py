@@ -173,7 +173,7 @@ def stream_answer_objects(
     prompt = None
     if query_req.prompt_id is not None:
         prompt = get_prompt_by_id(
-            prompt_id=query_req.prompt_id, user_id=user_id, db_session=db_session
+            prompt_id=query_req.prompt_id, user=user, db_session=db_session
         )
     if prompt is None:
         if not chat_session.persona.prompts:
