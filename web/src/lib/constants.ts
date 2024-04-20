@@ -23,3 +23,8 @@ export const HEADER_PADDING = "pt-[64px]";
 // can be the single source of truth
 export const EE_ENABLED =
   process.env.NEXT_PUBLIC_ENABLE_PAID_EE_FEATURES?.toLowerCase() === "true";
+
+// Enterprise-only settings
+export const CUSTOM_ANALYTICS_ENABLED = process.env.CUSTOM_ANALYTICS_SECRET_KEY
+  ? true
+  : false;
