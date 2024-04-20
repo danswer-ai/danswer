@@ -52,22 +52,28 @@ def build_connection_string(
     port: str = POSTGRES_PORT,
     db: str = POSTGRES_DB,
 ) -> str:
-    return f"postgresql+{db_api}://{user}:{password}@{host}:{port}/{db}?sslmode=disable"
+    return f"postgresql+{db_api}://{user}:{password}@{host}:{port}/{db}"
 
 
 def get_sqlalchemy_engine() -> Engine:
+    connect_args = {"sslmode": "disable"}
     global _SYNC_ENGINE
     if _SYNC_ENGINE is None:
         connection_string = build_connection_string(db_api=SYNC_DB_API)
-        _SYNC_ENGINE = create_engine(connection_string, pool_size=50, max_overflow=25)
+        _SYNC_ENGINE = create_engine(
+            connection_string, pool_size=50, max_overflow=25, connect_args=connect_args
+        )
     return _SYNC_ENGINE
 
 
 def get_sqlalchemy_async_engine() -> AsyncEngine:
+    connect_args = {"sslmode": "disable"}
     global _ASYNC_ENGINE
     if _ASYNC_ENGINE is None:
         connection_string = build_connection_string()
-        _ASYNC_ENGINE = create_async_engine(connection_string)
+        _ASYNC_ENGINE = create_async_engine(
+            connection_string, connect_args=connect_args
+        )
     return _ASYNC_ENGINE
 
 
