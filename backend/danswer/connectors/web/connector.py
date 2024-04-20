@@ -44,6 +44,12 @@ class WEB_CONNECTOR_VALID_SETTINGS(str, Enum):
 
 
 def protected_url_check(url: str) -> None:
+    """Couple considerations:
+    - DNS mapping changes over time so we don't want to cache the results
+    - Fetching this is assumed to be relatively fast compared to other bottlenecks like reading
+      the page or embedding the contents
+    - To be extra safe, all IPs associated with the URL must be global
+    """
     parse = urlparse(url)
     if parse.scheme != "http" and parse.scheme != "https":
         raise ValueError("URL must be of scheme https?://")
