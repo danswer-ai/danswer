@@ -71,6 +71,26 @@ def run_jobs(exclude_indexing: bool) -> None:
 
         indexing_thread.start()
         indexing_thread.join()
+    try:
+        update_env = os.environ.copy()
+        update_env["PYTHONPATH"] = "."
+        cmd_perm_sync = ["python", "ee.danswer/background/permission_sync.py"]
+
+        indexing_process = subprocess.Popen(
+            cmd_perm_sync,
+            env=update_env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+
+        perm_sync_thread = threading.Thread(
+            target=monitor_process, args=("INDEXING", indexing_process)
+        )
+        perm_sync_thread.start()
+        perm_sync_thread.join()
+    except Exception:
+        pass
 
     worker_thread.join()
     beat_thread.join()
