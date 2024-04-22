@@ -73,6 +73,7 @@ import { UserDropdown } from "@/components/UserDropdown";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { ChatPopup } from "./ChatPopup";
+import { ChatBanner } from "./ChatBanner";
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
@@ -946,6 +947,10 @@ export function ChatPage({
                       className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
                       ref={scrollableDivRef}
                     >
+                      {/* ChatBanner is a custom banner that displays a admin-specified message at 
+                      the top of the chat page. Only used in the EE version of the app. */}
+                      <ChatBanner />
+
                       {livePersona && (
                         <div className="sticky top-0 left-80 z-10 w-full bg-background flex">
                           <div className="mt-2 flex w-full">
