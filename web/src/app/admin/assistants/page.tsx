@@ -45,7 +45,7 @@ export default async function Page() {
 
         <Title>Create an Assistant</Title>
         <Link
-          href="/admin/personas/new"
+          href="/admin/assistants/new"
           className="flex py-2 px-4 mt-2 border border-border h-fit cursor-pointer hover:bg-hover text-sm w-40"
         >
           <div className="mx-auto flex">
