@@ -154,7 +154,7 @@ export function PersonasTable({ personas }: { personas: Persona[] }) {
                       onClick={async () => {
                         const response = await deletePersona(persona.id);
                         if (response.ok) {
-                          router.push(`/admin/personas?u=${Date.now()}`);
+                          router.refresh();
                         } else {
                           alert(
                             `Failed to delete persona - ${await response.text()}`

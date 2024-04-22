@@ -4,11 +4,11 @@ import { FiChevronLeft } from "react-icons/fi";
 import Link from "next/link";
 import { AssistantEditor } from "@/app/admin/assistants/AssistantEditor";
 import { SuccessfulPersonaUpdateRedirectType } from "@/app/admin/assistants/enums";
-import { fetchPersonaEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
+import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 
 export default async function Page() {
-  const [values, error] = await fetchPersonaEditorInfoSS();
+  const [values, error] = await fetchAssistantEditorInfoSS();
 
   let body;
   if (!values) {

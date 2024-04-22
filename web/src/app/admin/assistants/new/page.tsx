@@ -4,11 +4,11 @@ import { RobotIcon } from "@/components/icons/icons";
 import { BackButton } from "@/components/BackButton";
 import { Card } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { fetchPersonaEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
+import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
 import { SuccessfulPersonaUpdateRedirectType } from "../enums";
 
 export default async function Page() {
-  const [values, error] = await fetchPersonaEditorInfoSS();
+  const [values, error] = await fetchAssistantEditorInfoSS();
 
   let body;
   if (!values) {

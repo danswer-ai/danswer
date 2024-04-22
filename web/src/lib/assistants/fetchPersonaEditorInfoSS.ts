@@ -3,7 +3,7 @@ import { CCPairBasicInfo, DocumentSet, User } from "../types";
 import { getCurrentUserSS } from "../userSS";
 import { fetchSS } from "../utilsSS";
 
-export async function fetchPersonaEditorInfoSS(
+export async function fetchAssistantEditorInfoSS(
   personaId?: number | string
 ): Promise<
   | [

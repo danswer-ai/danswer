@@ -1,14 +1,15 @@
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { Card } from "@tremor/react";
+import { Card, Text, Title } from "@tremor/react";
 import { HeaderWrapper } from "@/components/header/HeaderWrapper";
 import { FiChevronLeft } from "react-icons/fi";
 import Link from "next/link";
 import { AssistantEditor } from "@/app/admin/assistants/AssistantEditor";
 import { SuccessfulPersonaUpdateRedirectType } from "@/app/admin/assistants/enums";
-import { fetchPersonaEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
+import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
+import { DeletePersonaButton } from "@/app/admin/assistants/[id]/DeletePersonaButton";
 
 export default async function Page({ params }: { params: { id: string } }) {
-  const [values, error] = await fetchPersonaEditorInfoSS(params.id);
+  const [values, error] = await fetchAssistantEditorInfoSS(params.id);
 
   let body;
   if (!values) {
@@ -29,6 +30,17 @@ export default async function Page({ params }: { params: { id: string } }) {
                 redirectType={SuccessfulPersonaUpdateRedirectType.CHAT}
               />
             </Card>
+
+            <Title className="mt-12">Delete Assistant</Title>
+            <Text>
+              Click the button below to permanently delete this assistant.
+            </Text>
+            <div className="flex mt-6">
+              <DeletePersonaButton
+                personaId={values.existingPersona!.id}
+                redirectType={SuccessfulPersonaUpdateRedirectType.CHAT}
+              />
+            </div>
           </div>
         </div>
       </div>
