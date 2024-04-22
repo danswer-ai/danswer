@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
@@ -61,7 +62,7 @@ def get_sqlalchemy_engine() -> Engine:
     if _SYNC_ENGINE is None:
         connection_string = build_connection_string(db_api=SYNC_DB_API)
         _SYNC_ENGINE = create_engine(
-            connection_string, pool_size=50, max_overflow=25, connect_args=connect_args
+            connection_string, poolclass=NullPool, connect_args=connect_args
         )
     return _SYNC_ENGINE
 
