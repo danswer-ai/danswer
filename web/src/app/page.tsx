@@ -5,7 +5,7 @@ export default async function Page() {
   const settings = await fetchSettingsSS();
 
   if (!settings) {
-    redirect("/search");
+    redirect("/chat");
   }
 
   if (settings.settings.default_page === "search") {
