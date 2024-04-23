@@ -23,7 +23,7 @@ import { questionValidationStreamed } from "@/lib/search/streamingQuestionValida
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { PersonaSelector } from "./PersonaSelector";
 import { computeAvailableFilters } from "@/lib/filters";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
 
 const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
