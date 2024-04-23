@@ -5,22 +5,20 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.auth.schemas import UserRole
+from danswer.configs.constants import DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN
+from danswer.configs.constants import DANSWER_API_KEY_PREFIX
+from danswer.configs.constants import UNNAMED_KEY_PLACEHOLDER
 from danswer.db.models import ApiKey
 from danswer.db.models import User
 from ee.danswer.auth.api_key import ApiKeyDescriptor
 from ee.danswer.auth.api_key import build_displayable_api_key
 from ee.danswer.auth.api_key import generate_api_key
 from ee.danswer.auth.api_key import hash_api_key
-from ee.danswer.db.constants import DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN
 from ee.danswer.server.api_key.models import APIKeyArgs
-
-_DANSWER_API_KEY = "danswer_api_key"
 
 
 def is_api_key_email_address(email: str) -> bool:
-    return email.endswith(
-        f"@{DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN}"
-    ) and email.startswith(_DANSWER_API_KEY)
+    return email.endswith(f"@{DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN}")
 
 
 def fetch_api_keys(db_session: Session) -> list[ApiKeyDescriptor]:
@@ -46,6 +44,13 @@ def fetch_user_for_api_key(hashed_api_key: str, db_session: Session) -> User | N
     return db_session.scalar(select(User).where(User.id == api_key.user_id))  # type: ignore
 
 
+def get_api_key_fake_email(
+    name: str,
+    unique_id: str,
+) -> str:
+    return f"{DANSWER_API_KEY_PREFIX}{name}@{unique_id}{DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN}"
+
+
 def insert_api_key(
     db_session: Session, api_key_args: APIKeyArgs, user_id: uuid.UUID | None
 ) -> ApiKeyDescriptor:
@@ -53,9 +58,10 @@ def insert_api_key(
     api_key = generate_api_key()
     api_key_user_id = uuid.uuid4()
 
+    display_name = api_key_args.name or UNNAMED_KEY_PLACEHOLDER
     api_key_user_row = User(
         id=api_key_user_id,
-        email=f"{_DANSWER_API_KEY}__{api_key_user_id}@{DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN}",
+        email=get_api_key_fake_email(display_name, str(api_key_user_id)),
         # a random password for the "user"
         hashed_password=std_password_helper.hash(std_password_helper.generate()),
         is_active=True,
@@ -91,7 +97,16 @@ def update_api_key(
     if existing_api_key is None:
         raise ValueError(f"API key with id {api_key_id} does not exist")
 
-    existing_api_key.name = api_key_args.name
+    new_name = api_key_args.name or UNNAMED_KEY_PLACEHOLDER
+
+    existing_api_key.name = new_name
+    api_key_user = db_session.scalar(
+        select(User).where(User.id == existing_api_key.user_id)  # type: ignore
+    )
+    if api_key_user is None:
+        raise RuntimeError("API Key does not have associated user.")
+
+    api_key_user.email = get_api_key_fake_email(new_name, str(api_key_user.id))
     db_session.commit()
 
     return ApiKeyDescriptor(
