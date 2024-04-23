@@ -18,7 +18,7 @@ from ee.danswer.server.api_key.models import APIKeyArgs
 
 
 def is_api_key_email_address(email: str) -> bool:
-    return email.endswith(f"@{DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN}")
+    return email.endswith(f"{DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN}")
 
 
 def fetch_api_keys(db_session: Session) -> list[ApiKeyDescriptor]:
