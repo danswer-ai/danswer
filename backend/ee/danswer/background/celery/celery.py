@@ -37,7 +37,7 @@ def sync_user_group_task(user_group_id: int) -> None:
             error_msg = str(e)
             logger.exception(f"Failed to sync user group - {error_msg}")
 
-    # need a new session so this can be committed (previous transaction may have
+    # Need a new session so this can be committed (previous transaction may have
     # been rolled back due to the exception)
     with Session(engine) as db_session:
         mark_task_finished(task_name, db_session, success=error_msg is None)

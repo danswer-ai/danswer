@@ -4,7 +4,6 @@ from danswer.access.access import get_access_for_documents
 from danswer.db.document import prepare_to_modify_documents
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
-from danswer.db.engine import get_sqlalchemy_engine
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
@@ -21,29 +20,31 @@ _SYNC_BATCH_SIZE = 1000
 
 
 def _sync_user_group_batch(
-    document_ids: list[str], document_index: DocumentIndex
+    document_ids: list[str], document_index: DocumentIndex, db_session: Session
 ) -> None:
     logger.debug(f"Syncing document sets for: {document_ids}")
-    # begin a transaction, release lock at the end
-    with Session(get_sqlalchemy_engine()) as db_session:
-        # acquires a lock on the documents so that no other process can modify them
-        prepare_to_modify_documents(db_session=db_session, document_ids=document_ids)
 
-        # get current state of document sets for these documents
-        document_id_to_access = get_access_for_documents(
-            document_ids=document_ids, db_session=db_session
-        )
+    # Acquires a lock on the documents so that no other process can modify them
+    prepare_to_modify_documents(db_session=db_session, document_ids=document_ids)
 
-        # update Vespa
-        document_index.update(
-            update_requests=[
-                UpdateRequest(
-                    document_ids=[document_id],
-                    access=document_id_to_access[document_id],
-                )
-                for document_id in document_ids
-            ]
-        )
+    # get current state of document sets for these documents
+    document_id_to_access = get_access_for_documents(
+        document_ids=document_ids, db_session=db_session
+    )
+
+    # update Vespa
+    document_index.update(
+        update_requests=[
+            UpdateRequest(
+                document_ids=[document_id],
+                access=document_id_to_access[document_id],
+            )
+            for document_id in document_ids
+        ]
+    )
+
+    # Finish the transaction and release the locks
+    db_session.commit()
 
 
 def sync_user_groups(user_group_id: int, db_session: Session) -> None:
@@ -70,6 +71,7 @@ def sync_user_groups(user_group_id: int, db_session: Session) -> None:
         _sync_user_group_batch(
             document_ids=[document.id for document in document_batch],
             document_index=document_index,
+            db_session=db_session,
         )
 
     if user_group.is_up_for_deletion:
