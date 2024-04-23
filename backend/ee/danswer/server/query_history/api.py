@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 import danswer.db.models as db_models
 from danswer.auth.users import current_admin_user
+from danswer.auth.users import get_display_email
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
@@ -76,7 +77,7 @@ class MessageSnapshot(BaseModel):
 
 class ChatSessionSnapshot(BaseModel):
     id: int
-    user_email: str | None
+    user_email: str
     name: str | None
     messages: list[MessageSnapshot]
     persona_name: str
@@ -89,7 +90,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
     retrieved_documents: list[AbridgedSearchDoc]
     feedback: QAFeedbackType | None
     persona_name: str
-    user_email: str | None
+    user_email: str
     time_created: datetime
 
     @classmethod
@@ -113,7 +114,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
                 retrieved_documents=ai_message.documents,
                 feedback=ai_message.feedback,
                 persona_name=chat_session_snapshot.persona_name,
-                user_email=chat_session_snapshot.user_email,
+                user_email=get_display_email(chat_session_snapshot.user_email),
                 time_created=user_message.time_created,
             )
             for user_message, ai_message in message_pairs
@@ -131,7 +132,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
             ),
             "feedback": self.feedback.value if self.feedback else "",
             "persona_name": self.persona_name,
-            "user_email": self.user_email if self.user_email else "",
+            "user_email": self.user_email,
             "time_created": str(self.time_created),
         }
 
@@ -181,7 +182,9 @@ def snapshot_from_chat_session(
 
     return ChatSessionSnapshot(
         id=chat_session.id,
-        user_email=chat_session.user.email if chat_session.user else None,
+        user_email=get_display_email(
+            chat_session.user.email if chat_session.user else None
+        ),
         name=chat_session.description,
         messages=[
             MessageSnapshot.build(message)
