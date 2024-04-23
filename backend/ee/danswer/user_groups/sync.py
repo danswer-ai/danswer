@@ -16,7 +16,7 @@ from ee.danswer.db.user_group import mark_user_group_as_synced
 
 logger = setup_logger()
 
-_SYNC_BATCH_SIZE = 1000
+_SYNC_BATCH_SIZE = 512
 
 
 def _sync_user_group_batch(
