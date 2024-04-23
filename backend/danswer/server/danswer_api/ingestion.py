@@ -143,6 +143,7 @@ def document_ingestion(
         embedder=index_embedding_model,
         document_index=curr_doc_index,
         ignore_time_skip=True,
+        db_session=db_session,
     )
 
     new_doc, chunks = indexing_pipeline(
@@ -178,6 +179,7 @@ def document_ingestion(
             embedder=new_index_embedding_model,
             document_index=sec_doc_index,
             ignore_time_skip=True,
+            db_session=db_session,
         )
 
         sec_ind_pipeline(
