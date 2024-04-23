@@ -90,7 +90,7 @@ DOCUMENT_ID_ENDPOINT = (
 )
 SEARCH_ENDPOINT = f"{VESPA_APP_CONTAINER_URL}/search/"
 
-_BATCH_SIZE = 100  # Specific to Vespa
+_BATCH_SIZE = 128  # Specific to Vespa
 _NUM_THREADS = (
     16  # since Vespa doesn't allow batching of inserts / updates, we use threads
 )
