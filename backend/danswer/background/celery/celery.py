@@ -37,9 +37,8 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 connection_string = build_connection_string(db_api=SYNC_DB_API)
-# celery_broker_url = f"sqla+{connection_string}"
 celery_broker_url = "redis://redis-server-service:6379/0"
-celery_backend_url = f"db+{connection_string}"
+celery_backend_url = "redis://redis-server-service:6379/0"
 celery_app = Celery(__name__, broker=celery_broker_url, backend=celery_backend_url)
 
 
