@@ -3,6 +3,7 @@ import "./globals.css";
 
 import { Inter } from "next/font/google";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
+import Script from "next/script";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,6 +26,10 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
+      <Script
+        src="https://analytics.tetrahedron.dev/script.js"
+        data-website-id="9ebecade-5b34-4048-b65b-ec4e29d9b760"
+      />
       <body
         className={`${inter.variable} font-sans text-default bg-background ${
           // TODO: remove this once proper dark mode exists
