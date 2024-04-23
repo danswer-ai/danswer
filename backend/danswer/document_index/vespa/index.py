@@ -20,6 +20,7 @@ import requests
 from retry import retry
 
 from danswer.configs.app_configs import LOG_VESPA_TIMING_INFORMATION
+from danswer.configs.app_configs import VESPA_CONFIG_SERVER_HOST
 from danswer.configs.app_configs import VESPA_HOST
 from danswer.configs.app_configs import VESPA_PORT
 from danswer.configs.app_configs import VESPA_TENANT_PORT
@@ -76,14 +77,19 @@ VESPA_DIM_REPLACEMENT_PAT = "VARIABLE_DIM"
 DANSWER_CHUNK_REPLACEMENT_PAT = "DANSWER_CHUNK_NAME"
 DOCUMENT_REPLACEMENT_PAT = "DOCUMENT_REPLACEMENT"
 DATE_REPLACEMENT = "DATE_REPLACEMENT"
-VESPA_CONFIG_SERVER_URL = f"http://{VESPA_HOST}:{VESPA_TENANT_PORT}"
-VESPA_APP_CONTAINER_URL = f"http://{VESPA_HOST}:{VESPA_PORT}"
+
+# config server
+VESPA_CONFIG_SERVER_URL = f"http://{VESPA_CONFIG_SERVER_HOST}:{VESPA_TENANT_PORT}"
 VESPA_APPLICATION_ENDPOINT = f"{VESPA_CONFIG_SERVER_URL}/application/v2"
+
+# main search application
+VESPA_APP_CONTAINER_URL = f"http://{VESPA_HOST}:{VESPA_PORT}"
 # danswer_chunk below is defined in vespa/app_configs/schemas/danswer_chunk.sd
 DOCUMENT_ID_ENDPOINT = (
     f"{VESPA_APP_CONTAINER_URL}/document/v1/default/{{index_name}}/docid"
 )
 SEARCH_ENDPOINT = f"{VESPA_APP_CONTAINER_URL}/search/"
+
 _BATCH_SIZE = 100  # Specific to Vespa
 _NUM_THREADS = (
     16  # since Vespa doesn't allow batching of inserts / updates, we use threads
