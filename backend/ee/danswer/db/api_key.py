@@ -97,16 +97,15 @@ def update_api_key(
     if existing_api_key is None:
         raise ValueError(f"API key with id {api_key_id} does not exist")
 
-    new_name = api_key_args.name or UNNAMED_KEY_PLACEHOLDER
-
-    existing_api_key.name = new_name
+    existing_api_key.name = api_key_args.name
     api_key_user = db_session.scalar(
         select(User).where(User.id == existing_api_key.user_id)  # type: ignore
     )
     if api_key_user is None:
         raise RuntimeError("API Key does not have associated user.")
 
-    api_key_user.email = get_api_key_fake_email(new_name, str(api_key_user.id))
+    email_name = api_key_args.name or UNNAMED_KEY_PLACEHOLDER
+    api_key_user.email = get_api_key_fake_email(email_name, str(api_key_user.id))
     db_session.commit()
 
     return ApiKeyDescriptor(
