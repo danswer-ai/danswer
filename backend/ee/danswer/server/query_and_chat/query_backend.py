@@ -81,7 +81,7 @@ def get_answer_with_quote(
 
     persona = get_persona_by_id(
         persona_id=query_request.persona_id,
-        user_id=user.id if user else None,
+        user=user,
         db_session=db_session,
     )
 
