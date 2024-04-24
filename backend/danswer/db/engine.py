@@ -1,4 +1,5 @@
 import contextlib
+import os
 from collections.abc import AsyncGenerator
 from collections.abc import Generator
 from datetime import datetime
@@ -28,7 +29,7 @@ ASYNC_DB_API = "asyncpg"
 # global so we don't create more than one engine per process
 # outside of being best practice, this is needed so we can properly pool
 # connections and not create a new pool on every request
-_SYNC_ENGINE: Engine | None = None
+_SYNC_ENGINE: dict[int, Engine] = {}
 _ASYNC_ENGINE: AsyncEngine | None = None
 
 
@@ -57,10 +58,11 @@ def build_connection_string(
 
 def get_sqlalchemy_engine() -> Engine:
     global _SYNC_ENGINE
-    if _SYNC_ENGINE is None:
+    pid = os.getpid()
+    if pid not in _SYNC_ENGINE:
         connection_string = build_connection_string(db_api=SYNC_DB_API)
-        _SYNC_ENGINE = create_engine(connection_string, pool_size=50, max_overflow=25)
-    return _SYNC_ENGINE
+        _SYNC_ENGINE[pid] = create_engine(connection_string, pool_size=50, max_overflow=25)
+    return _SYNC_ENGINE[pid]
 
 
 def get_sqlalchemy_async_engine() -> AsyncEngine:
