@@ -50,6 +50,10 @@ export const ChatSidebar = ({
     _setOpenTab(tab);
   };
 
+  const [isSidebarOpen, _setSidebarOpen] = useState(true); 
+
+  const toggleSidebar = () => { _setSidebarOpen(prevState => !prevState); }
+
   function TabOption({ tab }: { tab: Tabs }) {
     return (
       <div
@@ -105,20 +109,32 @@ export const ChatSidebar = ({
   }, [currentChatId]);
 
   return (
+    <div className={`relative h-screen`}>
     <div
       className={`
         flex-none
-        w-64
-        3xl:w-72
         ${HEADER_PADDING}
         border-r 
         border-border 
         flex 
         flex-col 
         h-screen
-        transition-transform`}
+        transition-transform
+        ${isSidebarOpen ? 'w-72' : 'w-0'}
+        overflow-hidden
+        transition-width duration-300 ease-in-out`}
       id="chat-sidebar"
     >
+      <button 
+        onClick={toggleSidebar} 
+        className={`
+          absolute 
+          top-1/2 -mr-3 right-0
+          h-7 w-1.5 rounded-full 
+          flex 
+          bg-gray-300 hover:bg-blue-700 
+          z-50`}>
+      </button>
       <div className="flex w-full mx-4 mt-4 text-sm gap-x-4 pb-2 border-b border-border">
         <TabOption tab={Tabs.CHATS} />
         <TabOption tab={Tabs.ASSISTANTS} />
@@ -228,6 +244,7 @@ export const ChatSidebar = ({
           </BasicSelectable>
         </div>
       </div>
+    </div>
     </div>
   );
 };
