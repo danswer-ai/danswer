@@ -33,10 +33,10 @@ function QueryHistoryTableRow({
 }) {
   let finalFeedback: Feedback | "mixed" | null = null;
   for (const message of chatSessionSnapshot.messages) {
-    if (message.feedback) {
+    if (message.feedback_type) {
       if (finalFeedback === null) {
-        finalFeedback = message.feedback;
-      } else if (finalFeedback !== message.feedback) {
+        finalFeedback = message.feedback_type;
+      } else if (finalFeedback !== message.feedback_type) {
         finalFeedback = "mixed";
       }
     }

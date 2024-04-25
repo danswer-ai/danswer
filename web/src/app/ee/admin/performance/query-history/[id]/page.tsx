@@ -41,9 +41,11 @@ function MessageDisplay({ message }: { message: MessageSnapshot }) {
           })}
         </div>
       )}
-      {message.feedback && (
+      {message.feedback_type && (
         <div className="mt-2">
-          <FeedbackBadge feedback={message.feedback} />
+          <Bold className="font-bold text-xs">Feedback</Bold>
+          {message.feedback_text && <Text>{message.feedback_text}</Text>}
+          <FeedbackBadge feedback={message.feedback_type} />
         </div>
       )}
       <Divider />

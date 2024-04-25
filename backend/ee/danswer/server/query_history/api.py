@@ -39,7 +39,8 @@ class MessageSnapshot(BaseModel):
     message: str
     message_type: MessageType
     documents: list[AbridgedSearchDoc]
-    feedback: QAFeedbackType | None
+    feedback_type: QAFeedbackType | None
+    feedback_text: str | None
     time_created: datetime
 
     @classmethod
@@ -49,7 +50,7 @@ class MessageSnapshot(BaseModel):
             if len(message.chat_message_feedbacks) > 0
             else None
         )
-        message_feedback = (
+        feedback_type = (
             (
                 QAFeedbackType.LIKE
                 if latest_messages_feedback_obj.is_positive
@@ -58,7 +59,11 @@ class MessageSnapshot(BaseModel):
             if latest_messages_feedback_obj
             else None
         )
-
+        feedback_text = (
+            latest_messages_feedback_obj.feedback_text
+            if latest_messages_feedback_obj
+            else None
+        )
         return cls(
             message=message.message,
             message_type=message.message_type,
@@ -70,7 +75,8 @@ class MessageSnapshot(BaseModel):
                 )
                 for document in message.search_docs
             ],
-            feedback=message_feedback,
+            feedback_type=feedback_type,
+            feedback_text=feedback_text,
             time_created=message.time_sent,
         )
 
@@ -88,7 +94,8 @@ class QuestionAnswerPairSnapshot(BaseModel):
     user_message: str
     ai_response: str
     retrieved_documents: list[AbridgedSearchDoc]
-    feedback: QAFeedbackType | None
+    feedback_type: QAFeedbackType | None
+    feedback_text: str | None
     persona_name: str
     user_email: str
     time_created: datetime
@@ -112,7 +119,8 @@ class QuestionAnswerPairSnapshot(BaseModel):
                 user_message=user_message.message,
                 ai_response=ai_message.message,
                 retrieved_documents=ai_message.documents,
-                feedback=ai_message.feedback,
+                feedback_type=ai_message.feedback_type,
+                feedback_text=ai_message.feedback_text,
                 persona_name=chat_session_snapshot.persona_name,
                 user_email=get_display_email(chat_session_snapshot.user_email),
                 time_created=user_message.time_created,
@@ -130,7 +138,8 @@ class QuestionAnswerPairSnapshot(BaseModel):
                     for doc in self.retrieved_documents
                 ]
             ),
-            "feedback": self.feedback.value if self.feedback else "",
+            "feedback_type": self.feedback_type.value if self.feedback_type else "",
+            "feedback_text": self.feedback_text or "",
             "persona_name": self.persona_name,
             "user_email": self.user_email,
             "time_created": str(self.time_created),
@@ -161,7 +170,9 @@ def fetch_and_process_chat_session_history(
         valid_snapshots = [
             snapshot
             for snapshot in valid_snapshots
-            if any(message.feedback == feedback_type for message in snapshot.messages)
+            if any(
+                message.feedback_type == feedback_type for message in snapshot.messages
+            )
         ]
 
     return valid_snapshots
