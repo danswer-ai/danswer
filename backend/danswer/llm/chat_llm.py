@@ -7,6 +7,7 @@ from langchain.schema.language_model import LanguageModelInput
 from langchain_community.chat_models import ChatLiteLLM
 
 from danswer.configs.app_configs import LOG_ALL_MODEL_INTERACTIONS
+from danswer.configs.model_configs import DISABLE_LITELLM_STREAMING
 from danswer.configs.model_configs import GEN_AI_API_ENDPOINT
 from danswer.configs.model_configs import GEN_AI_API_VERSION
 from danswer.configs.model_configs import GEN_AI_LLM_PROVIDER_TYPE
@@ -69,6 +70,9 @@ class LangChainChatLLM(LLM, abc.ABC):
     def stream(self, prompt: LanguageModelInput) -> Iterator[str]:
         if LOG_ALL_MODEL_INTERACTIONS:
             self._log_prompt(prompt)
+
+        if DISABLE_LITELLM_STREAMING:
+            return [self.invoke(prompt)]
 
         output_tokens = []
         for token in message_generator_to_string_generator(self.llm.stream(prompt)):
