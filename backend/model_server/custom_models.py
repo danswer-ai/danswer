@@ -3,8 +3,10 @@ from typing import Optional
 import numpy as np
 import tensorflow as tf  # type: ignore
 from fastapi import APIRouter
+from huggingface_hub.constants import HF_HOME
 from transformers import AutoTokenizer  # type: ignore
 from transformers import TFDistilBertForSequenceClassification
+from transformers.utils import TRANSFORMERS_CACHE
 
 from model_server.constants import MODEL_WARM_UP_STRING
 from model_server.utils import simple_log_function_time
@@ -24,6 +26,17 @@ _INTENT_MODEL: Optional[TFDistilBertForSequenceClassification] = None
 def get_intent_model_tokenizer(
     model_name: str = INTENT_MODEL_VERSION,
 ) -> "AutoTokenizer":
+    print(f"HF Home: {HF_HOME}")
+    print(f"Cache dir: {TRANSFORMERS_CACHE}")
+
+    from model_server.hf import hf_hub_download
+    from transformers.tokenization_utils_base import TOKENIZER_CONFIG_FILE
+
+    hf_file_path = hf_hub_download(
+        model_name, TOKENIZER_CONFIG_FILE, local_files_only=True
+    )
+    print("hf_file_path", hf_file_path)
+
     global _INTENT_TOKENIZER
     if _INTENT_TOKENIZER is None:
         _INTENT_TOKENIZER = AutoTokenizer.from_pretrained(model_name)
@@ -36,6 +49,8 @@ def get_local_intent_model(
 ) -> TFDistilBertForSequenceClassification:
     global _INTENT_MODEL
     if _INTENT_MODEL is None or max_context_length != _INTENT_MODEL.max_seq_length:
+        print(f"HF Home: {HF_HOME}")
+        print(f"Cache dir: {TRANSFORMERS_CACHE}")
         _INTENT_MODEL = TFDistilBertForSequenceClassification.from_pretrained(
             model_name
         )

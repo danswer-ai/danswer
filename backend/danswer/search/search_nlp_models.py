@@ -5,7 +5,9 @@ from typing import Optional
 from typing import TYPE_CHECKING
 
 import requests
+from huggingface_hub.constants import HF_HOME
 from transformers import logging as transformer_logging  # type:ignore
+from transformers.utils import TRANSFORMERS_CACHE
 
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
@@ -57,6 +59,17 @@ def get_default_tokenizer(model_name: str | None = None) -> "AutoTokenizer":
         if model_name is None:
             # This could be inaccurate
             model_name = DOCUMENT_ENCODER_MODEL
+
+        print(f"HF Home: {HF_HOME}")
+        print(f"Cache dir: {TRANSFORMERS_CACHE}")
+
+        from danswer.search.hf_test import hf_hub_download
+        from transformers.tokenization_utils_base import TOKENIZER_CONFIG_FILE
+
+        hf_file_path = hf_hub_download(
+            model_name, TOKENIZER_CONFIG_FILE, local_files_only=True
+        )
+        print("hf_file_path", hf_file_path)
 
         _TOKENIZER = (AutoTokenizer.from_pretrained(model_name), model_name)
 
