@@ -61,6 +61,28 @@ def _process_citations_for_slack(text: str) -> str:
     return re.sub(pattern, slack_link_format, text)
 
 
+def _split_text(text: str, limit: int = 3000) -> list[str]:
+    if len(text) <= limit:
+        return [text]
+
+    chunks = []
+    while text:
+        if len(text) <= limit:
+            chunks.append(text)
+            break
+
+        # Find the nearest space before the limit to avoid splitting a word
+        split_at = text.rfind(' ', 0, limit)
+        if split_at == -1:  # No spaces found, force split
+            split_at = limit
+
+        chunk = text[:split_at]
+        chunks.append(chunk)
+        text = text[split_at:].lstrip()  # Remove leading spaces from the next chunk
+
+    return chunks
+
+
 def clean_markdown_link_text(text: str) -> str:
     # Remove any newlines within the text
     return text.replace("\n", " ").strip()
@@ -348,14 +370,14 @@ def build_qa_response_blocks(
         filter_block = SectionBlock(text=f"_{filter_text}_")
 
     if not answer:
-        answer_block = SectionBlock(
+        answer_blocks = [SectionBlock(
             text="Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓"
-        )
+        )]
     else:
         answer_processed = decode_escapes(remove_slack_text_interactions(answer))
         if process_message_for_citations:
             answer_processed = _process_citations_for_slack(answer_processed)
-        answer_block = SectionBlock(text=answer_processed)
+        answer_blocks = [SectionBlock(text=text) for text in _split_text(answer_processed)]
         if quotes:
             quotes_blocks = build_quotes_block(quotes)
 
@@ -372,7 +394,7 @@ def build_qa_response_blocks(
     if filter_block is not None:
         response_blocks.append(filter_block)
 
-    response_blocks.append(answer_block)
+    response_blocks.extend(answer_blocks)
 
     if message_id is not None and not skip_ai_feedback:
         response_blocks.append(build_qa_feedback_block(message_id=message_id))
