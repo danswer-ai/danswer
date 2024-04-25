@@ -72,7 +72,8 @@ class LangChainChatLLM(LLM, abc.ABC):
             self._log_prompt(prompt)
 
         if DISABLE_LITELLM_STREAMING:
-            return [self.invoke(prompt)]
+            yield self.invoke(prompt)
+            return
 
         output_tokens = []
         for token in message_generator_to_string_generator(self.llm.stream(prompt)):
