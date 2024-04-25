@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_status
+from danswer.configs.app_configs import DISABLED_CONNECTOR_TYPES
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.gmail.connector_auth import delete_gmail_service_account_key
 from danswer.connectors.gmail.connector_auth import delete_google_app_gmail_cred
@@ -437,14 +438,25 @@ def get_connector_indexing_status(
     return indexing_statuses
 
 
+def _validate_connector_allowed(source: DocumentSource) -> None:
+    invalid_connectors = DISABLED_CONNECTOR_TYPES.replace("_", "").split(",")
+    for connector_type in invalid_connectors:
+        if source.value.lower().replace("_", "") == connector_type:
+            raise ValueError(
+                "This connector type has been disabled by your system admin. "
+                "Please contact them to get it enabled if you wish to use it."
+            )
+
+
 @router.post("/admin/connector")
 def create_connector_from_model(
-    connector_info: ConnectorBase,
+    connector_data: ConnectorBase,
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
     try:
-        return create_connector(connector_info, db_session)
+        _validate_connector_allowed(connector_data.source)
+        return create_connector(connector_data, db_session)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -456,6 +468,11 @@ def update_connector_from_model(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ConnectorSnapshot | StatusResponse[int]:
+    try:
+        _validate_connector_allowed(connector_data.source)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
     updated_connector = update_connector(connector_id, connector_data, db_session)
     if updated_connector is None:
         raise HTTPException(
