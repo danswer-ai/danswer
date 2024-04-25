@@ -13,6 +13,7 @@ from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (
     rate_limit_builder,
 )
 from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
+from danswer.connectors.document360.utils import flatten_child_categories
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -97,13 +98,16 @@ class Document360Connector(LoadConnector, PollConnector):
                         {"id": article["id"], "category_name": category["name"]}
                     )
                 for child_category in category["child_categories"]:
-                    for article in child_category["articles"]:
-                        articles_with_category.append(
-                            {
-                                "id": article["id"],
-                                "category_name": child_category["name"],
-                            }
-                        )
+                    all_nested_categories = flatten_child_categories(child_category)
+                    for nested_category in all_nested_categories:
+                        for article in nested_category["articles"]:
+                            articles_with_category.append(
+                                {
+                                    "id": article["id"],
+                                    "category_name": nested_category["name"],
+                                }
+                            )
+
         return articles_with_category
 
     def _process_articles(
