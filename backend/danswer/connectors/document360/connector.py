@@ -141,7 +141,9 @@ class Document360Connector(LoadConnector, PollConnector):
             doc_link = f"{DOCUMENT360_BASE_URL}/{self.portal_id}/document/v1/view/{article['id']}"
 
             html_content = article_details["html_content"]
-            article_content = parse_html_page_basic(html_content)
+            article_content = (
+                parse_html_page_basic(html_content) if html_content is not None else ""
+            )
             doc_text = (
                 f"{article_details.get('description', '')}\n{article_content}".strip()
             )
