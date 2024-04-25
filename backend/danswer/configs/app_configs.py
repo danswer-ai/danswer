@@ -126,7 +126,9 @@ POLL_CONNECTOR_OFFSET = 30  # Minutes overlap between poll windows
 
 # View the list here:
 # https://github.com/danswer-ai/danswer/blob/main/backend/danswer/connectors/factory.py
-DISABLED_CONNECTOR_TYPES = os.environ.get("DISABLED_CONNECTOR_TYPES") or ""
+# If this is empty, all connectors are enabled, this is an option for security heavy orgs where
+# only very select connectors are enabled and admins cannot add other connector types
+ENABLED_CONNECTOR_TYPES = os.environ.get("ENABLED_CONNECTOR_TYPES") or ""
 
 # Some calls to get information on expert users are quite costly especially with rate limiting
 # Since experts are not used in the actual user experience, currently it is turned off

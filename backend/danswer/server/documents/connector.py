@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_status
-from danswer.configs.app_configs import DISABLED_CONNECTOR_TYPES
+from danswer.configs.app_configs import ENABLED_CONNECTOR_TYPES
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.gmail.connector_auth import delete_gmail_service_account_key
 from danswer.connectors.gmail.connector_auth import delete_google_app_gmail_cred
@@ -439,13 +439,17 @@ def get_connector_indexing_status(
 
 
 def _validate_connector_allowed(source: DocumentSource) -> None:
-    invalid_connectors = DISABLED_CONNECTOR_TYPES.replace("_", "").split(",")
-    for connector_type in invalid_connectors:
+    valid_connectors = ENABLED_CONNECTOR_TYPES.replace("_", "").split(",")
+    if not valid_connectors:
+        return
+    for connector_type in valid_connectors:
         if source.value.lower().replace("_", "") == connector_type:
-            raise ValueError(
-                "This connector type has been disabled by your system admin. "
-                "Please contact them to get it enabled if you wish to use it."
-            )
+            return
+
+    raise ValueError(
+        "This connector type has been disabled by your system admin. "
+        "Please contact them to get it enabled if you wish to use it."
+    )
 
 
 @router.post("/admin/connector")
