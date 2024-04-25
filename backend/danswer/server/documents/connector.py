@@ -468,7 +468,11 @@ def update_connector_from_model(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ConnectorSnapshot | StatusResponse[int]:
-    _validate_connector_allowed(connector_data.source)
+    try:
+        _validate_connector_allowed(connector_data.source)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
     updated_connector = update_connector(connector_id, connector_data, db_session)
     if updated_connector is None:
         raise HTTPException(
