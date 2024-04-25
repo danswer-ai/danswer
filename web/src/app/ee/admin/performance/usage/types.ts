@@ -22,7 +22,8 @@ export interface MessageSnapshot {
   message: string;
   message_type: "user" | "assistant";
   documents: AbridgedSearchDoc[];
-  feedback: Feedback | null;
+  feedback_type: Feedback | null;
+  feedback_text: string | null;
   time_created: string;
 }
 
