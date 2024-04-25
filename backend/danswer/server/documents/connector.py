@@ -439,7 +439,9 @@ def get_connector_indexing_status(
 
 
 def _validate_connector_allowed(source: DocumentSource) -> None:
-    valid_connectors = ENABLED_CONNECTOR_TYPES.replace("_", "").split(",")
+    valid_connectors = [
+        x for x in ENABLED_CONNECTOR_TYPES.replace("_", "").split(",") if x
+    ]
     if not valid_connectors:
         return
     for connector_type in valid_connectors:
