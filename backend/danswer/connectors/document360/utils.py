@@ -1,7 +1,4 @@
-from typing import List
-
-
-def flatten_child_categories(category) -> List[dict]:
+def flatten_child_categories(category: dict) -> list[dict]:
     if not category["child_categories"]:
         return [category]
     else:
