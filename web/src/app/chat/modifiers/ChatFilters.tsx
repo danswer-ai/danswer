@@ -10,14 +10,14 @@ import {
   FiTag,
   FiX,
 } from "react-icons/fi";
-import { DateRangePickerValue } from "@tremor/react";
 import { listSourceMetadata } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
 import { BasicClickable } from "@/components/BasicClickable";
 import { ControlledPopup, DefaultDropdownElement } from "@/components/Dropdown";
-import { getXDaysAgo } from "@/lib/dateUtils";
 import { SourceSelectorProps } from "@/components/search/filtering/Filters";
 import { containsObject, objectsAreEquivalent } from "@/lib/contains";
+import { timeRangeValues } from "@/app/config/timeRange";
+import { TimeRangeSelector } from "@/components/filters/timeRangeFilter";
 
 enum FilterType {
   Source = "Source",
@@ -147,61 +147,6 @@ function KnowledgeSetsSection({
           includeCheckbox
         />
       ))}
-    </div>
-  );
-}
-
-const LAST_30_DAYS = "Last 30 days";
-const LAST_7_DAYS = "Last 7 days";
-const TODAY = "Today";
-
-function TimeRangeSection({
-  selectedTimeRange,
-  onSelect,
-}: {
-  selectedTimeRange: string | null;
-  onSelect: (timeRange: DateRangePickerValue) => void;
-}) {
-  return (
-    <div className="w-64">
-      <DefaultDropdownElement
-        key={LAST_30_DAYS}
-        name={LAST_30_DAYS}
-        onSelect={() =>
-          onSelect({
-            to: new Date(),
-            from: getXDaysAgo(30),
-            selectValue: LAST_30_DAYS,
-          })
-        }
-        isSelected={selectedTimeRange === LAST_30_DAYS}
-      />
-
-      <DefaultDropdownElement
-        key={LAST_7_DAYS}
-        name={LAST_7_DAYS}
-        onSelect={() =>
-          onSelect({
-            to: new Date(),
-            from: getXDaysAgo(7),
-            selectValue: LAST_7_DAYS,
-          })
-        }
-        isSelected={selectedTimeRange === LAST_7_DAYS}
-      />
-
-      <DefaultDropdownElement
-        key={TODAY}
-        name={TODAY}
-        onSelect={() =>
-          onSelect({
-            to: new Date(),
-            from: getXDaysAgo(1),
-            selectValue: TODAY,
-          })
-        }
-        isSelected={selectedTimeRange === TODAY}
-      />
     </div>
   );
 }
@@ -346,9 +291,11 @@ export function ChatFilters({
     );
   } else if (selectedFilterType === FilterType.TimeRange) {
     popupDisplay = (
-      <TimeRangeSection
-        selectedTimeRange={timeRange?.selectValue || null}
-        onSelect={(timeRange) => {
+      <TimeRangeSelector
+        value={timeRange?.selectValue || null}
+        className={`w-64`}
+        timeRangeValues={timeRangeValues}
+        onValueChange={(timeRange) => {
           setTimeRange(timeRange);
           handleFiltersToggle(!filtersOpen);
         }}
