@@ -31,6 +31,7 @@
     "react-icons": "^4.8.0",
     "react-loader-spinner": "^5.4.5",
     "react-markdown": "^9.0.1",
+    "react-tooltip": "^5.26.3",
     "remark-gfm": "^4.0.0",
     "semver": "^7.5.4",
     "sharp": "^0.32.6",
