@@ -23,8 +23,10 @@ from huggingface_hub import snapshot_download; \
 AutoTokenizer.from_pretrained('danswer/intent-model'); \
 AutoTokenizer.from_pretrained('intfloat/e5-base-v2'); \
 AutoTokenizer.from_pretrained('mixedbread-ai/mxbai-rerank-xsmall-v1'); \
+AutoTokenizer.from_pretrained('intfloat/e5-mistral-7b-instruct'); \
 snapshot_download('danswer/intent-model'); \
 snapshot_download('intfloat/e5-base-v2'); \
+snapshot_download('intfloat/e5-mistral-7b-instruct'); \
 snapshot_download('mixedbread-ai/mxbai-rerank-xsmall-v1')"
 
 WORKDIR /app
