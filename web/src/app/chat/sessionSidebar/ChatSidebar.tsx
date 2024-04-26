@@ -26,6 +26,7 @@ import { AssistantsTab } from "./AssistantsTab";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import Cookies from "js-cookie";
 import { SIDEBAR_TAB_COOKIE, Tabs } from "./constants";
+import { Tooltip } from "react-tooltip";
 
 export const ChatSidebar = ({
   existingChats,
@@ -112,6 +113,28 @@ export const ChatSidebar = ({
 
   return (
     <div className={`relative h-screen`}>
+      <button
+        onClick={toggleSidebar}
+        data-tooltip-id="toggleButton"
+        className={`
+        absolute 
+        top-1/2 -mr-4 right-0 z-50
+        h-8 w-2 rounded-full 
+        flex 
+        bg-gray-300 hover:bg-blue-700 
+        `}
+      ></button>
+      <Tooltip
+        id="toggleButton"
+        place="right"
+        effect="solid"
+        opacity="1"
+        delayHide="0"
+        closeEvents={{ click: true, mouseleave: true, blur: true }}
+        style={{ padding: 8 }}
+      >
+        {isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
+      </Tooltip>
       <div
         className={`
         flex-none
@@ -127,16 +150,6 @@ export const ChatSidebar = ({
         transition-width duration-300 ease-in-out`}
         id="chat-sidebar"
       >
-        <button
-          onClick={toggleSidebar}
-          className={`
-          absolute 
-          top-1/2 -mr-3 right-0
-          h-7 w-1.5 rounded-full 
-          flex 
-          bg-gray-300 hover:bg-blue-700 
-          z-50`}
-        ></button>
         <div className="flex w-full mx-4 mt-4 text-sm gap-x-4 pb-2 border-b border-border">
           <TabOption tab={Tabs.CHATS} />
           <TabOption tab={Tabs.ASSISTANTS} />
