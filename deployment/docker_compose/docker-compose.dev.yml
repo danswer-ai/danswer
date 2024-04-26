@@ -12,6 +12,7 @@ services:
     depends_on:
       - relational_db
       - index
+      - inference_model_server
     restart: always
     ports:
       - "8080:8080"
@@ -99,6 +100,8 @@ services:
     depends_on:
       - relational_db
       - index
+      - inference_model_server
+      - indexing_model_server
     restart: always
     environment:
       # Gen AI Settings (Needed by DanswerBot)
