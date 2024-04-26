@@ -34,6 +34,7 @@ from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
+from danswer.configs.constants import TokenRateLimitScope
 from danswer.connectors.models import InputType
 from danswer.db.enums import ChatSessionSharedStatus
 from danswer.db.enums import IndexingStatus
@@ -1041,6 +1042,37 @@ class UserGroup(Base):
     )
 
 
+"""Tables related to Token Rate Limiting
+NOTE: `TokenRateLimit` is partially an MIT feature (global rate limit)
+"""
+
+
+class TokenRateLimit(Base):
+    __tablename__ = "token_rate_limit"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    token_budget: Mapped[int] = mapped_column(Integer, nullable=False)
+    period_hours: Mapped[int] = mapped_column(Integer, nullable=False)
+    scope: Mapped[TokenRateLimitScope] = mapped_column(
+        Enum(TokenRateLimitScope, native_enum=False)
+    )
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class TokenRateLimit__UserGroup(Base):
+    __tablename__ = "token_rate_limit__user_group"
+
+    rate_limit_id: Mapped[int] = mapped_column(
+        ForeignKey("token_rate_limit.id"), primary_key=True
+    )
+    user_group_id: Mapped[int] = mapped_column(
+        ForeignKey("user_group.id"), primary_key=True
+    )
+
+
 """Tables related to Permission Sync"""
 
 
@@ -1063,7 +1095,9 @@ class PermissionSyncRun(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     # Not strictly needed but makes it easy to use without fetching from cc_pair
-    source_type: Mapped[DocumentSource] = mapped_column(Enum(DocumentSource))
+    source_type: Mapped[DocumentSource] = mapped_column(
+        Enum(DocumentSource, native_enum=False)
+    )
     # Currently all sync jobs are handled as a group permission sync or a user permission sync
     update_type: Mapped[PermissionSyncJobType] = mapped_column(
         Enum(PermissionSyncJobType)
@@ -1093,7 +1127,9 @@ class ExternalPermission(Base):
     # Email is needed because we want to keep track of users not in Danswer to simplify process
     # when the user joins
     user_email: Mapped[str] = mapped_column(String)
-    source_type: Mapped[DocumentSource] = mapped_column(Enum(DocumentSource))
+    source_type: Mapped[DocumentSource] = mapped_column(
+        Enum(DocumentSource, native_enum=False)
+    )
     external_permission_group: Mapped[str] = mapped_column(String)
     user = relationship("User")
 
@@ -1120,6 +1156,8 @@ class EmailToExternalUserCache(Base):
     # Email is needed because we want to keep track of users not in Danswer to simplify process
     # when the user joins
     user_email: Mapped[str] = mapped_column(String)
-    source_type: Mapped[DocumentSource] = mapped_column(Enum(DocumentSource))
+    source_type: Mapped[DocumentSource] = mapped_column(
+        Enum(DocumentSource, native_enum=False)
+    )
 
     user = relationship("User")
