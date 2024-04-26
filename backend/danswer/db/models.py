@@ -1063,7 +1063,9 @@ class PermissionSyncRun(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     # Not strictly needed but makes it easy to use without fetching from cc_pair
-    source_type: Mapped[DocumentSource] = mapped_column(Enum(DocumentSource))
+    source_type: Mapped[DocumentSource] = mapped_column(
+        Enum(DocumentSource, native_enum=False)
+    )
     # Currently all sync jobs are handled as a group permission sync or a user permission sync
     update_type: Mapped[PermissionSyncJobType] = mapped_column(
         Enum(PermissionSyncJobType)
@@ -1093,7 +1095,9 @@ class ExternalPermission(Base):
     # Email is needed because we want to keep track of users not in Danswer to simplify process
     # when the user joins
     user_email: Mapped[str] = mapped_column(String)
-    source_type: Mapped[DocumentSource] = mapped_column(Enum(DocumentSource))
+    source_type: Mapped[DocumentSource] = mapped_column(
+        Enum(DocumentSource, native_enum=False)
+    )
     external_permission_group: Mapped[str] = mapped_column(String)
     user = relationship("User")
 
@@ -1120,6 +1124,8 @@ class EmailToExternalUserCache(Base):
     # Email is needed because we want to keep track of users not in Danswer to simplify process
     # when the user joins
     user_email: Mapped[str] = mapped_column(String)
-    source_type: Mapped[DocumentSource] = mapped_column(Enum(DocumentSource))
+    source_type: Mapped[DocumentSource] = mapped_column(
+        Enum(DocumentSource, native_enum=False)
+    )
 
     user = relationship("User")
