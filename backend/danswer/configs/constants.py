@@ -120,3 +120,9 @@ class MessageType(str, Enum):
     SYSTEM = "system"  # SystemMessage
     USER = "user"  # HumanMessage
     ASSISTANT = "assistant"  # AIMessage
+
+
+class TokenRateLimitScope(str, Enum):
+    USER = "user"
+    USER_GROUP = "user_group"
+    GLOBAL = "global"
