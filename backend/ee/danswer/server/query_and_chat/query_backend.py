@@ -10,7 +10,8 @@ from danswer.db.models import User
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
-from danswer.llm.utils import get_default_llm_version
+from danswer.llm.factory import get_default_llm
+from danswer.llm.factory import get_llm_for_persona
 from danswer.llm.utils import get_max_input_tokens
 from danswer.one_shot_answer.answer_question import get_search_answer
 from danswer.one_shot_answer.models import DirectQARequest
@@ -85,11 +86,10 @@ def get_answer_with_quote(
         db_session=db_session,
     )
 
-    llm_name = get_default_llm_version()[0]
-    if persona and persona.llm_model_version_override:
-        llm_name = persona.llm_model_version_override
-
-    input_tokens = get_max_input_tokens(model_name=llm_name)
+    llm = get_default_llm() if not persona else get_llm_for_persona(persona)
+    input_tokens = get_max_input_tokens(
+        model_name=llm.config.model_name, model_provider=llm.config.model_provider
+    )
     max_history_tokens = int(input_tokens * DANSWER_BOT_TARGET_CHUNK_PERCENTAGE)
 
     remaining_tokens = input_tokens - max_history_tokens
