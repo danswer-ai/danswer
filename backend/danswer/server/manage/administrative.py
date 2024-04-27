@@ -25,6 +25,7 @@ from danswer.db.feedback import fetch_docs_ranked_by_boost
 from danswer.db.feedback import update_document_boost
 from danswer.db.feedback import update_document_hidden
 from danswer.db.file_store import get_default_file_store
+from danswer.db.index_attempt import cancel_indexing_attempts_for_connector
 from danswer.db.models import User
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
@@ -168,12 +169,17 @@ def create_deletion_attempt_for_connector_id(
             f"'{credential_id}' does not exist. Has it already been deleted?",
         )
 
-    if not check_deletion_attempt_is_allowed(connector_credential_pair=cc_pair):
+    # Cancel any scheduled indexing attempts
+    cancel_indexing_attempts_for_connector(
+        connector_id=connector_id, db_session=db_session, include_secondary_index=True
+    )
+
+    # Check if the deletion attempt should be allowed
+    deletion_attempt_disallowed_reason = check_deletion_attempt_is_allowed(cc_pair)
+    if deletion_attempt_disallowed_reason:
         raise HTTPException(
             status_code=400,
-            detail=f"Connector with ID '{connector_id}' and credential ID "
-            f"'{credential_id}' is not deletable. It must be both disabled AND have "
-            "no ongoing / planned indexing attempts.",
+            detail=deletion_attempt_disallowed_reason,
         )
 
     cleanup_connector_credential_pair_task.apply_async(

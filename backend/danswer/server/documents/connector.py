@@ -430,8 +430,11 @@ def get_connector_indexing_status(
                     db_session=db_session,
                 ),
                 is_deletable=check_deletion_attempt_is_allowed(
-                    connector_credential_pair=cc_pair
-                ),
+                    connector_credential_pair=cc_pair,
+                    # allow scheduled indexing attempts here, since on deletion request we will cancel them
+                    allow_scheduled=True,
+                )
+                is None,
             )
         )
 
