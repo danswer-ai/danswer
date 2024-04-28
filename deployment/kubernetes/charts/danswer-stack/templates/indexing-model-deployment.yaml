@@ -44,9 +44,9 @@ spec:
         - name: {{ .name }}
           mountPath: {{ .mountPath }}
         {{- end }}
-    volumes:
-    {{- range .Values.indexCapability.volumes }}
-    - name: {{ .name }}
-      persistentVolumeClaim:
-        claimName: {{ .persistentVolumeClaim.claimName }}
-    {{- end }}
+      volumes:
+      {{- range .Values.indexCapability.volumes }}
+      - name: {{ .name }}
+        persistentVolumeClaim:
+          claimName: {{ .persistentVolumeClaim.claimName }}
+      {{- end }}

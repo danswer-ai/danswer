@@ -10,7 +10,9 @@ spec:
   replicas: {{ .Values.inferenceCapability.deployment.replicas }}
   selector:
     matchLabels:
-      app: {{ .Values.inferenceCapability.service.name }}
+      {{- range .Values.inferenceCapability.deployment.labels }}
+      {{ .key }}: {{ .value }}
+      {{- end }}
   template:
     metadata:
       labels:
