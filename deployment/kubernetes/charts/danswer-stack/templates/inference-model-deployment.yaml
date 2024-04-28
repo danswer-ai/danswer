@@ -24,7 +24,7 @@ spec:
       - name: {{ .Values.inferenceCapability.service.name }}
         image: {{ .Values.inferenceCapability.deployment.image.repository }}:{{ .Values.inferenceCapability.deployment.image.tag }}
         imagePullPolicy: {{ .Values.inferenceCapability.deployment.image.pullPolicy }}
-        command: {{ .Values.inferenceCapability.deployment.command }}
+        command: {{ toYaml .Values.inferenceCapability.deployment.command | nindent 14 }}
         ports:
         - containerPort: {{ .Values.inferenceCapability.service.port }}
         envFrom:
