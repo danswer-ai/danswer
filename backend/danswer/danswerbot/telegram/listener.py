@@ -13,9 +13,11 @@ from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
 
-
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.models import Persona
+from danswer.db.persona import fetch_persona_by_id
+
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.retrieval.search_runner import download_nltk_data
@@ -33,9 +35,10 @@ from danswer.danswerbot.telegram.tokens import fetch_token, TelegramBotToken
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
+from danswer.llm.factory import get_llm_for_persona
 from danswer.llm.utils import check_number_of_tokens
-from danswer.llm.utils import get_default_llm_version
 from danswer.llm.utils import get_max_input_tokens
+
 from danswer.one_shot_answer.answer_question import get_search_answer
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
@@ -63,8 +66,13 @@ conversation_histories = {}
 def process_message(query_text, history):
   with Session(get_sqlalchemy_engine()) as db_session:
     # This also handles creating the query event in postgres
-    llm_name = get_default_llm_version()[0]
-    input_tokens = get_max_input_tokens(model_name = llm_name)
+    # llm_name = get_default_llm_version()[0]
+    persona = cast(
+      Persona,
+      fetch_persona_by_id(db_session, 1)
+    )
+    llm = get_llm_for_persona(persona)
+    input_tokens = get_max_input_tokens(model_name = llm.config.model_name, model_provider=llm.config.model_provider)
     thread_context_percent = DANSWER_BOT_TARGET_CHUNK_PERCENTAGE
     answer_generation_timeout = DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
     reflexion = ENABLE_DANSWERBOT_REFLEXION
@@ -151,8 +159,6 @@ async def handle_message(bot, message):
         conversation_histories[history_key] = []
       bot_answer = process_message(message.text, conversation_histories[history_key])
       formatted = format_message(bot_answer.answer)
-      print(bot_answer.answer)
-      print(formatted)
       result['formatted'] = formatted  # Store the result in the shared container
     finally:
       processing_done.set()
@@ -173,21 +179,21 @@ async def handle_message(bot, message):
   await bot.reply_to(message, result['formatted'], parse_mode='Markdown')  # Access the formatted message
 
 
-def _initialize_telebot(bot):
+def _initialize_telebot(bot, bot_name):
   @bot.message_handler(commands=['start', 'help'])
   async def send_welcome(message):
     await bot.reply_to(message, "Howdy, how are you doing?")
 
-  @bot.message_handler(func=lambda message: _should_respond(message))
+  @bot.message_handler(func=lambda message: _should_respond(bot_name, message))
   async def handle_message_wrapper(message):
     await handle_message(bot, message)
   
   logger.info("Initialized Telegram Bot")
 
-def _should_respond(message) -> bool:
+def _should_respond(bot_name, message) -> bool:
   if message.chat.type == "private":
     return True
-  if message.text and '@mirai_asile_bot' in message.text:
+  if message.text and f'@{bot_name}' in message.text:
     return True
   if message.text and message.reply_to_message and message.reply_to_message.from_user.username == 'mirai_asile_bot':
     return True
@@ -224,7 +230,7 @@ async def main():
           polling_task.cancel()
 
         telegram_bot = AsyncTeleBot(telegram_bot_token.bot_token)
-        _initialize_telebot(telegram_bot)
+        _initialize_telebot(telegram_bot, telegram_bot_token.bot_name)
         polling_task = loop.create_task(telegram_bot.polling(non_stop=True))
 
       await asyncio.sleep(60)
