@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "danswer-stack.fullname" . }}
+  name: env-configmap
   labels:
     {{- include "danswer-stack.labels" . | nindent 4 }}
 data:
