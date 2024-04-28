@@ -455,6 +455,5 @@ configMap:
   LOG_ALL_MODEL_INTERACTIONS: ""
   LOG_VESPA_TIMING_INFORMATION: ""
   # Shared or Non-backend Related
-  INTERNAL_URL: "http://api-server-service:80"  # for web server
   WEB_DOMAIN: "http://localhost:3000"  # for web server and api server
   DOMAIN: "localhost"  # for nginx

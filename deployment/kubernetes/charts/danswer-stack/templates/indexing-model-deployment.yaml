@@ -33,7 +33,7 @@ spec:
         - containerPort: 9000
         envFrom:
           - configMapRef:
-            name: {{ .Values.config.envConfigMapName }}
+              name: {{ .Values.config.envConfigMapName }}
         {{- if .Values.indexCapability.indexingOnly }}
         env:
           - name: INDEXING_ONLY
