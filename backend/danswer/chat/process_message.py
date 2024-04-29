@@ -30,6 +30,8 @@ from danswer.db.engine import get_session_context_manager
 from danswer.db.models import SearchDoc as DbSearchDoc
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
+from danswer.file_store.models import ChatFileType
+from danswer.file_store.utils import load_all_chat_files
 from danswer.llm.answering.answer import Answer
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import CitationConfig
@@ -174,6 +176,10 @@ def stream_chat_message_objects(
                 message=message_text,
                 token_count=len(llm_tokenizer_encode_func(message_text)),
                 message_type=MessageType.USER,
+                files=[
+                    {"id": str(file_id), "type": ChatFileType.IMAGE}
+                    for file_id in new_msg_req.file_ids
+                ],
                 db_session=db_session,
                 commit=False,
             )
@@ -202,9 +208,20 @@ def stream_chat_message_objects(
                     "when the last message is not a user message."
                 )
 
+        # load all files needed for this chat chain in memory
+        files = load_all_chat_files(history_msgs, new_msg_req.file_ids, db_session)
+        latest_query_files = [
+            file for file in files if file.file_id in new_msg_req.file_ids
+        ]
+
         run_search = False
         # Retrieval options are only None if reference_doc_ids are provided
-        if retrieval_options is not None and persona.num_chunks != 0:
+        # Also don't perform search if the user uploaded at least one file - just use the files
+        if (
+            retrieval_options is not None
+            and persona.num_chunks != 0
+            and not new_msg_req.file_ids
+        ):
             if retrieval_options.run_search == OptionalSearchSetting.ALWAYS:
                 run_search = True
             elif retrieval_options.run_search == OptionalSearchSetting.NEVER:
@@ -360,6 +377,7 @@ def stream_chat_message_objects(
         answer = Answer(
             question=final_msg.message,
             docs=llm_docs,
+            latest_query_files=latest_query_files,
             answer_style_config=AnswerStyleConfig(
                 citation_config=CitationConfig(
                     all_docs_useful=reference_db_search_docs is not None
@@ -380,7 +398,7 @@ def stream_chat_message_objects(
             ),
             doc_relevance_list=llm_relevance_list,
             message_history=[
-                PreviousMessage.from_chat_message(msg) for msg in history_msgs
+                PreviousMessage.from_chat_message(msg, files) for msg in history_msgs
             ],
         )
         # generator will not include quotes, so we can cast
