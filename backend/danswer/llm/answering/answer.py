@@ -9,7 +9,7 @@ from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
 from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
-from danswer.configs.chat_configs import QA_TIMEOUT
+from danswer.file_store.utils import InMemoryChatFile
 from danswer.llm.answering.doc_pruning import prune_documents
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import PreviousMessage
@@ -58,7 +58,9 @@ class Answer:
         doc_relevance_list: list[bool] | None = None,
         message_history: list[PreviousMessage] | None = None,
         single_message_history: str | None = None,
-        timeout: int = QA_TIMEOUT,
+        # newly passed in files to include as part of this question
+        latest_query_files: list[InMemoryChatFile] | None = None,
+        files: list[InMemoryChatFile] | None = None,
     ) -> None:
         if single_message_history and message_history:
             raise ValueError(
@@ -67,6 +69,10 @@ class Answer:
 
         self.question = question
         self.docs = docs
+
+        self.latest_query_files = latest_query_files or []
+        self.file_id_to_file = {file.file_id: file for file in (files or [])}
+
         self.doc_relevance_list = doc_relevance_list
         self.message_history = message_history or []
         # used for QA flow where we only want to send a single message
@@ -112,11 +118,15 @@ class Answer:
                 llm_config=self.llm.config,
                 prompt_config=self.prompt_config,
                 context_docs=self.pruned_docs,
+                latest_query_files=self.latest_query_files,
                 all_doc_useful=self.answer_style_config.citation_config.all_docs_useful,
                 llm_tokenizer_encode_func=self.llm_tokenizer.encode,
                 history_message=self.single_message_history or "",
             )
         elif self.answer_style_config.quotes_config:
+            # NOTE: quotes prompt doesn't currently support files
+            # this is okay for now, since the search UI (which uses this)
+            # doesn't support image upload
             self._final_prompt = build_quotes_prompt(
                 question=self.question,
                 context_docs=self.pruned_docs,

@@ -215,7 +215,6 @@ def stream_answer_objects(
         llm=get_llm_for_persona(persona=chat_session.persona),
         doc_relevance_list=search_pipeline.section_relevance_list,
         single_message_history=history_str,
-        timeout=timeout,
     )
     yield from answer.processed_streamed_output
 

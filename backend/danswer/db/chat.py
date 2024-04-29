@@ -30,6 +30,7 @@ from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.db.models import StarterMessage
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
+from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
 from danswer.search.enums import RecencyBiasSetting
@@ -256,6 +257,7 @@ def create_new_chat_message(
     token_count: int,
     message_type: MessageType,
     db_session: Session,
+    files: list[FileDescriptor] | None = None,
     rephrased_query: str | None = None,
     error: str | None = None,
     reference_docs: list[DBSearchDoc] | None = None,
@@ -273,6 +275,7 @@ def create_new_chat_message(
         token_count=token_count,
         message_type=message_type,
         citations=citations,
+        files=files,
         error=error,
     )
 
@@ -819,6 +822,7 @@ def translate_db_message_to_chat_message_detail(
         message_type=chat_message.message_type,
         time_sent=chat_message.time_sent,
         citations=chat_message.citations,
+        files=chat_message.files or [],
     )
 
     return chat_msg_detail

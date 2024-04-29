@@ -9,6 +9,7 @@ from pydantic import root_validator
 
 from danswer.chat.models import AnswerQuestionStreamReturn
 from danswer.configs.constants import MessageType
+from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.override_models import PromptOverride
 
 if TYPE_CHECKING:
@@ -25,13 +26,24 @@ class PreviousMessage(BaseModel):
     message: str
     token_count: int
     message_type: MessageType
+    files: list[InMemoryChatFile]
 
     @classmethod
-    def from_chat_message(cls, chat_message: "ChatMessage") -> "PreviousMessage":
+    def from_chat_message(
+        cls, chat_message: "ChatMessage", available_files: list[InMemoryChatFile]
+    ) -> "PreviousMessage":
+        message_file_ids = (
+            [file["id"] for file in chat_message.files] if chat_message.files else []
+        )
         return cls(
             message=chat_message.message,
             token_count=chat_message.token_count,
             message_type=chat_message.message_type,
+            files=[
+                file
+                for file in available_files
+                if str(file.file_id) in message_file_ids
+            ],
         )
 
 

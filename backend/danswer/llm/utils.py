@@ -2,6 +2,7 @@ from collections.abc import Callable
 from collections.abc import Iterator
 from copy import copy
 from typing import Any
+from typing import cast
 from typing import TYPE_CHECKING
 from typing import Union
 
@@ -24,6 +25,7 @@ from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MAX_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.db.models import ChatMessage
+from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.interfaces import LLM
 from danswer.search.models import InferenceChunk
 from danswer.utils.logger import setup_logger
@@ -85,12 +87,17 @@ def tokenizer_trim_chunks(
 def translate_danswer_msg_to_langchain(
     msg: Union[ChatMessage, "PreviousMessage"],
 ) -> BaseMessage:
+    # If the message is a `ChatMessage`, it doesn't have the downloaded files
+    # attached. Just ignore them for now
+    files = [] if isinstance(msg, ChatMessage) else msg.files
+    content = build_content_with_imgs(msg.message, files)
+
     if msg.message_type == MessageType.SYSTEM:
         raise ValueError("System messages are not currently part of history")
     if msg.message_type == MessageType.ASSISTANT:
-        return AIMessage(content=msg.message)
+        return AIMessage(content=content)
     if msg.message_type == MessageType.USER:
-        return HumanMessage(content=msg.message)
+        return HumanMessage(content=content)
 
     raise ValueError(f"New message type {msg.message_type} not handled")
 
@@ -105,6 +112,33 @@ def translate_history_to_basemessages(
     ]
     history_token_counts = [msg.token_count for msg in history if msg.token_count != 0]
     return history_basemessages, history_token_counts
+
+
+def build_content_with_imgs(
+    message: str, files: list[InMemoryChatFile]
+) -> str | list[str | dict]:  # matching Langchain's BaseMessage content type
+    if not files:
+        return message
+
+    return cast(
+        list[str | dict],
+        [
+            {
+                "type": "text",
+                "text": message,
+            },
+        ]
+        + [
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{file.to_base64()}",
+                },
+            }
+            for file in files
+            if file.file_type == "image"
+        ],
+    )
 
 
 def dict_based_prompt_to_langchain_prompt(
