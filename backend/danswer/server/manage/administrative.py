@@ -1,45 +1,43 @@
-from collections.abc import Callable
+import json
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 from typing import cast
 
 from fastapi import APIRouter
+from fastapi import Body
 from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
+from danswer.configs.app_configs import TOKEN_BUDGET_GLOBALLY_ENABLED
 from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
-from danswer.configs.constants import GEN_AI_DETECTED_MODEL
-from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
-from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
+from danswer.configs.constants import ENABLE_TOKEN_BUDGET
+from danswer.configs.constants import TOKEN_BUDGET
+from danswer.configs.constants import TOKEN_BUDGET_SETTINGS
+from danswer.configs.constants import TOKEN_BUDGET_TIME_PERIOD
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.engine import get_session
 from danswer.db.feedback import fetch_docs_ranked_by_boost
 from danswer.db.feedback import update_document_boost
 from danswer.db.feedback import update_document_hidden
-from danswer.db.file_store import get_default_file_store
+from danswer.db.index_attempt import cancel_indexing_attempts_for_connector
 from danswer.db.models import User
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
-from danswer.llm.exceptions import GenAIDisabledException
+from danswer.file_store.file_store import get_default_file_store
 from danswer.llm.factory import get_default_llm
-from danswer.llm.factory import get_default_llm_version
-from danswer.llm.utils import get_gen_ai_api_key
 from danswer.llm.utils import test_llm
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.manage.models import BoostDoc
 from danswer.server.manage.models import BoostUpdateRequest
 from danswer.server.manage.models import HiddenUpdateRequest
-from danswer.server.models import ApiKey
 from danswer.utils.logger import setup_logger
-from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 
 router = APIRouter(prefix="/manage")
 logger = setup_logger()
@@ -116,52 +114,6 @@ def document_hidden_update(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def _validate_llm_key(genai_api_key: str | None) -> None:
-    # Checking new API key, may change things for this if kv-store is updated
-    get_default_llm_version.cache_clear()
-    kv_store = get_dynamic_config_store()
-    try:
-        kv_store.delete(GEN_AI_DETECTED_MODEL)
-    except ConfigNotFoundError:
-        pass
-
-    gpt_4_version = "gpt-4"  # 32k is not available to most people
-    gpt4_llm = None
-    try:
-        llm = get_default_llm(api_key=genai_api_key, timeout=10)
-        if GEN_AI_MODEL_PROVIDER == "openai" and not GEN_AI_MODEL_VERSION:
-            gpt4_llm = get_default_llm(
-                gen_ai_model_version_override=gpt_4_version,
-                api_key=genai_api_key,
-                timeout=10,
-            )
-    except GenAIDisabledException:
-        return
-
-    functions_with_args: list[tuple[Callable, tuple]] = [(test_llm, (llm,))]
-    if gpt4_llm:
-        functions_with_args.append((test_llm, (gpt4_llm,)))
-
-    parallel_results = run_functions_tuples_in_parallel(
-        functions_with_args, allow_failures=False
-    )
-
-    error_msg = parallel_results[0]
-
-    if error_msg:
-        if genai_api_key is None:
-            raise HTTPException(status_code=404, detail="Key not found")
-        raise HTTPException(status_code=400, detail=error_msg)
-
-    # Mark check as successful
-    curr_time = datetime.now(tz=timezone.utc)
-    kv_store.store(GEN_AI_KEY_CHECK_TIME, curr_time.timestamp())
-
-    # None for no errors
-    if gpt4_llm and parallel_results[1] is None:
-        kv_store.store(GEN_AI_DETECTED_MODEL, gpt_4_version)
-
-
 @router.get("/admin/genai-api-key/validate")
 def validate_existing_genai_api_key(
     _: User = Depends(current_admin_user),
@@ -180,46 +132,18 @@ def validate_existing_genai_api_key(
         # First time checking the key, nothing unusual
         pass
 
-    genai_api_key = get_gen_ai_api_key()
-    _validate_llm_key(genai_api_key)
-
-
-@router.get("/admin/genai-api-key", response_model=ApiKey)
-def get_gen_ai_api_key_from_dynamic_config_store(
-    _: User = Depends(current_admin_user),
-) -> ApiKey:
-    """
-    NOTE: Only gets value from dynamic config store as to not expose env variables.
-    """
     try:
-        # only get last 4 characters of key to not expose full key
-        return ApiKey(
-            api_key=cast(
-                str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY)
-            )[-4:]
-        )
-    except ConfigNotFoundError:
-        raise HTTPException(status_code=404, detail="Key not found")
+        llm = get_default_llm(timeout=10)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="LLM not setup")
 
+    error = test_llm(llm)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
 
-@router.put("/admin/genai-api-key")
-def store_genai_api_key(
-    request: ApiKey,
-    _: User = Depends(current_admin_user),
-) -> None:
-    if not request.api_key:
-        raise HTTPException(400, "No API key provided")
-
-    _validate_llm_key(request.api_key)
-
-    get_dynamic_config_store().store(GEN_AI_API_KEY_STORAGE_KEY, request.api_key)
-
-
-@router.delete("/admin/genai-api-key")
-def delete_genai_api_key(
-    _: User = Depends(current_admin_user),
-) -> None:
-    get_dynamic_config_store().delete(GEN_AI_API_KEY_STORAGE_KEY)
+    # Mark check as successful
+    curr_time = datetime.now(tz=timezone.utc)
+    kv_store.store(GEN_AI_KEY_CHECK_TIME, curr_time.timestamp())
 
 
 @router.post("/admin/deletion-attempt")
@@ -245,12 +169,17 @@ def create_deletion_attempt_for_connector_id(
             f"'{credential_id}' does not exist. Has it already been deleted?",
         )
 
-    if not check_deletion_attempt_is_allowed(connector_credential_pair=cc_pair):
+    # Cancel any scheduled indexing attempts
+    cancel_indexing_attempts_for_connector(
+        connector_id=connector_id, db_session=db_session, include_secondary_index=True
+    )
+
+    # Check if the deletion attempt should be allowed
+    deletion_attempt_disallowed_reason = check_deletion_attempt_is_allowed(cc_pair)
+    if deletion_attempt_disallowed_reason:
         raise HTTPException(
             status_code=400,
-            detail=f"Connector with ID '{connector_id}' and credential ID "
-            f"'{credential_id}' is not deletable. It must be both disabled AND have "
-            "no ongoing / planned indexing attempts.",
+            detail=deletion_attempt_disallowed_reason,
         )
 
     cleanup_connector_credential_pair_task.apply_async(
@@ -262,3 +191,41 @@ def create_deletion_attempt_for_connector_id(
         file_store = get_default_file_store(db_session)
         for file_name in connector.connector_specific_config["file_locations"]:
             file_store.delete_file(file_name)
+
+
+@router.get("/admin/token-budget-settings")
+def get_token_budget_settings(_: User = Depends(current_admin_user)) -> dict:
+    if not TOKEN_BUDGET_GLOBALLY_ENABLED:
+        raise HTTPException(
+            status_code=400, detail="Token budget is not enabled in the application."
+        )
+
+    try:
+        settings_json = cast(
+            str, get_dynamic_config_store().load(TOKEN_BUDGET_SETTINGS)
+        )
+        settings = json.loads(settings_json)
+        return settings
+    except ConfigNotFoundError:
+        raise HTTPException(status_code=404, detail="Token budget settings not found.")
+
+
+@router.put("/admin/token-budget-settings")
+def update_token_budget_settings(
+    _: User = Depends(current_admin_user),
+    enable_token_budget: bool = Body(..., embed=True),
+    token_budget: int = Body(..., ge=0, embed=True),  # Ensure non-negative
+    token_budget_time_period: int = Body(..., ge=1, embed=True),  # Ensure positive
+) -> dict[str, str]:
+    # Prepare the settings as a JSON string
+    settings_json = json.dumps(
+        {
+            ENABLE_TOKEN_BUDGET: enable_token_budget,
+            TOKEN_BUDGET: token_budget,
+            TOKEN_BUDGET_TIME_PERIOD: token_budget_time_period,
+        }
+    )
+
+    # Store the settings in the dynamic config store
+    get_dynamic_config_store().store(TOKEN_BUDGET_SETTINGS, settings_json)
+    return {"message": "Token budget settings updated successfully."}

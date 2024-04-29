@@ -1,8 +1,9 @@
+import contextlib
 from collections.abc import AsyncGenerator
 from collections.abc import Generator
 from datetime import datetime
+from typing import ContextManager
 
-from ddtrace import tracer
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine
 from sqlalchemy.engine import Engine
@@ -70,10 +71,16 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
     return _ASYNC_ENGINE
 
 
+def get_session_context_manager() -> ContextManager[Session]:
+    return contextlib.contextmanager(get_session)()
+
+
 def get_session() -> Generator[Session, None, None]:
-    with tracer.trace("db.get_session"):
-        with Session(get_sqlalchemy_engine(), expire_on_commit=False) as session:
-            yield session
+    # The line below was added to monitor the latency caused by Postgres connections
+    # during API calls.
+    # with tracer.trace("db.get_session"):
+    with Session(get_sqlalchemy_engine(), expire_on_commit=False) as session:
+        yield session
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:

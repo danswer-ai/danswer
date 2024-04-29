@@ -14,6 +14,10 @@ import { SearchSummary, ShowHideDocsButton } from "./SearchSummary";
 import { SourceIcon } from "@/components/SourceIcon";
 import { ThreeDots } from "react-loader-spinner";
 import { SkippedSearch } from "./SkippedSearch";
+import remarkGfm from "remark-gfm";
+import { CopyButton } from "@/components/CopyButton";
+import { FileDescriptor } from "../interfaces";
+import { InMessageImage } from "../images/InMessageImage";
 
 export const Hoverable: React.FC<{
   children: JSX.Element;
@@ -21,7 +25,7 @@ export const Hoverable: React.FC<{
 }> = ({ children, onClick }) => {
   return (
     <div
-      className="hover:bg-neutral-300 p-2 rounded h-fit cursor-pointer"
+      className="hover:bg-hover p-2 rounded h-fit cursor-pointer"
       onClick={onClick}
     >
       {children}
@@ -132,6 +136,7 @@ export const AIMessage = ({
                         />
                       ),
                     }}
+                    remarkPlugins={[remarkGfm]}
                   >
                     {content}
                   </ReactMarkdown>
@@ -199,15 +204,7 @@ export const AIMessage = ({
           </div>
           {handleFeedback && (
             <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1">
-              <Hoverable
-                onClick={() => {
-                  navigator.clipboard.writeText(content.toString());
-                  setCopyClicked(true);
-                  setTimeout(() => setCopyClicked(false), 3000);
-                }}
-              >
-                {copyClicked ? <FiCheck /> : <FiCopy />}
-              </Hoverable>
+              <CopyButton content={content.toString()} />
               <Hoverable onClick={() => handleFeedback("like")}>
                 <FiThumbsUp />
               </Hoverable>
@@ -224,8 +221,10 @@ export const AIMessage = ({
 
 export const HumanMessage = ({
   content,
+  files,
 }: {
   content: string | JSX.Element;
+  files?: FileDescriptor[];
 }) => {
   return (
     <div className="py-5 px-5 flex -mr-6 w-full">
@@ -242,6 +241,16 @@ export const HumanMessage = ({
           </div>
           <div className="mx-auto mt-1 ml-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default flex flex-wrap">
             <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words">
+              {files && files.length > 0 && (
+                <div className="mt-2 mb-4">
+                  <div className="flex flex-wrap gap-2">
+                    {files.map((file) => {
+                      return <InMessageImage key={file.id} fileId={file.id} />;
+                    })}
+                  </div>
+                </div>
+              )}
+
               {typeof content === "string" ? (
                 <ReactMarkdown
                   className="prose max-w-full"
@@ -255,6 +264,7 @@ export const HumanMessage = ({
                       />
                     ),
                   }}
+                  remarkPlugins={[remarkGfm]}
                 >
                   {content}
                 </ReactMarkdown>

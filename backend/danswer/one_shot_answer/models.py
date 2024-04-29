@@ -9,6 +9,7 @@ from danswer.chat.models import DanswerContexts
 from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import QADocsResponse
 from danswer.configs.constants import MessageType
+from danswer.search.models import ChunkContext
 from danswer.search.models import RetrievalDetails
 
 
@@ -22,11 +23,14 @@ class ThreadMessage(BaseModel):
     role: MessageType = MessageType.USER
 
 
-class DirectQARequest(BaseModel):
+class DirectQARequest(ChunkContext):
     messages: list[ThreadMessage]
     prompt_id: int | None
     persona_id: int
     retrieval_options: RetrievalDetails = Field(default_factory=RetrievalDetails)
+    # This is to forcibly skip (or run) the step, if None it uses the system defaults
+    skip_rerank: bool | None = None
+    skip_llm_chunk_filter: bool | None = None
     chain_of_thought: bool = False
     return_contexts: bool = False
 

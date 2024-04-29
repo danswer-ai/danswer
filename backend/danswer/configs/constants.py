@@ -24,6 +24,7 @@ MATCH_HIGHLIGHTS = "match_highlights"
 # not be used for QA. For example, Google Drive file types which can't be parsed
 # are still useful as a search result but not for QA.
 IGNORE_FOR_QA = "ignore_for_qa"
+# NOTE: deprecated, only used for porting key from old system
 GEN_AI_API_KEY_STORAGE_KEY = "genai_api_key"
 PUBLIC_DOC_PAT = "PUBLIC"
 PUBLIC_DOCUMENT_SET = "__PUBLIC"
@@ -40,16 +41,16 @@ DEFAULT_BOOST = 0
 SESSION_KEY = "session"
 QUERY_EVENT_ID = "query_event_id"
 LLM_CHUNKS = "llm_chunks"
+TOKEN_BUDGET = "token_budget"
+TOKEN_BUDGET_TIME_PERIOD = "token_budget_time_period"
+ENABLE_TOKEN_BUDGET = "enable_token_budget"
+TOKEN_BUDGET_SETTINGS = "token_budget_settings"
 
 # For chunking/processing chunks
 TITLE_SEPARATOR = "\n\r\n"
 SECTION_SEPARATOR = "\n\n"
 # For combining attributes, doesn't have to be unique/perfect to work
 INDEX_SEPARATOR = "==="
-
-
-# Key-Value store constants
-GEN_AI_DETECTED_MODEL = "gen_ai_detected_model"
 
 
 # Messages
@@ -87,6 +88,7 @@ class DocumentSource(str, Enum):
     ZENDESK = "zendesk"
     LOOPIO = "loopio"
     SHAREPOINT = "sharepoint"
+    AXERO = "axero"
 
 
 class DocumentIndexType(str, Enum):
@@ -115,3 +117,9 @@ class MessageType(str, Enum):
     SYSTEM = "system"  # SystemMessage
     USER = "user"  # HumanMessage
     ASSISTANT = "assistant"  # AIMessage
+
+
+class TokenRateLimitScope(str, Enum):
+    USER = "user"
+    USER_GROUP = "user_group"
+    GLOBAL = "global"

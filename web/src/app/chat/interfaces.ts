@@ -6,6 +6,11 @@ export enum RetrievalType {
   SelectedDocs = "selectedDocs",
 }
 
+export enum ChatSessionSharedStatus {
+  Private = "private",
+  Public = "public",
+}
+
 export interface RetrievalDetails {
   run_search: "always" | "never" | "auto";
   real_time: boolean;
@@ -15,11 +20,17 @@ export interface RetrievalDetails {
 
 type CitationMap = { [key: string]: number };
 
+export interface FileDescriptor {
+  id: string;
+  type: "image";
+}
+
 export interface ChatSession {
   id: number;
   name: string;
   persona_id: number;
   time_created: string;
+  shared_status: ChatSessionSharedStatus;
 }
 
 export interface Message {
@@ -30,13 +41,17 @@ export interface Message {
   query?: string | null;
   documents?: DanswerDocument[] | null;
   citations?: CitationMap;
+  files: FileDescriptor[];
 }
 
 export interface BackendChatSession {
   chat_session_id: number;
   description: string;
   persona_id: number;
+  persona_name: string;
   messages: BackendMessage[];
+  time_created: string;
+  shared_status: ChatSessionSharedStatus;
 }
 
 export interface BackendMessage {
@@ -49,6 +64,7 @@ export interface BackendMessage {
   message_type: "user" | "assistant" | "system";
   time_sent: string;
   citations: CitationMap;
+  files: FileDescriptor[];
 }
 
 export interface DocumentsResponse {

@@ -14,19 +14,23 @@ import {
 } from "@/lib/types";
 import { ChatSession } from "./interfaces";
 import { unstable_noStore as noStore } from "next/cache";
-import { Persona } from "../admin/personas/interfaces";
+import { Persona } from "../admin/assistants/interfaces";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import {
   WelcomeModal,
   hasCompletedWelcomeFlowSS,
 } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
-import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
+import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import { cookies } from "next/headers";
 import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/contants";
-import { personaComparator } from "../admin/personas/lib";
-import { ChatLayout } from "./ChatPage";
+import { personaComparator } from "../admin/assistants/lib";
+import { ChatPage } from "./ChatPage";
 import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingModels";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
+import { Settings } from "../admin/settings/interfaces";
+import { SIDEBAR_TAB_COOKIE, Tabs } from "./sessionSidebar/constants";
+import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
+import { LLMProviderDescriptor } from "../admin/models/llm/interfaces";
 
 export default async function Page({
   searchParams,
@@ -43,7 +47,7 @@ export default async function Page({
     fetchSS("/persona?include_default=true"),
     fetchSS("/chat/get-user-chat-sessions"),
     fetchSS("/query/valid-tags"),
-    fetchSS("/secondary-index/get-embedding-models"),
+    fetchLLMProvidersSS(),
   ];
 
   // catch cases where the backend is completely unreachable here
@@ -54,8 +58,10 @@ export default async function Page({
     | Response
     | AuthTypeMetadata
     | FullEmbeddingModelResponse
+    | Settings
+    | LLMProviderDescriptor[]
     | null
-  )[] = [null, null, null, null, null, null, null, null, null];
+  )[] = [null, null, null, null, null, null, null, null, null, null];
   try {
     results = await Promise.all(tasks);
   } catch (e) {
@@ -68,7 +74,7 @@ export default async function Page({
   const personasResponse = results[4] as Response | null;
   const chatSessionsResponse = results[5] as Response | null;
   const tagsResponse = results[6] as Response | null;
-  const embeddingModelResponse = results[7] as Response | null;
+  const llmProviders = (results[7] || []) as LLMProviderDescriptor[];
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -130,16 +136,7 @@ export default async function Page({
     console.log(`Failed to fetch tags - ${tagsResponse?.status}`);
   }
 
-  const embeddingModelVersionInfo =
-    embeddingModelResponse && embeddingModelResponse.ok
-      ? ((await embeddingModelResponse.json()) as FullEmbeddingModelResponse)
-      : null;
-  const currentEmbeddingModelName =
-    embeddingModelVersionInfo?.current_model_name;
-  const nextEmbeddingModelName =
-    embeddingModelVersionInfo?.secondary_model_name;
-
-  const defaultPersonaIdRaw = searchParams["personaId"];
+  const defaultPersonaIdRaw = searchParams["assistantId"];
   const defaultPersonaId = defaultPersonaIdRaw
     ? parseInt(defaultPersonaIdRaw)
     : undefined;
@@ -150,6 +147,10 @@ export default async function Page({
   const finalDocumentSidebarInitialWidth = documentSidebarCookieInitialWidth
     ? parseInt(documentSidebarCookieInitialWidth.value)
     : undefined;
+
+  const defaultSidebarTab = cookies().get(SIDEBAR_TAB_COOKIE)?.value as
+    | Tabs
+    | undefined;
 
   const hasAnyConnectors = ccPairs.length > 0;
   const shouldShowWelcomeModal =
@@ -173,23 +174,25 @@ export default async function Page({
     <>
       <InstantSSRAutoRefresh />
 
-      {shouldShowWelcomeModal && <WelcomeModal />}
+      {shouldShowWelcomeModal && <WelcomeModal user={user} />}
       {!shouldShowWelcomeModal && !shouldDisplaySourcesIncompleteModal && (
-        <ApiKeyModal />
+        <ApiKeyModal user={user} />
       )}
       {shouldDisplaySourcesIncompleteModal && (
         <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}
 
-      <ChatLayout
+      <ChatPage
         user={user}
         chatSessions={chatSessions}
         availableSources={availableSources}
         availableDocumentSets={documentSets}
         availablePersonas={personas}
         availableTags={tags}
+        llmProviders={llmProviders}
         defaultSelectedPersonaId={defaultPersonaId}
         documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
+        defaultSidebarTab={defaultSidebarTab}
       />
     </>
   );

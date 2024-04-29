@@ -15,21 +15,14 @@ from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.configs.app_configs import CLEANUP_INDEXING_JOBS_TIMEOUT
 from danswer.configs.app_configs import DASK_JOB_CLIENT_ENABLED
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
-from danswer.configs.app_configs import LOG_LEVEL
 from danswer.configs.app_configs import NUM_INDEXING_WORKERS
-from danswer.configs.model_configs import MIN_THREADS_ML_MODELS
 from danswer.db.connector import fetch_connectors
-from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import mark_all_in_progress_cc_pairs_failed
-from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.connector_credential_pair import update_connector_credential_pair
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
-from danswer.db.embedding_model import update_embedding_model_status
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.db.index_attempt import cancel_indexing_attempts_past_model
-from danswer.db.index_attempt import count_unique_cc_pairs_with_index_attempts
 from danswer.db.index_attempt import create_index_attempt
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import get_inprogress_index_attempts
@@ -41,7 +34,12 @@ from danswer.db.models import EmbeddingModel
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
+from danswer.db.swap_index import check_index_swap
+from danswer.search.search_nlp_models import warm_up_encoders
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
+from shared_configs.configs import LOG_LEVEL
+from shared_configs.configs import MODEL_SERVER_PORT
 
 logger = setup_logger()
 
@@ -52,18 +50,6 @@ dask.config.set({"distributed.scheduler.allowed-failures": 0})
 _UNEXPECTED_STATE_FAILURE_REASON = (
     "Stopped mid run, likely due to the background process being killed"
 )
-
-
-"""Util funcs"""
-
-
-def _get_num_threads() -> int:
-    """Get # of "threads" to use for ML models in an indexing job. By default uses
-    the torch implementation, which returns the # of physical cores on the machine.
-    """
-    import torch
-
-    return max(MIN_THREADS_ML_MODELS, torch.get_num_threads())
 
 
 def _should_create_new_indexing(
@@ -344,12 +330,10 @@ def kickoff_indexing_jobs(
 
         if use_secondary_index:
             run = secondary_client.submit(
-                run_indexing_entrypoint, attempt.id, _get_num_threads(), pure=False
+                run_indexing_entrypoint, attempt.id, pure=False
             )
         else:
-            run = client.submit(
-                run_indexing_entrypoint, attempt.id, _get_num_threads(), pure=False
-            )
+            run = client.submit(run_indexing_entrypoint, attempt.id, pure=False)
 
         if run:
             secondary_str = "(secondary index) " if use_secondary_index else ""
@@ -364,49 +348,22 @@ def kickoff_indexing_jobs(
     return existing_jobs_copy
 
 
-def check_index_swap(db_session: Session) -> None:
-    """Get count of cc-pairs and count of index_attempts for the new model grouped by
-    connector + credential, if it's the same, then assume new index is done building.
-    This does not take into consideration if the attempt failed or not"""
-    # Default CC-pair created for Ingestion API unused here
-    all_cc_pairs = get_connector_credential_pairs(db_session)
-    cc_pair_count = len(all_cc_pairs) - 1
-    embedding_model = get_secondary_db_embedding_model(db_session)
+def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> None:
+    engine = get_sqlalchemy_engine()
+    with Session(engine) as db_session:
+        check_index_swap(db_session=db_session)
+        db_embedding_model = get_current_db_embedding_model(db_session)
 
-    if not embedding_model:
-        return
-
-    unique_cc_indexings = count_unique_cc_pairs_with_index_attempts(
-        embedding_model_id=embedding_model.id, db_session=db_session
+    # So that the first time users aren't surprised by really slow speed of first
+    # batch of documents indexed
+    logger.info("Running a first inference to warm up embedding model")
+    warm_up_encoders(
+        model_name=db_embedding_model.model_name,
+        normalize=db_embedding_model.normalize,
+        model_server_host=INDEXING_MODEL_SERVER_HOST,
+        model_server_port=MODEL_SERVER_PORT,
     )
 
-    if unique_cc_indexings > cc_pair_count:
-        raise RuntimeError("More unique indexings than cc pairs, should not occur")
-
-    if cc_pair_count == unique_cc_indexings:
-        # Swap indices
-        now_old_embedding_model = get_current_db_embedding_model(db_session)
-        update_embedding_model_status(
-            embedding_model=now_old_embedding_model,
-            new_status=IndexModelStatus.PAST,
-            db_session=db_session,
-        )
-
-        update_embedding_model_status(
-            embedding_model=embedding_model,
-            new_status=IndexModelStatus.PRESENT,
-            db_session=db_session,
-        )
-
-        # Expire jobs for the now past index/embedding model
-        cancel_indexing_attempts_past_model(db_session)
-
-        # Recount aggregates
-        for cc_pair in all_cc_pairs:
-            resync_cc_pair(cc_pair, db_session=db_session)
-
-
-def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> None:
     client_primary: Client | SimpleJobClient
     client_secondary: Client | SimpleJobClient
     if DASK_JOB_CLIENT_ENABLED:
@@ -433,7 +390,6 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
         client_secondary = SimpleJobClient(n_workers=num_workers)
 
     existing_jobs: dict[int, Future | SimpleJob] = {}
-    engine = get_sqlalchemy_engine()
 
     with Session(engine) as db_session:
         # Previous version did not always clean up cc-pairs well leaving some connectors undeleteable
@@ -470,14 +426,6 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
 
 
 def update__main() -> None:
-    # needed for CUDA to work with multiprocessing
-    # NOTE: needs to be done on application startup
-    # before any other torch code has been run
-    import torch
-
-    if not DASK_JOB_CLIENT_ENABLED:
-        torch.multiprocessing.set_start_method("spawn")
-
     logger.info("Starting Indexing Loop")
     update_loop()
 

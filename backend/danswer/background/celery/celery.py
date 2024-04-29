@@ -67,14 +67,15 @@ def cleanup_connector_credential_pair_task(
             connector_id=connector_id,
             credential_id=credential_id,
         )
-        if not cc_pair or not check_deletion_attempt_is_allowed(
-            connector_credential_pair=cc_pair
-        ):
+        if not cc_pair:
             raise ValueError(
-                "Cannot run deletion attempt - connector_credential_pair is not deletable. "
-                "This is likely because there is an ongoing / planned indexing attempt OR the "
-                "connector is not disabled."
+                f"Cannot run deletion attempt - connector_credential_pair with Connector ID: "
+                f"{connector_id} and Credential ID: {credential_id} does not exist."
             )
+
+        deletion_attempt_disallowed_reason = check_deletion_attempt_is_allowed(cc_pair)
+        if deletion_attempt_disallowed_reason:
+            raise ValueError(deletion_attempt_disallowed_reason)
 
         try:
             # The bulk of the work is in here, updates Postgres and Vespa
@@ -98,36 +99,36 @@ def sync_document_set_task(document_set_id: int) -> None:
     """For document sets marked as not up to date, sync the state from postgres
     into the datastore. Also handles deletions."""
 
-    def _sync_document_batch(document_ids: list[str]) -> None:
+    def _sync_document_batch(document_ids: list[str], db_session: Session) -> None:
         logger.debug(f"Syncing document sets for: {document_ids}")
-        # begin a transaction, release lock at the end
-        with Session(get_sqlalchemy_engine()) as db_session:
-            # acquires a lock on the documents so that no other process can modify them
-            prepare_to_modify_documents(
-                db_session=db_session, document_ids=document_ids
-            )
 
-            # get current state of document sets for these documents
-            document_set_map = {
-                document_id: document_sets
-                for document_id, document_sets in fetch_document_sets_for_documents(
-                    document_ids=document_ids, db_session=db_session
-                )
-            }
+        # Acquires a lock on the documents so that no other process can modify them
+        prepare_to_modify_documents(db_session=db_session, document_ids=document_ids)
 
-            # update Vespa
-            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
-            document_index = get_default_document_index(
-                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+        # get current state of document sets for these documents
+        document_set_map = {
+            document_id: document_sets
+            for document_id, document_sets in fetch_document_sets_for_documents(
+                document_ids=document_ids, db_session=db_session
             )
-            update_requests = [
-                UpdateRequest(
-                    document_ids=[document_id],
-                    document_sets=set(document_set_map.get(document_id, [])),
-                )
-                for document_id in document_ids
-            ]
-            document_index.update(update_requests=update_requests)
+        }
+
+        # update Vespa
+        curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+        document_index = get_default_document_index(
+            primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+        )
+        update_requests = [
+            UpdateRequest(
+                document_ids=[document_id],
+                document_sets=set(document_set_map.get(document_id, [])),
+            )
+            for document_id in document_ids
+        ]
+        document_index.update(update_requests=update_requests)
+
+        # Commit to release the locks
+        db_session.commit()
 
     with Session(get_sqlalchemy_engine()) as db_session:
         try:
@@ -140,7 +141,8 @@ def sync_document_set_task(document_set_id: int) -> None:
                 documents_to_update, _SYNC_BATCH_SIZE
             ):
                 _sync_document_batch(
-                    document_ids=[document.id for document in document_batch]
+                    document_ids=[document.id for document in document_batch],
+                    db_session=db_session,
                 )
 
             # if there are no connectors, then delete the document set. Otherwise, just
@@ -182,7 +184,7 @@ def check_for_document_sets_sync_task() -> None:
     with Session(get_sqlalchemy_engine()) as db_session:
         # check if any document sets are not synced
         document_set_info = fetch_document_sets(
-            db_session=db_session, include_outdated=True
+            user_id=None, db_session=db_session, include_outdated=True
         )
         for document_set, _ in document_set_info:
             if not document_set.is_up_to_date:

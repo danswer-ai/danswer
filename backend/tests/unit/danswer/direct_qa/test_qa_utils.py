@@ -2,9 +2,13 @@ import textwrap
 import unittest
 
 from danswer.configs.constants import DocumentSource
-from danswer.indexing.models import InferenceChunk
-from danswer.one_shot_answer.qa_utils import match_quotes_to_docs
-from danswer.one_shot_answer.qa_utils import separate_answer_quotes
+from danswer.llm.answering.stream_processing.quotes_processing import (
+    match_quotes_to_docs,
+)
+from danswer.llm.answering.stream_processing.quotes_processing import (
+    separate_answer_quotes,
+)
+from danswer.search.models import InferenceChunk
 
 
 class TestQAPostprocessing(unittest.TestCase):

@@ -36,6 +36,7 @@ import {
   FiCpu,
   FiInfo,
   FiUploadCloud,
+  FiUsers,
 } from "react-icons/fi";
 import { SiBookstack } from "react-icons/si";
 import Image from "next/image";
@@ -87,6 +88,13 @@ export const UsersIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <Users size={size} className={className} />;
+};
+
+export const GroupsIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiUsers size={size} className={className} />;
 };
 
 export const GearIcon = ({
@@ -590,5 +598,17 @@ export const ZendeskIcon = ({
     className={`w-[${size}px] h-[${size}px] ` + className}
   >
     <Image src={zendeskIcon} alt="Logo" width="96" height="96" />
+  </div>
+);
+
+export const AxeroIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src="/Axero.jpeg" alt="Logo" width="96" height="96" />
   </div>
 );
