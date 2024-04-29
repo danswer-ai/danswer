@@ -24,13 +24,13 @@ from danswer.db.engine import get_session
 from danswer.db.feedback import fetch_docs_ranked_by_boost
 from danswer.db.feedback import update_document_boost
 from danswer.db.feedback import update_document_hidden
-from danswer.db.file_store import get_default_file_store
 from danswer.db.index_attempt import cancel_indexing_attempts_for_connector
 from danswer.db.models import User
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.file_store.file_store import get_default_file_store
 from danswer.llm.factory import get_default_llm
 from danswer.llm.utils import test_llm
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier

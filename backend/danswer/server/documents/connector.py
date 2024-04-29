@@ -59,7 +59,6 @@ from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import get_document_cnts_for_cc_pairs
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
-from danswer.db.file_store import get_default_file_store
 from danswer.db.index_attempt import cancel_indexing_attempts_for_connector
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import create_index_attempt
@@ -67,6 +66,7 @@ from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import User
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.file_store.file_store import get_default_file_store
 from danswer.server.documents.models import AuthStatus
 from danswer.server.documents.models import AuthUrl
 from danswer.server.documents.models import ConnectorBase

@@ -11,10 +11,12 @@ from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.model_configs import GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS
 from danswer.db.chat import get_default_prompt
 from danswer.db.models import Persona
+from danswer.file_store.utils import InMemoryChatFile
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.factory import get_llm_for_persona
 from danswer.llm.interfaces import LLMConfig
+from danswer.llm.utils import build_content_with_imgs
 from danswer.llm.utils import check_number_of_tokens
 from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.llm.utils import get_max_input_tokens
@@ -59,7 +61,7 @@ def find_last_index(lst: list[int], max_prompt_tokens: int) -> int:
     return last_ind
 
 
-def drop_messages_history_overflow(
+def _drop_messages_history_overflow(
     system_msg: BaseMessage | None,
     system_token_count: int,
     history_msgs: list[BaseMessage],
@@ -171,7 +173,7 @@ def compute_max_llm_input_tokens(llm_config: LLMConfig) -> int:
 
 
 @lru_cache()
-def build_system_message(
+def _build_system_message(
     prompt_config: PromptConfig,
     context_exists: bool,
     llm_tokenizer_encode_func: Callable,
@@ -201,10 +203,11 @@ def build_system_message(
     return system_msg, token_count
 
 
-def build_user_message(
+def _build_user_message(
     question: str,
     prompt_config: PromptConfig,
     context_docs: list[LlmDoc] | list[InferenceChunk],
+    files: list[InMemoryChatFile],
     all_doc_useful: bool,
     history_message: str,
 ) -> tuple[HumanMessage, int]:
@@ -222,7 +225,11 @@ def build_user_message(
         )
         user_prompt = user_prompt.strip()
         token_count = len(llm_tokenizer_encode_func(user_prompt))
-        user_msg = HumanMessage(content=user_prompt)
+        user_msg = HumanMessage(
+            content=build_content_with_imgs(user_prompt, files)
+            if files
+            else user_prompt
+        )
         return user_msg, token_count
 
     context_docs_str = build_complete_context_str(context_docs)
@@ -240,7 +247,9 @@ def build_user_message(
 
     user_prompt = user_prompt.strip()
     token_count = len(llm_tokenizer_encode_func(user_prompt))
-    user_msg = HumanMessage(content=user_prompt)
+    user_msg = HumanMessage(
+        content=build_content_with_imgs(user_prompt, files) if files else user_prompt
+    )
 
     return user_msg, token_count
 
@@ -251,13 +260,14 @@ def build_citations_prompt(
     prompt_config: PromptConfig,
     llm_config: LLMConfig,
     context_docs: list[LlmDoc] | list[InferenceChunk],
+    latest_query_files: list[InMemoryChatFile],
     all_doc_useful: bool,
     history_message: str,
     llm_tokenizer_encode_func: Callable,
 ) -> list[BaseMessage]:
     context_exists = len(context_docs) > 0
 
-    system_message_or_none, system_tokens = build_system_message(
+    system_message_or_none, system_tokens = _build_system_message(
         prompt_config=prompt_config,
         context_exists=context_exists,
         llm_tokenizer_encode_func=llm_tokenizer_encode_func,
@@ -269,15 +279,16 @@ def build_citations_prompt(
 
     # Be sure the context_docs passed to build_chat_user_message
     # Is the same as passed in later for extracting citations
-    user_message, user_tokens = build_user_message(
+    user_message, user_tokens = _build_user_message(
         question=question,
         prompt_config=prompt_config,
         context_docs=context_docs,
+        files=latest_query_files,
         all_doc_useful=all_doc_useful,
         history_message=history_message,
     )
 
-    final_prompt_msgs = drop_messages_history_overflow(
+    final_prompt_msgs = _drop_messages_history_overflow(
         system_msg=system_message_or_none,
         system_token_count=system_tokens,
         history_msgs=history_basemessages,

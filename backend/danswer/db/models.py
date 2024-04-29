@@ -42,6 +42,7 @@ from danswer.db.enums import IndexModelStatus
 from danswer.db.enums import TaskStatus
 from danswer.db.pydantic_type import PydanticType
 from danswer.dynamic_configs.interface import JSON_ro
+from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
 from danswer.search.enums import RecencyBiasSetting
@@ -629,6 +630,11 @@ class ChatMessage(Base):
     )
     # Maps the citation numbers to a SearchDoc id
     citations: Mapped[dict[int, int]] = mapped_column(postgresql.JSONB(), nullable=True)
+    # files associated with this message (e.g. images uploaded by the user that the
+    # user is asking a question of)
+    files: Mapped[list[FileDescriptor] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
+    )
     # Only applies for LLM
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     time_sent: Mapped[datetime.datetime] = mapped_column(
