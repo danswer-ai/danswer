@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.db.engine import get_session
-from danswer.db.file_store import get_default_file_store
 from danswer.db.models import User
+from danswer.file_store.file_store import get_default_file_store
 from ee.danswer.server.enterprise_settings.models import AnalyticsScriptUpload
 from ee.danswer.server.enterprise_settings.models import EnterpriseSettings
 from ee.danswer.server.enterprise_settings.store import load_analytics_script
