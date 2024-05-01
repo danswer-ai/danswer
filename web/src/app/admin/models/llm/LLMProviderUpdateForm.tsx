@@ -222,7 +222,6 @@ export function LLMProviderUpdateForm({
                 name,
                 value: name,
               }))}
-              direction="up"
               maxHeight="max-h-56"
             />
           ) : (
@@ -246,7 +245,6 @@ export function LLMProviderUpdateForm({
                 value: name,
               }))}
               includeDefault
-              direction="up"
               maxHeight="max-h-56"
             />
           ) : (
