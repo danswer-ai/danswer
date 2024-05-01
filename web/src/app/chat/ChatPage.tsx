@@ -249,10 +249,10 @@ export function ChatPage({
           (persona) => persona.id === existingChatSessionPersonaId
         )
       : defaultSelectedPersonaId !== undefined
-        ? availablePersonas.find(
-            (persona) => persona.id === defaultSelectedPersonaId
-          )
-        : undefined
+      ? availablePersonas.find(
+          (persona) => persona.id === defaultSelectedPersonaId
+        )
+      : undefined
   );
   const livePersona = selectedPersona || availablePersonas[0];
 
@@ -1064,6 +1064,10 @@ export function ChatPage({
                                     message &&
                                     !isStreaming
                                   ) {
+                                    umami.track("Message Submitted", {
+                                      [user ? user.email : "Anonymous Possum"]:
+                                        message.slice(0, 500),
+                                    });
                                     onSubmit();
                                     event.preventDefault();
                                   }
@@ -1077,6 +1081,14 @@ export function ChatPage({
                                 onClick={() => {
                                   if (!isStreaming) {
                                     if (message) {
+                                      umami.track("Message Submitted", {
+                                        [user
+                                          ? user.email
+                                          : "Anonymous Possum"]: message.slice(
+                                          0,
+                                          500
+                                        ),
+                                      });
                                       onSubmit();
                                     }
                                   } else {

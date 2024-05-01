@@ -49,13 +49,10 @@ export function LLMProviderUpdateForm({
       (llmProviderDescriptor.default_fast_model || null),
     custom_config:
       existingLlmProvider?.custom_config ??
-      llmProviderDescriptor.custom_config_keys?.reduce(
-        (acc, key) => {
-          acc[key] = "";
-          return acc;
-        },
-        {} as { [key: string]: string }
-      ),
+      llmProviderDescriptor.custom_config_keys?.reduce((acc, key) => {
+        acc[key] = "";
+        return acc;
+      }, {} as { [key: string]: string }),
   };
 
   const [validatedConfig, setValidatedConfig] = useState(
@@ -76,13 +73,10 @@ export function LLMProviderUpdateForm({
     ...(llmProviderDescriptor.custom_config_keys
       ? {
           custom_config: Yup.object(
-            llmProviderDescriptor.custom_config_keys.reduce(
-              (acc, key) => {
-                acc[key] = Yup.string().required(`${key} is required`);
-                return acc;
-              },
-              {} as { [key: string]: Yup.StringSchema }
-            )
+            llmProviderDescriptor.custom_config_keys.reduce((acc, key) => {
+              acc[key] = Yup.string().required(`${key} is required`);
+              return acc;
+            }, {} as { [key: string]: Yup.StringSchema })
           ),
         }
       : {}),

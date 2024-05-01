@@ -15,7 +15,7 @@ export async function fetchAssistantEditorInfoSS(
         user: User | null;
         existingPersona: Persona | null;
       },
-      null,
+      null
     ]
   | [null, string]
 > {
@@ -44,7 +44,7 @@ export async function fetchAssistantEditorInfoSS(
     Response,
     Response,
     User | null,
-    Response | null,
+    Response | null
   ];
 
   if (!ccPairsInfoResponse.ok) {
