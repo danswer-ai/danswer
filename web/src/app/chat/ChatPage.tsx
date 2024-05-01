@@ -677,6 +677,18 @@ export function ChatPage({
           {documentSidebarInitialWidth !== undefined ? (
             <Dropzone
               onDrop={(acceptedFiles) => {
+                const llmAcceptsImages = checkLLMSupportsImageInput(
+                  ...getFinalLLM(llmProviders, livePersona)
+                );
+                if (!llmAcceptsImages) {
+                  setPopup({
+                    type: "error",
+                    message:
+                      "The current Assistant does not support image input. Please select an assistant with Vision support.",
+                  });
+                  return;
+                }
+
                 uploadFilesForChat(acceptedFiles).then(([fileIds, error]) => {
                   if (error) {
                     setPopup({
@@ -690,11 +702,6 @@ export function ChatPage({
                 });
               }}
               noClick
-              disabled={
-                !checkLLMSupportsImageInput(
-                  ...getFinalLLM(llmProviders, livePersona)
-                )
-              }
               onDragLeave={() => console.log("buh")}
               onDragEnter={() => console.log("floppa")}
             >
