@@ -69,7 +69,7 @@ def verify_user_logged_in(user: User | None = Depends(optional_user)) -> UserInf
 
     return UserInfo(
         id=str(user.id),
-        email=get_display_email(user.email),
+        email=get_display_email(user.email, space_less=True),
         is_active=user.is_active,
         is_superuser=user.is_superuser,
         is_verified=user.is_verified,
