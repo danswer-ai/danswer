@@ -42,6 +42,9 @@ from danswer.configs.app_configs import SMTP_USER
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
+from danswer.configs.constants import DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN
+from danswer.configs.constants import DANSWER_API_KEY_PREFIX
+from danswer.configs.constants import UNNAMED_KEY_PLACEHOLDER
 from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_user_count
 from danswer.db.auth import get_user_db
@@ -67,6 +70,20 @@ def verify_auth_setting() -> None:
             "disabled, basic, or google_oauth"
         )
     logger.info(f"Using Auth Type: {AUTH_TYPE.value}")
+
+
+def get_display_email(email: str | None, space_less: bool = False) -> str:
+    if email and email.endswith(DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN):
+        name = email.split("@")[0]
+        if name == DANSWER_API_KEY_PREFIX + UNNAMED_KEY_PLACEHOLDER:
+            return "Unnamed API Key"
+
+        if space_less:
+            return name
+
+        return name.replace("API_KEY__", "API Key: ")
+
+    return email or ""
 
 
 def user_needs_to_be_verified() -> bool:
