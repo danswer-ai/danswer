@@ -87,6 +87,7 @@ def handle_simplified_chat_message(
         chat_session_id=chat_message_req.chat_session_id,
         parent_message_id=parent_message.id,
         message=chat_message_req.message,
+        file_ids=[],
         prompt_id=None,
         search_doc_ids=chat_message_req.search_doc_ids,
         retrieval_options=retrieval_options,
