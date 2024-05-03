@@ -1,6 +1,6 @@
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.chat_configs import QA_TIMEOUT
-from danswer.configs.model_configs import GEN_AI_TEMPERATURE
+from danswer.configs.model_configs import GEN_AI_TEMPERATURE, LITELLM_EXTRA_HEADERS
 from danswer.db.engine import get_session_context_manager
 from danswer.db.llm import fetch_default_provider
 from danswer.db.llm import fetch_provider
@@ -87,4 +87,5 @@ def get_llm(
         timeout=timeout,
         temperature=temperature,
         custom_config=custom_config,
+        extra_headers=LITELLM_EXTRA_HEADERS,
     )

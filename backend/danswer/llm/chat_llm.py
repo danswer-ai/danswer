@@ -106,6 +106,7 @@ class DefaultMultiLLM(LangChainChatLLM):
         max_output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
         temperature: float = GEN_AI_TEMPERATURE,
         custom_config: dict[str, str] | None = None,
+        extra_headers: dict[str, str] | None = None,
     ):
         self._model_provider = model_provider
         self._model_version = model_name
@@ -123,6 +124,11 @@ class DefaultMultiLLM(LangChainChatLLM):
             for k, v in custom_config.items():
                 os.environ[k] = v
 
+        model_kwargs = DefaultMultiLLM.DEFAULT_MODEL_PARAMS if model_provider == "openai" else {}
+
+        if extra_headers:
+            model_kwargs.update({"extra_headers": extra_headers})
+
         self._llm = ChatLiteLLM(  # type: ignore
             model=(
                 model_name if custom_llm_provider else f"{model_provider}/{model_name}"
@@ -134,9 +140,7 @@ class DefaultMultiLLM(LangChainChatLLM):
             request_timeout=timeout,
             # LiteLLM and some model providers don't handle these params well
             # only turning it on for OpenAI
-            model_kwargs=DefaultMultiLLM.DEFAULT_MODEL_PARAMS
-            if model_provider == "openai"
-            else {},
+            model_kwargs=model_kwargs,
             verbose=should_be_verbose(),
             max_retries=0,  # retries are handled outside of langchain
         )

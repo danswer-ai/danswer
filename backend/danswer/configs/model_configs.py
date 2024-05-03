@@ -1,3 +1,4 @@
+import json
 import os
 
 #####
@@ -97,3 +98,15 @@ GEN_AI_TEMPERATURE = float(os.environ.get("GEN_AI_TEMPERATURE") or 0)
 DISABLE_LITELLM_STREAMING = (
     os.environ.get("DISABLE_LITELLM_STREAMING") or "false"
 ).lower() == "true"
+
+# extra headers to pass to LiteLLM
+LITELLM_EXTRA_HEADERS = None
+if os.environ.get("LITELLM_EXTRA_HEADERS"):
+    try:
+        LITELLM_EXTRA_HEADERS = json.loads(os.environ.get("LITELLM_EXTRA_HEADERS"))
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(
+            "Failed to parse LITELLM_EXTRA_HEADERS, must be a valid JSON object"
+        )
