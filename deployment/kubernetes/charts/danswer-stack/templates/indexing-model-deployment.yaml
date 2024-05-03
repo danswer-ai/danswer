@@ -28,7 +28,7 @@ spec:
       - name: indexing-model-server
         image: danswer/danswer-model-server:latest
         imagePullPolicy: IfNotPresent
-        command: [ "uvicorn", "model_server.main:app", "--host", "0.0.0.0", "--port", "9000" ]
+        command: [ "uvicorn", "model_server.main:app", "--host", "0.0.0.0", "--port", "9000", "--limit-concurrency", "10" ]
         ports:
         - containerPort: 9000
         envFrom:

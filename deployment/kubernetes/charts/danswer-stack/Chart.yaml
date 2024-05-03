@@ -6,15 +6,15 @@ sources:
   - "https://github.com/danswer-ai/danswer"
 type: application
 version: 0.1.0
-appVersion: "v0.3.42"
+appVersion: "v0.3.72"
 annotations:
   category: Productivity
   licenses: MIT
   images: |
     - name: webserver
-      image: docker.io/danswer/danswer-web-server:v0.3.42
+      image: docker.io/danswer/danswer-web-server:v0.3.72
     - name: background
-      image: docker.io/danswer/danswer-backend:v0.3.42
+      image: docker.io/danswer/danswer-backend:v0.3.72
     - name: vespa
       image: vespaengine/vespa:8.277.17
 dependencies:

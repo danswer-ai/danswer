@@ -60,10 +60,10 @@ indexCapability:
     type: ClusterIP
     port: 9000
     name: indexing-model-server-port
-  deploymentLables:
+  deploymentLabels:
     app: indexing-model-server
   podLabels: 
-    app: web-server 
+    app: indexing-model-server 
   indexingOnly: "True"  
   podAnnotations: {}
   volumeMounts:
@@ -79,14 +79,20 @@ indexCapability:
     storage: "3Gi" 
 
 postgresql:
-  global:
-    auth:
-      existingSecret: danswer-secrets
-      secretKeys:
-        adminPasswordKey: postgres_password                
+  # global:
+  #   auth:
+  #     existingSecret: danswer-secrets
+  #     secretKeys:
+  #       adminPasswordKey: postgres_password                
   primary:
     persistence:
       size: 1Gi 
+  enabled: true
+  auth:
+    username: danswerapi
+    database: danswer
+    password: password
+    postgresPassword: password
 
 nginx:
   containerPorts:
@@ -111,7 +117,7 @@ webserver:
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
-  deploymentLables:
+  deploymentLabels:
     app: web-server
   podAnnotations: {}
   podLabels: 
@@ -238,7 +244,7 @@ background:
     repository: danswer/danswer-backend
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: ""
+    tag: "0.3.69"
   podAnnotations: {}
   podLabels:
     scope: danswer-backend
@@ -255,7 +261,7 @@ background:
     # readOnlyRootFilesystem: true
     # runAsNonRoot: true
     # runAsUser: 1000
-
+  enableMiniChunk: "true"
   resources:
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
@@ -294,11 +300,15 @@ background:
 vespa:
   replicaCount: 1
   image:
-    repository: vespaengine/vespa
+    repository: vespa
     pullPolicy: IfNotPresent
     tag: "8.277.17"
   podAnnotations: {}
-  podLabels: {}
+  podLabels: 
+    app: vespa
+    app.kubernetes.io/instance: danswer-stack-kn
+    app.kubernetes.io/name: vespa
+  enabled: true
 
   podSecurityContext: {}
     # fsGroup: 2000
@@ -319,8 +329,8 @@ vespa:
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
     requests:
-      cpu: 2500m
-      memory: 5Gi
+      cpu: 1500m
+      memory: 4000Mi
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
