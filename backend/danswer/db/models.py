@@ -674,11 +674,20 @@ class ChatFolder(Base):
     # Only null if auth is off
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     name: Mapped[str | None] = mapped_column(String, nullable=True)
+    display_priority: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
 
     user: Mapped[User] = relationship("User", back_populates="chat_folders")
     chat_sessions: Mapped[List["ChatSession"]] = relationship(
         "ChatSession", back_populates="folder"
     )
+
+    def __lt__(self, other: Any) -> bool:
+        if not isinstance(other, ChatFolder):
+            return NotImplemented
+        if self.display_priority == other.display_priority:
+            # Bigger ID (created later) show earlier
+            return self.id > other.id
+        return self.display_priority < other.display_priority
 
 
 """

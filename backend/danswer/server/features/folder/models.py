@@ -7,11 +7,14 @@ class FolderChatMinimalInfo(BaseModel):
 
 
 class FolderResponse(BaseModel):
+    folder_id: int
+    folder_name: str | None
+    display_priority: int
     chat_sessions: list[FolderChatMinimalInfo]
 
 
 class GetUserFoldersResponse(BaseModel):
-    folders: FolderResponse
+    folders: list[FolderResponse]
 
 
 class FolderCreationRequest(BaseModel):

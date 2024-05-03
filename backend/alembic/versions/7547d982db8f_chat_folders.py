@@ -26,6 +26,7 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("name", sa.String(), nullable=True),
+        sa.Column("display_priority", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
             ["user_id"],
             ["user.id"],

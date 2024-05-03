@@ -10,6 +10,29 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
+def get_user_folders(
+    user_id: UUID | None,
+    db_session: Session,
+) -> list[ChatFolder]:
+    return db_session.query(ChatFolder).filter(ChatFolder.user_id == user_id).all()
+
+
+def update_folder_display_priority(
+    user_id: UUID | None,
+    display_priority_map: dict[int, int],
+    db_session: Session,
+) -> None:
+    folders = get_user_folders(user_id=user_id, db_session=db_session)
+    folder_ids = {folder.id for folder in folders}
+    if folder_ids != set(display_priority_map.keys()):
+        raise ValueError("Invalid Folder IDs provided")
+
+    for folder in folders:
+        folder.display_priority = display_priority_map[folder.id]
+
+    db_session.commit()
+
+
 def get_folder_by_id(
     user_id: UUID | None,
     folder_id: int,
@@ -59,9 +82,8 @@ def add_chat_to_folder(
     )
 
     chat_session.folder_id = folder.id
-    if chat_session not in folder.chat_sessions:
-        folder.chat_sessions.append(chat_session)
-        db_session.commit()
+
+    db_session.commit()
 
 
 def remove_chat_from_folder(
