@@ -58,6 +58,7 @@ from danswer.server.documents.connector import router as connector_router
 from danswer.server.documents.credential import router as credential_router
 from danswer.server.documents.document import router as document_router
 from danswer.server.features.document_set.api import router as document_set_router
+from danswer.server.features.folder.api import router as folder_router
 from danswer.server.features.persona.api import admin_router as admin_persona_router
 from danswer.server.features.persona.api import basic_router as persona_router
 from danswer.server.features.prompt.api import basic_router as prompt_router
@@ -261,6 +262,7 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, connector_router)
     include_router_with_global_prefix_prepended(application, credential_router)
     include_router_with_global_prefix_prepended(application, cc_pair_router)
+    include_router_with_global_prefix_prepended(application, folder_router)
     include_router_with_global_prefix_prepended(application, document_set_router)
     include_router_with_global_prefix_prepended(application, secondary_index_router)
     include_router_with_global_prefix_prepended(
