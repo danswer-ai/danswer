@@ -3,7 +3,6 @@ import os
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentIndexType
 
-
 #####
 # App Configs
 #####
@@ -167,6 +166,12 @@ CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
     )
     if ignored_tag
 ]
+
+# Avoid to get archived pages
+CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES = (
+    os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES", "").lower() == "true"
+)
+
 JIRA_CONNECTOR_LABELS_TO_SKIP = [
     ignored_tag
     for ignored_tag in os.environ.get("JIRA_CONNECTOR_LABELS_TO_SKIP", "").split(",")
