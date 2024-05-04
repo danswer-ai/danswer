@@ -54,7 +54,7 @@ class DiscourseConnector(PollConnector):
             base_url = "https://" + base_url
         self.base_url = base_url
 
-        self.categories = categories or []
+        self.categories = [c.lower() for c in categories] if categories else []
         self.category_id_map: dict[int, str] = {}
 
         self.batch_size = batch_size
