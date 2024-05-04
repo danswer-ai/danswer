@@ -244,7 +244,7 @@ background:
     repository: danswer/danswer-backend
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "0.3.69"
+    tag: latest
   podAnnotations: {}
   podLabels:
     scope: danswer-backend
