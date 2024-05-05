@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 import danswer.db.models as db_models
 from danswer.auth.users import current_admin_user
 from danswer.db.engine import get_session
+from ee.danswer.db.analytics import fetch_danswerbot_analytics
 from ee.danswer.db.analytics import fetch_per_user_query_analytics
 from ee.danswer.db.analytics import fetch_query_analytics
 
@@ -30,12 +31,12 @@ def get_query_analytics(
     db_session: Session = Depends(get_session),
 ) -> list[QueryAnalyticsResponse]:
     daily_query_usage_info = fetch_query_analytics(
-        db_session=db_session,
         start=start
         or (
             datetime.datetime.utcnow() - datetime.timedelta(days=30)
         ),  # default is 30d lookback
         end=end or datetime.datetime.utcnow(),
+        db_session=db_session,
     )
     return [
         QueryAnalyticsResponse(
@@ -61,12 +62,12 @@ def get_user_analytics(
     db_session: Session = Depends(get_session),
 ) -> list[UserAnalyticsResponse]:
     daily_query_usage_info_per_user = fetch_per_user_query_analytics(
-        db_session=db_session,
         start=start
         or (
             datetime.datetime.utcnow() - datetime.timedelta(days=30)
         ),  # default is 30d lookback
         end=end or datetime.datetime.utcnow(),
+        db_session=db_session,
     )
 
     user_analytics: dict[datetime.date, int] = defaultdict(int)
@@ -79,3 +80,38 @@ def get_user_analytics(
         )
         for date, cnt in user_analytics.items()
     ]
+
+
+class DanswerbotAnalyticsResponse(BaseModel):
+    total_queries: int
+    auto_resolved: int
+    date: datetime.date
+
+
+@router.get("/admin/danswerbot")
+def get_danswerbot_analytics(
+    start: datetime.datetime | None = None,
+    end: datetime.datetime | None = None,
+    _: db_models.User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> list[DanswerbotAnalyticsResponse]:
+    daily_danswerbot_info = fetch_danswerbot_analytics(
+        start=start
+        or (
+            datetime.datetime.utcnow() - datetime.timedelta(days=30)
+        ),  # default is 30d lookback
+        end=end or datetime.datetime.utcnow(),
+        db_session=db_session,
+    )
+
+    resolution_results = [
+        DanswerbotAnalyticsResponse(
+            total_queries=total_queries,
+            # If it hits negatives, something has gone wrong...
+            auto_resolved=max(0, total_queries - total_negatives),
+            date=date,
+        )
+        for total_queries, total_negatives, date in daily_danswerbot_info
+    ]
+
+    return resolution_results

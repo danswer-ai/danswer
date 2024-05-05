@@ -12,6 +12,12 @@ export interface UserAnalytics {
   date: string;
 }
 
+export interface DanswerBotAnalytics {
+  total_queries: number;
+  auto_resolved: number;
+  date: string;
+}
+
 export interface AbridgedSearchDoc {
   document_id: string;
   semantic_identifier: string;
