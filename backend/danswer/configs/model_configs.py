@@ -103,9 +103,12 @@ DISABLE_LITELLM_STREAMING = (
 LITELLM_EXTRA_HEADERS = None
 if os.environ.get("LITELLM_EXTRA_HEADERS"):
     try:
-        LITELLM_EXTRA_HEADERS = json.loads(os.environ.get("LITELLM_EXTRA_HEADERS"))
-    except Exception as e:
+        headers = os.environ.get("LITELLM_EXTRA_HEADERS")
+        if headers:
+            LITELLM_EXTRA_HEADERS = json.loads(headers)
+    except Exception:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(
             "Failed to parse LITELLM_EXTRA_HEADERS, must be a valid JSON object"

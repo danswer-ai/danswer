@@ -1,6 +1,7 @@
 import abc
 import os
 from collections.abc import Iterator
+from typing import Any
 
 import litellm  # type:ignore
 from langchain.chat_models.base import BaseChatModel
@@ -89,7 +90,7 @@ class DefaultMultiLLM(LangChainChatLLM):
     """Uses Litellm library to allow easy configuration to use a multitude of LLMs
     See https://python.langchain.com/docs/integrations/chat/litellm"""
 
-    DEFAULT_MODEL_PARAMS = {
+    DEFAULT_MODEL_PARAMS: dict[str, Any] = {
         "frequency_penalty": 0,
         "presence_penalty": 0,
     }
@@ -124,7 +125,9 @@ class DefaultMultiLLM(LangChainChatLLM):
             for k, v in custom_config.items():
                 os.environ[k] = v
 
-        model_kwargs = DefaultMultiLLM.DEFAULT_MODEL_PARAMS if model_provider == "openai" else {}
+        model_kwargs = (
+            DefaultMultiLLM.DEFAULT_MODEL_PARAMS if model_provider == "openai" else {}
+        )
 
         if extra_headers:
             model_kwargs.update({"extra_headers": extra_headers})
