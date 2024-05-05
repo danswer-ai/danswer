@@ -2,6 +2,7 @@ import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import {
   ChatSessionSnapshot,
+  DanswerBotAnalytics,
   QueryAnalytics,
   UserAnalytics,
 } from "./usage/types";
@@ -47,6 +48,19 @@ export const useUserAnalytics = (timeRange: DateRangePickerValue) => {
   return {
     ...swrResponse,
     refreshUserAnalytics: () => mutate(url),
+  };
+};
+
+export const useDanswerBotAnalytics = (timeRange: DateRangePickerValue) => {
+  const url = buildApiPath("/api/analytics/admin/danswerbot", {
+    start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
+    end: convertDateToEndOfDay(timeRange.to)?.toISOString(),
+  });
+  const swrResponse = useSWR<DanswerBotAnalytics[]>(url, errorHandlingFetcher); // TODO
+
+  return {
+    ...swrResponse,
+    refreshDanswerBotAnalytics: () => mutate(url),
   };
 };
 
