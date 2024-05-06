@@ -96,7 +96,6 @@ class CreateChatMessageRequest(ChunkContext):
     # allows the caller to specify the exact search query they want to use
     # will disable Query Rewording if specified
     query_override: str | None = None
-    no_ai_answer: bool = False
 
     # allows the caller to override the Persona / Prompt
     llm_override: LLMOverride | None = None

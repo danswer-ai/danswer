@@ -2,7 +2,6 @@ import datetime
 import json
 from enum import Enum as PyEnum
 from typing import Any
-from typing import List
 from typing import Literal
 from typing import NotRequired
 from typing import Optional
@@ -102,24 +101,24 @@ class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
-    oauth_accounts: Mapped[List[OAuthAccount]] = relationship(
+    oauth_accounts: Mapped[list[OAuthAccount]] = relationship(
         "OAuthAccount", lazy="joined"
     )
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole, native_enum=False, default=UserRole.BASIC)
     )
-    credentials: Mapped[List["Credential"]] = relationship(
+    credentials: Mapped[list["Credential"]] = relationship(
         "Credential", back_populates="user", lazy="joined"
     )
-    chat_sessions: Mapped[List["ChatSession"]] = relationship(
+    chat_sessions: Mapped[list["ChatSession"]] = relationship(
         "ChatSession", back_populates="user"
     )
-    chat_folders: Mapped[List["ChatFolder"]] = relationship(
+    chat_folders: Mapped[list["ChatFolder"]] = relationship(
         "ChatFolder", back_populates="user"
     )
-    prompts: Mapped[List["Prompt"]] = relationship("Prompt", back_populates="user")
+    prompts: Mapped[list["Prompt"]] = relationship("Prompt", back_populates="user")
     # Personas owned by this user
-    personas: Mapped[List["Persona"]] = relationship("Persona", back_populates="user")
+    personas: Mapped[list["Persona"]] = relationship("Persona", back_populates="user")
 
 
 class AccessToken(SQLAlchemyBaseAccessTokenTableUUID, Base):
@@ -224,6 +223,13 @@ class Document__Tag(Base):
     tag_id: Mapped[int] = mapped_column(ForeignKey("tag.id"), primary_key=True)
 
 
+class Persona__Tool(Base):
+    __tablename__ = "persona__tool"
+
+    persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id"), primary_key=True)
+    tool_id: Mapped[int] = mapped_column(ForeignKey("tool.id"), primary_key=True)
+
+
 """
 Documents/Indexing Tables
 """
@@ -274,7 +280,7 @@ class ConnectorCredentialPair(Base):
     credential: Mapped["Credential"] = relationship(
         "Credential", back_populates="connectors"
     )
-    document_sets: Mapped[List["DocumentSet"]] = relationship(
+    document_sets: Mapped[list["DocumentSet"]] = relationship(
         "DocumentSet",
         secondary=DocumentSet__ConnectorCredentialPair.__table__,
         back_populates="connector_credential_pairs",
@@ -315,7 +321,7 @@ class Document(Base):
     )
     # TODO if more sensitive data is added here for display, make sure to add user/group permission
 
-    retrieval_feedbacks: Mapped[List["DocumentRetrievalFeedback"]] = relationship(
+    retrieval_feedbacks: Mapped[list["DocumentRetrievalFeedback"]] = relationship(
         "DocumentRetrievalFeedback", back_populates="document"
     )
     tags = relationship(
@@ -369,15 +375,15 @@ class Connector(Base):
     )
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    credentials: Mapped[List["ConnectorCredentialPair"]] = relationship(
+    credentials: Mapped[list["ConnectorCredentialPair"]] = relationship(
         "ConnectorCredentialPair",
         back_populates="connector",
         cascade="all, delete-orphan",
     )
     documents_by_connector: Mapped[
-        List["DocumentByConnectorCredentialPair"]
+        list["DocumentByConnectorCredentialPair"]
     ] = relationship("DocumentByConnectorCredentialPair", back_populates="connector")
-    index_attempts: Mapped[List["IndexAttempt"]] = relationship(
+    index_attempts: Mapped[list["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="connector"
     )
 
@@ -397,15 +403,15 @@ class Credential(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    connectors: Mapped[List["ConnectorCredentialPair"]] = relationship(
+    connectors: Mapped[list["ConnectorCredentialPair"]] = relationship(
         "ConnectorCredentialPair",
         back_populates="credential",
         cascade="all, delete-orphan",
     )
     documents_by_credential: Mapped[
-        List["DocumentByConnectorCredentialPair"]
+        list["DocumentByConnectorCredentialPair"]
     ] = relationship("DocumentByConnectorCredentialPair", back_populates="credential")
-    index_attempts: Mapped[List["IndexAttempt"]] = relationship(
+    index_attempts: Mapped[list["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="credential"
     )
     user: Mapped[User | None] = relationship("User", back_populates="credentials")
@@ -425,7 +431,7 @@ class EmbeddingModel(Base):
     )
     index_name: Mapped[str] = mapped_column(String)
 
-    index_attempts: Mapped[List["IndexAttempt"]] = relationship(
+    index_attempts: Mapped[list["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="embedding_model"
     )
 
@@ -644,7 +650,7 @@ class ChatSession(Base):
     folder: Mapped["ChatFolder"] = relationship(
         "ChatFolder", back_populates="chat_sessions"
     )
-    messages: Mapped[List["ChatMessage"]] = relationship(
+    messages: Mapped[list["ChatMessage"]] = relationship(
         "ChatMessage", back_populates="chat_session", cascade="delete"
     )
     persona: Mapped["Persona"] = relationship("Persona")
@@ -691,10 +697,10 @@ class ChatMessage(Base):
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
     prompt: Mapped[Optional["Prompt"]] = relationship("Prompt")
-    chat_message_feedbacks: Mapped[List["ChatMessageFeedback"]] = relationship(
+    chat_message_feedbacks: Mapped[list["ChatMessageFeedback"]] = relationship(
         "ChatMessageFeedback", back_populates="chat_message"
     )
-    document_feedbacks: Mapped[List["DocumentRetrievalFeedback"]] = relationship(
+    document_feedbacks: Mapped[list["DocumentRetrievalFeedback"]] = relationship(
         "DocumentRetrievalFeedback", back_populates="chat_message"
     )
     search_docs: Mapped[list["SearchDoc"]] = relationship(
@@ -716,7 +722,7 @@ class ChatFolder(Base):
     display_priority: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
 
     user: Mapped[User] = relationship("User", back_populates="chat_folders")
-    chat_sessions: Mapped[List["ChatSession"]] = relationship(
+    chat_sessions: Mapped[list["ChatSession"]] = relationship(
         "ChatSession", back_populates="folder"
     )
 
@@ -865,6 +871,24 @@ class Prompt(Base):
     )
 
 
+class Tool(Base):
+    __tablename__ = "tool"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
+    # ID of the tool in the codebase, only applies for in-code tools.
+    # tools defiend via the UI will have this as None
+    in_code_tool_id: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    # Relationship to Persona through the association table
+    personas: Mapped[list["Persona"]] = relationship(
+        "Persona",
+        secondary=Persona__Tool.__table__,
+        back_populates="tools",
+    )
+
+
 class StarterMessage(TypedDict):
     """NOTE: is a `TypedDict` so it can be used as a type hint for a JSONB column
     in Postgres"""
@@ -931,6 +955,11 @@ class Persona(Base):
     document_sets: Mapped[list[DocumentSet]] = relationship(
         "DocumentSet",
         secondary=Persona__DocumentSet.__table__,
+        back_populates="personas",
+    )
+    tools: Mapped[list[Tool]] = relationship(
+        "Tool",
+        secondary=Persona__Tool.__table__,
         back_populates="personas",
     )
     # Owner
