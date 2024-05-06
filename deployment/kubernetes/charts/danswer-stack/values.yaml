@@ -79,11 +79,11 @@ indexCapability:
     storage: "3Gi" 
 
 postgresql:
-  # global:
-  #   auth:
-  #     existingSecret: danswer-secrets
-  #     secretKeys:
-  #       adminPasswordKey: postgres_password                
+  global:
+    auth:
+      existingSecret: danswer-secrets
+      secretKeys:
+        adminPasswordKey: postgres_password                
   primary:
     persistence:
       size: 1Gi 
