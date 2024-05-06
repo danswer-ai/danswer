@@ -1,4 +1,5 @@
 import datetime
+import json
 from enum import Enum as PyEnum
 from typing import Any
 from typing import List
@@ -24,10 +25,13 @@ from sqlalchemy import String
 from sqlalchemy import Text
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.engine.interfaces import Dialect
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import LargeBinary
+from sqlalchemy.types import TypeDecorator
 
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DEFAULT_BOOST
@@ -47,10 +51,44 @@ from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
 from danswer.search.enums import RecencyBiasSetting
 from danswer.search.enums import SearchType
+from danswer.utils.encryption import decrypt_bytes_to_string
+from danswer.utils.encryption import encrypt_string_to_bytes
 
 
 class Base(DeclarativeBase):
     pass
+
+
+class EncryptedString(TypeDecorator):
+    impl = LargeBinary
+
+    def process_bind_param(self, value: str | None, dialect: Dialect) -> bytes | None:
+        if value is not None:
+            return encrypt_string_to_bytes(value)
+        return value
+
+    def process_result_value(self, value: bytes | None, dialect: Dialect) -> str | None:
+        if value is not None:
+            return decrypt_bytes_to_string(value)
+        return value
+
+
+class EncryptedJson(TypeDecorator):
+    impl = LargeBinary
+
+    def process_bind_param(self, value: dict | None, dialect: Dialect) -> bytes | None:
+        if value is not None:
+            json_str = json.dumps(value)
+            return encrypt_string_to_bytes(json_str)
+        return value
+
+    def process_result_value(
+        self, value: bytes | None, dialect: Dialect
+    ) -> dict | None:
+        if value is not None:
+            json_str = decrypt_bytes_to_string(value)
+            return json.loads(json_str)
+        return value
 
 
 """
@@ -348,7 +386,7 @@ class Credential(Base):
     __tablename__ = "credential"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    credential_json: Mapped[dict[str, Any]] = mapped_column(postgresql.JSONB())
+    credential_json: Mapped[dict[str, Any]] = mapped_column(EncryptedJson())
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     # if `true`, then all Admins will have access to the credential
     admin_public: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -741,7 +779,7 @@ class LLMProvider(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True)
-    api_key: Mapped[str | None] = mapped_column(String, nullable=True)
+    api_key: Mapped[str | None] = mapped_column(EncryptedString(), nullable=True)
     api_base: Mapped[str | None] = mapped_column(String, nullable=True)
     api_version: Mapped[str | None] = mapped_column(String, nullable=True)
     # custom configs that should be passed to the LLM provider at inference time
@@ -984,7 +1022,8 @@ class KVStore(Base):
     __tablename__ = "key_value_store"
 
     key: Mapped[str] = mapped_column(String, primary_key=True)
-    value: Mapped[JSON_ro] = mapped_column(postgresql.JSONB(), nullable=False)
+    value: Mapped[JSON_ro] = mapped_column(postgresql.JSONB(), nullable=True)
+    encrypted_value: Mapped[JSON_ro] = mapped_column(EncryptedJson(), nullable=True)
 
 
 class PGFileStore(Base):
