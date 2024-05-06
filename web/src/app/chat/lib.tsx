@@ -10,9 +10,11 @@ import {
   BackendMessage,
   ChatSession,
   DocumentsResponse,
+  ImageGenerationDisplay,
   Message,
   RetrievalType,
   StreamingError,
+  ToolRunKickoff,
 } from "./interfaces";
 import { Persona } from "../admin/assistants/interfaces";
 import { ReadonlyURLSearchParams } from "next/navigation";
@@ -128,7 +130,12 @@ export async function* sendMessage({
   }
 
   yield* handleStream<
-    AnswerPiecePacket | DocumentsResponse | BackendMessage | StreamingError
+    | AnswerPiecePacket
+    | DocumentsResponse
+    | BackendMessage
+    | ImageGenerationDisplay
+    | ToolRunKickoff
+    | StreamingError
   >(sendMessageResponse);
 }
 

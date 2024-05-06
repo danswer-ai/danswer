@@ -73,6 +73,15 @@ export interface DocumentsResponse {
   rephrased_query: string | null;
 }
 
+export interface ImageGenerationDisplay {
+  file_ids: string[];
+}
+
+export interface ToolRunKickoff {
+  tool_name: string;
+  tool_args: Record<string, any>;
+}
+
 export interface StreamingError {
   error: string;
 }
