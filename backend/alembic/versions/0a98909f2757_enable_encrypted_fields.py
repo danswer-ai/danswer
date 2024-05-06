@@ -67,6 +67,34 @@ def upgrade() -> None:
     op.drop_column("credential", "credential_json")
     op.alter_column("credential", "temp_column", new_column_name="credential_json")
 
+    op.add_column("llm_provider", sa.Column("temp_column", sa.LargeBinary()))
+    llm_table = table(
+        "llm_provider",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column(
+            "api_key",
+            sa.String(),
+            nullable=False,
+        ),
+        sa.Column(
+            "temp_column",
+            sa.LargeBinary(),
+            nullable=False,
+        ),
+    )
+    results = connection.execute(sa.select(creds_table))
+
+    for row_id, api_key, _ in results:
+        llm_key = encrypt_string_to_bytes(api_key)
+        connection.execute(
+            llm_table.update()
+            .where(llm_table.c.id == row_id)
+            .values(temp_column=llm_key)
+        )
+
+    op.drop_column("llm_provider", "api_key")
+    op.alter_column("llm_provider", "temp_column", new_column_name="api_key")
+
 
 def downgrade() -> None:
     # Downgrades not supported, can be built in later if needed
