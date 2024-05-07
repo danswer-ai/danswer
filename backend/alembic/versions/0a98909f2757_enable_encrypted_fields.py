@@ -35,9 +35,6 @@ def upgrade() -> None:
 
     # Need a temporary column to translate the JSONB to binary
     op.add_column("credential", sa.Column("temp_column", sa.LargeBinary()))
-    op.add_column("llm_provider", sa.Column("temp_column", sa.LargeBinary()))
-
-    connection.commit()
 
     creds_table = table(
         "credential",
@@ -70,6 +67,8 @@ def upgrade() -> None:
     op.drop_column("credential", "credential_json")
     op.alter_column("credential", "temp_column", new_column_name="credential_json")
 
+    op.add_column("llm_provider", sa.Column("temp_column", sa.LargeBinary()))
+
     llm_table = table(
         "llm_provider",
         sa.Column("id", sa.Integer(), nullable=False),
@@ -84,7 +83,7 @@ def upgrade() -> None:
             nullable=False,
         ),
     )
-    results = connection.execute(sa.select(creds_table))
+    results = connection.execute(sa.select(llm_table))
 
     for row_id, api_key, _ in results:
         llm_key = encrypt_string_to_bytes(api_key)
