@@ -202,11 +202,11 @@ api:
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
     requests:
-      cpu: 1500m
-      memory: 2Gi
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
+      cpu: 500m
+      memory: 128Mi
+    limits:
+      cpu: 900m
+      memory: 512Mi
 
   autoscaling:
     enabled: false
@@ -262,11 +262,11 @@ background:
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
     requests:
-      cpu: 2500m
-      memory: 5Gi
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
+      cpu: 500m
+      memory: 500Mi
+    limits:
+      cpu: 900m
+      memory: 800Mi
 
   autoscaling:
     enabled: false
@@ -322,12 +322,12 @@ vespa:
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-    requests:
-      cpu: 1500m
-      memory: 4000Mi
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
+  #   requests:
+  #     cpu: 1500m
+  #     memory: 4000Mi
+  # # limits:
+  # #   cpu: 100m
+  # #   memory: 128Mi
 
   nodeSelector: {}
   tolerations: []
