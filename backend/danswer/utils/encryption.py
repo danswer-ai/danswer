@@ -26,6 +26,6 @@ def encrypt_string_to_bytes(intput_str: str) -> bytes:
 
 def decrypt_bytes_to_string(intput_bytes: bytes) -> str:
     versioned_decryption_fn = fetch_versioned_implementation(
-        "danswer.utils.encryption", "_encrypt_string"
+        "danswer.utils.encryption", "_decrypt_bytes"
     )
     return versioned_decryption_fn(intput_bytes)
