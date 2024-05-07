@@ -37,6 +37,7 @@ export function LLMProviderUpdateForm({
 
   // Define the initial values based on the provider's requirements
   const initialValues = {
+    name: existingLlmProvider?.name ?? "",
     api_key: existingLlmProvider?.api_key ?? "",
     api_base: existingLlmProvider?.api_base ?? "",
     api_version: existingLlmProvider?.api_version ?? "",
@@ -64,6 +65,7 @@ export function LLMProviderUpdateForm({
 
   // Setup validation schema if required
   const validationSchema = Yup.object({
+    name: Yup.string().required("Display Name is required"),
     api_key: llmProviderDescriptor.api_key_required
       ? Yup.string().required("API Key is required")
       : Yup.string(),
@@ -118,7 +120,7 @@ export function LLMProviderUpdateForm({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            name: llmProviderDescriptor.name,
+            provider: llmProviderDescriptor.name,
             ...values,
             fast_default_model_name:
               values.default_fast_model_name || values.default_model_name,
@@ -184,6 +186,15 @@ export function LLMProviderUpdateForm({
     >
       {({ values }) => (
         <Form>
+          <TextFormField
+            name="name"
+            label="Display Name"
+            subtext="A name which you can use to identify this provider when selecting it in the UI."
+            placeholder="Display Name"
+          />
+
+          <Divider />
+
           {llmProviderDescriptor.api_key_required && (
             <TextFormField
               name="api_key"
