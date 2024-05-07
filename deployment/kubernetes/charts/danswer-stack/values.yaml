@@ -78,21 +78,15 @@ indexCapability:
     accessMode: "ReadWriteOnce"
     storage: "3Gi" 
 
-postgresql:
-  global:
-    auth:
-      existingSecret: danswer-secrets
-      secretKeys:
-        adminPasswordKey: postgres_password                
+postgresql:               
   primary:
     persistence:
       size: 1Gi 
   enabled: true
   auth:
-    username: danswerapi
-    database: danswer
-    password: password
-    postgresPassword: password
+    existingSecret: danswer-secrets
+    # secretKeys:
+    #   adminPasswordKey: postgres_password
 
 nginx:
   containerPorts:

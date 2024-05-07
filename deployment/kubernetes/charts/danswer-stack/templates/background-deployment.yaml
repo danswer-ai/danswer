@@ -48,14 +48,6 @@ spec:
           env:
             - name: ENABLE_MINI_CHUNK
               value: "{{ .Values.background.enableMiniChunk }}"
-            {{- if .Values.postgresql.enabled }}
-            - name: POSTGRES_DB
-              value: {{ .Values.postgresql.auth.database }}
-            - name: POSTGRES_USER
-              value: {{ .Values.postgresql.auth.username }}
-            - name: POSTGRES_PASSWORD
-              value: {{ .Values.postgresql.auth.password }}
-            {{- end }}
           volumeMounts:
             - name: dynamic-storage
               mountPath: /home/storage
