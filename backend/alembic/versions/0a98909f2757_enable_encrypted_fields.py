@@ -98,5 +98,16 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Downgrades not supported, can be built in later if needed
-    pass
+    # Some information loss but this is ok. Should not allow decryption via downgrade.
+    op.drop_column("credential", "credential_json")
+    op.drop_column("llm_provider", "api_key")
+
+    op.add_column("llm_provider", sa.Column("api_key", sa.String()))
+    op.add_column(
+        "credential",
+        sa.Column("credential_json", postgresql.JSONB(astext_type=sa.Text())),
+    )
+
+    op.execute("DELETE FROM key_value_store WHERE value IS NULL")
+    op.alter_column("key_value_store", "value", nullable=False)
+    op.drop_column("key_value_store", "encrypted_value")

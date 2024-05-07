@@ -1,4 +1,4 @@
-from danswer.configs.app_configs import SECRET
+from danswer.configs.app_configs import ENCRYPTION_KEY_SECRET
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 
@@ -6,7 +6,7 @@ logger = setup_logger()
 
 
 def _encrypt_string(input_str: str) -> bytes:
-    if SECRET:
+    if ENCRYPTION_KEY_SECRET:
         logger.warning("MIT version of Danswer does not support encryption of secrets.")
     return input_str.encode()
 
