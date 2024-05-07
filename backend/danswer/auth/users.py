@@ -33,12 +33,12 @@ from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import EMAIL_FROM
 from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
-from danswer.configs.app_configs import SECRET
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import SMTP_PASS
 from danswer.configs.app_configs import SMTP_PORT
 from danswer.configs.app_configs import SMTP_SERVER
 from danswer.configs.app_configs import SMTP_USER
+from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
@@ -150,8 +150,8 @@ def send_user_verification_email(
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
-    reset_password_token_secret = SECRET
-    verification_token_secret = SECRET
+    reset_password_token_secret = USER_AUTH_SECRET
+    verification_token_secret = USER_AUTH_SECRET
 
     async def create(
         self,
