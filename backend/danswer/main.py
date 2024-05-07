@@ -29,7 +29,7 @@ from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
-from danswer.configs.app_configs import SECRET
+from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.chat_configs import MULTILINGUAL_QUERY_EXPANSION
 from danswer.configs.constants import AuthType
@@ -322,7 +322,7 @@ def get_application() -> FastAPI:
             fastapi_users.get_oauth_router(
                 oauth_client,
                 auth_backend,
-                SECRET,
+                USER_AUTH_SECRET,
                 associate_by_email=True,
                 is_verified_by_default=True,
                 # Points the user back to the login page

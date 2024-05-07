@@ -46,7 +46,7 @@ def get_danswer_api_key(key_len: int = 30, dont_regenerate: bool = False) -> str
     logger.info("Generating Danswer API Key")
 
     api_key = "dn_" + secrets.token_urlsafe(key_len)
-    kv_store.store(_DANSWER_API_KEY, api_key)
+    kv_store.store(_DANSWER_API_KEY, api_key, encrypt=True)
 
     return api_key
 
