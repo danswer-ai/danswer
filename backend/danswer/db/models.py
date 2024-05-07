@@ -779,6 +779,7 @@ class LLMProvider(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True)
+    provider: Mapped[str] = mapped_column(String)
     api_key: Mapped[str | None] = mapped_column(EncryptedString(), nullable=True)
     api_base: Mapped[str | None] = mapped_column(String, nullable=True)
     api_version: Mapped[str | None] = mapped_column(String, nullable=True)
