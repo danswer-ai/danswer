@@ -50,8 +50,8 @@ export function LLMProviderUpdateForm({
     custom_config:
       existingLlmProvider?.custom_config ??
       llmProviderDescriptor.custom_config_keys?.reduce(
-        (acc, key) => {
-          acc[key] = "";
+        (acc, customConfigKey) => {
+          acc[customConfigKey.name] = "";
           return acc;
         },
         {} as { [key: string]: string }
@@ -77,8 +77,12 @@ export function LLMProviderUpdateForm({
       ? {
           custom_config: Yup.object(
             llmProviderDescriptor.custom_config_keys.reduce(
-              (acc, key) => {
-                acc[key] = Yup.string().required(`${key} is required`);
+              (acc, customConfigKey) => {
+                if (customConfigKey.is_required) {
+                  acc[customConfigKey.name] = Yup.string().required(
+                    `${customConfigKey.name} is required`
+                  );
+                }
                 return acc;
               },
               {} as { [key: string]: Yup.StringSchema }
@@ -205,9 +209,17 @@ export function LLMProviderUpdateForm({
             />
           )}
 
-          {llmProviderDescriptor.custom_config_keys?.map((key) => (
-            <div key={key}>
-              <TextFormField name={`custom_config.${key}`} label={key} />
+          {llmProviderDescriptor.custom_config_keys?.map((customConfigKey) => (
+            <div key={customConfigKey.name}>
+              <TextFormField
+                name={`custom_config.${customConfigKey.name}`}
+                label={
+                  customConfigKey.is_required
+                    ? customConfigKey.name
+                    : `[Optional] ${customConfigKey.name}`
+                }
+                subtext={customConfigKey.description || undefined}
+              />
             </div>
           ))}
 
