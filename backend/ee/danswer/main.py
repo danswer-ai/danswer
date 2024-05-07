@@ -9,7 +9,7 @@ from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
-from danswer.configs.app_configs import SECRET
+from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
 from danswer.main import get_application
@@ -55,7 +55,7 @@ def get_ee_application() -> FastAPI:
             fastapi_users.get_oauth_router(
                 OpenID(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OPENID_CONFIG_URL),
                 auth_backend,
-                SECRET,
+                USER_AUTH_SECRET,
                 associate_by_email=True,
                 is_verified_by_default=True,
                 redirect_url=f"{WEB_DOMAIN}/auth/oidc/callback",
