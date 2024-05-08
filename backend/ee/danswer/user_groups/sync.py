@@ -25,26 +25,25 @@ def _sync_user_group_batch(
     logger.debug(f"Syncing document sets for: {document_ids}")
 
     # Acquires a lock on the documents so that no other process can modify them
-    prepare_to_modify_documents(db_session=db_session, document_ids=document_ids)
+    with prepare_to_modify_documents(db_session=db_session, document_ids=document_ids):
+        # get current state of document sets for these documents
+        document_id_to_access = get_access_for_documents(
+            document_ids=document_ids, db_session=db_session
+        )
 
-    # get current state of document sets for these documents
-    document_id_to_access = get_access_for_documents(
-        document_ids=document_ids, db_session=db_session
-    )
+        # update Vespa
+        document_index.update(
+            update_requests=[
+                UpdateRequest(
+                    document_ids=[document_id],
+                    access=document_id_to_access[document_id],
+                )
+                for document_id in document_ids
+            ]
+        )
 
-    # update Vespa
-    document_index.update(
-        update_requests=[
-            UpdateRequest(
-                document_ids=[document_id],
-                access=document_id_to_access[document_id],
-            )
-            for document_id in document_ids
-        ]
-    )
-
-    # Finish the transaction and release the locks
-    db_session.commit()
+        # Finish the transaction and release the locks
+        db_session.commit()
 
 
 def sync_user_groups(user_group_id: int, db_session: Session) -> None:
