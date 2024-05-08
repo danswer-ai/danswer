@@ -157,6 +157,7 @@ export function LLMConfiguration() {
           </Text>
           <ConfiguredLLMProviderDisplay
             existingLlmProviders={existingLlmProviders}
+            llmProviderDescriptors={llmProviderDescriptors}
           />
         </>
       ) : (
@@ -173,10 +174,6 @@ export function LLMConfiguration() {
 
       <div className="gap-y-4 flex flex-col">
         {llmProviderDescriptors.map((llmProviderDescriptor) => {
-          const existingLlmProvider = existingLlmProviders.find(
-            (llmProvider) => llmProvider.name === llmProviderDescriptor.name
-          );
-
           return (
             <DefaultLLMProviderDisplay
               key={llmProviderDescriptor.name}
