@@ -15,7 +15,7 @@ function LLMProviderUpdateModal({
   shouldMarkAsDefault,
   setPopup,
 }: {
-  llmProviderDescriptor: WellKnownLLMProviderDescriptor | null;
+  llmProviderDescriptor: WellKnownLLMProviderDescriptor | null | undefined;
   onClose: () => void;
   existingLlmProvider?: FullLLMProvider;
   shouldMarkAsDefault?: boolean;
@@ -55,7 +55,7 @@ function LLMProviderDisplay({
   existingLlmProvider,
   shouldMarkAsDefault,
 }: {
-  llmProviderDescriptor: WellKnownLLMProviderDescriptor | null;
+  llmProviderDescriptor: WellKnownLLMProviderDescriptor | null | undefined;
   existingLlmProvider: FullLLMProvider;
   shouldMarkAsDefault?: boolean;
 }) {
@@ -143,8 +143,10 @@ function LLMProviderDisplay({
 
 export function ConfiguredLLMProviderDisplay({
   existingLlmProviders,
+  llmProviderDescriptors,
 }: {
   existingLlmProviders: FullLLMProvider[];
+  llmProviderDescriptors: WellKnownLLMProviderDescriptor[];
 }) {
   existingLlmProviders = existingLlmProviders.sort((a, b) => {
     if (a.is_default_provider && !b.is_default_provider) {
@@ -158,13 +160,26 @@ export function ConfiguredLLMProviderDisplay({
 
   return (
     <div className="gap-y-4 flex flex-col">
-      {existingLlmProviders.map((provider) => (
-        <LLMProviderDisplay
-          key={provider.id}
-          llmProviderDescriptor={null}
-          existingLlmProvider={provider}
-        />
-      ))}
+      {existingLlmProviders.map((provider) => {
+        const defaultProviderDesciptor = llmProviderDescriptors.find(
+          (llmProviderDescriptors) =>
+            llmProviderDescriptors.name === provider.provider
+        );
+        console.log(provider.model_names.length);
+
+        return (
+          <LLMProviderDisplay
+            key={provider.id}
+            // if the user has specified custom model names,
+            // then the provider is custom - don't use the default
+            // provider descriptor
+            llmProviderDescriptor={
+              provider.model_names.length > 0 ? null : defaultProviderDesciptor
+            }
+            existingLlmProvider={provider}
+          />
+        );
+      })}
     </div>
   );
 }
