@@ -103,32 +103,30 @@ def sync_document_set_task(document_set_id: int) -> None:
         logger.debug(f"Syncing document sets for: {document_ids}")
 
         # Acquires a lock on the documents so that no other process can modify them
-        prepare_to_modify_documents(db_session=db_session, document_ids=document_ids)
+        with prepare_to_modify_documents(
+            db_session=db_session, document_ids=document_ids
+        ):
+            # get current state of document sets for these documents
+            document_set_map = {
+                document_id: document_sets
+                for document_id, document_sets in fetch_document_sets_for_documents(
+                    document_ids=document_ids, db_session=db_session
+                )
+            }
 
-        # get current state of document sets for these documents
-        document_set_map = {
-            document_id: document_sets
-            for document_id, document_sets in fetch_document_sets_for_documents(
-                document_ids=document_ids, db_session=db_session
+            # update Vespa
+            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+            document_index = get_default_document_index(
+                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
             )
-        }
-
-        # update Vespa
-        curr_ind_name, sec_ind_name = get_both_index_names(db_session)
-        document_index = get_default_document_index(
-            primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
-        )
-        update_requests = [
-            UpdateRequest(
-                document_ids=[document_id],
-                document_sets=set(document_set_map.get(document_id, [])),
-            )
-            for document_id in document_ids
-        ]
-        document_index.update(update_requests=update_requests)
-
-        # Commit to release the locks
-        db_session.commit()
+            update_requests = [
+                UpdateRequest(
+                    document_ids=[document_id],
+                    document_sets=set(document_set_map.get(document_id, [])),
+                )
+                for document_id in document_ids
+            ]
+            document_index.update(update_requests=update_requests)
 
     with Session(get_sqlalchemy_engine()) as db_session:
         try:
