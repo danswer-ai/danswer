@@ -1,6 +1,7 @@
 from typing import Generic
 from typing import Optional
 from typing import TypeVar
+from uuid import UUID
 
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
@@ -21,3 +22,12 @@ class ApiKey(BaseModel):
 
 class IdReturn(BaseModel):
     id: int
+
+
+class MinimalUserSnapshot(BaseModel):
+    id: UUID
+    email: str
+
+
+class DisplayPriorityRequest(BaseModel):
+    display_priority_map: dict[int, int]

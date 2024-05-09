@@ -1,4 +1,5 @@
 import datetime
+import json
 from enum import Enum as PyEnum
 from typing import Any
 from typing import List
@@ -8,8 +9,8 @@ from typing import Optional
 from typing import TypedDict
 from uuid import UUID
 
-from fastapi_users.db import SQLAlchemyBaseOAuthAccountTableUUID
-from fastapi_users.db import SQLAlchemyBaseUserTableUUID
+from fastapi_users_db_sqlalchemy import SQLAlchemyBaseOAuthAccountTableUUID
+from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
 from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyBaseAccessTokenTableUUID
 from sqlalchemy import Boolean
 from sqlalchemy import DateTime
@@ -24,58 +25,70 @@ from sqlalchemy import String
 from sqlalchemy import Text
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.engine.interfaces import Dialect
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import LargeBinary
+from sqlalchemy.types import TypeDecorator
 
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
+from danswer.configs.constants import TokenRateLimitScope
 from danswer.connectors.models import InputType
+from danswer.db.enums import ChatSessionSharedStatus
+from danswer.db.enums import IndexingStatus
+from danswer.db.enums import IndexModelStatus
+from danswer.db.enums import TaskStatus
+from danswer.db.pydantic_type import PydanticType
 from danswer.dynamic_configs.interface import JSON_ro
+from danswer.file_store.models import FileDescriptor
+from danswer.llm.override_models import LLMOverride
+from danswer.llm.override_models import PromptOverride
 from danswer.search.enums import RecencyBiasSetting
 from danswer.search.enums import SearchType
-
-
-class IndexingStatus(str, PyEnum):
-    NOT_STARTED = "not_started"
-    IN_PROGRESS = "in_progress"
-    SUCCESS = "success"
-    FAILED = "failed"
-
-
-# these may differ in the future, which is why we're okay with this duplication
-class DeletionStatus(str, PyEnum):
-    NOT_STARTED = "not_started"
-    IN_PROGRESS = "in_progress"
-    SUCCESS = "success"
-    FAILED = "failed"
-
-
-# Consistent with Celery task statuses
-class TaskStatus(str, PyEnum):
-    PENDING = "PENDING"
-    STARTED = "STARTED"
-    SUCCESS = "SUCCESS"
-    FAILURE = "FAILURE"
-
-
-class IndexModelStatus(str, PyEnum):
-    PAST = "PAST"
-    PRESENT = "PRESENT"
-    FUTURE = "FUTURE"
-
-
-class ChatSessionSharedStatus(str, PyEnum):
-    PUBLIC = "public"
-    PRIVATE = "private"
+from danswer.utils.encryption import decrypt_bytes_to_string
+from danswer.utils.encryption import encrypt_string_to_bytes
 
 
 class Base(DeclarativeBase):
     pass
+
+
+class EncryptedString(TypeDecorator):
+    impl = LargeBinary
+
+    def process_bind_param(self, value: str | None, dialect: Dialect) -> bytes | None:
+        if value is not None:
+            return encrypt_string_to_bytes(value)
+        return value
+
+    def process_result_value(self, value: bytes | None, dialect: Dialect) -> str | None:
+        if value is not None:
+            return decrypt_bytes_to_string(value)
+        return value
+
+
+class EncryptedJson(TypeDecorator):
+    impl = LargeBinary
+
+    def process_bind_param(self, value: dict | None, dialect: Dialect) -> bytes | None:
+        if value is not None:
+            json_str = json.dumps(value)
+            return encrypt_string_to_bytes(json_str)
+        return value
+
+    def process_result_value(
+        self, value: bytes | None, dialect: Dialect
+    ) -> dict | None:
+        if value is not None:
+            json_str = decrypt_bytes_to_string(value)
+            return json.loads(json_str)
+        return value
 
 
 """
@@ -101,6 +114,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     chat_sessions: Mapped[List["ChatSession"]] = relationship(
         "ChatSession", back_populates="user"
     )
+    chat_folders: Mapped[List["ChatFolder"]] = relationship(
+        "ChatFolder", back_populates="user"
+    )
     prompts: Mapped[List["Prompt"]] = relationship("Prompt", back_populates="user")
     # Personas owned by this user
     personas: Mapped[List["Persona"]] = relationship("Persona", back_populates="user")
@@ -114,6 +130,7 @@ class ApiKey(Base):
     __tablename__ = "api_key"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str | None] = mapped_column(String, nullable=True)
     hashed_api_key: Mapped[str] = mapped_column(String, unique=True)
     api_key_display: Mapped[str] = mapped_column(String, unique=True)
     # the ID of the "user" who represents the access credentials for the API key
@@ -369,7 +386,7 @@ class Credential(Base):
     __tablename__ = "credential"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    credential_json: Mapped[dict[str, Any]] = mapped_column(postgresql.JSONB())
+    credential_json: Mapped[dict[str, Any]] = mapped_column(EncryptedJson())
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     # if `true`, then all Admins will have access to the credential
     admin_public: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -589,6 +606,7 @@ class ChatSession(Base):
     description: Mapped[str] = mapped_column(Text)
     # One-shot direct answering, currently the two types of chats are not mixed
     one_shot: Mapped[bool] = mapped_column(Boolean, default=False)
+    danswerbot_flow: Mapped[bool] = mapped_column(Boolean, default=False)
     # Only ever set to True if system is set to not hard-delete chats
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     # controls whether or not this conversation is viewable by others
@@ -596,6 +614,23 @@ class ChatSession(Base):
         Enum(ChatSessionSharedStatus, native_enum=False),
         default=ChatSessionSharedStatus.PRIVATE,
     )
+    folder_id: Mapped[int | None] = mapped_column(
+        ForeignKey("chat_folder.id"), nullable=True
+    )
+
+    # the latest "overrides" specified by the user. These take precedence over
+    # the attached persona. However, overrides specified directly in the
+    # `send-message` call will take precedence over these.
+    # NOTE: currently only used by the chat seeding flow, will be used in the
+    # future once we allow users to override default values via the Chat UI
+    # itself
+    llm_override: Mapped[LLMOverride | None] = mapped_column(
+        PydanticType(LLMOverride), nullable=True
+    )
+    prompt_override: Mapped[PromptOverride | None] = mapped_column(
+        PydanticType(PromptOverride), nullable=True
+    )
+
     time_updated: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -606,6 +641,9 @@ class ChatSession(Base):
     )
 
     user: Mapped[User] = relationship("User", back_populates="chat_sessions")
+    folder: Mapped["ChatFolder"] = relationship(
+        "ChatFolder", back_populates="chat_sessions"
+    )
     messages: Mapped[List["ChatMessage"]] = relationship(
         "ChatMessage", back_populates="chat_session", cascade="delete"
     )
@@ -640,6 +678,11 @@ class ChatMessage(Base):
     )
     # Maps the citation numbers to a SearchDoc id
     citations: Mapped[dict[int, int]] = mapped_column(postgresql.JSONB(), nullable=True)
+    # files associated with this message (e.g. images uploaded by the user that the
+    # user is asking a question of)
+    files: Mapped[list[FileDescriptor] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
+    )
     # Only applies for LLM
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     time_sent: Mapped[datetime.datetime] = mapped_column(
@@ -659,6 +702,31 @@ class ChatMessage(Base):
         secondary="chat_message__search_doc",
         back_populates="chat_messages",
     )
+
+
+class ChatFolder(Base):
+    """For organizing chat sessions"""
+
+    __tablename__ = "chat_folder"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # Only null if auth is off
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    name: Mapped[str | None] = mapped_column(String, nullable=True)
+    display_priority: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
+
+    user: Mapped[User] = relationship("User", back_populates="chat_folders")
+    chat_sessions: Mapped[List["ChatSession"]] = relationship(
+        "ChatSession", back_populates="folder"
+    )
+
+    def __lt__(self, other: Any) -> bool:
+        if not isinstance(other, ChatFolder):
+            return NotImplemented
+        if self.display_priority == other.display_priority:
+            # Bigger ID (created later) show earlier
+            return self.id > other.id
+        return self.display_priority < other.display_priority
 
 
 """
@@ -706,6 +774,34 @@ Structures, Organizational, Configurations Tables
 """
 
 
+class LLMProvider(Base):
+    __tablename__ = "llm_provider"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    provider: Mapped[str] = mapped_column(String)
+    api_key: Mapped[str | None] = mapped_column(EncryptedString(), nullable=True)
+    api_base: Mapped[str | None] = mapped_column(String, nullable=True)
+    api_version: Mapped[str | None] = mapped_column(String, nullable=True)
+    # custom configs that should be passed to the LLM provider at inference time
+    # (e.g. `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, etc. for bedrock)
+    custom_config: Mapped[dict[str, str] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
+    )
+    default_model_name: Mapped[str] = mapped_column(String)
+    fast_default_model_name: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    # The LLMs that are available for this provider. Only required if not a default provider.
+    # If a default provider, then the LLM options are pulled from the `options.py` file.
+    # If needed, can be pulled out as a separate table in the future.
+    model_names: Mapped[list[str] | None] = mapped_column(
+        postgresql.ARRAY(String), nullable=True
+    )
+
+    # should only be set for a single provider
+    is_default_provider: Mapped[bool | None] = mapped_column(Boolean, unique=True)
+
+
 class DocumentSet(Base):
     __tablename__ = "document_set"
 
@@ -748,7 +844,6 @@ class Prompt(Base):
     __tablename__ = "prompt"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # If not belong to a user, then it's shared
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
@@ -782,7 +877,6 @@ class Persona(Base):
     __tablename__ = "persona"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # If not belong to a user, then it's shared
     user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
@@ -805,6 +899,9 @@ class Persona(Base):
     # globablly via env variables. For flexibility, validity is not currently enforced
     # NOTE: only is applied on the actual response generation - is not used for things like
     # auto-detected time filters, relevance filters, etc.
+    llm_model_provider_override: Mapped[str | None] = mapped_column(
+        String, nullable=True
+    )
     llm_model_version_override: Mapped[str | None] = mapped_column(
         String, nullable=True
     )
@@ -836,7 +933,7 @@ class Persona(Base):
         back_populates="personas",
     )
     # Owner
-    user: Mapped[User] = relationship("User", back_populates="personas")
+    user: Mapped[User | None] = relationship("User", back_populates="personas")
     # Other users with access
     users: Mapped[list[User]] = relationship(
         "User",
@@ -926,7 +1023,8 @@ class KVStore(Base):
     __tablename__ = "key_value_store"
 
     key: Mapped[str] = mapped_column(String, primary_key=True)
-    value: Mapped[JSON_ro] = mapped_column(postgresql.JSONB(), nullable=False)
+    value: Mapped[JSON_ro] = mapped_column(postgresql.JSONB(), nullable=True)
+    encrypted_value: Mapped[JSON_ro] = mapped_column(EncryptedJson(), nullable=True)
 
 
 class PGFileStore(Base):
@@ -1053,3 +1151,124 @@ class UserGroup(Base):
         secondary=DocumentSet__UserGroup.__table__,
         viewonly=True,
     )
+
+
+"""Tables related to Token Rate Limiting
+NOTE: `TokenRateLimit` is partially an MIT feature (global rate limit)
+"""
+
+
+class TokenRateLimit(Base):
+    __tablename__ = "token_rate_limit"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    token_budget: Mapped[int] = mapped_column(Integer, nullable=False)
+    period_hours: Mapped[int] = mapped_column(Integer, nullable=False)
+    scope: Mapped[TokenRateLimitScope] = mapped_column(
+        Enum(TokenRateLimitScope, native_enum=False)
+    )
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class TokenRateLimit__UserGroup(Base):
+    __tablename__ = "token_rate_limit__user_group"
+
+    rate_limit_id: Mapped[int] = mapped_column(
+        ForeignKey("token_rate_limit.id"), primary_key=True
+    )
+    user_group_id: Mapped[int] = mapped_column(
+        ForeignKey("user_group.id"), primary_key=True
+    )
+
+
+"""Tables related to Permission Sync"""
+
+
+class PermissionSyncStatus(str, PyEnum):
+    IN_PROGRESS = "in_progress"
+    SUCCESS = "success"
+    FAILED = "failed"
+
+
+class PermissionSyncJobType(str, PyEnum):
+    USER_LEVEL = "user_level"
+    GROUP_LEVEL = "group_level"
+
+
+class PermissionSyncRun(Base):
+    """Represents one run of a permission sync job. For some given cc_pair, it is either sync-ing
+    the users or it is sync-ing the groups"""
+
+    __tablename__ = "permission_sync_run"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    # Not strictly needed but makes it easy to use without fetching from cc_pair
+    source_type: Mapped[DocumentSource] = mapped_column(
+        Enum(DocumentSource, native_enum=False)
+    )
+    # Currently all sync jobs are handled as a group permission sync or a user permission sync
+    update_type: Mapped[PermissionSyncJobType] = mapped_column(
+        Enum(PermissionSyncJobType)
+    )
+    cc_pair_id: Mapped[int | None] = mapped_column(
+        ForeignKey("connector_credential_pair.id"), nullable=True
+    )
+    status: Mapped[PermissionSyncStatus] = mapped_column(Enum(PermissionSyncStatus))
+    error_msg: Mapped[str | None] = mapped_column(Text, default=None)
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    cc_pair: Mapped[ConnectorCredentialPair] = relationship("ConnectorCredentialPair")
+
+
+class ExternalPermission(Base):
+    """Maps user info both internal and external to the name of the external group
+    This maps the user to all of their external groups so that the external group name can be
+    attached to the ACL list matching during query time. User level permissions can be handled by
+    directly adding the Danswer user to the doc ACL list"""
+
+    __tablename__ = "external_permission"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    # Email is needed because we want to keep track of users not in Danswer to simplify process
+    # when the user joins
+    user_email: Mapped[str] = mapped_column(String)
+    source_type: Mapped[DocumentSource] = mapped_column(
+        Enum(DocumentSource, native_enum=False)
+    )
+    external_permission_group: Mapped[str] = mapped_column(String)
+    user = relationship("User")
+
+
+class EmailToExternalUserCache(Base):
+    """A way to map users IDs in the external tool to a user in Danswer or at least an email for
+    when the user joins. Used as a cache for when fetching external groups which have their own
+    user ids, this can easily be mapped back to users already known in Danswer without needing
+    to call external APIs to get the user emails.
+
+    This way when groups are updated in the external tool and we need to update the mapping of
+    internal users to the groups, we can sync the internal users to the external groups they are
+    part of using this.
+
+    Ie. User Chris is part of groups alpha, beta, and we can update this if Chris is no longer
+    part of alpha in some external tool.
+    """
+
+    __tablename__ = "email_to_external_user_cache"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    external_user_id: Mapped[str] = mapped_column(String)
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
+    # Email is needed because we want to keep track of users not in Danswer to simplify process
+    # when the user joins
+    user_email: Mapped[str] = mapped_column(String)
+    source_type: Mapped[DocumentSource] = mapped_column(
+        Enum(DocumentSource, native_enum=False)
+    )
+
+    user = relationship("User")

@@ -129,7 +129,7 @@ def create_doc_retrieval_feedback(
     db_session.commit()
 
 
-def delete_document_feedback_for_documents(
+def delete_document_feedback_for_documents__no_commit(
     document_ids: list[str], db_session: Session
 ) -> None:
     """NOTE: does not commit transaction so that this can be used as part of a

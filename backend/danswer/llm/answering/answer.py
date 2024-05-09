@@ -9,10 +9,9 @@ from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
 from danswer.configs.chat_configs import QA_PROMPT_OVERRIDE
-from danswer.configs.chat_configs import QA_TIMEOUT
+from danswer.file_store.utils import InMemoryChatFile
 from danswer.llm.answering.doc_pruning import prune_documents
 from danswer.llm.answering.models import AnswerStyleConfig
-from danswer.llm.answering.models import LLMConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.models import StreamProcessor
@@ -26,20 +25,22 @@ from danswer.llm.answering.stream_processing.citation_processing import (
 from danswer.llm.answering.stream_processing.quotes_processing import (
     build_quotes_processor,
 )
-from danswer.llm.factory import get_default_llm
+from danswer.llm.interfaces import LLM
 from danswer.llm.utils import get_default_llm_tokenizer
 
 
 def _get_stream_processor(
-    docs: list[LlmDoc], answer_style_configs: AnswerStyleConfig
+    context_docs: list[LlmDoc],
+    search_order_docs: list[LlmDoc],
+    answer_style_configs: AnswerStyleConfig,
 ) -> StreamProcessor:
     if answer_style_configs.citation_config:
         return build_citation_processor(
-            context_docs=docs,
+            context_docs=context_docs, search_order_docs=search_order_docs
         )
     if answer_style_configs.quotes_config:
         return build_quotes_processor(
-            context_docs=docs, is_json_prompt=not (QA_PROMPT_OVERRIDE == "weak")
+            context_docs=context_docs, is_json_prompt=not (QA_PROMPT_OVERRIDE == "weak")
         )
 
     raise RuntimeError("Not implemented yet")
@@ -51,13 +52,15 @@ class Answer:
         question: str,
         docs: list[LlmDoc],
         answer_style_config: AnswerStyleConfig,
-        llm_config: LLMConfig,
+        llm: LLM,
         prompt_config: PromptConfig,
         # must be the same length as `docs`. If None, all docs are considered "relevant"
         doc_relevance_list: list[bool] | None = None,
         message_history: list[PreviousMessage] | None = None,
         single_message_history: str | None = None,
-        timeout: int = QA_TIMEOUT,
+        # newly passed in files to include as part of this question
+        latest_query_files: list[InMemoryChatFile] | None = None,
+        files: list[InMemoryChatFile] | None = None,
     ) -> None:
         if single_message_history and message_history:
             raise ValueError(
@@ -66,24 +69,20 @@ class Answer:
 
         self.question = question
         self.docs = docs
+
+        self.latest_query_files = latest_query_files or []
+        self.file_id_to_file = {file.file_id: file for file in (files or [])}
+
         self.doc_relevance_list = doc_relevance_list
         self.message_history = message_history or []
         # used for QA flow where we only want to send a single message
         self.single_message_history = single_message_history
 
         self.answer_style_config = answer_style_config
-        self.llm_config = llm_config
         self.prompt_config = prompt_config
 
-        self.llm = get_default_llm(
-            gen_ai_model_provider=self.llm_config.model_provider,
-            gen_ai_model_version_override=self.llm_config.model_version,
-            timeout=timeout,
-            temperature=self.llm_config.temperature,
-        )
+        self.llm = llm
         self.llm_tokenizer = get_default_llm_tokenizer()
-
-        self.process_stream_fn = _get_stream_processor(docs, answer_style_config)
 
         self._final_prompt: list[BaseMessage] | None = None
 
@@ -101,7 +100,7 @@ class Answer:
             docs=self.docs,
             doc_relevance_list=self.doc_relevance_list,
             prompt_config=self.prompt_config,
-            llm_config=self.llm_config,
+            llm_config=self.llm.config,
             question=self.question,
             document_pruning_config=self.answer_style_config.document_pruning_config,
         )
@@ -116,14 +115,18 @@ class Answer:
             self._final_prompt = build_citations_prompt(
                 question=self.question,
                 message_history=self.message_history,
-                llm_config=self.llm_config,
+                llm_config=self.llm.config,
                 prompt_config=self.prompt_config,
                 context_docs=self.pruned_docs,
+                latest_query_files=self.latest_query_files,
                 all_doc_useful=self.answer_style_config.citation_config.all_docs_useful,
                 llm_tokenizer_encode_func=self.llm_tokenizer.encode,
                 history_message=self.single_message_history or "",
             )
         elif self.answer_style_config.quotes_config:
+            # NOTE: quotes prompt doesn't currently support files
+            # this is okay for now, since the search UI (which uses this)
+            # doesn't support image upload
             self._final_prompt = build_quotes_prompt(
                 question=self.question,
                 context_docs=self.pruned_docs,
@@ -152,8 +155,14 @@ class Answer:
             yield from self._processed_stream
             return
 
+        process_stream_fn = _get_stream_processor(
+            context_docs=self.pruned_docs,
+            search_order_docs=self.docs,
+            answer_style_configs=self.answer_style_config,
+        )
+
         processed_stream = []
-        for processed_packet in self.process_stream_fn(self.raw_streamed_output):
+        for processed_packet in process_stream_fn(self.raw_streamed_output):
             processed_stream.append(processed_packet)
             yield processed_packet
 

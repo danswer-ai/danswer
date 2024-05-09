@@ -75,14 +75,11 @@ def get_not_started_index_attempts(db_session: Session) -> list[IndexAttempt]:
     return list(new_attempts.all())
 
 
-def mark_attempt_in_progress(
+def mark_attempt_in_progress__no_commit(
     index_attempt: IndexAttempt,
-    db_session: Session,
 ) -> None:
     index_attempt.status = IndexingStatus.IN_PROGRESS
     index_attempt.time_started = index_attempt.time_started or func.now()  # type: ignore
-    db_session.add(index_attempt)
-    db_session.commit()
 
 
 def mark_attempt_succeeded(
@@ -295,6 +292,9 @@ def count_unique_cc_pairs_with_successful_index_attempts(
     embedding_model_id: int | None,
     db_session: Session,
 ) -> int:
+    """Collect all of the Index Attempts that are successful and for the specified embedding model
+    Then do distinct by connector_id and credential_id which is equivalent to the cc-pair. Finally,
+    do a count to get the total number of unique cc-pairs with successful attempts"""
     unique_pairs_count = (
         db_session.query(IndexAttempt.connector_id, IndexAttempt.credential_id)
         .filter(

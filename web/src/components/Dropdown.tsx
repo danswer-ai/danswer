@@ -1,6 +1,7 @@
 import { ChangeEvent, FC, useEffect, useRef, useState } from "react";
 import { ChevronDownIcon } from "./icons/icons";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
+import { Popover } from "./popover/Popover";
 
 export interface Option<T> {
   name: string;
@@ -181,9 +182,11 @@ export function SearchMultiSelectDropdown({
 export const CustomDropdown = ({
   children,
   dropdown,
+  direction = "down", // Default to 'down' if not specified
 }: {
   children: JSX.Element | string;
   dropdown: JSX.Element | string;
+  direction?: "up" | "down";
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -211,7 +214,9 @@ export const CustomDropdown = ({
       {isOpen && (
         <div
           onClick={() => setIsOpen(!isOpen)}
-          className="pt-2 absolute bottom w-full z-30 box-shadow"
+          className={`absolute ${
+            direction === "up" ? "bottom-full pb-2" : "pt-2 "
+          } w-full z-30 box-shadow`}
         >
           {dropdown}
         </div>
@@ -281,73 +286,91 @@ export function DefaultDropdown({
   selected,
   onSelect,
   includeDefault = false,
+  side,
+  maxHeight,
 }: {
   options: StringOrNumberOption[];
   selected: string | null;
   onSelect: (value: string | number | null) => void;
   includeDefault?: boolean;
+  side?: "top" | "right" | "bottom" | "left";
+  maxHeight?: string;
 }) {
   const selectedOption = options.find((option) => option.value === selected);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const Content = (
+    <div
+      className={`
+      flex 
+      text-sm 
+      bg-background 
+      px-3
+      py-1.5 
+      rounded-lg 
+      border 
+      border-border 
+      cursor-pointer`}
+    >
+      <p className="line-clamp-1">
+        {selectedOption?.name ||
+          (includeDefault ? "Default" : "Select an option...")}
+      </p>
+      <FiChevronDown className="my-auto ml-auto" />
+    </div>
+  );
+
+  const Dropdown = (
+    <div
+      className={`
+        border 
+        border 
+        rounded-lg 
+        flex 
+        flex-col 
+        bg-background
+        ${maxHeight || "max-h-96"}
+        overflow-y-auto 
+        overscroll-contain`}
+    >
+      {includeDefault && (
+        <DefaultDropdownElement
+          key={-1}
+          name="Default"
+          onSelect={() => {
+            onSelect(null);
+          }}
+          isSelected={selected === null}
+        />
+      )}
+      {options.map((option, ind) => {
+        const isSelected = option.value === selected;
+        return (
+          <DefaultDropdownElement
+            key={option.value}
+            name={option.name}
+            description={option.description}
+            onSelect={() => onSelect(option.value)}
+            isSelected={isSelected}
+          />
+        );
+      })}
+    </div>
+  );
 
   return (
-    <CustomDropdown
-      dropdown={
-        <div
-          className={`
-            border 
-            border 
-            rounded-lg 
-            flex 
-            flex-col 
-            bg-background
-            max-h-96 
-            overflow-y-auto 
-            overscroll-contain`}
-        >
-          {includeDefault && (
-            <DefaultDropdownElement
-              key={-1}
-              name="Default"
-              onSelect={() => {
-                onSelect(null);
-              }}
-              isSelected={selected === null}
-            />
-          )}
-          {options.map((option, ind) => {
-            const isSelected = option.value === selected;
-            return (
-              <DefaultDropdownElement
-                key={option.value}
-                name={option.name}
-                description={option.description}
-                onSelect={() => onSelect(option.value)}
-                isSelected={isSelected}
-              />
-            );
-          })}
-        </div>
-      }
-    >
-      <div
-        className={`
-            flex 
-            text-sm 
-            bg-background 
-            px-3
-            py-1.5 
-            rounded-lg 
-            border 
-            border-border 
-            cursor-pointer`}
-      >
-        <p className="line-clamp-1">
-          {selectedOption?.name ||
-            (includeDefault ? "Default" : "Select an option...")}
-        </p>
-        <FiChevronDown className="my-auto ml-auto" />
-      </div>
-    </CustomDropdown>
+    <div onClick={() => setIsOpen(!isOpen)}>
+      <Popover
+        open={isOpen}
+        onOpenChange={(open) => setIsOpen(open)}
+        content={Content}
+        popover={Dropdown}
+        align="start"
+        side={side}
+        sideOffset={5}
+        matchWidth
+      />
+    </div>
   );
 }
 

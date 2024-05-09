@@ -3,7 +3,6 @@ import os
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentIndexType
 
-
 #####
 # App Configs
 #####
@@ -41,12 +40,16 @@ WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
 AUTH_TYPE = AuthType((os.environ.get("AUTH_TYPE") or AuthType.DISABLED.value).lower())
 DISABLE_AUTH = AUTH_TYPE == AuthType.DISABLED
 
+# Encryption key secret is used to encrypt connector credentials, api keys, and other sensitive
+# information. This provides an extra layer of security on top of Postgres access controls
+# and is available in Danswer EE
+ENCRYPTION_KEY_SECRET = os.environ.get("ENCRYPTION_KEY_SECRET")
+
 # Turn off mask if admin users should see full credentials for data connectors.
 MASK_CREDENTIAL_PREFIX = (
     os.environ.get("MASK_CREDENTIAL_PREFIX", "True").lower() != "false"
 )
 
-SECRET = os.environ.get("SECRET", "")
 SESSION_EXPIRE_TIME_SECONDS = int(
     os.environ.get("SESSION_EXPIRE_TIME_SECONDS") or 86400 * 7
 )  # 7 days
@@ -75,6 +78,7 @@ OAUTH_CLIENT_SECRET = (
     or ""
 )
 
+USER_AUTH_SECRET = os.environ.get("USER_AUTH_SECRET", "")
 # for basic auth
 REQUIRE_EMAIL_VERIFICATION = (
     os.environ.get("REQUIRE_EMAIL_VERIFICATION", "").lower() == "true"
@@ -95,6 +99,9 @@ DOCUMENT_INDEX_TYPE = os.environ.get(
     "DOCUMENT_INDEX_TYPE", DocumentIndexType.COMBINED.value
 )
 VESPA_HOST = os.environ.get("VESPA_HOST") or "localhost"
+# NOTE: this is used if and only if the vespa config server is accessible via a
+# different host than the main vespa application
+VESPA_CONFIG_SERVER_HOST = os.environ.get("VESPA_CONFIG_SERVER_HOST") or VESPA_HOST
 VESPA_PORT = os.environ.get("VESPA_PORT") or "8081"
 VESPA_TENANT_PORT = os.environ.get("VESPA_TENANT_PORT") or "19071"
 # The default below is for dockerized deployment
@@ -121,6 +128,12 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 #####
 POLL_CONNECTOR_OFFSET = 30  # Minutes overlap between poll windows
 
+# View the list here:
+# https://github.com/danswer-ai/danswer/blob/main/backend/danswer/connectors/factory.py
+# If this is empty, all connectors are enabled, this is an option for security heavy orgs where
+# only very select connectors are enabled and admins cannot add other connector types
+ENABLED_CONNECTOR_TYPES = os.environ.get("ENABLED_CONNECTOR_TYPES") or ""
+
 # Some calls to get information on expert users are quite costly especially with rate limiting
 # Since experts are not used in the actual user experience, currently it is turned off
 # for some connectors
@@ -144,6 +157,7 @@ WEB_CONNECTOR_IGNORED_ELEMENTS = os.environ.get(
 WEB_CONNECTOR_OAUTH_CLIENT_ID = os.environ.get("WEB_CONNECTOR_OAUTH_CLIENT_ID")
 WEB_CONNECTOR_OAUTH_CLIENT_SECRET = os.environ.get("WEB_CONNECTOR_OAUTH_CLIENT_SECRET")
 WEB_CONNECTOR_OAUTH_TOKEN_URL = os.environ.get("WEB_CONNECTOR_OAUTH_TOKEN_URL")
+WEB_CONNECTOR_VALIDATE_URLS = os.environ.get("WEB_CONNECTOR_VALIDATE_URLS")
 
 NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP = (
     os.environ.get("NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP", "").lower()
@@ -155,6 +169,17 @@ CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
     for ignored_tag in os.environ.get("CONFLUENCE_CONNECTOR_LABELS_TO_SKIP", "").split(
         ","
     )
+    if ignored_tag
+]
+
+# Avoid to get archived pages
+CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES = (
+    os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES", "").lower() == "true"
+)
+
+JIRA_CONNECTOR_LABELS_TO_SKIP = [
+    ignored_tag
+    for ignored_tag in os.environ.get("JIRA_CONNECTOR_LABELS_TO_SKIP", "").split(",")
     if ignored_tag
 ]
 
@@ -205,23 +230,6 @@ DISABLE_DOCUMENT_CLEANUP = (
 
 
 #####
-# Model Server Configs
-#####
-# If MODEL_SERVER_HOST is set, the NLP models required for Danswer are offloaded to the server via
-# requests. Be sure to include the scheme in the MODEL_SERVER_HOST value.
-MODEL_SERVER_HOST = os.environ.get("MODEL_SERVER_HOST") or None
-MODEL_SERVER_ALLOWED_HOST = os.environ.get("MODEL_SERVER_HOST") or "0.0.0.0"
-MODEL_SERVER_PORT = int(os.environ.get("MODEL_SERVER_PORT") or "9000")
-
-# specify this env variable directly to have a different model server for the background
-# indexing job vs the api server so that background indexing does not effect query-time
-# performance
-INDEXING_MODEL_SERVER_HOST = (
-    os.environ.get("INDEXING_MODEL_SERVER_HOST") or MODEL_SERVER_HOST
-)
-
-
-#####
 # Miscellaneous
 #####
 DYNAMIC_CONFIG_STORE = (
@@ -245,5 +253,7 @@ LOG_VESPA_TIMING_INFORMATION = (
 )
 # Anonymous usage telemetry
 DISABLE_TELEMETRY = os.environ.get("DISABLE_TELEMETRY", "").lower() == "true"
-# notset, debug, info, warning, error, or critical
-LOG_LEVEL = os.environ.get("LOG_LEVEL", "info")
+
+TOKEN_BUDGET_GLOBALLY_ENABLED = (
+    os.environ.get("TOKEN_BUDGET_GLOBALLY_ENABLED", "").lower() == "true"
+)
