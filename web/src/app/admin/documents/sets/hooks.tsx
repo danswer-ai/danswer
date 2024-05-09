@@ -4,7 +4,9 @@ import useSWR, { mutate } from "swr";
 
 export function useDocumentSets() {
   const url = "/api/manage/admin/document-set";
-  const swrResponse = useSWR<DocumentSet[]>(url, errorHandlingFetcher);
+  const swrResponse = useSWR<DocumentSet[]>(url, errorHandlingFetcher, {
+    refreshInterval: 5000, // 5 seconds
+  });
 
   return {
     ...swrResponse,

@@ -50,7 +50,7 @@ function Main() {
           ccPairs={ccPairs}
           userGroups={userGroups}
           onClose={() => {
-            router.push("/admin/documents/sets");
+            router.push(`/admin/documents/sets?u=${Date.now()}`);
           }}
           setPopup={setPopup}
         />
