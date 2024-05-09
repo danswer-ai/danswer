@@ -1,20 +1,19 @@
+import csv  # type: ignore
+import io
 import os
+import zipfile
 from collections.abc import Iterator
 from datetime import datetime
 from datetime import timezone
+from email.parser import Parser as EmailParser
 from pathlib import Path
 from typing import Any
 from typing import IO
 
-from email.parser import Parser as EmailParser
+import docx2txt  # type: ignore
+import openpyxl  # type: ignore
+import pptx  # type: ignore
 from bs4 import BeautifulSoup
-import openpyxl
-import docx2txt
-import zipfile
-import pptx
-import csv
-import io
-
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -55,7 +54,18 @@ def _read_files_and_metadata(
             file_content, ignore_dirs=True
         ):
             yield os.path.join(directory_path, file_info.filename), file, metadata
-    elif extension in [".txt", ".md", ".mdx", ".pdf", ".docx", ".pptx", ".xlsx", ".csv", ".eml", ".epub"]:
+    elif extension in [
+        ".txt",
+        ".md",
+        ".mdx",
+        ".pdf",
+        ".docx",
+        ".pptx",
+        ".xlsx",
+        ".csv",
+        ".eml",
+        ".epub",
+    ]:
         yield file_name, file_content, metadata
     else:
         logger.warning(f"Skipping file '{file_name}' with extension '{extension}'")
@@ -81,7 +91,7 @@ def _process_file(
 
     elif extension == ".docx":
         file_content_raw = docx2txt.process(file)
-    
+
     elif extension == ".pptx":
         presentation = pptx.Presentation(file)
         text_content = []
@@ -90,10 +100,10 @@ def _process_file(
             for shape in slide.shapes:
                 if hasattr(shape, "text"):
                     extracted_text += shape.text + "\n"
-        
+
             text_content.append(extracted_text)
-        file_content_raw = '\n\n'.join(text_content)
-    
+        file_content_raw = "\n\n".join(text_content)
+
     elif extension == ".xlsx":
         workbook = openpyxl.load_workbook(file)
         text_content = []
@@ -103,33 +113,33 @@ def _process_file(
                 for row in sheet.iter_rows(min_row=1, values_only=True)
             )
             text_content.append(sheet_string)
-        file_content_raw = '\n\n'.join(text_content)
-    
+        file_content_raw = "\n\n".join(text_content)
+
     elif extension == ".csv":
         text_file = io.TextIOWrapper(file, encoding=detect_encoding(file))
         reader = csv.reader(text_file)
-        file_content_raw = '\n'.join([','.join(row) for row in reader])
-    
+        file_content_raw = "\n".join([",".join(row) for row in reader])
+
     elif extension == ".eml":
         text_file = io.TextIOWrapper(file, encoding=detect_encoding(file))
         parser = EmailParser()
         message = parser.parse(text_file)
 
-        text_content = [] 
+        text_content = []
         for part in message.walk():
-            if part.get_content_type().startswith('text/plain'):
+            if part.get_content_type().startswith("text/plain"):
                 text_content.append(part.get_payload())
-        file_content_raw = '\n\n'.join(text_content)
-    
+        file_content_raw = "\n\n".join(text_content)
+
     elif extension == ".epub":
         with zipfile.ZipFile(file) as epub:
             text_content = []
             for item in epub.infolist():
-                if item.filename.endswith('.xhtml') or item.filename.endswith('.html'):
+                if item.filename.endswith(".xhtml") or item.filename.endswith(".html"):
                     with epub.open(item) as html_file:
-                        soup = BeautifulSoup(html_file, 'html.parser')
+                        soup = BeautifulSoup(html_file, "html.parser")
                         text_content.append(soup.get_text())
-            file_content_raw = '\n\n'.join(text_content)
+            file_content_raw = "\n\n".join(text_content)
     else:
         encoding = detect_encoding(file)
         file_content_raw, file_metadata = read_file(file, encoding=encoding)
