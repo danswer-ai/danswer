@@ -763,6 +763,7 @@ class ChatMessageFeedback(Base):
     is_positive: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     required_followup: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     feedback_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    predefined_feedback: Mapped[str | None] = mapped_column(String, nullable=True)
 
     chat_message: Mapped[ChatMessage] = relationship(
         "ChatMessage", back_populates="chat_message_feedbacks"

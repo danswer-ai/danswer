@@ -51,6 +51,7 @@ class ChatFeedbackRequest(BaseModel):
     chat_message_id: int
     is_positive: bool | None = None
     feedback_text: str | None = None
+    predefined_feedback: str | None = None
 
     @root_validator
     def check_is_positive_or_feedback_text(cls: BaseModel, values: dict) -> dict:
