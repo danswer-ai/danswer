@@ -288,6 +288,7 @@ def create_chat_feedback(
     create_chat_message_feedback(
         is_positive=feedback.is_positive,
         feedback_text=feedback.feedback_text,
+        predefined_feedback=feedback.predefined_feedback,
         chat_message_id=feedback.chat_message_id,
         user_id=user_id,
         db_session=db_session,
