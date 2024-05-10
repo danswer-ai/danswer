@@ -31,6 +31,7 @@ export interface ChatSession {
   persona_id: number;
   time_created: string;
   shared_status: ChatSessionSharedStatus;
+  folder_id: number | null;
 }
 
 export interface Message {

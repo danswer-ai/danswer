@@ -31,6 +31,7 @@ import { Settings } from "../admin/settings/interfaces";
 import { SIDEBAR_TAB_COOKIE, Tabs } from "./sessionSidebar/constants";
 import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
 import { LLMProviderDescriptor } from "../admin/models/llm/interfaces";
+import { Folder } from "./folders/interfaces";
 
 export default async function Page({
   searchParams,
@@ -48,6 +49,7 @@ export default async function Page({
     fetchSS("/chat/get-user-chat-sessions"),
     fetchSS("/query/valid-tags"),
     fetchLLMProvidersSS(),
+    fetchSS("/folder"),
   ];
 
   // catch cases where the backend is completely unreachable here
@@ -75,6 +77,7 @@ export default async function Page({
   const chatSessionsResponse = results[5] as Response | null;
   const tagsResponse = results[6] as Response | null;
   const llmProviders = (results[7] || []) as LLMProviderDescriptor[];
+  const foldersResponse = results[8] as Response | null; // Handle folders result
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -170,6 +173,18 @@ export default async function Page({
     personas = personas.filter((persona) => persona.num_chunks === 0);
   }
 
+  let folders: Folder[] = [];
+  if (foldersResponse?.ok) {
+    folders = (await foldersResponse.json()).folders as Folder[];
+  } else {
+    console.log(`Failed to fetch folders - ${foldersResponse?.status}`);
+  }
+
+  const openedFoldersCookie = cookies().get("openedFolders");
+  const openedFolders = openedFoldersCookie
+    ? JSON.parse(openedFoldersCookie.value)
+    : {};
+
   return (
     <>
       <InstantSSRAutoRefresh />
@@ -193,6 +208,8 @@ export default async function Page({
         defaultSelectedPersonaId={defaultPersonaId}
         documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
         defaultSidebarTab={defaultSidebarTab}
+        folders={folders} // Pass folders to ChatPage
+        openedFolders={openedFolders} // Pass opened folders state to ChatPage
       />
     </>
   );

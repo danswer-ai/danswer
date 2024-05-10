@@ -62,6 +62,7 @@ import Dropzone from "react-dropzone";
 import { LLMProviderDescriptor } from "../admin/models/llm/interfaces";
 import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
 import { InputBarPreviewImage } from "./images/InputBarPreviewImage";
+import { Folder } from "./folders/interfaces";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -76,6 +77,8 @@ export function ChatPage({
   defaultSelectedPersonaId,
   documentSidebarInitialWidth,
   defaultSidebarTab,
+  folders,
+  openedFolders,
 }: {
   user: User | null;
   chatSessions: ChatSession[];
@@ -87,6 +90,8 @@ export function ChatPage({
   defaultSelectedPersonaId?: number; // what persona to default to
   documentSidebarInitialWidth?: number;
   defaultSidebarTab?: Tabs;
+  folders: Folder[];
+  openedFolders: { [key: number]: boolean };
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -642,6 +647,8 @@ export function ChatPage({
           onPersonaChange={onPersonaChange}
           user={user}
           defaultTab={defaultSidebarTab}
+          folders={folders}
+          openedFolders={openedFolders}
         />
 
         <div className="flex w-full overflow-x-hidden" ref={masterFlexboxRef}>
