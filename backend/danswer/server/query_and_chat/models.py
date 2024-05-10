@@ -142,6 +142,7 @@ class ChatSessionDetails(BaseModel):
     persona_id: int
     time_created: str
     shared_status: ChatSessionSharedStatus
+    folder_id: int | None
 
 
 class ChatSessionsResponse(BaseModel):
