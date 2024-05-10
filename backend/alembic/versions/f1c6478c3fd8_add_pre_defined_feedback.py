@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 revision = "f1c6478c3fd8"
 down_revision = "643a84a42a33"
-branch_labels = None
-depends_on = None
+branch_labels: None = None
+depends_on: None = None
 
 
 def upgrade() -> None:
