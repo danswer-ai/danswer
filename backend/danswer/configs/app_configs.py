@@ -1,3 +1,4 @@
+import json
 import os
 import urllib.parse
 
@@ -260,4 +261,10 @@ DISABLE_TELEMETRY = os.environ.get("DISABLE_TELEMETRY", "").lower() == "true"
 
 TOKEN_BUDGET_GLOBALLY_ENABLED = (
     os.environ.get("TOKEN_BUDGET_GLOBALLY_ENABLED", "").lower() == "true"
+)
+
+# Defined custom query/answer conditions to validate the query and the LLM answer.
+# Format: list of strings
+CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
+    os.environ.get("CUSTOM_ANSWER_VALIDITY_CONDITIONS", "[]")
 )
