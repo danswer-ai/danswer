@@ -29,8 +29,6 @@
             "module": "uvicorn",
             "cwd": "${workspaceFolder}/backend",
             "env": {
-                "AUTH_TYPE": "disabled",
-                "LOG_ALL_MODEL_INTERACTIONS": "True",
                 "LOG_LEVEL": "DEBUG",
                 "PYTHONUNBUFFERED": "1"
             },
@@ -48,7 +46,6 @@
             "module": "uvicorn",
             "cwd": "${workspaceFolder}/backend",
             "env": {
-                "AUTH_TYPE": "disabled",
                 "LOG_ALL_MODEL_INTERACTIONS": "True",
                 "LOG_LEVEL": "DEBUG",
                 "PYTHONUNBUFFERED": "1"
