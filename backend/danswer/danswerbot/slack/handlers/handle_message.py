@@ -19,6 +19,7 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_DISPLAY_ERROR_MSGS
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.configs.danswerbot_configs import DANSWER_BOT_TARGET_CHUNK_PERCENTAGE
 from danswer.configs.danswerbot_configs import DANSWER_BOT_USE_QUOTES
+from danswer.configs.danswerbot_configs import DANSWER_FOLLOWUP_EMOJI
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.configs.danswerbot_configs import DISABLE_DANSWER_BOT_FILTER_DETECT
 from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
@@ -369,6 +370,14 @@ def handle_message(
         logger.info(
             "Answer was evaluated to be invalid, throwing it away without responding."
         )
+        update_emote_react(
+            emoji=DANSWER_FOLLOWUP_EMOJI,
+            channel=message_info.channel_to_respond,
+            message_ts=message_info.msg_to_respond,
+            remove=False,
+            client=client,
+        )
+
         if answer.answer:
             logger.debug(answer.answer)
         return True
