@@ -229,6 +229,13 @@ class NotionConnector(LoadConnector, PollConnector):
                     )
                     continue
 
+                if result_type == "unsupported":
+                    logger.warning(
+                        f"Skipping unsupported block type '{result_type}' ('{result_block_id}') for page '{page_block_id}': "
+                        f"(discussion: https://github.com/danswer-ai/danswer/issues/1230)"
+                    )
+                    continue
+
                 cur_result_text_arr = []
                 if "rich_text" in result_obj:
                     for rich_text in result_obj["rich_text"]:
