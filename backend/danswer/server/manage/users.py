@@ -41,6 +41,27 @@ async def promote_admin(
     return
 
 
+@router.patch("/demote-admin-to-user")
+async def demote_admin(
+    user_email: UserByEmail, user: User = Depends(current_admin_user)
+) -> None:
+    if user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    async with AsyncSession(get_sqlalchemy_async_engine()) as asession:
+        user_db = SQLAlchemyUserDatabase[User, UUID_ID](asession, User)
+        user_to_demote = await user_db.get_by_email(user_email.user_email)
+        if not user_to_demote:
+            raise HTTPException(status_code=404, detail="User not found")
+        if user_to_demote.id == user.id:
+            raise HTTPException(
+                status_code=400, detail="Cannot demote yourself from admin role"
+            )
+        user_to_demote.role = UserRole.BASIC
+        asession.add(user_to_demote)
+        await asession.commit()
+    return
+
+
 @router.get("/users")
 def list_all_users(
     _: User | None = Depends(current_admin_user),
