@@ -83,13 +83,13 @@ const UsersTable = () => {
                         } else {
                           mutate("/api/manage/users");
                           setPopup({
-                            message: "User promoted to admin!",
+                            message: "User promoted to admin user!",
                             type: "success",
                           });
                         }
                       }}
                     >
-                      Promote to Admin!
+                      Promote to Admin User
                     </Button>
                   )}
                   {user.role === "admin" && (
