@@ -46,7 +46,7 @@ DISABLE_AUTH = AUTH_TYPE == AuthType.DISABLED
 # Encryption key secret is used to encrypt connector credentials, api keys, and other sensitive
 # information. This provides an extra layer of security on top of Postgres access controls
 # and is available in Danswer EE
-ENCRYPTION_KEY_SECRET = os.environ.get("ENCRYPTION_KEY_SECRET")
+ENCRYPTION_KEY_SECRET = os.environ.get("ENCRYPTION_KEY_SECRET") or ""
 
 # Turn off mask if admin users should see full credentials for data connectors.
 MASK_CREDENTIAL_PREFIX = (
