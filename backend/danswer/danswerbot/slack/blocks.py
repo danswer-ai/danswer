@@ -38,6 +38,16 @@ from danswer.utils.text_processing import replace_whitespaces_w_space
 _MAX_BLURB_LEN = 45
 
 
+def get_feedback_reminder_blocks(thread_link: str) -> Block:
+    return SectionBlock(
+        text=(
+            f"Eh! You forget to give feedback on <{thread_link}|this answer>. "
+            "It's essential to help us to improve the quality of the answers. "
+            "Please rate it by clicking the `Helpful` or `Not helpful` button. Thanks!"
+        )
+    )
+
+
 def _process_citations_for_slack(text: str) -> str:
     """
     Converts instances of [[x]](LINK) in the input text to Slack's link format <LINK|[x]>.
@@ -88,7 +98,9 @@ def clean_markdown_link_text(text: str) -> str:
     return text.replace("\n", " ").strip()
 
 
-def build_qa_feedback_block(message_id: int) -> Block:
+def build_qa_feedback_block(
+    message_id: int, feedback_reminder_id: str | None = None
+) -> Block:
     return ActionsBlock(
         block_id=build_feedback_id(message_id),
         elements=[
@@ -96,10 +108,12 @@ def build_qa_feedback_block(message_id: int) -> Block:
                 action_id=LIKE_BLOCK_ACTION_ID,
                 text="👍 Helpful",
                 style="primary",
+                value=feedback_reminder_id,
             ),
             ButtonElement(
                 action_id=DISLIKE_BLOCK_ACTION_ID,
                 text="👎 Not helpful",
+                value=feedback_reminder_id,
             ),
         ],
     )
@@ -345,6 +359,7 @@ def build_qa_response_blocks(
     skip_quotes: bool = False,
     process_message_for_citations: bool = False,
     skip_ai_feedback: bool = False,
+    feedback_reminder_id: str | None = None,
 ) -> list[Block]:
     if DISABLE_GENERATIVE_AI:
         return []
@@ -397,7 +412,11 @@ def build_qa_response_blocks(
     response_blocks.extend(answer_blocks)
 
     if message_id is not None and not skip_ai_feedback:
-        response_blocks.append(build_qa_feedback_block(message_id=message_id))
+        response_blocks.append(
+            build_qa_feedback_block(
+                message_id=message_id, feedback_reminder_id=feedback_reminder_id
+            )
+        )
 
     if not skip_quotes:
         response_blocks.extend(quotes_blocks)
