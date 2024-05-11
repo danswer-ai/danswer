@@ -106,7 +106,7 @@ def send_msg_ack_to_user(details: SlackMessageInfo, client: WebClient) -> None:
 
 
 def schedule_feedback_reminder(
-    details: SlackMessageInfo, client: WebClient
+    details: SlackMessageInfo, include_followup: bool, client: WebClient
 ) -> str | None:
     logger = cast(
         logging.Logger,
@@ -136,7 +136,8 @@ def schedule_feedback_reminder(
             post_at=int(future.timestamp()),
             blocks=[
                 get_feedback_reminder_blocks(
-                    thread_link=permalink.data["permalink"]  # type:ignore
+                    thread_link=permalink.data["permalink"],  # type:ignore
+                    include_followup=include_followup,
                 )
             ],
             text="",

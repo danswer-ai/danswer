@@ -38,14 +38,18 @@ from danswer.utils.text_processing import replace_whitespaces_w_space
 _MAX_BLURB_LEN = 45
 
 
-def get_feedback_reminder_blocks(thread_link: str) -> Block:
-    return SectionBlock(
-        text=(
-            f"Eh! You forget to give feedback on <{thread_link}|this answer>. "
-            "It's essential to help us to improve the quality of the answers. "
-            "Please rate it by clicking the `Helpful` or `Not helpful` button. Thanks!"
-        )
+def get_feedback_reminder_blocks(thread_link: str, include_followup: bool) -> Block:
+    text = (
+        f"Please provide feedback on <{thread_link}|this answer>. "
+        "This is essential to help us to improve the quality of the answers. "
+        "Please rate it by clicking the `Helpful` or `Not helpful` button. "
     )
+    if include_followup:
+        text += "\n\nIf you need more help, click the `I need more help from a human!` button. "
+
+    text += "\n\nThanks!"
+
+    return SectionBlock(text=text)
 
 
 def _process_citations_for_slack(text: str) -> str:
@@ -82,7 +86,7 @@ def _split_text(text: str, limit: int = 3000) -> list[str]:
             break
 
         # Find the nearest space before the limit to avoid splitting a word
-        split_at = text.rfind(' ', 0, limit)
+        split_at = text.rfind(" ", 0, limit)
         if split_at == -1:  # No spaces found, force split
             split_at = limit
 
@@ -385,14 +389,18 @@ def build_qa_response_blocks(
         filter_block = SectionBlock(text=f"_{filter_text}_")
 
     if not answer:
-        answer_blocks = [SectionBlock(
-            text="Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓"
-        )]
+        answer_blocks = [
+            SectionBlock(
+                text="Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓"
+            )
+        ]
     else:
         answer_processed = decode_escapes(remove_slack_text_interactions(answer))
         if process_message_for_citations:
             answer_processed = _process_citations_for_slack(answer_processed)
-        answer_blocks = [SectionBlock(text=text) for text in _split_text(answer_processed)]
+        answer_blocks = [
+            SectionBlock(text=text) for text in _split_text(answer_processed)
+        ]
         if quotes:
             quotes_blocks = build_quotes_block(quotes)
 
