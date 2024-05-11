@@ -292,8 +292,13 @@ def process_message(
         ):
             return
 
+        follow_up = bool(
+            slack_bot_config
+            and slack_bot_config.channel_config
+            and slack_bot_config.channel_config.get("follow_up_tags") is not None
+        )
         feedback_reminder_id = schedule_feedback_reminder(
-            details=details, client=client.web_client
+            details=details, client=client.web_client, include_followup=follow_up
         )
 
         failed = handle_message(

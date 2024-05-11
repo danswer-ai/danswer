@@ -32,7 +32,7 @@
                 "AUTH_TYPE": "disabled",
                 "LOG_ALL_MODEL_INTERACTIONS": "True",
                 "LOG_LEVEL": "DEBUG",
-                "PYTHONUNBUFFERED": "1",
+                "PYTHONUNBUFFERED": "1"
             },
             "args": [
                 "model_server.main:app",
@@ -51,7 +51,7 @@
                 "AUTH_TYPE": "disabled",
                 "LOG_ALL_MODEL_INTERACTIONS": "True",
                 "LOG_LEVEL": "DEBUG",
-                "PYTHONUNBUFFERED": "1",
+                "PYTHONUNBUFFERED": "1"
             },
             "args": [
                 "danswer.main:app",
@@ -92,10 +92,10 @@
         // For the listner to access the Slack API,
         // DANSWER_BOT_SLACK_APP_TOKEN & DANSWER_BOT_SLACK_BOT_TOKEN need to be set in .env file located in the root of the project
         {
-            "name": "Slack Bot Listener",
+            "name": "Slack Bot",
             "type": "python",
             "request": "launch",
-            "program": "danswer/listeners/slack_listener.py",
+            "program": "danswer/danswerbot/slack/listener.py",
             "cwd": "${workspaceFolder}/backend",
             "envFile": "${workspaceFolder}/.env",
             "env": {
