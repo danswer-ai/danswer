@@ -96,7 +96,7 @@ const UsersTable = () => {
                     <Button
                       onClick={async () => {
                         const res = await fetch(
-                          "/api/manage/demote-admin-to-user",
+                          "/api/manage/demote-admin-to-basic",
                           {
                             method: "PATCH",
                             headers: {
@@ -116,13 +116,13 @@ const UsersTable = () => {
                         } else {
                           mutate("/api/manage/users");
                           setPopup({
-                            message: "Admin demoted to user!",
+                            message: "Admin demoted to basic user!",
                             type: "success",
                           });
                         }
                       }}
                     >
-                      Demote to User
+                      Demote to Basic User
                     </Button>
                   )}
                 </div>
