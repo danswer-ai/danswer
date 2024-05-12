@@ -1,13 +1,13 @@
 from typing import Any
 
-from backend.danswer.connectors.cross_connector_utils.miscellaneous_utils import (
-    time_str_to_utc,
-)
 from zenpy import Zenpy  # type: ignore
-from zenpy.lib.api_objects.help_centre_objects import Article
+from zenpy.lib.api_objects.help_centre_objects import Article  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
+    time_str_to_utc,
+)
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector

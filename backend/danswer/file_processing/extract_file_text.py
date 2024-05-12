@@ -10,16 +10,19 @@ from typing import Any
 from typing import IO
 
 import chardet
-import docx2txt  # type: ignore
+import docx  # type: ignore
 import openpyxl  # type: ignore
 import pptx  # type: ignore
-from backend.danswer.file_processing.html_utils import parse_html_page_basic
 from pypdf import PdfReader
 from pypdf.errors import PdfStreamError
 
+from danswer.file_processing.html_utils import parse_html_page_basic
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
+
+TEXT_SECTION_SEPARATOR = "\n\n"
 
 
 PLAIN_TEXT_FILE_EXTENSIONS = [
@@ -160,7 +163,7 @@ def read_text_file(
     return file_content_raw, metadata
 
 
-def read_pdf_file(file: IO[Any], file_name: str, pdf_pass: str | None = None) -> str:
+def pdf_to_text(file: IO[Any], pdf_pass: str | None = None) -> str:
     try:
         pdf_reader = PdfReader(file)
 
@@ -171,88 +174,110 @@ def read_pdf_file(file: IO[Any], file_name: str, pdf_pass: str | None = None) ->
                 try:
                     decrypt_success = pdf_reader.decrypt(pdf_pass) != 0
                 except Exception:
-                    logger.error(f"Unable to decrypt pdf {file_name}")
+                    logger.error("Unable to decrypt pdf")
             else:
-                logger.info(f"No Password available to to decrypt pdf {file_name}")
+                logger.info("No Password available to to decrypt pdf")
 
             if not decrypt_success:
                 # By user request, keep files that are unreadable just so they
                 # can be discoverable by title.
                 return ""
 
-        return "\n".join(page.extract_text() for page in pdf_reader.pages)
+        return TEXT_SECTION_SEPARATOR.join(
+            page.extract_text() for page in pdf_reader.pages
+        )
     except PdfStreamError:
-        logger.exception(f"PDF file {file_name} is not a valid PDF")
+        logger.exception("PDF file is not a valid PDF")
     except Exception:
-        logger.exception(f"Failed to read PDF {file_name}")
+        logger.exception("Failed to read PDF")
 
     # File is still discoverable by title
     # but the contents are not included as they cannot be parsed
     return ""
 
 
+def docx_to_text(file: IO[Any]) -> str:
+    doc = docx.Document(file)
+    full_text = [para.text for para in doc.paragraphs]
+    return TEXT_SECTION_SEPARATOR.join(full_text)
+
+
+def pptx_to_text(file: IO[Any]) -> str:
+    presentation = pptx.Presentation(file)
+    text_content = []
+    for slide_number, slide in enumerate(presentation.slides, start=1):
+        extracted_text = f"\nSlide {slide_number}:\n"
+        for shape in slide.shapes:
+            if hasattr(shape, "text"):
+                extracted_text += shape.text + "\n"
+        text_content.append(extracted_text)
+    return TEXT_SECTION_SEPARATOR.join(text_content)
+
+
+def xlsx_to_text(file: IO[Any]) -> str:
+    workbook = openpyxl.load_workbook(file)
+    text_content = []
+    for sheet in workbook.worksheets:
+        sheet_string = "\n".join(
+            ",".join(map(str, row))
+            for row in sheet.iter_rows(min_row=1, values_only=True)
+        )
+        text_content.append(sheet_string)
+    return TEXT_SECTION_SEPARATOR.join(text_content)
+
+
+def eml_to_text(file: IO[Any]) -> str:
+    text_file = io.TextIOWrapper(file, encoding=detect_encoding(file))
+    parser = EmailParser()
+    message = parser.parse(text_file)
+    text_content = []
+    for part in message.walk():
+        if part.get_content_type().startswith("text/plain"):
+            text_content.append(part.get_payload())
+    return TEXT_SECTION_SEPARATOR.join(text_content)
+
+
+def epub_to_text(file: IO[Any]) -> str:
+    with zipfile.ZipFile(file) as epub:
+        text_content = []
+        for item in epub.infolist():
+            if item.filename.endswith(".xhtml") or item.filename.endswith(".html"):
+                with epub.open(item) as html_file:
+                    text_content.append(parse_html_page_basic(html_file))
+        return TEXT_SECTION_SEPARATOR.join(text_content)
+
+
+def file_io_to_text(file: IO[Any]) -> str:
+    encoding = detect_encoding(file)
+    file_content_raw, _ = read_text_file(file, encoding=encoding)
+    return file_content_raw
+
+
 def extract_file_text(
     file_name: str,
     file: IO[Any],
-    additional_info: dict[str, str] | None = None,
 ) -> str:
     extension = get_file_ext(file_name)
     if not check_file_ext_is_valid(extension):
         raise RuntimeError("Unprocessable file type")
 
-    if additional_info is None:
-        additional_info = {}
-
     if extension == ".pdf":
-        return read_pdf_file(
-            file=file, file_name=file_name, pdf_pass=additional_info.get("pdf_pass")
-        )
+        return pdf_to_text(file=file)
 
     elif extension == ".docx":
-        return docx2txt.process(file)
+        return docx_to_text(file)
 
     elif extension == ".pptx":
-        presentation = pptx.Presentation(file)
-        text_content = []
-        for slide_number, slide in enumerate(presentation.slides, start=1):
-            extracted_text = f"\nSlide {slide_number}:\n"
-            for shape in slide.shapes:
-                if hasattr(shape, "text"):
-                    extracted_text += shape.text + "\n"
-            text_content.append(extracted_text)
-        return "\n\n".join(text_content)
+        return pptx_to_text(file)
 
     elif extension == ".xlsx":
-        workbook = openpyxl.load_workbook(file)
-        text_content = []
-        for sheet in workbook.worksheets:
-            sheet_string = "\n".join(
-                ",".join(map(str, row))
-                for row in sheet.iter_rows(min_row=1, values_only=True)
-            )
-            text_content.append(sheet_string)
-        return "\n\n".join(text_content)
+        return xlsx_to_text(file)
 
     elif extension == ".eml":
-        text_file = io.TextIOWrapper(file, encoding=detect_encoding(file))
-        parser = EmailParser()
-        message = parser.parse(text_file)
-        text_content = []
-        for part in message.walk():
-            if part.get_content_type().startswith("text/plain"):
-                text_content.append(part.get_payload())
-        return "\n\n".join(text_content)
+        return eml_to_text(file)
 
     elif extension == ".epub":
-        with zipfile.ZipFile(file) as epub:
-            text_content = []
-            for item in epub.infolist():
-                if item.filename.endswith(".xhtml") or item.filename.endswith(".html"):
-                    with epub.open(item) as html_file:
-                        text_content.append(parse_html_page_basic(html_file))
-            return "\n\n".join(text_content)
+        return epub_to_text(file)
 
     else:
-        encoding = detect_encoding(file)
-        file_content_raw, _ = read_text_file(file, encoding=encoding)
-        return file_content_raw
+        return file_io_to_text(file)
