@@ -1,6 +1,4 @@
-import os
 from datetime import timedelta
-from pathlib import Path
 from typing import cast
 
 from celery import Celery  # type: ignore
@@ -10,9 +8,7 @@ from danswer.background.connector_deletion import delete_connector_credential_pa
 from danswer.background.task_utils import build_celery_task_wrapper
 from danswer.background.task_utils import name_cc_cleanup_task
 from danswer.background.task_utils import name_document_set_sync_task
-from danswer.configs.app_configs import FILE_CONNECTOR_TMP_STORAGE_PATH
 from danswer.configs.app_configs import JOB_TIMEOUT
-from danswer.connectors.file.utils import file_age_in_hours
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import prepare_to_modify_documents
@@ -201,21 +197,6 @@ def check_for_document_sets_sync_task() -> None:
                 sync_document_set_task.apply_async(
                     kwargs=dict(document_set_id=document_set.id),
                 )
-
-
-@celery_app.task(name="clean_old_temp_files_task", soft_time_limit=JOB_TIMEOUT)
-def clean_old_temp_files_task(
-    age_threshold_in_hours: float | int = 24 * 7,  # 1 week,
-    base_path: Path | str = FILE_CONNECTOR_TMP_STORAGE_PATH,
-) -> None:
-    """Files added via the File connector need to be deleted after ingestion
-    Currently handled async of the indexing job"""
-    os.makedirs(base_path, exist_ok=True)
-    for file in os.listdir(base_path):
-        full_file_path = Path(base_path) / file
-        if file_age_in_hours(full_file_path) > age_threshold_in_hours:
-            logger.info(f"Cleaning up uploaded file: {full_file_path}")
-            os.remove(full_file_path)
 
 
 #####

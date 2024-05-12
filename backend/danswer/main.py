@@ -46,8 +46,6 @@ from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
-from danswer.dynamic_configs.port_configs import port_api_key_to_postgres
-from danswer.dynamic_configs.port_configs import port_filesystem_to_postgres
 from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.search.search_nlp_models import warm_up_encoders
 from danswer.server.auth_check import check_router_auth
@@ -161,18 +159,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         logger.info(
             f"Using multilingual flow with languages: {MULTILINGUAL_QUERY_EXPANSION}"
         )
-
-    try:
-        port_filesystem_to_postgres()
-    except Exception:
-        logger.debug(
-            "Skipping port of persistent volumes. Maybe these have already been removed?"
-        )
-
-    try:
-        port_api_key_to_postgres()
-    except Exception as e:
-        logger.debug(f"Failed to port API keys. Exception: {e}. Continuing...")
 
     with Session(engine) as db_session:
         check_index_swap(db_session=db_session)

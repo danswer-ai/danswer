@@ -21,9 +21,6 @@ services:
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
-    volumes:
-      - local_dynamic_storage:/home/storage
-      - file_connector_tmp_storage:/home/file_connector_storage
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -53,9 +50,6 @@ services:
       - VESPA_HOST=index
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
       - INDEXING_MODEL_SERVER_HOST=${INDEXING_MODEL_SERVER_HOST:-indexing_model_server}
-    volumes:
-      - local_dynamic_storage:/home/storage
-      - file_connector_tmp_storage:/home/file_connector_storage
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -107,6 +101,7 @@ services:
       # Set to debug to get more fine-grained logs
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
+      # Not necessary, this is just to reduce download time during startup
       - model_cache_huggingface:/root/.cache/huggingface/
     logging:
       driver: json-file
@@ -134,6 +129,7 @@ services:
       # Set to debug to get more fine-grained logs
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
+      # Not necessary, this is just to reduce download time during startup
       - model_cache_huggingface:/root/.cache/huggingface/
     logging:
       driver: json-file
@@ -205,11 +201,6 @@ services:
 
 
 volumes:
-  # local_dynamic_storage is legacy only now
-  local_dynamic_storage:
-  # used to store files uploaded by the user temporarily while we are indexing them
-  # file_connector_tmp_storage is legacy only now
-  file_connector_tmp_storage:
   db_volume:
   vespa_volume:
   # Created by the container itself
