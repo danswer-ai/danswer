@@ -148,10 +148,6 @@ GOOGLE_DRIVE_INCLUDE_SHARED = False
 GOOGLE_DRIVE_FOLLOW_SHORTCUTS = False
 GOOGLE_DRIVE_ONLY_ORG_PUBLIC = False
 
-FILE_CONNECTOR_TMP_STORAGE_PATH = os.environ.get(
-    "FILE_CONNECTOR_TMP_STORAGE_PATH", "/home/file_connector_storage"
-)
-
 # TODO these should be available for frontend configuration, via advanced options expandable
 WEB_CONNECTOR_IGNORED_CLASSES = os.environ.get(
     "WEB_CONNECTOR_IGNORED_CLASSES", "sidebar,footer"
@@ -237,10 +233,9 @@ DISABLE_DOCUMENT_CLEANUP = (
 #####
 # Miscellaneous
 #####
-DYNAMIC_CONFIG_STORE = (
-    os.environ.get("DYNAMIC_CONFIG_STORE") or "PostgresBackedDynamicConfigStore"
-)
-DYNAMIC_CONFIG_DIR_PATH = os.environ.get("DYNAMIC_CONFIG_DIR_PATH", "/home/storage")
+# File based Key Value store no longer used
+DYNAMIC_CONFIG_STORE = "PostgresBackedDynamicConfigStore"
+
 JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
 # used to allow the background indexing jobs to use a different embedding
 # model server than the API server

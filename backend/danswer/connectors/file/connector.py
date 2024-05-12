@@ -1,36 +1,30 @@
-import csv  # type: ignore
-import io
 import os
-import zipfile
 from collections.abc import Iterator
 from datetime import datetime
 from datetime import timezone
-from email.parser import Parser as EmailParser
 from pathlib import Path
 from typing import Any
 from typing import IO
 
-import docx2txt  # type: ignore
-import openpyxl  # type: ignore
-import pptx  # type: ignore
-from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.file_utils import detect_encoding
-from danswer.connectors.cross_connector_utils.file_utils import load_files_from_zip
-from danswer.connectors.cross_connector_utils.file_utils import read_file
-from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
-from danswer.connectors.file.utils import check_file_ext_is_valid
-from danswer.connectors.file.utils import get_file_ext
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.file_processing.extract_file_text import check_file_ext_is_valid
+from danswer.file_processing.extract_file_text import detect_encoding
+from danswer.file_processing.extract_file_text import extract_file_text
+from danswer.file_processing.extract_file_text import get_file_ext
+from danswer.file_processing.extract_file_text import is_text_file_extension
+from danswer.file_processing.extract_file_text import load_files_from_zip
+from danswer.file_processing.extract_file_text import pdf_to_text
+from danswer.file_processing.extract_file_text import read_text_file
 from danswer.file_store.file_store import get_default_file_store
 from danswer.utils.logger import setup_logger
 
@@ -54,18 +48,7 @@ def _read_files_and_metadata(
             file_content, ignore_dirs=True
         ):
             yield os.path.join(directory_path, file_info.filename), file, metadata
-    elif extension in [
-        ".txt",
-        ".md",
-        ".mdx",
-        ".pdf",
-        ".docx",
-        ".pptx",
-        ".xlsx",
-        ".csv",
-        ".eml",
-        ".epub",
-    ]:
+    elif check_file_ext_is_valid(extension):
         yield file_name, file_content, metadata
     else:
         logger.warning(f"Skipping file '{file_name}' with extension '{extension}'")
@@ -84,65 +67,20 @@ def _process_file(
 
     file_metadata: dict[str, Any] = {}
 
-    if extension == ".pdf":
-        file_content_raw = read_pdf_file(
-            file=file, file_name=file_name, pdf_pass=pdf_pass
+    if is_text_file_extension(file_name):
+        encoding = detect_encoding(file)
+        file_content_raw, file_metadata = read_text_file(file, encoding=encoding)
+
+    # Using the PDF reader function directly to pass in password cleanly
+    elif extension == ".pdf":
+        file_content_raw = pdf_to_text(file=file, pdf_pass=pdf_pass)
+
+    else:
+        file_content_raw = extract_file_text(
+            file_name=file_name,
+            file=file,
         )
 
-    elif extension == ".docx":
-        file_content_raw = docx2txt.process(file)
-
-    elif extension == ".pptx":
-        presentation = pptx.Presentation(file)
-        text_content = []
-        for slide_number, slide in enumerate(presentation.slides, start=1):
-            extracted_text = f"\nSlide {slide_number}:\n"
-            for shape in slide.shapes:
-                if hasattr(shape, "text"):
-                    extracted_text += shape.text + "\n"
-
-            text_content.append(extracted_text)
-        file_content_raw = "\n\n".join(text_content)
-
-    elif extension == ".xlsx":
-        workbook = openpyxl.load_workbook(file)
-        text_content = []
-        for sheet in workbook.worksheets:
-            sheet_string = "\n".join(
-                ",".join(map(str, row))
-                for row in sheet.iter_rows(min_row=1, values_only=True)
-            )
-            text_content.append(sheet_string)
-        file_content_raw = "\n\n".join(text_content)
-
-    elif extension == ".csv":
-        text_file = io.TextIOWrapper(file, encoding=detect_encoding(file))
-        reader = csv.reader(text_file)
-        file_content_raw = "\n".join([",".join(row) for row in reader])
-
-    elif extension == ".eml":
-        text_file = io.TextIOWrapper(file, encoding=detect_encoding(file))
-        parser = EmailParser()
-        message = parser.parse(text_file)
-
-        text_content = []
-        for part in message.walk():
-            if part.get_content_type().startswith("text/plain"):
-                text_content.append(part.get_payload())
-        file_content_raw = "\n\n".join(text_content)
-
-    elif extension == ".epub":
-        with zipfile.ZipFile(file) as epub:
-            text_content = []
-            for item in epub.infolist():
-                if item.filename.endswith(".xhtml") or item.filename.endswith(".html"):
-                    with epub.open(item) as html_file:
-                        soup = BeautifulSoup(html_file, "html.parser")
-                        text_content.append(soup.get_text())
-            file_content_raw = "\n\n".join(text_content)
-    else:
-        encoding = detect_encoding(file)
-        file_content_raw, file_metadata = read_file(file, encoding=encoding)
     all_metadata = {**metadata, **file_metadata} if metadata else file_metadata
 
     # If this is set, we will show this in the UI as the "name" of the file
