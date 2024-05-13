@@ -88,9 +88,6 @@ services:
       - LOG_ENDPOINT_LATENCY=${LOG_ENDPOINT_LATENCY:-}
       # Enterprise Edition only
       - API_KEY_HASH_ROUNDS=${API_KEY_HASH_ROUNDS:-}
-    volumes:
-      - local_dynamic_storage:/home/storage
-      - file_connector_tmp_storage:/home/file_connector_storage
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
