@@ -192,7 +192,7 @@ export function AssistantEditor({
             task_prompt: Yup.string(),
             is_public: Yup.boolean().required(),
             document_set_ids: Yup.array().of(Yup.number()),
-            num_chunks: Yup.number().max(20).nullable(),
+            num_chunks: Yup.number().nullable(),
             include_citations: Yup.boolean().required(),
             llm_relevance_filter: Yup.boolean().required(),
             llm_model_version_override: Yup.string().nullable(),
