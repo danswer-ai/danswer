@@ -175,7 +175,9 @@ export function AssistantEditor({
           starter_messages: existingPersona?.starter_messages ?? [],
           // EE Only
           groups: existingPersona?.groups ?? [],
-          search_tool_enabled: personaCurrentToolIds.includes(searchTool!.id),
+          search_tool_enabled: existingPersona
+            ? personaCurrentToolIds.includes(searchTool!.id)
+            : ccPairs.length > 0,
           image_generation_tool_enabled: imageGenerationTool
             ? personaCurrentToolIds.includes(imageGenerationTool.id)
             : false,
@@ -251,7 +253,7 @@ export function AssistantEditor({
           formikHelpers.setSubmitting(true);
 
           const tools = [];
-          if (values.search_tool_enabled) {
+          if (values.search_tool_enabled && ccPairs.length > 0) {
             tools.push(searchTool!.id);
           }
           if (
@@ -397,133 +399,145 @@ export function AssistantEditor({
 
               <HidableSection sectionTitle="Tools">
                 <>
-                  <BooleanFormField
-                    name="search_tool_enabled"
-                    label="Search Tool"
-                    subtext={`The Search Tool allows the Assistant to search through connected knowledge to help build an answer.`}
-                    onChange={(e) => {
-                      setFieldValue("num_chunks", null);
-                      setFieldValue("search_tool_enabled", e.target.checked);
-                    }}
-                  />
+                  {ccPairs.length > 0 && (
+                    <>
+                      <BooleanFormField
+                        name="search_tool_enabled"
+                        label="Search Tool"
+                        subtext={`The Search Tool allows the Assistant to search through connected knowledge to help build an answer.`}
+                        onChange={(e) => {
+                          setFieldValue("num_chunks", null);
+                          setFieldValue(
+                            "search_tool_enabled",
+                            e.target.checked
+                          );
+                        }}
+                      />
 
-                  {values.search_tool_enabled && (
-                    <div className="pl-4 border-l-2 ml-4 border-border">
-                      {ccPairs.length > 0 && (
-                        <>
-                          <Label>Document Sets</Label>
+                      {values.search_tool_enabled && (
+                        <div className="pl-4 border-l-2 ml-4 border-border">
+                          {ccPairs.length > 0 && (
+                            <>
+                              <Label>Document Sets</Label>
 
-                          <div>
-                            <SubLabel>
+                              <div>
+                                <SubLabel>
+                                  <>
+                                    Select which{" "}
+                                    {!user || user.role === "admin" ? (
+                                      <Link
+                                        href="/admin/documents/sets"
+                                        className="text-blue-500"
+                                        target="_blank"
+                                      >
+                                        Document Sets
+                                      </Link>
+                                    ) : (
+                                      "Document Sets"
+                                    )}{" "}
+                                    that this Assistant should search through.
+                                    If none are specified, the Assistant will
+                                    search through all available documents in
+                                    order to try and respond to queries.
+                                  </>
+                                </SubLabel>
+                              </div>
+
+                              {documentSets.length > 0 ? (
+                                <FieldArray
+                                  name="document_set_ids"
+                                  render={(arrayHelpers: ArrayHelpers) => (
+                                    <div>
+                                      <div className="mb-3 mt-2 flex gap-2 flex-wrap text-sm">
+                                        {documentSets.map((documentSet) => {
+                                          const ind =
+                                            values.document_set_ids.indexOf(
+                                              documentSet.id
+                                            );
+                                          let isSelected = ind !== -1;
+                                          return (
+                                            <DocumentSetSelectable
+                                              key={documentSet.id}
+                                              documentSet={documentSet}
+                                              isSelected={isSelected}
+                                              onSelect={() => {
+                                                if (isSelected) {
+                                                  arrayHelpers.remove(ind);
+                                                } else {
+                                                  arrayHelpers.push(
+                                                    documentSet.id
+                                                  );
+                                                }
+                                              }}
+                                            />
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+                                />
+                              ) : (
+                                <Italic className="text-sm">
+                                  No Document Sets available.{" "}
+                                  {user?.role !== "admin" && (
+                                    <>
+                                      If this functionality would be useful,
+                                      reach out to the administrators of Danswer
+                                      for assistance.
+                                    </>
+                                  )}
+                                </Italic>
+                              )}
+
                               <>
-                                Select which{" "}
-                                {!user || user.role === "admin" ? (
-                                  <Link
-                                    href="/admin/documents/sets"
-                                    className="text-blue-500"
-                                    target="_blank"
-                                  >
-                                    Document Sets
-                                  </Link>
-                                ) : (
-                                  "Document Sets"
-                                )}{" "}
-                                that this Assistant should search through. If
-                                none are specified, the Assistant will search
-                                through all available documents in order to try
-                                and respond to queries.
-                              </>
-                            </SubLabel>
-                          </div>
+                                <TextFormField
+                                  name="num_chunks"
+                                  label="Number of Chunks"
+                                  placeholder="If unspecified, will use 10 chunks."
+                                  subtext={
+                                    <div>
+                                      How many chunks should we feed into the
+                                      LLM when generating the final response?
+                                      Each chunk is ~400 words long.
+                                    </div>
+                                  }
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    // Allow only integer values
+                                    if (
+                                      value === "" ||
+                                      /^[0-9]+$/.test(value)
+                                    ) {
+                                      setFieldValue("num_chunks", value);
+                                    }
+                                  }}
+                                />
 
-                          {documentSets.length > 0 ? (
-                            <FieldArray
-                              name="document_set_ids"
-                              render={(arrayHelpers: ArrayHelpers) => (
-                                <div>
-                                  <div className="mb-3 mt-2 flex gap-2 flex-wrap text-sm">
-                                    {documentSets.map((documentSet) => {
-                                      const ind =
-                                        values.document_set_ids.indexOf(
-                                          documentSet.id
-                                        );
-                                      let isSelected = ind !== -1;
-                                      return (
-                                        <DocumentSetSelectable
-                                          key={documentSet.id}
-                                          documentSet={documentSet}
-                                          isSelected={isSelected}
-                                          onSelect={() => {
-                                            if (isSelected) {
-                                              arrayHelpers.remove(ind);
-                                            } else {
-                                              arrayHelpers.push(documentSet.id);
-                                            }
-                                          }}
-                                        />
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              )}
-                            />
-                          ) : (
-                            <Italic className="text-sm">
-                              No Document Sets available.{" "}
-                              {user?.role !== "admin" && (
-                                <>
-                                  If this functionality would be useful, reach
-                                  out to the administrators of Danswer for
-                                  assistance.
-                                </>
-                              )}
-                            </Italic>
-                          )}
+                                <Label>Misc</Label>
 
-                          <>
-                            <TextFormField
-                              name="num_chunks"
-                              label="Number of Chunks"
-                              placeholder="If unspecified, will use 10 chunks."
-                              subtext={
-                                <div>
-                                  How many chunks should we feed into the LLM
-                                  when generating the final response? Each chunk
-                                  is ~400 words long.
-                                </div>
-                              }
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                // Allow only integer values
-                                if (value === "" || /^[0-9]+$/.test(value)) {
-                                  setFieldValue("num_chunks", value);
-                                }
-                              }}
-                            />
+                                <BooleanFormField
+                                  name="llm_relevance_filter"
+                                  label="Apply LLM Relevance Filter"
+                                  subtext={
+                                    "If enabled, the LLM will filter out chunks that are not relevant to the user query."
+                                  }
+                                />
 
-                            <Label>Misc</Label>
-
-                            <BooleanFormField
-                              name="llm_relevance_filter"
-                              label="Apply LLM Relevance Filter"
-                              subtext={
-                                "If enabled, the LLM will filter out chunks that are not relevant to the user query."
-                              }
-                            />
-
-                            <BooleanFormField
-                              name="include_citations"
-                              label="Include Citations"
-                              subtext={`
+                                <BooleanFormField
+                                  name="include_citations"
+                                  label="Include Citations"
+                                  subtext={`
                                 If set, the response will include bracket citations ([1], [2], etc.) 
                                 for each document used by the LLM to help inform the response. This is 
                                 the same technique used by the default Assistants. In general, we recommend 
                                 to leave this enabled in order to increase trust in the LLM answer.`}
-                            />
-                          </>
-                        </>
+                                />
+                              </>
+                            </>
+                          )}
+                        </div>
                       )}
-                    </div>
+                    </>
                   )}
 
                   {imageGenerationTool &&
