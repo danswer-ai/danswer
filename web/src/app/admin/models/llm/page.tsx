@@ -103,14 +103,14 @@ const LLMOptions = () => {
                 <SectionHeader>Token Budget</SectionHeader>
                 <Text>
                   Set a maximum token use per time period. If the token budget
-                  is exceeded, DocuDive will not be able to respond to queries
+                  is exceeded, Danswer will not be able to respond to queries
                   until the next time period.
                 </Text>
                 <br />
                 <BooleanFormField
                   name="enable_token_budget"
                   label="Enable Token Budget"
-                  subtext="If enabled, DocuDive will be limited to the token budget specified below."
+                  subtext="If enabled, Danswer will be limited to the token budget specified below."
                   onChange={(e) => {
                     setFieldValue("enable_token_budget", e.target.checked);
                   }}

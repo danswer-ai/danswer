@@ -14,7 +14,7 @@ function BackToDanswerButton() {
     <div className="absolute bottom-4 w-full flex border-t border-border pt-4">
       <div className="mx-auto">
         <Button onClick={() => router.push("/chat")}>
-          Back to DocuDive Chat
+          Back to Danswer Chat
         </Button>
       </div>
     </div>

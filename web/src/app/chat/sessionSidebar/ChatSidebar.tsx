@@ -183,14 +183,14 @@ export const ChatSidebar = ({
                 className="flex py-3 px-4 cursor-pointer hover:bg-hover"
               >
                 <FiSearch className="my-auto mr-2" />
-                DocuDive Search
+                Danswer Search
               </Link>
               <Link
                 href="/chat"
                 className="flex py-3 px-4 cursor-pointer hover:bg-hover"
               >
                 <FiMessageSquare className="my-auto mr-2" />
-                DocuDive Chat
+                Danswer Chat
               </Link>
               {(!user || user.role === "admin") && (
                 <Link

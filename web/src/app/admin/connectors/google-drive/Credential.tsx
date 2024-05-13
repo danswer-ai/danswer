@@ -378,7 +378,7 @@ export const DriveOAuthSection = ({
                 <TextFormField
                   name="google_drive_delegated_user"
                   label="[Optional] User email to impersonate:"
-                  subtext="If left blank, DocuDive will use the service account itself."
+                  subtext="If left blank, Danswer will use the service account itself."
                 />
                 <div className="flex">
                   <button

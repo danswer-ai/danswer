@@ -146,8 +146,8 @@ export const SlackBotCreationForm = ({
               const errorMsg = responseJson.detail || responseJson.message;
               setPopup({
                 message: isUpdate
-                  ? `Error updating DocuDiveBot config - ${errorMsg}`
-                  : `Error creating DocuDiveBot config - ${errorMsg}`,
+                  ? `Error updating DanswerBot config - ${errorMsg}`
+                  : `Error creating DanswerBot config - ${errorMsg}`,
                 type: "error",
               });
             }
@@ -169,7 +169,7 @@ export const SlackBotCreationForm = ({
                       &apos;#ask-danswer&apos;.
                       <br />
                       <br />
-                      <i>NOTE</i>: you still need to add DocuDiveBot to the
+                      <i>NOTE</i>: you still need to add DanswerBot to the
                       channel(s) in Slack itself. Setting this config will not
                       auto-add the bot to the channel.
                     </div>
@@ -181,15 +181,15 @@ export const SlackBotCreationForm = ({
                   label="Response Format"
                   subtext={
                     <>
-                      If set to Citations, DocuDiveBot will respond with a direct
+                      If set to Citations, DanswerBot will respond with a direct
                       answer with inline citations. It will also provide links
                       to these cited documents below the answer. When in doubt,
                       choose this option.
                       <br />
                       <br />
-                      If set to Quotes, DocuDiveBot will respond with a direct
+                      If set to Quotes, DanswerBot will respond with a direct
                       answer as well as with quotes pulled from the context
-                      documents to support that answer. DocuDiveBot will also
+                      documents to support that answer. DanswerBot will also
                       give a list of relevant documents. Choose this option if
                       you want a very detailed response AND/OR a list of
                       relevant documents would be useful just in case the LLM
@@ -204,7 +204,7 @@ export const SlackBotCreationForm = ({
 
                 <Divider />
 
-                <SectionHeader>When should DocuDiveBot respond?</SectionHeader>
+                <SectionHeader>When should DanswerBot respond?</SectionHeader>
 
                 <BooleanFormField
                   name="answer_validity_check_enabled"
@@ -218,22 +218,22 @@ export const SlackBotCreationForm = ({
                 />
                 <BooleanFormField
                   name="respond_tag_only"
-                  label="Respond to @DocuDiveBot Only"
-                  subtext="If set, DocuDiveBot will only respond when directly tagged"
+                  label="Respond to @DanswerBot Only"
+                  subtext="If set, DanswerBot will only respond when directly tagged"
                 />
                 <BooleanFormField
                   name="respond_to_bots"
                   label="Responds to Bot messages"
-                  subtext="If not set, DocuDiveBot will always ignore messages from Bots"
+                  subtext="If not set, DanswerBot will always ignore messages from Bots"
                 />
                 <TextArrayField
                   name="respond_team_member_list"
                   label="Team Members Emails"
-                  subtext={`If specified, DocuDiveBot responses will only be 
+                  subtext={`If specified, DanswerBot responses will only be 
                   visible to members in this list. This is
-                  useful if you want DocuDiveBot to operate in an
+                  useful if you want DanswerBot to operate in an
                   "assistant" mode, where it helps the team members find
-                  answers, but let's them build on top of DocuDiveBot's response / throw 
+                  answers, but let's them build on top of DanswerBot's response / throw 
                   out the occasional incorrect answer.`}
                   values={values}
                 />
@@ -243,8 +243,8 @@ export const SlackBotCreationForm = ({
 
                 <BooleanFormField
                   name="still_need_help_enabled"
-                  label="Should DocuDive give a “Still need help?” button?"
-                  subtext={`If specified, DocuDiveBot's response will include a button at the bottom 
+                  label="Should Danswer give a “Still need help?” button?"
+                  subtext={`If specified, DanswerBot's response will include a button at the bottom 
                   of the response that asks the user if they still need help.`}
                 />
                 {values.still_need_help_enabled && (
@@ -259,7 +259,7 @@ export const SlackBotCreationForm = ({
                         button. For example, &apos;mark@acme.com&apos;.
                         <br />
                         Or provide a user group by either the name or the
-                        handle. For example, &apos;DocuDive Team&apos; or
+                        handle. For example, &apos;Danswer Team&apos; or
                         &apos;danswer-team&apos;.
                         <br />
                         <br />
@@ -278,7 +278,7 @@ export const SlackBotCreationForm = ({
                   </SectionHeader>
                   <Text>
                     Use either a Persona <b>or</b> Document Sets to control how
-                    DocuDiveBot answers.
+                    DanswerBot answers.
                   </Text>
                   <Text>
                     <ul className="list-disc mt-2 ml-4">
@@ -288,7 +288,7 @@ export const SlackBotCreationForm = ({
                       </li>
                       <li>
                         You should use Document Sets if you just want to control
-                        which documents DocuDiveBot uses as references.
+                        which documents DanswerBot uses as references.
                       </li>
                     </ul>
                   </Text>
@@ -316,8 +316,8 @@ export const SlackBotCreationForm = ({
                           <div>
                             <div>
                               <SubLabel>
-                                The document sets that DocuDiveBot should search
-                                through. If left blank, DocuDiveBot will search
+                                The document sets that DanswerBot should search
+                                through. If left blank, DanswerBot will search
                                 through all documents.
                               </SubLabel>
                             </div>

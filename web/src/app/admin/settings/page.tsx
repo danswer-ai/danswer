@@ -23,7 +23,7 @@ export default async function Page() {
       />
 
       <Text className="mb-8">
-        Manage general DocuDive settings applicable to all users in the
+        Manage general Danswer settings applicable to all users in the
         workspace.
       </Text>
 
