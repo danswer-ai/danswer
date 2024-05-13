@@ -215,11 +215,11 @@ export function _WelcomeModal({ user }: { user: User | null }) {
       );
       break;
     default:
-      title = "🎉 Welcome to Danswer";
+      title = "🎉 Welcome to DocuDive";
       body = (
         <>
           <div>
-            <Text>How are you planning on using Danswer?</Text>
+            <Text>How are you planning on using DocuDive?</Text>
           </div>
           <Divider />
           <UsageTypeSection
