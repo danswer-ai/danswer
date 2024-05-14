@@ -1,7 +1,7 @@
 "use client";
 
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { useDocumentSets } from "../hooks";
+import { refreshDocumentSets, useDocumentSets } from "../hooks";
 import {
   useConnectorCredentialIndexingStatus,
   useUserGroups,
@@ -82,7 +82,8 @@ function Main({ documentSetId }: { documentSetId: number }) {
           ccPairs={ccPairs}
           userGroups={userGroups}
           onClose={() => {
-            router.push(`/admin/documents/sets?u=${Date.now()}`);
+            refreshDocumentSets();
+            router.push("/admin/documents/sets");
           }}
           setPopup={setPopup}
           existingDocumentSet={documentSet}

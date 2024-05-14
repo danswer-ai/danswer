@@ -283,6 +283,10 @@ class ConnectorCredentialPair(Base):
     document_sets: Mapped[list["DocumentSet"]] = relationship(
         "DocumentSet",
         secondary=DocumentSet__ConnectorCredentialPair.__table__,
+        primaryjoin=(
+            (DocumentSet__ConnectorCredentialPair.connector_credential_pair_id == id)
+            & (DocumentSet__ConnectorCredentialPair.is_current.is_(True))
+        ),
         back_populates="connector_credential_pairs",
         overlaps="document_set",
     )
@@ -825,6 +829,14 @@ class DocumentSet(Base):
     connector_credential_pairs: Mapped[list[ConnectorCredentialPair]] = relationship(
         "ConnectorCredentialPair",
         secondary=DocumentSet__ConnectorCredentialPair.__table__,
+        primaryjoin=(
+            (DocumentSet__ConnectorCredentialPair.document_set_id == id)
+            & (DocumentSet__ConnectorCredentialPair.is_current.is_(True))
+        ),
+        secondaryjoin=(
+            DocumentSet__ConnectorCredentialPair.connector_credential_pair_id
+            == ConnectorCredentialPair.id
+        ),
         back_populates="document_sets",
         overlaps="document_set",
     )
