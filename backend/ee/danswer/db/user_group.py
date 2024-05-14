@@ -45,9 +45,12 @@ def fetch_user_groups_for_user(
     return db_session.scalars(stmt).all()
 
 
-def fetch_documents_for_user_group(
-    db_session: Session, user_group_id: int
-) -> Sequence[Document]:
+def fetch_documents_for_user_group_paginated(
+    db_session: Session,
+    user_group_id: int,
+    last_document_id: str | None = None,
+    limit: int = 100,
+) -> tuple[Sequence[Document], str | None]:
     stmt = (
         select(Document)
         .join(
@@ -72,8 +75,13 @@ def fetch_documents_for_user_group(
             UserGroup__ConnectorCredentialPair.user_group_id == UserGroup.id,
         )
         .where(UserGroup.id == user_group_id)
+        .order_by(Document.id)
+        .limit(limit)
     )
-    return db_session.scalars(stmt).all()
+    if last_document_id is not None:
+        stmt = stmt.where(Document.id > last_document_id)
+    documents = db_session.scalars(stmt).all()
+    return documents, documents[-1].id if documents else None
 
 
 def fetch_user_groups_for_documents(
