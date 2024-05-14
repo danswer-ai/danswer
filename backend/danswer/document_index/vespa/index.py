@@ -90,7 +90,7 @@ SEARCH_ENDPOINT = f"{VESPA_APP_CONTAINER_URL}/search/"
 
 _BATCH_SIZE = 128  # Specific to Vespa
 _NUM_THREADS = (
-    16  # since Vespa doesn't allow batching of inserts / updates, we use threads
+    32  # since Vespa doesn't allow batching of inserts / updates, we use threads
 )
 # up from 500ms for now, since we've seen quite a few timeouts
 # in the long term, we are looking to improve the performance of Vespa
@@ -847,9 +847,46 @@ class VespaIndex(DocumentIndex):
 
     def update(self, update_requests: list[UpdateRequest]) -> None:
         logger.info(f"Updating {len(update_requests)} documents in Vespa")
-        start = time.time()
+        update_start = time.monotonic()
 
         processed_updates_requests: list[_VespaUpdateRequest] = []
+        all_doc_chunk_ids: dict[str, list[str]] = {}
+
+        # Fetch all chunks for each document ahead of time
+        index_names = [self.index_name]
+        if self.secondary_index_name:
+            index_names.append(self.secondary_index_name)
+
+        chunk_id_start_time = time.monotonic()
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=_NUM_THREADS
+        ) as executor:
+            future_to_doc_chunk_ids = {
+                executor.submit(
+                    _get_vespa_chunk_ids_by_document_id,
+                    document_id=document_id,
+                    index_name=index_name,
+                ): (document_id, index_name)
+                for index_name in index_names
+                for update_request in update_requests
+                for document_id in update_request.document_ids
+            }
+            for future in concurrent.futures.as_completed(future_to_doc_chunk_ids):
+                document_id, index_name = future_to_doc_chunk_ids[future]
+                try:
+                    doc_chunk_ids = future.result()
+                    if document_id not in all_doc_chunk_ids:
+                        all_doc_chunk_ids[document_id] = []
+                    all_doc_chunk_ids[document_id].extend(doc_chunk_ids)
+                except Exception as e:
+                    logger.error(
+                        f"Error retrieving chunk IDs for document {document_id} in index {index_name}: {e}"
+                    )
+        logger.debug(
+            f"Took {time.monotonic() - chunk_id_start_time:.2f} seconds to fetch all Vespa chunk IDs"
+        )
+
+        # Build the _VespaUpdateRequest objects
         for update_request in update_requests:
             update_dict: dict[str, dict] = {"fields": {}}
             if update_request.boost is not None:
@@ -873,26 +910,20 @@ class VespaIndex(DocumentIndex):
                 logger.error("Update request received but nothing to update")
                 continue
 
-            index_names = [self.index_name]
-            if self.secondary_index_name:
-                index_names.append(self.secondary_index_name)
-
-            for index_name in index_names:
-                for document_id in update_request.document_ids:
-                    for doc_chunk_id in _get_vespa_chunk_ids_by_document_id(
-                        document_id=document_id, index_name=index_name
-                    ):
-                        processed_updates_requests.append(
-                            _VespaUpdateRequest(
-                                document_id=document_id,
-                                url=f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{doc_chunk_id}",
-                                update_request=update_dict,
-                            )
+            for document_id in update_request.document_ids:
+                for doc_chunk_id in all_doc_chunk_ids[document_id]:
+                    processed_updates_requests.append(
+                        _VespaUpdateRequest(
+                            document_id=document_id,
+                            url=f"{DOCUMENT_ID_ENDPOINT.format(index_name=self.index_name)}/{doc_chunk_id}",
+                            update_request=update_dict,
                         )
+                    )
 
         self._apply_updates_batched(processed_updates_requests)
         logger.info(
-            "Finished updating Vespa documents in %s seconds", time.time() - start
+            "Finished updating Vespa documents in %.2f seconds",
+            time.monotonic() - update_start,
         )
 
     def delete(self, doc_ids: list[str]) -> None:
