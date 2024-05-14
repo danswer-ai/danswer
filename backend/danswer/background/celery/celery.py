@@ -15,7 +15,7 @@ from danswer.db.document import prepare_to_modify_documents
 from danswer.db.document_set import delete_document_set
 from danswer.db.document_set import fetch_document_sets
 from danswer.db.document_set import fetch_document_sets_for_documents
-from danswer.db.document_set import fetch_documents_for_document_set
+from danswer.db.document_set import fetch_documents_for_document_set_paginated
 from danswer.db.document_set import get_document_set_by_id
 from danswer.db.document_set import mark_document_set_as_synced
 from danswer.db.engine import build_connection_string
@@ -27,7 +27,6 @@ from danswer.db.tasks import get_latest_task
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import UpdateRequest
-from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -38,7 +37,7 @@ celery_backend_url = f"db+{connection_string}"
 celery_app = Celery(__name__, broker=celery_broker_url, backend=celery_backend_url)
 
 
-_SYNC_BATCH_SIZE = 1000
+_SYNC_BATCH_SIZE = 100
 
 
 #####
@@ -126,18 +125,21 @@ def sync_document_set_task(document_set_id: int) -> None:
 
     with Session(get_sqlalchemy_engine()) as db_session:
         try:
-            documents_to_update = fetch_documents_for_document_set(
-                document_set_id=document_set_id,
-                db_session=db_session,
-                current_only=False,
-            )
-            for document_batch in batch_generator(
-                documents_to_update, _SYNC_BATCH_SIZE
-            ):
+            cursor = None
+            while True:
+                document_batch, cursor = fetch_documents_for_document_set_paginated(
+                    document_set_id=document_set_id,
+                    db_session=db_session,
+                    current_only=False,
+                    last_document_id=cursor,
+                    limit=_SYNC_BATCH_SIZE,
+                )
                 _sync_document_batch(
                     document_ids=[document.id for document in document_batch],
                     db_session=db_session,
                 )
+                if cursor is None:
+                    break
 
             # if there are no connectors, then delete the document set. Otherwise, just
             # mark it as successfully synced.
