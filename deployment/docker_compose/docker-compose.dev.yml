@@ -270,7 +270,22 @@ services:
       - "5432:5432"
     volumes:
       - db_volume:/var/lib/postgresql/data
-
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    depends_on:
+      - relational_db
+    volumes:
+       - pgadmin:/var/lib/pgadmin
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
 
   # This container name cannot have an underscore in it due to Vespa expectations of the URL
   index:
@@ -325,6 +340,7 @@ volumes:
   # file_connector_tmp_storage is legacy only now
   file_connector_tmp_storage:
   db_volume:
+  pgadmin:
   vespa_volume:
   # Created by the container itself
   model_cache_huggingface:
