@@ -7,16 +7,15 @@ from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import UpdateRequest
-from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.user_group import delete_user_group
-from ee.danswer.db.user_group import fetch_documents_for_user_group
+from ee.danswer.db.user_group import fetch_documents_for_user_group_paginated
 from ee.danswer.db.user_group import fetch_user_group
 from ee.danswer.db.user_group import mark_user_group_as_synced
 
 logger = setup_logger()
 
-_SYNC_BATCH_SIZE = 512
+_SYNC_BATCH_SIZE = 100
 
 
 def _sync_user_group_batch(
@@ -62,16 +61,25 @@ def sync_user_groups(user_group_id: int, db_session: Session) -> None:
     if user_group is None:
         raise ValueError(f"User group '{user_group_id}' does not exist")
 
-    documents_to_update = fetch_documents_for_user_group(
-        db_session=db_session,
-        user_group_id=user_group_id,
-    )
-    for document_batch in batch_generator(documents_to_update, _SYNC_BATCH_SIZE):
+    cursor = None
+    while True:
+        # NOTE: this may miss some documents, but that is okay. Any new documents added
+        # will be added with the correct group membership
+        document_batch, cursor = fetch_documents_for_user_group_paginated(
+            db_session=db_session,
+            user_group_id=user_group_id,
+            last_document_id=cursor,
+            limit=_SYNC_BATCH_SIZE,
+        )
+
         _sync_user_group_batch(
             document_ids=[document.id for document in document_batch],
             document_index=document_index,
             db_session=db_session,
         )
+
+        if cursor is None:
+            break
 
     if user_group.is_up_for_deletion:
         delete_user_group(db_session=db_session, user_group=user_group)
