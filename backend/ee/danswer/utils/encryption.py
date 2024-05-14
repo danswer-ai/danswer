@@ -77,7 +77,7 @@ def decrypt_bytes_to_string(input_bytes: bytes) -> str:
     return versioned_decryption_fn(input_bytes)
 
 
-def test_encryption():
+def test_encryption() -> None:
     test_string = "Danswer is the BEST!"
     encrypted_bytes = encrypt_string_to_bytes(test_string)
     decrypted_string = decrypt_bytes_to_string(encrypted_bytes)
