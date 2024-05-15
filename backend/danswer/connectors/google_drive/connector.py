@@ -56,6 +56,8 @@ class GDriveMimeType(str, Enum):
     SPREADSHEET = "application/vnd.google-apps.spreadsheet"
     PDF = "application/pdf"
     WORD_DOC = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    TXT = "text/plain"
+    MARKDOWN = "text/markdown"
 
 
 GoogleDriveFileType = dict[str, Any]
@@ -321,6 +323,12 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
     elif mime_type == GDriveMimeType.WORD_DOC.value:
         response = service.files().get_media(fileId=file["id"]).execute()
         return docx_to_text(file=io.BytesIO(response))
+    elif mime_type == GDriveMimeType.TXT.value:
+        response = service.files().get_media(fileId=file["id"]).execute()
+        return io.BytesIO(response).getvalue().decode("utf-8")
+    elif mime_type == GDriveMimeType.MARKDOWN.value:
+        response = service.files().get_media(fileId=file["id"]).execute()
+        return io.BytesIO(response).getvalue().decode("utf-8")
     elif mime_type == GDriveMimeType.PDF.value:
         response = service.files().get_media(fileId=file["id"]).execute()
         return pdf_to_text(file=io.BytesIO(response))
