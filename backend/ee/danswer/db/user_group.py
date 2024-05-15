@@ -80,6 +80,8 @@ def fetch_documents_for_user_group_paginated(
     )
     if last_document_id is not None:
         stmt = stmt.where(Document.id > last_document_id)
+    stmt = stmt.distinct()
+
     documents = db_session.scalars(stmt).all()
     return documents, documents[-1].id if documents else None
 
