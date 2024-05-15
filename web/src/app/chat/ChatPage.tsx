@@ -727,8 +727,6 @@ export function ChatPage({
                 });
               }}
               noClick
-              onDragLeave={() => console.log("buh")}
-              onDragEnter={() => console.log("floppa")}
             >
               {({ getRootProps }) => (
                 <>
