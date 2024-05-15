@@ -443,6 +443,7 @@ export function AssistantEditor({
                                 </SubLabel>
                               </div>
 
+
                               {documentSets.length > 0 ? (
                                 <FieldArray
                                   name="document_set_ids"
@@ -482,11 +483,11 @@ export function AssistantEditor({
                                   {user?.role !== "admin" && (
                                     <>
                                       If this functionality would be useful,
-                                      reach out to the administrators of Danswer
+                                      reach out to the administrators of Docudive
                                       for assistance.
                                     </>
                                   )}
-                                </Italic>
+                                </Italic> 
                               )}
 
                               <>

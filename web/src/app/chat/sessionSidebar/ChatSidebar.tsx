@@ -153,6 +153,7 @@ export const ChatSidebar = ({
                     <FiPlusSquare className="mr-2" /> New Chat
                   </div>
                 </BasicClickable>
+
               </Link>
 
               <div className="ml-1.5 mr-3 h-full">
@@ -221,16 +222,15 @@ export const ChatSidebar = ({
                   href="/search"
                   className="flex py-3 px-4 cursor-pointer hover:bg-hover"
                 >
-                  <FiSearch className="my-auto mr-2" />
-                  Danswer Search
+                <FiSearch className="my-auto mr-2" />
+                  Docudive Search
                 </Link>
                 <Link
                   href="/chat"
-                  className="flex py-3 px-4 cursor-pointer hover:bg-hover"
-                >
+                  className="flex py-3 px-4 cursor-pointer hover:bg-hover">
                   <FiMessageSquare className="my-auto mr-2" />
-                  Danswer Chat
-                </Link>
+                  Docudive Chat
+                 </Link>
                 {(!user || user.role === "admin") && (
                   <Link
                     href="/admin/indexing/status"

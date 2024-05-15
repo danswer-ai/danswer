@@ -59,7 +59,12 @@ async function Page({ params }: { params: { id: string } }) {
       />
     );
   }
-  const personas = (await personasResponse.json()) as Persona[];
+  const personas = ((await personasResponse.json()) as Persona[]).map((persona: Persona)=> {
+    if(persona.name === 'Danswer') {
+      persona.name = 'DocuDive';
+    }
+    return persona;
+  });
 
   return (
     <div className="container mx-auto">
@@ -73,7 +78,7 @@ async function Page({ params }: { params: { id: string } }) {
 
       <Text className="mb-8">
         Edit the existing configuration below! This config will determine how
-        DanswerBot behaves in the specified channels.
+        DocuDiveBot behaves in the specified channels.
       </Text>
 
       <SlackBotCreationForm
