@@ -22,13 +22,17 @@ function LLMProviderUpdateModal({
   shouldMarkAsDefault?: boolean;
   setPopup?: (popup: PopupSpec) => void;
 }) {
-  const providerName =
-    llmProviderDescriptor?.display_name ||
-    llmProviderDescriptor?.name ||
-    existingLlmProvider?.name ||
-    "Custom LLM Provider";
+  const providerName = existingLlmProvider?.name
+    ? `"${existingLlmProvider.name}"`
+    : null ||
+      llmProviderDescriptor?.display_name ||
+      llmProviderDescriptor?.name ||
+      "Custom LLM Provider";
   return (
-    <Modal title={`Setup ${providerName}`} onOutsideClick={() => onClose()}>
+    <Modal
+      title={`${llmProviderDescriptor ? "Configure" : "Setup"} ${providerName}`}
+      onOutsideClick={() => onClose()}
+    >
       <div className="max-h-[70vh] overflow-y-auto px-4">
         {llmProviderDescriptor ? (
           <LLMProviderUpdateForm
@@ -64,9 +68,9 @@ function LLMProviderDisplay({
   const { popup, setPopup } = usePopup();
 
   const providerName =
+    existingLlmProvider?.name ||
     llmProviderDescriptor?.display_name ||
-    llmProviderDescriptor?.name ||
-    existingLlmProvider?.name;
+    llmProviderDescriptor?.name;
   return (
     <div>
       {popup}
