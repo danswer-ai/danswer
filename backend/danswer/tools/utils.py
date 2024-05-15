@@ -7,7 +7,7 @@ from danswer.llm.utils import get_default_llm_tokenizer
 from danswer.tools.tool import Tool
 
 
-OPEN_AI_TOOL_CALLING_MODELS = {"gpt-3.5-turbo", "gpt-4-turbo", "gpt-4", "gpt-4o"}
+OPEN_AI_TOOL_CALLING_MODELS = {"gpt-3.5-turbo", "gpt-4-turbo", "gpt-4"}
 
 
 def explicit_tool_calling_supported(model_provider: str, model_name: str) -> bool:

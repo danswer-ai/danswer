@@ -23,6 +23,7 @@ import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { Settings } from "../admin/settings/interfaces";
 import {
   buildChatUrl,
+  buildLatestMessageChain,
   createChatSession,
   getCitedDocumentsFromMessage,
   getHumanAndAIMessageFromMessageNumber,
@@ -32,7 +33,10 @@ import {
   nameChatSession,
   personaIncludesRetrieval,
   processRawChatHistory,
+  removeMessage,
   sendMessage,
+  setMessageAsLatest,
+  updateParentChildren,
   uploadFilesForChat,
 } from "./lib";
 import { useContext, useEffect, useRef, useState } from "react";
@@ -67,6 +71,9 @@ import { InputBarPreviewImage } from "./images/InputBarPreviewImage";
 import { Folder } from "./folders/interfaces";
 
 const MAX_INPUT_HEIGHT = 200;
+const TEMP_USER_MESSAGE_ID = -1;
+const TEMP_ASSISTANT_MESSAGE_ID = -2;
+const SYSTEM_MESSAGE_ID = -3;
 
 export function ChatPage({
   user,
@@ -160,7 +167,7 @@ export function ChatPage({
         } else {
           setSelectedPersona(undefined);
         }
-        setMessageHistory([]);
+        setCompleteMessageMap(new Map());
         setChatSessionSharedStatus(ChatSessionSharedStatus.Private);
 
         // if we're supposed to submit on initial load, then do that here
@@ -186,10 +193,11 @@ export function ChatPage({
         )
       );
 
-      const newMessageHistory = processRawChatHistory(chatSession.messages);
+      const newCompleteMessageMap = processRawChatHistory(chatSession.messages);
+      const newMessageHistory = buildLatestMessageChain(newCompleteMessageMap);
       // if the last message is an error, don't overwrite it
       if (messageHistory[messageHistory.length - 1]?.type !== "error") {
-        setMessageHistory(newMessageHistory);
+        setCompleteMessageMap(newCompleteMessageMap);
 
         const latestMessageId =
           newMessageHistory[newMessageHistory.length - 1]?.messageId;
@@ -231,7 +239,77 @@ export function ChatPage({
   const [message, setMessage] = useState(
     searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
   );
-  const [messageHistory, setMessageHistory] = useState<Message[]>([]);
+  const [completeMessageMap, setCompleteMessageMap] = useState<
+    Map<number, Message>
+  >(new Map());
+  const upsertToCompleteMessageMap = ({
+    messages,
+    completeMessageMapOverride,
+    replacementsMap = null,
+    makeLatestChildMessage = false,
+  }: {
+    messages: Message[];
+    // if calling this function repeatedly with short delay, stay may not update in time
+    // and result in weird behavipr
+    completeMessageMapOverride?: Map<number, Message> | null;
+    replacementsMap?: Map<number, number> | null;
+    makeLatestChildMessage?: boolean;
+  }) => {
+    // deep copy
+    const frozenCompleteMessageMap =
+      completeMessageMapOverride || completeMessageMap;
+    const newCompleteMessageMap = structuredClone(frozenCompleteMessageMap);
+    if (newCompleteMessageMap.size === 0) {
+      const systemMessageId = messages[0].parentMessageId || SYSTEM_MESSAGE_ID;
+      const firstMessageId = messages[0].messageId;
+      const dummySystemMessage: Message = {
+        messageId: systemMessageId,
+        message: "",
+        type: "system",
+        files: [],
+        parentMessageId: null,
+        childrenMessageIds: [firstMessageId],
+        latestChildMessageId: firstMessageId,
+      };
+      newCompleteMessageMap.set(
+        dummySystemMessage.messageId,
+        dummySystemMessage
+      );
+      messages[0].parentMessageId = systemMessageId;
+    }
+
+    messages.forEach((message) => {
+      const idToReplace = replacementsMap?.get(message.messageId);
+      if (idToReplace) {
+        removeMessage(idToReplace, newCompleteMessageMap);
+      }
+
+      // update childrenMessageIds for the parent
+      if (
+        !newCompleteMessageMap.has(message.messageId) &&
+        message.parentMessageId !== null
+      ) {
+        updateParentChildren(message, newCompleteMessageMap, true);
+      }
+      newCompleteMessageMap.set(message.messageId, message);
+    });
+
+    // if specified, make these new message the latest of the current message chain
+    if (makeLatestChildMessage) {
+      const currentMessageChain = buildLatestMessageChain(
+        frozenCompleteMessageMap
+      );
+      const latestMessage = currentMessageChain[currentMessageChain.length - 1];
+      if (latestMessage) {
+        newCompleteMessageMap.get(
+          latestMessage.messageId
+        )!.latestChildMessageId = messages[0].messageId;
+      }
+    }
+    setCompleteMessageMap(newCompleteMessageMap);
+    return newCompleteMessageMap;
+  };
+  const messageHistory = buildLatestMessageChain(completeMessageMap);
   const [currentTool, setCurrentTool] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
 
@@ -415,6 +493,11 @@ export function ChatPage({
     const messageToResend = messageHistory.find(
       (message) => message.messageId === messageIdToResend
     );
+    const messageToResendParent =
+      messageToResend?.parentMessageId !== null &&
+      messageToResend?.parentMessageId !== undefined
+        ? completeMessageMap.get(messageToResend.parentMessageId)
+        : null;
     const messageToResendIndex = messageToResend
       ? messageHistory.indexOf(messageToResend)
       : null;
@@ -435,19 +518,39 @@ export function ChatPage({
       messageToResendIndex !== null
         ? messageHistory.slice(0, messageToResendIndex)
         : messageHistory;
+    let parentMessage =
+      messageToResendParent ||
+      (currMessageHistory.length > 0
+        ? currMessageHistory[currMessageHistory.length - 1]
+        : null);
     const currFiles = currentMessageFileIds.map((id) => ({
       id,
       type: "image",
     })) as FileDescriptor[];
-    setMessageHistory([
-      ...currMessageHistory,
+
+    // if we're resending, set the parent's child to null
+    // we will use tempMessages until the regenerated message is complete
+    const messageUpdates: Message[] = [
       {
-        messageId: 0,
+        messageId: TEMP_USER_MESSAGE_ID,
         message: currMessage,
         type: "user",
         files: currFiles,
+        parentMessageId: parentMessage?.messageId || null,
       },
-    ]);
+    ];
+    if (parentMessage) {
+      messageUpdates.push({
+        ...parentMessage,
+        childrenMessageIds: (parentMessage.childrenMessageIds || []).concat([
+          TEMP_USER_MESSAGE_ID,
+        ]),
+        latestChildMessageId: TEMP_USER_MESSAGE_ID,
+      });
+    }
+    const frozenCompleteMessageMap = upsertToCompleteMessageMap({
+      messages: messageUpdates,
+    });
     setMessage("");
     setCurrentMessageFileIds([]);
 
@@ -504,7 +607,7 @@ export function ChatPage({
             if (documents && documents.length > 0) {
               // point to the latest message (we don't know the messageId yet, which is why
               // we have to use -1)
-              setSelectedMessageForDocDisplay(-1);
+              setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
             }
           } else if (Object.hasOwn(packet, "file_ids")) {
             aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
@@ -523,16 +626,35 @@ export function ChatPage({
             finalMessage = packet as BackendMessage;
           }
         }
-        setMessageHistory([
-          ...currMessageHistory,
+        const updateFn = (messages: Message[]) => {
+          const replacementsMap = finalMessage
+            ? new Map([
+                [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+                [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+              ] as [number, number][])
+            : null;
+          upsertToCompleteMessageMap({
+            messages: messages,
+            replacementsMap: replacementsMap,
+            completeMessageMapOverride: frozenCompleteMessageMap,
+          });
+        };
+        const newUserMessageId =
+          finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
+        const newAssistantMessageId =
+          finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+        updateFn([
           {
-            messageId: finalMessage?.parent_message || null,
+            messageId: newUserMessageId,
             message: currMessage,
             type: "user",
             files: currFiles,
+            parentMessageId: parentMessage?.messageId || null,
+            childrenMessageIds: [newAssistantMessageId],
+            latestChildMessageId: newAssistantMessageId,
           },
           {
-            messageId: finalMessage?.message_id || null,
+            messageId: newAssistantMessageId,
             message: error || answer,
             type: error ? "error" : "assistant",
             retrievalType,
@@ -540,6 +662,7 @@ export function ChatPage({
             documents: finalMessage?.context_docs?.top_documents || documents,
             citations: finalMessage?.citations || {},
             files: finalMessage?.files || aiMessageImages || [],
+            parentMessageId: newUserMessageId,
           },
         ]);
         if (isCancelledRef.current) {
@@ -549,21 +672,25 @@ export function ChatPage({
       }
     } catch (e: any) {
       const errorMsg = e.message;
-      setMessageHistory([
-        ...currMessageHistory,
-        {
-          messageId: null,
-          message: currMessage,
-          type: "user",
-          files: currFiles,
-        },
-        {
-          messageId: null,
-          message: errorMsg,
-          type: "error",
-          files: aiMessageImages || [],
-        },
-      ]);
+      upsertToCompleteMessageMap({
+        messages: [
+          {
+            messageId: TEMP_USER_MESSAGE_ID,
+            message: currMessage,
+            type: "user",
+            files: currFiles,
+            parentMessageId: null,
+          },
+          {
+            messageId: TEMP_ASSISTANT_MESSAGE_ID,
+            message: errorMsg,
+            type: "error",
+            files: aiMessageImages || [],
+            parentMessageId: null,
+          },
+        ],
+        completeMessageMapOverride: frozenCompleteMessageMap,
+      });
     }
     setIsStreaming(false);
     if (isNewSession) {
@@ -787,11 +914,53 @@ export function ChatPage({
                       >
                         {messageHistory.map((message, i) => {
                           if (message.type === "user") {
+                            const parentMessage = message.parentMessageId
+                              ? completeMessageMap.get(message.parentMessageId)
+                              : null;
                             return (
                               <div key={i}>
                                 <HumanMessage
                                   content={message.message}
                                   files={message.files}
+                                  messageId={message.messageId}
+                                  otherMessagesCanSwitchTo={
+                                    parentMessage?.childrenMessageIds || []
+                                  }
+                                  onEdit={(editedContent) => {
+                                    const parentMessageId =
+                                      message.parentMessageId!;
+                                    const parentMessage =
+                                      completeMessageMap.get(parentMessageId)!;
+                                    upsertToCompleteMessageMap({
+                                      messages: [
+                                        {
+                                          ...parentMessage,
+                                          latestChildMessageId: null,
+                                        },
+                                      ],
+                                    });
+                                    onSubmit({
+                                      messageIdToResend:
+                                        message.messageId || undefined,
+                                      messageOverride: editedContent,
+                                    });
+                                  }}
+                                  onMessageSelection={(messageId) => {
+                                    const newCompleteMessageMap = new Map(
+                                      completeMessageMap
+                                    );
+                                    newCompleteMessageMap.get(
+                                      message.parentMessageId!
+                                    )!.latestChildMessageId = messageId;
+                                    setCompleteMessageMap(
+                                      newCompleteMessageMap
+                                    );
+                                    setSelectedMessageForDocDisplay(messageId);
+
+                                    // set message as latest so we can edit this message
+                                    // and so it sticks around on page reload
+                                    setMessageAsLatest(messageId);
+                                  }}
                                 />
                               </div>
                             );
@@ -800,7 +969,8 @@ export function ChatPage({
                               (selectedMessageForDocDisplay !== null &&
                                 selectedMessageForDocDisplay ===
                                   message.messageId) ||
-                              (selectedMessageForDocDisplay === -1 &&
+                              (selectedMessageForDocDisplay ===
+                                TEMP_USER_MESSAGE_ID &&
                                 i === messageHistory.length - 1);
                             const previousMessage =
                               i !== 0 ? messageHistory[i - 1] : null;
@@ -921,7 +1091,7 @@ export function ChatPage({
                         })}
 
                         {isStreaming &&
-                          messageHistory.length &&
+                          messageHistory.length > 0 &&
                           messageHistory[messageHistory.length - 1].type ===
                             "user" && (
                             <div key={messageHistory.length}>
