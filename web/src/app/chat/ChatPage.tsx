@@ -8,9 +8,11 @@ import {
   ChatSessionSharedStatus,
   DocumentsResponse,
   FileDescriptor,
+  ImageGenerationDisplay,
   Message,
   RetrievalType,
   StreamingError,
+  ToolRunKickoff,
 } from "./interfaces";
 import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
 import { DocumentSet, Tag, User, ValidSources } from "@/lib/types";
@@ -62,6 +64,7 @@ import Dropzone from "react-dropzone";
 import { LLMProviderDescriptor } from "../admin/models/llm/interfaces";
 import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
 import { InputBarPreviewImage } from "./images/InputBarPreviewImage";
+import { Folder } from "./folders/interfaces";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -76,6 +79,8 @@ export function ChatPage({
   defaultSelectedPersonaId,
   documentSidebarInitialWidth,
   defaultSidebarTab,
+  folders,
+  openedFolders,
 }: {
   user: User | null;
   chatSessions: ChatSession[];
@@ -87,6 +92,8 @@ export function ChatPage({
   defaultSelectedPersonaId?: number; // what persona to default to
   documentSidebarInitialWidth?: number;
   defaultSidebarTab?: Tabs;
+  folders: Folder[];
+  openedFolders: { [key: number]: boolean };
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -225,6 +232,7 @@ export function ChatPage({
     searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
   );
   const [messageHistory, setMessageHistory] = useState<Message[]>([]);
+  const [currentTool, setCurrentTool] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
 
   // uploaded files
@@ -451,6 +459,7 @@ export function ChatPage({
         ? RetrievalType.SelectedDocs
         : RetrievalType.None;
     let documents: DanswerDocument[] = selectedDocuments;
+    let aiMessageImages: FileDescriptor[] | null = null;
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
     try {
@@ -497,6 +506,17 @@ export function ChatPage({
               // we have to use -1)
               setSelectedMessageForDocDisplay(-1);
             }
+          } else if (Object.hasOwn(packet, "file_ids")) {
+            aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
+              (fileId) => {
+                return {
+                  id: fileId,
+                  type: "image",
+                };
+              }
+            );
+          } else if (Object.hasOwn(packet, "tool_name")) {
+            setCurrentTool((packet as ToolRunKickoff).tool_name);
           } else if (Object.hasOwn(packet, "error")) {
             error = (packet as StreamingError).error;
           } else if (Object.hasOwn(packet, "message_id")) {
@@ -519,7 +539,7 @@ export function ChatPage({
             query: finalMessage?.rephrased_query || query,
             documents: finalMessage?.context_docs?.top_documents || documents,
             citations: finalMessage?.citations || {},
-            files: finalMessage?.files || [],
+            files: finalMessage?.files || aiMessageImages || [],
           },
         ]);
         if (isCancelledRef.current) {
@@ -541,7 +561,7 @@ export function ChatPage({
           messageId: null,
           message: errorMsg,
           type: "error",
-          files: [],
+          files: aiMessageImages || [],
         },
       ]);
     }
@@ -576,7 +596,8 @@ export function ChatPage({
   const onFeedback = async (
     messageId: number,
     feedbackType: FeedbackType,
-    feedbackDetails: string
+    feedbackDetails: string,
+    predefinedFeedback: string | undefined
   ) => {
     if (chatSessionId === null) {
       return;
@@ -585,7 +606,8 @@ export function ChatPage({
     const response = await handleChatFeedback(
       messageId,
       feedbackType,
-      feedbackDetails
+      feedbackDetails,
+      predefinedFeedback
     );
 
     if (response.ok) {
@@ -640,6 +662,8 @@ export function ChatPage({
           onPersonaChange={onPersonaChange}
           user={user}
           defaultTab={defaultSidebarTab}
+          folders={folders}
+          openedFolders={openedFolders}
         />
 
         <div className="flex w-full overflow-x-hidden" ref={masterFlexboxRef}>
@@ -648,11 +672,12 @@ export function ChatPage({
             <FeedbackModal
               feedbackType={currentFeedback[0]}
               onClose={() => setCurrentFeedback(null)}
-              onSubmit={(feedbackDetails) => {
+              onSubmit={({ message, predefinedFeedback }) => {
                 onFeedback(
                   currentFeedback[1],
                   currentFeedback[0],
-                  feedbackDetails
+                  message,
+                  predefinedFeedback
                 );
                 setCurrentFeedback(null);
               }}
@@ -702,8 +727,6 @@ export function ChatPage({
                 });
               }}
               noClick
-              onDragLeave={() => console.log("buh")}
-              onDragEnter={() => console.log("floppa")}
             >
               {({ getRootProps }) => (
                 <>
@@ -786,11 +809,13 @@ export function ChatPage({
                                 <AIMessage
                                   messageId={message.messageId}
                                   content={message.message}
+                                  files={message.files}
                                   query={messageHistory[i]?.query || undefined}
                                   personaName={livePersona.name}
                                   citedDocuments={getCitedDocumentsFromMessage(
                                     message
                                   )}
+                                  currentTool={currentTool}
                                   isComplete={
                                     i !== messageHistory.length - 1 ||
                                     !isStreaming

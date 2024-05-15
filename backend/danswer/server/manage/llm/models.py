@@ -87,7 +87,7 @@ class FullLLMProvider(LLMProvider):
             is_default_provider=llm_provider_model.is_default_provider,
             model_names=(
                 llm_provider_model.model_names
-                or fetch_models_for_provider(llm_provider_model.name)
+                or fetch_models_for_provider(llm_provider_model.provider)
                 or [llm_provider_model.default_model_name]
             ),
         )

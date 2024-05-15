@@ -148,8 +148,14 @@ def create_chat_message_feedback(
     db_session: Session,
     # Slack user requested help from human
     required_followup: bool | None = None,
+    predefined_feedback: str | None = None,  # Added predefined_feedback parameter
 ) -> None:
-    if is_positive is None and feedback_text is None and required_followup is None:
+    if (
+        is_positive is None
+        and feedback_text is None
+        and required_followup is None
+        and predefined_feedback is None
+    ):
         raise ValueError("No feedback provided")
 
     chat_message = get_chat_message(
@@ -164,6 +170,7 @@ def create_chat_message_feedback(
         is_positive=is_positive,
         feedback_text=feedback_text,
         required_followup=required_followup,
+        predefined_feedback=predefined_feedback,
     )
 
     db_session.add(message_feedback)

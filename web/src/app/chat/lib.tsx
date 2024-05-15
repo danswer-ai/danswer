@@ -10,9 +10,11 @@ import {
   BackendMessage,
   ChatSession,
   DocumentsResponse,
+  ImageGenerationDisplay,
   Message,
   RetrievalType,
   StreamingError,
+  ToolRunKickoff,
 } from "./interfaces";
 import { Persona } from "../admin/assistants/interfaces";
 import { ReadonlyURLSearchParams } from "next/navigation";
@@ -128,7 +130,12 @@ export async function* sendMessage({
   }
 
   yield* handleStream<
-    AnswerPiecePacket | DocumentsResponse | BackendMessage | StreamingError
+    | AnswerPiecePacket
+    | DocumentsResponse
+    | BackendMessage
+    | ImageGenerationDisplay
+    | ToolRunKickoff
+    | StreamingError
   >(sendMessageResponse);
 }
 
@@ -150,7 +157,8 @@ export async function nameChatSession(chatSessionId: number, message: string) {
 export async function handleChatFeedback(
   messageId: number,
   feedback: FeedbackType,
-  feedbackDetails: string
+  feedbackDetails: string,
+  predefinedFeedback: string | undefined
 ) {
   const response = await fetch("/api/chat/create-chat-message-feedback", {
     method: "POST",
@@ -161,11 +169,11 @@ export async function handleChatFeedback(
       chat_message_id: messageId,
       is_positive: feedback === "like",
       feedback_text: feedbackDetails,
+      predefined_feedback: predefinedFeedback,
     }),
   });
   return response;
 }
-
 export async function renameChatSession(
   chatSessionId: number,
   newName: string
