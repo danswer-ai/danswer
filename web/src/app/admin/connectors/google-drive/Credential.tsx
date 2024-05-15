@@ -249,7 +249,7 @@ export const DriveJsonUploadSection = ({
         <a
           className="text-link"
           target="_blank"
-          href="https://docs.danswer.dev/connectors/google_drive#authorization"
+          href="https://docs.docudive.dev/connectors/google_drive#authorization"
         >
           here
         </a>{" "}
@@ -322,7 +322,7 @@ export const DriveOAuthSection = ({
     return (
       <div>
         <p className="text-sm mb-2">
-          When using a Google Drive Service Account, you can either have Danswer
+          When using a Google Drive Service Account, you can either have Docudive
           act as the service account itself OR you can specify an account for
           the service account to impersonate.
           <br />

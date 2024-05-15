@@ -80,7 +80,7 @@ const Main = () => {
         DocuDive. More details on how to setup the Gong connector can be found in{" "}
         <a
           className="text-link"
-          href="https://docs.danswer.dev/connectors/gong"
+          href="https://docs.docudive.dev/connectors/gong"
           target="_blank"
         >
           this guide.

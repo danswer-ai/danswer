@@ -81,7 +81,7 @@ const Main = () => {
         found in{" "}
         <a
           className="text-link"
-          href="https://docs.danswer.dev/connectors/discourse"
+          href="https://docs.docudive.dev/connectors/discourse"
           target="_blank"
         >
           this guide.
@@ -221,7 +221,7 @@ const Main = () => {
                   <TextFormField
                     name="base_url"
                     label="Base URL:"
-                    subtext="This might be something like https://danswer.discourse.group/ or https://community.yourcompany.com/"
+                    subtext="This might be something like https://docudive.discourse.group/ or https://community.yourcompany.com/"
                   />
                 </>
               }

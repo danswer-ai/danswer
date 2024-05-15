@@ -107,7 +107,7 @@ const MainSection = () => {
             (tenant) ID, and Client Secret. You can follow the guide{" "}
             <a
               target="_blank"
-              href="https://docs.danswer.dev/connectors/sharepoint"
+              href="https://docs.Docudive.dev/connectors/sharepoint"
               className="text-link"
             >
               here
@@ -224,8 +224,8 @@ const MainSection = () => {
               label: "Sites:",
               subtext:
                 "Specify 0 or more sites to index. For example, specifying the site " +
-                "'support' for the 'danswerai' sharepoint will cause us to only index documents " +
-                "within the 'https://danswerai.sharepoint.com/sites/support' site. " +
+                "'support' for the 'Docudiveai' sharepoint will cause us to only index documents " +
+                "within the 'https://Docudiveai.sharepoint.com/sites/support' site. " +
                 "If no sites are specified, all sites in your organization will be indexed.",
             })}
             validationSchema={Yup.object().shape({

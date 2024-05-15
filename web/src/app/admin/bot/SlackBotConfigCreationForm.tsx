@@ -166,7 +166,7 @@ export const SlackBotCreationForm = ({
                     <div>
                       The names of the Slack channels you want this
                       configuration to apply to. For example,
-                      &apos;#ask-danswer&apos;.
+                      &apos;#ask-docudive&apos;.
                       <br />
                       <br />
                       <i>NOTE</i>: you still need to add DocuDiveBot to the
@@ -260,7 +260,7 @@ export const SlackBotCreationForm = ({
                         <br />
                         Or provide a user group by either the name or the
                         handle. For example, &apos;DocuDive Team&apos; or
-                        &apos;danswer-team&apos;.
+                        &apos;docudive-team&apos;.
                         <br />
                         <br />
                         If no emails are provided, we will not tag anyone and

@@ -109,7 +109,7 @@ const Main = () => {
             To use the Slab connector, first follow the guide{" "}
             <a
               className="text-link"
-              href="https://docs.danswer.dev/connectors/slab"
+              href="https://docs.Docudive.dev/connectors/slab"
               target="_blank"
             >
               here
@@ -213,7 +213,7 @@ const Main = () => {
                 Specify the base URL for your Slab team below. This will look
                 something like:{" "}
                 <b>
-                  <i>https://danswer.slab.com/</i>
+                  <i>https://Docudive.slab.com/</i>
                 </b>
               </Text>
               <Card className="mt-4">
@@ -230,7 +230,7 @@ const Main = () => {
                   }
                   validationSchema={Yup.object().shape({
                     base_url: Yup.string().required(
-                      "Please enter the base URL for your team e.g. https://danswer.slab.com/"
+                      "Please enter the base URL for your team e.g. https://Docudive.slab.com/"
                     ),
                   })}
                   initialValues={{

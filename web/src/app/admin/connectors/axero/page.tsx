@@ -102,7 +102,7 @@ const MainSection = () => {
             To use the Axero connector, first follow the guide{" "}
             <a
               className="text-blue-500"
-              href="https://docs.danswer.dev/connectors/axero"
+              href="https://docs.docudive.dev/connectors/axero"
               target="_blank"
             >
               here
