@@ -7,6 +7,7 @@ import { useState } from "react";
 import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
 import { mutate } from "swr";
 import { Badge, Button } from "@tremor/react";
+import isEqual from "lodash/isEqual";
 
 function LLMProviderUpdateModal({
   llmProviderDescriptor,
@@ -165,7 +166,6 @@ export function ConfiguredLLMProviderDisplay({
           (llmProviderDescriptors) =>
             llmProviderDescriptors.name === provider.provider
         );
-        console.log(provider.model_names.length);
 
         return (
           <LLMProviderDisplay
@@ -174,7 +174,9 @@ export function ConfiguredLLMProviderDisplay({
             // then the provider is custom - don't use the default
             // provider descriptor
             llmProviderDescriptor={
-              provider.model_names.length > 0 ? null : defaultProviderDesciptor
+              isEqual(provider.model_names, defaultProviderDesciptor?.llm_names)
+                ? defaultProviderDesciptor
+                : null
             }
             existingLlmProvider={provider}
           />
