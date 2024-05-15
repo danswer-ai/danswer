@@ -38,6 +38,7 @@ export interface FullLLMProvider extends LLMProvider {
 
 export interface LLMProviderDescriptor {
   name: string;
+  provider: string;
   model_names: string[];
   default_model_name: string;
   fast_default_model_name: string | null;
