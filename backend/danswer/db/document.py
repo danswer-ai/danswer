@@ -303,7 +303,7 @@ def acquire_document_locks(db_session: Session, document_ids: list[str]) -> bool
     documents = db_session.scalars(stmt).all()
 
     # make sure we found every document
-    if len(documents) != len(document_ids):
+    if len(documents) != len(set(document_ids)):
         logger.warning("Didn't find row for all specified document IDs. Aborting.")
         return False
 
@@ -341,7 +341,8 @@ def prepare_to_modify_documents(
                     break
         except OperationalError as e:
             logger.info(f"Failed to acquire locks for documents, retrying. Error: {e}")
-            time.sleep(retry_delay)
+
+        time.sleep(retry_delay)
 
     if not lock_acquired:
         raise RuntimeError(
