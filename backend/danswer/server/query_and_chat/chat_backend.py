@@ -81,6 +81,7 @@ def get_user_chat_sessions(
                 persona_id=chat.persona_id,
                 time_created=chat.time_created.isoformat(),
                 shared_status=chat.shared_status,
+                folder_id=chat.folder_id,
             )
             for chat in chat_sessions
         ]

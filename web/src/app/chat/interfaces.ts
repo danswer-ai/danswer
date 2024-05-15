@@ -31,6 +31,7 @@ export interface ChatSession {
   persona_id: number;
   time_created: string;
   shared_status: ChatSessionSharedStatus;
+  folder_id: number | null;
 }
 
 export interface Message {
@@ -70,6 +71,15 @@ export interface BackendMessage {
 export interface DocumentsResponse {
   top_documents: DanswerDocument[];
   rephrased_query: string | null;
+}
+
+export interface ImageGenerationDisplay {
+  file_ids: string[];
+}
+
+export interface ToolRunKickoff {
+  tool_name: string;
+  tool_args: Record<string, any>;
 }
 
 export interface StreamingError {
