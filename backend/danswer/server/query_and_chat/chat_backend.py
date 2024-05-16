@@ -423,12 +423,42 @@ def upload_files_for_chat(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_user),
 ) -> dict[str, list[uuid.UUID]]:
+    image_content_types = {"image/jpeg", "image/png", "image/webp"}
+    text_content_types = {
+        "text/plain",
+        "text/csv",
+        "text/markdown",
+        "text/x-markdown",
+        "text/x-config",
+        "text/tab-separated-values",
+        "application/json",
+        "application/xml",
+        "application/x-yaml",
+    }
+    document_content_types = {
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "message/rfc822",
+        "application/epub+zip",
+    }
+
+    allowed_content_types = image_content_types.union(text_content_types).union(
+        document_content_types
+    )
+
     for file in files:
-        if file.content_type not in ("image/jpeg", "image/png", "image/webp"):
-            raise HTTPException(
-                status_code=400,
-                detail="Only .jpg, .jpeg, .png, and .webp files are currently supported",
-            )
+        if file.content_type not in allowed_content_types:
+            if file.content_type in image_content_types:
+                error_detail = "Unsupported image file type. Supported image types include .jpg, .jpeg, .png, .webp."
+            elif file.content_type in text_content_types:
+                error_detail = "Unsupported text file type. Supported text types include .txt, .csv, .md, .mdx, .conf, "
+                ".log, .tsv."
+            else:
+                error_detail = "Unsupported document file type. Supported document types include .pdf, .docx, .pptx, .xlsx, "
+                ".json, .xml, .yml, .yaml, .eml, .epub."
+            raise HTTPException(status_code=400, detail=error_detail)
 
         if file.size and file.size > 20 * 1024 * 1024:
             raise HTTPException(
