@@ -97,7 +97,7 @@ const MainSection = () => {
             Zulip connector, see the{" "}
             <a
               className="text-link"
-              href="https://docs.danswer.dev/connectors/zulip"
+              href="https://docs.Docudive.dev/connectors/zulip"
               target="_blank"
             >
               docs

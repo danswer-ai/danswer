@@ -30,12 +30,7 @@ async function Page() {
       />
     );
   }
-  const personas = ((await personasResponse.json()) as Persona[]).map((persona: Persona)=> {
-    if(persona.name === 'Danswer') {
-      persona.name = 'DocuDive';
-    }
-    return persona;
-  });
+  const personas = (await personasResponse.json()) as Persona[];
 
   return (
     <div className="container mx-auto">

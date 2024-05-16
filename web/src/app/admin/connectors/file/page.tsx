@@ -71,7 +71,7 @@ const Main = () => {
         DocuDive to link users to the original document when they click on the
         search result. More details on this can be found in the{" "}
         <a
-          href="https://docs.danswer.dev/connectors/file"
+          href="https://docs.Docudive.dev/connectors/file"
           className="text-link"
         >
           documentation.

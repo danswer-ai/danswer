@@ -123,12 +123,7 @@ export default async function Page({
 
   let personas: Persona[] = [];
   if (personasResponse?.ok) {
-    personas = ((await personasResponse.json()) as Persona[]).map((persona: Persona)=> {
-      if(persona.name === 'Danswer') {
-        persona.name = 'DocuDive';
-      }
-      return persona;
-    });
+    personas = (await personasResponse.json()) as Persona[];
   } else {
     console.log(`Failed to fetch personas - ${personasResponse?.status}`);
   }
