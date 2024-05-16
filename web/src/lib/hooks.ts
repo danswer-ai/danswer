@@ -11,6 +11,7 @@ import { errorHandlingFetcher, fetcher } from "./fetcher";
 import { useState } from "react";
 import { DateRangePickerValue } from "@tremor/react";
 import { SourceMetadata } from "./search/interfaces";
+import { EE_ENABLED } from "./constants";
 
 const CREDENTIAL_URL = "/api/manage/admin/credential";
 
@@ -114,8 +115,24 @@ EE Only APIs
 
 const USER_GROUP_URL = "/api/manage/admin/user-group";
 
-export const useUserGroups = () => {
+export const useUserGroups = (): {
+  data: UserGroup[] | undefined;
+  isLoading: boolean;
+  error: string;
+  refreshUserGroups: () => void;
+} => {
   const swrResponse = useSWR<UserGroup[]>(USER_GROUP_URL, errorHandlingFetcher);
+
+  if (!EE_ENABLED) {
+    return {
+      ...{
+        data: [],
+        isLoading: false,
+        error: "",
+      },
+      refreshUserGroups: () => {},
+    };
+  }
 
   return {
     ...swrResponse,
