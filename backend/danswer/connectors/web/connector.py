@@ -20,13 +20,14 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_ID
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_TOKEN_URL
+from danswer.configs.app_configs import WEB_CONNECTOR_VALIDATE_URLS
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
-from danswer.connectors.cross_connector_utils.html_utils import web_html_cleanup
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.file_processing.extract_file_text import pdf_to_text
+from danswer.file_processing.html_utils import web_html_cleanup
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -49,7 +50,11 @@ def protected_url_check(url: str) -> None:
     - Fetching this is assumed to be relatively fast compared to other bottlenecks like reading
       the page or embedding the contents
     - To be extra safe, all IPs associated with the URL must be global
+    - This is to prevent misuse and not explicit attacks
     """
+    if not WEB_CONNECTOR_VALIDATE_URLS:
+        return
+
     parse = urlparse(url)
     if parse.scheme != "http" and parse.scheme != "https":
         raise ValueError("URL must be of scheme https?://")
@@ -242,9 +247,7 @@ class WebConnector(LoadConnector):
                 if current_url.split(".")[-1] == "pdf":
                     # PDF files are not checked for links
                     response = requests.get(current_url)
-                    page_text = read_pdf_file(
-                        file=io.BytesIO(response.content), file_name=current_url
-                    )
+                    page_text = pdf_to_text(file=io.BytesIO(response.content))
 
                     doc_batch.append(
                         Document(
@@ -262,6 +265,7 @@ class WebConnector(LoadConnector):
                 final_page = page.url
                 if final_page != current_url:
                     logger.info(f"Redirected to {final_page}")
+                    protected_url_check(final_page)
                     current_url = final_page
                     if current_url in visited_links:
                         logger.info("Redirected page already indexed")

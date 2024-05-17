@@ -3,7 +3,7 @@ import { ReadonlyURLSearchParams } from "next/navigation";
 // search params
 export const SEARCH_PARAM_NAMES = {
   CHAT_ID: "chatId",
-  PERSONA_ID: "personaId",
+  PERSONA_ID: "assistantId",
   // overrides
   TEMPERATURE: "temperature",
   MODEL_VERSION: "model-version",
@@ -13,6 +13,8 @@ export const SEARCH_PARAM_NAMES = {
   SUBMIT_ON_LOAD: "submit-on-load",
   // chat title
   TITLE: "title",
+  // for seeding chats
+  SEEDED: "seeded",
 };
 
 export function shouldSubmitOnLoad(searchParams: ReadonlyURLSearchParams) {

@@ -24,6 +24,7 @@ MATCH_HIGHLIGHTS = "match_highlights"
 # not be used for QA. For example, Google Drive file types which can't be parsed
 # are still useful as a search result but not for QA.
 IGNORE_FOR_QA = "ignore_for_qa"
+# NOTE: deprecated, only used for porting key from old system
 GEN_AI_API_KEY_STORAGE_KEY = "genai_api_key"
 PUBLIC_DOC_PAT = "PUBLIC"
 PUBLIC_DOCUMENT_SET = "__PUBLIC"
@@ -52,16 +53,18 @@ SECTION_SEPARATOR = "\n\n"
 INDEX_SEPARATOR = "==="
 
 
-# Key-Value store constants
-GEN_AI_DETECTED_MODEL = "gen_ai_detected_model"
-
-
 # Messages
 DISABLED_GEN_AI_MSG = (
     "Your System Admin has disabled the Generative AI functionalities of Danswer.\n"
     "Please contact them if you wish to have this enabled.\n"
     "You can still use Danswer as a search engine."
 )
+
+
+# API Keys
+DANSWER_API_KEY_PREFIX = "API_KEY__"
+DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN = "danswerapikey.ai"
+UNNAMED_KEY_PLACEHOLDER = "Unnamed"
 
 
 class DocumentSource(str, Enum):
@@ -91,6 +94,7 @@ class DocumentSource(str, Enum):
     ZENDESK = "zendesk"
     LOOPIO = "loopio"
     SHAREPOINT = "sharepoint"
+    DISCOURSE = "discourse"
     AXERO = "axero"
 
 
@@ -120,3 +124,9 @@ class MessageType(str, Enum):
     SYSTEM = "system"  # SystemMessage
     USER = "user"  # HumanMessage
     ASSISTANT = "assistant"  # AIMessage
+
+
+class TokenRateLimitScope(str, Enum):
+    USER = "user"
+    USER_GROUP = "user_group"
+    GLOBAL = "global"

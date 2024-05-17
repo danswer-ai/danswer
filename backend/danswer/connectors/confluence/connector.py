@@ -11,6 +11,7 @@ import bs4
 from atlassian import Confluence  # type:ignore
 from requests import HTTPError
 
+from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -18,7 +19,6 @@ from danswer.configs.constants import DocumentSource
 from danswer.connectors.confluence.rate_limit_handler import (
     make_confluence_call_handle_rate_limit,
 )
-from danswer.connectors.cross_connector_utils.html_utils import format_document_soup
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -27,6 +27,7 @@ from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.file_processing.html_utils import format_document_soup
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -219,6 +220,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     self.space,
                     start=start_ind,
                     limit=batch_size,
+                    status="current"
+                    if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
+                    else None,
                     expand="body.storage.value,version",
                 )
             except Exception:
@@ -237,6 +241,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                                 self.space,
                                 start=start_ind + i,
                                 limit=1,
+                                status="current"
+                                if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
+                                else None,
                                 expand="body.storage.value,version",
                             )
                         )

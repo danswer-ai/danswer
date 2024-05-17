@@ -10,11 +10,13 @@ import {
   BackendMessage,
   ChatSession,
   DocumentsResponse,
+  ImageGenerationDisplay,
   Message,
   RetrievalType,
   StreamingError,
+  ToolRunKickoff,
 } from "./interfaces";
-import { Persona } from "../admin/personas/interfaces";
+import { Persona } from "../admin/assistants/interfaces";
 import { ReadonlyURLSearchParams } from "next/navigation";
 import { SEARCH_PARAM_NAMES } from "./searchParams";
 
@@ -47,6 +49,7 @@ export async function createChatSession(
 
 export async function* sendMessage({
   message,
+  fileIds,
   parentMessageId,
   chatSessionId,
   promptId,
@@ -60,6 +63,7 @@ export async function* sendMessage({
   useExistingUserMessage,
 }: {
   message: string;
+  fileIds: string[];
   parentMessageId: number | null;
   chatSessionId: number;
   promptId: number | null | undefined;
@@ -89,6 +93,7 @@ export async function* sendMessage({
       message: message,
       prompt_id: promptId,
       search_doc_ids: documentsAreSelected ? selectedDocumentIds : null,
+      file_ids: fileIds,
       retrieval_options: !documentsAreSelected
         ? {
             run_search:
@@ -125,7 +130,12 @@ export async function* sendMessage({
   }
 
   yield* handleStream<
-    AnswerPiecePacket | DocumentsResponse | BackendMessage | StreamingError
+    | AnswerPiecePacket
+    | DocumentsResponse
+    | BackendMessage
+    | ImageGenerationDisplay
+    | ToolRunKickoff
+    | StreamingError
   >(sendMessageResponse);
 }
 
@@ -147,7 +157,8 @@ export async function nameChatSession(chatSessionId: number, message: string) {
 export async function handleChatFeedback(
   messageId: number,
   feedback: FeedbackType,
-  feedbackDetails: string
+  feedbackDetails: string,
+  predefinedFeedback: string | undefined
 ) {
   const response = await fetch("/api/chat/create-chat-message-feedback", {
     method: "POST",
@@ -158,11 +169,11 @@ export async function handleChatFeedback(
       chat_message_id: messageId,
       is_positive: feedback === "like",
       feedback_text: feedbackDetails,
+      predefined_feedback: predefinedFeedback,
     }),
   });
   return response;
 }
-
 export async function renameChatSession(
   chatSessionId: number,
   newName: string
@@ -364,6 +375,7 @@ export function processRawChatHistory(rawMessages: BackendMessage[]) {
         messageId: messageInfo.message_id,
         message: messageInfo.message,
         type: messageInfo.message_type as "user" | "assistant",
+        files: messageInfo.files,
         // only include these fields if this is an assistant message so that
         // this is identical to what is computed at streaming time
         ...(messageInfo.message_type === "assistant"
@@ -402,7 +414,7 @@ export function buildChatUrl(
   if (chatSessionId) {
     finalSearchParams.push(`${SEARCH_PARAM_NAMES.CHAT_ID}=${chatSessionId}`);
   }
-  if (personaId) {
+  if (personaId !== null) {
     finalSearchParams.push(`${SEARCH_PARAM_NAMES.PERSONA_ID}=${personaId}`);
   }
 
@@ -418,4 +430,24 @@ export function buildChatUrl(
   }
 
   return "/chat";
+}
+
+export async function uploadFilesForChat(
+  files: File[]
+): Promise<[string[], string | null]> {
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append("files", file);
+  });
+
+  const response = await fetch("/api/chat/file", {
+    method: "POST",
+    body: formData,
+  });
+  if (!response.ok) {
+    return [[], `Failed to upload files - ${(await response.json()).detail}`];
+  }
+  const responseJson = await response.json();
+
+  return [responseJson.file_ids as string[], null];
 }

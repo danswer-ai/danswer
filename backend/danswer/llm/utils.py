@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from collections.abc import Iterator
 from copy import copy
-from functools import lru_cache
 from typing import Any
 from typing import cast
 from typing import TYPE_CHECKING
@@ -15,24 +14,17 @@ from langchain.schema import PromptValue
 from langchain.schema.language_model import LanguageModelInput
 from langchain.schema.messages import AIMessage
 from langchain.schema.messages import BaseMessage
-from langchain.schema.messages import BaseMessageChunk
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 from tiktoken.core import Encoding
 
-from danswer.configs.constants import GEN_AI_API_KEY_STORAGE_KEY
-from danswer.configs.constants import GEN_AI_DETECTED_MODEL
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
-from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
-from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MAX_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
-from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
 from danswer.db.models import ChatMessage
-from danswer.dynamic_configs.factory import get_dynamic_config_store
-from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.interfaces import LLM
 from danswer.search.models import InferenceChunk
 from danswer.utils.logger import setup_logger
@@ -45,34 +37,6 @@ logger = setup_logger()
 
 _LLM_TOKENIZER: Any = None
 _LLM_TOKENIZER_ENCODE: Callable[[str], Any] | None = None
-
-
-@lru_cache()
-def get_default_llm_version() -> tuple[str, str]:
-    default_openai_model = "gpt-3.5-turbo-16k-0613"
-    if GEN_AI_MODEL_VERSION:
-        llm_version = GEN_AI_MODEL_VERSION
-    else:
-        if GEN_AI_MODEL_PROVIDER != "openai":
-            logger.warning("No LLM Model Version set")
-            # Either this value is unused or it will throw an error
-            llm_version = default_openai_model
-        else:
-            kv_store = get_dynamic_config_store()
-            try:
-                llm_version = cast(str, kv_store.load(GEN_AI_DETECTED_MODEL))
-            except ConfigNotFoundError:
-                llm_version = default_openai_model
-
-    if FAST_GEN_AI_MODEL_VERSION:
-        fast_llm_version = FAST_GEN_AI_MODEL_VERSION
-    else:
-        if GEN_AI_MODEL_PROVIDER == "openai":
-            fast_llm_version = default_openai_model
-        else:
-            fast_llm_version = llm_version
-
-    return llm_version, fast_llm_version
 
 
 def get_default_llm_tokenizer() -> Encoding:
@@ -122,12 +86,17 @@ def tokenizer_trim_chunks(
 def translate_danswer_msg_to_langchain(
     msg: Union[ChatMessage, "PreviousMessage"],
 ) -> BaseMessage:
+    # If the message is a `ChatMessage`, it doesn't have the downloaded files
+    # attached. Just ignore them for now
+    files = [] if isinstance(msg, ChatMessage) else msg.files
+    content = build_content_with_imgs(msg.message, files)
+
     if msg.message_type == MessageType.SYSTEM:
         raise ValueError("System messages are not currently part of history")
     if msg.message_type == MessageType.ASSISTANT:
-        return AIMessage(content=msg.message)
+        return AIMessage(content=content)
     if msg.message_type == MessageType.USER:
-        return HumanMessage(content=msg.message)
+        return HumanMessage(content=content)
 
     raise ValueError(f"New message type {msg.message_type} not handled")
 
@@ -142,6 +111,47 @@ def translate_history_to_basemessages(
     ]
     history_token_counts = [msg.token_count for msg in history if msg.token_count != 0]
     return history_basemessages, history_token_counts
+
+
+def build_content_with_imgs(
+    message: str,
+    files: list[InMemoryChatFile] | None = None,
+    img_urls: list[str] | None = None,
+) -> str | list[str | dict[str, Any]]:  # matching Langchain's BaseMessage content type
+    if not files and not img_urls:
+        return message
+
+    files = files or []
+    img_urls = img_urls or []
+
+    return cast(
+        list[str | dict[str, Any]],
+        [
+            {
+                "type": "text",
+                "text": message,
+            },
+        ]
+        + [
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{file.to_base64()}",
+                },
+            }
+            for file in files
+            if file.file_type == "image"
+        ]
+        + [
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": url,
+                },
+            }
+            for url in img_urls
+        ],
+    )
 
 
 def dict_based_prompt_to_langchain_prompt(
@@ -191,18 +201,48 @@ def convert_lm_input_to_basic_string(lm_input: LanguageModelInput) -> str:
     return prompt_value.to_string()
 
 
+def message_to_string(message: BaseMessage) -> str:
+    if not isinstance(message.content, str):
+        raise RuntimeError("LLM message not in expected format.")
+
+    return message.content
+
+
 def message_generator_to_string_generator(
-    messages: Iterator[BaseMessageChunk],
+    messages: Iterator[BaseMessage],
 ) -> Iterator[str]:
     for message in messages:
-        if not isinstance(message.content, str):
-            raise RuntimeError("LLM message not in expected format.")
-
-        yield message.content
+        yield message_to_string(message)
 
 
 def should_be_verbose() -> bool:
     return LOG_LEVEL == "debug"
+
+
+# estimate of the number of tokens in an image url
+# is correct when downsampling is used. Is very wrong when OpenAI does not downsample
+# TODO: improve this
+_IMG_TOKENS = 85
+
+
+def check_message_tokens(
+    message: BaseMessage, encode_fn: Callable[[str], list] | None = None
+) -> int:
+    if isinstance(message.content, str):
+        return check_number_of_tokens(message.content, encode_fn)
+
+    total_tokens = 0
+    for part in message.content:
+        if isinstance(part, str):
+            total_tokens += check_number_of_tokens(part, encode_fn)
+            continue
+
+        if part["type"] == "text":
+            total_tokens += check_number_of_tokens(part["text"], encode_fn)
+        elif part["type"] == "image_url":
+            total_tokens += _IMG_TOKENS
+
+    return total_tokens
 
 
 def check_number_of_tokens(
@@ -217,17 +257,6 @@ def check_number_of_tokens(
         encode_fn = tiktoken.get_encoding("cl100k_base").encode
 
     return len(encode_fn(text))
-
-
-def get_gen_ai_api_key() -> str | None:
-    # first check if the key has been provided by the UI
-    try:
-        return cast(str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY))
-    except ConfigNotFoundError:
-        pass
-
-    # if not provided by the UI, fallback to the env variable
-    return GEN_AI_API_KEY
 
 
 def test_llm(llm: LLM) -> str | None:
@@ -246,7 +275,7 @@ def test_llm(llm: LLM) -> str | None:
 
 def get_llm_max_tokens(
     model_map: dict,
-    model_name: str | None = GEN_AI_MODEL_VERSION,
+    model_name: str,
     model_provider: str = GEN_AI_MODEL_PROVIDER,
 ) -> int:
     """Best effort attempt to get the max tokens for the LLM"""
@@ -254,13 +283,10 @@ def get_llm_max_tokens(
         # This is an override, so always return this
         return GEN_AI_MAX_TOKENS
 
-    model_name = model_name or get_default_llm_version()[0]
-
     try:
-        if model_provider == "openai":
+        model_obj = model_map.get(f"{model_provider}/{model_name}")
+        if not model_obj:
             model_obj = model_map[model_name]
-        else:
-            model_obj = model_map[f"{model_provider}/{model_name}"]
 
         if "max_input_tokens" in model_obj:
             return model_obj["max_input_tokens"]
@@ -277,8 +303,8 @@ def get_llm_max_tokens(
 
 
 def get_max_input_tokens(
-    model_name: str | None = GEN_AI_MODEL_VERSION,
-    model_provider: str = GEN_AI_MODEL_PROVIDER,
+    model_name: str,
+    model_provider: str,
     output_tokens: int = GEN_AI_MAX_OUTPUT_TOKENS,
 ) -> int:
     # NOTE: we previously used `litellm.get_max_tokens()`, but despite the name, this actually
@@ -288,8 +314,6 @@ def get_max_input_tokens(
     # https://litellm.vercel.app/docs/completion/token_usage#7-model_cost
     # model_map is  litellm.model_cost
     litellm_model_map = litellm.model_cost
-
-    model_name = model_name or get_default_llm_version()[0]
 
     input_toks = (
         get_llm_max_tokens(

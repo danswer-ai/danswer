@@ -2,8 +2,10 @@ import {
   FiCheck,
   FiCopy,
   FiCpu,
+  FiImage,
   FiThumbsDown,
   FiThumbsUp,
+  FiTool,
   FiUser,
 } from "react-icons/fi";
 import { FeedbackType } from "../types";
@@ -16,6 +18,13 @@ import { ThreeDots } from "react-loader-spinner";
 import { SkippedSearch } from "./SkippedSearch";
 import remarkGfm from "remark-gfm";
 import { CopyButton } from "@/components/CopyButton";
+import { FileDescriptor } from "../interfaces";
+import { InMessageImage } from "../images/InMessageImage";
+import {
+  IMAGE_GENERATION_TOOL_NAME,
+  SEARCH_TOOL_NAME,
+} from "../tools/constants";
+import { ToolRunningAnimation } from "../tools/ToolRunningAnimation";
 
 export const Hoverable: React.FC<{
   children: JSX.Element;
@@ -34,9 +43,11 @@ export const Hoverable: React.FC<{
 export const AIMessage = ({
   messageId,
   content,
+  files,
   query,
   personaName,
   citedDocuments,
+  currentTool,
   isComplete,
   hasDocs,
   handleFeedback,
@@ -48,9 +59,11 @@ export const AIMessage = ({
 }: {
   messageId: number | null;
   content: string | JSX.Element;
+  files?: FileDescriptor[];
   query?: string;
   personaName?: string;
   citedDocuments?: [string, DanswerDocument][] | null;
+  currentTool?: string | null;
   isComplete?: boolean;
   hasDocs?: boolean;
   handleFeedback?: (feedbackType: FeedbackType) => void;
@@ -60,7 +73,29 @@ export const AIMessage = ({
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
 }) => {
-  const [copyClicked, setCopyClicked] = useState(false);
+  const loader =
+    currentTool === IMAGE_GENERATION_TOOL_NAME ? (
+      <div className="text-sm my-auto">
+        <ToolRunningAnimation
+          toolName="Generating images"
+          toolLogo={<FiImage size={16} className="my-auto mr-1" />}
+        />
+      </div>
+    ) : (
+      <div className="text-sm my-auto">
+        <ThreeDots
+          height="30"
+          width="50"
+          color="#3b82f6"
+          ariaLabel="grid-loading"
+          radius="12.5"
+          wrapperStyle={{}}
+          wrapperClass=""
+          visible={true}
+        />
+      </div>
+    );
+
   return (
     <div className={"py-5 px-5 flex -mr-6 w-full"}>
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
@@ -121,6 +156,17 @@ export const AIMessage = ({
 
             {content ? (
               <>
+                {files && files.length > 0 && (
+                  <div className="mt-2 mb-4">
+                    <div className="flex flex-wrap gap-2">
+                      {files.map((file) => {
+                        return (
+                          <InMessageImage key={file.id} fileId={file.id} />
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                 {typeof content === "string" ? (
                   <ReactMarkdown
                     className="prose max-w-full"
@@ -143,18 +189,7 @@ export const AIMessage = ({
                 )}
               </>
             ) : isComplete ? null : (
-              <div className="text-sm my-auto">
-                <ThreeDots
-                  height="30"
-                  width="50"
-                  color="#3b82f6"
-                  ariaLabel="grid-loading"
-                  radius="12.5"
-                  wrapperStyle={{}}
-                  wrapperClass=""
-                  visible={true}
-                />
-              </div>
+              loader
             )}
             {citedDocuments && citedDocuments.length > 0 && (
               <div className="mt-2">
@@ -219,8 +254,10 @@ export const AIMessage = ({
 
 export const HumanMessage = ({
   content,
+  files,
 }: {
   content: string | JSX.Element;
+  files?: FileDescriptor[];
 }) => {
   return (
     <div className="py-5 px-5 flex -mr-6 w-full">
@@ -237,6 +274,16 @@ export const HumanMessage = ({
           </div>
           <div className="mx-auto mt-1 ml-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default flex flex-wrap">
             <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words">
+              {files && files.length > 0 && (
+                <div className="mt-2 mb-4">
+                  <div className="flex flex-wrap gap-2">
+                    {files.map((file) => {
+                      return <InMessageImage key={file.id} fileId={file.id} />;
+                    })}
+                  </div>
+                </div>
+              )}
+
               {typeof content === "string" ? (
                 <ReactMarkdown
                   className="prose max-w-full"

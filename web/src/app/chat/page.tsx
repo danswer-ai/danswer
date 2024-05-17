@@ -14,21 +14,24 @@ import {
 } from "@/lib/types";
 import { ChatSession } from "./interfaces";
 import { unstable_noStore as noStore } from "next/cache";
-import { Persona } from "../admin/personas/interfaces";
+import { Persona } from "../admin/assistants/interfaces";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import {
   WelcomeModal,
   hasCompletedWelcomeFlowSS,
 } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
-import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
+import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import { cookies } from "next/headers";
 import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/contants";
-import { personaComparator } from "../admin/personas/lib";
-import { ChatLayout } from "./ChatPage";
+import { personaComparator } from "../admin/assistants/lib";
+import { ChatPage } from "./ChatPage";
 import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingModels";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
-import { getSettingsSS } from "@/lib/settings";
 import { Settings } from "../admin/settings/interfaces";
+import { SIDEBAR_TAB_COOKIE, Tabs } from "./sessionSidebar/constants";
+import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
+import { LLMProviderDescriptor } from "../admin/models/llm/interfaces";
+import { Folder } from "./folders/interfaces";
 
 export default async function Page({
   searchParams,
@@ -45,7 +48,8 @@ export default async function Page({
     fetchSS("/persona?include_default=true"),
     fetchSS("/chat/get-user-chat-sessions"),
     fetchSS("/query/valid-tags"),
-    getSettingsSS(),
+    fetchLLMProvidersSS(),
+    fetchSS("/folder"),
   ];
 
   // catch cases where the backend is completely unreachable here
@@ -57,6 +61,7 @@ export default async function Page({
     | AuthTypeMetadata
     | FullEmbeddingModelResponse
     | Settings
+    | LLMProviderDescriptor[]
     | null
   )[] = [null, null, null, null, null, null, null, null, null, null];
   try {
@@ -71,7 +76,8 @@ export default async function Page({
   const personasResponse = results[4] as Response | null;
   const chatSessionsResponse = results[5] as Response | null;
   const tagsResponse = results[6] as Response | null;
-  const settings = results[7] as Settings | null;
+  const llmProviders = (results[7] || []) as LLMProviderDescriptor[];
+  const foldersResponse = results[8] as Response | null; // Handle folders result
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -80,10 +86,6 @@ export default async function Page({
 
   if (user && !user.is_verified && authTypeMetadata?.requiresVerification) {
     return redirect("/auth/waiting-on-verification");
-  }
-
-  if (settings && !settings.chat_page_enabled) {
-    return redirect("/search");
   }
 
   let ccPairs: CCPairBasicInfo[] = [];
@@ -137,7 +139,7 @@ export default async function Page({
     console.log(`Failed to fetch tags - ${tagsResponse?.status}`);
   }
 
-  const defaultPersonaIdRaw = searchParams["personaId"];
+  const defaultPersonaIdRaw = searchParams["assistantId"];
   const defaultPersonaId = defaultPersonaIdRaw
     ? parseInt(defaultPersonaIdRaw)
     : undefined;
@@ -148,6 +150,10 @@ export default async function Page({
   const finalDocumentSidebarInitialWidth = documentSidebarCookieInitialWidth
     ? parseInt(documentSidebarCookieInitialWidth.value)
     : undefined;
+
+  const defaultSidebarTab = cookies().get(SIDEBAR_TAB_COOKIE)?.value as
+    | Tabs
+    | undefined;
 
   const hasAnyConnectors = ccPairs.length > 0;
   const shouldShowWelcomeModal =
@@ -167,28 +173,43 @@ export default async function Page({
     personas = personas.filter((persona) => persona.num_chunks === 0);
   }
 
+  let folders: Folder[] = [];
+  if (foldersResponse?.ok) {
+    folders = (await foldersResponse.json()).folders as Folder[];
+  } else {
+    console.log(`Failed to fetch folders - ${foldersResponse?.status}`);
+  }
+
+  const openedFoldersCookie = cookies().get("openedFolders");
+  const openedFolders = openedFoldersCookie
+    ? JSON.parse(openedFoldersCookie.value)
+    : {};
+
   return (
     <>
       <InstantSSRAutoRefresh />
 
-      {shouldShowWelcomeModal && <WelcomeModal />}
+      {shouldShowWelcomeModal && <WelcomeModal user={user} />}
       {!shouldShowWelcomeModal && !shouldDisplaySourcesIncompleteModal && (
-        <ApiKeyModal />
+        <ApiKeyModal user={user} />
       )}
       {shouldDisplaySourcesIncompleteModal && (
         <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}
 
-      <ChatLayout
+      <ChatPage
         user={user}
-        settings={settings}
         chatSessions={chatSessions}
         availableSources={availableSources}
         availableDocumentSets={documentSets}
         availablePersonas={personas}
         availableTags={tags}
+        llmProviders={llmProviders}
         defaultSelectedPersonaId={defaultPersonaId}
         documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
+        defaultSidebarTab={defaultSidebarTab}
+        folders={folders} // Pass folders to ChatPage
+        openedFolders={openedFolders} // Pass opened folders state to ChatPage
       />
     </>
   );

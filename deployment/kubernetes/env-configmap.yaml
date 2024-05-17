@@ -5,6 +5,7 @@ metadata:
 data:
   # Auth Setting, also check the secrets file
   AUTH_TYPE: "disabled"  # Change this for production uses unless Danswer is only accessible behind VPN
+  ENCRYPTION_KEY_SECRET: ""  # This should not be specified directly in the yaml, this is just for reference
   SESSION_EXPIRE_TIME_SECONDS: "86400"  # 1 Day Default
   VALID_EMAIL_DOMAINS: ""  # Can be something like danswer.ai, as an extra double-check
   SMTP_SERVER: "" # For sending verification emails, if unspecified then defaults to 'smtp.gmail.com'
@@ -49,12 +50,14 @@ data:
   MIN_THREADS_ML_MODELS: ""
   # Indexing Configs
   NUM_INDEXING_WORKERS: ""
+  ENABLED_CONNECTOR_TYPES: ""
   DISABLE_INDEX_UPDATE_ON_SWAP: ""
   DASK_JOB_CLIENT_ENABLED: ""
   CONTINUE_ON_CONNECTOR_FAILURE: ""
   EXPERIMENTAL_CHECKPOINTING_ENABLED: ""
   CONFLUENCE_CONNECTOR_LABELS_TO_SKIP: ""
   JIRA_API_VERSION: ""
+  WEB_CONNECTOR_VALIDATE_URLS: ""
   GONG_CONNECTOR_START_TIME: ""
   NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP: ""
   # DanswerBot SlackBot Configs

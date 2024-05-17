@@ -1,8 +1,9 @@
+import json
 import os
+import urllib.parse
 
 from danswer.configs.constants import AuthType
 from danswer.configs.constants import DocumentIndexType
-
 
 #####
 # App Configs
@@ -41,12 +42,16 @@ WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
 AUTH_TYPE = AuthType((os.environ.get("AUTH_TYPE") or AuthType.DISABLED.value).lower())
 DISABLE_AUTH = AUTH_TYPE == AuthType.DISABLED
 
+# Encryption key secret is used to encrypt connector credentials, api keys, and other sensitive
+# information. This provides an extra layer of security on top of Postgres access controls
+# and is available in Danswer EE
+ENCRYPTION_KEY_SECRET = os.environ.get("ENCRYPTION_KEY_SECRET")
+
 # Turn off mask if admin users should see full credentials for data connectors.
 MASK_CREDENTIAL_PREFIX = (
     os.environ.get("MASK_CREDENTIAL_PREFIX", "True").lower() != "false"
 )
 
-SECRET = os.environ.get("SECRET", "")
 SESSION_EXPIRE_TIME_SECONDS = int(
     os.environ.get("SESSION_EXPIRE_TIME_SECONDS") or 86400 * 7
 )  # 7 days
@@ -75,6 +80,7 @@ OAUTH_CLIENT_SECRET = (
     or ""
 )
 
+USER_AUTH_SECRET = os.environ.get("USER_AUTH_SECRET", "")
 # for basic auth
 REQUIRE_EMAIL_VERIFICATION = (
     os.environ.get("REQUIRE_EMAIL_VERIFICATION", "").lower() == "true"
@@ -95,6 +101,9 @@ DOCUMENT_INDEX_TYPE = os.environ.get(
     "DOCUMENT_INDEX_TYPE", DocumentIndexType.COMBINED.value
 )
 VESPA_HOST = os.environ.get("VESPA_HOST") or "localhost"
+# NOTE: this is used if and only if the vespa config server is accessible via a
+# different host than the main vespa application
+VESPA_CONFIG_SERVER_HOST = os.environ.get("VESPA_CONFIG_SERVER_HOST") or VESPA_HOST
 VESPA_PORT = os.environ.get("VESPA_PORT") or "8081"
 VESPA_TENANT_PORT = os.environ.get("VESPA_TENANT_PORT") or "19071"
 # The default below is for dockerized deployment
@@ -110,7 +119,10 @@ except ValueError:
 # Below are intended to match the env variables names used by the official postgres docker image
 # https://hub.docker.com/_/postgres
 POSTGRES_USER = os.environ.get("POSTGRES_USER") or "postgres"
-POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD") or "password"
+# URL-encode the password for asyncpg to avoid issues with special characters on some machines.
+POSTGRES_PASSWORD = urllib.parse.quote_plus(
+    os.environ.get("POSTGRES_PASSWORD") or "password"
+)
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
 POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
@@ -121,6 +133,12 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 #####
 POLL_CONNECTOR_OFFSET = 30  # Minutes overlap between poll windows
 
+# View the list here:
+# https://github.com/danswer-ai/danswer/blob/main/backend/danswer/connectors/factory.py
+# If this is empty, all connectors are enabled, this is an option for security heavy orgs where
+# only very select connectors are enabled and admins cannot add other connector types
+ENABLED_CONNECTOR_TYPES = os.environ.get("ENABLED_CONNECTOR_TYPES") or ""
+
 # Some calls to get information on expert users are quite costly especially with rate limiting
 # Since experts are not used in the actual user experience, currently it is turned off
 # for some connectors
@@ -129,10 +147,6 @@ ENABLE_EXPENSIVE_EXPERT_CALLS = False
 GOOGLE_DRIVE_INCLUDE_SHARED = False
 GOOGLE_DRIVE_FOLLOW_SHORTCUTS = False
 GOOGLE_DRIVE_ONLY_ORG_PUBLIC = False
-
-FILE_CONNECTOR_TMP_STORAGE_PATH = os.environ.get(
-    "FILE_CONNECTOR_TMP_STORAGE_PATH", "/home/file_connector_storage"
-)
 
 # TODO these should be available for frontend configuration, via advanced options expandable
 WEB_CONNECTOR_IGNORED_CLASSES = os.environ.get(
@@ -144,6 +158,7 @@ WEB_CONNECTOR_IGNORED_ELEMENTS = os.environ.get(
 WEB_CONNECTOR_OAUTH_CLIENT_ID = os.environ.get("WEB_CONNECTOR_OAUTH_CLIENT_ID")
 WEB_CONNECTOR_OAUTH_CLIENT_SECRET = os.environ.get("WEB_CONNECTOR_OAUTH_CLIENT_SECRET")
 WEB_CONNECTOR_OAUTH_TOKEN_URL = os.environ.get("WEB_CONNECTOR_OAUTH_TOKEN_URL")
+WEB_CONNECTOR_VALIDATE_URLS = os.environ.get("WEB_CONNECTOR_VALIDATE_URLS")
 
 NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP = (
     os.environ.get("NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP", "").lower()
@@ -157,6 +172,12 @@ CONFLUENCE_CONNECTOR_LABELS_TO_SKIP = [
     )
     if ignored_tag
 ]
+
+# Avoid to get archived pages
+CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES = (
+    os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES", "").lower() == "true"
+)
+
 JIRA_CONNECTOR_LABELS_TO_SKIP = [
     ignored_tag
     for ignored_tag in os.environ.get("JIRA_CONNECTOR_LABELS_TO_SKIP", "").split(",")
@@ -212,10 +233,9 @@ DISABLE_DOCUMENT_CLEANUP = (
 #####
 # Miscellaneous
 #####
-DYNAMIC_CONFIG_STORE = (
-    os.environ.get("DYNAMIC_CONFIG_STORE") or "PostgresBackedDynamicConfigStore"
-)
-DYNAMIC_CONFIG_DIR_PATH = os.environ.get("DYNAMIC_CONFIG_DIR_PATH", "/home/storage")
+# File based Key Value store no longer used
+DYNAMIC_CONFIG_STORE = "PostgresBackedDynamicConfigStore"
+
 JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
 # used to allow the background indexing jobs to use a different embedding
 # model server than the API server
@@ -236,4 +256,10 @@ DISABLE_TELEMETRY = os.environ.get("DISABLE_TELEMETRY", "").lower() == "true"
 
 TOKEN_BUDGET_GLOBALLY_ENABLED = (
     os.environ.get("TOKEN_BUDGET_GLOBALLY_ENABLED", "").lower() == "true"
+)
+
+# Defined custom query/answer conditions to validate the query and the LLM answer.
+# Format: list of strings
+CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
+    os.environ.get("CUSTOM_ANSWER_VALIDITY_CONDITIONS", "[]")
 )
