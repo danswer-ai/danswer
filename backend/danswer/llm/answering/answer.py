@@ -123,9 +123,9 @@ class Answer:
         self._final_prompt: list[BaseMessage] | None = None
 
         self._streamed_output: list[str] | None = None
-        self._processed_stream: list[
-            AnswerQuestionPossibleReturn | ToolResponse | ToolRunKickoff
-        ] | None = None
+        self._processed_stream: (
+            list[AnswerQuestionPossibleReturn | ToolResponse | ToolRunKickoff] | None
+        ) = None
 
     def _update_prompt_builder_for_search_tool(
         self, prompt_builder: AnswerPromptBuilder, final_context_documents: list[LlmDoc]
@@ -378,12 +378,12 @@ class Answer:
             message = None
 
             # special things we need to keep track of for the SearchTool
-            search_results: list[
-                LlmDoc
-            ] | None = None  # raw results that will be displayed to the user
-            final_context_docs: list[
-                LlmDoc
-            ] | None = None  # processed docs to feed into the LLM
+            search_results: list[LlmDoc] | None = (
+                None  # raw results that will be displayed to the user
+            )
+            final_context_docs: list[LlmDoc] | None = (
+                None  # processed docs to feed into the LLM
+            )
 
             for message in stream:
                 if isinstance(message, ToolRunKickoff):

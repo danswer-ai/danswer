@@ -9,7 +9,11 @@ export function getFinalLLM(
     (llmProvider) => llmProvider.is_default_provider
   );
 
+<<<<<<< HEAD
   let provider = defaultProvider?.provider || "";
+=======
+  let provider = defaultProvider?.name || "";
+>>>>>>> 2f6a106a (Chore/merger upstream 2024050201 (#27))
   let model = defaultProvider?.default_model_name || "";
 
   if (persona) {

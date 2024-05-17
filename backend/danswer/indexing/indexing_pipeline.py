@@ -168,51 +168,46 @@ def index_doc_batch(
         document_id_to_access_info = get_access_for_documents(
             document_ids=updatable_ids, db_session=db_session
         )
-        document_id_to_document_set = {
-            document_id: document_sets
-            for document_id, document_sets in fetch_document_sets_for_documents(
-                document_ids=updatable_ids, db_session=db_session
-            )
-        }
-        access_aware_chunks = [
-            DocMetadataAwareIndexChunk.from_index_chunk(
-                index_chunk=chunk,
-                access=document_id_to_access_info[chunk.source_document.id],
-                document_sets=set(
-                    document_id_to_document_set.get(chunk.source_document.id, [])
-                ),
-                boost=(
-                    id_to_db_doc_map[chunk.source_document.id].boost
-                    if chunk.source_document.id in id_to_db_doc_map
-                    else DEFAULT_BOOST
-                ),
-            )
-            for chunk in chunks_with_embeddings
-        ]
-
-        logger.debug(
-            f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in chunks]}"
+    }
+    access_aware_chunks = [
+        DocMetadataAwareIndexChunk.from_index_chunk(
+            index_chunk=chunk,
+            access=document_id_to_access_info[chunk.source_document.id],
+            document_sets=set(
+                document_id_to_document_set.get(chunk.source_document.id, [])
+            ),
+            boost=(
+                id_to_db_doc_map[chunk.source_document.id].boost
+                if chunk.source_document.id in id_to_db_doc_map
+                else DEFAULT_BOOST
+            ),
         )
-        # A document will not be spread across different batches, so all the
-        # documents with chunks in this set, are fully represented by the chunks
-        # in this set
-        insertion_records = document_index.index(chunks=access_aware_chunks)
+        for chunk in chunks_with_embeddings
+    ]
 
-        successful_doc_ids = [record.document_id for record in insertion_records]
-        successful_docs = [
-            doc for doc in updatable_docs if doc.id in successful_doc_ids
-        ]
+    logger.debug(
+        f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in chunks]}"
+    )
+    # A document will not be spread across different batches, so all the
+    # documents with chunks in this set, are fully represented by the chunks
+    # in this set
+    insertion_records = document_index.index(chunks=access_aware_chunks)
 
-        # Update the time of latest version of the doc successfully indexed
-        ids_to_new_updated_at = {}
-        for doc in successful_docs:
-            if doc.doc_updated_at is None:
-                continue
-            ids_to_new_updated_at[doc.id] = doc.doc_updated_at
+    successful_doc_ids = [record.document_id for record in insertion_records]
+    successful_docs = [doc for doc in updatable_docs if doc.id in successful_doc_ids]
 
-        update_docs_updated_at(
-            ids_to_new_updated_at=ids_to_new_updated_at, db_session=db_session
-        )
+    # Update the time of latest version of the doc successfully indexed
+    ids_to_new_updated_at = {}
+    for doc in successful_docs:
+        if doc.doc_updated_at is None:
+            continue
+        ids_to_new_updated_at[doc.id] = doc.doc_updated_at
+
+    update_docs_updated_at(
+        ids_to_new_updated_at=ids_to_new_updated_at, db_session=db_session
+    )
+
+    db_session.commit()
 
     return len([r for r in insertion_records if r.already_existed is False]), len(
         chunks
