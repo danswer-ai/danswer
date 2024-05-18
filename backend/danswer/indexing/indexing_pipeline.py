@@ -35,8 +35,7 @@ logger = setup_logger()
 class IndexingPipelineProtocol(Protocol):
     def __call__(
         self, documents: list[Document], index_attempt_metadata: IndexAttemptMetadata
-    ) -> tuple[int, int]:
-        ...
+    ) -> tuple[int, int]: ...
 
 
 def upsert_documents_in_db(
@@ -168,22 +167,27 @@ def index_doc_batch(
         document_id_to_access_info = get_access_for_documents(
             document_ids=updatable_ids, db_session=db_session
         )
-    }
-    access_aware_chunks = [
-        DocMetadataAwareIndexChunk.from_index_chunk(
-            index_chunk=chunk,
-            access=document_id_to_access_info[chunk.source_document.id],
-            document_sets=set(
-                document_id_to_document_set.get(chunk.source_document.id, [])
-            ),
-            boost=(
-                id_to_db_doc_map[chunk.source_document.id].boost
-                if chunk.source_document.id in id_to_db_doc_map
-                else DEFAULT_BOOST
-            ),
-        )
-        for chunk in chunks_with_embeddings
-    ]
+        document_id_to_document_set = {
+            document_id: document_sets
+            for document_id, document_sets in fetch_document_sets_for_documents(
+                document_ids=updatable_ids, db_session=db_session
+            )
+        }
+        access_aware_chunks = [
+            DocMetadataAwareIndexChunk.from_index_chunk(
+                index_chunk=chunk,
+                access=document_id_to_access_info[chunk.source_document.id],
+                document_sets=set(
+                    document_id_to_document_set.get(chunk.source_document.id, [])
+                ),
+                boost=(
+                    id_to_db_doc_map[chunk.source_document.id].boost
+                    if chunk.source_document.id in id_to_db_doc_map
+                    else DEFAULT_BOOST
+                ),
+            )
+            for chunk in chunks_with_embeddings
+        ]
 
     logger.debug(
         f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in chunks]}"

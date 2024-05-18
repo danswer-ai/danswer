@@ -61,9 +61,7 @@ def get_sqlalchemy_engine() -> Engine:
     global _SYNC_ENGINE
     if _SYNC_ENGINE is None:
         connection_string = build_connection_string(db_api=SYNC_DB_API)
-        _SYNC_ENGINE = create_engine(
-            connection_string, poolclass=NullPool, connect_args=connect_args
-        )
+        _SYNC_ENGINE = create_engine(connection_string, connect_args=connect_args)
     return _SYNC_ENGINE
 
 
