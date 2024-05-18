@@ -277,8 +277,6 @@ export function ChatPage({
       );
       messages[0].parentMessageId = systemMessageId;
     }
-    console.log(messages);
-    console.log(replacementsMap);
     messages.forEach((message) => {
       const idToReplace = replacementsMap?.get(message.messageId);
       if (idToReplace) {
@@ -308,11 +306,9 @@ export function ChatPage({
       }
     }
     setCompleteMessageMap(newCompleteMessageMap);
-    console.log(newCompleteMessageMap);
     return newCompleteMessageMap;
   };
   const messageHistory = buildLatestMessageChain(completeMessageMap);
-  console.log(messageHistory);
   const [currentTool, setCurrentTool] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
 
@@ -641,10 +637,6 @@ export function ChatPage({
                 [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
               ] as [number, number][])
             : null;
-          if (replacementsMap) {
-            console.log("FINISHING");
-            // console.log(replacementsMap);
-          }
           upsertToCompleteMessageMap({
             messages: messages,
             replacementsMap: replacementsMap,
