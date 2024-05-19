@@ -41,6 +41,8 @@ export type ValidSources =
   | "zendesk"
   | "discourse"
   | "axero"
+  | "clickup"
+  | "axero"
   | "wikipedia"
   | "mediawiki";
 
@@ -172,6 +174,11 @@ export interface RequestTrackerConfig {}
 export interface Document360Config {
   workspace: string;
   categories?: string[];
+}
+
+export interface ClickupConfig {
+  connector_type: "list" | "folder" | "space" | "workspace";
+  connector_ids?: string[];
 }
 
 export interface GoogleSitesConfig {
@@ -344,6 +351,11 @@ export interface RequestTrackerCredentialJson {
 export interface Document360CredentialJson {
   portal_id: string;
   document360_api_token: string;
+}
+
+export interface ClickupCredentialJson {
+  clickup_api_token: string;
+  clickup_team_id: string;
 }
 
 export interface ZendeskCredentialJson {

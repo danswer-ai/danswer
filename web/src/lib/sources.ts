@@ -1,6 +1,7 @@
 import {
   AxeroIcon,
   BookstackIcon,
+  ClickupIcon,
   ConfluenceIcon,
   DiscourseIcon,
   Document360Icon,
@@ -181,6 +182,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   requesttracker: {
     icon: RequestTrackerIcon,
     displayName: "Request Tracker",
+    category: SourceCategory.AppConnection,
+  },
+  clickup: {
+    icon: ClickupIcon,
+    displayName: "Clickup",
     category: SourceCategory.AppConnection,
   },
 };
