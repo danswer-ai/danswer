@@ -40,7 +40,8 @@ export type ValidSources =
   | "sharepoint"
   | "zendesk"
   | "discourse"
-  | "axero";
+  | "axero"
+  | "clickup";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
@@ -170,6 +171,11 @@ export interface RequestTrackerConfig {}
 export interface Document360Config {
   workspace: string;
   categories?: string[];
+}
+
+export interface ClickupConfig {
+  connector_type: "list" | "folder" | "space" | "workspace";
+  connector_ids?: string[];
 }
 
 export interface GoogleSitesConfig {
@@ -329,6 +335,11 @@ export interface RequestTrackerCredentialJson {
 export interface Document360CredentialJson {
   portal_id: string;
   document360_api_token: string;
+}
+
+export interface ClickupCredentialJson {
+  clickup_api_token: string;
+  clickup_team_id: string;
 }
 
 export interface ZendeskCredentialJson {

@@ -4,6 +4,7 @@ from typing import Type
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.axero.connector import AxeroConnector
 from danswer.connectors.bookstack.connector import BookstackConnector
+from danswer.connectors.clickup.connector import ClickupConnector
 from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.danswer_jira.connector import JiraConnector
 from danswer.connectors.discourse.connector import DiscourseConnector
@@ -74,6 +75,7 @@ def identify_connector_class(
         DocumentSource.SHAREPOINT: SharepointConnector,
         DocumentSource.DISCOURSE: DiscourseConnector,
         DocumentSource.AXERO: AxeroConnector,
+        DocumentSource.CLICKUP: ClickupConnector,
     }
     connector_by_source = connector_map.get(source, {})
 
@@ -110,6 +112,7 @@ def instantiate_connector(
     credentials: dict[str, Any],
 ) -> tuple[BaseConnector, dict[str, Any] | None]:
     connector_class = identify_connector_class(source, input_type)
+
     connector = connector_class(**connector_specific_config)
     new_credentials = connector.load_credentials(credentials)
 
