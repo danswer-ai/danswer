@@ -66,10 +66,11 @@ class ClickupConnector(LoadConnector, PollConnector):
         end: int | None = None,
     ) -> GenerateDocumentsOutput:
         doc_batch: list[Document] = []
+        page: int = 0
         params = {
             "include_markdown_description": "true",
             "include_closed": "true",
-            "page": 0,
+            "page": page,
         }
 
         if start is not None:
@@ -89,7 +90,8 @@ class ClickupConnector(LoadConnector, PollConnector):
         while True:
             response = self._make_request(url_endpoint, params)
 
-            params["page"] += 1
+            page += 1
+            params["page"] = page
 
             for task in response["tasks"]:
                 document = Document(
@@ -145,7 +147,7 @@ class ClickupConnector(LoadConnector, PollConnector):
         return self._get_all_tasks_filtered(None, None)
 
     def poll_source(
-        self, start: SecondsSinceUnixEpoch | None, end: SecondsSinceUnixEpoch | None
+        self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
         if self.api_token is None:
             raise ConnectorMissingCredentialError("Clickup")
