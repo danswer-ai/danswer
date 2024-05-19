@@ -98,6 +98,7 @@ class DocumentSource(str, Enum):
     TEAMS = "teams"
     DISCOURSE = "discourse"
     AXERO = "axero"
+    CLICKUP = "clickup"
     MEDIAWIKI = "mediawiki"
     WIKIPEDIA = "wikipedia"
 

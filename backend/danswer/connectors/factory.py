@@ -4,6 +4,7 @@ from typing import Type
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.axero.connector import AxeroConnector
 from danswer.connectors.bookstack.connector import BookstackConnector
+from danswer.connectors.clickup.connector import ClickupConnector
 from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.danswer_jira.connector import JiraConnector
 from danswer.connectors.discourse.connector import DiscourseConnector
@@ -80,6 +81,7 @@ def identify_connector_class(
         DocumentSource.TEAMS: TeamsConnector,
         DocumentSource.DISCOURSE: DiscourseConnector,
         DocumentSource.AXERO: AxeroConnector,
+        DocumentSource.CLICKUP: ClickupConnector,
         DocumentSource.MEDIAWIKI: MediaWikiConnector,
         DocumentSource.WIKIPEDIA: WikipediaConnector,
     }
