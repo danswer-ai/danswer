@@ -16,6 +16,7 @@ from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_status
 from danswer.configs.app_configs import ENABLED_CONNECTOR_TYPES
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import FileOrigin
 from danswer.connectors.gmail.connector_auth import delete_gmail_service_account_key
 from danswer.connectors.gmail.connector_auth import delete_google_app_gmail_cred
 from danswer.connectors.gmail.connector_auth import get_gmail_auth_url
@@ -351,7 +352,13 @@ def upload_files(
         for file in files:
             file_path = os.path.join(str(uuid.uuid4()), cast(str, file.filename))
             deduped_file_paths.append(file_path)
-            file_store.save_file(file_name=file_path, content=file.file)
+            file_store.save_file(
+                file_name=file_path,
+                content=file.file,
+                display_name=file.filename,
+                file_origin=FileOrigin.CONNECTOR,
+                file_type=file.content_type or "text/plain",
+            )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return FileUploadResponse(file_paths=deduped_file_paths)
