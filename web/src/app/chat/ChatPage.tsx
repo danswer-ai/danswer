@@ -5,7 +5,6 @@ import {
   BackendChatSession,
   BackendMessage,
   ChatFileType,
-  ChatSession,
   ChatSessionSharedStatus,
   DocumentsResponse,
   FileDescriptor,
@@ -16,12 +15,9 @@ import {
   ToolRunKickoff,
 } from "./interfaces";
 import { ChatSidebar } from "./sessionSidebar/ChatSidebar";
-import { DocumentSet, Tag, User, ValidSources } from "@/lib/types";
 import { Persona } from "../admin/assistants/interfaces";
-import { Header } from "@/components/header/Header";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
-import { Settings } from "../admin/settings/interfaces";
 import {
   buildChatUrl,
   buildLatestMessageChain,
@@ -53,22 +49,16 @@ import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoade
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { ChatPersonaSelector } from "./ChatPersonaSelector";
-import { HEADER_PADDING } from "@/lib/constants";
-import { FiSend, FiShare2, FiStopCircle } from "react-icons/fi";
+import { FiShare2 } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { ThreeDots } from "react-loader-spinner";
 import { StarterMessage } from "./StarterMessage";
-import { SelectedDocuments } from "./modifiers/SelectedDocuments";
-import { ChatFilters } from "./modifiers/ChatFilters";
 import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
-import { LLMProviderDescriptor } from "../admin/models/llm/interfaces";
 import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
-import { InputBarPreviewImage } from "./files/images/InputBarPreviewImage";
-import { Folder } from "./folders/interfaces";
 import { ChatInputBar } from "./input/ChatInputBar";
 import { ConfigurationModal } from "./modal/configuration/ConfigurationModal";
 import { useChatContext } from "@/components/context/ChatContext";
