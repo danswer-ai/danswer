@@ -30,3 +30,10 @@
   width: 8px; /* Vertical scrollbar width */
   height: 8px; /* Horizontal scrollbar height */
 }
+
+.ai-superscript {
+  font-size: 50%;
+  line-height: 2;
+  position: relative;
+  vertical-align: baseline;
+}
