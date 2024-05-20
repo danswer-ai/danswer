@@ -184,6 +184,7 @@ export function ChatSessionDisplay({
                           }
                           requiresContentPadding
                           sideOffset={6}
+                          triggerMaxWidth
                         />
                       </div>
                     </div>

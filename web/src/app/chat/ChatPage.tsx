@@ -43,7 +43,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
-import { useFilters } from "@/lib/hooks";
+import { useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { FeedbackType } from "./types";
 import ResizableSection from "@/components/resizable/ResizableSection";
@@ -69,7 +69,9 @@ import { LLMProviderDescriptor } from "../admin/models/llm/interfaces";
 import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
 import { InputBarPreviewImage } from "./images/InputBarPreviewImage";
 import { Folder } from "./folders/interfaces";
-import ChatInputBar from "./ChatInputBar";
+import { ChatInputBar } from "./input/ChatInputBar";
+import { ConfigurationModal } from "./modal/configuration/ConfigurationModal";
+import { useChatContext } from "@/components/context/ChatContext";
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
@@ -77,32 +79,28 @@ const TEMP_ASSISTANT_MESSAGE_ID = -2;
 const SYSTEM_MESSAGE_ID = -3;
 
 export function ChatPage({
-  user,
-  chatSessions,
-  availableSources,
-  availableDocumentSets,
-  availablePersonas,
-  availableTags,
-  llmProviders,
-  defaultSelectedPersonaId,
   documentSidebarInitialWidth,
   defaultSidebarTab,
-  folders,
-  openedFolders,
+  defaultSelectedPersonaId,
 }: {
-  user: User | null;
-  chatSessions: ChatSession[];
-  availableSources: ValidSources[];
-  availableDocumentSets: DocumentSet[];
-  availablePersonas: Persona[];
-  availableTags: Tag[];
-  llmProviders: LLMProviderDescriptor[];
-  defaultSelectedPersonaId?: number; // what persona to default to
   documentSidebarInitialWidth?: number;
   defaultSidebarTab?: Tabs;
-  folders: Folder[];
-  openedFolders: { [key: number]: boolean };
+  defaultSelectedPersonaId?: number;
 }) {
+  const [configModalActiveTab, setConfigModalActiveTab] = useState<
+    string | null
+  >(null);
+  let {
+    user,
+    chatSessions,
+    availableSources,
+    availableDocumentSets,
+    availablePersonas,
+    llmProviders,
+    folders,
+    openedFolders,
+  } = useChatContext();
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const existingChatIdRaw = searchParams.get("chatId");
@@ -146,6 +144,13 @@ export function ChatPage({
       filterManager.setSelectedSources([]);
       filterManager.setSelectedTags([]);
       filterManager.setTimeRange(null);
+      // reset LLM overrides
+      llmOverrideManager.setLlmOverride({
+        name: "",
+        provider: "",
+        modelName: "",
+      });
+      llmOverrideManager.setTemperature(null);
       // remove uploaded files
       setCurrentMessageFileIds([]);
 
@@ -387,6 +392,8 @@ export function ChatPage({
       availableDocumentSets,
     });
 
+  const llmOverrideManager = useLlmOverride();
+
   // state for cancelling streaming
   const [isCancelled, setIsCancelled] = useState(false);
   const isCancelledRef = useRef(isCancelled);
@@ -593,9 +600,13 @@ export function ChatPage({
           .map((document) => document.db_doc_id as number),
         queryOverride,
         forceSearch,
+        modelProvider: llmOverrideManager.llmOverride.name || undefined,
         modelVersion:
-          searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) || undefined,
+          llmOverrideManager.llmOverride.modelName ||
+          searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
+          undefined,
         temperature:
+          llmOverrideManager.temperature ||
           parseFloat(searchParams.get(SEARCH_PARAM_NAMES.TEMPERATURE) || "") ||
           undefined,
         systemPromptOverride:
@@ -768,6 +779,32 @@ export function ChatPage({
     }
   };
 
+  const handleImageUpload = (acceptedFiles: File[]) => {
+    const llmAcceptsImages = checkLLMSupportsImageInput(
+      ...getFinalLLM(llmProviders, livePersona)
+    );
+    if (!llmAcceptsImages) {
+      setPopup({
+        type: "error",
+        message:
+          "The current Assistant does not support image input. Please select an assistant with Vision support.",
+      });
+      return;
+    }
+
+    uploadFilesForChat(acceptedFiles).then(([fileIds, error]) => {
+      if (error) {
+        setPopup({
+          type: "error",
+          message: error,
+        });
+      } else {
+        const newFileIds = [...currentMessageFileIds, ...fileIds];
+        setCurrentMessageFileIds(newFileIds);
+      }
+    });
+  };
+
   // handle redirect if chat page is disabled
   // NOTE: this must be done here, in a client component since
   // settings are passed in via Context and therefore aren't
@@ -831,35 +868,18 @@ export function ChatPage({
             />
           )}
 
-          {documentSidebarInitialWidth !== undefined ? (
-            <Dropzone
-              onDrop={(acceptedFiles) => {
-                const llmAcceptsImages = checkLLMSupportsImageInput(
-                  ...getFinalLLM(llmProviders, livePersona)
-                );
-                if (!llmAcceptsImages) {
-                  setPopup({
-                    type: "error",
-                    message:
-                      "The current Assistant does not support image input. Please select an assistant with Vision support.",
-                  });
-                  return;
-                }
+          <ConfigurationModal
+            activeTab={configModalActiveTab}
+            setActiveTab={setConfigModalActiveTab}
+            onClose={() => setConfigModalActiveTab(null)}
+            filterManager={filterManager}
+            selectedAssistant={livePersona}
+            setSelectedAssistant={onPersonaChange}
+            llmOverrideManager={llmOverrideManager}
+          />
 
-                uploadFilesForChat(acceptedFiles).then(([fileIds, error]) => {
-                  if (error) {
-                    setPopup({
-                      type: "error",
-                      message: error,
-                    });
-                  } else {
-                    const newFileIds = [...currentMessageFileIds, ...fileIds];
-                    setCurrentMessageFileIds(newFileIds);
-                  }
-                });
-              }}
-              noClick
-            >
+          {documentSidebarInitialWidth !== undefined ? (
+            <Dropzone onDrop={handleImageUpload} noClick>
               {({ getRootProps }) => (
                 <>
                   <div
@@ -1167,35 +1187,22 @@ export function ChatPage({
                       </div>
                     </div>
 
-                    <div className="absolute bottom-0 z-10 w-full bg-background border-t border-border">
-                      <div className="w-full pb-4 pt-2">
-                        {!retrievalDisabled && (
-                          <div className="flex">
-                            <div className="w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar mx-auto px-4 pt-1 flex">
-                              {selectedDocuments.length > 0 ? (
-                                <SelectedDocuments
-                                  selectedDocuments={selectedDocuments}
-                                />
-                              ) : (
-                                <ChatFilters
-                                  {...filterManager}
-                                  existingSources={finalAvailableSources}
-                                  availableDocumentSets={
-                                    finalAvailableDocumentSets
-                                  }
-                                  availableTags={availableTags}
-                                />
-                              )}
-                            </div>
-                          </div>
-                        )}
-
+                    <div className="absolute bottom-0 z-10 w-full">
+                      <div className="w-full pb-4">
                         <ChatInputBar
                           message={message}
                           setMessage={setMessage}
                           onSubmit={onSubmit}
                           isStreaming={isStreaming}
                           setIsCancelled={setIsCancelled}
+                          retrievalDisabled={retrievalDisabled}
+                          filterManager={filterManager}
+                          llmOverrideManager={llmOverrideManager}
+                          selectedAssistant={livePersona}
+                          fileIds={currentMessageFileIds}
+                          setFileIds={setCurrentMessageFileIds}
+                          handleFileUpload={handleImageUpload}
+                          setConfigModalActiveTab={setConfigModalActiveTab}
                         />
                       </div>
                     </div>

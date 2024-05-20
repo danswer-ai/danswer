@@ -57,6 +57,7 @@ export async function* sendMessage({
   selectedDocumentIds,
   queryOverride,
   forceSearch,
+  modelProvider,
   modelVersion,
   temperature,
   systemPromptOverride,
@@ -72,6 +73,7 @@ export async function* sendMessage({
   queryOverride?: string;
   forceSearch?: boolean;
   // LLM overrides
+  modelProvider?: string;
   modelVersion?: string;
   temperature?: number;
   // prompt overrides
@@ -117,6 +119,7 @@ export async function* sendMessage({
         temperature || modelVersion
           ? {
               temperature,
+              model_provider: modelProvider,
               model_version: modelVersion,
             }
           : null,

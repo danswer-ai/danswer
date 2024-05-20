@@ -32,6 +32,7 @@ import { SIDEBAR_TAB_COOKIE, Tabs } from "./sessionSidebar/constants";
 import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
 import { LLMProviderDescriptor } from "../admin/models/llm/interfaces";
 import { Folder } from "./folders/interfaces";
+import { ChatProvider } from "@/components/context/ChatContext";
 
 export default async function Page({
   searchParams,
@@ -197,20 +198,25 @@ export default async function Page({
         <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}
 
-      <ChatPage
-        user={user}
-        chatSessions={chatSessions}
-        availableSources={availableSources}
-        availableDocumentSets={documentSets}
-        availablePersonas={personas}
-        availableTags={tags}
-        llmProviders={llmProviders}
-        defaultSelectedPersonaId={defaultPersonaId}
-        documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
-        defaultSidebarTab={defaultSidebarTab}
-        folders={folders} // Pass folders to ChatPage
-        openedFolders={openedFolders} // Pass opened folders state to ChatPage
-      />
+      <ChatProvider
+        value={{
+          user,
+          chatSessions,
+          availableSources,
+          availableDocumentSets: documentSets,
+          availablePersonas: personas,
+          availableTags: tags,
+          llmProviders,
+          folders,
+          openedFolders,
+        }}
+      >
+        <ChatPage
+          defaultSelectedPersonaId={defaultPersonaId}
+          documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
+          defaultSidebarTab={defaultSidebarTab}
+        />
+      </ChatProvider>
     </>
   );
 }
