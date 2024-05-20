@@ -817,9 +817,9 @@ export function ChatPage({
   const retrievalDisabled = !personaIncludesRetrieval(livePersona);
   return (
     <>
-      <div className="absolute top-0 z-40 w-full">
+      {/* <div className="absolute top-0 z-40 w-full">
         <Header user={user} />
-      </div>
+      </div> */}
       <HealthCheckBanner />
       <InstantSSRAutoRefresh />
 
@@ -890,16 +890,17 @@ export function ChatPage({
                   >
                     {/* <input {...getInputProps()} /> */}
                     <div
-                      className={`w-full h-full ${HEADER_PADDING} flex flex-col overflow-y-auto overflow-x-hidden relative`}
+                      className={`w-full h-full pt-2 flex flex-col overflow-y-auto overflow-x-hidden relative`}
                       ref={scrollableDivRef}
                     >
                       {livePersona && (
                         <div className="sticky top-0 left-80 z-10 w-full bg-background/90 flex">
-                          <div className="ml-2 p-1 rounded mt-2 w-fit">
+                          <div className="ml-2 p-1 rounded w-fit">
                             <ChatPersonaSelector
                               personas={availablePersonas}
                               selectedPersonaId={livePersona.id}
                               onPersonaChange={onPersonaChange}
+                              userId={user?.id}
                             />
                           </div>
 

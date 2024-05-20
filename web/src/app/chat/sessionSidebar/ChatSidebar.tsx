@@ -9,8 +9,9 @@ import {
   FiSearch,
   FiTool,
 } from "react-icons/fi";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { User } from "@/lib/types";
 import { logout } from "@/lib/user";
@@ -28,6 +29,7 @@ import { SIDEBAR_TAB_COOKIE, Tabs } from "./constants";
 import { Folder } from "../folders/interfaces";
 import { createFolder } from "../folders/FolderManagement";
 import { usePopup } from "@/components/admin/connectors/Popup";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 export const ChatSidebar = ({
   existingChats,
@@ -50,6 +52,12 @@ export const ChatSidebar = ({
 }) => {
   const router = useRouter();
   const { popup, setPopup } = usePopup();
+
+  const combinedSettings = useContext(SettingsContext);
+  if (!combinedSettings) {
+    return null;
+  }
+  const settings = combinedSettings.settings;
 
   const [openTab, _setOpenTab] = useState(defaultTab || Tabs.CHATS);
   const setOpenTab = (tab: Tabs) => {
@@ -119,7 +127,6 @@ export const ChatSidebar = ({
         flex-none
         w-64
         3xl:w-72
-        ${HEADER_PADDING}
         border-r 
         border-border 
         flex 
@@ -128,12 +135,30 @@ export const ChatSidebar = ({
         transition-transform`}
         id="chat-sidebar"
       >
-        <div className="flex w-full px-3 mt-4 text-sm ">
+        <div className="pt-6 flex">
+          <Link
+            className="ml-4"
+            href={
+              settings && settings.default_page === "chat" ? "/chat" : "/search"
+            }
+          >
+            <div className="flex">
+              <div className="h-[32px] w-[30px]">
+                <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
+              </div>
+              <h1 className="flex text-2xl text-strong font-bold my-auto">
+                Danswer
+              </h1>
+            </div>
+          </Link>
+        </div>
+
+        {/* <div className="flex w-full px-3 mt-4 text-sm ">
           <div className="flex w-full gap-x-4 pb-2 border-b border-border">
             <TabOption tab={Tabs.CHATS} />
             <TabOption tab={Tabs.ASSISTANTS} />
           </div>
-        </div>
+        </div> */}
 
         {openTab == Tabs.CHATS && (
           <>
