@@ -7,7 +7,7 @@ export interface CustomConfigKey {
 
 export interface WellKnownLLMProviderDescriptor {
   name: string;
-  display_name: string | null;
+  display_name: string;
 
   api_key_required: boolean;
   api_base_required: boolean;
