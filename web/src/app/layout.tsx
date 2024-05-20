@@ -11,7 +11,7 @@ const inter = Inter({
 
 export const metadata = {
   title: "Eve AI",
-  description: "Question answering for your documents",
+  description: "With EVE, you can quickly access the information you need to succeed in Mindvalley",
 };
 
 export const dynamic = "force-dynamic";
