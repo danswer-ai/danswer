@@ -369,6 +369,7 @@ export function DefaultDropdown({
         side={side}
         sideOffset={5}
         matchWidth
+        triggerMaxWidth
       />
     </div>
   );

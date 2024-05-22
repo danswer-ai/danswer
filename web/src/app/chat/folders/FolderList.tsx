@@ -230,7 +230,7 @@ export const FolderList = ({
   }
 
   return (
-    <div className="mt-1 pb-1 mb-1 overflow-y-auto">
+    <div className="mt-1 mb-1 overflow-y-auto">
       {folders.map((folder) => (
         <FolderItem
           key={folder.folder_id}

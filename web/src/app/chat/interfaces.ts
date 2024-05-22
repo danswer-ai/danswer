@@ -35,14 +35,18 @@ export interface ChatSession {
 }
 
 export interface Message {
-  messageId: number | null;
+  messageId: number;
   message: string;
-  type: "user" | "assistant" | "error";
+  type: "user" | "assistant" | "system" | "error";
   retrievalType?: RetrievalType;
   query?: string | null;
   documents?: DanswerDocument[] | null;
   citations?: CitationMap;
   files: FileDescriptor[];
+  // for rebuilding the message tree
+  parentMessageId: number | null;
+  childrenMessageIds?: number[];
+  latestChildMessageId?: number | null;
 }
 
 export interface BackendChatSession {
