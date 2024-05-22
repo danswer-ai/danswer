@@ -608,6 +608,21 @@ def mark_persona_as_deleted(
     db_session.commit()
 
 
+def mark_persona_as_not_deleted(
+    persona_id: int,
+    user: User | None,
+    db_session: Session,
+) -> None:
+    persona = get_persona_by_id(
+        persona_id=persona_id, user=user, db_session=db_session, include_deleted=True
+    )
+    if persona.deleted:
+        persona.deleted = False
+        db_session.commit()
+    else:
+        raise ValueError(f"Persona with ID {persona_id} is not deleted.")
+
+
 def mark_delete_persona_by_name(
     persona_name: str, db_session: Session, is_default: bool = True
 ) -> None:
