@@ -118,7 +118,14 @@ class ClickupConnector(LoadConnector, PollConnector):
                     ],
                     title=task["name"],
                     sections=[
-                        Section(link=task["url"], text=task["markdown_description"])
+                        Section(
+                            link=task["url"],
+                            text=(
+                                task["markdown_description"]
+                                if "markdown_description" in task
+                                else task["description"]
+                            ),
+                        )
                     ],
                     metadata={
                         "status": task["status"]["status"],
