@@ -108,9 +108,6 @@ export function ChatSessionDisplay({
         <BasicSelectable fullWidth selected={isSelected}>
           <>
             <div className="flex relative">
-              <div className="my-auto mr-2">
-                <FiMessageSquare size={16} />
-              </div>
               {isRenamingChat ? (
                 <input
                   value={chatName}

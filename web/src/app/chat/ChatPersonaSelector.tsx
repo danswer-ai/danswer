@@ -23,20 +23,21 @@ function PersonaItem({
       <div
         key={id}
         className={`
-      flex
-      flex-grow
-      px-3 
-      text-sm 
-      py-2 
-      my-0.5
-      rounded
-      mx-1
-      select-none 
-      cursor-pointer 
-      text-emphasis
-      bg-background
-      hover:bg-hover-light
-    `}
+          flex
+          flex-grow
+          px-3 
+          text-sm 
+          py-2 
+          my-0.5
+          rounded
+          mx-1
+          select-none 
+          cursor-pointer 
+          text-emphasis
+          bg-background
+          hover:bg-hover-light
+          ${isSelected ? "bg-hover text-selected-emphasis" : ""}
+        `}
         onClick={() => {
           onSelect(id);
         }}
@@ -83,12 +84,13 @@ export function ChatPersonaSelector({
             border-border 
             bg-background
             rounded-lg 
+            shadow-lg 
             flex 
             flex-col 
             w-64 
             max-h-96 
             overflow-y-auto 
-            flex
+            p-2
             overscroll-contain`}
         >
           {personas.map((persona) => {
@@ -113,7 +115,7 @@ export function ChatPersonaSelector({
             );
           })}
 
-          <div className="border-t border-border">
+          <div className="border-t border-border pt-2">
             <DefaultDropdownElement
               name={
                 <div className="flex items-center">
@@ -128,7 +130,7 @@ export function ChatPersonaSelector({
         </div>
       }
     >
-      <div className="select-none text-xl font-bold flex px-2 py-1.5 rounded cursor-pointer hover:bg-hover-light">
+      <div className="select-none text-xl text-strong font-bold flex px-2 py-1.5 rounded cursor-pointer hover:bg-hover-light">
         <div className="my-auto">
           {currentlySelectedPersona?.name || "Default"}
         </div>

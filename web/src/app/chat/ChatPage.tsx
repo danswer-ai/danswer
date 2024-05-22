@@ -62,7 +62,6 @@ import { SelectedDocuments } from "./modifiers/SelectedDocuments";
 import { ChatFilters } from "./modifiers/ChatFilters";
 import { AnswerPiecePacket, DanswerDocument } from "@/lib/search/interfaces";
 import { buildFilters } from "@/lib/search/utils";
-import { Tabs } from "./sessionSidebar/constants";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
 import { LLMProviderDescriptor } from "../admin/models/llm/interfaces";
@@ -72,6 +71,7 @@ import { Folder } from "./folders/interfaces";
 import { ChatInputBar } from "./input/ChatInputBar";
 import { ConfigurationModal } from "./modal/configuration/ConfigurationModal";
 import { useChatContext } from "@/components/context/ChatContext";
+import { UserDropdown } from "@/components/UserDropdown";
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
@@ -80,11 +80,9 @@ const SYSTEM_MESSAGE_ID = -3;
 
 export function ChatPage({
   documentSidebarInitialWidth,
-  defaultSidebarTab,
   defaultSelectedPersonaId,
 }: {
   documentSidebarInitialWidth?: number;
-  defaultSidebarTab?: Tabs;
   defaultSelectedPersonaId?: number;
 }) {
   const [configModalActiveTab, setConfigModalActiveTab] = useState<
@@ -827,10 +825,6 @@ export function ChatPage({
         <ChatSidebar
           existingChats={chatSessions}
           currentChatSession={selectedChatSession}
-          personas={availablePersonas}
-          onPersonaChange={onPersonaChange}
-          user={user}
-          defaultTab={defaultSidebarTab}
           folders={folders}
           openedFolders={openedFolders}
         />
@@ -904,14 +898,26 @@ export function ChatPage({
                             />
                           </div>
 
-                          {chatSessionId !== null && (
-                            <div
-                              onClick={() => setSharingModalVisible(true)}
-                              className="ml-auto mr-6 my-auto border-border border p-2 rounded cursor-pointer hover:bg-hover-light"
-                            >
-                              <FiShare2 />
+                          <div className="ml-auto mr-8 flex">
+                            {chatSessionId !== null && (
+                              <div
+                                onClick={() => setSharingModalVisible(true)}
+                                className={`
+                                my-auto
+                                p-2
+                                rounded
+                                cursor-pointer
+                                hover:bg-hover-light
+                              `}
+                              >
+                                <FiShare2 size="18" />
+                              </div>
+                            )}
+
+                            <div className="ml-4 my-auto">
+                              <UserDropdown user={user} />
                             </div>
-                          )}
+                          </div>
                         </div>
                       )}
 

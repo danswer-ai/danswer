@@ -12,6 +12,7 @@ export function Popover({
   side,
   align,
   sideOffset,
+  alignOffset,
   matchWidth,
   requiresContentPadding,
   triggerMaxWidth,
@@ -23,6 +24,7 @@ export function Popover({
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
   sideOffset?: number;
+  alignOffset?: number;
   matchWidth?: boolean;
   requiresContentPadding?: boolean;
   triggerMaxWidth?: boolean;
@@ -59,6 +61,7 @@ export function Popover({
           side={side}
           align={align}
           sideOffset={sideOffset}
+          alignOffset={alignOffset}
         >
           {popover}
         </RadixPopover.Content>

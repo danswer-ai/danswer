@@ -28,7 +28,6 @@ import { ChatPage } from "./ChatPage";
 import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingModels";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { Settings } from "../admin/settings/interfaces";
-import { SIDEBAR_TAB_COOKIE, Tabs } from "./sessionSidebar/constants";
 import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
 import { LLMProviderDescriptor } from "../admin/models/llm/interfaces";
 import { Folder } from "./folders/interfaces";
@@ -152,10 +151,6 @@ export default async function Page({
     ? parseInt(documentSidebarCookieInitialWidth.value)
     : undefined;
 
-  const defaultSidebarTab = cookies().get(SIDEBAR_TAB_COOKIE)?.value as
-    | Tabs
-    | undefined;
-
   const hasAnyConnectors = ccPairs.length > 0;
   const shouldShowWelcomeModal =
     !hasCompletedWelcomeFlowSS() &&
@@ -214,7 +209,6 @@ export default async function Page({
         <ChatPage
           defaultSelectedPersonaId={defaultPersonaId}
           documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
-          defaultSidebarTab={defaultSidebarTab}
         />
       </ChatProvider>
     </>
