@@ -1,6 +1,6 @@
 "use client";
 
-import { FiFolderPlus, FiPlusSquare } from "react-icons/fi";
+import { FiEdit, FiFolderPlus, FiPlusSquare } from "react-icons/fi";
 import { useContext, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -91,7 +91,7 @@ export const ChatSidebar = ({
           >
             <BasicClickable fullWidth>
               <div className="flex items-center text-sm">
-                <FiPlusSquare className="mr-2" /> New Chat
+                <FiEdit className="ml-1 mr-2" /> New Chat
               </div>
             </BasicClickable>
           </Link>

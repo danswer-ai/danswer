@@ -52,7 +52,7 @@ export function ChatTab({
   return (
     <div className="mb-1 ml-3 overflow-y-auto h-full">
       {folders.length > 0 && (
-        <div className="py-2 mr-3">
+        <div className="py-2 mr-3 border-b border-border">
           <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-2 font-medium">
             Folders
           </div>
@@ -71,7 +71,7 @@ export function ChatTab({
         }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDropToRemoveFromFolder}
-        className={`pt-1 border-t border-border transition duration-300 ease-in-out mr-3 ${
+        className={`pt-1 transition duration-300 ease-in-out mr-3 ${
           isDragOver ? "bg-hover" : ""
         } rounded-md`}
       >

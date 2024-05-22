@@ -28,6 +28,7 @@ export function AssistantsTab({
               border 
               rounded-md 
               mb-3 
+              hover:bg-hover-light
               ${selectedAssistant.id === assistant.id ? "border-accent" : "border-border"}
             `}
             onClick={() => onSelect(assistant)}

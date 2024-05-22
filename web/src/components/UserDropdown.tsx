@@ -14,7 +14,13 @@ import { BasicSelectable } from "@/components/BasicClickable";
 import { DefaultDropdown } from "./Dropdown";
 import { Popover } from "./popover/Popover";
 
-export function UserDropdown({ user }: { user: User | null }) {
+export function UserDropdown({
+  user,
+  hideChatAndSearch,
+}: {
+  user: User | null;
+  hideChatAndSearch?: boolean;
+}) {
   const [userInfoVisible, setUserInfoVisible] = useState(false);
   const userInfoRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -28,6 +34,8 @@ export function UserDropdown({ user }: { user: User | null }) {
     });
   };
 
+  const showAdminPanel = !user || user.role === "admin";
+
   return (
     <div className="relative" ref={userInfoRef}>
       <Popover
@@ -39,7 +47,7 @@ export function UserDropdown({ user }: { user: User | null }) {
               onClick={() => setUserInfoVisible(!userInfoVisible)}
               className="flex cursor-pointer"
             >
-              <div className="my-auto bg-user rounded-lg px-2 text-base">
+              <div className="my-auto bg-user rounded-lg px-2 text-base font-normal">
                 {user && user.email ? user.email[0].toUpperCase() : "A"}
               </div>
             </div>
@@ -60,27 +68,33 @@ export function UserDropdown({ user }: { user: User | null }) {
                 w-full 
                 max-h-96 
                 overflow-y-auto 
-                p-2
+                p-1
                 overscroll-contain
               `}
           >
-            <Link
-              href="/search"
-              className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
-            >
-              <FiSearch className="my-auto mr-2 text-lg" />
-              Danswer Search
-            </Link>
-            <Link
-              href="/chat"
-              className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
-            >
-              <FiMessageSquare className="my-auto mr-2 text-lg" />
-              Danswer Chat
-            </Link>
-            {(!user || user.role === "admin") && (
+            {!hideChatAndSearch && (
               <>
-                <div className="border-t border-border my-1" />
+                <Link
+                  href="/search"
+                  className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
+                >
+                  <FiSearch className="my-auto mr-2 text-lg" />
+                  Danswer Search
+                </Link>
+                <Link
+                  href="/chat"
+                  className="flex py-3 px-4 rounded cursor-pointer hover:bg-hover-light"
+                >
+                  <FiMessageSquare className="my-auto mr-2 text-lg" />
+                  Danswer Chat
+                </Link>
+              </>
+            )}
+            {showAdminPanel && (
+              <>
+                {!hideChatAndSearch && (
+                  <div className="border-t border-border my-1" />
+                )}
                 <Link
                   href="/admin/indexing/status"
                   className="flex py-3 px-4 cursor-pointer rounded hover:bg-hover-light"
@@ -92,7 +106,9 @@ export function UserDropdown({ user }: { user: User | null }) {
             )}
             {user && (
               <>
-                <div className="border-t border-border my-1" />
+                {(!hideChatAndSearch || showAdminPanel) && (
+                  <div className="border-t border-border my-1" />
+                )}
                 <div
                   onClick={handleLogout}
                   className="mt-1 flex py-3 px-4 cursor-pointer hover:bg-hover-light"

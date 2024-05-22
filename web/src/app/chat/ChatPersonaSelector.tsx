@@ -90,7 +90,7 @@ export function ChatPersonaSelector({
             w-64 
             max-h-96 
             overflow-y-auto 
-            p-2
+            p-1
             overscroll-contain`}
         >
           {personas.map((persona) => {
