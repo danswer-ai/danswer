@@ -30,12 +30,6 @@ export const ChatSidebar = ({
   const router = useRouter();
   const { popup, setPopup } = usePopup();
 
-  const combinedSettings = useContext(SettingsContext);
-  if (!combinedSettings) {
-    return null;
-  }
-  const settings = combinedSettings.settings;
-
   const currentChatId = currentChatSession?.id;
 
   // prevent the NextJS Router cache from causing the chat sidebar to not
@@ -43,6 +37,12 @@ export const ChatSidebar = ({
   useEffect(() => {
     router.refresh();
   }, [currentChatId]);
+
+  const combinedSettings = useContext(SettingsContext);
+  if (!combinedSettings) {
+    return null;
+  }
+  const settings = combinedSettings.settings;
 
   return (
     <>
