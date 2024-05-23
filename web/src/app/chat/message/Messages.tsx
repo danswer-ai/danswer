@@ -19,10 +19,11 @@ import { SkippedSearch } from "./SkippedSearch";
 import remarkGfm from "remark-gfm";
 import { CopyButton } from "@/components/CopyButton";
 import { FileDescriptor } from "../interfaces";
-import { InMessageImage } from "../images/InMessageImage";
+import { InMessageImage } from "../files/images/InMessageImage";
 import { IMAGE_GENERATION_TOOL_NAME } from "../tools/constants";
 import { ToolRunningAnimation } from "../tools/ToolRunningAnimation";
 import { Hoverable } from "@/components/Hoverable";
+import { InMessagePreview } from "../files/InMessagePreview";
 
 const ICON_SIZE = 15;
 
@@ -146,9 +147,7 @@ export const AIMessage = ({
                   <div className="mt-2 mb-4">
                     <div className="flex flex-wrap gap-2">
                       {files.map((file) => {
-                        return (
-                          <InMessageImage key={file.id} fileId={file.id} />
-                        );
+                        return <InMessagePreview key={file.id} file={file} />;
                       })}
                     </div>
                   </div>
@@ -339,7 +338,7 @@ export const HumanMessage = ({
                 <div className="mt-2 mb-4">
                   <div className="flex flex-wrap gap-2">
                     {files.map((file) => {
-                      return <InMessageImage key={file.id} fileId={file.id} />;
+                      return <InMessagePreview key={file.id} file={file} />;
                     })}
                   </div>
                 </div>

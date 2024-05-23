@@ -9,29 +9,41 @@ from danswer.configs.constants import FileOrigin
 from danswer.db.engine import get_session_context_manager
 from danswer.db.models import ChatMessage
 from danswer.file_store.file_store import get_default_file_store
+from danswer.file_store.models import FileDescriptor
 from danswer.file_store.models import InMemoryChatFile
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 
 
-def load_chat_file(file_id: str, db_session: Session) -> InMemoryChatFile:
-    file_io = get_default_file_store(db_session).read_file(file_id, mode="b")
-    return InMemoryChatFile(file_id=file_id, content=file_io.read())
+def load_chat_file(
+    file_descriptor: FileDescriptor, db_session: Session
+) -> InMemoryChatFile:
+    file_io = get_default_file_store(db_session).read_file(
+        file_descriptor["id"], mode="b"
+    )
+    return InMemoryChatFile(
+        file_id=file_descriptor["id"],
+        content=file_io.read(),
+        file_type=file_descriptor["type"],
+        filename=file_descriptor["name"],
+    )
 
 
 def load_all_chat_files(
-    chat_messages: list[ChatMessage], new_file_ids: list[str], db_session: Session
+    chat_messages: list[ChatMessage],
+    file_descriptors: list[FileDescriptor],
+    db_session: Session,
 ) -> list[InMemoryChatFile]:
-    file_ids_for_history = []
+    file_descriptors_for_history: list[FileDescriptor] = []
     for chat_message in chat_messages:
         if chat_message.files:
-            file_ids_for_history.extend([file["id"] for file in chat_message.files])
+            file_descriptors_for_history.extend(chat_message.files)
 
     files = cast(
         list[InMemoryChatFile],
         run_functions_tuples_in_parallel(
             [
-                (load_chat_file, (file_id, db_session))
-                for file_id in new_file_ids + file_ids_for_history
+                (load_chat_file, (file, db_session))
+                for file in file_descriptors + file_descriptors_for_history
             ]
         ),
     )

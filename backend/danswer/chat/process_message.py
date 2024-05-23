@@ -282,9 +282,13 @@ def stream_chat_message_objects(
                 )
 
         # load all files needed for this chat chain in memory
-        files = load_all_chat_files(history_msgs, new_msg_req.file_ids, db_session)
+        files = load_all_chat_files(
+            history_msgs, new_msg_req.file_descriptors, db_session
+        )
         latest_query_files = [
-            file for file in files if file.file_id in new_msg_req.file_ids
+            file
+            for file in files
+            if file.file_id in [f["id"] for f in new_msg_req.file_descriptors]
         ]
 
         if user_message:

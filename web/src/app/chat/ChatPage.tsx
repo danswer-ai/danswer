@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   BackendChatSession,
   BackendMessage,
+  ChatFileType,
   ChatSession,
   ChatSessionSharedStatus,
   DocumentsResponse,
@@ -66,7 +67,7 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Dropzone from "react-dropzone";
 import { LLMProviderDescriptor } from "../admin/models/llm/interfaces";
 import { checkLLMSupportsImageInput, getFinalLLM } from "@/lib/llm/utils";
-import { InputBarPreviewImage } from "./images/InputBarPreviewImage";
+import { InputBarPreviewImage } from "./files/images/InputBarPreviewImage";
 import { Folder } from "./folders/interfaces";
 import { ChatInputBar } from "./input/ChatInputBar";
 import { ConfigurationModal } from "./modal/configuration/ConfigurationModal";
@@ -150,7 +151,7 @@ export function ChatPage({
       });
       llmOverrideManager.setTemperature(null);
       // remove uploaded files
-      setCurrentMessageFileIds([]);
+      setCurrentMessageFiles([]);
 
       if (isStreaming) {
         setIsCancelled(true);
@@ -317,9 +318,9 @@ export function ChatPage({
   const [isStreaming, setIsStreaming] = useState(false);
 
   // uploaded files
-  const [currentMessageFileIds, setCurrentMessageFileIds] = useState<string[]>(
-    []
-  );
+  const [currentMessageFiles, setCurrentMessageFiles] = useState<
+    FileDescriptor[]
+  >([]);
 
   // for document display
   // NOTE: -1 is a special designation that means the latest AI message
@@ -528,10 +529,6 @@ export function ChatPage({
       (currMessageHistory.length > 0
         ? currMessageHistory[currMessageHistory.length - 1]
         : null);
-    const currFiles = currentMessageFileIds.map((id) => ({
-      id,
-      type: "image",
-    })) as FileDescriptor[];
 
     // if we're resending, set the parent's child to null
     // we will use tempMessages until the regenerated message is complete
@@ -540,7 +537,7 @@ export function ChatPage({
         messageId: TEMP_USER_MESSAGE_ID,
         message: currMessage,
         type: "user",
-        files: currFiles,
+        files: currentMessageFiles,
         parentMessageId: parentMessage?.messageId || null,
       },
     ];
@@ -562,7 +559,7 @@ export function ChatPage({
       parentMessage = frozenCompleteMessageMap.get(SYSTEM_MESSAGE_ID) || null;
     }
     setMessage("");
-    setCurrentMessageFileIds([]);
+    setCurrentMessageFiles([]);
 
     setIsStreaming(true);
     let answer = "";
@@ -580,7 +577,7 @@ export function ChatPage({
         getLastSuccessfulMessageId(currMessageHistory);
       for await (const packetBunch of sendMessage({
         message: currMessage,
-        fileIds: currentMessageFileIds,
+        fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
         promptId: livePersona?.prompts[0]?.id || 0,
@@ -628,7 +625,7 @@ export function ChatPage({
               (fileId) => {
                 return {
                   id: fileId,
-                  type: "image",
+                  type: ChatFileType.IMAGE,
                 };
               }
             );
@@ -662,7 +659,7 @@ export function ChatPage({
             messageId: newUserMessageId,
             message: currMessage,
             type: "user",
-            files: currFiles,
+            files: currentMessageFiles,
             parentMessageId: parentMessage?.messageId || null,
             childrenMessageIds: [newAssistantMessageId],
             latestChildMessageId: newAssistantMessageId,
@@ -692,7 +689,7 @@ export function ChatPage({
             messageId: TEMP_USER_MESSAGE_ID,
             message: currMessage,
             type: "user",
-            files: currFiles,
+            files: currentMessageFiles,
             parentMessageId: null,
           },
           {
@@ -769,7 +766,7 @@ export function ChatPage({
   const onPersonaChange = (persona: Persona | null) => {
     if (persona && persona.id !== livePersona.id) {
       // remove uploaded files
-      setCurrentMessageFileIds([]);
+      setCurrentMessageFiles([]);
 
       setSelectedPersona(persona);
       textareaRef.current?.focus();
@@ -781,7 +778,10 @@ export function ChatPage({
     const llmAcceptsImages = checkLLMSupportsImageInput(
       ...getFinalLLM(llmProviders, livePersona)
     );
-    if (!llmAcceptsImages) {
+    const imageFiles = acceptedFiles.filter((file) =>
+      file.type.startsWith("image/")
+    );
+    if (imageFiles.length > 0 && !llmAcceptsImages) {
       setPopup({
         type: "error",
         message:
@@ -790,15 +790,15 @@ export function ChatPage({
       return;
     }
 
-    uploadFilesForChat(acceptedFiles).then(([fileIds, error]) => {
+    uploadFilesForChat(acceptedFiles).then(([files, error]) => {
       if (error) {
         setPopup({
           type: "error",
           message: error,
         });
       } else {
-        const newFileIds = [...currentMessageFileIds, ...fileIds];
-        setCurrentMessageFileIds(newFileIds);
+        const newFiles = [...currentMessageFiles, ...files];
+        setCurrentMessageFiles(newFiles);
       }
     });
   };
@@ -884,38 +884,40 @@ export function ChatPage({
                   >
                     {/* <input {...getInputProps()} /> */}
                     <div
-                      className={`w-full h-full pt-2 flex flex-col overflow-y-auto overflow-x-hidden relative`}
+                      className={`w-full h-full flex flex-col overflow-y-auto overflow-x-hidden relative`}
                       ref={scrollableDivRef}
                     >
                       {livePersona && (
-                        <div className="sticky top-0 left-80 z-10 w-full bg-background/90 flex">
-                          <div className="ml-2 p-1 rounded w-fit">
-                            <ChatPersonaSelector
-                              personas={availablePersonas}
-                              selectedPersonaId={livePersona.id}
-                              onPersonaChange={onPersonaChange}
-                              userId={user?.id}
-                            />
-                          </div>
+                        <div className="sticky top-0 left-80 z-10 w-full bg-background flex">
+                          <div className="mt-2 flex w-full">
+                            <div className="ml-2 p-1 rounded w-fit">
+                              <ChatPersonaSelector
+                                personas={availablePersonas}
+                                selectedPersonaId={livePersona.id}
+                                onPersonaChange={onPersonaChange}
+                                userId={user?.id}
+                              />
+                            </div>
 
-                          <div className="ml-auto mr-8 flex">
-                            {chatSessionId !== null && (
-                              <div
-                                onClick={() => setSharingModalVisible(true)}
-                                className={`
+                            <div className="ml-auto mr-8 flex">
+                              {chatSessionId !== null && (
+                                <div
+                                  onClick={() => setSharingModalVisible(true)}
+                                  className={`
                                 my-auto
                                 p-2
                                 rounded
                                 cursor-pointer
                                 hover:bg-hover-light
                               `}
-                              >
-                                <FiShare2 size="18" />
-                              </div>
-                            )}
+                                >
+                                  <FiShare2 size="18" />
+                                </div>
+                              )}
 
-                            <div className="ml-4 my-auto">
-                              <UserDropdown user={user} />
+                              <div className="ml-4 my-auto">
+                                <UserDropdown user={user} />
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1206,8 +1208,8 @@ export function ChatPage({
                           filterManager={filterManager}
                           llmOverrideManager={llmOverrideManager}
                           selectedAssistant={livePersona}
-                          fileIds={currentMessageFileIds}
-                          setFileIds={setCurrentMessageFileIds}
+                          files={currentMessageFiles}
+                          setFiles={setCurrentMessageFiles}
                           handleFileUpload={handleImageUpload}
                           setConfigModalActiveTab={setConfigModalActiveTab}
                         />

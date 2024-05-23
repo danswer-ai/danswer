@@ -37,6 +37,7 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.file_store.file_store import get_default_file_store
 from danswer.file_store.models import ChatFileType
+from danswer.file_store.models import FileDescriptor
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
@@ -425,7 +426,7 @@ def upload_files_for_chat(
     files: list[UploadFile],
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_user),
-) -> dict[str, list[str]]:
+) -> dict[str, list[FileDescriptor]]:
     image_content_types = {"image/jpeg", "image/png", "image/webp"}
     text_content_types = {
         "text/plain",
@@ -475,7 +476,7 @@ def upload_files_for_chat(
 
     file_store = get_default_file_store(db_session)
 
-    file_ids = []
+    file_info: list[tuple[str, ChatFileType]] = []
     for file in files:
         if file.content_type in image_content_types:
             file_type = ChatFileType.IMAGE
@@ -484,6 +485,7 @@ def upload_files_for_chat(
         else:
             file_type = ChatFileType.PLAIN_TEXT
 
+        # store the raw file
         file_id = str(uuid.uuid4())
         file_store.save_file(
             file_name=file_id,
@@ -492,8 +494,9 @@ def upload_files_for_chat(
             file_origin=FileOrigin.CHAT_UPLOAD,
             file_type=file.content_type or file_type.value,
         )
-        file_ids.append(file_id)
 
+        # if the file is a doc, extract text and store that so we don't need
+        # to re-extract it every time we send a message
         if file_type == ChatFileType.DOC:
             extracted_text = extract_file_text(file_name=file.filename, file=file.file)
             text_file_id = str(uuid.uuid4())
@@ -504,9 +507,19 @@ def upload_files_for_chat(
                 file_origin=FileOrigin.CHAT_UPLOAD,
                 file_type="text/plain",
             )
-            file_ids.append(text_file_id)
+            # for DOC type, just return this for the FileDescriptor
+            # as we would always use this as the ID to attach to the
+            # message
+            file_info.append((text_file_id, file_type))
+        else:
+            file_info.append((file_id, file_type))
 
-    return {"file_ids": file_ids}
+    return {
+        "files": [
+            {"id": file_id, "type": file_type, "name": file.filename}
+            for file_id, file_type in file_info
+        ]
+    }
 
 
 @router.get("/file/{file_id}")

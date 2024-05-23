@@ -7,7 +7,8 @@ import { FilterManager, LlmOverride, LlmOverrideManager } from "@/lib/hooks";
 import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
 import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
-import { InputBarPreviewImage } from "../images/InputBarPreviewImage";
+import { FileDescriptor } from "../interfaces";
+import { InputBarPreview } from "../files/InputBarPreview";
 
 export function ChatInputBar({
   message,
@@ -19,8 +20,8 @@ export function ChatInputBar({
   filterManager,
   llmOverrideManager,
   selectedAssistant,
-  fileIds,
-  setFileIds,
+  files,
+  setFiles,
   handleFileUpload,
   setConfigModalActiveTab,
 }: {
@@ -33,8 +34,8 @@ export function ChatInputBar({
   filterManager: FilterManager;
   llmOverrideManager: LlmOverrideManager;
   selectedAssistant: Persona;
-  fileIds: string[];
-  setFileIds: (fileIds: string[]) => void;
+  files: FileDescriptor[];
+  setFiles: (files: FileDescriptor[]) => void;
   handleFileUpload: (files: File[]) => void;
   setConfigModalActiveTab: (tab: string) => void;
 }) {
@@ -76,14 +77,18 @@ export function ChatInputBar({
             [&:has(textarea:focus)]::ring-black
           "
           >
-            {fileIds.length > 0 && (
+            {files.length > 0 && (
               <div className="flex flex-wrap gap-y-2 px-1">
-                {fileIds.map((fileId) => (
-                  <div key={fileId} className="py-1">
-                    <InputBarPreviewImage
-                      fileId={fileId}
+                {files.map((file) => (
+                  <div key={file.id} className="py-1">
+                    <InputBarPreview
+                      file={file}
                       onDelete={() => {
-                        setFileIds(fileIds.filter((id) => id !== fileId));
+                        setFiles(
+                          files.filter(
+                            (fileInFilter) => fileInFilter.id !== file.id
+                          )
+                        );
                       }}
                     />
                   </div>
