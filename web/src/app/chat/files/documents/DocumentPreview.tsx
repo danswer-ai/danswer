@@ -1,7 +1,12 @@
-import { useState } from "react";
 import { FiFileText, FiX } from "react-icons/fi";
 
-export function DocumentPreview({ fileName }: { fileName: string }) {
+export function DocumentPreview({
+  fileName,
+  maxWidth,
+}: {
+  fileName: string;
+  maxWidth?: string;
+}) {
   return (
     <div
       className="
@@ -32,7 +37,13 @@ export function DocumentPreview({ fileName }: { fileName: string }) {
         </div>
       </div>
       <div className="ml-4">
-        <div className="font-medium truncate max-w-48">{fileName}</div>
+        <div
+          className={`font-medium text-sm truncate ${
+            maxWidth ? maxWidth : "max-w-48"
+          }`}
+        >
+          {fileName}
+        </div>
         <div className="text-subtle text-sm">Document</div>
       </div>
     </div>

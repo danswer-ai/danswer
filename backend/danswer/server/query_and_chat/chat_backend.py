@@ -460,8 +460,10 @@ def upload_files_for_chat(
                 error_detail = "Unsupported text file type. Supported text types include .txt, .csv, .md, .mdx, .conf, "
                 ".log, .tsv."
             else:
-                error_detail = "Unsupported document file type. Supported document types include .pdf, .docx, .pptx, .xlsx, "
-                ".json, .xml, .yml, .yaml, .eml, .epub."
+                error_detail = (
+                    "Unsupported document file type. Supported document types include .pdf, .docx, .pptx, .xlsx, "
+                    ".json, .xml, .yml, .yaml, .eml, .epub."
+                )
             raise HTTPException(status_code=400, detail=error_detail)
 
         if (
@@ -510,7 +512,7 @@ def upload_files_for_chat(
             # for DOC type, just return this for the FileDescriptor
             # as we would always use this as the ID to attach to the
             # message
-            file_info.append((text_file_id, file.filename, file_type))
+            file_info.append((text_file_id, file.filename, ChatFileType.PLAIN_TEXT))
         else:
             file_info.append((file_id, file.filename, file_type))
 

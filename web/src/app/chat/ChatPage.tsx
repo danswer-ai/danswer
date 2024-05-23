@@ -1172,7 +1172,7 @@ export function ChatPage({
                           )}
 
                         {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
-                        <div className={`min-h-[180px] w-full`}></div>
+                        <div className={`min-h-[100px] w-full`}></div>
 
                         {livePersona &&
                           livePersona.starter_messages &&
