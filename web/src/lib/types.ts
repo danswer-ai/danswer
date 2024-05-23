@@ -176,6 +176,7 @@ export interface Document360Config {
 export interface ClickupConfig {
   connector_type: "list" | "folder" | "space" | "workspace";
   connector_ids?: string[];
+  retrieve_task_comments: boolean;
 }
 
 export interface GoogleSitesConfig {

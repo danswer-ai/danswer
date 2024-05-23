@@ -15,6 +15,7 @@ import {
 import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import {
+  BooleanFormField,
   SelectorFormField,
   TextFormField,
   TextArrayFieldBuilder,
@@ -193,6 +194,15 @@ const MainSection = () => {
                         )
                       : "",
                 },
+                {
+                  header: "Retrieve Task Comments?",
+                  key: "retrieve_task_comments",
+                  getValue: (ccPairStatus) =>
+                    ccPairStatus.connector.connector_specific_config
+                      .retrieve_task_comments
+                      ? "Yes"
+                      : "No",
+                },
               ]}
               onUpdate={() =>
                 mutate("/api/manage/admin/connector/indexing-status")
@@ -256,11 +266,25 @@ const MainSection = () => {
                 />
               </>
             }
-            formBodyBuilder={TextArrayFieldBuilder({
-              name: "connector_ids",
-              label: "ID(s):",
-              subtext: "Specify 0 or more id(s) to index from.",
-            })}
+            formBodyBuilder={(values) => {
+              return (
+                <>
+                  <Divider />
+                  {TextArrayFieldBuilder({
+                    name: "connector_ids",
+                    label: "ID(s):",
+                    subtext: "Specify 0 or more id(s) to index from.",
+                  })(values)}
+                  <BooleanFormField
+                    name="retrieve_task_comments"
+                    label="Retrieve Task Comments?"
+                    subtext={
+                      "If checked, then all the comments for each task will also be retrieved and indexed."
+                    }
+                  />
+                </>
+              );
+            }}
             validationSchema={Yup.object().shape({
               connector_type: Yup.string()
                 .oneOf(["workspace", "space", "folder", "list"])
@@ -281,10 +305,12 @@ const MainSection = () => {
                     return false;
                   }
                 ),
+              retrieve_task_comments: Yup.boolean().required(),
             })}
             initialValues={{
               connector_type: "workspace",
               connector_ids: [],
+              retrieve_task_comments: true,
             }}
             refreshFreq={10 * 60} // 10 minutes
             credentialId={clickupCredential.id}
