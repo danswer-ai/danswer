@@ -15,6 +15,7 @@
     "@phosphor-icons/react": "^2.0.8",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-popover": "^1.0.7",
+    "@radix-ui/react-tooltip": "^1.0.7",
     "@tremor/react": "^3.9.2",
     "@types/js-cookie": "^3.0.3",
     "@types/lodash": "^4.17.0",

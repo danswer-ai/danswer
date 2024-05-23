@@ -1,4 +1,6 @@
-import { FiFileText, FiX } from "react-icons/fi";
+import { FiFileText } from "react-icons/fi";
+import { useState, useRef, useEffect } from "react";
+import { Tooltip } from "@/components/tooltip/Tooltip";
 
 export function DocumentPreview({
   fileName,
@@ -7,6 +9,17 @@ export function DocumentPreview({
   fileName: string;
   maxWidth?: string;
 }) {
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const fileNameRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (fileNameRef.current) {
+      setIsOverflowing(
+        fileNameRef.current.scrollWidth > fileNameRef.current.clientWidth
+      );
+    }
+  }, [fileName]);
+
   return (
     <div
       className="
@@ -36,14 +49,17 @@ export function DocumentPreview({
           <FiFileText className="w-6 h-6 text-white" />
         </div>
       </div>
-      <div className="ml-4">
-        <div
-          className={`font-medium text-sm truncate ${
-            maxWidth ? maxWidth : "max-w-48"
-          }`}
-        >
-          {fileName}
-        </div>
+      <div className="ml-4 relative">
+        <Tooltip content={fileName} side="top" align="start">
+          <div
+            ref={fileNameRef}
+            className={`font-medium text-sm truncate ${
+              maxWidth ? maxWidth : "max-w-48"
+            }`}
+          >
+            {fileName}
+          </div>
+        </Tooltip>
         <div className="text-subtle text-sm">Document</div>
       </div>
     </div>

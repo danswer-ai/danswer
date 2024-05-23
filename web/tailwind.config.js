@@ -43,6 +43,7 @@ module.exports = {
         "background-strong": "#eaecef",
         "background-search": "#ffffff",
         "background-custom-header": "#f3f4f6",
+        "background-inverted": "#000000",
 
         // text or icons
         link: "#3b82f6", // blue-500
