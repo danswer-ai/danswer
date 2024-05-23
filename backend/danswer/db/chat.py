@@ -319,6 +319,17 @@ def set_as_latest_chat_message(
     db_session.commit()
 
 
+def attach_files_to_chat_message(
+    chat_message: ChatMessage,
+    files: list[FileDescriptor],
+    db_session: Session,
+    commit: bool = True,
+) -> None:
+    chat_message.files = files
+    if commit:
+        db_session.commit()
+
+
 def get_prompt_by_id(
     prompt_id: int,
     user: User | None,
