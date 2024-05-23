@@ -73,6 +73,7 @@ import { ChatInputBar } from "./input/ChatInputBar";
 import { ConfigurationModal } from "./modal/configuration/ConfigurationModal";
 import { useChatContext } from "@/components/context/ChatContext";
 import { UserDropdown } from "@/components/UserDropdown";
+import { v4 as uuidv4 } from "uuid";
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
@@ -790,15 +791,35 @@ export function ChatPage({
       return;
     }
 
+    const tempFileDescriptors = acceptedFiles.map((file) => ({
+      id: uuidv4(),
+      type: file.type.startsWith("image/")
+        ? ChatFileType.IMAGE
+        : ChatFileType.DOCUMENT,
+      isUploading: true,
+    }));
+
+    // only show loading spinner for reasonably large files
+    const totalSize = acceptedFiles.reduce((sum, file) => sum + file.size, 0);
+    if (totalSize > 50 * 1024) {
+      setCurrentMessageFiles((prev) => [...prev, ...tempFileDescriptors]);
+    }
+
+    const removeTempFiles = (prev: FileDescriptor[]) => {
+      return prev.filter(
+        (file) => !tempFileDescriptors.some((newFile) => newFile.id === file.id)
+      );
+    };
+
     uploadFilesForChat(acceptedFiles).then(([files, error]) => {
       if (error) {
+        setCurrentMessageFiles((prev) => removeTempFiles(prev));
         setPopup({
           type: "error",
           message: error,
         });
       } else {
-        const newFiles = [...currentMessageFiles, ...files];
-        setCurrentMessageFiles(newFiles);
+        setCurrentMessageFiles((prev) => [...removeTempFiles(prev), ...files]);
       }
     });
   };
@@ -904,12 +925,12 @@ export function ChatPage({
                                 <div
                                   onClick={() => setSharingModalVisible(true)}
                                   className={`
-                                my-auto
-                                p-2
-                                rounded
-                                cursor-pointer
-                                hover:bg-hover-light
-                              `}
+                                    my-auto
+                                    p-2
+                                    rounded
+                                    cursor-pointer
+                                    hover:bg-hover-light
+                                  `}
                                 >
                                   <FiShare2 size="18" />
                                 </div>

@@ -1,40 +1,33 @@
 import { useState } from "react";
 import { FiFileText, FiX } from "react-icons/fi";
 
-export function FileItem({
-  fileName,
-  onDelete,
-}: {
-  fileName: string;
-  onDelete?: () => void;
-}) {
-  const [isHovered, setIsHovered] = useState(false);
-
+export function DocumentPreview({ fileName }: { fileName: string }) {
   return (
     <div
-      className="relative flex items-center p-2 bg-hover-light border border-border rounded-md"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className="
+        flex
+        items-center
+        p-2
+        bg-hover-light
+        border
+        border-border
+        rounded-md
+        box-border
+        h-16
+      "
     >
-      {isHovered && onDelete && (
-        <button
-          onClick={onDelete}
+      <div className="flex-shrink-0">
+        <div
           className="
-            absolute
-            top-0
-            right-0
-            cursor-pointer
-            border-none
-            bg-hover
-            p-1
-            rounded-full
+            w-12
+            h-12
+            bg-document
+            flex
+            items-center
+            justify-center
+            rounded-md
           "
         >
-          <FiX />
-        </button>
-      )}
-      <div className="flex-shrink-0">
-        <div className="w-12 h-12 bg-document flex items-center justify-center rounded-md">
           <FiFileText className="w-6 h-6 text-white" />
         </div>
       </div>

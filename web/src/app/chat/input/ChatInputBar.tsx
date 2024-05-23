@@ -78,9 +78,9 @@ export function ChatInputBar({
           "
           >
             {files.length > 0 && (
-              <div className="flex flex-wrap gap-y-2 px-1">
+              <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-2">
                 {files.map((file) => (
-                  <div key={file.id} className="py-1">
+                  <div key={file.id}>
                     <InputBarPreview
                       file={file}
                       onDelete={() => {
@@ -90,6 +90,7 @@ export function ChatInputBar({
                           )
                         );
                       }}
+                      isUploading={file.isUploading || false}
                     />
                   </div>
                 ))}

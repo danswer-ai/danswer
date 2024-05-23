@@ -476,7 +476,7 @@ def upload_files_for_chat(
 
     file_store = get_default_file_store(db_session)
 
-    file_info: list[tuple[str, ChatFileType]] = []
+    file_info: list[tuple[str, str | None, ChatFileType]] = []
     for file in files:
         if file.content_type in image_content_types:
             file_type = ChatFileType.IMAGE
@@ -510,14 +510,14 @@ def upload_files_for_chat(
             # for DOC type, just return this for the FileDescriptor
             # as we would always use this as the ID to attach to the
             # message
-            file_info.append((text_file_id, file_type))
+            file_info.append((text_file_id, file.filename, file_type))
         else:
-            file_info.append((file_id, file_type))
+            file_info.append((file_id, file.filename, file_type))
 
     return {
         "files": [
-            {"id": file_id, "type": file_type, "name": file.filename}
-            for file_id, file_type in file_info
+            {"id": file_id, "type": file_type, "name": file_name}
+            for file_id, file_name, file_type in file_info
         ]
     }
 
