@@ -133,7 +133,7 @@ export function ChatPage({
   useEffect(() => {
     urlChatSessionId.current = existingChatSessionId;
 
-    textareaRef.current?.focus();
+    textAreaRef.current?.focus();
 
     // only clear things if we're going from one chat session to another
     if (chatSessionId !== null && existingChatSessionId !== chatSessionId) {
@@ -425,9 +425,9 @@ export function ChatPage({
   }, [isFetchingChatMessages]);
 
   // handle re-sizing of the text area
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
-    const textarea = textareaRef.current;
+    const textarea = textAreaRef.current;
     if (textarea) {
       textarea.style.height = "0px";
       textarea.style.height = `${Math.min(
@@ -770,7 +770,7 @@ export function ChatPage({
       setCurrentMessageFiles([]);
 
       setSelectedPersona(persona);
-      textareaRef.current?.focus();
+      textAreaRef.current?.focus();
       router.push(buildChatUrl(searchParams, null, persona.id));
     }
   };
@@ -953,7 +953,7 @@ export function ChatPage({
                             selectedPersona={selectedPersona}
                             handlePersonaSelect={(persona) => {
                               setSelectedPersona(persona);
-                              textareaRef.current?.focus();
+                              textAreaRef.current?.focus();
                               router.push(
                                 buildChatUrl(searchParams, null, persona.id)
                               );
@@ -1172,7 +1172,7 @@ export function ChatPage({
                           )}
 
                         {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
-                        <div className={`min-h-[30px] w-full`}></div>
+                        <div className={`min-h-[180px] w-full`}></div>
 
                         {livePersona &&
                           livePersona.starter_messages &&
@@ -1233,6 +1233,7 @@ export function ChatPage({
                           setFiles={setCurrentMessageFiles}
                           handleFileUpload={handleImageUpload}
                           setConfigModalActiveTab={setConfigModalActiveTab}
+                          textAreaRef={textAreaRef}
                         />
                       </div>
                     </div>

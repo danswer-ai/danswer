@@ -131,8 +131,9 @@ def _build_content(
     final_message_with_files = "FILES:\n\n"
     for file in text_files:
         file_content = file.content.decode("utf-8")
+        file_name_section = f"DOCUMENT: {file.filename}\n" if file.filename else ""
         final_message_with_files += (
-            f"{CODE_BLOCK_PAT.format(file_content.strip())}\n\n\n"
+            f"{file_name_section}{CODE_BLOCK_PAT.format(file_content.strip())}\n\n\n"
         )
     final_message_with_files += message
 
