@@ -32,12 +32,14 @@ class ClickupConnector(LoadConnector, PollConnector):
         team_id: str | None = None,
         connector_type: str | None = None,
         connector_ids: list[str] | None = None,
+        retrieve_task_comments: bool = True,
     ) -> None:
         self.batch_size = batch_size
         self.api_token = api_token
         self.team_id = team_id
         self.connector_type = connector_type if connector_type else "workspace"
         self.connector_ids = connector_ids
+        self.retrieve_task_comments = retrieve_task_comments
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         self.api_token = credentials["clickup_api_token"]
@@ -59,6 +61,19 @@ class ClickupConnector(LoadConnector, PollConnector):
         response.raise_for_status()
 
         return response.json()
+
+    def _get_task_comments(self, task_id: str) -> list[Section]:
+        url_endpoint = f"/task/{task_id}/comment"
+        response = self._make_request(url_endpoint)
+        comments = [
+            Section(
+                link=f'https://app.clickup.com/t/{task_id}?comment={comment_dict["id"]}',
+                text=comment_dict["comment_text"],
+            )
+            for comment_dict in response["comments"]
+        ]
+
+        return comments
 
     def _get_all_tasks_filtered(
         self,
@@ -128,6 +143,7 @@ class ClickupConnector(LoadConnector, PollConnector):
                         )
                     ],
                     metadata={
+                        "id": task["id"],
                         "status": task["status"]["status"],
                         "list": task["list"]["name"],
                         "project": task["project"]["name"],
@@ -135,6 +151,27 @@ class ClickupConnector(LoadConnector, PollConnector):
                         "space_id": task["space"]["id"],
                     },
                 )
+
+                extra_fields = [
+                    "date_created",
+                    "date_updated",
+                    "date_closed",
+                    "date_done",
+                    "due_date",
+                    "checklists",
+                    "tags",
+                    "parent",
+                    "priority",
+                    "points",
+                    "time_estimate",
+                ]
+                for extra_field in extra_fields:
+                    if extra_field in task and task[extra_field] is not None:
+                        document.metadata[extra_field] = task[extra_field]
+
+                if self.retrieve_task_comments:
+                    document.sections.extend(self._get_task_comments(task["id"]))
+
                 doc_batch.append(document)
 
                 if len(doc_batch) >= self.batch_size:
