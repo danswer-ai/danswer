@@ -1,7 +1,7 @@
 version: '3'
 services:
   api_server:
-#    image: danswer/danswer-backend:latest
+    image: danswer/danswer-backend:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -91,7 +91,7 @@ services:
 
 
   background:
-#    image: danswer/danswer-backend:latest
+    image: danswer/danswer-backend:latest
     build:
       context: ../../backend
       dockerfile: Dockerfile
