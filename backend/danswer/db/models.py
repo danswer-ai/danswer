@@ -270,9 +270,6 @@ class ConnectorCredentialPair(Base):
     last_successful_index_time: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
     )
-    last_attempt_status: Mapped[IndexingStatus | None] = mapped_column(
-        Enum(IndexingStatus, native_enum=False)
-    )
     total_docs_indexed: Mapped[int] = mapped_column(Integer, default=0)
 
     connector: Mapped["Connector"] = relationship(

@@ -418,7 +418,9 @@ def get_connector_indexing_status(
                 credential=CredentialSnapshot.from_credential_db_model(credential),
                 public_doc=cc_pair.is_public,
                 owner=credential.user.email if credential.user else "",
-                last_status=cc_pair.last_attempt_status,
+                last_status=latest_index_attempt.status
+                if latest_index_attempt
+                else None,
                 last_success=cc_pair.last_successful_index_time,
                 docs_indexed=cc_pair_to_document_cnt.get(
                     (connector.id, credential.id), 0
@@ -438,6 +440,7 @@ def get_connector_indexing_status(
                 ),
                 is_deletable=check_deletion_attempt_is_allowed(
                     connector_credential_pair=cc_pair,
+                    db_session=db_session,
                     # allow scheduled indexing attempts here, since on deletion request we will cancel them
                     allow_scheduled=True,
                 )
