@@ -8,11 +8,11 @@ import requests
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.html_utils import parse_html_page_basic
 from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (
     rate_limit_builder,
 )
 from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
+from danswer.connectors.document360.utils import flatten_child_categories
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -21,13 +21,14 @@ from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.file_processing.html_utils import parse_html_page_basic
 
 # Limitations and Potential Improvements
 # 1. The "Categories themselves contain potentially relevant information" but they're not pulled in
 # 2. Only the HTML Articles are supported, Document360 also has a Markdown and "Block" format
 # 3. The contents are not as cleaned up as other HTML connectors
 
-DOCUMENT360_BASE_URL = "https://preview.portal.document360.io/"
+DOCUMENT360_BASE_URL = "https://portal.document360.io"
 DOCUMENT360_API_BASE_URL = "https://apihub.document360.io/v2"
 
 
@@ -97,13 +98,16 @@ class Document360Connector(LoadConnector, PollConnector):
                         {"id": article["id"], "category_name": category["name"]}
                     )
                 for child_category in category["child_categories"]:
-                    for article in child_category["articles"]:
-                        articles_with_category.append(
-                            {
-                                "id": article["id"],
-                                "category_name": child_category["name"],
-                            }
-                        )
+                    all_nested_categories = flatten_child_categories(child_category)
+                    for nested_category in all_nested_categories:
+                        for article in nested_category["articles"]:
+                            articles_with_category.append(
+                                {
+                                    "id": article["id"],
+                                    "category_name": nested_category["name"],
+                                }
+                            )
+
         return articles_with_category
 
     def _process_articles(
@@ -138,10 +142,16 @@ class Document360Connector(LoadConnector, PollConnector):
                 if author["email_id"]
             ]
 
-            doc_link = f"{DOCUMENT360_BASE_URL}/{self.portal_id}/document/v1/view/{article['id']}"
+            doc_link = (
+                article_details["url"]
+                if article_details.get("url")
+                else f"{DOCUMENT360_BASE_URL}/{self.portal_id}/document/v1/view/{article['id']}"
+            )
 
             html_content = article_details["html_content"]
-            article_content = parse_html_page_basic(html_content)
+            article_content = (
+                parse_html_page_basic(html_content) if html_content is not None else ""
+            )
             doc_text = (
                 f"{article_details.get('description', '')}\n{article_content}".strip()
             )

@@ -85,6 +85,7 @@ Install the required python dependencies:
 ```bash
 pip install -r danswer/backend/requirements/default.txt
 pip install -r danswer/backend/requirements/dev.txt
+pip install -r danswer/backend/requirements/model_server.txt
 ```
 
 Install [Node.js and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) for the frontend.
@@ -117,7 +118,19 @@ To start the frontend, navigate to `danswer/web` and run:
 npm run dev
 ```
 
-The first time running Danswer, you will also need to run the DB migrations for Postgres.
+Next, start the model server which runs the local NLP models.
+Navigate to `danswer/backend` and run:
+```bash
+uvicorn model_server.main:app --reload --port 9000
+```
+_For Windows (for compatibility with both PowerShell and Command Prompt):_
+```bash
+powershell -Command "
+    uvicorn model_server.main:app --reload --port 9000
+"
+```
+
+The first time running Danswer, you will need to run the DB migrations for Postgres.
 After the first time, this is no longer required unless the DB models change.
 
 Navigate to `danswer/backend` and with the venv active, run:

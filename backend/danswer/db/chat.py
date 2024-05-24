@@ -12,6 +12,7 @@ from sqlalchemy import update
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import Session
 
+from danswer.auth.schemas import UserRole
 from danswer.configs.chat_configs import HARD_DELETE_CHATS
 from danswer.configs.constants import MessageType
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
@@ -27,7 +28,10 @@ from danswer.db.models import Prompt
 from danswer.db.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.db.models import StarterMessage
+from danswer.db.models import Tool
+from danswer.db.models import User
 from danswer.db.models import User__UserGroup
+from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
 from danswer.search.enums import RecencyBiasSetting
@@ -99,6 +103,7 @@ def create_chat_session(
     llm_override: LLMOverride | None = None,
     prompt_override: PromptOverride | None = None,
     one_shot: bool = False,
+    danswerbot_flow: bool = False,
 ) -> ChatSession:
     chat_session = ChatSession(
         user_id=user_id,
@@ -107,6 +112,7 @@ def create_chat_session(
         llm_override=llm_override,
         prompt_override=prompt_override,
         one_shot=one_shot,
+        danswerbot_flow=danswerbot_flow,
     )
 
     db_session.add(chat_session)
@@ -254,6 +260,7 @@ def create_new_chat_message(
     token_count: int,
     message_type: MessageType,
     db_session: Session,
+    files: list[FileDescriptor] | None = None,
     rephrased_query: str | None = None,
     error: str | None = None,
     reference_docs: list[DBSearchDoc] | None = None,
@@ -271,6 +278,7 @@ def create_new_chat_message(
         token_count=token_count,
         message_type=message_type,
         citations=citations,
+        files=files,
         error=error,
     )
 
@@ -311,15 +319,29 @@ def set_as_latest_chat_message(
     db_session.commit()
 
 
+def attach_files_to_chat_message(
+    chat_message: ChatMessage,
+    files: list[FileDescriptor],
+    db_session: Session,
+    commit: bool = True,
+) -> None:
+    chat_message.files = files
+    if commit:
+        db_session.commit()
+
+
 def get_prompt_by_id(
     prompt_id: int,
-    user_id: UUID | None,
+    user: User | None,
     db_session: Session,
     include_deleted: bool = False,
 ) -> Prompt:
-    stmt = select(Prompt).where(
-        Prompt.id == prompt_id, or_(Prompt.user_id == user_id, Prompt.user_id.is_(None))
-    )
+    stmt = select(Prompt).where(Prompt.id == prompt_id)
+
+    # if user is not specified OR they are an admin, they should
+    # have access to all prompts, so this where clause is not needed
+    if user and user.role != UserRole.ADMIN:
+        stmt = stmt.where(or_(Prompt.user_id == user.id, Prompt.user_id.is_(None)))
 
     if not include_deleted:
         stmt = stmt.where(Prompt.deleted.is_(False))
@@ -351,14 +373,16 @@ def get_default_prompt() -> Prompt:
 
 def get_persona_by_id(
     persona_id: int,
-    # if user_id is `None` assume the user is an admin or auth is disabled
-    user_id: UUID | None,
+    # if user is `None` assume the user is an admin or auth is disabled
+    user: User | None,
     db_session: Session,
     include_deleted: bool = False,
 ) -> Persona:
     stmt = select(Persona).where(Persona.id == persona_id)
-    if user_id is not None:
-        stmt = stmt.where(or_(Persona.user_id == user_id, Persona.user_id.is_(None)))
+
+    # if user is an admin, they should have access to all Personas
+    if user is not None and user.role != UserRole.ADMIN:
+        stmt = stmt.where(or_(Persona.user_id == user.id, Persona.user_id.is_(None)))
 
     if not include_deleted:
         stmt = stmt.where(Persona.deleted.is_(False))
@@ -397,33 +421,33 @@ def get_personas_by_ids(
 
 
 def get_prompt_by_name(
-    prompt_name: str, user_id: UUID | None, shared: bool, db_session: Session
+    prompt_name: str, user: User | None, db_session: Session
 ) -> Prompt | None:
-    """Cannot do shared and user owned simultaneously as there may be two of those"""
     stmt = select(Prompt).where(Prompt.name == prompt_name)
-    if shared:
-        stmt = stmt.where(Prompt.user_id.is_(None))
-    else:
-        stmt = stmt.where(Prompt.user_id == user_id)
+
+    # if user is not specified OR they are an admin, they should
+    # have access to all prompts, so this where clause is not needed
+    if user and user.role != UserRole.ADMIN:
+        stmt = stmt.where(Prompt.user_id == user.id)
+
     result = db_session.execute(stmt).scalar_one_or_none()
     return result
 
 
 def get_persona_by_name(
-    persona_name: str, user_id: UUID | None, shared: bool, db_session: Session
+    persona_name: str, user: User | None, db_session: Session
 ) -> Persona | None:
-    """Cannot do shared and user owned simultaneously as there may be two of those"""
+    """Admins can see all, regular users can only fetch their own.
+    If user is None, assume the user is an admin or auth is disabled."""
     stmt = select(Persona).where(Persona.name == persona_name)
-    if shared:
-        stmt = stmt.where(Persona.user_id.is_(None))
-    else:
-        stmt = stmt.where(Persona.user_id == user_id)
+    if user and user.role != UserRole.ADMIN:
+        stmt = stmt.where(Persona.user_id == user.id)
     result = db_session.execute(stmt).scalar_one_or_none()
     return result
 
 
 def upsert_prompt(
-    user_id: UUID | None,
+    user: User | None,
     name: str,
     description: str,
     system_prompt: str,
@@ -431,7 +455,6 @@ def upsert_prompt(
     include_citations: bool,
     datetime_aware: bool,
     personas: list[Persona] | None,
-    shared: bool,
     db_session: Session,
     prompt_id: int | None = None,
     default_prompt: bool = True,
@@ -440,9 +463,7 @@ def upsert_prompt(
     if prompt_id is not None:
         prompt = db_session.query(Prompt).filter_by(id=prompt_id).first()
     else:
-        prompt = get_prompt_by_name(
-            prompt_name=name, user_id=user_id, shared=shared, db_session=db_session
-        )
+        prompt = get_prompt_by_name(prompt_name=name, user=user, db_session=db_session)
 
     if prompt:
         if not default_prompt and prompt.default_prompt:
@@ -463,7 +484,7 @@ def upsert_prompt(
     else:
         prompt = Prompt(
             id=prompt_id,
-            user_id=None if shared else user_id,
+            user_id=user.id if user else None,
             name=name,
             description=description,
             system_prompt=system_prompt,
@@ -485,7 +506,7 @@ def upsert_prompt(
 
 
 def upsert_persona(
-    user_id: UUID | None,
+    user: User | None,
     name: str,
     description: str,
     num_chunks: float,
@@ -494,11 +515,12 @@ def upsert_persona(
     recency_bias: RecencyBiasSetting,
     prompts: list[Prompt] | None,
     document_sets: list[DBDocumentSet] | None,
+    llm_model_provider_override: str | None,
     llm_model_version_override: str | None,
     starter_messages: list[StarterMessage] | None,
-    shared: bool,
     is_public: bool,
     db_session: Session,
+    tool_ids: list[int] | None = None,
     persona_id: int | None = None,
     default_persona: bool = False,
     commit: bool = True,
@@ -507,8 +529,15 @@ def upsert_persona(
         persona = db_session.query(Persona).filter_by(id=persona_id).first()
     else:
         persona = get_persona_by_name(
-            persona_name=name, user_id=user_id, shared=shared, db_session=db_session
+            persona_name=name, user=user, db_session=db_session
         )
+
+    # Fetch and attach tools by IDs
+    tools = None
+    if tool_ids is not None:
+        tools = db_session.query(Tool).filter(Tool.id.in_(tool_ids)).all()
+        if not tools and tool_ids:
+            raise ValueError("Tools not found")
 
     if persona:
         if not default_persona and persona.default_persona:
@@ -521,6 +550,7 @@ def upsert_persona(
         persona.llm_filter_extraction = llm_filter_extraction
         persona.recency_bias = recency_bias
         persona.default_persona = default_persona
+        persona.llm_model_provider_override = llm_model_provider_override
         persona.llm_model_version_override = llm_model_version_override
         persona.starter_messages = starter_messages
         persona.deleted = False  # Un-delete if previously deleted
@@ -536,10 +566,13 @@ def upsert_persona(
             persona.prompts.clear()
             persona.prompts = prompts
 
+        if tools is not None:
+            persona.tools = tools
+
     else:
         persona = Persona(
             id=persona_id,
-            user_id=None if shared else user_id,
+            user_id=user.id if user else None,
             is_public=is_public,
             name=name,
             description=description,
@@ -550,8 +583,10 @@ def upsert_persona(
             default_persona=default_persona,
             prompts=prompts or [],
             document_sets=document_sets or [],
+            llm_model_provider_override=llm_model_provider_override,
             llm_model_version_override=llm_model_version_override,
             starter_messages=starter_messages,
+            tools=tools or [],
         )
         db_session.add(persona)
 
@@ -566,26 +601,37 @@ def upsert_persona(
 
 def mark_prompt_as_deleted(
     prompt_id: int,
-    user_id: UUID | None,
+    user: User | None,
     db_session: Session,
 ) -> None:
-    prompt = get_prompt_by_id(
-        prompt_id=prompt_id, user_id=user_id, db_session=db_session
-    )
+    prompt = get_prompt_by_id(prompt_id=prompt_id, user=user, db_session=db_session)
     prompt.deleted = True
     db_session.commit()
 
 
 def mark_persona_as_deleted(
     persona_id: int,
-    user_id: UUID | None,
+    user: User | None,
+    db_session: Session,
+) -> None:
+    persona = get_persona_by_id(persona_id=persona_id, user=user, db_session=db_session)
+    persona.deleted = True
+    db_session.commit()
+
+
+def mark_persona_as_not_deleted(
+    persona_id: int,
+    user: User | None,
     db_session: Session,
 ) -> None:
     persona = get_persona_by_id(
-        persona_id=persona_id, user_id=user_id, db_session=db_session
+        persona_id=persona_id, user=user, db_session=db_session, include_deleted=True
     )
-    persona.deleted = True
-    db_session.commit()
+    if persona.deleted:
+        persona.deleted = False
+        db_session.commit()
+    else:
+        raise ValueError(f"Persona with ID {persona_id} is not deleted.")
 
 
 def mark_delete_persona_by_name(
@@ -621,9 +667,7 @@ def update_persona_visibility(
     is_visible: bool,
     db_session: Session,
 ) -> None:
-    persona = get_persona_by_id(
-        persona_id=persona_id, user_id=None, db_session=db_session
-    )
+    persona = get_persona_by_id(persona_id=persona_id, user=None, db_session=db_session)
     persona.is_visible = is_visible
     db_session.commit()
 
@@ -819,6 +863,7 @@ def translate_db_message_to_chat_message_detail(
         message_type=chat_message.message_type,
         time_sent=chat_message.time_sent,
         citations=chat_message.citations,
+        files=chat_message.files or [],
     )
 
     return chat_msg_detail

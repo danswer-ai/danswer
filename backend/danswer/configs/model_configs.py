@@ -1,3 +1,4 @@
+import json
 import os
 
 #####
@@ -37,32 +38,12 @@ ASYM_QUERY_PREFIX = os.environ.get("ASYM_QUERY_PREFIX", "query: ")
 ASYM_PASSAGE_PREFIX = os.environ.get("ASYM_PASSAGE_PREFIX", "passage: ")
 # Purely an optimization, memory limitation consideration
 BATCH_SIZE_ENCODE_CHUNKS = 8
-# This controls the minimum number of pytorch "threads" to allocate to the embedding
-# model. If torch finds more threads on its own, this value is not used.
-MIN_THREADS_ML_MODELS = int(os.environ.get("MIN_THREADS_ML_MODELS") or 1)
-
-# Cross Encoder Settings
-ENABLE_RERANKING_ASYNC_FLOW = (
-    os.environ.get("ENABLE_RERANKING_ASYNC_FLOW", "").lower() == "true"
-)
-ENABLE_RERANKING_REAL_TIME_FLOW = (
-    os.environ.get("ENABLE_RERANKING_REAL_TIME_FLOW", "").lower() == "true"
-)
-# Only using one for now
-CROSS_ENCODER_MODEL_ENSEMBLE = ["mixedbread-ai/mxbai-rerank-xsmall-v1"]
-# For score normalizing purposes, only way is to know the expected ranges
+# For score display purposes, only way is to know the expected ranges
 CROSS_ENCODER_RANGE_MAX = 12
 CROSS_ENCODER_RANGE_MIN = -12
-CROSS_EMBED_CONTEXT_SIZE = 512
 
 # Unused currently, can't be used with the current default encoder model due to its output range
 SEARCH_DISTANCE_CUTOFF = 0
-
-# Intent model max context size
-QUERY_MAX_CONTEXT_SIZE = 256
-
-# Danswer custom Deep Learning Models
-INTENT_MODEL_VERSION = "danswer/intent-model"
 
 
 #####
@@ -111,3 +92,24 @@ GEN_AI_HISTORY_CUTOFF = 3000
 # error if the total # of tokens exceeds the max input tokens.
 GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS = 512
 GEN_AI_TEMPERATURE = float(os.environ.get("GEN_AI_TEMPERATURE") or 0)
+
+# should be used if you are using a custom LLM inference provider that doesn't support
+# streaming format AND you are still using the langchain/litellm LLM class
+DISABLE_LITELLM_STREAMING = (
+    os.environ.get("DISABLE_LITELLM_STREAMING") or "false"
+).lower() == "true"
+
+# extra headers to pass to LiteLLM
+LITELLM_EXTRA_HEADERS = None
+_LITELLM_EXTRA_HEADERS_RAW = os.environ.get("LITELLM_EXTRA_HEADERS")
+if _LITELLM_EXTRA_HEADERS_RAW:
+    try:
+        LITELLM_EXTRA_HEADERS = json.loads(_LITELLM_EXTRA_HEADERS_RAW)
+    except Exception:
+        # need to import here to avoid circular imports
+        from danswer.utils.logger import setup_logger
+
+        logger = setup_logger()
+        logger.error(
+            "Failed to parse LITELLM_EXTRA_HEADERS, must be a valid JSON object"
+        )

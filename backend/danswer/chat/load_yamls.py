@@ -24,7 +24,7 @@ def load_prompts_from_yaml(prompts_yaml: str = PROMPTS_YAML) -> None:
     with Session(get_sqlalchemy_engine()) as db_session:
         for prompt in all_prompts:
             upsert_prompt(
-                user_id=None,
+                user=None,
                 prompt_id=prompt.get("id"),
                 name=prompt["name"],
                 description=prompt["description"].strip(),
@@ -34,7 +34,6 @@ def load_prompts_from_yaml(prompts_yaml: str = PROMPTS_YAML) -> None:
                 datetime_aware=prompt.get("datetime_aware", True),
                 default_prompt=True,
                 personas=None,
-                shared=True,
                 db_session=db_session,
                 commit=True,
             )
@@ -67,9 +66,7 @@ def load_personas_from_yaml(
                 prompts: list[PromptDBModel | None] | None = None
             else:
                 prompts = [
-                    get_prompt_by_name(
-                        prompt_name, user_id=None, shared=True, db_session=db_session
-                    )
+                    get_prompt_by_name(prompt_name, user=None, db_session=db_session)
                     for prompt_name in prompt_set_names
                 ]
                 if any([prompt is None for prompt in prompts]):
@@ -80,7 +77,7 @@ def load_personas_from_yaml(
 
             p_id = persona.get("id")
             upsert_persona(
-                user_id=None,
+                user=None,
                 # Negative to not conflict with existing personas
                 persona_id=(-1 * p_id) if p_id is not None else None,
                 name=persona["name"],
@@ -91,12 +88,12 @@ def load_personas_from_yaml(
                 llm_relevance_filter=persona.get("llm_relevance_filter"),
                 starter_messages=persona.get("starter_messages"),
                 llm_filter_extraction=persona.get("llm_filter_extraction"),
+                llm_model_provider_override=None,
                 llm_model_version_override=None,
                 recency_bias=RecencyBiasSetting(persona["recency_bias"]),
                 prompts=cast(list[PromptDBModel] | None, prompts),
                 document_sets=doc_sets,
                 default_persona=True,
-                shared=True,
                 is_public=True,
                 db_session=db_session,
             )

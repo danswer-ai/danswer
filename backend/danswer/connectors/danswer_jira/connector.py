@@ -8,6 +8,7 @@ from jira import JIRA
 from jira.resources import Issue
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
+from danswer.configs.app_configs import JIRA_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -44,21 +45,44 @@ def extract_jira_project(url: str) -> tuple[str, str]:
     return jira_base, jira_project
 
 
+def extract_text_from_content(content: dict) -> str:
+    texts = []
+    if "content" in content:
+        for block in content["content"]:
+            if "content" in block:
+                for item in block["content"]:
+                    if item["type"] == "text":
+                        texts.append(item["text"])
+    return " ".join(texts)
+
+
 def _get_comment_strs(
-    jira: Issue,
-    comment_email_blacklist: tuple[str, ...] = (),
+    jira: Issue, comment_email_blacklist: tuple[str, ...] = ()
 ) -> list[str]:
     comment_strs = []
     for comment in jira.fields.comment.comments:
-        # Can't test Jira server so can't be sure this works for everyone, wrapping in a try just
-        # in case
         try:
-            comment_strs.append(comment.body)
-            # If this fails, we just assume it's ok to keep the comment
-            if comment.author.emailAddress in comment_email_blacklist:
-                comment_strs.pop()
-        except Exception:
-            pass
+            if hasattr(comment, "body"):
+                body_text = extract_text_from_content(comment.raw["body"])
+            elif hasattr(comment, "raw"):
+                body = comment.raw.get("body", "No body content available")
+                body_text = (
+                    extract_text_from_content(body) if isinstance(body, dict) else body
+                )
+            else:
+                body_text = "No body attribute found"
+
+            if (
+                hasattr(comment, "author")
+                and comment.author.emailAddress in comment_email_blacklist
+            ):
+                continue  # Skip adding comment if author's email is in blacklist
+
+            comment_strs.append(body_text)
+        except Exception as e:
+            logger.error(f"Failed to process comment due to an error: {e}")
+            continue
+
     return comment_strs
 
 
@@ -68,6 +92,7 @@ def fetch_jira_issues_batch(
     jira_client: JIRA,
     batch_size: int = INDEX_BATCH_SIZE,
     comment_email_blacklist: tuple[str, ...] = (),
+    labels_to_skip: set[str] | None = None,
 ) -> tuple[list[Document], int]:
     doc_batch = []
 
@@ -80,6 +105,15 @@ def fetch_jira_issues_batch(
     for jira in batch:
         if type(jira) != Issue:
             logger.warning(f"Found Jira object not of type Issue {jira}")
+            continue
+
+        if labels_to_skip and any(
+            label in jira.fields.labels for label in labels_to_skip
+        ):
+            logger.info(
+                f"Skipping {jira.key} because it has a label to skip. Found "
+                f"labels: {jira.fields.labels}. Labels to skip: {labels_to_skip}."
+            )
             continue
 
         comments = _get_comment_strs(jira, comment_email_blacklist)
@@ -143,11 +177,17 @@ class JiraConnector(LoadConnector, PollConnector):
         jira_project_url: str,
         comment_email_blacklist: list[str] | None = None,
         batch_size: int = INDEX_BATCH_SIZE,
+        # if a ticket has one of the labels specified in this list, we will just
+        # skip it. This is generally used to avoid indexing extra sensitive
+        # tickets.
+        labels_to_skip: list[str] = JIRA_CONNECTOR_LABELS_TO_SKIP,
     ) -> None:
         self.batch_size = batch_size
         self.jira_base, self.jira_project = extract_jira_project(jira_project_url)
         self.jira_client: JIRA | None = None
         self._comment_email_blacklist = comment_email_blacklist or []
+
+        self.labels_to_skip = set(labels_to_skip)
 
     @property
     def comment_email_blacklist(self) -> tuple:
@@ -182,6 +222,8 @@ class JiraConnector(LoadConnector, PollConnector):
                 start_index=start_ind,
                 jira_client=self.jira_client,
                 batch_size=self.batch_size,
+                comment_email_blacklist=self.comment_email_blacklist,
+                labels_to_skip=self.labels_to_skip,
             )
 
             if doc_batch:
@@ -218,6 +260,7 @@ class JiraConnector(LoadConnector, PollConnector):
                 jira_client=self.jira_client,
                 batch_size=self.batch_size,
                 comment_email_blacklist=self.comment_email_blacklist,
+                labels_to_skip=self.labels_to_skip,
             )
 
             if doc_batch:

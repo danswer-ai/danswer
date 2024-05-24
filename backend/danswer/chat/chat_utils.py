@@ -1,5 +1,6 @@
 import re
 from collections.abc import Sequence
+from typing import cast
 
 from sqlalchemy.orm import Session
 
@@ -7,16 +8,20 @@ from danswer.chat.models import CitationInfo
 from danswer.chat.models import LlmDoc
 from danswer.db.chat import get_chat_messages_by_session
 from danswer.db.models import ChatMessage
-from danswer.indexing.models import InferenceChunk
+from danswer.llm.answering.models import PreviousMessage
+from danswer.search.models import InferenceChunk
+from danswer.search.models import InferenceSection
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
 
-def llm_doc_from_inference_chunk(inf_chunk: InferenceChunk) -> LlmDoc:
+def llm_doc_from_inference_section(inf_chunk: InferenceSection) -> LlmDoc:
     return LlmDoc(
         document_id=inf_chunk.document_id,
-        content=inf_chunk.content,
+        # This one is using the combined content of all the chunks of the section
+        # In default settings, this is the same as just the content of base chunk
+        content=inf_chunk.combined_content,
         blurb=inf_chunk.blurb,
         semantic_identifier=inf_chunk.semantic_identifier,
         source_type=inf_chunk.source_type,
@@ -85,7 +90,7 @@ def create_chat_chain(
 
 
 def combine_message_chain(
-    messages: list[ChatMessage],
+    messages: list[ChatMessage] | list[PreviousMessage],
     token_limit: int,
     msg_limit: int | None = None,
 ) -> str:
@@ -96,7 +101,7 @@ def combine_message_chain(
     if msg_limit is not None:
         messages = messages[-msg_limit:]
 
-    for message in reversed(messages):
+    for message in cast(list[ChatMessage] | list[PreviousMessage], reversed(messages)):
         message_token_count = message.token_count
 
         if total_token_count + message_token_count > token_limit:

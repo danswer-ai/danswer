@@ -1,4 +1,6 @@
 import io
+import ipaddress
+import socket
 from enum import Enum
 from typing import Any
 from typing import cast
@@ -18,15 +20,15 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_ID
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import WEB_CONNECTOR_OAUTH_TOKEN_URL
+from danswer.configs.app_configs import WEB_CONNECTOR_VALIDATE_URLS
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
-from danswer.connectors.cross_connector_utils.html_utils import web_html_cleanup
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.file_processing.extract_file_text import pdf_to_text
+from danswer.file_processing.html_utils import web_html_cleanup
 from danswer.utils.logger import setup_logger
-
 
 logger = setup_logger()
 
@@ -40,6 +42,40 @@ class WEB_CONNECTOR_VALID_SETTINGS(str, Enum):
     SITEMAP = "sitemap"
     # Given a file upload where every line is a URL, parse all the URLs provided
     UPLOAD = "upload"
+
+
+def protected_url_check(url: str) -> None:
+    """Couple considerations:
+    - DNS mapping changes over time so we don't want to cache the results
+    - Fetching this is assumed to be relatively fast compared to other bottlenecks like reading
+      the page or embedding the contents
+    - To be extra safe, all IPs associated with the URL must be global
+    - This is to prevent misuse and not explicit attacks
+    """
+    if not WEB_CONNECTOR_VALIDATE_URLS:
+        return
+
+    parse = urlparse(url)
+    if parse.scheme != "http" and parse.scheme != "https":
+        raise ValueError("URL must be of scheme https?://")
+
+    if not parse.hostname:
+        raise ValueError("URL must include a hostname")
+
+    try:
+        # This may give a large list of IP addresses for domains with extensive DNS configurations
+        # such as large distributed systems of CDNs
+        info = socket.getaddrinfo(parse.hostname, None)
+    except socket.gaierror as e:
+        raise ConnectionError(f"DNS resolution failed for {parse.hostname}: {e}")
+
+    for address in info:
+        ip = address[4][0]
+        if not ipaddress.ip_address(ip).is_global:
+            raise ValueError(
+                f"Non-global IP address detected: {ip}, skipping page {url}. "
+                f"The Web Connector is not allowed to read loopback, link-local, or private ranges"
+            )
 
 
 def check_internet_connection(url: str) -> None:
@@ -181,6 +217,10 @@ class WebConnector(LoadConnector):
         base_url = to_visit[0]  # For the recursive case
         doc_batch: list[Document] = []
 
+        # Needed to report error
+        at_least_one_doc = False
+        last_error = None
+
         playwright, context = start_playwright()
         restart_playwright = False
         while to_visit:
@@ -188,6 +228,13 @@ class WebConnector(LoadConnector):
             if current_url in visited_links:
                 continue
             visited_links.add(current_url)
+
+            try:
+                protected_url_check(current_url)
+            except Exception as e:
+                last_error = f"Invalid URL {current_url} due to {e}"
+                logger.warning(last_error)
+                continue
 
             logger.info(f"Visiting {current_url}")
 
@@ -200,9 +247,7 @@ class WebConnector(LoadConnector):
                 if current_url.split(".")[-1] == "pdf":
                     # PDF files are not checked for links
                     response = requests.get(current_url)
-                    page_text = read_pdf_file(
-                        file=io.BytesIO(response.content), file_name=current_url
-                    )
+                    page_text = pdf_to_text(file=io.BytesIO(response.content))
 
                     doc_batch.append(
                         Document(
@@ -220,6 +265,7 @@ class WebConnector(LoadConnector):
                 final_page = page.url
                 if final_page != current_url:
                     logger.info(f"Redirected to {final_page}")
+                    protected_url_check(final_page)
                     current_url = final_page
                     if current_url in visited_links:
                         logger.info("Redirected page already indexed")
@@ -236,9 +282,8 @@ class WebConnector(LoadConnector):
                             to_visit.append(link)
 
                 if page_response and str(page_response.status)[0] in ("4", "5"):
-                    logger.info(
-                        f"Skipped indexing {current_url} due to HTTP {page_response.status} response"
-                    )
+                    last_error = f"Skipped indexing {current_url} due to HTTP {page_response.status} response"
+                    logger.info(last_error)
                     continue
 
                 parsed_html = web_html_cleanup(soup, self.mintlify_cleanup)
@@ -257,7 +302,8 @@ class WebConnector(LoadConnector):
 
                 page.close()
             except Exception as e:
-                logger.error(f"Failed to fetch '{current_url}': {e}")
+                last_error = f"Failed to fetch '{current_url}': {e}"
+                logger.error(last_error)
                 playwright.stop()
                 restart_playwright = True
                 continue
@@ -265,12 +311,19 @@ class WebConnector(LoadConnector):
             if len(doc_batch) >= self.batch_size:
                 playwright.stop()
                 restart_playwright = True
+                at_least_one_doc = True
                 yield doc_batch
                 doc_batch = []
 
         if doc_batch:
             playwright.stop()
+            at_least_one_doc = True
             yield doc_batch
+
+        if not at_least_one_doc:
+            if last_error:
+                raise RuntimeError(last_error)
+            raise RuntimeError("No valid pages found.")
 
 
 if __name__ == "__main__":

@@ -8,7 +8,6 @@ from pydantic import BaseModel
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.html_utils import parse_html_page_basic
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     process_in_batches,
 )
@@ -23,6 +22,7 @@ from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.file_processing.html_utils import parse_html_page_basic
 from danswer.utils.logger import setup_logger
 
 
@@ -244,7 +244,7 @@ def _translate_content_to_doc(content: dict) -> Document:
 
     doc = Document(
         id="AXERO_" + str(content["ContentID"]),
-        sections=[Section(link=content["ContentVersionURL"], text=page_text)],
+        sections=[Section(link=content["ContentURL"], text=page_text)],
         source=DocumentSource.AXERO,
         semantic_identifier=content["ContentTitle"],
         doc_updated_at=time_str_to_utc(content["DateUpdated"]),
@@ -304,7 +304,6 @@ class AxeroConnector(PollConnector):
         iterable_space_ids = self.space_ids if self.space_ids else [None]
 
         for space_id in iterable_space_ids:
-            entity_types = []
             for entity in entity_types:
                 axero_obj = _get_entities(
                     entity_type=entity,
