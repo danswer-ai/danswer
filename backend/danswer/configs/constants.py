@@ -96,6 +96,8 @@ class DocumentSource(str, Enum):
     SHAREPOINT = "sharepoint"
     DISCOURSE = "discourse"
     AXERO = "axero"
+    MEDIAWIKI = "mediawiki"
+    WIKIPEDIA = "wikipedia"
 
 
 class DocumentIndexType(str, Enum):
