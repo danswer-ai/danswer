@@ -3,13 +3,19 @@ from collections.abc import Iterator
 from typing import Any
 from typing import TYPE_CHECKING
 
+from langchain.schema.messages import AIMessage
+from langchain.schema.messages import BaseMessage
+from langchain.schema.messages import HumanMessage
+from langchain.schema.messages import SystemMessage
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import root_validator
 
 from danswer.chat.models import AnswerQuestionStreamReturn
 from danswer.configs.constants import MessageType
+from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.override_models import PromptOverride
+from danswer.llm.utils import build_content_with_imgs
 
 if TYPE_CHECKING:
     from danswer.db.models import ChatMessage
@@ -25,14 +31,34 @@ class PreviousMessage(BaseModel):
     message: str
     token_count: int
     message_type: MessageType
+    files: list[InMemoryChatFile]
 
     @classmethod
-    def from_chat_message(cls, chat_message: "ChatMessage") -> "PreviousMessage":
+    def from_chat_message(
+        cls, chat_message: "ChatMessage", available_files: list[InMemoryChatFile]
+    ) -> "PreviousMessage":
+        message_file_ids = (
+            [file["id"] for file in chat_message.files] if chat_message.files else []
+        )
         return cls(
             message=chat_message.message,
             token_count=chat_message.token_count,
             message_type=chat_message.message_type,
+            files=[
+                file
+                for file in available_files
+                if str(file.file_id) in message_file_ids
+            ],
         )
+
+    def to_langchain_msg(self) -> BaseMessage:
+        content = build_content_with_imgs(self.message, self.files)
+        if self.message_type == MessageType.USER:
+            return HumanMessage(content=content)
+        elif self.message_type == MessageType.ASSISTANT:
+            return AIMessage(content=content)
+        else:
+            return SystemMessage(content=content)
 
 
 class DocumentPruningConfig(BaseModel):
@@ -47,6 +73,11 @@ class DocumentPruningConfig(BaseModel):
     # If user specifies to include additional context chunks for each match, then different pruning
     # is used. As many Sections as possible are included, and the last Section is truncated
     use_sections: bool = False
+    # If using tools, then we need to consider the tool length
+    tool_num_tokens: int = 0
+    # If using a tool message to represent the docs, then we have to JSON serialize
+    # the document content, which adds to the token count.
+    using_tool_message: bool = False
 
 
 class CitationConfig(BaseModel):

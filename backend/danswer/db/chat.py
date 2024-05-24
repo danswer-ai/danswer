@@ -28,8 +28,10 @@ from danswer.db.models import Prompt
 from danswer.db.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.db.models import StarterMessage
+from danswer.db.models import Tool
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
+from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
 from danswer.search.enums import RecencyBiasSetting
@@ -101,6 +103,7 @@ def create_chat_session(
     llm_override: LLMOverride | None = None,
     prompt_override: PromptOverride | None = None,
     one_shot: bool = False,
+    danswerbot_flow: bool = False,
 ) -> ChatSession:
     chat_session = ChatSession(
         user_id=user_id,
@@ -109,6 +112,7 @@ def create_chat_session(
         llm_override=llm_override,
         prompt_override=prompt_override,
         one_shot=one_shot,
+        danswerbot_flow=danswerbot_flow,
     )
 
     db_session.add(chat_session)
@@ -256,6 +260,7 @@ def create_new_chat_message(
     token_count: int,
     message_type: MessageType,
     db_session: Session,
+    files: list[FileDescriptor] | None = None,
     rephrased_query: str | None = None,
     error: str | None = None,
     reference_docs: list[DBSearchDoc] | None = None,
@@ -273,6 +278,7 @@ def create_new_chat_message(
         token_count=token_count,
         message_type=message_type,
         citations=citations,
+        files=files,
         error=error,
     )
 
@@ -311,6 +317,17 @@ def set_as_latest_chat_message(
     parent_message.latest_child_message = chat_message.id
 
     db_session.commit()
+
+
+def attach_files_to_chat_message(
+    chat_message: ChatMessage,
+    files: list[FileDescriptor],
+    db_session: Session,
+    commit: bool = True,
+) -> None:
+    chat_message.files = files
+    if commit:
+        db_session.commit()
 
 
 def get_prompt_by_id(
@@ -503,6 +520,7 @@ def upsert_persona(
     starter_messages: list[StarterMessage] | None,
     is_public: bool,
     db_session: Session,
+    tool_ids: list[int] | None = None,
     persona_id: int | None = None,
     default_persona: bool = False,
     commit: bool = True,
@@ -513,6 +531,13 @@ def upsert_persona(
         persona = get_persona_by_name(
             persona_name=name, user=user, db_session=db_session
         )
+
+    # Fetch and attach tools by IDs
+    tools = None
+    if tool_ids is not None:
+        tools = db_session.query(Tool).filter(Tool.id.in_(tool_ids)).all()
+        if not tools and tool_ids:
+            raise ValueError("Tools not found")
 
     if persona:
         if not default_persona and persona.default_persona:
@@ -541,6 +566,9 @@ def upsert_persona(
             persona.prompts.clear()
             persona.prompts = prompts
 
+        if tools is not None:
+            persona.tools = tools
+
     else:
         persona = Persona(
             id=persona_id,
@@ -558,6 +586,7 @@ def upsert_persona(
             llm_model_provider_override=llm_model_provider_override,
             llm_model_version_override=llm_model_version_override,
             starter_messages=starter_messages,
+            tools=tools or [],
         )
         db_session.add(persona)
 
@@ -588,6 +617,21 @@ def mark_persona_as_deleted(
     persona = get_persona_by_id(persona_id=persona_id, user=user, db_session=db_session)
     persona.deleted = True
     db_session.commit()
+
+
+def mark_persona_as_not_deleted(
+    persona_id: int,
+    user: User | None,
+    db_session: Session,
+) -> None:
+    persona = get_persona_by_id(
+        persona_id=persona_id, user=user, db_session=db_session, include_deleted=True
+    )
+    if persona.deleted:
+        persona.deleted = False
+        db_session.commit()
+    else:
+        raise ValueError(f"Persona with ID {persona_id} is not deleted.")
 
 
 def mark_delete_persona_by_name(
@@ -819,6 +863,7 @@ def translate_db_message_to_chat_message_detail(
         message_type=chat_message.message_type,
         time_sent=chat_message.time_sent,
         citations=chat_message.citations,
+        files=chat_message.files or [],
     )
 
     return chat_msg_detail

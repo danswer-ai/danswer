@@ -14,6 +14,7 @@ import { BackButton } from "@/components/BackButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { useRouter } from "next/navigation";
 import { UserGroup } from "@/lib/types";
+import { refreshDocumentSets } from "../hooks";
 
 function Main() {
   const { popup, setPopup } = usePopup();
@@ -50,6 +51,7 @@ function Main() {
           ccPairs={ccPairs}
           userGroups={userGroups}
           onClose={() => {
+            refreshDocumentSets();
             router.push("/admin/documents/sets");
           }}
           setPopup={setPopup}
