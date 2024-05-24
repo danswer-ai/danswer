@@ -4,7 +4,7 @@ import os
 PROMPTS_YAML = "./danswer/chat/prompts.yaml"
 PERSONAS_YAML = "./danswer/chat/personas.yaml"
 
-NUM_RETURNED_HITS = 50
+NUM_RETURNED_HITS = os.environ.get("TOOL_SEARCH_NUM_RETURNED_HITS") or 50
 NUM_RERANKED_RESULTS = 15
 
 # May be less depending on model
