@@ -168,20 +168,20 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Axero",
     category: SourceCategory.AppConnection,
   },
-  requesttracker: {
-    icon: RequestTrackerIcon,
-    displayName: "Request Tracker",
-    category: SourceCategory.AppConnection,
-  },
   wikipedia: {
     icon: WikipediaIcon,
     displayName: "Wikipedia",
-    category: SourceCategory.ImportedKnowledge,
+    category: SourceCategory.AppConnection,
   },
   mediawiki: {
     icon: MediaWikiIcon,
     displayName: "MediaWiki",
-    category: SourceCategory.ImportedKnowledge,
+    category: SourceCategory.AppConnection,
+  },
+  requesttracker: {
+    icon: RequestTrackerIcon,
+    displayName: "Request Tracker",
+    category: SourceCategory.AppConnection,
   },
 };
 
