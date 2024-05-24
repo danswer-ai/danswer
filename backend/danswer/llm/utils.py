@@ -14,7 +14,6 @@ from langchain.schema import PromptValue
 from langchain.schema.language_model import LanguageModelInput
 from langchain.schema.messages import AIMessage
 from langchain.schema.messages import BaseMessage
-from langchain.schema.messages import BaseMessageChunk
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 from tiktoken.core import Encoding
@@ -25,8 +24,10 @@ from danswer.configs.model_configs import GEN_AI_MAX_OUTPUT_TOKENS
 from danswer.configs.model_configs import GEN_AI_MAX_TOKENS
 from danswer.configs.model_configs import GEN_AI_MODEL_PROVIDER
 from danswer.db.models import ChatMessage
+from danswer.file_store.models import ChatFileType
 from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.interfaces import LLM
+from danswer.prompts.constants import CODE_BLOCK_PAT
 from danswer.search.models import InferenceChunk
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import LOG_LEVEL
@@ -114,18 +115,50 @@ def translate_history_to_basemessages(
     return history_basemessages, history_token_counts
 
 
-def build_content_with_imgs(
-    message: str, files: list[InMemoryChatFile]
-) -> str | list[str | dict]:  # matching Langchain's BaseMessage content type
-    if not files:
+def _build_content(
+    message: str,
+    files: list[InMemoryChatFile] | None = None,
+) -> str:
+    """Applies all non-image files."""
+    text_files = (
+        [file for file in files if file.file_type == ChatFileType.PLAIN_TEXT]
+        if files
+        else None
+    )
+    if not text_files:
         return message
 
+    final_message_with_files = "FILES:\n\n"
+    for file in text_files:
+        file_content = file.content.decode("utf-8")
+        file_name_section = f"DOCUMENT: {file.filename}\n" if file.filename else ""
+        final_message_with_files += (
+            f"{file_name_section}{CODE_BLOCK_PAT.format(file_content.strip())}\n\n\n"
+        )
+    final_message_with_files += message
+
+    return final_message_with_files
+
+
+def build_content_with_imgs(
+    message: str,
+    files: list[InMemoryChatFile] | None = None,
+    img_urls: list[str] | None = None,
+) -> str | list[str | dict[str, Any]]:  # matching Langchain's BaseMessage content type
+    files = files or []
+    img_files = [file for file in files if file.file_type == ChatFileType.IMAGE]
+    img_urls = img_urls or []
+    message_main_content = _build_content(message, files)
+
+    if not img_files and not img_urls:
+        return message_main_content
+
     return cast(
-        list[str | dict],
+        list[str | dict[str, Any]],
         [
             {
                 "type": "text",
-                "text": message,
+                "text": message_main_content,
             },
         ]
         + [
@@ -137,6 +170,15 @@ def build_content_with_imgs(
             }
             for file in files
             if file.file_type == "image"
+        ]
+        + [
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": url,
+                },
+            }
+            for url in img_urls
         ],
     )
 
@@ -188,18 +230,48 @@ def convert_lm_input_to_basic_string(lm_input: LanguageModelInput) -> str:
     return prompt_value.to_string()
 
 
+def message_to_string(message: BaseMessage) -> str:
+    if not isinstance(message.content, str):
+        raise RuntimeError("LLM message not in expected format.")
+
+    return message.content
+
+
 def message_generator_to_string_generator(
-    messages: Iterator[BaseMessageChunk],
+    messages: Iterator[BaseMessage],
 ) -> Iterator[str]:
     for message in messages:
-        if not isinstance(message.content, str):
-            raise RuntimeError("LLM message not in expected format.")
-
-        yield message.content
+        yield message_to_string(message)
 
 
 def should_be_verbose() -> bool:
     return LOG_LEVEL == "debug"
+
+
+# estimate of the number of tokens in an image url
+# is correct when downsampling is used. Is very wrong when OpenAI does not downsample
+# TODO: improve this
+_IMG_TOKENS = 85
+
+
+def check_message_tokens(
+    message: BaseMessage, encode_fn: Callable[[str], list] | None = None
+) -> int:
+    if isinstance(message.content, str):
+        return check_number_of_tokens(message.content, encode_fn)
+
+    total_tokens = 0
+    for part in message.content:
+        if isinstance(part, str):
+            total_tokens += check_number_of_tokens(part, encode_fn)
+            continue
+
+        if part["type"] == "text":
+            total_tokens += check_number_of_tokens(part["text"], encode_fn)
+        elif part["type"] == "image_url":
+            total_tokens += _IMG_TOKENS
+
+    return total_tokens
 
 
 def check_number_of_tokens(

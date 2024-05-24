@@ -46,6 +46,7 @@ from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
 from danswer.db.swap_index import check_index_swap
 from danswer.document_index.factory import get_default_document_index
+from danswer.llm.llm_initialization import load_llm_providers
 from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.search.search_nlp_models import warm_up_encoders
 from danswer.server.auth_check import check_router_auth
@@ -60,6 +61,7 @@ from danswer.server.features.folder.api import router as folder_router
 from danswer.server.features.persona.api import admin_router as admin_persona_router
 from danswer.server.features.persona.api import basic_router as persona_router
 from danswer.server.features.prompt.api import basic_router as prompt_router
+from danswer.server.features.tool.api import router as tool_router
 from danswer.server.gpts.api import router as gpts_router
 from danswer.server.manage.administrative import router as admin_router
 from danswer.server.manage.get_state import router as state_router
@@ -75,6 +77,9 @@ from danswer.server.query_and_chat.query_backend import (
 from danswer.server.query_and_chat.query_backend import basic_router as query_router
 from danswer.server.settings.api import admin_router as settings_admin_router
 from danswer.server.settings.api import basic_router as settings_router
+from danswer.tools.built_in_tools import auto_add_search_tool_to_personas
+from danswer.tools.built_in_tools import load_builtin_tools
+from danswer.tools.built_in_tools import refresh_built_in_tools_cache
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
@@ -195,9 +200,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         create_initial_default_connector(db_session)
         associate_default_cc_pair(db_session)
 
+        logger.info("Loading LLM providers from env variables")
+        load_llm_providers(db_session)
+
         logger.info("Loading default Prompts and Personas")
         delete_old_default_personas(db_session)
         load_chat_yamls()
+
+        logger.info("Loading built-in tools")
+        load_builtin_tools(db_session)
+        refresh_built_in_tools_cache(db_session)
+        auto_add_search_tool_to_personas(db_session)
 
         logger.info("Verifying Document Index(s) is/are available.")
         document_index = get_default_document_index(
@@ -257,6 +270,7 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, persona_router)
     include_router_with_global_prefix_prepended(application, admin_persona_router)
     include_router_with_global_prefix_prepended(application, prompt_router)
+    include_router_with_global_prefix_prepended(application, tool_router)
     include_router_with_global_prefix_prepended(application, state_router)
     include_router_with_global_prefix_prepended(application, danswer_api_router)
     include_router_with_global_prefix_prepended(application, gpts_router)
