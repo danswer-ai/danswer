@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 from urllib.parse import urlunparse
 
 from pywikibot import family  # type: ignore[import-untyped]
-from pywikibot import pagegenerators
+from pywikibot import pagegenerators  # type: ignore[import-untyped]
 from pywikibot.scripts import generate_family_file  # type: ignore[import-untyped]
 from pywikibot.scripts.generate_user_files import pywikibot  # type: ignore[import-untyped]
 
@@ -132,7 +132,7 @@ def family_class_dispatch(url: str, name: str) -> type[family.Family]:
 
     """
     if "wikipedia" in url:
-        import pywikibot.families.wikipedia_family
+        import pywikibot.families.wikipedia_family  # type: ignore[import-untyped]
 
         return pywikibot.families.wikipedia_family.Family
     # TODO: Support additional families pre-defined in `pywikibot.families.*_family.py` files
