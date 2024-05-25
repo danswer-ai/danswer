@@ -11,7 +11,7 @@ class CustomConfigKey(BaseModel):
 
 class WellKnownLLMProviderDescriptor(BaseModel):
     name: str
-    display_name: str | None = None
+    display_name: str
     api_key_required: bool
     api_base_required: bool
     api_version_required: bool

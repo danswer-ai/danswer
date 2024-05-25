@@ -50,14 +50,19 @@ export function ChatTab({
   };
 
   return (
-    <div className="mt-4 mb-1 ml-3 overflow-y-auto h-full">
-      <div className="border-b border-border pb-1 mr-3">
-        <FolderList
-          folders={folders}
-          currentChatId={currentChatId}
-          openedFolders={openedFolders}
-        />
-      </div>
+    <div className="mb-1 ml-3 overflow-y-auto h-full">
+      {folders.length > 0 && (
+        <div className="py-2 mr-3 border-b border-border">
+          <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-2 font-medium">
+            Folders
+          </div>
+          <FolderList
+            folders={folders}
+            currentChatId={currentChatId}
+            openedFolders={openedFolders}
+          />
+        </div>
+      )}
 
       <div
         onDragOver={(event) => {
@@ -66,7 +71,7 @@ export function ChatTab({
         }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDropToRemoveFromFolder}
-        className={`transition duration-300 ease-in-out mr-3 ${
+        className={`pt-1 transition duration-300 ease-in-out mr-3 ${
           isDragOver ? "bg-hover" : ""
         } rounded-md`}
       >
@@ -75,7 +80,7 @@ export function ChatTab({
             if (chatSessions.length > 0) {
               return (
                 <div key={dateRange}>
-                  <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-5 font-bold">
+                  <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-5 font-medium">
                     {dateRange}
                   </div>
                   {chatSessions

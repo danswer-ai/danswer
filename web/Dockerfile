@@ -32,6 +32,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# needed to get the `standalone` dir we expect later
+ENV NEXT_PRIVATE_STANDALONE true
+
 # Disable automatic telemetry collection
 ENV NEXT_TELEMETRY_DISABLED 1
 
