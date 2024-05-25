@@ -6,9 +6,9 @@ from collections.abc import Generator
 from typing import Any
 from typing import ClassVar
 
-import pywikibot.time
-from pywikibot import pagegenerators
-from pywikibot import textlib
+import pywikibot.time  # type: ignore[import-untyped]
+from pywikibot import pagegenerators  # type: ignore[import-untyped]
+from pywikibot import textlib  # type: ignore[import-untyped]
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
