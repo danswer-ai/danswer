@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev-local": "WEB_DOMAIN=http://localhost:3000 next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
