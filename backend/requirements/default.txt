@@ -59,6 +59,7 @@ rfc3986==1.5.0
 rt==3.1.2
 slack-sdk==3.20.2
 telebot==0.0.5
+tgcrypto==1.2.5
 SQLAlchemy[mypy]==2.0.15
 starlette==0.36.3
 supervisor==4.2.5
@@ -69,3 +70,6 @@ uvicorn==0.21.1
 zulip==0.8.2
 hubspot-api-client==8.1.0
 zenpy==2.0.41
+
+
+git+https://github.com/KurimuzonAkuma/pyrogram/archive/v2.1.18.zip #pyrogram

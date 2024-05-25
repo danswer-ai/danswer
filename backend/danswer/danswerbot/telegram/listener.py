@@ -5,6 +5,7 @@ from typing import Any
 from typing import cast
 import pprint
 import threading
+import json
 
 
 from sqlalchemy.orm import Session
@@ -27,10 +28,17 @@ from danswer.utils.logger import setup_logger
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 
-from telebot.async_telebot import AsyncTeleBot
+from danswer.server.query_and_chat.models import CreateChatMessageRequest
+
+from danswer.db.chat import *
+from danswer.chat.process_message import stream_chat_message
+
+# from telebot.async_telebot import AsyncTeleBot
+from pyrogram import Client, filters
 import asyncio
 from danswer.danswerbot.telegram.tokens import fetch_token, TelegramBotToken
 
+from pyrogram.types import Message
 
 from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
@@ -242,4 +250,71 @@ async def main():
       await asyncio.sleep(60)
 
 if __name__ == "__main__":
-  asyncio.run(main())
+  # asyncio.run(main())
+  try:
+    telegram_bot_token = fetch_token()
+    telegram_bot = Client(telegram_bot_token.bot_name, telegram_bot_token.api_id, telegram_bot_token.api_hash, bot_token=telegram_bot_token.bot_name)
+  except ConfigNotFoundError:
+    logger.debug("Missing Telegram Bot tokens")
+    exit()
+  except:
+    logger.debug('Failed to create Telegram Bot Client')
+  
+  @telegram_bot.on_message(filters.command('start'))
+  async def start(client: Client, message: Message):
+    await message.reply("Hello,\nAsk me any question!")
+  
+  @telegram_bot.on_message(filters.text & filters.private)
+  async def handle_text_message(client: Client, message: Message):   
+    with Session(get_sqlalchemy_engine()) as db_session:
+      description="Telegram chat"
+      message="How can I ask asylum in France?"
+      persona_id=0
+      prompt_id=0
+      llm_override=None
+      prompt_override=None
+      chat_session = None
+      try:
+        chat_session = get_chat_session_by_id(chat_session_id=message.chat.id, user_id=None, db_session=db_session)
+      except:
+        chat_session = create_chat_session(
+          db_session=db_session,
+          description=description,
+          user_id=None,
+          persona_id=persona_id,
+          llm_override=llm_override,
+          prompt_override=None
+        )
+
+      root_message = get_or_create_root_message(
+        chat_session_id=chat_session.id, db_session=db_session
+      )
+
+      parent_id = root_message.id
+      search_doc_ids= None
+      options = RetrievalDetails(
+        run_search = OptionalSearchSetting.AUTO
+      )
+      req = CreateChatMessageRequest(
+        chat_session_id=chat_session.id,
+        parent_message_id=parent_id,
+        message=message.text,
+        file_ids=[],
+        prompt_id=prompt_id,
+        search_doc_ids=None,
+        retrieval_options=options,
+        query_override=None,
+      )
+      result = "\n".join(stream_chat_message(
+        new_msg_req=req,
+        user=None
+      )).split('\n')
+      # print("RESULT", result[-2])
+      res_obj = json.loads(result[-2])
+      parent_id = res_obj["message_id"]
+      await message.reply(res_obj["message"])
+      # search_doc_ids = res_obj["context_docs"]["top_documents"]
+      # print("context_docs", search_doc_ids)
+      # print("citations", res_obj["citations"])
+
+  telegram_bot.run()
