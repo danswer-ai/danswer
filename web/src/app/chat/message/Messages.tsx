@@ -18,13 +18,48 @@ import { ThreeDots } from "react-loader-spinner";
 import { SkippedSearch } from "./SkippedSearch";
 import remarkGfm from "remark-gfm";
 import { CopyButton } from "@/components/CopyButton";
-import { FileDescriptor } from "../interfaces";
-import { InMessageImage } from "../images/InMessageImage";
+import { ChatFileType, FileDescriptor } from "../interfaces";
 import { IMAGE_GENERATION_TOOL_NAME } from "../tools/constants";
 import { ToolRunningAnimation } from "../tools/ToolRunningAnimation";
 import { Hoverable } from "@/components/Hoverable";
+import { DocumentPreview } from "../files/documents/DocumentPreview";
+import { InMessageImage } from "../files/images/InMessageImage";
 
-const ICON_SIZE = 15;
+function FileDisplay({ files }: { files: FileDescriptor[] }) {
+  const imageFiles = files.filter((file) => file.type === ChatFileType.IMAGE);
+  const nonImgFiles = files.filter((file) => file.type !== ChatFileType.IMAGE);
+
+  return (
+    <>
+      {" "}
+      {nonImgFiles && nonImgFiles.length > 0 && (
+        <div className="mt-2 mb-4">
+          <div className="flex flex-col gap-2">
+            {nonImgFiles.map((file) => {
+              return (
+                <div key={file.id} className="w-fit">
+                  <DocumentPreview
+                    fileName={file.name || file.id}
+                    maxWidth="max-w-64"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {imageFiles && imageFiles.length > 0 && (
+        <div className="mt-2 mb-4">
+          <div className="flex flex-wrap gap-2">
+            {imageFiles.map((file) => {
+              return <InMessageImage key={file.id} fileId={file.id} />;
+            })}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 export const AIMessage = ({
   messageId,
@@ -142,17 +177,8 @@ export const AIMessage = ({
 
             {content ? (
               <>
-                {files && files.length > 0 && (
-                  <div className="mt-2 mb-4">
-                    <div className="flex flex-wrap gap-2">
-                      {files.map((file) => {
-                        return (
-                          <InMessageImage key={file.id} fileId={file.id} />
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                <FileDisplay files={files || []} />
+
                 {typeof content === "string" ? (
                   <ReactMarkdown
                     className="prose max-w-full"
@@ -335,15 +361,7 @@ export const HumanMessage = ({
           </div>
           <div className="mx-auto mt-1 ml-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default flex flex-wrap">
             <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words">
-              {files && files.length > 0 && (
-                <div className="mt-2 mb-4">
-                  <div className="flex flex-wrap gap-2">
-                    {files.map((file) => {
-                      return <InMessageImage key={file.id} fileId={file.id} />;
-                    })}
-                  </div>
-                </div>
-              )}
+              <FileDisplay files={files || []} />
 
               {isEditing ? (
                 <div>
