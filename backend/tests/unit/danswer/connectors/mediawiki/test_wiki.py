@@ -4,7 +4,7 @@ import datetime
 from collections.abc import Iterable
 
 import pytest
-import pywikibot
+import pywikibot  # type: ignore[import-untyped]
 from pytest_mock import MockFixture
 
 from danswer.connectors.mediawiki import wiki
@@ -95,7 +95,7 @@ def test_get_doc_from_page(site: pywikibot.Site) -> None:
         assert (
             section.text.strip() == expected_section.strip()
         )  # Extra whitespace before/after is okay
-        assert section.link.startswith(test_page.full_url())
+        assert section.link and section.link.startswith(test_page.full_url())
     assert doc.semantic_identifier == test_page.title()
     assert doc.metadata == {
         "categories": [category.title() for category in test_page.categories()]

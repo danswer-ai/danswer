@@ -2,8 +2,8 @@ from typing import Final
 from unittest import mock
 
 import pytest
-from pywikibot.families.wikipedia_family import Family as WikipediaFamily
-from pywikibot.family import Family
+from pywikibot.families.wikipedia_family import Family as WikipediaFamily  # type: ignore[import-untyped]
+from pywikibot.family import Family  # type: ignore[import-untyped]
 
 from danswer.connectors.mediawiki import family
 
