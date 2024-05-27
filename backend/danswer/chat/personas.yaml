@@ -7,14 +7,14 @@ personas:
   - id: 0
     name: "Eve AI"
     description: >
-      Assistant with access to documents from your Connected Sources.
+      AI Assistant with access to Mindvalley’s internal documents through the Connected Sources..
     # Default Prompt objects attached to the persona, see prompts.yaml
     prompts:
       - "Answer-Question"
     # Default number of chunks to include as context, set to 0 to disable retrieval
     # Remove the field to set to the system default number of chunks/tokens to pass to Gen AI
     # Each chunk is 512 tokens long
-    num_chunks: 10
+    num_chunks: 20
     # Enable/Disable usage of the LLM chunk filter feature whereby each chunk is passed to the LLM to determine
     # if the chunk is useful or not towards the latest user query
     # This feature can be overriden for all personas via DISABLE_LLM_CHUNK_FILTER env variable
