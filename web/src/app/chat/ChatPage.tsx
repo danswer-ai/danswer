@@ -64,6 +64,7 @@ import { ConfigurationModal } from "./modal/configuration/ConfigurationModal";
 import { useChatContext } from "@/components/context/ChatContext";
 import { UserDropdown } from "@/components/UserDropdown";
 import { v4 as uuidv4 } from "uuid";
+import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
@@ -90,6 +91,7 @@ export function ChatPage({
     folders,
     openedFolders,
   } = useChatContext();
+  const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -156,7 +158,7 @@ export function ChatPage({
         setIsFetchingChatMessages(false);
         if (defaultSelectedPersonaId !== undefined) {
           setSelectedPersona(
-            availablePersonas.find(
+            filteredAssistants.find(
               (persona) => persona.id === defaultSelectedPersonaId
             )
           );
@@ -184,7 +186,7 @@ export function ChatPage({
       );
       const chatSession = (await response.json()) as BackendChatSession;
       setSelectedPersona(
-        availablePersonas.find(
+        filteredAssistants.find(
           (persona) => persona.id === chatSession.persona_id
         )
       );
@@ -326,16 +328,16 @@ export function ChatPage({
 
   const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
     existingChatSessionPersonaId !== undefined
-      ? availablePersonas.find(
+      ? filteredAssistants.find(
           (persona) => persona.id === existingChatSessionPersonaId
         )
       : defaultSelectedPersonaId !== undefined
-        ? availablePersonas.find(
+        ? filteredAssistants.find(
             (persona) => persona.id === defaultSelectedPersonaId
           )
         : undefined
   );
-  const livePersona = selectedPersona || availablePersonas[0];
+  const livePersona = selectedPersona || filteredAssistants[0];
 
   const [chatSessionSharedStatus, setChatSessionSharedStatus] =
     useState<ChatSessionSharedStatus>(ChatSessionSharedStatus.Private);
@@ -343,7 +345,7 @@ export function ChatPage({
   useEffect(() => {
     if (messageHistory.length === 0 && chatSessionId === null) {
       setSelectedPersona(
-        availablePersonas.find(
+        filteredAssistants.find(
           (persona) => persona.id === defaultSelectedPersonaId
         )
       );
@@ -903,7 +905,7 @@ export function ChatPage({
                           <div className="mt-2 flex w-full">
                             <div className="ml-2 p-1 rounded w-fit">
                               <ChatPersonaSelector
-                                personas={availablePersonas}
+                                personas={filteredAssistants}
                                 selectedPersonaId={livePersona.id}
                                 onPersonaChange={onPersonaChange}
                                 userId={user?.id}
@@ -939,15 +941,8 @@ export function ChatPage({
                         !isStreaming && (
                           <ChatIntro
                             availableSources={finalAvailableSources}
-                            availablePersonas={availablePersonas}
-                            selectedPersona={selectedPersona}
-                            handlePersonaSelect={(persona) => {
-                              setSelectedPersona(persona);
-                              textAreaRef.current?.focus();
-                              router.push(
-                                buildChatUrl(searchParams, null, persona.id)
-                              );
-                            }}
+                            availablePersonas={filteredAssistants}
+                            selectedPersona={livePersona}
                           />
                         )}
 
