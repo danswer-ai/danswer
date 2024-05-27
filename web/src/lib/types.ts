@@ -42,7 +42,6 @@ export type ValidSources =
   | "discourse"
   | "axero"
   | "clickup"
-  | "axero"
   | "wikipedia"
   | "mediawiki";
 
