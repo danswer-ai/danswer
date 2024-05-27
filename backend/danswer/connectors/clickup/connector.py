@@ -149,6 +149,12 @@ class ClickupConnector(LoadConnector, PollConnector):
                         "project": task["project"]["name"],
                         "folder": task["folder"]["name"],
                         "space_id": task["space"]["id"],
+                        "tags": [tag["name"] for tag in task["tags"]],
+                        "priority": (
+                            task["priority"]["priority"]
+                            if "priority" in task and task["priority"] is not None
+                            else ""
+                        ),
                     },
                 )
 
@@ -158,12 +164,6 @@ class ClickupConnector(LoadConnector, PollConnector):
                     "date_closed",
                     "date_done",
                     "due_date",
-                    "checklists",
-                    "tags",
-                    "parent",
-                    "priority",
-                    "points",
-                    "time_estimate",
                 ]
                 for extra_field in extra_fields:
                     if extra_field in task and task[extra_field] is not None:
