@@ -70,6 +70,5 @@ uvicorn==0.21.1
 zulip==0.8.2
 hubspot-api-client==8.1.0
 zenpy==2.0.41
+pyrogram==2.0.106
 
-
-git+https://github.com/KurimuzonAkuma/pyrogram/archive/v2.1.18.zip #pyrogram
