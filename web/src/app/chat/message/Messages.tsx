@@ -236,7 +236,7 @@ export const AIMessage = ({
                       ),
                     }}
                     remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypePrism]}
+                    rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
                   >
                     {content}
                   </ReactMarkdown>
