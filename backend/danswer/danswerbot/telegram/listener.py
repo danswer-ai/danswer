@@ -259,6 +259,7 @@ if __name__ == "__main__":
     exit()
   except:
     logger.debug('Failed to create Telegram Bot Client')
+    exit()
   
   @telegram_bot.on_message(filters.command('start'))
   async def start(client: Client, message: Message):
@@ -268,7 +269,7 @@ if __name__ == "__main__":
   async def handle_text_message(client: Client, message: Message):   
     with Session(get_sqlalchemy_engine()) as db_session:
       description="Telegram chat"
-      message="How can I ask asylum in France?"
+      # message="How can I ask asylum in France?"
       persona_id=0
       prompt_id=0
       llm_override=None
