@@ -51,6 +51,27 @@ export function CodeBlock({
     }
   }
 
+  // handle unknown languages. They won't have a `node.position.start.offset`
+  if (!codeText) {
+    const findTextNode = (node: any): string | null => {
+      if (node.type === "text") {
+        return node.value;
+      }
+      let finalResult = "";
+      if (node.children) {
+        for (const child of node.children) {
+          const result = findTextNode(child);
+          if (result) {
+            finalResult += result;
+          }
+        }
+      }
+      return finalResult;
+    };
+
+    codeText = findTextNode(props.node);
+  }
+
   const handleCopy = () => {
     if (!codeText) {
       return;
