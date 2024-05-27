@@ -1,5 +1,3 @@
-from functools import lru_cache
-
 from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 
@@ -117,12 +115,12 @@ def compute_max_llm_input_tokens(llm_config: LLMConfig) -> int:
     return input_tokens - _MISC_BUFFER
 
 
-@lru_cache()
 def build_citations_system_message(
     prompt_config: PromptConfig,
 ) -> SystemMessage:
     system_prompt = prompt_config.system_prompt.strip()
-    system_prompt += REQUIRE_CITATION_STATEMENT
+    if prompt_config.include_citations:
+        system_prompt += REQUIRE_CITATION_STATEMENT
     if prompt_config.datetime_aware:
         if system_prompt:
             system_prompt += ADDITIONAL_INFO.format(
