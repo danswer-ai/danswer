@@ -6,6 +6,7 @@ from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
+from danswer.configs.constants import FileOrigin
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.file_store.file_store import get_default_file_store
@@ -56,18 +57,27 @@ def upload_logo(
             detail="Invalid file type - only .png, .jpg, and .jpeg files are allowed",
         )
 
-    # Save the file to the server
     file_store = get_default_file_store(db_session)
-    file_store.save_file(_LOGO_FILENAME, file.file)
+    file_store.save_file(
+        file_name=_LOGO_FILENAME,
+        content=file.file,
+        # The rest aren't really used for anything
+        display_name=file.filename or "DanswerReplacementLogo",
+        file_origin=FileOrigin.OTHER,
+        file_type=file.content_type or "image/jpeg",
+    )
 
 
 @basic_router.get("/logo")
 def fetch_logo(db_session: Session = Depends(get_session)) -> Response:
-    file_store = get_default_file_store(db_session)
-    file_io = file_store.read_file(_LOGO_FILENAME, mode="b")
-    # NOTE: specifying "image/jpeg" here, but it still works for pngs
-    # TODO: do this properly
-    return Response(content=file_io.read(), media_type="image/jpeg")
+    try:
+        file_store = get_default_file_store(db_session)
+        file_io = file_store.read_file(_LOGO_FILENAME, mode="b")
+        # NOTE: specifying "image/jpeg" here, but it still works for pngs
+        # TODO: do this properly
+        return Response(content=file_io.read(), media_type="image/jpeg")
+    except Exception:
+        raise HTTPException(status_code=404, detail="No logo file found")
 
 
 @admin_router.put("/custom-analytics-script")
