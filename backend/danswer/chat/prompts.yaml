@@ -22,7 +22,7 @@ prompts:
       
       I have not read or seen any of the documents and do not want to read them.
       
-      If there are no relevant documents, refer to the chat history and existing knowledge.
+      If there are no relevant documents, refer to the chat history and your internal knowledge.
     # Inject a statement at the end of system prompt to inform the LLM of the current date/time
     # If the DANSWER_DATETIME_REPLACEMENT is set, the date/time is inserted there instead
     # Format looks like: "October 16, 2023 14:30"
