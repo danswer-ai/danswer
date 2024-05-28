@@ -13,7 +13,6 @@ const Page = () => {
       />
 
       <LLMConfiguration />
-
     </div>
   );
 };

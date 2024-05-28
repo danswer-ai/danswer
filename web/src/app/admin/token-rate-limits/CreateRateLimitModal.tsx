@@ -128,7 +128,7 @@ export const CreateRateLimitModal = ({
                 ]}
                 includeDefault={false}
                 onSelect={(selected) => {
-                  setFieldValue("target_scope", selected)
+                  setFieldValue("target_scope", selected);
                   if (selected === Scope.USER_GROUP) {
                     setShouldFetchUserGroups(true);
                   }
