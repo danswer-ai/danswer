@@ -113,6 +113,7 @@ export const AIMessage = ({
   if (!isReady) {
     return <div />;
   }
+  console.log(content);
 
   if (!isComplete) {
     const trimIncompleteCodeSection = (
@@ -223,14 +224,29 @@ export const AIMessage = ({
                     key={messageId}
                     className="prose max-w-full"
                     components={{
-                      a: ({ node, ...props }) => (
-                        <a
-                          {...props}
-                          className="text-blue-500 hover:text-blue-700"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        />
-                      ),
+                      a: (props) => {
+                        const { node, ...rest } = props;
+                        // for some reason <a> tags cause the onClick to not apply
+                        // and the links are unclickable
+                        // TODO: fix the fact that you have to double click to follow link
+                        // for the first link
+                        return (
+                          <a
+                            key={node?.position?.start?.offset}
+                            onClick={() =>
+                              rest.href
+                                ? window.open(rest.href, "_blank")
+                                : undefined
+                            }
+                            className="cursor-pointer text-link hover:text-link-hover"
+                            // href={rest.href}
+                            // target="_blank"
+                            // rel="noopener noreferrer"
+                          >
+                            {rest.children}
+                          </a>
+                        );
+                      },
                       code: (props) => (
                         <CodeBlock {...props} content={content as string} />
                       ),
