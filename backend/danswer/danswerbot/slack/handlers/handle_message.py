@@ -435,10 +435,10 @@ def handle_message(
                 client=client,
                 channel=channel,
                 receiver_ids=send_to,
-                text="Hello! Danswer has some results for you!",
+                text="Hello! EVE AI has some results for you!",
                 blocks=[
                     SectionBlock(
-                        text="Danswer is down for maintenance.\nWe're working hard on recharging the AI!"
+                        text="EVE AI is down for maintenance.\nWe're working hard on recharging the AI!"
                     )
                 ],
                 thread_ts=message_ts_to_respond_to,
