@@ -6,6 +6,8 @@ from typing import cast
 import pprint
 import threading
 import json
+import dbm
+import pickle
 
 
 from sqlalchemy.orm import Session
@@ -276,7 +278,9 @@ if __name__ == "__main__":
       prompt_override=None
       chat_session = None
       try:
-        chat_session = get_chat_session_by_id(chat_session_id=message.chat.id, user_id=None, db_session=db_session)
+        with dbm.open('chat_sessions', 'c') as dbm_file:
+          chat_session_id = int(dbm_file[str(message.chat.id)])
+        chat_session = get_chat_session_by_id(chat_session_id=chat_session_id, user_id=None, db_session=db_session)
       except:
         chat_session = create_chat_session(
           db_session=db_session,
@@ -286,6 +290,8 @@ if __name__ == "__main__":
           llm_override=llm_override,
           prompt_override=None
         )
+        with dbm.open('chat_sessions', 'c') as dbm_file:
+          dbm_file[str(message.chat.id)] = str(chat_session.id)
 
       root_message = get_or_create_root_message(
         chat_session_id=chat_session.id, db_session=db_session
