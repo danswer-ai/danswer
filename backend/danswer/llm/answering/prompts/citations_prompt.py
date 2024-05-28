@@ -13,14 +13,13 @@ from danswer.llm.interfaces import LLMConfig
 from danswer.llm.utils import build_content_with_imgs
 from danswer.llm.utils import check_number_of_tokens
 from danswer.llm.utils import get_max_input_tokens
-from danswer.prompts.chat_prompts import ADDITIONAL_INFO
 from danswer.prompts.chat_prompts import REQUIRE_CITATION_STATEMENT
 from danswer.prompts.constants import DEFAULT_IGNORE_STATEMENT
 from danswer.prompts.direct_qa_prompts import CITATIONS_PROMPT
 from danswer.prompts.direct_qa_prompts import CITATIONS_PROMPT_FOR_TOOL_CALLING
+from danswer.prompts.prompt_utils import add_time_to_system_prompt
 from danswer.prompts.prompt_utils import build_complete_context_str
 from danswer.prompts.prompt_utils import build_task_prompt_reminders
-from danswer.prompts.prompt_utils import get_current_llm_day_time
 from danswer.prompts.token_counts import ADDITIONAL_INFO_TOKEN_CNT
 from danswer.prompts.token_counts import (
     CHAT_USER_PROMPT_WITH_CONTEXT_OVERHEAD_TOKEN_CNT,
@@ -122,12 +121,7 @@ def build_citations_system_message(
     if prompt_config.include_citations:
         system_prompt += REQUIRE_CITATION_STATEMENT
     if prompt_config.datetime_aware:
-        if system_prompt:
-            system_prompt += ADDITIONAL_INFO.format(
-                datetime_info=get_current_llm_day_time()
-            )
-        else:
-            system_prompt = get_current_llm_day_time()
+        system_prompt = add_time_to_system_prompt(system_prompt=system_prompt)
 
     return SystemMessage(content=system_prompt)
 
