@@ -14,6 +14,7 @@ from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
 from danswer.configs.chat_configs import CHAT_TARGET_CHUNK_PERCENTAGE
+from danswer.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.constants import MessageType
 from danswer.db.chat import attach_files_to_chat_message
@@ -134,6 +135,7 @@ def _check_should_force_search(
             and new_msg_req.retrieval_options.run_search == OptionalSearchSetting.ALWAYS
         )
         or new_msg_req.search_doc_ids
+        or DISABLE_LLM_CHOOSE_SEARCH
     ):
         args = (
             {"query": new_msg_req.query_override}
