@@ -2,20 +2,22 @@ from danswer.prompts.constants import GENERAL_SEP_PAT
 from danswer.prompts.constants import QUESTION_PAT
 
 REQUIRE_CITATION_STATEMENT = """
+
 Cite relevant statements INLINE using the format [1], [2], [3], etc to reference the document number, \
 DO NOT provide a reference section at the end and DO NOT provide any links following the citations.
 """.rstrip()
 
 NO_CITATION_STATEMENT = """
+
 Do not provide any citations even if there are examples in the chat history.
 """.rstrip()
 
 CITATION_REMINDER = """
+
 Remember to provide inline citations in the format [1], [2], [3], etc.
 """
 
 ADDITIONAL_INFO = "\n\nAdditional Information:\n\t- {datetime_info}."
-
 
 CHAT_USER_PROMPT = f"""
 Refer to the following context documents when responding to me.{{optional_ignore_statement}}
