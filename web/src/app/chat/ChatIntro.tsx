@@ -109,7 +109,7 @@ export function ChatIntro({
               <div className="mx-auto">
                 <div className="m-auto h-[80px] w-[80px]">
                   <Image
-                    src="/logo.png"
+                    src="/logo/blue.png"
                     alt="Logo"
                     width="1419"
                     height="1520"

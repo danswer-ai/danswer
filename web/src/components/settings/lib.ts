@@ -11,19 +11,18 @@ export async function fetchSettingsSS() {
     }
   }
 
-  //TODO: Remove temporary fix to add error checking for fetchSS
-  let results: Response[] | undefined;
-  try {
-    results = await Promise.all(tasks);
-  } catch (error) {
-    console.error(error);
-  }
-  if (!results) {
-    return null;
-  }
-
-  // Original
-  // results = await Promise.all(tasks);
+  //Temporary dev fix to avoid Promise.all throwing an error
+  // let results: Response[] | undefined;
+  // try {
+  //   results = await Promise.all(tasks);
+  // } catch (error) {
+  //   console.error(error);
+  // }
+  // if (!results) {
+  //   return null;
+  // }
+  
+  const results = await Promise.all(tasks);
 
   const settings = (await results[0].json()) as Settings;
   const enterpriseSettings =
