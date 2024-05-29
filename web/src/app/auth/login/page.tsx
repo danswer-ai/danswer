@@ -70,12 +70,12 @@ const Page = async ({
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div>
           <div className="h-16 w-16 mx-auto">
-            <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
+            <Image src="/logo/blue.png" alt="Logo" width="1419" height="1520" />
           </div>
           {authUrl && authTypeMetadata && (
             <>
               <h2 className="text-center text-xl text-strong font-bold mt-6">
-                Log In to Danswer
+                Log In to Uni Wise
               </h2>
 
               <SignInButton
@@ -88,7 +88,7 @@ const Page = async ({
             <Card className="mt-4 w-96">
               <div className="flex">
                 <Title className="mb-2 mx-auto font-bold">
-                  Log In to Danswer
+                  Log In to Uni Wise
                 </Title>
               </div>
               <EmailPasswordForm />

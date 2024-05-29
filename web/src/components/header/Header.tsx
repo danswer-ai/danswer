@@ -10,11 +10,13 @@ import { CustomDropdown, DefaultDropdownElement } from "../Dropdown";
 import { FiMessageSquare, FiSearch } from "react-icons/fi";
 import { HeaderWrapper } from "./HeaderWrapper";
 import { SettingsContext } from "../settings/SettingsProvider";
+import { Bubble } from "../Bubble";
 
 interface HeaderProps {
   user: User | null;
 }
 
+//TODO: Add a link to the counselor chat
 export function Header({ user }: HeaderProps) {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -69,11 +71,11 @@ export function Header({ user }: HeaderProps) {
           }
         >
           <div className="flex">
-            <div className="h-[32px] w-[30px]">
-              <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
+            <div className="h-[36px] w-[36px]">
+              <Image src="/logo/blue.png" alt="Logo" width="150" height="150" />
             </div>
             <h1 className="flex text-2xl text-strong font-bold my-auto">
-              Danswer
+              Uni Wise
             </h1>
           </div>
         </Link>
@@ -103,8 +105,9 @@ export function Header({ user }: HeaderProps) {
             </Link>
           </>
         )}
-
+        
         <div className="ml-auto h-full flex flex-col">
+        
           <div className="my-auto">
             <CustomDropdown
               dropdown={
@@ -129,9 +132,16 @@ export function Header({ user }: HeaderProps) {
                 </div>
               }
             >
-              <div className="hover:bg-hover rounded p-1 w-fit">
-                <div className="my-auto bg-user text-sm rounded-lg px-1.5 select-none">
-                  {user && user.email ? user.email[0].toUpperCase() : "A"}
+              <div className="flex flex-row">
+                <Bubble isSelected={false}>
+                  <p>
+                    Talk To a Counselor
+                  </p>
+                </Bubble>
+                <div className="hover:bg-hover cursor-pointer rounded p-2 w-fit">
+                  <div className="my-auto bg-user text-sm rounded-lg px-1.5  select-none">
+                    {user && user.email ? user.email[0].toUpperCase() : "A"}
+                  </div>
                 </div>
               </div>
             </CustomDropdown>

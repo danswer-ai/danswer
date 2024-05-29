@@ -190,7 +190,7 @@ export function ChatIntro({
           <div className="px-12 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
             <div className="mx-auto">
               <div className="m-auto h-[80px] w-[80px]">
-                <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
+                <Image src="/logo/blue.png" alt="Logo" width="1419" height="1520" />
               </div>
             </div>
 

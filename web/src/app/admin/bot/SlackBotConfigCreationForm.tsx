@@ -146,8 +146,8 @@ export const SlackBotCreationForm = ({
               const errorMsg = responseJson.detail || responseJson.message;
               setPopup({
                 message: isUpdate
-                  ? `Error updating DanswerBot config - ${errorMsg}`
-                  : `Error creating DanswerBot config - ${errorMsg}`,
+                  ? `Error updating Uni Wise Bot config - ${errorMsg}`
+                  : `Error creating Uni Wise Bot config - ${errorMsg}`,
                 type: "error",
               });
             }

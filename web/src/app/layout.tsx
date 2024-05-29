@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Danswer",
-  description: "Question answering for your documents",
+  title: "Uni Wise",
+  description: "A better way to help students find information at your university.",
 };
 
 export const dynamic = "force-dynamic";

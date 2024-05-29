@@ -53,7 +53,7 @@ export function Verify({ user }: { user: User | null }) {
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div>
           <div className="h-16 w-16 mx-auto animate-pulse">
-            <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
+            <Image src="/logo/blue.png" alt="Logo" width="1419" height="1520" />
           </div>
 
           {!error ? (
