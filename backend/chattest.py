@@ -71,7 +71,7 @@ with Session(get_sqlalchemy_engine()) as db_session:
       chat_session_id=new_session.id,
       parent_message_id=parent_id,
       message=user_input,
-      file_ids=[],
+      file_descriptors=[],
       prompt_id=prompt_id,
       search_doc_ids=None,
       retrieval_options=options,
