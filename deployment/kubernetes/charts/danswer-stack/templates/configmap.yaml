@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "danswer-stack.labels" . | nindent 4 }}
 data:
-  INTERNAL_URL: "{{ include "danswer-stack.fullname" . }}-api:80"
+  INTERNAL_URL: "http://{{ include "danswer-stack.fullname" . }}-api:{{ .Values.api.service.port }}"
   POSTGRES_HOST: {{ .Release.Name }}-postgresql
   VESPA_HOST: "document-index-service"
   MODEL_SERVER_HOST: "{{ include "danswer-stack.fullname" . }}-inference-model-service"
