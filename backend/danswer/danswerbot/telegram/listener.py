@@ -255,7 +255,7 @@ if __name__ == "__main__":
   # asyncio.run(main())
   try:
     telegram_bot_token = fetch_token()
-    telegram_bot = Client(telegram_bot_token.bot_name, telegram_bot_token.api_id, telegram_bot_token.api_hash, bot_token=telegram_bot_token.bot_name)
+    telegram_bot = Client(telegram_bot_token.bot_name, telegram_bot_token.api_id, telegram_bot_token.api_hash, bot_token=telegram_bot_token.bot_token)
   except ConfigNotFoundError:
     logger.debug("Missing Telegram Bot tokens")
     exit()
@@ -272,7 +272,7 @@ if __name__ == "__main__":
     with Session(get_sqlalchemy_engine()) as db_session:
       description="Telegram chat"
       # message="How can I ask asylum in France?"
-      persona_id=0
+      persona_id=2
       prompt_id=0
       llm_override=None
       prompt_override=None
@@ -293,20 +293,27 @@ if __name__ == "__main__":
         with dbm.open('chat_sessions', 'c') as dbm_file:
           dbm_file[str(message.chat.id)] = str(chat_session.id)
 
-      root_message = get_or_create_root_message(
-        chat_session_id=chat_session.id, db_session=db_session
-      )
+      with dbm.open('parent_id', 'c') as dbm_file:
+        try:
+          parent_id = int(dbm_file[str(message.chat.id)])
+        except:
+          parent_id = None
+      if not parent_id:
+        root_message = get_or_create_root_message(
+          chat_session_id=chat_session.id, db_session=db_session
+        )
+        parent_id = root_message.id
 
-      parent_id = root_message.id
+      # parent_id = root_message.id
       search_doc_ids= None
       options = RetrievalDetails(
-        run_search = OptionalSearchSetting.AUTO
+        run_search = OptionalSearchSetting.ALWAYS
       )
       req = CreateChatMessageRequest(
         chat_session_id=chat_session.id,
         parent_message_id=parent_id,
         message=message.text,
-        file_ids=[],
+        file_descriptors=[],
         prompt_id=prompt_id,
         search_doc_ids=None,
         retrieval_options=options,
@@ -319,6 +326,8 @@ if __name__ == "__main__":
       # print("RESULT", result[-2])
       res_obj = json.loads(result[-2])
       parent_id = res_obj["message_id"]
+      with dbm.open('parent_id', 'c') as dbm_file:
+        dbm_file[str(message.chat.id)] = f"{parent_id}"
       await message.reply(res_obj["message"])
       # search_doc_ids = res_obj["context_docs"]["top_documents"]
       # print("context_docs", search_doc_ids)
