@@ -12,7 +12,7 @@ import { SettingsContext } from "../settings/SettingsProvider";
 import { UserDropdown } from "../UserDropdown";
 import { Logo } from "../Logo";
 
-function HeaderTitle({ children }: { children: JSX.Element | string }) {
+export function HeaderTitle({ children }: { children: JSX.Element | string }) {
   return <h1 className="flex text-2xl text-strong font-bold">{children}</h1>;
 }
 
