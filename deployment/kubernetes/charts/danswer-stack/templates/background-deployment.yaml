@@ -48,6 +48,7 @@ spec:
           env:
             - name: ENABLE_MINI_CHUNK
               value: "{{ .Values.background.enableMiniChunk }}"
+            {{- include "danswer-stack.envSecrets" . | nindent 12}}
           volumeMounts:
             - name: dynamic-storage
               mountPath: /home/storage

@@ -55,6 +55,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ .Values.config.envConfigMapName }}
+          env:
+            {{- include "danswer-stack.envSecrets" . | nindent 12}}
           volumeMounts:
             - name: dynamic-storage
               mountPath: /home/storage

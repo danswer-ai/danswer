@@ -48,6 +48,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ .Values.config.envConfigMapName }}
+          env:
+            {{- include "danswer-stack.envSecrets" . | nindent 12}}
           {{- with .Values.webserver.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}
