@@ -9,6 +9,7 @@ from danswer.server.documents.models import CredentialSnapshot
 from danswer.server.features.document_set.models import DocumentSet
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.manage.models import UserInfo
+from danswer.server.manage.models import UserPreferences
 
 
 class UserGroup(BaseModel):
@@ -34,6 +35,9 @@ class UserGroup(BaseModel):
                     is_superuser=user.is_superuser,
                     is_verified=user.is_verified,
                     role=user.role,
+                    preferences=UserPreferences(
+                        chosen_assistants=user.chosen_assistants
+                    ),
                 )
                 for user in user_group_model.users
             ],
