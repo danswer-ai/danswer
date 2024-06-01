@@ -49,6 +49,8 @@ spec:
             - configMapRef:
                 name: {{ .Values.config.envConfigMapName }}
           env:
+            - name: INTERNAL_URL
+              value: "http://{{ include "danswer-stack.fullname" . }}-api-service:{{ .Values.api.service.port | default 8080 }}"
             {{- include "danswer-stack.envSecrets" . | nindent 12}}
           {{- with .Values.webserver.volumeMounts }}
           volumeMounts:

@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "danswer-stack.fullname" . }}-api
+  name: {{ include "danswer-stack.fullname" . }}-api-deployment
   labels:
     {{- include "danswer-stack.labels" . | nindent 4 }}
 spec:

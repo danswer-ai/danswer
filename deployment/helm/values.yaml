@@ -78,7 +78,7 @@ indexCapability:
     accessMode: "ReadWriteOnce"
     storage: "3Gi" 
 
-postgresql:               
+postgresql:
   primary:
     persistence:
       size: 1Gi 
@@ -398,7 +398,7 @@ auth:
   existingSecret: "" # danswer-secrets
   # optionally override the secret keys to reference in the secret
   secretKeys:
-    postgres_password: ""
+    postgres_password: "postgres_password"
     smtp_pass: ""
     oauth_client_id: ""
     oauth_client_secret: ""
@@ -410,7 +410,7 @@ auth:
   secretName: "danswer-secrets"
   # set values as strings, they will be base64 encoded
   secrets:
-    postgres_password: "password"  # Change this for uses outside of development
+    postgres_password: "postgres"
     smtp_pass: ""
     oauth_client_id: ""
     oauth_client_secret: ""
