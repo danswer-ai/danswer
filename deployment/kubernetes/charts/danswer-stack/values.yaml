@@ -85,8 +85,8 @@ postgresql:
   enabled: true
   auth:
     existingSecret: danswer-secrets
-    # secretKeys:
-    #   adminPasswordKey: postgres_password
+    secretKeys:
+      adminPasswordKey: postgres_password #overwriting as postgres typically expects 'postgres-password'
 
 nginx:
   containerPorts:
@@ -392,6 +392,33 @@ persistence:
         - ReadWriteOnce
       size: 1Gi  
 
+auth:
+  # for storing smtp, oauth, slack, and other secrets
+  # keys are lowercased version of env vars (e.g. SMTP_USER -> smtp_user)
+  existingSecret: "" # danswer-secrets
+  # optionally override the secret keys to reference in the secret
+  secretKeys:
+    postgres_password: ""
+    smtp_pass: ""
+    oauth_client_id: ""
+    oauth_client_secret: ""
+    oauth_cookie_secret: ""
+    gen_ai_api_key: ""
+    danswer_bot_slack_app_token: ""
+    danswer_bot_slack_bot_token: ""
+  # will be overridden by the existingSecret if set
+  secretName: "danswer-secrets"
+  # set values as strings, they will be base64 encoded
+  secrets:
+    postgres_password: ""
+    smtp_pass: ""
+    oauth_client_id: ""
+    oauth_client_secret: ""
+    oauth_cookie_secret: ""
+    gen_ai_api_key: ""
+    danswer_bot_slack_app_token: ""
+    danswer_bot_slack_bot_token: ""
+
 configMap:
   AUTH_TYPE: "disabled"  # Change this for production uses unless Danswer is only accessible behind VPN
   SESSION_EXPIRE_TIME_SECONDS: "86400"  # 1 Day Default
@@ -399,13 +426,13 @@ configMap:
   SMTP_SERVER: "" # For sending verification emails, if unspecified then defaults to 'smtp.gmail.com'
   SMTP_PORT: "" # For sending verification emails, if unspecified then defaults to '587'
   SMTP_USER: ""  # 'your-email@company.com'
-  SMTP_PASS: ""  # 'your-gmail-password'
+  # SMTP_PASS: ""  # 'your-gmail-password'
   EMAIL_FROM: ""  # 'your-email@company.com' SMTP_USER missing used instead
   # Gen AI Settings
   GEN_AI_MODEL_PROVIDER: ""
   GEN_AI_MODEL_VERSION: ""
   FAST_GEN_AI_MODEL_VERSION: ""
-  GEN_AI_API_KEY: ""
+  # GEN_AI_API_KEY: ""
   GEN_AI_API_ENDPOINT: ""
   GEN_AI_API_VERSION: ""
   GEN_AI_LLM_PROVIDER_TYPE: ""
@@ -429,9 +456,7 @@ configMap:
   ASYM_PASSAGE_PREFIX: ""
   ENABLE_RERANKING_REAL_TIME_FLOW: ""
   ENABLE_RERANKING_ASYNC_FLOW: ""
-  
   MODEL_SERVER_PORT: ""
-  
   MIN_THREADS_ML_MODELS: ""
   # Indexing Configs
   NUM_INDEXING_WORKERS: ""
@@ -444,8 +469,8 @@ configMap:
   GONG_CONNECTOR_START_TIME: ""
   NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP: ""
   # DanswerBot SlackBot Configs
-  DANSWER_BOT_SLACK_APP_TOKEN: ""
-  DANSWER_BOT_SLACK_BOT_TOKEN: ""
+  # DANSWER_BOT_SLACK_APP_TOKEN: ""
+  # DANSWER_BOT_SLACK_BOT_TOKEN: ""
   DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER: ""
   DANSWER_BOT_DISPLAY_ERROR_MSGS: ""
   DANSWER_BOT_RESPOND_EVERY_CHANNEL: ""
