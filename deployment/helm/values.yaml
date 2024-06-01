@@ -39,22 +39,6 @@ inferenceCapability:
     - key: app
       value: inference-model-server
 
-
-
-config:
-  envConfigMapName: env-configmap
-
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: false
-  # Automatically mount a ServiceAccount's API credentials?
-  automount: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
-
 indexCapability:
   service:
     type: ClusterIP
@@ -78,10 +62,24 @@ indexCapability:
     accessMode: "ReadWriteOnce"
     storage: "3Gi" 
 
+config:
+  envConfigMapName: env-configmap
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
 postgresql:
   primary:
     persistence:
-      size: 1Gi 
+      size: 5Gi 
   enabled: true
   auth:
     existingSecret: danswer-secrets
@@ -357,40 +355,7 @@ persistence:
     storageClassName: ""
     accessModes:
       - ReadWriteOnce
-    size: 1Gi
-  connector:
-    enabled: true
-    existingClaim: ""
-    storageClassName: ""
-    accessModes:
-      - ReadWriteOnce
-    size: 1Gi
-  api:
-    connector:
-      enabled: true
-      storageClassName: ""
-      accessModes:
-        - ReadWriteOnce
-      size: 1Gi
-    dynamic:
-      enabled: true
-      storageClassName: ""
-      accessModes:
-        - ReadWriteOnce
-      size: 1Gi 
-  background:
-    connector:
-      enabled: true
-      storageClassName: ""
-      accessModes:
-        - ReadWriteOnce
-      size: 1Gi
-    dynamic:
-      enabled: true
-      storageClassName: ""
-      accessModes:
-        - ReadWriteOnce
-      size: 1Gi  
+    size: 5Gi
 
 auth:
   # for storing smtp, oauth, slack, and other secrets

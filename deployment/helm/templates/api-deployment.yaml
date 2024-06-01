@@ -57,25 +57,3 @@ spec:
                 name: {{ .Values.config.envConfigMapName }}
           env:
             {{- include "danswer-stack.envSecrets" . | nindent 12}}
-          volumeMounts:
-            - name: dynamic-storage
-              mountPath: /home/storage
-            - name: file-connector-storage
-              mountPath: /home/file_connector_storage
-          {{- if .Values.api.volumeMounts }}
-            {{- .Values.api.volumeMounts | toYaml | nindent 12}}
-          {{- end }}
-      volumes:
-        - name: dynamic-storage
-          persistentVolumeClaim:
-            claimName: {{ include "danswer-stack.fullname" . }}-api-dynamic
-        - name: file-connector-storage
-          {{- if .Values.persistence.api.connector.enabled }}
-          persistentVolumeClaim:
-            claimName: {{ include "danswer-stack.fullname" . }}-api-connector
-          {{- else }}
-          emptyDir: { }
-          {{- end }}
-        {{- if .Values.api.volumes }}
-          {{- .Values.api.volumes | toYaml | nindent 8}}
-        {{- end }}

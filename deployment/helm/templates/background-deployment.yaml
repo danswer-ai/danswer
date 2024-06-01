@@ -49,29 +49,3 @@ spec:
             - name: ENABLE_MINI_CHUNK
               value: "{{ .Values.background.enableMiniChunk }}"
             {{- include "danswer-stack.envSecrets" . | nindent 12}}
-          volumeMounts:
-            - name: dynamic-storage
-              mountPath: /home/storage
-            - name: connector-storage
-              mountPath: /home/file_connector_storage
-          {{- if .Values.background.volumeMounts }}
-            {{- .Values.background.volumeMounts | toYaml | nindent 12}}
-          {{- end }}
-      volumes:
-        - name: dynamic-storage
-          {{- if .Values.persistence.background.dynamic.enabled }}
-          persistentVolumeClaim:
-            claimName: {{ include "danswer-stack.fullname" . }}-bg-dynamic
-          {{- else }}
-          emptyDir: { }
-          {{- end }}
-        - name: connector-storage
-          {{- if .Values.persistence.background.connector.enabled }}
-          persistentVolumeClaim:
-            claimName: {{ include "danswer-stack.fullname" . }}-bg-connector
-          {{- else }}
-          emptyDir: { }
-          {{- end }}
-        {{- if .Values.background.volumes }}
-          {{- .Values.background.volumes | toYaml | nindent 8}}
-        {{- end }}
