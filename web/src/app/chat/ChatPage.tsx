@@ -337,7 +337,8 @@ export function ChatPage({
           )
         : undefined
   );
-  const livePersona = selectedPersona || filteredAssistants[0];
+  const livePersona =
+    selectedPersona || filteredAssistants[0] || availablePersonas[0];
 
   const [chatSessionSharedStatus, setChatSessionSharedStatus] =
     useState<ChatSessionSharedStatus>(ChatSessionSharedStatus.Private);
