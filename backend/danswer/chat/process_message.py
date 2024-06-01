@@ -128,6 +128,10 @@ def _handle_search_tool_response_summary(
 def _check_should_force_search(
     new_msg_req: CreateChatMessageRequest,
 ) -> ForceUseTool | None:
+    # If files are already provided, don't run the search tool
+    if new_msg_req.file_descriptors:
+        return None
+
     if (
         new_msg_req.query_override
         or (
@@ -388,7 +392,7 @@ def stream_chat_message_objects(
         search_tool: SearchTool | None = None
         tools: list[Tool] = []
         for tool_cls in persona_tool_classes:
-            if tool_cls.__name__ == SearchTool.__name__:
+            if tool_cls.__name__ == SearchTool.__name__ and not latest_query_files:
                 search_tool = SearchTool(
                     db_session=db_session,
                     user=user,
