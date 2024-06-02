@@ -43,6 +43,7 @@ from danswer.db.credentials import create_initial_public_credential
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import warm_up_connections
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
 from danswer.db.swap_index import check_index_swap
@@ -166,6 +167,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         logger.info(
             f"Using multilingual flow with languages: {MULTILINGUAL_QUERY_EXPANSION}"
         )
+
+    # fill up Postgres connection pools
+    await warm_up_connections()
 
     with Session(engine) as db_session:
         check_index_swap(db_session=db_session)
