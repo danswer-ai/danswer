@@ -52,6 +52,7 @@ export interface Message {
   documents?: DanswerDocument[] | null;
   citations?: CitationMap;
   files: FileDescriptor[];
+  alternate_model?: string
   // for rebuilding the message tree
   parentMessageId: number | null;
   childrenMessageIds?: number[];
