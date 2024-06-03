@@ -238,9 +238,9 @@ export const AIMessage = ({
                                 : undefined
                             }
                             className="cursor-pointer text-link hover:text-link-hover"
-                          // href={rest.href}
-                          // target="_blank"
-                          // rel="noopener noreferrer"
+                            // href={rest.href}
+                            // target="_blank"
+                            // rel="noopener noreferrer"
                           >
                             {rest.children}
                           </a>
@@ -475,12 +475,12 @@ export const HumanMessage = ({
                           setIsEditing(false);
                         }
                       }}
-                    // ref={(textarea) => {
-                    //   if (textarea) {
-                    //     textarea.selectionStart = textarea.selectionEnd =
-                    //       textarea.value.length;
-                    //   }
-                    // }}
+                      // ref={(textarea) => {
+                      //   if (textarea) {
+                      //     textarea.selectionStart = textarea.selectionEnd =
+                      //       textarea.value.length;
+                      //   }
+                      // }}
                     />
                     <div className="flex justify-end mt-2 gap-2 pr-4">
                       <button
@@ -518,12 +518,9 @@ export const HumanMessage = ({
                   </div>
                 </div>
               ) : typeof content === "string" ? (
-                <div
-                  className="flex flex-col preserve-lines prose max-w-full"
-                >
+                <div className="flex flex-col preserve-lines prose max-w-full">
                   {content}
                 </div>
-
               ) : (
                 content
               )}
@@ -552,9 +549,9 @@ export const HumanMessage = ({
                 </div>
               )}
             {onEdit &&
-              isHovered &&
-              !isEditing &&
-              (!files || files.length === 0) ? (
+            isHovered &&
+            !isEditing &&
+            (!files || files.length === 0) ? (
               <Hoverable
                 icon={FiEdit2}
                 onClick={() => {
