@@ -113,7 +113,6 @@ export const AIMessage = ({
   if (!isReady) {
     return <div />;
   }
-  console.log(content);
 
   if (!isComplete) {
     const trimIncompleteCodeSection = (
