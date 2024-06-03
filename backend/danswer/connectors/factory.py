@@ -31,6 +31,7 @@ from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.productboard.connector import ProductboardConnector
 from danswer.connectors.requesttracker.connector import RequestTrackerConnector
 from danswer.connectors.sharepoint.connector import SharepointConnector
+from danswer.connectors.salesforce.connector import SalesforceConnector
 from danswer.connectors.slab.connector import SlabConnector
 from danswer.connectors.slack.connector import SlackPollConnector
 from danswer.connectors.slack.load_connector import SlackLoadConnector
@@ -79,6 +80,7 @@ def identify_connector_class(
         DocumentSource.DROPBOX: DropboxConnector,
         DocumentSource.SHAREPOINT: SharepointConnector,
         DocumentSource.TEAMS: TeamsConnector,
+        DocumentSource.SALESFORCE: SalesforceConnector,
         DocumentSource.DISCOURSE: DiscourseConnector,
         DocumentSource.AXERO: AxeroConnector,
         DocumentSource.CLICKUP: ClickupConnector,
