@@ -452,7 +452,9 @@ def stream_chat_message_objects(
                 PreviousMessage.from_chat_message(msg, files) for msg in history_msgs
             ],
             tools=tools,
-            force_use_tool=_check_should_force_search(new_msg_req),
+            force_use_tool=(
+                _check_should_force_search(new_msg_req) if search_tool else None
+            ),
         )
 
         reference_db_search_docs = None
