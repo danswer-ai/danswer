@@ -22,6 +22,7 @@ import {
   NotionIcon,
   ProductboardIcon,
   RequestTrackerIcon,
+  SalesforceIcon,
   SharepointIcon,
   TeamsIcon,
   SlabIcon,
@@ -159,6 +160,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   dropbox: {
     icon: DropboxIcon,
     displayName: "Dropbox",
+    category: SourceCategory.AppConnection,
+  },
+  salesforce: {
+    icon: SalesforceIcon,
+    displayName: "Salesforce",
     category: SourceCategory.AppConnection,
   },
   sharepoint: {

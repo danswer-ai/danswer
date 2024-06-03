@@ -181,9 +181,9 @@ if __name__ == "__main__":
 
     connector.load_credentials(
         {
-            "salesforce_username": os.environ["AAD_CLIENT_ID"],
-            "salesforce_password": os.environ["AAD_CLIENT_SECRET"],
-            "salesforce_security_token": os.environ["AAD_CLIENT_DIRECTORY_ID"],
+            "salesforce_username": os.environ["SF_USERNAME"],
+            "salesforce_password": os.environ["SF_PASSWORD"],
+            "salesforce_security_token": os.environ["SF_SECURITY_TOKEN"],
         }
     )
     document_batches = connector.load_from_state()
