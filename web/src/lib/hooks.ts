@@ -8,7 +8,7 @@ import {
 } from "@/lib/types";
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { errorHandlingFetcher } from "./fetcher";
-import { useState } from "react";
+import { RefObject, useState } from "react";
 import { DateRangePickerValue } from "@tremor/react";
 import { SourceMetadata } from "./search/interfaces";
 import { destructureValue } from "./llm/utils";
@@ -17,6 +17,45 @@ import { UsersResponse } from "./users/interfaces";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
 const CREDENTIAL_URL = "/api/manage/admin/credential";
+
+import { useEffect, useRef } from "react";
+
+export type AutoScrollHookType = {
+  isStreaming: boolean;
+  lastMessageRef: RefObject<HTMLDivElement>;
+  inputRef: RefObject<HTMLDivElement>;
+  endDivRef: RefObject<HTMLDivElement>;
+  distance?: number;
+};
+
+const useAutoScrollOnMessage = ({
+  isStreaming,
+  lastMessageRef,
+  inputRef,
+  endDivRef,
+  distance = 140,
+}: AutoScrollHookType) => {
+  useEffect(() => {
+    console.log(
+      `Streaming ${isStreaming} ${lastMessageRef.current} ${inputRef.current}`
+    );
+
+    if (isStreaming && lastMessageRef.current && inputRef.current) {
+      console.log("Streaming");
+
+      const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
+      const endDivRect = inputRef.current.getBoundingClientRect();
+      if (
+        endDivRect.bottom - lastMessageRect.bottom > distance &&
+        endDivRef?.current
+      ) {
+        endDivRef.current.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  });
+};
+
+export default useAutoScrollOnMessage;
 
 export const usePublicCredentials = () => {
   const { mutate } = useSWRConfig();

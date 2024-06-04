@@ -42,7 +42,10 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
-import { useFilters, useLlmOverride } from "@/lib/hooks";
+import useAutoScrollOnMessage, {
+  useFilters,
+  useLlmOverride,
+} from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { FeedbackType } from "./types";
 import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
@@ -140,6 +143,9 @@ export function ChatPage({
   const urlChatSessionId = useRef<number | null>();
   // this is triggered every time the user switches which chat
   // session they are using
+
+  useEffect(() => {});
+
   useEffect(() => {
     if (
       chatSessionId &&
@@ -446,29 +452,8 @@ export function ChatPage({
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLDivElement>(null);
   const endDivRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    // new auto scroll GPT Style
-    if (
-      lastMessageRef &&
-      inputRef &&
-      inputRef.current &&
-      lastMessageRef.current
-    ) {
-      const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
-      const endDivRect = inputRef.current.getBoundingClientRect();
 
-      if (endDivRect.bottom - lastMessageRect.bottom > 140) {
-        if (endDivRef && endDivRef?.current) {
-          endDivRef?.current.scrollIntoView({ behavior: "smooth" });
-        }
-      }
-    }
-
-    // old version
-    // if (isStreaming || !message {
-    //   handleAutoScroll(endDivRef, scrollableDivRef);
-    // }
-  });
+  useAutoScrollOnMessage({ isStreaming, lastMessageRef, inputRef, endDivRef });
 
   // scroll to bottom initially
   const [hasPerformedInitialScroll, setHasPerformedInitialScroll] =
@@ -477,6 +462,107 @@ export function ChatPage({
     endDivRef.current?.scrollIntoView();
     setHasPerformedInitialScroll(true);
   }, [isFetchingChatMessages]);
+
+  // TODO: new scrolling feature
+  // useEffect(() => {
+  //   let timeoutId: NodeJS.Timeout | null = null;
+  //   let prevInputHeight = 0;
+  //   let prevDistance = 0;
+
+  //   const handleInputResize = async () => {
+  //     function delay(ms: number) {
+  //       return new Promise((resolve) => setTimeout(resolve, ms));
+  //     }
+
+  //     await delay(100);
+
+  //     if (
+  //       lastMessageRef &&
+  //       inputRef &&
+  //       inputRef.current &&
+  //       lastMessageRef.current
+  //     ) {
+  //       const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
+  //       const endDivRect = inputRef.current.getBoundingClientRect();
+  //       const currentInputHeight = endDivRect.height;
+  //       console.log(
+  //         `current vs previous heights ${currentInputHeight} | ${prevInputHeight}`
+  //       );
+  //       console.log(
+  //         `distance compared to previous ${endDivRect.top - lastMessageRect.bottom - (currentInputHeight - prevInputHeight)}`
+  //       );
+
+  //       if (
+  //         currentInputHeight !== prevInputHeight &&
+  //         currentInputHeight > prevInputHeight &&
+  //         endDivRect.top <= lastMessageRect.bottom
+  //       ) {
+  //         if (
+  //           lastMessageRef &&
+  //           inputRef &&
+  //           inputRef.current &&
+  //           lastMessageRef.current
+  //         ) {
+  //           const lastMessageRect =
+  //             lastMessageRef.current.getBoundingClientRect();
+  //           const endDivRect = inputRef.current.getBoundingClientRect();
+
+  //           if (prevDistance > -100) {
+  //             if (endDivRef && endDivRef?.current) {
+  //               console.log("Exists");
+  //               if (timeoutId) {
+  //                 clearTimeout(timeoutId);
+  //               }
+
+  //               timeoutId = setTimeout(() => {
+  //                 if (endDivRef && endDivRef?.current) {
+  //                   // TODO
+  //                   // window.scrollBy({
+  //                   //   top: currentInputHeight - prevInputHeight,
+  //                   //   behavior: 'smooth',
+  //                   // });
+
+  //                   endDivRef?.current.scrollIntoView({ behavior: "smooth" });
+  //                 }
+  //               }, 500);
+  //             }
+  //           }
+  //         }
+
+  //         prevInputHeight = currentInputHeight;
+  //       }
+  //       if (currentInputHeight !== prevInputHeight) {
+  //         prevInputHeight = currentInputHeight;
+  //       }
+  //     }
+
+  //     if (
+  //       lastMessageRef &&
+  //       inputRef &&
+  //       inputRef.current &&
+  //       lastMessageRef.current
+  //     ) {
+  //       const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
+  //       const endDivRect = inputRef.current.getBoundingClientRect();
+  //       prevDistance = endDivRect.top - lastMessageRect.bottom;
+  //     }
+  //   };
+
+  //   // Previous- on input
+  //   const textarea = textAreaRef.current;
+  //   if (textarea) {
+  //     textarea.addEventListener("input", handleInputResize);
+  //   }
+
+  //   return () => {
+  //     if (textarea) {
+  //       textarea.removeEventListener("input", handleInputResize);
+  //     }
+  //     if (timeoutId) {
+  //       clearTimeout(timeoutId);
+  //     }
+  //   };
+  // }, [lastMessageRef, inputRef]);
 
   // handle re-sizing of the text area
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
