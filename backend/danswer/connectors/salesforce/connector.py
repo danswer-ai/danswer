@@ -73,6 +73,13 @@ class SalesforceConnector(LoadConnector, PollConnector):
         if self.sf_client is None:
             raise ConnectorMissingCredentialError("Salesforce")
         
+        # try:
+        #     obj = self.sf_client.__getattr__(object_name)
+        #     if callable(getattr(obj, 'describe', None)):
+        #         obj_desc = obj.describe()
+        #         fields = [field['name'] for field in obj_desc['fields']]
+        #         return fields
+        
         try:
             obj_desc = self.sf_client.__getattr__(object_name).describe()
             fields = [field['name'] for field in obj_desc['fields']]
