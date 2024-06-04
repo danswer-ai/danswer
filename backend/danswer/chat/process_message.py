@@ -200,7 +200,10 @@ def stream_chat_message_objects(
     4. [always] Details on the final AI response message that is created
 
     """
+    print("Streaming function")
+    print(stream_chat_message_objects)
     try:
+        print("in the loop")
         user_id = user.id if user is not None else None
 
         chat_session = get_chat_session_by_id(
@@ -257,7 +260,16 @@ def stream_chat_message_objects(
             parent_message = root_message
 
         user_message = None
-        if not use_existing_user_message:
+
+        if new_msg_req.regenerate:
+            final_msg, history_msgs = create_chat_chain(
+                chat_session_id=chat_session_id,
+                db_session=db_session,
+                regenerating=True,
+            )
+            print(final_msg.message, history_msgs)
+
+        elif not use_existing_user_message:
             # Create new message at the right place in the tree and update the parent's child pointer
             # Don't commit yet until we verify the chat message chain
             user_message = create_new_chat_message(
@@ -284,11 +296,13 @@ def stream_chat_message_objects(
 
             # NOTE: do not commit user message - it will be committed when the
             # assistant message is successfully generated
+
         else:
             # re-create linear history of messages
             final_msg, history_msgs = create_chat_chain(
                 chat_session_id=chat_session_id, db_session=db_session
             )
+
             if final_msg.message_type != MessageType.USER:
                 raise RuntimeError(
                     "The last message was not a user message. Cannot call "
@@ -365,6 +379,7 @@ def stream_chat_message_objects(
             chat_session_id=chat_session_id,
             parent_message=final_msg,
             prompt_id=prompt_id,
+            alternate_model="Model is defined here",
             # message=,
             # rephrased_query=,
             # token_count=,
@@ -576,6 +591,8 @@ def stream_chat_message(
     user: User | None,
     use_existing_user_message: bool = False,
 ) -> Iterator[str]:
+    print("this is a test")
+    print(new_msg_req)
     with get_session_context_manager() as db_session:
         objects = stream_chat_message_objects(
             new_msg_req=new_msg_req,

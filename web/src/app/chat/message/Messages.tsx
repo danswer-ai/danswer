@@ -36,6 +36,7 @@ import Prism from "prismjs";
 
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
+import { Button } from "@tremor/react";
 
 function FileDisplay({ files }: { files: FileDescriptor[] }) {
   const imageFiles = files.filter((file) => file.type === ChatFileType.IMAGE);
@@ -73,7 +74,8 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
 }
 
 export const AIMessage = ({
-  handleRegenerate = () => console.log("None"),
+  regenerate = () => null,
+  handleRegenerate = () => null,
   regenerateModal,
   messageId,
   content,
@@ -95,6 +97,7 @@ export const AIMessage = ({
   alternateModel,
   fullMessage,
 }: {
+  regenerate?: () => void;
   handleRegenerate?: () => void;
   otherResponseCanSwitchTo?: number[];
   messageId: number | null;
@@ -233,6 +236,7 @@ export const AIMessage = ({
                   <SkippedSearch handleForceSearch={handleForceSearch} />
                 </div>
               )}
+
             {content ? (
               <>
                 <FileDisplay files={files || []} />
@@ -277,6 +281,7 @@ export const AIMessage = ({
                 ) : (
                   content
                 )}
+                {messageId}
               </>
             ) : isComplete ? null : (
               loader
@@ -325,6 +330,7 @@ export const AIMessage = ({
               </div>
             )}
           </div>
+          <Button onClick={() => regenerate()}>Regenerate</Button>
 
           {handleFeedback && (
             <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1.5">
@@ -505,6 +511,7 @@ export const HumanMessage = ({
             <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words">
               <FileDisplay files={files || []} />
 
+              {messageId}
               {isEditing ? (
                 <div>
                   <div

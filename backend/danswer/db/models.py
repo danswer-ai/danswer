@@ -710,6 +710,10 @@ class ChatMessage(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
+    alternate_model: Mapped[str | None] = mapped_column(
+        Text, nullable=True
+    )  # Add this line
+
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
     prompt: Mapped[Optional["Prompt"]] = relationship("Prompt")
     chat_message_feedbacks: Mapped[list["ChatMessageFeedback"]] = relationship(

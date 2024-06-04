@@ -63,6 +63,7 @@ export async function* sendMessage({
   temperature,
   systemPromptOverride,
   useExistingUserMessage,
+  regenerate,
 }: {
   message: string;
   fileDescriptors: FileDescriptor[];
@@ -79,6 +80,7 @@ export async function* sendMessage({
   temperature?: number;
   // prompt overrides
   systemPromptOverride?: string;
+  regenerate?: boolean;
   // if specified, will use the existing latest user message
   // and will ignore the specified `message`
   useExistingUserMessage?: boolean;
@@ -90,7 +92,45 @@ export async function* sendMessage({
     headers: {
       "Content-Type": "application/json",
     },
+    // body: JSON.stringify({
+    //   regenerate: true,
+    //   chat_session_id: 2,
+    //   parent_message_id: 44,
+    //   message: message,
+    //   prompt_id: promptId,
+    //   search_doc_ids: documentsAreSelected ? selectedDocumentIds : null,
+    //   file_descriptors: fileDescriptors,
+    //   retrieval_options: !documentsAreSelected
+    //     ? {
+    //         run_search:
+    //           promptId === null ||
+    //           promptId === undefined ||
+    //           queryOverride ||
+    //           forceSearch
+    //             ? "always"
+    //             : "auto",
+    //         real_time: true,
+    //         filters: filters,
+    //       }
+    //     : null,
+    //   query_override: queryOverride,
+    //   prompt_override: systemPromptOverride
+    //     ? {
+    //         system_prompt: systemPromptOverride,
+    //       }
+    //     : null,
+    //   llm_override:
+    //     temperature || modelVersion
+    //       ? {
+    //           temperature,
+    //           model_provider: modelProvider,
+    //           model_version: modelVersion,
+    //         }
+    //       : null,
+    //   use_existing_user_message: useExistingUserMessage,
+    // }),
     body: JSON.stringify({
+      regenerate: regenerate,
       chat_session_id: chatSessionId,
       parent_message_id: parentMessageId,
       message: message,
@@ -389,6 +429,7 @@ export function processRawChatHistory(
       parentMessageId: messageInfo.parent_message,
       childrenMessageIds: [],
       latestChildMessageId: messageInfo.latest_child_message,
+      alternate_model: messageInfo.alternate_model,
     };
 
     messages.set(messageInfo.message_id, message);

@@ -247,6 +247,7 @@ def get_or_create_root_message(
             message="",
             token_count=0,
             message_type=MessageType.SYSTEM,
+            alternate_model=None,
         )
         db_session.add(new_root_message)
         db_session.commit()
@@ -268,7 +269,9 @@ def create_new_chat_message(
     # Maps the citation number [n] to the DB SearchDoc
     citations: dict[int, int] | None = None,
     commit: bool = True,
+    alternate_model: str | None = None,
 ) -> ChatMessage:
+    print("called just now")
     new_chat_message = ChatMessage(
         chat_session_id=chat_session_id,
         parent_message=parent_message.id,
@@ -281,6 +284,7 @@ def create_new_chat_message(
         citations=citations,
         files=files,
         error=error,
+        alternate_model=alternate_model,
     )
 
     # SQL Alchemy will propagate this to update the reference_docs' foreign keys
@@ -871,6 +875,9 @@ def get_retrieval_docs_from_chat_message(
 def translate_db_message_to_chat_message_detail(
     chat_message: ChatMessage, remove_doc_content: bool = False
 ) -> ChatMessageDetail:
+    print("Translating")
+    print(chat_message.__dict__)
+
     chat_msg_detail = ChatMessageDetail(
         message_id=chat_message.id,
         parent_message=chat_message.parent_message,
@@ -884,6 +891,7 @@ def translate_db_message_to_chat_message_detail(
         time_sent=chat_message.time_sent,
         citations=chat_message.citations,
         files=chat_message.files or [],
+        alternate_model=chat_message.alternate_model,
     )
 
     return chat_msg_detail

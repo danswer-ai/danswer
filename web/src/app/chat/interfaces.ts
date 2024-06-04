@@ -80,6 +80,7 @@ export interface BackendMessage {
   time_sent: string;
   citations: CitationMap;
   files: FileDescriptor[];
+  alternate_model?: string;
 }
 
 export interface DocumentsResponse {

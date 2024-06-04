@@ -66,6 +66,7 @@ import { UserDropdown } from "@/components/UserDropdown";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import RegenerateOption from "./RegenerateOptions";
+import { Button } from "@tremor/react";
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
@@ -198,6 +199,7 @@ export function ChatPage({
 
       const newCompleteMessageMap = processRawChatHistory(chatSession.messages);
       const newMessageHistory = buildLatestMessageChain(newCompleteMessageMap);
+      // console.log(newCompleteMessageMap)
       // if the last message is an error, don't overwrite it
       if (messageHistory[messageHistory.length - 1]?.type !== "error") {
         setCompleteMessageMap(newCompleteMessageMap);
@@ -250,6 +252,7 @@ export function ChatPage({
     completeMessageMapOverride,
     replacementsMap = null,
     makeLatestChildMessage = false,
+    regenerate = false,
   }: {
     messages: Message[];
     // if calling this function repeatedly with short delay, stay may not update in time
@@ -257,11 +260,14 @@ export function ChatPage({
     completeMessageMapOverride?: Map<number, Message> | null;
     replacementsMap?: Map<number, number> | null;
     makeLatestChildMessage?: boolean;
+    regenerate?: boolean;
   }) => {
     // deep copy
     const frozenCompleteMessageMap =
       completeMessageMapOverride || completeMessageMap;
+
     const newCompleteMessageMap = structuredClone(frozenCompleteMessageMap);
+
     if (newCompleteMessageMap.size === 0) {
       const systemMessageId = messages[0].parentMessageId || SYSTEM_MESSAGE_ID;
       const firstMessageId = messages[0].messageId;
@@ -282,7 +288,9 @@ export function ChatPage({
     }
     messages.forEach((message) => {
       const idToReplace = replacementsMap?.get(message.messageId);
-      if (idToReplace) {
+
+      // regenerate
+      if (idToReplace && !regenerate) {
         removeMessage(idToReplace, newCompleteMessageMap);
       }
 
@@ -459,6 +467,7 @@ export function ChatPage({
       }
     }
   };
+
   useEffect(() => {
     adjustDocumentSidebarWidth(); // Adjust the width on initial render
     window.addEventListener("resize", adjustDocumentSidebarWidth); // Add resize event listener
@@ -489,18 +498,25 @@ export function ChatPage({
   }) => {
     onSubmit({ messageIdToResend, messageOverride });
   };
+
+  function delay(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   const onSubmit = async ({
     messageIdToResend,
     messageOverride,
     queryOverride,
     forceSearch,
     isSeededChat,
+    regenerate,
   }: {
     messageIdToResend?: number;
     messageOverride?: string;
     queryOverride?: string;
     forceSearch?: boolean;
     isSeededChat?: boolean;
+    regenerate?: boolean;
   } = {}) => {
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
@@ -520,6 +536,7 @@ export function ChatPage({
     const messageToResend = messageHistory.find(
       (message) => message.messageId === messageIdToResend
     );
+
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
       messageToResend?.parentMessageId !== undefined
@@ -556,16 +573,18 @@ export function ChatPage({
 
     // if we're resending, set the parent's child to null
     // we will use tempMessages until the regenerated message is complete
-    const messageUpdates: Message[] = [
-      {
-        messageId: TEMP_USER_MESSAGE_ID,
-        message: currMessage,
-        type: "user",
-        files: currentMessageFiles,
-        parentMessageId: parentMessage?.messageId || null,
-      },
-    ];
-    if (parentMessage) {
+    const messageUpdates: Message[] = [];
+    // if (!regenerate) {
+    messageUpdates.push({
+      messageId: TEMP_USER_MESSAGE_ID,
+      message: currMessage,
+      type: "user",
+      files: currentMessageFiles,
+      parentMessageId: parentMessage?.messageId || null,
+    });
+    // }
+
+    if (parentMessage && !regenerate) {
       messageUpdates.push({
         ...parentMessage,
         childrenMessageIds: (parentMessage.childrenMessageIds || []).concat([
@@ -574,9 +593,15 @@ export function ChatPage({
         latestChildMessageId: TEMP_USER_MESSAGE_ID,
       });
     }
+
+    // console.log("before?")
+    // await delay(10000)
+
     const frozenCompleteMessageMap = upsertToCompleteMessageMap({
       messages: messageUpdates,
+      regenerate: regenerate,
     });
+
     // on initial message send, we insert a dummy system message
     // set this as the parent here if no parent is set
     if (!parentMessage && frozenCompleteMessageMap.size === 2) {
@@ -584,6 +609,9 @@ export function ChatPage({
     }
     setMessage("");
     setCurrentMessageFiles([]);
+
+    // console.log("before?")
+    // await delay(10000)
 
     setIsStreaming(true);
     let answer = "";
@@ -596,10 +624,15 @@ export function ChatPage({
     let aiMessageImages: FileDescriptor[] | null = null;
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
+
+    // console.log("before")
+    // await delay(10000)
+
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
       for await (const packetBunch of sendMessage({
+        regenerate: regenerate,
         message: currMessage,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
@@ -661,23 +694,47 @@ export function ChatPage({
             finalMessage = packet as BackendMessage;
           }
         }
-        const updateFn = (messages: Message[]) => {
+
+        const updateFn = async (messages: Message[]) => {
           const replacementsMap = finalMessage
             ? new Map([
                 [messages[0].messageId, TEMP_USER_MESSAGE_ID],
                 [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
               ] as [number, number][])
             : null;
+
+          // if (replacementsMap != null) {
+          //   console.log("WAIT")
+          //   await delay(1000)
+
+          // }
+          // console.log(replacementsMap)
+
+          // console.log("NOW")a
           upsertToCompleteMessageMap({
             messages: messages,
             replacementsMap: replacementsMap,
             completeMessageMapOverride: frozenCompleteMessageMap,
+            regenerate: regenerate,
           });
+
+          // await delay(1000000)
+
+          // console.log("Done")
         };
+
         const newUserMessageId =
           finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
         const newAssistantMessageId =
           finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+
+        //
+        // console.log("Happening!")
+
+        // console.log(`${newUserMessageId} ${newAssistantMessageId}`)
+
+        // await delay(1000)
+
         updateFn([
           {
             messageId: newUserMessageId,
@@ -700,13 +757,20 @@ export function ChatPage({
             parentMessageId: newUserMessageId,
           },
         ]);
+
+        // console.log(`${newUserMessageId} ${newAssistantMessageId}`)
+        // console.log("happened!")
+        // await delay(1000)
+
         if (isCancelledRef.current) {
           setIsCancelled(false);
           break;
         }
       }
     } catch (e: any) {
+      console.log("error message");
       const errorMsg = e.message;
+
       upsertToCompleteMessageMap({
         messages: [
           {
@@ -727,6 +791,7 @@ export function ChatPage({
         completeMessageMapOverride: frozenCompleteMessageMap,
       });
     }
+
     setIsStreaming(false);
     if (isNewSession) {
       if (finalMessage) {
@@ -1051,8 +1116,16 @@ export function ChatPage({
                               i !== 0 ? messageHistory[i - 1] : null;
                             return (
                               <AIMessage
-                                // alternateModel={"message.alternate_model"}
-                                alternateModel={"gpt-4"}
+                                regenerate={() =>
+                                  // console.log("howdy")
+
+                                  onSubmit({
+                                    messageIdToResend: parentMessage?.messageId,
+                                    regenerate: true,
+                                  })
+                                }
+                                alternateModel={message.alternate_model}
+                                // alternateModel={"gpt-4"}
                                 fullMessage={message}
                                 otherResponseCanSwitchTo={
                                   parentMessage?.childrenMessageIds || []
