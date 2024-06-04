@@ -1,5 +1,6 @@
 from datetime import timezone
 from typing import Any
+from io import BytesIO
 
 from dropbox import Dropbox  # type: ignore
 from dropbox.exceptions import ApiError  # type:ignore
@@ -14,11 +15,12 @@ from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.connectors.models import ConnectorMissingCredentialError
+from danswer.utils.logger import setup_logger
+from danswer.file_processing.extract_file_text import extract_file_text
 
 
-class DropboxClientNotSetUpError(PermissionError):
-    def __init__(self) -> None:
-        super().__init__("Dropbox Client is not set up, was load_credentials called?")
+logger = setup_logger()
 
 
 class DropboxConnector(LoadConnector, PollConnector):
@@ -33,21 +35,27 @@ class DropboxConnector(LoadConnector, PollConnector):
     def _download_file(self, path: str) -> bytes:
         """Download a single file from Dropbox."""
         if self.dropbox_client is None:
-            raise DropboxClientNotSetUpError()
+            raise ConnectorMissingCredentialError("Dropbox")
         _, resp = self.dropbox_client.files_download(path)
         return resp.content
 
     def _get_shared_link(self, path: str) -> str:
         """Create a shared link for a file in Dropbox."""
         if self.dropbox_client is None:
-            raise DropboxClientNotSetUpError()
+            raise ConnectorMissingCredentialError("Dropbox")
+        
         try:
+            # Check if a shared link already exists
+            shared_links = self.dropbox_client.sharing_list_shared_links(path=path)
+            if shared_links.links:
+                return shared_links.links[0].url
+            
             link_metadata = (
                 self.dropbox_client.sharing_create_shared_link_with_settings(path)
             )
             return link_metadata.url
         except ApiError as err:
-            print(f"Failed to create a shared link for {path}: {err}")
+            logger.exception(f"Failed to create a shared link for {path}: {err}")
             return ""
 
     def _yield_files_recursive(
@@ -58,7 +66,7 @@ class DropboxConnector(LoadConnector, PollConnector):
     ) -> GenerateDocumentsOutput:
         """Yield files in batches from a specified Dropbox folder, including subfolders."""
         if self.dropbox_client is None:
-            raise DropboxClientNotSetUpError()
+            raise ConnectorMissingCredentialError("Dropbox")
 
         result = self.dropbox_client.files_list_folder(
             path,
@@ -88,7 +96,7 @@ class DropboxConnector(LoadConnector, PollConnector):
                     downloaded_file = self._download_file(entry.path_display)
                     link = self._get_shared_link(entry.path_display)
                     try:
-                        text = downloaded_file.decode("utf-8")
+                        text = extract_file_text(entry.name, BytesIO(downloaded_file))
                         batch.append(
                             Document(
                                 id=f"doc:{entry.id}",
@@ -100,7 +108,7 @@ class DropboxConnector(LoadConnector, PollConnector):
                             )
                         )
                     except Exception as e:
-                        print(
+                        logger.exception(
                             f"Error decoding file {entry.path_display} as utf-8 error occurred: {e}"
                         )
 
@@ -122,7 +130,7 @@ class DropboxConnector(LoadConnector, PollConnector):
         self, start: SecondsSinceUnixEpoch | None, end: SecondsSinceUnixEpoch | None
     ) -> GenerateDocumentsOutput:
         if self.dropbox_client is None:
-            raise DropboxClientNotSetUpError()
+            raise ConnectorMissingCredentialError("Dropbox")
 
         for batch in self._yield_files_recursive("", start, end):
             yield batch
@@ -133,13 +141,11 @@ class DropboxConnector(LoadConnector, PollConnector):
 if __name__ == "__main__":
     import os
 
-    connector = DropboxConnector(batch_size=5)
+    connector = DropboxConnector()
     connector.load_credentials(
         {
             "dropbox_access_token": os.environ["DROPBOX_ACCESS_TOKEN"],
         }
     )
     document_batches = connector.load_from_state()
-    for doc_batch in connector.load_from_state():
-        for doc in doc_batch:
-            print(doc)
+    print(next(document_batches))
