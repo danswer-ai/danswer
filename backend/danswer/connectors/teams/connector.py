@@ -78,7 +78,7 @@ class TeamsConnector(LoadConnector, PollConnector):
         self.graph_client = GraphClient(_acquire_token_func)
         return None
     
-    def get_post_message_lists_from_channel(self, channel_object: Channel) -> list[ChatMessage]:
+    def get_post_message_lists_from_channel(self, channel_object: Channel) -> list[list[ChatMessage]]:
     
         base_message_list: list[ChatMessage] = channel_object.messages.get().execute_query()
 
@@ -152,10 +152,11 @@ class TeamsConnector(LoadConnector, PollConnector):
         batch_count = 0
         for channel_object in channel_list:
             post_message_lists = self.get_post_message_lists_from_channel(channel_object)
-            doc_batch.append(
-                self.convert_post_message_list_to_document(channel_object, 
-                                                           post_message_lists)
-            )
+            for base_message_groups in post_message_lists:
+                doc_batch.append(
+                    self.convert_post_message_list_to_document(channel_object, 
+                                                                base_message_groups)
+                )
 
             batch_count += 1
             if batch_count >= self.batch_size:
