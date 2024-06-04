@@ -218,7 +218,7 @@ export interface IndexAttemptSnapshot {
 
 export interface ConnectorIndexingStatus<
   ConnectorConfigType,
-  ConnectorCredentialType,
+  ConnectorCredentialType
 > {
   cc_pair_id: number;
   name: string | null;
