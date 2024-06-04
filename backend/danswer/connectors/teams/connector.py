@@ -11,15 +11,13 @@ import msal  # type: ignore
 import openpyxl  # type: ignore
 # import pptx  # type: ignore
 from office365.graph_client import GraphClient  # type: ignore
-from office365.teams.team import Team
-from office365.teams.channels.channel import Channel
-from office365.teams.chats.messages.message import ChatMessage
-from office365.outlook.mail.item_body import ItemBody
+from office365.teams.team import Team  # type: ignore
+from office365.teams.channels.channel import Channel  # type: ignore
+from office365.teams.chats.messages.message import ChatMessage  # type: ignore
+from office365.outlook.mail.item_body import ItemBody  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.file_utils import is_text_file_extension
-from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -50,6 +48,7 @@ def get_created_datetime(obj: ChatMessage):
 
 
 class TeamsConnector(LoadConnector, PollConnector):
+
     def __init__(
         self,
         batch_size: int = INDEX_BATCH_SIZE,
@@ -60,19 +59,19 @@ class TeamsConnector(LoadConnector, PollConnector):
         self.requested_team_list: list[str] = teams
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        aad_client_id = credentials["aad_client_id"]
-        aad_client_secret = credentials["aad_client_secret"]
-        aad_directory_id = credentials["aad_directory_id"]
+        teams_client_id = credentials["teams_client_id"]
+        teams_client_secret = credentials["teams_client_secret"]
+        teams_directory_id = credentials["teams_directory_id"]
 
         def _acquire_token_func() -> dict[str, Any]:
             """
             Acquire token via MSAL
             """
-            authority_url = f"https://login.microsoftonline.com/{aad_directory_id}"
+            authority_url = f"https://login.microsoftonline.com/{teams_directory_id}"
             app = msal.ConfidentialClientApplication(
                 authority=authority_url,
-                client_id=aad_client_id,
-                client_credential=aad_client_secret,
+                client_id=teams_client_id,
+                client_credential=teams_client_secret,
             )
             token = app.acquire_token_for_client(
                 scopes=["https://graph.microsoft.com/.default"]
@@ -118,6 +117,9 @@ class TeamsConnector(LoadConnector, PollConnector):
         return channel_list
 
     def get_all_team_objects(self) -> list[Team]:
+        if self.graph_client is None:
+            raise ConnectorMissingCredentialError("Sharepoint")
+
         team_object_list: list[Team] = []
 
         teams_object = self.graph_client.teams.get().execute_query()
@@ -244,13 +246,13 @@ class TeamsConnector(LoadConnector, PollConnector):
 
 
 if __name__ == "__main__":
-    connector = TeamsConnector(sites=os.environ["SITES"].split(","))
+    connector = TeamsConnector(teams=os.environ["TEAMS"].split(","))
 
     connector.load_credentials(
         {
-            "aad_client_id": os.environ["AAD_CLIENT_ID"],
-            "aad_client_secret": os.environ["AAD_CLIENT_SECRET"],
-            "aad_directory_id": os.environ["AAD_CLIENT_DIRECTORY_ID"],
+            "teams_client_id": os.environ["TEAMS_CLIENT_ID"],
+            "teams_client_secret": os.environ["TEAMS_CLIENT_SECRET"],
+            "teams_directory_id": os.environ["TEAMS_CLIENT_DIRECTORY_ID"],
         }
     )
     document_batches = connector.load_from_state()

@@ -363,15 +363,15 @@ export interface ZendeskCredentialJson {
 }
 
 export interface SharepointCredentialJson {
-  aad_client_id: string;
-  aad_client_secret: string;
-  aad_directory_id: string;
+  sp_client_id: string;
+  sp_client_secret: string;
+  sp_directory_id: string;
 }
 
 export interface TeamsCredentialJson {
-  aad_client_id: string;
-  aad_client_secret: string;
-  aad_directory_id: string;
+  teams_client_id: string;
+  teams_client_secret: string;
+  teams_directory_id: string;
 }
 
 export interface DiscourseCredentialJson {

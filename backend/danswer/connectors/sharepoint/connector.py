@@ -70,19 +70,19 @@ class SharepointConnector(LoadConnector, PollConnector):
         self.requested_site_list: list[str] = sites
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        aad_client_id = credentials["aad_client_id"]
-        aad_client_secret = credentials["aad_client_secret"]
-        aad_directory_id = credentials["aad_directory_id"]
+        sp_client_id = credentials["sp_client_id"]
+        sp_client_secret = credentials["sp_client_secret"]
+        sp_directory_id = credentials["sp_directory_id"]
 
         def _acquire_token_func() -> dict[str, Any]:
             """
             Acquire token via MSAL
             """
-            authority_url = f"https://login.microsoftonline.com/{aad_directory_id}"
+            authority_url = f"https://login.microsoftonline.com/{sp_directory_id}"
             app = msal.ConfidentialClientApplication(
                 authority=authority_url,
-                client_id=aad_client_id,
-                client_credential=aad_client_secret,
+                client_id=sp_client_id,
+                client_credential=sp_client_secret,
             )
             token = app.acquire_token_for_client(
                 scopes=["https://graph.microsoft.com/.default"]
@@ -224,9 +224,9 @@ if __name__ == "__main__":
 
     connector.load_credentials(
         {
-            "aad_client_id": os.environ["AAD_CLIENT_ID"],
-            "aad_client_secret": os.environ["AAD_CLIENT_SECRET"],
-            "aad_directory_id": os.environ["AAD_CLIENT_DIRECTORY_ID"],
+            "sp_client_id": os.environ["SP_CLIENT_ID"],
+            "sp_client_secret": os.environ["SP_CLIENT_SECRET"],
+            "sp_directory_id": os.environ["SP_CLIENT_DIRECTORY_ID"],
         }
     )
     document_batches = connector.load_from_state()

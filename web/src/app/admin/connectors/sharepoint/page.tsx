@@ -67,7 +67,7 @@ const MainSection = () => {
 
   const sharepointCredential: Credential<SharepointCredentialJson> | undefined =
     credentialsData.find(
-      (credential) => credential.credential_json?.aad_client_id
+      (credential) => credential.credential_json?.sp_client_id
     );
 
   return (
@@ -87,7 +87,7 @@ const MainSection = () => {
           <div className="flex mb-1 text-sm">
             <Text className="my-auto">Existing Azure AD Client ID: </Text>
             <Text className="ml-1 italic my-auto">
-              {sharepointCredential.credential_json.aad_client_id}
+              {sharepointCredential.credential_json.sp_client_id}
             </Text>
             <button
               className="ml-1 hover:bg-hover rounded p-1"
@@ -119,35 +119,35 @@ const MainSection = () => {
               formBody={
                 <>
                   <TextFormField
-                    name="aad_client_id"
+                    name="sp_client_id"
                     label="Application (client) ID:"
                   />
                   <TextFormField
-                    name="aad_directory_id"
+                    name="sp_directory_id"
                     label="Directory (tenant) ID:"
                   />
                   <TextFormField
-                    name="aad_client_secret"
+                    name="sp_client_secret"
                     label="Client Secret:"
                     type="password"
                   />
                 </>
               }
               validationSchema={Yup.object().shape({
-                aad_client_id: Yup.string().required(
+                sp_client_id: Yup.string().required(
                   "Please enter your Application (client) ID"
                 ),
-                aad_directory_id: Yup.string().required(
+                sp_directory_id: Yup.string().required(
                   "Please enter your Directory (tenant) ID"
                 ),
-                aad_client_secret: Yup.string().required(
+                sp_client_secret: Yup.string().required(
                   "Please enter your Client Secret"
                 ),
               })}
               initialValues={{
-                aad_client_id: "",
-                aad_directory_id: "",
-                aad_client_secret: "",
+                sp_client_id: "",
+                sp_directory_id: "",
+                sp_client_secret: "",
               }}
               onSubmit={(isSuccess) => {
                 if (isSuccess) {
@@ -175,7 +175,7 @@ const MainSection = () => {
               connectorIndexingStatuses={sharepointConnectorIndexingStatuses}
               liveCredential={sharepointCredential}
               getCredential={(credential) =>
-                credential.credential_json.aad_directory_id
+                credential.credential_json.sp_directory_id
               }
               onUpdate={() =>
                 mutate("/api/manage/admin/connector/indexing-status")
