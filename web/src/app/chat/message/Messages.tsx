@@ -37,6 +37,7 @@ import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
 import { Button } from "@tremor/react";
+import RegenerateOption from "../RegenerateOptions";
 
 function FileDisplay({ files }: { files: FileDescriptor[] }) {
   const imageFiles = files.filter((file) => file.type === ChatFileType.IMAGE);
@@ -74,7 +75,8 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
 }
 
 export const AIMessage = ({
-  handleRegenerate = () => console.log("None"),
+  regenerate = () => null,
+  handleRegenerate = () => null,
   regenerateModal,
   messageId,
   content,
@@ -94,9 +96,10 @@ export const AIMessage = ({
   retrievalDisabled,
   onResponseSelection,
   alternateModel,
-  fullMessage
+  fullMessage,
 }: {
-  handleRegenerate?: () => void
+  regenerate?: () => void;
+  handleRegenerate?: () => void;
   otherResponseCanSwitchTo?: number[];
   messageId: number | null;
   regenerateModal?: boolean;
@@ -114,8 +117,8 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
-  alternateModel?: string
-  fullMessage?: Message  // for debugging
+  alternateModel?: string;
+  fullMessage?: Message; // for debugging
 
   onResponseSelection?: (messageId: number) => void;
 }) => {
@@ -188,9 +191,6 @@ export const AIMessage = ({
               </div>
             </div>
 
-            <Button onClick={() => console.log(fullMessage)}>
-              Log
-            </Button>
             <div className="font-bold text-emphasis ml-2 my-auto">
               {personaName || "Danswer"}
             </div>
@@ -237,15 +237,6 @@ export const AIMessage = ({
                   <SkippedSearch handleForceSearch={handleForceSearch} />
                 </div>
               )}
-            Message is {messageId}
-
-            <button onClick={() => console.log(otherResponseCanSwitchTo)}>
-              other message logs
-            </button>
-
-            <button onClick={() => console.log(messageId)}>
-              current message logs
-            </button>
 
             {content ? (
               <>
@@ -271,9 +262,9 @@ export const AIMessage = ({
                                 : undefined
                             }
                             className="cursor-pointer text-link hover:text-link-hover"
-                          // href={rest.href}
-                          // target="_blank"
-                          // rel="noopener noreferrer"
+                            // href={rest.href}
+                            // target="_blank"
+                            // rel="noopener noreferrer"
                           >
                             {rest.children}
                           </a>
@@ -291,6 +282,7 @@ export const AIMessage = ({
                 ) : (
                   content
                 )}
+                {messageId}
               </>
             ) : isComplete ? null : (
               loader
@@ -339,16 +331,16 @@ export const AIMessage = ({
               </div>
             )}
           </div>
-
+          <Button onClick={() => regenerate()}>Regenerate</Button>
 
           {handleFeedback && (
             <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1.5">
               {currentResponseId !== undefined &&
                 onResponseSelection &&
                 // otherMessagesCanSwitchTo &&
-                otherResponseCanSwitchTo.length > 0 && (
+                otherResponseCanSwitchTo.length > 1 && (
                   <div className="mr-2">
-                    <DummySwitcher
+                    <MessageSwitcher
                       currentPage={currentResponseId + 1}
                       totalPages={otherResponseCanSwitchTo.length}
                       handlePrevious={() =>
@@ -373,16 +365,20 @@ export const AIMessage = ({
                 icon={FiThumbsDown}
                 onClick={() => handleFeedback("dislike")}
               />
-              <Hoverable
-                active={regenerateModal || false}
-                icon={FiStar}
-                onClick={() => handleRegenerate()}
-              />
-              {alternateModel &&
-                <p>
-                  {alternateModel}
-                </p>}
-
+              <div className="group flex">
+                <Hoverable
+                  active={regenerateModal || false}
+                  icon={FiStar}
+                  onClick={() => handleRegenerate()}
+                />
+                <p
+                  className={`my-auto ml-1 ${!regenerateModal && "opacity-0"} text-sm group-hover:opacity-100 transition-all duration-300`}
+                >
+                  {" "}
+                  {alternateModel || ""}
+                </p>
+              </div>
+              {/* {alternateModel && } */}
             </div>
           )}
         </div>
@@ -419,34 +415,33 @@ function MessageSwitcher({
   );
 }
 
-function DummySwitcher({
-  currentPage,
-  totalPages,
-  handlePrevious,
-  handleNext,
-}: {
-  currentPage: number;
-  totalPages: number;
-  handlePrevious?: () => void;
-  handleNext?: () => void;
-}) {
-  return (
-    <div className="flex items-center text-sm space-x-0.5">
-      <Hoverable
-        icon={FiChevronLeft}
-        onClick={currentPage === 1 ? undefined : handlePrevious}
-      />
-      <span className="text-emphasis text-medium select-none">
-        {currentPage} / {totalPages}
-      </span>
-      <Hoverable
-        icon={FiChevronRight}
-        onClick={currentPage === totalPages ? undefined : handleNext}
-      />
-    </div>
-  );
-}
-
+// function ResponseSwitcher({
+//   currentPage,
+//   totalPages,
+//   handlePrevious,
+//   handleNext,
+// }: {
+//   currentPage: number;
+//   totalPages: number;
+//   handlePrevious?: () => void;
+//   handleNext?: () => void;
+// }) {
+//   return (
+//     <div className="flex items-center text-sm space-x-0.5">
+//       <Hoverable
+//         icon={FiChevronLeft}
+//         onClick={currentPage === 1 ? undefined : handlePrevious}
+//       />
+//       <span className="text-emphasis text-medium select-none">
+//         {currentPage} / {totalPages}
+//       </span>
+//       <Hoverable
+//         icon={FiChevronRight}
+//         onClick={currentPage === totalPages ? undefined : handleNext}
+//       />
+//     </div>
+//   );
+// }
 
 export const HumanMessage = ({
   content,
@@ -517,6 +512,7 @@ export const HumanMessage = ({
             <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words">
               <FileDisplay files={files || []} />
 
+              {messageId}
               {isEditing ? (
                 <div>
                   <div
@@ -570,12 +566,12 @@ export const HumanMessage = ({
                           setIsEditing(false);
                         }
                       }}
-                    // ref={(textarea) => {
-                    //   if (textarea) {
-                    //     textarea.selectionStart = textarea.selectionEnd =
-                    //       textarea.value.length;
-                    //   }
-                    // }}
+                      // ref={(textarea) => {
+                      //   if (textarea) {
+                      //     textarea.selectionStart = textarea.selectionEnd =
+                      //       textarea.value.length;
+                      //   }
+                      // }}
                     />
                     <div className="flex justify-end mt-2 gap-2 pr-4">
                       <button
@@ -613,60 +609,7 @@ export const HumanMessage = ({
                   </div>
                 </div>
               ) : typeof content === "string" ? (
-
-                // Method #1- ReformJuat the code specifically
-                //   <ReactMarkdown
-                //     className="prose prose-no-code-prose max-w-full"
-                //     components={
-                //       {
-                //         a: ({ node, ...props }) => (
-                //           <a
-                //             {...props}
-                //             className="text-blue-500 hover:text-blue-700"
-                //             target="_blank"
-                //             rel="noopener noreferrer"
-                //           />
-                //         ),
-
-                //         code: ({ node, className, children, ...props }) => {
-
-                //           return <p className="block-code">{children}</p>;
-                //         }
-                //       }
-                //     }
-                //     remarkPlugins={[remarkGfm]}
-                //   >
-
-                //     {`${content}`}
-                //   </ReactMarkdown>
-                // ) 
-
-                // Method #2- use tailwind's configuration options to modify
-                // Currently set for specifically pre and code but could be set for specific classes
-                // <ReactMarkdown
-                //   className="prose prose-no-code-prose max-w-full"
-                //   components={
-
-                //     {
-                //       a: ({ node, ...props }) => (
-                //         <a
-                //           {...props}
-                //           className="text-blue-500 hover:text-blue-700"
-                //           target="_blank"
-                //           rel="noopener noreferrer"
-                //         />
-                //       ),
-                //   }}
-                //   remarkPlugins={[remarkGfm]}
-                // >
-                //   {`${content}`}
-                // </ReactMarkdown>
-
-
-                // Remove React Markdown entirely
-                <div
-                  className="flex flex-col preserve-lines prose max-w-full"
-                >
+                <div className="flex flex-col preserve-lines prose max-w-full">
                   {content}
                 {/* </ReactMarkdown> */}
                 </div>
@@ -675,10 +618,6 @@ export const HumanMessage = ({
               )}
             </div>
           </div>
-          {/* <button onClick={() => console.log(content)}>
-            validate
-          </button> */}
-
           <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1">
             {currentMessageInd !== undefined &&
               onMessageSelection &&
@@ -702,9 +641,9 @@ export const HumanMessage = ({
                 </div>
               )}
             {onEdit &&
-              isHovered &&
-              !isEditing &&
-              (!files || files.length === 0) ? (
+            isHovered &&
+            !isEditing &&
+            (!files || files.length === 0) ? (
               <Hoverable
                 icon={FiEdit2}
                 onClick={() => {
@@ -712,14 +651,12 @@ export const HumanMessage = ({
                   setIsHovered(false);
                 }}
               />
-            )
-              :
-              (
-                <div className="h-[27px]" />
-              )}
+            ) : (
+              <div className="h-[27px]" />
+            )}
           </div>
         </div>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 };

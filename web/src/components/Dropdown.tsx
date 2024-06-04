@@ -24,8 +24,9 @@ function StandardDropdownOption<T>({
   return (
     <button
       onClick={() => handleSelect(option)}
-      className={`w-full text-left block px-4 py-2.5 text-sm hover:bg-gray-800 ${index !== 0 ? " border-t-2 border-gray-600" : ""
-        }`}
+      className={`w-full text-left block px-4 py-2.5 text-sm hover:bg-gray-800 ${
+        index !== 0 ? " border-t-2 border-gray-600" : ""
+      }`}
       role="menuitem"
     >
       <p className="font-medium">{option.name}</p>
@@ -215,8 +216,9 @@ export const CustomDropdown = ({
       {isOpen && (
         <div
           onClick={() => setIsOpen(!isOpen)}
-          className={`absolute ${direction === "up" ? "bottom-full pb-2" : "pt-2 "
-            } w-full z-30 box-shadow`}
+          className={`absolute ${
+            direction === "up" ? "bottom-full pb-2" : "pt-2 "
+          } w-full z-30 box-shadow`}
         >
           {dropdown}
         </div>
@@ -232,7 +234,7 @@ export function DefaultDropdownElement({
   onSelect,
   isSelected,
   includeCheckbox = false,
-  gptBox = false
+  gptBox = false,
 }: {
   name: string | JSX.Element;
   icon?: React.FC<{ size?: number; className?: string }>;
@@ -240,7 +242,7 @@ export function DefaultDropdownElement({
   onSelect?: () => void;
   isSelected?: boolean;
   includeCheckbox?: boolean;
-  gptBox?: boolean
+  gptBox?: boolean;
 }) {
   return (
     <div
@@ -290,7 +292,7 @@ export function DefaultDropdown({
   includeDefault = false,
   side,
   maxHeight,
-  gptBox
+  gptBox,
 }: {
   options: StringOrNumberOption[];
   selected: string | null;
@@ -298,7 +300,7 @@ export function DefaultDropdown({
   includeDefault?: boolean;
   side?: "top" | "right" | "bottom" | "left";
   maxHeight?: string;
-  gptBox?: boolean
+  gptBox?: boolean;
 }) {
   const selectedOption = options.find((option) => option.value === selected);
   const [isOpen, setIsOpen] = useState(false);
@@ -351,7 +353,7 @@ export function DefaultDropdown({
         const isSelected = option.value === selected;
         return (
           <DefaultDropdownElement
-            // TODO modify to include different icons 
+            // TODO modify to include different icons
             // includeCheckbox={true}
             key={option.value}
             name={option.name}
@@ -363,9 +365,6 @@ export function DefaultDropdown({
       })}
     </div>
   );
-
-
-
 
   return (
     <div onClick={() => setIsOpen(!isOpen)}>
@@ -384,7 +383,6 @@ export function DefaultDropdown({
   );
 }
 
-
 export function RegenerateDropdown({
   options,
   selected,
@@ -392,7 +390,7 @@ export function RegenerateDropdown({
   includeDefault = false,
   side,
   maxHeight,
-  gptBox
+  gptBox,
 }: {
   options: StringOrNumberOption[];
   selected: string | null;
@@ -400,7 +398,7 @@ export function RegenerateDropdown({
   includeDefault?: boolean;
   side?: "top" | "right" | "bottom" | "left";
   maxHeight?: string;
-  gptBox?: boolean
+  gptBox?: boolean;
 }) {
   const selectedOption = options.find((option) => option.value === selected);
   const [isOpen, setIsOpen] = useState(false);
@@ -419,9 +417,7 @@ export function RegenerateDropdown({
       border-border 
       cursor-pointer`}
     >
-      <p className="line-clamp-1">
-        Select a model
-      </p>
+      <p className="line-clamp-1">Select a model</p>
       <FiChevronDown className="my-auto ml-auto" />
     </div>
   );
@@ -453,7 +449,7 @@ export function RegenerateDropdown({
         const isSelected = option.value === selected;
         return (
           <DefaultDropdownElement
-            // TODO modify to include different icons 
+            // TODO modify to include different icons
             // includeCheckbox={true}
             key={option.value}
             name={option.name}
@@ -465,9 +461,6 @@ export function RegenerateDropdown({
       })}
     </div>
   );
-
-
-
 
   return (
     <div onClick={() => setIsOpen(!isOpen)}>

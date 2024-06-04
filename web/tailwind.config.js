@@ -16,21 +16,17 @@ module.exports = {
     transparent: "transparent",
     current: "currentColor",
     extend: {
-
       // For removing prose
       typography: {
-
-
-        'validate': {
+        validate: {
           css: {
             pre: false,
             code: false,
-            'pre code': false,
-            'code::before': false,
-            'code::after': false
-          }
+            "pre code": false,
+            "code::before": false,
+            "code::after": false,
+          },
         },
-
       },
 
       // typography: (theme) => ({
@@ -44,7 +40,6 @@ module.exports = {
       //     },
       //   },
       // }),
-
 
       screens: {
         "2xl": "1420px",

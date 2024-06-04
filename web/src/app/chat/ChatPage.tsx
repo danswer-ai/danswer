@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
@@ -67,12 +66,19 @@ import { UserDropdown } from "@/components/UserDropdown";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import RegenerateOption from "./RegenerateOptions";
+import { Button } from "@tremor/react";
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
 const SYSTEM_MESSAGE_ID = -3;
 
+// TODO put in types file
+
+export type modelOverRideType = {
+  modelProvider?: string;
+  modelVersion?: string;
+};
 export function ChatPage({
   documentSidebarInitialWidth,
   defaultSelectedPersonaId,
@@ -80,12 +86,7 @@ export function ChatPage({
   documentSidebarInitialWidth?: number;
   defaultSelectedPersonaId?: number;
 }) {
-
-
-  const [regenerateModal, setRegenerateModal] = useState<
-    boolean | null
-  >(null);
-
+  const [regenerateModal, setRegenerateModal] = useState<boolean | null>(null);
 
   const [configModalActiveTab, setConfigModalActiveTab] = useState<
     string | null
@@ -127,11 +128,7 @@ export function ChatPage({
     existingChatSessionId !== null
   );
 
-
-  const regenerateNewModel = (prompt: string,) => {
-
-  }
-
+  const regenerateNewModel = (prompt: string) => {};
 
   // needed so closures (e.g. onSubmit) can access the current value
   const urlChatSessionId = useRef<number | null>();
@@ -177,8 +174,7 @@ export function ChatPage({
               (persona) => persona.id === defaultSelectedPersonaId
             )
           );
-        }
-        else {
+        } else {
           setSelectedPersona(undefined);
         }
         setCompleteMessageMap(new Map());
@@ -209,6 +205,7 @@ export function ChatPage({
 
       const newCompleteMessageMap = processRawChatHistory(chatSession.messages);
       const newMessageHistory = buildLatestMessageChain(newCompleteMessageMap);
+      // console.log(newCompleteMessageMap)
       // if the last message is an error, don't overwrite it
       if (messageHistory[messageHistory.length - 1]?.type !== "error") {
         setCompleteMessageMap(newCompleteMessageMap);
@@ -261,6 +258,7 @@ export function ChatPage({
     completeMessageMapOverride,
     replacementsMap = null,
     makeLatestChildMessage = false,
+    regenerate = false,
   }: {
     messages: Message[];
     // if calling this function repeatedly with short delay, stay may not update in time
@@ -268,11 +266,14 @@ export function ChatPage({
     completeMessageMapOverride?: Map<number, Message> | null;
     replacementsMap?: Map<number, number> | null;
     makeLatestChildMessage?: boolean;
+    regenerate?: boolean;
   }) => {
     // deep copy
     const frozenCompleteMessageMap =
       completeMessageMapOverride || completeMessageMap;
+
     const newCompleteMessageMap = structuredClone(frozenCompleteMessageMap);
+
     if (newCompleteMessageMap.size === 0) {
       const systemMessageId = messages[0].parentMessageId || SYSTEM_MESSAGE_ID;
       const firstMessageId = messages[0].messageId;
@@ -293,7 +294,9 @@ export function ChatPage({
     }
     messages.forEach((message) => {
       const idToReplace = replacementsMap?.get(message.messageId);
-      if (idToReplace) {
+
+      // regenerate
+      if (idToReplace && !regenerate) {
         removeMessage(idToReplace, newCompleteMessageMap);
       }
 
@@ -326,6 +329,13 @@ export function ChatPage({
   const [currentTool, setCurrentTool] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
 
+  const regenerateID = (
+    modelOverRide: modelOverRideType,
+    messageIdToResend: number
+  ) => {
+    onSubmit({ messageIdToResend, modelOverRide });
+  };
+
   // uploaded files
   const [currentMessageFiles, setCurrentMessageFiles] = useState<
     FileDescriptor[]
@@ -338,21 +348,21 @@ export function ChatPage({
 
   const { aiMessage } = selectedMessageForDocDisplay
     ? getHumanAndAIMessageFromMessageNumber(
-      messageHistory,
-      selectedMessageForDocDisplay
-    )
+        messageHistory,
+        selectedMessageForDocDisplay
+      )
     : { aiMessage: null };
 
   const [selectedPersona, setSelectedPersona] = useState<Persona | undefined>(
     existingChatSessionPersonaId !== undefined
       ? filteredAssistants.find(
-        (persona) => persona.id === existingChatSessionPersonaId
-      )
-      : defaultSelectedPersonaId !== undefined
-      ? filteredAssistants.find(
-          (persona) => persona.id === defaultSelectedPersonaId
+          (persona) => persona.id === existingChatSessionPersonaId
         )
-      : undefined
+      : defaultSelectedPersonaId !== undefined
+        ? filteredAssistants.find(
+            (persona) => persona.id === defaultSelectedPersonaId
+          )
+        : undefined
   );
   const livePersona =
     selectedPersona || filteredAssistants[0] || availablePersonas[0];
@@ -415,8 +425,6 @@ export function ChatPage({
     [FeedbackType, number] | null
   >(null);
 
-
-
   const [sharingModalVisible, setSharingModalVisible] =
     useState<boolean>(false);
 
@@ -425,11 +433,9 @@ export function ChatPage({
   const endDivRef = useRef<HTMLDivElement>(null);
 
   // validate the scrollign
-  const allowAutoScrolling = true
+  const allowAutoScrolling = true;
   useEffect(() => {
     if ((isStreaming || !message) && allowAutoScrolling) {
-      // Prevent
-      // console.log("handling autoscroll")
       handleAutoScroll(endDivRef, scrollableDivRef);
     }
   });
@@ -474,6 +480,7 @@ export function ChatPage({
       }
     }
   };
+
   useEffect(() => {
     adjustDocumentSidebarWidth(); // Adjust the width on initial render
     window.addEventListener("resize", adjustDocumentSidebarWidth); // Add resize event listener
@@ -493,34 +500,35 @@ export function ChatPage({
     queryOverride,
     forceSearch,
     isSeededChat,
-    messageOverride
-  }:
-    {
-      messageIdToResend?: number;
-      message?: string;
-      queryOverride?: string;
-      forceSearch?: boolean;
-      isSeededChat?: boolean;
-      messageOverride?: string
-    }
-  ) => {
-    onSubmit({messageIdToResend, messageOverride})
+    messageOverride,
+  }: {
+    messageIdToResend?: number;
+    message?: string;
+    queryOverride?: string;
+    forceSearch?: boolean;
+    isSeededChat?: boolean;
+    messageOverride?: string;
+  }) => {
+    onSubmit({ messageIdToResend, messageOverride });
+  };
 
-  }
   const onSubmit = async ({
     messageIdToResend,
     messageOverride,
     queryOverride,
     forceSearch,
     isSeededChat,
-  }:
-    {
-      messageIdToResend?: number;
-      messageOverride?: string;
-      queryOverride?: string;
-      forceSearch?: boolean;
-      isSeededChat?: boolean;
-    } = {}) => {
+    regenerate,
+    modelOverRide = { modelProvider: undefined, modelVersion: undefined },
+  }: {
+    messageIdToResend?: number;
+    messageOverride?: string;
+    queryOverride?: string;
+    forceSearch?: boolean;
+    isSeededChat?: boolean;
+    regenerate?: boolean;
+    modelOverRide?: modelOverRideType;
+  } = {}) => {
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
     const searchParamBasedChatSessionName =
@@ -539,9 +547,10 @@ export function ChatPage({
     const messageToResend = messageHistory.find(
       (message) => message.messageId === messageIdToResend
     );
+
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
-        messageToResend?.parentMessageId !== undefined
+      messageToResend?.parentMessageId !== undefined
         ? completeMessageMap.get(messageToResend.parentMessageId)
         : null;
     const messageToResendIndex = messageToResend
@@ -575,16 +584,18 @@ export function ChatPage({
 
     // if we're resending, set the parent's child to null
     // we will use tempMessages until the regenerated message is complete
-    const messageUpdates: Message[] = [
-      {
-        messageId: TEMP_USER_MESSAGE_ID,
-        message: currMessage,
-        type: "user",
-        files: currentMessageFiles,
-        parentMessageId: parentMessage?.messageId || null,
-      },
-    ];
-    if (parentMessage) {
+    const messageUpdates: Message[] = [];
+    // if (!regenerate) {
+    messageUpdates.push({
+      messageId: TEMP_USER_MESSAGE_ID,
+      message: currMessage,
+      type: "user",
+      files: currentMessageFiles,
+      parentMessageId: parentMessage?.messageId || null,
+    });
+    // }
+
+    if (parentMessage && !regenerate) {
       messageUpdates.push({
         ...parentMessage,
         childrenMessageIds: (parentMessage.childrenMessageIds || []).concat([
@@ -593,9 +604,15 @@ export function ChatPage({
         latestChildMessageId: TEMP_USER_MESSAGE_ID,
       });
     }
+
+    // console.log("before?")
+    // await delay(10000)
+
     const frozenCompleteMessageMap = upsertToCompleteMessageMap({
       messages: messageUpdates,
+      regenerate: regenerate,
     });
+
     // on initial message send, we insert a dummy system message
     // set this as the parent here if no parent is set
     if (!parentMessage && frozenCompleteMessageMap.size === 2) {
@@ -603,6 +620,9 @@ export function ChatPage({
     }
     setMessage("");
     setCurrentMessageFiles([]);
+
+    // console.log("before?")
+    // await delay(10000)
 
     setIsStreaming(true);
     let answer = "";
@@ -615,10 +635,16 @@ export function ChatPage({
     let aiMessageImages: FileDescriptor[] | null = null;
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
+
+    // console.log("before")
+    // await delay(10000)
+
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
       for await (const packetBunch of sendMessage({
+        regenerate: regenerate,
+
         message: currMessage,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
@@ -638,8 +664,10 @@ export function ChatPage({
           .map((document) => document.db_doc_id as number),
         queryOverride,
         forceSearch,
-        modelProvider: llmOverrideManager.llmOverride.name || undefined,
+        modelProvider:
+          llmOverrideManager.llmOverride.name || modelOverRide["modelProvider"],
         modelVersion:
+          modelOverRide["modelVersion"] ||
           llmOverrideManager.llmOverride.modelName ||
           searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
           undefined,
@@ -680,23 +708,47 @@ export function ChatPage({
             finalMessage = packet as BackendMessage;
           }
         }
-        const updateFn = (messages: Message[]) => {
+
+        const updateFn = async (messages: Message[]) => {
           const replacementsMap = finalMessage
             ? new Map([
-              [messages[0].messageId, TEMP_USER_MESSAGE_ID],
-              [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
-            ] as [number, number][])
+                [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+                [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+              ] as [number, number][])
             : null;
+
+          // if (replacementsMap != null) {
+          //   console.log("WAIT")
+          //   await delay(1000)
+
+          // }
+          // console.log(replacementsMap)
+
+          // console.log("NOW")a
           upsertToCompleteMessageMap({
             messages: messages,
             replacementsMap: replacementsMap,
             completeMessageMapOverride: frozenCompleteMessageMap,
+            regenerate: regenerate,
           });
+
+          // await delay(1000000)
+
+          // console.log("Done")
         };
+
         const newUserMessageId =
           finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
         const newAssistantMessageId =
           finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+
+        //
+        // console.log("Happening!")
+
+        // console.log(`${newUserMessageId} ${newAssistantMessageId}`)
+
+        // await delay(1000)
+
         updateFn([
           {
             messageId: newUserMessageId,
@@ -719,13 +771,20 @@ export function ChatPage({
             parentMessageId: newUserMessageId,
           },
         ]);
+
+        // console.log(`${newUserMessageId} ${newAssistantMessageId}`)
+        // console.log("happened!")
+        // await delay(1000)
+
         if (isCancelledRef.current) {
           setIsCancelled(false);
           break;
         }
       }
     } catch (e: any) {
+      console.log("error message");
       const errorMsg = e.message;
+
       upsertToCompleteMessageMap({
         messages: [
           {
@@ -746,6 +805,7 @@ export function ChatPage({
         completeMessageMapOverride: frozenCompleteMessageMap,
       });
     }
+
     setIsStreaming(false);
     if (isNewSession) {
       if (finalMessage) {
@@ -877,7 +937,6 @@ export function ChatPage({
 
   // TODO clarify
 
-
   const retrievalDisabled = !personaIncludesRetrieval(livePersona);
   return (
     <>
@@ -943,8 +1002,9 @@ export function ChatPage({
               {({ getRootProps }) => (
                 <>
                   <div
-                    className={`w-full sm:relative h-screen ${retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
-                      }`}
+                    className={`w-full sm:relative h-screen ${
+                      retrievalDisabled ? "pb-[111px]" : "pb-[140px]"
+                    }`}
                     {...getRootProps()}
                   >
                     {/* <input {...getInputProps()} /> */}
@@ -1005,7 +1065,6 @@ export function ChatPage({
                         }
                       >
                         {messageHistory.map((message, i) => {
-
                           // Used now for both
                           const parentMessage = message.parentMessageId
                             ? completeMessageMap.get(message.parentMessageId)
@@ -1021,8 +1080,6 @@ export function ChatPage({
                                   otherMessagesCanSwitchTo={
                                     parentMessage?.childrenMessageIds || []
                                   }
-
-
                                   onEdit={(editedContent) => {
                                     const parentMessageId =
                                       message.parentMessageId!;
@@ -1042,8 +1099,6 @@ export function ChatPage({
                                       messageOverride: editedContent,
                                     });
                                   }}
-
-
                                   onMessageSelection={(messageId) => {
                                     const newCompleteMessageMap = new Map(
                                       completeMessageMap
@@ -1060,8 +1115,6 @@ export function ChatPage({
                                     // and so it sticks around on page reload
                                     setMessageAsLatest(messageId);
                                   }}
-
-
                                 />
                               </div>
                             );
@@ -1069,22 +1122,30 @@ export function ChatPage({
                             const isShowingRetrieved =
                               (selectedMessageForDocDisplay !== null &&
                                 selectedMessageForDocDisplay ===
-                                message.messageId) ||
+                                  message.messageId) ||
                               (selectedMessageForDocDisplay ===
                                 TEMP_USER_MESSAGE_ID &&
                                 i === messageHistory.length - 1);
                             const previousMessage =
                               i !== 0 ? messageHistory[i - 1] : null;
                             return (
-
                               <AIMessage
-                                alternateModel={message.alternate_model}
-                                fullMessage={message}
+                                // regenerate={() =>
+                                //   // console.log("howdy")
 
+                                // }
+                                alternateModel={message.alternate_model}
+                                // alternateModel={"gpt-4"}
+                                fullMessage={message}
                                 otherResponseCanSwitchTo={
                                   parentMessage?.childrenMessageIds || []
                                 }
-                                handleRegenerate={() => setRegenerateModal(regenerateModal => !regenerateModal)} regenerateModal={regenerateModal || false}
+                                handleRegenerate={() =>
+                                  setRegenerateModal(
+                                    (regenerateModal) => !regenerateModal
+                                  )
+                                }
+                                regenerateModal={regenerateModal || false}
                                 key={message.messageId}
                                 messageId={message.messageId}
                                 content={message.message}
@@ -1107,43 +1168,42 @@ export function ChatPage({
                                   i === messageHistory.length - 1 && isStreaming
                                     ? undefined
                                     : (feedbackType) =>
-                                      setCurrentFeedback([
-                                        feedbackType,
-                                        message.messageId as number,
-                                      ])
+                                        setCurrentFeedback([
+                                          feedbackType,
+                                          message.messageId as number,
+                                        ])
                                 }
                                 handleSearchQueryEdit={
                                   i === messageHistory.length - 1 &&
-                                    !isStreaming
+                                  !isStreaming
                                     ? (newQuery) => {
-                                      if (!previousMessage) {
-                                        setPopup({
-                                          type: "error",
-                                          message:
-                                            "Cannot edit query of first message - please refresh the page and try again.",
-                                        });
-                                        return;
-                                      }
+                                        if (!previousMessage) {
+                                          setPopup({
+                                            type: "error",
+                                            message:
+                                              "Cannot edit query of first message - please refresh the page and try again.",
+                                          });
+                                          return;
+                                        }
 
-                                      if (
-                                        previousMessage.messageId === null
-                                      ) {
-                                        setPopup({
-                                          type: "error",
-                                          message:
-                                            "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                        if (
+                                          previousMessage.messageId === null
+                                        ) {
+                                          setPopup({
+                                            type: "error",
+                                            message:
+                                              "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                          });
+                                          return;
+                                        }
+                                        onSubmit({
+                                          messageIdToResend:
+                                            previousMessage.messageId,
+                                          queryOverride: newQuery,
                                         });
-                                        return;
                                       }
-                                      onSubmit({
-                                        messageIdToResend:
-                                          previousMessage.messageId,
-                                        queryOverride: newQuery,
-                                      });
-                                    }
                                     : undefined
                                 }
-
                                 isCurrentlyShowingRetrieved={isShowingRetrieved}
                                 handleShowRetrieved={(messageNumber) => {
                                   if (isShowingRetrieved) {
@@ -1177,7 +1237,6 @@ export function ChatPage({
                                   }
                                 }}
                                 retrievalDisabled={retrievalDisabled}
-
                                 onResponseSelection={(messageId) => {
                                   const newCompleteMessageMap = new Map(
                                     completeMessageMap
@@ -1185,9 +1244,7 @@ export function ChatPage({
                                   newCompleteMessageMap.get(
                                     message.parentMessageId!
                                   )!.latestChildMessageId = messageId;
-                                  setCompleteMessageMap(
-                                    newCompleteMessageMap
-                                  );
+                                  setCompleteMessageMap(newCompleteMessageMap);
                                   setSelectedMessageForDocDisplay(messageId);
 
                                   // set message as latest so we can edit this message
@@ -1200,7 +1257,12 @@ export function ChatPage({
                             return (
                               <div key={i}>
                                 <AIMessage
-                                  handleRegenerate={() => setRegenerateModal(regenerateModal => !regenerateModal)} regenerateModal={regenerateModal || false}
+                                  handleRegenerate={() =>
+                                    setRegenerateModal(
+                                      (regenerateModal) => !regenerateModal
+                                    )
+                                  }
+                                  regenerateModal={regenerateModal || false}
                                   messageId={message.messageId}
                                   personaName={livePersona.name}
                                   content={
@@ -1217,11 +1279,15 @@ export function ChatPage({
                         {isStreaming &&
                           messageHistory.length > 0 &&
                           messageHistory[messageHistory.length - 1].type ===
-                          "user" && (
+                            "user" && (
                             <div key={messageHistory.length}>
                               <AIMessage
-
-                                handleRegenerate={() => setRegenerateModal(regenerateModal => !regenerateModal)} regenerateModal={regenerateModal || false}
+                                handleRegenerate={() =>
+                                  setRegenerateModal(
+                                    (regenerateModal) => !regenerateModal
+                                  )
+                                }
+                                regenerateModal={regenerateModal || false}
                                 messageId={null}
                                 personaName={livePersona.name}
                                 content={
@@ -1242,10 +1308,19 @@ export function ChatPage({
                             </div>
                           )}
 
-                        {regenerateModal &&
-                          <RegenerateOption onClose={() => setRegenerateModal(false)} llmOverrideManager={llmOverrideManager} selectedAssistant={livePersona} />
-                        }
-
+                        {regenerateModal && (
+                          <RegenerateOption
+                            regenerateID={regenerateID}
+                            messageIdToResend={
+                              messageHistory[messageHistory.length - 2] &&
+                              messageHistory[messageHistory.length - 2]
+                                .messageId
+                            }
+                            onClose={() => setRegenerateModal(false)}
+                            llmOverrideManager={llmOverrideManager}
+                            selectedAssistant={livePersona}
+                          />
+                        )}
 
                         {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                         {/* <div className={`min-h-[100px] w-full`}></div> */}
@@ -1332,9 +1407,9 @@ export function ChatPage({
                       />
                     </ResizableSection>
                   ) : // Another option is to use a div with the width set to the initial width, so that the
-                    // chat section appears in the same place as before
-                    // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
-                    null}
+                  // chat section appears in the same place as before
+                  // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
+                  null}
                 </>
               )}
             </Dropzone>

@@ -35,6 +35,12 @@ def get_default_llm(
     model_provider_name: str | None = None,
     model_version: str | None = None,
 ) -> LLM:
+    print("za defalt")
+
+    print(temperature, model_provider_name, model_version)
+
+    print("za defalt")
+
     if DISABLE_GENERATIVE_AI:
         raise GenAIDisabledException()
 

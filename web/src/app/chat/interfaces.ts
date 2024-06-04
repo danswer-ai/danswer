@@ -52,7 +52,7 @@ export interface Message {
   documents?: DanswerDocument[] | null;
   citations?: CitationMap;
   files: FileDescriptor[];
-  alternate_model?: string
+  alternate_model?: string;
   // for rebuilding the message tree
   parentMessageId: number | null;
   childrenMessageIds?: number[];
@@ -80,6 +80,7 @@ export interface BackendMessage {
   time_sent: string;
   citations: CitationMap;
   files: FileDescriptor[];
+  alternate_model?: string;
 }
 
 export interface DocumentsResponse {

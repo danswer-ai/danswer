@@ -96,6 +96,7 @@ class Answer:
         force_use_tool: ForceUseTool | None = None,
         # if set to True, then never use the LLMs provided tool-calling functonality
         skip_explicit_tool_calling: bool = False,
+        explicitly_alternate: bool = False,
     ) -> None:
         if single_message_history and message_history:
             raise ValueError(
@@ -119,6 +120,13 @@ class Answer:
         self.prompt_config = prompt_config
 
         self.llm = llm
+
+        self.model_version = llm.__dict__["_model_version"]
+        print(self.model_version)
+        self.explicitly_alternate = explicitly_alternate
+
+        # print("LLM is ")
+        # print()
         self.llm_tokenizer = get_default_llm_tokenizer()
 
         self._final_prompt: list[BaseMessage] | None = None

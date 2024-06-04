@@ -245,6 +245,42 @@ def handle_new_chat_message(
     have already been set as latest"""
     logger.debug(f"Received new chat message: {chat_message_req.message}")
 
+    print("new chat message")
+    print(chat_message_req.__dict__)
+
+    if (
+        not chat_message_req.message
+        and chat_message_req.prompt_id is not None
+        and not chat_message_req.use_existing_user_message
+    ):
+        raise HTTPException(status_code=400, detail="Empty chat message is invalid")
+
+    packets = stream_chat_message(
+        new_msg_req=chat_message_req,
+        user=user,
+        use_existing_user_message=chat_message_req.use_existing_user_message,
+    )
+
+    return StreamingResponse(packets, media_type="application/json")
+
+
+@router.post("/regenerate-response")
+def handle_new_response(
+    chat_message_req: CreateChatMessageRequest,
+    user: User | None = Depends(current_user),
+) -> StreamingResponse:
+    """This endpoint is both used for all the following purposes:
+    - Sending a new message in the session
+    - Regenerating a message in the session (just send the same one again)
+    - Editing a message (similar to regenerating but sending a different message)
+    - Kicking off a seeded chat session (set `use_existing_user_message`)
+
+    To avoid extra overhead/latency, this assumes (and checks) that previous messages on the path
+    have already been set as latest"""
+    logger.debug(f"Received new chat message: {chat_message_req.message}")
+
+    print(chat_message_req.__dict__)
+
     if (
         not chat_message_req.message
         and chat_message_req.prompt_id is not None
