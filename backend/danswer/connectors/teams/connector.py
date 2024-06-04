@@ -118,7 +118,7 @@ class TeamsConnector(LoadConnector, PollConnector):
 
     def get_all_team_objects(self) -> list[Team]:
         if self.graph_client is None:
-            raise ConnectorMissingCredentialError("Sharepoint")
+            raise ConnectorMissingCredentialError("Teams")
 
         team_object_list: list[Team] = []
 
