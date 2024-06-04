@@ -28,9 +28,6 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
 
-UNSUPPORTED_FILE_TYPE_CONTENT = ""  # idea copied from the google drive side of things
-
-
 logger = setup_logger()
 
 
