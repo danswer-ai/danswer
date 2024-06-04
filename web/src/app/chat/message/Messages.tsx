@@ -94,9 +94,9 @@ export const AIMessage = ({
   retrievalDisabled,
   onResponseSelection,
   alternateModel,
-  fullMessage
+  fullMessage,
 }: {
-  handleRegenerate?: () => void
+  handleRegenerate?: () => void;
   otherResponseCanSwitchTo?: number[];
   messageId: number | null;
   regenerateModal?: boolean;
@@ -114,8 +114,8 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
-  alternateModel?: string
-  fullMessage?: Message  // for debugging
+  alternateModel?: string;
+  fullMessage?: Message; // for debugging
 
   onResponseSelection?: (messageId: number) => void;
 }) => {
@@ -188,9 +188,7 @@ export const AIMessage = ({
               </div>
             </div>
 
-            <Button onClick={() => console.log(fullMessage)}>
-              Log
-            </Button>
+            <Button onClick={() => console.log(fullMessage)}>Log</Button>
             <div className="font-bold text-emphasis ml-2 my-auto">
               {personaName || "Danswer"}
             </div>
@@ -238,15 +236,12 @@ export const AIMessage = ({
                 </div>
               )}
             Message is {messageId}
-
             <button onClick={() => console.log(otherResponseCanSwitchTo)}>
               other message logs
             </button>
-
             <button onClick={() => console.log(messageId)}>
               current message logs
             </button>
-
             {content ? (
               <>
                 <FileDisplay files={files || []} />
@@ -271,9 +266,9 @@ export const AIMessage = ({
                                 : undefined
                             }
                             className="cursor-pointer text-link hover:text-link-hover"
-                          // href={rest.href}
-                          // target="_blank"
-                          // rel="noopener noreferrer"
+                            // href={rest.href}
+                            // target="_blank"
+                            // rel="noopener noreferrer"
                           >
                             {rest.children}
                           </a>
@@ -340,7 +335,6 @@ export const AIMessage = ({
             )}
           </div>
 
-
           {handleFeedback && (
             <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1.5">
               {currentResponseId !== undefined &&
@@ -378,11 +372,7 @@ export const AIMessage = ({
                 icon={FiStar}
                 onClick={() => handleRegenerate()}
               />
-              {alternateModel &&
-                <p>
-                  {alternateModel}
-                </p>}
-
+              {alternateModel && <p>{alternateModel}</p>}
             </div>
           )}
         </div>
@@ -446,7 +436,6 @@ function DummySwitcher({
     </div>
   );
 }
-
 
 export const HumanMessage = ({
   content,
@@ -570,12 +559,12 @@ export const HumanMessage = ({
                           setIsEditing(false);
                         }
                       }}
-                    // ref={(textarea) => {
-                    //   if (textarea) {
-                    //     textarea.selectionStart = textarea.selectionEnd =
-                    //       textarea.value.length;
-                    //   }
-                    // }}
+                      // ref={(textarea) => {
+                      //   if (textarea) {
+                      //     textarea.selectionStart = textarea.selectionEnd =
+                      //       textarea.value.length;
+                      //   }
+                      // }}
                     />
                     <div className="flex justify-end mt-2 gap-2 pr-4">
                       <button
@@ -613,7 +602,6 @@ export const HumanMessage = ({
                   </div>
                 </div>
               ) : typeof content === "string" ? (
-
                 // Method #1- ReformJuat the code specifically
                 //   <ReactMarkdown
                 //     className="prose prose-no-code-prose max-w-full"
@@ -639,7 +627,7 @@ export const HumanMessage = ({
 
                 //     {`${content}`}
                 //   </ReactMarkdown>
-                // ) 
+                // )
 
                 // Method #2- use tailwind's configuration options to modify
                 // Currently set for specifically pre and code but could be set for specific classes
@@ -662,11 +650,8 @@ export const HumanMessage = ({
                 //   {`${content}`}
                 // </ReactMarkdown>
 
-
                 // Remove React Markdown entirely
-                <div
-                  className="flex flex-col preserve-lines prose max-w-full"
-                >
+                <div className="flex flex-col preserve-lines prose max-w-full">
                   {content}
                 {/* </ReactMarkdown> */}
                 </div>
@@ -702,9 +687,9 @@ export const HumanMessage = ({
                 </div>
               )}
             {onEdit &&
-              isHovered &&
-              !isEditing &&
-              (!files || files.length === 0) ? (
+            isHovered &&
+            !isEditing &&
+            (!files || files.length === 0) ? (
               <Hoverable
                 icon={FiEdit2}
                 onClick={() => {
@@ -712,14 +697,12 @@ export const HumanMessage = ({
                   setIsHovered(false);
                 }}
               />
-            )
-              :
-              (
-                <div className="h-[27px]" />
-              )}
+            ) : (
+              <div className="h-[27px]" />
+            )}
           </div>
         </div>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 };

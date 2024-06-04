@@ -247,7 +247,7 @@ export function handleAutoScroll(
       scrollableRef.current.clientHeight
     ) {
       // console.log(endRef)
-      console.log("Handle scroll")
+      console.log("Handle scroll");
       endRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }
