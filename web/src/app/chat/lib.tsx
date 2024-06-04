@@ -255,8 +255,8 @@ export function handleAutoScroll(
   scrollableRef: RefObject<any>,
   buffer: number = 300
 ) {
-  // Auto-scrolls if the user is within `buffer` of the bottom of the scrollableRef
-  if (endRef && endRef.current && scrollableRef && scrollableRef.current) {
+  if (endRef && scrollableRef) {
+    if (endRef.current && scrollableRef.current) console.log("Scrolling");
     if (
       scrollableRef.current.scrollHeight -
         scrollableRef.current.scrollTop -
