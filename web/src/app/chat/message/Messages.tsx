@@ -518,22 +518,9 @@ export const HumanMessage = ({
                   </div>
                 </div>
               ) : typeof content === "string" ? (
-                <ReactMarkdown
-                  className="prose max-w-full"
-                  components={{
-                    a: ({ node, ...props }) => (
-                      <a
-                        {...props}
-                        className="text-blue-500 hover:text-blue-700"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      />
-                    ),
-                  }}
-                  remarkPlugins={[remarkGfm]}
-                >
+                <div className="flex flex-col preserve-lines prose max-w-full">
                   {content}
-                </ReactMarkdown>
+                </div>
               ) : (
                 content
               )}
