@@ -1,4 +1,4 @@
-import { Header } from "@/components/Header";
+import { Header } from "@/components/header/Header";
 import { AdminSidebar } from "@/components/admin/connectors/AdminSidebar";
 import {
   NotebookIcon,
@@ -10,6 +10,7 @@ import {
   ZoomInIcon,
   RobotIcon,
   ConnectorIcon,
+  SlackIcon,
 } from "@/components/icons/icons";
 import { User } from "@/lib/types";
 import {
@@ -18,6 +19,13 @@ import {
   getCurrentUserSS,
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
+import {
+  FiCpu,
+  FiLayers,
+  FiPackage,
+  FiSettings,
+  FiSlack,
+} from "react-icons/fi";
 
 export async function Layout({ children }: { children: React.ReactNode }) {
   const tasks = [getAuthTypeMetadataSS(), getCurrentUserSS()];
@@ -120,15 +128,15 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                     name: (
                       <div className="flex">
                         <RobotIcon size={18} />
-                        <div className="ml-1">Personas</div>
+                        <div className="ml-1">Assistants</div>
                       </div>
                     ),
-                    link: "/admin/personas",
+                    link: "/admin/assistants",
                   },
                   {
                     name: (
                       <div className="flex">
-                        <CPUIcon size={18} />
+                        <FiSlack size={18} />
                         <div className="ml-1">Slack Bots</div>
                       </div>
                     ),
@@ -137,16 +145,25 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                 ],
               },
               {
-                name: "Keys",
+                name: "Model Configs",
                 items: [
                   {
                     name: (
                       <div className="flex">
-                        <KeyIcon size={18} />
-                        <div className="ml-1">OpenAI</div>
+                        <FiCpu size={18} />
+                        <div className="ml-1">LLM</div>
                       </div>
                     ),
-                    link: "/admin/keys/openai",
+                    link: "/admin/models/llm",
+                  },
+                  {
+                    name: (
+                      <div className="flex">
+                        <FiPackage size={18} />
+                        <div className="ml-1">Embedding</div>
+                      </div>
+                    ),
+                    link: "/admin/models/embedding",
                   },
                 ],
               },
@@ -161,6 +178,20 @@ export async function Layout({ children }: { children: React.ReactNode }) {
                       </div>
                     ),
                     link: "/admin/users",
+                  },
+                ],
+              },
+              {
+                name: "Settings",
+                items: [
+                  {
+                    name: (
+                      <div className="flex">
+                        <FiSettings size={18} />
+                        <div className="ml-1">Workspace Settings</div>
+                      </div>
+                    ),
+                    link: "/admin/settings",
                   },
                 ],
               },

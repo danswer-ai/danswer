@@ -4,71 +4,90 @@ from typing import cast
 
 from sqlalchemy.orm import Session
 
-from danswer.chat.chat_utils import get_chunks_for_qa
+from danswer.chat.chat_utils import reorganize_citations
+from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import DanswerContexts
 from danswer.chat.models import DanswerQuotes
-from danswer.chat.models import LLMMetricsContainer
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
-from danswer.configs.chat_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
+from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.constants import MessageType
-from danswer.configs.model_configs import CHUNK_SIZE
 from danswer.db.chat import create_chat_session
+from danswer.db.chat import create_db_search_doc
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_or_create_root_message
-from danswer.db.chat import get_persona_by_id
 from danswer.db.chat import get_prompt_by_id
 from danswer.db.chat import translate_db_message_to_chat_message_detail
+from danswer.db.chat import translate_db_search_doc_to_server_search_doc
+from danswer.db.engine import get_session_context_manager
 from danswer.db.models import User
-from danswer.document_index.factory import get_default_document_index
-from danswer.indexing.models import InferenceChunk
+from danswer.llm.answering.answer import Answer
+from danswer.llm.answering.models import AnswerStyleConfig
+from danswer.llm.answering.models import CitationConfig
+from danswer.llm.answering.models import DocumentPruningConfig
+from danswer.llm.answering.models import PromptConfig
+from danswer.llm.answering.models import QuotesConfig
+from danswer.llm.factory import get_llm_for_persona
 from danswer.llm.utils import get_default_llm_token_encode
-from danswer.one_shot_answer.factory import get_question_answer_model
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.one_shot_answer.models import QueryRephrase
-from danswer.one_shot_answer.qa_block import no_gen_ai_response
 from danswer.one_shot_answer.qa_utils import combine_message_thread
 from danswer.search.models import RerankMetricsContainer
 from danswer.search.models import RetrievalMetricsContainer
-from danswer.search.models import SavedSearchDoc
-from danswer.search.request_preprocessing import retrieval_preprocessing
-from danswer.search.search_runner import chunks_to_search_docs
-from danswer.search.search_runner import full_chunk_search_generator
+from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.secondary_llm_flows.query_expansion import thread_based_query_rephrase
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.utils import get_json_line
+from danswer.tools.force import ForceUseTool
+from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
+from danswer.tools.search.search_tool import SearchResponseSummary
+from danswer.tools.search.search_tool import SearchTool
+from danswer.tools.search.search_tool import SECTION_RELEVANCE_LIST_ID
+from danswer.tools.tool import ToolResponse
+from danswer.tools.tool_runner import ToolRunKickoff
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
 
 logger = setup_logger()
 
-
-def stream_answer_objects(
-    query_req: DirectQARequest,
-    user: User | None,
-    db_session: Session,
-    # Needed to translate persona num_chunks to tokens to the LLM
-    default_num_chunks: float = DEFAULT_NUM_CHUNKS_FED_TO_CHAT,
-    default_chunk_size: int = CHUNK_SIZE,
-    timeout: int = QA_TIMEOUT,
-    bypass_acl: bool = False,
-    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-    | None = None,
-    rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-    llm_metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,
-) -> Iterator[
+AnswerObjectIterator = Iterator[
     QueryRephrase
     | QADocsResponse
     | LLMRelevanceFilterResponse
     | DanswerAnswerPiece
     | DanswerQuotes
+    | DanswerContexts
     | StreamingError
     | ChatMessageDetail
-]:
+    | CitationInfo
+    | ToolRunKickoff
+]
+
+
+def stream_answer_objects(
+    query_req: DirectQARequest,
+    user: User | None,
+    # These need to be passed in because in Web UI one shot flow,
+    # we can have much more document as there is no history.
+    # For Slack flow, we need to save more tokens for the thread context
+    max_document_tokens: int | None,
+    max_history_tokens: int | None,
+    db_session: Session,
+    # Needed to translate persona num_chunks to tokens to the LLM
+    default_num_chunks: float = MAX_CHUNKS_FED_TO_CHAT,
+    timeout: int = QA_TIMEOUT,
+    bypass_acl: bool = False,
+    use_citations: bool = False,
+    danswerbot_flow: bool = False,
+    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
+    | None = None,
+    rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
+) -> AnswerObjectIterator:
     """Streams in order:
     1. [always] Retrieved documents, stops flow if nothing is found
     2. [conditional] LLM selected chunk indices if LLM chunk filtering is turned on
@@ -86,167 +105,141 @@ def stream_answer_objects(
         user_id=user_id,
         persona_id=query_req.persona_id,
         one_shot=True,
+        danswerbot_flow=danswerbot_flow,
     )
 
     llm_tokenizer = get_default_llm_token_encode()
-    document_index = get_default_document_index()
 
     # Create a chat session which will just store the root message, the query, and the AI response
     root_message = get_or_create_root_message(
         chat_session_id=chat_session.id, db_session=db_session
     )
 
-    history_str = combine_message_thread(history)
+    history_str = combine_message_thread(
+        messages=history, max_tokens=max_history_tokens
+    )
 
     rephrased_query = thread_based_query_rephrase(
         user_query=query_msg.message,
         history_str=history_str,
     )
+    # Given back ahead of the documents for latency reasons
+    # In chat flow it's given back along with the documents
     yield QueryRephrase(rephrased_query=rephrased_query)
 
-    (
-        retrieval_request,
-        predicted_search_type,
-        predicted_flow,
-    ) = retrieval_preprocessing(
-        query=rephrased_query,
-        retrieval_details=query_req.retrieval_options,
-        persona=chat_session.persona,
-        user=user,
-        db_session=db_session,
-        bypass_acl=bypass_acl,
-    )
-
-    documents_generator = full_chunk_search_generator(
-        search_query=retrieval_request,
-        document_index=document_index,
-        retrieval_metrics_callback=retrieval_metrics_callback,
-        rerank_metrics_callback=rerank_metrics_callback,
-    )
-    applied_time_cutoff = retrieval_request.filters.time_cutoff
-    recency_bias_multiplier = retrieval_request.recency_bias_multiplier
-    run_llm_chunk_filter = not retrieval_request.skip_llm_chunk_filter
-
-    # First fetch and return the top chunks so the user can immediately see some results
-    top_chunks = cast(list[InferenceChunk], next(documents_generator))
-
-    top_docs = chunks_to_search_docs(top_chunks)
-    fake_saved_docs = [SavedSearchDoc.from_search_doc(doc) for doc in top_docs]
-
-    # Since this is in the one shot answer flow, we don't need to actually save the docs to DB
-    initial_response = QADocsResponse(
-        top_documents=fake_saved_docs,
-        predicted_flow=predicted_flow,
-        predicted_search=predicted_search_type,
-        applied_source_filters=retrieval_request.filters.source_type,
-        applied_time_cutoff=applied_time_cutoff,
-        recency_bias_multiplier=recency_bias_multiplier,
-    )
-    yield initial_response
-
-    # Get the final ordering of chunks for the LLM call
-    llm_chunk_selection = cast(list[bool], next(documents_generator))
-
-    # Yield the list of LLM selected chunks for showing the LLM selected icons in the UI
-    llm_relevance_filtering_response = LLMRelevanceFilterResponse(
-        relevant_chunk_indices=[
-            index for index, value in enumerate(llm_chunk_selection) if value
-        ]
-        if run_llm_chunk_filter
-        else []
-    )
-    yield llm_relevance_filtering_response
-
-    # Prep chunks to pass to LLM
-    num_llm_chunks = (
-        chat_session.persona.num_chunks
-        if chat_session.persona.num_chunks is not None
-        else default_num_chunks
-    )
-    llm_chunks_indices = get_chunks_for_qa(
-        chunks=top_chunks,
-        llm_chunk_selection=llm_chunk_selection,
-        token_limit=num_llm_chunks * default_chunk_size,
-    )
-    llm_chunks = [top_chunks[i] for i in llm_chunks_indices]
-
-    logger.debug(
-        f"Chunks fed to LLM: {[chunk.semantic_identifier for chunk in llm_chunks]}"
-    )
-
     prompt = None
-    llm_override = None
     if query_req.prompt_id is not None:
         prompt = get_prompt_by_id(
-            prompt_id=query_req.prompt_id, user_id=user_id, db_session=db_session
+            prompt_id=query_req.prompt_id, user=user, db_session=db_session
         )
-        persona = get_persona_by_id(
-            persona_id=query_req.persona_id, user_id=user_id, db_session=db_session
-        )
-        llm_override = persona.llm_model_version_override
-
-    qa_model = get_question_answer_model(
-        prompt=prompt,
-        timeout=timeout,
-        chain_of_thought=query_req.chain_of_thought,
-        llm_version=llm_override,
-    )
-
-    full_prompt_str = (
-        qa_model.build_prompt(
-            query=query_msg.message, history_str=history_str, context_chunks=llm_chunks
-        )
-        if qa_model is not None
-        else "Gen AI Disabled"
-    )
+    if prompt is None:
+        if not chat_session.persona.prompts:
+            raise RuntimeError(
+                "Persona does not have any prompts - this should never happen"
+            )
+        prompt = chat_session.persona.prompts[0]
 
     # Create the first User query message
     new_user_message = create_new_chat_message(
         chat_session_id=chat_session.id,
         parent_message=root_message,
         prompt_id=query_req.prompt_id,
-        message=full_prompt_str,
-        token_count=len(llm_tokenizer(full_prompt_str)),
+        message=query_msg.message,
+        token_count=len(llm_tokenizer(query_msg.message)),
         message_type=MessageType.USER,
         db_session=db_session,
         commit=True,
     )
 
-    response_packets = (
-        qa_model.answer_question_stream(
-            prompt=full_prompt_str,
-            llm_context_docs=llm_chunks,
-            metrics_callback=llm_metrics_callback,
-        )
-        if qa_model is not None
-        else no_gen_ai_response()
+    llm = get_llm_for_persona(persona=chat_session.persona)
+    prompt_config = PromptConfig.from_model(prompt)
+    document_pruning_config = DocumentPruningConfig(
+        max_chunks=int(
+            chat_session.persona.num_chunks
+            if chat_session.persona.num_chunks is not None
+            else default_num_chunks
+        ),
+        max_tokens=max_document_tokens,
+        use_sections=query_req.chunks_above > 0 or query_req.chunks_below > 0,
+    )
+    search_tool = SearchTool(
+        db_session=db_session,
+        user=user,
+        persona=chat_session.persona,
+        retrieval_options=query_req.retrieval_options,
+        prompt_config=prompt_config,
+        llm_config=llm.config,
+        pruning_config=document_pruning_config,
     )
 
-    # Capture outputs and errors
-    llm_output = ""
-    error: str | None = None
-    for packet in response_packets:
-        logger.debug(packet)
+    answer_config = AnswerStyleConfig(
+        citation_config=CitationConfig() if use_citations else None,
+        quotes_config=QuotesConfig() if not use_citations else None,
+        document_pruning_config=document_pruning_config,
+    )
+    answer = Answer(
+        question=query_msg.message,
+        answer_style_config=answer_config,
+        prompt_config=PromptConfig.from_model(prompt),
+        llm=get_llm_for_persona(persona=chat_session.persona),
+        single_message_history=history_str,
+        tools=[search_tool],
+        force_use_tool=ForceUseTool(
+            tool_name=search_tool.name(),
+            args={"query": rephrased_query},
+        ),
+        # for now, don't use tool calling for this flow, as we haven't
+        # tested quotes with tool calling too much yet
+        skip_explicit_tool_calling=True,
+    )
+    # won't be any ImageGenerationDisplay responses since that tool is never passed in
+    for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
+        # for one-shot flow, don't currently do anything with these
+        if isinstance(packet, ToolResponse):
+            if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
+                search_response_summary = cast(SearchResponseSummary, packet.response)
 
-        if isinstance(packet, DanswerAnswerPiece):
-            token = packet.answer_piece
-            if token:
-                llm_output += token
-        elif isinstance(packet, StreamingError):
-            error = packet.error
+                top_docs = chunks_or_sections_to_search_docs(
+                    search_response_summary.top_sections
+                )
 
-        yield packet
+                reference_db_search_docs = [
+                    create_db_search_doc(
+                        server_search_doc=top_doc, db_session=db_session
+                    )
+                    for top_doc in top_docs
+                ]
+
+                response_docs = [
+                    translate_db_search_doc_to_server_search_doc(db_search_doc)
+                    for db_search_doc in reference_db_search_docs
+                ]
+
+                initial_response = QADocsResponse(
+                    rephrased_query=rephrased_query,
+                    top_documents=response_docs,
+                    predicted_flow=search_response_summary.predicted_flow,
+                    predicted_search=search_response_summary.predicted_search,
+                    applied_source_filters=search_response_summary.final_filters.source_type,
+                    applied_time_cutoff=search_response_summary.final_filters.time_cutoff,
+                    recency_bias_multiplier=search_response_summary.recency_bias_multiplier,
+                )
+                yield initial_response
+            elif packet.id == SECTION_RELEVANCE_LIST_ID:
+                yield LLMRelevanceFilterResponse(relevant_chunk_indices=packet.response)
+        else:
+            yield packet
 
     # Saving Gen AI answer and responding with message info
     gen_ai_response_message = create_new_chat_message(
         chat_session_id=chat_session.id,
         parent_message=new_user_message,
         prompt_id=query_req.prompt_id,
-        message=llm_output,
-        token_count=len(llm_tokenizer(llm_output)),
+        message=answer.llm_answer,
+        token_count=len(llm_tokenizer(answer.llm_answer)),
         message_type=MessageType.ASSISTANT,
-        error=error,
-        reference_docs=None,  # Don't need to save reference docs for one shot flow
+        error=None,
+        reference_docs=reference_db_search_docs,
         db_session=db_session,
         commit=True,
     )
@@ -262,26 +255,35 @@ def stream_answer_objects(
 def stream_search_answer(
     query_req: DirectQARequest,
     user: User | None,
-    db_session: Session,
+    max_document_tokens: int | None,
+    max_history_tokens: int | None,
 ) -> Iterator[str]:
-    objects = stream_answer_objects(
-        query_req=query_req, user=user, db_session=db_session
-    )
-    for obj in objects:
-        yield get_json_line(obj.dict())
+    with get_session_context_manager() as session:
+        objects = stream_answer_objects(
+            query_req=query_req,
+            user=user,
+            max_document_tokens=max_document_tokens,
+            max_history_tokens=max_history_tokens,
+            db_session=session,
+        )
+        for obj in objects:
+            yield get_json_line(obj.dict())
 
 
 def get_search_answer(
     query_req: DirectQARequest,
     user: User | None,
+    max_document_tokens: int | None,
+    max_history_tokens: int | None,
     db_session: Session,
     answer_generation_timeout: int = QA_TIMEOUT,
     enable_reflexion: bool = False,
     bypass_acl: bool = False,
+    use_citations: bool = False,
+    danswerbot_flow: bool = False,
     retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
     | None = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
-    llm_metrics_callback: Callable[[LLMMetricsContainer], None] | None = None,
 ) -> OneShotQAResponse:
     """Collects the streamed one shot answer responses into a single object"""
     qa_response = OneShotQAResponse()
@@ -289,12 +291,15 @@ def get_search_answer(
     results = stream_answer_objects(
         query_req=query_req,
         user=user,
+        max_document_tokens=max_document_tokens,
+        max_history_tokens=max_history_tokens,
         db_session=db_session,
         bypass_acl=bypass_acl,
+        use_citations=use_citations,
+        danswerbot_flow=danswerbot_flow,
         timeout=answer_generation_timeout,
         retrieval_metrics_callback=retrieval_metrics_callback,
         rerank_metrics_callback=rerank_metrics_callback,
-        llm_metrics_callback=llm_metrics_callback,
     )
 
     answer = ""
@@ -309,6 +314,13 @@ def get_search_answer(
             qa_response.llm_chunks_indices = packet.relevant_chunk_indices
         elif isinstance(packet, DanswerQuotes):
             qa_response.quotes = packet
+        elif isinstance(packet, CitationInfo):
+            if qa_response.citations:
+                qa_response.citations.append(packet)
+            else:
+                qa_response.citations = [packet]
+        elif isinstance(packet, DanswerContexts):
+            qa_response.contexts = packet
         elif isinstance(packet, StreamingError):
             qa_response.error_msg = packet.error
         elif isinstance(packet, ChatMessageDetail):
@@ -324,5 +336,11 @@ def get_search_answer(
             qa_response.answer_valid = get_answer_validity(first_query, answer)
         else:
             qa_response.answer_valid = True
+
+    if use_citations and qa_response.answer and qa_response.citations:
+        # Reorganize citation nums to be in the same order as the answer
+        qa_response.answer, qa_response.citations = reorganize_citations(
+            qa_response.answer, qa_response.citations
+        )
 
     return qa_response

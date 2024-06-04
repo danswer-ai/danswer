@@ -1,189 +1,143 @@
 "use client";
 
-import {
-  FiLogOut,
-  FiMessageSquare,
-  FiMoreHorizontal,
-  FiPlusSquare,
-  FiSearch,
-  FiTool,
-} from "react-icons/fi";
-import { useEffect, useRef, useState } from "react";
+import { FiBook, FiEdit, FiFolderPlus, FiPlusSquare } from "react-icons/fi";
+import { useContext, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { User } from "@/lib/types";
-import { logout } from "@/lib/user";
-import { BasicClickable, BasicSelectable } from "@/components/BasicClickable";
 import Image from "next/image";
-import { ChatSessionDisplay } from "./SessionDisplay";
+import { useRouter } from "next/navigation";
+import { BasicClickable, BasicSelectable } from "@/components/BasicClickable";
 import { ChatSession } from "../interfaces";
-import { groupSessionsByDateRange } from "../lib";
-import { HEADER_PADDING } from "@/lib/constants";
+import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
+import { ChatTab } from "./ChatTab";
+import { Folder } from "../folders/interfaces";
+import { createFolder } from "../folders/FolderManagement";
+import { usePopup } from "@/components/admin/connectors/Popup";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
-interface ChatSidebarProps {
-  existingChats: ChatSession[];
-  currentChatId: number | null;
-  user: User | null;
-}
+import React from "react";
+import { FaBrain } from "react-icons/fa";
 
 export const ChatSidebar = ({
   existingChats,
-  currentChatId,
-  user,
-}: ChatSidebarProps) => {
+  currentChatSession,
+  folders,
+  openedFolders,
+}: {
+  existingChats: ChatSession[];
+  currentChatSession: ChatSession | null | undefined;
+  folders: Folder[];
+  openedFolders: { [key: number]: boolean };
+}) => {
   const router = useRouter();
+  const { popup, setPopup } = usePopup();
 
-  const groupedChatSessions = groupSessionsByDateRange(existingChats);
+  const currentChatId = currentChatSession?.id;
 
-  const [userInfoVisible, setUserInfoVisible] = useState(false);
-  const userInfoRef = useRef<HTMLDivElement>(null);
-
-  const handleLogout = () => {
-    logout().then((isSuccess) => {
-      if (!isSuccess) {
-        alert("Failed to logout");
-      }
-      router.push("/auth/login");
-    });
-  };
-
-  // hides logout popup on any click outside
-  const handleClickOutside = (event: MouseEvent) => {
-    if (
-      userInfoRef.current &&
-      !userInfoRef.current.contains(event.target as Node)
-    ) {
-      setUserInfoVisible(false);
-    }
-  };
-
+  // prevent the NextJS Router cache from causing the chat sidebar to not
+  // update / show an outdated list of chats
   useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside);
+    router.refresh();
+  }, [currentChatId]);
 
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  const combinedSettings = useContext(SettingsContext);
+  if (!combinedSettings) {
+    return null;
+  }
+  const settings = combinedSettings.settings;
 
   return (
-    <div
-      className={`
-        w-72
-        2xl:w-80
-        ${HEADER_PADDING}
+    <>
+      {popup}
+      <div
+        className={`
+        flex-none
+        w-64
+        3xl:w-72
         border-r 
         border-border 
         flex 
         flex-col 
         h-screen
         transition-transform`}
-      id="chat-sidebar"
-    >
-      <Link href="/chat" className="mx-3 mt-5">
-        <BasicClickable fullWidth>
-          <div className="flex text-sm">
-            <FiPlusSquare className="my-auto mr-2" /> New Chat
-          </div>
-        </BasicClickable>
-      </Link>
-
-      <div className="mt-1 pb-1 mb-1 ml-3 overflow-y-auto h-full">
-        {Object.entries(groupedChatSessions).map(
-          ([dateRange, chatSessions]) => {
-            if (chatSessions.length > 0) {
-              return (
-                <div key={dateRange}>
-                  <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-5 font-bold">
-                    {dateRange}
-                  </div>
-                  {chatSessions.map((chat) => {
-                    const isSelected = currentChatId === chat.id;
-                    return (
-                      <div key={chat.id} className="mr-3">
-                        <ChatSessionDisplay
-                          chatSession={chat}
-                          isSelected={isSelected}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            }
-          }
-        )}
-        {/* {existingChats.map((chat) => {
-          const isSelected = currentChatId === chat.id;
-          return (
-            <div key={chat.id} className="mr-3">
-              <ChatSessionDisplay chatSession={chat} isSelected={isSelected} />
-            </div>
-          );
-        })} */}
-      </div>
-
-      <div
-        className="mt-auto py-2 border-t border-border px-3"
-        ref={userInfoRef}
+        id="chat-sidebar"
       >
-        <div className="relative text-strong">
-          {userInfoVisible && (
-            <div
-              className={
-                (user ? "translate-y-[-110%]" : "translate-y-[-115%]") +
-                " absolute top-0 bg-background border border-border z-30 w-full rounded text-strong text-sm"
+        <div className="pt-6 flex">
+          <Link
+            className="ml-4 w-full"
+            href={
+              settings && settings.default_page === "chat" ? "/chat" : "/search"
+            }
+          >
+            <div className="flex w-full">
+              <div className="h-[32px] w-[30px]">
+                <Image src="/logo.png" alt="Logo" width="1419" height="1520" />
+              </div>
+              <h1 className="flex text-2xl text-strong font-bold my-auto">
+                Danswer
+              </h1>
+            </div>
+          </Link>
+        </div>
+
+        <div className="flex mt-5 items-center">
+          <Link
+            href={
+              "/chat" +
+              (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
+              currentChatSession
+                ? `?assistantId=${currentChatSession.persona_id}`
+                : "")
+            }
+            className="ml-3 w-full"
+          >
+            <BasicClickable fullWidth>
+              <div className="flex items-center text-sm">
+                <FiEdit className="ml-1 mr-2" /> New Chat
+              </div>
+            </BasicClickable>
+          </Link>
+
+          <div className="ml-1.5 mr-3 h-full">
+            <BasicClickable
+              onClick={() =>
+                createFolder("New Folder")
+                  .then((folderId) => {
+                    console.log(`Folder created with ID: ${folderId}`);
+                    router.refresh();
+                  })
+                  .catch((error) => {
+                    console.error("Failed to create folder:", error);
+                    setPopup({
+                      message: `Failed to create folder: ${error.message}`,
+                      type: "error",
+                    });
+                  })
               }
             >
-              <Link
-                href="/search"
-                className="flex py-3 px-4 cursor-pointer hover:bg-hover"
-              >
-                <FiSearch className="my-auto mr-2" />
-                Danswer Search
-              </Link>
-              <Link
-                href="/chat"
-                className="flex py-3 px-4 cursor-pointer hover:bg-hover"
-              >
-                <FiMessageSquare className="my-auto mr-2" />
-                Danswer Chat
-              </Link>
-              {(!user || user.role === "admin") && (
-                <Link
-                  href="/admin/indexing/status"
-                  className="flex py-3 px-4 cursor-pointer border-t border-border hover:bg-hover"
-                >
-                  <FiTool className="my-auto mr-2" />
-                  Admin Panel
-                </Link>
-              )}
-              {user && (
-                <div
-                  onClick={handleLogout}
-                  className="flex py-3 px-4 cursor-pointer border-t border-border rounded hover:bg-hover"
-                >
-                  <FiLogOut className="my-auto mr-2" />
-                  Log out
-                </div>
-              )}
-            </div>
-          )}
-          <BasicSelectable fullWidth selected={false}>
-            <div
-              onClick={() => setUserInfoVisible(!userInfoVisible)}
-              className="flex h-8"
-            >
-              <div className="my-auto mr-2 bg-user rounded-lg px-1.5">
-                {user && user.email ? user.email[0].toUpperCase() : "A"}
+              <div className="flex items-center text-sm h-full">
+                <FiFolderPlus className="mx-1 my-auto" />
               </div>
-              <p className="my-auto">
-                {user ? user.email : "Anonymous Possum"}
-              </p>
-              <FiMoreHorizontal className="my-auto ml-auto mr-2" size={20} />
-            </div>
-          </BasicSelectable>
+            </BasicClickable>
+          </div>
         </div>
+
+        <Link href="/assistants/mine" className="mt-3 mb-1 mx-3">
+          <BasicClickable fullWidth>
+            <div className="flex items-center text-default font-medium">
+              <FaBrain className="ml-1 mr-2" /> Manage Assistants
+            </div>
+          </BasicClickable>
+        </Link>
+
+        <div className="border-b border-border pb-4 mx-3" />
+
+        <ChatTab
+          existingChats={existingChats}
+          currentChatId={currentChatId}
+          folders={folders}
+          openedFolders={openedFolders}
+        />
       </div>
-    </div>
+    </>
   );
 };

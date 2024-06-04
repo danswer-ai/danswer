@@ -18,7 +18,7 @@ interface Props {
 export const ConnectorEditPopup = ({ existingConnector, onSubmit }: Props) => {
   return (
     <Modal onOutsideClick={onSubmit}>
-      <div className="px-8 py-6 bg-background">
+      <div className="bg-background">
         <h2 className="text-xl font-bold flex">
           Update Google Drive Connector
           <div
@@ -56,6 +56,10 @@ export const ConnectorEditPopup = ({ existingConnector, onSubmit }: Props) => {
                 name="follow_shortcuts"
                 label="Follow Shortcuts"
               />
+              <BooleanFormField
+                name="only_org_public"
+                label="Only Include Org Public Files"
+              />
             </div>
           )}
           validationSchema={Yup.object().shape({
@@ -68,6 +72,7 @@ export const ConnectorEditPopup = ({ existingConnector, onSubmit }: Props) => {
               .required(),
             include_shared: Yup.boolean().required(),
             follow_shortcuts: Yup.boolean().required(),
+            only_org_public: Yup.boolean().required(),
           })}
           onSubmit={onSubmit}
         />

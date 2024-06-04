@@ -36,6 +36,7 @@ import {
   FiCpu,
   FiInfo,
   FiUploadCloud,
+  FiUsers,
 } from "react-icons/fi";
 import { SiBookstack } from "react-icons/si";
 import Image from "next/image";
@@ -51,6 +52,10 @@ import document360Icon from "../../../public/Document360.png";
 import googleSitesIcon from "../../../public/GoogleSites.png";
 import zendeskIcon from "../../../public/Zendesk.svg";
 import dropboxIcon from "../../../public/Dropbox.png";
+import sharepointIcon from "../../../public/Sharepoint.png";
+import mediawikiIcon from "../../../public/MediaWiki.svg";
+import wikipediaIcon from "../../../public/Wikipedia.svg";
+import discourseIcon from "../../../public/Discourse.png";
 import { FaRobot } from "react-icons/fa";
 
 interface IconProps {
@@ -87,6 +92,13 @@ export const UsersIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <Users size={size} className={className} />;
+};
+
+export const GroupsIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return <FiUsers size={size} className={className} />;
 };
 
 export const GearIcon = ({
@@ -330,7 +342,19 @@ export const SlackIcon = ({
     </div>
   );
 };
-
+export const GitlabIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src="/Gitlab.png" alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
 export const GithubIcon = ({
   size = 16,
   className = defaultTailwindCSS,
@@ -341,6 +365,20 @@ export const GithubIcon = ({
       className={`w-[${size}px] h-[${size}px] ` + className}
     >
       <Image src="/Github.png" alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const GmailIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src="/Gmail.png" alt="Logo" width="96" height="96" />
     </div>
   );
 };
@@ -488,6 +526,18 @@ export const RequestTrackerIcon = ({
   </div>
 );
 
+export const SharepointIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src={sharepointIcon} alt="Logo" width="96" height="96" />
+  </div>
+);
+
 export const GongIcon = ({
   size = 16,
   className = defaultTailwindCSS,
@@ -564,5 +614,53 @@ export const DropboxIcon = ({
     className={`w-[${size}px] h-[${size}px] ` + className}
   >
     <Image src={dropboxIcon} alt="Logo" width="96" height="96" />
+  </div>
+);
+  
+export const DiscourseIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src={discourseIcon} alt="Logo" width="96" height="96" />
+  </div>
+);
+
+export const AxeroIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src="/Axero.jpeg" alt="Logo" width="96" height="96" />
+  </div>
+);
+
+export const MediaWikiIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src={mediawikiIcon} alt="Logo" width="96" height="96" />
+  </div>
+);
+
+export const WikipediaIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <div
+    style={{ width: `${size}px`, height: `${size}px` }}
+    className={`w-[${size}px] h-[${size}px] ` + className}
+  >
+    <Image src={wikipediaIcon} alt="Logo" width="96" height="96" />
   </div>
 );

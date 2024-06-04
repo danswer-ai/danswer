@@ -2,6 +2,7 @@ from typing import Any
 from typing import cast
 
 from slack_sdk import WebClient
+from slack_sdk.models.blocks import SectionBlock
 from slack_sdk.models.views import View
 from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
@@ -9,22 +10,29 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.danswerbot_configs import DANSWER_FOLLOWUP_EMOJI
+from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.danswerbot.slack.blocks import build_follow_up_resolved_blocks
 from danswer.danswerbot.slack.blocks import get_document_feedback_blocks
 from danswer.danswerbot.slack.config import get_slack_bot_config_for_channel
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
+from danswer.danswerbot.slack.constants import FeedbackVisibility
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import VIEW_DOC_FEEDBACK_ID
+from danswer.danswerbot.slack.handlers.handle_message import (
+    remove_scheduled_feedback_reminder,
+)
 from danswer.danswerbot.slack.utils import build_feedback_id
 from danswer.danswerbot.slack.utils import decompose_action_id
 from danswer.danswerbot.slack.utils import fetch_groupids_from_names
 from danswer.danswerbot.slack.utils import fetch_userids_from_emails
 from danswer.danswerbot.slack.utils import get_channel_name_from_id
+from danswer.danswerbot.slack.utils import get_feedback_visibility
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.feedback import create_chat_message_feedback
 from danswer.db.feedback import create_doc_retrieval_feedback
+from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.utils.logger import setup_logger
 
@@ -67,6 +75,7 @@ def handle_doc_feedback_button(
 def handle_slack_feedback(
     feedback_id: str,
     feedback_type: str,
+    feedback_msg_reminder: str,
     client: WebClient,
     user_id_to_post_confirmation: str,
     channel_id_to_post_confirmation: str,
@@ -85,6 +94,11 @@ def handle_slack_feedback(
                 user_id=None,  # no "user" for Slack bot for now
                 db_session=db_session,
             )
+            remove_scheduled_feedback_reminder(
+                client=client,
+                channel=user_id_to_post_confirmation,
+                msg_id=feedback_msg_reminder,
+            )
         elif feedback_type in [
             SearchFeedbackType.ENDORSE.value,
             SearchFeedbackType.REJECT.value,
@@ -100,11 +114,16 @@ def handle_slack_feedback(
             else:
                 feedback = SearchFeedbackType.HIDE
 
+            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+            document_index = get_default_document_index(
+                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+            )
+
             create_doc_retrieval_feedback(
                 message_id=message_id,
                 document_id=doc_id,
                 document_rank=doc_rank,
-                document_index=get_default_document_index(),
+                document_index=document_index,
                 db_session=db_session,
                 clicked=False,  # Not tracking this for Slack
                 feedback=feedback,
@@ -112,13 +131,33 @@ def handle_slack_feedback(
         else:
             logger_base.error(f"Feedback type '{feedback_type}' not supported")
 
-    # post message to slack confirming that feedback was received
-    client.chat_postEphemeral(
-        channel=channel_id_to_post_confirmation,
-        user=user_id_to_post_confirmation,
-        thread_ts=thread_ts_to_post_confirmation,
-        text="Thanks for your feedback!",
-    )
+    if get_feedback_visibility() == FeedbackVisibility.PRIVATE or feedback_type not in [
+        LIKE_BLOCK_ACTION_ID,
+        DISLIKE_BLOCK_ACTION_ID,
+    ]:
+        client.chat_postEphemeral(
+            channel=channel_id_to_post_confirmation,
+            user=user_id_to_post_confirmation,
+            thread_ts=thread_ts_to_post_confirmation,
+            text="Thanks for your feedback!",
+        )
+    else:
+        feedback_response_txt = (
+            "liked" if feedback_type == LIKE_BLOCK_ACTION_ID else "disliked"
+        )
+
+        if get_feedback_visibility() == FeedbackVisibility.ANONYMOUS:
+            msg = f"A user has {feedback_response_txt} the AI Answer"
+        else:
+            msg = f"<@{user_id_to_post_confirmation}> has {feedback_response_txt} the AI Answer"
+
+        respond_in_thread(
+            client=client,
+            channel=channel_id_to_post_confirmation,
+            text=msg,
+            thread_ts=thread_ts_to_post_confirmation,
+            unfurl=False,
+        )
 
 
 def handle_followup_button(
@@ -184,12 +223,37 @@ def handle_followup_button(
         )
 
 
+def get_clicker_name(
+    req: SocketModeRequest,
+    client: SocketModeClient,
+) -> str:
+    clicker_name = req.payload.get("user", {}).get("name", "Someone")
+    clicker_real_name = None
+    try:
+        clicker = client.web_client.users_info(user=req.payload["user"]["id"])
+        clicker_real_name = (
+            cast(dict, clicker.data).get("user", {}).get("profile", {}).get("real_name")
+        )
+    except Exception:
+        # Likely a scope issue
+        pass
+
+    if clicker_real_name:
+        clicker_name = clicker_real_name
+
+    return clicker_name
+
+
 def handle_followup_resolved_button(
     req: SocketModeRequest,
     client: SocketModeClient,
+    immediate: bool = False,
 ) -> None:
     channel_id = req.payload["container"]["channel_id"]
+    message_ts = req.payload["container"]["message_ts"]
     thread_ts = req.payload["container"]["thread_ts"]
+
+    clicker_name = get_clicker_name(req, client)
 
     update_emote_react(
         emoji=DANSWER_FOLLOWUP_EMOJI,
@@ -197,4 +261,35 @@ def handle_followup_resolved_button(
         message_ts=thread_ts,
         remove=True,
         client=client.web_client,
+    )
+
+    # Delete the message with the option to mark resolved
+    if not immediate:
+        slack_call = make_slack_api_rate_limited(client.web_client.chat_delete)
+        response = slack_call(
+            channel=channel_id,
+            ts=message_ts,
+        )
+
+        if not response.get("ok"):
+            logger_base.error("Unable to delete message for resolved")
+
+    if immediate:
+        msg_text = f"{clicker_name} has marked this question as resolved!"
+    else:
+        msg_text = (
+            f"{clicker_name} has marked this question as resolved! "
+            f'\n\n You can always click the "I need more help button" to let the team '
+            f"know that your problem still needs attention."
+        )
+
+    resolved_block = SectionBlock(text=msg_text)
+
+    respond_in_thread(
+        client=client.web_client,
+        channel=channel_id,
+        text="Your request for help as been addressed!",
+        blocks=[resolved_block],
+        thread_ts=thread_ts,
+        unfurl=False,
     )

@@ -9,6 +9,7 @@ SOURCE_LINKS = "source_links"
 SOURCE_LINK = "link"
 SEMANTIC_IDENTIFIER = "semantic_identifier"
 TITLE = "title"
+SKIP_TITLE_EMBEDDING = "skip_title"
 SECTION_CONTINUATION = "section_continuation"
 EMBEDDINGS = "embeddings"
 TITLE_EMBEDDING = "title_embedding"
@@ -23,6 +24,7 @@ MATCH_HIGHLIGHTS = "match_highlights"
 # not be used for QA. For example, Google Drive file types which can't be parsed
 # are still useful as a search result but not for QA.
 IGNORE_FOR_QA = "ignore_for_qa"
+# NOTE: deprecated, only used for porting key from old system
 GEN_AI_API_KEY_STORAGE_KEY = "genai_api_key"
 PUBLIC_DOC_PAT = "PUBLIC"
 PUBLIC_DOCUMENT_SET = "__PUBLIC"
@@ -39,6 +41,10 @@ DEFAULT_BOOST = 0
 SESSION_KEY = "session"
 QUERY_EVENT_ID = "query_event_id"
 LLM_CHUNKS = "llm_chunks"
+TOKEN_BUDGET = "token_budget"
+TOKEN_BUDGET_TIME_PERIOD = "token_budget_time_period"
+ENABLE_TOKEN_BUDGET = "enable_token_budget"
+TOKEN_BUDGET_SETTINGS = "token_budget_settings"
 
 # For chunking/processing chunks
 TITLE_SEPARATOR = "\n\r\n"
@@ -55,14 +61,22 @@ DISABLED_GEN_AI_MSG = (
 )
 
 
+# API Keys
+DANSWER_API_KEY_PREFIX = "API_KEY__"
+DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN = "danswerapikey.ai"
+UNNAMED_KEY_PLACEHOLDER = "Unnamed"
+
+
 class DocumentSource(str, Enum):
     # Special case, document passed in via Danswer APIs without specifying a source type
     INGESTION_API = "ingestion_api"
     SLACK = "slack"
     WEB = "web"
     GOOGLE_DRIVE = "google_drive"
+    GMAIL = "gmail"
     REQUESTTRACKER = "requesttracker"
     GITHUB = "github"
+    GITLAB = "gitlab"
     GURU = "guru"
     BOOKSTACK = "bookstack"
     CONFLUENCE = "confluence"
@@ -80,6 +94,11 @@ class DocumentSource(str, Enum):
     ZENDESK = "zendesk"
     LOOPIO = "loopio"
     DROPBOX = "dropbox"
+    SHAREPOINT = "sharepoint"
+    DISCOURSE = "discourse"
+    AXERO = "axero"
+    MEDIAWIKI = "mediawiki"
+    WIKIPEDIA = "wikipedia"
 
 
 class DocumentIndexType(str, Enum):
@@ -108,3 +127,16 @@ class MessageType(str, Enum):
     SYSTEM = "system"  # SystemMessage
     USER = "user"  # HumanMessage
     ASSISTANT = "assistant"  # AIMessage
+
+
+class TokenRateLimitScope(str, Enum):
+    USER = "user"
+    USER_GROUP = "user_group"
+    GLOBAL = "global"
+
+
+class FileOrigin(str, Enum):
+    CHAT_UPLOAD = "chat_upload"
+    CHAT_IMAGE_GEN = "chat_image_gen"
+    CONNECTOR = "connector"
+    OTHER = "other"

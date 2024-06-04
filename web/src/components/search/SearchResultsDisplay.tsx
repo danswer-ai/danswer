@@ -11,7 +11,6 @@ import {
 } from "@/lib/search/interfaces";
 import { QAFeedbackBlock } from "./QAFeedback";
 import { DocumentDisplay } from "./DocumentDisplay";
-import { ResponseSection, StatusOptions } from "./results/ResponseSection";
 import { QuotesSection } from "./results/QuotesSection";
 import { AnswerSection } from "./results/AnswerSection";
 import { ThreeDots } from "react-loader-spinner";
@@ -50,7 +49,7 @@ export const SearchResultsDisplay = ({
   }
 
   const isPersona = personaName !== null;
-  const { answer, quotes, documents, error, queryEventId } = searchResponse;
+  const { answer, quotes, documents, error, messageId } = searchResponse;
 
   if (isFetching && !answer && !documents) {
     return (
@@ -147,10 +146,10 @@ export const SearchResultsDisplay = ({
                   isAnswerable={validQuestionResponse.answerable}
                 />
 
-                {searchResponse.queryEventId !== null && (
+                {searchResponse.messageId !== null && (
                   <div className="absolute right-3 bottom-3">
                     <QAFeedbackBlock
-                      queryId={searchResponse.queryEventId}
+                      messageId={searchResponse.messageId}
                       setPopup={setPopup}
                     />
                   </div>
@@ -166,11 +165,12 @@ export const SearchResultsDisplay = ({
           <div className="font-bold text-emphasis border-b mb-3 pb-1 border-border text-lg">
             Results
           </div>
-          {removeDuplicateDocs(documents).map((document) => (
+          {removeDuplicateDocs(documents).map((document, ind) => (
             <DocumentDisplay
               key={document.document_id}
               document={document}
-              queryEventId={queryEventId}
+              documentRank={ind + 1}
+              messageId={messageId}
               isSelected={selectedDocumentIds.has(document.document_id)}
               setPopup={setPopup}
             />

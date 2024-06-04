@@ -5,24 +5,19 @@ from typing import cast
 
 from sqlalchemy.orm import Session
 
-from danswer.chat.chat_utils import build_chat_system_message
-from danswer.chat.chat_utils import build_chat_user_message
 from danswer.chat.chat_utils import create_chat_chain
-from danswer.chat.chat_utils import drop_messages_history_overflow
-from danswer.chat.chat_utils import extract_citations_from_stream
-from danswer.chat.chat_utils import get_chunks_for_qa
-from danswer.chat.chat_utils import llm_doc_from_inference_chunk
-from danswer.chat.chat_utils import map_document_id_order
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import ImageGenerationDisplay
 from danswer.chat.models import LlmDoc
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
-from danswer.configs.chat_configs import CHUNK_SIZE
-from danswer.configs.chat_configs import DEFAULT_NUM_CHUNKS_FED_TO_CHAT
-from danswer.configs.constants import DISABLED_GEN_AI_MSG
+from danswer.configs.chat_configs import CHAT_TARGET_CHUNK_PERCENTAGE
+from danswer.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
+from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.constants import MessageType
+from danswer.db.chat import attach_files_to_chat_message
 from danswer.db.chat import create_db_search_doc
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_chat_message
@@ -32,94 +27,48 @@ from danswer.db.chat import get_doc_query_identifiers_from_model
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
-from danswer.db.models import ChatMessage
+from danswer.db.embedding_model import get_current_db_embedding_model
+from danswer.db.engine import get_session_context_manager
+from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.models import SearchDoc as DbSearchDoc
 from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
-from danswer.indexing.models import InferenceChunk
+from danswer.file_store.models import ChatFileType
+from danswer.file_store.models import FileDescriptor
+from danswer.file_store.utils import load_all_chat_files
+from danswer.file_store.utils import save_files_from_urls
+from danswer.llm.answering.answer import Answer
+from danswer.llm.answering.models import AnswerStyleConfig
+from danswer.llm.answering.models import CitationConfig
+from danswer.llm.answering.models import DocumentPruningConfig
+from danswer.llm.answering.models import PreviousMessage
+from danswer.llm.answering.models import PromptConfig
 from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.factory import get_default_llm
-from danswer.llm.interfaces import LLM
-from danswer.llm.utils import get_default_llm_token_encode
-from danswer.llm.utils import translate_history_to_basemessages
-from danswer.search.models import OptionalSearchSetting
-from danswer.search.models import RetrievalDetails
-from danswer.search.request_preprocessing import retrieval_preprocessing
-from danswer.search.search_runner import chunks_to_search_docs
-from danswer.search.search_runner import full_chunk_search_generator
-from danswer.search.search_runner import inference_documents_from_ids
-from danswer.secondary_llm_flows.choose_search import check_if_need_search
-from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
+from danswer.llm.factory import get_llm_for_persona
+from danswer.llm.utils import get_default_llm_tokenizer
+from danswer.search.enums import OptionalSearchSetting
+from danswer.search.retrieval.search_runner import inference_documents_from_ids
+from danswer.search.utils import chunks_or_sections_to_search_docs
+from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.utils import get_json_line
+from danswer.tools.factory import get_tool_cls
+from danswer.tools.force import ForceUseTool
+from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
+from danswer.tools.images.image_generation_tool import ImageGenerationResponse
+from danswer.tools.images.image_generation_tool import ImageGenerationTool
+from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
+from danswer.tools.search.search_tool import SearchResponseSummary
+from danswer.tools.search.search_tool import SearchTool
+from danswer.tools.search.search_tool import SECTION_RELEVANCE_LIST_ID
+from danswer.tools.tool import Tool
+from danswer.tools.tool import ToolResponse
+from danswer.tools.utils import compute_all_tool_tokens
+from danswer.tools.utils import explicit_tool_calling_supported
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
 
 logger = setup_logger()
-
-
-def generate_ai_chat_response(
-    query_message: ChatMessage,
-    history: list[ChatMessage],
-    context_docs: list[LlmDoc],
-    doc_id_to_rank_map: dict[str, int],
-    llm: LLM | None,
-    llm_tokenizer: Callable,
-    all_doc_useful: bool,
-) -> Iterator[DanswerAnswerPiece | CitationInfo | StreamingError]:
-    if llm is None:
-        try:
-            llm = get_default_llm()
-        except GenAIDisabledException:
-            # Not an error if it's a user configuration
-            yield DanswerAnswerPiece(answer_piece=DISABLED_GEN_AI_MSG)
-            return
-
-    if query_message.prompt is None:
-        raise RuntimeError("No prompt received for generating Gen AI answer.")
-
-    try:
-        context_exists = len(context_docs) > 0
-
-        system_message_or_none, system_tokens = build_chat_system_message(
-            prompt=query_message.prompt,
-            context_exists=context_exists,
-            llm_tokenizer=llm_tokenizer,
-        )
-
-        history_basemessages, history_token_counts = translate_history_to_basemessages(
-            history
-        )
-
-        # Be sure the context_docs passed to build_chat_user_message
-        # Is the same as passed in later for extracting citations
-        user_message, user_tokens = build_chat_user_message(
-            chat_message=query_message,
-            prompt=query_message.prompt,
-            context_docs=context_docs,
-            llm_tokenizer=llm_tokenizer,
-            all_doc_useful=all_doc_useful,
-        )
-
-        prompt = drop_messages_history_overflow(
-            system_msg=system_message_or_none,
-            system_token_count=system_tokens,
-            history_msgs=history_basemessages,
-            history_token_counts=history_token_counts,
-            final_msg=user_message,
-            final_msg_token_count=user_tokens,
-        )
-
-        # Good Debug/Breakpoint
-        tokens = llm.stream(prompt)
-
-        yield from extract_citations_from_stream(
-            tokens, context_docs, doc_id_to_rank_map
-        )
-
-    except Exception as e:
-        logger.exception(f"LLM failed to produce valid chat message, error: {e}")
-        yield StreamingError(error=str(e))
 
 
 def translate_citations(
@@ -142,15 +91,99 @@ def translate_citations(
     return citation_to_saved_doc_id_map
 
 
-@log_generator_function_time()
-def stream_chat_message(
+def _handle_search_tool_response_summary(
+    packet: ToolResponse,
+    db_session: Session,
+    selected_search_docs: list[DbSearchDoc] | None,
+) -> tuple[QADocsResponse, list[DbSearchDoc]]:
+    response_sumary = cast(SearchResponseSummary, packet.response)
+
+    if not selected_search_docs:
+        top_docs = chunks_or_sections_to_search_docs(response_sumary.top_sections)
+        reference_db_search_docs = [
+            create_db_search_doc(server_search_doc=top_doc, db_session=db_session)
+            for top_doc in top_docs
+        ]
+    else:
+        reference_db_search_docs = selected_search_docs
+
+    response_docs = [
+        translate_db_search_doc_to_server_search_doc(db_search_doc)
+        for db_search_doc in reference_db_search_docs
+    ]
+    return (
+        QADocsResponse(
+            rephrased_query=response_sumary.rephrased_query,
+            top_documents=response_docs,
+            predicted_flow=response_sumary.predicted_flow,
+            predicted_search=response_sumary.predicted_search,
+            applied_source_filters=response_sumary.final_filters.source_type,
+            applied_time_cutoff=response_sumary.final_filters.time_cutoff,
+            recency_bias_multiplier=response_sumary.recency_bias_multiplier,
+        ),
+        reference_db_search_docs,
+    )
+
+
+def _check_should_force_search(
+    new_msg_req: CreateChatMessageRequest,
+) -> ForceUseTool | None:
+    # If files are already provided, don't run the search tool
+    if new_msg_req.file_descriptors:
+        return None
+
+    if (
+        new_msg_req.query_override
+        or (
+            new_msg_req.retrieval_options
+            and new_msg_req.retrieval_options.run_search == OptionalSearchSetting.ALWAYS
+        )
+        or new_msg_req.search_doc_ids
+        or DISABLE_LLM_CHOOSE_SEARCH
+    ):
+        args = (
+            {"query": new_msg_req.query_override}
+            if new_msg_req.query_override
+            else None
+        )
+        # if we are using selected docs, just put something here so the Tool doesn't need
+        # to build its own args via an LLM call
+        if new_msg_req.search_doc_ids:
+            args = {"query": new_msg_req.message}
+
+        return ForceUseTool(
+            tool_name=SearchTool.name(),
+            args=args,
+        )
+    return None
+
+
+ChatPacket = (
+    StreamingError
+    | QADocsResponse
+    | LLMRelevanceFilterResponse
+    | ChatMessageDetail
+    | DanswerAnswerPiece
+    | CitationInfo
+    | ImageGenerationDisplay
+)
+ChatPacketStream = Iterator[ChatPacket]
+
+
+def stream_chat_message_objects(
     new_msg_req: CreateChatMessageRequest,
     user: User | None,
     db_session: Session,
     # Needed to translate persona num_chunks to tokens to the LLM
-    default_num_chunks: float = DEFAULT_NUM_CHUNKS_FED_TO_CHAT,
-    default_chunk_size: int = CHUNK_SIZE,
-) -> Iterator[str]:
+    default_num_chunks: float = MAX_CHUNKS_FED_TO_CHAT,
+    # For flow with search, don't include as many chunks as possible since we need to leave space
+    # for the chat history, for smaller models, we likely won't get MAX_CHUNKS_FED_TO_CHAT chunks
+    max_document_percentage: float = CHAT_TARGET_CHUNK_PERCENTAGE,
+    # if specified, uses the last user message and does not create a new user message based
+    # on the `new_msg_req.message`. Currently, requires a state where the last message is a
+    # user message (e.g. this can only be used for the chat-seeding flow).
+    use_existing_user_message: bool = False,
+) -> ChatPacketStream:
     """Streams in order:
     1. [conditional] Retrieved documents if a search needs to be run
     2. [conditional] LLM selected chunk indices if LLM chunk filtering is turned on
@@ -170,11 +203,13 @@ def stream_chat_message(
         message_text = new_msg_req.message
         chat_session_id = new_msg_req.chat_session_id
         parent_id = new_msg_req.parent_message_id
-        prompt_id = new_msg_req.prompt_id
         reference_doc_ids = new_msg_req.search_doc_ids
         retrieval_options = new_msg_req.retrieval_options
         persona = chat_session.persona
-        query_override = new_msg_req.query_override
+
+        prompt_id = new_msg_req.prompt_id
+        if prompt_id is None and persona.prompts:
+            prompt_id = sorted(persona.prompts, key=lambda x: x.id)[-1].id
 
         if reference_doc_ids is None and retrieval_options is None:
             raise RuntimeError(
@@ -182,12 +217,21 @@ def stream_chat_message(
             )
 
         try:
-            llm = get_default_llm()
+            llm = get_llm_for_persona(
+                persona, new_msg_req.llm_override or chat_session.llm_override
+            )
         except GenAIDisabledException:
-            llm = None
+            raise RuntimeError("LLM is disabled. Can't use chat flow without LLM.")
 
-        llm_tokenizer = get_default_llm_token_encode()
-        document_index = get_default_document_index()
+        llm_tokenizer = get_default_llm_tokenizer()
+        llm_tokenizer_encode_func = cast(
+            Callable[[str], list[int]], llm_tokenizer.encode
+        )
+
+        embedding_model = get_current_db_embedding_model(db_session)
+        document_index = get_default_document_index(
+            primary_index_name=embedding_model.index_name, secondary_index_name=None
+        )
 
         # Every chat Session begins with an empty root message
         root_message = get_or_create_root_message(
@@ -203,47 +247,68 @@ def stream_chat_message(
         else:
             parent_message = root_message
 
-        # Create new message at the right place in the tree and update the parent's child pointer
-        # Don't commit yet until we verify the chat message chain
-        new_user_message = create_new_chat_message(
-            chat_session_id=chat_session_id,
-            parent_message=parent_message,
-            prompt_id=prompt_id,
-            message=message_text,
-            token_count=len(llm_tokenizer(message_text)),
-            message_type=MessageType.USER,
-            db_session=db_session,
-            commit=False,
-        )
-
-        # Create linear history of messages
-        final_msg, history_msgs = create_chat_chain(
-            chat_session_id=chat_session_id, db_session=db_session
-        )
-
-        if final_msg.id != new_user_message.id:
-            db_session.rollback()
-            raise RuntimeError(
-                "The new message was not on the mainline. "
-                "Be sure to update the chat pointers before calling this."
+        user_message = None
+        if not use_existing_user_message:
+            # Create new message at the right place in the tree and update the parent's child pointer
+            # Don't commit yet until we verify the chat message chain
+            user_message = create_new_chat_message(
+                chat_session_id=chat_session_id,
+                parent_message=parent_message,
+                prompt_id=prompt_id,
+                message=message_text,
+                token_count=len(llm_tokenizer_encode_func(message_text)),
+                message_type=MessageType.USER,
+                files=None,  # Need to attach later for optimization to only load files once in parallel
+                db_session=db_session,
+                commit=False,
             )
-
-        # Save now to save the latest chat message
-        db_session.commit()
-
-        run_search = False
-        # Retrieval options are only None if reference_doc_ids are provided
-        if retrieval_options is not None and persona.num_chunks != 0:
-            if retrieval_options.run_search == OptionalSearchSetting.ALWAYS:
-                run_search = True
-            elif retrieval_options.run_search == OptionalSearchSetting.NEVER:
-                run_search = False
-            else:
-                run_search = check_if_need_search(
-                    query_message=final_msg, history=history_msgs, llm=llm
+            # re-create linear history of messages
+            final_msg, history_msgs = create_chat_chain(
+                chat_session_id=chat_session_id, db_session=db_session
+            )
+            if final_msg.id != user_message.id:
+                db_session.rollback()
+                raise RuntimeError(
+                    "The new message was not on the mainline. "
+                    "Be sure to update the chat pointers before calling this."
                 )
 
-        rephrased_query = None
+            # NOTE: do not commit user message - it will be committed when the
+            # assistant message is successfully generated
+        else:
+            # re-create linear history of messages
+            final_msg, history_msgs = create_chat_chain(
+                chat_session_id=chat_session_id, db_session=db_session
+            )
+            if final_msg.message_type != MessageType.USER:
+                raise RuntimeError(
+                    "The last message was not a user message. Cannot call "
+                    "`stream_chat_message_objects` with `is_regenerate=True` "
+                    "when the last message is not a user message."
+                )
+
+        # load all files needed for this chat chain in memory
+        files = load_all_chat_files(
+            history_msgs, new_msg_req.file_descriptors, db_session
+        )
+        latest_query_files = [
+            file
+            for file in files
+            if file.file_id in [f["id"] for f in new_msg_req.file_descriptors]
+        ]
+
+        if user_message:
+            attach_files_to_chat_message(
+                chat_message=user_message,
+                files=[
+                    new_file.to_file_descriptor() for new_file in latest_query_files
+                ],
+                db_session=db_session,
+                commit=False,
+            )
+
+        selected_db_search_docs = None
+        selected_llm_docs: list[LlmDoc] | None = None
         if reference_doc_ids:
             identifier_tuples = get_doc_query_identifiers_from_model(
                 search_doc_ids=reference_doc_ids,
@@ -254,12 +319,12 @@ def stream_chat_message(
 
             # Generates full documents currently
             # May extend to include chunk ranges
-            llm_docs: list[LlmDoc] = inference_documents_from_ids(
+            selected_llm_docs = inference_documents_from_ids(
                 doc_identifiers=identifier_tuples,
-                document_index=get_default_document_index(),
+                document_index=document_index,
             )
-            doc_id_to_rank_map = map_document_id_order(
-                cast(list[InferenceChunk | LlmDoc], llm_docs)
+            document_pruning_config = DocumentPruningConfig(
+                is_manually_selected_docs=True
             )
 
             # In case the search doc is deleted, just don't include it
@@ -269,175 +334,179 @@ def stream_chat_message(
                 for doc_id in reference_doc_ids
             ]
 
-            reference_db_search_docs = [
+            selected_db_search_docs = [
                 db_sd for db_sd in db_search_docs_or_none if db_sd
             ]
 
-        elif run_search:
-            rephrased_query = (
-                history_based_query_rephrase(
-                    query_message=final_msg, history=history_msgs, llm=llm
-                )
-                if query_override is None
-                else query_override
-            )
-
-            (
-                retrieval_request,
-                predicted_search_type,
-                predicted_flow,
-            ) = retrieval_preprocessing(
-                query=rephrased_query,
-                retrieval_details=cast(RetrievalDetails, retrieval_options),
-                persona=persona,
-                user=user,
-                db_session=db_session,
-            )
-
-            documents_generator = full_chunk_search_generator(
-                search_query=retrieval_request,
-                document_index=document_index,
-            )
-            time_cutoff = retrieval_request.filters.time_cutoff
-            recency_bias_multiplier = retrieval_request.recency_bias_multiplier
-            run_llm_chunk_filter = not retrieval_request.skip_llm_chunk_filter
-
-            # First fetch and return the top chunks to the UI so the user can
-            # immediately see some results
-            top_chunks = cast(list[InferenceChunk], next(documents_generator))
-
-            # Get ranking of the documents for citation purposes later
-            doc_id_to_rank_map = map_document_id_order(
-                cast(list[InferenceChunk | LlmDoc], top_chunks)
-            )
-
-            top_docs = chunks_to_search_docs(top_chunks)
-
-            reference_db_search_docs = [
-                create_db_search_doc(server_search_doc=top_doc, db_session=db_session)
-                for top_doc in top_docs
-            ]
-
-            response_docs = [
-                translate_db_search_doc_to_server_search_doc(db_search_doc)
-                for db_search_doc in reference_db_search_docs
-            ]
-
-            initial_response = QADocsResponse(
-                rephrased_query=rephrased_query,
-                top_documents=response_docs,
-                predicted_flow=predicted_flow,
-                predicted_search=predicted_search_type,
-                applied_source_filters=retrieval_request.filters.source_type,
-                applied_time_cutoff=time_cutoff,
-                recency_bias_multiplier=recency_bias_multiplier,
-            ).dict()
-            yield get_json_line(initial_response)
-
-            # Get the final ordering of chunks for the LLM call
-            llm_chunk_selection = cast(list[bool], next(documents_generator))
-
-            # Yield the list of LLM selected chunks for showing the LLM selected icons in the UI
-            llm_relevance_filtering_response = LLMRelevanceFilterResponse(
-                relevant_chunk_indices=[
-                    index for index, value in enumerate(llm_chunk_selection) if value
-                ]
-                if run_llm_chunk_filter
-                else []
-            ).dict()
-            yield get_json_line(llm_relevance_filtering_response)
-
-            # Prep chunks to pass to LLM
-            num_llm_chunks = (
-                persona.num_chunks
-                if persona.num_chunks is not None
-                else default_num_chunks
-            )
-            llm_chunks_indices = get_chunks_for_qa(
-                chunks=top_chunks,
-                llm_chunk_selection=llm_chunk_selection,
-                token_limit=num_llm_chunks * default_chunk_size,
-            )
-            llm_chunks = [top_chunks[i] for i in llm_chunks_indices]
-            llm_docs = [llm_doc_from_inference_chunk(chunk) for chunk in llm_chunks]
-
         else:
-            llm_docs = []
-            doc_id_to_rank_map = {}
-            reference_db_search_docs = None
+            document_pruning_config = DocumentPruningConfig(
+                max_chunks=int(
+                    persona.num_chunks
+                    if persona.num_chunks is not None
+                    else default_num_chunks
+                ),
+                max_window_percentage=max_document_percentage,
+                use_sections=new_msg_req.chunks_above > 0
+                or new_msg_req.chunks_below > 0,
+            )
 
         # Cannot determine these without the LLM step or breaking out early
         partial_response = partial(
             create_new_chat_message,
             chat_session_id=chat_session_id,
-            parent_message=new_user_message,
+            parent_message=final_msg,
             prompt_id=prompt_id,
             # message=,
-            rephrased_query=rephrased_query,
+            # rephrased_query=,
             # token_count=,
             message_type=MessageType.ASSISTANT,
             # error=,
-            reference_docs=reference_db_search_docs,
+            # reference_docs=,
             db_session=db_session,
-            commit=True,
+            commit=False,
         )
 
-        # If no prompt is provided, this is interpreted as not wanting an AI Answer
-        # Simply provide/save the retrieval results
-        if final_msg.prompt is None:
-            gen_ai_response_message = partial_response(
-                message="",
-                token_count=0,
-                citations=None,
-                error=None,
-            )
-            msg_detail_response = translate_db_message_to_chat_message_detail(
-                gen_ai_response_message
-            )
+        if not final_msg.prompt:
+            raise RuntimeError("No Prompt found")
 
-            yield get_json_line(msg_detail_response.dict())
+        prompt_config = PromptConfig.from_model(
+            final_msg.prompt,
+            prompt_override=(
+                new_msg_req.prompt_override or chat_session.prompt_override
+            ),
+        )
 
-            # Stop here after saving message details, the above still needs to be sent for the
-            # message id to send the next follow-up message
-            return
+        persona_tool_classes = [
+            get_tool_cls(tool, db_session) for tool in persona.tools
+        ]
+
+        # factor in tool definition size when pruning
+        document_pruning_config.tool_num_tokens = compute_all_tool_tokens(
+            persona_tool_classes
+        )
+        document_pruning_config.using_tool_message = explicit_tool_calling_supported(
+            llm.config.model_provider, llm.config.model_name
+        )
+
+        # NOTE: for now, only support SearchTool and ImageGenerationTool
+        # in the future, will support arbitrary user-defined tools
+        search_tool: SearchTool | None = None
+        tools: list[Tool] = []
+        for tool_cls in persona_tool_classes:
+            if tool_cls.__name__ == SearchTool.__name__ and not latest_query_files:
+                search_tool = SearchTool(
+                    db_session=db_session,
+                    user=user,
+                    persona=persona,
+                    retrieval_options=retrieval_options,
+                    prompt_config=prompt_config,
+                    llm_config=llm.config,
+                    pruning_config=document_pruning_config,
+                    selected_docs=selected_llm_docs,
+                    chunks_above=new_msg_req.chunks_above,
+                    chunks_below=new_msg_req.chunks_below,
+                    full_doc=new_msg_req.full_doc,
+                )
+                tools.append(search_tool)
+            elif tool_cls.__name__ == ImageGenerationTool.__name__:
+                dalle_key = None
+                if llm and llm.config.api_key and llm.config.model_provider == "openai":
+                    dalle_key = llm.config.api_key
+                else:
+                    llm_providers = fetch_existing_llm_providers(db_session)
+                    openai_provider = next(
+                        iter(
+                            [
+                                llm_provider
+                                for llm_provider in llm_providers
+                                if llm_provider.provider == "openai"
+                            ]
+                        ),
+                        None,
+                    )
+                    if not openai_provider or not openai_provider.api_key:
+                        raise ValueError(
+                            "Image generation tool requires an OpenAI API key"
+                        )
+                    dalle_key = openai_provider.api_key
+                tools.append(ImageGenerationTool(api_key=dalle_key))
 
         # LLM prompt building, response capturing, etc.
-        response_packets = generate_ai_chat_response(
-            query_message=final_msg,
-            history=history_msgs,
-            context_docs=llm_docs,
-            doc_id_to_rank_map=doc_id_to_rank_map,
-            llm=llm,
-            llm_tokenizer=llm_tokenizer,
-            all_doc_useful=reference_doc_ids is not None,
+        answer = Answer(
+            question=final_msg.message,
+            latest_query_files=latest_query_files,
+            answer_style_config=AnswerStyleConfig(
+                citation_config=CitationConfig(
+                    all_docs_useful=selected_db_search_docs is not None
+                ),
+                document_pruning_config=document_pruning_config,
+            ),
+            prompt_config=prompt_config,
+            llm=(
+                llm
+                or get_llm_for_persona(
+                    persona, new_msg_req.llm_override or chat_session.llm_override
+                )
+            ),
+            message_history=[
+                PreviousMessage.from_chat_message(msg, files) for msg in history_msgs
+            ],
+            tools=tools,
+            force_use_tool=(
+                _check_should_force_search(new_msg_req) if search_tool else None
+            ),
         )
 
-        # Capture outputs and errors
-        llm_output = ""
-        error: str | None = None
-        citations: list[CitationInfo] = []
-        for packet in response_packets:
-            if isinstance(packet, DanswerAnswerPiece):
-                token = packet.answer_piece
-                if token:
-                    llm_output += token
-            elif isinstance(packet, StreamingError):
-                error = packet.error
-            elif isinstance(packet, CitationInfo):
-                citations.append(packet)
-                continue
+        reference_db_search_docs = None
+        qa_docs_response = None
+        ai_message_files = None  # any files to associate with the AI message e.g. dall-e generated images
+        for packet in answer.processed_streamed_output:
+            if isinstance(packet, ToolResponse):
+                if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
+                    (
+                        qa_docs_response,
+                        reference_db_search_docs,
+                    ) = _handle_search_tool_response_summary(
+                        packet, db_session, selected_db_search_docs
+                    )
+                    yield qa_docs_response
+                elif packet.id == SECTION_RELEVANCE_LIST_ID:
+                    yield LLMRelevanceFilterResponse(
+                        relevant_chunk_indices=packet.response
+                    )
+                elif packet.id == IMAGE_GENERATION_RESPONSE_ID:
+                    img_generation_response = cast(
+                        list[ImageGenerationResponse], packet.response
+                    )
 
-            yield get_json_line(packet.dict())
+                    file_ids = save_files_from_urls(
+                        [img.url for img in img_generation_response]
+                    )
+                    ai_message_files = [
+                        FileDescriptor(id=str(file_id), type=ChatFileType.IMAGE)
+                        for file_id in file_ids
+                    ]
+                    yield ImageGenerationDisplay(
+                        file_ids=[str(file_id) for file_id in file_ids]
+                    )
+
+            else:
+                yield cast(ChatPacket, packet)
+
     except Exception as e:
-        logger.exception(e)
+        logger.exception("Failed to process chat message")
 
-        # Frontend will erase whatever answer and show this instead
-        # This will be the issue 99% of the time
-        error_packet = StreamingError(
-            error="LLM failed to respond, have you set your API key?"
-        )
+        # Don't leak the API key
+        error_msg = str(e)
+        if llm.config.api_key and llm.config.api_key.lower() in error_msg.lower():
+            error_msg = (
+                f"LLM failed to respond. Invalid API "
+                f"key error from '{llm.config.model_provider}'."
+            )
 
-        yield get_json_line(error_packet.dict())
+        yield StreamingError(error=error_msg)
+        # Cancel the transaction so that no messages are saved
+        db_session.rollback()
         return
 
     # Post-LLM answer processing
@@ -445,27 +514,48 @@ def stream_chat_message(
         db_citations = None
         if reference_db_search_docs:
             db_citations = translate_citations(
-                citations_list=citations,
+                citations_list=answer.citations,
                 db_docs=reference_db_search_docs,
             )
 
         # Saving Gen AI answer and responding with message info
         gen_ai_response_message = partial_response(
-            message=llm_output,
-            token_count=len(llm_tokenizer(llm_output)),
+            message=answer.llm_answer,
+            rephrased_query=(
+                qa_docs_response.rephrased_query if qa_docs_response else None
+            ),
+            reference_docs=reference_db_search_docs,
+            files=ai_message_files,
+            token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
             citations=db_citations,
-            error=error,
+            error=None,
         )
+        db_session.commit()  # actually save user / assistant message
 
         msg_detail_response = translate_db_message_to_chat_message_detail(
             gen_ai_response_message
         )
 
-        yield get_json_line(msg_detail_response.dict())
+        yield msg_detail_response
     except Exception as e:
         logger.exception(e)
 
         # Frontend will erase whatever answer and show this instead
-        error_packet = StreamingError(error="Failed to parse LLM output")
+        yield StreamingError(error="Failed to parse LLM output")
 
-        yield get_json_line(error_packet.dict())
+
+@log_generator_function_time()
+def stream_chat_message(
+    new_msg_req: CreateChatMessageRequest,
+    user: User | None,
+    use_existing_user_message: bool = False,
+) -> Iterator[str]:
+    with get_session_context_manager() as db_session:
+        objects = stream_chat_message_objects(
+            new_msg_req=new_msg_req,
+            user=user,
+            db_session=db_session,
+            use_existing_user_message=use_existing_user_message,
+        )
+        for obj in objects:
+            yield get_json_line(obj.dict())

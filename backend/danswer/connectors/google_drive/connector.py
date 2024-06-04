@@ -1,5 +1,4 @@
 import io
-import tempfile
 from collections.abc import Iterator
 from collections.abc import Sequence
 from datetime import datetime
@@ -9,7 +8,6 @@ from itertools import chain
 from typing import Any
 from typing import cast
 
-import docx2txt  # type:ignore
 from google.auth.credentials import Credentials  # type: ignore
 from googleapiclient import discovery  # type: ignore
 from googleapiclient.errors import HttpError  # type: ignore
@@ -17,10 +15,10 @@ from googleapiclient.errors import HttpError  # type: ignore
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import GOOGLE_DRIVE_FOLLOW_SHORTCUTS
 from danswer.configs.app_configs import GOOGLE_DRIVE_INCLUDE_SHARED
+from danswer.configs.app_configs import GOOGLE_DRIVE_ONLY_ORG_PUBLIC
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.connectors.cross_connector_utils.file_utils import read_pdf_file
 from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
 from danswer.connectors.google_drive.connector_auth import (
     get_google_drive_creds_for_authorized_user,
@@ -41,13 +39,13 @@ from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.file_processing.extract_file_text import docx_to_text
+from danswer.file_processing.extract_file_text import pdf_to_text
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-# allow 10 minutes for modifiedTime to get propagated
-DRIVE_START_TIME_OFFSET = 60 * 10
 DRIVE_FOLDER_TYPE = "application/vnd.google-apps.folder"
 DRIVE_SHORTCUT_TYPE = "application/vnd.google-apps.shortcut"
 UNSUPPORTED_FILE_TYPE_CONTENT = ""  # keep empty for now
@@ -90,7 +88,7 @@ def _run_drive_file_query(
                     supportsAllDrives=include_shared,
                     includeItemsFromAllDrives=include_shared,
                     fields=(
-                        "nextPageToken, files(mimeType, id, name, "
+                        "nextPageToken, files(mimeType, id, name, permissions, "
                         "modifiedTime, webViewLink, shortcutDetails)"
                     ),
                     pageToken=next_page_token,
@@ -110,7 +108,7 @@ def _run_drive_file_query(
                             .get(
                                 fileId=file["shortcutDetails"]["targetId"],
                                 supportsAllDrives=include_shared,
-                                fields="mimeType, id, name, modifiedTime, webViewLink, shortcutDetails",
+                                fields="mimeType, id, name, modifiedTime, webViewLink, permissions, shortcutDetails",
                             )
                             .execute()
                         )
@@ -322,15 +320,10 @@ def extract_text(file: dict[str, str], service: discovery.Resource) -> str:
         )
     elif mime_type == GDriveMimeType.WORD_DOC.value:
         response = service.files().get_media(fileId=file["id"]).execute()
-        word_stream = io.BytesIO(response)
-        with tempfile.NamedTemporaryFile(delete=False) as temp:
-            temp.write(word_stream.getvalue())
-            temp_path = temp.name
-        return docx2txt.process(temp_path)
+        return docx_to_text(file=io.BytesIO(response))
     elif mime_type == GDriveMimeType.PDF.value:
         response = service.files().get_media(fileId=file["id"]).execute()
-        file_contents = read_pdf_file(file=io.BytesIO(response), file_name=file["name"])
-        return file_contents
+        return pdf_to_text(file=io.BytesIO(response))
 
     return UNSUPPORTED_FILE_TYPE_CONTENT
 
@@ -344,12 +337,14 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         batch_size: int = INDEX_BATCH_SIZE,
         include_shared: bool = GOOGLE_DRIVE_INCLUDE_SHARED,
         follow_shortcuts: bool = GOOGLE_DRIVE_FOLLOW_SHORTCUTS,
+        only_org_public: bool = GOOGLE_DRIVE_ONLY_ORG_PUBLIC,
         continue_on_failure: bool = CONTINUE_ON_CONNECTOR_FAILURE,
     ) -> None:
         self.folder_paths = folder_paths or []
         self.batch_size = batch_size
         self.include_shared = include_shared
         self.follow_shortcuts = follow_shortcuts
+        self.only_org_public = only_org_public
         self.continue_on_failure = continue_on_failure
         self.creds: Credentials | None = None
 
@@ -387,7 +382,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, str] | None:
         """Checks for two different types of credentials.
-        (1) A credential which holds a token acquired via a user going thorugh
+        (1) A credential which holds a token acquired via a user going thorough
         the Google OAuth flow.
         (2) A credential which holds a service account key JSON file, which
         can then be used to impersonate any user in the workspace.
@@ -466,6 +461,15 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
             doc_batch = []
             for file in files_batch:
                 try:
+                    if self.only_org_public:
+                        if "permissions" not in file:
+                            continue
+                        if not any(
+                            permission["type"] == "domain"
+                            for permission in file["permissions"]
+                        ):
+                            continue
+
                     text_contents = extract_text(file, service) or ""
 
                     doc_batch.append(
@@ -502,9 +506,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
         # propogation if a document is modified, it takes some time for the API to
         # reflect these changes if we do not have an offset, then we may "miss" the
         # update when polling
-        yield from self._fetch_docs_from_drive(
-            max(start - DRIVE_START_TIME_OFFSET, 0, 0), end
-        )
+        yield from self._fetch_docs_from_drive(start, end)
 
 
 if __name__ == "__main__":

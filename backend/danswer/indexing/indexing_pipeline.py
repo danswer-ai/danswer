@@ -16,18 +16,16 @@ from danswer.db.document import prepare_to_modify_documents
 from danswer.db.document import update_docs_updated_at
 from danswer.db.document import upsert_documents_complete
 from danswer.db.document_set import fetch_document_sets_for_documents
-from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.models import Document as DBDocument
 from danswer.db.tag import create_or_add_document_tag
 from danswer.db.tag import create_or_add_document_tag_list
-from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentMetadata
 from danswer.indexing.chunker import Chunker
 from danswer.indexing.chunker import DefaultChunker
-from danswer.indexing.embedder import DefaultEmbedder
+from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
-from danswer.search.models import Embedder
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 
@@ -90,69 +88,80 @@ def upsert_documents_in_db(
                 )
 
 
+def get_doc_ids_to_update(
+    documents: list[Document], db_docs: list[DBDocument]
+) -> list[Document]:
+    """Figures out which documents actually need to be updated. If a document is already present
+    and the `updated_at` hasn't changed, we shouldn't need to do anything with it."""
+    id_update_time_map = {
+        doc.id: doc.doc_updated_at for doc in db_docs if doc.doc_updated_at
+    }
+
+    updatable_docs: list[Document] = []
+    for doc in documents:
+        if (
+            doc.id in id_update_time_map
+            and doc.doc_updated_at
+            and doc.doc_updated_at <= id_update_time_map[doc.id]
+        ):
+            continue
+        updatable_docs.append(doc)
+
+    return updatable_docs
+
+
 @log_function_time()
 def index_doc_batch(
     *,
     chunker: Chunker,
-    embedder: Embedder,
+    embedder: IndexingEmbedder,
     document_index: DocumentIndex,
     documents: list[Document],
     index_attempt_metadata: IndexAttemptMetadata,
+    db_session: Session,
     ignore_time_skip: bool = False,
 ) -> tuple[int, int]:
     """Takes different pieces of the indexing pipeline and applies it to a batch of documents
     Note that the documents should already be batched at this point so that it does not inflate the
     memory requirements"""
-    with Session(get_sqlalchemy_engine()) as db_session:
-        document_ids = [document.id for document in documents]
+    document_ids = [document.id for document in documents]
+    db_docs = get_documents_by_ids(
+        document_ids=document_ids,
+        db_session=db_session,
+    )
+    id_to_db_doc_map = {doc.id: doc for doc in db_docs}
 
-        # Skip indexing docs that don't have a newer updated at
-        # Shortcuts the time-consuming flow on connector index retries
-        db_docs = get_documents_by_ids(
-            document_ids=document_ids,
-            db_session=db_session,
-        )
-        id_to_db_doc_map = {doc.id: doc for doc in db_docs}
-        id_update_time_map = {
-            doc.id: doc.doc_updated_at for doc in db_docs if doc.doc_updated_at
-        }
+    # Skip indexing docs that don't have a newer updated at
+    # Shortcuts the time-consuming flow on connector index retries
+    updatable_docs = (
+        get_doc_ids_to_update(documents=documents, db_docs=db_docs)
+        if not ignore_time_skip
+        else documents
+    )
+    updatable_ids = [doc.id for doc in updatable_docs]
 
-        updatable_docs: list[Document] = []
-        if ignore_time_skip:
-            updatable_docs = documents
-        else:
-            for doc in documents:
-                if (
-                    doc.id in id_update_time_map
-                    and doc.doc_updated_at
-                    and doc.doc_updated_at <= id_update_time_map[doc.id]
-                ):
-                    continue
-                updatable_docs.append(doc)
+    # Create records in the source of truth about these documents,
+    # does not include doc_updated_at which is also used to indicate a successful update
+    upsert_documents_in_db(
+        documents=documents,
+        index_attempt_metadata=index_attempt_metadata,
+        db_session=db_session,
+    )
 
-        updatable_ids = [doc.id for doc in updatable_docs]
+    logger.debug("Starting chunking")
 
-        # Acquires a lock on the documents so that no other process can modify them
-        prepare_to_modify_documents(db_session=db_session, document_ids=updatable_ids)
+    # The first chunk additionally contains the Title of the Document
+    chunks: list[DocAwareChunk] = list(
+        chain(*[chunker.chunk(document=document) for document in updatable_docs])
+    )
 
-        # Create records in the source of truth about these documents,
-        # does not include doc_updated_at which is also used to indicate a successful update
-        upsert_documents_in_db(
-            documents=updatable_docs,
-            index_attempt_metadata=index_attempt_metadata,
-            db_session=db_session,
-        )
+    logger.debug("Starting embedding")
+    chunks_with_embeddings = embedder.embed_chunks(chunks=chunks)
 
-        logger.debug("Starting chunking")
-
-        # The first chunk additionally contains the Title of the Document
-        chunks: list[DocAwareChunk] = list(
-            chain(*[chunker.chunk(document=document) for document in updatable_docs])
-        )
-
-        logger.debug("Starting embedding")
-        chunks_with_embeddings = embedder.embed(chunks=chunks)
-
+    # Acquires a lock on the documents so that no other process can modify them
+    # NOTE: don't need to acquire till here, since this is when the actual race condition
+    # with Vespa can occur.
+    with prepare_to_modify_documents(db_session=db_session, document_ids=updatable_ids):
         # Attach the latest status from Postgres (source of truth for access) to each
         # chunk. This access status will be attached to each chunk in the document index
         # TODO: attach document sets to the chunk based on the status of Postgres as well
@@ -187,9 +196,7 @@ def index_doc_batch(
         # A document will not be spread across different batches, so all the
         # documents with chunks in this set, are fully represented by the chunks
         # in this set
-        insertion_records = document_index.index(
-            chunks=access_aware_chunks,
-        )
+        insertion_records = document_index.index(chunks=access_aware_chunks)
 
         successful_doc_ids = [record.document_id for record in insertion_records]
         successful_docs = [
@@ -214,17 +221,14 @@ def index_doc_batch(
 
 def build_indexing_pipeline(
     *,
+    embedder: IndexingEmbedder,
+    document_index: DocumentIndex,
+    db_session: Session,
     chunker: Chunker | None = None,
-    embedder: Embedder | None = None,
-    document_index: DocumentIndex | None = None,
     ignore_time_skip: bool = False,
 ) -> IndexingPipelineProtocol:
     """Builds a pipline which takes in a list (batch) of docs and indexes them."""
     chunker = chunker or DefaultChunker()
-
-    embedder = embedder or DefaultEmbedder()
-
-    document_index = document_index or get_default_document_index()
 
     return partial(
         index_doc_batch,
@@ -232,4 +236,5 @@ def build_indexing_pipeline(
         embedder=embedder,
         document_index=document_index,
         ignore_time_skip=ignore_time_skip,
+        db_session=db_session,
     )

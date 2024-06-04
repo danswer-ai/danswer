@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.constants import DocumentSource
+from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.tag import get_tags_by_value_prefix_for_source_types
@@ -14,11 +15,11 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.one_shot_answer.answer_question import stream_search_answer
 from danswer.one_shot_answer.models import DirectQARequest
-from danswer.search.access_filters import build_access_filters_for_user
-from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.models import IndexFilters
 from danswer.search.models import SearchDoc
-from danswer.search.search_runner import chunks_to_search_docs
+from danswer.search.preprocessing.access_filters import build_access_filters_for_user
+from danswer.search.preprocessing.danswer_helper import recommend_search_flow
+from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
 from danswer.server.query_and_chat.models import AdminSearchRequest
@@ -28,6 +29,7 @@ from danswer.server.query_and_chat.models import QueryValidationResponse
 from danswer.server.query_and_chat.models import SimpleQueryRequest
 from danswer.server.query_and_chat.models import SourceTag
 from danswer.server.query_and_chat.models import TagResponse
+from danswer.server.query_and_chat.token_budget import check_token_budget
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -52,7 +54,13 @@ def admin_search(
         time_cutoff=question.filters.time_cutoff,
         access_control_list=user_acl_filters,
     )
-    document_index = get_default_document_index()
+
+    embedding_model = get_current_db_embedding_model(db_session)
+
+    document_index = get_default_document_index(
+        primary_index_name=embedding_model.index_name, secondary_index_name=None
+    )
+
     if not isinstance(document_index, VespaIndex):
         raise HTTPException(
             status_code=400,
@@ -61,7 +69,7 @@ def admin_search(
 
     matching_chunks = document_index.admin_retrieval(query=query, filters=final_filters)
 
-    documents = chunks_to_search_docs(matching_chunks)
+    documents = chunks_or_sections_to_search_docs(matching_chunks)
 
     # Deduplicate documents by id
     deduplicated_documents: list[SearchDoc] = []
@@ -101,10 +109,15 @@ def get_tags(
 
 @basic_router.post("/search-intent")
 def get_search_type(
-    simple_query: SimpleQueryRequest, _: User = Depends(current_user)
+    simple_query: SimpleQueryRequest,
+    _: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
 ) -> HelperResponse:
     logger.info(f"Calculating intent for {simple_query.query}")
-    return recommend_search_flow(simple_query.query)
+    embedding_model = get_current_db_embedding_model(db_session)
+    return recommend_search_flow(
+        simple_query.query, model_name=embedding_model.model_name
+    )
 
 
 @basic_router.post("/query-validation")
@@ -136,11 +149,14 @@ def stream_query_validation(
 def get_answer_with_quote(
     query_request: DirectQARequest,
     user: User = Depends(current_user),
-    db_session: Session = Depends(get_session),
+    _: bool = Depends(check_token_budget),
 ) -> StreamingResponse:
     query = query_request.messages[0].message
     logger.info(f"Received query for one shot answer with quotes: {query}")
     packets = stream_search_answer(
-        query_req=query_request, user=user, db_session=db_session
+        query_req=query_request,
+        user=user,
+        max_document_tokens=None,
+        max_history_tokens=0,
     )
     return StreamingResponse(packets, media_type="application/json")

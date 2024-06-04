@@ -6,7 +6,7 @@ from typing import cast
 import requests
 
 from danswer.configs.app_configs import DISABLE_TELEMETRY
-from danswer.dynamic_configs import get_dynamic_config_store
+from danswer.dynamic_configs.factory import get_dynamic_config_store
 from danswer.dynamic_configs.interface import ConfigNotFoundError
 
 CUSTOMER_UUID_KEY = "customer_uuid"
@@ -27,11 +27,13 @@ def get_or_generate_uuid() -> str:
         return cast(str, kv_store.load(CUSTOMER_UUID_KEY))
     except ConfigNotFoundError:
         customer_id = str(uuid.uuid4())
-        kv_store.store(CUSTOMER_UUID_KEY, customer_id)
+        kv_store.store(CUSTOMER_UUID_KEY, customer_id, encrypt=True)
         return customer_id
 
 
-def optional_telemetry(record_type: RecordType, data: dict) -> None:
+def optional_telemetry(
+    record_type: RecordType, data: dict, user_id: str | None = None
+) -> None:
     if DISABLE_TELEMETRY:
         return
 
@@ -42,6 +44,9 @@ def optional_telemetry(record_type: RecordType, data: dict) -> None:
                 payload = {
                     "data": data,
                     "record": record_type,
+                    # If None then it's a flow that doesn't include a user
+                    # For cases where the User itself is None, a string is provided instead
+                    "user_id": user_id,
                     "customer_uuid": get_or_generate_uuid(),
                 }
                 requests.post(

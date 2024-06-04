@@ -2,7 +2,12 @@
 
 import { ThreeDotsLoader } from "@/components/Loading";
 import { PageSelector } from "@/components/PageSelector";
-import { CPUIcon, EditIcon, TrashIcon } from "@/components/icons/icons";
+import {
+  CPUIcon,
+  EditIcon,
+  SlackIcon,
+  TrashIcon,
+} from "@/components/icons/icons";
 import { SlackBotConfig } from "@/lib/types";
 import { useState } from "react";
 import { useSlackBotConfigs, useSlackBotTokens } from "./hooks";
@@ -21,9 +26,15 @@ import {
   Text,
   Title,
 } from "@tremor/react";
-import { FiArrowUpRight, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import {
+  FiArrowUpRight,
+  FiChevronDown,
+  FiChevronUp,
+  FiSlack,
+} from "react-icons/fi";
 import Link from "next/link";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
+import { ErrorCallout } from "@/components/ErrorCallout";
 
 const numToDisplay = 50;
 
@@ -85,7 +96,7 @@ const SlackBotConfigsTable = ({
                     {slackBotConfig.persona &&
                     !isPersonaASlackBotPersona(slackBotConfig.persona) ? (
                       <Link
-                        href={`/admin/personas/${slackBotConfig.persona.id}`}
+                        href={`/admin/assistants/${slackBotConfig.persona.id}`}
                         className="text-blue-500 flex"
                       >
                         <FiArrowUpRight className="my-auto mr-1" />
@@ -168,8 +179,16 @@ const Main = () => {
     return <ThreeDotsLoader />;
   }
 
-  if (slackBotConfigsError || !slackBotConfigs) {
-    return <div>Error: {slackBotConfigsError}</div>;
+  if (slackBotConfigsError || !slackBotConfigs || !slackBotConfigs) {
+    return (
+      <ErrorCallout
+        errorTitle="Error loading slack bot configs"
+        errorMsg={
+          slackBotConfigsError.info?.message ||
+          slackBotConfigsError.info?.detail
+        }
+      />
+    );
   }
 
   return (
@@ -224,7 +243,6 @@ const Main = () => {
           <Button
             onClick={() => {
               setSlackBotTokensModalIsOpen(!slackBotTokensModalIsOpen);
-              console.log(slackBotTokensModalIsOpen);
             }}
             color="blue"
             size="xs"
@@ -283,7 +301,7 @@ const Page = () => {
   return (
     <div className="container mx-auto">
       <AdminPageTitle
-        icon={<CPUIcon size={32} />}
+        icon={<FiSlack size={32} />}
         title="Slack Bot Configuration"
       />
       <InstantSSRAutoRefresh />

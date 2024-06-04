@@ -28,7 +28,7 @@ import {
   Text,
 } from "@tremor/react";
 import { useRouter } from "next/navigation";
-import { Persona } from "../personas/interfaces";
+import { Persona } from "../assistants/interfaces";
 import { useState } from "react";
 import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
 
@@ -69,6 +69,8 @@ export const SlackBotCreationForm = ({
             ).includes("questionmark_prefilter"),
             respond_tag_only:
               existingSlackBotConfig?.channel_config?.respond_tag_only || false,
+            respond_to_bots:
+              existingSlackBotConfig?.channel_config?.respond_to_bots || false,
             respond_team_member_list:
               existingSlackBotConfig?.channel_config
                 ?.respond_team_member_list || ([] as string[]),
@@ -88,12 +90,17 @@ export const SlackBotCreationForm = ({
               !isPersonaASlackBotPersona(existingSlackBotConfig.persona)
                 ? existingSlackBotConfig.persona.id
                 : null,
+            response_type: existingSlackBotConfig?.response_type || "citations",
           }}
           validationSchema={Yup.object().shape({
             channel_names: Yup.array().of(Yup.string()),
+            response_type: Yup.string()
+              .oneOf(["quotes", "citations"])
+              .required(),
             answer_validity_check_enabled: Yup.boolean().required(),
             questionmark_prefilter_enabled: Yup.boolean().required(),
             respond_tag_only: Yup.boolean().required(),
+            respond_to_bots: Yup.boolean().required(),
             respond_team_member_list: Yup.array().of(Yup.string()).required(),
             still_need_help_enabled: Yup.boolean().required(),
             follow_up_tags: Yup.array().of(Yup.string()),
@@ -168,6 +175,33 @@ export const SlackBotCreationForm = ({
                     </div>
                   }
                 />
+
+                <SelectorFormField
+                  name="response_type"
+                  label="Response Format"
+                  subtext={
+                    <>
+                      If set to Citations, DanswerBot will respond with a direct
+                      answer with inline citations. It will also provide links
+                      to these cited documents below the answer. When in doubt,
+                      choose this option.
+                      <br />
+                      <br />
+                      If set to Quotes, DanswerBot will respond with a direct
+                      answer as well as with quotes pulled from the context
+                      documents to support that answer. DanswerBot will also
+                      give a list of relevant documents. Choose this option if
+                      you want a very detailed response AND/OR a list of
+                      relevant documents would be useful just in case the LLM
+                      missed anything.
+                    </>
+                  }
+                  options={[
+                    { name: "Citations", value: "citations" },
+                    { name: "Quotes", value: "quotes" },
+                  ]}
+                />
+
                 <Divider />
 
                 <SectionHeader>When should DanswerBot respond?</SectionHeader>
@@ -186,6 +220,11 @@ export const SlackBotCreationForm = ({
                   name="respond_tag_only"
                   label="Respond to @DanswerBot Only"
                   subtext="If set, DanswerBot will only respond when directly tagged"
+                />
+                <BooleanFormField
+                  name="respond_to_bots"
+                  label="Responds to Bot messages"
+                  subtext="If not set, DanswerBot will always ignore messages from Bots"
                 />
                 <TextArrayField
                   name="respond_team_member_list"

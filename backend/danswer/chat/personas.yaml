@@ -5,17 +5,16 @@ personas:
   # this is for DanswerBot to use when tagged in a non-configured channel
   # Careful setting specific IDs, this won't autoincrement the next ID value for postgres
   - id: 0
-    name: "Default"
+    name: "Danswer"
     description: >
-      Default Danswer Question Answering functionality.
+      Assistant with access to documents from your Connected Sources.
     # Default Prompt objects attached to the persona, see prompts.yaml
     prompts:
       - "Answer-Question"
     # Default number of chunks to include as context, set to 0 to disable retrieval
     # Remove the field to set to the system default number of chunks/tokens to pass to Gen AI
-    # If selecting documents, user can bypass this up until NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL
     # Each chunk is 512 tokens long
-    num_chunks: 5
+    num_chunks: 10
     # Enable/Disable usage of the LLM chunk filter feature whereby each chunk is passed to the LLM to determine
     # if the chunk is useful or not towards the latest user query
     # This feature can be overriden for all personas via DISABLE_LLM_CHUNK_FILTER env variable
@@ -40,25 +39,26 @@ personas:
     document_sets: []
 
 
-  - name: "Summarize"
+  - id: 1
+    name: "GPT"
     description: >
-      A less creative assistant which summarizes relevant documents but does not try to
-      extrapolate any answers for you.
+      Assistant with no access to documents. Chat with just the Language Model.
     prompts:
-      - "Summarize"
-    num_chunks: 5
+      - "OnlyLLM"
+    num_chunks: 0
     llm_relevance_filter: true
     llm_filter_extraction: true
     recency_bias: "auto"
     document_sets: []
 
 
-  - name: "Paraphrase"
+  - id: 2
+    name: "Paraphrase"
     description: >
-      The least creative default assistant that only provides quotes from the documents.
+      Assistant that is heavily constrained and only provides exact quotes from Connected Sources.
     prompts:
       - "Paraphrase"
-    num_chunks: 5
+    num_chunks: 10
     llm_relevance_filter: true
     llm_filter_extraction: true
     recency_bias: "auto"

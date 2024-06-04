@@ -1,11 +1,15 @@
 import {
+  AxeroIcon,
   BookstackIcon,
   ConfluenceIcon,
+  DiscourseIcon,
   Document360Icon,
   DropboxIcon,
   FileIcon,
   GithubIcon,
+  GitlabIcon,
   GlobeIcon,
+  GmailIcon,
   GongIcon,
   GoogleDriveIcon,
   GoogleSitesIcon,
@@ -17,13 +21,17 @@ import {
   NotionIcon,
   ProductboardIcon,
   RequestTrackerIcon,
+  SharepointIcon,
   SlabIcon,
   SlackIcon,
   ZendeskIcon,
   ZulipIcon,
+  MediaWikiIcon,
+  WikipediaIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import { SourceCategory, SourceMetadata } from "./search/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 
 interface PartialSourceMetadata {
   icon: React.FC<{ size?: number; className?: string }>;
@@ -51,6 +59,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Slack",
     category: SourceCategory.AppConnection,
   },
+  gmail: {
+    icon: GmailIcon,
+    displayName: "Gmail",
+    category: SourceCategory.AppConnection,
+  },
   google_drive: {
     icon: GoogleDriveIcon,
     displayName: "Google Drive",
@@ -59,6 +72,11 @@ const SOURCE_METADATA_MAP: SourceMap = {
   github: {
     icon: GithubIcon,
     displayName: "Github",
+    category: SourceCategory.AppConnection,
+  },
+  gitlab: {
+    icon: GitlabIcon,
+    displayName: "Gitlab",
     category: SourceCategory.AppConnection,
   },
   confluence: {
@@ -131,11 +149,6 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Google Sites",
     category: SourceCategory.ImportedKnowledge,
   },
-  requesttracker: {
-    icon: RequestTrackerIcon,
-    displayName: "Request Tracker",
-    category: SourceCategory.AppConnection,
-  },
   loopio: {
     icon: LoopioIcon,
     displayName: "Loopio",
@@ -144,6 +157,36 @@ const SOURCE_METADATA_MAP: SourceMap = {
   dropbox: {
     icon: DropboxIcon,
     displayName: "Dropbox",
+    category: SourceCategory.AppConnection,
+  },
+  sharepoint: {
+    icon: SharepointIcon,
+    displayName: "Sharepoint",
+    category: SourceCategory.AppConnection,
+  },
+  discourse: {
+    icon: DiscourseIcon,
+    displayName: "Discourse",
+    category: SourceCategory.AppConnection,
+  },
+  axero: {
+    icon: AxeroIcon,
+    displayName: "Axero",
+    category: SourceCategory.AppConnection,
+  },
+  wikipedia: {
+    icon: WikipediaIcon,
+    displayName: "Wikipedia",
+    category: SourceCategory.AppConnection,
+  },
+  mediawiki: {
+    icon: MediaWikiIcon,
+    displayName: "MediaWiki",
+    category: SourceCategory.AppConnection,
+  },
+  requesttracker: {
+    icon: RequestTrackerIcon,
+    displayName: "Request Tracker",
     category: SourceCategory.AppConnection,
   },
 };
@@ -173,4 +216,20 @@ export function listSourceMetadata(): SourceMetadata[] {
 
 export function getSourceDisplayName(sourceType: ValidSources): string | null {
   return getSourceMetadata(sourceType).displayName;
+}
+
+export function getSourceMetadataForSources(sources: ValidSources[]) {
+  return sources.map((source) => getSourceMetadata(source));
+}
+
+export function getSourcesForPersona(persona: Persona): ValidSources[] {
+  const personaSources: ValidSources[] = [];
+  persona.document_sets.forEach((documentSet) => {
+    documentSet.cc_pair_descriptors.forEach((ccPair) => {
+      if (!personaSources.includes(ccPair.connector.source)) {
+        personaSources.push(ccPair.connector.source);
+      }
+    });
+  });
+  return personaSources;
 }

@@ -1,0 +1,5 @@
+<validation-overrides>
+    <allow
+        until="DATE_REPLACEMENT"
+        comment="We need to be able to create/delete indices for swapping models">schema-removal</allow>
+</validation-overrides>

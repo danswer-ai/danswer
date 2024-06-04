@@ -2,12 +2,16 @@
 
 import * as Yup from "yup";
 import { JiraIcon, TrashIcon } from "@/components/icons/icons";
-import { TextFormField } from "@/components/admin/connectors/Field";
+import {
+  TextFormField,
+  TextArrayFieldBuilder,
+} from "@/components/admin/connectors/Field";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { CredentialForm } from "@/components/admin/connectors/CredentialForm";
 import {
   JiraConfig,
   JiraCredentialJson,
+  JiraServerCredentialJson,
   ConnectorIndexingStatus,
 } from "@/lib/types";
 import useSWR, { useSWRConfig } from "swr";
@@ -71,7 +75,7 @@ const Main = () => {
 
   const jiraConnectorIndexingStatuses: ConnectorIndexingStatus<
     JiraConfig,
-    JiraCredentialJson
+    JiraCredentialJson | JiraServerCredentialJson
   >[] = connectorIndexingStatuses.filter(
     (connectorIndexingStatus) =>
       connectorIndexingStatus.connector.source === "jira"
@@ -90,12 +94,6 @@ const Main = () => {
       {jiraCredential ? (
         <>
           <div className="flex mb-1 text-sm">
-            {/* <div className="flex">
-                <p className="my-auto">Existing Username: </p>
-                <p className="ml-1 italic my-auto max-w-md truncate">
-                  {confluenceCredential.credential_json?.confluence_username}
-                </p>{" "}
-              </div> */}
             <p className="my-auto">Existing Access Token: </p>
             <p className="ml-1 italic my-auto max-w-md truncate">
               {jiraCredential.credential_json?.jira_api_token}
@@ -142,8 +140,10 @@ const Main = () => {
             >
               here
             </a>{" "}
-            to generate an Access Token.
+            to generate an Access Token (for cloud) or Personal Access Token
+            (for server). Submit only one form.
           </Text>
+          <Title className="mb-2 mt-6 ml-auto mr-auto">Cloud</Title>
           <Card className="mt-4">
             <CredentialForm<JiraCredentialJson>
               formBody={
@@ -166,6 +166,33 @@ const Main = () => {
               })}
               initialValues={{
                 jira_user_email: "",
+                jira_api_token: "",
+              }}
+              onSubmit={(isSuccess) => {
+                if (isSuccess) {
+                  refreshCredentials();
+                }
+              }}
+            />
+          </Card>
+          <Title className="mb-2 mt-6 ml-auto mr-auto">Server</Title>
+          <Card className="mt-4">
+            <CredentialForm<JiraServerCredentialJson>
+              formBody={
+                <>
+                  <TextFormField
+                    name="jira_api_token"
+                    label="Personal Access Token:"
+                    type="password"
+                  />
+                </>
+              }
+              validationSchema={Yup.object().shape({
+                jira_api_token: Yup.string().required(
+                  "Please enter your Jira personal access token"
+                ),
+              })}
+              initialValues={{
                 jira_api_token: "",
               }}
               onSubmit={(isSuccess) => {
@@ -202,7 +229,10 @@ const Main = () => {
                 below every <b>10</b> minutes.
               </Text>
               <div className="mb-2">
-                <ConnectorsTable<JiraConfig, JiraCredentialJson>
+                <ConnectorsTable<
+                  JiraConfig,
+                  JiraCredentialJson | JiraServerCredentialJson
+                >
                   connectorIndexingStatuses={jiraConnectorIndexingStatuses}
                   liveCredential={jiraCredential}
                   getCredential={(credential) => {
@@ -235,6 +265,18 @@ const Main = () => {
                         );
                       },
                     },
+                    {
+                      header: "Disable comments from users",
+                      key: "comment_email_blacklist",
+                      getValue: (ccPairStatus) => {
+                        const connectorConfig =
+                          ccPairStatus.connector.connector_specific_config;
+                        return connectorConfig.comment_email_blacklist &&
+                          connectorConfig.comment_email_blacklist.length > 0
+                          ? connectorConfig.comment_email_blacklist.join(", ")
+                          : "";
+                      },
+                    },
                   ]}
                   onUpdate={() =>
                     mutate("/api/manage/admin/connector/indexing-status")
@@ -264,13 +306,30 @@ const Main = () => {
                   />
                 </>
               }
+              formBodyBuilder={(values) => {
+                return (
+                  <>
+                    <Divider />
+                    {TextArrayFieldBuilder({
+                      name: "comment_email_blacklist",
+                      label: "Disable comments from users:",
+                      subtext: `
+                      This is generally useful to ignore certain bots. Add user emails which comments should NOT be indexed.`,
+                    })(values)}
+                  </>
+                );
+              }}
               validationSchema={Yup.object().shape({
                 jira_project_url: Yup.string().required(
                   "Please enter any link to your jira project e.g. https://danswer.atlassian.net/jira/software/projects/DAN/boards/1"
                 ),
+                comment_email_blacklist: Yup.array()
+                  .of(Yup.string().required("Emails names must be strings"))
+                  .required(),
               })}
               initialValues={{
                 jira_project_url: "",
+                comment_email_blacklist: [],
               }}
               refreshFreq={10 * 60} // 10 minutes
             />

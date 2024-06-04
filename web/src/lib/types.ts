@@ -1,4 +1,8 @@
-import { Persona } from "@/app/admin/personas/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
+
+export interface UserPreferences {
+  chosen_assistants: number[] | null;
+}
 
 export interface User {
   id: string;
@@ -7,13 +11,21 @@ export interface User {
   is_superuser: string;
   is_verified: string;
   role: "basic" | "admin";
+  preferences: UserPreferences;
+}
+
+export interface MinimalUserSnapshot {
+  id: string;
+  email: string;
 }
 
 export type ValidSources =
   | "web"
   | "github"
+  | "gitlab"
   | "slack"
   | "google_drive"
+  | "gmail"
   | "bookstack"
   | "confluence"
   | "jira"
@@ -30,8 +42,13 @@ export type ValidSources =
   | "file"
   | "google_sites"
   | "loopio"
+  | "dropbox"
+  | "sharepoint"
   | "zendesk"
-  | "dropbox";
+  | "discourse"
+  | "axero"
+  | "wikipedia"
+  | "mediawiki";
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
@@ -40,6 +57,7 @@ export type ValidStatuses =
   | "in_progress"
   | "not_started";
 export type TaskStatus = "PENDING" | "STARTED" | "SUCCESS" | "FAILURE";
+export type Feedback = "like" | "dislike";
 
 export interface DocumentBoostStatus {
   document_id: string;
@@ -78,11 +96,21 @@ export interface GithubConfig {
   include_issues: boolean;
 }
 
+export interface GitlabConfig {
+  project_owner: string;
+  project_name: string;
+  include_mrs: boolean;
+  include_issues: boolean;
+}
+
 export interface GoogleDriveConfig {
   folder_paths?: string[];
   include_shared?: boolean;
   follow_shortcuts?: boolean;
+  only_org_public?: boolean;
 }
+
+export interface GmailConfig {}
 
 export interface BookstackConfig {}
 
@@ -92,6 +120,20 @@ export interface ConfluenceConfig {
 
 export interface JiraConfig {
   jira_project_url: string;
+  comment_email_blacklist?: string[];
+}
+
+export interface SharepointConfig {
+  sites?: string[];
+}
+
+export interface DiscourseConfig {
+  base_url: string;
+  categories?: string[];
+}
+
+export interface AxeroConfig {
+  spaces?: string[];
 }
 
 export interface ProductboardConfig {}
@@ -99,6 +141,7 @@ export interface ProductboardConfig {}
 export interface SlackConfig {
   workspace: string;
   channels?: string[];
+  channel_regex_enabled?: boolean;
 }
 
 export interface SlabConfig {
@@ -146,19 +189,35 @@ export interface ZendeskConfig {}
 
 export interface DropboxConfig {}
 
+export interface MediaWikiBaseConfig {
+  connector_name: string;
+  language_code: string;
+  categories?: string[];
+  pages?: string[];
+  recurse_depth?: number;
+}
+
+export interface MediaWikiConfig extends MediaWikiBaseConfig {
+  hostname: string;
+}
+
+export interface WikipediaConfig extends MediaWikiBaseConfig {}
+
 export interface IndexAttemptSnapshot {
   id: number;
   status: ValidStatuses | null;
   new_docs_indexed: number;
+  docs_removed_from_index: number;
   total_docs_indexed: number;
   error_msg: string | null;
+  full_exception_trace: string | null;
   time_started: string | null;
   time_updated: string;
 }
 
 export interface ConnectorIndexingStatus<
   ConnectorConfigType,
-  ConnectorCredentialType
+  ConnectorCredentialType,
 > {
   cc_pair_id: number;
   name: string | null;
@@ -173,6 +232,12 @@ export interface ConnectorIndexingStatus<
   latest_index_attempt: IndexAttemptSnapshot | null;
   deletion_attempt: DeletionAttemptSnapshot | null;
   is_deletable: boolean;
+}
+
+export interface CCPairBasicInfo {
+  docs_indexed: number;
+  has_successful_run: boolean;
+  source: ValidSources;
 }
 
 // CREDENTIALS
@@ -192,6 +257,11 @@ export interface GithubCredentialJson {
   github_access_token: string;
 }
 
+export interface GitlabCredentialJson {
+  gitlab_url: string;
+  gitlab_access_token: string;
+}
+
 export interface BookstackCredentialJson {
   bookstack_base_url: string;
   bookstack_api_token_id: string;
@@ -208,6 +278,10 @@ export interface JiraCredentialJson {
   jira_api_token: string;
 }
 
+export interface JiraServerCredentialJson {
+  jira_api_token: string;
+}
+
 export interface ProductboardCredentialJson {
   productboard_access_token: string;
 }
@@ -216,8 +290,17 @@ export interface SlackCredentialJson {
   slack_bot_token: string;
 }
 
+export interface GmailCredentialJson {
+  gmail_tokens: string;
+}
+
 export interface GoogleDriveCredentialJson {
   google_drive_tokens: string;
+}
+
+export interface GmailServiceAccountCredentialJson {
+  gmail_service_account_key: string;
+  gmail_delegated_user: string;
 }
 
 export interface GoogleDriveServiceAccountCredentialJson {
@@ -282,6 +365,25 @@ export interface DropboxCredentialJson {
   dropbox_access_token: string;
 }
 
+export interface SharepointCredentialJson {
+  aad_client_id: string;
+  aad_client_secret: string;
+  aad_directory_id: string;
+}
+
+export interface DiscourseCredentialJson {
+  discourse_api_key: string;
+  discourse_api_username: string;
+}
+
+export interface AxeroCredentialJson {
+  base_url: string;
+  axero_api_token: string;
+}
+
+export interface MediaWikiCredentialJson {}
+export interface WikipediaCredentialJson extends MediaWikiCredentialJson {}
+
 // DELETION
 
 export interface DeletionAttemptSnapshot {
@@ -304,6 +406,9 @@ export interface DocumentSet {
   description: string;
   cc_pair_descriptors: CCPairDescriptor<any, any>[];
   is_up_to_date: boolean;
+  is_public: boolean;
+  users: string[];
+  groups: number[];
 }
 
 export interface Tag {
@@ -321,18 +426,34 @@ export type AnswerFilterOption =
 export interface ChannelConfig {
   channel_names: string[];
   respond_tag_only?: boolean;
+  respond_to_bots?: boolean;
   respond_team_member_list?: string[];
   answer_filters?: AnswerFilterOption[];
   follow_up_tags?: string[];
 }
 
+export type SlackBotResponseType = "quotes" | "citations";
+
 export interface SlackBotConfig {
   id: number;
   persona: Persona | null;
   channel_config: ChannelConfig;
+  response_type: SlackBotResponseType;
 }
 
 export interface SlackBotTokens {
   bot_token: string;
   app_token: string;
+}
+
+/* EE Only Types */
+export interface UserGroup {
+  id: number;
+  name: string;
+  users: User[];
+  cc_pairs: CCPairDescriptor<any, any>[];
+  document_sets: DocumentSet[];
+  personas: Persona[];
+  is_up_to_date: boolean;
+  is_up_for_deletion: boolean;
 }

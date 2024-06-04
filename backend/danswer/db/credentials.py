@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import or_
 
 from danswer.auth.schemas import UserRole
+from danswer.connectors.gmail.constants import (
+    GMAIL_DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
+)
 from danswer.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
@@ -162,6 +165,19 @@ def create_initial_public_credential(db_session: Session) -> None:
         user_id=None,
     )
     db_session.add(credential)
+    db_session.commit()
+
+
+def delete_gmail_service_account_credentials(
+    user: User | None, db_session: Session
+) -> None:
+    credentials = fetch_credentials(db_session=db_session, user=user)
+    for credential in credentials:
+        if credential.credential_json.get(
+            GMAIL_DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY
+        ):
+            db_session.delete(credential)
+
     db_session.commit()
 
 

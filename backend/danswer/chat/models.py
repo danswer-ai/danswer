@@ -5,10 +5,10 @@ from typing import Any
 from pydantic import BaseModel
 
 from danswer.configs.constants import DocumentSource
-from danswer.search.models import QueryFlow
+from danswer.search.enums import QueryFlow
+from danswer.search.enums import SearchType
 from danswer.search.models import RetrievalDocs
 from danswer.search.models import SearchResponse
-from danswer.search.models import SearchType
 
 
 class LlmDoc(BaseModel):
@@ -16,10 +16,13 @@ class LlmDoc(BaseModel):
 
     document_id: str
     content: str
+    blurb: str
     semantic_identifier: str
     source_type: DocumentSource
+    metadata: dict[str, str | list[str]]
     updated_at: datetime | None
     link: str | None
+    source_links: dict[int, str] | None
 
 
 # First chunk of info for streaming QA
@@ -74,12 +77,24 @@ class DanswerQuotes(BaseModel):
     quotes: list[DanswerQuote]
 
 
+class DanswerContext(BaseModel):
+    content: str
+    document_id: str
+    semantic_identifier: str
+    blurb: str
+
+
+class DanswerContexts(BaseModel):
+    contexts: list[DanswerContext]
+
+
 class DanswerAnswer(BaseModel):
     answer: str | None
 
 
 class QAResponse(SearchResponse, DanswerAnswer):
     quotes: list[DanswerQuote] | None
+    contexts: list[DanswerContexts] | None
     predicted_flow: QueryFlow
     predicted_search: SearchType
     eval_res_valid: bool | None = None
@@ -87,12 +102,21 @@ class QAResponse(SearchResponse, DanswerAnswer):
     error_msg: str | None = None
 
 
-AnswerQuestionReturn = tuple[DanswerAnswer, DanswerQuotes]
+class ImageGenerationDisplay(BaseModel):
+    file_ids: list[str]
 
 
-AnswerQuestionStreamReturn = Iterator[
-    DanswerAnswerPiece | DanswerQuotes | StreamingError
-]
+AnswerQuestionPossibleReturn = (
+    DanswerAnswerPiece
+    | DanswerQuotes
+    | CitationInfo
+    | DanswerContexts
+    | ImageGenerationDisplay
+    | StreamingError
+)
+
+
+AnswerQuestionStreamReturn = Iterator[AnswerQuestionPossibleReturn]
 
 
 class LLMMetricsContainer(BaseModel):

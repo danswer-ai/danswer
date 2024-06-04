@@ -3,12 +3,15 @@ import {
   Credential,
   DocumentBoostStatus,
   Tag,
+  User,
+  UserGroup,
 } from "@/lib/types";
 import useSWR, { mutate, useSWRConfig } from "swr";
-import { fetcher } from "./fetcher";
+import { errorHandlingFetcher, fetcher } from "./fetcher";
 import { useState } from "react";
 import { DateRangePickerValue } from "@tremor/react";
 import { SourceMetadata } from "./search/interfaces";
+import { EE_ENABLED } from "./constants";
 
 const CREDENTIAL_URL = "/api/manage/admin/credential";
 
@@ -76,7 +79,20 @@ export const useTimeRange = (initialValue?: DateRangePickerValue) => {
   return useState<DateRangePickerValue | null>(null);
 };
 
-export function useFilters() {
+export interface FilterManager {
+  timeRange: DateRangePickerValue | null;
+  setTimeRange: React.Dispatch<
+    React.SetStateAction<DateRangePickerValue | null>
+  >;
+  selectedSources: SourceMetadata[];
+  setSelectedSources: React.Dispatch<React.SetStateAction<SourceMetadata[]>>;
+  selectedDocumentSets: string[];
+  setSelectedDocumentSets: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedTags: Tag[];
+  setSelectedTags: React.Dispatch<React.SetStateAction<Tag[]>>;
+}
+
+export function useFilters(): FilterManager {
   const [timeRange, setTimeRange] = useTimeRange();
   const [selectedSources, setSelectedSources] = useState<SourceMetadata[]>([]);
   const [selectedDocumentSets, setSelectedDocumentSets] = useState<string[]>(
@@ -95,3 +111,73 @@ export function useFilters() {
     setSelectedTags,
   };
 }
+
+export const useUsers = () => {
+  const url = "/api/manage/users";
+  const swrResponse = useSWR<User[]>(url, errorHandlingFetcher);
+
+  return {
+    ...swrResponse,
+    refreshIndexingStatus: () => mutate(url),
+  };
+};
+
+export interface LlmOverride {
+  name: string;
+  provider: string;
+  modelName: string;
+}
+
+export interface LlmOverrideManager {
+  llmOverride: LlmOverride;
+  setLlmOverride: React.Dispatch<React.SetStateAction<LlmOverride>>;
+  temperature: number | null;
+  setTemperature: React.Dispatch<React.SetStateAction<number | null>>;
+}
+
+export function useLlmOverride(): LlmOverrideManager {
+  const [llmOverride, setLlmOverride] = useState<LlmOverride>({
+    name: "",
+    provider: "",
+    modelName: "",
+  });
+  const [temperature, setTemperature] = useState<number | null>(null);
+
+  return {
+    llmOverride,
+    setLlmOverride,
+    temperature,
+    setTemperature,
+  };
+}
+
+/* 
+EE Only APIs
+*/
+
+const USER_GROUP_URL = "/api/manage/admin/user-group";
+
+export const useUserGroups = (): {
+  data: UserGroup[] | undefined;
+  isLoading: boolean;
+  error: string;
+  refreshUserGroups: () => void;
+} => {
+  const swrResponse = useSWR<UserGroup[]>(USER_GROUP_URL, errorHandlingFetcher);
+
+  if (!EE_ENABLED) {
+    return {
+      ...{
+        data: [],
+        isLoading: false,
+        error: "",
+      },
+      refreshUserGroups: () => {},
+    };
+  }
+
+  return {
+    ...swrResponse,
+    refreshUserGroups: () => mutate(USER_GROUP_URL),
+  };
+};

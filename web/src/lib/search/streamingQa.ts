@@ -1,10 +1,10 @@
+import { BackendMessage } from "@/app/chat/interfaces";
 import {
   AnswerPiecePacket,
   DanswerDocument,
   DocumentInfoPacket,
   ErrorMessagePacket,
   LLMRelevanceFilterPacket,
-  QueryEventIdPacket,
   Quote,
   QuotesInfoPacket,
   SearchRequestArgs,
@@ -26,7 +26,7 @@ export const searchRequestStreamed = async ({
   updateSuggestedFlowType,
   updateSelectedDocIndices,
   updateError,
-  updateQueryEventId,
+  updateMessageId,
 }: SearchRequestArgs) => {
   let answer = "";
   let quotes: Quote[] | null = null;
@@ -78,7 +78,7 @@ export const searchRequestStreamed = async ({
         | QuotesInfoPacket
         | DocumentInfoPacket
         | LLMRelevanceFilterPacket
-        | QueryEventIdPacket
+        | BackendMessage
       >(decoder.decode(value, { stream: true }), previousPartialChunk);
       if (!completedChunks.length && !partialChunk) {
         break;
@@ -150,9 +150,9 @@ export const searchRequestStreamed = async ({
           return;
         }
 
-        // check for query ID section
-        if (Object.hasOwn(chunk, "query_event_id")) {
-          updateQueryEventId((chunk as QueryEventIdPacket).query_event_id);
+        // check for message ID section
+        if (Object.hasOwn(chunk, "message_id")) {
+          updateMessageId((chunk as BackendMessage).message_id);
           return;
         }
 

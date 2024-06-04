@@ -91,6 +91,7 @@ export const GoogleDriveConnectorsTable = ({
             <TableHeaderCell>Folder Paths</TableHeaderCell>
             <TableHeaderCell>Include Shared</TableHeaderCell>
             <TableHeaderCell>Follow Shortcuts</TableHeaderCell>
+            <TableHeaderCell>Only Org Public</TableHeaderCell>
             <TableHeaderCell>Status</TableHeaderCell>
             <TableHeaderCell>Delete</TableHeaderCell>
           </TableRow>
@@ -138,6 +139,16 @@ export const GoogleDriveConnectorsTable = ({
                     <div>
                       {connectorIndexingStatus.connector
                         .connector_specific_config.follow_shortcuts ? (
+                        <i>Yes</i>
+                      ) : (
+                        <i>No</i>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      {connectorIndexingStatus.connector
+                        .connector_specific_config.only_org_public ? (
                         <i>Yes</i>
                       ) : (
                         <i>No</i>
@@ -196,6 +207,10 @@ export const GoogleDriveConnectorsTable = ({
           key: "follow_shortcuts",
         },
         {
+          header: "Only Org Public",
+          key: "only_org_public",
+        },
+        {
           header: "Status",
           key: "status",
         },
@@ -241,6 +256,16 @@ export const GoogleDriveConnectorsTable = ({
             <div>
               {connectorIndexingStatus.connector.connector_specific_config
                 .follow_shortcuts ? (
+                <i>Yes</i>
+              ) : (
+                <i>No</i>
+              )}
+            </div>
+          ),
+          only_org_public: (
+            <div>
+              {connectorIndexingStatus.connector.connector_specific_config
+                .only_org_public ? (
                 <i>Yes</i>
               ) : (
                 <i>No</i>

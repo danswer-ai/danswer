@@ -221,6 +221,15 @@ const GoogleDriveConnectorManagement = ({
                   "attempt to index those as well."
                 }
               />
+              <BooleanFormField
+                name="only_org_public"
+                label="Only Org-Wide Public Docs"
+                subtext={
+                  "If checked, then only documents that are shared to the entire organization " +
+                  "are included. Note: if you have multiple orgs, this check will pass for docs " +
+                  "shared with any of the orgs."
+                }
+              />
             </>
           )}
           validationSchema={Yup.object().shape({
@@ -233,11 +242,13 @@ const GoogleDriveConnectorManagement = ({
               .required(),
             include_shared: Yup.boolean().required(),
             follow_shortcuts: Yup.boolean().required(),
+            only_org_public: Yup.boolean().required(),
           })}
           initialValues={{
             folder_paths: [],
             include_shared: false,
             follow_shortcuts: false,
+            only_org_public: false,
           }}
           refreshFreq={10 * 60} // 10 minutes
           credentialId={liveCredential.id}

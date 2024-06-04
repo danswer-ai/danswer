@@ -155,18 +155,14 @@ const Main = () => {
             <div className="flex">
               <ConnectorForm<HubSpotConfig>
                 nameBuilder={() => "HubSpotConnector"}
+                ccPairNameBuilder={() => "HubSpotConnector"}
                 source="hubspot"
                 inputType="poll"
                 formBody={null}
                 validationSchema={Yup.object().shape({})}
                 initialValues={{}}
                 refreshFreq={10 * 60} // 10 minutes
-                onSubmit={async (isSuccess, responseJson) => {
-                  if (isSuccess && responseJson) {
-                    await linkCredential(responseJson.id, hubSpotCredential.id);
-                    mutate("/api/manage/admin/connector/indexing-status");
-                  }
-                }}
+                credentialId={hubSpotCredential.id}
               />
             </div>
           </>

@@ -77,7 +77,6 @@ def get_answer_for_question(
     str | None,
     RetrievalMetricsContainer | None,
     RerankMetricsContainer | None,
-    LLMMetricsContainer | None,
 ]:
     filters = IndexFilters(
         source_type=None,
@@ -103,25 +102,24 @@ def get_answer_for_question(
 
     retrieval_metrics = MetricsHander[RetrievalMetricsContainer]()
     rerank_metrics = MetricsHander[RerankMetricsContainer]()
-    llm_metrics = MetricsHander[LLMMetricsContainer]()
 
     answer = get_search_answer(
         query_req=new_message_request,
         user=None,
+        max_document_tokens=None,
+        max_history_tokens=None,
         db_session=db_session,
         answer_generation_timeout=100,
         enable_reflexion=False,
         bypass_acl=True,
         retrieval_metrics_callback=retrieval_metrics.record_metric,
         rerank_metrics_callback=rerank_metrics.record_metric,
-        llm_metrics_callback=llm_metrics.record_metric,
     )
 
     return (
         answer.answer,
         retrieval_metrics.metrics,
         rerank_metrics.metrics,
-        llm_metrics.metrics,
     )
 
 
@@ -219,7 +217,6 @@ if __name__ == "__main__":
                         answer,
                         retrieval_metrics,
                         rerank_metrics,
-                        llm_metrics,
                     ) = get_answer_for_question(sample["question"], db_session)
                     end_time = datetime.now()
 
@@ -235,12 +232,6 @@ if __name__ == "__main__":
                         else "\tFailed, either crashed or refused to answer."
                     )
                     if not args.discard_metrics:
-                        print("\nLLM Tokens Usage:")
-                        if llm_metrics is None:
-                            print("No LLM Metrics Available")
-                        else:
-                            _print_llm_metrics(llm_metrics)
-
                         print("\nRetrieval Metrics:")
                         if retrieval_metrics is None:
                             print("No Retrieval Metrics Available")

@@ -7,12 +7,14 @@ from datetime import timezone
 from typing import Any
 from typing import Optional
 
-import requests
 from retry import retry
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.app_configs import NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (
+    rl_requests,
+)
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -84,7 +86,7 @@ class NotionConnector(LoadConnector, PollConnector):
         self.indexed_pages: set[str] = set()
         self.root_page_id = root_page_id
         # if enabled, will recursively index child pages as they are found rather
-        # relying entirely on the `search` API. We have recieved reports that the
+        # relying entirely on the `search` API. We have received reports that the
         # `search` API misses many pages - in those cases, this might need to be
         # turned on. It's not currently known why/when this is required.
         # NOTE: this also removes all benefits polling, since we need to traverse
@@ -93,12 +95,14 @@ class NotionConnector(LoadConnector, PollConnector):
         self.recursive_index_enabled = recursive_index_enabled or self.root_page_id
 
     @retry(tries=3, delay=1, backoff=2)
-    def _fetch_blocks(self, block_id: str, cursor: str | None = None) -> dict[str, Any]:
+    def _fetch_child_blocks(
+        self, block_id: str, cursor: str | None = None
+    ) -> dict[str, Any] | None:
         """Fetch all child blocks via the Notion API."""
         logger.debug(f"Fetching children of block with ID '{block_id}'")
         block_url = f"https://api.notion.com/v1/blocks/{block_id}/children"
         query_params = None if not cursor else {"start_cursor": cursor}
-        res = requests.get(
+        res = rl_requests.get(
             block_url,
             headers=self.headers,
             params=query_params,
@@ -107,6 +111,15 @@ class NotionConnector(LoadConnector, PollConnector):
         try:
             res.raise_for_status()
         except Exception as e:
+            if res.status_code == 404:
+                # this happens when a page is not shared with the integration
+                # in this case, we should just ignore the page
+                logger.error(
+                    f"Unable to access block with ID '{block_id}'. "
+                    f"This is likely due to the block not being shared "
+                    f"with the Danswer integration. Exact exception:\n\n{e}"
+                )
+                return None
             logger.exception(f"Error fetching blocks - {res.json()}")
             raise e
         return res.json()
@@ -116,7 +129,7 @@ class NotionConnector(LoadConnector, PollConnector):
         """Fetch a page from it's ID via the Notion API."""
         logger.debug(f"Fetching page for ID '{page_id}'")
         block_url = f"https://api.notion.com/v1/pages/{page_id}"
-        res = requests.get(
+        res = rl_requests.get(
             block_url,
             headers=self.headers,
             timeout=_NOTION_CALL_TIMEOUT,
@@ -136,7 +149,7 @@ class NotionConnector(LoadConnector, PollConnector):
         logger.debug(f"Fetching database for ID '{database_id}'")
         block_url = f"https://api.notion.com/v1/databases/{database_id}/query"
         body = None if not cursor else {"start_cursor": cursor}
-        res = requests.post(
+        res = rl_requests.post(
             block_url,
             headers=self.headers,
             json=body,
@@ -187,20 +200,42 @@ class NotionConnector(LoadConnector, PollConnector):
         return result_pages
 
     def _read_blocks(
-        self, page_block_id: str
+        self, base_block_id: str
     ) -> tuple[list[tuple[str, str]], list[str]]:
-        """Reads blocks for a page"""
+        """Reads all child blocks for the specified block"""
         result_lines: list[tuple[str, str]] = []
         child_pages: list[str] = []
         cursor = None
         while True:
-            data = self._fetch_blocks(page_block_id, cursor)
+            data = self._fetch_child_blocks(base_block_id, cursor)
+
+            # this happens when a block is not shared with the integration
+            if data is None:
+                return result_lines, child_pages
 
             for result in data["results"]:
-                logger.debug(f"Found block for page '{page_block_id}': {result}")
+                logger.debug(
+                    f"Found child block for block with ID '{base_block_id}': {result}"
+                )
                 result_block_id = result["id"]
                 result_type = result["type"]
                 result_obj = result[result_type]
+
+                if result_type == "ai_block":
+                    logger.warning(
+                        f"Skipping 'ai_block' ('{result_block_id}') for base block '{base_block_id}': "
+                        f"Notion API does not currently support reading AI blocks (as of 24/02/09) "
+                        f"(discussion: https://github.com/danswer-ai/danswer/issues/1053)"
+                    )
+                    continue
+
+                if result_type == "unsupported":
+                    logger.warning(
+                        f"Skipping unsupported block type '{result_type}' "
+                        f"('{result_block_id}') for base block '{base_block_id}': "
+                        f"(discussion: https://github.com/danswer-ai/danswer/issues/1230)"
+                    )
+                    continue
 
                 cur_result_text_arr = []
                 if "rich_text" in result_obj:
@@ -302,7 +337,7 @@ class NotionConnector(LoadConnector, PollConnector):
         """Search for pages from a Notion database. Includes some small number of
         retries to handle misc, flakey failures."""
         logger.debug(f"Searching for pages in Notion with query_dict: {query_dict}")
-        res = requests.post(
+        res = rl_requests.post(
             "https://api.notion.com/v1/search",
             headers=self.headers,
             json=query_dict,
@@ -408,8 +443,10 @@ class NotionConnector(LoadConnector, PollConnector):
             )
             if len(pages) > 0:
                 yield from batch_generator(self._read_pages(pages), self.batch_size)
-            if db_res.has_more:
-                query_dict["start_cursor"] = db_res.next_cursor
+                if db_res.has_more:
+                    query_dict["start_cursor"] = db_res.next_cursor
+                else:
+                    break
             else:
                 break
 

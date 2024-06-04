@@ -80,7 +80,7 @@ const Main = () => {
           <div className="flex mb-1 text-sm">
             <p className="my-auto">Existing API Token: </p>
             <p className="ml-1 italic my-auto max-w-md">
-              {zendeskCredential.credential_json?.zendesk_email}
+              {zendeskCredential.credential_json?.zendesk_token}
             </p>
             <button
               className="ml-1 hover:bg-hover rounded p-1"
@@ -119,7 +119,7 @@ const Main = () => {
                 <>
                   <TextFormField
                     name="zendesk_subdomain"
-                    label="Zendesk Subdomain (<subdomain>.zendesk.com):"
+                    label="Zendesk Domain (ie. https://danswer.zendesk.com):"
                   />
                   <TextFormField
                     name="zendesk_email"
@@ -174,7 +174,7 @@ const Main = () => {
               getCredential={(credential) => {
                 return (
                   <div>
-                    <p>{credential.credential_json.zendesk_email}</p>
+                    <p>{credential.credential_json.zendesk_token}</p>
                   </div>
                 );
               }}
