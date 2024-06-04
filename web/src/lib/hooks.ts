@@ -28,23 +28,23 @@ export type AutoScrollHookType = {
   distance?: number;
 };
 
-export const useAutoScrollOnMessage = ({
+/**
+ * Scrolls on streaming of text, if within `distance`
+ */
+export const useScrollOnStream = ({
   isStreaming,
   lastMessageRef,
   inputRef,
   endDivRef,
-  distance = 140,
+  distance = 140, // distance that should "engage" the scroll
 }: AutoScrollHookType) => {
   useEffect(() => {
-    // console.log(
-    //   `Streaming ${isStreaming} ${lastMessageRef.current} ${inputRef.current}`
-    // );
-
+    // Is text streaming? + null checks
     if (isStreaming && lastMessageRef.current && inputRef.current) {
-      // console.log("Streaming");
-
       const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
       const endDivRect = inputRef.current.getBoundingClientRect();
+
+      // Is the bottom of the final chat within the engagement distance?
       if (
         endDivRect.bottom - lastMessageRect.bottom > distance &&
         endDivRef?.current
@@ -63,6 +63,9 @@ export type InitialScrollType = {
   isStreaming: boolean;
 };
 
+/**
+ * Initial scroll (specifically for the situation in which your input is too long)
+ */
 export const useInitialScroll = ({
   isStreaming,
   endDivRef,
@@ -71,12 +74,113 @@ export const useInitialScroll = ({
   initialScrollComplete,
 }: InitialScrollType) => {
   useEffect(() => {
+    // Check: have we done this before? + null checks
     if (!hasPerformedInitialScroll && endDivRef.current && isStreaming) {
       endDivRef.current.scrollIntoView({ behavior: "smooth" });
       initialScrollComplete();
     }
   }),
     [isFetchingChatMessages];
+};
+
+export type ResponsiveScrollType = {
+  lastMessageRef: RefObject<HTMLDivElement>;
+  inputRef: RefObject<HTMLDivElement>;
+  endDivRef: RefObject<HTMLDivElement>;
+  textAreaRef: RefObject<HTMLTextAreaElement>;
+};
+
+/**
+ * Scroll in cases where the input bar covers previously visible bottom of text
+ */
+export const useResponsiveScroll = ({
+  lastMessageRef,
+  inputRef,
+  endDivRef,
+  textAreaRef,
+}: ResponsiveScrollType) => {
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    let prevInputHeight = 0;
+    let prevDistance = 0;
+
+    // Core logic
+    const handleInputResize = async () => {
+      function delay(ms: number) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+      await delay(100);
+
+      // Validate that message and input exist
+      if (
+        lastMessageRef &&
+        inputRef &&
+        inputRef.current &&
+        lastMessageRef.current
+      ) {
+        const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
+        const endDivRect = inputRef.current.getBoundingClientRect();
+        const currentInputHeight = endDivRect.height;
+
+        if (
+          // Validate change in height
+          currentInputHeight > prevInputHeight &&
+          // Validate distance
+          endDivRect.top <= lastMessageRect.bottom
+        ) {
+          // Validate previous distance and existence of the final div
+          if (prevDistance > -100 && endDivRef && endDivRef?.current) {
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+            }
+
+            timeoutId = setTimeout(() => {
+              if (endDivRef && endDivRef?.current) {
+                // TODO
+                // window.scrollBy({
+                //   top: currentInputHeight - prevInputHeight,
+                //   behavior: 'smooth',
+                // });
+
+                endDivRef?.current.scrollIntoView({ behavior: "smooth" });
+              }
+            }, 500);
+          }
+
+          prevInputHeight = currentInputHeight;
+        }
+        if (currentInputHeight !== prevInputHeight) {
+          prevInputHeight = currentInputHeight;
+        }
+      }
+
+      // Update previous distance for calculation (regardless of scroll)
+      if (
+        lastMessageRef &&
+        inputRef &&
+        inputRef.current &&
+        lastMessageRef.current
+      ) {
+        const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
+        const endDivRect = inputRef.current.getBoundingClientRect();
+        prevDistance = endDivRect.top - lastMessageRect.bottom;
+      }
+    };
+
+    const textarea = textAreaRef.current;
+    if (textarea) {
+      textarea.addEventListener("input", handleInputResize);
+    }
+
+    return () => {
+      if (textarea) {
+        textarea.removeEventListener("input", handleInputResize);
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [lastMessageRef, inputRef]);
 };
 
 export const usePublicCredentials = () => {
