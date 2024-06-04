@@ -42,6 +42,7 @@ def get_created_datetime(obj: ChatMessage) -> datetime:
 
 
 class TeamsConnector(LoadConnector, PollConnector):
+
     def __init__(
         self,
         batch_size: int = INDEX_BATCH_SIZE,
