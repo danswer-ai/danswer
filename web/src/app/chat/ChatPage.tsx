@@ -49,7 +49,7 @@ import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoade
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { ChatPersonaSelector } from "./ChatPersonaSelector";
-import { FiShare2 } from "react-icons/fi";
+import { FiActivity, FiShare2 } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
 import { ThreeDots } from "react-loader-spinner";
@@ -65,6 +65,7 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { UserDropdown } from "@/components/UserDropdown";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
+import { EmphasizedClickable } from "@/components/BasicClickable";
 
 const MAX_INPUT_HEIGHT = 200;
 const TEMP_USER_MESSAGE_ID = -1;
@@ -92,6 +93,9 @@ export function ChatPage({
     openedFolders,
   } = useChatContext();
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
+
+  // TODO
+  const [canContinue, setCanContinue] = useState(true);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1155,6 +1159,22 @@ export function ChatPage({
                               />
                             </div>
                           )}
+                        {!isStreaming && canContinue && (
+                          <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
+                            <div className="ml-8 ">
+                              <div className="flex justify-end  w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
+                                <div className="ml-auto my-auto">
+                                  <EmphasizedClickable>
+                                    <div className="px-1 flex gap-x-1 text-xs">
+                                      Continue Generating
+                                      <FiActivity className="my-auto" />
+                                    </div>
+                                  </EmphasizedClickable>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                         <div className={`min-h-[100px] w-full`}></div>
@@ -1197,7 +1217,6 @@ export function ChatPage({
                               )}
                             </div>
                           )}
-
                         <div ref={endDivRef} />
                       </div>
                     </div>
