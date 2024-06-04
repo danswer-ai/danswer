@@ -33,15 +33,10 @@ export const useAutoScrollOnMessage = ({
   distance = 140,
 }: AutoScrollHookType) => {
   useEffect(() => {
-    // console.log(
-    //   `Streaming ${isStreaming} ${lastMessageRef.current} ${inputRef.current}`
-    // );
-
     if (isStreaming && lastMessageRef.current && inputRef.current) {
-      // console.log("Streaming");
-
       const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
       const endDivRect = inputRef.current.getBoundingClientRect();
+
       if (
         endDivRect.bottom - lastMessageRect.bottom > distance &&
         endDivRef?.current
@@ -74,6 +69,105 @@ export const useInitialScroll = ({
     }
   }),
     [isFetchingChatMessages];
+};
+
+export type ResponsiveScrollType = {
+  lastMessageRef: RefObject<HTMLDivElement>;
+  inputRef: RefObject<HTMLDivElement>;
+  endDivRef: RefObject<HTMLDivElement>;
+  textAreaRef: RefObject<HTMLTextAreaElement>;
+};
+
+export const useResponsiveAutoScroll = ({
+  lastMessageRef,
+  inputRef,
+  endDivRef,
+  textAreaRef,
+}: ResponsiveScrollType) => {
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    let prevInputHeight = 0;
+    let prevDistance = 0;
+
+    const handleInputResize = async () => {
+      function delay(ms: number) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+      await delay(100);
+
+      // validate that message and input exist
+      if (
+        lastMessageRef &&
+        inputRef &&
+        inputRef.current &&
+        lastMessageRef.current
+      ) {
+        const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
+        const endDivRect = inputRef.current.getBoundingClientRect();
+        const currentInputHeight = endDivRect.height;
+
+        if (
+          // validate change in height
+          currentInputHeight > prevInputHeight &&
+          // validate distance
+          endDivRect.top <= lastMessageRect.bottom
+        ) {
+          // Validate previous distance and existence of the final div
+          if (prevDistance > -100 && endDivRef && endDivRef?.current) {
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+            }
+
+            timeoutId = setTimeout(() => {
+              if (endDivRef && endDivRef?.current) {
+                // TODO
+                // window.scrollBy({
+                //   top: currentInputHeight - prevInputHeight,
+                //   behavior: 'smooth',
+                // });
+
+                endDivRef?.current.scrollIntoView({ behavior: "smooth" });
+              }
+            }, 500);
+          }
+
+          prevInputHeight = currentInputHeight;
+        }
+        if (currentInputHeight !== prevInputHeight) {
+          prevInputHeight = currentInputHeight;
+        }
+      }
+
+      // Update previous distance for calculation (regardless of scroll)
+      if (
+        lastMessageRef &&
+        inputRef &&
+        inputRef.current &&
+        lastMessageRef.current
+      ) {
+        const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
+        const endDivRect = inputRef.current.getBoundingClientRect();
+        prevDistance = endDivRect.top - lastMessageRect.bottom;
+      }
+    };
+
+    // Previous- on input
+    const textarea = textAreaRef.current;
+    if (textarea) {
+      textarea.addEventListener("input", handleInputResize);
+    }
+
+    return () => {
+      if (textarea) {
+        textarea.removeEventListener("input", handleInputResize);
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [lastMessageRef, inputRef]);
+
+  return null;
 };
 
 export const usePublicCredentials = () => {
