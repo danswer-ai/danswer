@@ -44,7 +44,7 @@ export type ValidSources =
   | "loopio"
   | "sharepoint"
   | "teams"
-  | "zendesk";
+  | "zendesk"
   | "discourse"
   | "axero"
   | "wikipedia"
