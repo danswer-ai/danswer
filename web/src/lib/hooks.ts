@@ -28,7 +28,7 @@ export type AutoScrollHookType = {
   distance?: number;
 };
 
-const useAutoScrollOnMessage = ({
+export const useAutoScrollOnMessage = ({
   isStreaming,
   lastMessageRef,
   inputRef,
@@ -36,12 +36,12 @@ const useAutoScrollOnMessage = ({
   distance = 140,
 }: AutoScrollHookType) => {
   useEffect(() => {
-    console.log(
-      `Streaming ${isStreaming} ${lastMessageRef.current} ${inputRef.current}`
-    );
+    // console.log(
+    //   `Streaming ${isStreaming} ${lastMessageRef.current} ${inputRef.current}`
+    // );
 
     if (isStreaming && lastMessageRef.current && inputRef.current) {
-      console.log("Streaming");
+      // console.log("Streaming");
 
       const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
       const endDivRect = inputRef.current.getBoundingClientRect();
@@ -55,7 +55,29 @@ const useAutoScrollOnMessage = ({
   });
 };
 
-export default useAutoScrollOnMessage;
+export type InitialScrollType = {
+  isFetchingChatMessages: boolean;
+  endDivRef: RefObject<HTMLDivElement>;
+  hasPerformedInitialScroll: boolean;
+  initialScrollComplete: () => void;
+  isStreaming: boolean;
+};
+
+export const useInitialScroll = ({
+  isStreaming,
+  endDivRef,
+  isFetchingChatMessages,
+  hasPerformedInitialScroll,
+  initialScrollComplete,
+}: InitialScrollType) => {
+  useEffect(() => {
+    if (!hasPerformedInitialScroll && endDivRef.current && isStreaming) {
+      endDivRef.current.scrollIntoView({ behavior: "smooth" });
+      initialScrollComplete();
+    }
+  }),
+    [isFetchingChatMessages];
+};
 
 export const usePublicCredentials = () => {
   const { mutate } = useSWRConfig();
