@@ -1,6 +1,6 @@
 from datetime import timezone
-from typing import Any
 from io import BytesIO
+from typing import Any
 
 from dropbox import Dropbox  # type: ignore
 from dropbox.exceptions import ApiError  # type:ignore
@@ -13,11 +13,11 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.connectors.models import ConnectorMissingCredentialError
-from danswer.utils.logger import setup_logger
 from danswer.file_processing.extract_file_text import extract_file_text
+from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
@@ -43,13 +43,13 @@ class DropboxConnector(LoadConnector, PollConnector):
         """Create a shared link for a file in Dropbox."""
         if self.dropbox_client is None:
             raise ConnectorMissingCredentialError("Dropbox")
-        
+
         try:
             # Check if a shared link already exists
             shared_links = self.dropbox_client.sharing_list_shared_links(path=path)
             if shared_links.links:
                 return shared_links.links[0].url
-            
+
             link_metadata = (
                 self.dropbox_client.sharing_create_shared_link_with_settings(path)
             )
