@@ -1,3 +1,5 @@
+import os
+import uuid
 from typing import cast
 
 from fastapi import APIRouter
@@ -6,13 +8,15 @@ from fastapi import HTTPException
 from fastapi import Request
 from fastapi import Response
 from fastapi import UploadFile
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_status
+from danswer.configs.app_configs import ENABLED_CONNECTOR_TYPES
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.file.utils import write_temp_files
+from danswer.configs.constants import FileOrigin
 from danswer.connectors.gmail.connector_auth import delete_gmail_service_account_key
 from danswer.connectors.gmail.connector_auth import delete_google_app_gmail_cred
 from danswer.connectors.gmail.connector_auth import get_gmail_auth_url
@@ -63,6 +67,7 @@ from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.index_attempt import get_latest_index_attempts
 from danswer.db.models import User
 from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.file_store.file_store import get_default_file_store
 from danswer.server.documents.models import AuthStatus
 from danswer.server.documents.models import AuthUrl
 from danswer.server.documents.models import ConnectorBase
@@ -334,18 +339,29 @@ def admin_google_drive_auth(
 
 @router.post("/admin/connector/file/upload")
 def upload_files(
-    files: list[UploadFile], _: User = Depends(current_admin_user)
+    files: list[UploadFile],
+    _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
 ) -> FileUploadResponse:
     for file in files:
         if not file.filename:
             raise HTTPException(status_code=400, detail="File name cannot be empty")
     try:
-        file_paths = write_temp_files(
-            [(cast(str, file.filename), file.file) for file in files]
-        )
+        file_store = get_default_file_store(db_session)
+        deduped_file_paths = []
+        for file in files:
+            file_path = os.path.join(str(uuid.uuid4()), cast(str, file.filename))
+            deduped_file_paths.append(file_path)
+            file_store.save_file(
+                file_name=file_path,
+                content=file.file,
+                display_name=file.filename,
+                file_origin=FileOrigin.CONNECTOR,
+                file_type=file.content_type or "text/plain",
+            )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    return FileUploadResponse(file_paths=file_paths)
+    return FileUploadResponse(file_paths=deduped_file_paths)
 
 
 @router.get("/admin/connector/indexing-status")
@@ -402,7 +418,9 @@ def get_connector_indexing_status(
                 credential=CredentialSnapshot.from_credential_db_model(credential),
                 public_doc=cc_pair.is_public,
                 owner=credential.user.email if credential.user else "",
-                last_status=cc_pair.last_attempt_status,
+                last_status=latest_index_attempt.status
+                if latest_index_attempt
+                else None,
                 last_success=cc_pair.last_successful_index_time,
                 docs_indexed=cc_pair_to_document_cnt.get(
                     (connector.id, credential.id), 0
@@ -421,22 +439,43 @@ def get_connector_indexing_status(
                     db_session=db_session,
                 ),
                 is_deletable=check_deletion_attempt_is_allowed(
-                    connector_credential_pair=cc_pair
-                ),
+                    connector_credential_pair=cc_pair,
+                    db_session=db_session,
+                    # allow scheduled indexing attempts here, since on deletion request we will cancel them
+                    allow_scheduled=True,
+                )
+                is None,
             )
         )
 
     return indexing_statuses
 
 
+def _validate_connector_allowed(source: DocumentSource) -> None:
+    valid_connectors = [
+        x for x in ENABLED_CONNECTOR_TYPES.replace("_", "").split(",") if x
+    ]
+    if not valid_connectors:
+        return
+    for connector_type in valid_connectors:
+        if source.value.lower().replace("_", "") == connector_type:
+            return
+
+    raise ValueError(
+        "This connector type has been disabled by your system admin. "
+        "Please contact them to get it enabled if you wish to use it."
+    )
+
+
 @router.post("/admin/connector")
 def create_connector_from_model(
-    connector_info: ConnectorBase,
+    connector_data: ConnectorBase,
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
     try:
-        return create_connector(connector_info, db_session)
+        _validate_connector_allowed(connector_data.source)
+        return create_connector(connector_data, db_session)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -448,6 +487,11 @@ def update_connector_from_model(
     _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ConnectorSnapshot | StatusResponse[int]:
+    try:
+        _validate_connector_allowed(connector_data.source)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
     updated_connector = update_connector(connector_id, connector_data, db_session)
     if updated_connector is None:
         raise HTTPException(
@@ -689,3 +733,43 @@ def get_connector_by_id(
         time_updated=connector.time_updated,
         disabled=connector.disabled,
     )
+
+
+class BasicCCPairInfo(BaseModel):
+    docs_indexed: int
+    has_successful_run: bool
+    source: DocumentSource
+
+
+@router.get("/indexing-status")
+def get_basic_connector_indexing_status(
+    _: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> list[BasicCCPairInfo]:
+    cc_pairs = get_connector_credential_pairs(db_session)
+    cc_pair_identifiers = [
+        ConnectorCredentialPairIdentifier(
+            connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id
+        )
+        for cc_pair in cc_pairs
+    ]
+    document_count_info = get_document_cnts_for_cc_pairs(
+        db_session=db_session,
+        cc_pair_identifiers=cc_pair_identifiers,
+    )
+    cc_pair_to_document_cnt = {
+        (connector_id, credential_id): cnt
+        for connector_id, credential_id, cnt in document_count_info
+    }
+    return [
+        BasicCCPairInfo(
+            docs_indexed=cc_pair_to_document_cnt.get(
+                (cc_pair.connector_id, cc_pair.credential_id)
+            )
+            or 0,
+            has_successful_run=cc_pair.last_successful_index_time is not None,
+            source=cc_pair.connector.source,
+        )
+        for cc_pair in cc_pairs
+        if cc_pair.connector.source != DocumentSource.INGESTION_API
+    ]

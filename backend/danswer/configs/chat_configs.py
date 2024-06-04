@@ -37,6 +37,9 @@ DISABLE_LLM_CHUNK_FILTER = (
 DISABLE_LLM_CHOOSE_SEARCH = (
     os.environ.get("DISABLE_LLM_CHOOSE_SEARCH", "").lower() == "true"
 )
+DISABLE_LLM_QUERY_REPHRASE = (
+    os.environ.get("DISABLE_LLM_QUERY_REPHRASE", "").lower() == "true"
+)
 # 1 edit per 20 characters, currently unused due to fuzzy match being too slow
 QUOTE_ALLOWED_ERROR_PERCENT = 0.05
 QA_TIMEOUT = int(os.environ.get("QA_TIMEOUT") or "60")  # 60 seconds

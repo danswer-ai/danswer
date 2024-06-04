@@ -18,7 +18,10 @@ FG = TypeVar("FG", bound=Callable[..., Generator | Iterator])
 
 
 def log_function_time(
-    func_name: str | None = None, print_only: bool = False
+    func_name: str | None = None,
+    print_only: bool = False,
+    debug_only: bool = False,
+    include_args: bool = False,
 ) -> Callable[[F], F]:
     def decorator(func: F) -> F:
         @wraps(func)
@@ -28,7 +31,12 @@ def log_function_time(
             result = func(*args, **kwargs)
             elapsed_time_str = str(time.time() - start_time)
             log_name = func_name or func.__name__
-            logger.info(f"{log_name} took {elapsed_time_str} seconds")
+            args_str = f" args={args} kwargs={kwargs}" if include_args else ""
+            final_log = f"{log_name}{args_str} took {elapsed_time_str} seconds"
+            if debug_only:
+                logger.debug(final_log)
+            else:
+                logger.info(final_log)
 
             if not print_only:
                 optional_telemetry(

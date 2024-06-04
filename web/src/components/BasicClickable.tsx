@@ -19,6 +19,7 @@ export function BasicClickable({
         text-emphasis 
         text-sm
         p-1
+        h-full
         select-none
         hover:bg-hover
         ${fullWidth ? "w-full" : ""}`}
@@ -71,7 +72,7 @@ export function BasicSelectable({
   fullWidth?: boolean;
 }) {
   return (
-    <button
+    <div
       className={`
         rounded
         font-medium 
@@ -84,6 +85,6 @@ export function BasicSelectable({
         ${fullWidth ? "w-full" : ""}`}
     >
       {children}
-    </button>
+    </div>
   );
 }

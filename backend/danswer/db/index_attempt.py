@@ -75,14 +75,11 @@ def get_not_started_index_attempts(db_session: Session) -> list[IndexAttempt]:
     return list(new_attempts.all())
 
 
-def mark_attempt_in_progress(
+def mark_attempt_in_progress__no_commit(
     index_attempt: IndexAttempt,
-    db_session: Session,
 ) -> None:
     index_attempt.status = IndexingStatus.IN_PROGRESS
     index_attempt.time_started = index_attempt.time_started or func.now()  # type: ignore
-    db_session.add(index_attempt)
-    db_session.commit()
 
 
 def mark_attempt_succeeded(
@@ -115,9 +112,11 @@ def update_docs_indexed(
     index_attempt: IndexAttempt,
     total_docs_indexed: int,
     new_docs_indexed: int,
+    docs_removed_from_index: int,
 ) -> None:
     index_attempt.total_docs_indexed = total_docs_indexed
     index_attempt.new_docs_indexed = new_docs_indexed
+    index_attempt.docs_removed_from_index = docs_removed_from_index
 
     db_session.add(index_attempt)
     db_session.commit()
@@ -229,13 +228,24 @@ def expire_index_attempts(
     embedding_model_id: int,
     db_session: Session,
 ) -> None:
+    delete_query = (
+        delete(IndexAttempt)
+        .where(IndexAttempt.embedding_model_id == embedding_model_id)
+        .where(IndexAttempt.status == IndexingStatus.NOT_STARTED)
+    )
+    db_session.execute(delete_query)
+
     update_query = (
         update(IndexAttempt)
         .where(IndexAttempt.embedding_model_id == embedding_model_id)
         .where(IndexAttempt.status != IndexingStatus.SUCCESS)
-        .values(status=IndexingStatus.FAILED, error_msg="Embedding model swapped")
+        .values(
+            status=IndexingStatus.FAILED,
+            error_msg="Canceled due to embedding model swap",
+        )
     )
     db_session.execute(update_query)
+
     db_session.commit()
 
 
@@ -244,20 +254,15 @@ def cancel_indexing_attempts_for_connector(
     db_session: Session,
     include_secondary_index: bool = False,
 ) -> None:
-    subquery = select(EmbeddingModel.id).where(
-        EmbeddingModel.status != IndexModelStatus.FUTURE
-    )
-
-    stmt = (
-        update(IndexAttempt)
-        .where(
-            IndexAttempt.connector_id == connector_id,
-            IndexAttempt.status == IndexingStatus.NOT_STARTED,
-        )
-        .values(status=IndexingStatus.FAILED)
+    stmt = delete(IndexAttempt).where(
+        IndexAttempt.connector_id == connector_id,
+        IndexAttempt.status == IndexingStatus.NOT_STARTED,
     )
 
     if not include_secondary_index:
+        subquery = select(EmbeddingModel.id).where(
+            EmbeddingModel.status != IndexModelStatus.FUTURE
+        )
         stmt = stmt.where(IndexAttempt.embedding_model_id.in_(subquery))
 
     db_session.execute(stmt)
@@ -283,20 +288,18 @@ def cancel_indexing_attempts_past_model(
     db_session.commit()
 
 
-def count_unique_cc_pairs_with_index_attempts(
+def count_unique_cc_pairs_with_successful_index_attempts(
     embedding_model_id: int | None,
     db_session: Session,
 ) -> int:
+    """Collect all of the Index Attempts that are successful and for the specified embedding model
+    Then do distinct by connector_id and credential_id which is equivalent to the cc-pair. Finally,
+    do a count to get the total number of unique cc-pairs with successful attempts"""
     unique_pairs_count = (
         db_session.query(IndexAttempt.connector_id, IndexAttempt.credential_id)
         .filter(
             IndexAttempt.embedding_model_id == embedding_model_id,
-            # Should not be able to hang since indexing jobs expire after a limit
-            # It will then be marked failed, and the next cycle it will be in a completed state
-            or_(
-                IndexAttempt.status == IndexingStatus.SUCCESS,
-                IndexAttempt.status == IndexingStatus.FAILED,
-            ),
+            IndexAttempt.status == IndexingStatus.SUCCESS,
         )
         .distinct()
         .count()

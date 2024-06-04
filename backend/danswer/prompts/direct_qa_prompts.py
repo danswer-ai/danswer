@@ -2,6 +2,7 @@
 # It is used also for the one shot direct QA flow
 import json
 
+from danswer.prompts.constants import DEFAULT_IGNORE_STATEMENT
 from danswer.prompts.constants import FINAL_QUERY_PAT
 from danswer.prompts.constants import GENERAL_SEP_PAT
 from danswer.prompts.constants import QUESTION_PAT
@@ -94,6 +95,35 @@ SAMPLE RESPONSE:
 {JSON_HELPFUL_HINT}
 {{language_hint_or_none}}
 """.strip()
+
+
+# similar to the chat flow, but with the option of including a
+# "conversation history" block
+CITATIONS_PROMPT = f"""
+Refer to the following context documents when responding to me.{DEFAULT_IGNORE_STATEMENT}
+CONTEXT:
+{GENERAL_SEP_PAT}
+{{context_docs_str}}
+{GENERAL_SEP_PAT}
+
+{{history_block}}{{task_prompt}}
+
+{QUESTION_PAT.upper()}
+{{user_query}}
+"""
+
+# with tool calling, the documents are in a separate "tool" message
+# NOTE: need to add the extra line about "getting right to the point" since the
+# tool calling models from OpenAI tend to be more verbose
+CITATIONS_PROMPT_FOR_TOOL_CALLING = f"""
+Refer to the provided context documents when responding to me.{DEFAULT_IGNORE_STATEMENT} \
+You should always get right to the point, and never use extraneous language.
+
+{{task_prompt}}
+
+{QUESTION_PAT.upper()}
+{{user_query}}
+"""
 
 
 # For weak LLM which only takes one chunk and cannot output json

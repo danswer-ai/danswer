@@ -6,15 +6,15 @@ NOTE: cannot use Celery directly due to
 https://github.com/celery/celery/issues/7007#issuecomment-1740139367"""
 from collections.abc import Callable
 from dataclasses import dataclass
+from multiprocessing import Process
 from typing import Any
 from typing import Literal
+from typing import Optional
 
-from torch import multiprocessing
-
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
-
 
 JobStatusType = (
     Literal["error"]
@@ -25,12 +25,28 @@ JobStatusType = (
 )
 
 
+def _initializer(
+    func: Callable, args: list | tuple, kwargs: dict[str, Any] | None = None
+) -> Any:
+    """Ensure the parent proc's database connections are not touched
+    in the new connection pool
+
+    Based on the recommended approach in the SQLAlchemy docs found:
+    https://docs.sqlalchemy.org/en/20/core/pooling.html#using-connection-pools-with-multiprocessing-or-os-fork
+    """
+    if kwargs is None:
+        kwargs = {}
+
+    get_sqlalchemy_engine().dispose(close=False)
+    return func(*args, **kwargs)
+
+
 @dataclass
 class SimpleJob:
     """Drop in replacement for `dask.distributed.Future`"""
 
     id: int
-    process: multiprocessing.Process | None = None
+    process: Optional["Process"] = None
 
     def cancel(self) -> bool:
         return self.release()
@@ -95,7 +111,7 @@ class SimpleJobClient:
         job_id = self.job_id_counter
         self.job_id_counter += 1
 
-        process = multiprocessing.Process(target=func, args=args, daemon=True)
+        process = Process(target=_initializer(func=func, args=args), daemon=True)
         job = SimpleJob(id=job_id, process=process)
         process.start()
 

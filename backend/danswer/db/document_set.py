@@ -16,6 +16,7 @@ from danswer.db.models import DocumentSet as DocumentSetDBModel
 from danswer.db.models import DocumentSet__ConnectorCredentialPair
 from danswer.server.features.document_set.models import DocumentSetCreationRequest
 from danswer.server.features.document_set.models import DocumentSetUpdateRequest
+from danswer.utils.variable_functionality import fetch_versioned_implementation
 
 
 def _delete_document_set_cc_pairs__no_commit(
@@ -39,6 +40,12 @@ def _mark_document_set_cc_pairs_as_outdated__no_commit(
     )
     for row in db_session.scalars(stmt):
         row.is_current = False
+
+
+def delete_document_set_privacy__no_commit(
+    document_set_id: int, db_session: Session
+) -> None:
+    """No private document sets in Danswer MIT"""
 
 
 def get_document_set_by_id(
@@ -67,13 +74,25 @@ def get_document_sets_by_ids(
     ).all()
 
 
+def make_doc_set_private(
+    document_set_id: int,
+    user_ids: list[UUID] | None,
+    group_ids: list[int] | None,
+    db_session: Session,
+) -> None:
+    # May cause error if someone switches down to MIT from EE
+    if user_ids or group_ids:
+        raise NotImplementedError("Danswer MIT does not support private Document Sets")
+
+
 def insert_document_set(
     document_set_creation_request: DocumentSetCreationRequest,
     user_id: UUID | None,
     db_session: Session,
 ) -> tuple[DocumentSetDBModel, list[DocumentSet__ConnectorCredentialPair]]:
     if not document_set_creation_request.cc_pair_ids:
-        raise ValueError("Cannot create a document set with no CC pairs")
+        # It's cc-pairs in actuality but the UI displays this error
+        raise ValueError("Cannot create a document set with no Connectors")
 
     # start a transaction
     db_session.begin()
@@ -83,6 +102,7 @@ def insert_document_set(
             name=document_set_creation_request.name,
             description=document_set_creation_request.description,
             user_id=user_id,
+            is_public=document_set_creation_request.is_public,
         )
         db_session.add(new_document_set_row)
         db_session.flush()  # ensure the new document set gets assigned an ID
@@ -96,6 +116,19 @@ def insert_document_set(
             for cc_pair_id in document_set_creation_request.cc_pair_ids
         ]
         db_session.add_all(ds_cc_pairs)
+
+        versioned_private_doc_set_fn = fetch_versioned_implementation(
+            "danswer.db.document_set", "make_doc_set_private"
+        )
+
+        # Private Document Sets
+        versioned_private_doc_set_fn(
+            document_set_id=new_document_set_row.id,
+            user_ids=document_set_creation_request.users,
+            group_ids=document_set_creation_request.groups,
+            db_session=db_session,
+        )
+
         db_session.commit()
     except:
         db_session.rollback()
@@ -108,7 +141,8 @@ def update_document_set(
     document_set_update_request: DocumentSetUpdateRequest, db_session: Session
 ) -> tuple[DocumentSetDBModel, list[DocumentSet__ConnectorCredentialPair]]:
     if not document_set_update_request.cc_pair_ids:
-        raise ValueError("Cannot create a document set with no CC pairs")
+        # It's cc-pairs in actuality but the UI displays this error
+        raise ValueError("Cannot create a document set with no Connectors")
 
     # start a transaction
     db_session.begin()
@@ -130,6 +164,19 @@ def update_document_set(
 
         document_set_row.description = document_set_update_request.description
         document_set_row.is_up_to_date = False
+        document_set_row.is_public = document_set_update_request.is_public
+
+        versioned_private_doc_set_fn = fetch_versioned_implementation(
+            "danswer.db.document_set", "make_doc_set_private"
+        )
+
+        # Private Document Sets
+        versioned_private_doc_set_fn(
+            document_set_id=document_set_row.id,
+            user_ids=document_set_update_request.users,
+            group_ids=document_set_update_request.groups,
+            db_session=db_session,
+        )
 
         # update the attached CC pairs
         # first, mark all existing CC pairs as not current
@@ -205,6 +252,15 @@ def mark_document_set_as_to_be_deleted(
         _delete_document_set_cc_pairs__no_commit(
             db_session=db_session, document_set_id=document_set_id
         )
+
+        # delete all private document set information
+        versioned_delete_private_fn = fetch_versioned_implementation(
+            "danswer.db.document_set", "delete_document_set_privacy__no_commit"
+        )
+        versioned_delete_private_fn(
+            document_set_id=document_set_id, db_session=db_session
+        )
+
         # mark the row as needing a sync, it will be deleted there since there
         # are no more relationships to cc pairs
         document_set_row.is_up_to_date = False
@@ -248,7 +304,7 @@ def mark_cc_pair__document_set_relationships_to_be_deleted__no_commit(
 
 
 def fetch_document_sets(
-    db_session: Session, include_outdated: bool = False
+    user_id: UUID | None, db_session: Session, include_outdated: bool = False
 ) -> list[tuple[DocumentSetDBModel, list[ConnectorCredentialPair]]]:
     """Return is a list where each element contains a tuple of:
     1. The document set itself
@@ -301,9 +357,38 @@ def fetch_document_sets(
     ]
 
 
-def fetch_documents_for_document_set(
-    document_set_id: int, db_session: Session, current_only: bool = True
-) -> Sequence[Document]:
+def fetch_all_document_sets(db_session: Session) -> Sequence[DocumentSetDBModel]:
+    """Used for Admin UI where they should have visibility into all document sets"""
+    return db_session.scalars(select(DocumentSetDBModel)).all()
+
+
+def fetch_user_document_sets(
+    user_id: UUID | None, db_session: Session
+) -> list[tuple[DocumentSetDBModel, list[ConnectorCredentialPair]]]:
+    # If Auth is turned off, all document sets become visible
+    # document sets are not permission enforced, only for organizational purposes
+    # the documents themselves are permission enforced
+    if user_id is None:
+        return fetch_document_sets(
+            user_id=user_id, db_session=db_session, include_outdated=True
+        )
+
+    versioned_fetch_doc_sets_fn = fetch_versioned_implementation(
+        "danswer.db.document_set", "fetch_document_sets"
+    )
+
+    return versioned_fetch_doc_sets_fn(
+        user_id=user_id, db_session=db_session, include_outdated=True
+    )
+
+
+def fetch_documents_for_document_set_paginated(
+    document_set_id: int,
+    db_session: Session,
+    current_only: bool = True,
+    last_document_id: str | None = None,
+    limit: int = 100,
+) -> tuple[Sequence[Document], str | None]:
     stmt = (
         select(Document)
         .join(
@@ -330,14 +415,19 @@ def fetch_documents_for_document_set(
             == DocumentSet__ConnectorCredentialPair.document_set_id,
         )
         .where(DocumentSetDBModel.id == document_set_id)
+        .order_by(Document.id)
+        .limit(limit)
     )
+    if last_document_id is not None:
+        stmt = stmt.where(Document.id > last_document_id)
     if current_only:
         stmt = stmt.where(
             DocumentSet__ConnectorCredentialPair.is_current == True  # noqa: E712
         )
     stmt = stmt.distinct()
 
-    return db_session.scalars(stmt).all()
+    documents = db_session.scalars(stmt).all()
+    return documents, documents[-1].id if documents else None
 
 
 def fetch_document_sets_for_documents(
@@ -404,6 +494,8 @@ def check_document_sets_are_public(
     db_session: Session,
     document_set_ids: list[int],
 ) -> bool:
+    """Checks if any of the CC-Pairs are Non Public (meaning that some documents in this document
+    set is not Public"""
     connector_credential_pair_ids = (
         db_session.query(
             DocumentSet__ConnectorCredentialPair.connector_credential_pair_id

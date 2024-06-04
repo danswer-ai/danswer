@@ -108,7 +108,19 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                       </div>
                     )}
                   </TableCell>
-                  <TableCell>{indexAttempt.new_docs_indexed}</TableCell>
+                  <TableCell>
+                    <div className="flex">
+                      <div className="text-right">
+                        <div>{indexAttempt.new_docs_indexed}</div>
+                        {indexAttempt.docs_removed_from_index > 0 && (
+                          <div className="text-xs w-52 text-wrap flex italic overflow-hidden whitespace-normal px-1">
+                            (also removed {indexAttempt.docs_removed_from_index}{" "}
+                            docs that were detected as deleted in the source)
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
                   <TableCell>{indexAttempt.total_docs_indexed}</TableCell>
                   <TableCell>
                     <div>
@@ -116,14 +128,14 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                         {indexAttempt.error_msg || "-"}
                       </Text>
                       {indexAttempt.full_exception_trace && (
-                        <Text
-                          onClick={() =>
-                            setIndexAttemptTracePopupId(indexAttempt.id)
-                          }
-                          className="mt-2 text-link cursor-pointer"
+                        <div
+                          onClick={() => {
+                            setIndexAttemptTracePopupId(indexAttempt.id);
+                          }}
+                          className="mt-2 text-link cursor-pointer select-none"
                         >
                           View Full Trace
-                        </Text>
+                        </div>
                       )}
                     </div>
                   </TableCell>

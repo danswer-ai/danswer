@@ -1,6 +1,8 @@
 import {
+  AxeroIcon,
   BookstackIcon,
   ConfluenceIcon,
+  DiscourseIcon,
   Document360Icon,
   FileIcon,
   GithubIcon,
@@ -24,10 +26,12 @@ import {
   SlackIcon,
   ZendeskIcon,
   ZulipIcon,
+  MediaWikiIcon,
+  WikipediaIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import { SourceCategory, SourceMetadata } from "./search/interfaces";
-import { Persona } from "@/app/admin/personas/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 
 interface PartialSourceMetadata {
   icon: React.FC<{ size?: number; className?: string }>;
@@ -158,6 +162,26 @@ const SOURCE_METADATA_MAP: SourceMap = {
   teams: {
     icon: TeamsIcon,
     displayName: "Teams",
+    category: SourceCategory.AppConnection,
+  },
+  discourse: {
+    icon: DiscourseIcon,
+    displayName: "Discourse",
+    category: SourceCategory.AppConnection,
+  },
+  axero: {
+    icon: AxeroIcon,
+    displayName: "Axero",
+    category: SourceCategory.AppConnection,
+  },
+  wikipedia: {
+    icon: WikipediaIcon,
+    displayName: "Wikipedia",
+    category: SourceCategory.AppConnection,
+  },
+  mediawiki: {
+    icon: MediaWikiIcon,
+    displayName: "MediaWiki",
     category: SourceCategory.AppConnection,
   },
   requesttracker: {

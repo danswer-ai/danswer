@@ -18,11 +18,13 @@ from sqlalchemy.orm import Session
 from danswer.configs.app_configs import DISABLE_TELEMETRY
 from danswer.configs.constants import ID_SEPARATOR
 from danswer.configs.constants import MessageType
+from danswer.configs.danswerbot_configs import DANSWER_BOT_FEEDBACK_VISIBILITY
 from danswer.configs.danswerbot_configs import DANSWER_BOT_MAX_QPM
 from danswer.configs.danswerbot_configs import DANSWER_BOT_MAX_WAIT_TIME
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_RETRIES
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.connectors.slack.utils import SlackTextCleaner
+from danswer.danswerbot.slack.constants import FeedbackVisibility
 from danswer.danswerbot.slack.constants import SLACK_CHANNEL_ID
 from danswer.danswerbot.slack.tokens import fetch_tokens
 from danswer.db.engine import get_sqlalchemy_engine
@@ -346,8 +348,12 @@ def read_slack_thread(
             if len(blocks) <= 1:
                 continue
 
-            # The useful block is the second one after the header block that says AI Answer
-            message = reply["blocks"][1]["text"]["text"]
+            # For the old flow, the useful block is the second one after the header block that says AI Answer
+            if reply["blocks"][0]["text"]["text"] == "AI Answer":
+                message = reply["blocks"][1]["text"]["text"]
+            else:
+                # for the new flow, the answer is the first block
+                message = reply["blocks"][0]["text"]["text"]
 
             if message.startswith("_Filters"):
                 if len(blocks) <= 2:
@@ -445,3 +451,10 @@ class SlackRateLimiter:
             self.refill()
 
         del self.waiting_questions[0]
+
+
+def get_feedback_visibility() -> FeedbackVisibility:
+    try:
+        return FeedbackVisibility(DANSWER_BOT_FEEDBACK_VISIBILITY.lower())
+    except ValueError:
+        return FeedbackVisibility.PRIVATE

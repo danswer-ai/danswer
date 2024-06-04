@@ -12,3 +12,5 @@ QUOTE_PAT = "Quote:"
 QUOTES_PAT_PLURAL = "Quotes:"
 INVALID_PAT = "Invalid:"
 SOURCES_KEY = "sources"
+
+DEFAULT_IGNORE_STATEMENT = " Ignore any context documents that are not relevant."

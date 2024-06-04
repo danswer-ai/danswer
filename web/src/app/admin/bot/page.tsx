@@ -34,6 +34,7 @@ import {
 } from "react-icons/fi";
 import Link from "next/link";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
+import { ErrorCallout } from "@/components/ErrorCallout";
 
 const numToDisplay = 50;
 
@@ -95,7 +96,7 @@ const SlackBotConfigsTable = ({
                     {slackBotConfig.persona &&
                     !isPersonaASlackBotPersona(slackBotConfig.persona) ? (
                       <Link
-                        href={`/admin/personas/${slackBotConfig.persona.id}`}
+                        href={`/admin/assistants/${slackBotConfig.persona.id}`}
                         className="text-blue-500 flex"
                       >
                         <FiArrowUpRight className="my-auto mr-1" />
@@ -178,8 +179,16 @@ const Main = () => {
     return <ThreeDotsLoader />;
   }
 
-  if (slackBotConfigsError || !slackBotConfigs) {
-    return <div>Error: {slackBotConfigsError}</div>;
+  if (slackBotConfigsError || !slackBotConfigs || !slackBotConfigs) {
+    return (
+      <ErrorCallout
+        errorTitle="Error loading slack bot configs"
+        errorMsg={
+          slackBotConfigsError.info?.message ||
+          slackBotConfigsError.info?.detail
+        }
+      />
+    );
   }
 
   return (

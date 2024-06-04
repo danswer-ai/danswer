@@ -7,6 +7,7 @@ const version = env_version || package_version;
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+  swcMinify: true,
   rewrites: async () => {
     // In production, something else (nginx in the one box setup) should take
     // care of this rewrite. TODO (chris): better support setups where
@@ -24,13 +25,7 @@ const nextConfig = {
     // In production, something else (nginx in the one box setup) should take
     // care of this redirect. TODO (chris): better support setups where
     // web_server and api_server are on different machines.
-    const defaultRedirects = [
-      {
-        source: "/",
-        destination: "/search",
-        permanent: true,
-      },
-    ];
+    const defaultRedirects = [];
 
     if (process.env.NODE_ENV === "production") return defaultRedirects;
 

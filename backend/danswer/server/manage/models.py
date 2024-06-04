@@ -1,4 +1,5 @@
 from typing import Any
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 from pydantic import root_validator
@@ -9,7 +10,13 @@ from danswer.configs.constants import AuthType
 from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
 from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
+from danswer.db.models import SlackBotConfig as SlackBotConfigModel
+from danswer.db.models import SlackBotResponseType
+from danswer.indexing.models import EmbeddingModelDetail
 from danswer.server.features.persona.models import PersonaSnapshot
+
+if TYPE_CHECKING:
+    from danswer.db.models import User as UserModel
 
 
 class VersionResponse(BaseModel):
@@ -23,6 +30,10 @@ class AuthTypeResponse(BaseModel):
     requires_verification: bool
 
 
+class UserPreferences(BaseModel):
+    chosen_assistants: list[int] | None
+
+
 class UserInfo(BaseModel):
     id: str
     email: str
@@ -30,6 +41,19 @@ class UserInfo(BaseModel):
     is_superuser: bool
     is_verified: bool
     role: UserRole
+    preferences: UserPreferences
+
+    @classmethod
+    def from_model(cls, user: "UserModel") -> "UserInfo":
+        return cls(
+            id=str(user.id),
+            email=user.email,
+            is_active=user.is_active,
+            is_superuser=user.is_superuser,
+            is_verified=user.is_verified,
+            role=user.role,
+            preferences=(UserPreferences(chosen_assistants=user.chosen_assistants)),
+        )
 
 
 class UserByEmail(BaseModel):
@@ -81,6 +105,7 @@ class SlackBotConfigCreationRequest(BaseModel):
     answer_filters: list[AllowedAnswerFilters] = []
     # list of user emails
     follow_up_tags: list[str] | None = None
+    response_type: SlackBotResponseType
 
     @validator("answer_filters", pre=True)
     def validate_filters(cls, value: list[str]) -> list[str]:
@@ -104,12 +129,26 @@ class SlackBotConfig(BaseModel):
     id: int
     persona: PersonaSnapshot | None
     channel_config: ChannelConfig
+    response_type: SlackBotResponseType
 
-
-class ModelVersionResponse(BaseModel):
-    model_name: str | None  # None only applicable to secondary index
+    @classmethod
+    def from_model(
+        cls, slack_bot_config_model: SlackBotConfigModel
+    ) -> "SlackBotConfig":
+        return cls(
+            id=slack_bot_config_model.id,
+            persona=(
+                PersonaSnapshot.from_model(
+                    slack_bot_config_model.persona, allow_deleted=True
+                )
+                if slack_bot_config_model.persona
+                else None
+            ),
+            channel_config=slack_bot_config_model.channel_config,
+            response_type=slack_bot_config_model.response_type,
+        )
 
 
 class FullModelVersionResponse(BaseModel):
-    current_model_name: str
-    secondary_model_name: str | None
+    current_model: EmbeddingModelDetail
+    secondary_model: EmbeddingModelDetail | None

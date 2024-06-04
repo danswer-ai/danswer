@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_user
+from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
+from danswer.db.connector_credential_pair import get_connector_credential_pairs
+from danswer.db.connector_credential_pair import resync_cc_pair
 from danswer.db.embedding_model import create_embedding_model
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.embedding_model import get_secondary_db_embedding_model
@@ -17,7 +20,6 @@ from danswer.db.models import User
 from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.models import EmbeddingModelDetail
 from danswer.server.manage.models import FullModelVersionResponse
-from danswer.server.manage.models import ModelVersionResponse
 from danswer.server.models import IdReturn
 from danswer.utils.logger import setup_logger
 
@@ -78,6 +80,14 @@ def set_new_embedding_model(
         secondary_index_embedding_dim=new_model.model_dim,
     )
 
+    # Pause index attempts for the currently in use index to preserve resources
+    if DISABLE_INDEX_UPDATE_ON_SWAP:
+        expire_index_attempts(
+            embedding_model_id=current_model.id, db_session=db_session
+        )
+        for cc_pair in get_connector_credential_pairs(db_session):
+            resync_cc_pair(cc_pair, db_session=db_session)
+
     return IdReturn(id=new_model.id)
 
 
@@ -104,21 +114,21 @@ def cancel_new_embedding(
 def get_current_embedding_model(
     _: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-) -> ModelVersionResponse:
+) -> EmbeddingModelDetail:
     current_model = get_current_db_embedding_model(db_session)
-    return ModelVersionResponse(model_name=current_model.model_name)
+    return EmbeddingModelDetail.from_model(current_model)
 
 
 @router.get("/get-secondary-embedding-model")
 def get_secondary_embedding_model(
     _: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-) -> ModelVersionResponse:
+) -> EmbeddingModelDetail | None:
     next_model = get_secondary_db_embedding_model(db_session)
+    if not next_model:
+        return None
 
-    return ModelVersionResponse(
-        model_name=next_model.model_name if next_model else None
-    )
+    return EmbeddingModelDetail.from_model(next_model)
 
 
 @router.get("/get-embedding-models")
@@ -129,6 +139,8 @@ def get_embedding_models(
     current_model = get_current_db_embedding_model(db_session)
     next_model = get_secondary_db_embedding_model(db_session)
     return FullModelVersionResponse(
-        current_model_name=current_model.model_name,
-        secondary_model_name=next_model.model_name if next_model else None,
+        current_model=EmbeddingModelDetail.from_model(current_model),
+        secondary_model=EmbeddingModelDetail.from_model(next_model)
+        if next_model
+        else None,
     )

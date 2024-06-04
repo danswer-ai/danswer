@@ -15,11 +15,11 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.one_shot_answer.answer_question import stream_search_answer
 from danswer.one_shot_answer.models import DirectQARequest
-from danswer.search.access_filters import build_access_filters_for_user
-from danswer.search.danswer_helper import recommend_search_flow
 from danswer.search.models import IndexFilters
 from danswer.search.models import SearchDoc
-from danswer.search.search_runner import chunks_to_search_docs
+from danswer.search.preprocessing.access_filters import build_access_filters_for_user
+from danswer.search.preprocessing.danswer_helper import recommend_search_flow
+from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
 from danswer.server.query_and_chat.models import AdminSearchRequest
@@ -29,6 +29,7 @@ from danswer.server.query_and_chat.models import QueryValidationResponse
 from danswer.server.query_and_chat.models import SimpleQueryRequest
 from danswer.server.query_and_chat.models import SourceTag
 from danswer.server.query_and_chat.models import TagResponse
+from danswer.server.query_and_chat.token_budget import check_token_budget
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -68,7 +69,7 @@ def admin_search(
 
     matching_chunks = document_index.admin_retrieval(query=query, filters=final_filters)
 
-    documents = chunks_to_search_docs(matching_chunks)
+    documents = chunks_or_sections_to_search_docs(matching_chunks)
 
     # Deduplicate documents by id
     deduplicated_documents: list[SearchDoc] = []
@@ -148,7 +149,7 @@ def stream_query_validation(
 def get_answer_with_quote(
     query_request: DirectQARequest,
     user: User = Depends(current_user),
-    db_session: Session = Depends(get_session),
+    _: bool = Depends(check_token_budget),
 ) -> StreamingResponse:
     query = query_request.messages[0].message
     logger.info(f"Received query for one shot answer with quotes: {query}")
@@ -157,6 +158,5 @@ def get_answer_with_quote(
         user=user,
         max_document_tokens=None,
         max_history_tokens=0,
-        db_session=db_session,
     )
     return StreamingResponse(packets, media_type="application/json")

@@ -2,9 +2,11 @@ from typing import Any
 from typing import Type
 
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.axero.connector import AxeroConnector
 from danswer.connectors.bookstack.connector import BookstackConnector
 from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.danswer_jira.connector import JiraConnector
+from danswer.connectors.discourse.connector import DiscourseConnector
 from danswer.connectors.document360.connector import Document360Connector
 from danswer.connectors.file.connector import LocalFileConnector
 from danswer.connectors.github.connector import GithubConnector
@@ -21,6 +23,7 @@ from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.linear.connector import LinearConnector
 from danswer.connectors.loopio.connector import LoopioConnector
+from danswer.connectors.mediawiki.wiki import MediaWikiConnector
 from danswer.connectors.models import InputType
 from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.productboard.connector import ProductboardConnector
@@ -31,6 +34,7 @@ from danswer.connectors.slab.connector import SlabConnector
 from danswer.connectors.slack.connector import SlackPollConnector
 from danswer.connectors.slack.load_connector import SlackLoadConnector
 from danswer.connectors.web.connector import WebConnector
+from danswer.connectors.wikipedia.connector import WikipediaConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
 from danswer.connectors.zulip.connector import ZulipConnector
 
@@ -72,6 +76,10 @@ def identify_connector_class(
         DocumentSource.LOOPIO: LoopioConnector,
         DocumentSource.SHAREPOINT: SharepointConnector,
         DocumentSource.TEAMS: TeamsConnector,
+        DocumentSource.DISCOURSE: DiscourseConnector,
+        DocumentSource.AXERO: AxeroConnector,
+        DocumentSource.MEDIAWIKI: MediaWikiConnector,
+        DocumentSource.WIKIPEDIA: WikipediaConnector,
     }
     connector_by_source = connector_map.get(source, {})
 

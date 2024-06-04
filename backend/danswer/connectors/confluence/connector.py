@@ -11,11 +11,14 @@ import bs4
 from atlassian import Confluence  # type:ignore
 from requests import HTTPError
 
+from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.html_utils import format_document_soup
+from danswer.connectors.confluence.rate_limit_handler import (
+    make_confluence_call_handle_rate_limit,
+)
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -24,6 +27,7 @@ from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.file_processing.html_utils import format_document_soup
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -72,7 +76,10 @@ def _extract_confluence_keys_from_datacenter_url(wiki_url: str) -> tuple[str, st
 
 
 def extract_confluence_keys_from_url(wiki_url: str) -> tuple[str, str, bool]:
-    is_confluence_cloud = ".atlassian.net/wiki/spaces/" in wiki_url
+    is_confluence_cloud = (
+        ".atlassian.net/wiki/spaces/" in wiki_url
+        or ".jira.com/wiki/spaces/" in wiki_url
+    )
 
     try:
         if is_confluence_cloud:
@@ -100,10 +107,11 @@ def _get_user(user_id: str, confluence_client: Confluence) -> str:
     """
     user_not_found = "Unknown User"
 
+    get_user_details_by_accountid = make_confluence_call_handle_rate_limit(
+        confluence_client.get_user_details_by_accountid
+    )
     try:
-        return confluence_client.get_user_details_by_accountid(user_id).get(
-            "displayName", user_not_found
-        )
+        return get_user_details_by_accountid(user_id).get("displayName", user_not_found)
     except Exception as e:
         logger.warning(
             f"Unable to get the User Display Name with the id: '{user_id}' - {e}"
@@ -127,8 +135,13 @@ def parse_html_page(text: str, confluence_client: Confluence) -> str:
         user_id = (
             user.attrs["ri:account-id"]
             if "ri:account-id" in user.attrs
-            else user.attrs["ri:userkey"]
+            else user.get("ri:userkey")
         )
+        if not user_id:
+            logger.warning(
+                "ri:userkey not found in ri:user element. " f"Found attrs: {user.attrs}"
+            )
+            continue
         # Include @ sign for tagging, more clear for LLM
         user.replaceWith("@" + _get_user(user_id, confluence_client))
     return format_document_soup(soup)
@@ -139,12 +152,16 @@ def _comment_dfs(
     comment_pages: Collection[dict[str, Any]],
     confluence_client: Confluence,
 ) -> str:
+    get_page_child_by_type = make_confluence_call_handle_rate_limit(
+        confluence_client.get_page_child_by_type
+    )
+
     for comment_page in comment_pages:
         comment_html = comment_page["body"]["storage"]["value"]
         comments_str += "\nComment:\n" + parse_html_page(
             comment_html, confluence_client
         )
-        child_comment_pages = confluence_client.get_page_child_by_type(
+        child_comment_pages = get_page_child_by_type(
             comment_page["id"],
             type="comment",
             start=None,
@@ -195,11 +212,17 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         start_ind: int,
     ) -> Collection[dict[str, Any]]:
         def _fetch(start_ind: int, batch_size: int) -> Collection[dict[str, Any]]:
+            get_all_pages_from_space = make_confluence_call_handle_rate_limit(
+                confluence_client.get_all_pages_from_space
+            )
             try:
-                return confluence_client.get_all_pages_from_space(
+                return get_all_pages_from_space(
                     self.space,
                     start=start_ind,
                     limit=batch_size,
+                    status="current"
+                    if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
+                    else None,
                     expand="body.storage.value,version",
                 )
             except Exception:
@@ -214,10 +237,13 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         # Could be that one of the pages here failed due to this bug:
                         # https://jira.atlassian.com/browse/CONFCLOUD-76433
                         view_pages.extend(
-                            confluence_client.get_all_pages_from_space(
+                            get_all_pages_from_space(
                                 self.space,
                                 start=start_ind + i,
                                 limit=1,
+                                status="current"
+                                if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
+                                else None,
                                 expand="body.storage.value,version",
                             )
                         )
@@ -228,7 +254,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         )
                         # Use view instead, which captures most info but is less complete
                         view_pages.extend(
-                            confluence_client.get_all_pages_from_space(
+                            get_all_pages_from_space(
                                 self.space,
                                 start=start_ind + i,
                                 limit=1,
@@ -257,10 +283,13 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         return pages
 
     def _fetch_comments(self, confluence_client: Confluence, page_id: str) -> str:
+        get_page_child_by_type = make_confluence_call_handle_rate_limit(
+            confluence_client.get_page_child_by_type
+        )
         try:
             comment_pages = cast(
                 Collection[dict[str, Any]],
-                confluence_client.get_page_child_by_type(
+                get_page_child_by_type(
                     page_id,
                     type="comment",
                     start=None,
@@ -279,8 +308,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             return ""
 
     def _fetch_labels(self, confluence_client: Confluence, page_id: str) -> list[str]:
+        get_page_labels = make_confluence_call_handle_rate_limit(
+            confluence_client.get_page_labels
+        )
         try:
-            labels_response = confluence_client.get_page_labels(page_id)
+            labels_response = get_page_labels(page_id)
             return [label["name"] for label in labels_response["results"]]
         except Exception as e:
             if not self.continue_on_failure:

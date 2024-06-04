@@ -1,15 +1,20 @@
+import re
 from datetime import datetime
+from re import Match
 
 import pytz
 import timeago  # type: ignore
 from slack_sdk.models.blocks import ActionsBlock
 from slack_sdk.models.blocks import Block
 from slack_sdk.models.blocks import ButtonElement
+from slack_sdk.models.blocks import ContextBlock
 from slack_sdk.models.blocks import DividerBlock
 from slack_sdk.models.blocks import HeaderBlock
 from slack_sdk.models.blocks import Option
 from slack_sdk.models.blocks import RadioButtonsElement
 from slack_sdk.models.blocks import SectionBlock
+from slack_sdk.models.blocks.basic_components import MarkdownTextObject
+from slack_sdk.models.blocks.block_elements import ImageElement
 
 from danswer.chat.models import DanswerQuote
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
@@ -22,6 +27,7 @@ from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_RESOLVED_ACTION_ID
 from danswer.danswerbot.slack.constants import IMMEDIATE_RESOLVED_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
+from danswer.danswerbot.slack.icons import source_to_github_img_link
 from danswer.danswerbot.slack.utils import build_feedback_id
 from danswer.danswerbot.slack.utils import remove_slack_text_interactions
 from danswer.danswerbot.slack.utils import translate_vespa_highlight_to_slack
@@ -29,22 +35,89 @@ from danswer.search.models import SavedSearchDoc
 from danswer.utils.text_processing import decode_escapes
 from danswer.utils.text_processing import replace_whitespaces_w_space
 
-_MAX_BLURB_LEN = 75
+_MAX_BLURB_LEN = 45
 
 
-def build_qa_feedback_block(message_id: int) -> Block:
+def get_feedback_reminder_blocks(thread_link: str, include_followup: bool) -> Block:
+    text = (
+        f"Please provide feedback on <{thread_link}|this answer>. "
+        "This is essential to help us to improve the quality of the answers. "
+        "Please rate it by clicking the `Helpful` or `Not helpful` button. "
+    )
+    if include_followup:
+        text += "\n\nIf you need more help, click the `I need more help from a human!` button. "
+
+    text += "\n\nThanks!"
+
+    return SectionBlock(text=text)
+
+
+def _process_citations_for_slack(text: str) -> str:
+    """
+    Converts instances of [[x]](LINK) in the input text to Slack's link format <LINK|[x]>.
+
+    Args:
+    - text (str): The input string containing markdown links.
+
+    Returns:
+    - str: The string with markdown links converted to Slack format.
+    """
+    # Regular expression to find all instances of [[x]](LINK)
+    pattern = r"\[\[(.*?)\]\]\((.*?)\)"
+
+    # Function to replace each found instance with Slack's format
+    def slack_link_format(match: Match) -> str:
+        link_text = match.group(1)
+        link_url = match.group(2)
+        return f"<{link_url}|[{link_text}]>"
+
+    # Substitute all matches in the input text
+    return re.sub(pattern, slack_link_format, text)
+
+
+def _split_text(text: str, limit: int = 3000) -> list[str]:
+    if len(text) <= limit:
+        return [text]
+
+    chunks = []
+    while text:
+        if len(text) <= limit:
+            chunks.append(text)
+            break
+
+        # Find the nearest space before the limit to avoid splitting a word
+        split_at = text.rfind(" ", 0, limit)
+        if split_at == -1:  # No spaces found, force split
+            split_at = limit
+
+        chunk = text[:split_at]
+        chunks.append(chunk)
+        text = text[split_at:].lstrip()  # Remove leading spaces from the next chunk
+
+    return chunks
+
+
+def clean_markdown_link_text(text: str) -> str:
+    # Remove any newlines within the text
+    return text.replace("\n", " ").strip()
+
+
+def build_qa_feedback_block(
+    message_id: int, feedback_reminder_id: str | None = None
+) -> Block:
     return ActionsBlock(
         block_id=build_feedback_id(message_id),
         elements=[
             ButtonElement(
                 action_id=LIKE_BLOCK_ACTION_ID,
-                text="👍",
+                text="👍 Helpful",
                 style="primary",
+                value=feedback_reminder_id,
             ),
             ButtonElement(
                 action_id=DISLIKE_BLOCK_ACTION_ID,
-                text="👎",
-                style="danger",
+                text="👎 Not helpful",
+                value=feedback_reminder_id,
             ),
         ],
     )
@@ -164,6 +237,80 @@ def build_documents_blocks(
     return section_blocks
 
 
+def build_sources_blocks(
+    cited_documents: list[tuple[int, SavedSearchDoc]],
+    num_docs_to_display: int = DANSWER_BOT_NUM_DOCS_TO_DISPLAY,
+) -> list[Block]:
+    if not cited_documents:
+        return [
+            SectionBlock(
+                text="*Warning*: no sources were cited for this answer, so it may be unreliable 😔"
+            )
+        ]
+
+    seen_docs_identifiers = set()
+    section_blocks: list[Block] = [SectionBlock(text="*Sources:*")]
+    included_docs = 0
+    for citation_num, d in cited_documents:
+        if d.document_id in seen_docs_identifiers:
+            continue
+        seen_docs_identifiers.add(d.document_id)
+
+        doc_sem_id = d.semantic_identifier
+        if d.source_type == DocumentSource.SLACK.value:
+            # for legacy reasons, before the switch to how Slack semantic identifiers are constructed
+            if "#" not in doc_sem_id:
+                doc_sem_id = "#" + doc_sem_id
+
+        # this is needed to try and prevent the line from overflowing
+        # if it does overflow, the image gets placed above the title and it
+        # looks bad
+        doc_sem_id = (
+            doc_sem_id[:_MAX_BLURB_LEN] + "..."
+            if len(doc_sem_id) > _MAX_BLURB_LEN
+            else doc_sem_id
+        )
+
+        owner_str = f"By {d.primary_owners[0]}" if d.primary_owners else None
+        days_ago_str = (
+            timeago.format(d.updated_at, datetime.now(pytz.utc))
+            if d.updated_at
+            else None
+        )
+        final_metadata_str = " | ".join(
+            ([owner_str] if owner_str else [])
+            + ([days_ago_str] if days_ago_str else [])
+        )
+
+        document_title = clean_markdown_link_text(doc_sem_id)
+        img_link = source_to_github_img_link(d.source_type)
+
+        section_blocks.append(
+            ContextBlock(
+                elements=(
+                    [
+                        ImageElement(
+                            image_url=img_link,
+                            alt_text=f"{d.source_type.value} logo",
+                        )
+                    ]
+                    if img_link
+                    else []
+                )
+                + [
+                    MarkdownTextObject(
+                        text=f"*<{d.link}|[{citation_num}] {document_title}>*\n{final_metadata_str}"
+                    ),
+                ]
+            )
+        )
+
+        if included_docs >= num_docs_to_display:
+            break
+
+    return section_blocks
+
+
 def build_quotes_block(
     quotes: list[DanswerQuote],
 ) -> list[Block]:
@@ -214,14 +361,14 @@ def build_qa_response_blocks(
     time_cutoff: datetime | None,
     favor_recent: bool,
     skip_quotes: bool = False,
+    process_message_for_citations: bool = False,
     skip_ai_feedback: bool = False,
+    feedback_reminder_id: str | None = None,
 ) -> list[Block]:
     if DISABLE_GENERATIVE_AI:
         return []
 
     quotes_blocks: list[Block] = []
-
-    ai_answer_header = HeaderBlock(text="AI Answer")
 
     filter_block: Block | None = None
     if time_cutoff or favor_recent or source_filters:
@@ -242,12 +389,18 @@ def build_qa_response_blocks(
         filter_block = SectionBlock(text=f"_{filter_text}_")
 
     if not answer:
-        answer_block = SectionBlock(
-            text="Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓"
-        )
+        answer_blocks = [
+            SectionBlock(
+                text="Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓"
+            )
+        ]
     else:
         answer_processed = decode_escapes(remove_slack_text_interactions(answer))
-        answer_block = SectionBlock(text=answer_processed)
+        if process_message_for_citations:
+            answer_processed = _process_citations_for_slack(answer_processed)
+        answer_blocks = [
+            SectionBlock(text=text) for text in _split_text(answer_processed)
+        ]
         if quotes:
             quotes_blocks = build_quotes_block(quotes)
 
@@ -259,19 +412,22 @@ def build_qa_response_blocks(
                 )
             ]
 
-    response_blocks: list[Block] = [ai_answer_header]
+    response_blocks: list[Block] = []
 
     if filter_block is not None:
         response_blocks.append(filter_block)
 
-    response_blocks.append(answer_block)
+    response_blocks.extend(answer_blocks)
 
     if message_id is not None and not skip_ai_feedback:
-        response_blocks.append(build_qa_feedback_block(message_id=message_id))
+        response_blocks.append(
+            build_qa_feedback_block(
+                message_id=message_id, feedback_reminder_id=feedback_reminder_id
+            )
+        )
 
     if not skip_quotes:
         response_blocks.extend(quotes_blocks)
-    response_blocks.append(DividerBlock())
 
     return response_blocks
 
