@@ -12,7 +12,7 @@ RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 
 # Install system dependencies
 # cmake needed for psycopg (postgres)
-# libpq-dev needed for psycopg (postgres)
+# libpq-dev needed for psyrecopg (postgres)
 # curl included just for users' convenience
 # zip for Vespa step futher down
 # ca-certificates for HTTPS

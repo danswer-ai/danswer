@@ -415,8 +415,6 @@ export function ChatPage({
   const allowAutoScrolling = true;
   useEffect(() => {
     if ((isStreaming || !message) && allowAutoScrolling) {
-      // Prevent
-      // console.log("handling autoscroll")
       handleAutoScroll(endDivRef, scrollableDivRef);
     }
   });
@@ -1053,7 +1051,8 @@ export function ChatPage({
                               i !== 0 ? messageHistory[i - 1] : null;
                             return (
                               <AIMessage
-                                alternateModel={message.alternate_model}
+                                // alternateModel={"message.alternate_model"}
+                                alternateModel={"gpt-4"}
                                 fullMessage={message}
                                 otherResponseCanSwitchTo={
                                   parentMessage?.childrenMessageIds || []

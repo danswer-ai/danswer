@@ -36,7 +36,6 @@ import Prism from "prismjs";
 
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
-import { Button } from "@tremor/react";
 
 function FileDisplay({ files }: { files: FileDescriptor[] }) {
   const imageFiles = files.filter((file) => file.type === ChatFileType.IMAGE);
@@ -188,7 +187,6 @@ export const AIMessage = ({
               </div>
             </div>
 
-            <Button onClick={() => console.log(fullMessage)}>Log</Button>
             <div className="font-bold text-emphasis ml-2 my-auto">
               {personaName || "Danswer"}
             </div>
@@ -235,13 +233,6 @@ export const AIMessage = ({
                   <SkippedSearch handleForceSearch={handleForceSearch} />
                 </div>
               )}
-            Message is {messageId}
-            <button onClick={() => console.log(otherResponseCanSwitchTo)}>
-              other message logs
-            </button>
-            <button onClick={() => console.log(messageId)}>
-              current message logs
-            </button>
             {content ? (
               <>
                 <FileDisplay files={files || []} />
@@ -340,9 +331,9 @@ export const AIMessage = ({
               {currentResponseId !== undefined &&
                 onResponseSelection &&
                 // otherMessagesCanSwitchTo &&
-                otherResponseCanSwitchTo.length > 0 && (
+                otherResponseCanSwitchTo.length > 1 && (
                   <div className="mr-2">
-                    <DummySwitcher
+                    <MessageSwitcher
                       currentPage={currentResponseId + 1}
                       totalPages={otherResponseCanSwitchTo.length}
                       handlePrevious={() =>
@@ -367,12 +358,20 @@ export const AIMessage = ({
                 icon={FiThumbsDown}
                 onClick={() => handleFeedback("dislike")}
               />
-              <Hoverable
-                active={regenerateModal || false}
-                icon={FiStar}
-                onClick={() => handleRegenerate()}
-              />
-              {alternateModel && <p>{alternateModel}</p>}
+              <div className="group flex">
+                <Hoverable
+                  active={regenerateModal || false}
+                  icon={FiStar}
+                  onClick={() => handleRegenerate()}
+                />
+                <p
+                  className={`my-auto ml-1 ${!regenerateModal && "opacity-0"} text-sm group-hover:opacity-100 transition-all duration-300`}
+                >
+                  {" "}
+                  {alternateModel || ""}
+                </p>
+              </div>
+              {/* {alternateModel && } */}
             </div>
           )}
         </div>
@@ -409,33 +408,33 @@ function MessageSwitcher({
   );
 }
 
-function DummySwitcher({
-  currentPage,
-  totalPages,
-  handlePrevious,
-  handleNext,
-}: {
-  currentPage: number;
-  totalPages: number;
-  handlePrevious?: () => void;
-  handleNext?: () => void;
-}) {
-  return (
-    <div className="flex items-center text-sm space-x-0.5">
-      <Hoverable
-        icon={FiChevronLeft}
-        onClick={currentPage === 1 ? undefined : handlePrevious}
-      />
-      <span className="text-emphasis text-medium select-none">
-        {currentPage} / {totalPages}
-      </span>
-      <Hoverable
-        icon={FiChevronRight}
-        onClick={currentPage === totalPages ? undefined : handleNext}
-      />
-    </div>
-  );
-}
+// function ResponseSwitcher({
+//   currentPage,
+//   totalPages,
+//   handlePrevious,
+//   handleNext,
+// }: {
+//   currentPage: number;
+//   totalPages: number;
+//   handlePrevious?: () => void;
+//   handleNext?: () => void;
+// }) {
+//   return (
+//     <div className="flex items-center text-sm space-x-0.5">
+//       <Hoverable
+//         icon={FiChevronLeft}
+//         onClick={currentPage === 1 ? undefined : handlePrevious}
+//       />
+//       <span className="text-emphasis text-medium select-none">
+//         {currentPage} / {totalPages}
+//       </span>
+//       <Hoverable
+//         icon={FiChevronRight}
+//         onClick={currentPage === totalPages ? undefined : handleNext}
+//       />
+//     </div>
+//   );
+// }
 
 export const HumanMessage = ({
   content,
@@ -602,55 +601,6 @@ export const HumanMessage = ({
                   </div>
                 </div>
               ) : typeof content === "string" ? (
-                // Method #1- ReformJuat the code specifically
-                //   <ReactMarkdown
-                //     className="prose prose-no-code-prose max-w-full"
-                //     components={
-                //       {
-                //         a: ({ node, ...props }) => (
-                //           <a
-                //             {...props}
-                //             className="text-blue-500 hover:text-blue-700"
-                //             target="_blank"
-                //             rel="noopener noreferrer"
-                //           />
-                //         ),
-
-                //         code: ({ node, className, children, ...props }) => {
-
-                //           return <p className="block-code">{children}</p>;
-                //         }
-                //       }
-                //     }
-                //     remarkPlugins={[remarkGfm]}
-                //   >
-
-                //     {`${content}`}
-                //   </ReactMarkdown>
-                // )
-
-                // Method #2- use tailwind's configuration options to modify
-                // Currently set for specifically pre and code but could be set for specific classes
-                // <ReactMarkdown
-                //   className="prose prose-no-code-prose max-w-full"
-                //   components={
-
-                //     {
-                //       a: ({ node, ...props }) => (
-                //         <a
-                //           {...props}
-                //           className="text-blue-500 hover:text-blue-700"
-                //           target="_blank"
-                //           rel="noopener noreferrer"
-                //         />
-                //       ),
-                //   }}
-                //   remarkPlugins={[remarkGfm]}
-                // >
-                //   {`${content}`}
-                // </ReactMarkdown>
-
-                // Remove React Markdown entirely
                 <div className="flex flex-col preserve-lines prose max-w-full">
                   {content}
                 {/* </ReactMarkdown> */}
@@ -660,10 +610,6 @@ export const HumanMessage = ({
               )}
             </div>
           </div>
-          {/* <button onClick={() => console.log(content)}>
-            validate
-          </button> */}
-
           <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1">
             {currentMessageInd !== undefined &&
               onMessageSelection &&
