@@ -616,7 +616,7 @@ export const DropboxIcon = ({
     <Image src={dropboxIcon} alt="Logo" width="96" height="96" />
   </div>
 );
-  
+
 export const DiscourseIcon = ({
   size = 16,
   className = defaultTailwindCSS,

@@ -14,10 +14,10 @@ import { adminDeleteCredential, linkCredential } from "@/lib/credential";
 import { fetcher } from "@/lib/fetcher";
 import { usePublicCredentials } from "@/lib/hooks";
 import {
-    ConnectorIndexingStatus,
-    Credential,
-    DropboxConfig,
-    DropboxCredentialJson
+  ConnectorIndexingStatus,
+  Credential,
+  DropboxConfig,
+  DropboxCredentialJson,
 } from "@/lib/types";
 import { Card, Text, Title } from "@tremor/react";
 import useSWR, { useSWRConfig } from "swr";
@@ -105,7 +105,14 @@ const Main = () => {
       ) : (
         <>
           <Text>
-            See the Dropbox connector <a className="text-blue-500" href="https://docs.danswer.dev/connectors/dropbox/overview">setup guide</a> on the Danswer docs to obtain a Dropbox token.
+            See the Dropbox connector{" "}
+            <a
+              className="text-blue-500"
+              href="https://docs.danswer.dev/connectors/dropbox/overview"
+            >
+              setup guide
+            </a>{" "}
+            on the Danswer docs to obtain a Dropbox token.
           </Text>
           <Card className="mt-4 mb-4">
             <CredentialForm<DropboxCredentialJson>
@@ -190,13 +197,13 @@ const Main = () => {
 };
 
 export default function Page() {
-    return (
-      <div className="mx-auto container">
-        <div className="mb-4">
-          <HealthCheckBanner />
-        </div>
-        <AdminPageTitle icon={<DropboxIcon size={32} />} title="Dropbox" />
-        <Main />
+  return (
+    <div className="mx-auto container">
+      <div className="mb-4">
+        <HealthCheckBanner />
       </div>
-    );
-  }
+      <AdminPageTitle icon={<DropboxIcon size={32} />} title="Dropbox" />
+      <Main />
+    </div>
+  );
+}
