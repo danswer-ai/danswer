@@ -550,11 +550,13 @@ export function ChatPage({
     const frozenCompleteMessageMap = upsertToCompleteMessageMap({
       messages: messageUpdates,
     });
+
     // on initial message send, we insert a dummy system message
     // set this as the parent here if no parent is set
     if (!parentMessage && frozenCompleteMessageMap.size === 2) {
       parentMessage = frozenCompleteMessageMap.get(SYSTEM_MESSAGE_ID) || null;
     }
+
     setMessage("");
     setCurrentMessageFiles([]);
 
@@ -569,6 +571,7 @@ export function ChatPage({
     let aiMessageImages: FileDescriptor[] | null = null;
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
+
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
