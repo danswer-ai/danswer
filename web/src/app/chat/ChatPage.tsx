@@ -333,7 +333,7 @@ export function ChatPage({
     modelOverRide: modelOverRideType,
     messageIdToResend: number
   ) => {
-    onSubmit({ messageIdToResend, modelOverRide });
+    onSubmit({ messageIdToResend, modelOverRide, regenerate: true });
   };
 
   // uploaded files
@@ -1134,6 +1134,21 @@ export function ChatPage({
                                 //   // console.log("howdy")
 
                                 // }
+
+                                // {regenerateModal && (
+                                //   <RegenerateOption
+                                regenerateID={regenerateID}
+                                messageIdToResend={
+                                  parentMessage?.messageId
+                                  // messageHistory[messageHistory.length - 1] &&
+                                  // messageHistory[messageHistory.length - 2]
+                                  //   .messageId
+                                }
+                                onClose={() => setRegenerateModal(false)}
+                                llmOverrideManager={llmOverrideManager}
+                                selectedAssistant={livePersona}
+                                //   />
+                                // )}
                                 alternateModel={message.alternate_model}
                                 // alternateModel={"gpt-4"}
                                 fullMessage={message}
@@ -1307,20 +1322,6 @@ export function ChatPage({
                               />
                             </div>
                           )}
-
-                        {regenerateModal && (
-                          <RegenerateOption
-                            regenerateID={regenerateID}
-                            messageIdToResend={
-                              messageHistory[messageHistory.length - 2] &&
-                              messageHistory[messageHistory.length - 2]
-                                .messageId
-                            }
-                            onClose={() => setRegenerateModal(false)}
-                            llmOverrideManager={llmOverrideManager}
-                            selectedAssistant={livePersona}
-                          />
-                        )}
 
                         {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                         {/* <div className={`min-h-[100px] w-full`}></div> */}

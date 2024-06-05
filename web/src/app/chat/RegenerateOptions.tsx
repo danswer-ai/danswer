@@ -89,66 +89,27 @@ export default function RegenerateOption({
       : llmName);
 
   return (
-    //     <Modal
-    //         onOutsideClick={onClose}
-    //         noPadding
-    //         className="
-    //     w-4/6
-    //     h-4/6
-    //     flex
-    //     flex-col
-    //   "
-    //     >
-    <div className={"  px-5 flex -mr-6 w-full"}>
-      <div className="mx-auto  w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar relative">
-        <div className="ml-16">
-          <div className="   flex">
-            {/* <Text className="mb-1">
-                    Regenerates?
-                </Text>
-            <Text className="mb-3">
-                <i className="font-medium">
+    <RegenerateDropdown
+      options={llmOptions}
+      selected={currentModelName}
+      onSelect={
+        (value) =>
+          // TODO change of course
+          // console.log(value)
+          {
+            const { name, provider, modelName } = destructureValue(
+              value as string
+            );
+            // console.log({ modelVersion: modelName, modelProvider: provider})
 
-                </i>.
-
-            </Text>
-            <Text>
-                    New model?
-                </Text>
-            {structureValue(
-                llmOverride.name,
-                llmOverride.provider,
-                llmOverride.modelName
-            )}
-
-            {currentModelName} */}
-
-            <RegenerateDropdown
-              options={llmOptions}
-              selected={currentModelName}
-              onSelect={
-                (value) =>
-                  // TODO change of course
-                  // console.log(value)
-                  {
-                    const { name, provider, modelName } = destructureValue(
-                      value as string
-                    );
-                    // console.log({ modelVersion: modelName, modelProvider: provider})
-
-                    // console.log(messageIdToResend)
-                    regenerateID(
-                      { modelVersion: modelName, modelProvider: provider },
-                      messageIdToResend
-                    );
-                  }
-                // setLlmOverride(destructureValue(value as string))
-              }
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-    // </Modal>
+            // console.log(messageIdToResend)
+            regenerateID(
+              { modelVersion: modelName, modelProvider: provider },
+              messageIdToResend
+            );
+          }
+        // setLlmOverride(destructureValue(value as string))
+      }
+    />
   );
 }

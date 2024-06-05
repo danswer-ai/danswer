@@ -1,7 +1,8 @@
 import { ChangeEvent, FC, useEffect, useRef, useState } from "react";
 import { ChevronDownIcon } from "./icons/icons";
-import { FiCheck, FiChevronDown } from "react-icons/fi";
+import { FiCheck, FiChevronDown, FiStar } from "react-icons/fi";
 import { Popover } from "./popover/Popover";
+import { Hoverable } from "./Hoverable";
 
 export interface Option<T> {
   name: string;
@@ -404,22 +405,27 @@ export function RegenerateDropdown({
   const [isOpen, setIsOpen] = useState(false);
 
   const Content = (
-    <div
-      className={`
-      flex 
-      text-sm 
-      max-w-sm
-      bg-background 
-      px-3
-      py-1.5 
-      rounded-lg 
-      border 
-      border-border 
-      cursor-pointer`}
-    >
-      <p className="line-clamp-1">Select a model</p>
-      <FiChevronDown className="my-auto ml-auto" />
-    </div>
+    // <div
+    //   className={`
+    //   flex
+    //   text-sm
+    //   max-w-sm
+    //   bg-background
+    //   px-3
+    //   py-1.5
+    //   rounded-lg
+    //   border
+    //   border-border
+    //   cursor-pointer`}
+    // >
+    <Hoverable
+      // active={regenerateModal || false}
+      icon={FiStar}
+      // onClick={() => handleRegenerate()}
+    />
+    //   // {/* <p className="line-clamp-1">Select a model</p>
+    //   <FiChevronDown className="my-auto ml-auto" /> */}
+    // // </div>
   );
 
   const Dropdown = (
@@ -472,7 +478,7 @@ export function RegenerateDropdown({
         align="start"
         side={side}
         sideOffset={5}
-        matchWidth
+        // matchWidth
         triggerMaxWidth
       />
     </div>
