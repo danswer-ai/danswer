@@ -9,6 +9,7 @@ import { Modal } from "@/components/Modal";
 import { useState } from "react";
 import { FaRobot } from "react-icons/fa";
 import { SourceMetadata } from "@/lib/search/interfaces";
+import { useChatContext } from "@/components/context/ChatContext";
 
 const MAX_PERSONAS_TO_DISPLAY = 4;
 
@@ -27,6 +28,28 @@ function HelperItemDisplay({
   );
 }
 
+interface AssistantsTabProps {
+  selectedAssistant: Persona;
+  onSelect: (assistant: Persona) => void;
+}
+
+export function AssistantInsertion({
+  selectedAssistant,
+  onSelect,
+}: AssistantsTabProps) {
+  const { availablePersonas, llmProviders } = useChatContext();
+
+  return (
+    <div className="">
+      test
+      {availablePersonas.map((assistant, index) => {
+        if (assistant != selectedAssistant) {
+          return <div>{assistant.name}</div>;
+        }
+      })}
+    </div>
+  );
+}
 export function ChatIntro({
   availableSources,
   availablePersonas,
@@ -118,6 +141,10 @@ export function ChatIntro({
             </>
           )}
         </div>
+        <AssistantInsertion
+          onSelect={(assistant: Persona) => null}
+          selectedAssistant={selectedPersona}
+        />
       </div>
     </>
   );
