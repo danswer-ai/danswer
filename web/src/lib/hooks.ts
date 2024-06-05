@@ -43,6 +43,7 @@ export const useScrollOnStream = ({
     if (isStreaming && lastMessageRef.current && inputRef.current) {
       const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
       const endDivRect = inputRef.current.getBoundingClientRect();
+      console.log(endDivRect.bottom - lastMessageRect.bottom);
 
       // Is the bottom of the final chat within the engagement distance?
       if (
@@ -69,18 +70,18 @@ export type InitialScrollType = {
 export const useInitialScroll = ({
   isStreaming,
   endDivRef,
-  isFetchingChatMessages,
   hasPerformedInitialScroll,
   initialScrollComplete,
 }: InitialScrollType) => {
   useEffect(() => {
     // Check: have we done this before? + null checks
     if (!hasPerformedInitialScroll && endDivRef.current && isStreaming) {
+      console.log("Initial scroll");
       endDivRef.current.scrollIntoView({ behavior: "smooth" });
+
       initialScrollComplete();
     }
-  }),
-    [isFetchingChatMessages];
+  });
 };
 
 export type ResponsiveScrollType = {
@@ -106,6 +107,7 @@ export const useResponsiveScroll = ({
 
     // Core logic
     const handleInputResize = async () => {
+      console.log("Handle!");
       function delay(ms: number) {
         return new Promise((resolve) => setTimeout(resolve, ms));
       }
@@ -180,7 +182,7 @@ export const useResponsiveScroll = ({
         clearTimeout(timeoutId);
       }
     };
-  }, [lastMessageRef, inputRef]);
+  });
 };
 
 export const usePublicCredentials = () => {
