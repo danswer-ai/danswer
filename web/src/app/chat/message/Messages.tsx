@@ -304,7 +304,8 @@ export const AIMessage = ({
                 ) : (
                   content
                 )}
-                {messageId}
+                {/* Can render for logging purposes */}
+                {/* {messageId} */}
               </>
             ) : isComplete ? null : (
               loader
@@ -556,7 +557,8 @@ export const HumanMessage = ({
             <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words">
               <FileDisplay files={files || []} />
 
-              {messageId}
+              {/* Can render for logging purposes */}
+              {/* {messageId} */}
               {isEditing ? (
                 <div>
                   <div

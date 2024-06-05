@@ -207,11 +207,10 @@ export function ChatPage({
 
       const newCompleteMessageMap = processRawChatHistory(chatSession.messages);
       const newMessageHistory = buildLatestMessageChain(newCompleteMessageMap);
-      // console.log(newCompleteMessageMap)
+
       // if the last message is an error, don't overwrite it
       if (messageHistory[messageHistory.length - 1]?.type !== "error") {
-        console.log("z\nz\nz\nz\nz\nz\n");
-        console.log("error message map");
+        console.log("updating message map");
         setCompleteMessageMap(newCompleteMessageMap);
 
         const latestMessageId =
@@ -330,8 +329,7 @@ export function ChatPage({
       }
     }
 
-    console.log("z\nz\nz\nz\nz\nz\n");
-    console.log("udpating messagemap");
+    console.log("updating message map");
     setCompleteMessageMap(newCompleteMessageMap);
     return newCompleteMessageMap;
   };
@@ -582,11 +580,6 @@ export function ChatPage({
     // if we're resending, set the parent's child to null
     // we will use tempMessages until the regenerated message is complete
     const messageUpdates: Message[] = [];
-    // if (!regenerate) {
-    console.log("modificaions will be made in a sec");
-    // await delay(1000)
-
-    console.log("will happen now");
 
     // New/edited user message
     messageUpdates.push({
@@ -617,16 +610,10 @@ export function ChatPage({
       });
     }
 
-    // console.log(completeMessageMap)
-    // console.log(messageUpdates)
-
     const frozenCompleteMessageMap = upsertToCompleteMessageMap({
       messages: messageUpdates,
       regenerate: regenerate,
     });
-
-    console.log("#1");
-    await delay(2000);
 
     // on initial message send, we insert a dummy system message
     // set this as the parent here if no parent is set
@@ -635,9 +622,6 @@ export function ChatPage({
     }
     setMessage("");
     setCurrentMessageFiles([]);
-
-    // console.log("before?")
-    // await delay(2000)
 
     setIsStreaming(true);
     let answer = "";
@@ -650,12 +634,6 @@ export function ChatPage({
     let aiMessageImages: FileDescriptor[] | null = null;
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
-
-    // console.log("before")
-    // await delay(2000)
-
-    console.log("#2");
-    await delay(2000);
 
     try {
       const lastSuccessfulMessageId =
@@ -735,22 +713,12 @@ export function ChatPage({
               ] as [number, number][])
             : null;
 
-          console.log("---");
-          console.log("before");
-          console.log(completeMessageMap);
-
           upsertToCompleteMessageMap({
             messages: messages,
             replacementsMap: replacementsMap,
             completeMessageMapOverride: frozenCompleteMessageMap,
             regenerate: regenerate,
           });
-          console.log("after applying:");
-          console.log(replacementsMap);
-          console.log("get");
-          console.log(completeMessageMap);
-          console.log(messageHistory);
-          console.log("");
         };
 
         const newUserMessageId =
@@ -810,12 +778,9 @@ export function ChatPage({
       });
     }
 
-    console.log("#3");
-    await delay(2000);
-    // console.log("Finished")
-    // await delay(1000)
-
     setIsStreaming(false);
+    // Should be able to update
+
     // if (isNewSession) {
     //   if (finalMessage) {
     //     setSelectedMessageForDocDisplay(finalMessage.message_id);
@@ -841,13 +806,6 @@ export function ChatPage({
     // ) {
     //   setSelectedMessageForDocDisplay(finalMessage.message_id);
     // }
-
-    console.log("updated message mapping +  history");
-
-    console.log(completeMessageMap);
-    console.log(messageHistory);
-    await delay(2000);
-    // await delay(20000)/
   };
 
   const onFeedback = async (
@@ -1063,7 +1021,8 @@ export function ChatPage({
                           </div>
                         </div>
                       )}
-                      <Button
+                      {/* <Button 
+                      // used for evaluating the message tree
                         className="fixed top-0 z-[1000]"
                         onClick={() => {
                           console.log("Message history");
@@ -1072,7 +1031,7 @@ export function ChatPage({
                         }}
                       >
                         Validate
-                      </Button>
+                      </Button> */}
                       {messageHistory.length === 0 &&
                         !isFetchingChatMessages &&
                         !isStreaming && (
@@ -1132,8 +1091,6 @@ export function ChatPage({
                                       message.parentMessageId!
                                     )!.latestChildMessageId = messageId;
 
-                                    console.log("z\nz\nz\nz\nz\nz\n");
-                                    console.log("new message map");
                                     setCompleteMessageMap(
                                       newCompleteMessageMap
                                     );
@@ -1284,8 +1241,7 @@ export function ChatPage({
                                     message.parentMessageId!
                                   )!.latestChildMessageId = messageId;
 
-                                  console.log("z\nz\nz\nz\nz\nz\n");
-                                  console.log("select message map");
+                                  console.log("updating message map");
                                   setCompleteMessageMap(newCompleteMessageMap);
                                   setSelectedMessageForDocDisplay(messageId);
 
@@ -1312,6 +1268,8 @@ export function ChatPage({
                             );
                           }
                         })}
+
+                        {/* pass in the document */}
 
                         {isStreaming &&
                           messageHistory.length > 0 &&
