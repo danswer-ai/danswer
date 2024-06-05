@@ -27,7 +27,7 @@ export type AutoScrollHookType = {
 };
 
 /**
- * Scrolls on streaming of text, if within `distance`
+ * Scrolls on streaming of text, if within param `distance`
  */
 export const useScrollOnStream = ({
   isStreaming,
@@ -35,12 +35,12 @@ export const useScrollOnStream = ({
   inputRef,
   endDivRef,
   distance = 140, // distance that should "engage" the scroll
-  debounce = 100,
+  debounce = 150, // time for debouncing
 }: AutoScrollHookType) => {
   const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Function to handle the scroll
+    // Function to handle the scroll itself
     const handleScroll = () => {
       if (lastMessageRef.current && inputRef.current && endDivRef?.current) {
         const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
@@ -74,10 +74,9 @@ export const useScrollOnStream = ({
 };
 
 export type InitialScrollType = {
-  isFetchingChatMessages: boolean;
   endDivRef: RefObject<HTMLDivElement>;
   hasPerformedInitialScroll: boolean;
-  initialScrollComplete: () => void;
+  completeInitialScroll: () => void;
   isStreaming: boolean;
 };
 
@@ -88,15 +87,13 @@ export const useInitialScroll = ({
   isStreaming,
   endDivRef,
   hasPerformedInitialScroll,
-  initialScrollComplete,
+  completeInitialScroll,
 }: InitialScrollType) => {
   useEffect(() => {
     // Check: have we done this before? + null checks
     if (!hasPerformedInitialScroll && endDivRef.current && isStreaming) {
-      console.log("Initial scroll");
       endDivRef.current.scrollIntoView({ behavior: "smooth" });
-
-      initialScrollComplete();
+      completeInitialScroll();
     }
   });
 };
@@ -155,12 +152,6 @@ export const useResponsiveScroll = ({
 
             timeoutId = setTimeout(() => {
               if (endDivRef && endDivRef?.current) {
-                // TODO
-                // window.scrollBy({
-                //   top: currentInputHeight - prevInputHeight,
-                //   behavior: 'smooth',
-                // });
-
                 endDivRef?.current.scrollIntoView({ behavior: "smooth" });
               }
             }, 500);

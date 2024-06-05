@@ -435,7 +435,7 @@ export function ChatPage({
     useState(false);
 
   // The scrolling hooks
-  const initialScrollComplete = () => {
+  const completeInitialScroll = () => {
     setHasPerformedInitialScroll(true);
   };
 
@@ -452,9 +452,8 @@ export function ChatPage({
   useInitialScroll({
     isStreaming,
     endDivRef,
-    isFetchingChatMessages,
     hasPerformedInitialScroll,
-    initialScrollComplete,
+    completeInitialScroll,
   });
 
   // Scroll if input bar covers bottom of message history
