@@ -27,9 +27,11 @@ logger = setup_logger()
 datetime_format_string = "%Y-%m-%dT%H:%M:%S.%f%z"
 
 
-def get_created_datetime(obj: ChatMessage) -> datetime:
+def get_created_datetime(chat_message: ChatMessage) -> datetime:
     # Extract the 'createdDateTime' value from the 'properties' dictionary and convert it to a datetime object
-    return datetime.strptime(obj.properties["createdDateTime"], datetime_format_string)
+    return datetime.strptime(
+        chat_message.properties["createdDateTime"], datetime_format_string
+    )
 
 
 class TeamsConnector(LoadConnector, PollConnector):
