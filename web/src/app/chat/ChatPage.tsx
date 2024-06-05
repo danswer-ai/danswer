@@ -321,7 +321,7 @@ export function ChatPage({
   const messageHistory = buildLatestMessageChain(completeMessageMap);
   const [isStreaming, setIsStreaming] = useState(false);
 
-  // uploaded files
+  // uploaded the files
   const [currentMessageFiles, setCurrentMessageFiles] = useState<
     FileDescriptor[]
   >([]);
