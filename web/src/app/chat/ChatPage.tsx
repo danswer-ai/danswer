@@ -348,6 +348,7 @@ export function ChatPage({
         )
         : undefined
   );
+
   const livePersona =
     selectedPersona || filteredAssistants[0] || availablePersonas[0];
 
