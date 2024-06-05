@@ -262,6 +262,7 @@ def stream_chat_message_objects(
                 db_session=db_session,
                 commit=False,
             )
+
             # re-create linear history of messages
             final_msg, history_msgs = create_chat_chain(
                 chat_session_id=chat_session_id, db_session=db_session
@@ -463,7 +464,6 @@ def stream_chat_message_objects(
 
         # this won't work- need to address with the `llm` and accesss the raw output
         for packet in answer.processed_streamed_output:
-            print(packet)
             if isinstance(packet, ToolResponse):
                 if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
                     (
@@ -538,9 +538,7 @@ def stream_chat_message_objects(
         msg_detail_response = translate_db_message_to_chat_message_detail(
             gen_ai_response_message
         )
-        print("msg_detail_response")
-        print(msg_detail_response)
-        print("")
+
         yield msg_detail_response
     except Exception as e:
         logger.exception(e)
@@ -563,5 +561,4 @@ def stream_chat_message(
             use_existing_user_message=use_existing_user_message,
         )
         for obj in objects:
-            print(obj.dict())
             yield get_json_line(obj.dict())

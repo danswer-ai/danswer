@@ -279,7 +279,6 @@ class DefaultMultiLLM(LLM):
             prompt = [_convert_message_to_dict(HumanMessage(content=prompt))]
 
         try:
-            # print("getting completion")
             return litellm.completion(
                 # model choice
                 model=f"{self.config.model_provider}/{self.config.model_name}",
@@ -327,9 +326,6 @@ class DefaultMultiLLM(LLM):
             litellm.ModelResponse, self._completion(prompt, tools, tool_choice, False)
         )
 
-        # print("contains message")
-        # print(response)
-
         return _convert_litellm_message_to_langchain_message(
             response.choices[0].message
         )
@@ -359,7 +355,6 @@ class DefaultMultiLLM(LLM):
                 count = token_counter(
                     model=response.model, text=text, count_response_tokens=True
                 )
-                print(count)
 
             if len(part["choices"]) == 0:
                 continue
@@ -369,8 +364,7 @@ class DefaultMultiLLM(LLM):
                 output = message_chunk
             else:
                 output += message_chunk
-            print("message chunk")
-            print(message_chunk)
+
             yield message_chunk
 
         if LOG_ALL_MODEL_INTERACTIONS and output:

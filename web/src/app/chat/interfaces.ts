@@ -69,6 +69,7 @@ export interface BackendChatSession {
 }
 
 export interface BackendMessage {
+  max_token?: boolean;
   message_id: number;
   parent_message: number | null;
   latest_child_message: number | null;

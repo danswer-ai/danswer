@@ -95,7 +95,7 @@ export function ChatPage({
   const filteredAssistants = orderAssistantsForUser(availablePersonas, user);
 
   // TODO
-  const [canContinue, setCanContinue] = useState(true);
+  const [canContinue, setCanContinue] = useState(false);
 
   const continueGenerating = () => {
     onSubmit({
@@ -486,6 +486,7 @@ export function ChatPage({
     forceSearch?: boolean;
     isSeededChat?: boolean;
   } = {}) => {
+    setCanContinue(false);
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
     const searchParamBasedChatSessionName =
@@ -618,7 +619,12 @@ export function ChatPage({
       })) {
         for (const packet of packetBunch) {
           console.log("packet");
-          console.log(packet);
+          // console
+          if (Object.hasOwn(packet, "max_token")) {
+            if ((packet as AnswerPiecePacket).max_token) {
+              setCanContinue(true);
+            }
+          }
 
           if (Object.hasOwn(packet, "answer_piece")) {
             answer += (packet as AnswerPiecePacket).answer_piece;
