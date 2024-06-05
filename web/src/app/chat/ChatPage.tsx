@@ -97,6 +97,13 @@ export function ChatPage({
   // TODO
   const [canContinue, setCanContinue] = useState(true);
 
+  const continueGenerating = () => {
+    onSubmit({
+      messageOverride:
+        "Continue Generating (pick up exactly where you left off but for code blocks and the like let's try and have it make sense to return in its own place)",
+    });
+  };
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const existingChatIdRaw = searchParams.get("chatId");
@@ -1167,7 +1174,9 @@ export function ChatPage({
                             <div className="ml-8 ">
                               <div className="flex justify-end  w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words mt-1 ml-8">
                                 <div className="ml-auto my-auto">
-                                  <EmphasizedClickable>
+                                  <EmphasizedClickable
+                                    onClick={() => continueGenerating()}
+                                  >
                                     <div className="px-1 flex gap-x-1 text-xs">
                                       Continue Generating
                                       <FiActivity className="my-auto" />

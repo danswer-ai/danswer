@@ -74,13 +74,16 @@ GEN_AI_API_KEY = (
 # API Base, such as (for Azure): https://danswer.openai.azure.com/
 GEN_AI_API_ENDPOINT = os.environ.get("GEN_AI_API_ENDPOINT") or None
 # API Version, such as (for Azure): 2023-09-15-preview
+
 GEN_AI_API_VERSION = os.environ.get("GEN_AI_API_VERSION") or None
 # LiteLLM custom_llm_provider
+
 GEN_AI_LLM_PROVIDER_TYPE = os.environ.get("GEN_AI_LLM_PROVIDER_TYPE") or None
 # Override the auto-detection of LLM max context length
+
 GEN_AI_MAX_TOKENS = int(os.environ.get("GEN_AI_MAX_TOKENS") or 0) or None
 # Set this to be enough for an answer + quotes. Also used for Chat
-GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS") or 4)
+GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS") or 60)
 
 # GEN_AI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEN_AI_MAX_OUTPUT_TOKENS") or 1024)
 
