@@ -214,6 +214,10 @@ class WebConnector(LoadConnector):
         and converts them into documents"""
         visited_links: set[str] = set()
         to_visit: list[str] = self.to_visit_list
+
+        if not to_visit:
+            raise ValueError("No URLs to visit")
+
         base_url = to_visit[0]  # For the recursive case
         doc_batch: list[Document] = []
 
