@@ -150,7 +150,9 @@ const Main = () => {
             Dropbox indexing status
           </Title>
           <Text className="mb-2">
-            The latest article changes are fetched every 10 minutes.
+            Due to the short term access key, the Dropbox connector will only
+            index files after a new access key is provided and the indexing
+            process is re-run manually.
           </Text>
           <div className="mb-2">
             <ConnectorsTable<DropboxConfig, DropboxCredentialJson>
@@ -186,7 +188,7 @@ const Main = () => {
               formBody={<></>}
               validationSchema={Yup.object().shape({})}
               initialValues={{}}
-              refreshFreq={10 * 60} // 10 minutes
+              // refreshFreq={10 * 60} // Disable polling
               credentialId={dropboxCredential.id}
             />
           </Card>
