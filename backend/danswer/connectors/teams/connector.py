@@ -108,19 +108,19 @@ class TeamsConnector(LoadConnector, PollConnector):
         self,
         teams: list[Team],
     ) -> list[Channel]:
-        channels: list[Channel] = []
+        channels_list: list[Channel] = []
         for team in teams:
             query = team.channels.get()
             channels = query.execute_query()
-            channels.extend(channels)
+            channels_list.extend(channels)
 
-        return channels
+        return channels_list
 
     def _get_all_teams(self) -> list[Team]:
         if self.graph_client is None:
             raise ConnectorMissingCredentialError("Teams")
 
-        teams: list[Team] = []
+        teams_list: list[Team] = []
 
         teams = self.graph_client.teams.get().execute_query()
 
@@ -130,11 +130,11 @@ class TeamsConnector(LoadConnector, PollConnector):
                 for team in teams:
                     adjusted_team_string = team.display_name.replace(" ", "")
                     if adjusted_team_string == adjusted_request_string:
-                        teams.append(team)
+                        teams_list.append(team)
         else:
-            teams.extend(teams)
+            teams_list.extend(teams)
 
-        return teams
+        return teams_list
 
     def _fetch_from_teams(
         self, start: datetime | None = None, end: datetime | None = None
