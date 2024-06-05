@@ -736,10 +736,15 @@ class ChatMessage(Base):
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
     prompt: Mapped[Optional["Prompt"]] = relationship("Prompt")
+
+    # when call for a specific assistant in UI (`@`)
+    alternate_assistant: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     chat_message_feedbacks: Mapped[list["ChatMessageFeedback"]] = relationship(
         "ChatMessageFeedback",
         back_populates="chat_message",
     )
+
     document_feedbacks: Mapped[list["DocumentRetrievalFeedback"]] = relationship(
         "DocumentRetrievalFeedback",
         back_populates="chat_message",

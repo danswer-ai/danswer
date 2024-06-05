@@ -7,8 +7,8 @@ import { FiBookmark, FiCpu, FiInfo, FiX, FiZoomIn } from "react-icons/fi";
 import { HoverPopup } from "@/components/HoverPopup";
 import { Modal } from "@/components/Modal";
 import { useState } from "react";
-import { FaCaretDown, FaCaretRight } from "react-icons/fa";
 import { Logo } from "@/components/Logo";
+import { useChatContext } from "@/components/context/ChatContext";
 
 const MAX_PERSONAS_TO_DISPLAY = 4;
 
@@ -27,6 +27,28 @@ function HelperItemDisplay({
   );
 }
 
+interface AssistantsTabProps {
+  selectedAssistant: Persona;
+  onSelect: (assistant: Persona) => void;
+}
+
+export function AssistantInsertion({
+  selectedAssistant,
+  onSelect,
+}: AssistantsTabProps) {
+  const { availablePersonas, llmProviders } = useChatContext();
+
+  return (
+    <div className="">
+      test
+      {availablePersonas.map((assistant, index) => {
+        if (assistant != selectedAssistant) {
+          return <div>{assistant.name}</div>;
+        }
+      })}
+    </div>
+  );
+}
 export function ChatIntro({
   availableSources,
   availablePersonas,
@@ -120,6 +142,10 @@ export function ChatIntro({
             </>
           )}
         </div>
+        <AssistantInsertion
+          onSelect={(assistant: Persona) => null}
+          selectedAssistant={selectedPersona}
+        />
       </div>
     </>
   );

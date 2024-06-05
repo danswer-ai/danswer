@@ -229,6 +229,8 @@ def stream_chat_message_objects(
         if prompt_id is None and persona.prompts:
             prompt_id = sorted(persona.prompts, key=lambda x: x.id)[-1].id
 
+        # TODO select proprer persona with new_msg_req.alternate_assistant
+
         if reference_doc_ids is None and retrieval_options is None:
             raise RuntimeError(
                 "Must specify a set of documents for chat or specify search options"
