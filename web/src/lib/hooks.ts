@@ -25,18 +25,23 @@ export type AutoScrollHookType = {
   distance?: number;
 };
 
-export const useAutoScrollOnMessage = ({
+/**
+ * Scrolls on streaming of text, if within `distance`
+ */
+export const useScrollOnStream = ({
   isStreaming,
   lastMessageRef,
   inputRef,
   endDivRef,
-  distance = 140,
+  distance = 140, // distance that should "engage" the scroll
 }: AutoScrollHookType) => {
   useEffect(() => {
+    // Is text streaming? + null checks
     if (isStreaming && lastMessageRef.current && inputRef.current) {
       const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
       const endDivRect = inputRef.current.getBoundingClientRect();
 
+      // Is the bottom of the final chat within the engagement distance?
       if (
         endDivRect.bottom - lastMessageRect.bottom > distance &&
         endDivRef?.current
@@ -55,6 +60,9 @@ export type InitialScrollType = {
   isStreaming: boolean;
 };
 
+/**
+ * Initial scroll (specifically for the situation in which your input is too long)
+ */
 export const useInitialScroll = ({
   isStreaming,
   endDivRef,
@@ -63,6 +71,7 @@ export const useInitialScroll = ({
   initialScrollComplete,
 }: InitialScrollType) => {
   useEffect(() => {
+    // Check: have we done this before? + null checks
     if (!hasPerformedInitialScroll && endDivRef.current && isStreaming) {
       endDivRef.current.scrollIntoView({ behavior: "smooth" });
       initialScrollComplete();
@@ -78,7 +87,10 @@ export type ResponsiveScrollType = {
   textAreaRef: RefObject<HTMLTextAreaElement>;
 };
 
-export const useResponsiveAutoScroll = ({
+/**
+ * Scroll in cases where the input bar covers previously visible bottom of text
+ */
+export const useResponsiveScroll = ({
   lastMessageRef,
   inputRef,
   endDivRef,
@@ -89,13 +101,14 @@ export const useResponsiveAutoScroll = ({
     let prevInputHeight = 0;
     let prevDistance = 0;
 
+    // Core logic
     const handleInputResize = async () => {
       function delay(ms: number) {
         return new Promise((resolve) => setTimeout(resolve, ms));
       }
       await delay(100);
 
-      // validate that message and input exist
+      // Validate that message and input exist
       if (
         lastMessageRef &&
         inputRef &&
@@ -107,9 +120,9 @@ export const useResponsiveAutoScroll = ({
         const currentInputHeight = endDivRect.height;
 
         if (
-          // validate change in height
+          // Validate change in height
           currentInputHeight > prevInputHeight &&
-          // validate distance
+          // Validate distance
           endDivRect.top <= lastMessageRect.bottom
         ) {
           // Validate previous distance and existence of the final div
@@ -151,7 +164,6 @@ export const useResponsiveAutoScroll = ({
       }
     };
 
-    // Previous- on input
     const textarea = textAreaRef.current;
     if (textarea) {
       textarea.addEventListener("input", handleInputResize);
@@ -166,8 +178,6 @@ export const useResponsiveAutoScroll = ({
       }
     };
   }, [lastMessageRef, inputRef]);
-
-  return null;
 };
 
 export const usePublicCredentials = () => {
