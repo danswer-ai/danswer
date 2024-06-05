@@ -44,6 +44,7 @@ OPEN_AI_MODEL_NAMES = [
     "gpt-3.5-turbo-0301",
 ]
 
+
 BEDROCK_PROVIDER_NAME = "bedrock"
 # need to remove all the weird "bedrock/eu-central-1/anthropic.claude-v1" named
 # models

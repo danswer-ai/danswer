@@ -200,11 +200,7 @@ def stream_chat_message_objects(
     4. [always] Details on the final AI response message that is created
 
     """
-    print("Streaming function")
-    print(stream_chat_message_objects)
-    print(new_msg_req)
     try:
-        print("in the loop")
         user_id = user.id if user is not None else None
 
         chat_session = get_chat_session_by_id(
@@ -269,7 +265,6 @@ def stream_chat_message_objects(
                 db_session=db_session,
                 regenerating=True,
             )
-            print(final_msg.message, history_msgs)
 
         elif not use_existing_user_message:
             # Create new message at the right place in the tree and update the parent's child pointer
@@ -598,8 +593,6 @@ def stream_chat_message(
     user: User | None,
     use_existing_user_message: bool = False,
 ) -> Iterator[str]:
-    print("this is a test")
-    print(new_msg_req)
     with get_session_context_manager() as db_session:
         objects = stream_chat_message_objects(
             new_msg_req=new_msg_req,

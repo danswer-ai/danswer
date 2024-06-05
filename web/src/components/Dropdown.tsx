@@ -392,7 +392,9 @@ export function RegenerateDropdown({
   side,
   maxHeight,
   gptBox,
+  alternate,
 }: {
+  alternate?: string;
   options: StringOrNumberOption[];
   selected: string | null;
   onSelect: (value: string | number | null) => void;
@@ -401,33 +403,7 @@ export function RegenerateDropdown({
   maxHeight?: string;
   gptBox?: boolean;
 }) {
-  const selectedOption = options.find((option) => option.value === selected);
   const [isOpen, setIsOpen] = useState(false);
-
-  const Content = (
-    // <div
-    //   className={`
-    //   flex
-    //   text-sm
-    //   max-w-sm
-    //   bg-background
-    //   px-3
-    //   py-1.5
-    //   rounded-lg
-    //   border
-    //   border-border
-    //   cursor-pointer`}
-    // >
-    <Hoverable
-      // active={regenerateModal || false}
-      icon={FiStar}
-      // onClick={() => handleRegenerate()}
-    />
-    //   // {/* <p className="line-clamp-1">Select a model</p>
-    //   <FiChevronDown className="my-auto ml-auto" /> */}
-    // // </div>
-  );
-
   const Dropdown = (
     <div
       className={`
@@ -455,8 +431,6 @@ export function RegenerateDropdown({
         const isSelected = option.value === selected;
         return (
           <DefaultDropdownElement
-            // TODO modify to include different icons
-            // includeCheckbox={true}
             key={option.value}
             name={option.name}
             description={option.description}
@@ -473,7 +447,16 @@ export function RegenerateDropdown({
       <Popover
         open={isOpen}
         onOpenChange={(open) => setIsOpen(open)}
-        content={Content}
+        content={
+          !alternate ? (
+            <Hoverable icon={FiStar} />
+          ) : (
+            <Hoverable
+              icon={FiStar}
+              hoverText={{ text: alternate, animate: true }}
+            />
+          )
+        }
         popover={Dropdown}
         align="start"
         side={side}

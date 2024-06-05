@@ -41,7 +41,12 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SEARCH_PARAM_NAMES, shouldSubmitOnLoad } from "./searchParams";
 import { useDocumentSelection } from "./useDocumentSelection";
-import { useFilters, useLlmOverride } from "@/lib/hooks";
+import {
+  LlmOverride,
+  LlmOverrideManager,
+  useFilters,
+  useLlmOverride,
+} from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { FeedbackType } from "./types";
 import ResizableSection from "@/components/resizable/ResizableSection";
@@ -66,7 +71,6 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { UserDropdown } from "@/components/UserDropdown";
 import { v4 as uuidv4 } from "uuid";
 import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
-import RegenerateOption from "./RegenerateOptions";
 import { Button } from "@tremor/react";
 
 const MAX_INPUT_HEIGHT = 200;
@@ -75,11 +79,10 @@ const TEMP_ASSISTANT_MESSAGE_ID = -2;
 const SYSTEM_MESSAGE_ID = -3;
 
 // TODO put in types file
-
-export type modelOverRideType = {
-  modelProvider?: string;
-  modelVersion?: string;
-};
+// export type modelOverRideType = {
+//   modelProvider?: string;
+//   modelVersion?: string;
+// };
 export function ChatPage({
   documentSidebarInitialWidth,
   defaultSelectedPersonaId,
@@ -87,8 +90,6 @@ export function ChatPage({
   documentSidebarInitialWidth?: number;
   defaultSelectedPersonaId?: number;
 }) {
-  const [regenerateModal, setRegenerateModal] = useState<boolean | null>(null);
-
   const [configModalActiveTab, setConfigModalActiveTab] = useState<
     string | null
   >(null);
@@ -128,8 +129,6 @@ export function ChatPage({
   const [isFetchingChatMessages, setIsFetchingChatMessages] = useState(
     existingChatSessionId !== null
   );
-
-  const regenerateNewModel = (prompt: string) => {};
 
   // needed so closures (e.g. onSubmit) can access the current value
   const urlChatSessionId = useRef<number | null>();
@@ -207,11 +206,10 @@ export function ChatPage({
 
       const newCompleteMessageMap = processRawChatHistory(chatSession.messages);
       const newMessageHistory = buildLatestMessageChain(newCompleteMessageMap);
-      // console.log(newCompleteMessageMap)
+
       // if the last message is an error, don't overwrite it
       if (messageHistory[messageHistory.length - 1]?.type !== "error") {
-        console.log("z\nz\nz\nz\nz\nz\n");
-        console.log("error message map");
+        console.log("updating message map");
         setCompleteMessageMap(newCompleteMessageMap);
 
         const latestMessageId =
@@ -330,8 +328,7 @@ export function ChatPage({
       }
     }
 
-    console.log("z\nz\nz\nz\nz\nz\n");
-    console.log("udpating messagemap");
+    console.log("updating message map");
     setCompleteMessageMap(newCompleteMessageMap);
     return newCompleteMessageMap;
   };
@@ -339,11 +336,11 @@ export function ChatPage({
   const [currentTool, setCurrentTool] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
 
-  const regenerateID = (
-    modelOverRide: modelOverRideType,
+  const regenerateResponse = (
+    modelOverRide: LlmOverride,
     messageIdToResend: number
   ) => {
-    onSubmit({
+    onSubmitResponse({
       messageIdToResend,
       modelOverRide,
       regenerate: true,
@@ -514,8 +511,275 @@ export function ChatPage({
     queryOverride,
     forceSearch,
     isSeededChat,
+  }: {
+    messageIdToResend?: number;
+    messageOverride?: string;
+    queryOverride?: string;
+    forceSearch?: boolean;
+    isSeededChat?: boolean;
+  } = {}) => {
+    let currChatSessionId: number;
+    let isNewSession = chatSessionId === null;
+    const searchParamBasedChatSessionName =
+      searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
+
+    if (isNewSession) {
+      currChatSessionId = await createChatSession(
+        livePersona?.id || 0,
+        searchParamBasedChatSessionName
+      );
+    } else {
+      currChatSessionId = chatSessionId as number;
+    }
+    setChatSessionId(currChatSessionId);
+
+    const messageToResend = messageHistory.find(
+      (message) => message.messageId === messageIdToResend
+    );
+    const messageToResendParent =
+      messageToResend?.parentMessageId !== null &&
+      messageToResend?.parentMessageId !== undefined
+        ? completeMessageMap.get(messageToResend.parentMessageId)
+        : null;
+    const messageToResendIndex = messageToResend
+      ? messageHistory.indexOf(messageToResend)
+      : null;
+    if (!messageToResend && messageIdToResend !== undefined) {
+      setPopup({
+        message:
+          "Failed to re-send message - please refresh the page and try again.",
+        type: "error",
+      });
+      return;
+    }
+
+    let currMessage = messageToResend ? messageToResend.message : message;
+    if (messageOverride) {
+      currMessage = messageOverride;
+    }
+    const currMessageHistory =
+      messageToResendIndex !== null
+        ? messageHistory.slice(0, messageToResendIndex)
+        : messageHistory;
+    let parentMessage =
+      messageToResendParent ||
+      (currMessageHistory.length > 0
+        ? currMessageHistory[currMessageHistory.length - 1]
+        : null) ||
+      (completeMessageMap.size === 1
+        ? Array.from(completeMessageMap.values())[0]
+        : null);
+
+    // if we're resending, set the parent's child to null
+    // we will use tempMessages until the regenerated message is complete
+    const messageUpdates: Message[] = [
+      {
+        messageId: TEMP_USER_MESSAGE_ID,
+        message: currMessage,
+        type: "user",
+        files: currentMessageFiles,
+        parentMessageId: parentMessage?.messageId || null,
+      },
+    ];
+    if (parentMessage) {
+      messageUpdates.push({
+        ...parentMessage,
+        childrenMessageIds: (parentMessage.childrenMessageIds || []).concat([
+          TEMP_USER_MESSAGE_ID,
+        ]),
+        latestChildMessageId: TEMP_USER_MESSAGE_ID,
+      });
+    }
+    const frozenCompleteMessageMap = upsertToCompleteMessageMap({
+      messages: messageUpdates,
+    });
+    // on initial message send, we insert a dummy system message
+    // set this as the parent here if no parent is set
+    if (!parentMessage && frozenCompleteMessageMap.size === 2) {
+      parentMessage = frozenCompleteMessageMap.get(SYSTEM_MESSAGE_ID) || null;
+    }
+    setMessage("");
+    setCurrentMessageFiles([]);
+
+    setIsStreaming(true);
+    let answer = "";
+    let query: string | null = null;
+    let retrievalType: RetrievalType =
+      selectedDocuments.length > 0
+        ? RetrievalType.SelectedDocs
+        : RetrievalType.None;
+    let documents: DanswerDocument[] = selectedDocuments;
+    let aiMessageImages: FileDescriptor[] | null = null;
+    let error: string | null = null;
+    let finalMessage: BackendMessage | null = null;
+    try {
+      const lastSuccessfulMessageId =
+        getLastSuccessfulMessageId(currMessageHistory);
+      for await (const packetBunch of sendMessage({
+        message: currMessage,
+        fileDescriptors: currentMessageFiles,
+        parentMessageId: lastSuccessfulMessageId,
+        chatSessionId: currChatSessionId,
+        promptId: livePersona?.prompts[0]?.id || 0,
+        filters: buildFilters(
+          filterManager.selectedSources,
+          filterManager.selectedDocumentSets,
+          filterManager.timeRange,
+          filterManager.selectedTags
+        ),
+        selectedDocumentIds: selectedDocuments
+          .filter(
+            (document) =>
+              document.db_doc_id !== undefined && document.db_doc_id !== null
+          )
+          .map((document) => document.db_doc_id as number),
+        queryOverride,
+        forceSearch,
+        modelProvider: llmOverrideManager.llmOverride.name || undefined,
+        modelVersion:
+          llmOverrideManager.llmOverride.modelName ||
+          searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
+          undefined,
+        temperature:
+          llmOverrideManager.temperature ||
+          parseFloat(searchParams.get(SEARCH_PARAM_NAMES.TEMPERATURE) || "") ||
+          undefined,
+        systemPromptOverride:
+          searchParams.get(SEARCH_PARAM_NAMES.SYSTEM_PROMPT) || undefined,
+        useExistingUserMessage: isSeededChat,
+      })) {
+        for (const packet of packetBunch) {
+          if (Object.hasOwn(packet, "answer_piece")) {
+            answer += (packet as AnswerPiecePacket).answer_piece;
+          } else if (Object.hasOwn(packet, "top_documents")) {
+            documents = (packet as DocumentsResponse).top_documents;
+            query = (packet as DocumentsResponse).rephrased_query;
+            retrievalType = RetrievalType.Search;
+            if (documents && documents.length > 0) {
+              // point to the latest message (we don't know the messageId yet, which is why
+              // we have to use -1)
+              setSelectedMessageForDocDisplay(TEMP_USER_MESSAGE_ID);
+            }
+          } else if (Object.hasOwn(packet, "file_ids")) {
+            aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
+              (fileId) => {
+                return {
+                  id: fileId,
+                  type: ChatFileType.IMAGE,
+                };
+              }
+            );
+          } else if (Object.hasOwn(packet, "tool_name")) {
+            setCurrentTool((packet as ToolRunKickoff).tool_name);
+          } else if (Object.hasOwn(packet, "error")) {
+            error = (packet as StreamingError).error;
+          } else if (Object.hasOwn(packet, "message_id")) {
+            finalMessage = packet as BackendMessage;
+          }
+        }
+        const updateFn = (messages: Message[]) => {
+          const replacementsMap = finalMessage
+            ? new Map([
+                [messages[0].messageId, TEMP_USER_MESSAGE_ID],
+                [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
+              ] as [number, number][])
+            : null;
+          upsertToCompleteMessageMap({
+            messages: messages,
+            replacementsMap: replacementsMap,
+            completeMessageMapOverride: frozenCompleteMessageMap,
+          });
+        };
+        const newUserMessageId =
+          finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
+        const newAssistantMessageId =
+          finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+        updateFn([
+          {
+            messageId: newUserMessageId,
+            message: currMessage,
+            type: "user",
+            files: currentMessageFiles,
+            parentMessageId: parentMessage?.messageId || null,
+            childrenMessageIds: [newAssistantMessageId],
+            latestChildMessageId: newAssistantMessageId,
+          },
+          {
+            messageId: newAssistantMessageId,
+            message: error || answer,
+            type: error ? "error" : "assistant",
+            retrievalType,
+            query: finalMessage?.rephrased_query || query,
+            documents: finalMessage?.context_docs?.top_documents || documents,
+            citations: finalMessage?.citations || {},
+            files: finalMessage?.files || aiMessageImages || [],
+            parentMessageId: newUserMessageId,
+          },
+        ]);
+        if (isCancelledRef.current) {
+          setIsCancelled(false);
+          break;
+        }
+      }
+    } catch (e: any) {
+      const errorMsg = e.message;
+      upsertToCompleteMessageMap({
+        messages: [
+          {
+            messageId: TEMP_USER_MESSAGE_ID,
+            message: currMessage,
+            type: "user",
+            files: currentMessageFiles,
+            parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
+          },
+          {
+            messageId: TEMP_ASSISTANT_MESSAGE_ID,
+            message: errorMsg,
+            type: "error",
+            files: aiMessageImages || [],
+            parentMessageId: TEMP_USER_MESSAGE_ID,
+          },
+        ],
+        completeMessageMapOverride: frozenCompleteMessageMap,
+      });
+    }
+
+    setIsStreaming(false);
+    if (isNewSession) {
+      if (finalMessage) {
+        setSelectedMessageForDocDisplay(finalMessage.message_id);
+      }
+      if (!searchParamBasedChatSessionName) {
+        await nameChatSession(currChatSessionId, currMessage);
+      }
+
+      // NOTE: don't switch pages if the user has navigated away from the chat
+      if (
+        currChatSessionId === urlChatSessionId.current ||
+        urlChatSessionId.current === null
+      ) {
+        router.push(buildChatUrl(searchParams, currChatSessionId, null), {
+          scroll: false,
+        });
+      }
+    }
+    if (
+      finalMessage?.context_docs &&
+      finalMessage.context_docs.top_documents.length > 0 &&
+      retrievalType === RetrievalType.Search
+    ) {
+      setSelectedMessageForDocDisplay(finalMessage.message_id);
+    }
+  };
+
+  const onSubmitResponse = async ({
+    messageIdToResend,
+    messageOverride,
+    queryOverride,
+    forceSearch,
+    isSeededChat,
     regenerate,
-    modelOverRide = { modelProvider: undefined, modelVersion: undefined },
+    modelOverRide = null,
   }: {
     messageIdToResend?: number;
     messageOverride?: string;
@@ -523,7 +787,7 @@ export function ChatPage({
     forceSearch?: boolean;
     isSeededChat?: boolean;
     regenerate?: boolean;
-    modelOverRide?: modelOverRideType;
+    modelOverRide?: LlmOverride | null;
   } = {}) => {
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
@@ -582,51 +846,8 @@ export function ChatPage({
     // if we're resending, set the parent's child to null
     // we will use tempMessages until the regenerated message is complete
     const messageUpdates: Message[] = [];
-    // if (!regenerate) {
-    console.log("modificaions will be made in a sec");
-    // await delay(1000)
 
-    console.log("will happen now");
-
-    // New/edited user message
-    messageUpdates.push({
-      messageId: TEMP_USER_MESSAGE_ID, // -1 (the updated value)
-      message: currMessage,
-      type: "user",
-      files: currentMessageFiles,
-      parentMessageId: parentMessage?.messageId || null,
-    });
-
-    if (parentMessage) {
-      // Parent message (udpate the children / what is being pointed to)
-      // If regenerating, should point to the same (temporary user message ID)
-      messageUpdates.push({
-        ...parentMessage,
-
-        // TODO: modify so properly updates, but for now, just point to temporary user message id
-        childrenMessageIds: regenerate
-          ? [TEMP_USER_MESSAGE_ID]
-          : (parentMessage.childrenMessageIds || []).concat([
-              TEMP_USER_MESSAGE_ID,
-            ]),
-
-        // (parentMessage.childrenMessageIds || []).concat([
-        //   TEMP_USER_MESSAGE_ID,
-        // ]),
-        latestChildMessageId: TEMP_USER_MESSAGE_ID,
-      });
-    }
-
-    // console.log(completeMessageMap)
-    // console.log(messageUpdates)
-
-    const frozenCompleteMessageMap = upsertToCompleteMessageMap({
-      messages: messageUpdates,
-      regenerate: regenerate,
-    });
-
-    console.log("#1");
-    await delay(2000);
+    const frozenCompleteMessageMap = completeMessageMap;
 
     // on initial message send, we insert a dummy system message
     // set this as the parent here if no parent is set
@@ -635,9 +856,10 @@ export function ChatPage({
     }
     setMessage("");
     setCurrentMessageFiles([]);
+    const parentId = messageIdToResend;
+    console.log("parentId");
 
-    // console.log("before?")
-    // await delay(2000)
+    console.log(parentId);
 
     setIsStreaming(true);
     let answer = "";
@@ -650,12 +872,6 @@ export function ChatPage({
     let aiMessageImages: FileDescriptor[] | null = null;
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
-
-    // console.log("before")
-    // await delay(2000)
-
-    console.log("#2");
-    await delay(2000);
 
     try {
       const lastSuccessfulMessageId =
@@ -682,10 +898,9 @@ export function ChatPage({
           .map((document) => document.db_doc_id as number),
         queryOverride,
         forceSearch,
-        modelProvider:
-          llmOverrideManager.llmOverride.name || modelOverRide["modelProvider"],
+        modelProvider: modelOverRide ? modelOverRide.provider : undefined,
         modelVersion:
-          modelOverRide["modelVersion"] ||
+          modelOverRide?.modelName ||
           llmOverrideManager.llmOverride.modelName ||
           searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
           undefined,
@@ -729,15 +944,11 @@ export function ChatPage({
 
         const updateFn = async (messages: Message[]) => {
           const replacementsMap = finalMessage
-            ? new Map([
-                [messages[0].messageId, TEMP_USER_MESSAGE_ID],
-                [messages[1].messageId, TEMP_ASSISTANT_MESSAGE_ID],
-              ] as [number, number][])
+            ? new Map([[messages[0].messageId, TEMP_USER_MESSAGE_ID]] as [
+                number,
+                number,
+              ][])
             : null;
-
-          console.log("---");
-          console.log("before");
-          console.log(completeMessageMap);
 
           upsertToCompleteMessageMap({
             messages: messages,
@@ -745,31 +956,15 @@ export function ChatPage({
             completeMessageMapOverride: frozenCompleteMessageMap,
             regenerate: regenerate,
           });
-          console.log("after applying:");
-          console.log(replacementsMap);
-          console.log("get");
-          console.log(completeMessageMap);
-          console.log(messageHistory);
-          console.log("");
         };
 
-        const newUserMessageId =
-          finalMessage?.parent_message || TEMP_USER_MESSAGE_ID;
         const newAssistantMessageId =
-          finalMessage?.message_id || TEMP_ASSISTANT_MESSAGE_ID;
+          finalMessage?.message_id || TEMP_USER_MESSAGE_ID;
 
         await updateFn([
           {
-            messageId: newUserMessageId,
-            message: currMessage,
-            type: "user",
-            files: currentMessageFiles,
-            parentMessageId: parentMessage?.messageId || null,
-            childrenMessageIds: [newAssistantMessageId],
-            latestChildMessageId: newAssistantMessageId,
-          },
-          {
             messageId: newAssistantMessageId,
+            // 153,
             message: error || answer,
             type: error ? "error" : "assistant",
             retrievalType,
@@ -777,7 +972,8 @@ export function ChatPage({
             documents: finalMessage?.context_docs?.top_documents || documents,
             citations: finalMessage?.citations || {},
             files: finalMessage?.files || aiMessageImages || [],
-            parentMessageId: newUserMessageId,
+            parentMessageId: parentId!,
+            alternate_model: modelOverRide?.modelName,
           },
         ]);
 
@@ -788,6 +984,7 @@ export function ChatPage({
       }
     } catch (e: any) {
       const errorMsg = e.message;
+      console.log(errorMsg);
 
       upsertToCompleteMessageMap({
         messages: [
@@ -810,46 +1007,34 @@ export function ChatPage({
       });
     }
 
-    console.log("#3");
-    await delay(2000);
-    // console.log("Finished")
-    // await delay(1000)
-
     setIsStreaming(false);
-    // if (isNewSession) {
-    //   if (finalMessage) {
-    //     setSelectedMessageForDocDisplay(finalMessage.message_id);
-    //   }
-    //   if (!searchParamBasedChatSessionName) {
-    //     await nameChatSession(currChatSessionId, currMessage);
-    //   }
 
-    //   // NOTE: don't switch pages if the user has navigated away from the chat
-    //   if (
-    //     currChatSessionId === urlChatSessionId.current ||
-    //     urlChatSessionId.current === null
-    //   ) {
-    //     router.push(buildChatUrl(searchParams, currChatSessionId, null), {
-    //       scroll: false,
-    //     });
-    //   }
-    // }
-    // if (
-    //   finalMessage?.context_docs &&
-    //   finalMessage.context_docs.top_documents.length > 0 &&
-    //   retrievalType === RetrievalType.Search
-    // ) {
-    //   setSelectedMessageForDocDisplay(finalMessage.message_id);
-    // }
+    if (isNewSession) {
+      if (finalMessage) {
+        setSelectedMessageForDocDisplay(finalMessage.message_id);
+      }
+      if (!searchParamBasedChatSessionName) {
+        await nameChatSession(currChatSessionId, currMessage);
+      }
 
-    console.log("updated message mapping +  history");
-
-    console.log(completeMessageMap);
-    console.log(messageHistory);
-    await delay(2000);
-    // await delay(20000)/
+      // NOTE: don't switch pages if the user has navigated away from the chat
+      if (
+        currChatSessionId === urlChatSessionId.current ||
+        urlChatSessionId.current === null
+      ) {
+        router.push(buildChatUrl(searchParams, currChatSessionId, null), {
+          scroll: false,
+        });
+      }
+    }
+    if (
+      finalMessage?.context_docs &&
+      finalMessage.context_docs.top_documents.length > 0 &&
+      retrievalType === RetrievalType.Search
+    ) {
+      setSelectedMessageForDocDisplay(finalMessage.message_id);
+    }
   };
-
   const onFeedback = async (
     messageId: number,
     feedbackType: FeedbackType,
@@ -952,13 +1137,9 @@ export function ChatPage({
   }
 
   // TODO clarify
-
   const retrievalDisabled = !personaIncludesRetrieval(livePersona);
   return (
     <>
-      {/* <div className="absolute top-0 z-40 w-full">
-        <Header user={user} />
-      </div> */}
       <HealthCheckBanner />
       <InstantSSRAutoRefresh />
 
@@ -969,7 +1150,6 @@ export function ChatPage({
           folders={folders}
           openedFolders={openedFolders}
         />
-
         <div className="flex w-full overflow-x-hidden" ref={masterFlexboxRef}>
           {popup}
           {currentFeedback && (
@@ -1063,7 +1243,8 @@ export function ChatPage({
                           </div>
                         </div>
                       )}
-                      <Button
+                      {/* <Button 
+                      // used for evaluating the message tree
                         className="fixed top-0 z-[1000]"
                         onClick={() => {
                           console.log("Message history");
@@ -1072,7 +1253,7 @@ export function ChatPage({
                         }}
                       >
                         Validate
-                      </Button>
+                      </Button> */}
                       {messageHistory.length === 0 &&
                         !isFetchingChatMessages &&
                         !isStreaming && (
@@ -1132,8 +1313,6 @@ export function ChatPage({
                                       message.parentMessageId!
                                     )!.latestChildMessageId = messageId;
 
-                                    console.log("z\nz\nz\nz\nz\nz\n");
-                                    console.log("new message map");
                                     setCompleteMessageMap(
                                       newCompleteMessageMap
                                     );
@@ -1159,32 +1338,15 @@ export function ChatPage({
                               i !== 0 ? messageHistory[i - 1] : null;
                             return (
                               <AIMessage
-                                // regenerate={() =>
-                                //   // console.log("howdy")
-
-                                // }
-
-                                // {regenerateModal && (
-                                //   <RegenerateOption
-                                regenerateID={regenerateID}
-                                messageIdToResend={
-                                  parentMessage?.messageId
-                                  // messageHistory[messageHistory.length - 1] &&
-                                  // messageHistory[messageHistory.length - 2]
-                                  //   .messageId
-                                }
-                                onClose={() => setRegenerateModal(false)}
+                                regenerateResponse={regenerateResponse}
+                                responseId={parentMessage?.messageId}
                                 llmOverrideManager={llmOverrideManager}
                                 selectedAssistant={livePersona}
-                                //   />
-                                // )}
                                 alternateModel={message.alternate_model}
-                                // alternateModel={"gpt-4"}
                                 fullMessage={message}
                                 otherResponseCanSwitchTo={
                                   parentMessage?.childrenMessageIds || []
                                 }
-                                regenerateModal={regenerateModal || false}
                                 key={message.messageId}
                                 messageId={message.messageId}
                                 content={message.message}
@@ -1284,8 +1446,7 @@ export function ChatPage({
                                     message.parentMessageId!
                                   )!.latestChildMessageId = messageId;
 
-                                  console.log("z\nz\nz\nz\nz\nz\n");
-                                  console.log("select message map");
+                                  console.log("updating message map");
                                   setCompleteMessageMap(newCompleteMessageMap);
                                   setSelectedMessageForDocDisplay(messageId);
 
@@ -1298,8 +1459,8 @@ export function ChatPage({
                           } else {
                             return (
                               <div key={i}>
-                                <AIMessage
-                                  regenerateModal={regenerateModal || false}
+                                {/* {message.message} */}
+                                {/* <AIMessage
                                   messageId={message.messageId}
                                   personaName={livePersona.name}
                                   content={
@@ -1307,11 +1468,13 @@ export function ChatPage({
                                       {message.message}
                                     </p>
                                   }
-                                />
+                                /> */}
                               </div>
                             );
                           }
                         })}
+
+                        {/* pass in the document */}
 
                         {isStreaming &&
                           messageHistory.length > 0 &&
@@ -1319,7 +1482,6 @@ export function ChatPage({
                             "user" && (
                             <div key={messageHistory.length}>
                               <AIMessage
-                                regenerateModal={regenerateModal || false}
                                 messageId={null}
                                 personaName={livePersona.name}
                                 content={

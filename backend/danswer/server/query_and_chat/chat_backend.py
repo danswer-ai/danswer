@@ -245,9 +245,6 @@ def handle_new_chat_message(
     have already been set as latest"""
     logger.debug(f"Received new chat message: {chat_message_req.message}")
 
-    print("new chat message")
-    print(chat_message_req.__dict__)
-
     if (
         not chat_message_req.message
         and chat_message_req.prompt_id is not None
@@ -278,8 +275,6 @@ def handle_new_response(
     To avoid extra overhead/latency, this assumes (and checks) that previous messages on the path
     have already been set as latest"""
     logger.debug(f"Received new chat message: {chat_message_req.message}")
-
-    print(chat_message_req.__dict__)
 
     if (
         not chat_message_req.message

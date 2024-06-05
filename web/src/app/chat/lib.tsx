@@ -96,43 +96,6 @@ export async function* sendMessage({
     headers: {
       "Content-Type": "application/json",
     },
-    // body: JSON.stringify({
-    //   regenerate: true,
-    //   chat_session_id: 2,
-    //   parent_message_id: 44,
-    //   message: message,
-    //   prompt_id: promptId,
-    //   search_doc_ids: documentsAreSelected ? selectedDocumentIds : null,
-    //   file_descriptors: fileDescriptors,
-    //   retrieval_options: !documentsAreSelected
-    //     ? {
-    //         run_search:
-    //           promptId === null ||
-    //           promptId === undefined ||
-    //           queryOverride ||
-    //           forceSearch
-    //             ? "always"
-    //             : "auto",
-    //         real_time: true,
-    //         filters: filters,
-    //       }
-    //     : null,
-    //   query_override: queryOverride,
-    //   prompt_override: systemPromptOverride
-    //     ? {
-    //         system_prompt: systemPromptOverride,
-    //       }
-    //     : null,
-    //   llm_override:
-    //     temperature || modelVersion
-    //       ? {
-    //           temperature,
-    //           model_provider: modelProvider,
-    //           model_version: modelVersion,
-    //         }
-    //       : null,
-    //   use_existing_user_message: useExistingUserMessage,
-    // }),
     body: JSON.stringify({
       regenerate: regenerate,
       chat_session_id: chatSessionId,
@@ -290,8 +253,6 @@ export function handleAutoScroll(
         buffer <=
       scrollableRef.current.clientHeight
     ) {
-      // console.log(endRef)
-      console.log("Handle scroll");
       endRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }

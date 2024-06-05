@@ -247,7 +247,6 @@ def get_or_create_root_message(
             message="",
             token_count=0,
             message_type=MessageType.SYSTEM,
-            # alternate_model=None,
         )
         db_session.add(new_root_message)
         db_session.commit()
@@ -875,9 +874,6 @@ def get_retrieval_docs_from_chat_message(
 def translate_db_message_to_chat_message_detail(
     chat_message: ChatMessage, remove_doc_content: bool = False
 ) -> ChatMessageDetail:
-    print("Translating")
-    print(chat_message.__dict__)
-
     chat_msg_detail = ChatMessageDetail(
         message_id=chat_message.id,
         parent_message=chat_message.parent_message,

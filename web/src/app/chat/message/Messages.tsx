@@ -38,9 +38,8 @@ import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
 import { Button } from "@tremor/react";
 import RegenerateOption from "../RegenerateOptions";
-import { LlmOverrideManager } from "@/lib/hooks";
+import { LlmOverride, LlmOverrideManager } from "@/lib/hooks";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { modelOverRideType } from "../ChatPage";
 
 function FileDisplay({ files }: { files: FileDescriptor[] }) {
   const imageFiles = files.filter((file) => file.type === ChatFileType.IMAGE);
@@ -78,7 +77,6 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
 }
 
 export const AIMessage = ({
-  regenerateModal,
   messageId,
   content,
   files,
@@ -101,30 +99,16 @@ export const AIMessage = ({
   llmOverrideManager,
   selectedAssistant,
   onClose,
-  regenerateID,
-  messageIdToResend,
+  regenerateResponse,
+  responseId,
 }: {
   llmOverrideManager?: LlmOverrideManager;
   selectedAssistant?: Persona;
   onClose?: () => void;
-  messageIdToResend?: number;
-  regenerateID?: (
-    modelOverRide: modelOverRideType,
-    messageIdToResend: number
-  ) => void;
-
-  // regenerateID={regenerateID}
-  // messageIdToResend={
-  //   // messageHistory[messageHistory.length - 2] &&
-  //   // messageHistory[messageHistory.length - 2]
-  //   //   .messageId
-  // }
-  // onClose={() => setRegenerateModal(false)}
-  // llmOverrideManager={llmOverrideManager}
-  // selectedAssistant={livePersona}
+  responseId?: number;
+  regenerateResponse?: (modelOverRide: LlmOverride, responseId: number) => void;
   otherResponseCanSwitchTo?: number[];
   messageId: number | null;
-  regenerateModal?: boolean;
   content: string | JSX.Element;
   files?: FileDescriptor[];
   query?: string;
@@ -284,9 +268,6 @@ export const AIMessage = ({
                                 : undefined
                             }
                             className="cursor-pointer text-link hover:text-link-hover"
-                            // href={rest.href}
-                            // target="_blank"
-                            // rel="noopener noreferrer"
                           >
                             {rest.children}
                           </a>
@@ -304,7 +285,6 @@ export const AIMessage = ({
                 ) : (
                   content
                 )}
-                {messageId}
               </>
             ) : isComplete ? null : (
               loader
@@ -386,46 +366,19 @@ export const AIMessage = ({
                 icon={FiThumbsDown}
                 onClick={() => handleFeedback("dislike")}
               />
-              {regenerateID &&
-                messageIdToResend &&
-                onClose &&
-                llmOverrideManager &&
-                selectedAssistant && (
-                  <div className="group flex">
-                    <RegenerateOption
-                      regenerateID={regenerateID}
-                      messageIdToResend={messageIdToResend}
-                      onClose={onClose}
-                      // () => setRegenerateModal(false)}
-                      llmOverrideManager={llmOverrideManager}
-                      selectedAssistant={selectedAssistant}
-                    />
-                    <p
-                      className={`my-auto ml-1 ${!regenerateModal && "opacity-0"} text-sm group-hover:opacity-100 transition-all duration-300`}
-                    >
-                      {" "}
-                      {alternateModel || ""}
-                    </p>
-                  </div>
-                )}
-              {/* {alternateModel && } */}
+
+              {regenerateResponse && responseId && selectedAssistant && (
+                <RegenerateOption
+                  alternateModel={alternateModel}
+                  selectedAssistant={selectedAssistant}
+                  regenerateResponse={regenerateResponse}
+                  messageIdToResend={responseId}
+                  llmOverrideManager={llmOverrideManager}
+                />
+              )}
             </div>
           )}
         </div>
-
-        {/* {regenerateModal && ( */}
-        {/* {regenerateID && messageIdToResend && onClose && llmOverrideManager && selectedAssistant && < RegenerateOption
-          regenerateID={regenerateID}
-          messageIdToResend={
-            messageIdToResend
-
-          }
-          onClose={onClose}
-          // () => setRegenerateModal(false)}
-          llmOverrideManager={llmOverrideManager}
-          selectedAssistant={selectedAssistant}
-        />} */}
-        {/* )} */}
       </div>
     </div>
   );
@@ -458,34 +411,6 @@ function MessageSwitcher({
     </div>
   );
 }
-
-// function ResponseSwitcher({
-//   currentPage,
-//   totalPages,
-//   handlePrevious,
-//   handleNext,
-// }: {
-//   currentPage: number;
-//   totalPages: number;
-//   handlePrevious?: () => void;
-//   handleNext?: () => void;
-// }) {
-//   return (
-//     <div className="flex items-center text-sm space-x-0.5">
-//       <Hoverable
-//         icon={FiChevronLeft}
-//         onClick={currentPage === 1 ? undefined : handlePrevious}
-//       />
-//       <span className="text-emphasis text-medium select-none">
-//         {currentPage} / {totalPages}
-//       </span>
-//       <Hoverable
-//         icon={FiChevronRight}
-//         onClick={currentPage === totalPages ? undefined : handleNext}
-//       />
-//     </div>
-//   );
-// }
 
 export const HumanMessage = ({
   content,
@@ -555,8 +480,6 @@ export const HumanMessage = ({
           <div className="mx-auto mt-1 ml-8 w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar-default flex flex-wrap">
             <div className="w-message-xs 2xl:w-message-sm 3xl:w-message-default break-words">
               <FileDisplay files={files || []} />
-
-              {messageId}
               {isEditing ? (
                 <div>
                   <div
