@@ -26,6 +26,7 @@ export type AutoScrollHookType = {
   inputRef: RefObject<HTMLDivElement>;
   endDivRef: RefObject<HTMLDivElement>;
   distance?: number;
+  debounce?: number;
 };
 
 /**
@@ -37,22 +38,41 @@ export const useScrollOnStream = ({
   inputRef,
   endDivRef,
   distance = 140, // distance that should "engage" the scroll
+  debounce = 100,
 }: AutoScrollHookType) => {
-  useEffect(() => {
-    // Is text streaming? + null checks
-    if (isStreaming && lastMessageRef.current && inputRef.current) {
-      const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
-      const endDivRect = inputRef.current.getBoundingClientRect();
-      console.log(endDivRect.bottom - lastMessageRect.bottom);
+  const timeoutRef = useRef<number | null>(null);
 
-      // Is the bottom of the final chat within the engagement distance?
-      if (
-        endDivRect.bottom - lastMessageRect.bottom > distance &&
-        endDivRef?.current
-      ) {
-        endDivRef.current.scrollIntoView({ behavior: "smooth" });
+  useEffect(() => {
+    // Function to handle the scroll
+    const handleScroll = () => {
+      if (lastMessageRef.current && inputRef.current && endDivRef?.current) {
+        const lastMessageRect = lastMessageRef.current.getBoundingClientRect();
+        const endDivRect = inputRef.current.getBoundingClientRect();
+
+        // Check if the bottom of the final chat is within the engagement distance
+        if (endDivRect.bottom - lastMessageRect.bottom > distance) {
+          endDivRef.current.scrollIntoView({ behavior: "smooth" });
+        }
       }
+    };
+
+    // Debounce the scroll event
+    if (isStreaming) {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(
+        handleScroll,
+        debounce
+      ) as unknown as number;
     }
+
+    // Cleanup function to clear the timeout when the component unmounts or the inputs change
+    return () => {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   });
 };
 
