@@ -220,9 +220,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                     self.space,
                     start=start_ind,
                     limit=batch_size,
-                    status="current"
-                    if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
-                    else None,
+                    status=(
+                        "current"
+                        if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
+                        else None
+                    ),
                     expand="body.storage.value,version",
                 )
             except Exception:
@@ -241,9 +243,11 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                                 self.space,
                                 start=start_ind + i,
                                 limit=1,
-                                status="current"
-                                if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
-                                else None,
+                                status=(
+                                    "current"
+                                    if CONFLUENCE_CONNECTOR_INDEX_ONLY_ACTIVE_PAGES
+                                    else None
+                                ),
                                 expand="body.storage.value,version",
                             )
                         )
@@ -376,9 +380,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         source=DocumentSource.CONFLUENCE,
                         semantic_identifier=page["title"],
                         doc_updated_at=last_modified,
-                        primary_owners=[BasicExpertInfo(email=author)]
-                        if author
-                        else None,
+                        primary_owners=(
+                            [BasicExpertInfo(email=author)] if author else None
+                        ),
                         metadata={
                             "Wiki Space Name": self.space,
                         },

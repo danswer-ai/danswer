@@ -49,9 +49,11 @@ class IndexAttemptSnapshot(BaseModel):
             docs_removed_from_index=index_attempt.docs_removed_from_index or 0,
             error_msg=index_attempt.error_msg,
             full_exception_trace=index_attempt.full_exception_trace,
-            time_started=index_attempt.time_started.isoformat()
-            if index_attempt.time_started
-            else None,
+            time_started=(
+                index_attempt.time_started.isoformat()
+                if index_attempt.time_started
+                else None
+            ),
             time_updated=index_attempt.time_updated.isoformat(),
         )
 
@@ -111,9 +113,11 @@ class CredentialSnapshot(CredentialBase):
     def from_credential_db_model(cls, credential: Credential) -> "CredentialSnapshot":
         return CredentialSnapshot(
             id=credential.id,
-            credential_json=mask_credential_dict(credential.credential_json)
-            if MASK_CREDENTIAL_PREFIX
-            else credential.credential_json,
+            credential_json=(
+                mask_credential_dict(credential.credential_json)
+                if MASK_CREDENTIAL_PREFIX
+                else credential.credential_json
+            ),
             user_id=credential.user_id,
             admin_public=credential.admin_public,
             time_created=credential.time_created,

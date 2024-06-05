@@ -86,8 +86,9 @@ def stream_answer_objects(
     bypass_acl: bool = False,
     use_citations: bool = False,
     danswerbot_flow: bool = False,
-    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-    | None = None,
+    retrieval_metrics_callback: (
+        Callable[[RetrievalMetricsContainer], None] | None
+    ) = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> AnswerObjectIterator:
     """Streams in order:
@@ -248,8 +249,6 @@ def stream_answer_objects(
         else:
             yield packet
 
-    # Saving Gen AI answer and responding with message info
-    print("Genai response is ")
     gen_ai_response_message = create_new_chat_message(
         chat_session_id=chat_session.id,
         parent_message=new_user_message,
@@ -261,8 +260,6 @@ def stream_answer_objects(
         reference_docs=reference_db_search_docs,
         db_session=db_session,
         commit=True,
-        # alternate_model="woohoo"
-        alternate_model=answer.model_version if answer.explicitly_alternate else None,
     )
 
     msg_detail_response = translate_db_message_to_chat_message_detail(
@@ -302,8 +299,9 @@ def get_search_answer(
     bypass_acl: bool = False,
     use_citations: bool = False,
     danswerbot_flow: bool = False,
-    retrieval_metrics_callback: Callable[[RetrievalMetricsContainer], None]
-    | None = None,
+    retrieval_metrics_callback: (
+        Callable[[RetrievalMetricsContainer], None] | None
+    ) = None,
     rerank_metrics_callback: Callable[[RerankMetricsContainer], None] | None = None,
 ) -> OneShotQAResponse:
     """Collects the streamed one shot answer responses into a single object"""

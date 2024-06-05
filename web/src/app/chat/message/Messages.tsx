@@ -38,6 +38,9 @@ import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
 import { Button } from "@tremor/react";
 import RegenerateOption from "../RegenerateOptions";
+import { LlmOverrideManager } from "@/lib/hooks";
+import { Persona } from "@/app/admin/assistants/interfaces";
+import { modelOverRideType } from "../ChatPage";
 
 function FileDisplay({ files }: { files: FileDescriptor[] }) {
   const imageFiles = files.filter((file) => file.type === ChatFileType.IMAGE);
@@ -75,8 +78,6 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
 }
 
 export const AIMessage = ({
-  regenerate = () => null,
-  handleRegenerate = () => null,
   regenerateModal,
   messageId,
   content,
@@ -97,9 +98,30 @@ export const AIMessage = ({
   onResponseSelection,
   alternateModel,
   fullMessage,
+  llmOverrideManager,
+  selectedAssistant,
+  onClose,
+  regenerateID,
+  messageIdToResend,
 }: {
-  regenerate?: () => void;
-  handleRegenerate?: () => void;
+  llmOverrideManager?: LlmOverrideManager;
+  selectedAssistant?: Persona;
+  onClose?: () => void;
+  messageIdToResend?: number;
+  regenerateID?: (
+    modelOverRide: modelOverRideType,
+    messageIdToResend: number
+  ) => void;
+
+  // regenerateID={regenerateID}
+  // messageIdToResend={
+  //   // messageHistory[messageHistory.length - 2] &&
+  //   // messageHistory[messageHistory.length - 2]
+  //   //   .messageId
+  // }
+  // onClose={() => setRegenerateModal(false)}
+  // llmOverrideManager={llmOverrideManager}
+  // selectedAssistant={livePersona}
   otherResponseCanSwitchTo?: number[];
   messageId: number | null;
   regenerateModal?: boolean;
@@ -331,7 +353,6 @@ export const AIMessage = ({
               </div>
             )}
           </div>
-          <Button onClick={() => regenerate()}>Regenerate</Button>
 
           {handleFeedback && (
             <div className="flex flex-col md:flex-row gap-x-0.5 ml-8 mt-1.5">
@@ -365,23 +386,46 @@ export const AIMessage = ({
                 icon={FiThumbsDown}
                 onClick={() => handleFeedback("dislike")}
               />
-              <div className="group flex">
-                <Hoverable
-                  active={regenerateModal || false}
-                  icon={FiStar}
-                  onClick={() => handleRegenerate()}
-                />
-                <p
-                  className={`my-auto ml-1 ${!regenerateModal && "opacity-0"} text-sm group-hover:opacity-100 transition-all duration-300`}
-                >
-                  {" "}
-                  {alternateModel || ""}
-                </p>
-              </div>
+              {regenerateID &&
+                messageIdToResend &&
+                onClose &&
+                llmOverrideManager &&
+                selectedAssistant && (
+                  <div className="group flex">
+                    <RegenerateOption
+                      regenerateID={regenerateID}
+                      messageIdToResend={messageIdToResend}
+                      onClose={onClose}
+                      // () => setRegenerateModal(false)}
+                      llmOverrideManager={llmOverrideManager}
+                      selectedAssistant={selectedAssistant}
+                    />
+                    <p
+                      className={`my-auto ml-1 ${!regenerateModal && "opacity-0"} text-sm group-hover:opacity-100 transition-all duration-300`}
+                    >
+                      {" "}
+                      {alternateModel || ""}
+                    </p>
+                  </div>
+                )}
               {/* {alternateModel && } */}
             </div>
           )}
         </div>
+
+        {/* {regenerateModal && ( */}
+        {/* {regenerateID && messageIdToResend && onClose && llmOverrideManager && selectedAssistant && < RegenerateOption
+          regenerateID={regenerateID}
+          messageIdToResend={
+            messageIdToResend
+
+          }
+          onClose={onClose}
+          // () => setRegenerateModal(false)}
+          llmOverrideManager={llmOverrideManager}
+          selectedAssistant={selectedAssistant}
+        />} */}
+        {/* )} */}
       </div>
     </div>
   );

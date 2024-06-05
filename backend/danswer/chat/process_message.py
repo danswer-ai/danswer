@@ -202,6 +202,7 @@ def stream_chat_message_objects(
     """
     print("Streaming function")
     print(stream_chat_message_objects)
+    print(new_msg_req)
     try:
         print("in the loop")
         user_id = user.id if user is not None else None
@@ -232,6 +233,7 @@ def stream_chat_message_objects(
             llm = get_llm_for_persona(
                 persona, new_msg_req.llm_override or chat_session.llm_override
             )
+
         except GenAIDisabledException:
             raise RuntimeError("LLM is disabled. Can't use chat flow without LLM.")
 
@@ -373,13 +375,18 @@ def stream_chat_message_objects(
                 or new_msg_req.chunks_below > 0,
             )
 
+        # when overriding model, ensure that the alternate model is known
+        alternate_model = None
+        if new_msg_req.llm_override:
+            alternate_model = new_msg_req.llm_override.model_version
+
         # Cannot determine these without the LLM step or breaking out early
         partial_response = partial(
             create_new_chat_message,
             chat_session_id=chat_session_id,
             parent_message=final_msg,
             prompt_id=prompt_id,
-            alternate_model="Model is defined here",
+            alternate_model=alternate_model,
             # message=,
             # rephrased_query=,
             # token_count=,

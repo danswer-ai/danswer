@@ -121,9 +121,9 @@ class Answer:
 
         self.llm = llm
 
-        self.model_version = llm.__dict__["_model_version"]
-        print(self.model_version)
-        self.explicitly_alternate = explicitly_alternate
+        # self.model_version = llm.__dict__["_model_version"]
+        # print(self.model_version)
+        # self.explicitly_alternate = explicitly_alternate
 
         # print("LLM is ")
         # print()
@@ -132,9 +132,9 @@ class Answer:
         self._final_prompt: list[BaseMessage] | None = None
 
         self._streamed_output: list[str] | None = None
-        self._processed_stream: list[
-            AnswerQuestionPossibleReturn | ToolResponse | ToolRunKickoff
-        ] | None = None
+        self._processed_stream: (
+            list[AnswerQuestionPossibleReturn | ToolResponse | ToolRunKickoff] | None
+        ) = None
 
     def _update_prompt_builder_for_search_tool(
         self, prompt_builder: AnswerPromptBuilder, final_context_documents: list[LlmDoc]
