@@ -168,10 +168,17 @@ export const SlackBotCreationForm = ({
                       configuration to apply to. For example,
                       &apos;#ask-danswer&apos;.
                       <br />
+                    
                       <br />
                       <i>NOTE</i>: you still need to add DanswerBot to the
                       channel(s) in Slack itself. Setting this config will not
                       auto-add the bot to the channel.
+                      <br />
+
+                      <br />
+                      <i>WARNING</i>: Adding the bot to a lot of channels (or very active channels) might have 
+                      a big impact on the AI LLM usage (and on the bill). Be carefull here.
+                      <br />
                     </div>
                   }
                 />
