@@ -78,8 +78,6 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
 }
 
 export const AIMessage = ({
-  regenerate = () => null,
-  handleRegenerate = () => null,
   regenerateModal,
   messageId,
   content,
@@ -124,9 +122,6 @@ export const AIMessage = ({
   // onClose={() => setRegenerateModal(false)}
   // llmOverrideManager={llmOverrideManager}
   // selectedAssistant={livePersona}
-
-  regenerate?: () => void;
-  handleRegenerate?: () => void;
   otherResponseCanSwitchTo?: number[];
   messageId: number | null;
   regenerateModal?: boolean;
