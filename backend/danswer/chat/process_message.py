@@ -25,6 +25,7 @@ from danswer.db.chat import get_chat_session_by_id
 from danswer.db.chat import get_db_search_doc_by_id
 from danswer.db.chat import get_doc_query_identifiers_from_model
 from danswer.db.chat import get_or_create_root_message
+from danswer.db.chat import get_persona_by_name
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.embedding_model import get_current_db_embedding_model
@@ -216,13 +217,19 @@ def stream_chat_message_objects(
         parent_id = new_msg_req.parent_message_id
         reference_doc_ids = new_msg_req.search_doc_ids
         retrieval_options = new_msg_req.retrieval_options
-        persona = chat_session.persona
+        alternate_assistant = new_msg_req.alternate_assistant
+
+        # use alernate persona if possible
+        if alternate_assistant:
+            persona = get_persona_by_name(
+                alternate_assistant, user=user, db_session=db_session
+            )
+        else:
+            persona = chat_session.persona
 
         prompt_id = new_msg_req.prompt_id
         if prompt_id is None and persona.prompts:
             prompt_id = sorted(persona.prompts, key=lambda x: x.id)[-1].id
-
-        # TODO select proprer persona with new_msg_req.alternate_assistant
 
         if reference_doc_ids is None and retrieval_options is None:
             raise RuntimeError(
