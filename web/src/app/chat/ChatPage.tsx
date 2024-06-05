@@ -444,7 +444,7 @@ export function ChatPage({
     lastMessageRef,
     inputRef,
     endDivRef,
-    distance: 140,
+    distance: -100,
   });
 
   // Scroll if necessary for initial message
@@ -1286,7 +1286,7 @@ export function ChatPage({
                             );
                           }
                         })}
-
+                        <div className="h-[50px]" />
                         {isStreaming &&
                           messageHistory.length > 0 &&
                           messageHistory[messageHistory.length - 1].type ===
