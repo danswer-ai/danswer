@@ -159,7 +159,7 @@ export async function* sendMessage({
       llm_override:
         temperature || modelVersion
           ? {
-              temperature,
+              temperature: temperature || 0,
               model_provider: modelProvider,
               model_version: modelVersion,
             }

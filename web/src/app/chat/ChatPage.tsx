@@ -73,6 +73,12 @@ const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
 const SYSTEM_MESSAGE_ID = -3;
 
+// TODO put in types file
+
+export type modelOverRideType = {
+  modelProvider?: string;
+  modelVersion?: string;
+};
 export function ChatPage({
   documentSidebarInitialWidth,
   defaultSelectedPersonaId,
@@ -323,6 +329,13 @@ export function ChatPage({
   const [currentTool, setCurrentTool] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
 
+  const regenerateID = (
+    modelOverRide: modelOverRideType,
+    messageIdToResend: number
+  ) => {
+    onSubmit({ messageIdToResend, modelOverRide });
+  };
+
   // uploaded files
   const [currentMessageFiles, setCurrentMessageFiles] = useState<
     FileDescriptor[]
@@ -499,10 +512,6 @@ export function ChatPage({
     onSubmit({ messageIdToResend, messageOverride });
   };
 
-  function delay(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
   const onSubmit = async ({
     messageIdToResend,
     messageOverride,
@@ -510,6 +519,7 @@ export function ChatPage({
     forceSearch,
     isSeededChat,
     regenerate,
+    modelOverRide = { modelProvider: undefined, modelVersion: undefined },
   }: {
     messageIdToResend?: number;
     messageOverride?: string;
@@ -517,6 +527,7 @@ export function ChatPage({
     forceSearch?: boolean;
     isSeededChat?: boolean;
     regenerate?: boolean;
+    modelOverRide?: modelOverRideType;
   } = {}) => {
     let currChatSessionId: number;
     let isNewSession = chatSessionId === null;
@@ -633,6 +644,7 @@ export function ChatPage({
         getLastSuccessfulMessageId(currMessageHistory);
       for await (const packetBunch of sendMessage({
         regenerate: regenerate,
+
         message: currMessage,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
@@ -652,8 +664,10 @@ export function ChatPage({
           .map((document) => document.db_doc_id as number),
         queryOverride,
         forceSearch,
-        modelProvider: llmOverrideManager.llmOverride.name || undefined,
+        modelProvider:
+          llmOverrideManager.llmOverride.name || modelOverRide["modelProvider"],
         modelVersion:
+          modelOverRide["modelVersion"] ||
           llmOverrideManager.llmOverride.modelName ||
           searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
           undefined,
@@ -1116,14 +1130,10 @@ export function ChatPage({
                               i !== 0 ? messageHistory[i - 1] : null;
                             return (
                               <AIMessage
-                                regenerate={() =>
-                                  // console.log("howdy")
+                                // regenerate={() =>
+                                //   // console.log("howdy")
 
-                                  onSubmit({
-                                    messageIdToResend: parentMessage?.messageId,
-                                    regenerate: true,
-                                  })
-                                }
+                                // }
                                 alternateModel={message.alternate_model}
                                 // alternateModel={"gpt-4"}
                                 fullMessage={message}
@@ -1300,6 +1310,12 @@ export function ChatPage({
 
                         {regenerateModal && (
                           <RegenerateOption
+                            regenerateID={regenerateID}
+                            messageIdToResend={
+                              messageHistory[messageHistory.length - 2] &&
+                              messageHistory[messageHistory.length - 2]
+                                .messageId
+                            }
                             onClose={() => setRegenerateModal(false)}
                             llmOverrideManager={llmOverrideManager}
                             selectedAssistant={livePersona}

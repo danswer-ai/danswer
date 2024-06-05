@@ -62,9 +62,17 @@ def fetch_default_provider(db_session: Session) -> FullLLMProvider | None:
 
 
 def fetch_provider(db_session: Session, provider_name: str) -> FullLLMProvider | None:
+    print("fetching")
     provider_model = db_session.scalar(
-        select(LLMProviderModel).where(LLMProviderModel.name == provider_name)
+        select(LLMProviderModel).where(LLMProviderModel.provider == provider_name)
     )
+
+    provider_models = db_session.scalars(select(LLMProviderModel)).all()
+    for model in provider_models:
+        print(f"provider: {model.name}")
+
+    print(provider_model)
+    print(provider_name)
     if not provider_model:
         return None
     return FullLLMProvider.from_model(provider_model)

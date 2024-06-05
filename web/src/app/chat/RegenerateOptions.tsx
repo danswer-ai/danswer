@@ -8,15 +8,23 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { getFinalLLM } from "@/lib/llm/utils";
 
 import { Modal } from "@/components/Modal";
+import { modelOverRideType } from "./ChatPage";
 
 export default function RegenerateOption({
   llmOverrideManager,
   selectedAssistant,
   onClose,
+  regenerateID,
+  messageIdToResend,
 }: {
   llmOverrideManager: LlmOverrideManager;
   selectedAssistant: Persona;
   onClose: () => void;
+  messageIdToResend: number;
+  regenerateID: (
+    modelOverRide: modelOverRideType,
+    messageIdToResend: number
+  ) => void;
 }) {
   const { llmProviders } = useChatContext();
   const { llmOverride, setLlmOverride, temperature, setTemperature } =
@@ -41,6 +49,10 @@ export default function RegenerateOption({
     debouncedSetTemperature(value);
   };
 
+  type modelValues = {
+    modelName: string;
+    provider: string;
+  };
   const llmOptions: { name: string; value: string }[] = [];
   const structureValue = (
     name: string,
@@ -117,7 +129,19 @@ export default function RegenerateOption({
               onSelect={
                 (value) =>
                   // TODO change of course
-                  console.log(value)
+                  // console.log(value)
+                  {
+                    const { name, provider, modelName } = destructureValue(
+                      value as string
+                    );
+                    // console.log({ modelVersion: modelName, modelProvider: provider})
+
+                    // console.log(messageIdToResend)
+                    regenerateID(
+                      { modelVersion: modelName, modelProvider: provider },
+                      messageIdToResend
+                    );
+                  }
                 // setLlmOverride(destructureValue(value as string))
               }
             />

@@ -37,6 +37,7 @@ import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
 import { Button } from "@tremor/react";
+import RegenerateOption from "../RegenerateOptions";
 
 function FileDisplay({ files }: { files: FileDescriptor[] }) {
   const imageFiles = files.filter((file) => file.type === ChatFileType.IMAGE);
