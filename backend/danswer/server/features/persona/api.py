@@ -67,6 +67,7 @@ def list_personas_admin(
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
 ) -> list[PersonaSnapshot]:
+    print("personas")
     return [
         PersonaSnapshot.from_model(persona)
         for persona in get_personas(

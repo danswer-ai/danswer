@@ -108,7 +108,7 @@ class CreateChatMessageRequest(ChunkContext):
     prompt_override: PromptOverride | None = None
 
     # allow user to specify an alternate assistnat
-    alternate_assistant: str | None = None
+    alternate_assistant_id: int | None = None
 
     # used for seeded chats to kick off the generation of an AI answer
     use_existing_user_message: bool = False

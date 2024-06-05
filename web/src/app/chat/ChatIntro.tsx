@@ -43,7 +43,7 @@ export function AssistantInsertion({
       test
       {availablePersonas.map((assistant, index) => {
         if (assistant != selectedAssistant) {
-          return <div>{assistant.name}</div>;
+          return <div key={index}>{assistant.name}</div>;
         }
       })}
     </div>

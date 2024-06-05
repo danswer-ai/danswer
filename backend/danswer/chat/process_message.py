@@ -26,6 +26,7 @@ from danswer.db.chat import get_chat_session_by_id
 from danswer.db.chat import get_db_search_doc_by_id
 from danswer.db.chat import get_doc_query_identifiers_from_model
 from danswer.db.chat import get_or_create_root_message
+from danswer.db.chat import get_persona_by_id
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.embedding_model import get_current_db_embedding_model
@@ -208,7 +209,9 @@ def stream_chat_message_objects(
     3. [always] A set of streamed LLM tokens or an error anywhere along the line if something fails
     4. [always] Details on the final AI response message that is created
 
+
     """
+
     try:
         user_id = user.id if user is not None else None
 
@@ -223,13 +226,21 @@ def stream_chat_message_objects(
         parent_id = new_msg_req.parent_message_id
         reference_doc_ids = new_msg_req.search_doc_ids
         retrieval_options = new_msg_req.retrieval_options
-        persona = chat_session.persona
+        alternate_assistant_id = new_msg_req.alternate_assistant_id
+
+        # use alernate persona if possible
+        if alternate_assistant_id:
+            persona = get_persona_by_id(
+                alternate_assistant_id, user=user, db_session=db_session
+            )
+        else:
+            persona = chat_session.persona
+        print("persona")
+        print(persona)
 
         prompt_id = new_msg_req.prompt_id
         if prompt_id is None and persona.prompts:
             prompt_id = sorted(persona.prompts, key=lambda x: x.id)[-1].id
-
-        # TODO select proprer persona with new_msg_req.alternate_assistant
 
         if reference_doc_ids is None and retrieval_options is None:
             raise RuntimeError(
@@ -384,6 +395,7 @@ def stream_chat_message_objects(
             message_type=MessageType.ASSISTANT,
             # error=,
             # reference_docs=,
+            alternate_assistant_id=new_msg_req.alternate_assistant_id,
             db_session=db_session,
             commit=False,
         )

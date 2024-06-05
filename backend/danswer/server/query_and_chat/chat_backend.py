@@ -288,6 +288,8 @@ def handle_new_chat_message(
     have already been set as latest"""
     logger.debug(f"Received new chat message: {chat_message_req.message}")
 
+    # print('new message is')
+    # print(chat_message_req)
     if (
         not chat_message_req.message
         and chat_message_req.prompt_id is not None

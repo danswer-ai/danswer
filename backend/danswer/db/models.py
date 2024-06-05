@@ -708,6 +708,10 @@ class ChatMessage(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_session_id: Mapped[int] = mapped_column(ForeignKey("chat_session.id"))
+    alternate_assistant_id = mapped_column(
+        Integer, ForeignKey("persona.id"), nullable=True
+    )
+
     parent_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     latest_child_message: Mapped[int | None] = mapped_column(Integer, nullable=True)
     message: Mapped[str] = mapped_column(Text)
@@ -736,9 +740,6 @@ class ChatMessage(Base):
 
     chat_session: Mapped[ChatSession] = relationship("ChatSession")
     prompt: Mapped[Optional["Prompt"]] = relationship("Prompt")
-
-    # when call for a specific assistant in UI (`@`)
-    alternate_assistant: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     chat_message_feedbacks: Mapped[list["ChatMessageFeedback"]] = relationship(
         "ChatMessageFeedback",

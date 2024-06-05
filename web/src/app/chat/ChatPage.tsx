@@ -703,6 +703,7 @@ export function ChatPage({
     const frozenCompleteMessageMap = upsertToCompleteMessageMap({
       messages: messageUpdates,
     });
+
     // on initial message send, we insert a dummy system message
     // set this as the parent here if no parent is set
     if (!parentMessage && frozenCompleteMessageMap.size === 2) {
@@ -721,6 +722,7 @@ export function ChatPage({
     let error: string | null = null;
     let finalMessage: BackendMessage | null = null;
     let toolCalls: ToolCallMetadata[] = [];
+
     try {
       const lastSuccessfulMessageId =
         getLastSuccessfulMessageId(currMessageHistory);
@@ -728,6 +730,8 @@ export function ChatPage({
       const stack = new CurrentMessageFIFO();
       updateCurrentMessageFIFO(stack, {
         message: currMessage,
+        // TODO actually pass in an id. This is functioal
+        alternateAssistantId: undefined,
         fileDescriptors: currentMessageFiles,
         parentMessageId: lastSuccessfulMessageId,
         chatSessionId: currChatSessionId,
