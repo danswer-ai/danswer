@@ -30,10 +30,10 @@ from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.productboard.connector import ProductboardConnector
 from danswer.connectors.requesttracker.connector import RequestTrackerConnector
 from danswer.connectors.sharepoint.connector import SharepointConnector
-from danswer.connectors.teams.connector import TeamsConnector
 from danswer.connectors.slab.connector import SlabConnector
 from danswer.connectors.slack.connector import SlackPollConnector
 from danswer.connectors.slack.load_connector import SlackLoadConnector
+from danswer.connectors.teams.connector import TeamsConnector
 from danswer.connectors.web.connector import WebConnector
 from danswer.connectors.wikipedia.connector import WikipediaConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
@@ -82,7 +82,6 @@ def identify_connector_class(
         DocumentSource.AXERO: AxeroConnector,
         DocumentSource.MEDIAWIKI: MediaWikiConnector,
         DocumentSource.WIKIPEDIA: WikipediaConnector,
-        DocumentSource.TEAMS: TeamsConnector,
     }
     connector_by_source = connector_map.get(source, {})
 

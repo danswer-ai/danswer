@@ -190,11 +190,6 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "MediaWiki",
     category: SourceCategory.AppConnection,
   },
-  teams: {
-    icon: TeamsIcon,
-    displayName: "Teams",
-    category: SourceCategory.AppConnection,
-  },
   requesttracker: {
     icon: RequestTrackerIcon,
     displayName: "Request Tracker",
